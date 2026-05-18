@@ -1249,6 +1249,9 @@ layout: sebook
       height: 100%;
       display: block;
     }
+    .hero-cust-choice-button[data-choice-pending="true"] .hero-cust-choice-preview .se-gym-hero-svg {
+      visibility: hidden;
+    }
     .hero-cust-choice-check {
       position: absolute;
       top: 0.35em;
@@ -6011,10 +6014,28 @@ layout: sebook
         if (Math.abs(offset) > 1) window.scrollBy(0, offset);
       }
 
+      function normalizeHeroMilestoneTier(value) {
+        var normalized = String(value || 'none').toLowerCase().replace(/^milestone-/, '');
+        return /^(none|bronze|silver|gold|diamond)$/.test(normalized) ? normalized : 'none';
+      }
+
+      function setHeroMilestoneTier(tier) {
+        var normalized = normalizeHeroMilestoneTier(tier);
+        window.SEGymHeroMilestone = normalized;
+        if (window.HeroAvatar && typeof window.HeroAvatar.applyMilestoneToScope === 'function') {
+          window.HeroAvatar.applyMilestoneToScope(normalized, document);
+          return;
+        }
+        document.querySelectorAll('[data-gym-hero-svg]').forEach(function (svg) {
+          svg.setAttribute('data-hero-milestone', normalized);
+        });
+      }
+
       function refreshLibrary() {
         // Show milestone banner based on total exercise attempts (all instances, not unique)
         var milestoneBanner = document.getElementById('milestone-banner');
         milestoneBanner.className = 'milestone-banner';
+        var heroMilestoneTier = 'none';
         function showMilestoneBanner(levelClass, icon, heading, detail) {
           milestoneBanner.innerHTML =
             '<span class="milestone-icon" aria-hidden="true">' + icon + '</span>' +
@@ -6032,12 +6053,16 @@ layout: sebook
           var MILESTONE_SILVER = {{ site.gym_milestone_silver }};
           var MILESTONE_BRONZE = {{ site.gym_milestone_bronze }};
           if (totalAnswered >= MILESTONE_DIAMOND) {
+            heroMilestoneTier = 'diamond';
             showMilestoneBanner('milestone-diamond', '&#128142;', 'Diamond milestone', 'You\'ve completed ' + MILESTONE_DIAMOND + '+ exercises. Legendary Superhero!');
           } else if (totalAnswered >= MILESTONE_GOLD) {
+            heroMilestoneTier = 'gold';
             showMilestoneBanner('milestone-gold', '&#127942;', 'Gold milestone', 'You\'ve completed ' + MILESTONE_GOLD + '+ exercises. Only one more level to go!');
           } else if (totalAnswered >= MILESTONE_SILVER) {
+            heroMilestoneTier = 'silver';
             showMilestoneBanner('milestone-silver', '&#129352;', 'Silver milestone', 'You\'ve completed ' + MILESTONE_SILVER + '+ exercises. Keep pushing!');
           } else if (totalAnswered >= MILESTONE_BRONZE) {
+            heroMilestoneTier = 'bronze';
             showMilestoneBanner('milestone-bronze', '&#129353;', 'Bronze milestone', 'You\'ve completed ' + MILESTONE_BRONZE + '+ exercises. Keep going!');
           } else {
             milestoneBanner.style.display = 'none';
@@ -6045,6 +6070,7 @@ layout: sebook
         } else {
           milestoneBanner.style.display = 'none';
         }
+        setHeroMilestoneTier(heroMilestoneTier);
 
         var gym = PersonalGym.getGym();
         var totalCards = 0;

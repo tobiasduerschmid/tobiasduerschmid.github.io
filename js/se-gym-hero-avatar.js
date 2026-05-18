@@ -696,6 +696,44 @@
     'full-lips': 3,
     'neutral': 1
   };
+  var MILESTONE_TIERS = ['none', 'bronze', 'silver', 'gold', 'diamond'];
+  var MILESTONE_TOKENS = {
+    none: {
+      metal: '#b7793c',
+      metalLight: '#f5d2a5',
+      metalDark: '#6b3e1d',
+      glow: '#f5a35c',
+      jewel: '#f2a45d'
+    },
+    bronze: {
+      metal: '#b7793c',
+      metalLight: '#f5d2a5',
+      metalDark: '#6b3e1d',
+      glow: '#f2a45d',
+      jewel: '#f0a15b'
+    },
+    silver: {
+      metal: '#c8d0d9',
+      metalLight: '#f8fbff',
+      metalDark: '#677381',
+      glow: '#c8e4f4',
+      jewel: '#8fc7e8'
+    },
+    gold: {
+      metal: '#ffd100',
+      metalLight: '#fff6ad',
+      metalDark: '#9a6b00',
+      glow: '#ffd86f',
+      jewel: '#ffbf3a'
+    },
+    diamond: {
+      metal: '#bdefff',
+      metalLight: '#ffffff',
+      metalDark: '#237a9d',
+      glow: '#a7f4ff',
+      jewel: '#74dcff'
+    }
+  };
   var MASCULINE_FACE_ACCESSORIES = [
     weightedValue([], 34),
     weightedValue(['glasses'], 13),
@@ -1518,6 +1556,31 @@
     }
   }
 
+  function normalizeMilestoneTier(value) {
+    var normalized = String(value || 'none').toLowerCase().replace(/^milestone-/, '');
+    return MILESTONE_TIERS.indexOf(normalized) !== -1 ? normalized : 'none';
+  }
+
+  function applyMilestoneToSvg(svg, tier) {
+    if (!svg) return;
+    var normalized = normalizeMilestoneTier(tier);
+    var tokens = MILESTONE_TOKENS[normalized] || MILESTONE_TOKENS.none;
+    svg.setAttribute('data-hero-milestone', normalized);
+    svg.style.setProperty('--hero-milestone-metal', tokens.metal);
+    svg.style.setProperty('--hero-milestone-metal-light', tokens.metalLight);
+    svg.style.setProperty('--hero-milestone-metal-dark', tokens.metalDark);
+    svg.style.setProperty('--hero-milestone-glow', tokens.glow);
+    svg.style.setProperty('--hero-milestone-jewel', tokens.jewel);
+    setSlot(svg, 'milestone-power', normalized);
+  }
+
+  function applyMilestoneToScope(tier, scope) {
+    var root = scope || document;
+    var normalized = normalizeMilestoneTier(tier);
+    var svgs = root.querySelectorAll('[data-gym-hero-svg]');
+    for (var i = 0; i < svgs.length; i++) applyMilestoneToSvg(svgs[i], normalized);
+  }
+
   function setMultiSlot(svg, slotName, options) {
     var selected = {};
     for (var i = 0; i < options.length; i++) selected[options[i]] = true;
@@ -1661,6 +1724,7 @@
     if (defaultBuckle) {
       defaultBuckle.style.display = hasEmblem ? 'none' : '';
     }
+    applyMilestoneToSvg(svg, svg.getAttribute('data-hero-milestone') || window.SEGymHeroMilestone || 'none');
     svg.setAttribute('data-hero-avatar-ready', 'true');
   }
 
@@ -1775,7 +1839,10 @@
     saveAvatar: saveAvatar,
     clearAvatar: clearAvatar,
     normalizeAvatar: normalizeAvatar,
+    normalizeMilestoneTier: normalizeMilestoneTier,
     getCompositedAccessories: getCompositedAccessories,
+    applyMilestoneToSvg: applyMilestoneToSvg,
+    applyMilestoneToScope: applyMilestoneToScope,
     applyRandomAvatarsToScope: applyRandomAvatarsToScope,
     applyAvatarToScope: applyAvatarToScope,
     applyToSvg: applyToSvg,
@@ -1799,6 +1866,15 @@
     var previousFocus = null;
     var choiceControls = [];
     var choicePreviewId = 0;
+    var choicePreviewRenderToken = 0;
+    var choicePreviewForegroundHandle = 0;
+    var choicePreviewBackgroundHandle = 0;
+    var choicePreviewScrollHandle = 0;
+    var choicePreviewForegroundQueue = [];
+    var choicePreviewBackgroundQueue = [];
+    var latestChoicePreviewState = null;
+    var latestChoicePreviewSnapshot = null;
+    var choicePreviewObserver = null;
 
     function $(id) { return modal.querySelector('#' + id); }
 
@@ -2139,6 +2215,77 @@
       return '238 34 324 596';
     }
 
+    function collectDisplaySnapshot(root, selector) {
+      var nodes = root.querySelectorAll(selector);
+      var values = [];
+      for (var i = 0; i < nodes.length; i++) values.push(nodes[i].getAttribute('display') || '');
+      return values;
+    }
+
+    function collectInlineDisplaySnapshot(root, selector) {
+      var nodes = root.querySelectorAll(selector);
+      var values = [];
+      for (var i = 0; i < nodes.length; i++) values.push(nodes[i].style.display || '');
+      return values;
+    }
+
+    function applyDisplaySnapshot(root, selector, values) {
+      var nodes = root.querySelectorAll(selector);
+      for (var i = 0; i < nodes.length && i < values.length; i++) {
+        if (values[i]) nodes[i].setAttribute('display', values[i]);
+        else nodes[i].removeAttribute('display');
+      }
+    }
+
+    function applyInlineDisplaySnapshot(root, selector, values) {
+      var nodes = root.querySelectorAll(selector);
+      for (var i = 0; i < nodes.length && i < values.length; i++) {
+        nodes[i].style.display = values[i] || '';
+      }
+    }
+
+    function setSnapshotAttribute(svg, name, value) {
+      if (value) svg.setAttribute(name, value);
+      else svg.removeAttribute(name);
+    }
+
+    function captureChoicePreviewSnapshot() {
+      var source = modal.querySelector('.hero-cust-preview [data-gym-hero-svg]');
+      if (!source) return null;
+      var emblemText = source.querySelector('[data-hero-emblem-text]');
+      return {
+        source: source,
+        styleCssText: source.style.cssText,
+        kind: source.getAttribute('data-hero-kind') || '',
+        body: source.getAttribute('data-hero-body') || '',
+        milestone: source.getAttribute('data-hero-milestone') || '',
+        ready: source.getAttribute('data-hero-avatar-ready') || '',
+        slots: collectDisplaySnapshot(source, '[data-hero-slot]'),
+        kindLayers: collectDisplaySnapshot(source, '[data-hero-kind-layer]'),
+        defaultTorsoDisplay: collectInlineDisplaySnapshot(source, '[data-hero-default-torso]'),
+        defaultBuckleDisplay: collectInlineDisplaySnapshot(source, '[data-hero-buckle-default]'),
+        emblemText: emblemText ? emblemText.textContent : ''
+      };
+    }
+
+    function applyChoicePreviewSnapshot(svg, snapshot, baseState) {
+      if (!snapshot) {
+        applyToSvg(svg, baseState);
+        return;
+      }
+      svg.style.cssText = snapshot.styleCssText;
+      setSnapshotAttribute(svg, 'data-hero-kind', snapshot.kind);
+      setSnapshotAttribute(svg, 'data-hero-body', snapshot.body);
+      setSnapshotAttribute(svg, 'data-hero-milestone', snapshot.milestone);
+      setSnapshotAttribute(svg, 'data-hero-avatar-ready', snapshot.ready);
+      applyDisplaySnapshot(svg, '[data-hero-slot]', snapshot.slots);
+      applyDisplaySnapshot(svg, '[data-hero-kind-layer]', snapshot.kindLayers);
+      applyInlineDisplaySnapshot(svg, '[data-hero-default-torso]', snapshot.defaultTorsoDisplay);
+      applyInlineDisplaySnapshot(svg, '[data-hero-buckle-default]', snapshot.defaultBuckleDisplay);
+      var emblemText = svg.querySelector('[data-hero-emblem-text]');
+      if (emblemText) emblemText.textContent = snapshot.emblemText;
+    }
+
     function applyChoicePreviewDelta(svg, definition, optionValue, baseState) {
       if (!definition || !definition.key) return;
       if (definition.key === 'heroKind') {
@@ -2179,8 +2326,8 @@
       }
     }
 
-    function createChoicePreviewSvg(definition, optionValue, baseState) {
-      var source = modal.querySelector('.hero-cust-preview [data-gym-hero-svg]');
+    function createChoicePreviewSvg(definition, optionValue, baseState, snapshot) {
+      var source = snapshot && snapshot.source ? snapshot.source : modal.querySelector('.hero-cust-preview [data-gym-hero-svg]');
       if (!source) return null;
       var svg = source.cloneNode(true);
       var suffix = 'choice-' + definition.key + '-' + optionValue + '-' + (++choicePreviewId);
@@ -2193,23 +2340,41 @@
       svg.setAttribute('data-hero-choice-svg', '');
       svg.removeAttribute('id');
       uniquifySvgIds(svg, suffix);
-      applyChoicePreviewDelta(svg, definition, optionValue, baseState || DEFAULTS);
+      updateChoicePreviewSvg(svg, definition, optionValue, baseState || DEFAULTS, snapshot);
       return svg;
     }
 
-    function renderChoicePreview(button, definition, baseState) {
+    function updateChoicePreviewSvg(svg, definition, optionValue, baseState, snapshot) {
+      var state = cloneAvatarState(baseState || DEFAULTS);
+      if (definition.key === 'heroKind') {
+        applyToSvg(svg, choiceState(definition, optionValue, state));
+        return;
+      }
+      applyChoicePreviewSnapshot(svg, snapshot || captureChoicePreviewSnapshot(), state);
+      applyChoicePreviewDelta(svg, definition, optionValue, state);
+    }
+
+    function renderChoicePreview(button, definition, baseState, signature, snapshot) {
       var preview = button.querySelector('.hero-cust-choice-preview');
       if (!preview) return;
-      var svg = createChoicePreviewSvg(definition, button.getAttribute('data-choice-value'), baseState);
-      if (!svg) return;
+      var optionValue = button.getAttribute('data-choice-value');
       var existing = preview.querySelector('[data-hero-choice-svg]');
       if (existing) {
-        existing.replaceWith(svg);
-      } else {
-        preview.textContent = '';
-        preview.appendChild(svg);
+        updateChoicePreviewSvg(existing, definition, optionValue, baseState, snapshot);
+        button._heroChoicePreviewRendered = true;
+        button._heroChoicePreviewSignature = signature || choicePreviewSignature(definition, optionValue, baseState);
+        button._heroChoicePendingSignature = '';
+        setChoicePreviewPending(button, false);
+        return;
       }
+      var svg = createChoicePreviewSvg(definition, optionValue, baseState, snapshot);
+      if (!svg) return;
+      preview.textContent = '';
+      preview.appendChild(svg);
       button._heroChoicePreviewRendered = true;
+      button._heroChoicePreviewSignature = signature || choicePreviewSignature(definition, optionValue, baseState);
+      button._heroChoicePendingSignature = '';
+      setChoicePreviewPending(button, false);
     }
 
     function syncChoiceControl(control) {
@@ -2225,20 +2390,316 @@
       for (var i = 0; i < choiceControls.length; i++) syncChoiceControl(choiceControls[i]);
     }
 
-    function renderAllChoicePreviews(baseState) {
-      for (var i = 0; i < choiceControls.length; i++) {
-        var control = choiceControls[i];
+    function scheduleChoicePreviewFrame(callback) {
+      if (typeof window.requestAnimationFrame === 'function') {
+        return window.requestAnimationFrame(callback);
+      }
+      return window.setTimeout(callback, 16);
+    }
+
+    function cancelChoicePreviewFrame(handle) {
+      if (!handle) return;
+      if (typeof window.cancelAnimationFrame === 'function') {
+        window.cancelAnimationFrame(handle);
+      } else {
+        window.clearTimeout(handle);
+      }
+    }
+
+    function scheduleChoicePreviewIdle(callback) {
+      if (typeof window.requestIdleCallback === 'function') {
+        return window.requestIdleCallback(callback, { timeout: 800 });
+      }
+      return window.setTimeout(function () {
+        callback({
+          didTimeout: true,
+          timeRemaining: function () { return 8; }
+        });
+      }, 80);
+    }
+
+    function cancelChoicePreviewIdle(handle) {
+      if (!handle) return;
+      if (typeof window.cancelIdleCallback === 'function') {
+        window.cancelIdleCallback(handle);
+      } else {
+        window.clearTimeout(handle);
+      }
+    }
+
+    function cancelQueuedChoicePreviewRenders() {
+      cancelChoicePreviewFrame(choicePreviewForegroundHandle);
+      cancelChoicePreviewIdle(choicePreviewBackgroundHandle);
+      choicePreviewForegroundHandle = 0;
+      choicePreviewBackgroundHandle = 0;
+      choicePreviewForegroundQueue = [];
+      choicePreviewBackgroundQueue = [];
+    }
+
+    function refreshLatestChoicePreviewContext() {
+      latestChoicePreviewState = cloneAvatarState(readForm());
+      latestChoicePreviewSnapshot = captureChoicePreviewSnapshot();
+      return latestChoicePreviewState;
+    }
+
+    function choicePreviewValue(definition, optionValue, baseState, key) {
+      if (definition.key === key) return optionValue;
+      if (key === 'heroKind') return normalizeHeroKind(baseState.kind);
+      if (key === 'hairStyle') return baseState.appearance.hairStyle;
+      if (key === 'eyebrowStyle') return baseState.appearance.eyebrowStyle;
+      if (key === 'eyeShape') return baseState.appearance.eyeShape || 'round';
+      if (key === 'noseShape') return baseState.appearance.noseShape || 'soft';
+      if (key === 'mouthStyle') return baseState.appearance.mouthStyle || 'smile';
+      if (key === 'blushStyle') return baseState.appearance.blushStyle || 'natural';
+      if (key === 'headStyle') return baseState.appearance.headStyle || 'default';
+      if (key === 'facialHair') return baseState.appearance.facialHair || 'none';
+      if (key === 'faceFeature') return baseState.appearance.faceFeature || 'none';
+      if (key === 'bodyType') return baseState.body.type;
+      if (key === 'outfitStyle') return baseState.outfit.style || DEFAULTS.outfit.style;
+      return '';
+    }
+
+    function choiceAppearanceSignature(definition, optionValue, baseState) {
+      return {
+        skin: baseState.appearance.skin,
+        hairColor: baseState.appearance.hairColor,
+        eyeColor: baseState.appearance.eyeColor,
+        hairStyle: choicePreviewValue(definition, optionValue, baseState, 'hairStyle'),
+        eyebrowStyle: choicePreviewValue(definition, optionValue, baseState, 'eyebrowStyle'),
+        eyeShape: choicePreviewValue(definition, optionValue, baseState, 'eyeShape'),
+        noseShape: choicePreviewValue(definition, optionValue, baseState, 'noseShape'),
+        mouthStyle: choicePreviewValue(definition, optionValue, baseState, 'mouthStyle'),
+        blushStyle: choicePreviewValue(definition, optionValue, baseState, 'blushStyle'),
+        headStyle: choicePreviewValue(definition, optionValue, baseState, 'headStyle'),
+        facialHair: choicePreviewValue(definition, optionValue, baseState, 'facialHair'),
+        faceFeature: choicePreviewValue(definition, optionValue, baseState, 'faceFeature')
+      };
+    }
+
+    function choicePreviewSignature(definition, optionValue, baseState) {
+      if (definition.key === 'heroKind') {
+        return JSON.stringify(choiceState(definition, optionValue, baseState));
+      }
+
+      var crop = definition.preview || 'full';
+      var signature = {
+        key: definition.key,
+        option: optionValue,
+        crop: crop,
+        kind: choicePreviewValue(definition, optionValue, baseState, 'heroKind')
+      };
+
+      if (crop === 'face' || crop === 'head') {
+        signature.appearance = choiceAppearanceSignature(definition, optionValue, baseState);
+        signature.outfit = {
+          capeOuter: baseState.outfit.capeOuter,
+          accessories: getAccessories(baseState.outfit)
+        };
+      } else if (crop === 'upper') {
+        signature.appearance = choiceAppearanceSignature(definition, optionValue, baseState);
+        signature.body = {
+          type: choicePreviewValue(definition, optionValue, baseState, 'bodyType')
+        };
+        signature.outfit = {
+          style: choicePreviewValue(definition, optionValue, baseState, 'outfitStyle'),
+          suit: baseState.outfit.suit,
+          capeOuter: baseState.outfit.capeOuter,
+          capeInner: baseState.outfit.capeInner,
+          accessories: getAccessories(baseState.outfit),
+          emblem: baseState.outfit.emblem || ''
+        };
+      } else {
+        signature.state = choiceState(definition, optionValue, baseState);
+      }
+      return JSON.stringify(signature);
+    }
+
+    function setChoicePreviewPending(button, isPending) {
+      if (!button) return;
+      if (isPending) {
+        button.setAttribute('data-choice-pending', 'true');
+        button.setAttribute('aria-busy', 'true');
+      } else {
+        button.removeAttribute('data-choice-pending');
+        button.removeAttribute('aria-busy');
+      }
+    }
+
+    function choicePreviewViewportBox() {
+      if (modal.hidden) return null;
+      var root = modal.querySelector('.hero-cust-box') || modal;
+      return root.getBoundingClientRect();
+    }
+
+    function isChoiceButtonInViewportBox(button, rootBox) {
+      if (!button || !rootBox || modal.hidden || button.offsetParent === null) return false;
+      var box = button.getBoundingClientRect();
+      return box.bottom >= rootBox.top && box.top <= rootBox.bottom && box.right >= rootBox.left && box.left <= rootBox.right;
+    }
+
+    function processChoicePreviewItem(item, state, token) {
+      if (!item || token !== choicePreviewRenderToken) return false;
+      if (item.button._heroChoicePreviewSignature === item.signature && item.button.querySelector('[data-hero-choice-svg]')) {
+        setChoicePreviewPending(item.button, false);
+        return false;
+      }
+      renderChoicePreview(item.button, item.definition, state, item.signature, item.snapshot);
+      return true;
+    }
+
+    function renderChoiceButtonPreviewForState(button, definition, state, snapshot) {
+      if (!button || !definition || !state) return false;
+      var optionValue = button.getAttribute('data-choice-value');
+      var signature = choicePreviewSignature(definition, optionValue, state);
+      if (button._heroChoicePreviewSignature === signature && button.querySelector('[data-hero-choice-svg]')) {
+        setChoicePreviewPending(button, false);
+        return false;
+      }
+      button._heroChoicePendingSignature = signature;
+      setChoicePreviewPending(button, true);
+      renderChoicePreview(button, definition, state, signature, snapshot);
+      return true;
+    }
+
+    function renderVisibleChoicePreviewButtons() {
+      if (modal.hidden) return;
+      var rootBox = choicePreviewViewportBox();
+      if (!rootBox) return;
+      var state = refreshLatestChoicePreviewContext();
+      for (var c = 0; c < choiceControls.length; c++) {
+        var control = choiceControls[c];
         if (!control.picker) continue;
         var buttons = control.picker.querySelectorAll('[data-choice-value]');
         for (var b = 0; b < buttons.length; b++) {
-          renderChoicePreview(buttons[b], control.definition, baseState);
+          if (isChoiceButtonInViewportBox(buttons[b], rootBox)) {
+            renderChoiceButtonPreviewForState(buttons[b], control.definition, state, latestChoicePreviewSnapshot);
+          }
         }
       }
     }
 
-    function refreshChoicePreviews(baseState) {
+    function scheduleVisibleChoicePreviewRefresh() {
+      if (choicePreviewScrollHandle) return;
+      choicePreviewScrollHandle = scheduleChoicePreviewFrame(function () {
+        choicePreviewScrollHandle = 0;
+        renderVisibleChoicePreviewButtons();
+      });
+    }
+
+    function runChoicePreviewQueue(queue, state, token, maxItems, budgetMs) {
+      var start = Date.now();
+      var rendered = 0;
+      while (queue.length && rendered < maxItems && Date.now() - start < budgetMs) {
+        var item = queue.shift();
+        if (processChoicePreviewItem(item, state, token)) rendered++;
+      }
+      return queue.length > 0;
+    }
+
+    function scheduleForegroundChoicePreviewWork(token, state) {
+      if (choicePreviewForegroundHandle) return;
+      choicePreviewForegroundHandle = scheduleChoicePreviewFrame(function step() {
+        choicePreviewForegroundHandle = 0;
+        if (token !== choicePreviewRenderToken) return;
+        if (runChoicePreviewQueue(choicePreviewForegroundQueue, state, token, 4, 12)) {
+          scheduleForegroundChoicePreviewWork(token, state);
+          return;
+        }
+        scheduleBackgroundChoicePreviewWork(token, state);
+      });
+    }
+
+    function scheduleBackgroundChoicePreviewWork(token, state) {
+      if (choicePreviewBackgroundHandle || choicePreviewForegroundQueue.length) return;
+      choicePreviewBackgroundHandle = scheduleChoicePreviewIdle(function step(deadline) {
+        choicePreviewBackgroundHandle = 0;
+        if (token !== choicePreviewRenderToken) return;
+        var budget = deadline && typeof deadline.timeRemaining === 'function'
+          ? Math.max(4, Math.min(12, deadline.timeRemaining()))
+          : 8;
+        if (runChoicePreviewQueue(choicePreviewBackgroundQueue, state, token, 3, budget)) {
+          scheduleBackgroundChoicePreviewWork(token, state);
+        }
+      });
+    }
+
+    function observeChoiceButton(button, definition) {
+      button._heroChoiceDefinition = definition;
+      if (!('IntersectionObserver' in window)) {
+        button._heroChoiceInView = true;
+        return;
+      }
+      if (!choicePreviewObserver) {
+        choicePreviewObserver = new IntersectionObserver(function (entries) {
+          var state = null;
+          var snapshot = null;
+          for (var i = 0; i < entries.length; i++) {
+            var button = entries[i].target;
+            button._heroChoiceInView = entries[i].isIntersecting;
+            if (!entries[i].isIntersecting) continue;
+            if (!state) {
+              state = refreshLatestChoicePreviewContext();
+              snapshot = latestChoicePreviewSnapshot;
+            }
+            var definition = button._heroChoiceDefinition;
+            renderChoiceButtonPreviewForState(button, definition, state, snapshot);
+          }
+        }, {
+          root: modal.querySelector('.hero-cust-box') || null,
+          rootMargin: '48px',
+          threshold: 0.01
+        });
+      }
+      choicePreviewObserver.observe(button);
+    }
+
+    function queueAllChoicePreviewRenders(baseState) {
       var state = cloneAvatarState(baseState);
-      renderAllChoicePreviews(state);
+      latestChoicePreviewState = state;
+      latestChoicePreviewSnapshot = captureChoicePreviewSnapshot();
+      var token = ++choicePreviewRenderToken;
+      var foreground = [];
+      var background = [];
+      var queued = [];
+      var rootBox = choicePreviewViewportBox();
+
+      cancelQueuedChoicePreviewRenders();
+
+      function add(button, definition) {
+        if (!button || queued.indexOf(button) !== -1) return;
+        var optionValue = button.getAttribute('data-choice-value');
+        var signature = choicePreviewSignature(definition, optionValue, state);
+        var hasCurrentPreview = button._heroChoicePreviewSignature === signature && button.querySelector('[data-hero-choice-svg]');
+        if (hasCurrentPreview) {
+          setChoicePreviewPending(button, false);
+          return;
+        }
+        queued.push(button);
+        button._heroChoicePendingSignature = signature;
+        setChoicePreviewPending(button, true);
+        var item = { button: button, definition: definition, signature: signature, snapshot: latestChoicePreviewSnapshot };
+        if (button.getAttribute('aria-pressed') === 'true' || button._heroChoiceInView || isChoiceButtonInViewportBox(button, rootBox)) {
+          foreground.push(item);
+        } else {
+          background.push(item);
+        }
+      }
+
+      for (var c = 0; c < choiceControls.length; c++) {
+        var control = choiceControls[c];
+        if (!control.picker) continue;
+        var buttons = control.picker.querySelectorAll('[data-choice-value]');
+        for (var b = 0; b < buttons.length; b++) add(buttons[b], control.definition);
+      }
+
+      choicePreviewForegroundQueue = foreground;
+      choicePreviewBackgroundQueue = background;
+      scheduleForegroundChoicePreviewWork(token, state);
+      scheduleBackgroundChoicePreviewWork(token, state);
+    }
+
+    function refreshChoicePreviews(baseState) {
+      queueAllChoicePreviewRenders(baseState);
     }
 
     function buildChoicePicker(select, key, definition) {
@@ -2295,6 +2756,7 @@
           });
 
           grid.appendChild(button);
+          observeChoiceButton(button, definition);
         }
         section.appendChild(grid);
         picker.appendChild(section);
@@ -2546,6 +3008,10 @@
 
     initChoiceControls();
     initColorTools();
+
+    var choicePreviewScrollRoot = modal.querySelector('.hero-cust-box');
+    if (choicePreviewScrollRoot) choicePreviewScrollRoot.addEventListener('scroll', scheduleVisibleChoicePreviewRefresh, { passive: true });
+    window.addEventListener('resize', scheduleVisibleChoicePreviewRefresh);
 
     modal.querySelectorAll('input[type="color"]').forEach(function (el) {
       el.addEventListener('input', function () {

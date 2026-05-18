@@ -37,6 +37,53 @@ async function setColorInput(page, selector, value) {
   }, value);
 }
 
+async function setSelectInput(page, selector, value) {
+  await page.locator(selector).evaluate((select, nextValue) => {
+    select.value = nextValue;
+    select.dispatchEvent(new Event('input', { bubbles: true }));
+    select.dispatchEvent(new Event('change', { bubbles: true }));
+  }, value);
+}
+
+async function setCheckboxInput(page, selector, checked) {
+  await page.locator(selector).evaluate((checkbox, nextChecked) => {
+    checkbox.checked = nextChecked;
+    checkbox.dispatchEvent(new Event('input', { bubbles: true }));
+    checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+  }, checked);
+}
+
+async function choicePreviewSvg(page, accessibleName) {
+  const button = page.getByRole('button', { name: accessibleName });
+  await button.scrollIntoViewIfNeeded();
+  await expect(button).toBeVisible();
+  const svg = button.locator('[data-hero-choice-svg]');
+  await expect(svg).toHaveCount(1, { timeout: 15000 });
+  return svg;
+}
+
+async function expectChoiceSlotVisible(svg, slot, option, message) {
+  await expect.poll(async () => svg
+    .locator(`[data-hero-slot="${slot}"][data-hero-option="${option}"]`)
+    .first()
+    .getAttribute('display'), {
+    message,
+    timeout: 15000,
+  }).toBe('inline');
+}
+
+async function expectNoVisiblePendingChoicePreviews(page) {
+  await expect.poll(async () => page.evaluate(() => {
+    const pendingSvgs = Array.from(document.querySelectorAll(
+      '#hero-customizer-modal .hero-cust-choice-button[data-choice-pending="true"] [data-hero-choice-svg]'
+    ));
+    return pendingSvgs.filter((svg) => getComputedStyle(svg).visibility !== 'hidden').length;
+  }), {
+    message: 'pending choice previews should hide stale SVGs',
+    timeout: 5000,
+  }).toBe(0);
+}
+
 function colorToRgb(color) {
   if (color.startsWith('#')) {
     const hex = color.slice(1);
@@ -181,19 +228,19 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
   });
 
   test('Style preview buttons re-render after randomize changes the base avatar', async ({ page }) => {
+    test.setTimeout(45000);
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
 
-    const longHairButton = page.getByRole('button', { name: 'Choose Hair style: Long and flowing' });
-    const longHairPreview = longHairButton.locator('[data-hero-choice-svg]');
-    await expect(longHairPreview).toHaveCount(1);
+    const longHairPreview = await choicePreviewSvg(page, 'Choose Hair style: Long and flowing');
 
     await setColorInput(page, '#hero-cust-hair-color', '#123456');
     await expect.poll(async () => longHairPreview.evaluate((svg) =>
       getComputedStyle(svg).getPropertyValue('--hero-hair').trim().toLowerCase()
     ), {
       message: 'hair preview button should update after direct color changes',
+      timeout: 15000,
     }).toBe('#123456');
 
     const randomize = page.getByRole('button', { name: 'Randomize' });
@@ -201,11 +248,73 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     const randomizedHairColor = (await page.getByLabel('Hair color', { exact: true }).inputValue()).toLowerCase();
     expect(randomizedHairColor, 'randomize should choose from generated avatar colors').not.toBe('#123456');
 
+    await page.getByRole('button', { name: 'Choose Hair style: Long and flowing' }).scrollIntoViewIfNeeded();
     await expect.poll(async () => longHairPreview.evaluate((svg) =>
       getComputedStyle(svg).getPropertyValue('--hero-hair').trim().toLowerCase()
     ), {
       message: 'hair preview button should re-render after randomize',
+      timeout: 15000,
     }).toBe(randomizedHairColor);
+  });
+
+  test('Style preview buttons stay current across mixed avatar changes', async ({ page }) => {
+    test.setTimeout(60000);
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+    await clearAccessories(page);
+
+    const shortHairSvg = await choicePreviewSvg(page, 'Choose Hair style: Short crop');
+    await expectChoiceSlotVisible(shortHairSvg, 'hair', 'short', 'short hair preview should render before mutations');
+
+    const eyebrowThinSvg = await choicePreviewSvg(page, 'Choose Eyebrows: Thin');
+    await expectChoiceSlotVisible(eyebrowThinSvg, 'eyebrow', 'thin', 'eyebrow option preview should render before mutations');
+
+    const hoodieSvg = await choicePreviewSvg(page, 'Choose Outfit style: Hoodie');
+    await expectChoiceSlotVisible(hoodieSvg, 'outfit-style', 'hoodie', 'outfit option preview should render before mutations');
+
+    const longHairButton = page.getByRole('button', { name: 'Choose Hair style: Long and flowing' });
+    await longHairButton.scrollIntoViewIfNeeded();
+    await longHairButton.click();
+    await expectNoVisiblePendingChoicePreviews(page);
+    await expectChoiceSlotVisible(
+      eyebrowThinSvg,
+      'hair',
+      'long',
+      'face previews should inherit the changed base hair style'
+    );
+    await expectChoiceSlotVisible(
+      eyebrowThinSvg,
+      'eyebrow',
+      'thin',
+      'face previews should preserve their own option delta'
+    );
+
+    await setCheckboxInput(page, '#hero-customizer-modal input[name="hero-cust-accessory"][value="hijab"]', true);
+    await expectNoVisiblePendingChoicePreviews(page);
+    await expectChoiceSlotVisible(
+      shortHairSvg,
+      'hair',
+      'bald',
+      'non-selected hair previews should hide hair under head-covering accessories'
+    );
+
+    await setSelectInput(page, '#hero-cust-body-type', 'broad');
+    await expectNoVisiblePendingChoicePreviews(page);
+    await page.getByRole('button', { name: 'Choose Outfit style: Hoodie' }).scrollIntoViewIfNeeded();
+    await expect.poll(async () => hoodieSvg.evaluate((svg) => svg.getAttribute('data-hero-body')), {
+      message: 'outfit previews should inherit body type changes',
+      timeout: 15000,
+    }).toBe('broad');
+
+    await setColorInput(page, '#hero-cust-suit', '#7a2cff');
+    await expectNoVisiblePendingChoicePreviews(page);
+    await expect.poll(async () => hoodieSvg.evaluate((svg) =>
+      getComputedStyle(svg).getPropertyValue('--hero-suit').trim().toLowerCase()
+    ), {
+      message: 'outfit previews should inherit suit color changes',
+      timeout: 15000,
+    }).toBe('#7a2cff');
   });
 
   test('Bruin mascot option replaces the human avatar and saves to page heroes', async ({ page }) => {
@@ -527,6 +636,60 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(summary.mouthVariety).toBeGreaterThanOrEqual(7);
     expect(summary.upbeatMouthSamples).toBeGreaterThan(360);
     expect(summary.neutralMouthSamples).toBeLessThan(40);
+  });
+
+  test('Milestone power layer supports every tier without becoming a customization control', async ({ page }) => {
+    await page.goto(GYM_URL);
+
+    const tiers = await page.locator('#gym-entrance [data-gym-hero-svg]').first().evaluate((svg) => {
+      const result = {};
+      for (const tier of ['bronze', 'silver', 'gold', 'diamond']) {
+        window.HeroAvatar.applyMilestoneToSvg(svg, tier);
+        result[tier] = {
+          attr: svg.getAttribute('data-hero-milestone'),
+          visibleLayerCount: Array.from(svg.querySelectorAll(`[data-hero-slot="milestone-power"][data-hero-option="${tier}"]`))
+            .filter((group) => group.getAttribute('display') === 'inline').length,
+          metal: getComputedStyle(svg).getPropertyValue('--hero-milestone-metal').trim(),
+        };
+      }
+      window.HeroAvatar.applyMilestoneToSvg(svg, 'none');
+      result.none = {
+        attr: svg.getAttribute('data-hero-milestone'),
+        visibleNonNoneLayerCount: Array.from(svg.querySelectorAll('[data-hero-slot="milestone-power"]'))
+          .filter((group) => group.getAttribute('data-hero-option') !== 'none' && group.getAttribute('display') === 'inline').length,
+      };
+      return result;
+    });
+
+    for (const tier of ['bronze', 'silver', 'gold', 'diamond']) {
+      expect(tiers[tier].attr).toBe(tier);
+      expect(tiers[tier].visibleLayerCount).toBeGreaterThanOrEqual(2);
+      expect(tiers[tier].metal).toMatch(/^#[0-9a-f]{6}$/i);
+    }
+    expect(tiers.none).toEqual({ attr: 'none', visibleNonNoneLayerCount: 0 });
+
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+    await expect(page.locator('#hero-customizer-modal [data-hero-choice="milestone"]')).toHaveCount(0);
+    await expect(page.getByRole('dialog', { name: 'Customize your hero' })).toBeVisible();
+  });
+
+  test('Exercise milestones automatically make page heroes look more powerful', async ({ page }) => {
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.evaluate(() => {
+      PersonalGym.setAnalyzePerformance(true);
+      PersonalGym.saveStats({ milestone: { seen: 1000, correct: 950 } });
+    });
+
+    await page.reload();
+
+    await expect(page.locator('#milestone-banner')).toContainText('Diamond milestone');
+    const heroes = page.locator('#gym-entrance [data-gym-hero-svg]');
+    await expect(heroes.first()).toHaveAttribute('data-hero-milestone', 'diamond');
+    await expect(heroes.nth(1)).toHaveAttribute('data-hero-milestone', 'diamond');
+    await expect(heroes.first().locator('[data-hero-slot="milestone-power"][data-hero-option="diamond"]').first())
+      .toHaveAttribute('display', 'inline');
   });
 
   test('Unsaved page heroes randomize independently on load', async ({ page }) => {
