@@ -331,6 +331,20 @@ html.dark-mode .uml-gitgraph-diagram-container {
   --git-graph-bg: #1a1a2e;
 }
 
+/* Static gitgraph diagrams can be rendered before the dark-mode custom
+   properties are available, leaving branch labels with light-mode fills.
+   Keep branch identity in the chip border/fill, and use readable label text
+   against the dark tinted chip. */
+html.dark-mode :is(.git-graph-canvas, .git-command-lab__graph, .git-command-lab-modal, .uml-gitgraph-diagram-container)
+  .git-graph-label-g:not(.git-graph-label-g--head) .git-graph-label-bg + path {
+  stroke-width: 2.5;
+  stroke-opacity: 1;
+}
+html.dark-mode :is(.git-graph-canvas, .git-command-lab__graph, .git-command-lab-modal, .uml-gitgraph-diagram-container)
+  .git-graph-label-g:not(.git-graph-label-g--head) .git-graph-branch-label {
+  fill: #eef7ff;
+}
+
 /* portfolio.css applies `filter: invert(1) hue-rotate(180deg)` to every SVG
    under .post-content in dark mode so generic SVG icons/diagrams flip to
    light-on-dark. The git-graph already themes itself via CSS variables
