@@ -68,7 +68,7 @@ test.describe('UML class diagram flashcards - question diagrams render in SEBook
     await expect(flashcardHero).toBeVisible();
     await expect(flashcardHero).toHaveAttribute('data-hero-kind', 'bruin');
     await expect(flashcardHero.locator('[data-hero-kind-layer="bruin"][data-hero-slot="mascot"]'))
-      .toHaveAttribute('display', null);
+      .not.toHaveAttribute('display', 'none');
   });
 
   test('Card 1 (aggregation) shows its diagram in the question', async ({ page }) => {

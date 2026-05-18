@@ -268,8 +268,7 @@
           choice('none', 'None'),
           choice('freckles', 'Freckles'),
           choice('beauty-mark', 'Beauty mark'),
-          choice('dimples', 'Dimples'),
-          choice('cheek-lines', 'Cheek lines')
+          choice('dimples', 'Dimples')
         ])
       ]
     },
@@ -442,6 +441,9 @@
       stocky: 'solid',
       pear: 'fuller-hip',
       voluptuous: 'full-frame'
+    },
+    faceFeature: {
+      'cheek-lines': 'none'
     },
     accessory: {
       'forehead-accent': 'forehead-jewel'
@@ -673,7 +675,7 @@
   };
   var FACE_FEATURE_WEIGHTS = []
     .concat(weightedValues(['none'], 15))
-    .concat(weightedValues(['freckles', 'beauty-mark', 'dimples', 'cheek-lines'], 2));
+    .concat(weightedValues(['freckles', 'beauty-mark', 'dimples'], 2));
   var CAMPUS_FACE_ACCESSORIES = [
     weightedValue([], 34),
     weightedValue(['glasses'], 14),
@@ -1181,6 +1183,7 @@
       if (obj.appearance.blushStyle === undefined) obj.appearance.blushStyle = 'natural';
       if (obj.appearance.facialHair === undefined) obj.appearance.facialHair = 'none';
       if (obj.appearance.faceFeature === undefined) obj.appearance.faceFeature = 'none';
+      obj.appearance.faceFeature = canonicalChoiceValue('faceFeature', obj.appearance.faceFeature);
     }
     if (obj.body) obj.body.type = canonicalChoiceValue('bodyType', obj.body.type);
     if (obj.outfit.style === undefined) obj.outfit.style = DEFAULTS.outfit.style;
@@ -1735,7 +1738,7 @@
     setSlot(svg, 'head-features', headStyle);
     setSlot(svg, 'hairline', hidesHair ? 'none' : renderedHairStyle);
     setSlot(svg, 'nose-shape', state.appearance.noseShape || 'soft');
-    setSlot(svg, 'face-feature', state.appearance.faceFeature || 'none');
+    setSlot(svg, 'face-feature', canonicalChoiceValue('faceFeature', state.appearance.faceFeature || 'none'));
     setSlot(svg, 'facial-hair', state.appearance.facialHair || 'none');
     setSlot(svg, 'mouth-style', state.appearance.mouthStyle || 'smile');
     setSlot(svg, 'hair-root', hidesHair ? 'none' : renderedHairStyle);

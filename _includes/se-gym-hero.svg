@@ -40,6 +40,10 @@
     <clipPath id="face-clear-clip-{{ hero_variant }}" clipPathUnits="userSpaceOnUse">
       <path d="M 354 176 C 366 166, 383 162, 396 166 C 399 167, 403 167, 406 166 C 419 162, 434 166, 446 176 C 450 198, 444 226, 430 244 C 418 258, 382 258, 370 244 C 356 226, 350 198, 354 176 Z"/>
     </clipPath>
+    <clipPath id="hair-shoulder-clip-{{ hero_variant }}" clipPathUnits="userSpaceOnUse">
+      <path d="M 300 58 H 500 V 380 H 454 C 454 338, 450 314, 444 292 C 430 290, 418 284, 410 274 C 404 268, 396 268, 390 274 C 382 284, 370 290, 356 292 C 350 314, 346 338, 346 380 H 300 Z"/>
+    </clipPath>
+    <style>.se-gym-hero-svg-{{ hero_variant }} [data-hero-slot="hair"]{clip-path:url(#hair-shoulder-clip-{{ hero_variant }});}</style>
     <clipPath id="eye-round-left-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><ellipse cx="381" cy="185" rx="7" ry="8.5"/></clipPath>
     <clipPath id="eye-round-right-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><ellipse cx="419" cy="185" rx="7" ry="8.5"/></clipPath>
     <clipPath id="eye-almond-left-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><path d="M 370 185 Q 381 176, 394 185 Q 381 194, 370 185 Z"/></clipPath>
