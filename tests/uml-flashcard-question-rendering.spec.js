@@ -9,6 +9,36 @@ const { test, expect } = require('@playwright/test');
 const SEBOOK_URL = '/SEBook/uml_class_diagram.html';
 const GYM_URL = '/se-gym/';
 
+const SAVED_BRUIN_HERO = {
+  version: 1,
+  kind: 'bruin',
+  appearance: {
+    presentation: 'male',
+    skin: '#8b5a35',
+    hairColor: '#3d2818',
+    hairStyle: 'bald',
+    eyeColor: '#1f140c',
+    eyebrowStyle: 'arched',
+    headStyle: 'default',
+    eyeShape: 'round',
+    noseShape: 'soft',
+    mouthStyle: 'smile',
+    blushStyle: 'none',
+    facialHair: 'none',
+    faceFeature: 'none',
+  },
+  body: { type: 'athletic' },
+  outfit: {
+    style: 'super-suit',
+    suit: '#1F6EBD',
+    capeOuter: '#15538f',
+    capeInner: '#FFD100',
+    accessory: 'none',
+    accessories: [],
+    emblem: '',
+  },
+};
+
 async function setCookie(context, name, value) {
   await context.addCookies([{
     name,
@@ -26,6 +56,21 @@ async function expectRenderedUml(question) {
 }
 
 test.describe('UML class diagram flashcards - question diagrams render in SEBook', () => {
+  test('configured SE Gym hero appears beside the flashcards', async ({ page }) => {
+    await page.addInitScript((hero) => {
+      localStorage.setItem('se-gym-hero-avatar', JSON.stringify(hero));
+    }, SAVED_BRUIN_HERO);
+
+    await page.goto(SEBOOK_URL);
+
+    await expect(page.getByRole('region', { name: /UML Class Diagram Flashcards flashcards/i })).toBeVisible();
+    const flashcardHero = page.locator('.flashcards-avatar-side [data-gym-hero-svg]');
+    await expect(flashcardHero).toBeVisible();
+    await expect(flashcardHero).toHaveAttribute('data-hero-kind', 'bruin');
+    await expect(flashcardHero.locator('[data-hero-kind-layer="bruin"][data-hero-slot="mascot"]'))
+      .toHaveAttribute('display', null);
+  });
+
   test('Card 1 (aggregation) shows its diagram in the question', async ({ page }) => {
     await page.goto(SEBOOK_URL);
 

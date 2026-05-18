@@ -23,6 +23,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
 {% assign all_cards = flashcard_data.cards %}
 {% endif %}
 
+<div class="flashcards-outer-wrap">
 <div class="flashcards-container" data-quiz-id="{{ include.id }}"
   role="region" aria-label="{{ flashcard_data.title | escape }} flashcards">
   <div class="quiz-header">
@@ -92,8 +93,58 @@ Data source: _data/flashcards/{{ include.id }}.yml
     </div>
   </div>
 </div>
+{% assign _flashcards_av_variant = include.id | slugify | append: "-fa" %}
+<aside class="flashcards-avatar-side" aria-hidden="true" style="display:none">
+  {% include se-gym-hero.svg variant=_flashcards_av_variant %}
+</aside>
+</div>
 
 <style>
+  /* Flex wrapper: flashcards on the left, configured avatar on the right. */
+  .flashcards-outer-wrap {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin: var(--sp-md, 12px) 0;
+  }
+
+  .flashcards-outer-wrap > .flashcards-container {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+  }
+
+  .flashcards-avatar-side {
+    width: 160px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 80px;
+  }
+
+  .flashcards-avatar-side [data-gym-hero-svg] {
+    display: block;
+    width: 100%;
+    height: auto;
+    filter: drop-shadow(0 10px 22px rgba(0, 47, 82, 0.22));
+  }
+
+  html.dark-mode .flashcards-avatar-side [data-gym-hero-svg] {
+    filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.48));
+  }
+
+  @media (max-width: 700px) {
+    .flashcards-outer-wrap {
+      flex-direction: column;
+    }
+
+    .flashcards-avatar-side {
+      width: 110px;
+      align-self: center;
+      position: static;
+      order: -1;
+    }
+  }
+
   .flashcards-container {
     background: var(--color-surface, #ffffff);
     border: 1px solid var(--color-divider, #e1e4e8);
@@ -520,9 +571,16 @@ Data source: _data/flashcards/{{ include.id }}.yml
   (function () {
     const fcId = "{{ include.id }}";
     const script = document.currentScript;
-    let container = script ? script.previousElementSibling : null;
-    while (container && (!container.classList || !container.classList.contains('flashcards-container'))) {
-      container = container.previousElementSibling;
+    let outerWrap = script ? script.previousElementSibling : null;
+    while (outerWrap && (!outerWrap.classList || !outerWrap.classList.contains('flashcards-outer-wrap'))) {
+      outerWrap = outerWrap.previousElementSibling;
+    }
+    let container = outerWrap ? outerWrap.querySelector('.flashcards-container') : null;
+    if (!container) {
+      container = script ? script.previousElementSibling : null;
+      while (container && (!container.classList || !container.classList.contains('flashcards-container'))) {
+        container = container.previousElementSibling;
+      }
     }
     if (!container) return;
 
@@ -767,6 +825,29 @@ Data source: _data/flashcards/{{ include.id }}.yml
           toggleInGym(toggleBtn);
         });
       }
+    }
+
+    // Show the saved SE Gym avatar next to these flashcards when one exists.
+    // HeroAvatar is loaded with `defer` in the SEBook layout, so it may not
+    // be available yet when this inline script runs; wait for `load` if so.
+    function initFlashcardsAvatar() {
+      if (!window.HeroAvatar) return;
+      var state = HeroAvatar.loadAvatar();
+      if (!state) return;
+      var side = outerWrap && outerWrap.classList.contains('flashcards-outer-wrap')
+        ? outerWrap.querySelector('.flashcards-avatar-side')
+        : null;
+      if (!side) return;
+      var svgEl = side.querySelector('[data-gym-hero-svg]');
+      if (!svgEl) return;
+      HeroAvatar.applyToSvg(svgEl, state);
+      side.style.display = '';
+    }
+
+    if (document.readyState === 'complete' || window.HeroAvatar) {
+      initFlashcardsAvatar();
+    } else {
+      window.addEventListener('load', initFlashcardsAvatar);
     }
 
   })();
