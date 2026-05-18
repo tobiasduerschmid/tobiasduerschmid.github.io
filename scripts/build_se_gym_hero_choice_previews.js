@@ -8,6 +8,8 @@ const HERO_INCLUDE = path.join(ROOT, '_includes', 'se-gym-hero.svg');
 const HERO_RUNTIME = path.join(ROOT, 'js', 'se-gym-hero-avatar.js');
 const OUT_DIR = path.join(ROOT, 'assets', 'se-gym-hero-choice-previews');
 const VARIANT = 'choice-preview';
+const REPRESENTATIVE_PREVIEW_SKIN = '#FFD100';
+const REPRESENTATIVE_PREVIEW_HAIR = '#2774AE';
 
 function renderedHeroInclude() {
   return fs.readFileSync(HERO_INCLUDE, 'utf8')
@@ -37,13 +39,13 @@ async function main() {
   await page.addScriptTag({ path: HERO_RUNTIME });
   await page.waitForFunction(() => window.HeroAvatar && window.HeroAvatar.CHOICE_SETS);
 
-  const previews = await page.evaluate(() => {
+  const previews = await page.evaluate(({ representativeSkin, representativeHair }) => {
     const source = document.querySelector('#source [data-gym-hero-svg]');
     if (!source) throw new Error('Missing source hero SVG');
 
     const PREVIEW_VIEWBOXES = {
       full: '238 34 324 596',
-      hair: '292 54 216 278',
+      hair: '292 54 216 346',
       eyebrows: '352 138 96 78',
       eyes: '352 154 96 78',
       nose: '370 178 60 50',
@@ -75,8 +77,21 @@ async function main() {
 
     function representativeState(definition, optionValue) {
       const state = clone(window.HeroAvatar.DEFAULTS);
-      if (definition.key === 'bodyType' || definition.key === 'outfitStyle') {
+      state.appearance.skin = representativeSkin;
+      state.appearance.hairColor = representativeHair;
+      if (definition.key === 'bodyType' || definition.key === 'outfitStyle' || definition.key === 'accessory') {
         state.appearance.hairStyle = 'short';
+      }
+      if (definition.key === 'accessory') {
+        const accessory = window.HeroAvatar.normalizeAvatar({
+          ...state,
+          outfit: {
+            ...state.outfit,
+            accessory: optionValue === 'none' ? 'none' : optionValue,
+            accessories: optionValue === 'none' ? [] : [optionValue],
+          },
+        });
+        return accessory;
       }
       setPathValue(state, definition.path, optionValue);
       if (definition.key === 'heroKind' && optionValue === 'bruin') {
@@ -124,6 +139,31 @@ async function main() {
       const right = Math.max(a.right, b.right);
       const bottom = Math.max(a.bottom, b.bottom);
       return { x, y, width: right - x, height: bottom - y, right, bottom };
+    }
+
+    function paddedPreviewBox(box, padding, minWidth, minHeight) {
+      if (!box) return null;
+      const result = {
+        x: box.x - padding,
+        y: box.y - padding,
+        width: box.width + padding * 2,
+        height: box.height + padding * 2,
+        right: box.right + padding,
+        bottom: box.bottom + padding,
+      };
+      const centerX = (result.x + result.right) / 2;
+      const centerY = (result.y + result.bottom) / 2;
+      if (minWidth && result.width < minWidth) {
+        result.x = centerX - minWidth / 2;
+        result.width = minWidth;
+        result.right = result.x + result.width;
+      }
+      if (minHeight && result.height < minHeight) {
+        result.y = centerY - minHeight / 2;
+        result.height = minHeight;
+        result.bottom = result.y + result.height;
+      }
+      return result;
     }
 
     function isVisible(node) {
@@ -179,6 +219,8 @@ async function main() {
         selectors.push(`[data-hero-slot="eyebrow"][data-hero-option="${optionValue}"]`);
       } else if (definition.key === 'eyeShape') {
         selectors.push(`[data-hero-slot="eye-shape"][data-hero-option="${optionValue}"]`);
+      } else if (definition.key === 'eyelashStyle') {
+        selectors.push(`[data-hero-slot="eyelash-style"][data-hero-option="${optionValue}"]`);
       } else if (definition.key === 'noseShape') {
         selectors.push(`[data-hero-slot="nose-shape"][data-hero-option="${optionValue}"]`);
       } else if (definition.key === 'mouthStyle') {
@@ -196,20 +238,18 @@ async function main() {
         selectors.push('[data-hero-default-torso]');
       } else if (definition.key === 'outfitStyle') {
         selectors.push(`[data-hero-slot="outfit-style"][data-hero-option="${optionValue}"]`);
+      } else if (definition.key === 'accessory') {
+        selectors.push(`[data-hero-slot="accessory"][data-hero-option="${optionValue}"]`);
       }
 
       let feature = null;
       for (const selector of selectors) feature = unionBox(feature, selectorBox(svg, selector));
       if (!feature) return formatBox(base);
+      if (definition.key === 'accessory') {
+        return formatBox(clampBox(paddedPreviewBox(feature, 18, 96, 96), parseBox(SOURCE_BOX)) || base);
+      }
       const padding = definition.key === 'hairStyle' ? 24 : 14;
-      const expanded = unionBox(base, {
-        x: feature.x - padding,
-        y: feature.y - padding,
-        width: feature.width + padding * 2,
-        height: feature.height + padding * 2,
-        right: feature.right + padding,
-        bottom: feature.bottom + padding,
-      });
+      const expanded = unionBox(base, paddedPreviewBox(feature, padding, 0, 0));
       return formatBox(clampBox(expanded, parseBox(SOURCE_BOX)) || base);
     }
 
@@ -221,8 +261,12 @@ async function main() {
     }
 
     const previews = [];
+    const measureHost = document.createElement('div');
+    measureHost.setAttribute('aria-hidden', 'true');
+    measureHost.style.cssText = 'position:absolute;left:-10000px;top:-10000px;width:800px;height:700px;overflow:hidden;opacity:0;pointer-events:none;';
+    document.body.appendChild(measureHost);
     for (const [key, definition] of Object.entries(window.HeroAvatar.CHOICE_SETS)) {
-      if (!definition.preview || definition.multiple) continue;
+      if (!definition.preview || (definition.multiple && key !== 'accessory')) continue;
       definition.key = key;
       for (const group of definition.groups) {
         for (const option of group.options) {
@@ -230,6 +274,7 @@ async function main() {
           svg.querySelectorAll('animate, animateTransform').forEach((node) => node.remove());
           const state = representativeState(definition, option.value);
           window.HeroAvatar.applyToSvg(svg, state);
+          measureHost.appendChild(svg);
           svg.setAttribute('viewBox', previewViewBox(svg, definition, option.value));
           svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
           svg.setAttribute('aria-hidden', 'true');
@@ -244,10 +289,15 @@ async function main() {
             viewBox: svg.getAttribute('viewBox'),
             svg: svg.outerHTML,
           });
+          svg.remove();
         }
       }
     }
+    measureHost.remove();
     return previews;
+  }, {
+    representativeSkin: REPRESENTATIVE_PREVIEW_SKIN,
+    representativeHair: REPRESENTATIVE_PREVIEW_HAIR,
   });
 
   /** @type {Record<string, Record<string, string>>} */
