@@ -713,6 +713,28 @@ info_nav_title: "My Settings"
 
         <div class="setting-row">
           <div>
+            <p class="setting-name">Show hero during workout</p>
+            <p class="setting-description">
+              When on, SE Gym shows decorative hero animations to the left
+              and right of the current workout question in desktop view.
+              Mobile workouts stay card-only. Uses the
+              <code>se-gym-show-workout-hero</code> cookie.
+            </p>
+          </div>
+          <div class="setting-control">
+            <div class="setting-toggle-row">
+              <label class="switch">
+                <span class="sr-only">Show hero during workout</span>
+                <input type="checkbox" id="setting-show-workout-hero" data-setting="showWorkoutHero" data-status-target="setting-show-workout-hero-status" aria-label="Show hero during workout">
+                <span class="slider round"></span>
+              </label>
+              <span class="setting-toggle-status" id="setting-show-workout-hero-status" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
             <p class="setting-name">Difficulty levels to include in workouts</p>
             <p class="setting-description">
               Check the difficulty levels you want to test. By default, all
@@ -1013,6 +1035,7 @@ info_nav_title: "My Settings"
     setCheckbox('setting-timed-practice', readCookie('se-gym-timed-practice') === 'true');
     setCheckbox('setting-performance', readCookie('analyze-performance') === 'true');
     setCheckbox('setting-show-difficulty', readCookie('se-gym-show-difficulty') === 'true');
+    setCheckbox('setting-show-workout-hero', readCookie('se-gym-show-workout-hero') === 'true');
 
     var activeDifficulties = readActiveDifficulties();
     document.querySelectorAll('input[data-setting-difficulty]').forEach(function (cb) {
@@ -1111,6 +1134,9 @@ info_nav_title: "My Settings"
     } else if (setting === 'showDifficulty') {
       writeCookie('se-gym-show-difficulty', target.checked ? 'true' : 'false');
       announce('Difficulty visibility setting saved.');
+    } else if (setting === 'showWorkoutHero') {
+      writeCookie('se-gym-show-workout-hero', target.checked ? 'true' : 'false');
+      announce('Workout hero setting saved.');
     } else if (setting === 'activeDifficulty') {
       var picked = [];
       document.querySelectorAll('input[data-setting-difficulty]').forEach(function (cb) {

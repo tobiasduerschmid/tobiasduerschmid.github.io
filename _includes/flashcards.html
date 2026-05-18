@@ -104,8 +104,8 @@ Data source: _data/flashcards/{{ include.id }}.yml
   .flashcards-outer-wrap {
     display: flex;
     align-items: flex-start;
-    gap: 16px;
-    margin: var(--sp-md, 12px) 0;
+    gap: 20px;
+    margin: 18px 0;
   }
 
   .flashcards-outer-wrap > .flashcards-container {
@@ -115,7 +115,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
   }
 
   .flashcards-avatar-side {
-    width: 160px;
+    width: clamp(220px, 18vw, 320px);
     flex-shrink: 0;
     position: sticky;
     top: 80px;
@@ -132,13 +132,13 @@ Data source: _data/flashcards/{{ include.id }}.yml
     filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.48));
   }
 
-  @media (max-width: 700px) {
+  @media (max-width: 900px) {
     .flashcards-outer-wrap {
       flex-direction: column;
     }
 
     .flashcards-avatar-side {
-      width: 110px;
+      width: clamp(150px, 45vw, 220px);
       align-self: center;
       position: static;
       order: -1;
@@ -146,14 +146,46 @@ Data source: _data/flashcards/{{ include.id }}.yml
   }
 
   .flashcards-container {
-    background: var(--color-surface, #ffffff);
-    border: 1px solid var(--color-divider, #e1e4e8);
-    border-radius: var(--radius-lg, 12px);
-    padding: var(--sp-md, 12px);
-    margin: var(--sp-md, 12px) 0;
-    box-shadow: var(--shadow-sm, 0 1px 2px rgba(0, 0, 0, 0.08));
+    background:
+      radial-gradient(circle at 100% 0%, rgba(139, 184, 232, 0.2) 0 88px, transparent 90px),
+      linear-gradient(180deg, #ffffff, #f7fbff);
+    border: 1.5px solid #8BB8E8;
+    border-radius: 8px;
+    padding: 18px;
+    margin: 18px 0;
+    box-shadow: 0 16px 34px rgba(0, 59, 92, 0.14);
     font-family: 'Inter', sans-serif;
     position: relative;
+  }
+
+  .flashcards-container::before {
+    content: '';
+    position: absolute;
+    inset: 0 0 auto;
+    height: 5px;
+    border-radius: 8px 8px 0 0;
+    background: linear-gradient(90deg, #2774AE 0 44%, #FFD100 44% 56%, #2774AE 56% 100%);
+  }
+
+  .flashcards-container > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .flashcards-container .quiz-progress-bar {
+    height: 10px;
+    background: #dbeeff;
+    border: 1px solid #547fa4;
+    border-radius: 999px;
+    margin: 12px 0 16px;
+    overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0, 59, 92, 0.12);
+  }
+
+  .flashcards-container .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2774AE 0 76%, #FFD100 76% 100%);
+    transition: width 0.4s ease;
   }
 
   .flashcard-card {
@@ -172,7 +204,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
     font-weight: 600;
     margin-bottom: 12px;
     line-height: 1.25;
-    color: #1a1a1a;
+    color: #17324d;
     min-height: 40px;
     display: flex;
     align-items: center;
@@ -251,14 +283,16 @@ Data source: _data/flashcards/{{ include.id }}.yml
   }
 
   .flashcard-answer-container {
-    margin-top: var(--sp-md, 10px);
-    padding: var(--sp-md, 10px) var(--sp-lg, 15px);
-    background: var(--color-surface-2, #f8f9fa);
-    border-radius: var(--radius-md, 8px);
-    border-top: 2px solid var(--color-accent, #FFD100);
+    margin-top: 16px;
+    padding: 14px 16px;
+    background: #eef7ff;
+    border: 1.5px solid #8BB8E8;
+    border-left: 5px solid #2774AE;
+    border-radius: 8px;
     animation: slideDown 0.3s ease;
     font-size: 0.95em;
-    line-height: 1.3;
+    line-height: 1.45;
+    color: #17324d;
   }
 
   @keyframes slideDown {
@@ -286,7 +320,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
 
   .flashcard-explanation {
     font-size: 1em;
-    color: #666;
+    color: #17324d;
     line-height: 1.5;
   }
 
@@ -300,13 +334,14 @@ Data source: _data/flashcards/{{ include.id }}.yml
     background: var(--color-primary, #2774AE);
     color: var(--color-text-on-primary, white);
     border: none;
-    padding: var(--sp-sm, 8px) var(--sp-lg, 16px);
-    min-height: 36px;
+    padding: 8px 16px;
+    min-height: 42px;
     border-radius: var(--radius-md, 8px);
-    font-weight: 600;
+    font-weight: 700;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
     font-size: 0.95em;
+    box-shadow: 0 7px 16px rgba(0, 59, 92, 0.18);
   }
 
   .show-answer-btn:focus-visible,
@@ -428,29 +463,44 @@ Data source: _data/flashcards/{{ include.id }}.yml
 
   /* Dark Mode */
   html.dark-mode .flashcards-container {
-    background-color: #1a1a1a !important;
-    border-color: #333 !important;
-    color: #e0e0e0 !important;
+    background:
+      radial-gradient(circle at 100% 0%, rgba(139, 184, 232, 0.16) 0 88px, transparent 90px),
+      linear-gradient(180deg, #111f31, #0f1722) !important;
+    border-color: #8BB8E8 !important;
+    color: #e6f4ff !important;
+    box-shadow: 0 18px 38px rgba(0, 0, 0, 0.46), inset 0 0 0 1px rgba(139, 184, 232, 0.16) !important;
+  }
+
+  html.dark-mode .flashcards-container::before {
+    background: linear-gradient(90deg, #8BB8E8 0 44%, #FFD100 44% 56%, #8BB8E8 56% 100%);
+  }
+
+  html.dark-mode .flashcards-container .quiz-progress-bar {
+    background: #172536 !important;
+    border-color: #718499 !important;
+  }
+
+  html.dark-mode .flashcards-container .progress-fill {
+    background: linear-gradient(90deg, #8BB8E8 0 76%, #FFD100 76% 100%) !important;
   }
 
   html.dark-mode .flashcard-question {
-    color: #ffffff !important;
+    color: #f0f7ff !important;
   }
 
   html.dark-mode .flashcard-answer-container {
-    background-color: #252525 !important;
-    border-top-color: #FFD100 !important;
+    background: #14283f !important;
+    border-color: #8BB8E8 !important;
+    border-left-color: #FFD100 !important;
+    color: #e6f4ff !important;
   }
 
   html.dark-mode .flashcard-answer {
     color: #FFD100 !important;
   }
 
-  /* WCAG 1.4.3: #666 on the dark flashcards-container surface (#1a1a1a)
-     measures ~3.17:1 — fails the 4.5:1 minimum for body text. Bump to a
-     muted but legible grey that clears 4.5:1 on #252525 and #1a1a1a. */
   html.dark-mode .flashcard-explanation {
-    color: #b0b0b0 !important;
+    color: #d9ecff !important;
   }
 
   /* The se-gym-toggle pill keeps a subtle neutral border in light mode
@@ -466,7 +516,31 @@ Data source: _data/flashcards/{{ include.id }}.yml
     color: var(--color-primary, #5fa8d3) !important;
   }
 
+  @media (prefers-reduced-motion: reduce) {
+    .flashcard-card,
+    .flashcard-answer-container,
+    .flashcards-container .progress-fill,
+    .show-answer-btn,
+    .restart-btn,
+    .review-btn,
+    .assess-btn {
+      animation: none !important;
+      transition: none !important;
+    }
+
+    .assess-btn:hover,
+    .show-answer-btn:hover,
+    .restart-btn:hover,
+    .review-btn:hover {
+      transform: none !important;
+    }
+  }
+
   @media print {
+    .flashcards-container::before {
+      display: none !important;
+    }
+
     .flashcards-container {
       background: transparent !important;
       border: none !important;

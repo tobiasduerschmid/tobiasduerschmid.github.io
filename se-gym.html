@@ -150,6 +150,21 @@ layout: sebook
               <span class="slider round"></span>
             </label>
           </div>
+          {% if site.gym_hero_animation %}
+          <div class="controls-row toggle-row" style="justify-content: space-between; margin-top: 10px;">
+            <span class="toggle-copy">
+              <span class="toggle-icon" aria-hidden="true"><i class="fa-solid fa-user-astronaut"></i></span>
+              <span class="toggle-label">Show hero during workout</span>
+              <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about workout hero" aria-describedby="show-workout-hero-tooltip">?</button>
+              <span id="show-workout-hero-tooltip" role="tooltip" class="info-tooltip">When on, desktop workouts show decorative hero animations beside the current question. Mobile workouts keep the focus on the card and never show these side heroes. Off by default.</span>
+            </span>
+            <label class="switch">
+              <span class="sr-only">Toggle hero visibility during workout</span>
+              <input type="checkbox" id="showWorkoutHeroToggle" aria-label="Show hero during workout">
+              <span class="slider round"></span>
+            </label>
+          </div>
+          {% endif %}
           <div class="controls-row toggle-row" style="justify-content: space-between; margin-top: 10px;">
             <span class="toggle-copy">
               <span class="toggle-icon" aria-hidden="true"><i class="fa-solid fa-star"></i></span>
@@ -567,7 +582,19 @@ layout: sebook
         <div class="workout-progress-fill" id="workout-progress" style="width: 0%"></div>
       </div>
 
-      <div id="workout-card-area"></div>
+      <div class="workout-stage" id="workout-stage">
+        {% if site.gym_hero_animation %}
+        <aside class="workout-hero-visual workout-hero-visual-left" aria-hidden="true">
+          {% include se-gym-hero.svg variant="workout-left" %}
+        </aside>
+        {% endif %}
+        <div id="workout-card-area"></div>
+        {% if site.gym_hero_animation %}
+        <aside class="workout-hero-visual workout-hero-visual-right" aria-hidden="true">
+          {% include se-gym-hero.svg variant="workout-right" %}
+        </aside>
+        {% endif %}
+      </div>
 
       <div id="workout-results" style="display: none;">
         <div class="workout-results-content">
@@ -1037,6 +1064,20 @@ layout: sebook
       font: inherit;
       font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
     }
+    .hero-cust-color-entry {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      flex-wrap: wrap;
+      justify-self: start;
+      max-width: 100%;
+    }
+    .hero-cust-color-entry label {
+      color: #333b45;
+      font: inherit;
+      font-weight: 700;
+      line-height: 1.25;
+    }
     .hero-cust-color-palette {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(34px, 1fr));
@@ -1087,7 +1128,16 @@ layout: sebook
     }
     .hero-cust-hsl-row label {
       min-width: 0;
+      color: #333b45;
       font-size: 0.95em;
+      font-weight: 700;
+    }
+    .hero-cust-hsl-row output {
+      display: block;
+      margin-top: 0.12em;
+      color: #333b45;
+      font: inherit;
+      font-weight: 600;
     }
     .hero-cust-hsl-row input[type="range"] {
       width: 100%;
@@ -1137,6 +1187,11 @@ layout: sebook
       border-color: #3a4250;
       color: #e9ecf2;
     }
+    html.dark-mode .hero-cust-color-entry label,
+    html.dark-mode .hero-cust-hsl-row label,
+    html.dark-mode .hero-cust-hsl-row output {
+      color: #e9ecf2;
+    }
     html.dark-mode .hero-cust-color-swatch {
       border-color: #8d98a5;
     }
@@ -1178,6 +1233,15 @@ layout: sebook
       background: #2a3142;
       color: #e9ecf2;
       border-color: #3a4250;
+    }
+    .hero-cust-control input.hero-cust-color-value[type="text"] {
+      flex: initial;
+      width: 8.8em;
+      min-width: 8.8em;
+      max-width: 100%;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      letter-spacing: 0;
+      text-transform: uppercase;
     }
     .hero-cust-choice-picker {
       flex: 1 1 100%;
@@ -3330,6 +3394,58 @@ layout: sebook
     #workout-card-area {
       max-width: 860px;
       margin: 0 auto;
+      min-width: 0;
+    }
+
+    .workout-stage {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .workout-hero-visual {
+      display: none;
+      pointer-events: none;
+      user-select: none;
+      min-width: 0;
+    }
+
+    .workout-hero-visual .se-gym-hero-svg {
+      max-height: min(64vh, 560px);
+      width: 100%;
+    }
+
+    #gym-workout.workout-results-active .workout-stage {
+      display: none;
+    }
+
+    @media (min-width: 1180px) {
+      #gym-workout.workout-hero-enabled {
+        max-width: min(100%, 1500px);
+      }
+
+      #gym-workout.workout-hero-enabled .workout-stage {
+        display: grid;
+        grid-template-columns: minmax(150px, 1fr) minmax(0, 860px) minmax(150px, 1fr);
+        gap: clamp(10px, 1.5vw, 24px);
+        align-items: start;
+        max-width: min(100%, 1500px);
+      }
+
+      #gym-workout.workout-hero-enabled .workout-hero-visual {
+        display: block;
+        position: sticky;
+        top: 92px;
+        align-self: start;
+        padding-top: 18px;
+      }
+
+      #gym-workout.workout-hero-enabled .workout-hero-visual-left {
+        justify-self: end;
+      }
+
+      #gym-workout.workout-hero-enabled .workout-hero-visual-right {
+        justify-self: start;
+      }
     }
 
     .workout-source-badge {
@@ -5735,6 +5851,7 @@ layout: sebook
       var timedPracticeExtendBtn = document.getElementById('timed-practice-extend-btn');
       var timedPracticeStatus = document.getElementById('timed-practice-status');
       var showDifficultyToggle = document.getElementById('showDifficultyToggle');
+      var showWorkoutHeroToggle = document.getElementById('showWorkoutHeroToggle');
       var moreConfettiToggle = document.getElementById('moreConfettiToggle');
       var difficultyFilterCheckboxes = document.querySelectorAll('.difficulty-filter-checkbox');
 
@@ -5932,6 +6049,15 @@ layout: sebook
         if (timedPracticeTotalInput) timedPracticeTotalInput.value = String(PersonalGym.getTimedPracticeTotalMinutes());
         if (timedPracticePerQuestionInput) timedPracticePerQuestionInput.value = String(PersonalGym.getTimedPracticeSecondsPerQuestion());
         updateTimedPracticeEstimate(cardCount || 0);
+      }
+
+      function isWorkoutHeroPreferred() {
+        return typeof PersonalGym.isShowWorkoutHero === 'function' && PersonalGym.isShowWorkoutHero();
+      }
+
+      function syncWorkoutHeroVisibility() {
+        if (!workoutView) return;
+        workoutView.classList.toggle('workout-hero-enabled', isWorkoutHeroPreferred());
       }
 
       function renderWorkoutTimer(remainingSeconds) {
@@ -6329,6 +6455,18 @@ layout: sebook
         });
       }
 
+      // ---- Workout hero toggle ----
+      if (showWorkoutHeroToggle && typeof PersonalGym.setShowWorkoutHero === 'function') {
+        showWorkoutHeroToggle.checked = isWorkoutHeroPreferred();
+        syncWorkoutHeroVisibility();
+        showWorkoutHeroToggle.addEventListener('change', function () {
+          PersonalGym.setShowWorkoutHero(showWorkoutHeroToggle.checked);
+          syncWorkoutHeroVisibility();
+        });
+      } else {
+        syncWorkoutHeroVisibility();
+      }
+
       // ---- More-confetti toggle (mirror of /settings/) ----
       if (moreConfettiToggle) {
         moreConfettiToggle.checked = /(?:^|; )more-confetti=true(?:;|$)/.test(document.cookie || '');
@@ -6402,6 +6540,8 @@ layout: sebook
 
         libraryView.style.display = 'none';
         workoutView.style.display = 'block';
+        workoutView.classList.remove('workout-results-active');
+        syncWorkoutHeroVisibility();
         setWorkoutMode(true);
         workoutResults.style.display = 'none';
         workoutCardArea.innerHTML = '';
@@ -6655,6 +6795,8 @@ layout: sebook
 
         libraryView.style.display = 'none';
         workoutView.style.display = 'block';
+        workoutView.classList.remove('workout-results-active');
+        syncWorkoutHeroVisibility();
         setWorkoutMode(true);
         workoutResults.style.display = 'none';
         workoutCardArea.innerHTML = '';
@@ -6666,6 +6808,8 @@ layout: sebook
       }
 
       function showWorkoutCard(index) {
+        workoutView.classList.remove('workout-results-active');
+        syncWorkoutHeroVisibility();
         workoutCardArea.innerHTML = '';
         var card = workoutCards[index];
         if (!card) return;
@@ -7430,6 +7574,7 @@ layout: sebook
       function finishWorkout() {
         stopWorkoutTimer(true);
         workoutCardArea.innerHTML = '';
+        workoutView.classList.add('workout-results-active');
         workoutResults.style.display = 'block';
         workoutProgress.style.width = '100%';
         workoutScoreEl.textContent = workoutScore;

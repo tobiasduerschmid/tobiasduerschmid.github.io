@@ -116,6 +116,7 @@ test.describe('Settings page', () => {
     await expect(page.getByLabel('Underline glossary abbreviations')).toBeVisible();
     await expect(page.getByLabel('Autosave tutorial work')).toBeVisible();
     await expect(page.getByLabel('Timed practice')).toBeVisible();
+    await expect(page.getByLabel('Show hero during workout')).toBeVisible();
     await expect(page.getByRole('heading', { name: 'What each tutorial remembers' })).toBeVisible();
 
     await clickSwitch(page, '#setting-dark-mode');
@@ -142,6 +143,9 @@ test.describe('Settings page', () => {
     const settingsCookies = await page.evaluate(() => document.cookie);
     expect(settingsCookies).toContain('se-gym-timer-mode=per-question');
     expect(settingsCookies).toContain('se-gym-timer-seconds-per-question=1');
+
+    await clickSwitch(page, '#setting-show-workout-hero');
+    expect(await page.evaluate(() => document.cookie)).toContain('se-gym-show-workout-hero=true');
   });
 });
 

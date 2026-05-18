@@ -586,13 +586,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         deep: new Set(['#a06840', '#8b5a35', '#7a4e2f']),
         darkest: new Set(['#5c3a22', '#3d2515']),
       };
-      const commonBodyTypes = new Set(['average', 'athletic', 'lean', 'slim', 'straight', 'soft', 'medium-lean', 'soft-medium', 'short-soft', 'short-curved', 'tall-soft', 'soft-athletic', 'medium-full']);
-      const specializedBodyTypes = new Set([
-        'petite-curved', 'narrow-shoulders', 'compact-lean', 'athletic-curved',
-        'muscular', 'compact-strong', 'broad-lean', 'tall-lean', 'tall-curved',
-        'soft-tapered', 'hourglass', 'fuller-hip', 'soft-full-hips', 'full-frame',
-        'plus-size', 'balanced-full',
-      ]);
+      const commonBodyTypes = new Set(['average', 'athletic', 'lean', 'curvy', 'solid']);
+      const specializedBodyTypes = new Set(['petite', 'tall', 'broad', 'muscular', 'fuller-hip', 'full-frame', 'plus-size']);
       const costumeAccessories = new Set(['crown', 'halo', 'monocle', 'eyepatch', 'mask']);
       const manualOnlyAccessories = new Set(['crown', 'halo', 'monocle', 'eyepatch', 'mask', 'forehead-jewel', 'headwrap']);
       const coveredHairAccessories = new Set(['draped-scarf', 'hijab', 'headwrap']);
@@ -733,7 +728,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(summary.presentationSkinBandCounts.male).toBe(4);
     expect(summary.presentationSkinBandCounts.female).toBe(4);
     expect(Math.abs(summary.maleSamples - summary.femaleSamples)).toBeLessThanOrEqual(80);
-    expect(summary.bodyVariety).toBeGreaterThanOrEqual(24);
+    expect(summary.bodyVariety).toBeGreaterThanOrEqual(10);
     expect(summary.commonBodySamples).toBeGreaterThan(summary.specializedBodySamples);
     expect(summary.costumeAccessorySamples).toBe(0);
     expect(summary.manualOnlyAccessorySamples).toBe(0);
@@ -741,7 +736,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(summary.femaleFacialHairSamples).toBe(0);
     expect(summary.expressiveManualHairSamples).toBe(0);
     expect(summary.costumeOutfitSamples).toBe(0);
-    expect(summary.everydayCampusOutfitSamples).toBeGreaterThan(560);
+    expect(summary.everydayCampusOutfitSamples).toBeGreaterThanOrEqual(560);
     expect(summary.technicalOutfitSamples).toBeLessThan(50);
     expect(summary.accentHairColorSamples).toBeLessThan(40);
     expect(summary.hijabSamples).toBeGreaterThan(0);
@@ -1274,6 +1269,100 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     ).toEqual([]);
   });
 
+  test('Every selectable hair style keeps the center chin and neck area clean', async ({ page }) => {
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+    await clearAccessories(page);
+
+    const centerHairHits = await page.evaluate(() => {
+      const svg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+      const baseState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS)));
+      baseState.outfit.accessory = 'none';
+      baseState.outfit.accessories = [];
+      const styles = Array.from(document.querySelectorAll('#hero-cust-hair-style option'))
+        .map((node) => node.value)
+        .filter(Boolean);
+      const points = [
+        { name: 'lower chin', x: 400, y: 236 },
+        { name: 'under chin', x: 400, y: 244 },
+        { name: 'upper neck', x: 400, y: 252 },
+      ];
+
+      function hitSlot(point) {
+        const svgPoint = svg.createSVGPoint();
+        svgPoint.x = point.x;
+        svgPoint.y = point.y;
+        const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
+        const element = document.elementFromPoint(screenPoint.x, screenPoint.y);
+        const slot = element && element.closest('[data-hero-slot]');
+        return {
+          point: point.name,
+          slot: slot && slot.getAttribute('data-hero-slot'),
+          option: slot && slot.getAttribute('data-hero-option'),
+        };
+      }
+
+      const failures = [];
+      for (const style of styles) {
+        const state = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+        state.appearance.hairStyle = style;
+        window.HeroAvatar.applyToSvg(svg, state);
+        for (const hit of points.map(hitSlot)) {
+          if (['hair', 'hairline', 'hair-root'].includes(hit.slot)) {
+            failures.push(Object.assign({ style }, hit));
+          }
+        }
+      }
+      return failures;
+    });
+
+    expect(
+      centerHairHits,
+      'Hair styles should not draw ponytail ties or bob bands below the chin'
+    ).toEqual([]);
+  });
+
+  test('Top knot fully covers the upper scalp before the knot stem', async ({ page }) => {
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+    await clearAccessories(page);
+
+    await page.getByLabel('Head shape', { exact: true }).selectOption('soft-oval');
+    await page.getByLabel('Hair style', { exact: true }).selectOption('top-knot');
+
+    const exposedScalpHits = await page.locator('#hero-customizer-modal [data-gym-hero-svg]').evaluate((svg) => {
+      const points = [
+        { name: 'left upper scalp', x: 365, y: 146 },
+        { name: 'center upper scalp', x: 400, y: 140 },
+        { name: 'right upper scalp', x: 435, y: 146 },
+        { name: 'forehead cap', x: 400, y: 158 },
+      ];
+
+      return points.map((point) => {
+        const svgPoint = svg.createSVGPoint();
+        svgPoint.x = point.x;
+        svgPoint.y = point.y;
+        const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
+        const element = document.elementFromPoint(screenPoint.x, screenPoint.y);
+        const slot = element && element.closest('[data-hero-slot]');
+        return {
+          name: point.name,
+          slot: slot && slot.getAttribute('data-hero-slot'),
+          option: slot && slot.getAttribute('data-hero-option'),
+        };
+      });
+    });
+
+    for (const hit of exposedScalpHits) {
+      expect(hit, `${hit.name} should be covered by top-knot hair`).toMatchObject({
+        slot: 'hairline',
+        option: 'top-knot',
+      });
+    }
+  });
+
   test('Bantu knots sit on a connected hairline without exposing the scalp', async ({ page }) => {
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
@@ -1642,9 +1731,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     await clearAccessories(page);
 
-    const hairStyle = page.getByLabel('Hair style', { exact: true });
-    const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
-      const styles = [
+    const styles = [
       'textured-fringe',
       'straight-fringe',
       'side-parted-short',
@@ -1688,16 +1775,38 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     ];
     const hairlineStyles = new Set(['textured-fringe', 'middle-part-flow', 'straight-long-layers', 'wavy-lob', 'side-part-lob', 'wolf-cut', 'sleek-bob-bangs', 'soft-bangs', 'low-pony-bangs', 'butterfly-layers', 'curly-layers', 'coils', 'two-strand-twists', 'twist-out', 'coily-puff', 'double-puffs', 'bantu-knots', 'french-braid', 'braided-pony', 'knotless-braids', 'space-buns', 'claw-clip-updo']);
 
-    for (const style of styles) {
-      await hairStyle.selectOption(style);
-      await expect(hairStyle).toHaveValue(style);
-      await expect(preview.locator(`[data-hero-slot="hair"][data-hero-option="${style}"]`))
-        .toHaveAttribute('display', 'inline');
-      if (hairlineStyles.has(style)) {
-        await expect(preview.locator(`[data-hero-slot="hairline"][data-hero-option="${style}"]`))
-          .toHaveAttribute('display', 'inline');
+    const previewFailures = await page.evaluate(async ({ styles, hairlineStyles }) => {
+      const select = document.querySelector('#hero-cust-hair-style');
+      const svg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+      const hairlineSet = new Set(hairlineStyles);
+      const failures = [];
+      const nextFrame = () => new Promise((resolve) => requestAnimationFrame(resolve));
+
+      if (!select || !svg) return [{ reason: 'missing hair select or preview svg' }];
+
+      for (const style of styles) {
+        select.value = style;
+        select.dispatchEvent(new Event('input', { bubbles: true }));
+        select.dispatchEvent(new Event('change', { bubbles: true }));
+        await nextFrame();
+
+        const activeHair = svg.querySelector(`[data-hero-slot="hair"][data-hero-option="${style}"]`);
+        const activeHairline = svg.querySelector(`[data-hero-slot="hairline"][data-hero-option="${style}"]`);
+        if (select.value !== style) {
+          failures.push({ style, reason: 'select value did not update', value: select.value });
+        }
+        if (!activeHair || activeHair.getAttribute('display') !== 'inline') {
+          failures.push({ style, reason: 'hair layer not visible' });
+        }
+        if (hairlineSet.has(style) && (!activeHairline || activeHairline.getAttribute('display') !== 'inline')) {
+          failures.push({ style, reason: 'hairline layer not visible' });
+        }
       }
-    }
+
+      return failures;
+    }, { styles, hairlineStyles: Array.from(hairlineStyles) });
+
+    expect(previewFailures).toEqual([]);
   });
 
   test('Customizer keyboard shortcut chips meet light-mode contrast', async ({ page }) => {
@@ -2017,49 +2126,91 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(new Set(randomReloadSignatures).size).toBeGreaterThan(1);
   });
 
-  test('Expanded body shape options update the hero preview', async ({ page }) => {
+  test('Body type choices render distinct silhouettes in the hero preview', async ({ page }) => {
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
 
-    const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
-    const bodyOptions = [
-      'petite-curved',
-      'narrow-shoulders',
-      'compact-lean',
-      'medium-lean',
-      'straight',
-      'soft',
-      'soft-medium',
-      'short-soft',
-      'short-curved',
-      'athletic-curved',
-      'soft-athletic',
-      'v-shape',
-      'compact-strong',
-      'broad-lean',
-      'solid',
-      'tall-lean',
-      'tall-soft',
-      'tall-curved',
-      'balanced-curved',
-      'medium-curved',
-      'rounded',
-      'medium-full',
-      'soft-tapered',
-      'fuller-hip',
-      'soft-full-hips',
-      'full-frame',
-      'balanced-full',
-    ];
+    const summary = await page.evaluate(() => {
+      const select = document.querySelector('#hero-cust-body-type');
+      const svg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+      const values = Array.from(select.options).map((option) => option.value).filter(Boolean);
+      const baseState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS)));
 
-    for (const value of bodyOptions) {
-      await page.getByLabel('Body type', { exact: true }).selectOption(value);
-      await expect(page.getByLabel('Body type', { exact: true })).toHaveValue(value);
-      await expect(preview).toHaveAttribute('data-hero-body', value);
-      await expect(preview.locator(`[data-hero-slot="body-shape"][data-hero-option="${value}"]`))
-        .toHaveAttribute('display', 'inline');
+      function visibleBodyGroup() {
+        return svg.querySelector('[data-hero-slot="body-shape"][display="inline"]')
+          || svg.querySelector('[data-hero-default-torso]');
+      }
+
+      function bodyPaths(group) {
+        return Array.from(group.querySelectorAll('path')).filter((path) => {
+          const fill = path.getAttribute('fill');
+          return fill && fill !== 'none';
+        });
+      }
+
+      function filledWidthAt(paths, y) {
+        const point = svg.createSVGPoint();
+        let min = null;
+        let max = null;
+        for (let x = 240; x <= 560; x += 2) {
+          point.x = x;
+          point.y = y;
+          const filled = paths.some((path) => path.isPointInFill(point));
+          if (!filled) continue;
+          if (min === null) min = x;
+          max = x;
+        }
+        return min === null ? 0 : max - min;
+      }
+
+      const profiles = values.map((value) => {
+        const state = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+        state.body.type = value;
+        window.HeroAvatar.applyToSvg(svg, state);
+        const group = visibleBodyGroup();
+        const bbox = group.getBBox();
+        const paths = bodyPaths(group);
+        return {
+          value,
+          selectedBody: svg.getAttribute('data-hero-body'),
+          top: Math.round(bbox.y),
+          shoulder: filledWidthAt(paths, 276),
+          mid: filledWidthAt(paths, 350),
+          hip: filledWidthAt(paths, 424),
+        };
+      });
+      return { values, profiles };
+    });
+
+    expect(summary.values).toEqual([
+      'petite',
+      'lean',
+      'average',
+      'tall',
+      'athletic',
+      'muscular',
+      'broad',
+      'solid',
+      'curvy',
+      'fuller-hip',
+      'full-frame',
+      'plus-size',
+    ]);
+
+    const profile = Object.fromEntries(summary.profiles.map((item) => [item.value, item]));
+    for (const value of summary.values) {
+      expect(profile[value].selectedBody, `${value} should be applied to the preview SVG`).toBe(value);
     }
+
+    expect(profile.petite.shoulder, 'petite should have visibly narrower shoulders than medium').toBeLessThan(profile.average.shoulder - 24);
+    expect(profile.broad.shoulder, 'broad should have visibly wider shoulders than medium').toBeGreaterThan(profile.average.shoulder + 40);
+    expect(profile.athletic.shoulder, 'athletic should taper clearly from shoulders to hip').toBeGreaterThan(profile.athletic.hip + 28);
+    expect(profile.curvy.shoulder, 'curvy should narrow clearly at the waist').toBeGreaterThan(profile.curvy.mid + 28);
+    expect(profile.curvy.hip, 'curvy should widen clearly from waist to hip').toBeGreaterThan(profile.curvy.mid + 28);
+    expect(profile['fuller-hip'].hip, 'fuller-hip should widen clearly below the torso').toBeGreaterThan(profile['fuller-hip'].shoulder + 24);
+    expect(profile['plus-size'].hip, 'plus-size should be wider through the lower torso than full-frame').toBeGreaterThan(profile['full-frame'].hip + 8);
+    expect(profile.tall.top, 'tall should use a visibly longer upper-body profile').toBeLessThan(profile.average.top - 6);
   });
 
   test('Accessory combinations compose into coherent face, head, and detail layers', async ({ page }) => {

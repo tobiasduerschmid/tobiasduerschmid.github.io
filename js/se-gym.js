@@ -7,6 +7,7 @@
   var TIMED_TOTAL_MINUTES_COOKIE = 'se-gym-timer-total-minutes';
   var TIMED_SECONDS_PER_QUESTION_COOKIE = 'se-gym-timer-seconds-per-question';
   var SHOW_DIFFICULTY_COOKIE = 'se-gym-show-difficulty';
+  var SHOW_WORKOUT_HERO_COOKIE = 'se-gym-show-workout-hero';
   var ACTIVE_DIFFICULTIES_COOKIE = 'se-gym-active-difficulties';
   var DEFAULT_TIMED_TOTAL_MINUTES = 20;
   var DEFAULT_TIMED_SECONDS_PER_QUESTION = 60;
@@ -143,6 +144,15 @@
     setCookie(SHOW_DIFFICULTY_COOKIE, value ? 'true' : 'false', COOKIE_DAYS);
   }
 
+  function isShowWorkoutHero() {
+    // Default: keep workout cards visually focused. Desktop side heroes are opt-in.
+    return getCookie(SHOW_WORKOUT_HERO_COOKIE) === 'true';
+  }
+
+  function setShowWorkoutHero(value) {
+    setCookie(SHOW_WORKOUT_HERO_COOKIE, value ? 'true' : 'false', COOKIE_DAYS);
+  }
+
   function normalizeDifficultyList(list) {
     if (!Array.isArray(list)) return [];
     var seen = {};
@@ -240,6 +250,8 @@
     setAnalyzePerformance: setAnalyzePerformance,
     isShowDifficulty: isShowDifficulty,
     setShowDifficulty: setShowDifficulty,
+    isShowWorkoutHero: isShowWorkoutHero,
+    setShowWorkoutHero: setShowWorkoutHero,
     getActiveDifficulties: getActiveDifficulties,
     setActiveDifficulties: setActiveDifficulties,
     DIFFICULTY_LEVELS: DIFFICULTY_LEVELS,

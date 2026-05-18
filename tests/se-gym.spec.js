@@ -16,6 +16,7 @@ const GIT_PAGE_URL = '/SEBook/tools/git.html';
 const ACTIVATE_TOGGLE_SLIDER = '#activatePersonalGymToggle + .slider';
 const ANALYZE_TOGGLE_SLIDER = '#analyzePerformanceToggle + .slider';
 const TIMED_TOGGLE_SLIDER = '#timedPracticeToggle + .slider';
+const SHOW_WORKOUT_HERO_SLIDER = '#showWorkoutHeroToggle + .slider';
 
 function parseIndices(value) {
   if (!value) return [];
@@ -321,6 +322,24 @@ test.describe('SE Gym - Library View', () => {
     await expect(page.locator('#timed-practice-seconds-per-question')).toHaveAttribute('aria-invalid', 'false');
     await expect(page.locator('#timed-practice-note')).toContainText('0:02');
   });
+
+  test('show hero during workout is off by default and persists when enabled', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'scrum' }]));
+    await page.goto(GYM_URL);
+
+    await expect(page.getByLabel('Show hero during workout')).not.toBeChecked();
+    await page.getByRole('button', { name: 'Start Workout' }).click();
+    await expect(page.locator('#gym-workout')).not.toHaveClass(/workout-hero-enabled/);
+    await expect(page.locator('.workout-hero-visual:visible')).toHaveCount(0);
+
+    await page.getByRole('button', { name: /Back to Gym Entrance/i }).click();
+    await page.locator(SHOW_WORKOUT_HERO_SLIDER).click();
+    await expect(page.getByLabel('Show hero during workout')).toBeChecked();
+
+    await page.reload();
+    await expect(page.getByLabel('Show hero during workout')).toBeChecked();
+  });
 });
 
 // ==================== MOBILE LAYOUT TESTS ====================
@@ -363,6 +382,22 @@ test.describe('SE Gym - Mobile layout', () => {
     await expectNoHorizontalScroll(page, 'SE Gym workout');
     await expectTapTarget(page.getByRole('button', { name: /Back to Gym Entrance/i }), 'Back to Gym Entrance button');
     await expectTapTarget(page.getByRole('radio').first(), 'first answer option');
+  });
+
+  test('workout hero setting does not show side heroes on mobile', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym-show-workout-hero', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'scrum' }]));
+    await page.goto(GYM_URL);
+
+    await expect(page.getByLabel('Show hero during workout')).toBeChecked();
+    await page.getByRole('spinbutton', { name: /max cards/i }).fill('1');
+    await page.getByRole('button', { name: 'Start Workout' }).click();
+
+    await expect(page.locator('#gym-workout')).toHaveClass(/workout-hero-enabled/);
+    await expect(page.locator('.workout-hero-visual:visible')).toHaveCount(0);
+    await expect(page.getByRole('radio').first()).toBeVisible();
+    await expectNoHorizontalScroll(page, 'SE Gym workout with hero setting enabled on mobile');
   });
 
   test('flashcard code blocks stay readable on narrow touch screens', async ({ page, context }) => {
@@ -509,6 +544,45 @@ test.describe('Personal Gym - Workout', () => {
 
     await expect(page.locator('#timed-practice-clock')).toBeVisible();
     await expect(page.locator('#timed-practice-clock-value')).toHaveText(/^(1:00|0:5[0-9])$/);
+  });
+
+  test('show hero during workout displays heroes beside the question on desktop', async ({ page, context }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym-show-workout-hero', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'scrum' }]));
+    await page.goto(GYM_URL);
+
+    await expect(page.getByLabel('Show hero during workout')).toBeChecked();
+    await page.getByRole('spinbutton', { name: /max cards/i }).fill('1');
+    await page.getByRole('button', { name: 'Start Workout' }).click();
+
+    const leftHero = page.locator('.workout-hero-visual-left [data-gym-hero-svg]');
+    const rightHero = page.locator('.workout-hero-visual-right [data-gym-hero-svg]');
+    await expect(leftHero).toBeVisible();
+    await expect(rightHero).toBeVisible();
+    await expect(leftHero).toHaveAttribute('data-hero-avatar-ready', 'true');
+    await expect(rightHero).toHaveAttribute('data-hero-avatar-ready', 'true');
+
+    const positions = await page.evaluate(() => {
+      const question = document.querySelector('.workout-quiz-card .question-text');
+      const left = document.querySelector('.workout-hero-visual-left');
+      const right = document.querySelector('.workout-hero-visual-right');
+      if (!question || !left || !right) return null;
+      const questionRect = question.getBoundingClientRect();
+      const leftRect = left.getBoundingClientRect();
+      const rightRect = right.getBoundingClientRect();
+      return {
+        leftRightEdge: leftRect.right,
+        questionLeftEdge: questionRect.left,
+        rightLeftEdge: rightRect.left,
+        questionRightEdge: questionRect.right,
+      };
+    });
+    expect(positions, 'desktop workout should render a question with side heroes').not.toBeNull();
+    expect(positions.leftRightEdge, 'left workout hero should sit to the left of the question').toBeLessThanOrEqual(positions.questionLeftEdge);
+    expect(positions.rightLeftEdge, 'right workout hero should sit to the right of the question').toBeGreaterThanOrEqual(positions.questionRightEdge);
+    await a11yCheckpoint(page, 'gym workout - quiz card with side heroes enabled', { feature: A11Y_FEATURE, darkMode: true });
   });
 
   test('workout renders quiz card with quiz UI', async ({ page, context }) => {

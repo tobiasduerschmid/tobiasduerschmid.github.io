@@ -117,10 +117,10 @@ If you skipped any of these, go back and do them — the cookies page is a priva
 
 This is a snapshot to help you spot duplicates and pick the right category — **`cookies.html` is the source of truth**, not this list.
 
-**Cookies (14):**
-- `dark-mode`, `show-highlights`, `highlights` (alias on blog index), `read-aloud`, `uml-accent-color`
+**Cookies (18):**
+- `dark-mode`, `show-highlights`, `highlights` (alias on blog index), `read-aloud`, `uml-accent-color`, `more-confetti`
 - `se-bookmarks`, `se-bookmarks-active`
-- `se-gym`, `se-gym-active`, `se-gym-timed-practice`, `se-gym-timer-mode`, `se-gym-timer-total-minutes`, `se-gym-timer-seconds-per-question`, `analyze-performance`
+- `se-gym`, `se-gym-active`, `se-gym-timed-practice`, `se-gym-timer-mode`, `se-gym-timer-total-minutes`, `se-gym-timer-seconds-per-question`, `analyze-performance`, `se-gym-show-difficulty`, `se-gym-show-workout-hero`, `se-gym-active-difficulties`
 
 **localStorage — static (9):**
 - `prefersReducedMotion`
@@ -157,7 +157,7 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - Tutorial autosave: `tutorial-autosave`
 - UML accent color: `uml-accent-color`
 - SEBook bookmarks enabled: `se-bookmarks-active`
-- SE Gym enabled, timed practice, and performance tracking: `se-gym-active`, `se-gym-timed-practice`, `se-gym-timer-mode`, `se-gym-timer-total-minutes`, `se-gym-timer-seconds-per-question`, `analyze-performance`, `se-gym-stats`
+- SE Gym enabled, timed practice, workout hero, difficulty visibility/filtering, and performance tracking: `se-gym-active`, `se-gym-timed-practice`, `se-gym-timer-mode`, `se-gym-timer-total-minutes`, `se-gym-timer-seconds-per-question`, `se-gym-show-workout-hero`, `se-gym-show-difficulty`, `se-gym-active-difficulties`, `analyze-performance`, `se-gym-stats`
 - Per-tutorial state and progress: `tutorial-progress-<id>`, `tutorial-editor-split-<id>`, `tutorial-popout-state-<path>`, `tutorial-debug-bps-<id>`, `tutorial-debug-watchpoint-remove-choice-<id>`, `tutorial-debug-section-<id>-<name>`, `tutorial-debug-subsection-<id>-<name>`, `regex-tutorial-progress`, `regex-tutorial-advanced-progress`
 
 If your change makes any line in this section wrong, edit `cookies.html` first, then update this snapshot.
