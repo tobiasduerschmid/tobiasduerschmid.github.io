@@ -759,9 +759,36 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
   });
 
   test('Milestone power layer supports every tier without becoming a customization control', async ({ page }) => {
+    await page.setViewportSize({ width: 1400, height: 1000 });
     await page.goto(GYM_URL);
 
-    const tiers = await page.locator('#gym-entrance [data-gym-hero-svg]').first().evaluate((svg) => {
+    const entranceHero = page.locator('#gym-entrance .gym-entrance-visual-left [data-gym-hero-svg]');
+    await entranceHero.scrollIntoViewIfNeeded();
+    await expect(entranceHero).toBeVisible();
+
+    const tiers = await entranceHero.evaluate((svg) => {
+      window.HeroAvatar.applyToSvg(svg, window.HeroAvatar.DEFAULTS);
+      const visual = svg.closest('.gym-entrance-visual');
+      const previousVisualPointerEvents = visual ? visual.style.pointerEvents : '';
+      const previousSvgPointerEvents = svg.style.pointerEvents;
+      if (visual) visual.style.pointerEvents = 'auto';
+      svg.style.pointerEvents = 'auto';
+
+      function hitAt(x, y) {
+        const svgPoint = svg.createSVGPoint();
+        svgPoint.x = x;
+        svgPoint.y = y;
+        const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
+        const element = document.elementFromPoint(screenPoint.x, screenPoint.y);
+        const slot = element && element.closest('[data-hero-slot]');
+        const zone = element && element.closest('[data-hero-milestone-zone]');
+        return {
+          slot: slot && slot.getAttribute('data-hero-slot'),
+          option: slot && slot.getAttribute('data-hero-option'),
+          zone: zone && zone.getAttribute('data-hero-milestone-zone'),
+        };
+      }
+
       const result = {};
       for (const tier of ['bronze', 'silver', 'gold', 'diamond']) {
         window.HeroAvatar.applyMilestoneToSvg(svg, tier);
@@ -769,7 +796,11 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
           attr: svg.getAttribute('data-hero-milestone'),
           visibleLayerCount: Array.from(svg.querySelectorAll(`[data-hero-slot="milestone-power"][data-hero-option="${tier}"]`))
             .filter((group) => group.getAttribute('display') === 'inline').length,
+          visibleShoeZoneCount: svg.querySelectorAll(`[data-hero-slot="milestone-power"][data-hero-option="${tier}"][display="inline"] [data-hero-milestone-zone="shoes"]`).length,
           metal: getComputedStyle(svg).getPropertyValue('--hero-milestone-metal').trim(),
+          beltHit: hitAt(400, 426),
+          leftShoeHit: hitAt(366, 607),
+          rightShoeHit: hitAt(434, 607),
         };
       }
       window.HeroAvatar.applyMilestoneToSvg(svg, 'none');
@@ -778,13 +809,27 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         visibleNonNoneLayerCount: Array.from(svg.querySelectorAll('[data-hero-slot="milestone-power"]'))
           .filter((group) => group.getAttribute('data-hero-option') !== 'none' && group.getAttribute('display') === 'inline').length,
       };
+      if (visual) visual.style.pointerEvents = previousVisualPointerEvents;
+      svg.style.pointerEvents = previousSvgPointerEvents;
       return result;
     });
 
     for (const tier of ['bronze', 'silver', 'gold', 'diamond']) {
       expect(tiers[tier].attr).toBe(tier);
       expect(tiers[tier].visibleLayerCount).toBeGreaterThanOrEqual(2);
+      expect(tiers[tier].visibleShoeZoneCount).toBe(1);
       expect(tiers[tier].metal).toMatch(/^#[0-9a-f]{6}$/i);
+      expect(tiers[tier].beltHit.slot, `${tier} milestone should not cover the belt`).not.toBe('milestone-power');
+      expect(tiers[tier].leftShoeHit, `${tier} milestone should visibly style the left shoe`).toEqual({
+        slot: 'milestone-power',
+        option: tier,
+        zone: 'shoes',
+      });
+      expect(tiers[tier].rightShoeHit, `${tier} milestone should visibly style the right shoe`).toEqual({
+        slot: 'milestone-power',
+        option: tier,
+        zone: 'shoes',
+      });
     }
     expect(tiers.none).toEqual({ attr: 'none', visibleNonNoneLayerCount: 0 });
 
