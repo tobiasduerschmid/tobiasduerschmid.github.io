@@ -40,6 +40,72 @@ async function waitForTutorialReady(page) {
   await page.waitForSelector('.tvm-step-btn',  { timeout: 10_000 });
 }
 
+async function waitForTerminalPrompt(page) {
+  await expect(page.locator('.tvm-terminal-container .xterm')).toBeVisible({ timeout: VM_BOOT_TIMEOUT });
+  await page.waitForFunction(
+    () => window._tutorial && window._tutorial.booted && window._tutorial._terminalReadyForInput,
+    { timeout: 120_000 },
+  );
+}
+
+async function terminalBottomReserve(page) {
+  return page.evaluate(() => {
+    const terminal = document.querySelector('.tvm-terminal-container .xterm');
+    const viewport = document.querySelector('.tvm-terminal-container .xterm-viewport');
+    const screen = document.querySelector('.tvm-terminal-container .xterm-screen');
+    const canvas = document.querySelector('.tvm-terminal-container canvas');
+    const term = window._tutorial && window._tutorial.term;
+    const dimensions = term?._core?._renderService?.dimensions;
+    const rendered = canvas || screen;
+
+    if (!terminal || !viewport || !rendered || !term) {
+      throw new Error('Advanced Git terminal did not expose the xterm scrollport and rendered screen');
+    }
+
+    const viewportRect = viewport.getBoundingClientRect();
+    const renderedRect = rendered.getBoundingClientRect();
+    return {
+      bottomReservePx: viewportRect.bottom - renderedRect.bottom,
+      cellHeightPx: dimensions?.actualCellHeight || renderedRect.height / Math.max(term.rows, 1),
+      cols: term.cols,
+      rows: term.rows,
+      terminalLineHeight: getComputedStyle(terminal).lineHeight,
+      viewportHeight: viewportRect.height,
+      renderedHeight: renderedRect.height,
+    };
+  });
+}
+
+// =============================================================================
+// Terminal layout regression
+// =============================================================================
+test.describe('Advanced Git Tutorial terminal layout', () => {
+  test('terminal prompt row remains fully visible at a 1920x1080 Chrome viewport', async ({ browser }) => {
+    test.setTimeout(150_000);
+    const context = await browser.newContext({
+      viewport: { width: 1920, height: 1080 },
+      deviceScaleFactor: 1,
+    });
+    const page = await context.newPage();
+
+    try {
+      await page.goto(TUTORIAL_URL);
+      await waitForTutorialReady(page);
+      await waitForTerminalPrompt(page);
+
+      const metrics = await terminalBottomReserve(page);
+      expect(metrics.cols, 'terminal should have a usable column count').toBeGreaterThan(40);
+      expect(metrics.rows, 'terminal should have a usable row count').toBeGreaterThan(4);
+      expect(
+        metrics.bottomReservePx,
+        `terminal bottom row needs visible breathing room; metrics=${JSON.stringify(metrics)}`,
+      ).toBeGreaterThanOrEqual(Math.min(8, metrics.cellHeightPx * 0.35));
+    } finally {
+      await context.close();
+    }
+  });
+});
+
 // Git v86: loadStep runs before the VM boots, so initial files may not be synced
 // to the VM filesystem. After ensuring the VM is booted, re-sync all step files,
 // drain any pending _runSilent commands, then apply the solution.
