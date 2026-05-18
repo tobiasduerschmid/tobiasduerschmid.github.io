@@ -1797,6 +1797,15 @@
     return String(rounded).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
   }
 
+  function clampNumber(value, min, max) {
+    return Math.max(min, Math.min(max, value));
+  }
+
+  function headFitScaleX(widthDelta, growWeight, shrinkWeight, min, max) {
+    var weight = widthDelta >= 0 ? growWeight : shrinkWeight;
+    return clampNumber(1 + widthDelta * weight, min, max);
+  }
+
   function setGroupTransform(group, transform, fitName, fitValue) {
     if (!group) return;
     if (transform) group.setAttribute('transform', transform);
@@ -1823,12 +1832,41 @@
     var fit = HEAD_STYLE_FITS[normalized] || HEAD_STYLE_FITS.default;
     var widthDelta = (fit.scaleX || 1) - 1;
     var lift = fit.translateY || 0;
-    var hairTransform = affineFitTransform({ scaleX: 1 + widthDelta * 0.32, scaleY: 1, translateY: lift * 0.04 }, 400, 176);
-    var hairlineTransform = affineFitTransform({ scaleX: 1 + widthDelta * 0.28, scaleY: 1, translateY: lift * 0.04 }, 400, 166);
-    var headwearTransform = affineFitTransform({ scaleX: 1 + widthDelta * 0.18, scaleY: 1, translateY: lift * 0.03 }, 400, 164);
-    var faceAccessoryTransform = affineFitTransform({ scaleX: 1 + widthDelta * 0.08, scaleY: 1, translateY: 0 }, 400, 188);
-    var sideAccessoryTransform = affineFitTransform({ scaleX: 1 + widthDelta * 0.28, scaleY: 1, translateY: 0 }, 400, 198);
-    var faceFeatureTransform = affineFitTransform({ scaleX: 1 + widthDelta * 0.12, scaleY: 1, translateY: lift * 0.03 }, 400, 204);
+    var hairTransform = affineFitTransform({
+      scaleX: headFitScaleX(widthDelta, 1.18, 0.58, 0.94, 1.17),
+      scaleY: 1,
+      translateY: lift * 0.34
+    }, 400, 176);
+    var hairlineTransform = affineFitTransform({
+      scaleX: headFitScaleX(widthDelta, 1.24, 0.55, 0.95, 1.18),
+      scaleY: 1,
+      translateY: lift * 0.36
+    }, 400, 166);
+    var hairRootTransform = affineFitTransform({
+      scaleX: headFitScaleX(widthDelta, 0.95, 0.45, 0.96, 1.14),
+      scaleY: 1,
+      translateY: lift * 0.24
+    }, 400, 176);
+    var headwearTransform = affineFitTransform({
+      scaleX: headFitScaleX(widthDelta, 1.08, 0.5, 0.95, 1.16),
+      scaleY: 1,
+      translateY: lift * 0.38
+    }, 400, 164);
+    var faceAccessoryTransform = affineFitTransform({
+      scaleX: headFitScaleX(widthDelta, 0.16, 0.08, 0.99, 1.03),
+      scaleY: 1,
+      translateY: lift * 0.03
+    }, 400, 188);
+    var sideAccessoryTransform = affineFitTransform({
+      scaleX: headFitScaleX(widthDelta, 0.78, 0.38, 0.96, 1.11),
+      scaleY: 1,
+      translateY: lift * 0.08
+    }, 400, 198);
+    var faceFeatureTransform = affineFitTransform({
+      scaleX: headFitScaleX(widthDelta, 0.18, 0.1, 0.98, 1.04),
+      scaleY: 1,
+      translateY: lift * 0.08
+    }, 400, 204);
     var accessoryGroups = svg.querySelectorAll('[data-hero-slot="accessory"]');
     for (var i = 0; i < accessoryGroups.length; i++) {
       accessoryGroups[i].removeAttribute('transform');
@@ -1838,7 +1876,7 @@
     svg.setAttribute('data-hero-head-fit', normalized);
     applyFitToSlot(svg, 'hair', hairTransform, 'data-hero-head-fit', normalized);
     applyFitToSlot(svg, 'hairline', hairlineTransform, 'data-hero-head-fit', normalized);
-    applyFitToSlot(svg, 'hair-root', '', 'data-hero-head-fit', normalized);
+    applyFitToSlot(svg, 'hair-root', hairRootTransform, 'data-hero-head-fit', normalized);
     applyFitToSlot(svg, 'face-feature', faceFeatureTransform, 'data-hero-head-fit', normalized);
     applyFitToAccessories(svg, headwearTransform, HEADWEAR_FIT_ACCESSORIES, normalized);
     applyFitToAccessories(svg, faceAccessoryTransform, FACE_FIT_ACCESSORIES, normalized);

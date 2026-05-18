@@ -2190,18 +2190,49 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       baseState.outfit.accessory = 'none';
       baseState.outfit.accessories = [];
 
-      function pointHits(points) {
+      function topSlotAtPoint(point) {
+        const svgPoint = svg.createSVGPoint();
+        svgPoint.x = point.x;
+        svgPoint.y = point.y;
+        const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
+        const element = document.elementFromPoint(screenPoint.x, screenPoint.y);
+        const slot = element && element.closest('[data-hero-slot]');
+        return {
+          slot: slot && slot.getAttribute('data-hero-slot'),
+          option: slot && slot.getAttribute('data-hero-option'),
+        };
+      }
+
+      function slotCoversPoint(point, slotName, option) {
+        const group = svg.querySelector('[data-hero-slot="' + slotName + '"][data-hero-option="' + option + '"]');
+        if (!group || group.getAttribute('display') !== 'inline') return false;
+        const rect = group.getBoundingClientRect();
+        if (!rect.width || !rect.height) return false;
+        const svgPoint = svg.createSVGPoint();
+        svgPoint.x = point.x;
+        svgPoint.y = point.y;
+        const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
+        return (
+          screenPoint.x >= rect.left - 0.5 &&
+          screenPoint.x <= rect.right + 0.5 &&
+          screenPoint.y >= rect.top - 0.5 &&
+          screenPoint.y <= rect.bottom + 0.5
+        );
+      }
+
+      function coveredPointHits(points, candidateSlots, option) {
         return points.map((point) => {
-          const svgPoint = svg.createSVGPoint();
-          svgPoint.x = point.x;
-          svgPoint.y = point.y;
-          const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
-          const element = document.elementFromPoint(screenPoint.x, screenPoint.y);
-          const slot = element && element.closest('[data-hero-slot]');
+          for (const slotName of candidateSlots) {
+            if (slotCoversPoint(point, slotName, option)) {
+              return { name: point.name, slot: slotName, option, covered: true };
+            }
+          }
+          const topHit = topSlotAtPoint(point);
           return {
             name: point.name,
-            slot: slot && slot.getAttribute('data-hero-slot'),
-            option: slot && slot.getAttribute('data-hero-option'),
+            slot: topHit.slot,
+            option: topHit.option,
+            covered: false,
           };
         });
       }
@@ -2223,29 +2254,31 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
           });
         }
 
-        const templeSlots = pointHits([
+        const templeSlots = coveredPointHits([
           { name: 'left temple root', x: 356, y: 178 },
           { name: 'right temple root', x: 444, y: 178 },
-        ]);
+        ], ['hair-root'], style);
         for (const point of templeSlots) {
-          if (point.slot !== 'hair-root' || point.option !== style) {
+          if (!point.covered) {
             failures.push(Object.assign({ style }, point));
           }
         }
 
         if (sidePanelSet.has(style)) {
-          const filledBackHairSlots = pointHits([
+          const filledBackHairPoints = [
             { name: 'left crown volume', x: 360, y: 170 },
             { name: 'right crown volume', x: 440, y: 170 },
             { name: 'left hair behind head', x: 346, y: 205 },
             { name: 'right hair behind head', x: 454, y: 205 },
-          ]);
+          ];
 
-          for (const point of filledBackHairSlots) {
-            const validCrownLayer = point.name.includes('crown volume') && ['hair', 'hair-root', 'hairline'].includes(point.slot);
-            const validBackHairLayer = !point.name.includes('crown volume') && point.slot === 'hair';
-            if (point.option !== style || (!validCrownLayer && !validBackHairLayer)) {
-              failures.push(Object.assign({ style }, point));
+          for (const point of filledBackHairPoints) {
+            const candidateSlots = point.name.includes('crown volume')
+              ? ['hair', 'hair-root', 'hairline']
+              : ['hair'];
+            const hit = coveredPointHits([point], candidateSlots, style)[0];
+            if (!hit.covered) {
+              failures.push(Object.assign({ style }, hit));
             }
           }
         }
@@ -2521,6 +2554,36 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         return { width: rect.width, top: rect.top, bottom: rect.bottom, headFit: group.getAttribute('data-hero-head-fit') };
       }
 
+      function screenRectCoversSvgPoint(group, point) {
+        const rect = group.getBoundingClientRect();
+        if (!rect.width || !rect.height) return false;
+        const svgPoint = svg.createSVGPoint();
+        svgPoint.x = point.x;
+        svgPoint.y = point.y;
+        const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
+        return (
+          screenPoint.x >= rect.left - 0.5 &&
+          screenPoint.x <= rect.right + 0.5 &&
+          screenPoint.y >= rect.top - 0.5 &&
+          screenPoint.y <= rect.bottom + 0.5
+        );
+      }
+
+      function renderCoverage(check) {
+        const state = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+        state.appearance.headStyle = check.headStyle;
+        state.appearance.hairStyle = check.hairStyle || 'short';
+        state.outfit.accessory = check.accessory || 'none';
+        state.outfit.accessories = check.accessory ? [check.accessory] : [];
+        window.HeroAvatar.applyToSvg(svg, state);
+        const group = svg.querySelector(`[data-hero-slot="${check.slot}"][data-hero-option="${check.option}"]`);
+        if (!group || group.getAttribute('display') !== 'inline') return null;
+        return {
+          headFit: group.getAttribute('data-hero-head-fit'),
+          uncoveredPoints: check.points.filter((point) => !screenRectCoversSvgPoint(group, point)),
+        };
+      }
+
       for (const check of cases) {
         const defaultBox = render(check, 'default');
         const broadBox = render(check, 'broad');
@@ -2536,6 +2599,51 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         }
         if (check.width && !(broadBox.width > narrowBox.width + 0.5)) {
           failures.push({ check, reason: 'fit layer should widen on broad heads and narrow on narrow heads', broadWidth: broadBox.width, narrowWidth: narrowBox.width });
+        }
+      }
+
+      const coverageCases = [
+        {
+          slot: 'hair',
+          option: 'short',
+          hairStyle: 'short',
+          headStyle: 'full-cheeks',
+          points: [{ name: 'left upper temple', x: 352, y: 168 }, { name: 'right upper temple', x: 448, y: 168 }],
+        },
+        {
+          slot: 'hair',
+          option: 'straight-fringe',
+          hairStyle: 'straight-fringe',
+          headStyle: 'full-cheeks',
+          points: [{ name: 'left fringe edge', x: 352, y: 162 }, { name: 'right fringe edge', x: 448, y: 162 }],
+        },
+        {
+          slot: 'hair-root',
+          option: 'long',
+          hairStyle: 'long',
+          headStyle: 'broad',
+          points: [{ name: 'left temple root', x: 352, y: 180 }, { name: 'right temple root', x: 448, y: 180 }],
+        },
+        {
+          slot: 'accessory',
+          option: 'headband',
+          accessory: 'headband',
+          headStyle: 'full-cheeks',
+          points: [{ name: 'left band edge', x: 350, y: 164 }, { name: 'right band edge', x: 450, y: 164 }],
+        },
+        {
+          slot: 'accessory',
+          option: 'beanie',
+          accessory: 'beanie',
+          headStyle: 'full-cheeks',
+          points: [{ name: 'left beanie edge', x: 350, y: 164 }, { name: 'right beanie edge', x: 450, y: 164 }],
+        },
+      ];
+
+      for (const check of coverageCases) {
+        const coverage = renderCoverage(check);
+        if (!coverage || coverage.headFit !== check.headStyle || coverage.uncoveredPoints.length) {
+          failures.push({ check, reason: 'larger head shape should stay covered by fitted hair or headwear', coverage });
         }
       }
 
