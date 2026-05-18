@@ -148,8 +148,64 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     const modal = page.getByRole('dialog', { name: 'Customize your hero' });
     await expect(modal).toBeVisible();
-    await expect(page.getByLabel('Hero type')).toBeFocused();
+    await expect(page.getByLabel('Hero type', { exact: true })).toBeFocused();
     await a11yCheckpoint(page, 'hero customizer open', { feature: A11Y_FEATURE, darkMode: true });
+  });
+
+  test('Style preview buttons are generated from the central avatar choice registry', async ({ page }) => {
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+    await clearAccessories(page);
+
+    const registryHairValues = await page.evaluate(() =>
+      window.HeroAvatar.CHOICE_SETS.hairStyle.groups.flatMap((group) =>
+        group.options.map((option) => option.value)
+      )
+    );
+    const selectHairValues = await page.locator('#hero-cust-hair-style option').evaluateAll((options) =>
+      options.map((option) => option.value)
+    );
+    expect(selectHairValues).toEqual(registryHairValues);
+
+    const longHairButton = page.getByRole('button', { name: 'Choose Hair style: Long and flowing' });
+    await expect(longHairButton).toBeVisible();
+    await longHairButton.click();
+
+    await expect(page.getByLabel('Hair style', { exact: true })).toHaveValue('long');
+    await expect(longHairButton).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.locator('#hero-customizer-modal [data-gym-hero-svg]')).toHaveCount(1);
+    await expect(page.locator(
+      '#hero-customizer-modal [data-gym-hero-svg] [data-hero-slot="hair"][data-hero-option="long"]'
+    )).toHaveAttribute('display', 'inline');
+  });
+
+  test('Style preview buttons re-render after randomize changes the base avatar', async ({ page }) => {
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+
+    const longHairButton = page.getByRole('button', { name: 'Choose Hair style: Long and flowing' });
+    const longHairPreview = longHairButton.locator('[data-hero-choice-svg]');
+    await expect(longHairPreview).toHaveCount(1);
+
+    await setColorInput(page, '#hero-cust-hair-color', '#123456');
+    await expect.poll(async () => longHairPreview.evaluate((svg) =>
+      getComputedStyle(svg).getPropertyValue('--hero-hair').trim().toLowerCase()
+    ), {
+      message: 'hair preview button should update after direct color changes',
+    }).toBe('#123456');
+
+    const randomize = page.getByRole('button', { name: 'Randomize' });
+    await randomize.click();
+    const randomizedHairColor = (await page.getByLabel('Hair color', { exact: true }).inputValue()).toLowerCase();
+    expect(randomizedHairColor, 'randomize should choose from generated avatar colors').not.toBe('#123456');
+
+    await expect.poll(async () => longHairPreview.evaluate((svg) =>
+      getComputedStyle(svg).getPropertyValue('--hero-hair').trim().toLowerCase()
+    ), {
+      message: 'hair preview button should re-render after randomize',
+    }).toBe(randomizedHairColor);
   });
 
   test('Bruin mascot option replaces the human avatar and saves to page heroes', async ({ page }) => {
@@ -157,13 +213,15 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
 
-    const heroType = page.getByLabel('Hero type');
+    const heroType = page.getByLabel('Hero type', { exact: true });
     await expect(heroType).toHaveValue('human');
     await heroType.selectOption('bruin');
 
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
     await expect(preview).toHaveAttribute('data-hero-kind', 'bruin');
     await expect(preview.locator('[data-hero-kind-layer="bruin"][data-hero-slot="mascot"]')).toHaveAttribute('display', 'inline');
+    await expect(preview.locator('[data-hero-kind-layer="bruin"][data-hero-slot="mascot-arms"]')).toHaveAttribute('display', 'inline');
+    await expect(preview.locator('[data-hero-kind-layer="bruin"][data-hero-slot="mascot-paws"]')).toHaveAttribute('display', 'inline');
     const humanLayerDisplays = await preview.locator('[data-hero-kind-layer="human"]').evaluateAll((layers) =>
       layers.map((layer) => layer.getAttribute('display'))
     );
@@ -313,7 +371,9 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       ]);
       const costumeAccessories = new Set(['crown', 'halo', 'monocle', 'eyepatch', 'mask']);
       const coveredHairAccessories = new Set(['draped-scarf', 'hijab']);
+      const currentCampusAccessories = new Set(['over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'chain-necklace', 'campus-lanyard', 'bandana']);
       const expressiveManualHair = new Set(['mohawk', 'bowl-cut', 'pigtails', 'top-knot']);
+      const upbeatMouthStyles = new Set(['grin', 'bright-smile', 'cheerful-grin', 'open-smile', 'excited-smile']);
       const everydayCampusOutfits = new Set(['hoodie', 'crewneck-sweatshirt', 'varsity-jacket', 'denim-jacket', 'flannel-overshirt', 'striped-knit', 'windbreaker', 'collared-shirt', 'kurta-top', 'campus-blouse', 'cardigan']);
       const costumeOutfits = new Set(['super-suit', 'captain-jacket']);
       const technicalOutfits = new Set(['lab-coat', 'utility-vest']);
@@ -324,6 +384,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       const bandCounts = { light: 0, medium: 0, deep: 0, darkest: 0 };
       const presentationBands = { male: new Set(), female: new Set() };
       const bodyTypes = new Set();
+      const campusAccessoryTypes = new Set();
+      const mouthTypes = new Set();
       const invalid = [];
       let maleSamples = 0;
       let femaleSamples = 0;
@@ -344,6 +406,9 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       let facialHairSamples = 0;
       let cleanShavenSamples = 0;
       let layeredAccessorySamples = 0;
+      let currentCampusAccessorySamples = 0;
+      let upbeatMouthSamples = 0;
+      let neutralMouthSamples = 0;
 
       try {
         for (let i = 0; i < 640; i++) {
@@ -370,6 +435,10 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
           const accessories = avatar.outfit.accessories || [];
           if (accessories.length > 1) layeredAccessorySamples++;
+          for (const accessory of accessories) {
+            if (currentCampusAccessories.has(accessory)) campusAccessoryTypes.add(accessory);
+          }
+          if (accessories.some((accessory) => currentCampusAccessories.has(accessory))) currentCampusAccessorySamples++;
           if (accessories.some((accessory) => costumeAccessories.has(accessory))) costumeAccessorySamples++;
           if (accessories.includes('hijab')) hijabSamples++;
           if (accessories.includes('headwrap')) headwrapSamples++;
@@ -380,6 +449,9 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
           if (everydayCampusOutfits.has(avatar.outfit.style)) everydayCampusOutfitSamples++;
           if (technicalOutfits.has(avatar.outfit.style)) technicalOutfitSamples++;
           if (!naturalHairColors.has(avatar.appearance.hairColor.toLowerCase())) accentHairColorSamples++;
+          mouthTypes.add(avatar.appearance.mouthStyle);
+          if (upbeatMouthStyles.has(avatar.appearance.mouthStyle)) upbeatMouthSamples++;
+          if (avatar.appearance.mouthStyle === 'neutral') neutralMouthSamples++;
           if (avatar.appearance.facialHair === 'none') {
             cleanShavenSamples++;
           } else {
@@ -420,6 +492,11 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         facialHairSamples,
         cleanShavenSamples,
         layeredAccessorySamples,
+        currentCampusAccessorySamples,
+        currentCampusAccessoryVariety: campusAccessoryTypes.size,
+        mouthVariety: mouthTypes.size,
+        upbeatMouthSamples,
+        neutralMouthSamples,
       };
     });
 
@@ -445,6 +522,11 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(summary.facialHairSamples).toBeGreaterThan(0);
     expect(summary.cleanShavenSamples).toBeGreaterThan(0);
     expect(summary.layeredAccessorySamples).toBeGreaterThan(0);
+    expect(summary.currentCampusAccessorySamples).toBeGreaterThan(60);
+    expect(summary.currentCampusAccessoryVariety).toBe(6);
+    expect(summary.mouthVariety).toBeGreaterThanOrEqual(7);
+    expect(summary.upbeatMouthSamples).toBeGreaterThan(360);
+    expect(summary.neutralMouthSamples).toBeLessThan(40);
   });
 
   test('Unsaved page heroes randomize independently on load', async ({ page }) => {
@@ -519,7 +601,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     await clearAccessories(page);
-    await page.getByLabel('Hair style').selectOption('long');
+    await page.getByLabel('Hair style', { exact: true }).selectOption('long');
     const longGroup = page.locator(
       '#hero-customizer-modal [data-gym-hero-svg] [data-hero-slot="hair"][data-hero-option="long"]'
     );
@@ -535,8 +617,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     await clearAccessories(page);
-    await page.getByLabel('Head shape').selectOption('default');
-    await page.getByLabel('Hair style').selectOption('long');
+    await page.getByLabel('Head shape', { exact: true }).selectOption('default');
+    await page.getByLabel('Hair style', { exact: true }).selectOption('long');
 
     const faceLayer = page.locator(
       '#hero-customizer-modal [data-gym-hero-svg] [data-hero-slot="face-clear"][data-hero-option="default"]'
@@ -617,7 +699,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     await clearAccessories(page);
 
-    const hairStyle = page.getByLabel('Hair style');
+    const hairStyle = page.getByLabel('Hair style', { exact: true });
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
     const styles = [
       'long',
@@ -734,8 +816,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     await clearAccessories(page);
 
-    const hairStyle = page.getByLabel('Hair style');
-    await page.getByLabel('Head shape').selectOption('soft-oval');
+    const hairStyle = page.getByLabel('Hair style', { exact: true });
+    await page.getByLabel('Head shape', { exact: true }).selectOption('soft-oval');
     const options = await page.locator('#hero-cust-hair-style option').evaluateAll((nodes) =>
       nodes.map((node) => node.value).filter(Boolean)
     );
@@ -777,8 +859,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     await clearAccessories(page);
 
-    await page.getByLabel('Head shape').selectOption('soft-oval');
-    await page.getByLabel('Hair style').selectOption('bantu-knots');
+    await page.getByLabel('Head shape', { exact: true }).selectOption('soft-oval');
+    await page.getByLabel('Hair style', { exact: true }).selectOption('bantu-knots');
 
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
     await expect(preview.locator('[data-hero-slot="hair"][data-hero-option="bantu-knots"]'))
@@ -825,8 +907,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     await clearAccessories(page);
 
-    await page.getByLabel('Head shape').selectOption('soft-oval');
-    const hairStyle = page.getByLabel('Hair style');
+    await page.getByLabel('Head shape', { exact: true }).selectOption('soft-oval');
+    const hairStyle = page.getByLabel('Hair style', { exact: true });
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
     const styles = [
       'coily-puff',
@@ -893,8 +975,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     await clearAccessories(page);
 
-    const hairStyle = page.getByLabel('Hair style');
-    const headShape = page.getByLabel('Head shape');
+    const hairStyle = page.getByLabel('Hair style', { exact: true });
+    const headShape = page.getByLabel('Head shape', { exact: true });
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
 
     await headShape.selectOption('oblong');
@@ -925,8 +1007,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     await clearAccessories(page);
-    await page.getByLabel('Hair style').selectOption('coils');
-    await page.getByLabel('Outfit style').selectOption('hoodie');
+    await page.getByLabel('Hair style', { exact: true }).selectOption('coils');
+    await page.getByLabel('Outfit style', { exact: true }).selectOption('hoodie');
     await page.getByLabel('Hijab', { exact: true }).check();
     await page.getByLabel('Earrings', { exact: true }).check();
 
@@ -939,7 +1021,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       .toHaveAttribute('display', 'inline');
     await expect(preview.locator('[data-hero-slot="hair"][data-hero-option="coils"]'))
       .toHaveAttribute('display', 'none');
-    await expect(page.getByLabel('Hair style')).toHaveValue('coils');
+    await expect(page.getByLabel('Hair style', { exact: true })).toHaveValue('coils');
   });
 
   test('Textured crop and rectangular glasses update the preview', async ({ page }) => {
@@ -947,7 +1029,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     await clearAccessories(page);
-    await page.getByLabel('Hair style').selectOption('textured-crop');
+    await page.getByLabel('Hair style', { exact: true }).selectOption('textured-crop');
     await page.getByLabel('Rectangular glasses', { exact: true }).check();
 
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
@@ -965,9 +1047,9 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
     await setColorInput(page, '#hero-cust-skin', '#3d2515');
     await setColorInput(page, '#hero-cust-hair-color', '#1a1a1a');
-    await page.getByLabel('Hair style').selectOption('center-part');
-    await page.getByLabel('Head shape').selectOption('oblong');
-    await page.getByLabel('Mouth').selectOption('full-lips');
+    await page.getByLabel('Hair style', { exact: true }).selectOption('center-part');
+    await page.getByLabel('Head shape', { exact: true }).selectOption('oblong');
+    await page.getByLabel('Mouth', { exact: true }).selectOption('full-lips');
     await page.getByLabel('Glasses', { exact: true }).check();
 
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
@@ -1066,7 +1148,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     await clearAccessories(page);
 
-    await page.getByLabel('Outfit style').selectOption('kurta-top');
+    await page.getByLabel('Outfit style', { exact: true }).selectOption('kurta-top');
     await page.getByLabel('Wireframe glasses', { exact: true }).check();
     await page.getByLabel('Small hoop earrings', { exact: true }).check();
     await page.getByLabel('Forehead accent', { exact: true }).check();
@@ -1082,8 +1164,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       .toHaveAttribute('display', 'inline');
 
     await clearAccessories(page);
-    await page.getByLabel('Hair style').selectOption('straight-long-layers');
-    await page.getByLabel('Outfit style').selectOption('campus-blouse');
+    await page.getByLabel('Hair style', { exact: true }).selectOption('straight-long-layers');
+    await page.getByLabel('Outfit style', { exact: true }).selectOption('campus-blouse');
     await page.getByLabel('Hair clips', { exact: true }).check();
     await expect(preview.locator('[data-hero-slot="hair"][data-hero-option="straight-long-layers"]'))
       .toHaveAttribute('display', 'inline');
@@ -1095,8 +1177,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       .toHaveAttribute('display', 'inline');
 
     await clearAccessories(page);
-    await page.getByLabel('Hair style').selectOption('long-straight');
-    await page.getByLabel('Outfit style').selectOption('collared-shirt');
+    await page.getByLabel('Hair style', { exact: true }).selectOption('long-straight');
+    await page.getByLabel('Outfit style', { exact: true }).selectOption('collared-shirt');
     await page.getByLabel('Draped scarf', { exact: true }).check();
     await expect(preview.locator('[data-hero-slot="outfit-style"][data-hero-option="collared-shirt"]'))
       .toHaveAttribute('display', 'inline');
@@ -1106,23 +1188,23 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       .toHaveAttribute('display', 'none');
 
     await clearAccessories(page);
-    await page.getByLabel('Outfit style').selectOption('cardigan');
+    await page.getByLabel('Outfit style', { exact: true }).selectOption('cardigan');
     await expect(preview.locator('[data-hero-slot="outfit-style"][data-hero-option="cardigan"]'))
       .toHaveAttribute('display', 'inline');
 
     for (const outfit of ['captain-jacket', 'utility-vest']) {
-      await page.getByLabel('Outfit style').selectOption(outfit);
+      await page.getByLabel('Outfit style', { exact: true }).selectOption(outfit);
       await expect(preview.locator(`[data-hero-slot="outfit-style"][data-hero-option="${outfit}"]`))
         .toHaveAttribute('display', 'inline');
     }
 
     for (const outfit of ['crewneck-sweatshirt', 'flannel-overshirt', 'striped-knit']) {
-      await page.getByLabel('Outfit style').selectOption(outfit);
+      await page.getByLabel('Outfit style', { exact: true }).selectOption(outfit);
       await expect(preview.locator(`[data-hero-slot="outfit-style"][data-hero-option="${outfit}"]`))
         .toHaveAttribute('display', 'inline');
     }
 
-    for (const label of ['Round-rim glasses', 'Safety goggles', 'Tech visor', 'Over-ear headphones', 'Wireless earbuds', 'Chain necklace', 'Bandana']) {
+    for (const label of ['Round-rim glasses', 'Safety goggles', 'Tech visor', 'Over-ear headphones', 'Wireless earbuds', 'Wired earbuds', 'Chain necklace', 'Campus lanyard', 'Bandana']) {
       await clearAccessories(page);
       await page.getByLabel(label, { exact: true }).check();
       const checkedValue = await page.getByLabel(label, { exact: true }).inputValue();
@@ -1137,7 +1219,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     await clearAccessories(page);
 
-    const hairStyle = page.getByLabel('Hair style');
+    const hairStyle = page.getByLabel('Hair style', { exact: true });
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
       const styles = [
       'textured-fringe',
@@ -1235,7 +1317,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByRole('button', { name: 'Customize Hero' }).click();
 
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
-    const headShape = page.getByLabel('Head shape');
+    const headShape = page.getByLabel('Head shape', { exact: true });
     const shapes = ['diamond', 'full-oval', 'tapered-oval', 'gentle-taper', 'soft-round-jaw', 'soft-angular'];
 
     for (const shape of shapes) {
@@ -1256,9 +1338,9 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByRole('button', { name: 'Customize Hero' }).click();
 
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
-    const facialHair = page.getByLabel('Facial hair');
-    const faceFeature = page.getByLabel('Facial details');
-    const cheekTint = page.getByLabel('Cheek tint');
+    const facialHair = page.getByLabel('Facial hair', { exact: true });
+    const faceFeature = page.getByLabel('Facial details', { exact: true });
+    const cheekTint = page.getByLabel('Cheek tint', { exact: true });
 
     for (const value of [
       'stubble',
@@ -1329,9 +1411,9 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByRole('button', { name: 'Customize Hero' }).click();
 
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
-    const eyeShape = page.getByLabel('Eye shape');
-    const noseShape = page.getByLabel('Nose shape');
-    const mouth = page.getByLabel('Mouth');
+    const eyeShape = page.getByLabel('Eye shape', { exact: true });
+    const noseShape = page.getByLabel('Nose shape', { exact: true });
+    const mouth = page.getByLabel('Mouth', { exact: true });
 
     for (const value of ['almond', 'monolid', 'soft-monolid', 'hooded', 'smiling', 'wide']) {
       await eyeShape.selectOption(value);
@@ -1378,9 +1460,10 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     await page.getByLabel('Emblem (one emoji)').fill('🚀');
-    const emblemText = page.locator('#hero-customizer-modal [data-hero-emblem-text]');
+    const preview = page.locator('#hero-customizer-modal .hero-cust-preview [data-gym-hero-svg]');
+    const emblemText = preview.locator('[data-hero-emblem-text]');
     await expect(emblemText).toHaveText('🚀');
-    const emblemGroup = page.locator('#hero-customizer-modal [data-hero-slot="emblem"]');
+    const emblemGroup = preview.locator('[data-hero-slot="emblem"]');
     await expect(emblemGroup).toHaveAttribute('display', 'inline');
 
     await page.getByRole('button', { name: 'Clear' }).click();
@@ -1401,13 +1484,13 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     await page.getByLabel('Suit color').fill('#aa22aa');
-    await page.getByLabel('Outfit style').selectOption('varsity-jacket');
+    await page.getByLabel('Outfit style', { exact: true }).selectOption('varsity-jacket');
     await clearAccessories(page);
     await page.getByLabel('Rectangular glasses', { exact: true }).check();
     await page.getByLabel('Earrings', { exact: true }).check();
-    await page.getByLabel('Hair style').selectOption('afro');
-    await page.getByLabel('Head shape').selectOption('soft-square');
-    await page.getByLabel('Body type').selectOption('broad');
+    await page.getByLabel('Hair style', { exact: true }).selectOption('afro');
+    await page.getByLabel('Head shape', { exact: true }).selectOption('soft-square');
+    await page.getByLabel('Body type', { exact: true }).selectOption('broad');
     await page.getByRole('button', { name: /save/i }).click();
     await expect(page.getByRole('dialog', { name: 'Customize your hero' })).toBeHidden();
 
@@ -1544,8 +1627,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     ];
 
     for (const value of bodyOptions) {
-      await page.getByLabel('Body type').selectOption(value);
-      await expect(page.getByLabel('Body type')).toHaveValue(value);
+      await page.getByLabel('Body type', { exact: true }).selectOption(value);
+      await expect(page.getByLabel('Body type', { exact: true })).toHaveValue(value);
       await expect(preview).toHaveAttribute('data-hero-body', value);
       await expect(preview.locator(`[data-hero-slot="body-shape"][data-hero-option="${value}"]`))
         .toHaveAttribute('display', 'inline');
@@ -1558,7 +1641,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     await clearAccessories(page);
 
-    await page.getByLabel('Hair style').selectOption('long-layers');
+    await page.getByLabel('Hair style', { exact: true }).selectOption('long-layers');
     await page.getByLabel('Rectangular glasses', { exact: true }).check();
     await page.getByLabel('Hero mask', { exact: true }).check();
     await page.getByLabel('Beanie', { exact: true }).check();
@@ -1643,7 +1726,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
-    await page.getByLabel('Hair style').selectOption('textured-crop');
+    await page.getByLabel('Hair style', { exact: true }).selectOption('textured-crop');
     await clearAccessories(page);
     await page.getByLabel('Rectangular glasses', { exact: true }).check();
     const downloadPromise = page.waitForEvent('download');
@@ -1693,10 +1776,10 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       mimeType: 'application/json',
       buffer: Buffer.from(JSON.stringify(validAvatar)),
     });
-    await expect(page.getByLabel('Hair style')).toHaveValue('ponytail');
-    await expect(page.getByLabel('Body type')).toHaveValue('curvy');
-    await expect(page.getByLabel('Facial details')).toHaveValue('freckles');
-    await expect(page.getByLabel('Cheek tint')).toHaveValue('natural');
+    await expect(page.getByLabel('Hair style', { exact: true })).toHaveValue('ponytail');
+    await expect(page.getByLabel('Body type', { exact: true })).toHaveValue('curvy');
+    await expect(page.getByLabel('Facial details', { exact: true })).toHaveValue('freckles');
+    await expect(page.getByLabel('Cheek tint', { exact: true })).toHaveValue('natural');
     await expect(page.getByLabel('Rectangular glasses', { exact: true })).toBeChecked();
     await expect(page.getByLabel('Earrings', { exact: true })).toBeChecked();
     // Preview updated but not yet saved
@@ -1711,7 +1794,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
-    const hairStyle = page.getByLabel('Hair style');
+    const hairStyle = page.getByLabel('Hair style', { exact: true });
     const initial = await hairStyle.inputValue();
     // Click randomize until the hair style changes; collisions are possible.
     let changed = false;

@@ -6,6 +6,9 @@
     <linearGradient id="cape-inner-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--hero-cape-inner-light, #FFE470)"/><stop offset="1" stop-color="var(--hero-cape-inner, #B38B00)"/></linearGradient>
     <linearGradient id="gold-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE470"/><stop offset=".5" stop-color="#FFD100"/><stop offset="1" stop-color="#B38B00"/></linearGradient>
     <radialGradient id="gold-radial-{{ hero_variant }}" cx=".38" cy=".32" r=".95"><stop offset="0" stop-color="#fff7c0"/><stop offset=".5" stop-color="#FFD100"/><stop offset="1" stop-color="#8a6a00"/></radialGradient>
+    <linearGradient id="milestone-metal-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--hero-milestone-metal-light, #f5d2a5)"/><stop offset=".5" stop-color="var(--hero-milestone-metal, #b7793c)"/><stop offset="1" stop-color="var(--hero-milestone-metal-dark, #6b3e1d)"/></linearGradient>
+    <radialGradient id="milestone-glow-{{ hero_variant }}" cx=".5" cy=".42" r=".58"><stop offset="0" stop-color="var(--hero-milestone-glow, #f5a35c)" stop-opacity=".34"/><stop offset=".65" stop-color="var(--hero-milestone-glow, #f5a35c)" stop-opacity=".12"/><stop offset="1" stop-color="var(--hero-milestone-glow, #f5a35c)" stop-opacity="0"/></radialGradient>
+    <radialGradient id="milestone-jewel-{{ hero_variant }}" cx=".38" cy=".3" r=".85"><stop offset="0" stop-color="#ffffff"/><stop offset=".42" stop-color="var(--hero-milestone-jewel, #f2a45d)"/><stop offset="1" stop-color="var(--hero-milestone-metal-dark, #6b3e1d)"/></radialGradient>
     <linearGradient id="skin-{{ hero_variant }}" gradientUnits="userSpaceOnUse" x1="0" y1="82" x2="0" y2="270"><stop offset="0" stop-color="var(--hero-skin-highlight-soft, var(--hero-skin-light, #dfa07a))"/><stop offset=".38" stop-color="var(--hero-skin-light, #dfa07a)"/><stop offset=".78" stop-color="var(--hero-skin-mid, #c5815b)"/><stop offset="1" stop-color="var(--hero-skin, #b46a3d)"/></linearGradient>
     <linearGradient id="steel-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7e8895"/><stop offset=".35" stop-color="#e6ebf1"/><stop offset=".55" stop-color="#c0c8d2"/><stop offset="1" stop-color="#42495a"/></linearGradient>
     <linearGradient id="steel-dark-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b6470"/><stop offset=".5" stop-color="#aab3be"/><stop offset="1" stop-color="#2a323d"/></linearGradient>
@@ -52,6 +55,24 @@
     <clipPath id="eye-wide-left-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><ellipse cx="380" cy="185" rx="8.5" ry="9.5"/></clipPath>
     <clipPath id="eye-wide-right-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><ellipse cx="420" cy="185" rx="8.5" ry="9.5"/></clipPath>
   </defs>
+  <g data-hero-slot="milestone-power" data-hero-option="none"></g>
+  <g data-hero-slot="milestone-power" data-hero-option="bronze" display="none" opacity=".75">
+    <ellipse cx="400" cy="318" rx="146" ry="264" fill="url(#milestone-glow-{{ hero_variant }})"/>
+  </g>
+  <g data-hero-slot="milestone-power" data-hero-option="silver" display="none" opacity=".86">
+    <ellipse cx="400" cy="318" rx="164" ry="282" fill="url(#milestone-glow-{{ hero_variant }})"/>
+    <path d="M 276 322 C 252 378, 254 462, 288 534 M 524 322 C 548 378, 546 462, 512 534" stroke="var(--hero-milestone-glow, #dbe6ef)" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".32"/>
+  </g>
+  <g data-hero-slot="milestone-power" data-hero-option="gold" display="none" opacity=".92">
+    <ellipse cx="400" cy="318" rx="182" ry="300" fill="url(#milestone-glow-{{ hero_variant }})"/>
+    <path d="M 246 270 C 214 356, 220 466, 272 560 M 554 270 C 586 356, 580 466, 528 560" stroke="var(--hero-milestone-glow, #ffd76a)" stroke-width="3.4" fill="none" stroke-linecap="round" opacity=".35"/>
+    <path d="M 296 230 L 286 250 L 266 258 L 286 266 L 296 286 L 306 266 L 326 258 L 306 250 Z M 504 230 L 494 250 L 474 258 L 494 266 L 504 286 L 514 266 L 534 258 L 514 250 Z" fill="url(#milestone-jewel-{{ hero_variant }})" opacity=".72"/>
+  </g>
+  <g data-hero-slot="milestone-power" data-hero-option="diamond" display="none" opacity=".96">
+    <ellipse cx="400" cy="318" rx="198" ry="318" fill="url(#milestone-glow-{{ hero_variant }})"/>
+    <path d="M 232 260 C 196 352, 204 478, 270 584 M 568 260 C 604 352, 596 478, 530 584" stroke="var(--hero-milestone-glow, #bbf4ff)" stroke-width="4" fill="none" stroke-linecap="round" opacity=".42"/>
+    <path d="M 274 232 L 298 210 L 326 234 L 304 268 Z M 526 232 L 502 210 L 474 234 L 496 268 Z M 250 420 L 276 392 L 302 422 L 278 456 Z M 550 420 L 524 392 L 498 422 L 522 456 Z" fill="url(#milestone-jewel-{{ hero_variant }})" stroke="var(--hero-milestone-metal-light, #e9fbff)" stroke-width="1.2" opacity=".66"/>
+  </g>
   <g data-hero-kind-layer="human"><animateTransform attributeName="transform" type="rotate" values="-1.6 400 268;2 400 268;-1.6 400 268" keyTimes="0;0.5;1" dur="1.7s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
     <path d="M 335 258 C 318 290, 308 360, 308 440 C 308 490, 312 525, 318 555 Q 332 545, 346 555 Q 360 545, 374 555 Q 388 545, 400 555 Q 412 545, 426 555 Q 440 545, 454 555 Q 468 545, 482 555 C 488 525, 492 490, 492 440 C 492 360, 482 290, 465 258 Z" fill="url(#cape-grad-{{ hero_variant }})"/>
     <path d="M 338 260 C 326 300, 320 380, 320 470 C 320 510, 324 540, 328 558 L 332 553 C 328 540, 326 510, 326 470 C 326 380, 332 300, 343 262 Z" fill="url(#cape-inner-{{ hero_variant }})" opacity=".9"/>
@@ -1248,6 +1269,7 @@
       <g data-hero-slot="hairline" data-hero-option="bantu-knots" display="none">
         <path d="M 352 168 C 354 140, 374 118, 400 116 C 426 118, 446 140, 448 168 C 434 160, 418 154, 400 156 C 382 154, 366 160, 352 168 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
         <path d="M 354 168 C 360 154, 374 144, 388 142 C 394 140, 406 140, 412 142 C 426 144, 440 154, 446 168 C 432 159, 416 154, 400 156 C 384 154, 368 159, 354 168 Z" fill="var(--hero-hair, #1f140c)" opacity=".92"/>
+        <ellipse cx="400" cy="158" rx="38" ry="8" fill="var(--hero-hair, #1f140c)" opacity=".9"/>
         <path d="M 364 146 C 374 136, 386 130, 400 130 C 414 130, 426 136, 436 146 M 360 166 C 374 158, 386 154, 400 156 C 414 154, 426 158, 440 166" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.7" fill="none" stroke-linecap="round" opacity=".55"/>
         <path d="M 356 168 C 352 184, 356 198, 364 206 M 444 168 C 448 184, 444 198, 436 206" stroke="var(--hero-hair, #1f140c)" stroke-width="3.8" fill="none" stroke-linecap="round" opacity=".76"/>
       </g>
@@ -1521,10 +1543,23 @@
         <circle cx="448" cy="194" r="4.2" fill="#f7fbff" stroke="var(--hero-glasses-frame, #123047)" stroke-width="1"/>
         <path d="M 352 198 L 352 208 M 448 198 L 448 208" stroke="#f7fbff" stroke-width="2.6" stroke-linecap="round"/>
       </g>
+      <g data-hero-slot="accessory" data-hero-option="wired-earbuds" display="none">
+        <circle cx="352" cy="194" r="3.8" fill="#f7fbff" stroke="var(--hero-glasses-frame, #123047)" stroke-width="1"/>
+        <circle cx="448" cy="194" r="3.8" fill="#f7fbff" stroke="var(--hero-glasses-frame, #123047)" stroke-width="1"/>
+        <path d="M 352 198 C 358 218, 374 238, 392 252 M 448 198 C 442 218, 426 238, 408 252" stroke="#f7fbff" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".92"/>
+        <path d="M 392 252 Q 400 260, 408 252" stroke="var(--hero-glasses-frame, #123047)" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".72"/>
+      </g>
       <g data-hero-slot="accessory" data-hero-option="chain-necklace" display="none">
         <path d="M 374 250 C 384 266, 416 266, 426 250" stroke="var(--hero-cape-inner, #FFD100)" stroke-width="3" fill="none" stroke-linecap="round" opacity=".9"/>
         <path d="M 378 252 C 388 262, 412 262, 422 252" stroke="#fff6c0" stroke-width="1.1" fill="none" stroke-linecap="round" opacity=".8"/>
         <circle cx="400" cy="264" r="3" fill="var(--hero-cape-inner, #FFD100)" stroke="#5a3f00" stroke-width=".8"/>
+      </g>
+      <g data-hero-slot="accessory" data-hero-option="campus-lanyard" display="none">
+        <path d="M 374 250 L 400 304 L 426 250" stroke="var(--hero-cape-inner, #FFD100)" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".86"/>
+        <path d="M 382 252 L 400 292 L 418 252" stroke="#fff6c0" stroke-width=".9" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".66"/>
+        <rect x="388" y="294" width="24" height="18" rx="3" fill="var(--hero-glasses-frame, #123047)" stroke="#fff6c0" stroke-width="1.2"/>
+        <rect x="393" y="299" width="14" height="2.2" rx="1.1" fill="#f7fbff" opacity=".9"/>
+        <rect x="393" y="304" width="10" height="2" rx="1" fill="var(--hero-cape-inner, #FFD100)" opacity=".9"/>
       </g>
       <g data-hero-slot="accessory" data-hero-option="forehead-accent" display="none">
         <circle cx="400" cy="170" r="3" fill="#b72d4a"/>
@@ -1888,6 +1923,7 @@
       <rect x="474" y="94" width="34" height="3.5" fill="#fff6c0" opacity=".8"/>
     </g>
     <g data-hero-kind-layer="bruin" data-hero-slot="mascot" data-hero-option="bruin" display="none">
+      <animateTransform attributeName="transform" type="translate" values="0 12;0 -12;0 12" keyTimes="0;0.5;1" dur="2.2s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
       <animateTransform attributeName="transform" type="translate" values="0 0;0 -5;0 0" keyTimes="0;0.5;1" dur="1.35s" begin=".1s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
       <g>
         <animateTransform attributeName="transform" type="rotate" values="-1.2 400 338;1.2 400 338;-1.2 400 338" keyTimes="0;0.5;1" dur="2.6s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1"/>
@@ -1899,9 +1935,8 @@
         </path>
         <path d="M 332 320 C 322 400, 320 490, 328 545 M 468 320 C 478 400, 480 490, 472 545 M 370 295 C 364 380, 366 470, 372 540 M 430 295 C 436 380, 434 470, 428 540" stroke="#001428" stroke-width="2.2" fill="none" opacity=".28"/>
       </g>
-      <path d="M 310 102 C 294 142, 294 203, 324 262" stroke="url(#bruin-fur-{{ hero_variant }})" stroke-width="42" fill="none" stroke-linecap="round"/>
-      <path d="M 490 102 C 506 142, 506 203, 476 262" stroke="url(#bruin-fur-{{ hero_variant }})" stroke-width="42" fill="none" stroke-linecap="round"/>
-      <path d="M 308 112 C 304 152, 306 214, 326 256 M 492 112 C 496 152, 494 214, 474 256" stroke="var(--hero-bruin-fur-light, #a06840)" stroke-width="5" fill="none" stroke-linecap="round" opacity=".54"/>
+      <path d="M 318 252 C 332 268, 350 278, 374 282 M 482 252 C 468 268, 450 278, 426 282" stroke="url(#bruin-fur-{{ hero_variant }})" stroke-width="30" fill="none" stroke-linecap="round"/>
+      <path d="M 326 254 C 342 266, 356 272, 374 276 M 474 254 C 458 266, 444 272, 426 276" stroke="var(--hero-bruin-fur-light, #a06840)" stroke-width="4" fill="none" stroke-linecap="round" opacity=".42"/>
       <path d="M 326 248 C 332 202, 364 168, 400 168 C 436 168, 468 202, 474 248 C 500 318, 496 430, 463 548 C 442 574, 358 574, 337 548 C 304 430, 300 318, 326 248 Z" fill="url(#bruin-fur-{{ hero_variant }})" stroke="var(--hero-bruin-line, #1f140c)" stroke-width="2.2"/>
       <path d="M 346 318 C 352 272, 376 244, 400 244 C 424 244, 448 272, 454 318 C 464 394, 452 486, 425 524 C 411 538, 389 538, 375 524 C 348 486, 336 394, 346 318 Z" fill="url(#bruin-muzzle-{{ hero_variant }})" opacity=".55"/>
       <path d="M 358 330 C 376 344, 424 344, 442 330 M 356 356 C 378 370, 422 370, 444 356 M 350 386 C 374 398, 426 398, 450 386" stroke="var(--hero-bruin-fur-light, #a06840)" stroke-width="2.1" fill="none" stroke-linecap="round" opacity=".34"/>
@@ -1947,6 +1982,16 @@
       <ellipse cx="400" cy="418" rx="39" ry="42" fill="url(#gold-radial-{{ hero_variant }})" stroke="#5a3f00" stroke-width="2"/>
       <text x="400" y="428" text-anchor="middle" font-size="24" font-family="Arial, Helvetica, sans-serif" font-weight="700" fill="#002F52">SE</text>
       <path d="M 376 386 Q 400 400, 424 386" stroke="url(#cape-inner-{{ hero_variant }})" stroke-width="6" fill="none" stroke-linecap="round"/>
+    </g>
+    <g data-hero-kind-layer="bruin" data-hero-slot="mascot-arms" data-hero-option="bruin" display="none">
+      <path d="M 310 102 C 292 142, 294 198, 324 252" stroke="url(#bruin-fur-{{ hero_variant }})" stroke-width="42" fill="none" stroke-linecap="round"/>
+      <path d="M 490 102 C 508 142, 506 198, 476 252" stroke="url(#bruin-fur-{{ hero_variant }})" stroke-width="42" fill="none" stroke-linecap="round"/>
+      <path d="M 308 112 C 304 150, 306 204, 326 246 M 492 112 C 496 150, 494 204, 474 246" stroke="var(--hero-bruin-fur-light, #a06840)" stroke-width="5" fill="none" stroke-linecap="round" opacity=".55"/>
+      <path d="M 318 118 C 306 156, 310 200, 332 240 M 482 118 C 494 156, 490 200, 468 240" stroke="var(--hero-bruin-fur-dark, #3d2515)" stroke-width="3" fill="none" stroke-linecap="round" opacity=".36"/>
+      <rect x="292" y="92" width="34" height="18" rx="6" fill="url(#gold-{{ hero_variant }})" stroke="#5a3f00" stroke-width="1.6"/>
+      <rect x="292" y="94" width="34" height="3.5" fill="#fff6c0" opacity=".8"/>
+      <rect x="474" y="92" width="34" height="18" rx="6" fill="url(#gold-{{ hero_variant }})" stroke="#5a3f00" stroke-width="1.6"/>
+      <rect x="474" y="94" width="34" height="3.5" fill="#fff6c0" opacity=".8"/>
     </g>
     <g>
       <rect x="270" y="77" width="260" height="16" rx="2" fill="url(#steel-{{ hero_variant }})"/>

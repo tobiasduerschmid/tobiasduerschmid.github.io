@@ -716,6 +716,37 @@ test.describe('Personal Gym - Workout', () => {
   test('workout completes and shows results', async ({ page, context }) => {
     await setCookie(context, 'se-gym-active', 'true');
     await setCookie(context, 'se-gym', JSON.stringify([{ type: 'flashcard', id: 'git' }]));
+    await page.addInitScript(() => {
+      localStorage.setItem('se-gym-hero-avatar', JSON.stringify({
+        version: 1,
+        kind: 'bruin',
+        appearance: {
+          presentation: 'male',
+          skin: '#8b5a35',
+          hairColor: '#3d2818',
+          hairStyle: 'bald',
+          eyeColor: '#1f140c',
+          eyebrowStyle: 'arched',
+          headStyle: 'default',
+          eyeShape: 'round',
+          noseShape: 'soft',
+          mouthStyle: 'smile',
+          blushStyle: 'none',
+          facialHair: 'none',
+          faceFeature: 'none'
+        },
+        body: { type: 'athletic' },
+        outfit: {
+          style: 'super-suit',
+          suit: '#1F6EBD',
+          capeOuter: '#15538f',
+          capeInner: '#FFD100',
+          accessory: 'none',
+          accessories: [],
+          emblem: ''
+        }
+      }));
+    });
     await page.goto(GYM_URL);
 
     await page.locator('#max-cards').fill('1');
@@ -729,6 +760,11 @@ test.describe('Personal Gym - Workout', () => {
     await expect(page.locator('#workout-results')).toBeVisible();
     await expect(page.locator('#workout-score')).toHaveText('1');
     await expect(page.locator('#workout-total')).toHaveText('1');
+    const resultsHero = page.locator('#workout-results .workout-results-hero [data-gym-hero-svg]');
+    await expect(resultsHero).toBeVisible();
+    await expect(resultsHero).toHaveAttribute('data-hero-kind', 'bruin');
+    await expect(resultsHero.locator('[data-hero-kind-layer="bruin"][data-hero-slot="mascot"]'))
+      .toHaveAttribute('display', 'inline');
     await a11yCheckpoint(page, 'gym workout — results screen', { feature: A11Y_FEATURE, darkMode: true });
   });
 
