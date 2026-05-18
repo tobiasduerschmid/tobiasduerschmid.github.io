@@ -476,7 +476,7 @@
     'broad':           ['shoulder'],
     'solid':           ['shoulder'],
     'tall':            [],
-    'curvy':           ['waist'],
+    'curvy':           [],
     'fuller-hip':      ['hip'],
     'full-frame':      ['waist', 'hip'],
     'plus-size':       ['waist', 'hip']

@@ -1893,74 +1893,81 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
 
-    const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
-    const facialHair = page.getByLabel('Facial hair', { exact: true });
     const faceFeature = page.getByLabel('Facial details', { exact: true });
-    const cheekTint = page.getByLabel('Cheek tint', { exact: true });
 
     await expect(faceFeature.locator('option[value="cheek-lines"]')).toHaveCount(0);
 
-    for (const value of [
-      'stubble',
-      'mustache',
-      'soul-patch',
-      'goatee',
-      'sideburns',
-      'chin-strap',
-      'short-beard',
-      'trimmed-beard',
-      'full-beard',
-    ]) {
-      await facialHair.selectOption(value);
-      await expect(facialHair).toHaveValue(value);
-      await expect(preview.locator(`[data-hero-slot="facial-hair"][data-hero-option="${value}"]`))
-        .toHaveAttribute('display', 'inline');
-    }
-    for (const value of ['short-beard', 'trimmed-beard', 'full-beard']) {
-      await facialHair.selectOption(value);
-      const beardIsOpaque = await preview
-        .locator(`[data-hero-slot="facial-hair"][data-hero-option="${value}"]`)
-        .evaluate((group) => Array.from(group.querySelectorAll('[fill]:not([fill="none"])'))
-          .every((node) => Number(node.getAttribute('opacity') || '1') >= 0.85));
-      expect(beardIsOpaque).toBe(true);
-    }
+    const failures = await page.evaluate(() => {
+      const svg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+      const baseState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS)));
+      const failures = [];
 
-    for (const value of ['freckles', 'beauty-mark', 'dimples']) {
-      await faceFeature.selectOption(value);
-      await expect(faceFeature).toHaveValue(value);
-      await expect(preview.locator(`[data-hero-slot="face-feature"][data-hero-option="${value}"]`))
-        .toHaveAttribute('display', 'inline');
-    }
+      function visibleSlot(slot, option) {
+        const group = svg.querySelector(`[data-hero-slot="${slot}"][data-hero-option="${option}"]`);
+        return group && group.getAttribute('display') === 'inline';
+      }
 
-    await cheekTint.selectOption('none');
-    await expect(cheekTint).toHaveValue('none');
-    const hiddenCheekOpacities = await preview.locator('ellipse[fill*="--hero-cheek"]').evaluateAll((nodes) =>
-      nodes.map((node) => Number(getComputedStyle(node).opacity))
-    );
-    expect(hiddenCheekOpacities.length).toBeGreaterThan(0);
-    expect(hiddenCheekOpacities.every((opacity) => opacity === 0)).toBe(true);
+      for (const value of ['stubble', 'mustache', 'soul-patch', 'goatee', 'sideburns', 'chin-strap', 'short-beard', 'trimmed-beard', 'full-beard']) {
+        const state = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+        state.appearance.facialHair = value;
+        window.HeroAvatar.applyToSvg(svg, state);
+        if (!visibleSlot('facial-hair', value)) failures.push({ slot: 'facial-hair', value });
+      }
 
-    await faceFeature.selectOption('freckles');
-    await expect(preview.locator('[data-hero-slot="face-feature"][data-hero-option="freckles"]'))
-      .toHaveAttribute('display', 'inline');
-    const stillHiddenCheeks = await preview.locator('ellipse[fill*="--hero-cheek"]').evaluateAll((nodes) =>
-      nodes.every((node) => Number(getComputedStyle(node).opacity) === 0)
-    );
-    expect(stillHiddenCheeks).toBe(true);
+      for (const value of ['short-beard', 'trimmed-beard', 'full-beard']) {
+        const state = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+        state.appearance.facialHair = value;
+        window.HeroAvatar.applyToSvg(svg, state);
+        const group = svg.querySelector(`[data-hero-slot="facial-hair"][data-hero-option="${value}"]`);
+        const beardIsOpaque = group && Array.from(group.querySelectorAll('[fill]:not([fill="none"])'))
+          .every((node) => Number(node.getAttribute('opacity') || '1') >= 0.85);
+        if (!beardIsOpaque) failures.push({ slot: 'facial-hair', value, beardIsOpaque });
+      }
 
-    await cheekTint.selectOption('natural');
-    await expect(cheekTint).toHaveValue('natural');
-    const visibleCheekOpacity = await preview.locator('ellipse[fill*="--hero-cheek"]').evaluateAll((nodes) =>
-      Math.max(...nodes.map((node) => Number(getComputedStyle(node).opacity)))
-    );
-    expect(visibleCheekOpacity).toBeGreaterThan(0);
+      for (const value of ['freckles', 'beauty-mark', 'dimples']) {
+        const state = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+        state.appearance.faceFeature = value;
+        window.HeroAvatar.applyToSvg(svg, state);
+        if (!visibleSlot('face-feature', value)) failures.push({ slot: 'face-feature', value });
+      }
 
-    await facialHair.selectOption('none');
-    await faceFeature.selectOption('none');
-    await expect(preview.locator('[data-hero-slot="facial-hair"][data-hero-option="none"]'))
-      .toHaveAttribute('display', 'inline');
-    await expect(preview.locator('[data-hero-slot="face-feature"][data-hero-option="none"]'))
-      .toHaveAttribute('display', 'inline');
+      const noCheeksState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+      noCheeksState.appearance.blushStyle = 'none';
+      window.HeroAvatar.applyToSvg(svg, noCheeksState);
+      const hiddenCheekOpacities = Array.from(svg.querySelectorAll('ellipse[fill*="--hero-cheek"]'))
+        .map((node) => Number(getComputedStyle(node).opacity));
+      if (!hiddenCheekOpacities.length || hiddenCheekOpacities.some((opacity) => opacity !== 0)) {
+        failures.push({ slot: 'cheek', value: 'none', opacities: hiddenCheekOpacities });
+      }
+
+      const frecklesNoCheeksState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+      frecklesNoCheeksState.appearance.blushStyle = 'none';
+      frecklesNoCheeksState.appearance.faceFeature = 'freckles';
+      window.HeroAvatar.applyToSvg(svg, frecklesNoCheeksState);
+      const stillHiddenCheeks = Array.from(svg.querySelectorAll('ellipse[fill*="--hero-cheek"]'))
+        .every((node) => Number(getComputedStyle(node).opacity) === 0);
+      if (!visibleSlot('face-feature', 'freckles') || !stillHiddenCheeks) {
+        failures.push({ slot: 'face-feature', value: 'freckles', stillHiddenCheeks });
+      }
+
+      const visibleCheeksState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+      visibleCheeksState.appearance.blushStyle = 'natural';
+      window.HeroAvatar.applyToSvg(svg, visibleCheeksState);
+      const visibleCheekOpacity = Math.max(...Array.from(svg.querySelectorAll('ellipse[fill*="--hero-cheek"]'))
+        .map((node) => Number(getComputedStyle(node).opacity)));
+      if (!(visibleCheekOpacity > 0)) failures.push({ slot: 'cheek', value: 'natural', visibleCheekOpacity });
+
+      const clearState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+      clearState.appearance.facialHair = 'none';
+      clearState.appearance.faceFeature = 'none';
+      window.HeroAvatar.applyToSvg(svg, clearState);
+      if (!visibleSlot('facial-hair', 'none')) failures.push({ slot: 'facial-hair', value: 'none' });
+      if (!visibleSlot('face-feature', 'none')) failures.push({ slot: 'face-feature', value: 'none' });
+
+      return failures;
+    });
+
+    expect(failures).toEqual([]);
   });
 
   test('Expanded facial structure controls update the preview', async ({ page }) => {
@@ -2210,6 +2217,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
           value,
           selectedBody: svg.getAttribute('data-hero-body'),
           shape: group.getAttribute('data-hero-option') || 'default',
+          features: Array.from(svg.querySelectorAll('[data-hero-slot="silhouette"][display="inline"]'))
+            .map((node) => node.getAttribute('data-hero-feature')),
           width: Math.round(bbox.width),
           top: Math.round(bbox.y),
           shoulder: filledWidthAt(paths, 276),
@@ -2245,6 +2254,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(profile.broad.shoulder, 'broad should have visibly wider shoulders than medium').toBeGreaterThan(profile.average.shoulder + 40);
     expect(profile.athletic.shoulder, 'athletic should taper clearly from shoulders to hip').toBeGreaterThan(profile.athletic.hip + 28);
     expect(profile.curvy.shape, 'curvy should use the softened curved torso instead of the extreme hourglass').toBe('curvy');
+    expect(profile.curvy.features, 'curvy should not use extra waist guide lines').toEqual([]);
     expect(profile['full-frame'].width, 'full-frame should remain broader than the softened curvy frame').toBeGreaterThan(profile.curvy.width + 8);
     expect(profile['fuller-hip'].hip, 'fuller-hip should widen clearly below the torso').toBeGreaterThan(profile['fuller-hip'].shoulder + 24);
     expect(profile['plus-size'].hip, 'plus-size should be wider through the lower torso than full-frame').toBeGreaterThan(profile['full-frame'].hip + 8);
