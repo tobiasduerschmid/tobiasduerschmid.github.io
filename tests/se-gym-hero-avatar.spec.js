@@ -360,6 +360,147 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       .toHaveAttribute('viewBox', CHOICE_PREVIEW_VIEWBOXES.hair);
   });
 
+  test('Every rendered choice preview uses the declared viewport and contains visible art', async ({ page }) => {
+    test.setTimeout(90000);
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+    await clearAccessories(page);
+
+    const previewFailures = await page.evaluate(async () => {
+      const modal = document.querySelector('#hero-customizer-modal');
+      const scrollRoot = modal && modal.querySelector('.hero-cust-box');
+      const buttons = Array.from(modal.querySelectorAll('.hero-cust-choice-button'));
+      const failures = [];
+      const nextFrame = () => new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+      function parseBox(value) {
+        const parts = String(value || '').trim().split(/\s+/).map(Number);
+        if (parts.length !== 4 || parts.some((part) => Number.isNaN(part))) return null;
+        return {
+          x: parts[0],
+          y: parts[1],
+          width: parts[2],
+          height: parts[3],
+          right: parts[0] + parts[2],
+          bottom: parts[1] + parts[3],
+        };
+      }
+
+      function intersectionArea(a, b) {
+        const left = Math.max(a.x, b.x);
+        const top = Math.max(a.y, b.y);
+        const right = Math.min(a.x + a.width, b.right);
+        const bottom = Math.min(a.y + a.height, b.bottom);
+        return Math.max(0, right - left) * Math.max(0, bottom - top);
+      }
+
+      function slotAreaInsideViewBox(svg, slot, option, viewBox) {
+        const group = svg.querySelector(`[data-hero-slot="${slot}"][data-hero-option="${option}"]`);
+        if (!group || group.getAttribute('display') !== 'inline') return { visible: false, area: 0 };
+        if (group.closest('[display="none"]')) return { visible: false, area: 0 };
+        try {
+          const box = group.getBBox();
+          return { visible: true, area: box.width > 0 && box.height > 0 ? intersectionArea(box, viewBox) : 0 };
+        } catch (e) {
+          return { visible: true, area: 0 };
+        }
+      }
+
+      function expectOptionSlot(svg, label, key, option, viewBox) {
+        const slotByKey = {
+          hairStyle: 'hair',
+          eyebrowStyle: 'eyebrow',
+          eyeShape: 'eye-shape',
+          noseShape: 'nose-shape',
+          mouthStyle: 'mouth-style',
+          headStyle: 'head-shape',
+          facialHair: 'facial-hair',
+          faceFeature: 'face-feature',
+          outfitStyle: 'outfit-style',
+        };
+        const slot = slotByKey[key];
+        if (!slot) return;
+
+        const emptyOptions = new Set(['bald', 'none', 'clean-shaven', 'super-suit']);
+        const strokeOnlyKeys = new Set(['eyebrowStyle']);
+        const result = slotAreaInsideViewBox(svg, slot, option, viewBox);
+        if (!result.visible) {
+          failures.push({ label, key, option, slot, reason: 'option-specific slot is not visible in preview' });
+          return;
+        }
+        if (!strokeOnlyKeys.has(key) && !emptyOptions.has(option) && result.area < 4) {
+          failures.push({ label, key, option, slot, reason: 'option-specific slot is outside or empty in preview crop', area: Math.round(result.area) });
+        }
+      }
+
+      if (!modal || !scrollRoot) return [{ reason: 'missing customizer modal or scroll root' }];
+
+      for (const button of buttons) {
+        button.scrollIntoView({ block: 'center', inline: 'nearest' });
+        scrollRoot.dispatchEvent(new Event('scroll', { bubbles: true }));
+        await nextFrame();
+      }
+
+      const deadline = performance.now() + 30000;
+      while (performance.now() < deadline) {
+        if (buttons.every((button) => button.querySelector('[data-hero-choice-svg]'))) break;
+        await nextFrame();
+      }
+
+      for (const button of buttons) {
+        const picker = button.closest('.hero-cust-choice-picker');
+        const svg = button.querySelector('[data-hero-choice-svg]');
+        const label = button.getAttribute('aria-label');
+        const key = picker && picker.getAttribute('data-hero-choice-picker');
+        const option = button.getAttribute('data-choice-value');
+        const expectedViewBox = picker && picker.getAttribute('data-preview-viewbox');
+        if (!svg) {
+          failures.push({ label, reason: 'missing preview svg' });
+          continue;
+        }
+        if (svg.getAttribute('viewBox') !== expectedViewBox) {
+          failures.push({ label, reason: 'wrong viewBox', expected: expectedViewBox, actual: svg.getAttribute('viewBox') });
+        }
+        const box = parseBox(svg.getAttribute('viewBox'));
+        if (!box) {
+          failures.push({ label, reason: 'invalid viewBox', actual: svg.getAttribute('viewBox') });
+          continue;
+        }
+        expectOptionSlot(svg, label, key, option, box);
+        if (key === 'heroKind' && svg.getAttribute('data-hero-kind') !== option) {
+          failures.push({ label, key, option, reason: 'hero type preview did not apply the represented option', actual: svg.getAttribute('data-hero-kind') });
+        }
+        if (key === 'bodyType' && svg.getAttribute('data-hero-body') !== option) {
+          failures.push({ label, key, option, reason: 'body type preview did not apply the represented option', actual: svg.getAttribute('data-hero-body') });
+        }
+      }
+
+      const blushPreviews = Object.fromEntries(Array.from(
+        modal.querySelectorAll('[data-hero-choice-picker="blushStyle"] .hero-cust-choice-button')
+      ).map((button) => {
+        const svg = button.querySelector('[data-hero-choice-svg]');
+        return [
+          button.getAttribute('data-choice-value'),
+          svg ? Number.parseFloat(svg.style.getPropertyValue('--hero-cheek-opacity') || '0') : Number.NaN,
+        ];
+      }));
+      if (!(blushPreviews.natural > 0)) {
+        failures.push({ key: 'blushStyle', option: 'natural', reason: 'natural cheek preview should show cheek tint', actual: blushPreviews.natural });
+      }
+      if (!(blushPreviews.subtle > 0 && blushPreviews.subtle < blushPreviews.natural * 0.75)) {
+        failures.push({ key: 'blushStyle', option: 'subtle', reason: 'subtle cheek preview should be visibly lighter than natural', actual: blushPreviews.subtle, natural: blushPreviews.natural });
+      }
+      if (blushPreviews.none !== 0) {
+        failures.push({ key: 'blushStyle', option: 'none', reason: 'none cheek preview should hide cheek tint', actual: blushPreviews.none });
+      }
+
+      return failures;
+    });
+
+    expect(previewFailures).toEqual([]);
+  });
+
   test('Avatar choices use respectful labels and canonical exported values', async ({ page }) => {
     await page.goto(GYM_URL);
 
@@ -1279,6 +1420,123 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       blockedFeatureHitsByStyle,
       'No selectable hair style should place hair over eyes, cheeks, or mouth'
     ).toEqual([]);
+  });
+
+  test('Every selectable hair style has complete visible hair behavior across face shapes and covering headwear', async ({ page }) => {
+    test.setTimeout(90000);
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+    await clearAccessories(page);
+
+    const hairFailures = await page.evaluate(() => {
+      const svg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+      const baseState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS)));
+      const hairStyles = Array.from(document.querySelectorAll('#hero-cust-hair-style option'))
+        .map((node) => node.value)
+        .filter(Boolean);
+      const headStyles = Array.from(document.querySelectorAll('#hero-cust-head-style option'))
+        .map((node) => node.value)
+        .filter(Boolean);
+      const coveringHeadwear = ['headwrap', 'draped-scarf', 'hijab', 'turban'];
+      const protectedFacePoints = [
+        { name: 'left eye outer', x: 374, y: 185 },
+        { name: 'left eye center', x: 381, y: 185 },
+        { name: 'right eye center', x: 419, y: 185 },
+        { name: 'right eye outer', x: 426, y: 185 },
+        { name: 'nose bridge', x: 400, y: 198 },
+        { name: 'nose tip', x: 400, y: 214 },
+        { name: 'left cheek', x: 368, y: 208 },
+        { name: 'right cheek', x: 432, y: 208 },
+        { name: 'mouth', x: 400, y: 226 },
+        { name: 'chin', x: 400, y: 240 },
+      ];
+      const failures = [];
+
+      baseState.outfit.accessory = 'none';
+      baseState.outfit.accessories = [];
+
+      function visibleSlot(slot, option) {
+        const group = svg.querySelector(`[data-hero-slot="${slot}"][data-hero-option="${option}"]`);
+        return group && group.getAttribute('display') === 'inline';
+      }
+
+      function bboxArea(slot, option) {
+        const group = svg.querySelector(`[data-hero-slot="${slot}"][data-hero-option="${option}"]`);
+        if (!group || group.getAttribute('display') !== 'inline' || typeof group.getBBox !== 'function') return 0;
+        try {
+          const box = group.getBBox();
+          return box.width * box.height;
+        } catch (e) {
+          return 0;
+        }
+      }
+
+      function hitSlot(point) {
+        const svgPoint = svg.createSVGPoint();
+        svgPoint.x = point.x;
+        svgPoint.y = point.y;
+        const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
+        const element = document.elementFromPoint(screenPoint.x, screenPoint.y);
+        const slot = element && element.closest('[data-hero-slot]');
+        return {
+          point: point.name,
+          slot: slot && slot.getAttribute('data-hero-slot'),
+          option: slot && slot.getAttribute('data-hero-option'),
+        };
+      }
+
+      for (const hairStyle of hairStyles) {
+        const state = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+        state.appearance.hairStyle = hairStyle;
+        state.appearance.headStyle = 'default';
+        window.HeroAvatar.applyToSvg(svg, state);
+
+        if (!visibleSlot('hair', hairStyle)) {
+          failures.push({ hairStyle, reason: 'selected hair slot is not visible' });
+        }
+        if (hairStyle !== 'bald' && bboxArea('hair', hairStyle) < 24) {
+          failures.push({ hairStyle, reason: 'selected hair slot has no visible geometry' });
+        }
+
+        for (const headStyle of headStyles) {
+          const shapedState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+          shapedState.appearance.hairStyle = hairStyle;
+          shapedState.appearance.headStyle = headStyle;
+          window.HeroAvatar.applyToSvg(svg, shapedState);
+
+          for (const hit of protectedFacePoints.map(hitSlot)) {
+            if (['hair', 'hairline', 'hair-root'].includes(hit.slot)) {
+              failures.push(Object.assign({ hairStyle, headStyle, reason: 'hair covers protected facial feature' }, hit));
+            }
+          }
+        }
+
+        for (const headwear of coveringHeadwear) {
+          const coveredState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+          coveredState.appearance.hairStyle = hairStyle;
+          coveredState.outfit.accessory = headwear;
+          coveredState.outfit.accessories = [headwear];
+          window.HeroAvatar.applyToSvg(svg, coveredState);
+
+          if (!visibleSlot('hair', 'bald')) {
+            failures.push({ hairStyle, headwear, reason: 'covering headwear should switch hair layer to bald' });
+          }
+          if (!visibleSlot('accessory', headwear)) {
+            failures.push({ hairStyle, headwear, reason: 'covering headwear accessory is not visible' });
+          }
+          for (const slot of ['hair', 'hairline', 'hair-root']) {
+            if (hairStyle !== 'bald' && visibleSlot(slot, hairStyle)) {
+              failures.push({ hairStyle, headwear, slot, reason: 'covered hair detail remains visible' });
+            }
+          }
+        }
+      }
+
+      return failures;
+    });
+
+    expect(hairFailures).toEqual([]);
   });
 
   test('Every selectable hair style keeps the costume emblem clear', async ({ page }) => {

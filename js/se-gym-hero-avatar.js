@@ -2453,7 +2453,10 @@
         setSlot(svg, 'mouth-style', optionValue);
       } else if (definition.key === 'blushStyle') {
         var contrastTokens = avatarContrastTokens(baseState.appearance.skin, baseState.appearance.hairColor);
-        svg.style.setProperty('--hero-cheek-opacity', optionValue === 'none' ? '0' : contrastTokens.cheekOpacity);
+        var cheekOpacity = optionValue === 'none'
+          ? '0'
+          : (optionValue === 'subtle' ? String(parseFloat(contrastTokens.cheekOpacity) * 0.55) : contrastTokens.cheekOpacity);
+        svg.style.setProperty('--hero-cheek-opacity', cheekOpacity);
       } else if (definition.key === 'headStyle') {
         setSlot(svg, 'head-shape', optionValue);
         setSlot(svg, 'face-clear', optionValue);
