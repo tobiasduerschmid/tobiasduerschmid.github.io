@@ -128,6 +128,7 @@
   word-break: break-word;
   transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 120ms ease, box-shadow 160ms ease;
   box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.08));
+  scroll-margin-top: 96px;
 }
 .git-command-lab__btn .git-command-lab__cmd {
   min-width: 0;
@@ -155,6 +156,8 @@
 .git-command-lab__btn:focus-visible {
   outline: var(--focus-width, 3px) solid var(--focus-color, #1e5c8a);
   outline-offset: var(--focus-offset, 2px);
+  position: relative;
+  z-index: 2;
 }
 
 .git-command-lab__icon {
@@ -310,6 +313,7 @@ html.dark-mode .git-command-lab__rebase-file code {
   font-weight: 600;
   line-height: 1.2;
   transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, opacity 160ms ease;
+  scroll-margin-top: 96px;
 }
 .git-command-lab__btn-back:hover:not(:disabled) {
   background-color: #f1f3f5;
@@ -319,6 +323,8 @@ html.dark-mode .git-command-lab__rebase-file code {
 .git-command-lab__btn-back:focus-visible {
   outline: var(--focus-width, 3px) solid var(--focus-color, #9aa6b2);
   outline-offset: var(--focus-offset, 2px);
+  position: relative;
+  z-index: 2;
 }
 .git-command-lab__btn-back:disabled {
   opacity: 0.4;

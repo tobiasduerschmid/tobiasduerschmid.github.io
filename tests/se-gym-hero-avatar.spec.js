@@ -22,11 +22,46 @@ const CHOICE_PREVIEW_VIEWBOXES = {
   outfit: '286 226 228 294',
 };
 
+const DEFAULT_SAVED_HERO = {
+  version: 1,
+  kind: 'human',
+  appearance: {
+    skin: '#dfa07a',
+    hairColor: '#1f140c',
+    hairStyle: 'short',
+    eyeColor: '#1f140c',
+    eyebrowStyle: 'arched',
+    headStyle: 'default',
+    eyeShape: 'round',
+    noseShape: 'soft',
+    mouthStyle: 'smile',
+    blushStyle: 'natural',
+    facialHair: 'none',
+    faceFeature: 'none',
+  },
+  body: { type: 'athletic' },
+  outfit: {
+    style: 'super-suit',
+    suit: '#1F6EBD',
+    capeOuter: '#15538f',
+    capeInner: '#FFD100',
+    accessory: 'none',
+    accessories: [],
+    emblem: '',
+  },
+};
+
 async function clearState(page) {
   await page.context().clearCookies();
   await page.evaluate(() => {
     try { localStorage.removeItem('se-gym-hero-avatar'); } catch (e) { /* */ }
   });
+}
+
+async function useDefaultSavedHero(page) {
+  await page.addInitScript((hero) => {
+    localStorage.setItem('se-gym-hero-avatar', JSON.stringify(hero));
+  }, DEFAULT_SAVED_HERO);
 }
 
 async function activatePersonalGym(page) {
@@ -90,6 +125,16 @@ async function scrollChoiceButtonIntoView(page, accessibleName) {
   });
   await expect(button).toBeVisible();
   return button;
+}
+
+async function scrollHeroCustomizerToTop(page) {
+  await page.locator('#hero-customizer-modal').evaluate(async (modal) => {
+    const scrollRoot = modal.querySelector('.hero-cust-box');
+    if (!scrollRoot) return;
+    scrollRoot.scrollTop = 0;
+    scrollRoot.dispatchEvent(new Event('scroll', { bubbles: true }));
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+  });
 }
 
 async function choicePreviewSvg(page, accessibleName) {
@@ -358,6 +403,75 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     const hairSvg = await choicePreviewSvg(page, 'Choose Hair style: Long and flowing');
     await expect(hairSvg, 'rendered choice SVGs should use their declared crop viewBox')
       .toHaveAttribute('viewBox', CHOICE_PREVIEW_VIEWBOXES.hair);
+  });
+
+  test('Choice thumbnails render visible options first and defer offscreen options until requested', async ({ page }) => {
+    await useDefaultSavedHero(page);
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+
+    const visibleChoice = page.getByRole('button', { name: 'Choose Hero type: Human hero' });
+    await expect(visibleChoice.locator('[data-hero-choice-svg]')).toHaveCount(1);
+
+    const totalButtons = await page.locator('#hero-customizer-modal .hero-cust-choice-button').count();
+    const renderedAtOpen = await page.locator('#hero-customizer-modal [data-hero-choice-svg]').count();
+    expect(renderedAtOpen, 'opening the customizer should not eagerly render every choice thumbnail')
+      .toBeLessThan(totalButtons);
+
+    const offscreenChoice = page.getByRole('button', { name: 'Choose Outfit style: Utility vest' });
+    await expect(offscreenChoice.locator('[data-hero-choice-svg]')).toHaveCount(0);
+
+    await offscreenChoice.focus();
+    await expect(offscreenChoice).toBeFocused();
+    await expect(offscreenChoice.locator('[data-hero-choice-svg]')).toHaveCount(1);
+  });
+
+  test('Large scroll jumps drop thumbnail work for options that moved far away', async ({ page }) => {
+    await useDefaultSavedHero(page);
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+
+    const transientChoice = page.getByRole('button', { name: 'Choose Outfit style: Utility vest' });
+    await expect(transientChoice.locator('[data-hero-choice-svg]')).toHaveCount(0);
+
+    await transientChoice.evaluate(async (button) => {
+      const scrollRoot = button.closest('.hero-cust-box');
+      if (!scrollRoot) return;
+      button.scrollIntoView({ block: 'center', inline: 'nearest' });
+      scrollRoot.dispatchEvent(new Event('scroll', { bubbles: true }));
+      scrollRoot.scrollTop = 0;
+      scrollRoot.dispatchEvent(new Event('scroll', { bubbles: true }));
+      await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+    });
+
+    await expect(transientChoice).not.toBeInViewport();
+    await expect(transientChoice.locator('[data-hero-choice-svg]')).toHaveCount(0);
+
+    await transientChoice.focus();
+    await expect(transientChoice.locator('[data-hero-choice-svg]')).toHaveCount(1);
+  });
+
+  test('Offscreen stale choice thumbnails stay hidden until their option is requested again', async ({ page }) => {
+    await useDefaultSavedHero(page);
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+
+    const offscreenChoice = page.getByRole('button', { name: 'Choose Outfit style: Utility vest' });
+    const offscreenSvg = await choicePreviewSvg(page, 'Choose Outfit style: Utility vest');
+
+    await scrollHeroCustomizerToTop(page);
+    await expect(offscreenChoice).not.toBeInViewport();
+
+    await setColorInput(page, '#hero-cust-skin', '#3d2515');
+    await expect(offscreenChoice).toHaveAttribute('data-choice-pending', 'true');
+    await expect(offscreenSvg).toHaveCSS('visibility', 'hidden');
+
+    await offscreenChoice.focus();
+    await expect(offscreenSvg).toHaveCSS('visibility', 'visible');
+    await expect(offscreenChoice).not.toHaveAttribute('data-choice-pending', 'true');
   });
 
   test('Every rendered choice preview uses the declared viewport and contains visible art', async ({ page }) => {
@@ -633,6 +747,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     );
 
     await setCheckboxInput(page, '#hero-customizer-modal input[name="hero-cust-accessory"][value="hijab"]', true);
+    await scrollChoiceButtonIntoView(page, 'Choose Hair style: Short crop');
     await expectNoVisiblePendingChoicePreviews(page);
     await expectChoiceSlotVisible(
       shortHairSvg,

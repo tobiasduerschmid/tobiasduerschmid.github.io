@@ -1332,6 +1332,7 @@ layout: sebook
       box-shadow: inset 0 0 0 2px rgba(39, 116, 174, 0.34), 0 8px 16px rgba(0, 59, 92, 0.14);
     }
     .hero-cust-choice-preview {
+      position: relative;
       display: block;
       min-width: 0;
       height: 82px;
@@ -1339,6 +1340,29 @@ layout: sebook
       overflow: hidden;
       border: 1px solid #b5c3d1;
       background: linear-gradient(180deg, #eaf2fb 0%, #d0e4f7 100%);
+    }
+    .hero-cust-choice-button[data-choice-pending="true"] .hero-cust-choice-preview::before,
+    .hero-cust-choice-button[data-choice-pending="true"] .hero-cust-choice-preview::after {
+      content: "";
+      position: absolute;
+      pointer-events: none;
+    }
+    .hero-cust-choice-button[data-choice-pending="true"] .hero-cust-choice-preview::before {
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% 34%, rgba(39, 116, 174, 0.22) 0 18%, transparent 19%),
+        linear-gradient(180deg, rgba(255, 255, 255, 0.58), rgba(208, 228, 247, 0.82));
+    }
+    .hero-cust-choice-button[data-choice-pending="true"] .hero-cust-choice-preview::after {
+      left: 50%;
+      top: 50%;
+      width: 2.2em;
+      height: 2.2em;
+      border: 0.22em solid rgba(0, 59, 92, 0.38);
+      border-top-color: rgba(39, 116, 174, 0.82);
+      border-radius: 999px;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 0 0 0.12em rgba(255, 255, 255, 0.68);
     }
     .hero-cust-choice-preview .se-gym-hero-svg {
       width: 100%;
@@ -1466,6 +1490,16 @@ layout: sebook
       border-color: #596579;
       background: linear-gradient(180deg, #2a3344 0%, #1a2230 100%);
     }
+    html.dark-mode .hero-cust-choice-button[data-choice-pending="true"] .hero-cust-choice-preview::before {
+      background:
+        radial-gradient(circle at 50% 34%, rgba(139, 184, 232, 0.24) 0 18%, transparent 19%),
+        linear-gradient(180deg, rgba(48, 57, 77, 0.86), rgba(26, 34, 48, 0.9));
+    }
+    html.dark-mode .hero-cust-choice-button[data-choice-pending="true"] .hero-cust-choice-preview::after {
+      border-color: rgba(215, 236, 255, 0.32);
+      border-top-color: rgba(139, 184, 232, 0.9);
+      box-shadow: 0 0 0 0.12em rgba(6, 29, 49, 0.72);
+    }
     html.dark-mode .hero-cust-choice-check {
       background: #d7ecff;
       color: #061d31;
@@ -1568,7 +1602,8 @@ layout: sebook
       min-height: 38px;
     }
     #hero-customizer-section { margin-top: 1.5rem; }
-    #customize-hero-disabled-note { font-size: 0.95em; opacity: 0.75; }
+    #customize-hero-disabled-note { font-size: 0.95em; color: #4f5b6b; opacity: 1; }
+    html.dark-mode #customize-hero-disabled-note { color: #d7deea; }
     #customize-hero-btn:not([hidden]) ~ #customize-hero-disabled-note { display: none; }
 
     .gym-topic-hero-svg .gym-floor ellipse {

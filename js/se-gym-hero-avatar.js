@@ -3,6 +3,8 @@
 
   var STORAGE_KEY = 'se-gym-hero-avatar';
   var SCHEMA_VERSION = 1;
+  var CHOICE_PREVIEW_OBSERVER_MARGIN = 160;
+  var CHOICE_PREVIEW_QUEUE_RETAIN_MARGIN = 520;
 
   function choice(value, label) {
     return { value: value, label: label };
@@ -2510,6 +2512,8 @@
         button._heroChoicePreviewRendered = true;
         button._heroChoicePreviewSignature = signature || choicePreviewSignature(definition, optionValue, baseState);
         button._heroChoicePendingSignature = '';
+        button._heroChoiceQueuedSignature = '';
+        button._heroChoiceQueuedToken = 0;
         setChoicePreviewPending(button, false);
         return;
       }
@@ -2520,6 +2524,8 @@
       button._heroChoicePreviewRendered = true;
       button._heroChoicePreviewSignature = signature || choicePreviewSignature(definition, optionValue, baseState);
       button._heroChoicePendingSignature = '';
+      button._heroChoiceQueuedSignature = '';
+      button._heroChoiceQueuedToken = 0;
       setChoicePreviewPending(button, false);
     }
 
@@ -2677,19 +2683,86 @@
       return root.getBoundingClientRect();
     }
 
-    function isChoiceButtonInViewportBox(button, rootBox) {
+    function isChoiceButtonInViewportBox(button, rootBox, margin) {
       if (!button || !rootBox || modal.hidden || button.offsetParent === null) return false;
+      var extra = typeof margin === 'number' ? margin : 0;
       var box = button.getBoundingClientRect();
-      return box.bottom >= rootBox.top && box.top <= rootBox.bottom && box.right >= rootBox.left && box.left <= rootBox.right;
+      return box.bottom >= rootBox.top - extra
+        && box.top <= rootBox.bottom + extra
+        && box.right >= rootBox.left - extra
+        && box.left <= rootBox.right + extra;
+    }
+
+    function shouldRetainQueuedChoicePreview(item, rootBox) {
+      if (!item || !item.button || item.token !== choicePreviewRenderToken) return false;
+      return item.button.getAttribute('aria-pressed') === 'true'
+        || item.button.matches(':focus, :focus-within, :hover')
+        || isChoiceButtonInViewportBox(item.button, rootBox, CHOICE_PREVIEW_QUEUE_RETAIN_MARGIN);
+    }
+
+    function releaseQueuedChoicePreview(item) {
+      if (!item || !item.button) return;
+      if (item.button._heroChoiceQueuedSignature === item.signature) {
+        item.button._heroChoiceQueuedSignature = '';
+        item.button._heroChoiceQueuedToken = 0;
+      }
+      setChoicePreviewPending(item.button, !!item.button.querySelector('[data-hero-choice-svg]'));
+    }
+
+    function pruneQueuedChoicePreviewRenders() {
+      if (!choicePreviewForegroundQueue.length) return;
+      var rootBox = choicePreviewViewportBox();
+      if (!rootBox) return;
+      var retained = [];
+      for (var i = 0; i < choicePreviewForegroundQueue.length; i++) {
+        var item = choicePreviewForegroundQueue[i];
+        if (shouldRetainQueuedChoicePreview(item, rootBox)) {
+          retained.push(item);
+        } else {
+          releaseQueuedChoicePreview(item);
+        }
+      }
+      choicePreviewForegroundQueue = retained;
     }
 
     function processChoicePreviewItem(item, state, token) {
       if (!item || token !== choicePreviewRenderToken) return false;
+      if (!shouldRetainQueuedChoicePreview(item, choicePreviewViewportBox())) {
+        releaseQueuedChoicePreview(item);
+        return false;
+      }
+      item.button._heroChoiceQueuedSignature = '';
+      item.button._heroChoiceQueuedToken = 0;
       if (item.button._heroChoicePreviewSignature === item.signature && item.button.querySelector('[data-hero-choice-svg]')) {
         setChoicePreviewPending(item.button, false);
         return false;
       }
-      renderChoicePreview(item.button, item.definition, state, item.signature, item.snapshot);
+      renderChoicePreview(item.button, item.definition, item.state || state, item.signature, item.snapshot);
+      return true;
+    }
+
+    function queueChoiceButtonPreviewForState(button, definition, state, snapshot, targetQueue) {
+      if (!button || !definition || !state) return false;
+      var optionValue = button.getAttribute('data-choice-value');
+      var signature = choicePreviewSignature(definition, optionValue, state);
+      if (button._heroChoicePreviewSignature === signature && button.querySelector('[data-hero-choice-svg]')) {
+        setChoicePreviewPending(button, false);
+        return false;
+      }
+      button._heroChoicePendingSignature = signature;
+      setChoicePreviewPending(button, true);
+      if (button._heroChoiceQueuedSignature === signature && button._heroChoiceQueuedToken === choicePreviewRenderToken) {
+        return false;
+      }
+      button._heroChoiceQueuedSignature = signature;
+      button._heroChoiceQueuedToken = choicePreviewRenderToken;
+      var item = { button: button, definition: definition, signature: signature, state: state, snapshot: snapshot, token: choicePreviewRenderToken };
+      if (targetQueue) {
+        targetQueue.push(item);
+      } else {
+        choicePreviewForegroundQueue.push(item);
+        scheduleForegroundChoicePreviewWork(choicePreviewRenderToken, state);
+      }
       return true;
     }
 
@@ -2711,6 +2784,7 @@
       if (modal.hidden) return;
       var rootBox = choicePreviewViewportBox();
       if (!rootBox) return;
+      pruneQueuedChoicePreviewRenders();
       var state = refreshLatestChoicePreviewContext();
       for (var c = 0; c < choiceControls.length; c++) {
         var control = choiceControls[c];
@@ -2718,7 +2792,7 @@
         var buttons = control.picker.querySelectorAll('[data-choice-value]');
         for (var b = 0; b < buttons.length; b++) {
           if (isChoiceButtonInViewportBox(buttons[b], rootBox)) {
-            renderChoiceButtonPreviewForState(buttons[b], control.definition, state, latestChoicePreviewSnapshot);
+            queueChoiceButtonPreviewForState(buttons[b], control.definition, state, latestChoicePreviewSnapshot);
           }
         }
       }
@@ -2747,11 +2821,10 @@
       choicePreviewForegroundHandle = scheduleChoicePreviewFrame(function step() {
         choicePreviewForegroundHandle = 0;
         if (token !== choicePreviewRenderToken) return;
-        if (runChoicePreviewQueue(choicePreviewForegroundQueue, state, token, 4, 12)) {
+        pruneQueuedChoicePreviewRenders();
+        if (runChoicePreviewQueue(choicePreviewForegroundQueue, state, token, 1, 8)) {
           scheduleForegroundChoicePreviewWork(token, state);
-          return;
         }
-        scheduleBackgroundChoicePreviewWork(token, state);
       });
     }
 
@@ -2772,7 +2845,7 @@
     function observeChoiceButton(button, definition) {
       button._heroChoiceDefinition = definition;
       if (!('IntersectionObserver' in window)) {
-        button._heroChoiceInView = true;
+        button._heroChoiceInView = false;
         return;
       }
       if (!choicePreviewObserver) {
@@ -2788,15 +2861,29 @@
               snapshot = latestChoicePreviewSnapshot;
             }
             var definition = button._heroChoiceDefinition;
-            renderChoiceButtonPreviewForState(button, definition, state, snapshot);
+            queueChoiceButtonPreviewForState(button, definition, state, snapshot);
           }
         }, {
           root: modal.querySelector('.hero-cust-box') || null,
-          rootMargin: '48px',
+          rootMargin: CHOICE_PREVIEW_OBSERVER_MARGIN + 'px',
           threshold: 0.01
         });
       }
       choicePreviewObserver.observe(button);
+    }
+
+    function isChoiceButtonDemanded(button, rootBox) {
+      if (!button) return false;
+      return button.getAttribute('aria-pressed') === 'true'
+        || !!button._heroChoiceInView
+        || isChoiceButtonInViewportBox(button, rootBox, CHOICE_PREVIEW_OBSERVER_MARGIN)
+        || button.matches(':focus, :focus-within, :hover');
+    }
+
+    function renderChoiceButtonPreviewOnDemand(button, definition) {
+      if (!button || !definition || modal.hidden) return;
+      var state = refreshLatestChoicePreviewContext();
+      renderChoiceButtonPreviewForState(button, definition, state, latestChoicePreviewSnapshot);
     }
 
     function queueAllChoicePreviewRenders(baseState) {
@@ -2805,8 +2892,6 @@
       latestChoicePreviewSnapshot = captureChoicePreviewSnapshot();
       var token = ++choicePreviewRenderToken;
       var foreground = [];
-      var background = [];
-      var renderedBackground = [];
       var queued = [];
       var rootBox = choicePreviewViewportBox();
 
@@ -2821,18 +2906,14 @@
           setChoicePreviewPending(button, false);
           return;
         }
-        queued.push(button);
         button._heroChoicePendingSignature = signature;
-        setChoicePreviewPending(button, true);
-        var item = { button: button, definition: definition, signature: signature, snapshot: latestChoicePreviewSnapshot };
         var hasRenderedPreview = !!button.querySelector('[data-hero-choice-svg]');
-        if (button.getAttribute('aria-pressed') === 'true' || button._heroChoiceInView || isChoiceButtonInViewportBox(button, rootBox)) {
-          foreground.push(item);
-        } else if (hasRenderedPreview) {
-          renderedBackground.push(item);
-        } else {
-          background.push(item);
+        if (!isChoiceButtonDemanded(button, rootBox)) {
+          setChoicePreviewPending(button, hasRenderedPreview);
+          return;
         }
+        queued.push(button);
+        queueChoiceButtonPreviewForState(button, definition, state, latestChoicePreviewSnapshot, foreground);
       }
 
       for (var c = 0; c < choiceControls.length; c++) {
@@ -2843,9 +2924,8 @@
       }
 
       choicePreviewForegroundQueue = foreground;
-      choicePreviewBackgroundQueue = renderedBackground.concat(background);
+      choicePreviewBackgroundQueue = [];
       scheduleForegroundChoicePreviewWork(token, state);
-      scheduleBackgroundChoicePreviewWork(token, state);
     }
 
     function refreshChoicePreviews(baseState) {
@@ -2904,6 +2984,12 @@
           button.addEventListener('click', function () {
             select.value = this.getAttribute('data-choice-value');
             select.dispatchEvent(new Event('change', { bubbles: true }));
+          });
+          button.addEventListener('focus', function () {
+            renderChoiceButtonPreviewOnDemand(this, this._heroChoiceDefinition);
+          });
+          button.addEventListener('pointerenter', function () {
+            renderChoiceButtonPreviewOnDemand(this, this._heroChoiceDefinition);
           });
 
           grid.appendChild(button);

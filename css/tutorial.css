@@ -2703,6 +2703,37 @@ html:not(.dark-mode) .tvm-terminal-loading {
   letter-spacing: 0.03em;
 }
 
+.tvm-test-run-btn {
+  padding: 0.35em 0.75em;
+  border: 1px solid #0069b4;
+  border-radius: 4px;
+  background: #0069b4;
+  color: #ffffff;
+  font: inherit;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.tvm-test-run-btn:hover:not(:disabled) {
+  background: #005a99;
+  border-color: #005a99;
+}
+
+.tvm-test-run-btn:disabled {
+  background: #516171;
+  border-color: #516171;
+  color: #ffffff;
+  cursor: not-allowed;
+  opacity: 1;
+}
+
+.tvm-test-run-btn:focus-visible {
+  outline: var(--focus-width, 3px) solid var(--focus-color, #ffb81c);
+  outline-offset: var(--focus-offset, 2px);
+}
+
 .tvm-run-btn {
   background: #0078d4;
   color: #fff;

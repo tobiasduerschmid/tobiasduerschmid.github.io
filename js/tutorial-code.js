@@ -9020,6 +9020,21 @@
   // ---------------------------------------------------------------------------
   // Tutorial Steps
   // ---------------------------------------------------------------------------
+  TutorialCode.prototype._prepareInstructionScrollables = function (root) {
+    if (!root) return;
+    var heading = root.querySelector('h2');
+    var headingText = heading && heading.textContent ? heading.textContent.trim() : '';
+    var tables = root.querySelectorAll('.tvm-step-instructions table');
+    Array.prototype.forEach.call(tables, function (table, index) {
+      if (!table.hasAttribute('tabindex')) table.setAttribute('tabindex', '0');
+      if (!table.hasAttribute('aria-label') && !table.hasAttribute('aria-labelledby') && !table.caption) {
+        table.setAttribute('aria-label', headingText
+          ? headingText + ' table' + (tables.length > 1 ? ' ' + (index + 1) : '')
+          : 'Tutorial table' + (tables.length > 1 ? ' ' + (index + 1) : ''));
+      }
+    });
+  };
+
   TutorialCode.prototype.loadStep = function (index) {
     if (index < 0 || index >= this.steps.length) return;
     // Block navigation to locked steps (unless instructor mode)
@@ -9047,6 +9062,7 @@
     html += '<div class="tvm-step-instructions">' +
       this._stepInstructionsHTML(step) + '</div>';
     this.stepContentEl.innerHTML = html;
+    this._prepareInstructionScrollables(this.stepContentEl);
     this._initTooltips(this.stepContentEl);
     if (this.stepContentWrapEl) this.stepContentWrapEl.scrollTop = 0;
 
