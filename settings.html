@@ -383,12 +383,12 @@ info_nav_title: "My Settings"
           <div>
             <p class="setting-name">More confetti</p>
             <p class="setting-description">
-              By default, confetti only celebrates a finished quiz or
-              flashcard workout. Turn this on to also get a small burst of
-              confetti after <em>each</em> correctly answered quiz question
-              and after each flashcard you mark as "I got it right" — in
-              SEBook, tutorials, and the personal gym. Off by default.
-              Respects your reduced-motion preference.
+              Confetti celebrates finished quizzes and flashcard workouts,
+              and also gives a polished burst after <em>each</em> correctly
+              answered quiz question and each flashcard you mark as "I got it
+              right" — in SEBook, tutorials, and the personal gym. On by
+              default; turn this off for quieter feedback. Respects your
+              reduced-motion preference.
             </p>
           </div>
           <div class="setting-control">
@@ -921,6 +921,10 @@ info_nav_title: "My Settings"
     document.documentElement.classList.toggle('abbr-underlines-disabled', !enabled);
   }
 
+  function isMoreConfettiPreferred() {
+    return readCookie('more-confetti') !== 'false';
+  }
+
   function syncVolumeOutput() {
     var input = document.getElementById('setting-audio-volume');
     var output = document.getElementById('setting-audio-volume-value');
@@ -1061,7 +1065,7 @@ info_nav_title: "My Settings"
     setCheckbox('setting-abbr-underlines', abbrUnderlines);
     applyAbbrUnderlineMode(abbrUnderlines);
 
-    var moreConfetti = readCookie('more-confetti') === 'true';
+    var moreConfetti = isMoreConfettiPreferred();
     setCheckbox('setting-more-confetti', moreConfetti);
     document.documentElement.classList.toggle('more-confetti-enabled', moreConfetti);
 

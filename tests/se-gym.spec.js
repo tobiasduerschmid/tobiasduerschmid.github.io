@@ -17,6 +17,7 @@ const ACTIVATE_TOGGLE_SLIDER = '#activatePersonalGymToggle + .slider';
 const ANALYZE_TOGGLE_SLIDER = '#analyzePerformanceToggle + .slider';
 const TIMED_TOGGLE_SLIDER = '#timedPracticeToggle + .slider';
 const SHOW_WORKOUT_HERO_SLIDER = '#showWorkoutHeroToggle + .slider';
+const MORE_CONFETTI_SLIDER = '#moreConfettiToggle + .slider';
 
 function parseIndices(value) {
   if (!value) return [];
@@ -113,6 +114,20 @@ test.describe('SE Gym - Library View', () => {
     await expect(page.locator('#gym-controls-body')).not.toHaveClass(/pd-inactive/);
     await expect(page.locator('#gym-entrance-sections')).not.toHaveClass(/pd-inactive/);
     await a11yCheckpoint(page, 'gym entrance — activated (controls visible)', { feature: A11Y_FEATURE, darkMode: true });
+  });
+
+  test('more confetti is enabled by default and can be opted out', async ({ page }) => {
+    await page.goto(GYM_URL);
+    await page.locator(ACTIVATE_TOGGLE_SLIDER).click();
+
+    const moreConfetti = page.getByRole('checkbox', { name: 'More confetti' });
+    await expect(moreConfetti).toBeChecked();
+
+    await page.locator(MORE_CONFETTI_SLIDER).click();
+    await expect(moreConfetti).not.toBeChecked();
+
+    await page.reload();
+    await expect(page.getByRole('checkbox', { name: 'More confetti' })).not.toBeChecked();
   });
 
   test('activate toggle persists across page reload', async ({ page }) => {
@@ -788,7 +803,9 @@ test.describe('Personal Gym - Workout', () => {
   });
 
   test('workout completes and shows results', async ({ page, context }) => {
+    await page.setViewportSize({ width: 1440, height: 900 });
     await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym-show-workout-hero', 'true');
     await setCookie(context, 'se-gym', JSON.stringify([{ type: 'flashcard', id: 'git' }]));
     await page.addInitScript(() => {
       localStorage.setItem('se-gym-hero-avatar', JSON.stringify({
@@ -834,7 +851,9 @@ test.describe('Personal Gym - Workout', () => {
     await expect(page.locator('#workout-results')).toBeVisible();
     await expect(page.locator('#workout-score')).toHaveText('1');
     await expect(page.locator('#workout-total')).toHaveText('1');
+    await expect(page.locator('.workout-hero-visual:visible')).toHaveCount(0);
     const resultsHero = page.locator('#workout-results .workout-results-hero [data-gym-hero-svg]');
+    await expect(resultsHero).toHaveCount(1);
     await expect(resultsHero).toBeVisible();
     await expect(resultsHero).toHaveAttribute('data-hero-kind', 'bruin');
     await expect(resultsHero.locator('[data-hero-kind-layer="bruin"][data-hero-slot="mascot"]'))

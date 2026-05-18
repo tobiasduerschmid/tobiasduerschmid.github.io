@@ -170,7 +170,7 @@ layout: sebook
               <span class="toggle-icon" aria-hidden="true"><i class="fa-solid fa-star"></i></span>
               <span class="toggle-label">More confetti</span>
               <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about more confetti" aria-describedby="more-confetti-tooltip">?</button>
-              <span id="more-confetti-tooltip" role="tooltip" class="info-tooltip">When on, a small burst of confetti fires after each correctly answered quiz question and each flashcard you mark as "I got it right" — not only at the end of the workout. Respects your reduced-motion preference. Off by default.</span>
+              <span id="more-confetti-tooltip" role="tooltip" class="info-tooltip">When on, a polished burst of confetti fires after each correctly answered quiz question and each flashcard you mark as "I got it right" — not only at the end of the workout. Respects your reduced-motion preference. On by default; turn it off for quieter feedback.</span>
             </span>
             <label class="switch">
               <span class="sr-only">Toggle more confetti</span>
@@ -3446,6 +3446,10 @@ layout: sebook
       #gym-workout.workout-hero-enabled .workout-hero-visual-right {
         justify-self: start;
       }
+
+      #gym-workout.workout-results-active.workout-hero-enabled .workout-stage {
+        display: none;
+      }
     }
 
     .workout-source-badge {
@@ -6469,7 +6473,9 @@ layout: sebook
 
       // ---- More-confetti toggle (mirror of /settings/) ----
       if (moreConfettiToggle) {
-        moreConfettiToggle.checked = /(?:^|; )more-confetti=true(?:;|$)/.test(document.cookie || '');
+        moreConfettiToggle.checked = (typeof window.isMoreConfettiEnabled === 'function')
+          ? window.isMoreConfettiEnabled()
+          : !/(?:^|; )more-confetti=false(?:;|$)/.test(document.cookie || '');
         moreConfettiToggle.addEventListener('change', function () {
           var on = moreConfettiToggle.checked;
           document.cookie = 'more-confetti=' + (on ? 'true' : 'false') + '; max-age=31536000; path=/; SameSite=Lax';
