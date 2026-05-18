@@ -2484,6 +2484,67 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(fitFailures).toEqual([]);
   });
 
+  test('Head-bound hair, accessories, and details fit the selected head shape', async ({ page }) => {
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+    await clearAccessories(page);
+
+    const fitFailures = await page.evaluate(() => {
+      const svg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+      const baseState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS)));
+      const failures = [];
+      const cases = [
+        { slot: 'hair', option: 'short', width: true },
+        { slot: 'hairline', option: 'short', hairStyle: 'short', width: true },
+        { slot: 'hair-root', option: 'long', hairStyle: 'long' },
+        { slot: 'accessory', option: 'beanie', accessory: 'beanie', width: true },
+        { slot: 'accessory', option: 'glasses', accessory: 'glasses' },
+        { slot: 'accessory', option: 'earrings', accessory: 'earrings', width: true },
+        { slot: 'face-feature', option: 'freckles', faceFeature: 'freckles' },
+      ];
+
+      baseState.outfit.accessory = 'none';
+      baseState.outfit.accessories = [];
+
+      function render(check, headStyle) {
+        const state = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+        state.appearance.headStyle = headStyle;
+        state.appearance.hairStyle = check.hairStyle || 'short';
+        state.appearance.faceFeature = check.faceFeature || 'none';
+        state.outfit.accessory = check.accessory || 'none';
+        state.outfit.accessories = check.accessory ? [check.accessory] : [];
+        window.HeroAvatar.applyToSvg(svg, state);
+        const group = svg.querySelector(`[data-hero-slot="${check.slot}"][data-hero-option="${check.option}"]`);
+        if (!group || group.getAttribute('display') !== 'inline') return null;
+        const rect = group.getBoundingClientRect();
+        return { width: rect.width, top: rect.top, bottom: rect.bottom, headFit: group.getAttribute('data-hero-head-fit') };
+      }
+
+      for (const check of cases) {
+        const defaultBox = render(check, 'default');
+        const broadBox = render(check, 'broad');
+        const narrowBox = render(check, 'narrow');
+        const oblongBox = render(check, 'oblong');
+
+        if (!defaultBox || !broadBox || !narrowBox || !oblongBox) {
+          failures.push({ check, reason: 'fit layer did not render for every tested head shape' });
+          continue;
+        }
+        if (broadBox.headFit !== 'broad' || narrowBox.headFit !== 'narrow' || oblongBox.headFit !== 'oblong') {
+          failures.push({ check, reason: 'fit layer did not record the active head shape', broadBox, narrowBox, oblongBox });
+        }
+        if (check.width && !(broadBox.width > narrowBox.width + 0.5)) {
+          failures.push({ check, reason: 'fit layer should widen on broad heads and narrow on narrow heads', broadWidth: broadBox.width, narrowWidth: narrowBox.width });
+        }
+      }
+
+      return failures;
+    });
+
+    expect(fitFailures).toEqual([]);
+  });
+
   test('Every selectable hair style keeps the costume emblem clear', async ({ page }) => {
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
@@ -2874,7 +2935,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       const roundFrame = svg.querySelector('[data-hero-slot="accessory"][data-hero-option="glasses"] circle');
       const gradientStop = svg.querySelector('linearGradient[id^="hair-grad-"] stop');
       const nose = svg.querySelector('[data-hero-slot="nose-shape"][data-hero-option="soft"] [data-hero-face-detail="nose"]');
-      const smileLine = svg.querySelector('[data-hero-slot="mouth-style"][data-hero-option="smile"] path[stroke*="--hero-mouth-line"]');
+      const smileLine = svg.querySelector('[data-hero-slot="mouth-style"][data-hero-option="full-lips"] path[stroke*="--hero-mouth-line"]');
       const cheek = svg.querySelector('ellipse[fill*="--hero-cheek"]');
       const lipFill = svg.querySelector('[data-hero-slot="mouth-style"][data-hero-option="full-lips"] path[fill*="--hero-lip-fill"]');
       const lipHighlight = svg.querySelector('[data-hero-slot="mouth-style"][data-hero-option="full-lips"] path[stroke*="--hero-lip-highlight"]');
@@ -3239,6 +3300,24 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         return group && group.getAttribute('display') === 'inline';
       }
 
+      function facialHairBox(facialHair, mouthStyle, headStyle = 'default') {
+        const state = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+        state.appearance.facialHair = facialHair;
+        state.appearance.mouthStyle = mouthStyle;
+        state.appearance.headStyle = headStyle;
+        window.HeroAvatar.applyToSvg(svg, state);
+        const group = svg.querySelector(`[data-hero-slot="facial-hair"][data-hero-option="${facialHair}"]`);
+        if (!group || group.getAttribute('display') !== 'inline') return null;
+        const rect = group.getBoundingClientRect();
+        return {
+          width: rect.width,
+          top: rect.top,
+          bottom: rect.bottom,
+          mouthFit: group.getAttribute('data-hero-mouth-fit'),
+          headFit: group.getAttribute('data-hero-head-fit'),
+        };
+      }
+
       for (const value of ['stubble', 'soft-mustache', 'fine-mustache-stubble', 'mustache', 'soul-patch', 'goatee', 'sideburns', 'chin-strap', 'short-beard', 'trimmed-beard', 'full-beard']) {
         const state = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
         state.appearance.facialHair = value;
@@ -3254,6 +3333,24 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         const beardIsOpaque = group && Array.from(group.querySelectorAll('[fill]:not([fill="none"])'))
           .every((node) => Number(node.getAttribute('opacity') || '1') >= 0.85);
         if (!beardIsOpaque) failures.push({ slot: 'facial-hair', value, beardIsOpaque });
+      }
+
+      const smallMustache = facialHairBox('mustache', 'small-smile');
+      const wideMustache = facialHairBox('mustache', 'wide-smile');
+      if (!smallMustache || !wideMustache || !(wideMustache.width > smallMustache.width + 2)) {
+        failures.push({ slot: 'facial-hair', value: 'mustache', reason: 'mustache should widen with wider mouth shapes', smallMustache, wideMustache });
+      }
+
+      const neutralBeard = facialHairBox('short-beard', 'neutral');
+      const excitedBeard = facialHairBox('short-beard', 'excited-smile');
+      if (!neutralBeard || !excitedBeard || !(excitedBeard.bottom > neutralBeard.bottom + 1)) {
+        failures.push({ slot: 'facial-hair', value: 'short-beard', reason: 'beard should drop below taller open smiles', neutralBeard, excitedBeard });
+      }
+
+      const narrowBeard = facialHairBox('trimmed-beard', 'smile', 'narrow');
+      const broadBeard = facialHairBox('trimmed-beard', 'smile', 'broad');
+      if (!narrowBeard || !broadBeard || broadBeard.headFit !== 'broad' || narrowBeard.headFit !== 'narrow' || !(broadBeard.width > narrowBeard.width + 1)) {
+        failures.push({ slot: 'facial-hair', value: 'trimmed-beard', reason: 'beard should also follow head width while fitting the mouth', narrowBeard, broadBeard });
       }
 
       for (const value of ['freckles', 'nose-freckles', 'beauty-mark', 'small-moles', 'dimples', 'chin-dimple', 'smile-lines', 'under-eye-lines']) {

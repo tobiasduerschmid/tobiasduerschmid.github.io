@@ -338,22 +338,22 @@ test.describe('SE Gym - Library View', () => {
     await expect(page.locator('#timed-practice-note')).toContainText('0:02');
   });
 
-  test('show hero during workout is off by default and persists when enabled', async ({ page, context }) => {
+  test('show hero during workout is on by default and persists when disabled', async ({ page, context }) => {
     await setCookie(context, 'se-gym-active', 'true');
     await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'scrum' }]));
     await page.goto(GYM_URL);
 
-    await expect(page.getByLabel('Show hero during workout')).not.toBeChecked();
+    await expect(page.getByLabel('Show hero during workout')).toBeChecked();
     await page.getByRole('button', { name: 'Start Workout' }).click();
-    await expect(page.locator('#gym-workout')).not.toHaveClass(/workout-hero-enabled/);
-    await expect(page.locator('.workout-hero-visual:visible')).toHaveCount(0);
+    await expect(page.locator('#gym-workout')).toHaveClass(/workout-hero-enabled/);
 
     await page.getByRole('button', { name: /Back to Gym Entrance/i }).click();
     await page.locator(SHOW_WORKOUT_HERO_SLIDER).click();
-    await expect(page.getByLabel('Show hero during workout')).toBeChecked();
+    await expect(page.getByLabel('Show hero during workout')).not.toBeChecked();
+    expect(await page.evaluate(() => document.cookie)).toContain('se-gym-show-workout-hero=false');
 
     await page.reload();
-    await expect(page.getByLabel('Show hero during workout')).toBeChecked();
+    await expect(page.getByLabel('Show hero during workout')).not.toBeChecked();
   });
 });
 

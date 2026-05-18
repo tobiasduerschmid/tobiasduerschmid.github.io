@@ -6,8 +6,8 @@
   var layer = null;
   var activePieces = [];
   var cleanupTimer = null;
-  var MAX_ACTIVE_PIECES = 260;
-  var CLEANUP_PADDING_MS = 700;
+  var MAX_ACTIVE_PIECES = 176;
+  var CLEANUP_PADDING_MS = 360;
 
   function injectCSS() {
     if (cssInjected) return;
@@ -22,14 +22,13 @@
         'overflow:hidden;',
         'background:var(--piece-bg,#fff);',
         'border:1px solid rgba(18,24,38,0.16);',
-        'box-shadow:0 1px 1px rgba(18,24,38,0.18),0 10px 24px rgba(18,24,38,0.14);',
-        'filter:saturate(1.08);',
+        'box-shadow:0 1px 1px rgba(18,24,38,0.18),0 8px 18px rgba(18,24,38,0.12);',
         'transform:translate3d(0,0,0) rotateZ(0deg) rotateY(0deg) scale(0.52);',
         'transform-origin:50% 50%;',
         'backface-visibility:visible;',
         'will-change:transform,opacity;',
         'opacity:0;',
-        'animation:site-confetti-fly var(--duration,5400ms) linear forwards;',
+        'animation:site-confetti-fly var(--duration,4200ms) linear forwards;',
         'animation-delay:var(--delay,0ms);',
       '}',
       '.site-confetti-piece::after{',
@@ -58,7 +57,7 @@
       'html.prm-reduce .site-confetti-piece{animation:none !important;}',
       'html.dark-mode .site-confetti-piece{',
         'border-color:rgba(255,255,255,0.18);',
-        'box-shadow:0 1px 1px rgba(0,0,0,0.34),0 8px 22px rgba(0,0,0,0.28);',
+        'box-shadow:0 1px 1px rgba(0,0,0,0.34),0 6px 16px rgba(0,0,0,0.24);',
       '}'
     ].join('');
     document.head.appendChild(style);
@@ -69,6 +68,11 @@
     layer = document.createElement('div');
     layer.className = 'site-confetti-layer';
     layer.setAttribute('aria-hidden', 'true');
+    layer.addEventListener('animationend', function (event) {
+      if (event.target && event.target.classList.contains('site-confetti-piece')) {
+        removePiece(event.target);
+      }
+    });
     document.body.appendChild(layer);
     return layer;
   }
@@ -157,8 +161,8 @@
     if (!rect.width || !rect.height) return;
 
     var colors = ['#ff4f6d','#ffb000','#ffd84d','#43d17d','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#f97316','#ffffff'];
-    var shapes = ['ribbon','ribbon','ribbon','ribbon','ticket','ticket','circle','triangle','spark'];
-    var count = clamp(Math.round((rect.width + rect.height) / 7), 96, 132);
+    var shapes = ['ribbon','ribbon','ribbon','ribbon','ticket','ticket','circle'];
+    var count = clamp(Math.round((rect.width + rect.height) / 9), 64, 88);
     var confettiLayer = getLayer();
     var fragment = document.createDocumentFragment();
     var centerX = rect.left + rect.width / 2;
@@ -179,7 +183,7 @@
       piece.style.top  = px(centerY + rand(-sourceSpreadY, sourceSpreadY));
 
       var shape = shapes[Math.floor(Math.random() * shapes.length)];
-      var w, h, br, clip;
+      var w, h, br;
       if (shape === 'ribbon') {
         w = rand(6, 10);
         h = rand(20, 34);
@@ -192,16 +196,6 @@
         w = rand(10, 16);
         h = w;
         br = 999;
-      } else if (shape === 'triangle') {
-        w = rand(13, 18);
-        h = rand(13, 20);
-        br = 1;
-        clip = 'polygon(50% 0, 100% 100%, 0 100%)';
-      } else {
-        w = rand(14, 20);
-        h = w;
-        br = 2;
-        clip = 'polygon(50% 0, 62% 36%, 100% 50%, 62% 64%, 50% 100%, 38% 64%, 0 50%, 38% 36%)';
       }
 
       piece.style.width        = w.toFixed(1) + 'px';
@@ -209,7 +203,6 @@
       piece.style.marginLeft   = (-w / 2).toFixed(1) + 'px';
       piece.style.marginTop    = (-h / 2).toFixed(1) + 'px';
       piece.style.borderRadius = br + 'px';
-      if (clip) piece.style.clipPath = clip;
 
       var direction = Math.random() < 0.5 ? -1 : 1;
       var velocity = direction * rand(100, 415) + rand(-85, 85);
@@ -230,8 +223,8 @@
       var rxFlutter = rand(70, 150);
       var ryFlutter = rand(80, 170);
       var color = colors[i % colors.length];
-      var duration = rand(5400, 7200);
-      var delay = Math.random() * 180;
+      var duration = rand(3400, 4600);
+      var delay = Math.random() * 110;
 
       piece.style.setProperty('--rz0', deg(rzStart));
       piece.style.setProperty('--rx0', deg(rxStart));
@@ -250,9 +243,6 @@
       piece.style.setProperty('--delay', delay.toFixed(0) + 'ms');
       piece.style.setProperty('--duration', duration.toFixed(0) + 'ms');
       piece.style.setProperty('--piece-bg', 'linear-gradient(135deg,rgba(255,255,255,0.92),rgba(255,255,255,0.18) 24%,' + color + ' 46%,' + color + ' 74%,rgba(0,0,0,0.16))');
-      piece.addEventListener('animationend', function (event) {
-        removePiece(event.currentTarget);
-      }, { once: true });
       piece.__siteConfettiExpiresAt = Date.now() + delay + duration + CLEANUP_PADDING_MS;
       activePieces.push(piece);
       fragment.appendChild(piece);

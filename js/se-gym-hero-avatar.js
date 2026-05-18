@@ -540,6 +540,12 @@
     return aliases[value] || value;
   }
 
+  function lookupValues(values) {
+    var lookup = {};
+    for (var i = 0; i < values.length; i++) lookup[values[i]] = true;
+    return lookup;
+  }
+
   // Silhouette overlays add readable secondary cues; torso geometry handles the primary body profile.
   var BODY_SILHOUETTES = {
     'petite':          [],
@@ -611,6 +617,52 @@
   var HEAD_ACCESSORY_PRIORITY = ['hijab', 'wrapped-dastar', 'headwrap', 'draped-scarf', 'turban', 'embroidered-prayer-cap', 'beanie', 'baseball-cap', 'bucket-hat', 'bandana', 'visor', 'crown', 'headband'];
   var EAR_ACCESSORY_PRIORITY = ['hoop-earrings', 'earrings'];
   var DETAIL_ACCESSORY_PRIORITY = ['headset-mic', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'hair-clips', 'chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard', 'student-id-badge', 'backpack-straps', 'messenger-bag', 'circuit-pin', 'code-patch', 'utility-belt', 'hero-cape-clasp', 'forehead-jewel', 'halo'];
+  var HEADWEAR_FIT_ACCESSORIES = lookupValues(HEADWEAR_ACCESSORIES.concat(['crown', 'halo', 'headset-mic', 'over-ear-headphones', 'hair-clips']));
+  var FACE_FIT_ACCESSORIES = lookupValues(FACE_ACCESSORIES.concat(['forehead-jewel']));
+  var SIDE_FIT_ACCESSORIES = lookupValues(['earrings', 'hoop-earrings', 'wireless-earbuds', 'wired-earbuds']);
+  var HEAD_STYLE_FITS = {
+    default: { scaleX: 1, scaleY: 1, translateY: 0 },
+    feminine: { scaleX: 1.05, scaleY: 0.99, translateY: -1 },
+    'soft-oval': { scaleX: 1.02, scaleY: 1.03, translateY: -2 },
+    round: { scaleX: 1.1, scaleY: 0.98, translateY: 0 },
+    'full-cheeks': { scaleX: 1.13, scaleY: 0.99, translateY: 0 },
+    heart: { scaleX: 1.07, scaleY: 1, translateY: -2 },
+    diamond: { scaleX: 1.04, scaleY: 1.02, translateY: -2 },
+    oval: { scaleX: 0.98, scaleY: 1.08, translateY: -5 },
+    oblong: { scaleX: 0.96, scaleY: 1.13, translateY: -7 },
+    narrow: { scaleX: 0.91, scaleY: 1.08, translateY: -4 },
+    square: { scaleX: 1, scaleY: 0.98, translateY: 0 },
+    'soft-square': { scaleX: 1.05, scaleY: 1, translateY: -1 },
+    broad: { scaleX: 1.12, scaleY: 0.98, translateY: 0 },
+    'full-oval': { scaleX: 1.09, scaleY: 1.03, translateY: -2 },
+    'soft-full-cheek-jaw': { scaleX: 1.12, scaleY: 1.02, translateY: -1 },
+    'tapered-oval': { scaleX: 0.98, scaleY: 1.06, translateY: -5 },
+    'gentle-taper': { scaleX: 1.02, scaleY: 1.04, translateY: -4 },
+    'soft-round-jaw': { scaleX: 1.08, scaleY: 1, translateY: 0 },
+    'soft-angular': { scaleX: 1.04, scaleY: 1.03, translateY: -3 },
+    'slim-square-jaw': { scaleX: 0.96, scaleY: 1.05, translateY: -4 },
+    'slender-soft-square': { scaleX: 0.96, scaleY: 1.06, translateY: -4 },
+    'long-tapered-jaw': { scaleX: 0.98, scaleY: 1.13, translateY: -8 },
+    'narrow-angular-jaw': { scaleX: 0.92, scaleY: 1.08, translateY: -5 },
+    'soft-v-jaw': { scaleX: 0.98, scaleY: 1.05, translateY: -4 },
+    'full-straight-jaw': { scaleX: 1.11, scaleY: 1.02, translateY: -1 }
+  };
+  var MOUTH_STYLE_FITS = {
+    smile: { scaleX: 1, scaleY: 1, translateY: 0 },
+    'soft-smile': { scaleX: 0.94, scaleY: 0.98, translateY: -0.4 },
+    'small-smile': { scaleX: 0.84, scaleY: 0.98, translateY: -0.8 },
+    grin: { scaleX: 1.08, scaleY: 1.03, translateY: 0.9 },
+    'closed-smile': { scaleX: 0.96, scaleY: 1, translateY: -0.3 },
+    neutral: { scaleX: 0.88, scaleY: 0.96, translateY: -1 },
+    'full-lips': { scaleX: 0.98, scaleY: 1.05, translateY: 0.4 },
+    'soft-full-lips': { scaleX: 0.96, scaleY: 1.04, translateY: 0.2 },
+    'bright-smile': { scaleX: 1.04, scaleY: 1.03, translateY: 0.8 },
+    'wide-smile': { scaleX: 1.14, scaleY: 1.04, translateY: 1.1 },
+    'toothy-smile': { scaleX: 1.1, scaleY: 1.07, translateY: 1.5 },
+    'cheerful-grin': { scaleX: 1.12, scaleY: 1.06, translateY: 1.4 },
+    'open-smile': { scaleX: 1.03, scaleY: 1.1, translateY: 2.4 },
+    'excited-smile': { scaleX: 1.11, scaleY: 1.13, translateY: 3 }
+  };
 
   // Body-type → body-shape (SVG geometry override). Average uses the default torso.
   // These use distinct but natural profiles so picker previews read without looking caricatured.
@@ -1724,6 +1776,96 @@
     }
   }
 
+  function affineFitTransform(fit, centerX, centerY) {
+    var scaleX = fit.scaleX === undefined ? 1 : fit.scaleX;
+    var scaleY = fit.scaleY === undefined ? 1 : fit.scaleY;
+    var translateX = fit.translateX || 0;
+    var translateY = fit.translateY || 0;
+    if (Math.abs(scaleX - 1) < 0.001 && Math.abs(scaleY - 1) < 0.001 && !translateX && !translateY) return '';
+    var matrixX = centerX - scaleX * centerX + translateX;
+    var matrixY = centerY - scaleY * centerY + translateY;
+    return [
+      'matrix(',
+      fmtTransformNumber(scaleX), ' 0 0 ', fmtTransformNumber(scaleY), ' ',
+      fmtTransformNumber(matrixX), ' ', fmtTransformNumber(matrixY),
+      ')'
+    ].join('');
+  }
+
+  function fmtTransformNumber(value) {
+    var rounded = Math.round(value * 1000) / 1000;
+    return String(rounded).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
+  }
+
+  function setGroupTransform(group, transform, fitName, fitValue) {
+    if (!group) return;
+    if (transform) group.setAttribute('transform', transform);
+    else group.removeAttribute('transform');
+    if (fitName && fitValue) group.setAttribute(fitName, fitValue);
+    else if (fitName) group.removeAttribute(fitName);
+  }
+
+  function applyFitToSlot(svg, slotName, transform, fitName, fitValue) {
+    var groups = svg.querySelectorAll('[data-hero-slot="' + slotName + '"]');
+    for (var i = 0; i < groups.length; i++) setGroupTransform(groups[i], transform, fitName, fitValue);
+  }
+
+  function applyFitToAccessories(svg, transform, lookup, fitValue) {
+    var groups = svg.querySelectorAll('[data-hero-slot="accessory"]');
+    for (var i = 0; i < groups.length; i++) {
+      var option = groups[i].getAttribute('data-hero-option');
+      if (lookup[option]) setGroupTransform(groups[i], transform, 'data-hero-head-fit', fitValue);
+    }
+  }
+
+  function applyHeadShapeFit(svg, headStyle) {
+    var normalized = canonicalChoiceValue('headStyle', headStyle || 'default');
+    var fit = HEAD_STYLE_FITS[normalized] || HEAD_STYLE_FITS.default;
+    var widthDelta = (fit.scaleX || 1) - 1;
+    var lift = fit.translateY || 0;
+    var hairTransform = affineFitTransform({ scaleX: 1 + widthDelta * 0.32, scaleY: 1, translateY: lift * 0.04 }, 400, 176);
+    var hairlineTransform = affineFitTransform({ scaleX: 1 + widthDelta * 0.28, scaleY: 1, translateY: lift * 0.04 }, 400, 166);
+    var headwearTransform = affineFitTransform({ scaleX: 1 + widthDelta * 0.18, scaleY: 1, translateY: lift * 0.03 }, 400, 164);
+    var faceAccessoryTransform = affineFitTransform({ scaleX: 1 + widthDelta * 0.08, scaleY: 1, translateY: 0 }, 400, 188);
+    var sideAccessoryTransform = affineFitTransform({ scaleX: 1 + widthDelta * 0.28, scaleY: 1, translateY: 0 }, 400, 198);
+    var faceFeatureTransform = affineFitTransform({ scaleX: 1 + widthDelta * 0.12, scaleY: 1, translateY: lift * 0.03 }, 400, 204);
+    var accessoryGroups = svg.querySelectorAll('[data-hero-slot="accessory"]');
+    for (var i = 0; i < accessoryGroups.length; i++) {
+      accessoryGroups[i].removeAttribute('transform');
+      accessoryGroups[i].removeAttribute('data-hero-head-fit');
+    }
+
+    svg.setAttribute('data-hero-head-fit', normalized);
+    applyFitToSlot(svg, 'hair', hairTransform, 'data-hero-head-fit', normalized);
+    applyFitToSlot(svg, 'hairline', hairlineTransform, 'data-hero-head-fit', normalized);
+    applyFitToSlot(svg, 'hair-root', '', 'data-hero-head-fit', normalized);
+    applyFitToSlot(svg, 'face-feature', faceFeatureTransform, 'data-hero-head-fit', normalized);
+    applyFitToAccessories(svg, headwearTransform, HEADWEAR_FIT_ACCESSORIES, normalized);
+    applyFitToAccessories(svg, faceAccessoryTransform, FACE_FIT_ACCESSORIES, normalized);
+    applyFitToAccessories(svg, sideAccessoryTransform, SIDE_FIT_ACCESSORIES, normalized);
+  }
+
+  function facialHairFitForMouth(mouthStyle, headStyle) {
+    var mouth = MOUTH_STYLE_FITS[canonicalChoiceValue('mouthStyle', mouthStyle || 'smile')] || MOUTH_STYLE_FITS.smile;
+    var head = HEAD_STYLE_FITS[canonicalChoiceValue('headStyle', headStyle || 'default')] || HEAD_STYLE_FITS.default;
+    return {
+      scaleX: (mouth.scaleX || 1) * (1 + ((head.scaleX || 1) - 1) * 0.38),
+      scaleY: (mouth.scaleY || 1) * (1 + ((head.scaleY || 1) - 1) * 0.18),
+      translateY: (mouth.translateY || 0) + (head.translateY || 0) * 0.16
+    };
+  }
+
+  function applyFacialHairFit(svg, mouthStyle, headStyle) {
+    var normalizedMouth = canonicalChoiceValue('mouthStyle', mouthStyle || 'smile');
+    var normalizedHead = canonicalChoiceValue('headStyle', headStyle || 'default');
+    var transform = affineFitTransform(facialHairFitForMouth(normalizedMouth, normalizedHead), 400, 224);
+    var groups = svg.querySelectorAll('[data-hero-slot="facial-hair"]');
+    for (var i = 0; i < groups.length; i++) {
+      setGroupTransform(groups[i], transform, 'data-hero-mouth-fit', normalizedMouth);
+      groups[i].setAttribute('data-hero-head-fit', normalizedHead);
+    }
+  }
+
   function eyelashFitForEyeShape(eyeShape) {
     var normalized = canonicalChoiceValue('eyeShape', eyeShape || 'round');
     if (ROUND_EYE_SHAPES[normalized]) return { family: 'round' };
@@ -1990,6 +2132,8 @@
     var bodyType = canonicalChoiceValue('bodyType', state.body.type);
     var hairStyle = canonicalChoiceValue('hairStyle', state.appearance.hairStyle);
     var eyeShape = canonicalChoiceValue('eyeShape', state.appearance.eyeShape || 'round');
+    var headStyle = canonicalChoiceValue('headStyle', state.appearance.headStyle || 'default');
+    var mouthStyle = canonicalChoiceValue('mouthStyle', state.appearance.mouthStyle || 'smile');
     var contrastTokens = avatarContrastTokens(state.appearance.skin, state.appearance.hairColor);
     applyAvatarColorTokens(svg, state, contrastTokens);
 
@@ -2005,7 +2149,6 @@
     setSlot(svg, 'eye-shape', eyeShape);
     setSlot(svg, 'eyelash-style', state.appearance.eyelashStyle || 'none');
     applyEyelashFit(svg, eyeShape);
-    var headStyle = state.appearance.headStyle || 'default';
     setSlot(svg, 'head-shape', headStyle);
     setSlot(svg, 'face-clear', headStyle);
     setSlot(svg, 'head-features', headStyle);
@@ -2013,10 +2156,12 @@
     setSlot(svg, 'nose-shape', state.appearance.noseShape || 'soft');
     setSlot(svg, 'face-feature', canonicalChoiceValue('faceFeature', state.appearance.faceFeature || 'none'));
     setSlot(svg, 'facial-hair', state.appearance.facialHair || 'none');
-    setSlot(svg, 'mouth-style', state.appearance.mouthStyle || 'smile');
+    setSlot(svg, 'mouth-style', mouthStyle);
     setSlot(svg, 'hair-root', hidesHair ? 'none' : renderedHairStyle);
     setSlot(svg, 'outfit-style', state.outfit.style || DEFAULTS.outfit.style);
     setMultiSlot(svg, 'accessory', compositedAccessories);
+    applyHeadShapeFit(svg, headStyle);
+    applyFacialHairFit(svg, mouthStyle, headStyle);
 
     applyBodyTypeToSvg(svg, heroKind === 'bruin' ? 'athletic' : bodyType);
 
@@ -2893,6 +3038,7 @@
         setSlot(svg, 'hair', renderedHairStyle);
         setSlot(svg, 'hairline', hidesHair ? 'none' : renderedHairStyle);
         setSlot(svg, 'hair-root', hidesHair ? 'none' : renderedHairStyle);
+        applyHeadShapeFit(svg, baseState.appearance.headStyle || 'default');
       } else if (definition.key === 'eyebrowStyle') {
         setSlot(svg, 'eyebrow', optionValue);
       } else if (definition.key === 'eyeShape') {
@@ -2905,6 +3051,7 @@
         setSlot(svg, 'nose-shape', optionValue);
       } else if (definition.key === 'mouthStyle') {
         setSlot(svg, 'mouth-style', optionValue);
+        applyFacialHairFit(svg, optionValue, baseState.appearance.headStyle || 'default');
       } else if (definition.key === 'blushStyle') {
         var contrastTokens = avatarContrastTokens(baseState.appearance.skin, baseState.appearance.hairColor);
         var cheekOpacity = optionValue === 'none'
@@ -2915,14 +3062,20 @@
         setSlot(svg, 'head-shape', optionValue);
         setSlot(svg, 'face-clear', optionValue);
         setSlot(svg, 'head-features', optionValue);
+        applyHeadShapeFit(svg, optionValue);
+        applyFacialHairFit(svg, baseState.appearance.mouthStyle || 'smile', optionValue);
       } else if (definition.key === 'facialHair') {
         setSlot(svg, 'facial-hair', optionValue);
+        applyFacialHairFit(svg, baseState.appearance.mouthStyle || 'smile', baseState.appearance.headStyle || 'default');
       } else if (definition.key === 'faceFeature') {
         setSlot(svg, 'face-feature', optionValue);
+        applyHeadShapeFit(svg, baseState.appearance.headStyle || 'default');
       } else if (definition.key === 'bodyType') {
         applyBodyTypeToSvg(svg, normalizeHeroKind(baseState.kind) === 'bruin' ? 'athletic' : canonicalChoiceValue('bodyType', optionValue));
       } else if (definition.key === 'outfitStyle') {
         setSlot(svg, 'outfit-style', optionValue);
+      } else if (definition.key === 'accessory') {
+        applyHeadShapeFit(svg, baseState.appearance.headStyle || 'default');
       }
     }
 

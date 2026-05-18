@@ -156,7 +156,7 @@ layout: sebook
               <span class="toggle-icon" aria-hidden="true"><i class="fa-solid fa-user-astronaut"></i></span>
               <span class="toggle-label">Show hero during workout</span>
               <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about workout hero" aria-describedby="show-workout-hero-tooltip">?</button>
-              <span id="show-workout-hero-tooltip" role="tooltip" class="info-tooltip">When on, desktop workouts show decorative hero animations beside the current question. Mobile workouts keep the focus on the card and never show these side heroes. Off by default.</span>
+              <span id="show-workout-hero-tooltip" role="tooltip" class="info-tooltip">When on, desktop workouts show decorative hero animations beside the current question. Mobile workouts keep the focus on the card and never show these side heroes. On by default; turn it off for a quieter workout view.</span>
             </span>
             <label class="switch">
               <span class="sr-only">Toggle hero visibility during workout</span>
@@ -743,6 +743,33 @@ layout: sebook
       box-sizing: border-box;
     }
 
+    body.se-gym-page.se-gym-workout-active #se-gym-app {
+      max-width: min(100%, 1900px);
+    }
+
+    body.se-gym-page.se-gym-workout-active {
+      overflow-x: clip;
+    }
+
+    body.se-gym-page.se-gym-workout-active .intro-header {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: 0 !important;
+      padding: 0 !important;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      clip-path: inset(50%);
+      border: 0;
+      box-shadow: none;
+      white-space: nowrap;
+    }
+
+    body.se-gym-page.se-gym-workout-active #main-content {
+      padding-top: 8px;
+      padding-bottom: 12px;
+    }
+
     #se-gym-app *,
     #se-gym-app *::before,
     #se-gym-app *::after {
@@ -795,6 +822,10 @@ layout: sebook
     #gym-workout {
       max-width: 860px;
       margin: 0 auto;
+    }
+
+    body.se-gym-page.se-gym-workout-active #sidebar {
+      display: none !important;
     }
 
     body.se-gym-page.se-gym-workout-active #sidebar-toggle {
@@ -3607,10 +3638,11 @@ layout: sebook
       pointer-events: none;
       user-select: none;
       min-width: 0;
+      width: 100%;
     }
 
     .workout-hero-visual .se-gym-hero-svg {
-      max-height: min(64vh, 560px);
+      max-height: min(84vh, 820px);
       width: 100%;
     }
 
@@ -3620,23 +3652,23 @@ layout: sebook
 
     @media (min-width: 1180px) {
       #gym-workout.workout-hero-enabled {
-        max-width: min(100%, 1500px);
+        max-width: min(100%, 1900px);
       }
 
       #gym-workout.workout-hero-enabled .workout-stage {
         display: grid;
-        grid-template-columns: minmax(150px, 1fr) minmax(0, 860px) minmax(150px, 1fr);
+        grid-template-columns: minmax(380px, 1fr) minmax(0, 560px) minmax(380px, 1fr);
         gap: clamp(10px, 1.5vw, 24px);
         align-items: start;
-        max-width: min(100%, 1500px);
+        max-width: min(100%, 1900px);
       }
 
       #gym-workout.workout-hero-enabled .workout-hero-visual {
         display: block;
         position: sticky;
-        top: 92px;
+        top: 76px;
         align-self: start;
-        padding-top: 18px;
+        padding-top: 6px;
       }
 
       #gym-workout.workout-hero-enabled .workout-hero-visual-left {
@@ -4511,11 +4543,36 @@ layout: sebook
       padding: 32px 0;
     }
 
+    #gym-workout.workout-results-active {
+      padding-top: 0;
+    }
+
+    #gym-workout.workout-results-active .workout-header-row,
+    #gym-workout.workout-results-active .workout-progress-bar {
+      display: none;
+    }
+
+    #gym-workout.workout-results-active .workout-results-content {
+      padding: 8px 0 12px;
+    }
+
+    #gym-workout.workout-results-active .workout-results-content h2 {
+      margin: 0 0 8px;
+      padding-bottom: 0;
+      border-bottom: 0;
+      font-size: clamp(1.55em, 3vw, 2em);
+    }
+
     .workout-results-hero {
       width: min(280px, 72vw);
       margin: 0 auto 12px;
       aspect-ratio: 700 / 665;
       pointer-events: none;
+    }
+
+    #gym-workout.workout-results-active .workout-results-hero {
+      width: min(260px, 34vh, 56vw);
+      margin-bottom: 8px;
     }
 
     .workout-results-hero .se-gym-hero-svg {
@@ -4529,12 +4586,88 @@ layout: sebook
       color: var(--color-primary, #2774AE);
     }
 
+    #gym-workout.workout-results-active .workout-score-display {
+      margin: 8px 0 6px;
+      font-size: clamp(1.55em, 3vw, 2em);
+    }
+
+    #gym-workout.workout-results-active #workout-summary {
+      margin: 0 0 10px;
+    }
+
+    #gym-workout.workout-results-active .workout-breakdown {
+      margin-top: 10px;
+      padding: 12px 14px;
+    }
+
+    #gym-workout.workout-results-active .workout-breakdown-heading {
+      margin-bottom: 8px;
+    }
+
+    #gym-workout.workout-results-active .workout-breakdown-list {
+      gap: 6px;
+    }
+
+    #gym-workout.workout-results-active .workout-breakdown-row {
+      padding-top: 5px;
+      padding-bottom: 5px;
+    }
+
     .workout-results-actions {
       display: flex;
       justify-content: center;
       gap: 12px;
       flex-wrap: wrap;
       margin-top: 20px;
+    }
+
+    #gym-workout.workout-results-active .workout-results-actions {
+      margin-top: 12px;
+    }
+
+    #gym-workout.workout-results-active .workout-result-shortcut-hint {
+      margin-top: 8px;
+    }
+
+    @media (max-height: 820px) and (min-width: 760px) {
+      body.se-gym-page.se-gym-workout-active #se-gym-app {
+        padding-top: 8px;
+        padding-bottom: 10px;
+      }
+
+      #gym-workout.workout-results-active .workout-results-content {
+        padding-top: 4px;
+      }
+
+      #gym-workout.workout-results-active .workout-results-hero {
+        width: min(210px, 29vh, 50vw);
+      }
+
+      #gym-workout.workout-results-active .workout-score-display {
+        margin-top: 6px;
+        margin-bottom: 4px;
+      }
+
+      #gym-workout.workout-results-active #workout-summary {
+        margin-bottom: 8px;
+      }
+
+      #gym-workout.workout-results-active .workout-breakdown {
+        padding: 10px 12px;
+      }
+
+      #gym-workout.workout-results-active .workout-breakdown-list {
+        gap: 4px;
+      }
+
+      #gym-workout.workout-results-active .workout-breakdown-row {
+        padding-top: 4px;
+        padding-bottom: 4px;
+      }
+
+      #gym-workout.workout-results-active .workout-results-actions {
+        margin-top: 10px;
+      }
     }
 
     #se-gym-app .quiz-shortcuts-hint,
@@ -7162,7 +7295,6 @@ layout: sebook
         var sidebar = document.getElementById('sidebar');
         var sidebarToggle = document.getElementById('sidebar-toggle');
         var mobileSidebar = window.matchMedia && window.matchMedia('(max-width: 1100px)').matches;
-        if (!mobileSidebar) return;
         if (isWorkout) {
           if (sidebar) {
             sidebar.classList.remove('open');
@@ -7179,9 +7311,12 @@ layout: sebook
             sidebarToggle.removeAttribute('inert');
             sidebarToggle.removeAttribute('aria-hidden');
           }
-          if (sidebar && !sidebar.classList.contains('open')) {
+          if (sidebar && mobileSidebar && !sidebar.classList.contains('open')) {
             sidebar.setAttribute('inert', '');
             sidebar.setAttribute('aria-hidden', 'true');
+          } else if (sidebar) {
+            sidebar.removeAttribute('inert');
+            sidebar.removeAttribute('aria-hidden');
           }
         }
       }

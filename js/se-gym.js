@@ -145,8 +145,8 @@
   }
 
   function isShowWorkoutHero() {
-    // Default: keep workout cards visually focused. Desktop side heroes are opt-in.
-    return getCookie(SHOW_WORKOUT_HERO_COOKIE) === 'true';
+    // Default: show desktop side heroes. An explicit "false" cookie opts out.
+    return getCookie(SHOW_WORKOUT_HERO_COOKIE) !== 'false';
   }
 
   function setShowWorkoutHero(value) {

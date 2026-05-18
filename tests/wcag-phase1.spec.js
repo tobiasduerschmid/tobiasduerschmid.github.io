@@ -144,8 +144,9 @@ test.describe('Settings page', () => {
     expect(settingsCookies).toContain('se-gym-timer-mode=per-question');
     expect(settingsCookies).toContain('se-gym-timer-seconds-per-question=1');
 
+    await expect(page.getByLabel('Show hero during workout')).toBeChecked();
     await clickSwitch(page, '#setting-show-workout-hero');
-    expect(await page.evaluate(() => document.cookie)).toContain('se-gym-show-workout-hero=true');
+    expect(await page.evaluate(() => document.cookie)).toContain('se-gym-show-workout-hero=false');
   });
 });
 
