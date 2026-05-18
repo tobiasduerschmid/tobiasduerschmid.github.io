@@ -37,7 +37,7 @@
       id: 'hero-cust-hair-style',
       label: 'Hair style',
       path: ['appearance', 'hairStyle'],
-      preview: 'head',
+      preview: 'hair',
       groups: [
         choiceGroup('Short styles', [
           choice('short', 'Short crop'),
@@ -90,12 +90,12 @@
           choice('double-puffs', 'Double puffs'),
           choice('bantu-knots', 'Bantu knots'),
           choice('afro', 'Afro'),
-          choice('rounded-afro', 'Rounded afro')
+          choice('rounded-afro', 'Rounded Afro')
         ]),
         choiceGroup('Braids, locs, and tied styles', [
           choice('locs', 'Long locs'),
           choice('loose-locs', 'Loose locs'),
-          choice('dreads-bun', 'Locs bun'),
+          choice('locs-bun', 'Locs bun'),
           choice('braids', 'Thick braids'),
           choice('long-braid', 'Long braid'),
           choice('french-braid', 'French braid'),
@@ -126,7 +126,7 @@
       id: 'hero-cust-eyebrow',
       label: 'Eyebrows',
       path: ['appearance', 'eyebrowStyle'],
-      preview: 'face',
+      preview: 'eyebrows',
       groups: [
         choiceGroup('Eyebrows', [
           choice('arched', 'Arched'),
@@ -142,13 +142,13 @@
       id: 'hero-cust-eye-shape',
       label: 'Eye shape',
       path: ['appearance', 'eyeShape'],
-      preview: 'face',
+      preview: 'eyes',
       groups: [
         choiceGroup('Eye shape', [
           choice('round', 'Round'),
           choice('almond', 'Almond'),
-          choice('monolid', 'Monolid'),
-          choice('soft-monolid', 'Soft monolid'),
+          choice('single-eyelid', 'Single eyelid'),
+          choice('soft-single-eyelid', 'Soft single eyelid'),
           choice('hooded', 'Hooded'),
           choice('smiling', 'Smiling eyes'),
           choice('wide', 'Wide-set bright')
@@ -159,7 +159,7 @@
       id: 'hero-cust-nose-shape',
       label: 'Nose shape',
       path: ['appearance', 'noseShape'],
-      preview: 'face',
+      preview: 'nose',
       groups: [
         choiceGroup('Nose shape', [
           choice('soft', 'Soft bridge'),
@@ -179,7 +179,7 @@
       id: 'hero-cust-mouth-style',
       label: 'Mouth',
       path: ['appearance', 'mouthStyle'],
-      preview: 'face',
+      preview: 'mouth',
       groups: [
         choiceGroup('Mouth', [
           choice('smile', 'Smile'),
@@ -198,7 +198,7 @@
       id: 'hero-cust-blush-style',
       label: 'Cheek tint',
       path: ['appearance', 'blushStyle'],
-      preview: 'face',
+      preview: 'cheeks',
       groups: [
         choiceGroup('Cheek tint', [
           choice('natural', 'Natural'),
@@ -210,7 +210,7 @@
       id: 'hero-cust-head-style',
       label: 'Head shape',
       path: ['appearance', 'headStyle'],
-      preview: 'head',
+      preview: 'head-shape',
       groups: [
         choiceGroup('Natural face shapes', [
           choice('default', 'Balanced oval'),
@@ -242,7 +242,7 @@
       id: 'hero-cust-facial-hair',
       label: 'Facial hair',
       path: ['appearance', 'facialHair'],
-      preview: 'face',
+      preview: 'facial-hair',
       groups: [
         choiceGroup('Facial hair', [
           choice('none', 'None'),
@@ -262,7 +262,7 @@
       id: 'hero-cust-face-feature',
       label: 'Facial details',
       path: ['appearance', 'faceFeature'],
-      preview: 'face',
+      preview: 'face-detail',
       groups: [
         choiceGroup('Facial details', [
           choice('none', 'None'),
@@ -277,7 +277,7 @@
       id: 'hero-cust-body-type',
       label: 'Body type',
       path: ['body', 'type'],
-      preview: 'upper',
+      preview: 'body',
       groups: [
         choiceGroup('Frame basics', [
           choice('petite', 'Petite frame'),
@@ -307,7 +307,7 @@
           choice('compact-strong', 'Compact strong build'),
           choice('broad', 'Broad-shouldered build'),
           choice('broad-lean', 'Broad lean build'),
-          choice('stocky', 'Stocky build')
+          choice('solid', 'Solid build')
         ]),
         choiceGroup('Curved and full frames', [
           choice('curvy', 'Curved frame'),
@@ -317,9 +317,9 @@
           choice('medium-full', 'Medium full frame'),
           choice('soft-tapered', 'Soft tapered frame'),
           choice('hourglass', 'Softly tapered frame'),
-          choice('pear', 'Fuller-hip frame'),
+          choice('fuller-hip', 'Fuller-hip frame'),
           choice('soft-full-hips', 'Soft fuller-hip frame'),
-          choice('voluptuous', 'Full frame'),
+          choice('full-frame', 'Full frame'),
           choice('plus-size', 'Plus-size frame'),
           choice('balanced-full', 'Balanced full frame')
         ])
@@ -329,7 +329,7 @@
       id: 'hero-cust-outfit-style',
       label: 'Outfit style',
       path: ['outfit', 'style'],
-      preview: 'upper',
+      preview: 'outfit',
       groups: [
         choiceGroup('Outfit style', [
           choice('super-suit', 'Super suit'),
@@ -380,7 +380,7 @@
           choice('wired-earbuds', 'Wired earbuds'),
           choice('chain-necklace', 'Chain necklace'),
           choice('campus-lanyard', 'Campus lanyard'),
-          choice('forehead-accent', 'Forehead accent')
+          choice('forehead-jewel', 'Forehead jewel')
         ]),
         choiceGroup('Headwear', [
           choice('headband', 'Headband'),
@@ -388,8 +388,8 @@
           choice('baseball-cap', 'Baseball cap'),
           choice('bucket-hat', 'Bucket hat'),
           choice('bandana', 'Bandana'),
-          choice('headwrap', 'Head wrap'),
-          choice('draped-scarf', 'Draped scarf'),
+          choice('headwrap', 'Headwrap'),
+          choice('draped-scarf', 'Draped head scarf'),
           choice('hijab', 'Hijab'),
           choice('turban', 'Turban'),
           choice('crown', 'Crown'),
@@ -430,6 +430,30 @@
     accessory: choiceValues('accessory')
   };
 
+  var HERO_CHOICE_VALUE_ALIASES = {
+    hairStyle: {
+      'dreads-bun': 'locs-bun'
+    },
+    eyeShape: {
+      monolid: 'single-eyelid',
+      'soft-monolid': 'soft-single-eyelid'
+    },
+    bodyType: {
+      stocky: 'solid',
+      pear: 'fuller-hip',
+      voluptuous: 'full-frame'
+    },
+    accessory: {
+      'forehead-accent': 'forehead-jewel'
+    }
+  };
+
+  function canonicalChoiceValue(key, value) {
+    var aliases = HERO_CHOICE_VALUE_ALIASES[key];
+    if (!aliases || typeof value !== 'string') return value;
+    return aliases[value] || value;
+  }
+
   // Silhouette overlays are used only for shoulder emphasis; torso geometry handles body contours.
   var BODY_SILHOUETTES = {
     'petite':      [],
@@ -453,7 +477,7 @@
     'compact-strong': ['shoulder'],
     'broad':       ['shoulder'],
     'broad-lean':  ['shoulder'],
-    'stocky':      ['shoulder'],
+    'solid':       ['shoulder'],
     'tall':        [],
     'tall-lean':   [],
     'tall-soft':   [],
@@ -465,21 +489,21 @@
     'medium-full': [],
     'soft-tapered': [],
     'hourglass':   [],
-    'pear':        [],
+    'fuller-hip': [],
     'soft-full-hips': [],
-    'voluptuous':  [],
+    'full-frame': [],
     'plus-size':   [],
     'balanced-full': []
   };
   var ALL_SILHOUETTE_FEATURES = ['bust', 'waist', 'hip', 'shoulder'];
   var HAIR_COVERING_ACCESSORIES = { headwrap: true, 'draped-scarf': true, hijab: true, turban: true };
   var FACE_ACCESSORIES = ['glasses', 'rectangular-glasses', 'wireframe-glasses', 'round-rim-glasses', 'safety-goggles', 'tech-visor', 'spectacles', 'monocle', 'mask', 'eyepatch'];
-  var DETAIL_ACCESSORIES = ['earrings', 'hoop-earrings', 'hair-clips', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'chain-necklace', 'campus-lanyard', 'forehead-accent', 'crown', 'halo'];
+  var DETAIL_ACCESSORIES = ['earrings', 'hoop-earrings', 'hair-clips', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'chain-necklace', 'campus-lanyard', 'forehead-jewel', 'crown', 'halo'];
   var HEADWEAR_ACCESSORIES = ['headband', 'beanie', 'baseball-cap', 'bucket-hat', 'bandana', 'headwrap', 'draped-scarf', 'hijab', 'turban', 'visor'];
   var FACE_ACCESSORY_PRIORITY = ['mask', 'eyepatch', 'tech-visor', 'safety-goggles', 'round-rim-glasses', 'wireframe-glasses', 'rectangular-glasses', 'glasses', 'spectacles', 'monocle'];
   var HEAD_ACCESSORY_PRIORITY = ['hijab', 'headwrap', 'draped-scarf', 'turban', 'beanie', 'baseball-cap', 'bucket-hat', 'bandana', 'visor', 'crown', 'headband'];
   var EAR_ACCESSORY_PRIORITY = ['hoop-earrings', 'earrings'];
-  var DETAIL_ACCESSORY_PRIORITY = ['over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'hair-clips', 'chain-necklace', 'campus-lanyard', 'forehead-accent', 'halo'];
+  var DETAIL_ACCESSORY_PRIORITY = ['over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'hair-clips', 'chain-necklace', 'campus-lanyard', 'forehead-jewel', 'halo'];
 
   // Body-type → body-shape (SVG geometry override). Types not listed here use the default torso.
   // The shapes are full silhouette swaps so the body actually looks different, not just scaled.
@@ -498,7 +522,7 @@
     'v-shape':    'v-shape',
     'compact-strong': 'compact-strong',
     'broad-lean': 'broad-lean',
-    'stocky':     'stocky',
+    'solid':      'solid',
     'tall-lean':  'tall-lean',
     'tall-soft':  'tall-soft',
     'tall-curved': 'tall-curved',
@@ -509,9 +533,9 @@
     'medium-full': 'medium-full',
     'soft-tapered': 'soft-tapered',
     'hourglass':  'hourglass',
-    'pear':       'pear',
+    'fuller-hip': 'fuller-hip',
     'soft-full-hips': 'soft-full-hips',
-    'voluptuous': 'voluptuous',
+    'full-frame': 'full-frame',
     'plus-size':  'plus-size',
     'balanced-full': 'balanced-full',
     'muscular':   'muscular',
@@ -624,20 +648,20 @@
   var BRUIN_FUR_WEIGHTS = weightedPalette(['#7a4e2f', '#8b5a35', '#6a4830', '#5c3a22', '#a06840'], [8, 10, 8, 6, 4], 2);
   var BODY_TYPE_WEIGHTS = []
     .concat(weightedValues(['average', 'athletic', 'lean', 'slim', 'straight', 'soft', 'medium-lean', 'soft-medium'], 9))
-    .concat(weightedValues(['tall', 'curvy', 'broad', 'stocky', 'petite', 'rounded', 'v-shape', 'balanced-curved', 'medium-curved', 'short-soft', 'short-curved', 'tall-soft', 'soft-athletic', 'medium-full'], 4))
-    .concat(weightedValues(['petite-curved', 'narrow-shoulders', 'compact-lean', 'athletic-curved', 'muscular', 'compact-strong', 'broad-lean', 'tall-lean', 'tall-curved', 'soft-tapered', 'hourglass', 'pear', 'soft-full-hips', 'voluptuous', 'plus-size', 'balanced-full'], 2));
+    .concat(weightedValues(['tall', 'curvy', 'broad', 'solid', 'petite', 'rounded', 'v-shape', 'balanced-curved', 'medium-curved', 'short-soft', 'short-curved', 'tall-soft', 'soft-athletic', 'medium-full'], 4))
+    .concat(weightedValues(['petite-curved', 'narrow-shoulders', 'compact-lean', 'athletic-curved', 'muscular', 'compact-strong', 'broad-lean', 'tall-lean', 'tall-curved', 'soft-tapered', 'hourglass', 'fuller-hip', 'soft-full-hips', 'full-frame', 'plus-size', 'balanced-full'], 2));
   var HEAD_STYLE_WEIGHTS = []
     .concat(weightedValues(['default', 'soft-oval', 'round', 'full-cheeks', 'full-oval', 'oval', 'soft-square', 'soft-round-jaw'], 8))
     .concat(weightedValues(['heart', 'diamond', 'square', 'broad', 'narrow', 'oblong', 'tapered-oval', 'gentle-taper', 'soft-angular', 'feminine'], 3));
   var PRESENTATION_BODY_WEIGHTS = {
     male: []
       .concat(weightedValues(['average', 'athletic', 'lean', 'slim', 'straight', 'soft', 'medium-lean', 'soft-medium'], 9))
-      .concat(weightedValues(['tall', 'broad', 'stocky', 'v-shape', 'muscular', 'broad-lean', 'tall-lean', 'compact-lean', 'compact-strong', 'narrow-shoulders', 'soft-athletic', 'tall-soft'], 5))
-      .concat(weightedValues(['petite', 'curvy', 'rounded', 'balanced-curved', 'medium-curved', 'petite-curved', 'short-soft', 'short-curved', 'athletic-curved', 'tall-curved', 'medium-full', 'soft-tapered', 'hourglass', 'pear', 'soft-full-hips', 'voluptuous', 'plus-size', 'balanced-full'], 2)),
+      .concat(weightedValues(['tall', 'broad', 'solid', 'v-shape', 'muscular', 'broad-lean', 'tall-lean', 'compact-lean', 'compact-strong', 'narrow-shoulders', 'soft-athletic', 'tall-soft'], 5))
+      .concat(weightedValues(['petite', 'curvy', 'rounded', 'balanced-curved', 'medium-curved', 'petite-curved', 'short-soft', 'short-curved', 'athletic-curved', 'tall-curved', 'medium-full', 'soft-tapered', 'hourglass', 'fuller-hip', 'soft-full-hips', 'full-frame', 'plus-size', 'balanced-full'], 2)),
     female: []
       .concat(weightedValues(['average', 'athletic', 'lean', 'slim', 'straight', 'soft', 'medium-lean', 'soft-medium'], 9))
       .concat(weightedValues(['petite', 'curvy', 'rounded', 'balanced-curved', 'medium-curved', 'petite-curved', 'short-soft', 'short-curved', 'athletic-curved', 'soft-athletic', 'tall-soft', 'tall-curved', 'medium-full', 'soft-tapered', 'plus-size'], 5))
-      .concat(weightedValues(['narrow-shoulders', 'compact-lean', 'v-shape', 'muscular', 'compact-strong', 'broad', 'broad-lean', 'stocky', 'tall', 'tall-lean', 'hourglass', 'pear', 'soft-full-hips', 'voluptuous', 'balanced-full'], 2))
+      .concat(weightedValues(['narrow-shoulders', 'compact-lean', 'v-shape', 'muscular', 'compact-strong', 'broad', 'broad-lean', 'solid', 'tall', 'tall-lean', 'hourglass', 'fuller-hip', 'soft-full-hips', 'full-frame', 'balanced-full'], 2))
   };
   var PRESENTATION_HEAD_STYLE_WEIGHTS = {
     male: []
@@ -679,12 +703,12 @@
   var SHORT_HAIR_STYLES = ['short', 'textured-crop', 'textured-fringe', 'straight-fringe', 'side-parted-short', 'soft-two-block', 'middle-part-flow', 'slick-back', 'pixie', 'fade', 'buzz', 'undercut', 'pompadour'];
   var LONG_HAIR_STYLES = ['bob', 'layered-bob', 'sleek-bob-bangs', 'wavy-lob', 'side-part-lob', 'shoulder-length', 'wolf-cut', 'long-layers', 'straight-long-layers', 'butterfly-layers', 'long-straight', 'loose-waves', 'center-part', 'curtain-bangs', 'soft-bangs', 'low-pony-bangs', 'side-swept', 'shag', 'long', 'wavy', 'ponytail', 'high-pony', 'sleek-low-pony', 'claw-clip-updo', 'half-up', 'low-bun', 'messy-bun'];
   var TEXTURED_HAIR_STYLES = ['curly', 'curly-bob', 'voluminous-curls', 'curly-layers', 'coils', 'two-strand-twists', 'twist-out', 'coily-puff', 'double-puffs', 'bantu-knots', 'afro', 'rounded-afro'];
-  var BRAID_LOC_STYLES = ['locs', 'loose-locs', 'dreads-bun', 'braids', 'long-braid', 'french-braid', 'braided-pony', 'side-braid', 'braided-bun', 'box-braids', 'knotless-braids', 'cornrows'];
+  var BRAID_LOC_STYLES = ['locs', 'loose-locs', 'locs-bun', 'braids', 'long-braid', 'french-braid', 'braided-pony', 'side-braid', 'braided-bun', 'box-braids', 'knotless-braids', 'cornrows'];
   var FACIAL_HAIR_STYLES = ['none', 'stubble', 'mustache', 'goatee', 'short-beard', 'trimmed-beard'];
   var POLISHED_SHORT_HAIR_STYLES = ['short', 'textured-crop', 'textured-fringe', 'straight-fringe', 'side-parted-short', 'soft-two-block', 'middle-part-flow', 'slick-back', 'fade', 'buzz', 'undercut', 'pompadour'];
   var POLISHED_FEMININE_HAIR_STYLES = ['pixie', 'bob', 'layered-bob', 'sleek-bob-bangs', 'wavy-lob', 'side-part-lob', 'shoulder-length', 'wolf-cut', 'long-layers', 'straight-long-layers', 'butterfly-layers', 'long-straight', 'loose-waves', 'center-part', 'curtain-bangs', 'soft-bangs', 'low-pony-bangs', 'side-swept', 'shag', 'ponytail', 'high-pony', 'sleek-low-pony', 'claw-clip-updo', 'half-up', 'low-bun', 'messy-bun', 'french-braid'];
   var POLISHED_TEXTURED_HAIR_STYLES = ['curly', 'curly-bob', 'voluminous-curls', 'curly-layers', 'coils', 'two-strand-twists', 'twist-out', 'coily-puff', 'double-puffs', 'afro', 'rounded-afro'];
-  var POLISHED_BRAID_LOC_STYLES = ['locs', 'loose-locs', 'dreads-bun', 'long-braid', 'french-braid', 'braided-pony', 'side-braid', 'braided-bun', 'box-braids', 'knotless-braids', 'cornrows'];
+  var POLISHED_BRAID_LOC_STYLES = ['locs', 'loose-locs', 'locs-bun', 'long-braid', 'french-braid', 'braided-pony', 'side-braid', 'braided-bun', 'box-braids', 'knotless-braids', 'cornrows'];
   var FRIENDLY_MOUTH_RANDOM_WEIGHTS = {
     'cheerful-grin': 10,
     'bright-smile': 9,
@@ -777,13 +801,13 @@
       accessories: MASCULINE_FACE_ACCESSORIES,
       facialHairChance: 0.48,
       facialHairStyles: FACIAL_HAIR_STYLES,
-      eyeShapes: ['round', 'almond', 'hooded', 'monolid'],
+      eyeShapes: ['round', 'almond', 'hooded', 'single-eyelid'],
       noseShapes: ['soft', 'rounded', 'rounded-tip', 'broad', 'narrow', 'gentle-bridge', 'defined-bridge'],
       mouthStyles: ['smile', 'soft-smile', 'bright-smile', 'cheerful-grin', 'neutral']
     },
     {
       weight: 13,
-      hairStyles: POLISHED_TEXTURED_HAIR_STYLES.concat(['locs', 'loose-locs', 'cornrows', 'dreads-bun']),
+      hairStyles: POLISHED_TEXTURED_HAIR_STYLES.concat(['locs', 'loose-locs', 'cornrows', 'locs-bun']),
       outfitStyles: ['hoodie', 'crewneck-sweatshirt', 'denim-jacket', 'flannel-overshirt', 'windbreaker', 'kurta-top', 'cardigan', 'collared-shirt'],
       accessories: [
         weightedValue([], 26),
@@ -842,7 +866,7 @@
       ],
       facialHairChance: 0.36,
       facialHairStyles: ['none', 'stubble', 'mustache', 'trimmed-beard'],
-      eyeShapes: ['round', 'almond', 'monolid', 'hooded', 'wide'],
+      eyeShapes: ['round', 'almond', 'single-eyelid', 'hooded', 'wide'],
       noseShapes: ['soft', 'rounded', 'rounded-tip', 'broad', 'narrow', 'gentle-bridge', 'defined-bridge'],
       mouthStyles: ['smile', 'soft-smile', 'bright-smile', 'cheerful-grin', 'neutral']
     },
@@ -865,7 +889,7 @@
       ],
       facialHairChance: 0.28,
       facialHairStyles: ['none', 'stubble', 'mustache'],
-      eyeShapes: ['round', 'almond', 'monolid', 'hooded', 'smiling'],
+      eyeShapes: ['round', 'almond', 'single-eyelid', 'hooded', 'smiling'],
       noseShapes: ['soft', 'rounded', 'rounded-tip', 'button', 'soft-upturned', 'gentle-bridge', 'defined-bridge'],
       mouthStyles: ['smile', 'soft-smile', 'bright-smile', 'cheerful-grin', 'neutral']
     }
@@ -878,7 +902,7 @@
       accessories: FEMININE_FACE_ACCESSORIES,
       facialHairChance: 0,
       facialHairStyles: ['none'],
-      eyeShapes: ['round', 'almond', 'hooded', 'smiling', 'wide', 'soft-monolid'],
+      eyeShapes: ['round', 'almond', 'hooded', 'smiling', 'wide', 'soft-single-eyelid'],
       noseShapes: ['soft', 'rounded', 'rounded-tip', 'narrow', 'button', 'soft-upturned', 'gentle-bridge', 'defined-bridge', 'soft-low-bridge'],
       mouthStyles: ['smile', 'soft-smile', 'bright-smile', 'cheerful-grin', 'full-lips']
     },
@@ -947,7 +971,7 @@
       ],
       facialHairChance: 0,
       facialHairStyles: ['none'],
-      eyeShapes: ['round', 'almond', 'monolid', 'soft-monolid', 'hooded'],
+      eyeShapes: ['round', 'almond', 'single-eyelid', 'soft-single-eyelid', 'hooded'],
       noseShapes: ['soft', 'rounded', 'rounded-tip', 'broad', 'narrow', 'gentle-bridge', 'soft-low-bridge'],
       mouthStyles: ['smile', 'soft-smile', 'bright-smile', 'cheerful-grin', 'full-lips']
     },
@@ -970,7 +994,7 @@
       ],
       facialHairChance: 0,
       facialHairStyles: ['none'],
-      eyeShapes: ['round', 'almond', 'monolid', 'soft-monolid', 'hooded', 'wide'],
+      eyeShapes: ['round', 'almond', 'single-eyelid', 'soft-single-eyelid', 'hooded', 'wide'],
       noseShapes: ['soft', 'rounded', 'rounded-tip', 'broad', 'narrow', 'gentle-bridge', 'defined-bridge', 'soft-low-bridge'],
       mouthStyles: ['smile', 'soft-smile', 'bright-smile', 'cheerful-grin', 'neutral']
     },
@@ -982,7 +1006,6 @@
         weightedValue([], 20),
         weightedValue(['round-rim-glasses'], 8),
         weightedValue(['wireframe-glasses'], 8),
-        weightedValue(['forehead-accent'], 3),
         weightedValue(['earrings'], 6),
         weightedValue(['hoop-earrings'], 5),
         weightedValue(['glasses'], 5),
@@ -995,7 +1018,7 @@
       ],
       facialHairChance: 0,
       facialHairStyles: ['none'],
-      eyeShapes: ['round', 'almond', 'monolid', 'soft-monolid', 'hooded', 'smiling'],
+      eyeShapes: ['round', 'almond', 'single-eyelid', 'soft-single-eyelid', 'hooded', 'smiling'],
       noseShapes: ['soft', 'rounded', 'rounded-tip', 'button', 'soft-upturned', 'gentle-bridge', 'defined-bridge', 'soft-low-bridge'],
       mouthStyles: ['smile', 'soft-smile', 'bright-smile', 'cheerful-grin', 'full-lips', 'neutral']
     },
@@ -1021,7 +1044,7 @@
       ],
       facialHairChance: 0,
       facialHairStyles: ['none'],
-      eyeShapes: ['soft-monolid', 'monolid', 'almond', 'hooded', 'smiling'],
+      eyeShapes: ['soft-single-eyelid', 'single-eyelid', 'almond', 'hooded', 'smiling'],
       noseShapes: ['soft-low-bridge', 'soft', 'rounded-tip', 'button', 'gentle-bridge', 'soft-upturned'],
       mouthStyles: ['smile', 'soft-smile', 'bright-smile', 'cheerful-grin']
     },
@@ -1033,7 +1056,6 @@
         weightedValue([], 16),
         weightedValue(['earrings'], 7),
         weightedValue(['hoop-earrings'], 6),
-        weightedValue(['forehead-accent'], 5),
         weightedValue(['wireframe-glasses'], 5),
         weightedValue(['round-rim-glasses'], 5),
         weightedValue(['hijab'], 4),
@@ -1047,7 +1069,7 @@
       ],
       facialHairChance: 0,
       facialHairStyles: ['none'],
-      eyeShapes: ['almond', 'hooded', 'soft-monolid', 'monolid', 'round'],
+      eyeShapes: ['almond', 'hooded', 'soft-single-eyelid', 'single-eyelid', 'round'],
       noseShapes: ['gentle-bridge', 'defined-bridge', 'rounded-tip', 'soft-low-bridge', 'soft', 'rounded'],
       mouthStyles: ['smile', 'soft-smile', 'bright-smile', 'cheerful-grin', 'full-lips']
     }
@@ -1058,7 +1080,7 @@
     var seen = {};
     var cleaned = [];
     for (var i = 0; i < values.length; i++) {
-      var value = values[i];
+      var value = canonicalChoiceValue('accessory', values[i]);
       if (typeof value !== 'string' || value === 'none') continue;
       if (ENUMS.accessory.indexOf(value) === -1 || seen[value]) continue;
       seen[value] = true;
@@ -1149,13 +1171,18 @@
     var accessories = getAccessories(obj.outfit);
     obj.outfit.accessories = accessories;
     obj.outfit.accessory = accessories[0] || 'none';
-    if (obj.appearance && obj.appearance.headStyle === undefined) obj.appearance.headStyle = 'default';
-    if (obj.appearance && obj.appearance.eyeShape === undefined) obj.appearance.eyeShape = 'round';
-    if (obj.appearance && obj.appearance.noseShape === undefined) obj.appearance.noseShape = 'soft';
-    if (obj.appearance && obj.appearance.mouthStyle === undefined) obj.appearance.mouthStyle = 'smile';
-    if (obj.appearance && obj.appearance.blushStyle === undefined) obj.appearance.blushStyle = 'natural';
-    if (obj.appearance && obj.appearance.facialHair === undefined) obj.appearance.facialHair = 'none';
-    if (obj.appearance && obj.appearance.faceFeature === undefined) obj.appearance.faceFeature = 'none';
+    if (obj.appearance) {
+      obj.appearance.hairStyle = canonicalChoiceValue('hairStyle', obj.appearance.hairStyle);
+      if (obj.appearance.eyeShape !== undefined) obj.appearance.eyeShape = canonicalChoiceValue('eyeShape', obj.appearance.eyeShape);
+      if (obj.appearance.headStyle === undefined) obj.appearance.headStyle = 'default';
+      if (obj.appearance.eyeShape === undefined) obj.appearance.eyeShape = 'round';
+      if (obj.appearance.noseShape === undefined) obj.appearance.noseShape = 'soft';
+      if (obj.appearance.mouthStyle === undefined) obj.appearance.mouthStyle = 'smile';
+      if (obj.appearance.blushStyle === undefined) obj.appearance.blushStyle = 'natural';
+      if (obj.appearance.facialHair === undefined) obj.appearance.facialHair = 'none';
+      if (obj.appearance.faceFeature === undefined) obj.appearance.faceFeature = 'none';
+    }
+    if (obj.body) obj.body.type = canonicalChoiceValue('bodyType', obj.body.type);
     if (obj.outfit.style === undefined) obj.outfit.style = DEFAULTS.outfit.style;
     return obj;
   }
@@ -1603,6 +1630,7 @@
   }
 
   function applyBodyTypeToSvg(svg, bodyType) {
+    bodyType = canonicalChoiceValue('bodyType', bodyType);
     svg.setAttribute('data-hero-body', bodyType);
     var features = BODY_SILHOUETTES[bodyType] || [];
     for (var f = 0; f < ALL_SILHOUETTE_FEATURES.length; f++) {
@@ -1628,6 +1656,9 @@
 
   function applyToSvg(svg, state) {
     var heroKind = normalizeHeroKind(state.kind);
+    var bodyType = canonicalChoiceValue('bodyType', state.body.type);
+    var hairStyle = canonicalChoiceValue('hairStyle', state.appearance.hairStyle);
+    var eyeShape = canonicalChoiceValue('eyeShape', state.appearance.eyeShape || 'round');
     var contrastTokens = avatarContrastTokens(state.appearance.skin, state.appearance.hairColor);
     svg.style.setProperty('--hero-skin-light', state.appearance.skin);
     svg.style.setProperty('--hero-skin', darken(state.appearance.skin, 0.22));
@@ -1694,10 +1725,10 @@
     var accessories = getAccessories(state.outfit);
     var compositedAccessories = getCompositedAccessories(accessories);
     var hidesHair = compositedAccessories.some(function (accessory) { return !!HAIR_COVERING_ACCESSORIES[accessory]; });
-    var renderedHairStyle = hidesHair ? 'bald' : state.appearance.hairStyle;
+    var renderedHairStyle = hidesHair ? 'bald' : hairStyle;
     setSlot(svg, 'hair', renderedHairStyle);
     setSlot(svg, 'eyebrow', state.appearance.eyebrowStyle);
-    setSlot(svg, 'eye-shape', state.appearance.eyeShape || 'round');
+    setSlot(svg, 'eye-shape', eyeShape);
     var headStyle = state.appearance.headStyle || 'default';
     setSlot(svg, 'head-shape', headStyle);
     setSlot(svg, 'face-clear', headStyle);
@@ -1711,7 +1742,7 @@
     setSlot(svg, 'outfit-style', state.outfit.style || DEFAULTS.outfit.style);
     setMultiSlot(svg, 'accessory', compositedAccessories);
 
-    applyBodyTypeToSvg(svg, heroKind === 'bruin' ? 'athletic' : state.body.type);
+    applyBodyTypeToSvg(svg, heroKind === 'bruin' ? 'athletic' : bodyType);
 
     var emblemGroup = svg.querySelector('[data-hero-slot="emblem"]');
     var emblemText = svg.querySelector('[data-hero-emblem-text]');
@@ -1740,7 +1771,7 @@
 
   var HEX_COLOR = /^#[0-9A-Fa-f]{6}$/;
   function isHex(v) { return typeof v === 'string' && HEX_COLOR.test(v); }
-  function inEnum(v, key) { return typeof v === 'string' && ENUMS[key].indexOf(v) !== -1; }
+  function inEnum(v, key) { return typeof v === 'string' && ENUMS[key].indexOf(canonicalChoiceValue(key, v)) !== -1; }
 
   function countGraphemes(s) {
     if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
@@ -2208,11 +2239,46 @@
       }
     }
 
+    var CHOICE_PREVIEW_VIEWBOXES = {
+      full: '238 34 324 596',
+      hair: '292 54 216 278',
+      eyebrows: '352 138 96 78',
+      eyes: '352 154 96 78',
+      nose: '370 178 60 50',
+      mouth: '360 202 80 66',
+      cheeks: '342 178 116 94',
+      'head-shape': '326 92 148 184',
+      'facial-hair': '344 184 112 92',
+      'face-detail': '350 178 100 82',
+      body: '270 228 260 340',
+      outfit: '286 226 228 294',
+      face: '346 138 108 118',
+      head: '318 78 164 208',
+      upper: '246 86 308 374'
+    };
+
+    var FACE_PREVIEW_CROPS = {
+      hair: true,
+      eyebrows: true,
+      eyes: true,
+      nose: true,
+      mouth: true,
+      cheeks: true,
+      'head-shape': true,
+      'facial-hair': true,
+      'face-detail': true,
+      face: true,
+      head: true
+    };
+
+    var UPPER_PREVIEW_CROPS = {
+      body: true,
+      outfit: true,
+      upper: true
+    };
+
     function previewViewBox(crop) {
-      if (crop === 'face') return '346 138 108 118';
-      if (crop === 'head') return '318 78 164 208';
-      if (crop === 'upper') return '246 86 308 374';
-      return '238 34 324 596';
+      return CHOICE_PREVIEW_VIEWBOXES[crop] || CHOICE_PREVIEW_VIEWBOXES.full;
     }
 
     function collectDisplaySnapshot(root, selector) {
@@ -2296,14 +2362,14 @@
         var accessories = getAccessories(baseState.outfit);
         var compositedAccessories = getCompositedAccessories(accessories);
         var hidesHair = compositedAccessories.some(function (accessory) { return !!HAIR_COVERING_ACCESSORIES[accessory]; });
-        var renderedHairStyle = hidesHair ? 'bald' : optionValue;
+        var renderedHairStyle = hidesHair ? 'bald' : canonicalChoiceValue('hairStyle', optionValue);
         setSlot(svg, 'hair', renderedHairStyle);
         setSlot(svg, 'hairline', hidesHair ? 'none' : renderedHairStyle);
         setSlot(svg, 'hair-root', hidesHair ? 'none' : renderedHairStyle);
       } else if (definition.key === 'eyebrowStyle') {
         setSlot(svg, 'eyebrow', optionValue);
       } else if (definition.key === 'eyeShape') {
-        setSlot(svg, 'eye-shape', optionValue);
+        setSlot(svg, 'eye-shape', canonicalChoiceValue('eyeShape', optionValue));
       } else if (definition.key === 'noseShape') {
         setSlot(svg, 'nose-shape', optionValue);
       } else if (definition.key === 'mouthStyle') {
@@ -2320,7 +2386,7 @@
       } else if (definition.key === 'faceFeature') {
         setSlot(svg, 'face-feature', optionValue);
       } else if (definition.key === 'bodyType') {
-        applyBodyTypeToSvg(svg, normalizeHeroKind(baseState.kind) === 'bruin' ? 'athletic' : optionValue);
+        applyBodyTypeToSvg(svg, normalizeHeroKind(baseState.kind) === 'bruin' ? 'athletic' : canonicalChoiceValue('bodyType', optionValue));
       } else if (definition.key === 'outfitStyle') {
         setSlot(svg, 'outfit-style', optionValue);
       }
@@ -2445,16 +2511,16 @@
     function choicePreviewValue(definition, optionValue, baseState, key) {
       if (definition.key === key) return optionValue;
       if (key === 'heroKind') return normalizeHeroKind(baseState.kind);
-      if (key === 'hairStyle') return baseState.appearance.hairStyle;
+      if (key === 'hairStyle') return canonicalChoiceValue('hairStyle', baseState.appearance.hairStyle);
       if (key === 'eyebrowStyle') return baseState.appearance.eyebrowStyle;
-      if (key === 'eyeShape') return baseState.appearance.eyeShape || 'round';
+      if (key === 'eyeShape') return canonicalChoiceValue('eyeShape', baseState.appearance.eyeShape || 'round');
       if (key === 'noseShape') return baseState.appearance.noseShape || 'soft';
       if (key === 'mouthStyle') return baseState.appearance.mouthStyle || 'smile';
       if (key === 'blushStyle') return baseState.appearance.blushStyle || 'natural';
       if (key === 'headStyle') return baseState.appearance.headStyle || 'default';
       if (key === 'facialHair') return baseState.appearance.facialHair || 'none';
       if (key === 'faceFeature') return baseState.appearance.faceFeature || 'none';
-      if (key === 'bodyType') return baseState.body.type;
+      if (key === 'bodyType') return canonicalChoiceValue('bodyType', baseState.body.type);
       if (key === 'outfitStyle') return baseState.outfit.style || DEFAULTS.outfit.style;
       return '';
     }
@@ -2489,13 +2555,13 @@
         kind: choicePreviewValue(definition, optionValue, baseState, 'heroKind')
       };
 
-      if (crop === 'face' || crop === 'head') {
+      if (FACE_PREVIEW_CROPS[crop]) {
         signature.appearance = choiceAppearanceSignature(definition, optionValue, baseState);
         signature.outfit = {
           capeOuter: baseState.outfit.capeOuter,
           accessories: getAccessories(baseState.outfit)
         };
-      } else if (crop === 'upper') {
+      } else if (UPPER_PREVIEW_CROPS[crop]) {
         signature.appearance = choiceAppearanceSignature(definition, optionValue, baseState);
         signature.body = {
           type: choicePreviewValue(definition, optionValue, baseState, 'bodyType')
@@ -2841,18 +2907,18 @@
       if ($('hero-cust-kind')) $('hero-cust-kind').value = normalizeHeroKind(state.kind);
       $('hero-cust-skin').value = state.appearance.skin;
       $('hero-cust-hair-color').value = state.appearance.hairColor;
-      $('hero-cust-hair-style').value = state.appearance.hairStyle;
+      $('hero-cust-hair-style').value = canonicalChoiceValue('hairStyle', state.appearance.hairStyle);
       $('hero-cust-eye-color').value = state.appearance.eyeColor;
       $('hero-cust-eyebrow').value = state.appearance.eyebrowStyle;
       if ($('hero-cust-head-style')) $('hero-cust-head-style').value = state.appearance.headStyle || 'default';
-      if ($('hero-cust-eye-shape')) $('hero-cust-eye-shape').value = state.appearance.eyeShape || 'round';
+      if ($('hero-cust-eye-shape')) $('hero-cust-eye-shape').value = canonicalChoiceValue('eyeShape', state.appearance.eyeShape || 'round');
       if ($('hero-cust-nose-shape')) $('hero-cust-nose-shape').value = state.appearance.noseShape || 'soft';
       if ($('hero-cust-mouth-style')) $('hero-cust-mouth-style').value = state.appearance.mouthStyle || 'smile';
       if ($('hero-cust-blush-style')) $('hero-cust-blush-style').value = state.appearance.blushStyle || 'natural';
       if ($('hero-cust-facial-hair')) $('hero-cust-facial-hair').value = state.appearance.facialHair || 'none';
       if ($('hero-cust-face-feature')) $('hero-cust-face-feature').value = state.appearance.faceFeature || 'none';
       var bodySelect = $('hero-cust-body-type');
-      if (bodySelect && inEnum(state.body.type, 'bodyType')) bodySelect.value = state.body.type;
+      if (bodySelect && inEnum(state.body.type, 'bodyType')) bodySelect.value = canonicalChoiceValue('bodyType', state.body.type);
       $('hero-cust-outfit-style').value = state.outfit.style || DEFAULTS.outfit.style;
       $('hero-cust-suit').value = state.outfit.suit;
       $('hero-cust-cape-outer').value = state.outfit.capeOuter;

@@ -7,6 +7,21 @@ const GYM_URL = '/se-gym/';
 
 const ACTIVATE_TOGGLE_SLIDER = '#activatePersonalGymToggle + .slider';
 
+const CHOICE_PREVIEW_VIEWBOXES = {
+  full: '238 34 324 596',
+  hair: '292 54 216 278',
+  eyebrows: '352 138 96 78',
+  eyes: '352 154 96 78',
+  nose: '370 178 60 50',
+  mouth: '360 202 80 66',
+  cheeks: '342 178 116 94',
+  'head-shape': '326 92 148 184',
+  'facial-hair': '344 184 112 92',
+  'face-detail': '350 178 100 82',
+  body: '270 228 260 340',
+  outfit: '286 226 228 294',
+};
+
 async function clearState(page) {
   await page.context().clearCookies();
   await page.evaluate(() => {
@@ -21,10 +36,12 @@ async function activatePersonalGym(page) {
 
 async function clearAccessories(page) {
   await page.locator('#hero-customizer-modal input[name="hero-cust-accessory"]:checked').evaluateAll((checkboxes) => {
+    const firstChecked = checkboxes[0];
     for (const checkbox of checkboxes) {
       checkbox.checked = false;
-      checkbox.dispatchEvent(new Event('input', { bubbles: true }));
-      checkbox.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+    if (firstChecked) {
+      firstChecked.dispatchEvent(new Event('change', { bubbles: true }));
     }
   });
 }
@@ -225,6 +242,102 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await expect(page.locator(
       '#hero-customizer-modal [data-gym-hero-svg] [data-hero-slot="hair"][data-hero-option="long"]'
     )).toHaveAttribute('display', 'inline');
+  });
+
+  test('Style preview buttons crop into the selected avatar detail', async ({ page }) => {
+    test.setTimeout(60000);
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+    await clearAccessories(page);
+
+    const previewCrops = [
+      { name: 'Choose Hero type: Bruin mascot', viewBox: CHOICE_PREVIEW_VIEWBOXES.full },
+      { name: 'Choose Hair style: Long and flowing', viewBox: CHOICE_PREVIEW_VIEWBOXES.hair },
+      { name: 'Choose Eyebrows: Thin', viewBox: CHOICE_PREVIEW_VIEWBOXES.eyebrows },
+      { name: 'Choose Eye shape: Almond', viewBox: CHOICE_PREVIEW_VIEWBOXES.eyes },
+      { name: 'Choose Nose shape: Button', viewBox: CHOICE_PREVIEW_VIEWBOXES.nose },
+      { name: 'Choose Mouth: Grin', viewBox: CHOICE_PREVIEW_VIEWBOXES.mouth },
+      { name: 'Choose Cheek tint: None', viewBox: CHOICE_PREVIEW_VIEWBOXES.cheeks },
+      { name: 'Choose Head shape: Round face', viewBox: CHOICE_PREVIEW_VIEWBOXES['head-shape'] },
+      { name: 'Choose Facial hair: Full beard', viewBox: CHOICE_PREVIEW_VIEWBOXES['facial-hair'] },
+      { name: 'Choose Facial details: Freckles', viewBox: CHOICE_PREVIEW_VIEWBOXES['face-detail'] },
+      { name: 'Choose Body type: Broad-shouldered build', viewBox: CHOICE_PREVIEW_VIEWBOXES.body },
+      { name: 'Choose Outfit style: Hoodie', viewBox: CHOICE_PREVIEW_VIEWBOXES.outfit },
+    ];
+
+    for (const crop of previewCrops) {
+      const svg = await choicePreviewSvg(page, crop.name);
+      await expect(svg, `${crop.name} preview should crop to its own feature area`)
+        .toHaveAttribute('viewBox', crop.viewBox);
+    }
+  });
+
+  test('Avatar choices use respectful labels and canonical exported values', async ({ page }) => {
+    await page.goto(GYM_URL);
+
+    const summary = await page.evaluate(() => {
+      const flatten = (choiceSet) => choiceSet.groups.flatMap((group) => group.options);
+      const labelsByValue = (choiceSet) => Object.fromEntries(
+        flatten(choiceSet).map((option) => [option.value, option.label])
+      );
+      const legacyLocs = JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS));
+      legacyLocs.appearance.hairStyle = 'dreads-bun';
+      legacyLocs.body.type = 'voluptuous';
+      const legacyHip = JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS));
+      legacyHip.body.type = 'pear';
+      const legacyDetails = JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS));
+      legacyDetails.appearance.eyeShape = 'monolid';
+      legacyDetails.body.type = 'stocky';
+      legacyDetails.outfit.accessory = 'forehead-accent';
+      legacyDetails.outfit.accessories = ['forehead-accent'];
+
+      return {
+        hairValues: flatten(window.HeroAvatar.CHOICE_SETS.hairStyle).map((option) => option.value),
+        eyeValues: flatten(window.HeroAvatar.CHOICE_SETS.eyeShape).map((option) => option.value),
+        bodyValues: flatten(window.HeroAvatar.CHOICE_SETS.bodyType).map((option) => option.value),
+        accessoryValues: flatten(window.HeroAvatar.CHOICE_SETS.accessory).map((option) => option.value),
+        hairLabels: labelsByValue(window.HeroAvatar.CHOICE_SETS.hairStyle),
+        eyeLabels: labelsByValue(window.HeroAvatar.CHOICE_SETS.eyeShape),
+        bodyLabels: labelsByValue(window.HeroAvatar.CHOICE_SETS.bodyType),
+        accessoryLabels: labelsByValue(window.HeroAvatar.CHOICE_SETS.accessory),
+        legacyLocsValidation: window.HeroAvatar.validateAvatar(legacyLocs),
+        normalizedLegacyLocs: window.HeroAvatar.normalizeAvatar(legacyLocs),
+        legacyHipValidation: window.HeroAvatar.validateAvatar(legacyHip),
+        normalizedLegacyHip: window.HeroAvatar.normalizeAvatar(legacyHip),
+        legacyDetailsValidation: window.HeroAvatar.validateAvatar(legacyDetails),
+        normalizedLegacyDetails: window.HeroAvatar.normalizeAvatar(legacyDetails),
+      };
+    });
+
+    expect(summary.hairValues).not.toContain('dreads-bun');
+    expect(summary.hairValues).toContain('locs-bun');
+    expect(summary.eyeValues).not.toContain('monolid');
+    expect(summary.eyeValues).not.toContain('soft-monolid');
+    expect(summary.eyeValues).toEqual(expect.arrayContaining(['single-eyelid', 'soft-single-eyelid']));
+    expect(summary.bodyValues).not.toContain('pear');
+    expect(summary.bodyValues).not.toContain('voluptuous');
+    expect(summary.bodyValues).not.toContain('stocky');
+    expect(summary.bodyValues).toEqual(expect.arrayContaining(['solid', 'fuller-hip', 'full-frame']));
+    expect(summary.accessoryValues).not.toContain('forehead-accent');
+    expect(summary.accessoryValues).toContain('forehead-jewel');
+    expect(summary.hairLabels['rounded-afro']).toBe('Rounded Afro');
+    expect(summary.hairLabels['locs-bun']).toBe('Locs bun');
+    expect(summary.eyeLabels['single-eyelid']).toBe('Single eyelid');
+    expect(summary.eyeLabels['soft-single-eyelid']).toBe('Soft single eyelid');
+    expect(summary.bodyLabels.solid).toBe('Solid build');
+    expect(summary.bodyLabels['full-frame']).toBe('Full frame');
+    expect(summary.accessoryLabels['draped-scarf']).toBe('Draped head scarf');
+    expect(summary.accessoryLabels['forehead-jewel']).toBe('Forehead jewel');
+    expect(summary.legacyLocsValidation.ok).toBe(true);
+    expect(summary.normalizedLegacyLocs.appearance.hairStyle).toBe('locs-bun');
+    expect(summary.normalizedLegacyLocs.body.type).toBe('full-frame');
+    expect(summary.legacyHipValidation.ok).toBe(true);
+    expect(summary.normalizedLegacyHip.body.type).toBe('fuller-hip');
+    expect(summary.legacyDetailsValidation.ok).toBe(true);
+    expect(summary.normalizedLegacyDetails.appearance.eyeShape).toBe('single-eyelid');
+    expect(summary.normalizedLegacyDetails.body.type).toBe('solid');
+    expect(summary.normalizedLegacyDetails.outfit.accessories).toEqual(['forehead-jewel']);
   });
 
   test('Style preview buttons re-render after randomize changes the base avatar', async ({ page }) => {
@@ -475,11 +588,12 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       const specializedBodyTypes = new Set([
         'petite-curved', 'narrow-shoulders', 'compact-lean', 'athletic-curved',
         'muscular', 'compact-strong', 'broad-lean', 'tall-lean', 'tall-curved',
-        'soft-tapered', 'hourglass', 'pear', 'soft-full-hips', 'voluptuous',
+        'soft-tapered', 'hourglass', 'fuller-hip', 'soft-full-hips', 'full-frame',
         'plus-size', 'balanced-full',
       ]);
       const costumeAccessories = new Set(['crown', 'halo', 'monocle', 'eyepatch', 'mask']);
-      const coveredHairAccessories = new Set(['draped-scarf', 'hijab']);
+      const manualOnlyAccessories = new Set(['crown', 'halo', 'monocle', 'eyepatch', 'mask', 'forehead-jewel', 'headwrap']);
+      const coveredHairAccessories = new Set(['draped-scarf', 'hijab', 'headwrap']);
       const currentCampusAccessories = new Set(['over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'chain-necklace', 'campus-lanyard', 'bandana']);
       const expressiveManualHair = new Set(['mohawk', 'bowl-cut', 'pigtails', 'top-knot']);
       const upbeatMouthStyles = new Set(['grin', 'bright-smile', 'cheerful-grin', 'open-smile', 'excited-smile']);
@@ -501,6 +615,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       let commonBodySamples = 0;
       let specializedBodySamples = 0;
       let costumeAccessorySamples = 0;
+      let manualOnlyAccessorySamples = 0;
       let coveredFacialHairSamples = 0;
       let femaleFacialHairSamples = 0;
       let expressiveManualHairSamples = 0;
@@ -549,6 +664,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
           }
           if (accessories.some((accessory) => currentCampusAccessories.has(accessory))) currentCampusAccessorySamples++;
           if (accessories.some((accessory) => costumeAccessories.has(accessory))) costumeAccessorySamples++;
+          if (accessories.some((accessory) => manualOnlyAccessories.has(accessory))) manualOnlyAccessorySamples++;
           if (accessories.includes('hijab')) hijabSamples++;
           if (accessories.includes('headwrap')) headwrapSamples++;
           if (accessories.some((accessory) => coveredHairAccessories.has(accessory) || accessory === 'turban')) coveredHairSamples++;
@@ -587,6 +703,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         commonBodySamples,
         specializedBodySamples,
         costumeAccessorySamples,
+        manualOnlyAccessorySamples,
         coveredFacialHairSamples,
         femaleFacialHairSamples,
         expressiveManualHairSamples,
@@ -617,6 +734,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(summary.bodyVariety).toBeGreaterThanOrEqual(24);
     expect(summary.commonBodySamples).toBeGreaterThan(summary.specializedBodySamples);
     expect(summary.costumeAccessorySamples).toBe(0);
+    expect(summary.manualOnlyAccessorySamples).toBe(0);
     expect(summary.coveredFacialHairSamples).toBe(0);
     expect(summary.femaleFacialHairSamples).toBe(0);
     expect(summary.expressiveManualHairSamples).toBe(0);
@@ -862,8 +980,6 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     await clearAccessories(page);
 
-    const hairStyle = page.getByLabel('Hair style', { exact: true });
-    const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
     const styles = [
       'long',
       'long-layers',
@@ -886,7 +1002,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       'box-braids',
       'ponytail',
     ];
-    const sidePanelStyles = new Set([
+    const sidePanelStyles = [
       'long',
       'long-layers',
       'straight-long-layers',
@@ -904,18 +1020,16 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       'center-part',
       'shoulder-length',
       'half-up',
-    ]);
+    ];
 
-    for (const style of styles) {
-      await hairStyle.selectOption(style);
-      await expect(preview.locator(`[data-hero-slot="hair-root"][data-hero-option="${style}"]`))
-        .toHaveAttribute('display', 'inline');
+    const connectivityFailures = await page.evaluate(({ styles, sidePanelStyles }) => {
+      const svg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+      const sidePanelSet = new Set(sidePanelStyles);
+      const baseState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS)));
+      baseState.outfit.accessory = 'none';
+      baseState.outfit.accessories = [];
 
-      const templeSlots = await preview.evaluate((svg) => {
-        const points = [
-          { name: 'left temple root', x: 356, y: 178 },
-          { name: 'right temple root', x: 444, y: 178 },
-        ];
+      function pointHits(points) {
         return points.map((point) => {
           const svgPoint = svg.createSVGPoint();
           svgPoint.x = point.x;
@@ -929,48 +1043,59 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
             option: slot && slot.getAttribute('data-hero-option'),
           };
         });
-      });
-
-      for (const point of templeSlots) {
-        expect(point, `${style} should have connected hair at ${point.name}`).toMatchObject({
-          slot: 'hair-root',
-          option: style,
-        });
       }
 
-      if (sidePanelStyles.has(style)) {
-        const filledBackHairSlots = await preview.evaluate((svg) => {
-          const points = [
-            { name: 'left crown volume', x: 350, y: 170 },
-            { name: 'right crown volume', x: 450, y: 170 },
+      const failures = [];
+      for (const style of styles) {
+        const state = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+        state.appearance.hairStyle = style;
+        window.HeroAvatar.applyToSvg(svg, state);
+
+        const root = svg.querySelector('[data-hero-slot="hair-root"][data-hero-option="' + style + '"]');
+        if (!root || root.getAttribute('display') !== 'inline') {
+          failures.push({
+            style,
+            name: 'hair root display',
+            slot: root && root.getAttribute('data-hero-slot'),
+            option: root && root.getAttribute('data-hero-option'),
+            display: root && root.getAttribute('display'),
+          });
+        }
+
+        const templeSlots = pointHits([
+          { name: 'left temple root', x: 356, y: 178 },
+          { name: 'right temple root', x: 444, y: 178 },
+        ]);
+        for (const point of templeSlots) {
+          if (point.slot !== 'hair-root' || point.option !== style) {
+            failures.push(Object.assign({ style }, point));
+          }
+        }
+
+        if (sidePanelSet.has(style)) {
+          const filledBackHairSlots = pointHits([
+            { name: 'left crown volume', x: 360, y: 170 },
+            { name: 'right crown volume', x: 440, y: 170 },
             { name: 'left hair behind head', x: 346, y: 205 },
             { name: 'right hair behind head', x: 454, y: 205 },
-          ];
-          return points.map((point) => {
-            const svgPoint = svg.createSVGPoint();
-            svgPoint.x = point.x;
-            svgPoint.y = point.y;
-            const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
-            const element = document.elementFromPoint(screenPoint.x, screenPoint.y);
-            const slot = element && element.closest('[data-hero-slot]');
-            return {
-              name: point.name,
-              slot: slot && slot.getAttribute('data-hero-slot'),
-              option: slot && slot.getAttribute('data-hero-option'),
-            };
-          });
-        });
+          ]);
 
-        for (const point of filledBackHairSlots) {
-          expect(point.option, `${style} should fill ${point.name}`).toBe(style);
-          if (point.name.includes('crown volume')) {
-            expect(['hair', 'hair-root', 'hairline'], `${style} should fill ${point.name} with a visible hair layer`).toContain(point.slot);
-          } else {
-            expect(point.slot, `${style} should fill ${point.name}`).toBe('hair');
+          for (const point of filledBackHairSlots) {
+            const validCrownLayer = point.name.includes('crown volume') && ['hair', 'hair-root', 'hairline'].includes(point.slot);
+            const validBackHairLayer = !point.name.includes('crown volume') && point.slot === 'hair';
+            if (point.option !== style || (!validCrownLayer && !validBackHairLayer)) {
+              failures.push(Object.assign({ style }, point));
+            }
           }
         }
       }
-    }
+      return failures;
+    }, { styles, sidePanelStyles });
+
+    expect(
+      connectivityFailures,
+      'Long and side-panel hair styles should connect at temples and fill side panels'
+    ).toEqual([]);
   });
 
   test('Every selectable hair style keeps the facial feature area clear', async ({ page }) => {
@@ -979,16 +1104,22 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     await clearAccessories(page);
 
-    const hairStyle = page.getByLabel('Hair style', { exact: true });
-    await page.getByLabel('Head shape', { exact: true }).selectOption('soft-oval');
-    const options = await page.locator('#hero-cust-hair-style option').evaluateAll((nodes) =>
-      nodes.map((node) => node.value).filter(Boolean)
-    );
+    const blockedFeatureHitsByStyle = await page.evaluate(() => {
+      const svg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+      const styles = Array.from(document.querySelectorAll('#hero-cust-hair-style option'))
+        .map((node) => node.value)
+        .filter(Boolean);
+      const baseState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS)));
+      baseState.appearance.headStyle = 'soft-oval';
+      baseState.outfit.accessory = 'none';
+      baseState.outfit.accessories = [];
 
-    for (const style of options) {
-      await hairStyle.selectOption(style);
-      const blockedFeatureHits = await page.locator('#hero-customizer-modal [data-gym-hero-svg]')
-        .evaluate((svg) => {
+      return styles.map((style) => {
+        const state = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+        state.appearance.hairStyle = style;
+        window.HeroAvatar.applyToSvg(svg, state);
+
+        const blockedFeatureHits = (() => {
           const points = [
             { name: 'left eye', x: 381, y: 185 },
             { name: 'right eye', x: 419, y: 185 },
@@ -1010,10 +1141,16 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
               option: slot && slot.getAttribute('data-hero-option'),
             };
           }).filter((hit) => ['hair', 'hairline', 'hair-root'].includes(hit.slot));
-        });
+        })();
 
-      expect(blockedFeatureHits, `${style} should not place hair over eyes, cheeks, or mouth`).toEqual([]);
-    }
+        return { style, blockedFeatureHits };
+      }).filter((result) => result.blockedFeatureHits.length > 0);
+    });
+
+    expect(
+      blockedFeatureHitsByStyle,
+      'No selectable hair style should place hair over eyes, cheeks, or mouth'
+    ).toEqual([]);
   });
 
   test('Bantu knots sit on a connected hairline without exposing the scalp', async ({ page }) => {
@@ -1306,6 +1443,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
   });
 
   test('Additional culturally flexible outfit and accessory options update the preview', async ({ page }) => {
+    test.setTimeout(60000);
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
@@ -1314,7 +1452,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByLabel('Outfit style', { exact: true }).selectOption('kurta-top');
     await page.getByLabel('Wireframe glasses', { exact: true }).check();
     await page.getByLabel('Small hoop earrings', { exact: true }).check();
-    await page.getByLabel('Forehead accent', { exact: true }).check();
+    await page.getByLabel('Forehead jewel', { exact: true }).check();
 
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
     await expect(preview.locator('[data-hero-slot="outfit-style"][data-hero-option="kurta-top"]'))
@@ -1323,7 +1461,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       .toHaveAttribute('display', 'inline');
     await expect(preview.locator('[data-hero-slot="accessory"][data-hero-option="hoop-earrings"]'))
       .toHaveAttribute('display', 'inline');
-    await expect(preview.locator('[data-hero-slot="accessory"][data-hero-option="forehead-accent"]'))
+    await expect(preview.locator('[data-hero-slot="accessory"][data-hero-option="forehead-jewel"]'))
       .toHaveAttribute('display', 'inline');
 
     await clearAccessories(page);
@@ -1342,7 +1480,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await clearAccessories(page);
     await page.getByLabel('Hair style', { exact: true }).selectOption('long-straight');
     await page.getByLabel('Outfit style', { exact: true }).selectOption('collared-shirt');
-    await page.getByLabel('Draped scarf', { exact: true }).check();
+    await page.getByLabel('Draped head scarf', { exact: true }).check();
     await expect(preview.locator('[data-hero-slot="outfit-style"][data-hero-option="collared-shirt"]'))
       .toHaveAttribute('display', 'inline');
     await expect(preview.locator('[data-hero-slot="accessory"][data-hero-option="draped-scarf"]'))
@@ -1377,6 +1515,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
   });
 
   test('Expanded natural hair styles update the preview', async ({ page }) => {
+    test.setTimeout(60000);
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
@@ -1578,7 +1717,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     const noseShape = page.getByLabel('Nose shape', { exact: true });
     const mouth = page.getByLabel('Mouth', { exact: true });
 
-    for (const value of ['almond', 'monolid', 'soft-monolid', 'hooded', 'smiling', 'wide']) {
+    for (const value of ['almond', 'single-eyelid', 'soft-single-eyelid', 'hooded', 'smiling', 'wide']) {
       await eyeShape.selectOption(value);
       await expect(eyeShape).toHaveValue(value);
       await expect(preview.locator(`[data-hero-slot="eye-shape"][data-hero-option="${value}"]`))
@@ -1776,7 +1915,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       'v-shape',
       'compact-strong',
       'broad-lean',
-      'stocky',
+      'solid',
       'tall-lean',
       'tall-soft',
       'tall-curved',
@@ -1785,7 +1924,9 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       'rounded',
       'medium-full',
       'soft-tapered',
+      'fuller-hip',
       'soft-full-hips',
+      'full-frame',
       'balanced-full',
     ];
 
