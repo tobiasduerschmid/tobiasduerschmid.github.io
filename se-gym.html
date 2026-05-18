@@ -398,6 +398,28 @@ layout: sebook
           Build a campus-ready hero with proportions, hair, headwear, color, and detail options. The preview updates
           live; Save applies the look to the heroes on this page.
         </p>
+        <div class="hero-cust-actions hero-cust-actions-top" role="group" aria-label="Top hero customizer actions">
+          <button type="button" class="gym-btn secondary" data-hero-cust-action="randomize">
+            <i class="fa-solid fa-shuffle" aria-hidden="true"></i> Randomize
+          </button>
+          <button type="button" class="gym-btn secondary" data-hero-cust-action="reset">
+            <i class="fa-solid fa-rotate-left" aria-hidden="true"></i> Reset
+          </button>
+          <button type="button" class="gym-btn secondary" data-hero-cust-action="use-random">
+            <i class="fa-solid fa-dice" aria-hidden="true"></i> Use random heroes
+          </button>
+          <button type="button" class="gym-btn secondary" data-hero-cust-action="download">
+            <i class="fa-solid fa-download" aria-hidden="true"></i> Download
+          </button>
+          <button type="button" class="gym-btn secondary" data-hero-cust-action="upload">
+            <i class="fa-solid fa-upload" aria-hidden="true"></i> Upload
+          </button>
+          <span class="hero-cust-action-spacer" aria-hidden="true"></span>
+          <button type="button" class="gym-btn secondary" data-hero-cust-action="cancel">Cancel</button>
+          <button type="button" class="gym-btn primary" data-hero-cust-action="save">
+            <i class="fa-solid fa-check" aria-hidden="true"></i> Save
+          </button>
+        </div>
         <div class="hero-cust-layout">
           <div class="hero-cust-preview-pane">
             <div class="hero-cust-preview" aria-hidden="true">
@@ -516,27 +538,27 @@ layout: sebook
               </div>
             </fieldset>
 
-            <div class="hero-cust-actions">
-              <button type="button" id="hero-cust-randomize" class="gym-btn secondary">
+            <div class="hero-cust-actions hero-cust-actions-bottom" role="group" aria-label="Bottom hero customizer actions">
+              <button type="button" id="hero-cust-randomize" class="gym-btn secondary" data-hero-cust-action="randomize">
                 <i class="fa-solid fa-shuffle" aria-hidden="true"></i> Randomize
               </button>
-              <button type="button" id="hero-cust-reset" class="gym-btn secondary">
+              <button type="button" id="hero-cust-reset" class="gym-btn secondary" data-hero-cust-action="reset">
                 <i class="fa-solid fa-rotate-left" aria-hidden="true"></i> Reset
               </button>
-              <button type="button" id="hero-cust-use-random" class="gym-btn secondary">
+              <button type="button" id="hero-cust-use-random" class="gym-btn secondary" data-hero-cust-action="use-random">
                 <i class="fa-solid fa-dice" aria-hidden="true"></i> Use random heroes
               </button>
-              <button type="button" id="hero-cust-download" class="gym-btn secondary">
+              <button type="button" id="hero-cust-download" class="gym-btn secondary" data-hero-cust-action="download">
                 <i class="fa-solid fa-download" aria-hidden="true"></i> Download
               </button>
-              <button type="button" id="hero-cust-upload" class="gym-btn secondary">
+              <button type="button" id="hero-cust-upload" class="gym-btn secondary" data-hero-cust-action="upload">
                 <i class="fa-solid fa-upload" aria-hidden="true"></i> Upload
               </button>
               <input type="file" id="hero-cust-upload-input" accept="application/json,.json"
                 title="Upload hero avatar JSON" aria-label="Upload hero avatar JSON" style="display:none;">
-              <span style="flex:1;"></span>
-              <button type="button" id="hero-cust-cancel" class="gym-btn secondary">Cancel</button>
-              <button type="button" id="hero-cust-save" class="gym-btn primary">
+              <span class="hero-cust-action-spacer" aria-hidden="true"></span>
+              <button type="button" id="hero-cust-cancel" class="gym-btn secondary" data-hero-cust-action="cancel">Cancel</button>
+              <button type="button" id="hero-cust-save" class="gym-btn primary" data-hero-cust-action="save">
                 <i class="fa-solid fa-check" aria-hidden="true"></i> Save
               </button>
             </div>
@@ -875,6 +897,16 @@ layout: sebook
     .hero-cust-modal[hidden] { display: none; }
     #customize-hero-btn[hidden] { display: none !important; }
     body.hero-cust-modal-open { overflow: hidden; }
+    body.hero-cust-modal-open #gym-entrance [data-gym-hero-svg],
+    body.hero-cust-modal-open #gym-entrance [data-gym-hero-svg] *,
+    body.hero-cust-modal-open #gym-workout [data-gym-hero-svg],
+    body.hero-cust-modal-open #gym-workout [data-gym-hero-svg] *,
+    body.hero-cust-modal-open #gym-entrance .gym-topic-hero-svg,
+    body.hero-cust-modal-open #gym-entrance .gym-topic-hero-svg *,
+    body.hero-cust-modal-open #gym-workout .gym-topic-hero-svg,
+    body.hero-cust-modal-open #gym-workout .gym-topic-hero-svg * {
+      animation-play-state: paused !important;
+    }
     .hero-cust-modal {
       position: fixed;
       inset: 0;
@@ -1519,6 +1551,18 @@ layout: sebook
       gap: 0.5rem;
       align-items: center;
       margin-top: 1rem;
+    }
+    .hero-cust-actions-top {
+      margin: 0 3rem 1rem 0;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--color-border, #d0d4da);
+    }
+    html.dark-mode .hero-cust-actions-top {
+      border-bottom-color: #3a4250;
+    }
+    .hero-cust-action-spacer {
+      flex: 1 1 auto;
+      min-width: 1rem;
     }
     .hero-cust-actions button {
       min-height: 38px;

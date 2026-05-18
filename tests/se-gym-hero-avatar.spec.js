@@ -70,6 +70,17 @@ async function setCheckboxInput(page, selector, checked) {
   }, checked);
 }
 
+function heroCustomizerActions(page, placement = 'top') {
+  return page.getByRole('group', { name: placement === 'top' ? 'Top hero customizer actions' : 'Bottom hero customizer actions' });
+}
+
+function heroCustomizerAction(page, name, placement = 'top') {
+  return heroCustomizerActions(page, placement).getByRole('button', {
+    name,
+    exact: typeof name === 'string',
+  });
+}
+
 async function scrollChoiceButtonIntoView(page, accessibleName) {
   const button = page.getByRole('button', { name: accessibleName });
   await button.evaluate((element) => {
@@ -223,6 +234,57 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await expect(modal).toBeVisible();
     await expect(page.getByLabel('Hero type', { exact: true })).toBeFocused();
     await a11yCheckpoint(page, 'hero customizer open', { feature: A11Y_FEATURE, darkMode: true });
+  });
+
+  test('Hero customizer actions are available at the top and bottom of the modal', async ({ page }) => {
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+
+    for (const placement of ['top', 'bottom']) {
+      const actions = heroCustomizerActions(page, placement);
+      await expect(actions).toBeVisible();
+      for (const name of ['Randomize', 'Reset', 'Use random heroes', 'Download', 'Upload', 'Cancel', 'Save']) {
+        await expect(heroCustomizerAction(page, name, placement)).toBeVisible();
+      }
+    }
+  });
+
+  test('Opening hero customizer pauses page hero SVG animations but keeps modal preview live', async ({ page }) => {
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+
+    const readAnimationState = async () => page.evaluate(() => {
+      const pageSvgs = Array.from(document.querySelectorAll(
+        '#gym-entrance [data-gym-hero-svg], #gym-workout [data-gym-hero-svg]'
+      ));
+      const modalSvg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+      const cssAnimated = Array.from(document.querySelectorAll(
+        '#gym-entrance [data-gym-hero-svg], #gym-entrance [data-gym-hero-svg] *, #gym-workout [data-gym-hero-svg], #gym-workout [data-gym-hero-svg] *'
+      )).filter((node) => getComputedStyle(node).animationName !== 'none');
+
+      return {
+        pageCount: pageSvgs.length,
+        pagePaused: pageSvgs.map((svg) => svg.animationsPaused()),
+        modalPaused: modalSvg ? modalSvg.animationsPaused() : null,
+        cssAnimatedCount: cssAnimated.length,
+        cssPaused: cssAnimated.every((node) => getComputedStyle(node).animationPlayState === 'paused'),
+      };
+    });
+
+    const closedBefore = await readAnimationState();
+    expect(closedBefore.pageCount).toBeGreaterThan(0);
+    expect(closedBefore.pagePaused).toEqual(closedBefore.pagePaused.map(() => false));
+
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+    const openState = await readAnimationState();
+    expect(openState.pagePaused).toEqual(openState.pagePaused.map(() => true));
+    expect(openState.modalPaused).toBe(false);
+    if (openState.cssAnimatedCount > 0) expect(openState.cssPaused).toBe(true);
+
+    await heroCustomizerAction(page, 'Cancel').click();
+    const closedAfter = await readAnimationState();
+    expect(closedAfter.pagePaused).toEqual(closedAfter.pagePaused.map(() => false));
   });
 
   test('Style preview buttons are generated from the central avatar choice registry', async ({ page }) => {
@@ -383,7 +445,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       timeout: 15000,
     }).toBe('#123456');
 
-    const randomize = page.getByRole('button', { name: 'Randomize' });
+    const randomize = heroCustomizerAction(page, 'Randomize');
     await randomize.click();
     const randomizedHairColor = (await page.getByLabel('Hair color', { exact: true }).inputValue()).toLowerCase();
     expect(randomizedHairColor, 'randomize should choose from generated avatar colors').not.toBe('#123456');
@@ -477,7 +539,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(humanLayerDisplays.every((display) => display === 'none')).toBe(true);
     await expect(page.getByLabel('Skin tone')).toHaveValue('#8b5a35');
 
-    await page.getByRole('button', { name: 'Save' }).click();
+    await heroCustomizerAction(page, 'Save').click();
     await expect(page.getByRole('dialog', { name: 'Customize your hero' })).toBeHidden();
 
     await expect.poll(async () => page.locator('#gym-entrance [data-gym-hero-svg]').evaluateAll((svgs) =>
@@ -2094,7 +2156,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByLabel('Hair style', { exact: true }).selectOption('afro');
     await page.getByLabel('Head shape', { exact: true }).selectOption('soft-square');
     await page.getByLabel('Body type', { exact: true }).selectOption('broad');
-    await page.getByRole('button', { name: /save/i }).click();
+    await heroCustomizerAction(page, /save/i).click();
     await expect(page.getByRole('dialog', { name: 'Customize your hero' })).toBeHidden();
 
     const saved = await page.evaluate(() => localStorage.getItem('se-gym-hero-avatar'));
@@ -2181,7 +2243,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
-    await page.getByRole('button', { name: 'Use random heroes' }).click();
+    await heroCustomizerAction(page, 'Use random heroes').click();
 
     await expect(page.locator('#hero-cust-status')).toContainText(/Saved hero removed/i);
     expect(await page.evaluate(() => localStorage.getItem('se-gym-hero-avatar'))).toBeNull();
@@ -2434,7 +2496,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     // Preview updated but not yet saved
     const storedBefore = await page.evaluate(() => localStorage.getItem('se-gym-hero-avatar'));
     expect(storedBefore).toBeNull();
-    await page.getByRole('button', { name: /save/i }).click();
+    await heroCustomizerAction(page, /save/i).click();
     const storedAfter = await page.evaluate(() => localStorage.getItem('se-gym-hero-avatar'));
     expect(storedAfter).not.toBeNull();
   });
@@ -2448,7 +2510,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     // Click randomize until the hair style changes; collisions are possible.
     let changed = false;
     for (let attempt = 0; attempt < 16 && !changed; attempt++) {
-      await page.getByRole('button', { name: /randomize/i }).click();
+      await heroCustomizerAction(page, /randomize/i).click();
       const current = await hairStyle.inputValue();
       if (current !== initial) changed = true;
     }

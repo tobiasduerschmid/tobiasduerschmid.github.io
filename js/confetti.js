@@ -1,6 +1,6 @@
-// Site-wide confetti burst. Spawns polished paper pieces from the
-// perimeter of an anchor element and lets them fly outward and fall under
-// "gravity". Guarded by the site-wide reduced-motion helper.
+// Site-wide confetti burst. Spawns polished paper pieces from around an
+// anchor element and animates each piece along a small physics-inspired
+// toss path. Guarded by the site-wide reduced-motion helper.
 (function () {
   var cssInjected = false;
   var layer = null;
@@ -29,7 +29,7 @@
         'backface-visibility:visible;',
         'will-change:transform,opacity;',
         'opacity:0;',
-        'animation:site-confetti-fly var(--duration,3800ms) cubic-bezier(.17,.84,.31,1) forwards;',
+        'animation:site-confetti-fly var(--duration,5600ms) linear forwards;',
         'animation-delay:var(--delay,0ms);',
       '}',
       '.site-confetti-piece::after{',
@@ -42,13 +42,13 @@
         'pointer-events:none;',
       '}',
       '@keyframes site-confetti-fly{',
-        '0%{transform:translate3d(0,0,0) rotateZ(0deg) rotateX(0deg) rotateY(0deg) scale(0.52);opacity:0;}',
-        '8%{opacity:1;}',
-        '20%{transform:translate3d(calc(var(--tx)*0.28),calc(var(--ty)*0.28 - var(--lift,34px)),0) rotateZ(calc(var(--rz)*0.22)) rotateX(calc(var(--rx)*0.28)) rotateY(calc(var(--ry)*0.28)) scale(1.08);opacity:1;}',
-        '43%{transform:translate3d(calc(var(--tx)*0.72 + var(--sway,0px)),calc(var(--ty)*0.74 - calc(var(--lift,34px)*0.58)),0) rotateZ(calc(var(--rz)*0.56)) rotateX(calc(var(--rx)*0.62)) rotateY(calc(var(--ry)*0.64)) scale(1);}',
-        '67%{transform:translate3d(var(--tx),calc(var(--ty) + 52px),0) rotateZ(calc(var(--rz)*0.82)) rotateX(calc(var(--rx)*0.92)) rotateY(calc(var(--ry)*0.9)) scale(0.98);opacity:1;}',
-        '88%{transform:translate3d(calc(var(--tx) + var(--drift,0px)),calc(var(--ty) + var(--fall,230px)),0) rotateZ(calc(var(--rz)*0.96)) rotateX(calc(var(--rx)*1.08)) rotateY(calc(var(--ry)*1.06)) scale(0.9);opacity:0.76;}',
-        '100%{transform:translate3d(calc(var(--tx) + var(--drift,0px) + var(--sway,0px)),calc(var(--ty) + var(--fall,320px)),0) rotateZ(var(--rz)) rotateX(var(--rx)) rotateY(var(--ry)) scale(0.78);opacity:0;}',
+        '0%{transform:translate3d(0,0,0) rotateZ(var(--rz0)) rotateX(var(--rx0)) rotateY(var(--ry0)) scale(0.64);opacity:0;}',
+        '6%{opacity:1;}',
+        '16%{transform:translate3d(var(--x1),var(--y1),0) rotateZ(var(--rz1)) rotateX(var(--rx1)) rotateY(var(--ry1)) scale(1.04);opacity:1;}',
+        '32%{transform:translate3d(var(--x2),var(--y2),0) rotateZ(var(--rz2)) rotateX(var(--rx2)) rotateY(var(--ry2)) scale(1);opacity:1;}',
+        '54%{transform:translate3d(var(--x3),var(--y3),0) rotateZ(var(--rz3)) rotateX(var(--rx3)) rotateY(var(--ry3)) scale(0.96);opacity:0.98;}',
+        '76%{transform:translate3d(var(--x4),var(--y4),0) rotateZ(var(--rz4)) rotateX(var(--rx4)) rotateY(var(--ry4)) scale(0.9);opacity:0.78;}',
+        '100%{transform:translate3d(var(--x5),var(--y5),0) rotateZ(var(--rz5)) rotateX(var(--rx5)) rotateY(var(--ry5)) scale(0.78);opacity:0;}',
       '}',
       '@media (prefers-reduced-motion:reduce){',
         '.site-confetti-layer{display:none !important;}',
@@ -124,6 +124,29 @@
     return Math.max(min, Math.min(max, value));
   }
 
+  function px(value) {
+    return value.toFixed(1) + 'px';
+  }
+
+  function deg(value) {
+    return value.toFixed(0) + 'deg';
+  }
+
+  function ballisticY(t, peakTime, peakHeight, drop) {
+    var a = (peakHeight + drop * peakTime) / (peakTime * (1 - peakTime));
+    var b = drop - a;
+    return a * t * t + b * t;
+  }
+
+  function driftX(t, velocity, wind, flutter, phase, cycles) {
+    var wave = Math.sin(phase + t * cycles * Math.PI * 2);
+    return velocity * t + wind * t * t + wave * flutter * (0.15 + t * 0.85);
+  }
+
+  function tumbleAt(start, spin, flutter, phase, t) {
+    return start + spin * t + Math.sin(phase + t * Math.PI * 2) * flutter;
+  }
+
   window.spawnConfetti = function spawnConfetti(anchor) {
     if (!anchor || !anchor.getBoundingClientRect) return;
     if (prefersReducedMotion()) return;
@@ -135,10 +158,16 @@
 
     var colors = ['#ff4f6d','#ffb000','#ffd84d','#43d17d','#14b8a6','#3b82f6','#8b5cf6','#ec4899','#f97316','#ffffff'];
     var shapes = ['ribbon','ribbon','ribbon','ribbon','ticket','ticket','circle','triangle','spark'];
-    var count = clamp(Math.round((rect.width + rect.height) / 9), 72, 110);
-    var perimeter = 2 * (rect.width + rect.height);
+    var count = clamp(Math.round((rect.width + rect.height) / 7), 96, 132);
     var confettiLayer = getLayer();
     var fragment = document.createDocumentFragment();
+    var centerX = rect.left + rect.width / 2;
+    var centerY = rect.top + rect.height * 0.45;
+    var viewportHeight = window.innerHeight || document.documentElement.clientHeight || 720;
+    var sourceSpreadX = Math.min(84, rect.width * 0.26);
+    var sourceSpreadY = Math.min(46, rect.height * 0.18);
+    var maxPeakHeight = Math.max(24, Math.min(240, centerY - 28));
+    var timeStops = [0.16, 0.32, 0.54, 0.76, 1];
 
     trimToBudget(count);
 
@@ -146,15 +175,8 @@
       var piece = document.createElement('div');
       piece.className = 'site-confetti-piece';
 
-      var pos = Math.random() * perimeter;
-      var x, y, nx, ny;
-      if      (pos < rect.width)                          { x = pos;                                              y = 0;                                               nx =  0; ny = -1; }
-      else if (pos < rect.width + rect.height)            { x = rect.width;                                       y = pos - rect.width;                                nx =  1; ny =  0; }
-      else if (pos < 2 * rect.width + rect.height)        { x = rect.width - (pos - rect.width - rect.height);   y = rect.height;                                     nx =  0; ny =  1; }
-      else                                                { x = 0;                                                y = rect.height - (pos - 2*rect.width - rect.height); nx = -1; ny =  0; }
-
-      piece.style.left = (rect.left + x) + 'px';
-      piece.style.top  = (rect.top + y)  + 'px';
+      piece.style.left = px(centerX + rand(-sourceSpreadX, sourceSpreadX));
+      piece.style.top  = px(centerY + rand(-sourceSpreadY, sourceSpreadY));
 
       var shape = shapes[Math.floor(Math.random() * shapes.length)];
       var w, h, br, clip;
@@ -189,30 +211,42 @@
       piece.style.borderRadius = br + 'px';
       if (clip) piece.style.clipPath = clip;
 
-      var distance   = rand(125, 230);
-      var tangential = rand(-150, 150);
-      var tx    = nx * distance + (nx === 0 ? tangential : 0);
-      var ty    = ny * distance + (ny === 0 ? tangential : 0);
-      var rz    = rand(-720, 720);
-      var rx    = rand(420, 1120) * (Math.random() < 0.5 ? -1 : 1);
-      var ry    = rand(520, 1220) * (Math.random() < 0.5 ? -1 : 1);
-      var drift = rand(-150, 150);
-      var sway  = rand(-90, 90);
-      var lift  = rand(42, 86);
-      var fall  = rand(260, 430);
+      var direction = Math.random() < 0.5 ? -1 : 1;
+      var velocity = direction * rand(90, 390) + rand(-80, 80);
+      var wind = rand(-170, 170);
+      var flutter = rand(10, 44);
+      var phase = rand(0, Math.PI * 2);
+      var cycles = rand(1.1, 2.4);
+      var peakTime = rand(0.2, 0.34);
+      var peakHeight = rand(Math.max(24, maxPeakHeight * 0.58), maxPeakHeight);
+      var drop = Math.max(520, viewportHeight - centerY + rand(120, 320));
+      var rzStart = rand(-80, 80);
+      var rxStart = rand(-70, 70);
+      var ryStart = rand(-70, 70);
+      var rzSpin = rand(260, 900) * (Math.random() < 0.5 ? -1 : 1);
+      var rxSpin = rand(720, 1760) * (Math.random() < 0.5 ? -1 : 1);
+      var rySpin = rand(640, 1680) * (Math.random() < 0.5 ? -1 : 1);
+      var rzFlutter = rand(18, 54);
+      var rxFlutter = rand(70, 150);
+      var ryFlutter = rand(80, 170);
       var color = colors[i % colors.length];
-      var duration = rand(3200, 4700);
+      var duration = rand(5600, 7600);
       var delay = Math.random() * 180;
 
-      piece.style.setProperty('--tx',    tx.toFixed(1)    + 'px');
-      piece.style.setProperty('--ty',    ty.toFixed(1)    + 'px');
-      piece.style.setProperty('--rz',    rz.toFixed(0)    + 'deg');
-      piece.style.setProperty('--rx',    rx.toFixed(0)    + 'deg');
-      piece.style.setProperty('--ry',    ry.toFixed(0)    + 'deg');
-      piece.style.setProperty('--drift', drift.toFixed(1) + 'px');
-      piece.style.setProperty('--sway',  sway.toFixed(1)  + 'px');
-      piece.style.setProperty('--lift',  lift.toFixed(1)  + 'px');
-      piece.style.setProperty('--fall',  fall.toFixed(1)  + 'px');
+      piece.style.setProperty('--rz0', deg(rzStart));
+      piece.style.setProperty('--rx0', deg(rxStart));
+      piece.style.setProperty('--ry0', deg(ryStart));
+
+      for (var stopIndex = 0; stopIndex < timeStops.length; stopIndex++) {
+        var stop = timeStops[stopIndex];
+        var varIndex = stopIndex + 1;
+        piece.style.setProperty('--x' + varIndex, px(driftX(stop, velocity, wind, flutter, phase, cycles)));
+        piece.style.setProperty('--y' + varIndex, px(ballisticY(stop, peakTime, peakHeight, drop)));
+        piece.style.setProperty('--rz' + varIndex, deg(tumbleAt(rzStart, rzSpin, rzFlutter, phase, stop)));
+        piece.style.setProperty('--rx' + varIndex, deg(tumbleAt(rxStart, rxSpin, rxFlutter, phase + 1.7, stop)));
+        piece.style.setProperty('--ry' + varIndex, deg(tumbleAt(ryStart, rySpin, ryFlutter, phase + 3.1, stop)));
+      }
+
       piece.style.setProperty('--delay', delay.toFixed(0) + 'ms');
       piece.style.setProperty('--duration', duration.toFixed(0) + 'ms');
       piece.style.setProperty('--piece-bg', 'linear-gradient(135deg,rgba(255,255,255,0.92),rgba(255,255,255,0.18) 24%,' + color + ' 46%,' + color + ' 74%,rgba(0,0,0,0.16))');

@@ -3040,6 +3040,20 @@
       status.classList.toggle('hero-cust-status-error', !!isError);
     }
 
+    function setOriginalHeroAnimationsPaused(paused) {
+      var svgs = document.querySelectorAll('[data-gym-hero-svg]');
+      for (var i = 0; i < svgs.length; i++) {
+        var svg = svgs[i];
+        if (modal.contains(svg)) continue;
+        try {
+          if (paused && typeof svg.pauseAnimations === 'function') svg.pauseAnimations();
+          else if (!paused && typeof svg.unpauseAnimations === 'function') svg.unpauseAnimations();
+        } catch (e) {
+          // Some embedded SVG contexts may not expose SMIL controls.
+        }
+      }
+    }
+
     function openModal() {
       previousFocus = document.activeElement;
       var initial = loadAvatar() || randomAvatar();
@@ -3048,6 +3062,7 @@
       modal.hidden = false;
       document.body.classList.add('hero-cust-modal-open');
       modal.classList.add('hero-cust-open');
+      setOriginalHeroAnimationsPaused(true);
       refreshPreview();
       var first = $('hero-cust-kind') || $('hero-cust-skin');
       if (first) first.focus();
@@ -3057,6 +3072,7 @@
       modal.hidden = true;
       document.body.classList.remove('hero-cust-modal-open');
       modal.classList.remove('hero-cust-open');
+      setOriginalHeroAnimationsPaused(false);
       if (previousFocus && document.contains(previousFocus) && typeof previousFocus.focus === 'function') previousFocus.focus();
     }
 
@@ -3213,17 +3229,24 @@
       refreshPreview();
     });
 
-    $('hero-cust-cancel').addEventListener('click', closeModal);
     $('hero-cust-close').addEventListener('click', closeModal);
-    $('hero-cust-save').addEventListener('click', saveAndClose);
-    $('hero-cust-randomize').addEventListener('click', doRandomize);
-    $('hero-cust-reset').addEventListener('click', doReset);
-    $('hero-cust-use-random').addEventListener('click', doUseRandomHeroes);
-    $('hero-cust-download').addEventListener('click', doDownload);
 
-    var uploadBtn = $('hero-cust-upload');
     var uploadInput = $('hero-cust-upload-input');
-    uploadBtn.addEventListener('click', function () { uploadInput.click(); });
+    function bindActionButtons(action, handler) {
+      modal.querySelectorAll('[data-hero-cust-action="' + action + '"]').forEach(function (button) {
+        button.addEventListener('click', handler);
+      });
+    }
+
+    bindActionButtons('cancel', closeModal);
+    bindActionButtons('save', saveAndClose);
+    bindActionButtons('randomize', doRandomize);
+    bindActionButtons('reset', doReset);
+    bindActionButtons('use-random', doUseRandomHeroes);
+    bindActionButtons('download', doDownload);
+    bindActionButtons('upload', function () {
+      if (uploadInput) uploadInput.click();
+    });
     uploadInput.addEventListener('change', function (e) {
       doUpload(e.target.files && e.target.files[0]);
       uploadInput.value = '';
