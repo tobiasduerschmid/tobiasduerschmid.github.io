@@ -254,6 +254,7 @@
           choice('bright-smile', 'Bright smile'),
           choice('wide-smile', 'Wide smile'),
           choice('toothy-smile', 'Toothy smile'),
+          choice('toothy-bright-smile', 'Toothy bright smile'),
           choice('cheerful-grin', 'Cheerful grin'),
           choice('open-smile', 'Open smile'),
           choice('excited-smile', 'Excited smile')
@@ -659,6 +660,7 @@
     'bright-smile': { scaleX: 1.04, scaleY: 1.03, translateY: 0.8 },
     'wide-smile': { scaleX: 1.14, scaleY: 1.04, translateY: 1.1 },
     'toothy-smile': { scaleX: 1.1, scaleY: 1.07, translateY: 1.5 },
+    'photo-smile': { scaleX: 1.13, scaleY: 1.1, translateY: 1.8 },
     'cheerful-grin': { scaleX: 1.12, scaleY: 1.06, translateY: 1.4 },
     'open-smile': { scaleX: 1.03, scaleY: 1.1, translateY: 2.4 },
     'excited-smile': { scaleX: 1.11, scaleY: 1.13, translateY: 3 }
@@ -868,6 +870,7 @@
     'bright-smile': 9,
     'wide-smile': 9,
     'toothy-smile': 9,
+    'photo-smile': 10,
     'open-smile': 7,
     'soft-smile': 7,
     'smile': 6,
@@ -1321,7 +1324,7 @@
   function randomMouthStyle(recipe) {
     var seen = {};
     var styles = (recipe && recipe.mouthStyles && recipe.mouthStyles.length ? recipe.mouthStyles : ['smile']).slice();
-    ['bright-smile', 'wide-smile', 'toothy-smile', 'cheerful-grin', 'closed-smile', 'small-smile', 'soft-full-lips', 'open-smile', 'excited-smile'].forEach(function (style) {
+    ['bright-smile', 'wide-smile', 'toothy-smile', 'photo-smile', 'cheerful-grin', 'closed-smile', 'small-smile', 'soft-full-lips', 'open-smile', 'excited-smile'].forEach(function (style) {
       if (styles.indexOf(style) === -1) styles.push(style);
     });
     var weighted = [];
