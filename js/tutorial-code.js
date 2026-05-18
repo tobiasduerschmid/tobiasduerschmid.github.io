@@ -9857,17 +9857,98 @@
 
   TutorialCode.prototype._initTooltips = function (rootEl) {
     if (!rootEl || !window.jQuery || !jQuery.fn || !jQuery.fn.tooltip) return;
-    jQuery(rootEl)
-      .find('[data-toggle="tooltip"], [title]:not([data-no-tooltip])')
-      .tooltip({
-        trigger: 'hover focus',
-        delay: { show: 100, hide: 250 },
-        container: 'body',
-        viewport: { selector: 'body', padding: 8 },
-        placement: function (_tip, element) {
-          var rect = element.getBoundingClientRect();
-          return rect.top < 80 ? 'bottom' : 'auto top';
-        },
+    var $triggers = jQuery(rootEl).find('[data-toggle="tooltip"], [title]:not([data-no-tooltip])');
+    if (!$triggers.length) return;
+
+    $triggers.tooltip({
+      trigger: 'manual',
+      delay: 0,
+      container: 'body',
+      viewport: { selector: 'body', padding: 8 },
+      placement: function (_tip, element) {
+        var rect = element.getBoundingClientRect();
+        return rect.top < 80 ? 'bottom' : 'auto top';
+      },
+    });
+
+    function getTip($trigger) {
+      var data = $trigger.data('bs.tooltip');
+      if (data && data.$tip) return data.$tip;
+      var id = $trigger.attr('aria-describedby');
+      return id ? jQuery('#' + id) : jQuery();
+    }
+
+    function clearTimer($trigger, key) {
+      var timer = $trigger.data(key);
+      if (timer) {
+        window.clearTimeout(timer);
+        $trigger.removeData(key);
+      }
+    }
+
+    function scheduleHide($trigger) {
+      clearTimer($trigger, 'a11yTooltipHideTimer');
+      var timer = window.setTimeout(function () {
+        var $tip = getTip($trigger);
+        if ($trigger.is(':hover') || $trigger.is(':focus') || ($tip.length && $tip.is(':hover'))) {
+          scheduleHide($trigger);
+          return;
+        }
+        $trigger.tooltip('hide');
+      }, 150);
+      $trigger.data('a11yTooltipHideTimer', timer);
+    }
+
+    function showTooltip(trigger) {
+      var $trigger = jQuery(trigger);
+      clearTimer($trigger, 'a11yTooltipHideTimer');
+      clearTimer($trigger, 'a11yTooltipShowTimer');
+      $trigger.tooltip('show');
+      window.setTimeout(function () {
+        getTip($trigger)
+          .off('.a11yTooltipHover')
+          .on('mouseenter.a11yTooltipHover', function () {
+            clearTimer($trigger, 'a11yTooltipHideTimer');
+          })
+          .on('mouseleave.a11yTooltipHover', function () {
+            scheduleHide($trigger);
+          });
+      }, 0);
+    }
+
+    // Step content often has dense inline affordances; require a deliberate
+    // one-second hover before opening a tooltip, but keep keyboard focus instant.
+    var HOVER_SHOW_DELAY = 1000;
+    function scheduleShow(trigger) {
+      var $trigger = jQuery(trigger);
+      clearTimer($trigger, 'a11yTooltipShowTimer');
+      var timer = window.setTimeout(function () {
+        $trigger.removeData('a11yTooltipShowTimer');
+        if ($trigger.is(':hover')) showTooltip(trigger);
+      }, HOVER_SHOW_DELAY);
+      $trigger.data('a11yTooltipShowTimer', timer);
+    }
+
+    $triggers
+      .off('.a11yTooltip')
+      .on('mouseenter.a11yTooltip', function () {
+        scheduleShow(this);
+      })
+      .on('focusin.a11yTooltip', function () {
+        showTooltip(this);
+      })
+      .on('mouseleave.a11yTooltip focusout.a11yTooltip', function () {
+        var $trigger = jQuery(this);
+        clearTimer($trigger, 'a11yTooltipShowTimer');
+        scheduleHide($trigger);
+      });
+
+    jQuery(document)
+      .off('keydown.tutorialDynamicTooltips')
+      .on('keydown.tutorialDynamicTooltips', function (event) {
+        if (event.key === 'Escape' || event.keyCode === 27) {
+          jQuery('[data-original-title]').tooltip('hide');
+        }
       });
   };
 

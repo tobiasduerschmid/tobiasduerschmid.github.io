@@ -1120,7 +1120,11 @@ channel.
   path so setup input cannot race with solution input. Setup and visible
   solution batches may contain multi-command Git workflows, so keep their
   timeouts long enough for the shell prompt to return instead of resolving
-  against a partially applied repository state.
+  against a partially applied repository state. Dynamic Bootstrap tooltips in
+  this runtime intentionally wait 1 second before showing on pointer hover to
+  keep dense tutorial chrome from flashing incidental boxes during cursor
+  travel; keyboard focus still shows them immediately because focus is
+  deliberate navigation.
 - **`js/tutorial-hero-celebration.js`** — shared test-pass celebration used
   by every `TutorialCode` backend and the `uml-editor` backend. After a
   visible gate-style test run passes all tests, it clones the saved SE Gym

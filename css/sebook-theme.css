@@ -916,7 +916,7 @@ body.sebook-layout #tts-read-btn {
   height: 100%;
   padding-top: 0 !important;
   padding-bottom: 0 !important;
-  font-size: 1.2em !important;
+  font-size: var(--tutorial-navbar-brand-font-size, 20px) !important;
 }
 
 .tutorial-back-link {
@@ -942,6 +942,7 @@ body.sebook-layout #tts-read-btn {
 .tutorial-navbar-actions {
   display: flex;
   min-height: 45px;
+  margin-left: auto;
   padding-right: 16px;
   gap: 12px;
   flex-wrap: wrap;

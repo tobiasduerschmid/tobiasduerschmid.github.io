@@ -62,6 +62,14 @@
         }
       }
 
+      function clearShowTimer($trigger) {
+        var timer = $trigger.data('a11yTooltipShowTimer');
+        if (timer) {
+          window.clearTimeout(timer);
+          $trigger.removeData('a11yTooltipShowTimer');
+        }
+      }
+
       function scheduleHide($trigger) {
         clearHideTimer($trigger);
         var timer = window.setTimeout(function () {
@@ -78,6 +86,7 @@
       function showTooltip(trigger) {
         var $trigger = $(trigger);
         clearHideTimer($trigger);
+        clearShowTimer($trigger);
         $trigger.tooltip('show');
         window.setTimeout(function () {
           getTip($trigger)
@@ -91,13 +100,32 @@
         }, 0);
       }
 
+      // Delay hover-only tooltips so quick cursor travel across dense toolbars
+      // does not fill the page with boxes. Focus remains immediate for keyboard
+      // users because it is deliberate navigation, not incidental pointer motion.
+      var HOVER_SHOW_DELAY = 1000;
+      function scheduleShow(trigger) {
+        var $trigger = $(trigger);
+        clearShowTimer($trigger);
+        var timer = window.setTimeout(function () {
+          $trigger.removeData('a11yTooltipShowTimer');
+          if ($trigger.is(':hover')) showTooltip(trigger);
+        }, HOVER_SHOW_DELAY);
+        $trigger.data('a11yTooltipShowTimer', timer);
+      }
+
       $triggers
         .off('.a11yTooltip')
-        .on('mouseenter.a11yTooltip focusin.a11yTooltip', function () {
+        .on('mouseenter.a11yTooltip', function () {
+          scheduleShow(this);
+        })
+        .on('focusin.a11yTooltip', function () {
           showTooltip(this);
         })
         .on('mouseleave.a11yTooltip focusout.a11yTooltip', function () {
-          scheduleHide($(this));
+          var $trigger = $(this);
+          clearShowTimer($trigger);
+          scheduleHide($trigger);
         });
 
       $(document).on('keydown.a11yTooltip', function (e) {

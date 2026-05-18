@@ -765,12 +765,15 @@
   var STATUS_SHORT_MAP = { 'M': 'modified', 'A': 'new file', 'D': 'deleted', 'R': 'renamed', 'T': 'typechange', 'U': 'unmerged' };
 
   // Short commit IDs (1–2 chars: A, B', ¬A…) used in command labs need a
-  // larger font so the label fills the node; real hashes use a smaller size.
+  // larger font so the label fills the node. Real hashes stay much smaller
+  // because the 5-character label plus its readability halo otherwise pushes
+  // into the 44px circle's stroke; full commit details remain available in the
+  // SVG description.
   // shortHash is the trimmed form ("A", "D'", "a3f2…") so we check that, not
   // the raw 40-char hash (which was always length 40 and never matched before).
   function _hashDisplay(shortHash) {
     var big = shortHash.length <= 2;
-    return { text: shortHash, fontSize: big ? 18 : 13, dy: big ? 7 : 5 };
+    return { text: shortHash, fontSize: big ? 18 : 10.5, dy: big ? 7 : 4, strokeWidth: big ? 3 : 2 };
   }
 
   function _normalizeFileEntry(entry) {
@@ -2230,7 +2233,7 @@
     var hashText = this._svgEl('text', {
       x: 0, y: hd.dy, 'text-anchor': 'middle',
       fill: hashTextFill, 'font-size': hd.fontSize, 'font-weight': 600,
-      stroke: nodeColor, 'stroke-width': 3, 'stroke-opacity': 0.85,
+      stroke: nodeColor, 'stroke-width': hd.strokeWidth, 'stroke-opacity': 0.85,
       'stroke-linejoin': 'round', 'paint-order': 'stroke',
       'class': 'git-graph-hash',
       'data-layout-id': cm.hash,
@@ -2296,6 +2299,7 @@
       var hd = _hashDisplay(cm.shortHash);
       entry.hashText.textContent = hd.text;
       entry.hashText.setAttribute('font-size', hd.fontSize);
+      entry.hashText.setAttribute('stroke-width', hd.strokeWidth);
       entry.hashText.setAttribute('y', hd.dy);
       entry.shortHash = cm.shortHash;
     }
@@ -2697,7 +2701,7 @@
       var hashFill = _pickReadableOn(color);
       svg += '<text x="' + cx + '" y="' + (cy + hd.dy) + '" text-anchor="middle" ' +
         'fill="' + hashFill + '" font-size="' + hd.fontSize + '" font-weight="700" ' +
-        'stroke="' + color + '" stroke-width="3" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke" ' +
+        'stroke="' + color + '" stroke-width="' + hd.strokeWidth + '" stroke-opacity="0.85" stroke-linejoin="round" paint-order="stroke" ' +
         'class="git-graph-hash" data-layout-id="' + this._escapeXml(cm.hash) + '">' +
         this._escapeXml(hd.text) + '</text>';
 

@@ -855,12 +855,10 @@
         }
 
         // Hover-delay: avoid tooltip clutter when the cursor is just
-        // travelling across the toolbar. 600ms is the sweet spot — long
-        // enough that quick mouse passes don't fire, short enough that
-        // pausing on a button feels responsive. Keyboard focus still
-        // shows the tooltip immediately so screen-reader / keyboard
-        // users don't pay the delay tax.
-        var HOVER_SHOW_DELAY = 600;
+        // travelling across dense tutorial toolbars. Keyboard focus still
+        // shows the tooltip immediately so keyboard users do not pay the
+        // pointer-hover delay.
+        var HOVER_SHOW_DELAY = 1000;
         function clearShowTimer($trigger) {
           var timer = $trigger.data('a11yTooltipShowTimer');
           if (timer) {

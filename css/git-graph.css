@@ -713,8 +713,11 @@ html.dark-mode .git-workbench-shelf {
   }
 }
 
+/* Commit hashes are compact node labels inside a fixed 44px circle. Let their
+   SVG attributes use a smaller fitted size; the full hash/message remains in
+   the graph's text alternative for reading and assistive technology. */
 :is([class^="git-graph-"], [class*=" git-graph-"], [class^="git-workbench-"], [class*=" git-workbench-"]) :is(
-  p, li, button, text, code, pre,
+  p, li, button, text:not(.git-graph-hash), code, pre,
   .git-graph-label, .git-workbench-zone-header, .git-workbench-row,
   .git-workbench-stash-entry, .git-workbench-status
 ) {

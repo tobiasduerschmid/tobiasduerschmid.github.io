@@ -29,7 +29,7 @@
         'backface-visibility:visible;',
         'will-change:transform,opacity;',
         'opacity:0;',
-        'animation:site-confetti-fly var(--duration,5600ms) linear forwards;',
+        'animation:site-confetti-fly var(--duration,5400ms) linear forwards;',
         'animation-delay:var(--delay,0ms);',
       '}',
       '.site-confetti-piece::after{',
@@ -44,8 +44,8 @@
       '@keyframes site-confetti-fly{',
         '0%{transform:translate3d(0,0,0) rotateZ(var(--rz0)) rotateX(var(--rx0)) rotateY(var(--ry0)) scale(0.64);opacity:0;}',
         '6%{opacity:1;}',
-        '16%{transform:translate3d(var(--x1),var(--y1),0) rotateZ(var(--rz1)) rotateX(var(--rx1)) rotateY(var(--ry1)) scale(1.04);opacity:1;}',
-        '32%{transform:translate3d(var(--x2),var(--y2),0) rotateZ(var(--rz2)) rotateX(var(--rx2)) rotateY(var(--ry2)) scale(1);opacity:1;}',
+        '15%{transform:translate3d(var(--x1),var(--y1),0) rotateZ(var(--rz1)) rotateX(var(--rx1)) rotateY(var(--ry1)) scale(1.04);opacity:1;}',
+        '31%{transform:translate3d(var(--x2),var(--y2),0) rotateZ(var(--rz2)) rotateX(var(--rx2)) rotateY(var(--ry2)) scale(1);opacity:1;}',
         '54%{transform:translate3d(var(--x3),var(--y3),0) rotateZ(var(--rz3)) rotateX(var(--rx3)) rotateY(var(--ry3)) scale(0.96);opacity:0.98;}',
         '76%{transform:translate3d(var(--x4),var(--y4),0) rotateZ(var(--rz4)) rotateX(var(--rx4)) rotateY(var(--ry4)) scale(0.9);opacity:0.78;}',
         '100%{transform:translate3d(var(--x5),var(--y5),0) rotateZ(var(--rz5)) rotateX(var(--rx5)) rotateY(var(--ry5)) scale(0.78);opacity:0;}',
@@ -167,7 +167,7 @@
     var sourceSpreadX = Math.min(84, rect.width * 0.26);
     var sourceSpreadY = Math.min(46, rect.height * 0.18);
     var maxPeakHeight = Math.max(24, Math.min(240, centerY - 28));
-    var timeStops = [0.16, 0.32, 0.54, 0.76, 1];
+    var timeStops = [0.15, 0.31, 0.54, 0.76, 1];
 
     trimToBudget(count);
 
@@ -212,25 +212,25 @@
       if (clip) piece.style.clipPath = clip;
 
       var direction = Math.random() < 0.5 ? -1 : 1;
-      var velocity = direction * rand(90, 390) + rand(-80, 80);
-      var wind = rand(-170, 170);
-      var flutter = rand(10, 44);
+      var velocity = direction * rand(100, 415) + rand(-85, 85);
+      var wind = rand(-180, 180);
+      var flutter = rand(12, 48);
       var phase = rand(0, Math.PI * 2);
       var cycles = rand(1.1, 2.4);
       var peakTime = rand(0.2, 0.34);
-      var peakHeight = rand(Math.max(24, maxPeakHeight * 0.58), maxPeakHeight);
+      var peakHeight = rand(Math.max(24, maxPeakHeight * 0.62), maxPeakHeight);
       var drop = Math.max(520, viewportHeight - centerY + rand(120, 320));
       var rzStart = rand(-80, 80);
       var rxStart = rand(-70, 70);
       var ryStart = rand(-70, 70);
-      var rzSpin = rand(260, 900) * (Math.random() < 0.5 ? -1 : 1);
-      var rxSpin = rand(720, 1760) * (Math.random() < 0.5 ? -1 : 1);
-      var rySpin = rand(640, 1680) * (Math.random() < 0.5 ? -1 : 1);
+      var rzSpin = rand(290, 960) * (Math.random() < 0.5 ? -1 : 1);
+      var rxSpin = rand(780, 1860) * (Math.random() < 0.5 ? -1 : 1);
+      var rySpin = rand(700, 1780) * (Math.random() < 0.5 ? -1 : 1);
       var rzFlutter = rand(18, 54);
       var rxFlutter = rand(70, 150);
       var ryFlutter = rand(80, 170);
       var color = colors[i % colors.length];
-      var duration = rand(5600, 7600);
+      var duration = rand(5400, 7200);
       var delay = Math.random() * 180;
 
       piece.style.setProperty('--rz0', deg(rzStart));
