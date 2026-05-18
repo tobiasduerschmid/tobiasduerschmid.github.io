@@ -10638,6 +10638,9 @@
       this._announceTestResult(tests, results);
       if (!allPass && window.TutorChat) { window.TutorChat.onTestFailure(this); }
       if (allPass && window.TutorChat) { window.TutorChat.onTestPass(); }
+      if (allPass && window.SEGymHeroCelebration) {
+        window.SEGymHeroCelebration.show({ hostEl: this.stepContentEl });
+      }
     }
     if (allPass && this.requireTests) {
       this._stepsPassed.add(this.currentStep);

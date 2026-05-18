@@ -1121,6 +1121,16 @@ channel.
   solution batches may contain multi-command Git workflows, so keep their
   timeouts long enough for the shell prompt to return instead of resolving
   against a partially applied repository state.
+- **`js/tutorial-hero-celebration.js`** — shared test-pass celebration used
+  by every `TutorialCode` backend and the `uml-editor` backend. After a
+  visible gate-style test run passes all tests, it clones the saved SE Gym
+  hero from the layout's `#quiz-avatar-tpl`, applies the user's
+  `localStorage['se-gym-hero-avatar']` customization via `HeroAvatar`, shows
+  the short "You aced this, keep going!" speech bubble in the test panel, and
+  fires the site-wide confetti. The helper returns without rendering when no
+  saved hero exists or reduced motion is active; keep new backends calling
+  this shared helper after their common all-pass renderer instead of adding
+  backend-specific celebration code.
 - **`js/tutorial-quiz.js`** — shared quiz renderer (used by main page and
   the instructions popup). `single` / `multiple` / `parsons` types,
   `min_score` gating, `option_feedback` rendering. Tutorial quiz answer

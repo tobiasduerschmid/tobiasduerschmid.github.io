@@ -22,6 +22,7 @@ const { test, expect } = require('@playwright/test');
 const TUTORIAL_URL = '/SEBook/tools/cooldown-demo';
 const COOLDOWN_SECONDS = 3;
 const PYODIDE_BOOT_TIMEOUT = 60_000;
+const HERO_CELEBRATION_MESSAGE = 'You aced this, keep going!';
 
 // Locator factories — accessible-name based so layout / class refactors don't
 // break the suite. The cooldown variant has aria-label "Test My Work locked,
@@ -42,7 +43,10 @@ async function waitForTutorialReady(page) {
   // can keep that panel collapsed at load on small viewports.
   await expect(page.locator('.tvm-loading')).toBeHidden({ timeout: PYODIDE_BOOT_TIMEOUT });
   await page.waitForFunction(
-    () => !!window._tutorial && window._tutorial.config.backend === 'pyodide',
+    () => !!window._tutorial
+      && window._tutorial.config.backend === 'pyodide'
+      && !!window.HeroAvatar
+      && !!window.SEGymHeroCelebration,
     null,
     { timeout: PYODIDE_BOOT_TIMEOUT }
   );
@@ -65,6 +69,8 @@ async function resetTutorialState(page) {
     if (t._testCooldownStorageKey) {
       localStorage.removeItem(t._testCooldownStorageKey);
     }
+    localStorage.removeItem('se-gym-hero-avatar');
+    document.querySelectorAll('.tvm-hero-celebration, .site-confetti-layer').forEach((el) => el.remove());
     t.resetStep();
     t._refreshTestButton(t.currentStep);
   });
@@ -85,6 +91,15 @@ async function setActiveFileContent(page, source) {
     file.model.setValue(src);
     t._saveCurrentFile();
   }, source);
+}
+
+async function saveDefaultHero(page) {
+  await page.evaluate(() => {
+    const hero = window.HeroAvatar.normalizeAvatar(
+      JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS))
+    );
+    window.HeroAvatar.saveAvatar(hero);
+  });
 }
 
 const STARTER_CODE_FAILING = 'def answer():\n    return None\n';
@@ -112,6 +127,7 @@ test.describe.serial('Test cooldown demo', () => {
   });
 
   test.beforeEach(async () => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
     await resetTutorialState(page);
   });
 
@@ -193,6 +209,35 @@ test.describe.serial('Test cooldown demo', () => {
     // The visible failure is still what's on screen — the silent pass did
     // not promote it to "All 1 tests passed!".
     await expect(page.locator('.tvm-test-panel')).toContainText(/0\s*\/\s*1 tests passed/);
+  });
+
+  test('passing all step tests shows the saved hero celebration and confetti', async () => {
+    await saveDefaultHero(page);
+    await setActiveFileContent(page, SOLUTION_CODE_PASSING);
+
+    await regularTestBtn(page).click();
+
+    const message = page.getByText(HERO_CELEBRATION_MESSAGE);
+    await expect(page.locator('.tvm-test-summary')).toContainText(/All 1 tests passed!/);
+    await expect(message).toBeVisible();
+    await expect(page.locator('.tvm-hero-celebration [data-gym-hero-svg]')).toBeVisible();
+    await expect.poll(
+      async () => page.locator('.site-confetti-piece').count(),
+      { message: 'passing tests with a saved hero should spawn confetti', timeout: 2_000 }
+    ).toBeGreaterThan(0);
+    await expect(message).toBeHidden({ timeout: 6_000 });
+  });
+
+  test('reduced motion suppresses the saved hero celebration and confetti', async () => {
+    await page.emulateMedia({ reducedMotion: 'reduce' });
+    await saveDefaultHero(page);
+    await setActiveFileContent(page, SOLUTION_CODE_PASSING);
+
+    await regularTestBtn(page).click();
+
+    await expect(page.locator('.tvm-test-summary')).toContainText(/All 1 tests passed!/);
+    await expect(page.getByText(HERO_CELEBRATION_MESSAGE)).toHaveCount(0);
+    await expect(page.locator('.site-confetti-piece')).toHaveCount(0);
   });
 
   test('cooldown survives a page reload', async () => {

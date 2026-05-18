@@ -4178,6 +4178,150 @@ html:not(.dark-mode) .tvm-test-item.fail .tvm-test-icon { color: #dc2626; }
 
 html:not(.dark-mode) .tvm-test-desc { color: #383848; }
 
+/* Tutorial test-pass hero celebration. Inserted only when the student has a
+   saved SE Gym hero and reduced motion is not active. */
+.tvm-hero-celebration {
+  display: inline-flex;
+  align-items: center;
+  gap: 24px;
+  max-width: 100%;
+  margin: 14px 0 4px;
+  padding: 6px 2px 0 0;
+  animation: tvm-hero-celebration-pop 4.25s ease-in-out forwards;
+}
+
+.tvm-hero-celebration-avatar {
+  flex: 0 0 auto;
+  width: clamp(240px, 30vw, 340px);
+}
+
+.tvm-hero-celebration-avatar [data-gym-hero-svg] {
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 10px 22px rgba(0, 0, 0, 0.42));
+}
+
+.tvm-hero-celebration-bubble {
+  position: relative;
+  max-width: min(30em, calc(100% - 370px));
+  padding: 16px 24px;
+  border: 2px solid #ffd100;
+  border-radius: 8px;
+  background: #253343;
+  color: #f7fbff;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.26);
+  font-size: 1.25em;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.tvm-hero-celebration-bubble::before {
+  content: "";
+  position: absolute;
+  left: -28px;
+  top: calc(50% - 18px);
+  width: 0;
+  height: 0;
+  border-top: 18px solid transparent;
+  border-bottom: 18px solid transparent;
+  border-right: 28px solid #ffd100;
+}
+
+.tvm-hero-celebration-bubble::after {
+  content: "";
+  position: absolute;
+  left: -23px;
+  top: calc(50% - 15px);
+  width: 0;
+  height: 0;
+  border-top: 15px solid transparent;
+  border-bottom: 15px solid transparent;
+  border-right: 24px solid #253343;
+}
+
+html:not(.dark-mode) .tvm-hero-celebration-avatar [data-gym-hero-svg] {
+  filter: drop-shadow(0 10px 22px rgba(0, 47, 82, 0.22));
+}
+
+html:not(.dark-mode) .tvm-hero-celebration-bubble {
+  border-color: #2774ae;
+  background: #f7fbff;
+  color: #16324a;
+  box-shadow: 0 10px 24px rgba(0, 47, 82, 0.18);
+}
+
+html:not(.dark-mode) .tvm-hero-celebration-bubble::before {
+  border-right-color: #2774ae;
+}
+
+html:not(.dark-mode) .tvm-hero-celebration-bubble::after {
+  border-right-color: #f7fbff;
+}
+
+@keyframes tvm-hero-celebration-pop {
+  0% { opacity: 0; transform: translateY(10px) scale(0.96); }
+  12% { opacity: 1; transform: translateY(0) scale(1); }
+  82% { opacity: 1; transform: translateY(0) scale(1); }
+  100% { opacity: 0; transform: translateY(-8px) scale(0.98); }
+}
+
+@media (max-width: 640px) {
+  .tvm-hero-celebration {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .tvm-hero-celebration-avatar {
+    width: clamp(210px, 68vw, 300px);
+  }
+
+  .tvm-hero-celebration-bubble {
+    max-width: 100%;
+    text-align: center;
+  }
+
+  .tvm-hero-celebration-bubble::before {
+    left: calc(50% - 18px);
+    top: -28px;
+    border-left: 18px solid transparent;
+    border-right: 18px solid transparent;
+    border-bottom: 28px solid #ffd100;
+    border-top: 0;
+  }
+
+  .tvm-hero-celebration-bubble::after {
+    left: calc(50% - 15px);
+    top: -23px;
+    border-left: 15px solid transparent;
+    border-right: 15px solid transparent;
+    border-bottom: 24px solid #253343;
+    border-top: 0;
+  }
+
+  html:not(.dark-mode) .tvm-hero-celebration-bubble::before {
+    border-bottom-color: #2774ae;
+  }
+
+  html:not(.dark-mode) .tvm-hero-celebration-bubble::after {
+    border-bottom-color: #f7fbff;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tvm-hero-celebration {
+    display: none !important;
+    animation: none !important;
+  }
+}
+
+html.prm-reduce .tvm-hero-celebration {
+  display: none !important;
+  animation: none !important;
+}
+
 /* Loading overlay */
 html:not(.dark-mode) .tvm-loading {
   background: #f0f0f4;

@@ -774,6 +774,9 @@
       this._announceTestResult(resultTests, results);
       if (!allPass && window.TutorChat) window.TutorChat.onTestFailure(this);
       if (allPass && window.TutorChat) window.TutorChat.onTestPass();
+      if (allPass && window.SEGymHeroCelebration) {
+        window.SEGymHeroCelebration.show({ hostEl: this.instructionsEl });
+      }
     }
     if (!silent && this._cooldownEnabled()) this._startTestCooldown(this.currentStep);
     this._silentTestRun = false;

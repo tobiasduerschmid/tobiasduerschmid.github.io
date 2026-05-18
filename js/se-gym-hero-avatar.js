@@ -197,6 +197,9 @@
           choice('outer-corner', 'Outer-corner'),
           choice('soft-fan', 'Soft fan'),
           choice('full-upper', 'Full upper'),
+          choice('long-classic', 'Long classic'),
+          choice('long-doll', 'Long doll'),
+          choice('long-glam', 'Long glam'),
           choice('winged', 'Winged'),
           choice('dense', 'Dense lashes')
         ])
@@ -573,28 +576,33 @@
   };
   var ROUND_EYE_SHAPES = { round: true, 'clear-round': true };
   var WIDE_ROUND_EYE_SHAPES = { wide: true };
-  var COMPACT_EYE_SHAPES = { 'single-eyelid': true, 'soft-single-eyelid': true, 'wide-single-eyelid': true, hooded: true, 'deep-set': true };
+  var COMPACT_EYE_SHAPES = { 'single-eyelid': true, 'soft-single-eyelid': true, 'wide-single-eyelid': true, hooded: true };
+  var DEEP_SET_EYE_SHAPES = { 'deep-set': true };
   var ANGLED_ALMOND_EYE_SHAPES = { 'tapered-almond': true, 'upturned-almond': true, 'downturned-soft': true };
   var EYELASH_STYLE_GEOMETRY = {
-    'short-soft': { count: 7, length: 1.35, reach: 0.82, strokeWidth: 0.48, opacity: 0.38 },
-    'short-dense': { count: 9, length: 1.42, reach: 0.9, strokeWidth: 0.46, opacity: 0.42 },
-    'barely-there': { count: 3, length: 1.9, reach: 0.62, strokeWidth: 0.58, opacity: 0.4 },
-    subtle: { count: 5, length: 2.15, reach: 0.82, strokeWidth: 0.62, opacity: 0.48 },
-    'short-natural': { count: 5, length: 1.9, reach: 0.78, strokeWidth: 0.58, opacity: 0.44 },
-    'short-corner': { count: 5, length: 1.82, reach: 0.54, strokeWidth: 0.56, opacity: 0.44 },
-    'short-upper': { count: 6, length: 2.02, reach: 0.9, strokeWidth: 0.58, opacity: 0.46 },
-    'outer-corner': { count: 5, length: 2.75, reach: 0.56, strokeWidth: 0.68, opacity: 0.5 },
-    'soft-fan': { count: 7, length: 2.55, reach: 0.9, strokeWidth: 0.62, opacity: 0.48 },
-    'full-upper': { count: 8, length: 2.65, reach: 1, strokeWidth: 0.64, opacity: 0.5 },
-    winged: { count: 6, length: 2.95, reach: 0.58, strokeWidth: 0.68, opacity: 0.48, outerBoost: 0.42 },
-    dense: { count: 10, length: 2.55, reach: 1, strokeWidth: 0.62, opacity: 0.52 }
+    'short-soft': { count: 9, length: 3.05, reach: 0.9, strokeWidth: 0.56, opacity: 0.46 },
+    'short-dense': { count: 11, length: 3, reach: 1, strokeWidth: 0.54, opacity: 0.5 },
+    'barely-there': { count: 4, length: 3.7, reach: 0.7, strokeWidth: 0.66, opacity: 0.48 },
+    subtle: { count: 7, length: 4.15, reach: 0.95, strokeWidth: 0.7, opacity: 0.54 },
+    'short-natural': { count: 7, length: 3.82, reach: 0.92, strokeWidth: 0.66, opacity: 0.52 },
+    'short-corner': { count: 6, length: 3.72, reach: 0.68, strokeWidth: 0.64, opacity: 0.52 },
+    'short-upper': { count: 8, length: 3.95, reach: 1, strokeWidth: 0.66, opacity: 0.54 },
+    'outer-corner': { count: 6, length: 5.35, reach: 0.72, strokeWidth: 0.74, opacity: 0.56 },
+    'soft-fan': { count: 9, length: 5.45, reach: 1, strokeWidth: 0.7, opacity: 0.56 },
+    'full-upper': { count: 11, length: 5.75, reach: 1, strokeWidth: 0.72, opacity: 0.58 },
+    'long-classic': { count: 11, length: 6.45, reach: 1, strokeWidth: 0.76, opacity: 0.62 },
+    'long-doll': { count: 13, length: 6.9, reach: 1, strokeWidth: 0.78, opacity: 0.64, outerBoost: 0.25 },
+    'long-glam': { count: 14, length: 7.45, reach: 1, strokeWidth: 0.82, opacity: 0.66, outerBoost: 0.55 },
+    winged: { count: 9, length: 6.25, reach: 0.82, strokeWidth: 0.76, opacity: 0.58, outerBoost: 0.85 },
+    dense: { count: 14, length: 6.05, reach: 1, strokeWidth: 0.72, opacity: 0.62 }
   };
   var EYELASH_FAMILY_GEOMETRY = {
-    round: { kind: 'ellipse', cx: 381, cy: 185, rx: 7, ry: 8.5, startAngle: 216, endAngle: 252, lengthScale: 0.74, outwardBias: 0.42, riseBias: 0.08 },
-    'wide-round': { kind: 'ellipse', cx: 380, cy: 185, rx: 8.5, ry: 9.5, startAngle: 214, endAngle: 252, lengthScale: 0.78, outwardBias: 0.48, riseBias: 0.05 },
-    almond: { kind: 'curve', p0: [370, 185], p1: [381, 176], p2: [394, 185], startT: 0.05, endT: 0.54, lengthScale: 0.9, outwardBias: 0.64, riseBias: 0.18 },
-    'angled-almond': { kind: 'curve', p0: [369.5, 184.6], p1: [381, 177.2], p2: [395, 185.6], startT: 0.04, endT: 0.52, lengthScale: 0.86, outwardBias: 0.9, riseBias: 0.1 },
-    compact: { kind: 'curve', p0: [370, 186], p1: [382, 180], p2: [394, 186], startT: 0.05, endT: 0.48, lengthScale: 0.66, outwardBias: 0.9, riseBias: 0.06 }
+    round: { kind: 'ellipse', cx: 381, cy: 185, rx: 7, ry: 8.5, startAngle: 205, endAngle: 335, lengthScale: 1, fanBias: 0.18, riseBias: 0.1 },
+    'wide-round': { kind: 'ellipse', cx: 380, cy: 185, rx: 8.5, ry: 9.5, startAngle: 205, endAngle: 335, lengthScale: 1, fanBias: 0.2, riseBias: 0.08 },
+    almond: { kind: 'curve', p0: [370, 185], p1: [381, 176], p2: [394, 185], startT: 0.03, endT: 0.96, lengthScale: 1, fanBias: 0.22, riseBias: 0.16 },
+    'angled-almond': { kind: 'curve', p0: [369.5, 184.6], p1: [381, 177.2], p2: [395, 185.6], startT: 0.03, endT: 0.94, lengthScale: 0.98, fanBias: 0.3, riseBias: 0.1 },
+    compact: { kind: 'curve', p0: [370, 186], p1: [382, 180], p2: [394, 186], startT: 0.04, endT: 0.88, lengthScale: 0.86, fanBias: 0.28, riseBias: 0.08 },
+    'deep-set': { kind: 'curve', p0: [369.4, 184.2], p1: [382, 173.9], p2: [394.8, 184.2], startT: 0.02, endT: 0.98, lengthScale: 0.92, fanBias: 0.3, riseBias: 0.22 }
   };
   var FACE_ACCESSORIES = ['glasses', 'rectangular-glasses', 'thin-rectangular-glasses', 'semi-rimless-glasses', 'wireframe-glasses', 'round-rim-glasses', 'safety-goggles', 'tech-visor', 'spectacles', 'monocle', 'mask', 'eyepatch'];
   var DETAIL_ACCESSORIES = ['earrings', 'hoop-earrings', 'hair-clips', 'over-ear-headphones', 'headset-mic', 'wireless-earbuds', 'wired-earbuds', 'chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard', 'student-id-badge', 'backpack-straps', 'messenger-bag', 'circuit-pin', 'code-patch', 'utility-belt', 'hero-cape-clasp', 'forehead-jewel', 'crown', 'halo'];
@@ -757,7 +765,8 @@
   var EYELASH_STYLE_WEIGHTS = []
     .concat(weightedValues(['none'], 18))
     .concat(weightedValues(['short-soft', 'short-dense', 'barely-there', 'subtle', 'short-natural', 'short-corner', 'short-upper', 'outer-corner'], 4))
-    .concat(weightedValues(['soft-fan', 'full-upper', 'winged', 'dense'], 2));
+    .concat(weightedValues(['soft-fan', 'full-upper', 'winged', 'dense'], 2))
+    .concat(weightedValues(['long-classic', 'long-doll', 'long-glam'], 1));
   var PRESENTATION_EYELASH_STYLE_WEIGHTS = {
     male: []
       .concat(weightedValues(['none'], 24))
@@ -1717,10 +1726,116 @@
 
   function eyelashFitForEyeShape(eyeShape) {
     var normalized = canonicalChoiceValue('eyeShape', eyeShape || 'round');
-    if (ROUND_EYE_SHAPES[normalized]) return { family: 'round', transform: 'matrix(0.84 0 0 0.88 64 21.38)' };
-    if (WIDE_ROUND_EYE_SHAPES[normalized]) return { family: 'wide-round', transform: 'matrix(0.9 0 0 0.9 40 17.1)' };
-    if (COMPACT_EYE_SHAPES[normalized]) return { family: 'compact', transform: 'matrix(0.92 0 0 0.78 32 40.98)' };
-    return { family: 'almond', transform: '' };
+    if (ROUND_EYE_SHAPES[normalized]) return { family: 'round' };
+    if (WIDE_ROUND_EYE_SHAPES[normalized]) return { family: 'wide-round' };
+    if (DEEP_SET_EYE_SHAPES[normalized]) return { family: 'deep-set' };
+    if (COMPACT_EYE_SHAPES[normalized]) return { family: 'compact' };
+    if (ANGLED_ALMOND_EYE_SHAPES[normalized]) return { family: 'angled-almond' };
+    return { family: 'almond' };
+  }
+
+  function fmtPathNumber(value) {
+    var rounded = Math.round(value * 10) / 10;
+    return String(rounded).replace(/\.0$/, '');
+  }
+
+  function normalizeVector(x, y) {
+    var length = Math.sqrt(x * x + y * y) || 1;
+    return { x: x / length, y: y / length };
+  }
+
+  function quadraticPoint(p0, p1, p2, t) {
+    var mt = 1 - t;
+    return {
+      x: mt * mt * p0[0] + 2 * mt * t * p1[0] + t * t * p2[0],
+      y: mt * mt * p0[1] + 2 * mt * t * p1[1] + t * t * p2[1],
+      dx: 2 * mt * (p1[0] - p0[0]) + 2 * t * (p2[0] - p1[0]),
+      dy: 2 * mt * (p1[1] - p0[1]) + 2 * t * (p2[1] - p1[1])
+    };
+  }
+
+  function lashSampleForFamily(familyGeometry, u) {
+    if (familyGeometry.kind === 'ellipse') {
+      var angle = (familyGeometry.startAngle + (familyGeometry.endAngle - familyGeometry.startAngle) * u) * Math.PI / 180;
+      var x = familyGeometry.cx + Math.cos(angle) * familyGeometry.rx;
+      var y = familyGeometry.cy + Math.sin(angle) * familyGeometry.ry;
+      var ellipseFan = familyGeometry.fanBias || 0;
+      var ellipseDirection = normalizeVector(
+        (x - familyGeometry.cx) / familyGeometry.rx + ellipseFan * (u - 0.5),
+        (y - familyGeometry.cy) / familyGeometry.ry - (familyGeometry.riseBias || 0)
+      );
+      return { x: x, y: y, direction: ellipseDirection };
+    }
+
+    var t = familyGeometry.startT + (familyGeometry.endT - familyGeometry.startT) * u;
+    var point = quadraticPoint(familyGeometry.p0, familyGeometry.p1, familyGeometry.p2, t);
+    var curveFan = familyGeometry.fanBias || 0;
+    var curveDirection = normalizeVector(
+      point.dy + curveFan * (u - 0.5) * 8,
+      -point.dx - (familyGeometry.riseBias || 0) * 10
+    );
+    return { x: point.x, y: point.y, direction: curveDirection };
+  }
+
+  function mirrorLashSegment(segment) {
+    return {
+      sx: 800 - segment.sx,
+      sy: segment.sy,
+      cx: 800 - segment.cx,
+      cy: segment.cy,
+      ex: 800 - segment.ex,
+      ey: segment.ey
+    };
+  }
+
+  function buildEyelashPath(style, family) {
+    var config = EYELASH_STYLE_GEOMETRY[style];
+    var familyGeometry = EYELASH_FAMILY_GEOMETRY[family] || EYELASH_FAMILY_GEOMETRY.almond;
+    if (!config) return '';
+
+    var count = Math.max(1, config.count || 1);
+    var reach = config.reach === undefined ? 1 : config.reach;
+    var segments = [];
+    for (var i = 0; i < count; i++) {
+      var slot = count === 1 ? 0.5 : i / (count - 1);
+      var u = Math.max(0, Math.min(1, slot * reach));
+      var sample = lashSampleForFamily(familyGeometry, u);
+      var taper = 1 - slot * 0.18 + (i % 2 ? 0.04 : 0);
+      var outerBoost = config.outerBoost ? Math.max(0, 1 - slot * 1.6) * config.outerBoost : 0;
+      var length = (config.length + outerBoost) * (familyGeometry.lengthScale || 1) * taper;
+      var endX = sample.x + sample.direction.x * length;
+      var endY = sample.y + sample.direction.y * length;
+      var controlX = sample.x + sample.direction.x * length * 0.58 - 0.16;
+      var controlY = sample.y + sample.direction.y * length * 0.48 - 0.1;
+      var segment = { sx: sample.x, sy: sample.y, cx: controlX, cy: controlY, ex: endX, ey: endY };
+      segments.push(segment, mirrorLashSegment(segment));
+    }
+
+    return segments.map(function (segment) {
+      return [
+        'M', fmtPathNumber(segment.sx), fmtPathNumber(segment.sy),
+        'Q', fmtPathNumber(segment.cx), fmtPathNumber(segment.cy), fmtPathNumber(segment.ex), fmtPathNumber(segment.ey)
+      ].join(' ');
+    }).join(' ');
+  }
+
+  function updateEyelashGeometry(group, family) {
+    var style = group.getAttribute('data-hero-option') || 'none';
+    var path = group.querySelector('[data-hero-lash-path]');
+    if (!path) return;
+    var config = EYELASH_STYLE_GEOMETRY[style];
+    if (!config) {
+      path.removeAttribute('d');
+      path.setAttribute('display', 'none');
+      path.removeAttribute('data-hero-lash-family');
+      return;
+    }
+
+    path.setAttribute('d', buildEyelashPath(style, family));
+    path.setAttribute('data-hero-lash-family', family);
+    path.setAttribute('display', 'inline');
+    path.setAttribute('stroke-width', String(config.strokeWidth));
+    path.setAttribute('opacity', String(config.opacity));
   }
 
   function applyEyelashFit(svg, eyeShape) {
@@ -1728,8 +1843,8 @@
     svg.setAttribute('data-hero-eye-family', fit.family);
     var groups = svg.querySelectorAll('[data-hero-slot="eyelash-style"]');
     for (var i = 0; i < groups.length; i++) {
-      if (fit.transform) groups[i].setAttribute('transform', fit.transform);
-      else groups[i].removeAttribute('transform');
+      groups[i].removeAttribute('transform');
+      updateEyelashGeometry(groups[i], fit.family);
     }
   }
 

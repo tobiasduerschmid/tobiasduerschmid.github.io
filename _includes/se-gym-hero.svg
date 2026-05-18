@@ -1346,21 +1346,83 @@
         <path d="M 363 168 C 372 160, 378 154, 384 154 C 391 155, 395 164, 400 168 C 405 164, 409 155, 416 154 C 423 154, 429 160, 437 168" stroke="var(--hero-hair, #1f140c)" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".56"/>
         <path d="M 371 144 C 382 137, 392 137, 400 144 C 409 137, 421 139, 432 147" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1" fill="none" stroke-linecap="round" opacity=".22"/>
       </g>
+      <g data-hero-slot="hairline" data-hero-option="short" display="none">
+        <path d="M 355 176 C 348 144, 366 116, 400 114 C 434 116, 452 144, 445 176 C 438 158, 424 144, 406 140 C 392 138, 378 144, 368 156 C 362 163, 358 170, 355 176 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
+        <path d="M 386 146 C 394 141, 406 141, 416 146" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.7" fill="none" stroke-linecap="round" opacity=".5"/>
+      </g>
+      <g data-hero-slot="hairline" data-hero-option="textured-crop" display="none">
+        <path d="M 358 144 C 376 120, 422 116, 444 144 C 428 134, 414 138, 404 154 C 394 138, 374 138, 358 154 Z" fill="var(--hero-hair, #1f140c)" opacity=".92"/>
+        <path d="M 364 148 L 372 166 L 382 142 L 394 166 L 404 142 L 414 166 L 426 144 L 438 166" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.55" fill="none" stroke-linecap="round" opacity=".5"/>
+      </g>
+      <g data-hero-slot="hairline" data-hero-option="wispy-crop" display="none">
+        <path d="M 360 148 C 372 126, 392 118, 400 130 C 410 118, 430 126, 440 148 C 420 140, 382 140, 360 150 Z" fill="var(--hero-hair, #1f140c)" opacity=".86"/>
+        <path d="M 360 151 L 366 169 L 374 146 L 384 171 L 395 143 L 404 171 L 416 146 L 426 169 L 440 151" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.35" fill="none" stroke-linecap="round" opacity=".48"/>
+      </g>
+      <g data-hero-slot="hairline" data-hero-option="casual-messy-crop" display="none">
+        <path d="M 358 148 L 368 124 L 380 150 L 392 116 L 402 150 L 416 120 L 428 150 L 440 132 L 446 166 C 420 156, 384 156, 354 168 Z" fill="var(--hero-hair, #1f140c)" opacity=".92"/>
+        <path d="M 370 130 C 365 140, 363 151, 364 160 M 386 122 C 391 133, 390 147, 381 158 M 402 119 C 407 132, 406 149, 400 160 M 420 124 C 414 135, 412 148, 414 160 M 436 138 C 428 144, 424 154, 426 164" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.55" fill="none" stroke-linecap="round" opacity=".58"/>
+      </g>
       <g data-hero-slot="hairline" data-hero-option="textured-fringe" display="none">
         <path d="M 356 146 C 374 120, 422 116, 444 146 L 442 168 C 420 158, 386 158, 358 168 Z" fill="var(--hero-hair, #1f140c)"/>
         <path d="M 364 148 L 372 166 L 382 142 L 394 166 L 404 142 L 414 166 L 426 144 L 438 166" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".56"/>
+      </g>
+      <g data-hero-slot="hairline" data-hero-option="straight-fringe" display="none">
+        <path d="M 352 146 C 374 130, 426 130, 448 146 L 446 168 C 424 158, 376 158, 354 168 Z" fill="var(--hero-hair, #1f140c)"/>
+        <path d="M 358 157 C 376 151, 424 151, 442 157 M 360 163 C 378 157, 422 157, 440 163" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.45" fill="none" stroke-linecap="round" opacity=".5"/>
+      </g>
+      <g data-hero-slot="hairline" data-hero-option="neat-straight-fringe" display="none">
+        <path d="M 354 144 C 374 130, 426 130, 446 144 L 444 166 C 424 160, 376 160, 356 166 Z" fill="var(--hero-hair, #1f140c)"/>
+        <path d="M 356 157 C 376 151, 424 151, 444 157" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".38"/>
+        <path d="M 358 156 C 376 151, 424 151, 442 156 M 360 161 C 378 156, 422 156, 440 161" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.25" fill="none" stroke-linecap="round" opacity=".48"/>
       </g>
       <g data-hero-slot="hairline" data-hero-option="soft-rounded-fringe" display="none">
         <path d="M 354 148 C 374 132, 426 132, 446 148 L 444 164 C 426 158, 374 158, 356 164 Z" fill="var(--hero-hair, #1f140c)" opacity=".9"/>
         <path d="M 356 160 C 374 154, 426 154, 444 160" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.45" fill="none" stroke-linecap="round" opacity=".4"/>
       </g>
+      <g data-hero-slot="hairline" data-hero-option="side-parted-short" display="none">
+        <path d="M 358 148 C 380 120, 422 116, 442 138 C 420 130, 395 135, 376 151 C 368 158, 362 164, 356 169 C 356 161, 356 154, 358 148 Z" fill="var(--hero-hair, #1f140c)"/>
+        <path d="M 382 128 Q 404 118, 430 128 M 378 145 Q 402 135, 432 143" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.55" fill="none" stroke-linecap="round" opacity=".5"/>
+        <path d="M 371 129 C 369 142, 369 154, 372 165" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.25" fill="none" stroke-linecap="round" opacity=".34"/>
+      </g>
       <g data-hero-slot="hairline" data-hero-option="neat-side-swept-fringe" display="none">
         <path d="M 358 150 C 376 124, 410 114, 442 136 C 424 132, 404 138, 386 150 C 376 157, 366 163, 356 168 C 356 162, 356 156, 358 150 Z" fill="var(--hero-hair, #1f140c)" opacity=".92"/>
         <path d="M 376 133 C 402 120, 426 124, 440 136 M 374 148 C 398 136, 422 138, 438 148" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.45" fill="none" stroke-linecap="round" opacity=".44"/>
       </g>
+      <g data-hero-slot="hairline" data-hero-option="thick-side-swept" display="none">
+        <path d="M 356 156 C 374 118, 418 104, 446 132 C 424 124, 398 130, 376 148 C 366 156, 360 164, 356 170 C 354 165, 354 160, 356 156 Z" fill="var(--hero-hair, #1f140c)"/>
+        <path d="M 366 142 C 392 116, 424 112, 444 132 M 364 154 C 394 134, 424 134, 440 146 M 370 164 C 396 150, 420 150, 438 158" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".56"/>
+        <path d="M 358 166 C 362 176, 363 186, 360 194 M 442 166 C 438 176, 437 186, 440 194" stroke="var(--hero-hair, #1f140c)" stroke-width="3.4" fill="none" stroke-linecap="round" opacity=".62"/>
+      </g>
+      <g data-hero-slot="hairline" data-hero-option="ivy-league" display="none">
+        <path d="M 358 148 C 374 124, 404 112, 438 132 C 424 128, 398 132, 376 148 C 368 154, 362 160, 356 166 C 356 158, 357 152, 358 148 Z" fill="var(--hero-hair, #1f140c)"/>
+        <path d="M 382 125 C 404 118, 426 124, 440 134 M 380 138 C 402 128, 424 132, 438 144 M 376 151 C 400 140, 424 143, 438 154" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.45" fill="none" stroke-linecap="round" opacity=".58"/>
+      </g>
+      <g data-hero-slot="hairline" data-hero-option="soft-two-block" display="none">
+        <path d="M 356 150 C 374 128, 426 128, 444 150 L 442 168 C 418 158, 382 158, 358 168 Z" fill="var(--hero-hair, #1f140c)"/>
+        <path d="M 358 170 L 358 194 M 442 170 L 442 194" stroke="var(--hero-hair, #1f140c)" stroke-width="6" stroke-linecap="round" opacity=".64"/>
+        <path d="M 366 136 Q 400 118, 434 136 M 366 154 Q 400 144, 434 154" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.45" fill="none" stroke-linecap="round" opacity=".5"/>
+      </g>
       <g data-hero-slot="hairline" data-hero-option="middle-part-flow" display="none">
         <path d="M 356 146 C 374 118, 392 112, 400 128 C 410 112, 430 120, 444 146 C 428 138, 412 142, 400 160 C 388 142, 372 138, 356 146 Z" fill="var(--hero-hair, #1f140c)"/>
         <path d="M 400 110 C 398 128, 398 146, 400 162 M 366 138 Q 384 126, 398 138 M 402 138 Q 420 126, 438 138" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".58"/>
+      </g>
+      <g data-hero-slot="hairline" data-hero-option="slick-back" display="none">
+        <path d="M 364 146 C 378 124, 392 116, 400 116 C 408 116, 422 124, 436 146 C 416 138, 384 138, 364 146 Z" fill="var(--hero-hair, #1f140c)"/>
+        <path d="M 372 132 Q 400 118, 428 132 M 370 144 Q 400 132, 430 144 M 370 156 Q 400 146, 430 156" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.55" fill="none" stroke-linecap="round" opacity=".52"/>
+      </g>
+      <g data-hero-slot="hairline" data-hero-option="fade" display="none">
+        <path d="M 356 176 C 352 144, 370 116, 400 112 C 430 116, 448 144, 444 176 C 434 162, 418 156, 400 156 C 382 156, 366 162, 356 176 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
+        <path d="M 360 166 C 376 154, 424 154, 440 166 L 440 184 C 424 174, 376 174, 360 184 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".28"/>
+        <path d="M 368 136 Q 400 122, 432 136 M 366 164 L 434 164" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.45" fill="none" stroke-linecap="round" opacity=".46"/>
+      </g>
+      <g data-hero-slot="hairline" data-hero-option="crew-cut" display="none">
+        <path d="M 356 176 C 352 150, 370 124, 400 120 C 430 124, 448 150, 444 176 C 434 164, 418 158, 400 158 C 382 158, 366 164, 356 176 Z" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
+        <path d="M 360 148 C 374 132, 426 132, 440 148 L 438 160 C 424 154, 376 154, 362 160 Z" fill="url(#hair-grad-{{ hero_variant }})" opacity=".7"/>
+        <path d="M 366 140 L 366 146 M 382 134 L 382 143 M 400 132 L 400 142 M 418 134 L 418 143 M 434 140 L 434 146 M 366 158 Q 400 151, 434 158" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".42"/>
+      </g>
+      <g data-hero-slot="hairline" data-hero-option="buzz" display="none">
+        <path d="M 354 176 C 350 142, 370 112, 400 110 C 430 112, 450 142, 446 176 C 434 164, 418 158, 400 158 C 382 158, 366 164, 354 176 Z" fill="var(--hero-hair, #1f140c)" opacity=".8"/>
+        <path d="M 362 148 Q 400 128, 438 148 M 366 168 Q 400 158, 434 168" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.45" fill="none" stroke-linecap="round" opacity=".36"/>
       </g>
       <g data-hero-slot="hairline" data-hero-option="long" display="none">
         <path d="M 354 168 C 356 140, 374 112, 400 102 C 426 112, 444 140, 446 168 C 432 159, 416 155, 400 158 C 384 155, 368 159, 354 168 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
@@ -1468,6 +1530,25 @@
         <path d="M 354 168 C 356 138, 374 112, 400 102 C 426 112, 444 138, 446 168 C 432 160, 416 156, 400 158 C 384 156, 368 160, 354 168 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
         <ellipse cx="400" cy="116" rx="21" ry="10" fill="var(--hero-hair, #1f140c)" opacity=".94"/>
         <path d="M 378 116 Q 400 100, 422 116 M 362 164 C 376 156, 388 154, 400 158 C 412 154, 424 156, 438 164" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.7" fill="none" stroke-linecap="round" opacity=".5"/>
+      </g>
+      <g data-hero-slot="hairline" data-hero-option="pixie" display="none">
+        <path d="M 358 176 C 352 152, 366 130, 400 128 C 434 130, 448 152, 442 176 C 432 162, 418 154, 402 154 C 388 156, 376 156, 368 162 C 362 168, 360 172, 358 176 Z" fill="var(--hero-hair, #1f140c)" opacity=".94"/>
+        <path d="M 360 142 Q 376 130, 396 134 L 408 158 Q 400 152, 388 152 Q 376 152, 364 156 Z" fill="var(--hero-hair, #1f140c)"/>
+        <path d="M 366 140 Q 386 128, 410 138 M 396 156 Q 414 152, 432 158" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity=".5"/>
+      </g>
+      <g data-hero-slot="hairline" data-hero-option="undercut" display="none">
+        <path d="M 360 156 C 354 134, 368 116, 400 114 C 432 116, 446 134, 440 156 C 432 144, 420 138, 408 138 C 392 138, 380 140, 372 144 C 364 148, 362 152, 360 156 Z" fill="var(--hero-hair, #1f140c)"/>
+        <path d="M 358 156 L 442 156 L 444 168 L 356 168 Z" fill="var(--hero-hair, #1f140c)" opacity=".92"/>
+        <path d="M 388 130 Q 400 124, 414 132" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".5"/>
+      </g>
+      <g data-hero-slot="hairline" data-hero-option="bowl-cut" display="none">
+        <path d="M 348 184 C 344 152, 360 116, 400 114 C 440 116, 456 152, 452 184 C 450 174, 444 170, 434 170 L 366 170 C 356 170, 350 174, 348 184 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
+        <path d="M 348 184 L 452 184 M 374 134 Q 400 126, 426 134" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".5"/>
+      </g>
+      <g data-hero-slot="hairline" data-hero-option="pompadour" display="none">
+        <path d="M 360 178 C 354 158, 366 138, 400 136 C 434 138, 446 158, 440 178 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
+        <path d="M 366 138 Q 380 88, 408 92 Q 432 96, 432 130 Q 432 110, 414 108 Q 396 106, 388 124 Q 380 140, 366 138 Z" fill="var(--hero-hair, #1f140c)"/>
+        <path d="M 372 130 Q 382 96, 406 100 M 388 120 Q 400 108, 416 110" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.75" fill="none" stroke-linecap="round" opacity=".58"/>
       </g>
       <g data-hero-slot="hairline" data-hero-option="side-swept" display="none">
         <path d="M 354 168 C 350 140, 368 114, 400 110 C 430 112, 448 136, 446 168 C 428 154, 402 150, 382 158 C 370 162, 360 166, 354 168 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
@@ -1921,6 +2002,15 @@
         <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
       </g>
       <g data-hero-slot="eyelash-style" data-hero-option="full-upper" display="none">
+        <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
+      </g>
+      <g data-hero-slot="eyelash-style" data-hero-option="long-classic" display="none">
+        <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
+      </g>
+      <g data-hero-slot="eyelash-style" data-hero-option="long-doll" display="none">
+        <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
+      </g>
+      <g data-hero-slot="eyelash-style" data-hero-option="long-glam" display="none">
         <path data-hero-lash-path stroke="var(--hero-eyebrow, #1f140c)" stroke-linecap="round" fill="none"/>
       </g>
       <g data-hero-slot="eyelash-style" data-hero-option="winged" display="none">
