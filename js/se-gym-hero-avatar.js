@@ -1663,12 +1663,8 @@
     }
   }
 
-  function applyToSvg(svg, state) {
-    var heroKind = normalizeHeroKind(state.kind);
-    var bodyType = canonicalChoiceValue('bodyType', state.body.type);
-    var hairStyle = canonicalChoiceValue('hairStyle', state.appearance.hairStyle);
-    var eyeShape = canonicalChoiceValue('eyeShape', state.appearance.eyeShape || 'round');
-    var contrastTokens = avatarContrastTokens(state.appearance.skin, state.appearance.hairColor);
+  function applyAvatarColorTokens(svg, state, contrastTokens) {
+    contrastTokens = contrastTokens || avatarContrastTokens(state.appearance.skin, state.appearance.hairColor);
     svg.style.setProperty('--hero-skin-light', state.appearance.skin);
     svg.style.setProperty('--hero-skin', darken(state.appearance.skin, 0.22));
     svg.style.setProperty('--hero-skin-mid', contrastTokens.skinMid);
@@ -1731,6 +1727,15 @@
     svg.style.setProperty('--hero-cape-dark', darken(state.outfit.capeOuter, 0.55));
     svg.style.setProperty('--hero-cape-inner-light', lighten(state.outfit.capeInner, 0.4));
     svg.style.setProperty('--hero-cape-inner', state.outfit.capeInner);
+  }
+
+  function applyToSvg(svg, state) {
+    var heroKind = normalizeHeroKind(state.kind);
+    var bodyType = canonicalChoiceValue('bodyType', state.body.type);
+    var hairStyle = canonicalChoiceValue('hairStyle', state.appearance.hairStyle);
+    var eyeShape = canonicalChoiceValue('eyeShape', state.appearance.eyeShape || 'round');
+    var contrastTokens = avatarContrastTokens(state.appearance.skin, state.appearance.hairColor);
+    applyAvatarColorTokens(svg, state, contrastTokens);
 
     svg.setAttribute('data-hero-kind', heroKind);
     setHeroKindLayers(svg, heroKind);
@@ -1885,6 +1890,7 @@
     normalizeAvatar: normalizeAvatar,
     normalizeMilestoneTier: normalizeMilestoneTier,
     getCompositedAccessories: getCompositedAccessories,
+    BRUIN_DEFAULTS: BRUIN_DEFAULTS,
     applyMilestoneToSvg: applyMilestoneToSvg,
     applyMilestoneToScope: applyMilestoneToScope,
     applyRandomAvatarsToScope: applyRandomAvatarsToScope,
@@ -2286,6 +2292,18 @@
       return normalizeAvatar(state);
     }
 
+    function representativeChoiceBaseState(definition) {
+      var state = cloneAvatarState(DEFAULTS);
+      if (definition && (definition.key === 'bodyType' || definition.key === 'outfitStyle')) {
+        state.appearance.hairStyle = 'short';
+      }
+      return normalizeAvatar(state);
+    }
+
+    function representativeChoiceState(definition, optionValue) {
+      return choiceState(definition, optionValue, representativeChoiceBaseState(definition));
+    }
+
     function updateUrlReference(value, idMap) {
       if (!value) return value;
       var next = value.replace(/url\(#([^)]+)\)/g, function (match, id) {
@@ -2336,6 +2354,8 @@
       upper: '246 86 308 374'
     };
 
+    var CHOICE_PREVIEW_SOURCE_VIEWBOX = '50 -20 700 665';
+
     var FACE_PREVIEW_CROPS = {
       hair: true,
       eyebrows: true,
@@ -2358,6 +2378,126 @@
 
     function previewViewBox(crop) {
       return CHOICE_PREVIEW_VIEWBOXES[crop] || CHOICE_PREVIEW_VIEWBOXES.full;
+    }
+
+    function parseSvgBox(value) {
+      var parts = String(value || '').trim().split(/\s+/).map(Number);
+      if (parts.length !== 4 || parts.some(function (part) { return Number.isNaN(part); })) return null;
+      return {
+        x: parts[0],
+        y: parts[1],
+        width: parts[2],
+        height: parts[3],
+        right: parts[0] + parts[2],
+        bottom: parts[1] + parts[3]
+      };
+    }
+
+    function formatSvgBox(box) {
+      function clean(value) {
+        var rounded = Math.round(value * 10) / 10;
+        return String(Math.abs(rounded) < 0.05 ? 0 : rounded);
+      }
+      return [clean(box.x), clean(box.y), clean(box.width), clean(box.height)].join(' ');
+    }
+
+    function unionSvgBox(a, b) {
+      if (!a) return b;
+      if (!b) return a;
+      var x = Math.min(a.x, b.x);
+      var y = Math.min(a.y, b.y);
+      var right = Math.max(a.right, b.right);
+      var bottom = Math.max(a.bottom, b.bottom);
+      return { x: x, y: y, width: right - x, height: bottom - y, right: right, bottom: bottom };
+    }
+
+    function isSvgNodeVisible(node) {
+      var cursor = node;
+      while (cursor && cursor.nodeType === 1) {
+        if (cursor.getAttribute('display') === 'none' || cursor.style.display === 'none') return false;
+        cursor = cursor.parentElement;
+      }
+      return true;
+    }
+
+    function visibleSelectorBox(svg, selector) {
+      var nodes = svg.querySelectorAll(selector);
+      var box = null;
+      for (var i = 0; i < nodes.length; i++) {
+        if (!isSvgNodeVisible(nodes[i])) continue;
+        try {
+          var bbox = nodes[i].getBBox();
+          if (!bbox || bbox.width <= 0 || bbox.height <= 0) continue;
+          box = unionSvgBox(box, {
+            x: bbox.x,
+            y: bbox.y,
+            width: bbox.width,
+            height: bbox.height,
+            right: bbox.x + bbox.width,
+            bottom: bbox.y + bbox.height
+          });
+        } catch (e) {
+          // Hidden SVG nodes may not expose a bounding box in every browser.
+        }
+      }
+      return box;
+    }
+
+    function clampSvgBox(box, bounds) {
+      if (!box || !bounds) return box;
+      var x = Math.max(bounds.x, box.x);
+      var y = Math.max(bounds.y, box.y);
+      var right = Math.min(bounds.right, box.right);
+      var bottom = Math.min(bounds.bottom, box.bottom);
+      if (right <= x || bottom <= y) return box;
+      return { x: x, y: y, width: right - x, height: bottom - y, right: right, bottom: bottom };
+    }
+
+    function expandedPreviewBox(svg, definition, optionValue) {
+      var base = parseSvgBox(previewViewBox(definition.preview));
+      var selectors = [];
+      if (definition.key === 'heroKind') {
+        selectors.push('[data-hero-kind-layer="' + optionValue + '"]');
+      } else if (definition.key === 'hairStyle') {
+        selectors.push('[data-hero-slot="hair"][data-hero-option="' + optionValue + '"]');
+        selectors.push('[data-hero-slot="hairline"][data-hero-option="' + optionValue + '"]');
+        selectors.push('[data-hero-slot="hair-root"][data-hero-option="' + optionValue + '"]');
+      } else if (definition.key === 'eyebrowStyle') {
+        selectors.push('[data-hero-slot="eyebrow"][data-hero-option="' + optionValue + '"]');
+      } else if (definition.key === 'eyeShape') {
+        selectors.push('[data-hero-slot="eye-shape"][data-hero-option="' + optionValue + '"]');
+      } else if (definition.key === 'noseShape') {
+        selectors.push('[data-hero-slot="nose-shape"][data-hero-option="' + optionValue + '"]');
+      } else if (definition.key === 'mouthStyle') {
+        selectors.push('[data-hero-slot="mouth-style"][data-hero-option="' + optionValue + '"]');
+      } else if (definition.key === 'headStyle') {
+        selectors.push('[data-hero-slot="head-shape"][data-hero-option="' + optionValue + '"]');
+        selectors.push('[data-hero-slot="head-features"][data-hero-option="' + optionValue + '"]');
+      } else if (definition.key === 'facialHair') {
+        selectors.push('[data-hero-slot="facial-hair"][data-hero-option="' + optionValue + '"]');
+      } else if (definition.key === 'faceFeature') {
+        selectors.push('[data-hero-slot="face-feature"][data-hero-option="' + optionValue + '"]');
+      } else if (definition.key === 'bodyType') {
+        selectors.push('[data-hero-slot="body-shape"][display="inline"]');
+        selectors.push('[data-hero-slot="silhouette"][display="inline"]');
+        selectors.push('[data-hero-default-torso]');
+      } else if (definition.key === 'outfitStyle') {
+        selectors.push('[data-hero-slot="outfit-style"][data-hero-option="' + optionValue + '"]');
+      }
+
+      var featureBox = null;
+      for (var i = 0; i < selectors.length; i++) featureBox = unionSvgBox(featureBox, visibleSelectorBox(svg, selectors[i]));
+      if (!featureBox) return base;
+      var padding = definition.key === 'hairStyle' ? 24 : 14;
+      var expanded = unionSvgBox(base, {
+        x: featureBox.x - padding,
+        y: featureBox.y - padding,
+        width: featureBox.width + padding * 2,
+        height: featureBox.height + padding * 2,
+        right: featureBox.right + padding,
+        bottom: featureBox.bottom + padding
+      });
+      return clampSvgBox(expanded, parseSvgBox(CHOICE_PREVIEW_SOURCE_VIEWBOX)) || base;
     }
 
     function collectDisplaySnapshot(root, selector) {
@@ -2474,13 +2614,12 @@
       }
     }
 
-    function createChoicePreviewSvg(definition, optionValue, baseState, snapshot) {
-      var source = snapshot && snapshot.source ? snapshot.source : modal.querySelector('.hero-cust-preview [data-gym-hero-svg]');
+    function createChoicePreviewSvg(definition, optionValue) {
+      var source = modal.querySelector('.hero-cust-preview [data-gym-hero-svg]');
       if (!source) return null;
       var svg = source.cloneNode(true);
       var suffix = 'choice-' + definition.key + '-' + optionValue + '-' + (++choicePreviewId);
       svg.querySelectorAll('animate, animateTransform').forEach(function (node) { node.remove(); });
-      svg.setAttribute('viewBox', previewViewBox(definition.preview));
       svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
       svg.setAttribute('aria-hidden', 'true');
       svg.setAttribute('focusable', 'false');
@@ -2488,29 +2627,78 @@
       svg.setAttribute('data-hero-choice-svg', '');
       svg.removeAttribute('id');
       uniquifySvgIds(svg, suffix);
-      updateChoicePreviewSvg(svg, definition, optionValue, baseState || DEFAULTS, snapshot);
+      updateChoicePreviewSvg(svg, definition, optionValue);
       return svg;
     }
 
-    function updateChoicePreviewSvg(svg, definition, optionValue, baseState, snapshot) {
-      var state = cloneAvatarState(baseState || DEFAULTS);
-      if (definition.key === 'heroKind') {
-        applyToSvg(svg, choiceState(definition, optionValue, state));
-        return;
+    function updateChoicePreviewSvg(svg, definition, optionValue) {
+      var state = representativeChoiceState(definition, optionValue);
+      applyToSvg(svg, state);
+      svg._heroChoiceRepresentativeState = state;
+      svg.setAttribute('viewBox', formatSvgBox(expandedPreviewBox(svg, definition, optionValue)));
+    }
+
+    function choicePreviewBaseUrl() {
+      return window.SEGymHeroChoicePreviewBaseUrl || '/assets/se-gym-hero-choice-previews/';
+    }
+
+    function choicePreviewAsset(key, optionValue) {
+      var manifest = window.SEGymHeroChoicePreviews;
+      if (!manifest || !manifest.assets || !manifest.assets[key]) return null;
+      var file = manifest.assets[key][optionValue];
+      if (!file) return null;
+      return choicePreviewBaseUrl() + file;
+    }
+
+    function renderStaticChoicePreview(button, definition) {
+      var preview = button && button.querySelector('.hero-cust-choice-preview');
+      if (!preview || !definition) return false;
+      var optionValue = button.getAttribute('data-choice-value');
+      var src = choicePreviewAsset(definition.key, optionValue);
+      if (!src) return false;
+      if (preview.querySelector('[data-hero-choice-preview-img]')) return true;
+      var img = document.createElement('img');
+      img.alt = '';
+      img.loading = 'eager';
+      img.decoding = 'async';
+      img.setAttribute('aria-hidden', 'true');
+      img.setAttribute('data-hero-choice-preview-img', '');
+      img.setAttribute('data-hero-choice-preview-src', src);
+      img.className = 'se-gym-hero-choice-preview-img';
+      preview.textContent = '';
+      preview.appendChild(img);
+      button._heroChoicePreviewRendered = true;
+      button._heroChoicePreviewSignature = choicePreviewSignature(definition, optionValue);
+      button._heroChoicePendingSignature = '';
+      button._heroChoiceQueuedSignature = '';
+      button._heroChoiceQueuedToken = 0;
+      setChoicePreviewPending(button, false);
+      return true;
+    }
+
+    function loadStaticChoicePreviewImages() {
+      var images = modal.querySelectorAll('[data-hero-choice-preview-img][data-hero-choice-preview-src]');
+      for (var i = 0; i < images.length; i++) {
+        var img = images[i];
+        if (img.getAttribute('src')) continue;
+        img.loading = 'eager';
+        img.src = img.getAttribute('data-hero-choice-preview-src');
       }
-      applyChoicePreviewSnapshot(svg, snapshot || captureChoicePreviewSnapshot(), state);
-      applyChoicePreviewDelta(svg, definition, optionValue, state);
+    }
+
+    function choiceButtonHasPreview(button) {
+      return !!(button && button.querySelector('[data-hero-choice-svg], [data-hero-choice-preview-img]'));
     }
 
     function renderChoicePreview(button, definition, baseState, signature, snapshot) {
       var preview = button.querySelector('.hero-cust-choice-preview');
       if (!preview) return;
       var optionValue = button.getAttribute('data-choice-value');
+      if (renderStaticChoicePreview(button, definition)) return;
       var existing = preview.querySelector('[data-hero-choice-svg]');
       if (existing) {
-        updateChoicePreviewSvg(existing, definition, optionValue, baseState, snapshot);
         button._heroChoicePreviewRendered = true;
-        button._heroChoicePreviewSignature = signature || choicePreviewSignature(definition, optionValue, baseState);
+        button._heroChoicePreviewSignature = signature || choicePreviewSignature(definition, optionValue);
         button._heroChoicePendingSignature = '';
         button._heroChoiceQueuedSignature = '';
         button._heroChoiceQueuedToken = 0;
@@ -2522,7 +2710,7 @@
       preview.textContent = '';
       preview.appendChild(svg);
       button._heroChoicePreviewRendered = true;
-      button._heroChoicePreviewSignature = signature || choicePreviewSignature(definition, optionValue, baseState);
+      button._heroChoicePreviewSignature = signature || choicePreviewSignature(definition, optionValue);
       button._heroChoicePendingSignature = '';
       button._heroChoiceQueuedSignature = '';
       button._heroChoiceQueuedToken = 0;
@@ -2589,8 +2777,8 @@
     }
 
     function refreshLatestChoicePreviewContext() {
-      latestChoicePreviewState = cloneAvatarState(readForm());
-      latestChoicePreviewSnapshot = captureChoicePreviewSnapshot();
+      latestChoicePreviewState = cloneAvatarState(DEFAULTS);
+      latestChoicePreviewSnapshot = null;
       return latestChoicePreviewState;
     }
 
@@ -2629,41 +2817,12 @@
     }
 
     function choicePreviewSignature(definition, optionValue, baseState) {
-      if (definition.key === 'heroKind') {
-        return JSON.stringify(choiceState(definition, optionValue, baseState));
-      }
-
-      var crop = definition.preview || 'full';
-      var signature = {
+      return JSON.stringify({
         key: definition.key,
         option: optionValue,
-        crop: crop,
-        kind: choicePreviewValue(definition, optionValue, baseState, 'heroKind')
-      };
-
-      if (FACE_PREVIEW_CROPS[crop]) {
-        signature.appearance = choiceAppearanceSignature(definition, optionValue, baseState);
-        signature.outfit = {
-          capeOuter: baseState.outfit.capeOuter,
-          accessories: getAccessories(baseState.outfit)
-        };
-      } else if (UPPER_PREVIEW_CROPS[crop]) {
-        signature.appearance = choiceAppearanceSignature(definition, optionValue, baseState);
-        signature.body = {
-          type: choicePreviewValue(definition, optionValue, baseState, 'bodyType')
-        };
-        signature.outfit = {
-          style: choicePreviewValue(definition, optionValue, baseState, 'outfitStyle'),
-          suit: baseState.outfit.suit,
-          capeOuter: baseState.outfit.capeOuter,
-          capeInner: baseState.outfit.capeInner,
-          accessories: getAccessories(baseState.outfit),
-          emblem: baseState.outfit.emblem || ''
-        };
-      } else {
-        signature.state = choiceState(definition, optionValue, baseState);
-      }
-      return JSON.stringify(signature);
+        crop: definition.preview || 'full',
+        representative: true
+      });
     }
 
     function setChoicePreviewPending(button, isPending) {
@@ -2706,7 +2865,7 @@
         item.button._heroChoiceQueuedSignature = '';
         item.button._heroChoiceQueuedToken = 0;
       }
-      setChoicePreviewPending(item.button, !!item.button.querySelector('[data-hero-choice-svg]'));
+      setChoicePreviewPending(item.button, choiceButtonHasPreview(item.button));
     }
 
     function pruneQueuedChoicePreviewRenders() {
@@ -2733,7 +2892,7 @@
       }
       item.button._heroChoiceQueuedSignature = '';
       item.button._heroChoiceQueuedToken = 0;
-      if (item.button._heroChoicePreviewSignature === item.signature && item.button.querySelector('[data-hero-choice-svg]')) {
+      if (item.button._heroChoicePreviewSignature === item.signature && choiceButtonHasPreview(item.button)) {
         setChoicePreviewPending(item.button, false);
         return false;
       }
@@ -2745,7 +2904,7 @@
       if (!button || !definition || !state) return false;
       var optionValue = button.getAttribute('data-choice-value');
       var signature = choicePreviewSignature(definition, optionValue, state);
-      if (button._heroChoicePreviewSignature === signature && button.querySelector('[data-hero-choice-svg]')) {
+      if (button._heroChoicePreviewSignature === signature && choiceButtonHasPreview(button)) {
         setChoicePreviewPending(button, false);
         return false;
       }
@@ -2770,7 +2929,7 @@
       if (!button || !definition || !state) return false;
       var optionValue = button.getAttribute('data-choice-value');
       var signature = choicePreviewSignature(definition, optionValue, state);
-      if (button._heroChoicePreviewSignature === signature && button.querySelector('[data-hero-choice-svg]')) {
+      if (button._heroChoicePreviewSignature === signature && choiceButtonHasPreview(button)) {
         setChoicePreviewPending(button, false);
         return false;
       }
@@ -2785,7 +2944,7 @@
       var rootBox = choicePreviewViewportBox();
       if (!rootBox) return;
       pruneQueuedChoicePreviewRenders();
-      var state = refreshLatestChoicePreviewContext();
+      var state = latestChoicePreviewState || refreshLatestChoicePreviewContext();
       for (var c = 0; c < choiceControls.length; c++) {
         var control = choiceControls[c];
         if (!control.picker) continue;
@@ -2882,14 +3041,14 @@
 
     function renderChoiceButtonPreviewOnDemand(button, definition) {
       if (!button || !definition || modal.hidden) return;
-      var state = refreshLatestChoicePreviewContext();
+      var state = latestChoicePreviewState || refreshLatestChoicePreviewContext();
       renderChoiceButtonPreviewForState(button, definition, state, latestChoicePreviewSnapshot);
     }
 
     function queueAllChoicePreviewRenders(baseState) {
-      var state = cloneAvatarState(baseState);
+      var state = cloneAvatarState(DEFAULTS);
       latestChoicePreviewState = state;
-      latestChoicePreviewSnapshot = captureChoicePreviewSnapshot();
+      latestChoicePreviewSnapshot = null;
       var token = ++choicePreviewRenderToken;
       var foreground = [];
       var queued = [];
@@ -2901,13 +3060,13 @@
         if (!button || queued.indexOf(button) !== -1) return;
         var optionValue = button.getAttribute('data-choice-value');
         var signature = choicePreviewSignature(definition, optionValue, state);
-        var hasCurrentPreview = button._heroChoicePreviewSignature === signature && button.querySelector('[data-hero-choice-svg]');
+        var hasCurrentPreview = button._heroChoicePreviewSignature === signature && choiceButtonHasPreview(button);
         if (hasCurrentPreview) {
           setChoicePreviewPending(button, false);
           return;
         }
         button._heroChoicePendingSignature = signature;
-        var hasRenderedPreview = !!button.querySelector('[data-hero-choice-svg]');
+        var hasRenderedPreview = choiceButtonHasPreview(button);
         if (!isChoiceButtonDemanded(button, rootBox)) {
           setChoicePreviewPending(button, hasRenderedPreview);
           return;
@@ -2929,7 +3088,9 @@
     }
 
     function refreshChoicePreviews(baseState) {
-      queueAllChoicePreviewRenders(baseState);
+      latestChoicePreviewState = cloneAvatarState(DEFAULTS);
+      latestChoicePreviewSnapshot = null;
+      renderVisibleChoicePreviewButtons();
     }
 
     function buildChoicePicker(select, key, definition) {
@@ -2993,7 +3154,7 @@
           });
 
           grid.appendChild(button);
-          observeChoiceButton(button, definition);
+          if (!renderStaticChoicePreview(button, definition)) observeChoiceButton(button, definition);
         }
         section.appendChild(grid);
         picker.appendChild(section);
@@ -3149,6 +3310,7 @@
       writeForm(initial);
       setStatus('');
       modal.hidden = false;
+      loadStaticChoicePreviewImages();
       document.body.classList.add('hero-cust-modal-open');
       modal.classList.add('hero-cust-open');
       setOriginalHeroAnimationsPaused(true);

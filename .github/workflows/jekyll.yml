@@ -67,6 +67,21 @@ jobs:
         if: github.event_name == 'push'
         uses: actions/configure-pages@v4
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install preview build dependencies
+        run: npm ci || npm install
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Pre-render SE Gym hero choice previews
+        run: node scripts/build_se_gym_hero_choice_previews.js
+
       - name: Build with Jekyll
         run: bundle exec jekyll build
         env:
@@ -109,6 +124,9 @@ jobs:
 
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
+
+      - name: Pre-render SE Gym hero choice previews
+        run: node scripts/build_se_gym_hero_choice_previews.js
 
       - name: Build site for audit
         run: bundle exec jekyll build

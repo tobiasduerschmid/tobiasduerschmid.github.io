@@ -64,6 +64,22 @@ async function useDefaultSavedHero(page) {
   }, DEFAULT_SAVED_HERO);
 }
 
+async function installStaticChoicePreviewManifest(page, assets) {
+  await page.route('**/assets/se-gym-hero-choice-previews/*.svg', async (route) => {
+    await route.fulfill({
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"><rect width="1" height="1"/></svg>',
+    });
+  });
+  await page.addInitScript(({ manifestAssets }) => {
+    window.SEGymHeroChoicePreviewBaseUrl = '/assets/se-gym-hero-choice-previews/';
+    window.SEGymHeroChoicePreviews = {
+      count: Object.values(manifestAssets).reduce((total, group) => total + Object.keys(group).length, 0),
+      assets: manifestAssets,
+    };
+  }, { manifestAssets: assets });
+}
+
 async function activatePersonalGym(page) {
   await page.locator(ACTIVATE_TOGGLE_SLIDER).click();
   await expect(page.locator('#activatePersonalGymToggle')).toBeChecked();
@@ -360,7 +376,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     )).toHaveAttribute('display', 'inline');
   });
 
-  test('Style preview buttons crop into the selected avatar detail', async ({ page }) => {
+  test('Style preview buttons declare registry crops and expand around represented details', async ({ page }) => {
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
@@ -401,8 +417,75 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     }
 
     const hairSvg = await choicePreviewSvg(page, 'Choose Hair style: Long and flowing');
-    await expect(hairSvg, 'rendered choice SVGs should use their declared crop viewBox')
-      .toHaveAttribute('viewBox', CHOICE_PREVIEW_VIEWBOXES.hair);
+    const hairCrop = await hairSvg.evaluate((svg) => {
+      function parseBox(value) {
+        const parts = String(value || '').trim().split(/\s+/).map(Number);
+        if (parts.length !== 4 || parts.some((part) => Number.isNaN(part))) return null;
+        return {
+          x: parts[0],
+          y: parts[1],
+          width: parts[2],
+          height: parts[3],
+          right: parts[0] + parts[2],
+          bottom: parts[1] + parts[3],
+        };
+      }
+
+      function unionBox(a, b) {
+        if (!a) return b;
+        if (!b) return a;
+        const x = Math.min(a.x, b.x);
+        const y = Math.min(a.y, b.y);
+        const right = Math.max(a.right, b.right);
+        const bottom = Math.max(a.bottom, b.bottom);
+        return { x, y, width: right - x, height: bottom - y, right, bottom };
+      }
+
+      function visibleBox(selector) {
+        return Array.from(svg.querySelectorAll(selector)).reduce((box, node) => {
+          if (node.closest('[display="none"]')) return box;
+          try {
+            const bbox = node.getBBox();
+            if (!bbox || bbox.width <= 0 || bbox.height <= 0) return box;
+            return unionBox(box, {
+              x: bbox.x,
+              y: bbox.y,
+              width: bbox.width,
+              height: bbox.height,
+              right: bbox.x + bbox.width,
+              bottom: bbox.y + bbox.height,
+            });
+          } catch (e) {
+            return box;
+          }
+        }, null);
+      }
+
+      const viewBox = parseBox(svg.getAttribute('viewBox'));
+      const declared = parseBox(svg.closest('[data-hero-choice-picker]').getAttribute('data-preview-viewbox'));
+      const feature = visibleBox(
+        '[data-hero-slot="hair"][data-hero-option="long"], ' +
+        '[data-hero-slot="hairline"][data-hero-option="long"], ' +
+        '[data-hero-slot="hair-root"][data-hero-option="long"]'
+      );
+      const tolerance = 0.5;
+      return {
+        viewBox: svg.getAttribute('viewBox'),
+        declared: svg.closest('[data-hero-choice-picker]').getAttribute('data-preview-viewbox'),
+        validViewBox: Boolean(viewBox && viewBox.width > 0 && viewBox.height > 0),
+        expandedFromDeclared: Boolean(viewBox && declared && (viewBox.x < declared.x || viewBox.y < declared.y || viewBox.right > declared.right || viewBox.bottom > declared.bottom)),
+        hairFullyInside: Boolean(
+          viewBox && feature &&
+          feature.x >= viewBox.x - tolerance &&
+          feature.y >= viewBox.y - tolerance &&
+          feature.right <= viewBox.right + tolerance &&
+          feature.bottom <= viewBox.bottom + tolerance
+        ),
+      };
+    });
+    expect(hairCrop.validViewBox, `long hair preview should render with a valid viewBox, got ${hairCrop.viewBox}`).toBe(true);
+    expect(hairCrop.expandedFromDeclared, 'long hair preview should expand beyond the registry crop when the represented hair needs more room').toBe(true);
+    expect(hairCrop.hairFullyInside, `long hair should fit inside the preview frame ${hairCrop.viewBox}`).toBe(true);
   });
 
   test('Choice thumbnails render visible options first and defer offscreen options until requested', async ({ page }) => {
@@ -425,6 +508,52 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await offscreenChoice.focus();
     await expect(offscreenChoice).toBeFocused();
     await expect(offscreenChoice.locator('[data-hero-choice-svg]')).toHaveCount(1);
+  });
+
+  test('Production choice thumbnail images start loading when the customizer opens', async ({ page }) => {
+    const requestedPreviewAssets = [];
+    page.on('request', (request) => {
+      const url = request.url();
+      if (url.includes('/assets/se-gym-hero-choice-previews/') && url.endsWith('.svg')) {
+        requestedPreviewAssets.push(url);
+      }
+    });
+    await installStaticChoicePreviewManifest(page, {
+      hairStyle: { long: 'hair-style-long.svg' },
+      outfitStyle: { hoodie: 'outfit-style-hoodie.svg' },
+    });
+
+    await page.goto(GYM_URL);
+
+    const longHairButton = page.getByRole('button', {
+      name: 'Choose Hair style: Long and flowing',
+      includeHidden: true,
+    });
+    const hoodieButton = page.getByRole('button', {
+      name: 'Choose Outfit style: Hoodie',
+      includeHidden: true,
+    });
+    const longHairImage = longHairButton.locator('[data-hero-choice-preview-img]');
+    const hoodieImage = hoodieButton.locator('[data-hero-choice-preview-img]');
+
+    await expect(longHairImage).toHaveAttribute('data-hero-choice-preview-src', '/assets/se-gym-hero-choice-previews/hair-style-long.svg');
+    await expect(longHairImage).toHaveAttribute('loading', 'eager');
+    await expect(longHairImage).not.toHaveAttribute('loading', 'lazy');
+    await expect(longHairImage).not.toHaveAttribute('src', /./);
+    await expect(hoodieImage).not.toHaveAttribute('src', /./);
+    expect(requestedPreviewAssets, 'production thumbnails should not request image files before the modal opens').toEqual([]);
+
+    await activatePersonalGym(page);
+    expect(requestedPreviewAssets, 'activating Personal Gym alone should not load the modal thumbnails').toEqual([]);
+
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+
+    await expect(longHairImage).toHaveAttribute('src', '/assets/se-gym-hero-choice-previews/hair-style-long.svg');
+    await expect(hoodieImage).toHaveAttribute('src', '/assets/se-gym-hero-choice-previews/outfit-style-hoodie.svg');
+    await expect.poll(() => requestedPreviewAssets.length, {
+      message: 'production thumbnails should begin network loading as soon as the modal opens',
+      timeout: 5000,
+    }).toBe(2);
   });
 
   test('Large scroll jumps drop thumbnail work for options that moved far away', async ({ page }) => {
@@ -453,7 +582,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await expect(transientChoice.locator('[data-hero-choice-svg]')).toHaveCount(1);
   });
 
-  test('Offscreen stale choice thumbnails stay hidden until their option is requested again', async ({ page }) => {
+  test('Offscreen representative choice thumbnails are not invalidated by avatar changes', async ({ page }) => {
     await useDefaultSavedHero(page);
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
@@ -466,15 +595,16 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await expect(offscreenChoice).not.toBeInViewport();
 
     await setColorInput(page, '#hero-cust-skin', '#3d2515');
-    await expect(offscreenChoice).toHaveAttribute('data-choice-pending', 'true');
-    await expect(offscreenSvg).toHaveCSS('visibility', 'hidden');
+    await expect(offscreenChoice).not.toHaveAttribute('data-choice-pending', 'true');
+    await expect(offscreenSvg).toHaveCSS('visibility', 'visible');
 
     await offscreenChoice.focus();
+    await expect(offscreenChoice.locator('[data-hero-choice-svg]')).toHaveCount(1);
     await expect(offscreenSvg).toHaveCSS('visibility', 'visible');
     await expect(offscreenChoice).not.toHaveAttribute('data-choice-pending', 'true');
   });
 
-  test('Every rendered choice preview uses the declared viewport and contains visible art', async ({ page }) => {
+  test('Every rendered choice preview uses a valid representative viewport and contains visible art', async ({ page }) => {
     test.setTimeout(90000);
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
@@ -507,6 +637,47 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         const right = Math.min(a.x + a.width, b.right);
         const bottom = Math.min(a.y + a.height, b.bottom);
         return Math.max(0, right - left) * Math.max(0, bottom - top);
+      }
+
+      function unionBox(a, b) {
+        if (!a) return b;
+        if (!b) return a;
+        const x = Math.min(a.x, b.x);
+        const y = Math.min(a.y, b.y);
+        const right = Math.max(a.right, b.right);
+        const bottom = Math.max(a.bottom, b.bottom);
+        return { x, y, width: right - x, height: bottom - y, right, bottom };
+      }
+
+      function visibleUnionBox(svg, selector) {
+        return Array.from(svg.querySelectorAll(selector)).reduce((box, node) => {
+          if (node.closest('[display="none"]')) return box;
+          try {
+            const bbox = node.getBBox();
+            if (!bbox || bbox.width <= 0 || bbox.height <= 0) return box;
+            return unionBox(box, {
+              x: bbox.x,
+              y: bbox.y,
+              width: bbox.width,
+              height: bbox.height,
+              right: bbox.x + bbox.width,
+              bottom: bbox.y + bbox.height,
+            });
+          } catch (e) {
+            return box;
+          }
+        }, null);
+      }
+
+      function boxContains(outer, inner) {
+        const tolerance = 0.5;
+        return Boolean(
+          outer && inner &&
+          inner.x >= outer.x - tolerance &&
+          inner.y >= outer.y - tolerance &&
+          inner.right <= outer.right + tolerance &&
+          inner.bottom <= outer.bottom + tolerance
+        );
       }
 
       function slotAreaInsideViewBox(svg, slot, option, viewBox) {
@@ -546,6 +717,17 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         if (!strokeOnlyKeys.has(key) && !emptyOptions.has(option) && result.area < 4) {
           failures.push({ label, key, option, slot, reason: 'option-specific slot is outside or empty in preview crop', area: Math.round(result.area) });
         }
+        if (key === 'hairStyle' && option !== 'bald') {
+          const featureBox = visibleUnionBox(
+            svg,
+            `[data-hero-slot="hair"][data-hero-option="${option}"], ` +
+            `[data-hero-slot="hairline"][data-hero-option="${option}"], ` +
+            `[data-hero-slot="hair-root"][data-hero-option="${option}"]`
+          );
+          if (featureBox && !boxContains(viewBox, featureBox)) {
+            failures.push({ label, key, option, reason: 'represented hair extends outside preview crop', viewBox: svg.getAttribute('viewBox') });
+          }
+        }
       }
 
       if (!modal || !scrollRoot) return [{ reason: 'missing customizer modal or scroll root' }];
@@ -568,13 +750,9 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         const label = button.getAttribute('aria-label');
         const key = picker && picker.getAttribute('data-hero-choice-picker');
         const option = button.getAttribute('data-choice-value');
-        const expectedViewBox = picker && picker.getAttribute('data-preview-viewbox');
         if (!svg) {
           failures.push({ label, reason: 'missing preview svg' });
           continue;
-        }
-        if (svg.getAttribute('viewBox') !== expectedViewBox) {
-          failures.push({ label, reason: 'wrong viewBox', expected: expectedViewBox, actual: svg.getAttribute('viewBox') });
         }
         const box = parseBox(svg.getAttribute('viewBox'));
         if (!box) {
@@ -684,21 +862,25 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(summary.normalizedLegacyDetails.outfit.accessories).toEqual(['forehead-jewel']);
   });
 
-  test('Style preview buttons re-render after randomize changes the base avatar', async ({ page }) => {
+  test('Style preview buttons keep representative thumbnails after randomize changes the base avatar', async ({ page }) => {
     test.setTimeout(45000);
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
 
     const longHairPreview = await choicePreviewSvg(page, 'Choose Hair style: Long and flowing');
+    const representativeHairColor = await longHairPreview.evaluate((svg) =>
+      getComputedStyle(svg).getPropertyValue('--hero-hair').trim().toLowerCase()
+    );
+    expect(representativeHairColor).toBe('#1f140c');
 
     await setColorInput(page, '#hero-cust-hair-color', '#123456');
     await expect.poll(async () => longHairPreview.evaluate((svg) =>
       getComputedStyle(svg).getPropertyValue('--hero-hair').trim().toLowerCase()
     ), {
-      message: 'hair preview button should update after direct color changes',
+      message: 'hair preview button should remain representative after direct color changes',
       timeout: 15000,
-    }).toBe('#123456');
+    }).toBe(representativeHairColor);
 
     const randomize = heroCustomizerAction(page, 'Randomize');
     await randomize.click();
@@ -709,12 +891,12 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await expect.poll(async () => longHairPreview.evaluate((svg) =>
       getComputedStyle(svg).getPropertyValue('--hero-hair').trim().toLowerCase()
     ), {
-      message: 'hair preview button should re-render after randomize',
+      message: 'hair preview button should not re-render from the randomized base avatar',
       timeout: 15000,
-    }).toBe(randomizedHairColor);
+    }).toBe(representativeHairColor);
   });
 
-  test('Style preview buttons stay current across mixed avatar changes', async ({ page }) => {
+  test('Style preview buttons remain representative across mixed avatar changes', async ({ page }) => {
     test.setTimeout(60000);
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
@@ -736,8 +918,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await expectChoiceSlotVisible(
       eyebrowThinSvg,
       'hair',
-      'long',
-      'face previews should inherit the changed base hair style'
+      'short',
+      'face previews should keep representative default hair after base hair changes'
     );
     await expectChoiceSlotVisible(
       eyebrowThinSvg,
@@ -752,26 +934,26 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await expectChoiceSlotVisible(
       shortHairSvg,
       'hair',
-      'bald',
-      'non-selected hair previews should hide hair under head-covering accessories'
+      'short',
+      'hair previews should keep their represented hair visible even when the live avatar wears headwear'
     );
 
     await setSelectInput(page, '#hero-cust-body-type', 'broad');
     await expectNoVisiblePendingChoicePreviews(page);
     await scrollChoiceButtonIntoView(page, 'Choose Outfit style: Hoodie');
     await expect.poll(async () => hoodieSvg.evaluate((svg) => svg.getAttribute('data-hero-body')), {
-      message: 'outfit previews should inherit body type changes',
+      message: 'outfit previews should keep their representative body type',
       timeout: 15000,
-    }).toBe('broad');
+    }).toBe('athletic');
 
     await setColorInput(page, '#hero-cust-suit', '#7a2cff');
     await expectNoVisiblePendingChoicePreviews(page);
     await expect.poll(async () => hoodieSvg.evaluate((svg) =>
       getComputedStyle(svg).getPropertyValue('--hero-suit').trim().toLowerCase()
     ), {
-      message: 'outfit previews should inherit suit color changes',
+      message: 'outfit previews should keep their representative suit color',
       timeout: 15000,
-    }).toBe('#7a2cff');
+    }).toBe('#1f6ebd');
   });
 
   test('Bruin mascot option replaces the human avatar and saves to page heroes', async ({ page }) => {
@@ -806,6 +988,58 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
     const savedKind = await page.evaluate(() => JSON.parse(localStorage.getItem('se-gym-hero-avatar')).kind);
     expect(savedKind).toBe('bruin');
+  });
+
+  test('Mobile hero customizer keeps the live preview visible while controls scroll', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+
+    const modal = page.getByRole('dialog', { name: 'Customize your hero' });
+    const livePreview = modal.locator('.hero-cust-preview [data-gym-hero-svg]');
+    await expect(livePreview).toBeInViewport();
+
+    const outfitStyle = page.getByLabel('Outfit style', { exact: true });
+    await outfitStyle.evaluate((select) => {
+      select.scrollIntoView({ block: 'center', inline: 'nearest' });
+      const scrollRoot = select.closest('.hero-cust-box');
+      if (scrollRoot) scrollRoot.dispatchEvent(new Event('scroll', { bubbles: true }));
+    });
+    await outfitStyle.focus();
+    await expect(outfitStyle).toBeFocused();
+    await expect(livePreview).toBeInViewport();
+
+    const bottomSave = heroCustomizerAction(page, 'Save', 'bottom');
+    await bottomSave.evaluate((button) => {
+      button.scrollIntoView({ block: 'center', inline: 'nearest' });
+      const scrollRoot = button.closest('.hero-cust-box');
+      if (scrollRoot) scrollRoot.dispatchEvent(new Event('scroll', { bubbles: true }));
+    });
+    await bottomSave.focus();
+    await expect(bottomSave).toBeFocused();
+    await expect(livePreview).toBeInViewport();
+
+    const geometry = await page.evaluate(() => {
+      const preview = document.querySelector('#hero-customizer-modal .hero-cust-preview-pane');
+      const focused = document.activeElement;
+      if (!preview || !focused) return null;
+      const previewRect = preview.getBoundingClientRect();
+      const focusRect = focused.getBoundingClientRect();
+      return {
+        previewTop: previewRect.top,
+        previewBottom: previewRect.bottom,
+        focusTop: focusRect.top,
+        focusBottom: focusRect.bottom,
+        viewportHeight: window.innerHeight,
+      };
+    });
+
+    expect(geometry).not.toBeNull();
+    expect(geometry.previewTop, 'sticky live preview should stay inside the top of the mobile viewport').toBeGreaterThanOrEqual(0);
+    expect(geometry.previewBottom, 'sticky live preview should not consume the whole mobile viewport').toBeLessThan(geometry.viewportHeight * 0.45);
+    expect(geometry.focusTop, 'focused bottom control should not be hidden behind the sticky live preview').toBeGreaterThanOrEqual(geometry.previewBottom - 1);
+    expect(geometry.focusBottom, 'focused bottom control should remain inside the mobile viewport').toBeLessThanOrEqual(geometry.viewportHeight);
   });
 
   test('Avatar color controls expose all presets and HSL sliders on mobile', async ({ page }) => {
