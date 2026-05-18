@@ -118,6 +118,22 @@
     el.setAttribute('tabindex', '0');
   }
 
+  function keepFocusBelowFixedHeader(el) {
+    if (!el || el.__gitCommandLabFocusGuard) return;
+    el.__gitCommandLabFocusGuard = true;
+    el.addEventListener('focus', function () {
+      var rect = el.getBoundingClientRect();
+      var fixedHeader = document.querySelector('.navbar-fixed-top');
+      var headerBottom = fixedHeader ? fixedHeader.getBoundingClientRect().bottom : 0;
+      var safeTop = Math.max(headerBottom + 16, 120);
+      if (rect.top >= safeTop) return;
+      window.scrollTo({
+        top: Math.max(0, window.scrollY + rect.top - safeTop),
+        behavior: 'auto',
+      });
+    });
+  }
+
   function makeCard(container, spec) {
     container.innerHTML = '';
     container.classList.add('git-command-lab');
@@ -183,6 +199,7 @@
     cmdEl.textContent = spec.command;
     btn.appendChild(icon);
     btn.appendChild(cmdEl);
+    keepFocusBelowFixedHeader(btn);
     action.appendChild(btn);
 
     // Pair of graph slots: the interactive one shows "before" initially and
@@ -473,6 +490,7 @@
     backLabel.textContent = 'Back';
     backBtn.appendChild(backIcon);
     backBtn.appendChild(backLabel);
+    keepFocusBelowFixedHeader(backBtn);
     btnGroup.appendChild(backBtn);
 
     var btn = document.createElement('button');
@@ -485,6 +503,7 @@
     cmdEl.className = 'git-command-lab__cmd';
     btn.appendChild(icon);
     btn.appendChild(cmdEl);
+    keepFocusBelowFixedHeader(btn);
     btnGroup.appendChild(btn);
 
     var graphHost = document.createElement('div');
