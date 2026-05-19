@@ -350,6 +350,60 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(closedAfter.pagePaused).toEqual(closedAfter.pagePaused.map(() => false));
   });
 
+  test('Hero motion animations share synchronized timing', async ({ page }) => {
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+
+    const motionClockFailures = await page.evaluate(() => {
+      const failures = [];
+      const sharedTiming = {
+        dur: '2.2s',
+        keyTimes: '0;0.5;1',
+        calcMode: 'spline',
+        keySplines: '0.4 0 0.6 1;0.4 0 0.6 1',
+        begin: '0s',
+      };
+
+      for (const svg of document.querySelectorAll('[data-gym-hero-svg]')) {
+        const variantClass = Array.from(svg.classList).find((name) => name.startsWith('se-gym-hero-svg-'));
+        const label = variantClass || 'unlabeled hero svg';
+        const motionAnimations = Array.from(svg.querySelectorAll('*')).filter((node) =>
+          node.localName === 'animateTransform' ||
+          (node.localName === 'animate' && node.getAttribute('attributeName') === 'd')
+        );
+
+        if (motionAnimations.length === 0) {
+          failures.push({ label, reason: 'missing motion animations' });
+          continue;
+        }
+
+        for (const node of motionAnimations) {
+          const details = {
+            tagName: node.tagName,
+            attributeName: node.getAttribute('attributeName'),
+            id: node.id || null,
+            values: node.getAttribute('values'),
+            begin: node.getAttribute('begin'),
+            dur: node.getAttribute('dur'),
+            keyTimes: node.getAttribute('keyTimes'),
+            calcMode: node.getAttribute('calcMode'),
+            keySplines: node.getAttribute('keySplines'),
+          };
+
+          for (const [name, value] of Object.entries(sharedTiming)) {
+            if (details[name] !== value) {
+              failures.push({ label, reason: 'motion animation does not use shared timing', expected: { [name]: value }, details });
+            }
+          }
+        }
+      }
+
+      return failures;
+    });
+
+    expect(motionClockFailures).toEqual([]);
+  });
+
   test('Style preview buttons are generated from the central avatar choice registry', async ({ page }) => {
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
@@ -2840,13 +2894,35 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
     const hairlineCoverage = await preview.evaluate((svg) => {
       const points = [
-        { name: 'top forehead hairline', x: 400, y: 158 },
-        { name: 'left temple hairline', x: 360, y: 168 },
-        { name: 'right temple hairline', x: 440, y: 168 },
-        { name: 'center knot', x: 400, y: 106 },
+        { name: 'top forehead hairline', x: 400, y: 158, slot: 'hairline' },
+        { name: 'left temple hairline', x: 360, y: 168, slot: 'hair-root' },
+        { name: 'right temple hairline', x: 440, y: 168, slot: 'hair-root' },
+        { name: 'center knot', x: 400, y: 106, slot: 'hair' },
       ];
 
+      function slotCoversPoint(point) {
+        const group = svg.querySelector(
+          `[data-hero-slot="${point.slot}"][data-hero-option="bantu-knots"]`
+        );
+        if (!group || group.getAttribute('display') !== 'inline') return false;
+        const rect = group.getBoundingClientRect();
+        if (!rect.width || !rect.height) return false;
+        const svgPoint = svg.createSVGPoint();
+        svgPoint.x = point.x;
+        svgPoint.y = point.y;
+        const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
+        return (
+          screenPoint.x >= rect.left - 0.5 &&
+          screenPoint.x <= rect.right + 0.5 &&
+          screenPoint.y >= rect.top - 0.5 &&
+          screenPoint.y <= rect.bottom + 0.5
+        );
+      }
+
       return points.map((point) => {
+        if (slotCoversPoint(point)) {
+          return { name: point.name, slot: point.slot, option: 'bantu-knots', covered: true };
+        }
         const svgPoint = svg.createSVGPoint();
         svgPoint.x = point.x;
         svgPoint.y = point.y;
@@ -2857,15 +2933,16 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
           name: point.name,
           slot: slot && slot.getAttribute('data-hero-slot'),
           option: slot && slot.getAttribute('data-hero-option'),
+          covered: false,
         };
       });
     });
 
     expect(hairlineCoverage).toEqual([
-      { name: 'top forehead hairline', slot: 'hairline', option: 'bantu-knots' },
-      { name: 'left temple hairline', slot: 'hair-root', option: 'bantu-knots' },
-      { name: 'right temple hairline', slot: 'hair-root', option: 'bantu-knots' },
-      { name: 'center knot', slot: 'hair', option: 'bantu-knots' },
+      { name: 'top forehead hairline', slot: 'hairline', option: 'bantu-knots', covered: true },
+      { name: 'left temple hairline', slot: 'hair-root', option: 'bantu-knots', covered: true },
+      { name: 'right temple hairline', slot: 'hair-root', option: 'bantu-knots', covered: true },
+      { name: 'center knot', slot: 'hair', option: 'bantu-knots', covered: true },
     ]);
   });
 
@@ -2913,12 +2990,33 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
           failures.push({ style, point: 'hair-root layer', slot: root && root.getAttribute('display') });
         }
 
+        function slotCoversPoint(point, slotName) {
+          const group = svg.querySelector(`[data-hero-slot="${slotName}"][data-hero-option="${style}"]`);
+          if (!group || group.getAttribute('display') !== 'inline') return false;
+          const rect = group.getBoundingClientRect();
+          if (!rect.width || !rect.height) return false;
+          const svgPoint = svg.createSVGPoint();
+          svgPoint.x = point.x;
+          svgPoint.y = point.y;
+          const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
+          return (
+            screenPoint.x >= rect.left - 0.5 &&
+            screenPoint.x <= rect.right + 0.5 &&
+            screenPoint.y >= rect.top - 0.5 &&
+            screenPoint.y <= rect.bottom + 0.5
+          );
+        }
+
         const points = [
           { name: 'top forehead hairline', x: 400, y: 158 },
           { name: 'left temple root', x: 356, y: 178 },
           { name: 'right temple root', x: 444, y: 178 },
         ];
         const coverage = points.map((point) => {
+          const expectedSlot = point.name === 'top forehead hairline' ? 'hairline' : 'hair-root';
+          if (slotCoversPoint(point, expectedSlot)) {
+            return { name: point.name, slot: expectedSlot, option: style, covered: true };
+          }
           const svgPoint = svg.createSVGPoint();
           svgPoint.x = point.x;
           svgPoint.y = point.y;
@@ -2929,6 +3027,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
             name: point.name,
             slot: slot && slot.getAttribute('data-hero-slot'),
             option: slot && slot.getAttribute('data-hero-option'),
+            covered: false,
           };
         });
         const expected = [
@@ -2938,8 +3037,14 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         ];
         for (const expectedHit of expected) {
           const hit = coverage.find((item) => item.name === expectedHit.point);
-          if (!hit || hit.slot !== expectedHit.slot || hit.option !== style) {
-            failures.push({ style, point: expectedHit.point, slot: hit && hit.slot, option: hit && hit.option });
+          if (!hit || !hit.covered || hit.slot !== expectedHit.slot || hit.option !== style) {
+            failures.push({
+              style,
+              point: expectedHit.point,
+              slot: hit && hit.slot,
+              option: hit && hit.option,
+              covered: hit && hit.covered,
+            });
           }
         }
       }
@@ -3040,6 +3145,12 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
     const tokens = await preview.evaluate((svg) => {
       const styles = getComputedStyle(svg);
+      function renderedPaint(element, property, tokenName) {
+        if (!element) return '';
+        const value = getComputedStyle(element)[property].trim();
+        if (value) return value;
+        return styles.getPropertyValue(tokenName).trim();
+      }
       const roundFrame = svg.querySelector('[data-hero-slot="accessory"][data-hero-option="glasses"] circle');
       const gradientStop = svg.querySelector('linearGradient[id^="hair-grad-"] stop');
       const nose = svg.querySelector('[data-hero-slot="nose-shape"][data-hero-option="soft"] [data-hero-face-detail="nose"]');
@@ -3062,13 +3173,13 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         faceMark: styles.getPropertyValue('--hero-face-mark').trim(),
         mouthLine: styles.getPropertyValue('--hero-mouth-line').trim(),
         eyebrow: styles.getPropertyValue('--hero-eyebrow').trim(),
-        cheekFill: cheek ? getComputedStyle(cheek).fill.trim() : '',
+        cheekFill: renderedPaint(cheek, 'fill', '--hero-cheek'),
         cheekOpacity: cheek ? getComputedStyle(cheek).opacity.trim() : '',
-        lipFill: lipFill ? getComputedStyle(lipFill).fill.trim() : '',
-        lipHighlight: lipHighlight ? getComputedStyle(lipHighlight).stroke.trim() : '',
+        lipFill: renderedPaint(lipFill, 'fill', '--hero-lip-fill'),
+        lipHighlight: renderedPaint(lipHighlight, 'stroke', '--hero-lip-highlight'),
         glassesFrame: styles.getPropertyValue('--hero-glasses-frame').trim(),
         glassesFrameDark: styles.getPropertyValue('--hero-glasses-frame-dark').trim(),
-        noseFill: nose ? getComputedStyle(nose).fill.trim() : '',
+        noseFill: renderedPaint(nose, 'fill', '--hero-face-line'),
         noseOpacity: nose ? getComputedStyle(nose).opacity.trim() : '',
         contourOpacity: styles.getPropertyValue('--hero-contour-opacity').trim(),
         hairDetailOpacity: styles.getPropertyValue('--hero-hair-detail-opacity').trim(),
@@ -3076,8 +3187,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         faceShadowOpacity: styles.getPropertyValue('--hero-face-shadow-opacity').trim(),
         jawLineOpacity: styles.getPropertyValue('--hero-jaw-line-opacity').trim(),
         neckShadowOpacity: styles.getPropertyValue('--hero-neck-shadow-opacity').trim(),
-        smileLineStroke: smileLine ? getComputedStyle(smileLine).stroke.trim() : '',
-        roundGlassesStroke: roundFrame ? getComputedStyle(roundFrame).stroke.trim() : '',
+        smileLineStroke: renderedPaint(smileLine, 'stroke', '--hero-mouth-line'),
+        roundGlassesStroke: renderedPaint(roundFrame, 'stroke', '--hero-glasses-frame'),
         gradientStop: gradientStop ? gradientStop.getAttribute('stop-color') : '',
         polishAfterFaceClear: Boolean(
           faceClear &&

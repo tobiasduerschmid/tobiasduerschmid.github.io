@@ -4566,7 +4566,7 @@ layout: sebook
     .workout-results-hero {
       width: min(280px, 72vw);
       margin: 0 auto 12px;
-      aspect-ratio: 700 / 665;
+      aspect-ratio: 640 / 665;
       pointer-events: none;
     }
 
@@ -6403,6 +6403,22 @@ layout: sebook
         workoutView.classList.toggle('workout-hero-enabled', isWorkoutHeroPreferred());
       }
 
+      function restartWorkoutHeroAnimations() {
+        if (!workoutView) return;
+        requestAnimationFrame(function() {
+          var svgs = workoutView.querySelectorAll('[data-gym-hero-svg]');
+          for (var i = 0; i < svgs.length; i++) {
+            var svg = svgs[i];
+            if (typeof svg.setCurrentTime === 'function') {
+              svg.setCurrentTime(0);
+            }
+            if (typeof svg.unpauseAnimations === 'function' && !(typeof prefersReducedMotion === 'function' && prefersReducedMotion())) {
+              svg.unpauseAnimations();
+            }
+          }
+        });
+      }
+
       function renderWorkoutTimer(remainingSeconds) {
         if (!timedPracticeClock || !timedPracticeClockValue) return;
         timedPracticeClock.hidden = false;
@@ -6887,6 +6903,7 @@ layout: sebook
         workoutView.style.display = 'block';
         workoutView.classList.remove('workout-results-active');
         syncWorkoutHeroVisibility();
+        restartWorkoutHeroAnimations();
         setWorkoutMode(true);
         workoutResults.style.display = 'none';
         workoutCardArea.innerHTML = '';
@@ -7142,6 +7159,7 @@ layout: sebook
         workoutView.style.display = 'block';
         workoutView.classList.remove('workout-results-active');
         syncWorkoutHeroVisibility();
+        restartWorkoutHeroAnimations();
         setWorkoutMode(true);
         workoutResults.style.display = 'none';
         workoutCardArea.innerHTML = '';
@@ -8016,6 +8034,7 @@ layout: sebook
         workoutReviewStep = 0;
         workoutEndedByTimer = false;
         resetDifficultyStats();
+        restartWorkoutHeroAnimations();
         workoutResults.style.display = 'none';
         if (workoutResultShortcutHint) workoutResultShortcutHint.classList.add('hidden');
         startWorkoutTimer(workoutCards.length);

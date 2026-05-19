@@ -60,7 +60,7 @@ async function main() {
       head: '318 78 164 208',
       upper: '246 86 308 374',
     };
-    const SOURCE_BOX = '50 -20 700 665';
+    const SOURCE_BOX = '80 -20 640 665';
 
     function clone(value) {
       return JSON.parse(JSON.stringify(value));

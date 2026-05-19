@@ -538,7 +538,6 @@ steps:
               {/* SUB-GOAL: Use props to render dynamic content */}
               <h3>{name}</h3>
               <p>${price.toFixed(2)}</p>
-              {/* TODO: Add more elements here */}
             </Card.Body>
           </Card>
         );

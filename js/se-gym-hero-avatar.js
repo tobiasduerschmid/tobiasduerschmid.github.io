@@ -2823,7 +2823,7 @@
       upper: '246 86 308 374'
     };
 
-    var CHOICE_PREVIEW_SOURCE_VIEWBOX = '50 -20 700 665';
+    var CHOICE_PREVIEW_SOURCE_VIEWBOX = '80 -20 640 665';
 
     var FACE_PREVIEW_CROPS = {
       hair: true,

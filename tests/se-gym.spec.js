@@ -11,6 +11,36 @@ const GYM_URL = '/se-gym/';
 // A page with both a quiz and flashcard include
 const GIT_PAGE_URL = '/SEBook/tools/git.html';
 
+const DEFAULT_HUMAN_HERO_AVATAR = {
+  version: 1,
+  kind: 'human',
+  appearance: {
+    skin: '#dfa07a',
+    hairColor: '#1f140c',
+    hairStyle: 'short',
+    eyeColor: '#1f140c',
+    eyebrowStyle: 'arched',
+    headStyle: 'default',
+    eyeShape: 'round',
+    eyelashStyle: 'none',
+    noseShape: 'soft',
+    mouthStyle: 'smile',
+    blushStyle: 'natural',
+    facialHair: 'none',
+    faceFeature: 'none',
+  },
+  body: { type: 'athletic' },
+  outfit: {
+    style: 'super-suit',
+    suit: '#1F6EBD',
+    capeOuter: '#15538f',
+    capeInner: '#FFD100',
+    accessory: 'none',
+    accessories: [],
+    emblem: '',
+  },
+};
+
 // The toggle inputs are visually hidden inside custom .switch labels.
 // We need to click the visible slider span, not the hidden input.
 const ACTIVATE_TOGGLE_SLIDER = '#activatePersonalGymToggle + .slider';
@@ -63,6 +93,12 @@ async function setCookie(context, name, value) {
     domain: '127.0.0.1',
     path: '/',
   }]);
+}
+
+async function useSavedHumanHeroAvatar(page) {
+  await page.addInitScript((hero) => {
+    localStorage.setItem('se-gym-hero-avatar', JSON.stringify(hero));
+  }, DEFAULT_HUMAN_HERO_AVATAR);
 }
 
 async function expectNoHorizontalScroll(page, stateName) {
@@ -598,6 +634,93 @@ test.describe('Personal Gym - Workout', () => {
     expect(positions.leftRightEdge, 'left workout hero should sit to the left of the question').toBeLessThanOrEqual(positions.questionLeftEdge);
     expect(positions.rightLeftEdge, 'right workout hero should sit to the right of the question').toBeGreaterThanOrEqual(positions.questionRightEdge);
     await a11yCheckpoint(page, 'gym workout - quiz card with side heroes enabled', { feature: A11Y_FEATURE, darkMode: true });
+  });
+
+  test('workout hero animation starts and keeps the human head assembly synchronized', async ({ page, context }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' });
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await useSavedHumanHeroAvatar(page);
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym-show-workout-hero', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'scrum' }]));
+    await page.goto(GYM_URL);
+
+    await page.getByRole('spinbutton', { name: /max cards/i }).fill('1');
+    await page.getByRole('button', { name: 'Start Workout' }).click();
+
+    const leftHero = page.locator('.workout-hero-visual-left [data-gym-hero-svg]');
+    await expect(leftHero).toBeVisible();
+    await expect(leftHero).toHaveAttribute('data-hero-avatar-ready', 'true');
+
+    const readHeroMotion = async () => leftHero.evaluate((svg) => {
+      const head = /** @type {SVGGraphicsElement | null} */ (svg.querySelector('[data-hero-head-assembly]'));
+      const body = /** @type {SVGGraphicsElement | null} */ (svg.querySelector('[data-hero-motion="body-lift"]'));
+      const headMatrix = head ? head.getCTM() : null;
+      const bodyMatrix = body ? body.getCTM() : null;
+      const requiredHeadSlots = [
+        'head-shape',
+        'hair',
+        'face-clear',
+        'hairline',
+        'hair-root',
+        'eyebrow',
+        'eye-shape',
+        'eyelash-style',
+        'nose-shape',
+        'face-feature',
+        'facial-hair',
+        'mouth-style',
+        'head-features',
+      ];
+      const missingHeadSlots = requiredHeadSlots.filter((slot) =>
+        !svg.querySelector(`[data-hero-head-assembly] [data-hero-slot="${slot}"]`),
+      );
+      const unwrappedHeadSlots = requiredHeadSlots.filter((slot) =>
+        Array.from(svg.querySelectorAll(`[data-hero-slot="${slot}"]`)).some((node) =>
+          !node.closest('[data-hero-head-assembly]'),
+        ),
+      );
+
+      return {
+        paused: svg.animationsPaused(),
+        headY: headMatrix ? headMatrix.f : null,
+        bodyY: bodyMatrix ? bodyMatrix.f : null,
+        headSharesBodyMotion: Boolean(head && body && head.closest('[data-hero-motion="body-lift"]') === body),
+        missingHeadSlots,
+        unwrappedHeadSlots,
+      };
+    });
+
+    const initial = await readHeroMotion();
+    expect(initial.paused).toBe(false);
+    expect(initial.headSharesBodyMotion, 'the head assembly should ride on the shared body-lift transform').toBe(true);
+    expect(initial.missingHeadSlots, 'core head slots should stay inside the synchronized head assembly').toEqual([]);
+    expect(initial.unwrappedHeadSlots, 'core head slots should not animate on separate ancestors').toEqual([]);
+
+    /** @type {{ headDelta: number, bodyDelta: number, syncDelta: number } | null} */
+    let movingSample = null;
+    await expect.poll(async () => {
+      const current = await readHeroMotion();
+      if (initial.headY === null || initial.bodyY === null || current.headY === null || current.bodyY === null) {
+        return 0;
+      }
+
+      const headDelta = current.headY - initial.headY;
+      const bodyDelta = current.bodyY - initial.bodyY;
+      if (Math.abs(headDelta) > 0.5) {
+        movingSample = {
+          headDelta,
+          bodyDelta,
+          syncDelta: Math.abs(headDelta - bodyDelta),
+        };
+      }
+      return Math.abs(headDelta);
+    }, {
+      message: 'workout hero head assembly should advance after the workout starts',
+      timeout: 5000,
+    }).toBeGreaterThan(0.5);
+
+    expect(movingSample?.syncDelta ?? Infinity, 'head assembly and body-lift motion should remain on the same timeline').toBeLessThan(0.08);
   });
 
   test('workout renders quiz card with quiz UI', async ({ page, context }) => {
