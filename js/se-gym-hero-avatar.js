@@ -2453,7 +2453,34 @@
     }
     applyFineTuneToSvg(svg, state.fineTune);
     applyMilestoneToSvg(svg, svg.getAttribute('data-hero-milestone') || window.SEGymHeroMilestone || 'none');
+    applyReducedMotionToSvg(svg);
     svg.setAttribute('data-hero-avatar-ready', 'true');
+  }
+
+  // Per the deep-research validation matrix, prefers-reduced-motion is a
+  // release gate. CSS `animation-play-state: paused` does NOT pause SMIL
+  // animations — we have to call svg.pauseAnimations() programmatically.
+  // We also listen for media-query changes so users who toggle the OS
+  // setting at runtime get the new state without reloading.
+  var reducedMotionMql = (typeof window !== 'undefined' && window.matchMedia)
+    ? window.matchMedia('(prefers-reduced-motion: reduce)')
+    : null;
+  var reducedMotionTrackedSvgs = [];
+  function applyReducedMotionToSvg(svg) {
+    if (!svg || typeof svg.pauseAnimations !== 'function') return;
+    if (reducedMotionTrackedSvgs.indexOf(svg) === -1) reducedMotionTrackedSvgs.push(svg);
+    if (reducedMotionMql && reducedMotionMql.matches) {
+      try { svg.pauseAnimations(); } catch (e) {}
+    } else {
+      try { svg.unpauseAnimations(); } catch (e) {}
+    }
+  }
+  if (reducedMotionMql && typeof reducedMotionMql.addEventListener === 'function') {
+    reducedMotionMql.addEventListener('change', function () {
+      for (var i = 0; i < reducedMotionTrackedSvgs.length; i++) {
+        applyReducedMotionToSvg(reducedMotionTrackedSvgs[i]);
+      }
+    });
   }
 
   function applyAvatarToScope(state, scope) {
@@ -2558,6 +2585,106 @@
     localStorage.removeItem(STORAGE_KEY);
   }
 
+  var HERO_TEMPLATE_URL = '/assets/se-gym-hero-template.svg';
+  var heroTemplatePromise = null;
+  var heroTemplateMountCount = 0;
+
+  function escapedRegExp(value) {
+    return String(value).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  function avatarTemplateUrl() {
+    return window.SEGymHeroTemplateUrl || HERO_TEMPLATE_URL;
+  }
+
+  function fetchHeroTemplate() {
+    if (heroTemplatePromise) return heroTemplatePromise;
+    if (!window.fetch || !window.Promise) {
+      heroTemplatePromise = Promise.resolve(null);
+      return heroTemplatePromise;
+    }
+    heroTemplatePromise = fetch(avatarTemplateUrl(), { cache: 'no-cache' })
+      .then(function (response) {
+        return response.ok ? response.text() : null;
+      })
+      .catch(function () { return null; });
+    return heroTemplatePromise;
+  }
+
+  function safeIdToken(value) {
+    return String(value || 'avatar')
+      .replace(/[^A-Za-z0-9_-]+/g, '-')
+      .replace(/^-+|-+$/g, '') || 'avatar';
+  }
+
+  function rewriteSvgReferences(value, idMap, oldIds) {
+    var next = String(value);
+    for (var i = 0; i < oldIds.length; i++) {
+      var oldId = oldIds[i];
+      var newId = idMap[oldId];
+      var escaped = escapedRegExp(oldId);
+      next = next.replace(new RegExp('url\\((["\\\']?)#' + escaped + '\\1\\)', 'g'), 'url(#' + newId + ')');
+      if (next === '#' + oldId) next = '#' + newId;
+    }
+    return next;
+  }
+
+  function uniquifySvgIds(svg, seed) {
+    var token = safeIdToken(seed) + '-' + (++heroTemplateMountCount);
+    var idMap = {};
+    var oldIds = [];
+    svg.querySelectorAll('[id]').forEach(function (el) {
+      var oldId = el.getAttribute('id');
+      if (!oldId || idMap[oldId]) return;
+      idMap[oldId] = oldId + '-' + token;
+      oldIds.push(oldId);
+    });
+    oldIds.sort(function (a, b) { return b.length - a.length; });
+    svg.querySelectorAll('[id]').forEach(function (el) {
+      var oldId = el.getAttribute('id');
+      if (idMap[oldId]) el.setAttribute('id', idMap[oldId]);
+    });
+    svg.querySelectorAll('*').forEach(function (el) {
+      for (var i = 0; i < el.attributes.length; i++) {
+        var attr = el.attributes[i];
+        if (attr.value.indexOf('#') === -1 && attr.value.indexOf('url(') === -1) continue;
+        var rewritten = rewriteSvgReferences(attr.value, idMap, oldIds);
+        if (rewritten !== attr.value) el.setAttribute(attr.name, rewritten);
+      }
+    });
+    svg.querySelectorAll('style').forEach(function (styleEl) {
+      styleEl.textContent = rewriteSvgReferences(styleEl.textContent, idMap, oldIds);
+    });
+  }
+
+  function buildAvatarSvg(seed) {
+    return fetchHeroTemplate().then(function (source) {
+      if (!source) return null;
+      var template = document.createElement('template');
+      template.innerHTML = source.trim();
+      var sourceSvg = template.content && template.content.querySelector('svg');
+      if (!sourceSvg) return null;
+      var svg = document.importNode(sourceSvg, true);
+      uniquifySvgIds(svg, seed);
+      return svg;
+    });
+  }
+
+  function mountSavedAvatar(host, options) {
+    if (!host) return Promise.resolve(false);
+    var state = loadAvatar();
+    if (!state) return Promise.resolve(false);
+    var variant = options && options.variant ? options.variant : host.getAttribute('data-hero-avatar-variant');
+    return buildAvatarSvg(variant).then(function (svg) {
+      if (!svg) return false;
+      host.innerHTML = '';
+      host.appendChild(svg);
+      applyToSvg(svg, state);
+      host.style.display = '';
+      return true;
+    });
+  }
+
   window.HeroAvatar = {
     STORAGE_KEY: STORAGE_KEY,
     SCHEMA_VERSION: SCHEMA_VERSION,
@@ -2581,6 +2708,7 @@
     applyRandomAvatarsToScope: applyRandomAvatarsToScope,
     applyAvatarToScope: applyAvatarToScope,
     applyToSvg: applyToSvg,
+    mountSavedAvatar: mountSavedAvatar,
     isValidEmblem: isValidEmblem
   };
 

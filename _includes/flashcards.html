@@ -94,9 +94,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
   </div>
 </div>
 {% assign _flashcards_av_variant = include.id | slugify | append: "-fa" %}
-<aside class="flashcards-avatar-side" aria-hidden="true" style="display:none">
-  {% include se-gym-hero.svg variant=_flashcards_av_variant %}
-</aside>
+<aside class="flashcards-avatar-side" aria-hidden="true" data-hero-avatar-variant="{{ _flashcards_av_variant }}" style="display:none"></aside>
 </div>
 
 <style>
@@ -905,17 +903,12 @@ Data source: _data/flashcards/{{ include.id }}.yml
     // HeroAvatar is loaded with `defer` in the SEBook layout, so it may not
     // be available yet when this inline script runs; wait for `load` if so.
     function initFlashcardsAvatar() {
-      if (!window.HeroAvatar) return;
-      var state = HeroAvatar.loadAvatar();
-      if (!state) return;
+      if (!window.HeroAvatar || typeof HeroAvatar.mountSavedAvatar !== 'function') return;
       var side = outerWrap && outerWrap.classList.contains('flashcards-outer-wrap')
         ? outerWrap.querySelector('.flashcards-avatar-side')
         : null;
       if (!side) return;
-      var svgEl = side.querySelector('[data-gym-hero-svg]');
-      if (!svgEl) return;
-      HeroAvatar.applyToSvg(svgEl, state);
-      side.style.display = '';
+      HeroAvatar.mountSavedAvatar(side);
     }
 
     if (document.readyState === 'complete' || window.HeroAvatar) {

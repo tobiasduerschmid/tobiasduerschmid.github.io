@@ -1,4 +1,4 @@
-.PHONY: init-submodules install build prod check test clean run pdf latex all vm-setup vm-build vm-snapshot audit-a11y audit-a11y-interactive audit-a11y-tutorial audit-a11y-gym audit-a11y-quiz
+.PHONY: init-submodules install build prod check test clean run run-hero-fast pdf latex all vm-setup vm-build vm-snapshot audit-a11y audit-a11y-interactive audit-a11y-tutorial audit-a11y-gym audit-a11y-quiz
 
 JEKYLL_PORT ?= $(shell ruby -e 'require "socket"; port = 4000; loop do; begin; TCPServer.new("127.0.0.1", port).close; puts port; break; rescue Errno::EADDRINUSE; port += 1; rescue Errno::EACCES, Errno::EPERM; puts port; break; end; end')
 
@@ -32,6 +32,9 @@ clean:
 	rm -rf _site
 
 run: check
+	bundle exec jekyll serve --incremental --port $(JEKYLL_PORT)
+
+run-hero-fast:
 	bundle exec jekyll serve --incremental --port $(JEKYLL_PORT)
 
 pdf: build
