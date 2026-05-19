@@ -8,4 +8,6 @@ course: CS35L
 
 {% include quiz.html id="CS35_current" %}
 
+{% include study_schedule.html plan="CS35L" %}
+
 # Welcome to Computer Science 35L - Software Construction at UCLA

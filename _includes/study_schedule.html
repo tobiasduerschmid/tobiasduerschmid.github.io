@@ -1,0 +1,317 @@
+{% comment %}
+Study Schedule include for SEBook course pages.
+
+Usage:
+  {% include study_schedule.html plan="CS35L" %}
+
+Renders:
+  • A "Schedule Study" button.
+  • A modal with a 4–14 day range selector + a "Create Study Plan" button.
+  • A results region showing the organized per-day list once the plan is generated.
+
+The actual scheduling logic lives in /js/study-schedule.js. The list of items
+to schedule lives in /_data/study_plans/<plan>.yml.
+{% endcomment %}
+
+{% assign plan_key = include.plan | default: page.course %}
+{% assign plan_data = site.data.study_plans[plan_key] %}
+
+{% if plan_data %}
+<section class="study-schedule" aria-labelledby="study-schedule-heading">
+  <div class="study-schedule__intro">
+    <h2 id="study-schedule-heading">Need a study plan?</h2>
+    <p>
+      Tell the SE Book how many days you have and it will give you an organized
+      list of tutorials and SE Gym questions to work through each day.
+    </p>
+    <button type="button" id="schedule-study-btn" class="study-schedule__open-btn">
+      <i class="fa-solid fa-calendar-days" aria-hidden="true"></i>
+      Schedule Study
+    </button>
+  </div>
+
+  <!--
+    Inline plan output region. Lives in the page so screen readers can find
+    the headings produced by the schedule generator. Hidden until a plan is
+    rendered.
+  -->
+  <div id="study-plan-output"
+       class="study-schedule__output"
+       role="region"
+       aria-live="polite"
+       aria-label="Generated study plan"
+       hidden></div>
+
+  <!-- Modal: time-range picker -->
+  <div id="study-schedule-modal"
+       class="study-schedule__modal"
+       role="dialog"
+       aria-modal="true"
+       aria-labelledby="study-schedule-modal-title"
+       hidden>
+    <div class="study-schedule__modal-backdrop" data-close-modal></div>
+    <div class="study-schedule__modal-box" role="document">
+      <h3 id="study-schedule-modal-title">Schedule Your Study Plan</h3>
+      <p id="study-schedule-modal-desc">
+        Pick how many days you want to spread CS 35L material over. Plans must
+        run for at least four days and at most two weeks.
+      </p>
+
+      <!--
+        novalidate: hand validation to study-schedule.js so the error appears
+        in the polite live region (#study-schedule-error). Native tooltips
+        bypass screen readers and would also short-circuit the JS handler.
+        The min/max attributes on the input remain so the visible spinner
+        still constrains values and assistive tech can announce the range.
+      -->
+      <form id="study-schedule-form" aria-describedby="study-schedule-modal-desc" novalidate>
+        <label for="study-schedule-days" class="study-schedule__field-label">
+          Number of days (4–14):
+        </label>
+        <input id="study-schedule-days"
+               name="days"
+               type="number"
+               min="4"
+               max="14"
+               step="1"
+               value="7"
+               required
+               aria-describedby="study-schedule-days-help study-schedule-error" />
+        <p id="study-schedule-days-help" class="study-schedule__help">
+          Choose any whole number between four days and two weeks.
+        </p>
+        <p id="study-schedule-error"
+           class="study-schedule__error"
+           role="alert"
+           aria-live="assertive"
+           hidden></p>
+
+        <div class="study-schedule__modal-btns">
+          <button type="submit"
+                  id="create-study-plan-btn"
+                  class="study-schedule__primary-btn">
+            Create Study Plan
+          </button>
+          <button type="button"
+                  id="study-schedule-cancel-btn"
+                  class="study-schedule__secondary-btn"
+                  data-close-modal>
+            Cancel
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Plan data, embedded so JS can read it without an extra fetch. -->
+  <script id="study-schedule-data" type="application/json">
+{
+  "title": {{ plan_data.title | jsonify }},
+  "items": [
+    {% for item in plan_data.items %}{
+      "title": {{ item.title | jsonify }},
+      "type":  {{ item.type  | jsonify }},
+      "url":   {{ item.url   | jsonify }}
+    }{% unless forloop.last %},{% endunless %}{% endfor %}
+  ]
+}
+  </script>
+</section>
+
+<style>
+  .study-schedule {
+    margin: 24px 0;
+    padding: 18px 20px;
+    background: var(--color-surface-2, #f8f9fa);
+    border: 1px solid var(--color-border, #d8dde2);
+    border-radius: var(--radius-md, 8px);
+  }
+  html.dark-mode .study-schedule {
+    background: var(--color-surface, #1e1e1e);
+    border-color: var(--color-border, #444);
+  }
+  .study-schedule__intro h2 {
+    margin-top: 0;
+    font-size: 1.4em;
+  }
+  .study-schedule__intro p {
+    margin: 0 0 12px 0;
+  }
+  .study-schedule__open-btn,
+  .study-schedule__primary-btn,
+  .study-schedule__secondary-btn {
+    font: inherit;
+    padding: 10px 18px;
+    border-radius: var(--radius-md, 8px);
+    cursor: pointer;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    border: 1px solid transparent;
+  }
+  .study-schedule__open-btn,
+  .study-schedule__primary-btn {
+    background: var(--color-primary, #2774AE);
+    color: var(--color-text-on-primary, #fff);
+    border-color: var(--color-primary, #2774AE);
+  }
+  .study-schedule__open-btn:hover,
+  .study-schedule__open-btn:focus-visible,
+  .study-schedule__primary-btn:hover,
+  .study-schedule__primary-btn:focus-visible {
+    background: var(--color-primary-hover, #1e5c8a);
+    border-color: var(--color-primary-hover, #1e5c8a);
+  }
+  .study-schedule__secondary-btn {
+    background: var(--color-surface, #fff);
+    color: var(--color-text, #111);
+    border-color: var(--color-border-strong, #767676);
+  }
+  html.dark-mode .study-schedule__secondary-btn {
+    background: var(--color-surface, #2a2a2a);
+    color: var(--color-text, #e0e0e0);
+    border-color: var(--color-border-strong, #888);
+  }
+  .study-schedule__secondary-btn:hover,
+  .study-schedule__secondary-btn:focus-visible {
+    background: var(--color-surface-3, #f5f5f5);
+  }
+  html.dark-mode .study-schedule__secondary-btn:hover,
+  html.dark-mode .study-schedule__secondary-btn:focus-visible {
+    background: var(--color-surface-2, #333);
+  }
+
+  .study-schedule__modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+  }
+  .study-schedule__modal[hidden] {
+    display: none;
+  }
+  .study-schedule__modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+  }
+  .study-schedule__modal-box {
+    position: relative;
+    z-index: 1;
+    background: var(--color-surface, #fff);
+    color: var(--color-text, #111);
+    border-radius: var(--radius-md, 8px);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+    padding: 22px 24px;
+    max-width: 480px;
+    width: 100%;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+  html.dark-mode .study-schedule__modal-box {
+    background: var(--color-surface, #1e1e1e);
+    color: var(--color-text, #e0e0e0);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.7);
+  }
+  .study-schedule__modal-box h3 {
+    margin-top: 0;
+    font-size: 1.3em;
+  }
+  .study-schedule__field-label {
+    display: block;
+    margin-top: 12px;
+    font-weight: 600;
+  }
+  #study-schedule-days {
+    font: inherit;
+    padding: 8px 10px;
+    border: 1px solid var(--color-border-strong, #767676);
+    border-radius: var(--radius-sm, 4px);
+    width: 100px;
+    margin-top: 6px;
+    background: var(--color-surface, #fff);
+    color: var(--color-text, #111);
+  }
+  html.dark-mode #study-schedule-days {
+    background: var(--color-surface, #2a2a2a);
+    color: var(--color-text, #e0e0e0);
+    border-color: var(--color-border-strong, #888);
+  }
+  .study-schedule__help {
+    margin: 6px 0 0 0;
+    color: var(--color-text-muted, #595959);
+    font-size: 0.9em;
+  }
+  html.dark-mode .study-schedule__help {
+    color: var(--color-text-muted, #bdbdbd);
+  }
+  .study-schedule__error {
+    margin: 8px 0 0 0;
+    color: var(--color-error, #b81e2c);
+    font-weight: 600;
+  }
+  html.dark-mode .study-schedule__error {
+    color: var(--color-error, #ff8585);
+  }
+  .study-schedule__modal-btns {
+    margin-top: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .study-schedule__output {
+    margin-top: 22px;
+  }
+  .study-schedule__output[hidden] {
+    display: none;
+  }
+  .study-schedule__output h3 {
+    margin-top: 0;
+  }
+  .study-schedule__day {
+    margin: 14px 0;
+    padding: 14px 16px;
+    background: var(--color-surface, #fff);
+    border: 1px solid var(--color-border, #d8dde2);
+    border-radius: var(--radius-md, 8px);
+  }
+  html.dark-mode .study-schedule__day {
+    background: var(--color-surface, #1e1e1e);
+    border-color: var(--color-border, #444);
+  }
+  .study-schedule__day h4 {
+    margin: 0 0 8px 0;
+    font-size: 1.1em;
+    color: var(--color-primary, #2774AE);
+  }
+  html.dark-mode .study-schedule__day h4 {
+    color: var(--color-accent, #FFD100);
+  }
+  .study-schedule__day ul {
+    margin: 0;
+    padding-left: 22px;
+  }
+  .study-schedule__day li {
+    margin: 4px 0;
+  }
+  .study-schedule__type-badge {
+    display: inline-block;
+    margin-right: 6px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    font-size: 0.85em;
+    font-weight: 600;
+    background: var(--color-accent, #FFD100);
+    color: var(--color-text-on-accent, #000);
+  }
+  .study-schedule__type-badge--gym {
+    background: var(--color-primary, #2774AE);
+    color: var(--color-text-on-primary, #fff);
+  }
+</style>
+{% endif %}
