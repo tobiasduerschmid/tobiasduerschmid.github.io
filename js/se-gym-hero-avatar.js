@@ -1936,8 +1936,10 @@
       featureRim: darkSkin ? 'rgba(255, 226, 185, 0.72)' : 'rgba(44, 21, 8, 0.22)',
       featureShadow: darkSkin ? 'rgba(0, 0, 0, 0.44)' : 'rgba(0, 47, 82, 0.18)',
       noseOpacity: darkSkin ? '0.55' : '0.35',
-      noseHighlightOpacity: darkSkin ? '0.08' : '0.36',
-      nostrilOpacity: darkSkin ? '0.96' : '0.3',
+      noseBridgeOpacity: darkSkin ? '0.26' : '0.16',
+      nosePlaneOpacity: darkSkin ? '0.2' : '0.14',
+      noseHighlightOpacity: darkSkin ? '0.07' : '0.28',
+      nostrilOpacity: darkSkin ? '0.64' : '0.3',
       cheekOpacity: darkSkin ? '0.16' : '0.28',
       contourOpacity: darkSkin ? '0.38' : '0.18',
       subtleLineOpacity: darkSkin ? '0.2' : '0.18',
@@ -2469,6 +2471,8 @@
     svg.style.setProperty('--hero-feature-rim', contrastTokens.featureRim);
     svg.style.setProperty('--hero-feature-shadow', contrastTokens.featureShadow);
     svg.style.setProperty('--hero-nose-opacity', contrastTokens.noseOpacity);
+    svg.style.setProperty('--hero-nose-bridge-opacity', contrastTokens.noseBridgeOpacity);
+    svg.style.setProperty('--hero-nose-plane-opacity', contrastTokens.nosePlaneOpacity);
     svg.style.setProperty('--hero-nose-highlight-opacity', contrastTokens.noseHighlightOpacity);
     svg.style.setProperty('--hero-nostril-opacity', contrastTokens.nostrilOpacity);
     svg.style.setProperty('--hero-contour-opacity', contrastTokens.contourOpacity);

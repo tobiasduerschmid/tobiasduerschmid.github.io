@@ -3124,152 +3124,176 @@
                             additive="sum" calcMode="spline"
                             keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
           <g transform="translate(-400 -208)">
+      <g data-hero-nose-layer clip-path="url(#face-clear-clip-{{ hero_variant }})">
       <g data-hero-slot="nose-shape" data-hero-option="soft">
-        <ellipse data-hero-face-detail="nose" cx="400" cy="211.8" rx="3" ry="1.7" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
-        <ellipse cx="398.8" cy="210.8" rx="1.6" ry="1" fill="var(--hero-nose-highlight, #fff1dc)" opacity="0.40"/>
-        <ellipse cx="397.5" cy="212.8" rx="1.15" ry="0.7" transform="rotate(-18 397.5 212.8)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-        <ellipse cx="402.5" cy="212.8" rx="1.15" ry="0.7" transform="rotate(18 402.5 212.8)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-
+        <path d="M 399.2 188.8 C 400.3 196.2, 400.3 203.6, 399.4 209.6" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width="1.05" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
+        <ellipse cx="400" cy="211.9" rx="3.4" ry="1.55" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
+        <path d="M 398.6 191 C 399 198.2, 398.9 205.4, 398.2 209.8" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".9" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <ellipse data-hero-face-detail="nose" cx="400" cy="212.3" rx="1.55" ry=".75" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
+        <ellipse cx="397.8" cy="213.1" rx=".9" ry=".42" transform="rotate(-16 397.8 213.1)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+        <ellipse cx="402.2" cy="213.1" rx=".9" ry=".42" transform="rotate(16 402.2 213.1)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="rounded" display="none">
-        <ellipse cx="400" cy="212" rx="3.3" ry="1.9" fill="var(--hero-nose-fill, #7a4a2a)" opacity="0.18"/>
-        <ellipse cx="398.8" cy="211" rx="1.7" ry="1.1" fill="var(--hero-nose-highlight, #fff1dc)" opacity="0.42"/>
-        <ellipse cx="397.4" cy="213" rx="1.2" ry="0.8" transform="rotate(-18 397.4 213)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-        <ellipse cx="402.6" cy="213" rx="1.2" ry="0.8" transform="rotate(18 402.6 213)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-
+        <path d="M 399 190 C 400.1 197.6, 400.1 204.9, 399.4 210.1" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width="1" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
+        <ellipse cx="400" cy="212.1" rx="3.8" ry="1.9" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
+        <path d="M 398.4 191.8 C 398.9 198.6, 398.8 205.5, 398.2 210.1" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".95" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <ellipse data-hero-face-detail="nose" cx="400" cy="212.5" rx="1.8" ry=".9" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
+        <ellipse cx="397.5" cy="213.3" rx="1" ry=".5" transform="rotate(-17 397.5 213.3)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+        <ellipse cx="402.5" cy="213.3" rx="1" ry=".5" transform="rotate(17 402.5 213.3)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="broad" display="none">
-        <ellipse cx="400" cy="212" rx="4.1" ry="2.1" fill="var(--hero-nose-fill, #7a4a2a)" opacity="0.20"/>
-        <ellipse cx="398.6" cy="211" rx="2" ry="1.2" fill="var(--hero-nose-highlight, #fff1dc)" opacity="0.40"/>
-        <ellipse cx="396.6" cy="213.2" rx="1.5" ry="0.9" transform="rotate(-18 396.6 213.2)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-        <ellipse cx="403.4" cy="213.2" rx="1.5" ry="0.9" transform="rotate(18 403.4 213.2)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-
+        <path d="M 397.7 196 C 399.1 201.6, 400.9 201.6, 402.3 196" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width="1.2" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
+        <ellipse cx="400" cy="212.2" rx="5" ry="2.05" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
+        <path d="M 397.5 203.7 C 398.9 206.4, 401.1 206.4, 402.5 203.7" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <ellipse data-hero-face-detail="nose" cx="400" cy="212.7" rx="2.1" ry=".9" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
+        <ellipse cx="396.5" cy="213.5" rx="1.25" ry=".55" transform="rotate(-13 396.5 213.5)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+        <ellipse cx="403.5" cy="213.5" rx="1.25" ry=".55" transform="rotate(13 403.5 213.5)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="medium-broad-soft-tip" display="none">
-        <ellipse cx="400" cy="212" rx="3.6" ry="1.9" fill="var(--hero-nose-fill, #7a4a2a)" opacity="0.19"/>
-        <ellipse cx="398.6" cy="211" rx="1.8" ry="1.1" fill="var(--hero-nose-highlight, #fff1dc)" opacity="0.40"/>
-        <ellipse cx="397" cy="213.1" rx="1.3" ry="0.85" transform="rotate(-18 397 213.1)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-        <ellipse cx="403" cy="213.1" rx="1.3" ry="0.85" transform="rotate(18 403 213.1)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-
+        <path d="M 398.2 193.5 C 399.6 199.4, 400.4 204.8, 399.7 210.2" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width="1.08" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
+        <ellipse cx="400" cy="212.2" rx="4.25" ry="1.85" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
+        <path d="M 398.1 196 C 398.8 201.4, 398.7 206.5, 398.2 210.2" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".9" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <ellipse data-hero-face-detail="nose" cx="400" cy="212.6" rx="1.9" ry=".82" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
+        <ellipse cx="397" cy="213.4" rx="1.1" ry=".52" transform="rotate(-14 397 213.4)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+        <ellipse cx="403" cy="213.4" rx="1.1" ry=".52" transform="rotate(14 403 213.4)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="narrow" display="none">
-        <ellipse cx="400" cy="211.6" rx="2.2" ry="1.4" fill="var(--hero-nose-fill, #7a4a2a)" opacity="0.18"/>
-        <ellipse cx="399.2" cy="210.6" rx="1.2" ry="0.85" fill="var(--hero-nose-highlight, #fff1dc)" opacity="0.42"/>
-        <ellipse cx="398.2" cy="212.5" rx="0.9" ry="0.6" transform="rotate(-18 398.2 212.5)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-        <ellipse cx="401.8" cy="212.5" rx="0.9" ry="0.6" transform="rotate(18 401.8 212.5)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-
+        <path d="M 400.3 185.8 C 400.7 194.5, 400.5 203.3, 400 209.9" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width=".95" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
+        <ellipse cx="400" cy="211.7" rx="2.65" ry="1.35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
+        <path d="M 399.1 188 C 399.4 196.5, 399.2 204.5, 398.8 209.8" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".78" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <ellipse data-hero-face-detail="nose" cx="400" cy="212.1" rx="1.18" ry=".62" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
+        <ellipse cx="398.3" cy="212.8" rx=".7" ry=".36" transform="rotate(-18 398.3 212.8)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+        <ellipse cx="401.7" cy="212.8" rx=".7" ry=".36" transform="rotate(18 401.7 212.8)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="straight-narrow" display="none">
-        <ellipse cx="400" cy="211.6" rx="2.2" ry="1.4" fill="var(--hero-nose-fill, #7a4a2a)" opacity="0.18"/>
-        <ellipse cx="399.2" cy="210.6" rx="1.2" ry="0.85" fill="var(--hero-nose-highlight, #fff1dc)" opacity="0.42"/>
-        <ellipse cx="398.2" cy="212.5" rx="0.9" ry="0.6" transform="rotate(-18 398.2 212.5)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-        <ellipse cx="401.8" cy="212.5" rx="0.9" ry="0.6" transform="rotate(18 401.8 212.5)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-
+        <path d="M 400.4 184.4 C 400.6 192.9, 400.6 202, 400.1 210.2" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width="1.05" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
+        <ellipse cx="400" cy="211.8" rx="2.65" ry="1.35" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
+        <path d="M 399 186.7 C 399.3 195.1, 399.2 203.3, 398.9 210" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".8" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <ellipse data-hero-face-detail="nose" cx="400" cy="212.2" rx="1.22" ry=".62" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
+        <ellipse cx="398.3" cy="212.9" rx=".72" ry=".36" transform="rotate(-17 398.3 212.9)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+        <ellipse cx="401.7" cy="212.9" rx=".72" ry=".36" transform="rotate(17 401.7 212.9)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="slender-straight-soft-tip" display="none">
-        <ellipse cx="400" cy="211.8" rx="2.6" ry="1.6" fill="var(--hero-nose-fill, #7a4a2a)" opacity="0.18"/>
-        <ellipse cx="399" cy="210.8" rx="1.4" ry="0.95" fill="var(--hero-nose-highlight, #fff1dc)" opacity="0.42"/>
-        <ellipse cx="397.9" cy="212.7" rx="1" ry="0.7" transform="rotate(-18 397.9 212.7)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-        <ellipse cx="402.1" cy="212.7" rx="1" ry="0.7" transform="rotate(18 402.1 212.7)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-
+        <path d="M 400.2 185.6 C 400.7 194.5, 400.5 203.3, 399.9 210.1" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width="1" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
+        <ellipse cx="400" cy="212" rx="2.95" ry="1.45" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
+        <path d="M 398.9 188 C 399.4 196.1, 399.2 204.1, 398.6 210.1" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".82" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <ellipse data-hero-face-detail="nose" cx="400" cy="212.4" rx="1.35" ry=".68" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
+        <ellipse cx="398" cy="213.1" rx=".82" ry=".4" transform="rotate(-17 398 213.1)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+        <ellipse cx="402" cy="213.1" rx=".82" ry=".4" transform="rotate(17 402 213.1)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="prominent-straight" display="none">
-        <ellipse cx="400" cy="212" rx="3" ry="1.7" fill="var(--hero-nose-fill, #7a4a2a)" opacity="0.20"/>
-        <ellipse cx="398.9" cy="211" rx="1.6" ry="1" fill="var(--hero-nose-highlight, #fff1dc)" opacity="0.42"/>
-        <ellipse cx="397.6" cy="213" rx="1.15" ry="0.75" transform="rotate(-18 397.6 213)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-        <ellipse cx="402.4" cy="213" rx="1.15" ry="0.75" transform="rotate(18 402.4 213)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-
+        <path d="M 400.7 183.8 C 401.2 193.2, 401 203.6, 400.2 211.2" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width="1.18" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
+        <ellipse cx="400" cy="212.4" rx="3.45" ry="1.65" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
+        <path d="M 398.9 186.8 C 399.4 195.7, 399.3 204.8, 398.5 210.9" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".9" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <ellipse data-hero-face-detail="nose" cx="400" cy="212.8" rx="1.55" ry=".76" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
+        <ellipse cx="397.7" cy="213.5" rx=".94" ry=".44" transform="rotate(-16 397.7 213.5)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+        <ellipse cx="402.3" cy="213.5" rx=".94" ry=".44" transform="rotate(16 402.3 213.5)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="button" display="none">
-        <ellipse cx="400" cy="210.4" rx="3.4" ry="2" fill="var(--hero-nose-fill, #7a4a2a)" opacity="0.20"/>
-        <ellipse cx="398.8" cy="209.4" rx="1.8" ry="1.2" fill="var(--hero-nose-highlight, #fff1dc)" opacity="0.48"/>
-        <ellipse cx="397.4" cy="211.6" rx="1.2" ry="0.85" transform="rotate(-20 397.4 211.6)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-        <ellipse cx="402.6" cy="211.6" rx="1.2" ry="0.85" transform="rotate(20 402.6 211.6)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-
+        <path d="M 399 196.5 C 400 200.2, 400 204.5, 399.5 208.2" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width=".95" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
+        <ellipse cx="400" cy="210.7" rx="4.05" ry="2.05" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
+        <path d="M 398.2 203.1 C 399.2 204.9, 400.8 204.9, 401.8 203.1" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <ellipse data-hero-face-detail="nose" cx="400" cy="211.1" rx="1.9" ry=".92" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
+        <ellipse cx="397.5" cy="211.7" rx=".98" ry=".54" transform="rotate(-23 397.5 211.7)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+        <ellipse cx="402.5" cy="211.7" rx=".98" ry=".54" transform="rotate(23 402.5 211.7)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="defined-bridge" display="none">
-        <ellipse cx="400" cy="211.8" rx="2.8" ry="1.7" fill="var(--hero-nose-fill, #7a4a2a)" opacity="0.20"/>
-        <ellipse cx="398.8" cy="210.8" rx="1.5" ry="1" fill="var(--hero-nose-highlight, #fff1dc)" opacity="0.44"/>
-        <ellipse cx="397.7" cy="212.9" rx="1.1" ry="0.75" transform="rotate(-18 397.7 212.9)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .56)"/>
-        <ellipse cx="402.3" cy="212.9" rx="1.1" ry="0.75" transform="rotate(18 402.3 212.9)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .56)"/>
-
+        <path d="M 400.5 183.8 C 401.1 192.4, 400.9 202.7, 400.1 210.7" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width="1.25" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
+        <path d="M 397.9 190 C 398.4 197.8, 398.2 205.4, 397.6 210.2" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width=".72" stroke-linecap="round" fill="none" opacity="var(--hero-face-detail-line-opacity, .13)"/>
+        <ellipse cx="400" cy="212.2" rx="3.2" ry="1.55" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
+        <path d="M 398.7 186.2 C 399.2 195.2, 399.1 204.1, 398.4 210.6" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".86" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <ellipse data-hero-face-detail="nose" cx="400" cy="212.6" rx="1.45" ry=".72" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
+        <ellipse cx="397.8" cy="213.3" rx=".88" ry=".42" transform="rotate(-17 397.8 213.3)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+        <ellipse cx="402.2" cy="213.3" rx=".88" ry=".42" transform="rotate(17 402.2 213.3)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="long-soft-bridge" display="none">
-        <ellipse cx="400" cy="212.8" rx="2.9" ry="1.7" fill="var(--hero-nose-fill, #7a4a2a)" opacity="0.19"/>
-        <ellipse cx="398.9" cy="211.8" rx="1.5" ry="1" fill="var(--hero-nose-highlight, #fff1dc)" opacity="0.42"/>
-        <ellipse cx="397.6" cy="213.8" rx="1.15" ry="0.8" transform="rotate(-18 397.6 213.8)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-        <ellipse cx="402.4" cy="213.8" rx="1.15" ry="0.8" transform="rotate(18 402.4 213.8)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-
+        <path d="M 400.2 181.8 C 401 191.8, 400.8 203.6, 399.9 211.8" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width="1.05" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
+        <ellipse cx="400" cy="213.2" rx="3.35" ry="1.55" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
+        <path d="M 398.6 184.5 C 399.2 194.7, 399.1 204.9, 398.4 211.7" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".86" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <ellipse data-hero-face-detail="nose" cx="400" cy="213.6" rx="1.5" ry=".74" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
+        <ellipse cx="397.7" cy="214.2" rx=".9" ry=".43" transform="rotate(-16 397.7 214.2)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+        <ellipse cx="402.3" cy="214.2" rx=".9" ry=".43" transform="rotate(16 402.3 214.2)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="soft-rounded-bridge" display="none">
-        <ellipse cx="400" cy="212" rx="3.2" ry="1.8" fill="var(--hero-nose-fill, #7a4a2a)" opacity="0.19"/>
-        <ellipse cx="398.8" cy="211" rx="1.7" ry="1.1" fill="var(--hero-nose-highlight, #fff1dc)" opacity="0.42"/>
-        <ellipse cx="397.4" cy="213" rx="1.2" ry="0.8" transform="rotate(-18 397.4 213)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-        <ellipse cx="402.6" cy="213" rx="1.2" ry="0.8" transform="rotate(18 402.6 213)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-
+        <path d="M 399 188.2 C 400.5 195.5, 400.4 203.8, 399.5 210.2" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width="1.08" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
+        <ellipse cx="400" cy="212.2" rx="3.7" ry="1.75" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
+        <path d="M 398.4 191 C 398.9 198.4, 398.8 205.5, 398.1 210.2" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".9" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <ellipse data-hero-face-detail="nose" cx="400" cy="212.5" rx="1.7" ry=".78" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
+        <ellipse cx="397.5" cy="213.3" rx=".96" ry=".45" transform="rotate(-16 397.5 213.3)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+        <ellipse cx="402.5" cy="213.3" rx=".96" ry=".45" transform="rotate(16 402.5 213.3)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="rounded-tip" display="none">
-        <ellipse cx="400" cy="212.2" rx="3.9" ry="2.2" fill="var(--hero-nose-fill, #7a4a2a)" opacity="0.20"/>
-        <ellipse cx="398.7" cy="211.2" rx="2" ry="1.3" fill="var(--hero-nose-highlight, #fff1dc)" opacity="0.44"/>
-        <ellipse cx="397" cy="213.4" rx="1.35" ry="0.9" transform="rotate(-18 397 213.4)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-        <ellipse cx="403" cy="213.4" rx="1.35" ry="0.9" transform="rotate(18 403 213.4)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-
+        <path d="M 398.9 190.5 C 400.1 198, 400.2 205.5, 399.6 210.7" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width="1" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
+        <ellipse cx="400" cy="212.6" rx="4.45" ry="2.15" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
+        <path d="M 397.8 202.5 C 399 205.2, 401 205.2, 402.2 202.5" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <ellipse data-hero-face-detail="nose" cx="400" cy="213" rx="2.05" ry=".98" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
+        <ellipse cx="397" cy="213.8" rx="1.12" ry=".55" transform="rotate(-15 397 213.8)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+        <ellipse cx="403" cy="213.8" rx="1.12" ry=".55" transform="rotate(15 403 213.8)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="slim-rounded-tip" display="none">
-        <ellipse cx="400" cy="211.8" rx="2.7" ry="1.6" fill="var(--hero-nose-fill, #7a4a2a)" opacity="0.18"/>
-        <ellipse cx="399" cy="210.8" rx="1.4" ry="0.95" fill="var(--hero-nose-highlight, #fff1dc)" opacity="0.42"/>
-        <ellipse cx="397.8" cy="212.8" rx="1" ry="0.7" transform="rotate(-18 397.8 212.8)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-        <ellipse cx="402.2" cy="212.8" rx="1" ry="0.7" transform="rotate(18 402.2 212.8)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-
+        <path d="M 399.4 188.3 C 400.4 196.2, 400.3 204, 399.8 210.1" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width=".96" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
+        <ellipse cx="400" cy="212" rx="3.05" ry="1.55" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
+        <path d="M 398.6 190.5 C 399 198.2, 398.9 205.5, 398.4 210" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".82" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <ellipse data-hero-face-detail="nose" cx="400" cy="212.4" rx="1.42" ry=".7" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
+        <ellipse cx="398" cy="213.1" rx=".82" ry=".4" transform="rotate(-16 398 213.1)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+        <ellipse cx="402" cy="213.1" rx=".82" ry=".4" transform="rotate(16 402 213.1)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="wide-rounded-tip" display="none">
-        <ellipse cx="400" cy="212.2" rx="4.4" ry="2.2" fill="var(--hero-nose-fill, #7a4a2a)" opacity="0.20"/>
-        <ellipse cx="398.5" cy="211.2" rx="2.2" ry="1.3" fill="var(--hero-nose-highlight, #fff1dc)" opacity="0.42"/>
-        <ellipse cx="396.4" cy="213.4" rx="1.5" ry="0.95" transform="rotate(-18 396.4 213.4)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-        <ellipse cx="403.6" cy="213.4" rx="1.5" ry="0.95" transform="rotate(18 403.6 213.4)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-
+        <path d="M 398 193.5 C 399.4 200.3, 400.6 205.6, 400 210.8" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width="1.1" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
+        <ellipse cx="400" cy="212.7" rx="5.1" ry="2.15" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
+        <path d="M 397.2 203 C 398.8 205.6, 401.2 205.6, 402.8 203" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.02" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <ellipse data-hero-face-detail="nose" cx="400" cy="213.1" rx="2.35" ry=".96" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
+        <ellipse cx="396.4" cy="213.8" rx="1.28" ry=".58" transform="rotate(-13 396.4 213.8)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+        <ellipse cx="403.6" cy="213.8" rx="1.28" ry=".58" transform="rotate(13 403.6 213.8)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="soft-upturned" display="none">
-        <ellipse cx="400" cy="209.6" rx="3" ry="1.7" fill="var(--hero-nose-fill, #7a4a2a)" opacity="0.20"/>
-        <ellipse cx="398.9" cy="208.6" rx="1.6" ry="1" fill="var(--hero-nose-highlight, #fff1dc)" opacity="0.46"/>
-        <ellipse cx="397.6" cy="210.8" rx="1.25" ry="1" transform="rotate(-25 397.6 210.8)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .58)"/>
-        <ellipse cx="402.4" cy="210.8" rx="1.25" ry="1" transform="rotate(25 402.4 210.8)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .58)"/>
-
+        <path d="M 399.1 195.1 C 400.1 199.3, 400 204.2, 399.5 207.7" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width=".95" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
+        <ellipse cx="400" cy="210.1" rx="3.6" ry="1.75" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
+        <path d="M 398.2 202 C 399.2 203.7, 400.8 203.7, 401.8 202" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".95" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <ellipse data-hero-face-detail="nose" cx="400" cy="210.6" rx="1.65" ry=".82" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
+        <ellipse cx="397.7" cy="211.2" rx=".96" ry=".54" transform="rotate(-24 397.7 211.2)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+        <ellipse cx="402.3" cy="211.2" rx=".96" ry=".54" transform="rotate(24 402.3 211.2)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="gentle-bridge" display="none">
-        <ellipse cx="400" cy="211.8" rx="2.9" ry="1.7" fill="var(--hero-nose-fill, #7a4a2a)" opacity="0.17"/>
-        <ellipse cx="398.9" cy="210.8" rx="1.5" ry="1" fill="var(--hero-nose-highlight, #fff1dc)" opacity="0.40"/>
-        <ellipse cx="397.6" cy="212.8" rx="1.05" ry="0.7" transform="rotate(-18 397.6 212.8)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .52)"/>
-        <ellipse cx="402.4" cy="212.8" rx="1.05" ry="0.7" transform="rotate(18 402.4 212.8)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .52)"/>
-
+        <path d="M 399.3 190.8 C 400.1 198, 400.1 204.8, 399.5 210" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width=".88" stroke-linecap="round" fill="none" opacity="var(--hero-face-detail-line-opacity, .13)"/>
+        <ellipse cx="400" cy="211.9" rx="3.15" ry="1.48" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
+        <path d="M 398.7 194 C 399 199.6, 398.9 205.7, 398.4 209.9" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".8" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <ellipse data-hero-face-detail="nose" cx="400" cy="212.3" rx="1.38" ry=".66" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
+        <ellipse cx="397.8" cy="213" rx=".82" ry=".38" transform="rotate(-15 397.8 213)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+        <ellipse cx="402.2" cy="213" rx=".82" ry=".38" transform="rotate(15 402.2 213)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="soft-low-bridge" display="none">
-        <ellipse cx="400" cy="211.9" rx="3.3" ry="1.8" fill="var(--hero-nose-fill, #7a4a2a)" opacity="0.18"/>
-        <ellipse cx="398.8" cy="210.9" rx="1.7" ry="1.1" fill="var(--hero-nose-highlight, #fff1dc)" opacity="0.40"/>
-        <ellipse cx="397.2" cy="213" rx="1.25" ry="0.85" transform="rotate(-18 397.2 213)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-        <ellipse cx="402.8" cy="213" rx="1.25" ry="0.85" transform="rotate(18 402.8 213)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-
+        <path d="M 398.4 197 C 399.3 202.1, 400.7 202.1, 401.6 197" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width="1" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
+        <ellipse cx="400" cy="212.2" rx="3.95" ry="1.72" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
+        <path d="M 397.9 204.2 C 399.1 206.1, 400.9 206.1, 402.1 204.2" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".92" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <ellipse data-hero-face-detail="nose" cx="400" cy="212.6" rx="1.85" ry=".82" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
+        <ellipse cx="397.3" cy="213.4" rx="1.05" ry=".48" transform="rotate(-14 397.3 213.4)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+        <ellipse cx="402.7" cy="213.4" rx="1.05" ry=".48" transform="rotate(14 402.7 213.4)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="low-wide-bridge" display="none">
-        <ellipse cx="400" cy="212" rx="4.2" ry="2" fill="var(--hero-nose-fill, #7a4a2a)" opacity="0.18"/>
-        <ellipse cx="398.6" cy="211" rx="2.1" ry="1.2" fill="var(--hero-nose-highlight, #fff1dc)" opacity="0.40"/>
-        <ellipse cx="396.6" cy="213.2" rx="1.5" ry="0.9" transform="rotate(-18 396.6 213.2)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-        <ellipse cx="403.4" cy="213.2" rx="1.5" ry="0.9" transform="rotate(18 403.4 213.2)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-
+        <path d="M 397.2 198.2 C 398.9 202.7, 401.1 202.7, 402.8 198.2" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width="1.18" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
+        <ellipse cx="400" cy="212.3" rx="5.05" ry="1.95" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
+        <path d="M 397.2 204.4 C 398.8 206.4, 401.2 206.4, 402.8 204.4" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".96" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <ellipse data-hero-face-detail="nose" cx="400" cy="212.8" rx="2.25" ry=".86" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
+        <ellipse cx="396.5" cy="213.6" rx="1.28" ry=".55" transform="rotate(-12 396.5 213.6)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+        <ellipse cx="403.5" cy="213.6" rx="1.28" ry=".55" transform="rotate(12 403.5 213.6)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="soft-flat-bridge" display="none">
-        <ellipse cx="400" cy="211.9" rx="3.6" ry="1.9" fill="var(--hero-nose-fill, #7a4a2a)" opacity="0.17"/>
-        <ellipse cx="398.7" cy="210.9" rx="1.8" ry="1.1" fill="var(--hero-nose-highlight, #fff1dc)" opacity="0.38"/>
-        <ellipse cx="397" cy="213.1" rx="1.3" ry="0.85" transform="rotate(-18 397 213.1)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-        <ellipse cx="403" cy="213.1" rx="1.3" ry="0.85" transform="rotate(18 403 213.1)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
-
+        <path d="M 397.5 200 C 399 203.1, 401 203.1, 402.5 200" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width="1" stroke-linecap="round" fill="none" opacity="var(--hero-face-detail-line-opacity, .13)"/>
+        <ellipse cx="400" cy="212.2" rx="4.4" ry="1.78" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
+        <path d="M 397.7 204.7 C 399 206.5, 401 206.5, 402.3 204.7" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".9" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <ellipse data-hero-face-detail="nose" cx="400" cy="212.7" rx="1.95" ry=".78" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
+        <ellipse cx="397" cy="213.4" rx="1.12" ry=".5" transform="rotate(-13 397 213.4)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+        <ellipse cx="403" cy="213.4" rx="1.12" ry=".5" transform="rotate(13 403 213.4)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="aquiline-bridge" display="none">
-        <ellipse cx="400" cy="212.2" rx="2.9" ry="1.7" fill="var(--hero-nose-fill, #7a4a2a)" opacity="0.20"/>
-        <ellipse cx="398.9" cy="211.2" rx="1.5" ry="1" fill="var(--hero-nose-highlight, #fff1dc)" opacity="0.42"/>
-        <ellipse cx="397.7" cy="213.2" rx="1.05" ry="0.7" transform="rotate(-18 397.7 213.2)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .56)"/>
-        <ellipse cx="402.3" cy="213.2" rx="1.05" ry="0.7" transform="rotate(18 402.3 213.2)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .56)"/>
-
+        <path d="M 400.2 183.8 C 402.2 191.8, 402.1 200.6, 400.1 211.2" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width="1.12" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
+        <ellipse cx="400" cy="212.6" rx="3.35" ry="1.58" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
+        <path d="M 398.7 186.8 C 399.4 195.3, 399.2 204.5, 398.5 211" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".82" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <ellipse data-hero-face-detail="nose" cx="400" cy="213" rx="1.45" ry=".72" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
+        <ellipse cx="397.8" cy="213.7" rx=".86" ry=".4" transform="rotate(-17 397.8 213.7)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+        <ellipse cx="402.2" cy="213.7" rx=".86" ry=".4" transform="rotate(17 402.2 213.7)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
+      </g>
       </g>
       <g data-hero-cheek-blush clip-path="url(#face-clear-clip-{{ hero_variant }})">
         <ellipse cx="371" cy="210" rx="8.2" ry="4.4" fill="var(--hero-cheek, #e87b6a)" opacity="var(--hero-cheek-opacity, .35)"/>
