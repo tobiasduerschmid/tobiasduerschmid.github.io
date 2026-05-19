@@ -9,7 +9,7 @@ const ACTIVATE_TOGGLE_SLIDER = '#activatePersonalGymToggle + .slider';
 
 const CHOICE_PREVIEW_VIEWBOXES = {
   full: '238 34 324 596',
-  hair: '292 54 216 346',
+  hair: '288 38 224 268',
   eyebrows: '352 138 96 78',
   eyes: '352 154 96 78',
   ears: '326 154 148 80',
@@ -520,20 +520,38 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
           const bottom = Math.max(a.bottom, b.bottom);
           return { x, y, width: right - x, height: bottom - y, right, bottom };
         }
+        function transformedBox(svg, featureNode, bbox) {
+          const rawBox = {
+            x: bbox.x,
+            y: bbox.y,
+            width: bbox.width,
+            height: bbox.height,
+            right: bbox.x + bbox.width,
+            bottom: bbox.y + bbox.height,
+          };
+          const nodeMatrix = featureNode.getCTM && featureNode.getCTM();
+          const svgMatrix = svg.getCTM && svg.getCTM();
+          if (!nodeMatrix || !svgMatrix || !svgMatrix.inverse) return rawBox;
+          const matrix = svgMatrix.inverse().multiply(nodeMatrix);
+          const points = [
+            new DOMPoint(bbox.x, bbox.y).matrixTransform(matrix),
+            new DOMPoint(bbox.x + bbox.width, bbox.y).matrixTransform(matrix),
+            new DOMPoint(bbox.x, bbox.y + bbox.height).matrixTransform(matrix),
+            new DOMPoint(bbox.x + bbox.width, bbox.y + bbox.height).matrixTransform(matrix),
+          ];
+          const x = Math.min(...points.map((point) => point.x));
+          const y = Math.min(...points.map((point) => point.y));
+          const right = Math.max(...points.map((point) => point.x));
+          const bottom = Math.max(...points.map((point) => point.y));
+          return { x, y, width: right - x, height: bottom - y, right, bottom };
+        }
         const viewBox = parseBox(node.getAttribute('viewBox'));
         const upper = parseBox('246 86 308 374');
         const feature = Array.from(node.querySelectorAll(`[data-hero-slot="accessory"][data-hero-option="${value}"] *`)).reduce((box, featureNode) => {
           try {
             const bbox = featureNode.getBBox();
             if (!bbox || bbox.width <= 0 || bbox.height <= 0) return box;
-            return unionBox(box, {
-              x: bbox.x,
-              y: bbox.y,
-              width: bbox.width,
-              height: bbox.height,
-              right: bbox.x + bbox.width,
-              bottom: bbox.y + bbox.height,
-            });
+            return unionBox(box, transformedBox(node, featureNode, bbox));
           } catch (e) {
             return box;
           }
@@ -642,20 +660,39 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         return { x, y, width: right - x, height: bottom - y, right, bottom };
       }
 
+      function transformedBox(featureNode, bbox) {
+        const rawBox = {
+          x: bbox.x,
+          y: bbox.y,
+          width: bbox.width,
+          height: bbox.height,
+          right: bbox.x + bbox.width,
+          bottom: bbox.y + bbox.height,
+        };
+        const nodeMatrix = featureNode.getCTM && featureNode.getCTM();
+        const svgMatrix = svg.getCTM && svg.getCTM();
+        if (!nodeMatrix || !svgMatrix || !svgMatrix.inverse) return rawBox;
+        const matrix = svgMatrix.inverse().multiply(nodeMatrix);
+        const points = [
+          new DOMPoint(bbox.x, bbox.y).matrixTransform(matrix),
+          new DOMPoint(bbox.x + bbox.width, bbox.y).matrixTransform(matrix),
+          new DOMPoint(bbox.x, bbox.y + bbox.height).matrixTransform(matrix),
+          new DOMPoint(bbox.x + bbox.width, bbox.y + bbox.height).matrixTransform(matrix),
+        ];
+        const x = Math.min(...points.map((point) => point.x));
+        const y = Math.min(...points.map((point) => point.y));
+        const right = Math.max(...points.map((point) => point.x));
+        const bottom = Math.max(...points.map((point) => point.y));
+        return { x, y, width: right - x, height: bottom - y, right, bottom };
+      }
+
       function visibleBox(selector) {
         return Array.from(svg.querySelectorAll(selector)).reduce((box, node) => {
           if (node.closest('[display="none"]')) return box;
           try {
             const bbox = node.getBBox();
             if (!bbox || bbox.width <= 0 || bbox.height <= 0) return box;
-            return unionBox(box, {
-              x: bbox.x,
-              y: bbox.y,
-              width: bbox.width,
-              height: bbox.height,
-              right: bbox.x + bbox.width,
-              bottom: bbox.y + bbox.height,
-            });
+            return unionBox(box, transformedBox(node, bbox));
           } catch (e) {
             return box;
           }
@@ -674,13 +711,18 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         viewBox: svg.getAttribute('viewBox'),
         declared: svg.closest('[data-hero-choice-picker]').getAttribute('data-preview-viewbox'),
         validViewBox: Boolean(viewBox && viewBox.width > 0 && viewBox.height > 0),
-        matchesDeclared: Boolean(
+        containsDeclared: Boolean(
           viewBox &&
           declared &&
-          Math.abs(viewBox.x - declared.x) <= tolerance &&
-          Math.abs(viewBox.y - declared.y) <= tolerance &&
-          Math.abs(viewBox.width - declared.width) <= tolerance &&
-          Math.abs(viewBox.height - declared.height) <= tolerance
+          declared.x >= viewBox.x - tolerance &&
+          declared.y >= viewBox.y - tolerance &&
+          declared.right <= viewBox.right + tolerance &&
+          declared.bottom <= viewBox.bottom + tolerance
+        ),
+        expandsForLongHair: Boolean(
+          viewBox &&
+          declared &&
+          viewBox.bottom > declared.bottom + tolerance
         ),
         hairFullyInside: Boolean(
           viewBox && feature &&
@@ -692,7 +734,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       };
     });
     expect(hairCrop.validViewBox, `long hair preview should render with a valid viewBox, got ${hairCrop.viewBox}`).toBe(true);
-    expect(hairCrop.matchesDeclared, `long hair preview should use the taller registry crop ${hairCrop.declared}`).toBe(true);
+    expect(hairCrop.containsDeclared, `long hair preview should include the registry crop ${hairCrop.declared}`).toBe(true);
+    expect(hairCrop.expandsForLongHair, `long hair preview should expand beyond the compact hair crop ${hairCrop.declared}`).toBe(true);
     expect(hairCrop.hairFullyInside, `long hair should fit inside the preview frame ${hairCrop.viewBox}`).toBe(true);
   });
 
@@ -903,20 +946,39 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         return { x, y, width: right - x, height: bottom - y, right, bottom };
       }
 
+      function transformedBox(svg, featureNode, bbox) {
+        const rawBox = {
+          x: bbox.x,
+          y: bbox.y,
+          width: bbox.width,
+          height: bbox.height,
+          right: bbox.x + bbox.width,
+          bottom: bbox.y + bbox.height,
+        };
+        const nodeMatrix = featureNode.getCTM && featureNode.getCTM();
+        const svgMatrix = svg.getCTM && svg.getCTM();
+        if (!nodeMatrix || !svgMatrix || !svgMatrix.inverse) return rawBox;
+        const matrix = svgMatrix.inverse().multiply(nodeMatrix);
+        const points = [
+          new DOMPoint(bbox.x, bbox.y).matrixTransform(matrix),
+          new DOMPoint(bbox.x + bbox.width, bbox.y).matrixTransform(matrix),
+          new DOMPoint(bbox.x, bbox.y + bbox.height).matrixTransform(matrix),
+          new DOMPoint(bbox.x + bbox.width, bbox.y + bbox.height).matrixTransform(matrix),
+        ];
+        const x = Math.min(...points.map((point) => point.x));
+        const y = Math.min(...points.map((point) => point.y));
+        const right = Math.max(...points.map((point) => point.x));
+        const bottom = Math.max(...points.map((point) => point.y));
+        return { x, y, width: right - x, height: bottom - y, right, bottom };
+      }
+
       function visibleUnionBox(svg, selector) {
         return Array.from(svg.querySelectorAll(selector)).reduce((box, node) => {
           if (node.closest('[display="none"]')) return box;
           try {
             const bbox = node.getBBox();
             if (!bbox || bbox.width <= 0 || bbox.height <= 0) return box;
-            return unionBox(box, {
-              x: bbox.x,
-              y: bbox.y,
-              width: bbox.width,
-              height: bbox.height,
-              right: bbox.x + bbox.width,
-              bottom: bbox.y + bbox.height,
-            });
+            return unionBox(box, transformedBox(svg, node, bbox));
           } catch (e) {
             return box;
           }
@@ -939,7 +1001,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         if (!group || group.getAttribute('display') !== 'inline') return { visible: false, area: 0 };
         if (group.closest('[display="none"]')) return { visible: false, area: 0 };
         try {
-          const box = group.getBBox();
+          const bbox = group.getBBox();
+          const box = transformedBox(svg, group, bbox);
           return { visible: true, area: box.width > 0 && box.height > 0 ? intersectionArea(box, viewBox) : 0 };
         } catch (e) {
           return { visible: true, area: 0 };

@@ -3619,7 +3619,7 @@
 
     var CHOICE_PREVIEW_VIEWBOXES = {
       full: '238 34 324 596',
-      hair: '292 54 216 346',
+      hair: '288 38 224 268',
       eyebrows: '352 138 96 78',
       eyes: '352 154 96 78',
       ears: '326 154 148 80',
@@ -3736,19 +3736,49 @@
         try {
           var bbox = nodes[i].getBBox();
           if (!bbox || bbox.width <= 0 || bbox.height <= 0) continue;
-          box = unionSvgBox(box, {
-            x: bbox.x,
-            y: bbox.y,
-            width: bbox.width,
-            height: bbox.height,
-            right: bbox.x + bbox.width,
-            bottom: bbox.y + bbox.height
-          });
+          box = unionSvgBox(box, transformedSelectorBox(svg, nodes[i], bbox));
         } catch (e) {
           // Hidden SVG nodes may not expose a bounding box in every browser.
         }
       }
       return box;
+    }
+
+    function transformedSelectorBox(svg, node, bbox) {
+      var rawBox = {
+        x: bbox.x,
+        y: bbox.y,
+        width: bbox.width,
+        height: bbox.height,
+        right: bbox.x + bbox.width,
+        bottom: bbox.y + bbox.height
+      };
+      if (!node.getCTM || !svg.getCTM) return rawBox;
+      var nodeMatrix = node.getCTM();
+      var svgMatrix = svg.getCTM();
+      if (!nodeMatrix || !svgMatrix || !svgMatrix.inverse) return rawBox;
+      var matrix = svgMatrix.inverse().multiply(nodeMatrix);
+      var points = [
+        transformedSvgPoint(svg, bbox.x, bbox.y, matrix),
+        transformedSvgPoint(svg, bbox.x + bbox.width, bbox.y, matrix),
+        transformedSvgPoint(svg, bbox.x, bbox.y + bbox.height, matrix),
+        transformedSvgPoint(svg, bbox.x + bbox.width, bbox.y + bbox.height, matrix)
+      ];
+      var minX = Math.min(points[0].x, points[1].x, points[2].x, points[3].x);
+      var minY = Math.min(points[0].y, points[1].y, points[2].y, points[3].y);
+      var maxX = Math.max(points[0].x, points[1].x, points[2].x, points[3].x);
+      var maxY = Math.max(points[0].y, points[1].y, points[2].y, points[3].y);
+      return { x: minX, y: minY, width: maxX - minX, height: maxY - minY, right: maxX, bottom: maxY };
+    }
+
+    function transformedSvgPoint(svg, x, y, matrix) {
+      if (typeof window.DOMPoint === 'function') {
+        return new window.DOMPoint(x, y).matrixTransform(matrix);
+      }
+      var point = svg.createSVGPoint();
+      point.x = x;
+      point.y = y;
+      return point.matrixTransform(matrix);
     }
 
     function clampSvgBox(box, bounds) {

@@ -45,7 +45,7 @@ async function main() {
 
     const PREVIEW_VIEWBOXES = {
       full: '238 34 324 596',
-      hair: '292 54 216 346',
+      hair: '288 38 224 268',
       eyebrows: '352 138 96 78',
       eyes: '352 154 96 78',
       ears: '326 154 148 80',
@@ -183,19 +183,39 @@ async function main() {
         try {
           const bbox = node.getBBox();
           if (!bbox || bbox.width <= 0 || bbox.height <= 0) continue;
-          box = unionBox(box, {
-            x: bbox.x,
-            y: bbox.y,
-            width: bbox.width,
-            height: bbox.height,
-            right: bbox.x + bbox.width,
-            bottom: bbox.y + bbox.height,
-          });
+          box = unionBox(box, transformedBox(svg, node, bbox));
         } catch (e) {
           // Some hidden SVG nodes do not expose bounding boxes.
         }
       }
       return box;
+    }
+
+    function transformedBox(svg, node, bbox) {
+      const rawBox = {
+        x: bbox.x,
+        y: bbox.y,
+        width: bbox.width,
+        height: bbox.height,
+        right: bbox.x + bbox.width,
+        bottom: bbox.y + bbox.height,
+      };
+      if (!node.getCTM || !svg.getCTM) return rawBox;
+      const nodeMatrix = node.getCTM();
+      const svgMatrix = svg.getCTM();
+      if (!nodeMatrix || !svgMatrix || !svgMatrix.inverse) return rawBox;
+      const matrix = svgMatrix.inverse().multiply(nodeMatrix);
+      const points = [
+        new DOMPoint(bbox.x, bbox.y).matrixTransform(matrix),
+        new DOMPoint(bbox.x + bbox.width, bbox.y).matrixTransform(matrix),
+        new DOMPoint(bbox.x, bbox.y + bbox.height).matrixTransform(matrix),
+        new DOMPoint(bbox.x + bbox.width, bbox.y + bbox.height).matrixTransform(matrix),
+      ];
+      const x = Math.min(...points.map((point) => point.x));
+      const y = Math.min(...points.map((point) => point.y));
+      const right = Math.max(...points.map((point) => point.x));
+      const bottom = Math.max(...points.map((point) => point.y));
+      return { x, y, width: right - x, height: bottom - y, right, bottom };
     }
 
     function clampBox(box, bounds) {

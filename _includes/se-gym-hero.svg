@@ -156,7 +156,10 @@
       </g>
     </g>
     <clipPath id="face-clear-clip-{{ hero_variant }}" clipPathUnits="userSpaceOnUse">
-      <path d="M 352 174 C 364 164, 383 160, 396 164 C 399 165, 401 165, 404 164 C 417 160, 436 164, 448 174 C 452 198, 446 227, 429 245 C 416 259, 384 259, 371 245 C 354 227, 348 198, 352 174 Z"/>
+      <!-- Top edge extended to y=126 (matches head-shape crown) so the polish
+           overlays and cheek tints fade smoothly across the forehead instead
+           of starting at a hard line at the brow. -->
+      <path d="M 352 174 C 354 145, 372 128, 400 126 C 428 128, 446 145, 448 174 C 452 198, 446 227, 429 245 C 416 259, 384 259, 371 245 C 354 227, 348 198, 352 174 Z"/>
     </clipPath>
     <clipPath id="hair-shoulder-clip-{{ hero_variant }}" clipPathUnits="userSpaceOnUse">
       <path d="M 300 58 H 500 V 380 H 454 C 454 338, 450 314, 444 292 C 430 290, 418 284, 410 274 C 404 268, 396 268, 390 274 C 382 284, 370 290, 356 292 C 350 314, 346 338, 346 380 H 300 Z"/>
@@ -1644,19 +1647,19 @@
         <path d="M 366 130 C 384 116, 416 116, 434 130 M 362 166 C 376 157, 388 154, 400 156 C 412 154, 424 157, 438 166" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="low-pony-bangs" display="none">
+        <!-- Back-layer (covers behind the head + side panels). -->
+        <use href="#shoulder-hair-backfill-{{ hero_variant }}"/>
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.8" stroke-linejoin="round"/>
         <ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
         <path d="M 354 148 C 376 132, 424 132, 446 148 C 444 157, 438 165, 426 170 C 416 162, 406 158, 400 160 C 390 158, 376 162, 360 170 C 356 164, 354 156, 354 148 Z" fill="var(--hero-hair, #1f140c)" opacity=".76"/>
-
+        <!-- Ponytail tail. -->
         <path d="M 448 178 C 464 210, 460 292, 448 356" stroke="var(--hero-hair, #1f140c)" stroke-width="22" fill="none" stroke-linecap="round"/>
-        <path d="M 366 130 C 384 116, 416 116, 434 130 M 362 166 C 376 157, 388 154, 400 156 C 412 154, 424 157, 438 166" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="half-up" display="none">
+        <!-- Back-layer (covers behind the head + side panels). -->
+        <use href="#long-hair-backfill-{{ hero_variant }}"/>
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.8" stroke-linejoin="round"/>
         <ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
-
-
-        <path d="M 366 130 C 384 116, 416 116, 434 130 M 362 166 C 376 157, 388 154, 400 156 C 412 154, 424 157, 438 166" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="pigtails" display="none">
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.8" stroke-linejoin="round"/>
@@ -2302,10 +2305,7 @@
       <g data-hero-slot="hair-root" data-hero-option="clean-taper" display="none"></g>
       <g data-hero-slot="hair-root" data-hero-option="rounded-curls" display="none"><use href="#hair-temple-roots-{{ hero_variant }}"/></g>
       <g data-hero-slot="hair-root" data-hero-option="low-twist-bun" display="none"><use href="#hair-temple-roots-{{ hero_variant }}"/></g>
-      <g data-hero-slot="hair-root" data-hero-option="tousled-wispy-fringe" display="none">
-        <path d="M 357 166 C 356 174, 360 186, 367 194 M 443 166 C 444 174, 440 186, 433 194" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.85" fill="none" stroke-linecap="round" opacity=".34"/>
-        <path d="M 362 170 C 361 178, 364 186, 369 193 M 438 170 C 439 178, 436 186, 431 193" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity=".32"/>
-      </g>
+      <g data-hero-slot="hair-root" data-hero-option="tousled-wispy-fringe" display="none"></g>
       <g data-hero-slot="hair-root" data-hero-option="textured-fringe" display="none"><use href="#hair-temple-roots-{{ hero_variant }}"/></g>
       <g data-hero-slot="hair-root" data-hero-option="middle-part-flow" display="none"><use href="#hair-temple-roots-{{ hero_variant }}"/></g>
       <g data-hero-slot="hair-root" data-hero-option="long" display="none"><use href="#hair-temple-roots-{{ hero_variant }}"/></g>
@@ -3391,114 +3391,132 @@
           <g transform="translate(-400 -226)">
       <g data-hero-mouth-layer clip-path="url(#face-clear-clip-{{ hero_variant }})">
       <g data-hero-slot="mouth-style" data-hero-option="smile">
-        <path d="M 374.8 219.5 C 385 231.3, 392.4 237.6, 400 238 C 407.6 237.6, 415 231.3, 425.2 219.5 C 415.6 237.6, 408.1 242.4, 400 242.7 C 391.9 242.4, 384.4 237.6, 374.8 219.5 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
-        <ellipse cx="400" cy="241.2" rx="13.2" ry="3.4" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".1"/>
-        <path d="M 382.4 223.1 C 391.2 229.7, 408.8 229.7, 417.6 223.1 C 413.5 232.5, 406.8 235.4, 400 235.4 C 393.2 235.4, 386.5 232.5, 382.4 223.1 Z" fill="#fffdf7" opacity=".94"/>
-        <path d="M 373.2 219.8 C 376.8 222.9, 380.3 224, 383.6 223.4 M 416.4 223.4 C 419.7 224, 423.2 222.9, 426.8 219.8" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.05" fill="none" stroke-linecap="round" opacity="var(--hero-smile-crease-opacity, .1)"/>
+        <!-- Happy lens-shaped smile with corner dimples (contained above chin). -->
+        <path d="M 374.8 219.5 C 385 226.6, 392.4 230.4, 400 230.7 C 407.6 230.4, 415 226.6, 425.2 219.5 C 415.6 230.4, 408.1 233.4, 400 233.6 C 391.9 233.4, 384.4 230.4, 374.8 219.5 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
+        <ellipse cx="400" cy="232.7" rx="13.2" ry="2.1" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".14"/>
+        <path d="M 382.4 223.1 C 391.2 225.5, 408.8 225.5, 417.6 223.1 C 413.5 227.3, 406.8 229.1, 400 229.1 C 393.2 229.1, 386.5 227.3, 382.4 223.1 Z" fill="#fffdf7" opacity=".94"/>
+        <path d="M 373.2 219.8 C 376.8 222.9, 380.3 224, 383.6 223.4 M 416.4 223.4 C 419.7 224, 423.2 222.9, 426.8 219.8" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.05" fill="none" stroke-linecap="round" opacity="var(--hero-smile-crease-opacity, .14)"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="soft-smile" display="none">
-        <path d="M 380.5 223.2 C 389 232.5, 411 232.5, 419.5 223.2" stroke="var(--hero-mouth-fill, #5a2418)" stroke-width="4.35" fill="none" stroke-linecap="round"/>
-        <path d="M 386.8 224.7 C 394.7 229.6, 405.3 229.6, 413.2 224.7" stroke="var(--hero-lip-highlight, #ffb0a0)" stroke-width="1.05" fill="none" stroke-linecap="round" opacity=".32"/>
+        <!-- Soft happy curve with a gentle highlight. -->
+        <path d="M 380.5 223.2 C 389 228, 411 228, 419.5 223.2" stroke="var(--hero-mouth-fill, #5a2418)" stroke-width="4.35" fill="none" stroke-linecap="round"/>
+        <path d="M 386.8 224.7 C 394.7 227.4, 405.3 227.4, 413.2 224.7" stroke="var(--hero-lip-highlight, #ffb0a0)" stroke-width="1.05" fill="none" stroke-linecap="round" opacity=".32"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="small-smile" display="none">
-        <path d="M 386.5 223.5 C 392.4 230.1, 407.6 230.1, 413.5 223.5" stroke="var(--hero-mouth-fill, #5a2418)" stroke-width="4.05" fill="none" stroke-linecap="round"/>
-        <path d="M 391 224.8 C 396.6 228, 403.4 228, 409 224.8" stroke="var(--hero-lip-highlight, #ffb0a0)" stroke-width=".95" fill="none" stroke-linecap="round" opacity=".3"/>
+        <!-- Small content smile. -->
+        <path d="M 386.5 223.5 C 392.4 227.2, 407.6 227.2, 413.5 223.5" stroke="var(--hero-mouth-fill, #5a2418)" stroke-width="4.05" fill="none" stroke-linecap="round"/>
+        <path d="M 391 224.8 C 396.6 226.6, 403.4 226.6, 409 224.8" stroke="var(--hero-lip-highlight, #ffb0a0)" stroke-width=".95" fill="none" stroke-linecap="round" opacity=".3"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="grin" display="none">
-        <path d="M 377.2 220.6 C 386.9 231.8, 393.2 237.5, 400 237.8 C 406.8 237.5, 413.1 231.8, 422.8 220.6 C 415.9 238.2, 408.1 241.2, 400 241.4 C 391.9 241.2, 384.1 238.2, 377.2 220.6 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
-        <ellipse cx="400" cy="238.4" rx="11.6" ry="2.9" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".1"/>
-        <path d="M 383.1 223.8 C 391.6 229.4, 408.4 229.4, 416.9 223.8 C 412.9 231.5, 406.4 235, 400 235 C 393.6 235, 387.1 231.5, 383.1 223.8 Z" fill="#fffdf7" opacity=".91"/>
+        <!-- Happy grin: lens shape with teeth. -->
+        <path d="M 377.2 220.6 C 386.9 227.7, 393.2 230.9, 400 231.1 C 406.8 230.9, 413.1 227.7, 422.8 220.6 C 415.9 231.4, 408.1 233.1, 400 233.2 C 391.9 233.1, 384.1 231.4, 377.2 220.6 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
+        <ellipse cx="400" cy="231.6" rx="11.6" ry="1.8" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".14"/>
+        <path d="M 383.1 223.8 C 391.6 227, 408.4 227, 416.9 223.8 C 412.9 228, 406.4 229.6, 400 229.6 C 393.6 229.6, 387.1 228, 383.1 223.8 Z" fill="#fffdf7" opacity=".94"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="closed-smile" display="none">
-        <path d="M 380.6 223.2 C 389.7 233.8, 410.3 233.8, 419.4 223.2" stroke="var(--hero-mouth-fill, #5a2418)" stroke-width="4.45" fill="none" stroke-linecap="round"/>
-        <path d="M 383.5 222.5 C 392.4 231.3, 407.6 231.3, 416.5 222.5" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="1.45" fill="none" stroke-linecap="round" opacity=".48"/>
+        <!-- Closed warm smile with a thin lip-line shadow. -->
+        <path d="M 380.6 223.2 C 389.7 230, 410.3 230, 419.4 223.2" stroke="var(--hero-mouth-fill, #5a2418)" stroke-width="4.45" fill="none" stroke-linecap="round"/>
+        <path d="M 383.5 222.5 C 392.4 228.2, 407.6 228.2, 416.5 222.5" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="1.45" fill="none" stroke-linecap="round" opacity=".48"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="neutral" display="none">
-        <path d="M 385.8 225.4 C 393.5 228.2, 406.5 228.2, 414.2 225.4" stroke="var(--hero-mouth-fill, #5a2418)" stroke-width="3.95" fill="none" stroke-linecap="round"/>
-        <path d="M 388.5 225.1 C 395.5 227, 404.5 227, 411.5 225.1" stroke="var(--hero-lip-highlight, #ffb0a0)" stroke-width=".85" fill="none" stroke-linecap="round" opacity=".22"/>
+        <!-- Neutral: gentle, nearly-straight curve. -->
+        <path d="M 385.8 225.4 C 393.5 227.5, 406.5 227.5, 414.2 225.4" stroke="var(--hero-mouth-fill, #5a2418)" stroke-width="3.95" fill="none" stroke-linecap="round"/>
+        <path d="M 388.5 225.1 C 395.5 226.4, 404.5 226.4, 411.5 225.1" stroke="var(--hero-lip-highlight, #ffb0a0)" stroke-width=".85" fill="none" stroke-linecap="round" opacity=".22"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="full-lips" display="none">
+        <!-- Full lips with pillow shapes (contained). -->
         <path d="M 382.2 222 C 391.4 216.8, 397.3 218.6, 400 220.5 C 402.7 218.6, 408.6 216.8, 417.8 222 C 410.4 225.9, 404.6 226.8, 400 225.5 C 395.4 226.8, 389.6 225.9, 382.2 222 Z" fill="var(--hero-lip-fill, #b44a4a)" opacity=".95"/>
-        <path d="M 383.2 223.4 C 392.4 235, 407.6 235, 416.8 223.4 C 411.8 234.2, 405.4 237.1, 400 237.3 C 394.6 237.1, 388.2 234.2, 383.2 223.4 Z" fill="var(--hero-lip-shadow, #8f3232)" opacity=".95"/>
+        <path d="M 383.2 223.4 C 392.4 230, 407.6 230, 416.8 223.4 C 411.8 232, 405.4 233.8, 400 233.9 C 394.6 233.8, 388.2 232, 383.2 223.4 Z" fill="var(--hero-lip-shadow, #8f3232)" opacity=".95"/>
         <path d="M 388.2 222.1 C 394.4 219.7, 405.6 219.7, 411.8 222.1" stroke="var(--hero-lip-highlight, #ffb0a0)" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".62"/>
-        <path d="M 382.8 222.3 C 392 235.8, 408 235.8, 417.2 222.3" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity=".54"/>
+        <path d="M 382.8 222.3 C 392 232.3, 408 232.3, 417.2 222.3" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity=".54"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="soft-full-lips" display="none">
+        <!-- Soft full lips with subdued pillows (contained). -->
         <path d="M 383.2 222 C 391.8 218.2, 397.1 219.2, 400 221 C 402.9 219.2, 408.2 218.2, 416.8 222 C 409.6 225.1, 404.2 225.7, 400 224.8 C 395.8 225.7, 390.4 225.1, 383.2 222 Z" fill="var(--hero-lip-fill, #b44a4a)" opacity=".8"/>
-        <path d="M 384.2 223.3 C 392.8 233.4, 407.2 233.4, 415.8 223.3 C 410.9 232.5, 405 235.1, 400 235.3 C 395 235.1, 389.1 232.5, 384.2 223.3 Z" fill="var(--hero-lip-shadow, #8f3232)" opacity=".8"/>
+        <path d="M 384.2 223.3 C 392.8 229, 407.2 229, 415.8 223.3 C 410.9 231, 405 232.7, 400 232.8 C 395 232.7, 389.1 231, 384.2 223.3 Z" fill="var(--hero-lip-shadow, #8f3232)" opacity=".8"/>
         <path d="M 389 222.1 C 395 220.5, 405 220.5, 411 222.1" stroke="var(--hero-lip-highlight, #ffb0a0)" stroke-width="1.45" fill="none" stroke-linecap="round" opacity=".5"/>
-        <path d="M 384.2 223 C 393 234.2, 407 234.2, 415.8 223" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="1.35" fill="none" stroke-linecap="round" opacity=".46"/>
+        <path d="M 384.2 223 C 393 231, 407 231, 415.8 223" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="1.35" fill="none" stroke-linecap="round" opacity=".46"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="bright-smile" display="none">
-        <path d="M 374.1 218.9 C 384.8 232.7, 392.4 239.2, 400 239.6 C 407.6 239.2, 415.2 232.7, 425.9 218.9 C 415.5 239.8, 408 242.5, 400 242.8 C 392 242.5, 384.5 239.8, 374.1 218.9 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
-        <ellipse cx="400" cy="241.7" rx="13.8" ry="3.5" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".1"/>
-        <path d="M 381.7 222.8 C 391.1 230, 408.9 230, 418.3 222.8 C 413.8 232.4, 407 235.5, 400 235.7 C 393 235.5, 386.2 232.4, 381.7 222.8 Z" fill="#fffdf7" opacity=".94"/>
-        <path d="M 372.2 219.1 C 376 222.3, 380 223.8, 383.8 223.2 M 416.2 223.2 C 420 223.8, 424 222.3, 427.8 219.1" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.05" fill="none" stroke-linecap="round" opacity="var(--hero-smile-crease-opacity, .1)"/>
+        <!-- Bright happy smile: bigger lens with corner dimples. -->
+        <path d="M 374.1 218.9 C 384.8 227.5, 392.4 231.2, 400 231.5 C 407.6 231.2, 415.2 227.5, 425.9 218.9 C 415.5 232.4, 408 234.1, 400 234.3 C 392 234.1, 384.5 232.4, 374.1 218.9 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
+        <ellipse cx="400" cy="233.4" rx="13.8" ry="2.1" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".14"/>
+        <path d="M 381.7 222.8 C 391.1 227.4, 408.9 227.4, 418.3 222.8 C 413.8 229.4, 407 231.2, 400 231.3 C 393 231.2, 386.2 229.4, 381.7 222.8 Z" fill="#fffdf7" opacity=".94"/>
+        <path d="M 372.2 219.1 C 376 222.3, 380 223.8, 383.8 223.2 M 416.2 223.2 C 420 223.8, 424 222.3, 427.8 219.1" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.05" fill="none" stroke-linecap="round" opacity="var(--hero-smile-crease-opacity, .14)"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="wide-smile" display="none">
-        <path d="M 370.7 218.8 C 382.5 233.3, 391.2 240.3, 400 240.6 C 408.8 240.3, 417.5 233.3, 429.3 218.8 C 417.5 240.5, 408.9 243.4, 400 243.7 C 391.1 243.4, 382.5 240.5, 370.7 218.8 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
-        <ellipse cx="400" cy="242.4" rx="15.4" ry="3.7" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".1"/>
-        <path d="M 378.3 222.9 C 388.9 230.5, 411.1 230.5, 421.7 222.9 C 416.2 233, 408.2 236, 400 236.2 C 391.8 236, 383.8 233, 378.3 222.9 Z" fill="#fffdf7" opacity=".94"/>
-        <path d="M 370.2 219 C 374.6 222.4, 379 224.2, 383.5 223.5 M 416.5 223.5 C 421 224.2, 425.4 222.4, 429.8 219" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.08" fill="none" stroke-linecap="round" opacity="var(--hero-smile-crease-opacity, .1)"/>
+        <!-- Wide happy smile with prominent dimples. -->
+        <path d="M 370.7 218.8 C 382.5 228.4, 391.2 232.5, 400 232.7 C 408.8 232.5, 417.5 228.4, 429.3 218.8 C 417.5 233.5, 408.9 235.2, 400 235.4 C 391.1 235.2, 382.5 233.5, 370.7 218.8 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
+        <ellipse cx="400" cy="234.6" rx="15.4" ry="2.2" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".14"/>
+        <path d="M 378.3 222.9 C 388.9 227.6, 411.1 227.6, 421.7 222.9 C 416.2 229.9, 408.2 231.7, 400 231.8 C 391.8 231.7, 383.8 229.9, 378.3 222.9 Z" fill="#fffdf7" opacity=".94"/>
+        <path d="M 370.2 219 C 374.6 222.4, 379 224.2, 383.5 223.5 M 416.5 223.5 C 421 224.2, 425.4 222.4, 429.8 219" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.08" fill="none" stroke-linecap="round" opacity="var(--hero-smile-crease-opacity, .14)"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="toothy-smile" display="none">
-        <path d="M 376.4 219.8 C 386.2 235.7, 392.5 242, 400 242.3 C 407.5 242, 413.8 235.7, 423.6 219.8 C 414.7 230.9, 407.3 234.4, 400 234.4 C 392.7 234.4, 385.3 230.9, 376.4 219.8 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
-        <ellipse cx="400" cy="240.2" rx="12.5" ry="3.3" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".1"/>
-        <path d="M 383.2 223.3 C 391.8 228.4, 408.2 228.4, 416.8 223.3 C 414.8 233.2, 408.4 237.3, 400 237.3 C 391.6 237.3, 385.2 233.2, 383.2 223.3 Z" fill="#fffdf7"/>
-        <path d="M 384.2 223.8 C 392.7 226.9, 407.3 226.9, 415.8 223.8" stroke="#eef1ea" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".58"/>
-        <path d="M 386 233.7 C 392.7 237.2, 407.3 237.2, 414 233.7" stroke="var(--hero-lip-fill, #b44a4a)" stroke-width="1.4" fill="none" stroke-linecap="round" opacity=".32"/>
-        <path d="M 376.4 219.8 C 386.2 235.7, 392.5 242, 400 242.3 C 407.5 242, 413.8 235.7, 423.6 219.8" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".72"/>
+        <!-- Toothy smile with prominent teeth + soft gum line. -->
+        <path d="M 376.4 219.8 C 386.2 229.5, 392.5 233.1, 400 233.3 C 407.5 233.1, 413.8 229.5, 423.6 219.8 C 414.7 226, 407.3 228, 400 228 C 392.7 228, 385.3 226, 376.4 219.8 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
+        <ellipse cx="400" cy="232.4" rx="12.5" ry="2" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".14"/>
+        <path d="M 383.2 223.3 C 391.8 226.4, 408.2 226.4, 416.8 223.3 C 414.8 230.4, 408.4 232.6, 400 232.6 C 391.6 232.6, 385.2 230.4, 383.2 223.3 Z" fill="#fffdf7"/>
+        <path d="M 384.2 223.8 C 392.7 225.7, 407.3 225.7, 415.8 223.8" stroke="#eef1ea" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".58"/>
+        <path d="M 386 230.1 C 392.7 232, 407.3 232, 414 230.1" stroke="var(--hero-lip-fill, #b44a4a)" stroke-width="1.4" fill="none" stroke-linecap="round" opacity=".32"/>
+        <path d="M 376.4 219.8 C 386.2 229.5, 392.5 233.1, 400 233.3 C 407.5 233.1, 413.8 229.5, 423.6 219.8" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".72"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="toothy-bright-smile" display="none">
-        <path d="M 369.4 219 C 378.2 231.6, 389 238.4, 398 239.4 C 386.6 239.9, 376.4 234.8, 369.4 226.2 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity="var(--hero-smile-cheek-shadow-opacity, .16)"/>
-        <path d="M 430.6 219 C 421.8 231.6, 411 238.4, 402 239.4 C 413.4 239.9, 423.6 234.8, 430.6 226.2 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity="var(--hero-smile-cheek-shadow-opacity, .16)"/>
-        <path d="M 380.2 220.9 C 388.3 235, 393.9 241.6, 400 241.9 C 406.1 241.6, 411.7 235, 419.8 220.9 C 411.4 228.4, 405.5 230.7, 400 230.7 C 394.5 230.7, 388.6 228.4, 380.2 220.9 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
-        <path d="M 383.8 223.4 C 392.1 226.8, 407.9 226.8, 416.2 223.4 C 414.2 233.1, 408.1 237.4, 400 237.4 C 391.9 237.4, 385.8 233.1, 383.8 223.4 Z" fill="#fffdf7"/>
+        <!-- Toothy bright smile: full happy expression with cheek dimples. -->
+        <path d="M 369.4 219 C 378.2 226.5, 389 230.5, 398 231.1 C 386.6 231.4, 376.4 228.5, 369.4 223.4 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity="var(--hero-smile-cheek-shadow-opacity, .16)"/>
+        <path d="M 430.6 219 C 421.8 226.5, 411 230.5, 402 231.1 C 413.4 231.4, 423.6 228.5, 430.6 223.4 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity="var(--hero-smile-cheek-shadow-opacity, .16)"/>
+        <path d="M 380.2 220.9 C 388.3 228.8, 393.9 232.6, 400 232.8 C 406.1 232.6, 411.7 228.8, 419.8 220.9 C 411.4 225, 405.5 226.4, 400 226.4 C 394.5 226.4, 388.6 225, 380.2 220.9 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
+        <path d="M 383.8 223.4 C 392.1 226.8, 407.9 226.8, 416.2 223.4 C 414.2 229.5, 408.1 232, 400 232 C 391.9 232, 385.8 229.5, 383.8 223.4 Z" fill="#fffdf7"/>
         <path d="M 385 224 C 393.4 226.2, 406.6 226.2, 415 224" stroke="#eef1ea" stroke-width="1.15" fill="none" stroke-linecap="round" opacity=".56"/>
-        <path d="M 388 232.6 C 393.8 234.9, 406.2 234.9, 412 232.6" stroke="var(--hero-lip-fill, #b44a4a)" stroke-width="1.35" fill="none" stroke-linecap="round" opacity=".36"/>
+        <path d="M 388 230 C 393.8 231.5, 406.2 231.5, 412 230" stroke="var(--hero-lip-fill, #b44a4a)" stroke-width="1.35" fill="none" stroke-linecap="round" opacity=".36"/>
         <path d="M 381.2 220.2 C 389 224.4, 411 224.4, 418.8 220.2" stroke="var(--hero-skin-highlight, #fff1dc)" stroke-width=".92" fill="none" stroke-linecap="round" opacity=".24"/>
-        <path d="M 376.2 221.6 C 379 223.9, 381.5 224.7, 384.1 224.2 M 415.9 224.2 C 418.5 224.7, 421 223.9, 423.8 221.6" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1" fill="none" stroke-linecap="round" opacity="var(--hero-smile-crease-opacity, .09)"/>
+        <path d="M 376.2 221.6 C 379 223.9, 381.5 224.7, 384.1 224.2 M 415.9 224.2 C 418.5 224.7, 421 223.9, 423.8 221.6" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1" fill="none" stroke-linecap="round" opacity="var(--hero-smile-crease-opacity, .14)"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="photo-smile" display="none">
-        <path d="M 372.5 219.4 C 384 239.2, 392.4 245.7, 400 246 C 407.6 245.7, 416 239.2, 427.5 219.4 C 418.2 233, 409.4 236.5, 400 236.5 C 390.6 236.5, 381.8 233, 372.5 219.4 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
-        <ellipse cx="400" cy="241" rx="13.5" ry="3.6" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".1"/>
-        <path d="M 381.5 222.9 C 391.8 228.6, 408.2 228.6, 418.5 222.9 C 416.4 233.1, 409 236.8, 400 236.9 C 391 236.8, 383.6 233.1, 381.5 222.9 Z" fill="#fffdf7"/>
+        <!-- Photo smile: big confident grin with full teeth + lower-lip shine. -->
+        <path d="M 372.5 219.4 C 384 230, 392.4 233.6, 400 233.8 C 407.6 233.6, 416 230, 427.5 219.4 C 418.2 226.7, 409.4 228.6, 400 228.6 C 390.6 228.6, 381.8 226.7, 372.5 219.4 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
+        <ellipse cx="400" cy="233" rx="13.5" ry="2.1" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".14"/>
+        <path d="M 381.5 222.9 C 391.8 226.6, 408.2 226.6, 418.5 222.9 C 416.4 229.4, 409 232, 400 232.1 C 391 232, 383.6 229.4, 381.5 222.9 Z" fill="#fffdf7"/>
         <path d="M 383.2 224.1 C 392 226.9, 408 226.9, 416.8 224.1" stroke="#f1f3ec" stroke-width="1.15" fill="none" stroke-linecap="round" opacity=".58"/>
-        <path d="M 384.8 230.7 C 392.5 233.4, 407.5 233.4, 415.2 230.7" stroke="var(--hero-mouth-line, #3a1408)" stroke-width=".62" fill="none" stroke-linecap="round" opacity=".13"/>
-        <path d="M 384.2 233.7 C 392.8 237.5, 407.2 237.5, 415.8 233.7" stroke="var(--hero-lip-fill, #b44a4a)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".42"/>
-        <path d="M 372.5 219.4 C 384 239.2, 392.4 245.7, 400 246 C 407.6 245.7, 416 239.2, 427.5 219.4" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="2.02" fill="none" stroke-linecap="round" opacity=".74"/>
-        <path d="M 371.5 219 C 374.8 221.6, 377.7 222.7, 380.7 222 M 419.3 222 C 422.3 222.7, 425.2 221.6, 428.5 219" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.02" fill="none" stroke-linecap="round" opacity="var(--hero-smile-crease-opacity, .1)"/>
+        <path d="M 384.8 228.3 C 392.5 230.1, 407.5 230.1, 415.2 228.3" stroke="var(--hero-mouth-line, #3a1408)" stroke-width=".62" fill="none" stroke-linecap="round" opacity=".13"/>
+        <path d="M 384.2 230.4 C 392.8 232.8, 407.2 232.8, 415.8 230.4" stroke="var(--hero-lip-fill, #b44a4a)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".42"/>
+        <path d="M 372.5 219.4 C 384 230, 392.4 233.6, 400 233.8 C 407.6 233.6, 416 230, 427.5 219.4" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="2.02" fill="none" stroke-linecap="round" opacity=".74"/>
+        <path d="M 371.5 219 C 374.8 221.6, 377.7 222.7, 380.7 222 M 419.3 222 C 422.3 222.7, 425.2 221.6, 428.5 219" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.02" fill="none" stroke-linecap="round" opacity="var(--hero-smile-crease-opacity, .14)"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="warm-smile" display="none">
-        <path d="M 378.2 223 C 387.7 234, 412.3 234, 421.8 223" stroke="var(--hero-mouth-fill, #5a2418)" stroke-width="4.55" fill="none" stroke-linecap="round"/>
-        <path d="M 382.4 222.4 C 391.2 231.2, 408.8 231.2, 417.6 222.4" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="1.28" fill="none" stroke-linecap="round" opacity=".4"/>
-        <path d="M 387.6 224.4 C 395 229.2, 405 229.2, 412.4 224.4" stroke="var(--hero-lip-highlight, #ffb0a0)" stroke-width="1.05" fill="none" stroke-linecap="round" opacity=".34"/>
+        <!-- Warm closed smile with gentle highlight. -->
+        <path d="M 378.2 223 C 387.7 230, 412.3 230, 421.8 223" stroke="var(--hero-mouth-fill, #5a2418)" stroke-width="4.55" fill="none" stroke-linecap="round"/>
+        <path d="M 382.4 222.4 C 391.2 228.4, 408.8 228.4, 417.6 222.4" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="1.28" fill="none" stroke-linecap="round" opacity=".4"/>
+        <path d="M 387.6 224.4 C 395 227.6, 405 227.6, 412.4 224.4" stroke="var(--hero-lip-highlight, #ffb0a0)" stroke-width="1.05" fill="none" stroke-linecap="round" opacity=".34"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="soft-open-grin" display="none">
-        <path d="M 376.6 220.8 C 386.8 235.6, 393.2 242.2, 400 242.6 C 406.8 242.2, 413.2 235.6, 423.4 220.8 C 415 232.6, 407.6 236.2, 400 236.2 C 392.4 236.2, 385 232.6, 376.6 220.8 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
-        <ellipse cx="400" cy="240.4" rx="12.4" ry="3.1" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".1"/>
-        <path d="M 383.4 223.4 C 392 229.3, 408 229.3, 416.6 223.4 C 413.3 231.5, 406.9 235, 400 235.1 C 393.1 235, 386.7 231.5, 383.4 223.4 Z" fill="#fffdf7" opacity=".92"/>
-        <path d="M 386.2 234.4 C 393.2 238, 406.8 238, 413.8 234.4" stroke="var(--hero-lip-fill, #b44a4a)" stroke-width="1.35" fill="none" stroke-linecap="round" opacity=".34"/>
-        <path d="M 377 220.8 C 386.8 235.6, 393.2 242.2, 400 242.6 C 406.8 242.2, 413.2 235.6, 423 220.8" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".68"/>
+        <!-- Soft happy grin with peek of teeth. -->
+        <path d="M 376.6 220.8 C 386.8 229.4, 393.2 232.9, 400 233.1 C 406.8 232.9, 413.2 229.4, 423.4 220.8 C 415 227.1, 407.6 229.1, 400 229.1 C 392.4 229.1, 385 227.1, 376.6 220.8 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
+        <ellipse cx="400" cy="232.1" rx="12.4" ry="1.9" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".14"/>
+        <path d="M 383.4 223.4 C 392 228.1, 408 228.1, 416.6 223.4 C 413.3 228.8, 406.9 230.7, 400 230.8 C 393.1 230.7, 386.7 228.8, 383.4 223.4 Z" fill="#fffdf7" opacity=".92"/>
+        <path d="M 386.2 230.4 C 393.2 232.4, 406.8 232.4, 413.8 230.4" stroke="var(--hero-lip-fill, #b44a4a)" stroke-width="1.35" fill="none" stroke-linecap="round" opacity=".34"/>
+        <path d="M 377 220.8 C 386.8 229.4, 393.2 232.9, 400 233.1 C 406.8 232.9, 413.2 229.4, 423 220.8" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".68"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="cheerful-grin" display="none">
-        <path d="M 375.7 220.2 C 386 232.6, 392.8 239.1, 400 239.5 C 407.2 239.1, 414 232.6, 424.3 220.2 C 414.4 239.5, 407.4 242.3, 400 242.6 C 392.6 242.3, 385.6 239.5, 375.7 220.2 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
-        <ellipse cx="400" cy="240.8" rx="13.4" ry="3.4" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".1"/>
-        <path d="M 382.6 223.4 C 391.4 229.8, 408.6 229.8, 417.4 223.4 C 413 232.2, 406.7 234.9, 400 235 C 393.3 234.9, 387 232.2, 382.6 223.4 Z" fill="#fffdf7" opacity=".91"/>
-        <path d="M 373.2 219.6 C 376.8 222.7, 380.2 224, 383.6 223.4 M 416.4 223.4 C 419.8 224, 423.2 222.7, 426.8 219.6" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.05" fill="none" stroke-linecap="round" opacity="var(--hero-smile-crease-opacity, .1)"/>
+        <!-- Cheerful grin: bright happy expression with corner dimples. -->
+        <path d="M 375.7 220.2 C 386 227.5, 392.8 231.1, 400 231.3 C 407.2 231.1, 414 227.5, 424.3 220.2 C 414.4 232.3, 407.4 233.9, 400 234.1 C 392.6 233.9, 385.6 232.3, 375.7 220.2 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
+        <ellipse cx="400" cy="232.9" rx="13.4" ry="2.1" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".14"/>
+        <path d="M 382.6 223.4 C 391.4 227, 408.6 227, 417.4 223.4 C 413 228.3, 406.7 229.8, 400 229.9 C 393.3 229.8, 387 228.3, 382.6 223.4 Z" fill="#fffdf7" opacity=".91"/>
+        <path d="M 373.2 219.6 C 376.8 222.7, 380.2 224, 383.6 223.4 M 416.4 223.4 C 419.8 224, 423.2 222.7, 426.8 219.6" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.05" fill="none" stroke-linecap="round" opacity="var(--hero-smile-crease-opacity, .14)"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="open-smile" display="none">
-        <path d="M 381.7 221.7 C 389.8 235.4, 394.4 244.1, 400 244.5 C 405.6 244.1, 410.2 235.4, 418.3 221.7 C 411.4 231.4, 405.8 234.9, 400 234.9 C 394.2 234.9, 388.6 231.4, 381.7 221.7 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
-        <ellipse cx="400" cy="239.4" rx="11.1" ry="2.9" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".1"/>
-        <path d="M 385.9 224.1 C 393.7 229.2, 406.3 229.2, 414.1 224.1 C 409.1 229.8, 400 230.5, 391.5 229.7 C 389.4 228.2, 387.5 226.3, 385.9 224.1 Z" fill="#fffdf7" opacity=".87"/>
-        <path d="M 392.1 238.9 C 397.1 242.4, 402.9 242.4, 407.9 238.9" fill="none" stroke="var(--hero-lip-fill, #b44a4a)" stroke-width="2.25" stroke-linecap="round" opacity=".68"/>
+        <!-- Open happy smile with visible lower lip. -->
+        <path d="M 381.7 221.7 C 389.8 229.7, 394.4 234.6, 400 234.8 C 405.6 234.6, 410.2 229.7, 418.3 221.7 C 411.4 227.5, 405.8 229.4, 400 229.4 C 394.2 229.4, 388.6 227.5, 381.7 221.7 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
+        <ellipse cx="400" cy="232.4" rx="11.1" ry="1.9" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".14"/>
+        <path d="M 385.9 224.1 C 393.7 228.1, 406.3 228.1, 414.1 224.1 C 409.1 228.4, 400 229, 391.5 228.4 C 389.4 227.3, 387.5 225.8, 385.9 224.1 Z" fill="#fffdf7" opacity=".87"/>
+        <path d="M 392.1 232.4 C 397.1 234.4, 402.9 234.4, 407.9 232.4" fill="none" stroke="var(--hero-lip-fill, #b44a4a)" stroke-width="2.25" stroke-linecap="round" opacity=".68"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="excited-smile" display="none">
-        <path d="M 378.8 220.7 C 387.4 238.6, 393.1 247.7, 400 248.2 C 406.9 247.7, 412.6 238.6, 421.2 220.7 C 412.6 233.1, 406.4 237, 400 237 C 393.6 237, 387.4 233.1, 378.8 220.7 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
-        <ellipse cx="400" cy="240.9" rx="11.8" ry="3.2" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".1"/>
-        <path d="M 385 224 C 393.7 230.9, 406.3 230.9, 415 224 C 408.6 231.1, 400.1 232.2, 391.6 230.9 C 389.1 229.2, 386.9 226.8, 385 224 Z" fill="#fffdf7" opacity=".89"/>
-        <path d="M 391.4 241.2 C 396.6 245.5, 403.4 245.5, 408.6 241.2" stroke="var(--hero-lip-fill, #b44a4a)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".72"/>
-        <path d="M 375.2 220.3 C 378.1 222.9, 381 224.2, 384.1 223.6 M 415.9 223.6 C 419 224.2, 421.9 222.9, 424.8 220.3" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.02" fill="none" stroke-linecap="round" opacity="var(--hero-smile-crease-opacity, .1)"/>
+        <!-- Excited happy mouth: tall open with prominent lip + dimples. -->
+        <path d="M 378.8 220.7 C 387.4 230.6, 393.1 235.9, 400 236.2 C 406.9 235.9, 412.6 230.6, 421.2 220.7 C 412.6 228.1, 406.4 230.2, 400 230.2 C 393.6 230.2, 387.4 228.1, 378.8 220.7 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
+        <ellipse cx="400" cy="232.7" rx="11.8" ry="2" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".14"/>
+        <path d="M 385 224 C 393.7 228.8, 406.3 228.8, 415 224 C 408.6 228.8, 400.1 229.6, 391.6 228.8 C 389.1 227.7, 386.9 226.2, 385 224 Z" fill="#fffdf7" opacity=".89"/>
+        <path d="M 391.4 234 C 396.6 236.4, 403.4 236.4, 408.6 234" stroke="var(--hero-lip-fill, #b44a4a)" stroke-width="2.5" fill="none" stroke-linecap="round" opacity=".72"/>
+        <path d="M 375.2 220.3 C 378.1 222.9, 381 224.2, 384.1 223.6 M 415.9 223.6 C 419 224.2, 421.9 222.9, 424.8 220.3" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.02" fill="none" stroke-linecap="round" opacity="var(--hero-smile-crease-opacity, .14)"/>
       </g>
       </g>
           </g>
