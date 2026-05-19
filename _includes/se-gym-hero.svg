@@ -224,8 +224,8 @@
   <ellipse cx="400" cy="248" rx="238" ry="318" fill="url(#hero-stage-glow-{{ hero_variant }})" pointer-events="none"/>
   <path d="M 268 328 C 236 410, 238 506, 290 586 M 532 328 C 564 410, 562 506, 510 586" stroke="#ffffff" stroke-width="6.00" stroke-linecap="round" fill="none" stroke-linecap="round" opacity=".22" pointer-events="none"/>
   <ellipse cx="400" cy="220" rx="220" ry="240" fill="url(#hero-aura-glow-{{ hero_variant }})" pointer-events="none"/>
-  <!-- Cape sway follows the breath with a small cloth lag instead of a hard workout wobble. -->
-  <g data-hero-kind-layer="human" data-hero-motion="cape-rock"><animateTransform attributeName="transform" type="rotate" values="-2.1 400 268;2.7 400 268;-2.1 400 268" keyTimes="0;0.6;1" dur="2.2s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.5 0 0.4 1; 0.3 0.7 0.4 1" />
+  <!-- Cape sway shares the exact press/breath timeline so the rig never phase-drifts. -->
+  <g data-hero-kind-layer="human" data-hero-motion="cape-rock"><animateTransform attributeName="transform" type="rotate" values="-2.1 400 268;2.7 400 268;-2.1 400 268" keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1" />
     <path d="M 335 258 C 318 290, 308 360, 308 440 C 308 490, 312 525, 318 555 Q 332 545, 346 555 Q 360 545, 374 555 Q 388 545, 400 555 Q 412 545, 426 555 Q 440 545, 454 555 Q 468 545, 482 555 C 488 525, 492 490, 492 440 C 492 360, 482 290, 465 258 Z" fill="url(#cape-grad-{{ hero_variant }})"/>
     <path d="M 338 260 C 326 300, 320 380, 320 470 C 320 510, 324 540, 328 558 L 332 553 C 328 540, 326 510, 326 470 C 326 380, 332 300, 343 262 Z" fill="url(#cape-inner-{{ hero_variant }})" opacity=".9"/>
     <path d="M 462 260 C 474 300, 480 380, 480 470 C 480 510, 476 540, 472 558 L 468 553 C 472 540, 474 510, 474 470 C 474 380, 468 300, 457 262 Z" fill="url(#cape-inner-{{ hero_variant }})" opacity=".9"/>
@@ -660,14 +660,6 @@
       <text x="0" y="11" text-anchor="middle" font-family="'Fraunces', Georgia, serif" font-weight="800" font-size="34" fill="#002F52" stroke="#fff6c0" stroke-width="3.30" paint-order="stroke fill" letter-spacing="-1">SE</text>
       <path d="M 26 -33 L 19 -22 L 24 -22 L 18 -9 L 27 -23 L 22 -23 Z" fill="#00385f" opacity=".88"/>
     </g>
-    <ellipse cx="322" cy="278" rx="25" ry="31" fill="var(--hero-suit-dark, #04375d)" opacity=".92"/>
-    <ellipse cx="322" cy="276" rx="22" ry="28" fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #04375d)" stroke-width="2.10"/>
-    <path d="M 306 268 C 313 257, 328 253, 342 260" stroke="var(--hero-suit-light, #68c4ea)" stroke-width="3.00" fill="none" stroke-linecap="round" opacity=".48"/>
-    <ellipse cx="478" cy="278" rx="25" ry="31" fill="var(--hero-suit-dark, #04375d)" opacity=".92"/>
-    <ellipse cx="478" cy="276" rx="22" ry="28" fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #04375d)" stroke-width="2.10"/>
-    <path d="M 494 268 C 487 257, 472 253, 458 260" stroke="var(--hero-suit-light, #68c4ea)" stroke-width="3.00" fill="none" stroke-linecap="round" opacity=".48"/>
-    <ellipse cx="316" cy="266" rx="6.5" ry="14" fill="#a7ebff" opacity=".38"/>
-    <ellipse cx="484" cy="266" rx="6.5" ry="14" fill="#a7ebff" opacity=".38"/>
     <!-- ============================================================
          HUMAN ARMS — Articulated skeleton (two rigid bones per arm).
          Drawn BEFORE the head-assembly so long hair drapes naturally
@@ -822,6 +814,15 @@
         </g>
       </g>
     </g>
+    <!-- Shoulder caps sit over the arm roots so the sockets read as fabric plates, not exposed joints. -->
+    <ellipse cx="322" cy="278" rx="25" ry="31" fill="var(--hero-suit-dark, #04375d)" opacity=".92"/>
+    <ellipse cx="322" cy="276" rx="22" ry="28" fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #04375d)" stroke-width="2.10"/>
+    <path d="M 306 268 C 313 257, 328 253, 342 260" stroke="var(--hero-suit-light, #68c4ea)" stroke-width="3.00" fill="none" stroke-linecap="round" opacity=".48"/>
+    <ellipse cx="478" cy="278" rx="25" ry="31" fill="var(--hero-suit-dark, #04375d)" opacity=".92"/>
+    <ellipse cx="478" cy="276" rx="22" ry="28" fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #04375d)" stroke-width="2.10"/>
+    <path d="M 494 268 C 487 257, 472 253, 458 260" stroke="var(--hero-suit-light, #68c4ea)" stroke-width="3.00" fill="none" stroke-linecap="round" opacity=".48"/>
+    <ellipse cx="316" cy="266" rx="6.5" ry="14" fill="#a7ebff" opacity=".38"/>
+    <ellipse cx="484" cy="266" rx="6.5" ry="14" fill="#a7ebff" opacity=".38"/>
     <g data-hero-head-assembly transform="translate(400 236) scale(1.12) translate(-400 -236)">
       <g data-hero-slot="ear-shape" data-hero-option="oval">
         <g data-hero-face-detail="ear-left">
@@ -1026,142 +1027,82 @@
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="tousled-wispy-fringe" display="none">
-        <!-- Reference: Tobi's headshot — honey-blonde tousled fringe with multiple
-             standing peaks at the crown, dominant cowlick at center-left, and 5
-             distinct fringe locks. Soft-flat layered build:
-               back_layer  → halo behind head (depth cue)
-               front_layer → spiky-topped silhouette with embedded fringe locks
-               cel layers  → sharp shadow + highlight plates (no gradient mush)
-               crown tufts → 3 standing strands matching the reference's spiky top
-               cowlick     → dominant standing strand at center-left
-               detail      → flow lines + per-lock separation/definition strokes
-             All cubic Beziers — no L-lines / saw-teeth. -->
+        <!-- Reference-informed soft-flat short tousle:
+             compact halo, one cubic front silhouette, clumped asymmetric fringe. -->
+        <path d="M 346 174
+                 C 338 156, 338 134, 348 118
+                 C 358 102, 374 94, 392 94
+                 C 404 88, 424 94, 438 110
+                 C 450 124, 456 146, 452 162
+                 C 450 170, 446 174, 440 176
+                 C 424 168, 406 164, 388 166
+                 C 372 166, 358 170, 346 174 Z"
+              fill="var(--hero-hair-dark, #0f0905)" opacity=".48"/>
 
-        <!-- BACK LAYER: subtle halo behind the head, drawn first. -->
-        <path d="M 344 174
-                 C 336 156, 332 134, 340 116
-                 C 348 100, 360 90, 374 86
-                 C 384 80, 394 80, 402 86
-                 C 410 82, 422 86, 432 96
-                 C 446 110, 454 132, 454 156
-                 C 452 168, 448 174, 444 174
-                 C 440 174, 436 172, 432 172
-                 C 410 172, 390 172, 368 172
-                 C 358 172, 350 174, 344 174 Z"
-              fill="var(--hero-hair-dark, #0f0905)" opacity=".55"/>
-
-        <!-- FRONT LAYER (main silhouette): the top edge has 4 subtle peaks/valleys
-             — left rise → big peak → small dip → right peak — giving the spiky
-             tousled top the reference shows. Bottom edge embeds 5 fringe locks. -->
         <path d="M 348 172
-                 C 340 154, 338 132, 344 116
-                 C 348 106, 354 98, 362 92
-                 C 366 88, 372 86, 376 90
-                 C 380 84, 386 80, 390 84
-                 C 394 88, 396 94, 400 96
-                 C 404 90, 410 88, 414 94
-                 C 418 90, 424 90, 430 100
-                 C 440 112, 448 132, 448 152
-                 C 448 162, 446 168, 442 168
-                 C 438 168, 436 168, 434 170
-                 C 432 174, 430 182, 424 182
-                 C 420 180, 418 172, 416 170
-                 C 414 178, 410 188, 404 186
-                 C 400 184, 398 174, 396 172
-                 C 392 182, 384 194, 376 190
-                 C 370 186, 368 174, 366 172
-                 C 362 180, 358 186, 354 184
-                 C 350 180, 348 174, 348 172 Z"
+                 C 342 156, 342 136, 350 120
+                 C 356 108, 366 100, 380 98
+                 C 388 92, 396 92, 402 100
+                 C 408 94, 422 98, 436 112
+                 C 446 124, 452 142, 450 158
+                 C 450 166, 448 172, 444 174
+                 C 440 172, 436 168, 432 166
+                 C 430 174, 426 181, 421 181
+                 C 416 178, 416 169, 413 166
+                 C 408 176, 404 184, 398 183
+                 C 394 180, 394 170, 391 167
+                 C 386 176, 379 184, 372 181
+                 C 368 178, 368 170, 365 168
+                 C 360 176, 354 180, 351 177
+                 C 349 175, 348 173, 348 172 Z"
               fill="url(#hair-grad-{{ hero_variant }})"
               stroke="var(--hero-hair-dark, #0f0905)"
               stroke-width="3.6"
               stroke-linejoin="round"
               stroke-linecap="round"/>
 
-        <!-- CEL-SHADE 1: mid-tone shadow on the right-front (light from upper-left).
-             Strengthened to opacity .44 for clearer two-tone soft-flat contrast. -->
-        <path d="M 392 108 C 410 108, 426 120, 438 142
-                 C 442 154, 444 166, 442 168
-                 C 432 162, 420 160, 408 162
-                 C 400 158, 396 140, 396 120
-                 C 394 114, 392 110, 392 108 Z"
-              fill="var(--hero-hair-dark, #0f0905)" opacity=".44"/>
+        <path d="M 394 108 C 412 108, 430 122, 440 144
+                 C 444 154, 446 164, 444 170
+                 C 432 164, 418 161, 404 163
+                 C 398 156, 396 130, 394 108 Z"
+              fill="var(--hero-hair-dark, #0f0905)" opacity=".38"/>
 
-        <!-- CEL-SHADE 2: top-light highlight on the upper-left, where the dominant
-             crown peak catches the light. Strengthened to opacity .82. -->
-        <path d="M 352 112 C 364 96, 384 88, 400 92
-                 C 410 94, 420 100, 428 110
-                 C 414 104, 400 106, 390 114
-                 C 378 108, 366 112, 358 122
-                 C 356 120, 354 116, 352 112 Z"
-              fill="var(--hero-hair-light, #4a3220)" opacity=".82"/>
+        <path d="M 354 116 C 366 100, 384 96, 398 102
+                 C 408 100, 420 104, 430 114
+                 C 414 108, 398 111, 386 119
+                 C 374 112, 362 116, 354 128
+                 C 352 124, 352 120, 354 116 Z"
+              fill="var(--hero-hair-light, #4a3220)" opacity=".72"/>
 
-        <!-- CROWN TUFTS: three standing strands at the top, matching the spiky
-             tousled crown in the reference. Tallest tuft is at center-left
-             (dominant cowlick); two smaller flanking tufts add the wispy character. -->
-        <g fill="url(#hair-grad-{{ hero_variant }})"
-           stroke="var(--hero-hair-dark, #0f0905)"
-           stroke-width="2.4"
-           stroke-linejoin="round">
-          <!-- Left tuft: medium height, slight lean -->
-          <path d="M 368 94 C 364 82, 374 76, 378 86
-                   C 380 92, 376 100, 372 100
-                   C 368 98, 366 96, 368 94 Z"/>
-          <!-- Center cowlick: tallest, dominant standing strand -->
-          <path d="M 384 88 C 378 72, 392 66, 398 78
-                   C 402 88, 398 100, 392 102
-                   C 386 100, 382 92, 384 88 Z"/>
-          <!-- Right tuft: small, leans slightly outward -->
-          <path d="M 406 96 C 404 86, 414 84, 418 94
-                   C 420 102, 416 108, 412 108
-                   C 408 106, 404 100, 406 96 Z"/>
-        </g>
+        <path d="M 360 108 C 382 98, 414 102, 434 118"
+              stroke="#ffffff" stroke-width="2.8" fill="none"
+              stroke-linecap="round" opacity=".5"/>
+        <path d="M 366 118 C 386 108, 412 110, 430 124"
+              stroke="var(--hero-hair-light, #4a3220)" stroke-width="1.7" fill="none"
+              stroke-linecap="round" opacity=".68"/>
 
-        <!-- SPECULAR SHEEN: bright white catchlight + warm secondary along the top. -->
-        <path d="M 358 102 C 382 88, 414 92, 432 108"
-              stroke="#ffffff" stroke-width="3.2" fill="none"
-              stroke-linecap="round" opacity=".62"/>
-        <path d="M 364 110 C 384 100, 412 102, 430 116"
-              stroke="var(--hero-hair-light, #4a3220)" stroke-width="1.8" fill="none"
-              stroke-linecap="round" opacity=".75"/>
+        <ellipse cx="391" cy="112" rx="10" ry="4"
+                 fill="#ffffff" opacity=".3"
+                 transform="rotate(-12 391 112)"/>
 
-        <!-- FOCUSED SUB-HIGHLIGHT: a small bright shine-spot at the dominant crown peak. -->
-        <ellipse cx="386" cy="106" rx="11" ry="4.5"
-                 fill="#ffffff" opacity=".45"
-                 transform="rotate(-14 386 106)"/>
-
-        <!-- FLOW LINES: three feathering curves following the sweep direction. -->
-        <path d="M 354 118 C 372 106, 396 102, 418 108
-                 M 354 136 C 374 124, 408 122, 432 138
-                 M 356 152 C 374 142, 410 142, 434 154"
-              stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.6" fill="none"
+        <path d="M 356 126 C 374 112, 394 108, 416 114
+                 M 354 143 C 374 130, 408 130, 434 146
+                 M 360 158 C 378 148, 408 148, 430 158"
+              stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.55" fill="none"
               stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .5)"/>
 
-        <!-- LOCK-SEPARATION STROKES: short dark vertical strokes at the seams
-             between fringe locks, reading as the "ink" between hair clumps. -->
-        <path d="M 360 166 C 360 174, 360 178, 360 180
-                 M 376 164 C 376 172, 378 180, 378 184
-                 M 392 164 C 392 174, 394 184, 394 188
-                 M 410 166 C 410 174, 412 180, 412 184
-                 M 426 168 C 426 174, 428 178, 428 180"
-              stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.5" fill="none"
+        <path d="M 365 168 C 365 174, 366 178, 368 180
+                 M 389 166 C 389 172, 391 178, 392 181
+                 M 413 166 C 413 172, 414 176, 416 179
+                 M 431 168 C 431 172, 432 175, 434 176"
+              stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.45" fill="none"
+              stroke-linecap="round" opacity=".52"/>
+
+        <path d="M 370 168 C 371 173, 372 177, 373 179
+                 M 394 168 C 395 174, 396 178, 397 180
+                 M 417 168 C 418 172, 419 176, 420 178"
+              stroke="var(--hero-hair-light, #4a3220)" stroke-width="1.25" fill="none"
               stroke-linecap="round" opacity=".58"/>
-
-        <!-- STRAND-TIP DEFINITION: dark interior strokes inside each fringe lock. -->
-        <path d="M 351 174 C 351 178, 351 182, 351 184
-                 M 369 172 C 370 178, 371 184, 372 188
-                 M 393 172 C 394 180, 395 188, 395 192
-                 M 417 172 C 418 178, 419 184, 419 186"
-              stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.6" fill="none"
-              stroke-linecap="round" opacity=".62"/>
-
-        <!-- STRAND-TIP HIGHLIGHTS: bright catchlights on the lit side of each lock. -->
-        <path d="M 353 174 C 354 178, 355 182, 354 184
-                 M 371 172 C 372 178, 373 184, 372 188
-                 M 395 172 C 396 180, 397 186, 396 190
-                 M 419 172 C 420 178, 421 184, 420 186"
-              stroke="var(--hero-hair-light, #4a3220)" stroke-width="1.3" fill="none"
-              stroke-linecap="round" opacity=".62"/>
 
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
@@ -1903,20 +1844,15 @@
       </g>
       <g data-hero-slot="hairline" data-hero-option="none"></g>
       <g data-hero-slot="hairline" data-hero-option="tousled-wispy-fringe" display="none">
-        <!-- Soft forehead shadow under the fringe. Top edge follows the wisp
-             contour of the new hair path (matching the 1+3 clump pattern);
-             bottom edge tapers across the forehead just above the eyebrows. -->
-        <path d="M 348 174
-                 C 354 178, 358 180, 364 174
-                 C 366 174, 368 174, 370 174
-                 C 376 184, 384 186, 388 178
-                 C 392 174, 396 174, 400 174
-                 C 408 186, 418 184, 422 176
-                 C 426 174, 432 174, 436 174
-                 C 442 174, 444 174, 446 174
-                 C 446 184, 432 190, 400 192
-                 C 368 190, 350 184, 348 174 Z"
-              fill="var(--hero-hair-dark, #0f0905)" opacity=".32"/>
+        <path d="M 350 171
+                 C 356 176, 362 176, 366 169
+                 C 372 181, 382 183, 390 170
+                 C 396 180, 408 181, 414 168
+                 C 420 178, 431 178, 438 170
+                 C 440 176, 436 183, 424 187
+                 C 406 191, 381 190, 362 185
+                 C 354 182, 350 176, 350 171 Z"
+              fill="var(--hero-hair-dark, #0f0905)" opacity=".26"/>
       </g>
       <g data-hero-slot="hairline" data-hero-option="short" display="none">
         <path d="M 355 176 C 348 144, 366 116, 400 114 C 434 116, 452 144, 445 176 C 438 158, 424 144, 406 140 C 392 138, 378 144, 368 156 C 362 163, 358 170, 355 176 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
@@ -2961,7 +2897,7 @@
       </g>
       <g data-hero-motion="nose-breath-position">
         <animateTransform attributeName="transform" type="translate"
-                          values="0 0;0 .45;0 0"
+                          values="0 0;0 .38;0 0"
                           keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                           additive="sum" calcMode="spline"
                           keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
@@ -3570,14 +3506,14 @@
       <rect x="478" y="94" width="20" height="3.5" rx="1.75" fill="#fff6c0" opacity=".84"/>
     </g>
     <g data-hero-kind-layer="bruin" data-hero-slot="mascot" data-hero-option="bruin" display="none">
-      <animateTransform attributeName="transform" type="translate" values="0 12;0 -17;0 12" keyTimes="0;0.5;1" dur="2.2s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" />
+      <animateTransform attributeName="transform" type="translate" values="0 12;0 -17;0 12" keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1" />
       <g>
-        <animateTransform attributeName="transform" type="rotate" values="-1.2 400 338;1.2 400 338;-1.2 400 338" keyTimes="0;0.5;1" dur="2.2s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" />
+        <animateTransform attributeName="transform" type="rotate" values="-1.2 400 338;1.2 400 338;-1.2 400 338" keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1" />
         <path d="M 335 258 C 318 290, 308 360, 308 440 C 308 490, 312 525, 318 555 Q 332 545, 346 555 Q 360 545, 374 555 Q 388 545, 400 555 Q 412 545, 426 555 Q 440 545, 454 555 Q 468 545, 482 555 C 488 525, 492 490, 492 440 C 492 360, 482 290, 465 258 Z" fill="url(#cape-grad-{{ hero_variant }})" opacity=".96"/>
         <path d="M 338 260 C 326 300, 320 380, 320 470 C 320 510, 324 540, 328 558 L 332 553 C 328 540, 326 510, 326 470 C 326 380, 332 300, 343 262 Z" fill="url(#cape-inner-{{ hero_variant }})" opacity=".9"/>
         <path d="M 462 260 C 474 300, 480 380, 480 470 C 480 510, 476 540, 472 558 L 468 553 C 472 540, 474 510, 474 470 C 474 380, 468 300, 457 262 Z" fill="url(#cape-inner-{{ hero_variant }})" opacity=".9"/>
         <path d="M 318 555 Q 332 545, 346 555 Q 360 545, 374 555 Q 388 545, 400 555 Q 412 545, 426 555 Q 440 545, 454 555 Q 468 545, 482 555 L 480 563 Q 468 553, 454 563 Q 440 553, 426 563 Q 412 553, 400 563 Q 388 553, 374 563 Q 360 553, 346 563 Q 332 553, 320 563 Z" fill="url(#cape-inner-{{ hero_variant }})" opacity=".82">
-          <animate attributeName="d" values="M 318 555 Q 332 545, 346 555 Q 360 545, 374 555 Q 388 545, 400 555 Q 412 545, 426 555 Q 440 545, 454 555 Q 468 545, 482 555 L 480 563 Q 468 553, 454 563 Q 440 553, 426 563 Q 412 553, 400 563 Q 388 553, 374 563 Q 360 553, 346 563 Q 332 553, 320 563 Z;M 318 558 Q 332 548, 346 558 Q 360 548, 374 558 Q 388 548, 400 558 Q 412 548, 426 558 Q 440 548, 454 558 Q 468 548, 482 558 L 480 566 Q 468 556, 454 566 Q 440 556, 426 566 Q 412 556, 400 566 Q 388 556, 374 566 Q 360 556, 346 566 Q 332 556, 320 566 Z;M 318 555 Q 332 545, 346 555 Q 360 545, 374 555 Q 388 545, 400 555 Q 412 545, 426 555 Q 440 545, 454 555 Q 468 545, 482 555 L 480 563 Q 468 553, 454 563 Q 440 553, 426 563 Q 412 553, 400 563 Q 388 553, 374 563 Q 360 553, 346 563 Q 332 553, 320 563 Z" keyTimes="0;0.5;1" dur="2.2s" begin="0s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" />
+          <animate attributeName="d" values="M 318 555 Q 332 545, 346 555 Q 360 545, 374 555 Q 388 545, 400 555 Q 412 545, 426 555 Q 440 545, 454 555 Q 468 545, 482 555 L 480 563 Q 468 553, 454 563 Q 440 553, 426 563 Q 412 553, 400 563 Q 388 553, 374 563 Q 360 553, 346 563 Q 332 553, 320 563 Z;M 318 558 Q 332 548, 346 558 Q 360 548, 374 558 Q 388 548, 400 558 Q 412 548, 426 558 Q 440 548, 454 558 Q 468 548, 482 558 L 480 566 Q 468 556, 454 566 Q 440 556, 426 566 Q 412 556, 400 566 Q 388 556, 374 566 Q 360 556, 346 566 Q 332 556, 320 566 Z;M 318 555 Q 332 545, 346 555 Q 360 545, 374 555 Q 388 545, 400 555 Q 412 545, 426 555 Q 440 545, 454 555 Q 468 545, 482 555 L 480 563 Q 468 553, 454 563 Q 440 553, 426 563 Q 412 553, 400 563 Q 388 553, 374 563 Q 360 553, 346 563 Q 332 553, 320 563 Z" keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite" calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1" />
         </path>
         <path d="M 332 320 C 322 400, 320 490, 328 545 M 468 320 C 478 400, 480 490, 472 545 M 370 295 C 364 380, 366 470, 372 540 M 430 295 C 436 380, 434 470, 428 540" stroke="#001428" stroke-width="3.30" fill="none" opacity=".28"/>
       </g>
@@ -3598,19 +3534,19 @@
       <ellipse cx="374" cy="184" rx="33" ry="24" fill="var(--hero-bruin-fur-light, #a06840)" opacity=".22"/>
       <ellipse cx="426" cy="190" rx="25" ry="20" fill="var(--hero-bruin-fur-dark, #3d2515)" opacity=".12"/>
       <g>
-        <animateTransform attributeName="transform" type="rotate" values="0 350 170;-5 350 170;0 350 170" keyTimes="0;0.5;1" dur="2.2s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" />
+        <animateTransform attributeName="transform" type="rotate" values="0 350 170;-5 350 170;0 350 170" keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1" />
         <circle cx="350" cy="170" r="26" fill="url(#bruin-fur-{{ hero_variant }})" stroke="var(--hero-bruin-line, #1f140c)" stroke-width="2.70"/>
         <circle cx="350" cy="170" r="12" fill="var(--hero-bruin-muzzle, #d0a070)" opacity=".84"/>
         <path d="M 339 166 Q 350 158, 361 166" stroke="var(--hero-bruin-fur-light, #a06840)" stroke-width="3.00" fill="none" stroke-linecap="round" opacity=".48"/>
       </g>
       <g>
-        <animateTransform attributeName="transform" type="rotate" values="0 450 170;5 450 170;0 450 170" keyTimes="0;0.5;1" dur="2.2s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" />
+        <animateTransform attributeName="transform" type="rotate" values="0 450 170;5 450 170;0 450 170" keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1" />
         <circle cx="450" cy="170" r="26" fill="url(#bruin-fur-{{ hero_variant }})" stroke="var(--hero-bruin-line, #1f140c)" stroke-width="2.70"/>
         <circle cx="450" cy="170" r="12" fill="var(--hero-bruin-muzzle, #d0a070)" opacity=".84"/>
         <path d="M 439 166 Q 450 158, 461 166" stroke="var(--hero-bruin-fur-light, #a06840)" stroke-width="3.00" fill="none" stroke-linecap="round" opacity=".48"/>
       </g>
       <g>
-        <animateTransform attributeName="transform" type="translate" values="0 0;0 -3;0 0" keyTimes="0;0.5;1" dur="2.2s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" />
+        <animateTransform attributeName="transform" type="translate" values="0 0;0 -3;0 0" keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1" />
         <path d="M 378 154 Q 400 132, 422 154 Q 414 150, 400 164 Q 386 150, 378 154 Z" fill="var(--hero-bruin-fur-light, #a06840)" stroke="var(--hero-bruin-line, #1f140c)" stroke-width="1.80" opacity=".86"/>
         <path d="M 388 153 Q 400 144, 412 153" stroke="#fff0b4" stroke-width="2.25" fill="none" stroke-linecap="round" opacity=".38"/>
         <ellipse cx="400" cy="216" rx="40" ry="31" fill="url(#bruin-muzzle-{{ hero_variant }})" stroke="var(--hero-bruin-line, #1f140c)" stroke-width="2.10"/>
@@ -3625,7 +3561,7 @@
         <path d="M 372 188 Q 382 179, 393 185 M 407 185 Q 418 179, 428 188" stroke="var(--hero-bruin-line, #1f140c)" stroke-width="3.15" fill="none" stroke-linecap="round"/>
         <path d="M 370 194 Q 382 188, 394 194 M 406 194 Q 418 188, 430 194" stroke="#fff0b4" stroke-width="1.80" fill="none" stroke-linecap="round" opacity=".36"/>
         <path d="M 374 199 Q 382 199, 390 199 M 410 199 Q 418 199, 426 199" stroke="var(--hero-eye, #1f140c)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity="0">
-          <animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.56;0.6;0.64;1" dur="3.4s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.56;0.6;0.64;1" dur="3.4s" begin="0s" repeatCount="indefinite" />
         </path>
         <path d="M 390 212 Q 400 204, 410 212 Q 407 221, 400 221 Q 393 221, 390 212 Z" fill="var(--hero-bruin-line, #1f140c)"/>
         <ellipse cx="397" cy="210" rx="2.4" ry="1.5" fill="#ffffff" opacity=".38"/>
@@ -3729,27 +3665,27 @@
         <g data-hero-topic-rotator="left" color="#ffffff">
           <g data-hero-topic-image="code" opacity="1">
             <use href="#hero-topic-icon-code-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="1;0;0;0;0;0;1" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="1;0;0;0;0;0;1" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
           <g data-hero-topic-image="testing" opacity="0">
             <use href="#hero-topic-icon-testing-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="0;1;0;0;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="0;1;0;0;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
           <g data-hero-topic-image="git" opacity="0">
             <use href="#hero-topic-icon-git-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="0;0;1;0;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="0;0;1;0;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
           <g data-hero-topic-image="data" opacity="0">
             <use href="#hero-topic-icon-data-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="0;0;0;1;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="0;0;0;1;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
           <g data-hero-topic-image="uml" opacity="0">
             <use href="#hero-topic-icon-uml-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="0;0;0;0;1;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="0;0;0;0;1;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
           <g data-hero-topic-image="graph" opacity="0">
             <use href="#hero-topic-icon-graph-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="0;0;0;0;0;1;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="0;0;0;0;0;1;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
         </g>
         <circle r="5" fill="#0a1018"/>
@@ -3788,27 +3724,27 @@
         <g data-hero-topic-rotator="right" color="#ffffff">
           <g data-hero-topic-image="code" opacity="1">
             <use href="#hero-topic-icon-code-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="1;0;0;0;0;0;1" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="1;0;0;0;0;0;1" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
           <g data-hero-topic-image="testing" opacity="0">
             <use href="#hero-topic-icon-testing-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="0;1;0;0;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="0;1;0;0;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
           <g data-hero-topic-image="git" opacity="0">
             <use href="#hero-topic-icon-git-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="0;0;1;0;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="0;0;1;0;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
           <g data-hero-topic-image="data" opacity="0">
             <use href="#hero-topic-icon-data-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="0;0;0;1;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="0;0;0;1;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
           <g data-hero-topic-image="uml" opacity="0">
             <use href="#hero-topic-icon-uml-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="0;0;0;0;1;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="0;0;0;0;1;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
           <g data-hero-topic-image="graph" opacity="0">
             <use href="#hero-topic-icon-graph-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="0;0;0;0;0;1;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="0;0;0;0;0;1;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
         </g>
         <circle r="5" fill="#0a1018"/>

@@ -2470,7 +2470,10 @@
     if (!svg || typeof svg.pauseAnimations !== 'function') return;
     if (reducedMotionTrackedSvgs.indexOf(svg) === -1) reducedMotionTrackedSvgs.push(svg);
     if (reducedMotionMql && reducedMotionMql.matches) {
-      try { svg.pauseAnimations(); } catch (e) {}
+      try {
+        if (typeof svg.setCurrentTime === 'function') svg.setCurrentTime(0);
+        svg.pauseAnimations();
+      } catch (e) {}
     } else {
       try { svg.unpauseAnimations(); } catch (e) {}
     }
