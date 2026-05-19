@@ -14,18 +14,33 @@
       <stop offset=".5" stop-color="#ffffff" stop-opacity=".06"/>
       <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
     </radialGradient>
+    <linearGradient id="torso-rim-light-{{ hero_variant }}" gradientUnits="userSpaceOnUse" x1="324" y1="262" x2="476" y2="432"><stop offset="0" stop-color="#dff7ff" stop-opacity=".58"/><stop offset=".18" stop-color="#b8eeff" stop-opacity=".28"/><stop offset=".48" stop-color="#ffffff" stop-opacity=".08"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+    <radialGradient id="torso-core-glow-{{ hero_variant }}" gradientUnits="userSpaceOnUse" cx="400" cy="314" r="118"><stop offset="0" stop-color="#ffffff" stop-opacity=".26"/><stop offset=".42" stop-color="#9be5ff" stop-opacity=".18"/><stop offset="1" stop-color="#9be5ff" stop-opacity="0"/></radialGradient>
     <linearGradient id="suit-panel-{{ hero_variant }}" gradientUnits="userSpaceOnUse" x1="330" y1="260" x2="470" y2="430"><stop offset="0" stop-color="#94e3ff" stop-opacity=".52"/><stop offset=".55" stop-color="#2aa6d2" stop-opacity=".2"/><stop offset="1" stop-color="#062f54" stop-opacity=".18"/></linearGradient>
     <linearGradient id="suit-deep-panel-{{ hero_variant }}" gradientUnits="userSpaceOnUse" x1="350" y1="260" x2="450" y2="560"><stop offset="0" stop-color="#052944" stop-opacity=".22"/><stop offset=".65" stop-color="#03213d" stop-opacity=".58"/><stop offset="1" stop-color="#06172c" stop-opacity=".76"/></linearGradient>
+    <linearGradient id="leg-rim-light-{{ hero_variant }}" gradientUnits="userSpaceOnUse" x1="352" y1="436" x2="448" y2="562"><stop offset="0" stop-color="#b7efff" stop-opacity=".42"/><stop offset=".32" stop-color="#b7efff" stop-opacity=".14"/><stop offset="1" stop-color="#ffffff" stop-opacity="0"/></linearGradient>
+    <linearGradient id="leg-inner-shadow-{{ hero_variant }}" gradientUnits="userSpaceOnUse" x1="372" y1="434" x2="428" y2="562"><stop offset="0" stop-color="#001a2f" stop-opacity="0"/><stop offset=".34" stop-color="#001a2f" stop-opacity=".14"/><stop offset="1" stop-color="#001a2f" stop-opacity=".46"/></linearGradient>
     <linearGradient id="cape-grad-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--hero-cape-light, #4eb7df)"/><stop offset=".55" stop-color="var(--hero-cape, #0d5f91)"/><stop offset="1" stop-color="var(--hero-cape-dark, #001F38)"/></linearGradient>
     <linearGradient id="cape-inner-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--hero-cape-inner-light, #FFE470)"/><stop offset="1" stop-color="var(--hero-cape-inner, #B38B00)"/></linearGradient>
     <linearGradient id="gold-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE470"/><stop offset=".5" stop-color="#FFD100"/><stop offset="1" stop-color="#B38B00"/></linearGradient>
     <radialGradient id="gold-radial-{{ hero_variant }}" cx=".38" cy=".32" r=".95"><stop offset="0" stop-color="#fff7c0"/><stop offset=".5" stop-color="#FFD100"/><stop offset="1" stop-color="#8a6a00"/></radialGradient>
     <linearGradient id="boot-cream-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffdf0"/><stop offset=".5" stop-color="#f4f0d9"/><stop offset="1" stop-color="#cfc7a2"/></linearGradient>
     <linearGradient id="boot-shadow-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4f0d9" stop-opacity=".72"/><stop offset="1" stop-color="#6f5a18" stop-opacity=".52"/></linearGradient>
+    <linearGradient id="boot-side-light-{{ hero_variant }}" gradientUnits="userSpaceOnUse" x1="336" y1="552" x2="392" y2="626"><stop offset="0" stop-color="#ffffff" stop-opacity=".48"/><stop offset=".22" stop-color="#fff7d2" stop-opacity=".24"/><stop offset="1" stop-color="#fff7d2" stop-opacity="0"/></linearGradient>
+    <radialGradient id="boot-toe-gloss-{{ hero_variant }}" gradientUnits="userSpaceOnUse" cx="366" cy="592" r="34"><stop offset="0" stop-color="#ffffff" stop-opacity=".44"/><stop offset=".5" stop-color="#fff0b0" stop-opacity=".16"/><stop offset="1" stop-color="#fff0b0" stop-opacity="0"/></radialGradient>
+    <linearGradient id="boot-sole-depth-{{ hero_variant }}" gradientUnits="userSpaceOnUse" x1="334" y1="616" x2="394" y2="634"><stop offset="0" stop-color="#4a3806" stop-opacity=".16"/><stop offset=".52" stop-color="#8f6c00" stop-opacity=".48"/><stop offset="1" stop-color="#fff6c0" stop-opacity=".2"/></linearGradient>
+      <linearGradient id="boot-side-light-right-{{ hero_variant }}" gradientUnits="userSpaceOnUse" x1="464" y1="552" x2="408" y2="626"><stop offset="0" stop-color="#ffffff" stop-opacity=".48"/><stop offset=".22" stop-color="#fff7d2" stop-opacity=".24"/><stop offset="1" stop-color="#fff7d2" stop-opacity="0"/></linearGradient>
+      <radialGradient id="boot-toe-gloss-right-{{ hero_variant }}" gradientUnits="userSpaceOnUse" cx="434" cy="592" r="34"><stop offset="0" stop-color="#ffffff" stop-opacity=".44"/><stop offset=".5" stop-color="#fff0b0" stop-opacity=".16"/><stop offset="1" stop-color="#fff0b0" stop-opacity="0"/></radialGradient>
+      <linearGradient id="boot-sole-depth-right-{{ hero_variant }}" gradientUnits="userSpaceOnUse" x1="466" y1="616" x2="406" y2="634"><stop offset="0" stop-color="#4a3806" stop-opacity=".16"/><stop offset=".52" stop-color="#8f6c00" stop-opacity=".48"/><stop offset="1" stop-color="#fff6c0" stop-opacity=".2"/></linearGradient>
     <linearGradient id="milestone-metal-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="var(--hero-milestone-metal-light, #f5d2a5)"/><stop offset=".5" stop-color="var(--hero-milestone-metal, #b7793c)"/><stop offset="1" stop-color="var(--hero-milestone-metal-dark, #6b3e1d)"/></linearGradient>
     <radialGradient id="milestone-glow-{{ hero_variant }}" cx=".5" cy=".42" r=".58"><stop offset="0" stop-color="var(--hero-milestone-glow, #f5a35c)" stop-opacity=".34"/><stop offset=".65" stop-color="var(--hero-milestone-glow, #f5a35c)" stop-opacity=".12"/><stop offset="1" stop-color="var(--hero-milestone-glow, #f5a35c)" stop-opacity="0"/></radialGradient>
     <radialGradient id="milestone-jewel-{{ hero_variant }}" cx=".38" cy=".3" r=".85"><stop offset="0" stop-color="#ffffff"/><stop offset=".42" stop-color="var(--hero-milestone-jewel, #f2a45d)"/><stop offset="1" stop-color="var(--hero-milestone-metal-dark, #6b3e1d)"/></radialGradient>
     <linearGradient id="skin-{{ hero_variant }}" gradientUnits="userSpaceOnUse" x1="0" y1="82" x2="0" y2="270"><stop offset="0" stop-color="var(--hero-skin-highlight-soft, var(--hero-skin-light, #dfa07a))"/><stop offset=".38" stop-color="var(--hero-skin-light, #dfa07a)"/><stop offset=".78" stop-color="var(--hero-skin-mid, #c5815b)"/><stop offset="1" stop-color="var(--hero-skin, #b46a3d)"/></linearGradient>
+    <radialGradient id="face-round-light-{{ hero_variant }}" gradientUnits="userSpaceOnUse" cx="383" cy="170" r="78"><stop offset="0" stop-color="var(--hero-skin-highlight-soft, #fff1dc)" stop-opacity=".58"/><stop offset=".34" stop-color="var(--hero-skin-highlight-soft, #fff1dc)" stop-opacity=".28"/><stop offset=".72" stop-color="var(--hero-skin-light, #dfa07a)" stop-opacity=".1"/><stop offset="1" stop-color="var(--hero-skin-light, #dfa07a)" stop-opacity="0"/></radialGradient>
+    <radialGradient id="face-form-shadow-{{ hero_variant }}" gradientUnits="userSpaceOnUse" cx="429" cy="226" r="82"><stop offset="0" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity=".28"/><stop offset=".42" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity=".15"/><stop offset="1" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity="0"/></radialGradient>
+    <radialGradient id="face-scatter-{{ hero_variant }}"><stop offset="0" stop-color="var(--hero-skin-scatter, #a14e47)" stop-opacity=".78"/><stop offset=".58" stop-color="var(--hero-skin-scatter, #a14e47)" stop-opacity=".22"/><stop offset="1" stop-color="var(--hero-skin-scatter, #a14e47)" stop-opacity="0"/></radialGradient>
+    <radialGradient id="face-soft-shadow-{{ hero_variant }}"><stop offset="0" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity=".52"/><stop offset=".64" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity=".16"/><stop offset="1" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity="0"/></radialGradient>
+    <radialGradient id="face-rim-light-{{ hero_variant }}"><stop offset="0" stop-color="var(--hero-skin-ambient, #dfa07a)" stop-opacity=".62"/><stop offset=".54" stop-color="var(--hero-skin-ambient, #dfa07a)" stop-opacity=".18"/><stop offset="1" stop-color="var(--hero-skin-ambient, #dfa07a)" stop-opacity="0"/></radialGradient>
     <linearGradient id="steel-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7e8895"/><stop offset=".35" stop-color="#e6ebf1"/><stop offset=".55" stop-color="#c0c8d2"/><stop offset="1" stop-color="#42495a"/></linearGradient>
     <linearGradient id="steel-dark-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b6470"/><stop offset=".5" stop-color="#aab3be"/><stop offset="1" stop-color="#2a323d"/></linearGradient>
     <radialGradient id="plate-face-{{ hero_variant }}" cx=".38" cy=".3" r=".95"><stop offset="0" stop-color="#58bff4"/><stop offset=".52" stop-color="#1f82ce"/><stop offset="1" stop-color="#00345f"/></radialGradient>
@@ -167,8 +182,7 @@
       .se-gym-hero-svg-{{ hero_variant }} [data-hero-head-assembly] [data-hero-option="utility-belt"]{transform:scale(.8928571429);transform-box:view-box;transform-origin:400px 252px;}
 
       .se-gym-hero-svg-{{ hero_variant }} [data-hero-motion="eye-blink"],
-      .se-gym-hero-svg-{{ hero_variant }} [data-hero-motion="nose-breath-position"],
-      .se-gym-hero-svg-{{ hero_variant }} [data-hero-motion="mouth-breath-position"]{transform-box:view-box;}
+      .se-gym-hero-svg-{{ hero_variant }} [data-hero-motion="lower-face-breath-position"]{transform-box:view-box;}
     </style>
     <clipPath id="eye-round-left-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><ellipse cx="381" cy="185" rx="7" ry="8.5"/></clipPath>
     <clipPath id="eye-round-right-{{ hero_variant }}" clipPathUnits="userSpaceOnUse"><ellipse cx="419" cy="185" rx="7" ry="8.5"/></clipPath>
@@ -246,6 +260,9 @@
     <path d="M 442 440 L 452 555 L 426 558 L 420 440 Z" fill="#052844"/>
     <path d="M 360 432 C 358 478, 358 518, 356 560 L 384 562 C 386 518, 386 478, 388 432 Z" fill="url(#suit-{{ hero_variant }})"/>
     <path d="M 440 432 C 442 478, 442 518, 444 560 L 416 562 C 414 518, 414 478, 412 432 Z" fill="url(#suit-{{ hero_variant }})"/>
+    <path d="M 362 434 C 360 474, 360 518, 360 558 L 376 560 C 378 516, 378 476, 380 434 Z" fill="url(#leg-rim-light-{{ hero_variant }})" opacity=".9"/>
+    <path d="M 438 434 C 440 474, 440 518, 440 558 L 424 560 C 422 516, 422 476, 420 434 Z" fill="url(#leg-rim-light-{{ hero_variant }})" opacity=".66"/>
+    <path d="M 378 434 C 382 476, 382 520, 380 560 L 388 560 C 390 520, 390 476, 388 434 Z M 422 434 C 418 476, 418 520, 420 560 L 412 560 C 410 520, 410 476, 412 434 Z" fill="url(#leg-inner-shadow-{{ hero_variant }})" opacity=".58"/>
     <path d="M 368 438 C 366 480, 366 522, 365 558 M 432 438 C 434 480, 434 522, 435 558" stroke="#a7ebff" stroke-width="3.30" fill="none" stroke-linecap="round" opacity=".34"/>
     <path d="M 384 440 L 386 555" stroke="#042947" stroke-width="3.75" opacity=".7"/>
     <path d="M 416 440 L 414 555" stroke="#042947" stroke-width="3.75" opacity=".7"/>
@@ -255,14 +272,20 @@
     <g>
       <path d="M 346 552 L 392 552 L 392 616 Q 392 624, 378 626 L 346 628 Q 336 626, 336 618 L 340 580 Q 340 564, 346 552 Z" fill="url(#boot-cream-{{ hero_variant }})" stroke="#8f6c00" stroke-width="3.00" stroke-linejoin="round"/>
       <path d="M 340 552 L 392 552 L 390 570 Q 366 576, 340 570 Z" fill="url(#gold-{{ hero_variant }})" stroke="#8f6c00" stroke-width="1.95" stroke-linejoin="round"/>
+      <path d="M 344 554 L 388 554 L 386 575 Q 368 582, 346 576 Z" fill="url(#boot-side-light-{{ hero_variant }})" opacity=".88"/>
+      <path d="M 340 584 C 350 576, 372 574, 390 584 L 388 612 C 374 620, 352 620, 340 612 Z" fill="url(#boot-toe-gloss-{{ hero_variant }})" opacity=".92"/>
       <path d="M 344 594 C 356 586, 376 586, 390 596 M 344 610 C 356 600, 376 600, 390 610" stroke="#ffffff" stroke-width="2.55" fill="none" stroke-linecap="round" opacity=".7"/>
       <path d="M 343 574 L 390 592 M 390 574 L 344 592" stroke="#8f6c00" stroke-width="1.65" fill="none" stroke-linecap="round" opacity=".34"/>
+      <path d="M 337 616 Q 360 624, 390 620 L 390 626 Q 360 633, 336 624 Z" fill="url(#boot-sole-depth-{{ hero_variant }})" opacity=".82"/>
       <path d="M 336 618 Q 360 632, 388 624 L 392 624 Q 360 638, 334 626 Z" fill="url(#boot-shadow-{{ hero_variant }})" opacity=".7"/>
       <ellipse cx="368" cy="620" rx="15" ry="3.4" fill="#ffffff" opacity=".52"/>
       <path d="M 454 552 L 408 552 L 408 616 Q 408 624, 422 626 L 454 628 Q 464 626, 464 618 L 460 580 Q 460 564, 454 552 Z" fill="url(#boot-cream-{{ hero_variant }})" stroke="#8f6c00" stroke-width="3.00" stroke-linejoin="round"/>
       <path d="M 460 552 L 408 552 L 410 570 Q 434 576, 460 570 Z" fill="url(#gold-{{ hero_variant }})" stroke="#8f6c00" stroke-width="1.95" stroke-linejoin="round"/>
+        <path d="M 456 554 L 412 554 L 414 575 Q 432 582, 454 576 Z" fill="url(#boot-side-light-right-{{ hero_variant }})" opacity=".72"/>
+        <path d="M 460 584 C 450 576, 428 574, 410 584 L 412 612 C 426 620, 448 620, 460 612 Z" fill="url(#boot-toe-gloss-right-{{ hero_variant }})" opacity=".86"/>
       <path d="M 410 596 C 424 586, 444 586, 456 594 M 410 610 C 424 600, 444 600, 456 610" stroke="#ffffff" stroke-width="2.55" fill="none" stroke-linecap="round" opacity=".7"/>
       <path d="M 457 574 L 410 592 M 410 574 L 456 592" stroke="#8f6c00" stroke-width="1.65" fill="none" stroke-linecap="round" opacity=".34"/>
+        <path d="M 463 616 Q 440 624, 410 620 L 410 626 Q 440 633, 464 624 Z" fill="url(#boot-sole-depth-right-{{ hero_variant }})" opacity=".82"/>
       <path d="M 464 618 Q 440 632, 412 624 L 408 624 Q 440 638, 466 626 Z" fill="url(#boot-shadow-{{ hero_variant }})" opacity=".7"/>
       <ellipse cx="432" cy="620" rx="15" ry="3.4" fill="#ffffff" opacity=".52"/>
     </g>
@@ -410,10 +433,14 @@
     </g>
     <path d="M 340 268 C 336 304, 340 354, 354 398 L 384 404 C 380 350, 380 306, 376 270 Z" fill="url(#suit-panel-{{ hero_variant }})" opacity=".72"/>
     <path d="M 460 268 C 464 304, 460 354, 446 398 L 416 404 C 420 350, 420 306, 424 270 Z" fill="url(#suit-panel-{{ hero_variant }})" opacity=".72"/>
+    <path d="M 324 268 C 320 312, 322 372, 340 424 C 362 438, 384 444, 400 446 C 416 444, 438 438, 460 424 C 478 372, 480 312, 476 268 C 452 254, 428 248, 400 246 C 372 248, 348 254, 324 268 Z" fill="url(#torso-core-glow-{{ hero_variant }})" opacity=".72"/>
+      <path d="M 344 302 C 344 346, 354 390, 372 422 C 388 430, 412 430, 428 422 C 446 390, 456 346, 456 302 C 440 318, 421 328, 400 332 C 379 328, 360 318, 344 302 Z" fill="url(#suit-deep-panel-{{ hero_variant }})" opacity=".34"/>
+    <path d="M 332 270 C 324 322, 330 380, 348 420 C 360 430, 382 438, 400 440 C 418 438, 440 430, 452 420 C 470 380, 476 322, 468 270" fill="none" stroke="url(#torso-rim-light-{{ hero_variant }})" stroke-width="12.00" stroke-linecap="round" stroke-linejoin="round" opacity=".54"/>
     <path d="M 352 292 L 384 410 M 448 292 L 416 410" stroke="#04375d" stroke-width="3.30" fill="none" opacity=".5"/>
     <path d="M 370 258 L 400 306 L 430 258 L 418 308 L 400 330 L 382 308 Z" fill="#f8fcff" opacity=".88"/>
     <path d="M 360 292 Q 400 314, 440 292" stroke="#083f68" stroke-width="3.90" fill="none" opacity=".46"/>
     <path d="M 400 318 L 400 430" stroke="#073754" stroke-width="3.00" opacity=".42"/>
+    <path d="M 346 332 C 364 318, 386 312, 400 312 C 414 312, 436 318, 454 332" stroke="#ffffff" stroke-width="3.30" fill="none" stroke-linecap="round" opacity=".18"/>
     <path d="M 358 338 C 374 350, 390 356, 400 356 C 410 356, 426 350, 442 338" stroke="#a7ebff" stroke-width="2.03" fill="none" opacity=".34"/>
     <path d="M 362 374 C 382 384, 418 384, 438 374 M 372 396 C 388 402, 412 402, 428 396" stroke="#04375d" stroke-width="2.25" fill="none" opacity=".42"/>
     <path d="M 322 410 L 478 410 L 472 432 L 328 432 Z" fill="url(#gold-{{ hero_variant }})" stroke="#6f4f00" stroke-width="2.55" stroke-linejoin="round"/>
@@ -585,14 +612,12 @@
       <path d="M 462 424 C 444 432, 424 436, 406 437" stroke="#7FB6F0" stroke-width="1.80" fill="none" opacity=".32"/>
     </g>
     <g data-hero-slot="silhouette" data-hero-feature="shoulder" display="none">
-      <ellipse cx="306" cy="276" rx="16" ry="22" fill="url(#suit-{{ hero_variant }})"/>
-      <ellipse cx="494" cy="276" rx="16" ry="22" fill="url(#suit-{{ hero_variant }})"/>
-      <ellipse cx="302" cy="266" rx="5" ry="12" fill="#4393d2" opacity=".55"/>
-      <ellipse cx="498" cy="266" rx="5" ry="12" fill="#4393d2" opacity=".55"/>
+      <path d="M 302 272 C 316 263, 334 262, 348 269" stroke="var(--hero-suit-dark, #0a3e6f)" stroke-width="3.00" fill="none" stroke-linecap="round" opacity=".2"/>
+      <path d="M 498 272 C 484 263, 466 262, 452 269" stroke="var(--hero-suit-dark, #0a3e6f)" stroke-width="3.00" fill="none" stroke-linecap="round" opacity=".2"/>
+      <path d="M 308 267 C 321 263, 334 264, 344 270" stroke="var(--hero-suit-light, #4393d2)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity=".22"/>
+      <path d="M 492 267 C 479 263, 466 264, 456 270" stroke="var(--hero-suit-light, #4393d2)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity=".22"/>
     </g>
     <g data-hero-slot="milestone-power" data-hero-option="bronze" display="none">
-      <path d="M 320 272 C 344 258, 374 252, 394 252 L 384 278 L 338 298 C 326 292, 320 282, 320 272 Z" fill="url(#milestone-metal-{{ hero_variant }})" stroke="var(--hero-milestone-metal-dark, #6b3e1d)" stroke-width="2.10" opacity=".82"/>
-      <path d="M 480 272 C 456 258, 426 252, 406 252 L 416 278 L 462 298 C 474 292, 480 282, 480 272 Z" fill="url(#milestone-metal-{{ hero_variant }})" stroke="var(--hero-milestone-metal-dark, #6b3e1d)" stroke-width="2.10" opacity=".82"/>
       <g data-hero-milestone-zone="shoes" opacity=".82">
         <path class="hero-milestone-shoe-plate" d="M 338 592 C 352 585, 374 585, 392 594 L 390 617 Q 372 625, 348 624 Q 338 622, 337 616 Z"/>
         <path class="hero-milestone-shoe-line" d="M 348 600 C 360 594, 376 594, 388 600" stroke-width="3.00" opacity=".68"/>
@@ -601,9 +626,6 @@
       </g>
     </g>
     <g data-hero-slot="milestone-power" data-hero-option="silver" display="none">
-      <path d="M 314 270 C 342 254, 374 248, 396 250 L 384 282 L 332 304 C 320 296, 314 284, 314 270 Z" fill="url(#milestone-metal-{{ hero_variant }})" stroke="var(--hero-milestone-metal-dark, #677381)" stroke-width="2.40" opacity=".9"/>
-      <path d="M 486 270 C 458 254, 426 248, 404 250 L 416 282 L 468 304 C 480 296, 486 284, 486 270 Z" fill="url(#milestone-metal-{{ hero_variant }})" stroke="var(--hero-milestone-metal-dark, #677381)" stroke-width="2.40" opacity=".9"/>
-      <path d="M 344 268 L 382 300 M 456 268 L 418 300" stroke="var(--hero-milestone-metal-light, #f8fbff)" stroke-width="3.00" fill="none" stroke-linecap="round" opacity=".72"/>
       <g data-hero-milestone-zone="shoes" opacity=".88">
         <path class="hero-milestone-shoe-plate" d="M 340 568 L 392 568 L 392 582 Q 366 588, 340 582 Z" stroke-width="1.80"/>
         <path class="hero-milestone-shoe-plate" d="M 336 588 C 350 578, 376 578, 392 591 L 390 619 Q 372 628, 346 626 Q 337 624, 336 616 Z" stroke-width="2.10"/>
@@ -614,9 +636,6 @@
       </g>
     </g>
     <g data-hero-slot="milestone-power" data-hero-option="gold" display="none">
-      <path d="M 306 266 C 340 248, 374 244, 398 248 L 382 286 L 328 312 C 314 302, 306 286, 306 266 Z" fill="url(#milestone-metal-{{ hero_variant }})" stroke="var(--hero-milestone-metal-dark, #9a6b00)" stroke-width="2.70" opacity=".96"/>
-      <path d="M 494 266 C 460 248, 426 244, 402 248 L 418 286 L 472 312 C 486 302, 494 286, 494 266 Z" fill="url(#milestone-metal-{{ hero_variant }})" stroke="var(--hero-milestone-metal-dark, #9a6b00)" stroke-width="2.70" opacity=".96"/>
-      <path d="M 340 266 L 382 306 M 460 266 L 418 306 M 354 292 L 376 278 M 446 292 L 424 278" stroke="var(--hero-milestone-metal-light, #fff6ad)" stroke-width="3.45" fill="none" stroke-linecap="round" opacity=".75"/>
       <path d="M 312 346 L 304 360 L 288 366 L 304 372 L 312 386 L 320 372 L 336 366 L 320 360 Z M 488 346 L 480 360 L 464 366 L 480 372 L 488 386 L 496 372 L 512 366 L 496 360 Z" fill="url(#milestone-jewel-{{ hero_variant }})" opacity=".78"/>
       <g data-hero-milestone-zone="shoes" opacity=".94">
         <path class="hero-milestone-shoe-plate" d="M 338 566 L 392 566 L 390 584 Q 366 592, 338 584 Z" stroke-width="2.10"/>
@@ -630,10 +649,6 @@
       </g>
     </g>
     <g data-hero-slot="milestone-power" data-hero-option="diamond" display="none">
-      <path d="M 298 262 C 336 242, 374 240, 400 246 L 382 288 L 326 318 C 308 306, 298 286, 298 262 Z" fill="url(#milestone-metal-{{ hero_variant }})" stroke="var(--hero-milestone-metal-dark, #237a9d)" stroke-width="3.00" opacity=".98"/>
-      <path d="M 502 262 C 464 242, 426 240, 400 246 L 418 288 L 474 318 C 492 306, 502 286, 502 262 Z" fill="url(#milestone-metal-{{ hero_variant }})" stroke="var(--hero-milestone-metal-dark, #237a9d)" stroke-width="3.00" opacity=".98"/>
-      <path d="M 334 254 L 382 304 L 356 294 L 326 316 M 466 254 L 418 304 L 444 294 L 474 316" stroke="var(--hero-milestone-metal-light, #ffffff)" stroke-width="3.30" fill="none" stroke-linecap="round" opacity=".78"/>
-      <path d="M 304 338 L 318 314 L 334 338 L 318 362 Z M 496 338 L 482 314 L 466 338 L 482 362 Z" fill="url(#milestone-jewel-{{ hero_variant }})" stroke="var(--hero-milestone-metal-light, #ffffff)" stroke-width="1.50" opacity=".8"/>
       <g data-hero-milestone-zone="shoes" opacity=".96">
         <path class="hero-milestone-shoe-plate" d="M 336 584 L 356 570 L 392 590 L 388 620 L 360 628 L 336 616 Z" stroke-width="2.70"/>
         <path class="hero-milestone-shoe-jewel" d="M 356 570 L 368 604 L 392 590 L 388 620 L 368 604 L 360 628 L 336 616 Z" stroke-width="1.50" opacity=".78"/>
@@ -671,10 +686,10 @@
              (nested inside the upper arm so the elbow tracks it)
          Motion (2.2 s overhead-press cycle, sync'd with barbell-lift):
            • At t=0,1 (barbell UP):  α=0°,  β=0°  → arms fully extended
-           • At t=0.5  (barbell DOWN):
-                LEFT:  α=−32°  β=+62°
-                RIGHT: α=+32°  β=−62°
-         The body is stationary — only the arms and barbell move.
+           • At t=0.55 (barbell DOWN):
+                LEFT:  α=−28°  β=+56°
+                RIGHT: α=+28°  β=−56°
+         The torso has only the small shared breathing lift; arms/bar rotate from joints.
          ============================================================ -->
     <g data-hero-kind-layer="human" data-hero-human-arms>
       <!-- ===== LEFT ARM ===== -->
@@ -685,144 +700,153 @@
            ============================================================ -->
       <g data-arm-side="left-upper">
         <animateTransform attributeName="transform" type="rotate"
-                          values="0 322 268; -32 322 268; 0 322 268"
+                          values="0 322 268; -28 322 268; 0 322 268"
                           keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                           calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
 
-        <!-- LEFT UPPER ARM bone — smooth uniform taper from shoulder
-             (~36 px wide) to chunky rounded elbow (~30 px wide). One
-             continuous curve, no exaggerated bicep belly. -->
-        <path d="M 306 268
-                 C 302 244, 300 216, 306 190
-                 C 310 178, 316 168, 322 165
-                 C 328 168, 334 178, 338 190
-                 C 344 216, 342 244, 338 268 Z"
+        <!-- LEFT UPPER ARM sleeve — the shoulder root is narrow because
+             the torso overlap covers it; textile folds carry the volume. -->
+        <path d="M 305 268
+                 C 300 250, 301 225, 307 199
+                 C 311 181, 317 168, 323 160
+                 C 331 166, 337 181, 341 201
+                 C 346 228, 345 252, 339 269
+                 C 329 276, 315 276, 305 268 Z"
               fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
               stroke-width="2.25" stroke-linejoin="round" opacity="1"/>
-        <path d="M 312 262 C 310 235, 311 202, 318 176 C 313 188, 312 230, 316 262 Z"
-              fill="var(--hero-suit-light, #68c4ea)" opacity=".18"/>
+        <path d="M 306 266 C 311 257, 317 252, 324 252 C 331 252, 337 258, 340 268 C 330 274, 316 274, 306 266 Z"
+              fill="var(--hero-suit-dark, #064b7b)" opacity=".14"/>
+        <path d="M 313 264 C 310 238, 312 204, 318 178 C 315 194, 316 235, 321 264 Z"
+              fill="var(--hero-suit-light, #68c4ea)" opacity=".2"/>
+        <path d="M 336 266 C 340 240, 339 210, 332 183 C 336 204, 335 242, 330 269 Z"
+              fill="var(--hero-suit-dark, #064b7b)" opacity=".2"/>
+        <path d="M 309 226 C 317 222, 329 222, 338 226 M 310 207 C 318 203, 329 204, 337 209"
+              stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.35" fill="none" stroke-linecap="round" opacity=".18"/>
+        <path d="M 312 248 C 319 253, 329 253, 336 248 M 311 235 C 319 239, 330 239, 338 234"
+              stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.35" fill="none" stroke-linecap="round" opacity=".24"/>
 
-        <!-- ELBOW JOINT SPHERE (r=15, ~30 px diameter) — anchored at
-             the elbow pivot INSIDE the upper-arm rotation group, so
-             its world position always tracks the forearm's pivot.
-             Fills any gap at the joint regardless of bend angle. -->
-        <circle cx="322" cy="162" r="15" fill="url(#suit-{{ hero_variant }})"
-                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="2.10" opacity="1"/>
+        <!-- Folded sleeve overlap at the elbow: fills the hinge without a spherical joint. -->
+        <path d="M 309 158
+                 C 313 150, 321 147, 329 151
+                 C 336 155, 340 162, 337 169
+                 C 333 176, 323 179, 315 175
+                 C 308 171, 305 164, 309 158 Z"
+              fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+              stroke-width="1.95" stroke-linejoin="round"/>
+        <path d="M 310 160 C 319 164, 329 164, 336 160 M 313 171 C 321 174, 329 172, 335 168"
+              stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.35" fill="none" stroke-linecap="round" opacity=".32"/>
 
-        <!-- Subtle outer highlight — fades before the elbow -->
-        <path d="M 309 252 C 306 224, 306 194, 313 174"
+        <path d="M 310 252 C 307 225, 308 195, 314 176"
               stroke="var(--hero-suit-light, #68c4ea)" stroke-width="2" fill="none"
               stroke-linecap="round" opacity=".45"/>
-
-        <!-- Subtle inner shadow -->
-        <path d="M 335 252 C 338 224, 338 194, 331 174"
+        <path d="M 334 252 C 337 226, 337 197, 331 178"
               stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.8" fill="none"
               stroke-linecap="round" opacity=".35"/>
 
         <!-- ===== Forearm group — pivots at ELBOW (322,162) ===== -->
         <g data-arm-side="left-forearm">
           <animateTransform attributeName="transform" type="rotate"
-                            values="0 322 162; 62 322 162; 0 322 162"
+                            values="0 322 162; 56 322 162; 0 322 162"
                             keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                             calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
 
-          <!-- LEFT FOREARM bone — chunky rounded elbow end (~28 px,
-               matching upper arm + sphere) tapers smoothly to narrow
-               wrist (~16 px). Bottom arc matches the sphere curvature
-               so they form one continuous silhouette. -->
-          <path d="M 308 162
-                   C 305 138, 309 104, 314 76
-                   C 315 70, 318 67, 322 67
-                   C 326 67, 329 70, 330 76
-                   C 335 104, 339 138, 336 162
-                   C 336 170, 332 174, 322 174
-                   C 312 174, 308 170, 308 162 Z"
+          <!-- LEFT FOREARM sleeve — tapered cloth tube with a soft elbow fold and wrist cuff. -->
+          <path d="M 309 164
+                   C 306 145, 309 118, 314 88
+                   C 315 78, 318 70, 322 67
+                   C 327 68, 331 77, 333 88
+                   C 338 116, 340 143, 335 164
+                   C 331 172, 326 176, 320 175
+                   C 314 174, 310 170, 309 164 Z"
                 fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
                 stroke-width="2.10" stroke-linejoin="round" opacity="1"/>
+          <path d="M 310 156 C 318 160, 327 160, 335 156 M 311 142 C 319 145, 327 145, 334 141"
+                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.25" fill="none" stroke-linecap="round" opacity=".24"/>
+          <path d="M 312 128 C 319 132, 328 132, 334 127 M 313 112 C 320 116, 327 116, 333 112"
+                stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.25" fill="none" stroke-linecap="round" opacity=".24"/>
+          <path d="M 318 168 C 315 144, 316 112, 319 86" stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.75" fill="none" stroke-linecap="round" opacity=".42"/>
+          <path d="M 332 158 C 334 133, 331 105, 327 84" stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.55" fill="none" stroke-linecap="round" opacity=".34"/>
           <path d="M 314 78 C 316 72, 328 72, 330 78 L 329 86 C 326 89, 318 89, 315 86 Z"
                 fill="url(#gold-{{ hero_variant }})" stroke="#6f4f00" stroke-width="1.50" stroke-linejoin="round"/>
           <path d="M 316 80 C 320 77, 326 77, 329 80" stroke="#fff6c0" stroke-width="1.35"
                 fill="none" stroke-linecap="round" opacity=".76"/>
-
-          <!-- Subtle outer highlight -->
-          <path d="M 313 154 C 311 128, 314 100, 316 80"
-                stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.8" fill="none"
-                stroke-linecap="round" opacity=".45"/>
-
-          <!-- Subtle inner shadow -->
-          <path d="M 331 154 C 333 128, 330 100, 328 80"
-                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.6" fill="none"
-                stroke-linecap="round" opacity=".35"/>
         </g>
       </g>
 
       <!-- ===== RIGHT ARM (mirror of left) ===== -->
       <g data-arm-side="right-upper">
         <animateTransform attributeName="transform" type="rotate"
-                          values="0 478 268; 32 478 268; 0 478 268"
+                          values="0 478 268; 28 478 268; 0 478 268"
                           keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                           calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
 
-        <path d="M 494 268
-                 C 498 244, 500 216, 494 190
-                 C 490 178, 484 168, 478 165
-                 C 472 168, 466 178, 462 190
-                 C 456 216, 458 244, 462 268 Z"
+        <path d="M 495 268
+                 C 500 250, 499 225, 493 199
+                 C 489 181, 483 168, 477 160
+                 C 469 166, 463 181, 459 201
+                 C 454 228, 455 252, 461 269
+                 C 471 276, 485 276, 495 268 Z"
               fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
               stroke-width="2.25" stroke-linejoin="round" opacity="1"/>
-        <path d="M 488 262 C 490 235, 489 202, 482 176 C 487 188, 488 230, 484 262 Z"
-              fill="var(--hero-suit-light, #68c4ea)" opacity=".18"/>
+        <path d="M 494 266 C 489 257, 483 252, 476 252 C 469 252, 463 258, 460 268 C 470 274, 484 274, 494 266 Z"
+              fill="var(--hero-suit-dark, #064b7b)" opacity=".14"/>
+        <path d="M 487 264 C 490 238, 488 204, 482 178 C 485 194, 484 235, 479 264 Z"
+              fill="var(--hero-suit-light, #68c4ea)" opacity=".2"/>
+        <path d="M 464 266 C 460 240, 461 210, 468 183 C 464 204, 465 242, 470 269 Z"
+              fill="var(--hero-suit-dark, #064b7b)" opacity=".2"/>
+        <path d="M 491 226 C 483 222, 471 222, 462 226 M 490 207 C 482 203, 471 204, 463 209"
+              stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.35" fill="none" stroke-linecap="round" opacity=".18"/>
+        <path d="M 488 248 C 481 253, 471 253, 464 248 M 489 235 C 481 239, 470 239, 462 234"
+              stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.35" fill="none" stroke-linecap="round" opacity=".24"/>
 
-        <circle cx="478" cy="162" r="15" fill="url(#suit-{{ hero_variant }})"
-                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="2.10" opacity="1"/>
+        <path d="M 491 158
+                 C 487 150, 479 147, 471 151
+                 C 464 155, 460 162, 463 169
+                 C 467 176, 477 179, 485 175
+                 C 492 171, 495 164, 491 158 Z"
+              fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+              stroke-width="1.95" stroke-linejoin="round"/>
+        <path d="M 490 160 C 481 164, 471 164, 464 160 M 487 171 C 479 174, 471 172, 465 168"
+              stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.35" fill="none" stroke-linecap="round" opacity=".32"/>
 
-        <path d="M 491 252 C 494 224, 494 194, 487 174"
+        <path d="M 490 252 C 493 225, 492 195, 486 176"
               stroke="var(--hero-suit-light, #68c4ea)" stroke-width="2" fill="none"
               stroke-linecap="round" opacity=".45"/>
-
-        <path d="M 465 252 C 462 224, 462 194, 469 174"
+        <path d="M 466 252 C 463 226, 463 197, 469 178"
               stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.8" fill="none"
               stroke-linecap="round" opacity=".35"/>
 
         <g data-arm-side="right-forearm">
           <animateTransform attributeName="transform" type="rotate"
-                            values="0 478 162; -62 478 162; 0 478 162"
+                            values="0 478 162; -56 478 162; 0 478 162"
                             keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                             calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
 
-          <path d="M 492 162
-                   C 495 138, 491 104, 486 76
-                   C 485 70, 482 67, 478 67
-                   C 474 67, 471 70, 470 76
-                   C 465 104, 461 138, 464 162
-                   C 464 170, 468 174, 478 174
-                   C 488 174, 492 170, 492 162 Z"
+          <path d="M 491 164
+                   C 494 145, 491 118, 486 88
+                   C 485 78, 482 70, 478 67
+                   C 473 68, 469 77, 467 88
+                   C 462 116, 460 143, 465 164
+                   C 469 172, 474 176, 480 175
+                   C 486 174, 490 170, 491 164 Z"
                 fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
                 stroke-width="2.10" stroke-linejoin="round" opacity="1"/>
+          <path d="M 490 156 C 482 160, 473 160, 465 156 M 489 142 C 481 145, 473 145, 466 141"
+                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.25" fill="none" stroke-linecap="round" opacity=".24"/>
+          <path d="M 488 128 C 481 132, 472 132, 466 127 M 487 112 C 480 116, 473 116, 467 112"
+                stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.25" fill="none" stroke-linecap="round" opacity=".24"/>
+          <path d="M 482 168 C 485 144, 484 112, 481 86" stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.75" fill="none" stroke-linecap="round" opacity=".42"/>
+          <path d="M 468 158 C 466 133, 469 105, 473 84" stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.55" fill="none" stroke-linecap="round" opacity=".34"/>
           <path d="M 486 78 C 484 72, 472 72, 470 78 L 471 86 C 474 89, 482 89, 485 86 Z"
                 fill="url(#gold-{{ hero_variant }})" stroke="#6f4f00" stroke-width="1.50" stroke-linejoin="round"/>
           <path d="M 484 80 C 480 77, 474 77, 471 80" stroke="#fff6c0" stroke-width="1.35"
                 fill="none" stroke-linecap="round" opacity=".76"/>
-
-          <path d="M 487 154 C 489 128, 486 100, 484 80"
-                stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.8" fill="none"
-                stroke-linecap="round" opacity=".45"/>
-
-          <path d="M 469 154 C 467 128, 470 100, 472 80"
-                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.6" fill="none"
-                stroke-linecap="round" opacity=".35"/>
         </g>
       </g>
     </g>
-    <!-- Shoulder caps sit over the arm roots so the sockets read as fabric plates, not exposed joints. -->
-    <ellipse cx="322" cy="278" rx="25" ry="31" fill="var(--hero-suit-dark, #04375d)" opacity=".92"/>
-    <ellipse cx="322" cy="276" rx="22" ry="28" fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #04375d)" stroke-width="2.10"/>
-    <path d="M 306 268 C 313 257, 328 253, 342 260" stroke="var(--hero-suit-light, #68c4ea)" stroke-width="3.00" fill="none" stroke-linecap="round" opacity=".48"/>
-    <ellipse cx="478" cy="278" rx="25" ry="31" fill="var(--hero-suit-dark, #04375d)" opacity=".92"/>
-    <ellipse cx="478" cy="276" rx="22" ry="28" fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #04375d)" stroke-width="2.10"/>
-    <path d="M 494 268 C 487 257, 472 253, 458 260" stroke="var(--hero-suit-light, #68c4ea)" stroke-width="3.00" fill="none" stroke-linecap="round" opacity=".48"/>
-    <ellipse cx="316" cy="266" rx="6.5" ry="14" fill="#a7ebff" opacity=".38"/>
-    <ellipse cx="484" cy="266" rx="6.5" ry="14" fill="#a7ebff" opacity=".38"/>
+    <!-- Tiny sleeve seams suggest fabric without adding visible shoulder pads. -->
+    <path d="M 312 270 C 324 264, 338 264, 350 270" stroke="var(--hero-suit-dark, #04375d)" stroke-width="2.10" fill="none" stroke-linecap="round" opacity=".18"/>
+    <path d="M 488 270 C 476 264, 462 264, 450 270" stroke="var(--hero-suit-dark, #04375d)" stroke-width="2.10" fill="none" stroke-linecap="round" opacity=".18"/>
     <g data-hero-head-assembly transform="translate(400 236) scale(1.12) translate(-400 -236)">
       <g data-hero-slot="ear-shape" data-hero-option="oval">
         <g data-hero-face-detail="ear-left">
@@ -1027,84 +1051,83 @@
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="tousled-wispy-fringe" display="none">
-        <!-- Reference-informed soft-flat short tousle:
-             compact halo, one cubic front silhouette, clumped asymmetric fringe. -->
-        <path d="M 346 174
-                 C 338 156, 338 134, 348 118
-                 C 358 102, 374 94, 392 94
-                 C 404 88, 424 94, 438 110
-                 C 450 124, 456 146, 452 162
-                 C 450 170, 446 174, 440 176
-                 C 424 168, 406 164, 388 166
-                 C 372 166, 358 170, 346 174 Z"
-              fill="var(--hero-hair-dark, #0f0905)" opacity=".48"/>
+        <path d="M 348 170
+              C 344 155, 348 138, 360 124
+              C 372 113, 386 111, 399 115
+              C 414 111, 431 118, 442 134
+              C 450 148, 450 162, 441 169
+              C 428 161, 413 158, 398 158
+              C 379 158, 364 162, 348 170 Z"
+              fill="var(--hero-hair-dark, #0f0905)" opacity=".36"/>
 
-        <path d="M 348 172
-                 C 342 156, 342 136, 350 120
-                 C 356 108, 366 100, 380 98
-                 C 388 92, 396 92, 402 100
-                 C 408 94, 422 98, 436 112
-                 C 446 124, 452 142, 450 158
-                 C 450 166, 448 172, 444 174
-                 C 440 172, 436 168, 432 166
-                 C 430 174, 426 181, 421 181
-                 C 416 178, 416 169, 413 166
-                 C 408 176, 404 184, 398 183
-                 C 394 180, 394 170, 391 167
-                 C 386 176, 379 184, 372 181
-                 C 368 178, 368 170, 365 168
-                 C 360 176, 354 180, 351 177
-                 C 349 175, 348 173, 348 172 Z"
+        <path d="M 348 170
+              C 344 151, 351 133, 366 121
+              C 378 112, 392 112, 402 118
+              C 415 113, 431 120, 442 136
+              C 449 149, 449 164, 440 170
+              C 434 165, 428 162, 422 160
+              C 420 166, 415 170, 408 169
+              C 403 168, 401 162, 398 159
+              C 392 166, 384 171, 377 169
+              C 371 167, 370 161, 367 157
+              C 361 164, 355 168, 348 170 Z"
               fill="url(#hair-grad-{{ hero_variant }})"
               stroke="var(--hero-hair-dark, #0f0905)"
-              stroke-width="3.6"
+              stroke-width="3.15"
               stroke-linejoin="round"
               stroke-linecap="round"/>
 
-        <path d="M 394 108 C 412 108, 430 122, 440 144
-                 C 444 154, 446 164, 444 170
-                 C 432 164, 418 161, 404 163
-                 C 398 156, 396 130, 394 108 Z"
-              fill="var(--hero-hair-dark, #0f0905)" opacity=".38"/>
+        <path d="M 362 153
+              C 374 140, 389 134, 404 137
+              C 398 146, 393 154, 390 167
+              C 402 154, 414 145, 428 146
+              C 426 155, 422 163, 417 169
+              C 428 160, 436 157, 443 158
+              C 440 165, 435 169, 428 172
+              C 408 161, 382 160, 357 166
+              C 358 162, 360 157, 362 153 Z"
+              fill="var(--hero-hair, #1f140c)" opacity=".56"/>
 
-        <path d="M 354 116 C 366 100, 384 96, 398 102
-                 C 408 100, 420 104, 430 114
-                 C 414 108, 398 111, 386 119
-                 C 374 112, 362 116, 354 128
-                 C 352 124, 352 120, 354 116 Z"
-              fill="var(--hero-hair-light, #4a3220)" opacity=".72"/>
+        <path d="M 355 164
+              C 359 151, 370 141, 383 138
+              C 381 149, 377 159, 369 169
+              C 381 160, 392 148, 403 140
+              C 402 151, 398 162, 392 171"
+              stroke="var(--hero-hair-dark, #0f0905)"
+              stroke-width="2.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              fill="none"
+              opacity=".52"/>
 
-        <path d="M 360 108 C 382 98, 414 102, 434 118"
-              stroke="#ffffff" stroke-width="2.8" fill="none"
-              stroke-linecap="round" opacity=".5"/>
-        <path d="M 366 118 C 386 108, 412 110, 430 124"
-              stroke="var(--hero-hair-light, #4a3220)" stroke-width="1.7" fill="none"
-              stroke-linecap="round" opacity=".68"/>
+        <path d="M 371 132 C 387 121, 410 122, 428 134
+                 M 363 151 C 378 140, 397 136, 416 140
+                 M 380 160 C 394 151, 414 150, 430 158"
+              stroke="var(--hero-hair-rim, #4a3220)"
+              stroke-width="1.8"
+              fill="none"
+              stroke-linecap="round"
+              opacity="var(--hero-hair-detail-opacity, .5)"/>
 
-        <ellipse cx="391" cy="112" rx="10" ry="4"
-                 fill="#ffffff" opacity=".3"
-                 transform="rotate(-12 391 112)"/>
+        <path d="M 374 130 C 388 122, 407 124, 422 134"
+              stroke="var(--hero-hair-light, #4a3220)"
+              stroke-width="3"
+              fill="none"
+              stroke-linecap="round"
+              opacity=".58"/>
+        <path d="M 369 146 C 383 137, 401 135, 417 140"
+              stroke="#ffffff"
+              stroke-width="1.8"
+              fill="none"
+              stroke-linecap="round"
+              opacity=".18"/>
 
-        <path d="M 356 126 C 374 112, 394 108, 416 114
-                 M 354 143 C 374 130, 408 130, 434 146
-                 M 360 158 C 378 148, 408 148, 430 158"
-              stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.55" fill="none"
-              stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .5)"/>
-
-        <path d="M 365 168 C 365 174, 366 178, 368 180
-                 M 389 166 C 389 172, 391 178, 392 181
-                 M 413 166 C 413 172, 414 176, 416 179
-                 M 431 168 C 431 172, 432 175, 434 176"
-              stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.45" fill="none"
-              stroke-linecap="round" opacity=".52"/>
-
-        <path d="M 370 168 C 371 173, 372 177, 373 179
-                 M 394 168 C 395 174, 396 178, 397 180
-                 M 417 168 C 418 172, 419 176, 420 178"
-              stroke="var(--hero-hair-light, #4a3220)" stroke-width="1.25" fill="none"
-              stroke-linecap="round" opacity=".58"/>
-
-        <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
+        <path d="M 350 165 C 344 176, 345 189, 352 196
+                 C 356 189, 357 178, 354 168 Z
+                 M 446 164 C 452 176, 451 188, 444 195
+                 C 441 188, 441 176, 444 167 Z"
+              fill="var(--hero-hair-dark, #0f0905)"
+              opacity=".5"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="casual-messy-crop" display="none">
         <path d="M 354 176 C 348 142, 368 112, 400 110 C 432 112, 452 142, 446 176 C 432 164, 416 158, 400 158 C 384 158, 368 164, 354 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="3" stroke-linejoin="round"/>
@@ -1319,37 +1342,37 @@
         <circle cx="420" cy="130" r="3" fill="var(--hero-hair-rim, #4a3220)" opacity=".5"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="curly-bob" display="none">
-        <path d="M 354 178 C 346 140, 366 110, 400 108 C 434 110, 454 140, 446 178 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
+          <path d="M 354 170 C 347 136, 366 108, 400 106 C 434 108, 453 136, 446 170 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="360" cy="150" r="15" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="382" cy="126" r="17" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="410" cy="124" r="18" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="438" cy="150" r="16" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="348" cy="190" r="14" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="452" cy="190" r="14" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <path d="M 346 176 C 336 214, 346 242, 370 248 C 372 220, 374 194, 382 176 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <path d="M 454 176 C 464 214, 454 242, 430 248 C 428 220, 426 194, 418 176 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
+          <path d="M 346 170 C 338 202, 346 234, 370 242 C 372 214, 374 190, 382 170 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
+          <path d="M 454 170 C 462 202, 454 234, 430 242 C 428 214, 426 190, 418 170 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
         <path d="M 356 212 C 364 218, 364 224, 356 228 M 444 212 C 436 218, 436 224, 444 228 M 378 136 C 382 132, 388 132, 392 136 M 414 136 C 418 132, 424 132, 428 136" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2.55" fill="none" stroke-linecap="round" opacity=".52"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="voluminous-curls" display="none">
-        <path d="M 346 178 C 338 136, 362 104, 400 100 C 438 104, 462 136, 454 178 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
+          <path d="M 346 170 C 339 132, 362 102, 400 98 C 438 102, 461 132, 454 170 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="356" cy="142" r="22" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="382" cy="116" r="24" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="414" cy="116" r="24" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="444" cy="144" r="22" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="344" cy="186" r="20" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="456" cy="186" r="20" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <path d="M 344 180 C 334 220, 344 258, 366 270 C 372 238, 374 204, 384 176 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <path d="M 456 180 C 466 220, 456 258, 434 270 C 428 238, 426 204, 416 176 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
+          <path d="M 344 172 C 336 208, 344 246, 366 258 C 372 228, 374 198, 384 170 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
+          <path d="M 456 172 C 464 208, 456 246, 434 258 C 428 228, 426 198, 416 170 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
         <path d="M 356 142 C 361 137, 369 137, 374 142 M 388 122 C 393 118, 399 118, 404 122 M 420 128 C 425 123, 433 123, 438 128 M 350 210 C 357 216, 357 222, 350 226 M 450 210 C 443 216, 443 222, 450 226" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2.55" fill="none" stroke-linecap="round" opacity=".52"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="curly-layers" display="none">
-        <path d="M 346 178 C 338 136, 362 104, 400 100 C 438 104, 462 136, 454 178 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
+          <path d="M 346 170 C 339 132, 362 102, 400 98 C 438 102, 461 132, 454 170 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="356" cy="140" r="20" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="382" cy="116" r="22" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="414" cy="116" r="22" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="444" cy="142" r="20" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <path d="M 346 178 C 334 224, 342 284, 360 326 C 372 334, 386 326, 388 310 C 372 270, 374 218, 384 176 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <path d="M 454 178 C 466 224, 458 284, 440 326 C 428 334, 414 326, 412 310 C 428 270, 426 218, 416 176 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
+          <path d="M 346 170 C 336 216, 342 278, 360 320 C 372 328, 386 320, 388 304 C 372 266, 374 214, 384 170 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
+          <path d="M 454 170 C 464 216, 458 278, 440 320 C 428 328, 414 320, 412 304 C 428 266, 426 214, 416 170 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
         <path d="M 356 142 C 361 138, 367 138, 372 142 M 388 122 C 392 119, 398 119, 402 122 M 420 126 C 425 122, 431 122, 436 126 M 354 218 C 360 224, 360 230, 354 234 M 446 218 C 440 224, 440 230, 446 234" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2.55" fill="none" stroke-linecap="round" opacity=".52"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="coils" display="none">
@@ -1832,11 +1855,12 @@
         <path d="M 350 180 C 350 146, 370 124, 400 122 C 430 124, 450 146, 450 180 C 452 214, 434 236, 414 242 L 386 242 C 366 236, 348 214, 350 180 Z" fill="url(#skin-{{ hero_variant }})" clip-path="url(#face-clear-clip-{{ hero_variant }})"/>
       </g>
       <g data-hero-polish="face" clip-path="url(#face-clear-clip-{{ hero_variant }})" pointer-events="none">
-        <path d="M 354 176 C 366 166, 383 162, 396 166 C 399 167, 403 167, 406 166 C 419 162, 434 166, 446 176 L 446 182 Q 400 178 354 182 Z" fill="#000000" opacity=".04"/>
-        <ellipse cx="382" cy="186" rx="24" ry="34" fill="var(--hero-skin-highlight-soft, #fff1dc)" opacity="var(--hero-face-highlight-opacity, .22)"/>
-        <path d="M 362 188 C 362 212, 376 232, 400 239 C 382 237, 365 224, 358 206 C 356 199, 358 193, 362 188 Z" fill="var(--hero-skin-ambient, #dfa07a)" opacity="var(--hero-face-ambient-opacity, .16)"/>
-        <path d="M 434 182 C 444 202, 436 228, 406 240 C 424 224, 430 200, 426 184 C 429 184, 432 183, 434 182 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity="var(--hero-face-shadow-opacity, .16)"/>
-        <path d="M 372 205 C 382 210, 392 210, 400 206 C 408 210, 418 210, 428 205" stroke="var(--hero-skin-highlight, #fff1dc)" stroke-width="1.95" fill="none" stroke-linecap="round" opacity="var(--hero-face-ambient-opacity, .16)"/>
+        <ellipse cx="390" cy="181" rx="52" ry="66" fill="url(#face-round-light-{{ hero_variant }})" opacity="var(--hero-face-core-highlight-opacity, .72)"/>
+        <ellipse cx="420" cy="213" rx="54" ry="58" fill="url(#face-form-shadow-{{ hero_variant }})" opacity="var(--hero-face-form-shadow-opacity, .5)"/>
+        <ellipse cx="364" cy="207" rx="32" ry="22" fill="url(#face-scatter-{{ hero_variant }})" opacity="var(--hero-face-scatter-opacity, .1)"/>
+        <ellipse cx="431" cy="210" rx="30" ry="30" fill="url(#face-soft-shadow-{{ hero_variant }})" opacity="var(--hero-face-soft-shadow-opacity, .16)"/>
+        <ellipse cx="400" cy="238" rx="38" ry="16" fill="url(#face-soft-shadow-{{ hero_variant }})" opacity="var(--hero-face-ao-opacity, .12)"/>
+        <ellipse cx="357" cy="192" rx="18" ry="58" fill="url(#face-rim-light-{{ hero_variant }})" opacity="var(--hero-face-rim-opacity, .1)"/>
       </g>
       <g data-hero-slot="hair-cap" data-hero-option="head-covering" display="none">
         <path d="M 342 172 C 340 140, 366 112, 400 110 C 434 112, 460 140, 458 172 C 444 164, 424 158, 400 158 C 376 158, 356 164, 342 172 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
@@ -1844,15 +1868,22 @@
       </g>
       <g data-hero-slot="hairline" data-hero-option="none"></g>
       <g data-hero-slot="hairline" data-hero-option="tousled-wispy-fringe" display="none">
-        <path d="M 350 171
-                 C 356 176, 362 176, 366 169
-                 C 372 181, 382 183, 390 170
-                 C 396 180, 408 181, 414 168
-                 C 420 178, 431 178, 438 170
-                 C 440 176, 436 183, 424 187
-                 C 406 191, 381 190, 362 185
-                 C 354 182, 350 176, 350 171 Z"
-              fill="var(--hero-hair-dark, #0f0905)" opacity=".26"/>
+        <path d="M 355 166
+              C 362 162, 371 159, 382 159
+              C 392 160, 399 162, 408 160
+              C 419 158, 430 161, 440 167
+              C 430 165, 421 165, 413 167
+              C 404 170, 394 170, 383 168
+              C 372 166, 363 165, 355 166 Z"
+              fill="var(--hero-hair-dark, #0f0905)" opacity=".14"/>
+        <path d="M 360 165
+              C 373 159, 391 157, 407 160
+              M 394 160 C 406 156, 423 158, 436 165"
+              stroke="var(--hero-hair-rim, #4a3220)"
+              stroke-width="1.5"
+              fill="none"
+              stroke-linecap="round"
+              opacity=".34"/>
       </g>
       <g data-hero-slot="hairline" data-hero-option="short" display="none">
         <path d="M 355 176 C 348 144, 366 116, 400 114 C 434 116, 452 144, 445 176 C 438 158, 424 144, 406 140 C 392 138, 378 144, 368 156 C 362 163, 358 170, 355 176 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
@@ -1943,7 +1974,7 @@
         <circle cx="420" cy="130" r="3" fill="var(--hero-hair-rim, #4a3220)" opacity=".5"/>
       </g>
       <g data-hero-slot="hairline" data-hero-option="curly-bob" display="none">
-        <path d="M 354 178 C 346 140, 366 110, 400 108 C 434 110, 454 140, 446 178 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
+        <path d="M 354 170 C 347 136, 366 108, 400 106 C 434 108, 453 136, 446 170 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="360" cy="150" r="15" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="382" cy="126" r="17" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="410" cy="124" r="18" fill="url(#hair-grad-{{ hero_variant }})"/>
@@ -1951,7 +1982,7 @@
         <path d="M 378 136 C 382 132, 388 132, 392 136 M 414 136 C 418 132, 424 132, 428 136" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2.55" fill="none" stroke-linecap="round" opacity=".52"/>
       </g>
       <g data-hero-slot="hairline" data-hero-option="voluminous-curls" display="none">
-        <path d="M 346 178 C 338 136, 362 104, 400 100 C 438 104, 462 136, 454 178 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
+        <path d="M 346 170 C 339 132, 362 102, 400 98 C 438 102, 461 132, 454 170 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="356" cy="142" r="22" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="382" cy="116" r="24" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="414" cy="116" r="24" fill="url(#hair-grad-{{ hero_variant }})"/>
@@ -2149,7 +2180,7 @@
         <path d="M 382 132 Q 408 122, 432 132 M 382 150 Q 406 138, 430 146" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2.70" fill="none" stroke-linecap="round" opacity=".56"/>
       </g>
       <g data-hero-slot="hairline" data-hero-option="curly-layers" display="none">
-        <path d="M 348 170 C 344 140, 366 110, 400 104 C 434 110, 456 140, 452 170 C 438 162, 420 156, 404 160 C 392 152, 372 158, 348 170 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
+        <path d="M 348 164 C 344 136, 366 108, 400 102 C 434 108, 456 136, 452 164 C 438 158, 420 154, 404 156 C 392 150, 372 154, 348 164 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="356" cy="142" r="18" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="382" cy="118" r="20" fill="url(#hair-grad-{{ hero_variant }})"/>
         <circle cx="414" cy="118" r="20" fill="url(#hair-grad-{{ hero_variant }})"/>
@@ -2895,7 +2926,7 @@
         <rect x="388" y="402" width="24" height="28" rx="5" fill="var(--hero-cape-dark, #001F38)" stroke="var(--hero-cape-inner-light, #FFE470)" stroke-width="2.40"/>
         <path d="M 346 414 H 362 M 438 414 H 454 M 392 412 H 408" stroke="#fff6c0" stroke-width="2.10" stroke-linecap="round" opacity=".78"/>
       </g>
-      <g data-hero-motion="nose-breath-position">
+      <g data-hero-motion="lower-face-breath-position">
         <animateTransform attributeName="transform" type="translate"
                           values="0 0;0 .38;0 0"
                           keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
@@ -2912,7 +2943,7 @@
         <path d="M 398.8 176 C 398.4 195, 397.7 209.8, 400 213.3 C 402.3 209.8, 401.6 195, 401.2 176 Z" fill="var(--hero-nose-highlight, #fff1dc)" opacity=".16"/>
         <path data-hero-face-detail="nose" d="M 401 176 C 403.2 195, 403.9 209, 403.4 214 C 402.4 216, 401.5 217, 400 216.7 C 404.8 215.4, 404.2 205, 402 174 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .32)"/>
         <path d="M 396.6 213.3 C 398.6 215.5, 401.4 215.5, 403.4 213.3 C 401.7 214.3, 398.3 214.3, 396.6 213.3 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity=".34"/>
-        <path d="M 399.3 177 C 398.8 195, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity=".36" stroke-linecap="round"/>
+        <path d="M 399.3 177 C 398.8 195, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)" stroke-linecap="round"/>
         <ellipse cx="400" cy="213.5" rx="1.7" ry="1.4" fill="var(--hero-nose-highlight, #fff1dc)" opacity="var(--hero-subtle-line-opacity, .55)"/>
         <path d="M 395.6 214.5 Q 397.2 213.4, 399.3 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
         <path d="M 404.4 214.5 Q 402.8 213.4, 400.7 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
@@ -2921,7 +2952,7 @@
         <path d="M 398.7 176 C 398.3 195, 397.2 209.8, 400 213.3 C 402.8 209.8, 401.8 195, 401.3 176 Z" fill="var(--hero-nose-highlight, #fff1dc)" opacity=".16"/>
         <path data-hero-face-detail="nose" d="M 401 176 C 403.4 195, 404.1 209, 403.9 214 C 402.9 216, 401.5 217, 400 216.7 C 405.3 215.4, 404.4 205, 402 174 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .32)"/>
         <path d="M 396.1 213.3 C 398.1 215.5, 401.9 215.5, 403.9 213.3 C 402.2 214.3, 397.8 214.3, 396.1 213.3 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity=".34"/>
-        <path d="M 399.3 177 C 398.8 195, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity=".36" stroke-linecap="round"/>
+        <path d="M 399.3 177 C 398.8 195, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)" stroke-linecap="round"/>
         <ellipse cx="400" cy="213.5" rx="2" ry="1.4" fill="var(--hero-nose-highlight, #fff1dc)" opacity="var(--hero-subtle-line-opacity, .55)"/>
         <path d="M 395.3 214.5 Q 396.9 213.4, 399.2 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
         <path d="M 404.7 214.5 Q 403.1 213.4, 400.8 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
@@ -2930,7 +2961,7 @@
         <path d="M 398 178 C 397.4 190, 395.8 203.2, 396.9 210.8 C 397.5 214.2, 398.7 216, 400 216 C 401.3 216, 402.5 214.2, 403.1 210.8 C 404.2 203.2, 402.6 190, 402 178 Z" fill="var(--hero-nose-highlight, #fff1dc)" opacity=".18"/>
         <path data-hero-face-detail="nose" d="M 401 178 C 403.2 190.6, 404.9 203.2, 404.1 210.7 C 403.6 214.7, 401.9 216.9, 400 216.8 C 402.5 214.7, 402.8 203, 401.2 176 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .28)"/>
         <path d="M 395.2 211.4 C 396.3 214.8, 398.5 216.7, 400 216.1 C 401.5 216.7, 403.7 214.8, 404.8 211.4 C 402.7 213.6, 397.3 213.6, 395.2 211.4 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity=".28"/>
-        <path d="M 398.6 180 C 398.2 192.6, 398.1 203.2, 397.1 211.6" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.50" fill="none" opacity=".42" stroke-linecap="round"/>
+        <path d="M 398.6 180 C 398.2 192.6, 398.1 203.2, 397.1 211.6" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.50" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)" stroke-linecap="round"/>
         <path d="M 395.7 204.4 C 397.5 207.2, 402.5 207.2, 404.3 204.4" stroke="var(--hero-face-plane-shadow, #7a4a2a)" stroke-width="1.12" fill="none" stroke-linecap="round" opacity=".14"/>
         <ellipse cx="400" cy="212.9" rx="3.5" ry="1.9" fill="var(--hero-nose-highlight, #fff1dc)" opacity="var(--hero-subtle-line-opacity, .42)"/>
         <path d="M 395 214.5 Q 397.1 212.9, 399.2 214.7" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".3"/>
@@ -2940,7 +2971,7 @@
         <path d="M 398.3 176 C 397.9 195, 396.2 209.8, 400 213.3 C 403.8 209.8, 402.1 195, 401.7 176 Z" fill="var(--hero-nose-highlight, #fff1dc)" opacity=".16"/>
         <path data-hero-face-detail="nose" d="M 401 176 C 404 195, 404.7 209, 404.9 214 C 403.9 216, 401.5 217, 400 216.7 C 406.3 215.4, 405 205, 402 174 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .3)"/>
         <path d="M 395.1 213.3 C 397.1 215.5, 402.9 215.5, 404.9 213.3 C 403.2 214.3, 396.8 214.3, 395.1 213.3 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity=".34"/>
-        <path d="M 399.3 177 C 398.8 195, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity=".36" stroke-linecap="round"/>
+        <path d="M 399.3 177 C 398.8 195, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)" stroke-linecap="round"/>
         <ellipse cx="400" cy="213.5" rx="2.5" ry="1.6" fill="var(--hero-nose-highlight, #fff1dc)" opacity="var(--hero-subtle-line-opacity, .55)"/>
         <path d="M 395.7 214.5 Q 397.3 213.4, 399 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
         <path d="M 404.3 214.5 Q 402.7 213.4, 401 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
@@ -2949,7 +2980,7 @@
         <path d="M 399.3 176 C 398.9 195, 398.9 209.8, 400 213.3 C 401.1 209.8, 401.1 195, 400.7 176 Z" fill="var(--hero-nose-highlight, #fff1dc)" opacity=".16"/>
         <path data-hero-face-detail="nose" d="M 401 176 C 402 195, 402.7 209, 402.2 214 C 401.2 216, 401.5 217, 400 216.7 C 403.6 215.4, 403 205, 402 174 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .32)"/>
         <path d="M 397.8 213.3 C 399.8 215.5, 400.2 215.5, 402.2 213.3 C 400.5 214.3, 399.5 214.3, 397.8 213.3 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity=".34"/>
-        <path d="M 399.3 177 C 398.8 195, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.27" fill="none" opacity=".36" stroke-linecap="round"/>
+        <path d="M 399.3 177 C 398.8 195, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.27" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)" stroke-linecap="round"/>
         <ellipse cx="400" cy="213.5" rx="1.1" ry="1.2" fill="var(--hero-nose-highlight, #fff1dc)" opacity="var(--hero-subtle-line-opacity, .55)"/>
         <path d="M 397.2 214.5 Q 398.8 213.4, 399.5 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
         <path d="M 402.8 214.5 Q 401.2 213.4, 400.5 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
@@ -2958,7 +2989,7 @@
         <path d="M 399.2 174 C 398.8 194, 398.8 209.8, 400 213.3 C 401.2 209.8, 401.3 194, 400.8 174 Z" fill="var(--hero-nose-highlight, #fff1dc)" opacity=".16"/>
         <path data-hero-face-detail="nose" d="M 401 174 C 402.1 194, 402.8 209, 402.3 214 C 401.3 216, 401.5 217, 400 216.7 C 403.7 215.4, 403.1 205, 402 172 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .32)"/>
         <path d="M 397.7 213.3 C 399.7 215.5, 400.3 215.5, 402.3 213.3 C 400.6 214.3, 399.4 214.3, 397.7 213.3 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity=".34"/>
-        <path d="M 399.3 175 C 398.8 194, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.27" fill="none" opacity=".36" stroke-linecap="round"/>
+        <path d="M 399.3 175 C 398.8 194, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.27" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)" stroke-linecap="round"/>
         <ellipse cx="400" cy="213.5" rx="1.2" ry="1.2" fill="var(--hero-nose-highlight, #fff1dc)" opacity="var(--hero-subtle-line-opacity, .55)"/>
         <path d="M 397.2 214.5 Q 398.8 213.4, 399.5 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
         <path d="M 402.8 214.5 Q 401.2 213.4, 400.5 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
@@ -2967,7 +2998,7 @@
         <path d="M 399.2 174 C 398.8 194.3, 398.6 210.3, 400 213.8 C 401.4 210.3, 401.3 194.3, 400.8 174 Z" fill="var(--hero-nose-highlight, #fff1dc)" opacity=".16"/>
         <path data-hero-face-detail="nose" d="M 401 174 C 402.1 194.3, 402.8 209.5, 402.5 214.5 C 401.5 216.5, 401.5 217.5, 400 217.2 C 403.9 215.9, 403.1 205.5, 402 172 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .32)"/>
         <path d="M 397.5 213.8 C 399.5 216, 400.5 216, 402.5 213.8 C 400.8 214.8, 399.2 214.8, 397.5 213.8 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity=".34"/>
-        <path d="M 399.3 175 C 398.8 194.3, 399 208.5, 398.3 214.5" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.27" fill="none" opacity=".36" stroke-linecap="round"/>
+        <path d="M 399.3 175 C 398.8 194.3, 399 208.5, 398.3 214.5" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.27" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)" stroke-linecap="round"/>
         <ellipse cx="400" cy="214" rx="1.4" ry="1.3" fill="var(--hero-nose-highlight, #fff1dc)" opacity="var(--hero-subtle-line-opacity, .55)"/>
         <path d="M 397.1 215 Q 398.7 213.9, 399.5 215.4" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
         <path d="M 402.9 215 Q 401.3 213.9, 400.5 215.4" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
@@ -2976,7 +3007,7 @@
         <path d="M 398.6 171 C 398.2 192.8, 397.5 210.3, 400 213.8 C 402.5 210.3, 401.8 192.8, 401.4 171 Z" fill="var(--hero-nose-highlight, #fff1dc)" opacity=".16"/>
         <path data-hero-face-detail="nose" d="M 401 171 C 403.3 192.8, 404 209.5, 403.6 214.5 C 402.6 216.5, 401.5 217.5, 400 217.2 C 405 215.9, 404.3 205.5, 402 169 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .38)"/>
         <path d="M 396.4 213.8 C 398.4 216, 401.6 216, 403.6 213.8 C 401.9 214.8, 398.1 214.8, 396.4 213.8 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity=".34"/>
-        <path d="M 399.3 172 C 398.8 192.8, 399 208.5, 398.3 214.5" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity=".36" stroke-linecap="round"/>
+        <path d="M 399.3 172 C 398.8 192.8, 399 208.5, 398.3 214.5" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)" stroke-linecap="round"/>
         <ellipse cx="400" cy="214" rx="1.8" ry="1.4" fill="var(--hero-nose-highlight, #fff1dc)" opacity="var(--hero-subtle-line-opacity, .55)"/>
         <path d="M 396.6 215 Q 398.2 213.9, 399.3 215.4" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
         <path d="M 403.4 215 Q 401.8 213.9, 400.7 215.4" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
@@ -2985,7 +3016,7 @@
         <path d="M 398.7 188 C 398.3 200, 397.1 207.8, 400 211.3 C 402.9 207.8, 401.8 200, 401.3 188 Z" fill="var(--hero-nose-highlight, #fff1dc)" opacity=".14"/>
         <path data-hero-face-detail="nose" d="M 401 188 C 403.3 200, 404 207, 404 212 C 403 214, 401.5 215, 400 214.7 C 405.4 213.4, 404.3 203, 402 186 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .32)"/>
         <path d="M 396 211.3 C 398 213.5, 402 213.5, 404 211.3 C 402.3 212.3, 397.7 212.3, 396 211.3 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity=".34"/>
-        <path d="M 399.3 189 C 398.8 200, 399 206, 398.3 212" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity=".36" stroke-linecap="round"/>
+        <path d="M 399.3 189 C 398.8 200, 399 206, 398.3 212" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)" stroke-linecap="round"/>
         <ellipse cx="400" cy="211.5" rx="2.1" ry="1.6" fill="var(--hero-nose-highlight, #fff1dc)" opacity="var(--hero-subtle-line-opacity, .55)"/>
         <path d="M 396.4 212.5 Q 398 211.4, 399.1 212.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
         <path d="M 403.6 212.5 Q 402 211.4, 400.9 212.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
@@ -2994,7 +3025,7 @@
         <path d="M 398.6 171 C 398.2 192.5, 397.3 209.8, 400 213.3 C 402.7 209.8, 401.8 192.5, 401.4 171 Z" fill="var(--hero-nose-highlight, #fff1dc)" opacity=".16"/>
         <path data-hero-face-detail="nose" d="M 401 171 C 403.5 192.5, 404.2 209, 403.8 214 C 402.8 216, 401.5 217, 400 216.7 C 405.2 215.4, 404.5 205, 402 169 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .38)"/>
         <path d="M 396.2 213.3 C 398.2 215.5, 401.8 215.5, 403.8 213.3 C 402.1 214.3, 397.9 214.3, 396.2 213.3 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity=".34"/>
-        <path d="M 399.3 172 C 398.8 192.5, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.58" fill="none" opacity=".36" stroke-linecap="round"/>
+        <path d="M 399.3 172 C 398.8 192.5, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.58" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)" stroke-linecap="round"/>
         <ellipse cx="400" cy="213.5" rx="1.8" ry="1.4" fill="var(--hero-nose-highlight, #fff1dc)" opacity="var(--hero-subtle-line-opacity, .55)"/>
         <path d="M 396.6 214.5 Q 398.2 213.4, 399.3 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
         <path d="M 403.4 214.5 Q 401.8 213.4, 400.7 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
@@ -3003,7 +3034,7 @@
         <path d="M 398.8 171 C 398.4 193, 397.4 210.7, 400 214.2 C 402.6 210.7, 401.6 193, 401.2 171 Z" fill="var(--hero-nose-highlight, #fff1dc)" opacity=".16"/>
         <path data-hero-face-detail="nose" d="M 401 171 C 403.3 193, 404 210, 403.7 215 C 402.7 217, 401.5 218, 400 217.7 C 405.1 216.4, 404.3 206, 402 169 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .32)"/>
         <path d="M 396.3 214.2 C 398.3 216.4, 401.7 216.4, 403.7 214.2 C 402 215.2, 398 215.2, 396.3 214.2 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity=".34"/>
-        <path d="M 399.3 172 C 398.8 193, 399 209, 398.3 215" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity=".36" stroke-linecap="round"/>
+        <path d="M 399.3 172 C 398.8 193, 399 209, 398.3 215" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)" stroke-linecap="round"/>
         <ellipse cx="400" cy="214.4" rx="1.8" ry="1.4" fill="var(--hero-nose-highlight, #fff1dc)" opacity="var(--hero-subtle-line-opacity, .55)"/>
         <path d="M 396.6 215.4 Q 398.2 214.3, 399.3 215.8" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
         <path d="M 403.4 215.4 Q 401.8 214.3, 400.7 215.8" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
@@ -3012,7 +3043,7 @@
         <path d="M 398.7 176 C 398.3 195, 397.2 209.8, 400 213.3 C 402.8 209.8, 401.8 195, 401.3 176 Z" fill="var(--hero-nose-highlight, #fff1dc)" opacity=".16"/>
         <path data-hero-face-detail="nose" d="M 401 176 C 403.3 195, 404 209, 403.9 214 C 402.9 216, 401.5 217, 400 216.7 C 405.3 215.4, 404.3 205, 402 174 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .32)"/>
         <path d="M 396.1 213.3 C 398.1 215.5, 401.9 215.5, 403.9 213.3 C 402.2 214.3, 397.8 214.3, 396.1 213.3 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity=".34"/>
-        <path d="M 399.3 177 C 398.8 195, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity=".36" stroke-linecap="round"/>
+        <path d="M 399.3 177 C 398.8 195, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)" stroke-linecap="round"/>
         <ellipse cx="400" cy="213.5" rx="1.9" ry="1.4" fill="var(--hero-nose-highlight, #fff1dc)" opacity="var(--hero-subtle-line-opacity, .55)"/>
         <path d="M 396.5 214.5 Q 398.1 213.4, 399.2 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
         <path d="M 403.5 214.5 Q 401.9 213.4, 400.8 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
@@ -3021,7 +3052,7 @@
         <path d="M 398.8 176 C 398.4 195, 397.1 209.8, 400 213.3 C 402.9 209.8, 401.6 195, 401.2 176 Z" fill="var(--hero-nose-highlight, #fff1dc)" opacity=".16"/>
         <path data-hero-face-detail="nose" d="M 401 176 C 403.3 195, 404 209, 404 214 C 403 216, 401.5 217, 400 216.7 C 405.4 215.4, 404.3 205, 402 174 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .32)"/>
         <path d="M 396 213.3 C 398 215.5, 402 215.5, 404 213.3 C 402.3 214.3, 397.7 214.3, 396 213.3 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity=".34"/>
-        <path d="M 399.3 177 C 398.8 195, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity=".36" stroke-linecap="round"/>
+        <path d="M 399.3 177 C 398.8 195, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)" stroke-linecap="round"/>
         <ellipse cx="400" cy="213.5" rx="2.3" ry="1.6" fill="var(--hero-nose-highlight, #fff1dc)" opacity="var(--hero-subtle-line-opacity, .55)"/>
         <path d="M 396.2 214.5 Q 397.8 213.4, 399.1 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
         <path d="M 403.8 214.5 Q 402.2 213.4, 400.9 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
@@ -3030,7 +3061,7 @@
         <path d="M 399.2 176 C 398.8 195, 398.3 209.8, 400 213.3 C 401.7 209.8, 401.3 195, 400.8 176 Z" fill="var(--hero-nose-highlight, #fff1dc)" opacity=".16"/>
         <path data-hero-face-detail="nose" d="M 401 176 C 402.2 195, 402.9 209, 402.8 214 C 401.8 216, 401.5 217, 400 216.7 C 404.2 215.4, 403.2 205, 402 174 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .32)"/>
         <path d="M 397.2 213.3 C 399.2 215.5, 400.8 215.5, 402.8 213.3 C 401.1 214.3, 398.9 214.3, 397.2 213.3 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity=".34"/>
-        <path d="M 399.3 177 C 398.8 195, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.27" fill="none" opacity=".36" stroke-linecap="round"/>
+        <path d="M 399.3 177 C 398.8 195, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.27" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)" stroke-linecap="round"/>
         <ellipse cx="400" cy="213.5" rx="1.6" ry="1.3" fill="var(--hero-nose-highlight, #fff1dc)" opacity="var(--hero-subtle-line-opacity, .55)"/>
         <path d="M 397 214.5 Q 398.6 213.4, 399.4 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
         <path d="M 403 214.5 Q 401.4 213.4, 400.6 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
@@ -3039,7 +3070,7 @@
         <path d="M 398.3 176 C 397.9 195, 395.7 209.8, 400 213.3 C 404.3 209.8, 402.1 195, 401.7 176 Z" fill="var(--hero-nose-highlight, #fff1dc)" opacity=".16"/>
         <path data-hero-face-detail="nose" d="M 401 176 C 404.1 195, 404.8 209, 405.4 214 C 404.4 216, 401.5 217, 400 216.7 C 406.8 215.4, 405.1 205, 402 174 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .3)"/>
         <path d="M 394.6 213.3 C 396.6 215.5, 403.4 215.5, 405.4 213.3 C 403.7 214.3, 396.3 214.3, 394.6 213.3 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity=".34"/>
-        <path d="M 399.3 177 C 398.8 195, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity=".36" stroke-linecap="round"/>
+        <path d="M 399.3 177 C 398.8 195, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)" stroke-linecap="round"/>
         <ellipse cx="400" cy="213.5" rx="2.9" ry="1.7" fill="var(--hero-nose-highlight, #fff1dc)" opacity="var(--hero-subtle-line-opacity, .55)"/>
         <path d="M 395.2 214.5 Q 396.8 213.4, 398.8 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
         <path d="M 404.8 214.5 Q 403.2 213.4, 401.2 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
@@ -3048,7 +3079,7 @@
         <path d="M 398.9 188 C 398.4 200, 397.3 207.5, 400 211 C 402.7 207.5, 401.6 200, 401.1 188 Z" fill="var(--hero-nose-highlight, #fff1dc)" opacity=".14"/>
         <path data-hero-face-detail="nose" d="M 401 188 C 403.3 200, 404 207, 403.8 212 C 402.8 214, 401.5 215, 400 214.7 C 405.2 213.4, 404.3 203, 402 186 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .32)"/>
         <path d="M 396.2 211 C 398.2 213.2, 401.8 213.2, 403.8 211 C 402.1 212, 397.9 212, 396.2 211 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity=".34"/>
-        <path d="M 399.3 189 C 398.8 200, 399 206, 398.3 212" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity=".36" stroke-linecap="round"/>
+        <path d="M 399.3 189 C 398.8 200, 399 206, 398.3 212" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)" stroke-linecap="round"/>
         <ellipse cx="400" cy="211.2" rx="2" ry="1.4" fill="var(--hero-nose-highlight, #fff1dc)" opacity="var(--hero-subtle-line-opacity, .55)"/>
         <path d="M 396.5 212.2 Q 398.1 211.9, 399.2 212.6" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
         <path d="M 403.5 212.2 Q 401.9 211.9, 400.8 212.6" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
@@ -3057,7 +3088,7 @@
         <path d="M 398.8 176 C 398.4 195, 397.7 209.8, 400 213.3 C 402.3 209.8, 401.6 195, 401.2 176 Z" fill="var(--hero-nose-highlight, #fff1dc)" opacity=".16"/>
         <path data-hero-face-detail="nose" d="M 401 176 C 403.1 195, 403.8 209, 403.4 214 C 402.4 216, 401.5 217, 400 216.7 C 404.8 215.4, 404.1 205, 402 174 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .28)"/>
         <path d="M 396.6 213.3 C 398.6 215.5, 401.4 215.5, 403.4 213.3 C 401.7 214.3, 398.3 214.3, 396.6 213.3 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity=".34"/>
-        <path d="M 399.3 177 C 398.8 195, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity=".36" stroke-linecap="round"/>
+        <path d="M 399.3 177 C 398.8 195, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)" stroke-linecap="round"/>
         <ellipse cx="400" cy="213.5" rx="1.6" ry="1.3" fill="var(--hero-nose-highlight, #fff1dc)" opacity="var(--hero-subtle-line-opacity, .55)"/>
         <path d="M 395.6 214.5 Q 397.3 213.4, 399.3 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
         <path d="M 404.4 214.5 Q 402.8 213.4, 400.7 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
@@ -3066,7 +3097,7 @@
         <path d="M 398.5 178 C 398.1 196, 396.5 209.8, 400 213.3 C 403.5 209.8, 401.9 196, 401.5 178 Z" fill="var(--hero-nose-highlight, #fff1dc)" opacity=".12"/>
         <path data-hero-face-detail="nose" d="M 401 178 C 403.7 196, 404.4 209, 404.6 214 C 403.6 216, 401.5 217, 400 216.7 C 406 215.4, 404.7 205, 402 176 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .24)"/>
         <path d="M 395.4 213.3 C 397.4 215.5, 402.6 215.5, 404.6 213.3 C 402.9 214.3, 397.1 214.3, 395.4 213.3 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity=".34"/>
-        <path d="M 399.3 179 C 398.8 196, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity=".36" stroke-linecap="round"/>
+        <path d="M 399.3 179 C 398.8 196, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)" stroke-linecap="round"/>
         <ellipse cx="400" cy="213.5" rx="2.3" ry="1.4" fill="var(--hero-nose-highlight, #fff1dc)" opacity="var(--hero-subtle-line-opacity, .55)"/>
         <path d="M 396 214.5 Q 397.6 213.4, 399.1 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
         <path d="M 404 214.5 Q 402.4 213.4, 400.9 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
@@ -3075,7 +3106,7 @@
         <path d="M 398 178 C 397.6 196, 394.9 209.8, 400 213.3 C 405.1 209.8, 402.4 196, 402 178 Z" fill="var(--hero-nose-highlight, #fff1dc)" opacity=".12"/>
         <path data-hero-face-detail="nose" d="M 401 178 C 404.8 196, 405.5 209, 406.2 214 C 405.2 216, 401.5 217, 400 216.7 C 407.6 215.4, 405.8 205, 402 176 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .24)"/>
         <path d="M 393.8 213.3 C 395.8 215.5, 404.2 215.5, 406.2 213.3 C 404.5 214.3, 395.5 214.3, 393.8 213.3 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity=".34"/>
-        <path d="M 399.3 179 C 398.8 196, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity=".36" stroke-linecap="round"/>
+        <path d="M 399.3 179 C 398.8 196, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)" stroke-linecap="round"/>
         <ellipse cx="400" cy="213.5" rx="3.2" ry="1.6" fill="var(--hero-nose-highlight, #fff1dc)" opacity="var(--hero-subtle-line-opacity, .55)"/>
         <path d="M 394.6 214.5 Q 396.2 213.4, 398.7 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
         <path d="M 405.4 214.5 Q 403.8 213.4, 401.3 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
@@ -3084,7 +3115,7 @@
         <path d="M 398.6 178 C 398.2 196, 396.3 209.8, 400 213.3 C 403.7 209.8, 401.8 196, 401.4 178 Z" fill="var(--hero-nose-highlight, #fff1dc)" opacity=".11"/>
         <path data-hero-face-detail="nose" d="M 401 178 C 403.6 196, 404.3 209, 404.8 214 C 403.8 216, 401.5 217, 400 216.7 C 406.2 215.4, 404.6 205, 402 176 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .24)"/>
         <path d="M 395.2 213.3 C 397.2 215.5, 402.8 215.5, 404.8 213.3 C 403.1 214.3, 396.9 214.3, 395.2 213.3 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity=".34"/>
-        <path d="M 399.3 179 C 398.8 196, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity=".36" stroke-linecap="round"/>
+        <path d="M 399.3 179 C 398.8 196, 399 208, 398.3 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)" stroke-linecap="round"/>
         <ellipse cx="400" cy="213.5" rx="2.5" ry="1.3" fill="var(--hero-nose-highlight, #fff1dc)" opacity="var(--hero-subtle-line-opacity, .55)"/>
         <path d="M 395.8 214.5 Q 397.4 213.4, 399 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
         <path d="M 404.2 214.5 Q 402.6 213.4, 401 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
@@ -3093,7 +3124,7 @@
         <path d="M 398.5 171 C 398.1 192.5, 397.3 209.8, 399.9 213.3 C 402.7 209.8, 401.9 192.5, 401.5 171 Z" fill="var(--hero-nose-highlight, #fff1dc)" opacity=".16"/>
         <path data-hero-face-detail="nose" d="M 401.2 171 C 403.6 192.5, 404.3 209, 403.8 214 C 402.8 216, 401.4 217, 399.9 216.7 C 405.2 215.4, 404.6 205, 402.2 169 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .38)"/>
         <path d="M 396.2 213.3 C 398.2 215.5, 401.8 215.5, 403.8 213.3 C 402.1 214.3, 397.9 214.3, 396.2 213.3 Z" fill="var(--hero-nose-fill, #7a4a2a)" opacity=".34"/>
-        <path d="M 399.2 172 C 398.7 192.5, 398.9 208, 398.2 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity=".36" stroke-linecap="round"/>
+        <path d="M 399.2 172 C 398.7 192.5, 398.9 208, 398.2 214" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width="1.42" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)" stroke-linecap="round"/>
         <ellipse cx="399.9" cy="213.5" rx="1.8" ry="1.4" fill="var(--hero-nose-highlight, #fff1dc)" opacity="var(--hero-subtle-line-opacity, .55)"/>
         <path d="M 396.4 214.5 Q 398 213.4, 399.2 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
         <path d="M 403.4 214.5 Q 401.8 213.4, 400.7 214.9" stroke="var(--hero-face-mark, #5a321e)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".32"/>
@@ -3102,7 +3133,6 @@
       <ellipse cx="429" cy="210" rx="9" ry="5" fill="var(--hero-cheek, #e87b6a)" opacity="var(--hero-cheek-opacity, .35)"/>
           </g>
         </g>
-      </g>
       <g data-hero-slot="face-feature" data-hero-option="none"></g>
       <g data-hero-slot="face-feature" data-hero-option="freckles" display="none">
         <circle cx="366" cy="205" r="1.5" fill="var(--hero-face-line, #7a4a2a)" opacity=".42"/>
@@ -3143,19 +3173,6 @@
       </g>
       <g data-hero-slot="face-feature" data-hero-option="cheek-lines" display="none">
       </g>
-      <g data-hero-motion="mouth-breath-position">
-        <animateTransform attributeName="transform" type="translate"
-                          values="0 0;0 .38;0 0"
-                          keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
-                          additive="sum" calcMode="spline"
-                          keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
-        <g data-hero-motion="mouth-breath-scale" transform="translate(400 226)">
-          <animateTransform attributeName="transform" type="scale"
-                            values="1 1;1.012 1.028;1 1"
-                            keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
-                            additive="sum" calcMode="spline"
-                            keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
-          <g transform="translate(-400 -226)">
       <g data-hero-slot="facial-hair" data-hero-option="none"></g>
       <g data-hero-slot="facial-hair" data-hero-option="clean-shaven" display="none"></g>
       <g data-hero-slot="facial-hair" data-hero-option="stubble" display="none">
@@ -3220,11 +3237,19 @@
         <path d="M 376 236 C 384 246, 394 252, 400 254 C 406 252, 416 246, 424 236" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.40" fill="none" stroke-linecap="round" opacity=".24"/>
         <path d="M 384 246 Q 400 254, 416 246" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.10" fill="none" stroke-linecap="round" opacity=".34"/>
       </g>
+        <g data-hero-motion="mouth-breath-scale" transform="translate(400 226)">
+          <animateTransform attributeName="transform" type="scale"
+                            values="1 1;1.012 1.028;1 1"
+                            keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
+                            additive="sum" calcMode="spline"
+                            keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
+          <g transform="translate(-400 -226)">
       <g data-hero-slot="mouth-style" data-hero-option="smile">
-        <path d="M 379 221.5 Q 400 235.5, 421 221.5 Q 413 234, 400 236 Q 387 234, 379 221.5 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
+        <path d="M 374.5 219 Q 400 241, 425.5 219 Q 415 240, 400 242 Q 385 240, 374.5 219 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
 
-        <ellipse cx="400" cy="238" rx="12" ry="3" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".12"/>
-        <path d="M 385 224.1 Q 400 231.1, 415 224.1 Q 408 229.8, 400 230.8 Q 392 229.8, 385 224.1 Z" fill="#ffffff" opacity=".95"/>
+        <ellipse cx="400" cy="242" rx="14.5" ry="3.6" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".12"/>
+        <path d="M 381.5 222.8 Q 400 234, 418.5 222.8 Q 409.5 233.6, 400 235.2 Q 390.5 233.6, 381.5 222.8 Z" fill="#ffffff" opacity=".97"/>
+        <path d="M 371.5 218.3 C 376 222.6, 380 224.6, 384.5 224 M 415.5 224 C 420 224.6, 424 222.6, 428.5 218.3" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity="var(--hero-subtle-line-opacity, .24)"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="soft-smile" display="none">
         <path d="M 381 223.5 Q 400 235, 419 223.5" stroke="var(--hero-mouth-fill, #5a2418)" stroke-width="5.10" fill="none" stroke-linecap="round"/>
@@ -3260,57 +3285,59 @@
         <path d="M 384 223 Q 400 236.5, 416 223" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="1.88" fill="none" stroke-linecap="round" opacity=".62"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="bright-smile" display="none">
-        <path d="M 378.5 221.5 Q 400 237.5, 421.5 221.5 Q 412 235.5, 400 238 Q 388 235.5, 378.5 221.5 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
+        <path d="M 374 218.8 Q 400 242, 426 218.8 Q 415 240.5, 400 242.5 Q 385 240.5, 374 218.8 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
 
-        <ellipse cx="400" cy="238" rx="12" ry="3" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".12"/>
-        <path d="M 384.5 224 Q 400 232.2, 415.5 224 Q 408 230.8, 400 232 Q 392 230.8, 384.5 224 Z" fill="#ffffff" opacity=".94"/>
+        <ellipse cx="400" cy="242" rx="14.5" ry="3.7" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".12"/>
+        <path d="M 381.5 222.8 Q 400 234.4, 418.5 222.8 Q 409.4 233.8, 400 235.6 Q 390.6 233.8, 381.5 222.8 Z" fill="#ffffff" opacity=".96"/>
+        <path d="M 370.5 218 C 375.5 222.8, 380 224.8, 384.5 224.2 M 415.5 224.2 C 420 224.8, 424.5 222.8, 429.5 218" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity="var(--hero-subtle-line-opacity, .24)"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="wide-smile" display="none">
-        <path d="M 375.5 221.5 Q 400 238.5, 424.5 221.5 Q 414 236.5, 400 238.5 Q 386 236.5, 375.5 221.5 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
+        <path d="M 370.5 218.7 Q 400 243, 429.5 218.7 Q 417 241.5, 400 243.5 Q 383 241.5, 370.5 218.7 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
 
-        <ellipse cx="400" cy="238" rx="12" ry="3" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".12"/>
-        <path d="M 382 224 Q 400 232.6, 418 224 Q 409 231.5, 400 232.8 Q 391 231.5, 382 224 Z" fill="#ffffff" opacity=".94"/>
+        <ellipse cx="400" cy="243" rx="16" ry="3.9" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".12"/>
+        <path d="M 378 222.9 Q 400 235, 422 222.9 Q 411.2 234, 400 235.8 Q 388.8 234, 378 222.9 Z" fill="#ffffff" opacity=".96"/>
+        <path d="M 367.5 217.7 C 373 223, 378 225.4, 383 224.5 M 417 224.5 C 422 225.4, 427 223, 432.5 217.7" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.75" fill="none" stroke-linecap="round" opacity="var(--hero-subtle-line-opacity, .26)"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="toothy-smile" display="none">
-        <path d="M 377.5 220.5 C 386 234.5, 392 241, 400 241 C 408 241, 414 234.5, 422.5 220.5 C 414 230.5, 407 233.5, 400 233.5 C 393 233.5, 386 230.5, 377.5 220.5 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
+        <path d="M 376 219.5 C 385.5 236, 392 243, 400 243 C 408 243, 414.5 236, 424 219.5 C 415 231, 407.5 234.6, 400 234.6 C 392.5 234.6, 385 231, 376 219.5 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
 
-        <ellipse cx="400" cy="238" rx="12" ry="3" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".12"/>
-        <path d="M 384 224 C 392 228.5, 408 228.5, 416 224 C 414 232, 408 236, 400 236 C 392 236, 386 232, 384 224 Z" fill="#ffffff"/>
-        <path d="M 385 224 C 393 227.5, 407 227.5, 415 224" stroke="#eef1ea" stroke-width="1.65" fill="none" stroke-linecap="round" opacity=".75"/>
+        <ellipse cx="400" cy="240.5" rx="13" ry="3.5" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".12"/>
+        <path d="M 383 223.2 C 391.5 228.4, 408.5 228.4, 417 223.2 C 415 233.4, 408.5 237.8, 400 237.8 C 391.5 237.8, 385 233.4, 383 223.2 Z" fill="#ffffff"/>
+        <path d="M 384 223.5 C 392.5 227.5, 407.5 227.5, 416 223.5" stroke="#eef1ea" stroke-width="1.65" fill="none" stroke-linecap="round" opacity=".75"/>
         <path d="M 391 225.5 L 390.8 232.5 M 400 226 L 400 234 M 409 225.5 L 409.2 232.5" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="0.83" opacity=".2"/>
         <path d="M 385 234 C 392 238, 408 238, 415 234" stroke="var(--hero-lip-fill, #b44a4a)" stroke-width="1.72" fill="none" stroke-linecap="round" opacity=".38"/>
-        <path d="M 377.5 220.5 C 386 234.5, 392 241, 400 241 C 408 241, 414 234.5, 422.5 220.5" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="2.70" fill="none" stroke-linecap="round"/>
+        <path d="M 376 219.5 C 385.5 236, 392 243, 400 243 C 408 243, 414.5 236, 424 219.5" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="2.70" fill="none" stroke-linecap="round"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="toothy-bright-smile" display="none">
-        <path d="M 371 218 C 378 230, 389 237, 398 238 C 387 239, 377 234, 371 226 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity="var(--hero-smile-cheek-shadow-opacity, .16)"/>
-        <path d="M 429 218 C 422 230, 411 237, 402 238 C 413 239, 423 234, 429 226 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity="var(--hero-smile-cheek-shadow-opacity, .16)"/>
-        <path d="M 382 222 C 388 234, 393 240.5, 400 240.5 C 407 240.5, 412 234, 418 222 C 410 227.5, 405 229.5, 400 229.5 C 395 229.5, 390 227.5, 382 222 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
-        <path d="M 385 223.8 C 392.5 226.4, 407.5 226.4, 415 223.8 C 413.2 232.4, 407.2 236.2, 400 236.2 C 392.8 236.2, 386.8 232.4, 385 223.8 Z" fill="#ffffff"/>
-        <path d="M 386 224.2 C 394 226.2, 406 226.2, 414 224.2" stroke="#eef1ea" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".72"/>
+        <path d="M 369 217.5 C 377 231.5, 389 239.2, 398 240 C 386 241, 375.5 235.5, 369 226 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity="var(--hero-smile-cheek-shadow-opacity, .2)"/>
+        <path d="M 431 217.5 C 423 231.5, 411 239.2, 402 240 C 414 241, 424.5 235.5, 431 226 Z" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity="var(--hero-smile-cheek-shadow-opacity, .2)"/>
+        <path d="M 380 220.8 C 387 235, 393 242.5, 400 242.5 C 407 242.5, 413 235, 420 220.8 C 411.5 228, 405.5 230.4, 400 230.4 C 394.5 230.4, 388.5 228, 380 220.8 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
+        <path d="M 383.5 223.3 C 391.8 226.4, 408.2 226.4, 416.5 223.3 C 414.7 233.5, 408.3 238, 400 238 C 391.7 238, 385.3 233.5, 383.5 223.3 Z" fill="#ffffff"/>
+        <path d="M 384.5 223.8 C 393.2 226.3, 406.8 226.3, 415.5 223.8" stroke="#eef1ea" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".72"/>
         <path d="M 391.6 225.5 L 391.4 231.7 M 400 225.9 L 400 232.6 M 408.4 225.5 L 408.6 231.7" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="0.72" opacity=".16"/>
         <path d="M 387 232.8 C 393 235.2, 407 235.2, 413 232.8" stroke="var(--hero-lip-fill, #b44a4a)" stroke-width="1.58" fill="none" stroke-linecap="round" opacity=".4"/>
-        <path d="M 383 220.8 C 390 224.5, 410 224.5, 417 220.8" stroke="var(--hero-skin-highlight, #fff1dc)" stroke-width="1.20" fill="none" stroke-linecap="round" opacity=".28"/>
-        <path d="M 378 222.5 C 380 224.3, 382.5 225.2, 385 224.8 M 415 224.8 C 417.5 225.2, 420 224.3, 422 222.5" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.35" fill="none" stroke-linecap="round" opacity="var(--hero-subtle-line-opacity, .12)"/>
+        <path d="M 381 220 C 389 224.2, 411 224.2, 419 220" stroke="var(--hero-skin-highlight, #fff1dc)" stroke-width="1.20" fill="none" stroke-linecap="round" opacity=".3"/>
+        <path d="M 375 221.2 C 378 224.2, 381 225.6, 384 225 M 416 225 C 419 225.6, 422 224.2, 425 221.2" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity="var(--hero-subtle-line-opacity, .2)"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="photo-smile" display="none">
-        <path d="M 374 220 C 385 238, 393 244, 400 244 C 407 244, 415 238, 426 220 C 417 232, 409 235, 400 235 C 391 235, 383 232, 374 220 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
+        <path d="M 372 219 C 384 240, 392.5 246.5, 400 246.5 C 407.5 246.5, 416 240, 428 219 C 418.5 233, 409.5 236.5, 400 236.5 C 390.5 236.5, 381.5 233, 372 219 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
 
-        <ellipse cx="400" cy="238" rx="12" ry="3" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".12"/>
+        <ellipse cx="400" cy="241.5" rx="14" ry="3.8" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".12"/>
         <path d="M 382 222.8 C 392 225.6, 408 225.6, 418 222.8" stroke="var(--hero-lip-fill, #b44a4a)" stroke-width="1.50" fill="none" stroke-linecap="round" opacity=".5"/>
-        <path d="M 381 223.5 C 391 229, 409 229, 419 223.5 C 417 232, 410 235, 400 235 C 390 235, 383 232, 381 223.5 Z" fill="#ffffff"/>
+        <path d="M 379.5 222.8 C 390.5 229, 409.5 229, 420.5 222.8 C 418.4 233.8, 410.6 237.2, 400 237.2 C 389.4 237.2, 381.6 233.8, 379.5 222.8 Z" fill="#ffffff"/>
         <path d="M 383 224.1 C 392 227.4, 408 227.4, 417 224.1" stroke="#f4f6ef" stroke-width="1.58" fill="none" stroke-linecap="round" opacity=".7"/>
         <path d="M 387.2 224.6 L 387 232.6 M 393.2 225 L 393 234 M 400 225.2 L 400 234.4 M 406.8 225 L 407 234 M 412.8 224.6 L 413 232.6" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="0.75" opacity=".2"/>
         <path d="M 384 230.6 C 392 233.4, 408 233.4, 416 230.6" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="0.83" fill="none" stroke-linecap="round" opacity=".22"/>
         <path d="M 383 234 C 392 238, 408 238, 417 234" stroke="var(--hero-lip-fill, #b44a4a)" stroke-width="1.88" fill="none" stroke-linecap="round" opacity=".55"/>
-        <path d="M 374 220 C 385 238, 393 244, 400 244 C 407 244, 415 238, 426 220" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="2.47" fill="none" stroke-linecap="round"/>
-        <path d="M 370 218.5 C 373 221, 376 222, 379 221.5 M 421 221.5 C 424 222, 427 221, 430 218.5" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity="var(--hero-subtle-line-opacity, .26)"/>
+        <path d="M 372 219 C 384 240, 392.5 246.5, 400 246.5 C 407.5 246.5, 416 240, 428 219" stroke="var(--hero-mouth-line, #3a1408)" stroke-width="2.47" fill="none" stroke-linecap="round"/>
+        <path d="M 368 217.5 C 372 221.2, 376 222.8, 380 222 M 420 222 C 424 222.8, 428 221.2, 432 217.5" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity="var(--hero-subtle-line-opacity, .3)"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="cheerful-grin" display="none">
-        <path d="M 377.5 221.5 Q 400 239.5, 422.5 221.5 Q 413 238.5, 400 241 Q 387 238.5, 377.5 221.5 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
+        <path d="M 375.5 220 Q 400 242, 424.5 220 Q 414 240, 400 242.5 Q 386 240, 375.5 220 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
 
-        <ellipse cx="400" cy="238" rx="12" ry="3" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".12"/>
-        <path d="M 383.5 224 Q 400 232.8, 416.5 224 Q 409 231.5, 400 233.2 Q 391 231.5, 383.5 224 Z" fill="#ffffff" opacity=".92"/>
-        <path d="M 373.5 220.5 C 377 223.2, 380 224.5, 383.5 223.5 M 416.5 223.5 C 420 224.5, 423 223.2, 426.5 220.5" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.72" fill="none" stroke-linecap="round" opacity="var(--hero-subtle-line-opacity, .22)"/>
+        <ellipse cx="400" cy="241" rx="14" ry="3.7" fill="var(--hero-face-plane-shadow, #7a4a2a)" opacity=".12"/>
+        <path d="M 382.5 223.3 Q 400 234.2, 417.5 223.3 Q 409 233, 400 234.8 Q 391 233, 382.5 223.3 Z" fill="#ffffff" opacity=".93"/>
+        <path d="M 371.5 218.8 C 376 223.4, 380 225.2, 384 224.2 M 416 224.2 C 420 225.2, 424 223.4, 428.5 218.8" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.72" fill="none" stroke-linecap="round" opacity="var(--hero-subtle-line-opacity, .26)"/>
       </g>
       <g data-hero-slot="mouth-style" data-hero-option="open-smile" display="none">
         <path d="M 381.5 221.5 Q 400 237, 418.5 221.5 Q 413 243, 400 245 Q 387 243, 381.5 221.5 Z" fill="var(--hero-mouth-fill, #5a2418)"/>
@@ -3665,27 +3692,27 @@
         <g data-hero-topic-rotator="left" color="#ffffff">
           <g data-hero-topic-image="code" opacity="1">
             <use href="#hero-topic-icon-code-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="1;0;0;0;0;0;1" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="1;0;0;0;0;0;1" keyTimes="0;0.1666666667;0.3333333333;0.5;0.6666666667;0.8333333333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
           <g data-hero-topic-image="testing" opacity="0">
             <use href="#hero-topic-icon-testing-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="0;1;0;0;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="0;1;0;0;0;0;0" keyTimes="0;0.1666666667;0.3333333333;0.5;0.6666666667;0.8333333333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
           <g data-hero-topic-image="git" opacity="0">
             <use href="#hero-topic-icon-git-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="0;0;1;0;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="0;0;1;0;0;0;0" keyTimes="0;0.1666666667;0.3333333333;0.5;0.6666666667;0.8333333333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
           <g data-hero-topic-image="data" opacity="0">
             <use href="#hero-topic-icon-data-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="0;0;0;1;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="0;0;0;1;0;0;0" keyTimes="0;0.1666666667;0.3333333333;0.5;0.6666666667;0.8333333333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
           <g data-hero-topic-image="uml" opacity="0">
             <use href="#hero-topic-icon-uml-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="0;0;0;0;1;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="0;0;0;0;1;0;0" keyTimes="0;0.1666666667;0.3333333333;0.5;0.6666666667;0.8333333333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
           <g data-hero-topic-image="graph" opacity="0">
             <use href="#hero-topic-icon-graph-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="0;0;0;0;0;1;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="0;0;0;0;0;1;0" keyTimes="0;0.1666666667;0.3333333333;0.5;0.6666666667;0.8333333333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
         </g>
         <circle r="5" fill="#0a1018"/>
@@ -3724,27 +3751,27 @@
         <g data-hero-topic-rotator="right" color="#ffffff">
           <g data-hero-topic-image="code" opacity="1">
             <use href="#hero-topic-icon-code-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="1;0;0;0;0;0;1" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="1;0;0;0;0;0;1" keyTimes="0;0.1666666667;0.3333333333;0.5;0.6666666667;0.8333333333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
           <g data-hero-topic-image="testing" opacity="0">
             <use href="#hero-topic-icon-testing-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="0;1;0;0;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="0;1;0;0;0;0;0" keyTimes="0;0.1666666667;0.3333333333;0.5;0.6666666667;0.8333333333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
           <g data-hero-topic-image="git" opacity="0">
             <use href="#hero-topic-icon-git-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="0;0;1;0;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="0;0;1;0;0;0;0" keyTimes="0;0.1666666667;0.3333333333;0.5;0.6666666667;0.8333333333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
           <g data-hero-topic-image="data" opacity="0">
             <use href="#hero-topic-icon-data-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="0;0;0;1;0;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="0;0;0;1;0;0;0" keyTimes="0;0.1666666667;0.3333333333;0.5;0.6666666667;0.8333333333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
           <g data-hero-topic-image="uml" opacity="0">
             <use href="#hero-topic-icon-uml-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="0;0;0;0;1;0;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="0;0;0;0;1;0;0" keyTimes="0;0.1666666667;0.3333333333;0.5;0.6666666667;0.8333333333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
           <g data-hero-topic-image="graph" opacity="0">
             <use href="#hero-topic-icon-graph-{{ hero_variant }}"/>
-            <animate attributeName="opacity" values="0;0;0;0;0;1;0" keyTimes="0;0.1667;0.3333;0.5;0.6667;0.8333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
+            <animate attributeName="opacity" values="0;0;0;0;0;1;0" keyTimes="0;0.1666666667;0.3333333333;0.5;0.6666666667;0.8333333333;1" dur="13.2s" begin="0s" repeatCount="indefinite" calcMode="discrete"/>
           </g>
         </g>
         <circle r="5" fill="#0a1018"/>
@@ -3768,18 +3795,24 @@
       <path d="M 464 82 L 500 82" stroke="var(--hero-bruin-fur-light, #a06840)" stroke-width="4.50" opacity=".72"/>
     </g>
     <g data-hero-kind-layer="human">
-      <path d="M 290 66 Q 290 56, 300 56 L 330 56 Q 340 56, 340 66 L 340 92 Q 340 102, 332 104 L 326 110 Q 318 116, 308 110 L 304 104 Q 290 104, 290 92 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="2.70" stroke-linejoin="round"/>
-      <path d="M 296 62 Q 301 56, 306 62 Q 311 56, 316 62 Q 321 56, 326 62 Q 331 56, 336 62" fill="none" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="2.10" stroke-linecap="round" opacity=".7"/>
-      <path d="M 306 62 L 306 78 M 316 62 L 316 78 M 326 62 L 326 78" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.95" stroke-linecap="round" opacity=".55"/>
-      <path d="M 298 64 Q 314 62, 332 64" stroke="#f0b386" stroke-width="3.00" fill="none" opacity=".75"/>
-      <path d="M 308 92 Q 304 100, 312 108 Q 320 112, 324 102 Q 322 96, 318 94 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.95"/>
-      <ellipse cx="319" cy="101" rx="2" ry="2.5" fill="#f0b386" opacity=".5"/>
-      <path d="M 510 66 Q 510 56, 500 56 L 470 56 Q 460 56, 460 66 L 460 92 Q 460 102, 468 104 L 474 110 Q 482 116, 492 110 L 496 104 Q 510 104, 510 92 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="2.70" stroke-linejoin="round"/>
-      <path d="M 464 62 Q 469 56, 474 62 Q 479 56, 484 62 Q 489 56, 494 62 Q 499 56, 504 62" fill="none" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="2.10" stroke-linecap="round" opacity=".7"/>
-      <path d="M 474 62 L 474 78 M 484 62 L 484 78 M 494 62 L 494 78" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.95" stroke-linecap="round" opacity=".55"/>
-      <path d="M 468 64 Q 484 62, 502 64" stroke="#f0b386" stroke-width="3.00" fill="none" opacity=".75"/>
-      <path d="M 492 92 Q 496 100, 488 108 Q 480 112, 476 102 Q 478 96, 482 94 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.95"/>
-      <ellipse cx="481" cy="101" rx="2" ry="2.5" fill="#f0b386" opacity=".5"/>
+      <path d="M 292 68 C 292 59, 299 55, 309 56 L 327 56 C 335 56, 340 62, 340 70 L 338 90 C 337 99, 331 104, 323 105 L 319 111 C 314 116, 306 113, 304 105 C 296 103, 291 98, 291 90 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="2.70" stroke-linejoin="round"/>
+      <path d="M 295 83 H 337" stroke="url(#steel-{{ hero_variant }})" stroke-width="8.4" stroke-linecap="round" opacity=".78"/>
+      <path d="M 296 79 H 336" stroke="#ffffff" stroke-width="1.35" stroke-linecap="round" opacity=".36"/>
+      <path d="M 296 66 C 299 60, 304 58, 308 64 C 311 58, 316 58, 319 64 C 322 58, 327 58, 331 64 C 335 64, 337 67, 337 72" fill="none" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="2.03" stroke-linecap="round" opacity=".68"/>
+      <path d="M 307 66 L 307 82 M 318 65 L 318 82 M 329 66 L 329 82" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.72" stroke-linecap="round" opacity=".48"/>
+      <path d="M 298 64 C 308 61, 323 61, 334 65" stroke="#f0b386" stroke-width="2.70" fill="none" stroke-linecap="round" opacity=".72"/>
+      <path d="M 298 80 C 308 84, 323 84, 336 80" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.42" fill="none" stroke-linecap="round" opacity=".22"/>
+      <path d="M 307 94 C 303 100, 308 108, 316 109 C 323 109, 326 102, 321 96 C 317 93, 312 92, 307 94 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.88"/>
+      <ellipse cx="317" cy="101" rx="2.1" ry="2.6" fill="#f0b386" opacity=".46"/>
+      <path d="M 508 68 C 508 59, 501 55, 491 56 L 473 56 C 465 56, 460 62, 460 70 L 462 90 C 463 99, 469 104, 477 105 L 481 111 C 486 116, 494 113, 496 105 C 504 103, 509 98, 509 90 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="2.70" stroke-linejoin="round"/>
+      <path d="M 463 83 H 505" stroke="url(#steel-{{ hero_variant }})" stroke-width="8.4" stroke-linecap="round" opacity=".78"/>
+      <path d="M 464 79 H 504" stroke="#ffffff" stroke-width="1.35" stroke-linecap="round" opacity=".36"/>
+      <path d="M 504 66 C 501 60, 496 58, 492 64 C 489 58, 484 58, 481 64 C 478 58, 473 58, 469 64 C 465 64, 463 67, 463 72" fill="none" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="2.03" stroke-linecap="round" opacity=".68"/>
+      <path d="M 493 66 L 493 82 M 482 65 L 482 82 M 471 66 L 471 82" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.72" stroke-linecap="round" opacity=".48"/>
+      <path d="M 502 64 C 492 61, 477 61, 466 65" stroke="#f0b386" stroke-width="2.70" fill="none" stroke-linecap="round" opacity=".72"/>
+      <path d="M 502 80 C 492 84, 477 84, 464 80" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.42" fill="none" stroke-linecap="round" opacity=".22"/>
+      <path d="M 493 94 C 497 100, 492 108, 484 109 C 477 109, 474 102, 479 96 C 483 93, 488 92, 493 94 Z" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.88"/>
+      <ellipse cx="483" cy="101" rx="2.1" ry="2.6" fill="#f0b386" opacity=".46"/>
     </g>
     <g fill="url(#gold-radial-{{ hero_variant }})" stroke="#5a3f00" stroke-width="0.75">
       <g transform="translate(160 -8)"><path d="M 0 -12 L 2 -2 L 12 0 L 2 2 L 0 12 L -2 2 L -12 0 L -2 -2 Z"><animate attributeName="opacity" values="1;0;1" keyTimes="0;0.55;1" dur="2.2s" repeatCount="indefinite" begin="0s" calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1" /></path></g>

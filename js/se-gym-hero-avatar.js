@@ -9,7 +9,7 @@
   var CHOICE_PREVIEW_OBSERVER_MARGIN = 160;
   var CHOICE_PREVIEW_QUEUE_RETAIN_MARGIN = 520;
   var REPRESENTATIVE_PREVIEW_SKIN = '#FFD100';
-  var REPRESENTATIVE_PREVIEW_HAIR = '#2774AE';
+  var REPRESENTATIVE_PREVIEW_HAIR = '#1f140c';
 
   function choice(value, label) {
     return { value: value, label: label };
@@ -645,7 +645,69 @@
   var HEADWEAR_FIT_ACCESSORIES = lookupValues(HEADWEAR_ACCESSORIES.concat(['crown', 'halo', 'headset-mic', 'over-ear-headphones', 'hair-clips']));
   var FACE_FIT_ACCESSORIES = lookupValues(FACE_ACCESSORIES.concat(['forehead-jewel']));
   var SIDE_FIT_ACCESSORIES = lookupValues(['earrings', 'hoop-earrings', 'wireless-earbuds', 'wired-earbuds']);
+  var HAIR_CAP_REQUIRED_STYLES = lookupValues([]);
   var PARTIAL_HEAD_COVERAGE_HAIR_STYLES = lookupValues(['bald', 'mohawk', 'none', 'tousled-wispy-fringe']);
+  // Per-style vertical nudges keep bangs out of the brow band without pushing updos into the bar.
+  // Long-panel styles can override hair, hairline, and hair-root independently.
+  var HAIR_STYLE_VERTICAL_OFFSETS = {
+    'tousled-wispy-fringe': -4,
+    'textured-crop': -3,
+    'casual-messy-crop': -3,
+    'textured-fringe': -5,
+    'straight-fringe': -6,
+    'neat-straight-fringe': -6,
+    'soft-bangs': -7,
+    'curtain-bangs': -6,
+    'low-pony-bangs': -6,
+    'sleek-bob-bangs': -6,
+    'layered-bob': -5,
+    long: -3,
+    'shoulder-length': -5,
+    'flipped-lob': -5,
+    'long-layers': { hair: -12, hairline: -8, 'hair-root': -7 },
+    'straight-long-layers': { hair: -13, hairline: -9, 'hair-root': -8 },
+    'long-straight': { hair: -12, hairline: -8, 'hair-root': -7 },
+    'loose-waves': -3,
+    'wavy-lob': -3,
+    'side-part-lob': -5,
+    'wolf-cut': -4,
+    'butterfly-layers': -4,
+    'curly-bob': -3,
+    'voluminous-curls': -4,
+    'curly-layers': -4,
+    wavy: -3,
+    locs: { hair: -12, hairline: -8, 'hair-root': -7 },
+    'loose-locs': { hair: -12, hairline: -8, 'hair-root': -7 },
+    braids: { hair: -12, hairline: -8, 'hair-root': -7 },
+    'long-braid': { hair: -12, hairline: -8, 'hair-root': -7 },
+    'french-braid': -6,
+    'braided-pony': -6,
+    'side-braid': -5,
+    'braided-bun': 0,
+    'box-braids': { hair: -16, hairline: -10, 'hair-root': -9 },
+    'knotless-braids': { hair: -16, hairline: -10, 'hair-root': -9 },
+    cornrows: -4,
+    'locs-bun': 0,
+    'side-swept': -5,
+    'center-part': { hair: -12, hairline: -8, 'hair-root': -7 },
+    'long-center-part': { hair: -14, hairline: -9, 'hair-root': -8 },
+    'middle-part-flow': { hair: -10, hairline: -7, 'hair-root': -6 },
+    afro: 2,
+    'rounded-afro': 1,
+    'coily-puff': 0,
+    'double-puffs': 0,
+    'bantu-knots': 0,
+    bun: 0,
+    'space-buns': -1,
+    'messy-bun': 0,
+    'claw-clip-updo': 0,
+    ponytail: 0,
+    'high-pony': 1,
+    'sleek-low-pony': 0,
+    'half-up': 0,
+    'top-knot': 0,
+    pompadour: 3
+  };
   var HEAD_STYLE_FITS = {
     default: { scaleX: 1, scaleY: 1, translateY: 0 },
     feminine: { scaleX: 1.05, scaleY: 0.99, translateY: -1 },
@@ -1810,6 +1872,9 @@
     var cheek = darkSkin
       ? skinRelativeAccent(skin, '#9a665d', deepSkin ? 0.32 : 0.28, 1.8)
       : skinRelativeAccent(skin, '#e07a68', skinLum > 0.65 ? 0.34 : 0.28, 1.85);
+    var skinScatter = darkSkin
+      ? skinRelativeAccent(skin, '#a14e47', deepSkin ? 0.22 : 0.16, 1.75)
+      : skinRelativeAccent(skin, '#e07a68', skinLum > 0.65 ? 0.2 : 0.16, 1.65);
     var mouthFill = darkSkin
       ? skinRelativeAccent(skinShadow, '#5a2418', deepSkin ? 0.24 : 0.18, 1.75)
       : '#5a2418';
@@ -1833,7 +1898,7 @@
       ? mix(skin, warmHighlight, 0.16)
       : mix(skin, '#ffe6cc', 0.18);
     var facePlaneShadow = darkSkin
-      ? mix(skinShadow, '#160c07', deepSkin ? 0.32 : 0.22)
+      ? mix(skinShadow, '#160c07', deepSkin ? 0.18 : 0.1)
       : darken(skin, 0.24);
     var jawLine = firstContrastColorAgainstAll(
       darkSkin
@@ -1846,6 +1911,7 @@
     return {
       skinMid: skinMid,
       skinAmbient: skinAmbient,
+      skinScatter: skinScatter,
       skinShadow: skinShadow,
       skinHighlight: warmHighlight,
       skinHighlightSoft: skinHighlightSoft,
@@ -1868,16 +1934,23 @@
       hairShadow: hairLum < 0.28 ? 'rgba(0, 0, 0, 0.42)' : 'rgba(53, 31, 15, 0.24)',
       featureRim: darkSkin ? 'rgba(255, 226, 185, 0.72)' : 'rgba(44, 21, 8, 0.22)',
       featureShadow: darkSkin ? 'rgba(0, 0, 0, 0.44)' : 'rgba(0, 47, 82, 0.18)',
-      noseOpacity: darkSkin ? '0.92' : '0.35',
+      noseOpacity: darkSkin ? '0.55' : '0.35',
+      noseHighlightOpacity: darkSkin ? '0.12' : '0.36',
       nostrilOpacity: darkSkin ? '0.96' : '0.3',
-      cheekOpacity: darkSkin ? '0.34' : '0.3',
-      contourOpacity: darkSkin ? '0.58' : '0.18',
-      subtleLineOpacity: darkSkin ? '0.66' : '0.24',
+      cheekOpacity: darkSkin ? '0.18' : '0.3',
+      contourOpacity: darkSkin ? '0.38' : '0.18',
+      subtleLineOpacity: darkSkin ? '0.32' : '0.24',
       hairDetailOpacity: darkSkin && darkHair ? '0.74' : '0.5',
-      faceHighlightOpacity: darkSkin ? '0.2' : '0.14',
-      faceAmbientOpacity: darkSkin ? '0.18' : '0.1',
-      faceShadowOpacity: darkSkin ? '0.26' : '0.1',
-      jawLineOpacity: darkSkin ? '0.46' : '0.22',
+      faceCoreHighlightOpacity: darkSkin ? '0.66' : '0.72',
+      faceFormShadowOpacity: darkSkin ? '0.46' : '0.42',
+      faceSoftShadowOpacity: darkSkin ? '0.14' : '0.12',
+      faceScatterOpacity: darkSkin ? '0.11' : '0.08',
+      faceAoOpacity: darkSkin ? '0.12' : '0.08',
+      faceRimOpacity: darkSkin ? '0.12' : '0.08',
+      faceHighlightOpacity: darkSkin ? '0.12' : '0.14',
+      faceAmbientOpacity: darkSkin ? '0.1' : '0.1',
+      faceShadowOpacity: darkSkin ? '0.14' : '0.1',
+      jawLineOpacity: darkSkin ? '0.26' : '0.22',
       neckShadowOpacity: darkSkin ? '0.52' : '0.28',
       neckHighlightOpacity: darkSkin ? '0.22' : '0.18',
       glassesFrame: glassesFrame,
@@ -1897,7 +1970,7 @@
   }
 
   function setHeadCoveringHairCap(svg, hairStyle) {
-    var showCap = hairStyle && !PARTIAL_HEAD_COVERAGE_HAIR_STYLES[hairStyle];
+    var showCap = hairStyle && !!HAIR_CAP_REQUIRED_STYLES[hairStyle];
     var groups = svg.querySelectorAll('[data-hero-slot="hair-cap"]');
     for (var i = 0; i < groups.length; i++) {
       groups[i].setAttribute('display', showCap ? 'inline' : 'none');
@@ -1923,6 +1996,11 @@
   function fmtTransformNumber(value) {
     var rounded = Math.round(value * 1000) / 1000;
     return String(rounded).replace(/\.0+$/, '').replace(/(\.\d*?)0+$/, '$1');
+  }
+
+  function appendTransform(baseTransform, extraTransform) {
+    if (!extraTransform) return baseTransform || '';
+    return baseTransform ? baseTransform + ' ' + extraTransform : extraTransform;
   }
 
   function clampNumber(value, min, max) {
@@ -1967,6 +2045,15 @@
     for (var i = 0; i < groups.length; i++) setGroupTransform(groups[i], transform, fitName, fitValue);
   }
 
+  function hairStyleVerticalOffset(option, slotName) {
+    var fit = HAIR_STYLE_VERTICAL_OFFSETS[option];
+    if (!fit) return 0;
+    if (typeof fit === 'number') return fit;
+    if (slotName === 'hairline') return fit.hairline === undefined ? (fit.hair || 0) : fit.hairline;
+    if (slotName === 'hair-root') return fit['hair-root'] === undefined ? (fit.hairline === undefined ? (fit.hair || 0) : fit.hairline) : fit['hair-root'];
+    return fit.hair || 0;
+  }
+
   function applyHairFitToSlot(svg, slotName, defaultTransform, headCoveringTransform, fitName, fitValue) {
     var groups = svg.querySelectorAll('[data-hero-slot="' + slotName + '"]');
     for (var i = 0; i < groups.length; i++) {
@@ -1974,6 +2061,8 @@
       var transform = option && !PARTIAL_HEAD_COVERAGE_HAIR_STYLES[option]
         ? headCoveringTransform
         : defaultTransform;
+      var verticalOffset = hairStyleVerticalOffset(option, slotName);
+      transform = appendTransform(transform, verticalOffset ? 'translate(0 ' + fmtTransformNumber(verticalOffset) + ')' : '');
       setGroupTransform(groups[i], transform, fitName, fitValue);
     }
   }
@@ -2339,6 +2428,7 @@
     svg.style.setProperty('--hero-skin', darken(state.appearance.skin, 0.22));
     svg.style.setProperty('--hero-skin-mid', contrastTokens.skinMid);
     svg.style.setProperty('--hero-skin-ambient', contrastTokens.skinAmbient);
+    svg.style.setProperty('--hero-skin-scatter', contrastTokens.skinScatter);
     svg.style.setProperty('--hero-skin-shadow', contrastTokens.skinShadow);
     svg.style.setProperty('--hero-skin-highlight', contrastTokens.skinHighlight);
     svg.style.setProperty('--hero-skin-highlight-soft', contrastTokens.skinHighlightSoft);
@@ -2371,9 +2461,16 @@
     svg.style.setProperty('--hero-feature-rim', contrastTokens.featureRim);
     svg.style.setProperty('--hero-feature-shadow', contrastTokens.featureShadow);
     svg.style.setProperty('--hero-nose-opacity', contrastTokens.noseOpacity);
+    svg.style.setProperty('--hero-nose-highlight-opacity', contrastTokens.noseHighlightOpacity);
     svg.style.setProperty('--hero-nostril-opacity', contrastTokens.nostrilOpacity);
     svg.style.setProperty('--hero-contour-opacity', contrastTokens.contourOpacity);
     svg.style.setProperty('--hero-subtle-line-opacity', contrastTokens.subtleLineOpacity);
+    svg.style.setProperty('--hero-face-core-highlight-opacity', contrastTokens.faceCoreHighlightOpacity);
+    svg.style.setProperty('--hero-face-form-shadow-opacity', contrastTokens.faceFormShadowOpacity);
+    svg.style.setProperty('--hero-face-soft-shadow-opacity', contrastTokens.faceSoftShadowOpacity);
+    svg.style.setProperty('--hero-face-scatter-opacity', contrastTokens.faceScatterOpacity);
+    svg.style.setProperty('--hero-face-ao-opacity', contrastTokens.faceAoOpacity);
+    svg.style.setProperty('--hero-face-rim-opacity', contrastTokens.faceRimOpacity);
     svg.style.setProperty('--hero-face-highlight-opacity', contrastTokens.faceHighlightOpacity);
     svg.style.setProperty('--hero-face-ambient-opacity', contrastTokens.faceAmbientOpacity);
     svg.style.setProperty('--hero-face-shadow-opacity', contrastTokens.faceShadowOpacity);

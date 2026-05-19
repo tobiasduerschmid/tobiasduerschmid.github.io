@@ -72,7 +72,7 @@ async function installStaticChoicePreviewManifest(page, assets) {
   await page.route('**/assets/se-gym-hero-choice-previews/*.svg', async (route) => {
     await route.fulfill({
       contentType: 'image/svg+xml',
-      body: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#FFD100"/><path d="M3 6Q8 1 13 6V14H3Z" fill="#2774AE"/></svg>',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16"><circle cx="8" cy="8" r="7" fill="#FFD100"/><path d="M3 6Q8 1 13 6V14H3Z" fill="#1f140c"/></svg>',
     });
   });
   await page.addInitScript(({ manifestAssets }) => {
@@ -356,7 +356,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(closedAfter.pagePaused).toEqual(closedAfter.pagePaused.map(() => false));
   });
 
-  test('Hero motion animations share synchronized timing', async ({ page }) => {
+  test('Hero motion animations declare deterministic starts and share synchronized timing', async ({ page }) => {
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
 
@@ -364,26 +364,42 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       const failures = [];
       const sharedTiming = {
         dur: '2.2s',
-        keyTimes: '0;0.5;1',
+        keyTimes: '0;0.55;1',
         calcMode: 'spline',
-        keySplines: '0.4 0 0.6 1;0.4 0 0.6 1',
+        keySplines: '0.5 0 0.4 1; 0.2 0.7 0.3 1',
         begin: '0s',
       };
 
       for (const svg of document.querySelectorAll('[data-gym-hero-svg]')) {
         const variantClass = Array.from(svg.classList).find((name) => name.startsWith('se-gym-hero-svg-'));
         const label = variantClass || 'unlabeled hero svg';
-        const motionAnimations = Array.from(svg.querySelectorAll('*')).filter((node) =>
-          node.localName === 'animateTransform' ||
-          (node.localName === 'animate' && node.getAttribute('attributeName') === 'd')
+        const allAnimations = Array.from(svg.querySelectorAll('animate, animateTransform'));
+        const linkedCycleAnimations = allAnimations.filter((node) =>
+          node.getAttribute('dur') === sharedTiming.dur
         );
 
-        if (motionAnimations.length === 0) {
-          failures.push({ label, reason: 'missing motion animations' });
+        if (linkedCycleAnimations.length === 0) {
+          failures.push({ label, reason: 'missing shared-cycle animations' });
           continue;
         }
 
-        for (const node of motionAnimations) {
+        for (const node of allAnimations) {
+          if (node.getAttribute('begin') !== '0s') {
+            failures.push({
+              label,
+              reason: 'animation does not declare the shared zero start',
+              details: {
+                tagName: node.tagName,
+                attributeName: node.getAttribute('attributeName'),
+                dur: node.getAttribute('dur'),
+                begin: node.getAttribute('begin'),
+                values: node.getAttribute('values'),
+              },
+            });
+          }
+        }
+
+        for (const node of linkedCycleAnimations) {
           const details = {
             tagName: node.tagName,
             attributeName: node.getAttribute('attributeName'),
@@ -780,7 +796,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     });
 
     for (const color of [previewColors.top, previewColors.bottom]) {
-      expect(contrastRatio('#2774AE', color), `representative blue hair should remain visible on ${color}`).toBeGreaterThanOrEqual(3);
+      expect(contrastRatio('#1f140c', color), `representative dark hair should remain visible on ${color}`).toBeGreaterThanOrEqual(3);
       expect(contrastRatio('#FFD100', color), `representative gold skin should remain visible on ${color}`).toBeGreaterThanOrEqual(3);
     }
     expect(contrastRatio('#e9ecf2', previewColors.border)).toBeGreaterThanOrEqual(3);
@@ -1187,7 +1203,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       getComputedStyle(svg).getPropertyValue('--hero-hair').trim().toLowerCase()
     );
     expect(representativeSkinColor).toBe('#ffd100');
-    expect(representativeHairColor).toBe('#2774ae');
+    expect(representativeHairColor).toBe('#1f140c');
 
     await setColorInput(page, '#hero-cust-hair-color', '#123456');
     await expect.poll(async () => longHairPreview.evaluate((svg) =>
@@ -3217,7 +3233,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       .toHaveAttribute('display', 'inline');
   });
 
-  test('Dark skin and dark hair combinations keep feature separation', async ({ page }) => {
+  test('Dark skin and dark hair combinations keep feature separation without harsh face lines', async ({ page }) => {
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
@@ -3274,6 +3290,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         glassesFrameDark: styles.getPropertyValue('--hero-glasses-frame-dark').trim(),
         noseFill: renderedPaint(nose, 'fill', '--hero-face-line'),
         noseOpacity: nose ? getComputedStyle(nose).opacity.trim() : '',
+        noseHighlightOpacity: styles.getPropertyValue('--hero-nose-highlight-opacity').trim(),
         contourOpacity: styles.getPropertyValue('--hero-contour-opacity').trim(),
         hairDetailOpacity: styles.getPropertyValue('--hero-hair-detail-opacity').trim(),
         faceHighlightOpacity: styles.getPropertyValue('--hero-face-highlight-opacity').trim(),
@@ -3288,6 +3305,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
           facePolish &&
           (faceClear.compareDocumentPosition(facePolish) & Node.DOCUMENT_POSITION_FOLLOWING)
         ),
+        facePolishPathCount: facePolish ? facePolish.querySelectorAll('path').length : -1,
         featuresAfterPolish: Boolean(
           facePolish &&
           eyebrow &&
@@ -3297,6 +3315,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     });
 
     expect(tokens.polishAfterFaceClear).toBe(true);
+    expect(tokens.facePolishPathCount).toBe(0);
     expect(tokens.featuresAfterPolish).toBe(true);
     expect(tokens.skinHighlightSoft.toLowerCase()).not.toBe(tokens.skin.toLowerCase());
     expect(tokens.skinMid.toLowerCase()).not.toBe(tokens.skin.toLowerCase());
@@ -3306,6 +3325,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(contrastRatio(tokens.hairRim, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.faceLine, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.faceMark, tokens.skin)).toBeGreaterThanOrEqual(3);
+    expect(contrastRatio(tokens.facePlaneShadow, tokens.skin)).toBeLessThanOrEqual(1.8);
     expect(contrastRatio(tokens.cheekFill, tokens.skin)).toBeLessThanOrEqual(1.8);
     expect(contrastRatio(tokens.lipFill, tokens.skin)).toBeLessThanOrEqual(2.1);
     expect(contrastRatio(tokens.lipHighlight, tokens.lipFill)).toBeLessThanOrEqual(1.6);
@@ -3314,13 +3334,15 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(contrastRatio(tokens.noseFill, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.eyebrow, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.jawLine, tokens.skin)).toBeGreaterThanOrEqual(3);
-    expect(Number(tokens.noseOpacity)).toBeGreaterThanOrEqual(0.9);
-    expect(Number(tokens.cheekOpacity)).toBeLessThanOrEqual(0.4);
-    expect(Number(tokens.contourOpacity)).toBeGreaterThanOrEqual(0.5);
+    expect(Number(tokens.noseOpacity)).toBeGreaterThanOrEqual(0.45);
+    expect(Number(tokens.noseOpacity)).toBeLessThanOrEqual(0.6);
+    expect(Number(tokens.noseHighlightOpacity)).toBeLessThanOrEqual(0.14);
+    expect(Number(tokens.cheekOpacity)).toBeLessThanOrEqual(0.22);
+    expect(Number(tokens.contourOpacity)).toBeLessThanOrEqual(0.4);
     expect(Number(tokens.hairDetailOpacity)).toBeGreaterThanOrEqual(0.7);
-    expect(Number(tokens.faceHighlightOpacity)).toBeGreaterThanOrEqual(0.18);
-    expect(Number(tokens.faceShadowOpacity)).toBeGreaterThanOrEqual(0.24);
-    expect(Number(tokens.jawLineOpacity)).toBeGreaterThanOrEqual(0.4);
+    expect(Number(tokens.faceHighlightOpacity)).toBeLessThanOrEqual(0.14);
+    expect(Number(tokens.faceShadowOpacity)).toBeLessThanOrEqual(0.16);
+    expect(Number(tokens.jawLineOpacity)).toBeLessThanOrEqual(0.3);
     expect(Number(tokens.neckShadowOpacity)).toBeGreaterThanOrEqual(0.5);
     expect(tokens.hairLight.toLowerCase()).not.toBe(tokens.hairRim.toLowerCase());
     expect(tokens.gradientStop).toContain('--hero-hair-light');

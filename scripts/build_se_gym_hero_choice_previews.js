@@ -9,7 +9,7 @@ const HERO_RUNTIME = path.join(ROOT, 'js', 'se-gym-hero-avatar.js');
 const OUT_DIR = path.join(ROOT, 'assets', 'se-gym-hero-choice-previews');
 const VARIANT = 'choice-preview';
 const REPRESENTATIVE_PREVIEW_SKIN = '#FFD100';
-const REPRESENTATIVE_PREVIEW_HAIR = '#2774AE';
+const REPRESENTATIVE_PREVIEW_HAIR = '#1f140c';
 
 function renderedHeroInclude() {
   return fs.readFileSync(HERO_INCLUDE, 'utf8')
