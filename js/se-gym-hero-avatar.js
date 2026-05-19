@@ -611,21 +611,21 @@
   var DEEP_SET_EYE_SHAPES = { 'deep-set': true };
   var ANGLED_ALMOND_EYE_SHAPES = { 'tapered-almond': true, 'upturned-almond': true, 'downturned-soft': true };
   var EYELASH_STYLE_GEOMETRY = {
-    'short-soft': { count: 9, length: 3.05, reach: 0.9, strokeWidth: 0.56, opacity: 0.46 },
-    'short-dense': { count: 11, length: 3, reach: 1, strokeWidth: 0.54, opacity: 0.5 },
-    'barely-there': { count: 4, length: 3.7, reach: 0.7, strokeWidth: 0.66, opacity: 0.48 },
-    subtle: { count: 7, length: 4.15, reach: 0.95, strokeWidth: 0.7, opacity: 0.54 },
-    'short-natural': { count: 7, length: 3.82, reach: 0.92, strokeWidth: 0.66, opacity: 0.52 },
-    'short-corner': { count: 6, length: 3.72, reach: 0.68, strokeWidth: 0.64, opacity: 0.52 },
-    'short-upper': { count: 8, length: 3.95, reach: 1, strokeWidth: 0.66, opacity: 0.54 },
-    'outer-corner': { count: 6, length: 5.35, reach: 0.72, strokeWidth: 0.74, opacity: 0.56 },
-    'soft-fan': { count: 9, length: 5.45, reach: 1, strokeWidth: 0.7, opacity: 0.56 },
-    'full-upper': { count: 11, length: 5.75, reach: 1, strokeWidth: 0.72, opacity: 0.58 },
-    'long-classic': { count: 11, length: 6.45, reach: 1, strokeWidth: 0.76, opacity: 0.62 },
-    'long-doll': { count: 13, length: 6.9, reach: 1, strokeWidth: 0.78, opacity: 0.64, outerBoost: 0.25 },
-    'long-glam': { count: 14, length: 7.45, reach: 1, strokeWidth: 0.82, opacity: 0.66, outerBoost: 0.55 },
-    winged: { count: 9, length: 6.25, reach: 0.82, strokeWidth: 0.76, opacity: 0.58, outerBoost: 0.85 },
-    dense: { count: 14, length: 6.05, reach: 1, strokeWidth: 0.72, opacity: 0.62 }
+    'short-soft': { count: 6, length: 2.3, reach: 0.86, strokeWidth: 0.48, opacity: 0.34 },
+    'short-dense': { count: 8, length: 2.2, reach: 0.96, strokeWidth: 0.48, opacity: 0.36 },
+    'barely-there': { count: 3, length: 2.75, reach: 0.64, strokeWidth: 0.54, opacity: 0.34 },
+    subtle: { count: 5, length: 2.95, reach: 0.88, strokeWidth: 0.56, opacity: 0.38 },
+    'short-natural': { count: 5, length: 2.72, reach: 0.86, strokeWidth: 0.54, opacity: 0.36 },
+    'short-corner': { count: 4, length: 2.8, reach: 0.62, strokeWidth: 0.54, opacity: 0.36 },
+    'short-upper': { count: 6, length: 2.85, reach: 0.92, strokeWidth: 0.54, opacity: 0.38 },
+    'outer-corner': { count: 4, length: 3.55, reach: 0.66, strokeWidth: 0.58, opacity: 0.38 },
+    'soft-fan': { count: 7, length: 3.75, reach: 0.94, strokeWidth: 0.58, opacity: 0.4 },
+    'full-upper': { count: 8, length: 3.95, reach: 0.96, strokeWidth: 0.6, opacity: 0.42 },
+    'long-classic': { count: 8, length: 4.35, reach: 0.96, strokeWidth: 0.62, opacity: 0.42 },
+    'long-doll': { count: 9, length: 4.6, reach: 0.96, strokeWidth: 0.64, opacity: 0.42, outerBoost: 0.18 },
+    'long-glam': { count: 9, length: 4.9, reach: 0.96, strokeWidth: 0.66, opacity: 0.42, outerBoost: 0.35 },
+    winged: { count: 7, length: 4.4, reach: 0.74, strokeWidth: 0.62, opacity: 0.42, outerBoost: 0.55 },
+    dense: { count: 9, length: 4.05, reach: 0.96, strokeWidth: 0.6, opacity: 0.4 }
   };
   var EYELASH_FAMILY_GEOMETRY = {
     round: { kind: 'ellipse', cx: 381, cy: 185, rx: 7, ry: 8.5, startAngle: 205, endAngle: 335, lengthScale: 1, fanBias: 0.18, riseBias: 0.1 },
@@ -942,8 +942,9 @@
       .concat(weightedValues(['default', 'diamond', 'soft-square', 'slender-soft-square', 'narrow', 'oblong', 'soft-angular', 'square', 'broad', 'feminine'], 3))
   };
   var FACE_FEATURE_WEIGHTS = []
-    .concat(weightedValues(['none'], 15))
-    .concat(weightedValues(['freckles', 'nose-freckles', 'beauty-mark', 'small-moles', 'dimples', 'chin-dimple', 'smile-lines', 'under-eye-lines'], 2));
+    .concat(weightedValues(['none'], 18))
+    .concat(weightedValues(['freckles', 'nose-freckles', 'beauty-mark', 'small-moles'], 2))
+    .concat(weightedValues(['dimples', 'chin-dimple', 'smile-lines', 'under-eye-lines'], 1));
   var EAR_SHAPE_WEIGHTS = []
     .concat(weightedValues(['oval', 'small-round', 'broad-round', 'photo-rounded-lobe', 'narrow', 'attached-lobe', 'free-lobe'], 8))
     .concat(weightedValues(['prominent', 'soft-angled'], 3));
@@ -1937,9 +1938,15 @@
       noseOpacity: darkSkin ? '0.55' : '0.35',
       noseHighlightOpacity: darkSkin ? '0.08' : '0.36',
       nostrilOpacity: darkSkin ? '0.96' : '0.3',
-      cheekOpacity: darkSkin ? '0.18' : '0.3',
+      cheekOpacity: darkSkin ? '0.16' : '0.28',
       contourOpacity: darkSkin ? '0.38' : '0.18',
-      subtleLineOpacity: darkSkin ? '0.32' : '0.24',
+      subtleLineOpacity: darkSkin ? '0.2' : '0.18',
+      smileCreaseOpacity: darkSkin ? '0.1' : '0.12',
+      faceDetailLineOpacity: darkSkin ? '0.11' : '0.13',
+      underEyeLineOpacity: darkSkin ? '0.06' : '0.08',
+      faceMarkSoftOpacity: darkSkin ? '0.22' : '0.28',
+      faceMarkOpacity: darkSkin ? '0.28' : '0.34',
+      faceMarkStrongOpacity: darkSkin ? '0.38' : '0.48',
       hairDetailOpacity: darkSkin && darkHair ? '0.74' : '0.5',
       faceCoreHighlightOpacity: darkSkin ? '0.66' : '0.72',
       faceFormShadowOpacity: darkSkin ? '0.46' : '0.42',
@@ -2466,6 +2473,12 @@
     svg.style.setProperty('--hero-nostril-opacity', contrastTokens.nostrilOpacity);
     svg.style.setProperty('--hero-contour-opacity', contrastTokens.contourOpacity);
     svg.style.setProperty('--hero-subtle-line-opacity', contrastTokens.subtleLineOpacity);
+    svg.style.setProperty('--hero-smile-crease-opacity', contrastTokens.smileCreaseOpacity);
+    svg.style.setProperty('--hero-face-detail-line-opacity', contrastTokens.faceDetailLineOpacity);
+    svg.style.setProperty('--hero-under-eye-line-opacity', contrastTokens.underEyeLineOpacity);
+    svg.style.setProperty('--hero-face-mark-soft-opacity', contrastTokens.faceMarkSoftOpacity);
+    svg.style.setProperty('--hero-face-mark-opacity', contrastTokens.faceMarkOpacity);
+    svg.style.setProperty('--hero-face-mark-strong-opacity', contrastTokens.faceMarkStrongOpacity);
     svg.style.setProperty('--hero-face-core-highlight-opacity', contrastTokens.faceCoreHighlightOpacity);
     svg.style.setProperty('--hero-face-form-shadow-opacity', contrastTokens.faceFormShadowOpacity);
     svg.style.setProperty('--hero-face-soft-shadow-opacity', contrastTokens.faceSoftShadowOpacity);
@@ -2837,6 +2850,7 @@
     var choicePreviewScrollHandle = 0;
     var choicePreviewForegroundQueue = [];
     var choicePreviewBackgroundQueue = [];
+    var choicePreviewTemplateCache = {};
     var latestChoicePreviewState = null;
     var latestChoicePreviewSnapshot = null;
     var choicePreviewObserver = null;
@@ -3697,6 +3711,13 @@
       return clampSvgBox(expanded, parseSvgBox(CHOICE_PREVIEW_SOURCE_VIEWBOX)) || base;
     }
 
+    function choicePreviewBox(svg, definition, optionValue) {
+      if (definition.key === 'hairStyle' || definition.key === 'accessory') {
+        return expandedPreviewBox(svg, definition, optionValue);
+      }
+      return parseSvgBox(previewViewBox(definition.preview)) || parseSvgBox(CHOICE_PREVIEW_VIEWBOXES.full);
+    }
+
     function collectDisplaySnapshot(root, selector) {
       var nodes = root.querySelectorAll(selector);
       var values = [];
@@ -3822,32 +3843,113 @@
       } else if (definition.key === 'outfitStyle') {
         setSlot(svg, 'outfit-style', optionValue);
       } else if (definition.key === 'accessory') {
+        setSlot(svg, 'accessory', canonicalChoiceValue('accessory', optionValue));
         applyHeadShapeFit(svg, baseState.appearance.headStyle || 'default');
       }
     }
 
-    function createChoicePreviewSvg(definition, optionValue) {
+    function choicePreviewTemplateSlots(definition) {
+      var slots = {};
+      if (!definition || !definition.key) return slots;
+      if (definition.key === 'hairStyle') {
+        slots.hair = true;
+        slots.hairline = true;
+        slots['hair-root'] = true;
+      } else if (definition.key === 'headStyle') {
+        slots['head-shape'] = true;
+        slots['face-clear'] = true;
+        slots['head-features'] = true;
+      } else if (definition.key === 'bodyType') {
+        slots['body-shape'] = true;
+        slots.silhouette = true;
+      } else {
+        var slotByKey = {
+          eyebrowStyle: 'eyebrow',
+          eyeShape: 'eye-shape',
+          earShape: 'ear-shape',
+          eyelashStyle: 'eyelash-style',
+          noseShape: 'nose-shape',
+          mouthStyle: 'mouth-style',
+          facialHair: 'facial-hair',
+          faceFeature: 'face-feature',
+          outfitStyle: 'outfit-style',
+          accessory: 'accessory'
+        };
+        if (slotByKey[definition.key]) slots[slotByKey[definition.key]] = true;
+      }
+      return slots;
+    }
+
+    function pruneChoicePreviewTemplate(svg, definition) {
+      if (!svg) return;
+      var keepSlots = choicePreviewTemplateSlots(definition);
+      var slotNodes = svg.querySelectorAll('[data-hero-slot]');
+      for (var i = slotNodes.length - 1; i >= 0; i--) {
+        var node = slotNodes[i];
+        var slot = node.getAttribute('data-hero-slot');
+        if (keepSlots[slot]) continue;
+        if (node.getAttribute('display') === 'none') node.remove();
+      }
+      if (!definition || definition.key !== 'heroKind') {
+        var hiddenKindLayers = svg.querySelectorAll('[data-hero-kind-layer][display="none"]');
+        for (var k = hiddenKindLayers.length - 1; k >= 0; k--) hiddenKindLayers[k].remove();
+      }
+    }
+
+    function choicePreviewTemplate(definition, baseState, snapshot) {
+      var cacheKey = definition && definition.key ? definition.key : 'default';
+      if (choicePreviewTemplateCache[cacheKey]) return choicePreviewTemplateCache[cacheKey].cloneNode(true);
       var source = modal.querySelector('.hero-cust-preview [data-gym-hero-svg]');
       if (!source) return null;
-      var svg = source.cloneNode(true);
+      var template = source.cloneNode(true);
+      template.querySelectorAll('animate, animateTransform').forEach(function (node) { node.remove(); });
+      if (snapshot) applyChoicePreviewSnapshot(template, snapshot, baseState);
+      pruneChoicePreviewTemplate(template, definition);
+      choicePreviewTemplateCache[cacheKey] = template;
+      return template.cloneNode(true);
+    }
+
+    function createChoicePreviewSvg(definition, optionValue, baseState, snapshot) {
+      var svg = choicePreviewTemplate(definition, baseState, snapshot);
+      if (!svg) return null;
       var suffix = 'choice-' + definition.key + '-' + optionValue + '-' + (++choicePreviewId);
-      svg.querySelectorAll('animate, animateTransform').forEach(function (node) { node.remove(); });
       svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
       svg.setAttribute('aria-hidden', 'true');
       svg.setAttribute('focusable', 'false');
       svg.removeAttribute('data-gym-hero-svg');
       svg.setAttribute('data-hero-choice-svg', '');
       svg.removeAttribute('id');
-      uniquifySvgIds(svg, suffix);
-      updateChoicePreviewSvg(svg, definition, optionValue);
+      svg._heroChoicePreviewIdSuffix = suffix;
+      svg._heroChoicePreviewIdsUnique = false;
       return svg;
     }
 
-    function updateChoicePreviewSvg(svg, definition, optionValue) {
-      var state = representativeChoiceState(definition, optionValue);
-      applyToSvg(svg, state);
+    function updateChoicePreviewSvg(svg, definition, optionValue, baseState, snapshot) {
+      var previewBase = normalizeAvatar(cloneAvatarState(baseState || DEFAULTS));
+      var state = snapshot
+        ? choiceState(definition, optionValue, previewBase)
+        : representativeChoiceState(definition, optionValue);
+      if (snapshot && definition.key !== 'heroKind') {
+        applyChoicePreviewSnapshot(svg, snapshot, previewBase);
+        applyChoicePreviewDelta(svg, definition, optionValue, previewBase);
+      } else {
+        applyToSvg(svg, state);
+      }
       svg._heroChoiceRepresentativeState = state;
-      svg.setAttribute('viewBox', formatSvgBox(expandedPreviewBox(svg, definition, optionValue)));
+      pruneChoicePreviewSvg(svg);
+      if (!svg._heroChoicePreviewIdsUnique) {
+        uniquifySvgIds(svg, svg._heroChoicePreviewIdSuffix || ('choice-' + (++choicePreviewId)));
+        svg._heroChoicePreviewIdsUnique = true;
+      }
+      svg.setAttribute('viewBox', formatSvgBox(choicePreviewBox(svg, definition, optionValue)));
+    }
+
+    function pruneChoicePreviewSvg(svg) {
+      if (!svg) return;
+      var hiddenNodes = svg.querySelectorAll('[data-hero-slot][display="none"], [data-hero-kind-layer][display="none"]');
+      for (var i = hiddenNodes.length - 1; i >= 0; i--) {
+        hiddenNodes[i].remove();
+      }
     }
 
     function choicePreviewBaseUrl() {
@@ -3921,7 +4023,7 @@
       if (!svg) return;
       preview.textContent = '';
       preview.appendChild(svg);
-      updateChoicePreviewSvg(svg, definition, optionValue);
+      updateChoicePreviewSvg(svg, definition, optionValue, baseState, snapshot);
       button._heroChoicePreviewRendered = true;
       button._heroChoicePreviewSignature = signature || choicePreviewSignature(definition, optionValue);
       button._heroChoicePendingSignature = '';
@@ -3987,11 +4089,12 @@
       choicePreviewBackgroundHandle = 0;
       choicePreviewForegroundQueue = [];
       choicePreviewBackgroundQueue = [];
+      choicePreviewTemplateCache = {};
     }
 
-    function refreshLatestChoicePreviewContext() {
-      latestChoicePreviewState = cloneAvatarState(DEFAULTS);
-      latestChoicePreviewSnapshot = null;
+    function refreshLatestChoicePreviewContext(baseState) {
+      latestChoicePreviewState = normalizeAvatar(cloneAvatarState(baseState || readForm() || DEFAULTS));
+      latestChoicePreviewSnapshot = captureChoicePreviewSnapshot();
       return latestChoicePreviewState;
     }
 
@@ -4198,7 +4301,7 @@
         choicePreviewForegroundHandle = 0;
         if (token !== choicePreviewRenderToken) return;
         pruneQueuedChoicePreviewRenders();
-        if (runChoicePreviewQueue(choicePreviewForegroundQueue, state, token, 1, 8)) {
+        if (runChoicePreviewQueue(choicePreviewForegroundQueue, state, token, 4, 20)) {
           scheduleForegroundChoicePreviewWork(token, state);
         }
       });
@@ -4210,9 +4313,9 @@
         choicePreviewBackgroundHandle = 0;
         if (token !== choicePreviewRenderToken) return;
         var budget = deadline && typeof deadline.timeRemaining === 'function'
-          ? Math.max(4, Math.min(12, deadline.timeRemaining()))
+          ? Math.max(6, Math.min(18, deadline.timeRemaining()))
           : 8;
-        if (runChoicePreviewQueue(choicePreviewBackgroundQueue, state, token, 3, budget)) {
+        if (runChoicePreviewQueue(choicePreviewBackgroundQueue, state, token, 5, budget)) {
           scheduleBackgroundChoicePreviewWork(token, state);
         }
       });
@@ -4263,9 +4366,10 @@
     }
 
     function queueAllChoicePreviewRenders(baseState) {
-      var state = cloneAvatarState(DEFAULTS);
+      var state = normalizeAvatar(cloneAvatarState(baseState || DEFAULTS));
       latestChoicePreviewState = state;
-      latestChoicePreviewSnapshot = null;
+      latestChoicePreviewSnapshot = captureChoicePreviewSnapshot();
+      choicePreviewTemplateCache = {};
       var token = ++choicePreviewRenderToken;
       var foreground = [];
       var queued = [];
@@ -4305,8 +4409,9 @@
     }
 
     function refreshChoicePreviews(baseState) {
-      latestChoicePreviewState = cloneAvatarState(DEFAULTS);
-      latestChoicePreviewSnapshot = null;
+      latestChoicePreviewState = normalizeAvatar(cloneAvatarState(baseState || DEFAULTS));
+      latestChoicePreviewSnapshot = captureChoicePreviewSnapshot();
+      choicePreviewTemplateCache = {};
       renderVisibleChoicePreviewButtons();
     }
 
