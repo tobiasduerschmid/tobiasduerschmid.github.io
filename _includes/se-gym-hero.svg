@@ -809,14 +809,59 @@
         <path d="M 366 135 C 363 144, 361 154, 363 165 M 380 128 C 376 142, 374 153, 376 166 M 397 126 C 394 140, 394 153, 396 168 M 414 130 C 410 142, 408 154, 410 166 M 430 140 C 423 150, 420 158, 422 166" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2.17" stroke-linecap="round" opacity=".62"/>
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
-      <g data-hero-slot="hair" data-hero-option="tousled-wispy-fringe" display="none">
-        <!-- Base blond hair shape simulating the spiky layered tousled look -->
-        <path d="M 347 178 C 345 150, 345 130, 355 120 C 365 110, 380 105, 400 105 C 420 105, 435 110, 445 120 C 455 130, 455 150, 453 178 C 445 145, 440 135, 430 148 C 425 155, 422 150, 418 140 C 413 130, 407 130, 403 140 C 398 150, 395 155, 390 148 C 385 140, 380 135, 375 145 C 370 155, 365 150, 360 140 C 355 130, 350 145, 347 178 Z" fill="var(--hero-hair, #debb81)" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2.5" stroke-linejoin="round"/>
-        <!-- Shadows for depth -->
-        <path d="M 355 120 C 365 125, 375 115, 385 128 C 395 141, 405 141, 415 128 C 425 115, 435 125, 445 120 C 430 125, 415 115, 400 115 C 385 115, 370 125, 355 120 Z" fill="var(--hero-hair-dark, #8a6c42)" opacity="0.6"/>
-        <!-- Wispy stylized strokes -->
-        <path d="M 365 110 Q 375 125 372 140 M 380 105 Q 390 125 385 145 M 400 105 Q 400 125 398 148 M 420 105 Q 410 125 415 145 M 435 110 Q 425 125 428 140" stroke="var(--hero-hair-dark, #8a6c42)" stroke-width="2.0" fill="none" stroke-linecap="round" opacity="0.7"/>
-        <path d="M 370 115 Q 380 130 377 145 M 390 110 Q 395 130 392 150 M 410 110 Q 405 130 408 150 M 430 115 Q 420 130 422 145" stroke="var(--hero-hair-light, #fcede1)" stroke-width="2.2" fill="none" stroke-linecap="round" opacity="0.8"/>
+            <g data-hero-slot="hair" data-hero-option="tousled-wispy-fringe" display="none">
+        <path d="M 347 165
+                 C 346 150, 350 135, 360 120
+                 C 370 105, 385 100, 400 100
+                 C 415 100, 430 105, 440 120
+                 C 450 135, 454 150, 453 165
+                 L 448 160
+                 L 446 172
+                 L 440 156
+                 L 435 168
+                 L 428 152
+                 L 423 165
+                 L 416 148
+                 L 412 165
+                 L 404 148
+                 L 400 165
+                 L 396 148
+                 L 388 165
+                 L 384 148
+                 L 377 165
+                 L 372 152
+                 L 365 168
+                 L 360 156
+                 L 354 172
+                 L 352 160 Z"
+              fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2.5" stroke-linejoin="round"/>
+        
+        <!-- Second dynamic layer of sweeping bangs overlapping -->
+        <path d="M 358 140
+                 Q 366 120 378 135
+                 L 372 150
+                 Q 382 125 392 138
+                 L 386 158
+                 Q 398 130 405 142
+                 L 402 162
+                 Q 412 135 420 148
+                 L 415 160
+                 Q 425 140 435 150
+                 L 428 165
+                 Q 435 150 445 155
+                 C 438 125, 410 105, 400 105
+                 C 380 105, 365 120, 358 140 Z"
+              fill="var(--hero-hair-light, #ffd482)" opacity="0.65" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.8" stroke-linejoin="round" />
+
+        <!-- Deeper shadow clusters (spiky triangles dropping down) -->
+        <path d="M 370 120 L 375 140 L 382 125 
+                 M 390 115 L 396 145 L 402 120
+                 M 412 115 L 416 140 L 424 122" 
+              fill="var(--hero-hair-dark, #8a6c42)" opacity="0.8" />
+              
+        <!-- Top spiky clusters branching off the crown -->
+        <path d="M 368 112 Q 360 98 355 106 Q 365 102 375 110 M 392 100 Q 390 85 382 90 Q 398 88 402 100 M 415 102 Q 425 85 432 95 Q 420 90 410 105"
+              fill="none" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="casual-messy-crop" display="none">
         <path d="M 354 176 C 348 142, 368 112, 400 110 C 432 112, 452 142, 446 176 C 432 164, 416 158, 400 158 C 384 158, 368 164, 354 176 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
@@ -1550,10 +1595,32 @@
         <ellipse cx="400" cy="164" rx="50" ry="10" fill="var(--hero-hair, #1f140c)" opacity=".86"/>
       </g>
       <g data-hero-slot="hairline" data-hero-option="none"></g>
-      <g data-hero-slot="hairline" data-hero-option="tousled-wispy-fringe" display="none">
-        <path d="M 347 178 C 347 165, 349 153, 355 145 C 360 155, 363 158, 367 150 C 372 138, 376 135, 382 140 C 386 150, 389 154, 394 146 C 400 135, 404 135, 410 146 C 415 154, 418 150, 423 140 C 428 135, 432 138, 437 150 C 441 158, 444 155, 448 145 C 452 153, 453 165, 453 178" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2.5" fill="var(--hero-hair, #debb81)" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
-        <path d="M 355 145 C 362 135, 370 145, 382 140 M 394 146 C 400 135, 405 145, 423 140 M 437 150 C 444 140, 448 150, 453 155" stroke="var(--hero-hair-dark, #8a6c42)" stroke-width="1.8" fill="none" stroke-linecap="round" opacity="0.6"/>
-        <path d="M 367 150 L 369 160 M 382 140 L 385 155 M 394 146 L 396 160 M 410 146 L 413 162 M 423 140 L 426 155 M 437 150 L 440 162" stroke="var(--hero-hair-light, #fcede1)" stroke-width="2.0" fill="none" stroke-linecap="round" opacity="0.8"/>
+            <g data-hero-slot="hairline" data-hero-option="tousled-wispy-fringe" display="none">
+        <!-- Intense shading dropping down from the top fringe down to the forehead -->
+        <path d="M 353 165
+                 L 360 156
+                 L 365 168
+                 L 372 152
+                 L 377 165
+                 L 384 148
+                 L 388 165
+                 L 396 148
+                 L 400 165
+                 L 404 148
+                 L 412 165
+                 L 416 148
+                 L 423 165
+                 L 428 152
+                 L 435 168
+                 L 440 156
+                 L 446 172
+                 C 440 180, 420 185, 400 185
+                 C 380 185, 360 180, 353 165 Z"
+              fill="var(--hero-hair-dark, #8a6c42)" opacity="0.4"/>
+              
+        <!-- Straggler overlapping spikes -->
+        <path d="M 370 165 L 372 178 L 376 162 M 392 164 L 396 182 L 402 162 M 418 165 L 420 176 L 424 160"
+              fill="var(--hero-hair-dark, #8a6c42)" opacity="0.75" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.8" stroke-linejoin="round"/>
       </g>
       <g data-hero-slot="hairline" data-hero-option="short" display="none">
         <path d="M 355 176 C 348 144, 366 116, 400 114 C 434 116, 452 144, 445 176 C 438 158, 424 144, 406 140 C 392 138, 378 144, 368 156 C 362 163, 358 170, 355 176 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
@@ -3158,18 +3225,18 @@
   </g>
   <g data-hero-motion="barbell-lift"><animateTransform attributeName="transform" type="translate" values="0 -12;0 12;0 -12" keyTimes="0;0.5;1" dur="2.2s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" />
     <g data-hero-kind-layer="human">
-      <path d="M 322 268 C 318 210, 314 150, 312 90" stroke="#042947" stroke-width="64.50" fill="none" stroke-linecap="round" opacity=".52"/>
-      <path d="M 322 268 C 318 210, 314 150, 312 90" stroke="url(#suit-{{ hero_variant }})" stroke-width="57.00" fill="none" stroke-linecap="round"/>
-      <path d="M 311 264 C 307 210, 303 150, 302 92" stroke="#a7ebff" stroke-width="9.00" fill="none" stroke-linecap="round" opacity=".48"/>
-      <path d="M 330 264 C 326 210, 322 150, 320 92" stroke="#04375d" stroke-width="12.00" fill="none" stroke-linecap="round" opacity=".5"/>
-      <path d="M 478 268 C 482 210, 486 150, 488 90" stroke="#042947" stroke-width="64.50" fill="none" stroke-linecap="round" opacity=".52"/>
-      <path d="M 478 268 C 482 210, 486 150, 488 90" stroke="url(#suit-{{ hero_variant }})" stroke-width="57.00" fill="none" stroke-linecap="round"/>
-      <path d="M 489 264 C 493 210, 497 150, 498 92" stroke="#a7ebff" stroke-width="9.00" fill="none" stroke-linecap="round" opacity=".48"/>
-      <path d="M 470 264 C 474 210, 478 150, 480 92" stroke="#04375d" stroke-width="12.00" fill="none" stroke-linecap="round" opacity=".5"/>
-      <rect x="290" y="91" width="38" height="20" rx="7" fill="url(#gold-{{ hero_variant }})" stroke="#6f4f00" stroke-width="2.55"/>
-      <rect x="294" y="94" width="30" height="4" rx="2" fill="#fff6c0" opacity=".84"/>
-      <rect x="472" y="91" width="38" height="20" rx="7" fill="url(#gold-{{ hero_variant }})" stroke="#6f4f00" stroke-width="2.55"/>
-      <rect x="476" y="94" width="30" height="4" rx="2" fill="#fff6c0" opacity=".84"/>
+      <path d="M 322 268 C 318 210, 314 150, 312 90" stroke="#042947" stroke-width="47" fill="none" stroke-linecap="round" opacity=".52"/>
+      <path d="M 322 268 C 318 210, 314 150, 312 90" stroke="url(#suit-{{ hero_variant }})" stroke-width="40" fill="none" stroke-linecap="round"/>
+      <path d="M 314 264 C 310 210, 306 150, 305 92" stroke="#a7ebff" stroke-width="6" fill="none" stroke-linecap="round" opacity=".48"/>
+      <path d="M 328 264 C 324 210, 320 150, 318 92" stroke="#04375d" stroke-width="8" fill="none" stroke-linecap="round" opacity=".48"/>
+      <path d="M 478 268 C 482 210, 486 150, 488 90" stroke="#042947" stroke-width="47" fill="none" stroke-linecap="round" opacity=".52"/>
+      <path d="M 478 268 C 482 210, 486 150, 488 90" stroke="url(#suit-{{ hero_variant }})" stroke-width="40" fill="none" stroke-linecap="round"/>
+      <path d="M 486 264 C 490 210, 494 150, 495 92" stroke="#a7ebff" stroke-width="6" fill="none" stroke-linecap="round" opacity=".48"/>
+      <path d="M 472 264 C 476 210, 480 150, 482 92" stroke="#04375d" stroke-width="8" fill="none" stroke-linecap="round" opacity=".48"/>
+      <rect x="296" y="91" width="32" height="18" rx="6" fill="url(#gold-{{ hero_variant }})" stroke="#6f4f00" stroke-width="2.1"/>
+      <rect x="300" y="94" width="24" height="3.5" rx="1.75" fill="#fff6c0" opacity=".84"/>
+      <rect x="472" y="91" width="32" height="18" rx="6" fill="url(#gold-{{ hero_variant }})" stroke="#6f4f00" stroke-width="2.1"/>
+      <rect x="476" y="94" width="24" height="3.5" rx="1.75" fill="#fff6c0" opacity=".84"/>
     </g>
     <g data-hero-kind-layer="bruin" data-hero-slot="mascot" data-hero-option="bruin" display="none">
       <animateTransform attributeName="transform" type="translate" values="0 12;0 -17;0 12" keyTimes="0;0.5;1" dur="2.2s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" />
@@ -3281,57 +3348,38 @@
       <rect x="474" y="94" width="34" height="3.5" fill="#fff6c0" opacity=".8"/>
     </g>
     <g data-hero-barbell transform="translate(400 85) scale(.86) translate(-400 -85)">
-      <rect x="270" y="77" width="260" height="16" rx="3" fill="url(#steel-{{ hero_variant }})"/>
-      <rect x="318" y="78" width="164" height="14" rx="2" fill="url(#knurl-{{ hero_variant }})" opacity=".78"/>
-      <path d="M 274 80 H 526" stroke="#ffffff" stroke-width="3.00" stroke-linecap="round" opacity=".54"/>
-      <path d="M 274 91 H 526" stroke="#172230" stroke-width="2.40" stroke-linecap="round" opacity=".28"/>
-      <rect x="262" y="68" width="16" height="34" rx="3" fill="url(#steel-dark-{{ hero_variant }})" stroke="#25303d" stroke-width="1.50"/>
-      <line x1="266" y1="72" x2="266" y2="98" stroke="#fff" stroke-width="1.35" opacity=".64"/>
-      <line x1="274" y1="72" x2="274" y2="98" stroke="#fff" stroke-width="1.35" opacity=".64"/>
-      <rect x="522" y="68" width="16" height="34" rx="3" fill="url(#steel-dark-{{ hero_variant }})" stroke="#25303d" stroke-width="1.50"/>
-      <line x1="526" y1="72" x2="526" y2="98" stroke="#fff" stroke-width="1.35" opacity=".64"/>
-      <line x1="534" y1="72" x2="534" y2="98" stroke="#fff" stroke-width="1.35" opacity=".64"/>
-      <rect x="110" y="74" width="156" height="24" rx="4" fill="url(#steel-{{ hero_variant }})"/>
-      <rect x="110" y="76" width="156" height="3" rx="1.5" fill="#fff" opacity=".54"/>
-      <rect x="110" y="94" width="156" height="2" rx="1" fill="#000" opacity=".25"/>
-      <rect x="534" y="74" width="156" height="24" rx="4" fill="url(#steel-{{ hero_variant }})"/>
-      <rect x="534" y="76" width="156" height="3" rx="1.5" fill="#fff" opacity=".54"/>
-      <rect x="534" y="94" width="156" height="2" rx="1" fill="#000" opacity=".25"/>
-      <rect x="100" y="67" width="15" height="36" rx="4" fill="url(#steel-dark-{{ hero_variant }})" stroke="#25303d" stroke-width="1.50"/>
-      <circle cx="107" cy="85" r="3.2" fill="#263342"/>
-      <rect x="685" y="67" width="15" height="36" rx="4" fill="url(#steel-dark-{{ hero_variant }})" stroke="#25303d" stroke-width="1.50"/>
-      <circle cx="693" cy="85" r="3.2" fill="#263342"/>
-      <g transform="translate(235 85)">
-        <circle r="60" fill="url(#plate-glow-{{ hero_variant }})"/>
-        <circle r="57" fill="#001428" opacity=".44"/>
-        <circle r="54" fill="url(#gold-radial-{{ hero_variant }})"/>
-        <circle r="49" fill="none" stroke="#fff6c0" stroke-width="1.65" opacity=".48"/>
-        <circle r="46" fill="url(#plate-face-dark-{{ hero_variant }})"/>
-        <circle r="46" fill="none" stroke="#001428" stroke-width="2.70"/>
-        <path d="M -32 -32 Q -4 -43 28 -32" stroke="#ffffff" stroke-width="3.30" fill="none" opacity=".28" stroke-linecap="round"/>
-        <ellipse cx="0" cy="-32" rx="5" ry="7" fill="#001428" opacity=".68"/>
-        <ellipse cx="32" cy="0" rx="7" ry="5" fill="#001428" opacity=".68"/>
-        <ellipse cx="0" cy="32" rx="5" ry="7" fill="#001428" opacity=".68"/>
-        <ellipse cx="-32" cy="0" rx="7" ry="5" fill="#001428" opacity=".68"/>
-        <circle r="5" fill="#0a1018"/>
-      </g>
-      <g transform="translate(160 85)"><circle r="86" fill="#001428" opacity=".5"/><circle r="82" fill="url(#gold-radial-{{ hero_variant }})"/><circle r="82" fill="none" stroke="#5a3f00" stroke-width="3.00"/><circle r="74" fill="none" stroke="#fff6c0" stroke-width="2.10" opacity=".75"/><circle r="69" fill="none" stroke="#5a3f00" stroke-width="1.80" opacity=".5"/><circle r="66" fill="url(#plate-face-{{ hero_variant }})"/><circle r="66" fill="none" stroke="#001428" stroke-width="3.75"/><circle r="56" fill="none" stroke="#FFD100" stroke-width="1.80" opacity=".4"/><ellipse cx="0" cy="-50" rx="5" ry="8" fill="#001428" opacity=".55"/><ellipse cx="50" cy="0" rx="8" ry="5" fill="#001428" opacity=".55"/><ellipse cx="0" cy="50" rx="5" ry="8" fill="#001428" opacity=".55"/><ellipse cx="-50" cy="0" rx="8" ry="5" fill="#001428" opacity=".55"/><path d="M -50,-52 Q -10,-66 38,-50" stroke="#ffffff" stroke-width="5.25" fill="none" opacity=".4" stroke-linecap="round"/><path d="M -42,-44 Q -5,-55 32,-44" stroke="#ffffff" stroke-width="2.25" fill="none" opacity=".25" stroke-linecap="round"/><g opacity="1"><g fill="none" stroke="#FFFFFF" stroke-width="13.50" stroke-linecap="round" stroke-linejoin="round"><polyline points="-18,-22 -40,0 -18,22"/><polyline points="18,-22 40,0 18,22"/><line x1="11" y1="-30" x2="-11" y2="30"/></g><animate attributeName="opacity" values="1;1;0;0;1" keyTimes="0;0.15;0.175;0.975;1" dur="13.2s" begin="0s" repeatCount="indefinite" /></g><g opacity="0"><g fill="none" stroke="#FFFFFF" stroke-width="13.50" stroke-linecap="round" stroke-linejoin="round"><rect x="-34" y="-34" width="68" height="68" rx="11"/><polyline points="-18,3 -5,18 22,-15"/></g><animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;0.025;0.15;0.175;1" dur="13.2s" begin="2.2s" repeatCount="indefinite" /></g><g opacity="0"><g stroke="#FFFFFF" stroke-width="12.00" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="-22" y1="-30" x2="-22" y2="30"/><path d="M -22,-10 C 14,-10 14,10 -22,10"/></g><g fill="#FFFFFF"><circle cx="-22" cy="-32" r="10"/><circle cx="-22" cy="32"  r="10"/><circle cx="18"  cy="0"   r="10"/></g><animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;0.025;0.15;0.175;1" dur="13.2s" begin="4.4s" repeatCount="indefinite" /></g><g opacity="0"><g fill="none" stroke="#FFFFFF" stroke-width="10.50" stroke-linejoin="round" stroke-linecap="round"><rect x="-34" y="-34" width="68" height="16" rx="3"/><rect x="-34" y="-8"  width="68" height="16" rx="3"/><rect x="-34" y="18"  width="68" height="16" rx="3"/><line x1="-15" y1="-18" x2="-15" y2="-8"/><line x1="15"  y1="-18" x2="15"  y2="-8"/><line x1="-15" y1="8"   x2="-15" y2="18"/><line x1="15"  y1="8"   x2="15"  y2="18"/></g><animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;0.025;0.15;0.175;1" dur="13.2s" begin="6.6000000000000005s" repeatCount="indefinite" /></g><g opacity="0"><g fill="none" stroke="#FFFFFF" stroke-width="9.75" stroke-linejoin="round" stroke-linecap="round"><rect x="-34" y="-34" width="28" height="22" rx="3"/><rect x="6"   y="-34" width="28" height="22" rx="3"/><rect x="-17" y="12"  width="34" height="22" rx="3"/><path d="M -20,-12 L -3,12"/><path d="M 20,-12 L 3,12"/></g><g fill="#FFFFFF"><polygon points="-3,12 -10,4 -1,6"/><polygon points="3,12 10,4 1,6"/></g><animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;0.025;0.15;0.175;1" dur="13.2s" begin="8.8s" repeatCount="indefinite" /></g><g opacity="0"><g stroke="#FFFFFF" stroke-width="8.25" fill="none"><line x1="-26" y1="-22" x2="26"  y2="-22"/><line x1="-26" y1="-22" x2="-26" y2="22"/><line x1="-26" y1="-22" x2="26"  y2="22"/><line x1="26"  y1="22"  x2="-26" y2="22"/><line x1="26"  y1="22"  x2="26"  y2="-22"/><line x1="0"   y1="-22" x2="0"   y2="22"/><line x1="-26" y1="22"  x2="0"   y2="-22"/><line x1="26"  y1="-22" x2="0"   y2="22"/></g><g fill="#FFFFFF"><circle cx="-26" cy="-22" r="9"/><circle cx="26"  cy="-22" r="9"/><circle cx="-26" cy="22"  r="9"/><circle cx="26"  cy="22"  r="9"/><circle cx="0"   cy="-22" r="8"/><circle cx="0"   cy="22"  r="8"/></g><animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;0.025;0.15;0.175;1" dur="13.2s" begin="11s" repeatCount="indefinite" /></g><circle r="5" fill="#0a1018"/><circle r="5" fill="none" stroke="#0a4a82" stroke-width="1.20"/></g>
-      <g transform="translate(565 85)">
-        <circle r="60" fill="url(#plate-glow-{{ hero_variant }})"/>
-        <circle r="57" fill="#001428" opacity=".44"/>
-        <circle r="54" fill="url(#gold-radial-{{ hero_variant }})"/>
-        <circle r="49" fill="none" stroke="#fff6c0" stroke-width="1.65" opacity=".48"/>
-        <circle r="46" fill="url(#plate-face-dark-{{ hero_variant }})"/>
-        <circle r="46" fill="none" stroke="#001428" stroke-width="2.70"/>
-        <path d="M -32 -32 Q -4 -43 28 -32" stroke="#ffffff" stroke-width="3.30" fill="none" opacity=".28" stroke-linecap="round"/>
-        <ellipse cx="0" cy="-32" rx="5" ry="7" fill="#001428" opacity=".68"/>
-        <ellipse cx="32" cy="0" rx="7" ry="5" fill="#001428" opacity=".68"/>
-        <ellipse cx="0" cy="32" rx="5" ry="7" fill="#001428" opacity=".68"/>
-        <ellipse cx="-32" cy="0" rx="7" ry="5" fill="#001428" opacity=".68"/>
-        <circle r="5" fill="#0a1018"/>
-      </g>
-      <g transform="translate(640 85)"><circle r="86" fill="#001428" opacity=".5"/><circle r="82" fill="url(#gold-radial-{{ hero_variant }})"/><circle r="82" fill="none" stroke="#5a3f00" stroke-width="3.00"/><circle r="74" fill="none" stroke="#fff6c0" stroke-width="2.10" opacity=".75"/><circle r="69" fill="none" stroke="#5a3f00" stroke-width="1.80" opacity=".5"/><circle r="66" fill="url(#plate-face-{{ hero_variant }})"/><circle r="66" fill="none" stroke="#001428" stroke-width="3.75"/><circle r="56" fill="none" stroke="#FFD100" stroke-width="1.80" opacity=".4"/><ellipse cx="0" cy="-50" rx="5" ry="8" fill="#001428" opacity=".55"/><ellipse cx="50" cy="0" rx="8" ry="5" fill="#001428" opacity=".55"/><ellipse cx="0" cy="50" rx="5" ry="8" fill="#001428" opacity=".55"/><ellipse cx="-50" cy="0" rx="8" ry="5" fill="#001428" opacity=".55"/><path d="M -50,-52 Q -10,-66 38,-50" stroke="#ffffff" stroke-width="5.25" fill="none" opacity=".4" stroke-linecap="round"/><path d="M -42,-44 Q -5,-55 32,-44" stroke="#ffffff" stroke-width="2.25" fill="none" opacity=".25" stroke-linecap="round"/><g opacity="1"><g fill="none" stroke="#FFFFFF" stroke-width="13.50" stroke-linecap="round" stroke-linejoin="round"><polyline points="-18,-22 -40,0 -18,22"/><polyline points="18,-22 40,0 18,22"/><line x1="11" y1="-30" x2="-11" y2="30"/></g><animate attributeName="opacity" values="1;1;0;0;1" keyTimes="0;0.15;0.175;0.975;1" dur="13.2s" begin="0s" repeatCount="indefinite" /></g><g opacity="0"><g fill="none" stroke="#FFFFFF" stroke-width="13.50" stroke-linecap="round" stroke-linejoin="round"><rect x="-34" y="-34" width="68" height="68" rx="11"/><polyline points="-18,3 -5,18 22,-15"/></g><animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;0.025;0.15;0.175;1" dur="13.2s" begin="2.2s" repeatCount="indefinite" /></g><g opacity="0"><g stroke="#FFFFFF" stroke-width="12.00" stroke-linecap="round" stroke-linejoin="round" fill="none"><line x1="-22" y1="-30" x2="-22" y2="30"/><path d="M -22,-10 C 14,-10 14,10 -22,10"/></g><g fill="#FFFFFF"><circle cx="-22" cy="-32" r="10"/><circle cx="-22" cy="32"  r="10"/><circle cx="18"  cy="0"   r="10"/></g><animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;0.025;0.15;0.175;1" dur="13.2s" begin="4.4s" repeatCount="indefinite" /></g><g opacity="0"><g fill="none" stroke="#FFFFFF" stroke-width="10.50" stroke-linejoin="round" stroke-linecap="round"><rect x="-34" y="-34" width="68" height="16" rx="3"/><rect x="-34" y="-8"  width="68" height="16" rx="3"/><rect x="-34" y="18"  width="68" height="16" rx="3"/><line x1="-15" y1="-18" x2="-15" y2="-8"/><line x1="15"  y1="-18" x2="15"  y2="-8"/><line x1="-15" y1="8"   x2="-15" y2="18"/><line x1="15"  y1="8"   x2="15"  y2="18"/></g><animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;0.025;0.15;0.175;1" dur="13.2s" begin="6.6000000000000005s" repeatCount="indefinite" /></g><g opacity="0"><g fill="none" stroke="#FFFFFF" stroke-width="9.75" stroke-linejoin="round" stroke-linecap="round"><rect x="-34" y="-34" width="28" height="22" rx="3"/><rect x="6"   y="-34" width="28" height="22" rx="3"/><rect x="-17" y="12"  width="34" height="22" rx="3"/><path d="M -20,-12 L -3,12"/><path d="M 20,-12 L 3,12"/></g><g fill="#FFFFFF"><polygon points="-3,12 -10,4 -1,6"/><polygon points="3,12 10,4 1,6"/></g><animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;0.025;0.15;0.175;1" dur="13.2s" begin="8.8s" repeatCount="indefinite" /></g><g opacity="0"><g stroke="#FFFFFF" stroke-width="8.25" fill="none"><line x1="-26" y1="-22" x2="26"  y2="-22"/><line x1="-26" y1="-22" x2="-26" y2="22"/><line x1="-26" y1="-22" x2="26"  y2="22"/><line x1="26"  y1="22"  x2="-26" y2="22"/><line x1="26"  y1="22"  x2="26"  y2="-22"/><line x1="0"   y1="-22" x2="0"   y2="22"/><line x1="-26" y1="22"  x2="0"   y2="-22"/><line x1="26"  y1="-22" x2="0"   y2="22"/></g><g fill="#FFFFFF"><circle cx="-26" cy="-22" r="9"/><circle cx="26"  cy="-22" r="9"/><circle cx="-26" cy="22"  r="9"/><circle cx="26"  cy="22"  r="9"/><circle cx="0"   cy="-22" r="8"/><circle cx="0"   cy="22"  r="8"/></g><animate attributeName="opacity" values="0;1;1;0;0" keyTimes="0;0.025;0.15;0.175;1" dur="13.2s" begin="11s" repeatCount="indefinite" /></g><circle r="5" fill="#0a1018"/><circle r="5" fill="none" stroke="#0a4a82" stroke-width="1.20"/></g>
+    <!-- Main Bar with metallic sheen -->
+    <path d="M 280 82 L 520 82 L 520 88 L 280 88 Z" fill="#b0c4de" stroke="#102a43" stroke-width="2.5" />
+    <path d="M 280 84 L 520 84" stroke="#ffffff" stroke-width="1.5" opacity="0.6"/>
+    
+    <!-- Code Bracket Plates (Left) -->
+    <g transform="translate(290 85)">
+      <!-- Outer Plate (Dark Blue) -->
+      <path d="M 0 -45 L 20 -45 L 8 -10 L 8 10 L 20 45 L 0 45 L -15 10 L -15 -10 Z" fill="#0d1b2a" stroke="#486581" stroke-width="2" stroke-linejoin="round"/>
+      <text x="2" y="8" fill="#e0e8f5" font-family="'Courier New', monospace" font-size="28" font-weight="900" text-anchor="middle">&lt;</text>
+      <!-- Inner Plate (Gold accent) -->
+      <path d="M 20 -35 L 35 -35 L 25 -10 L 25 10 L 35 35 L 20 35 L 8 10 L 8 -10 Z" fill="#b8860b" stroke="#f0e68c" stroke-width="1.5" stroke-linejoin="round"/>
     </g>
+
+    <!-- Code Bracket Plates (Right) -->
+    <g transform="translate(510 85)">
+      <!-- Inner Plate (Gold accent) -->
+      <path d="M -20 -35 L -35 -35 L -25 -10 L -25 10 L -35 35 L -20 35 L -8 10 L -8 -10 Z" fill="#b8860b" stroke="#f0e68c" stroke-width="1.5" stroke-linejoin="round"/>
+      <!-- Outer Plate (Dark Blue) -->
+      <path d="M 0 -45 L -20 -45 L -8 -10 L -8 10 L -20 45 L 0 45 L 15 10 L 15 -10 Z" fill="#0d1b2a" stroke="#486581" stroke-width="2" stroke-linejoin="round"/>
+      <text x="-2" y="8" fill="#e0e8f5" font-family="'Courier New', monospace" font-size="28" font-weight="900" text-anchor="middle">&gt;</text>
+    </g>
+
+    <!-- Fasteners / Collars -->
+    <rect x="325" y="75" width="10" height="20" rx="3" fill="#627d98" stroke="#102a43" stroke-width="2"/>
+    <rect x="465" y="75" width="10" height="20" rx="3" fill="#627d98" stroke="#102a43" stroke-width="2"/>
+    
+    <!-- Code Slashes in the middle instead of weights -->
+    <g transform="translate(400 85)">
+      <path d="M -15 -25 L -5 -25 L -15 25 L -25 25 Z" fill="#0d1b2a" opacity="0.8"/>
+      <path d="M 15 25 L 25 25 L 15 -25 L 5 -25 Z" fill="#0d1b2a" opacity="0.8"/>
+    </g>
+  </g>
     <g data-hero-kind-layer="bruin" data-hero-slot="mascot-paws" data-hero-option="bruin" display="none">
       <path d="M 288 66 Q 288 54, 300 54 L 326 54 Q 340 54, 342 68 L 342 92 Q 342 105, 332 110 L 318 116 L 302 110 Q 290 104, 288 92 Z" fill="url(#bruin-fur-{{ hero_variant }})" stroke="var(--hero-bruin-line, #1f140c)" stroke-width="2.70" stroke-linejoin="round"/>
       <ellipse cx="318" cy="88" rx="15" ry="11" fill="var(--hero-bruin-muzzle, #d0a070)" opacity=".66"/>
