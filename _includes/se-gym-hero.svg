@@ -174,7 +174,7 @@
     <path d="M 274 232 L 298 210 L 326 234 L 304 268 Z M 526 232 L 502 210 L 474 234 L 496 268 Z M 250 420 L 276 392 L 302 422 L 278 456 Z M 550 420 L 524 392 L 498 422 L 522 456 Z" fill="url(#milestone-jewel-{{ hero_variant }})" stroke="var(--hero-milestone-metal-light, #e9fbff)" stroke-width="1.80" opacity=".66"/>
   </g>
   <ellipse cx="400" cy="248" rx="238" ry="318" fill="url(#hero-stage-glow-{{ hero_variant }})" pointer-events="none"/>
-  <path d="M 268 328 C 236 410, 238 506, 290 586 M 532 328 C 564 410, 562 506, 510 586" stroke="#c9e9ff" stroke-width="3.90" fill="none" stroke-linecap="round" opacity=".22" pointer-events="none"/>
+  <path d="M 268 328 C 236 410, 238 506, 290 586 M 532 328 C 564 410, 562 506, 510 586" stroke="#ffffff" stroke-width="6.00" stroke-linecap="round" fill="none" stroke-linecap="round" opacity=".22" pointer-events="none"/>
   <ellipse cx="400" cy="220" rx="220" ry="240" fill="url(#hero-aura-glow-{{ hero_variant }})" pointer-events="none"/>
   <g data-hero-kind-layer="human" data-hero-motion="cape-rock"><animateTransform attributeName="transform" type="rotate" values="-1.6 400 268;2 400 268;-1.6 400 268" keyTimes="0;0.5;1" dur="2.2s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1" />
     <path d="M 335 258 C 318 290, 308 360, 308 440 C 308 490, 312 525, 318 555 Q 332 545, 346 555 Q 360 545, 374 555 Q 388 545, 400 555 Q 412 545, 426 555 Q 440 545, 454 555 Q 468 545, 482 555 C 488 525, 492 490, 492 440 C 492 360, 482 290, 465 258 Z" fill="url(#cape-grad-{{ hero_variant }})"/>
