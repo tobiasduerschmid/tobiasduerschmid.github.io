@@ -1,6 +1,9 @@
 (function () {
   'use strict';
 
+  if (window.__SEGymHeroAvatarLoaded) return;
+  window.__SEGymHeroAvatarLoaded = true;
+
   var STORAGE_KEY = 'se-gym-hero-avatar';
   var SCHEMA_VERSION = 1;
   var CHOICE_PREVIEW_OBSERVER_MARGIN = 160;
@@ -642,6 +645,7 @@
   var HEADWEAR_FIT_ACCESSORIES = lookupValues(HEADWEAR_ACCESSORIES.concat(['crown', 'halo', 'headset-mic', 'over-ear-headphones', 'hair-clips']));
   var FACE_FIT_ACCESSORIES = lookupValues(FACE_ACCESSORIES.concat(['forehead-jewel']));
   var SIDE_FIT_ACCESSORIES = lookupValues(['earrings', 'hoop-earrings', 'wireless-earbuds', 'wired-earbuds']);
+  var PARTIAL_HEAD_COVERAGE_HAIR_STYLES = lookupValues(['bald', 'mohawk', 'none', 'tousled-wispy-fringe']);
   var HEAD_STYLE_FITS = {
     default: { scaleX: 1, scaleY: 1, translateY: 0 },
     feminine: { scaleX: 1.05, scaleY: 0.99, translateY: -1 },
@@ -705,6 +709,44 @@
     'plus-size':  'plus-size'
   };
 
+  var FINE_TUNE_AXES = ['vertical', 'spread', 'width', 'height'];
+  var FINE_TUNE_AXIS_LIMITS = {
+    vertical: { min: -20, max: 20 },
+    spread: { min: -20, max: 20 },
+    width: { min: -20, max: 20 },
+    height: { min: -20, max: 20 }
+  };
+  var FINE_TUNE_TRANSLATE_STEP = 0.35;
+  var FINE_TUNE_SPREAD_STEP = 0.0025;
+  var FINE_TUNE_SCALE_STEP = 0.0025;
+  var HISTORY_LIMIT = 200;
+  var FINE_TUNE_TARGETS = [
+    { key: 'head', label: 'Head', slots: ['head-shape', 'face-clear', 'head-features'], cx: 400, cy: 188 },
+    { key: 'hair', label: 'Hair', slots: ['hair', 'hairline', 'hair-root', 'hair-cap'], cx: 400, cy: 166 },
+    { key: 'ears', label: 'Ears', slots: ['ear-shape'], cx: 400, cy: 190 },
+    { key: 'eyes', label: 'Eyes', slots: ['eye-shape'], cx: 400, cy: 185 },
+    { key: 'eyelashes', label: 'Eyelashes', slots: ['eyelash-style'], cx: 400, cy: 184 },
+    { key: 'eyebrows', label: 'Eyebrows', slots: ['eyebrow'], cx: 400, cy: 172 },
+    { key: 'nose', label: 'Nose', slots: ['nose-shape'], cx: 400, cy: 196 },
+    { key: 'mouth', label: 'Mouth', slots: ['mouth-style'], cx: 400, cy: 223 },
+    { key: 'cheeks', label: 'Cheeks', selectors: ['ellipse[fill*="--hero-cheek"]', 'ellipse[fill-opacity*="--hero-cheek-opacity"]'], cx: 400, cy: 212 },
+    { key: 'faceFeature', label: 'Facial details', slots: ['face-feature'], cx: 400, cy: 207 },
+    { key: 'facialHair', label: 'Facial hair', slots: ['facial-hair'], cx: 400, cy: 228 },
+    { key: 'body', label: 'Body', slots: ['body-shape', 'silhouette'], selectors: ['[data-hero-default-torso]'], cx: 400, cy: 360 },
+    { key: 'outfit', label: 'Outfit', slots: ['outfit-style'], cx: 400, cy: 348 },
+    { key: 'accessories', label: 'Accessories/headwear', slots: ['accessory'], cx: 400, cy: 190 },
+    { key: 'emblem', label: 'Emblem', slots: ['emblem'], cx: 400, cy: 338 },
+    { key: 'mascot', label: 'Bruin mascot', slots: ['mascot', 'mascot-arms', 'mascot-paws'], cx: 400, cy: 302 }
+  ];
+
+  function defaultFineTuneState() {
+    var tuning = {};
+    for (var i = 0; i < FINE_TUNE_TARGETS.length; i++) {
+      tuning[FINE_TUNE_TARGETS[i].key] = { vertical: 0, spread: 0, width: 0, height: 0 };
+    }
+    return tuning;
+  }
+
   var DEFAULTS = {
     version: SCHEMA_VERSION,
     kind: 'human',
@@ -733,7 +775,8 @@
       accessory: 'none',
       accessories: [],
       emblem: ''
-    }
+    },
+    fineTune: defaultFineTuneState()
   };
 
   var PALETTES = {
@@ -1384,6 +1427,50 @@
     return weightedFrom(presentation === 'male' ? MALE_STYLE_RECIPES : FEMALE_STYLE_RECIPES);
   }
 
+  function normalizeFineTuneValue(value, axis) {
+    var limits = FINE_TUNE_AXIS_LIMITS[axis] || { min: -3, max: 3 };
+    var number = Number(value);
+    if (!Number.isFinite(number)) return 0;
+    return clampNumber(Math.round(number), limits.min, limits.max);
+  }
+
+  function normalizeFineTuneState(value) {
+    var normalized = defaultFineTuneState();
+    if (!value || typeof value !== 'object') return normalized;
+    for (var i = 0; i < FINE_TUNE_TARGETS.length; i++) {
+      var key = FINE_TUNE_TARGETS[i].key;
+      var source = value[key];
+      if (!source || typeof source !== 'object') continue;
+      for (var a = 0; a < FINE_TUNE_AXES.length; a++) {
+        var axis = FINE_TUNE_AXES[a];
+        normalized[key][axis] = normalizeFineTuneValue(source[axis], axis);
+      }
+    }
+    return normalized;
+  }
+
+  function isFineTuneStateValid(value) {
+    if (value === undefined) return true;
+    if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+    var allowedTargets = {};
+    for (var i = 0; i < FINE_TUNE_TARGETS.length; i++) allowedTargets[FINE_TUNE_TARGETS[i].key] = true;
+    for (var key in value) {
+      if (!Object.prototype.hasOwnProperty.call(value, key)) continue;
+      if (!allowedTargets[key]) return false;
+      var target = value[key];
+      if (!target || typeof target !== 'object' || Array.isArray(target)) return false;
+      for (var axis in target) {
+        if (!Object.prototype.hasOwnProperty.call(target, axis)) continue;
+        if (FINE_TUNE_AXES.indexOf(axis) === -1) return false;
+        var axisValue = target[axis];
+        var limits = FINE_TUNE_AXIS_LIMITS[axis];
+        if (typeof axisValue !== 'number' || !Number.isFinite(axisValue)) return false;
+        if (Math.round(axisValue) !== axisValue || axisValue < limits.min || axisValue > limits.max) return false;
+      }
+    }
+    return true;
+  }
+
   function normalizeAvatar(obj) {
     if (!obj || !obj.outfit) return obj;
     obj.kind = normalizeHeroKind(obj.kind);
@@ -1407,6 +1494,7 @@
     }
     if (obj.body) obj.body.type = canonicalChoiceValue('bodyType', obj.body.type);
     if (obj.outfit.style === undefined) obj.outfit.style = DEFAULTS.outfit.style;
+    obj.fineTune = normalizeFineTuneState(obj.fineTune);
     return obj;
   }
 
@@ -1808,6 +1896,14 @@
     }
   }
 
+  function setHeadCoveringHairCap(svg, hairStyle) {
+    var showCap = hairStyle && !PARTIAL_HEAD_COVERAGE_HAIR_STYLES[hairStyle];
+    var groups = svg.querySelectorAll('[data-hero-slot="hair-cap"]');
+    for (var i = 0; i < groups.length; i++) {
+      groups[i].setAttribute('display', showCap ? 'inline' : 'none');
+    }
+  }
+
   function affineFitTransform(fit, centerX, centerY) {
     var scaleX = fit.scaleX === undefined ? 1 : fit.scaleX;
     var scaleY = fit.scaleY === undefined ? 1 : fit.scaleY;
@@ -1838,10 +1934,30 @@
     return clampNumber(1 + widthDelta * weight, min, max);
   }
 
+  function setBaseTransform(group, transform) {
+    if (!group) return;
+    if (transform) {
+      group.setAttribute('data-hero-base-transform', transform);
+      group.setAttribute('transform', transform);
+    } else {
+      group.removeAttribute('data-hero-base-transform');
+      group.removeAttribute('transform');
+    }
+  }
+
+  function setComposedTransform(group, fineTransform) {
+    if (!group) return;
+    var baseTransform = group.getAttribute('data-hero-base-transform') || '';
+    var transforms = [];
+    if (baseTransform) transforms.push(baseTransform);
+    if (fineTransform) transforms.push(fineTransform);
+    if (transforms.length) group.setAttribute('transform', transforms.join(' '));
+    else group.removeAttribute('transform');
+  }
+
   function setGroupTransform(group, transform, fitName, fitValue) {
     if (!group) return;
-    if (transform) group.setAttribute('transform', transform);
-    else group.removeAttribute('transform');
+    setBaseTransform(group, transform);
     if (fitName && fitValue) group.setAttribute(fitName, fitValue);
     else if (fitName) group.removeAttribute(fitName);
   }
@@ -1849,6 +1965,17 @@
   function applyFitToSlot(svg, slotName, transform, fitName, fitValue) {
     var groups = svg.querySelectorAll('[data-hero-slot="' + slotName + '"]');
     for (var i = 0; i < groups.length; i++) setGroupTransform(groups[i], transform, fitName, fitValue);
+  }
+
+  function applyHairFitToSlot(svg, slotName, defaultTransform, headCoveringTransform, fitName, fitValue) {
+    var groups = svg.querySelectorAll('[data-hero-slot="' + slotName + '"]');
+    for (var i = 0; i < groups.length; i++) {
+      var option = groups[i].getAttribute('data-hero-option');
+      var transform = option && !PARTIAL_HEAD_COVERAGE_HAIR_STYLES[option]
+        ? headCoveringTransform
+        : defaultTransform;
+      setGroupTransform(groups[i], transform, fitName, fitValue);
+    }
   }
 
   function applyFitToAccessories(svg, transform, lookup, fitValue) {
@@ -1863,6 +1990,7 @@
     var normalized = canonicalChoiceValue('headStyle', headStyle || 'default');
     var fit = HEAD_STYLE_FITS[normalized] || HEAD_STYLE_FITS.default;
     var widthDelta = (fit.scaleX || 1) - 1;
+    var heightDelta = (fit.scaleY || 1) - 1;
     var lift = fit.translateY || 0;
     var hairTransform = affineFitTransform({
       scaleX: headFitScaleX(widthDelta, 1.18, 0.58, 0.94, 1.17),
@@ -1878,6 +2006,21 @@
       scaleX: headFitScaleX(widthDelta, 0.95, 0.45, 0.96, 1.14),
       scaleY: 1,
       translateY: lift * 0.24
+    }, 400, 176);
+    var headCoveringHairTransform = affineFitTransform({
+      scaleX: headFitScaleX(widthDelta, 1.45, 0.72, 0.94, 1.24),
+      scaleY: clampNumber(1 + heightDelta * 0.46, 0.96, 1.08),
+      translateY: lift * 0.46
+    }, 400, 174);
+    var headCoveringHairlineTransform = affineFitTransform({
+      scaleX: headFitScaleX(widthDelta, 1.55, 0.7, 0.94, 1.26),
+      scaleY: clampNumber(1 + heightDelta * 0.5, 0.97, 1.09),
+      translateY: lift * 0.5
+    }, 400, 166);
+    var headCoveringHairRootTransform = affineFitTransform({
+      scaleX: headFitScaleX(widthDelta, 1.25, 0.58, 0.95, 1.2),
+      scaleY: clampNumber(1 + heightDelta * 0.25, 0.98, 1.05),
+      translateY: lift * 0.32
     }, 400, 176);
     var headwearTransform = affineFitTransform({
       scaleX: headFitScaleX(widthDelta, 1.08, 0.5, 0.95, 1.16),
@@ -1901,14 +2044,15 @@
     }, 400, 204);
     var accessoryGroups = svg.querySelectorAll('[data-hero-slot="accessory"]');
     for (var i = 0; i < accessoryGroups.length; i++) {
-      accessoryGroups[i].removeAttribute('transform');
+      setBaseTransform(accessoryGroups[i], '');
       accessoryGroups[i].removeAttribute('data-hero-head-fit');
     }
 
     svg.setAttribute('data-hero-head-fit', normalized);
-    applyFitToSlot(svg, 'hair', hairTransform, 'data-hero-head-fit', normalized);
-    applyFitToSlot(svg, 'hairline', hairlineTransform, 'data-hero-head-fit', normalized);
-    applyFitToSlot(svg, 'hair-root', hairRootTransform, 'data-hero-head-fit', normalized);
+    applyHairFitToSlot(svg, 'hair', hairTransform, headCoveringHairTransform, 'data-hero-head-fit', normalized);
+    applyFitToSlot(svg, 'hair-cap', headCoveringHairlineTransform, 'data-hero-head-fit', normalized);
+    applyHairFitToSlot(svg, 'hairline', hairlineTransform, headCoveringHairlineTransform, 'data-hero-head-fit', normalized);
+    applyHairFitToSlot(svg, 'hair-root', hairRootTransform, headCoveringHairRootTransform, 'data-hero-head-fit', normalized);
     applyFitToSlot(svg, 'ear-shape', sideAccessoryTransform, 'data-hero-head-fit', normalized);
     applyFitToSlot(svg, 'face-feature', faceFeatureTransform, 'data-hero-head-fit', normalized);
     applyFitToAccessories(svg, headwearTransform, HEADWEAR_FIT_ACCESSORIES, normalized);
@@ -2056,8 +2200,65 @@
     svg.setAttribute('data-hero-eye-family', fit.family);
     var groups = svg.querySelectorAll('[data-hero-slot="eyelash-style"]');
     for (var i = 0; i < groups.length; i++) {
-      groups[i].removeAttribute('transform');
+      setBaseTransform(groups[i], '');
       updateEyelashGeometry(groups[i], fit.family);
+    }
+  }
+
+  function collectFineTuneElements(svg, target) {
+    var elements = [];
+    var seen = [];
+
+    function addAll(selector) {
+      var nodes = svg.querySelectorAll(selector);
+      for (var i = 0; i < nodes.length; i++) {
+        if (seen.indexOf(nodes[i]) !== -1) continue;
+        seen.push(nodes[i]);
+        elements.push(nodes[i]);
+      }
+    }
+
+    var slots = target.slots || [];
+    for (var s = 0; s < slots.length; s++) addAll('[data-hero-slot="' + slots[s] + '"]');
+    var selectors = target.selectors || [];
+    for (var q = 0; q < selectors.length; q++) addAll(selectors[q]);
+    return elements;
+  }
+
+  function fineTuneTransformForTarget(target, tuning) {
+    var values = tuning || {};
+    var vertical = normalizeFineTuneValue(values.vertical, 'vertical');
+    var spread = normalizeFineTuneValue(values.spread, 'spread');
+    var width = normalizeFineTuneValue(values.width, 'width');
+    var height = normalizeFineTuneValue(values.height, 'height');
+    var transforms = [];
+    if (spread) {
+      transforms.push(affineFitTransform({
+        scaleX: 1 + spread * FINE_TUNE_SPREAD_STEP,
+        scaleY: 1
+      }, 400, target.cy));
+    }
+    if (vertical || width || height) {
+      transforms.push(affineFitTransform({
+        scaleX: 1 + width * FINE_TUNE_SCALE_STEP,
+        scaleY: 1 + height * FINE_TUNE_SCALE_STEP,
+        translateY: vertical * FINE_TUNE_TRANSLATE_STEP
+      }, target.cx, target.cy));
+    }
+    return transforms.filter(Boolean).join(' ');
+  }
+
+  function applyFineTuneToSvg(svg, fineTune) {
+    var normalized = normalizeFineTuneState(fineTune);
+    for (var i = 0; i < FINE_TUNE_TARGETS.length; i++) {
+      var target = FINE_TUNE_TARGETS[i];
+      var transform = fineTuneTransformForTarget(target, normalized[target.key]);
+      var elements = collectFineTuneElements(svg, target);
+      for (var e = 0; e < elements.length; e++) {
+        setComposedTransform(elements[e], transform);
+        if (transform) elements[e].setAttribute('data-hero-fine-tune', target.key);
+        else elements[e].removeAttribute('data-hero-fine-tune');
+      }
     }
   }
 
@@ -2226,6 +2427,7 @@
     setSlot(svg, 'face-clear', headStyle);
     setSlot(svg, 'head-features', headStyle);
     setSlot(svg, 'hairline', hidesHair ? 'none' : renderedHairStyle);
+    setHeadCoveringHairCap(svg, renderedHairStyle);
     setSlot(svg, 'nose-shape', state.appearance.noseShape || 'soft');
     setSlot(svg, 'face-feature', canonicalChoiceValue('faceFeature', state.appearance.faceFeature || 'none'));
     setSlot(svg, 'facial-hair', state.appearance.facialHair || 'none');
@@ -2249,6 +2451,7 @@
     if (defaultBuckle) {
       defaultBuckle.style.display = hasEmblem ? 'none' : '';
     }
+    applyFineTuneToSvg(svg, state.fineTune);
     applyMilestoneToSvg(svg, svg.getAttribute('data-hero-milestone') || window.SEGymHeroMilestone || 'none');
     svg.setAttribute('data-hero-avatar-ready', 'true');
   }
@@ -2329,6 +2532,7 @@
         if (!inEnum(o.accessories[ai], 'accessory')) return { ok: false, error: 'Invalid accessory.' };
       }
     }
+    if (!isFineTuneStateValid(obj.fineTune)) return { ok: false, error: 'Invalid fine tuning.' };
     if (!isValidEmblem(o.emblem)) return { ok: false, error: 'Emblem must be empty or a single emoji.' };
     return { ok: true };
   }
@@ -2346,7 +2550,8 @@
   }
 
   function saveAvatar(state) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    var normalized = normalizeAvatar(JSON.parse(JSON.stringify(state)));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
   }
 
   function clearAvatar() {
@@ -2359,6 +2564,7 @@
     ENUMS: ENUMS,
     CHOICE_SETS: HERO_CHOICE_SETS,
     DEFAULTS: DEFAULTS,
+    FINE_TUNE_TARGETS: FINE_TUNE_TARGETS,
     randomPresentation: randomPresentation,
     randomAvatar: randomAvatar,
     validateAvatar: validateAvatar,
@@ -2366,6 +2572,7 @@
     saveAvatar: saveAvatar,
     clearAvatar: clearAvatar,
     normalizeAvatar: normalizeAvatar,
+    normalizeFineTuneState: normalizeFineTuneState,
     normalizeMilestoneTier: normalizeMilestoneTier,
     getCompositedAccessories: getCompositedAccessories,
     BRUIN_DEFAULTS: BRUIN_DEFAULTS,
@@ -2403,6 +2610,13 @@
     var latestChoicePreviewState = null;
     var latestChoicePreviewSnapshot = null;
     var choicePreviewObserver = null;
+    var fineTuneControls = [];
+    var undoStack = [];
+    var redoStack = [];
+    var historyCurrent = null;
+    var suppressHistory = false;
+    var undoButton = null;
+    var redoButton = null;
 
     function $(id) { return modal.querySelector('#' + id); }
 
@@ -2521,10 +2735,11 @@
 
     function updateColorInput(input, hex, hsl, silent) {
       if (!input || !isHex(hex)) return;
+      var previous = silent ? null : normalizedFormState();
       input.value = hex.toLowerCase();
       rememberHsl(input, hsl || hexToHsl(input.value), input.value);
       syncColorTool(input);
-      if (!silent) refreshPreview();
+      if (!silent) commitPreviewEdit(previous);
     }
 
     function updateColorFromHsl(input) {
@@ -2678,6 +2893,227 @@
       for (var i = 0; i < COLOR_CONTROLS.length; i++) {
         buildColorTools(COLOR_CONTROLS[i]);
       }
+    }
+
+    function formatFineTuneValue(value) {
+      return value > 0 ? '+' + value : String(value);
+    }
+
+    function fineTuneControl(targetKey, axis) {
+      for (var i = 0; i < fineTuneControls.length; i++) {
+        var control = fineTuneControls[i];
+        if (control.targetKey === targetKey && control.axis === axis) return control;
+      }
+      return null;
+    }
+
+    function setFineTuneControlValue(targetKey, axis, value) {
+      var control = fineTuneControl(targetKey, axis);
+      if (!control) return;
+      var normalized = normalizeFineTuneValue(value, axis);
+      if (control.input) {
+        control.input.value = String(normalized);
+        control.input.setAttribute('aria-valuetext', formatFineTuneValue(normalized));
+      }
+      control.output.value = formatFineTuneValue(normalized);
+      control.output.textContent = formatFineTuneValue(normalized);
+      control.output.setAttribute('data-hero-tune-value', String(normalized));
+      var limits = FINE_TUNE_AXIS_LIMITS[axis];
+      if (control.decrease) control.decrease.disabled = normalized <= limits.min;
+      if (control.increase) control.increase.disabled = normalized >= limits.max;
+    }
+
+    function writeFineTuneForm(state) {
+      var tuning = normalizeFineTuneState(state && state.fineTune);
+      for (var i = 0; i < FINE_TUNE_TARGETS.length; i++) {
+        var target = FINE_TUNE_TARGETS[i];
+        for (var a = 0; a < FINE_TUNE_AXES.length; a++) {
+          var axis = FINE_TUNE_AXES[a];
+          setFineTuneControlValue(target.key, axis, tuning[target.key][axis]);
+        }
+      }
+    }
+
+    function readFineTuneForm() {
+      var tuning = defaultFineTuneState();
+      var inputs = modal.querySelectorAll('[data-hero-tune-input]');
+      for (var i = 0; i < inputs.length; i++) {
+        var targetKey = inputs[i].getAttribute('data-hero-tune-target');
+        var axis = inputs[i].getAttribute('data-hero-tune-axis');
+        if (!tuning[targetKey] || FINE_TUNE_AXES.indexOf(axis) === -1) continue;
+        tuning[targetKey][axis] = normalizeFineTuneValue(
+          Number(inputs[i].value || 0),
+          axis
+        );
+      }
+      return tuning;
+    }
+
+    function adjustFineTuneControl(targetKey, axis, delta) {
+      var control = fineTuneControl(targetKey, axis);
+      if (!control) return;
+      var current = Number(control.output.getAttribute('data-hero-tune-value') || 0);
+      setFineTuneControlValue(targetKey, axis, current + delta);
+      commitPreviewEdit();
+    }
+
+    function resetFineTuneTarget(targetKey) {
+      for (var a = 0; a < FINE_TUNE_AXES.length; a++) {
+        setFineTuneControlValue(targetKey, FINE_TUNE_AXES[a], 0);
+      }
+      commitPreviewEdit();
+    }
+
+    function createFineTuneButton(text, ariaLabel, targetKey, axis, delta) {
+      var button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'hero-cust-tune-button';
+      button.textContent = text;
+      button.setAttribute('aria-label', ariaLabel);
+      button.addEventListener('click', function () {
+        adjustFineTuneControl(targetKey, axis, delta);
+      });
+      return button;
+    }
+
+    function createFineTuneStepper(target, axis, axisLabel, decreaseText, increaseText, decreaseLabel, increaseLabel) {
+      var limits = FINE_TUNE_AXIS_LIMITS[axis];
+      var inputId = 'hero-cust-tune-' + target.key + '-' + axis + '-range';
+
+      var stepper = document.createElement('div');
+      stepper.className = 'hero-cust-tune-stepper';
+      stepper.setAttribute('role', 'group');
+      stepper.setAttribute('aria-label', target.label + ' ' + axisLabel);
+
+      var label = document.createElement('label');
+      label.className = 'hero-cust-tune-axis';
+      label.setAttribute('for', inputId);
+      label.textContent = axisLabel;
+      stepper.appendChild(label);
+
+      var decrease = createFineTuneButton(decreaseText, decreaseLabel, target.key, axis, -1);
+      stepper.appendChild(decrease);
+
+      var input = document.createElement('input');
+      input.id = inputId;
+      input.className = 'hero-cust-tune-range';
+      input.type = 'range';
+      input.min = String(limits.min);
+      input.max = String(limits.max);
+      input.step = '1';
+      input.value = '0';
+      input.setAttribute('aria-label', target.label + ' ' + axisLabel + ' adjustment');
+      input.setAttribute('aria-valuetext', '0');
+      input.setAttribute('data-hero-tune-input', '');
+      input.setAttribute('data-hero-tune-target', target.key);
+      input.setAttribute('data-hero-tune-axis', axis);
+      input.addEventListener('input', function () {
+        setFineTuneControlValue(target.key, axis, input.value);
+        commitPreviewEdit();
+      });
+      input.addEventListener('change', function () {
+        setFineTuneControlValue(target.key, axis, input.value);
+        commitPreviewEdit();
+      });
+      stepper.appendChild(input);
+
+      var output = document.createElement('output');
+      output.id = 'hero-cust-tune-' + target.key + '-' + axis;
+      output.className = 'hero-cust-tune-value';
+      output.setAttribute('aria-label', target.label + ' ' + axisLabel + ' adjustment');
+      output.setAttribute('data-hero-tune-output', '');
+      output.setAttribute('data-hero-tune-target', target.key);
+      output.setAttribute('data-hero-tune-axis', axis);
+      stepper.appendChild(output);
+
+      var increase = createFineTuneButton(increaseText, increaseLabel, target.key, axis, 1);
+      stepper.appendChild(increase);
+
+      fineTuneControls.push({
+        targetKey: target.key,
+        axis: axis,
+        input: input,
+        output: output,
+        decrease: decrease,
+        increase: increase
+      });
+      return stepper;
+    }
+
+    function buildFineTuneControls() {
+      var container = modal.querySelector('[data-hero-fine-tune-controls]');
+      if (!container || container._heroFineTuneBuilt) return;
+      container.textContent = '';
+      fineTuneControls = [];
+
+      for (var i = 0; i < FINE_TUNE_TARGETS.length; i++) {
+        var target = FINE_TUNE_TARGETS[i];
+        var row = document.createElement('div');
+        row.className = 'hero-cust-tune-row';
+        row.setAttribute('data-hero-tune-row', target.key);
+
+        var name = document.createElement('span');
+        name.className = 'hero-cust-tune-name';
+        name.textContent = target.label;
+        row.appendChild(name);
+
+        var lowerName = target.label.toLowerCase();
+        var controls = document.createElement('div');
+        controls.className = 'hero-cust-tune-controls';
+        row.appendChild(controls);
+
+        controls.appendChild(createFineTuneStepper(
+          target,
+          'vertical',
+          'Up/down',
+          'Up',
+          'Down',
+          'Move ' + lowerName + ' up',
+          'Move ' + lowerName + ' down'
+        ));
+        controls.appendChild(createFineTuneStepper(
+          target,
+          'spread',
+          'In/out',
+          'In',
+          'Out',
+          'Move ' + lowerName + ' inward',
+          'Move ' + lowerName + ' outward'
+        ));
+        controls.appendChild(createFineTuneStepper(
+          target,
+          'width',
+          'Width',
+          'Less',
+          'More',
+          'Make ' + lowerName + ' width less',
+          'Make ' + lowerName + ' width more'
+        ));
+        controls.appendChild(createFineTuneStepper(
+          target,
+          'height',
+          'Height',
+          'Less',
+          'More',
+          'Make ' + lowerName + ' height less',
+          'Make ' + lowerName + ' height more'
+        ));
+
+        var reset = document.createElement('button');
+        reset.type = 'button';
+        reset.className = 'hero-cust-tune-reset';
+        reset.textContent = 'Reset';
+        reset.setAttribute('aria-label', 'Reset ' + lowerName + ' fine tuning');
+        reset.addEventListener('click', function () {
+          resetFineTuneTarget(this.getAttribute('data-hero-tune-reset'));
+        });
+        reset.setAttribute('data-hero-tune-reset', target.key);
+        row.appendChild(reset);
+        container.appendChild(row);
+      }
+
+      container._heroFineTuneBuilt = true;
+      writeFineTuneForm(DEFAULTS);
     }
 
     function populateSelectFromChoiceSet(select, key, definition) {
@@ -3784,7 +4220,8 @@
           accessory: accessories[0] || 'none',
           accessories: accessories,
           emblem: $('hero-cust-emblem').value
-        }
+        },
+        fineTune: readFineTuneForm()
       };
     }
 
@@ -3812,8 +4249,99 @@
       $('hero-cust-cape-inner').value = state.outfit.capeInner;
       writeAccessoriesForm(state);
       $('hero-cust-emblem').value = state.outfit.emblem;
+      writeFineTuneForm(state);
       resetAllColorHslFromForm();
       syncAllColorTools();
+    }
+
+    function normalizedFormState() {
+      return normalizeAvatar(cloneAvatarState(readForm()));
+    }
+
+    function historySignature(state) {
+      return JSON.stringify(normalizeAvatar(cloneAvatarState(state)));
+    }
+
+    function updateHistoryButtons() {
+      if (undoButton) undoButton.disabled = undoStack.length === 0;
+      if (redoButton) redoButton.disabled = redoStack.length === 0;
+    }
+
+    function resetHistory(state) {
+      undoStack = [];
+      redoStack = [];
+      historyCurrent = normalizeAvatar(cloneAvatarState(state));
+      updateHistoryButtons();
+    }
+
+    function pushHistorySnapshot(stack, state) {
+      stack.push(normalizeAvatar(cloneAvatarState(state)));
+      if (stack.length > HISTORY_LIMIT) stack.shift();
+    }
+
+    function recordHistoryEdit(previousState) {
+      if (suppressHistory) return;
+      var next = normalizedFormState();
+      if (!historyCurrent) {
+        historyCurrent = next;
+        updateHistoryButtons();
+        return;
+      }
+      if (previousState) {
+        var previous = normalizeAvatar(cloneAvatarState(previousState));
+        if (historySignature(next) === historySignature(previous)) {
+          updateHistoryButtons();
+          return;
+        }
+        pushHistorySnapshot(undoStack, previous);
+        redoStack = [];
+        historyCurrent = next;
+        updateHistoryButtons();
+        return;
+      }
+      if (historySignature(next) === historySignature(historyCurrent)) {
+        updateHistoryButtons();
+        return;
+      }
+      pushHistorySnapshot(undoStack, historyCurrent);
+      redoStack = [];
+      historyCurrent = next;
+      updateHistoryButtons();
+    }
+
+    function applyHistoryState(state, message) {
+      suppressHistory = true;
+      try {
+        writeForm(normalizeAvatar(cloneAvatarState(state)));
+        refreshPreview();
+      } finally {
+        suppressHistory = false;
+      }
+      historyCurrent = normalizeAvatar(cloneAvatarState(state));
+      updateHistoryButtons();
+      setStatus(message || '');
+    }
+
+    function undoHistory() {
+      if (!undoStack.length) {
+        updateHistoryButtons();
+        return;
+      }
+      var current = historyCurrent ? normalizeAvatar(cloneAvatarState(historyCurrent)) : normalizedFormState();
+      var previous = undoStack.pop();
+      pushHistorySnapshot(redoStack, current);
+      applyHistoryState(previous, 'Undid the last hero edit.');
+    }
+
+    function redoHistory() {
+      if (!redoStack.length) {
+        updateHistoryButtons();
+        return;
+      }
+      var current = historyCurrent ? normalizeAvatar(cloneAvatarState(historyCurrent)) : normalizedFormState();
+      var next = redoStack.pop();
+      pushHistorySnapshot(undoStack, current);
+      applyHistoryState(next, 'Redid the hero edit.');
     }
 
     function applyBruinFormDefaults() {
@@ -3838,6 +4366,11 @@
       if (preview) applyToSvg(preview, s);
       syncAllChoiceControls();
       refreshChoicePreviews(s);
+    }
+
+    function commitPreviewEdit(previousState) {
+      refreshPreview();
+      recordHistoryEdit(previousState);
     }
 
     function setStatus(msg, isError) {
@@ -3865,6 +4398,7 @@
       previousFocus = document.activeElement;
       var initial = loadAvatar() || randomAvatar();
       writeForm(initial);
+      resetHistory(normalizedFormState());
       setStatus('');
       modal.hidden = false;
       loadStaticChoicePreviewImages();
@@ -3872,6 +4406,7 @@
       modal.classList.add('hero-cust-open');
       setOriginalHeroAnimationsPaused(true);
       refreshPreview();
+      resetHistory(normalizedFormState());
       var first = $('hero-cust-kind') || $('hero-cust-skin');
       if (first) first.focus();
     }
@@ -3886,6 +4421,19 @@
 
     function onKeydown(e) {
       if (modal.hidden) return;
+      var key = String(e.key || '').toLowerCase();
+      var code = String(e.code || '').toLowerCase();
+      var isHistoryShortcut = (e.ctrlKey || e.metaKey) && !e.altKey;
+      if (isHistoryShortcut && (key === 'z' || key === '\u001a' || code === 'keyz') && !e.shiftKey) {
+        e.preventDefault();
+        undoHistory();
+        return;
+      }
+      if (isHistoryShortcut && (key === 'y' || key === '\u0019' || code === 'keyy') && !e.shiftKey) {
+        e.preventDefault();
+        redoHistory();
+        return;
+      }
       if (e.key === 'Escape') {
         e.preventDefault();
         closeModal();
@@ -3910,7 +4458,7 @@
     }
 
     function saveAndClose() {
-      var state = readForm();
+      var state = normalizeAvatar(readForm());
       var v = validateAvatar(state);
       if (!v.ok) { setStatus(v.error, true); return; }
       saveAvatar(state);
@@ -3921,14 +4469,15 @@
     function doRandomize() {
       var current = readForm();
       var r = randomAvatar(null, current.kind);
+      r.fineTune = current.fineTune;
       writeForm(r);
-      refreshPreview();
+      commitPreviewEdit();
       setStatus('Randomized — press Save to keep it.');
     }
 
     function doReset() {
       writeForm(DEFAULTS);
-      refreshPreview();
+      commitPreviewEdit();
       setStatus('Reset to defaults — press Save to keep it.');
     }
 
@@ -3936,12 +4485,12 @@
       clearAvatar();
       applyRandomAvatarsToScope(document);
       writeForm(randomAvatar());
-      refreshPreview();
+      commitPreviewEdit();
       setStatus('Saved hero removed. Page heroes now randomize separately on each load.');
     }
 
     function doDownload() {
-      var state = readForm();
+      var state = normalizeAvatar(readForm());
       var v = validateAvatar(state);
       if (!v.ok) { setStatus(v.error, true); return; }
       var blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
@@ -3966,7 +4515,7 @@
           if (!v.ok) { setStatus(v.error, true); return; }
           normalizeAvatar(parsed);
           writeForm(parsed);
-          refreshPreview();
+          commitPreviewEdit();
           setStatus('Avatar loaded into preview — press Save to keep it.');
         } catch (err) {
           setStatus('Could not parse JSON file.', true);
@@ -3980,6 +4529,7 @@
 
     initChoiceControls();
     initColorTools();
+    buildFineTuneControls();
 
     var choicePreviewScrollRoot = modal.querySelector('.hero-cust-box');
     if (choicePreviewScrollRoot) choicePreviewScrollRoot.addEventListener('scroll', scheduleVisibleChoicePreviewRefresh, { passive: true });
@@ -3989,26 +4539,26 @@
       el.addEventListener('input', function () {
         resetColorHslFromInput(el);
         syncColorTool(el);
-        refreshPreview();
+        commitPreviewEdit();
       });
       el.addEventListener('change', function () {
         resetColorHslFromInput(el);
         syncColorTool(el);
-        refreshPreview();
+        commitPreviewEdit();
       });
     });
 
     modal.querySelectorAll('select').forEach(function (el) {
       function onSelectChange() {
         if (el.id === 'hero-cust-kind' && el.value === 'bruin') applyBruinFormDefaults();
-        refreshPreview();
+        commitPreviewEdit();
       }
       el.addEventListener('input', onSelectChange);
       el.addEventListener('change', onSelectChange);
     });
 
     modal.querySelectorAll('input[name="hero-cust-accessory"]').forEach(function (el) {
-      el.addEventListener('change', refreshPreview);
+      el.addEventListener('change', commitPreviewEdit);
     });
 
     var emblemInput = $('hero-cust-emblem');
@@ -4019,14 +4569,14 @@
         return;
       }
       setStatus('');
-      refreshPreview();
+      commitPreviewEdit();
     });
 
     modal.querySelectorAll('[data-emblem-quickpick]').forEach(function (btn) {
       btn.addEventListener('click', function () {
         emblemInput.value = btn.getAttribute('data-emblem-quickpick');
         setStatus('');
-        refreshPreview();
+        commitPreviewEdit();
       });
     });
 
@@ -4034,7 +4584,7 @@
     if (clearBtn) clearBtn.addEventListener('click', function () {
       emblemInput.value = '';
       setStatus('');
-      refreshPreview();
+      commitPreviewEdit();
     });
 
     $('hero-cust-close').addEventListener('click', closeModal);
@@ -4060,7 +4610,13 @@
       uploadInput.value = '';
     });
 
-    document.addEventListener('keydown', onKeydown);
+    undoButton = $('hero-cust-undo');
+    redoButton = $('hero-cust-redo');
+    if (undoButton) undoButton.addEventListener('click', undoHistory);
+    if (redoButton) redoButton.addEventListener('click', redoHistory);
+    updateHistoryButtons();
+
+    document.addEventListener('keydown', onKeydown, true);
 
     var backdrop = modal.querySelector('.hero-cust-backdrop');
     if (backdrop) backdrop.addEventListener('click', closeModal);

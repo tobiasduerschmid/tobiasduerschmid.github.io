@@ -136,6 +136,10 @@ function heroCustomizerAction(page, name, placement = 'top') {
   });
 }
 
+function fineTuneOutput(page, target, axis) {
+  return page.locator(`#hero-cust-tune-${target}-${axis}`);
+}
+
 async function scrollChoiceButtonIntoView(page, accessibleName) {
   const button = page.getByRole('button', { name: accessibleName });
   await button.evaluate((element) => {
@@ -2398,7 +2402,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
               slot: slot && slot.getAttribute('data-hero-slot'),
               option: slot && slot.getAttribute('data-hero-option'),
             };
-          }).filter((hit) => ['hair', 'hairline', 'hair-root'].includes(hit.slot));
+          }).filter((hit) => ['hair', 'hair-cap', 'hairline', 'hair-root'].includes(hit.slot));
         })();
 
         return { style, blockedFeatureHits };
@@ -2408,6 +2412,85 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(
       blockedFeatureHitsByStyle,
       'No selectable hair style should place hair over eyes, cheeks, or mouth'
+    ).toEqual([]);
+  });
+
+  test('Foreground hair shapes stay out of the eye area', async ({ page }) => {
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+    await clearAccessories(page);
+
+    const eyeIntersectionFailures = await page.evaluate(() => {
+      const svg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+      const styles = Array.from(document.querySelectorAll('#hero-cust-hair-style option'))
+        .map((node) => node.value)
+        .filter(Boolean);
+      const headStyles = ['default', 'full-cheeks', 'broad', 'oblong', 'soft-full-cheek-jaw'];
+      const eyeShapes = ['round', 'wide', 'almond'];
+      const foregroundHairSlots = ['hair-cap', 'hairline', 'hair-root'];
+      const eyePoints = [
+        { name: 'left eye center', x: 381, y: 185 },
+        { name: 'right eye center', x: 419, y: 185 },
+        { name: 'left eye outer', x: 374, y: 185 },
+        { name: 'right eye outer', x: 426, y: 185 },
+        { name: 'left upper eye', x: 381, y: 180 },
+        { name: 'right upper eye', x: 419, y: 180 },
+      ];
+      const baseState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS)));
+      const failures = [];
+
+      baseState.outfit.accessory = 'none';
+      baseState.outfit.accessories = [];
+
+      function stackedSlotsAt(point) {
+        const svgPoint = svg.createSVGPoint();
+        svgPoint.x = point.x;
+        svgPoint.y = point.y;
+        const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
+        return document.elementsFromPoint(screenPoint.x, screenPoint.y)
+          .map((element) => {
+            const slot = element.closest && element.closest('[data-hero-slot]');
+            return slot && {
+              slot: slot.getAttribute('data-hero-slot'),
+              option: slot.getAttribute('data-hero-option'),
+            };
+          })
+          .filter(Boolean);
+      }
+
+      for (const hairStyle of styles) {
+        for (const headStyle of headStyles) {
+          for (const eyeShape of eyeShapes) {
+            const state = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+            state.appearance.hairStyle = hairStyle;
+            state.appearance.headStyle = headStyle;
+            state.appearance.eyeShape = eyeShape;
+            window.HeroAvatar.applyToSvg(svg, state);
+
+            for (const point of eyePoints) {
+              const foregroundHairHits = stackedSlotsAt(point)
+                .filter((hit) => foregroundHairSlots.includes(hit.slot));
+              if (foregroundHairHits.length) {
+                failures.push({
+                  hairStyle,
+                  headStyle,
+                  eyeShape,
+                  point: point.name,
+                  foregroundHairHits,
+                });
+              }
+            }
+          }
+        }
+      }
+
+      return failures;
+    });
+
+    expect(
+      eyeIntersectionFailures,
+      'Foreground hair geometry should leave the eyes clear instead of relying on eye layers to hide intersections'
     ).toEqual([]);
   });
 
@@ -2495,7 +2578,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
           window.HeroAvatar.applyToSvg(svg, shapedState);
 
           for (const hit of protectedFacePoints.map(hitSlot)) {
-            if (['hair', 'hairline', 'hair-root'].includes(hit.slot)) {
+            if (['hair', 'hair-cap', 'hairline', 'hair-root'].includes(hit.slot)) {
               failures.push(Object.assign({ hairStyle, headStyle, reason: 'hair covers protected facial feature' }, hit));
             }
           }
@@ -3835,6 +3918,126 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     }
   });
 
+  test('Fine tuning moves and scales individual avatar elements without randomizing them', async ({ page }) => {
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+
+    await a11yCheckpoint(page, 'hero avatar fine tuning controls', { feature: A11Y_FEATURE, darkMode: true });
+
+    const eyesVerticalSlider = page.getByRole('slider', { name: 'Eyes Up/down adjustment', exact: true });
+    await expect(eyesVerticalSlider).toBeVisible();
+    await expect(eyesVerticalSlider).toHaveAttribute('min', '-20');
+    await expect(eyesVerticalSlider).toHaveAttribute('max', '20');
+
+    const overflowingFineTuneButtons = await page.locator('#hero-customizer-modal .hero-cust-tune-button, #hero-customizer-modal .hero-cust-tune-reset')
+      .evaluateAll((buttons) => buttons
+        .filter((button) => button.offsetParent !== null && button.scrollWidth > button.clientWidth + 1)
+        .map((button) => button.textContent.trim()));
+    expect(overflowingFineTuneButtons, 'fine-tune button labels should fit inside their buttons').toEqual([]);
+
+    await page.getByRole('button', { name: 'Move eyes up', exact: true }).click();
+    await page.getByRole('button', { name: 'Move eyes outward', exact: true }).click();
+    await page.getByRole('button', { name: 'Make eyes width more', exact: true }).click();
+    await page.getByRole('button', { name: 'Make eyes height less', exact: true }).click();
+
+    await expect(eyesVerticalSlider).toHaveValue('-1');
+    await expect(fineTuneOutput(page, 'eyes', 'vertical')).toHaveText('-1');
+    await expect(fineTuneOutput(page, 'eyes', 'spread')).toHaveText('+1');
+    await expect(fineTuneOutput(page, 'eyes', 'width')).toHaveText('+1');
+    await expect(fineTuneOutput(page, 'eyes', 'height')).toHaveText('-1');
+
+    await heroCustomizerAction(page, 'Randomize').click();
+    await expect(fineTuneOutput(page, 'eyes', 'vertical')).toHaveText('-1');
+    await expect(fineTuneOutput(page, 'eyes', 'spread')).toHaveText('+1');
+    await expect(fineTuneOutput(page, 'eyes', 'width')).toHaveText('+1');
+    await expect(fineTuneOutput(page, 'eyes', 'height')).toHaveText('-1');
+
+    await heroCustomizerAction(page, 'Save').click();
+    await expect(page.getByRole('dialog', { name: 'Customize your hero' })).toBeHidden();
+
+    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('se-gym-hero-avatar')));
+    expect(saved.fineTune.eyes).toEqual({
+      vertical: -1,
+      spread: 1,
+      width: 1,
+      height: -1,
+    });
+
+    const pageSvg = page.locator('#gym-entrance [data-gym-hero-svg]').first();
+    const eyeSlot = pageSvg.locator('[data-hero-slot="eye-shape"]').first();
+    await expect(eyeSlot).toHaveAttribute('data-hero-fine-tune', 'eyes');
+    await expect(eyeSlot).toHaveAttribute('transform', /matrix/);
+  });
+
+  test('Undo and redo controls stay visible and restore hero edits', async ({ page }) => {
+    await useDefaultSavedHero(page);
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+
+    const undo = page.getByRole('button', { name: 'Undo', exact: true });
+    const redo = page.getByRole('button', { name: 'Redo', exact: true });
+    await expect(undo).toBeVisible();
+    await expect(redo).toBeVisible();
+    await expect(undo).toBeDisabled();
+    await expect(redo).toBeDisabled();
+    await expect(undo).toHaveAttribute('aria-keyshortcuts', /Control\+Z/);
+    await expect(redo).toHaveAttribute('aria-keyshortcuts', /Control\+Y/);
+
+    const hairStyle = page.getByLabel('Hair style', { exact: true });
+    await setSelectInput(page, '#hero-cust-hair-style', 'afro');
+    await expect(hairStyle).toHaveValue('afro');
+    await expect(undo).toBeEnabled();
+    await expect(redo).toBeDisabled();
+
+    await page.keyboard.press('Control+Z');
+    await expect(hairStyle).toHaveValue('short');
+    await expect(redo).toBeEnabled();
+
+    await page.keyboard.press('Control+Y');
+    await expect(hairStyle).toHaveValue('afro');
+
+    const suitColor = page.getByLabel('Suit color', { exact: true });
+    const suitHue = page.locator('#hero-cust-suit-hue');
+    await expect(suitColor).toHaveValue('#1f6ebd');
+    await suitHue.evaluate((input) => {
+      input.value = '20';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const firstSuitColor = await suitColor.inputValue();
+    await suitHue.evaluate((input) => {
+      input.value = '80';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    const secondSuitColor = await suitColor.inputValue();
+    await suitHue.evaluate((input) => {
+      input.value = '140';
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    await undo.click();
+    await expect(suitColor).toHaveValue(secondSuitColor);
+    await undo.click();
+    await expect(suitColor).toHaveValue(firstSuitColor);
+    await undo.click();
+    await expect(suitColor).toHaveValue('#1f6ebd');
+
+    await page.getByRole('button', { name: 'Move eyes up', exact: true }).click();
+    await expect(fineTuneOutput(page, 'eyes', 'vertical')).toHaveText('-1');
+    await undo.click();
+    await expect(fineTuneOutput(page, 'eyes', 'vertical')).toHaveText('0');
+    await redo.click();
+    await expect(fineTuneOutput(page, 'eyes', 'vertical')).toHaveText('-1');
+
+    const modalBox = page.locator('#hero-customizer-modal .hero-cust-box');
+    await modalBox.evaluate((box) => {
+      box.scrollTop = box.scrollHeight;
+      box.dispatchEvent(new Event('scroll', { bubbles: true }));
+    });
+    await expect(undo).toBeInViewport();
+    await expect(redo).toBeInViewport();
+  });
+
   test('Use random heroes removes saved customization and restores independent page randomization', async ({ page }) => {
     await page.addInitScript(() => {
       let seed = 97531;
@@ -4103,6 +4306,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByLabel('Hair style', { exact: true }).selectOption('textured-crop');
     await clearAccessories(page);
     await page.getByLabel('Rectangular glasses', { exact: true }).check();
+    await page.getByRole('button', { name: 'Move nose down', exact: true }).click();
+    await page.getByRole('button', { name: 'Make nose width more', exact: true }).click();
     const downloadPromise = page.waitForEvent('download');
     await page.locator('#hero-cust-download').click();
     const download = await downloadPromise;
@@ -4115,6 +4320,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     const parsed = JSON.parse(buf);
     expect(parsed.appearance.hairStyle).toBe('textured-crop');
     expect(parsed.outfit.accessories).toEqual(['rectangular-glasses']);
+    expect(parsed.fineTune.nose.vertical).toBe(1);
+    expect(parsed.fineTune.nose.width).toBe(1);
     expect(parsed.version).toBe(1);
   });
 
@@ -4142,7 +4349,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       version: 1,
       appearance: { skin: '#dfa07a', hairColor: '#101010', hairStyle: 'ponytail', eyeColor: '#1f140c', eyebrowStyle: 'straight', facialHair: 'none', faceFeature: 'freckles' },
       body: { type: 'curvy' },
-      outfit: { suit: '#1F6EBD', capeOuter: '#15538f', capeInner: '#FFD100', accessory: 'rectangular-glasses', accessories: ['rectangular-glasses', 'earrings'], emblem: '' }
+      outfit: { suit: '#1F6EBD', capeOuter: '#15538f', capeInner: '#FFD100', accessory: 'rectangular-glasses', accessories: ['rectangular-glasses', 'earrings'], emblem: '' },
+      fineTune: { mouth: { vertical: -2, spread: 1, width: 3, height: -1 } }
     };
 
     await page.locator('#hero-cust-upload-input').setInputFiles({
@@ -4156,12 +4364,17 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await expect(page.getByLabel('Cheek tint', { exact: true })).toHaveValue('natural');
     await expect(page.getByLabel('Rectangular glasses', { exact: true })).toBeChecked();
     await expect(page.getByLabel('Earrings', { exact: true })).toBeChecked();
+    await expect(fineTuneOutput(page, 'mouth', 'vertical')).toHaveText('-2');
+    await expect(fineTuneOutput(page, 'mouth', 'spread')).toHaveText('+1');
+    await expect(fineTuneOutput(page, 'mouth', 'width')).toHaveText('+3');
+    await expect(fineTuneOutput(page, 'mouth', 'height')).toHaveText('-1');
     // Preview updated but not yet saved
     const storedBefore = await page.evaluate(() => localStorage.getItem('se-gym-hero-avatar'));
     expect(storedBefore).toBeNull();
     await heroCustomizerAction(page, /save/i).click();
     const storedAfter = await page.evaluate(() => localStorage.getItem('se-gym-hero-avatar'));
     expect(storedAfter).not.toBeNull();
+    expect(JSON.parse(String(storedAfter)).fineTune.mouth).toEqual({ vertical: -2, spread: 1, width: 3, height: -1 });
   });
 
   test('Randomize button changes preview and shows a status message', async ({ page }) => {

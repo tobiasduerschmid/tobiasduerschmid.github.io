@@ -425,6 +425,16 @@ layout: sebook
             <div class="hero-cust-preview" aria-hidden="true">
               {% include se-gym-hero.svg variant="preview" %}
             </div>
+            <div class="hero-cust-history" role="group" aria-label="Hero edit history controls">
+              <button type="button" id="hero-cust-undo" class="gym-btn secondary"
+                data-hero-cust-history="undo" aria-keyshortcuts="Control+Z Meta+Z" disabled>
+                <i class="fa-solid fa-rotate-left" aria-hidden="true"></i> Undo
+              </button>
+              <button type="button" id="hero-cust-redo" class="gym-btn secondary"
+                data-hero-cust-history="redo" aria-keyshortcuts="Control+Y Meta+Y" disabled>
+                <i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Redo
+              </button>
+            </div>
             <p id="hero-cust-status" class="hero-cust-status" role="status" aria-live="polite" aria-atomic="true"></p>
           </div>
           <div class="hero-cust-form">
@@ -544,6 +554,11 @@ layout: sebook
                   <button type="button" class="hero-cust-quickbtn" data-emblem-quickpick="🦾" aria-label="Mechanical arm">🦾</button>
                 </div>
               </div>
+            </fieldset>
+
+            <fieldset class="hero-cust-fieldset">
+              <legend>Fine tuning</legend>
+              <div class="hero-cust-tune-list" data-hero-fine-tune-controls></div>
             </fieldset>
 
             <div class="hero-cust-actions hero-cust-actions-bottom" role="group" aria-label="Bottom hero customizer actions">
@@ -1050,8 +1065,33 @@ layout: sebook
       max-height: min(62vh, 560px);
       filter: drop-shadow(0 6px 12px rgba(0, 47, 82, 0.18));
     }
+    .hero-cust-history {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5em;
+      align-items: center;
+      justify-content: center;
+      margin-top: 0.65em;
+    }
+    .hero-cust-history .gym-btn {
+      min-width: 6.8em;
+      white-space: nowrap;
+    }
+    .hero-cust-history .gym-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.58;
+      box-shadow: none;
+    }
     @media (max-height: 680px) {
       .hero-cust-preview .se-gym-hero-svg { max-height: min(48vh, 380px); }
+    }
+    @media (max-width: 1080px) {
+      #se-gym-app .hero-cust-tune-row {
+        grid-template-columns: 1fr;
+      }
+      #se-gym-app .hero-cust-tune-reset {
+        justify-self: start;
+      }
     }
     @media (max-width: 720px) {
       .hero-cust-box {
@@ -1074,6 +1114,12 @@ layout: sebook
         max-width: 260px;
         margin: 0 auto;
         padding: 0.35rem;
+      }
+      .hero-cust-history {
+        margin-top: 0.45em;
+      }
+      .hero-cust-history .gym-btn {
+        min-height: 40px;
       }
       .hero-cust-preview .se-gym-hero-svg { max-height: min(28vh, 220px); }
       .hero-cust-status {
@@ -1099,6 +1145,26 @@ layout: sebook
       }
       #se-gym-app .hero-cust-choice-picker {
         margin-left: 0;
+      }
+      #se-gym-app .hero-cust-tune-row {
+        grid-template-columns: 1fr;
+      }
+      #se-gym-app .hero-cust-tune-controls {
+        grid-template-columns: 1fr;
+      }
+      #se-gym-app .hero-cust-tune-stepper {
+        grid-template-columns: max-content minmax(0, 1fr) minmax(3em, max-content) max-content;
+      }
+      #se-gym-app .hero-cust-tune-button {
+        width: auto;
+        height: 40px;
+        min-width: 4.6em;
+      }
+      #se-gym-app .hero-cust-tune-value {
+        min-height: 40px;
+      }
+      #se-gym-app .hero-cust-tune-reset {
+        justify-self: start;
       }
     }
     @media (max-width: 720px) and (max-height: 680px) {
@@ -1489,12 +1555,127 @@ layout: sebook
       font: inherit;
       font-weight: 600;
     }
+    .hero-cust-tune-list {
+      display: grid;
+      gap: 0.7em;
+    }
+    .hero-cust-tune-row {
+      display: grid;
+      grid-template-columns: minmax(8em, 0.24fr) minmax(0, 1fr) auto;
+      gap: 0.65em;
+      align-items: center;
+      padding: 0.65em;
+      border: 1px solid #b7c5d3;
+      border-radius: 8px;
+      background: #f7fbff;
+      color: #1f2933;
+    }
+    .hero-cust-tune-name {
+      font: inherit;
+      font-weight: 700;
+      color: #17324d;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+    .hero-cust-tune-controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(22em, 1fr));
+      gap: 0.55em;
+      min-width: 0;
+    }
+    .hero-cust-tune-stepper {
+      display: grid;
+      grid-template-columns: max-content minmax(8em, 1fr) minmax(3em, max-content) max-content;
+      gap: 0.25em;
+      align-items: center;
+      min-width: 0;
+    }
+    .hero-cust-tune-axis {
+      grid-column: 1 / -1;
+      font: inherit;
+      font-size: 0.9em;
+      font-weight: 700;
+      color: #4b5563;
+      line-height: 1.2;
+    }
+    .hero-cust-tune-range {
+      min-width: 0;
+      width: 100%;
+      height: 34px;
+      margin: 0;
+      accent-color: #2774AE;
+      cursor: pointer;
+      font: inherit;
+    }
+    .hero-cust-tune-button {
+      width: auto;
+      height: 34px;
+      min-width: 4.6em;
+      border: 1px solid #7d8a98;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #17324d;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 0.55em;
+      font: inherit;
+      font-weight: 800;
+      line-height: 1;
+      white-space: nowrap;
+    }
+    .hero-cust-tune-button:hover:not(:disabled) {
+      border-color: #2774AE;
+      background: #eaf4ff;
+      color: #003B5C;
+    }
+    .hero-cust-tune-button:disabled {
+      cursor: not-allowed;
+      opacity: 0.52;
+    }
+    .hero-cust-tune-value {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 2.6em;
+      min-height: 34px;
+      border-radius: 8px;
+      border: 1px solid #a7b5c4;
+      background: #ffffff;
+      color: #1f2933;
+      font: inherit;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+    .hero-cust-tune-reset {
+      min-width: 5.4em;
+      min-height: 34px;
+      border: 1px solid #7d8a98;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #17324d;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+      padding: 0.25em 0.65em;
+      align-self: end;
+      white-space: nowrap;
+    }
+    .hero-cust-tune-reset:hover {
+      border-color: #2774AE;
+      background: #eaf4ff;
+      color: #003B5C;
+    }
     .hero-cust-control input:focus,
     .hero-cust-control select:focus,
     .hero-cust-control button:focus,
     .hero-cust-close:focus,
     .hero-cust-quickbtn:focus,
+    .hero-cust-history button:focus,
     .hero-cust-actions button:focus,
+    .hero-cust-tune-button:focus,
+    .hero-cust-tune-reset:focus,
     .hero-cust-radio-group input[type="radio"]:focus,
     .hero-cust-checkbox-group input[type="checkbox"]:focus {
       outline: 3px solid var(--focus-color, #2774AE);
@@ -1641,6 +1822,33 @@ layout: sebook
       background: #d7ecff;
       color: #061d31;
       border-color: #1d2230;
+    }
+    html.dark-mode .hero-cust-tune-row {
+      background: #252c3b;
+      color: #e9ecf2;
+      border-color: #4c596d;
+    }
+    html.dark-mode .hero-cust-tune-name {
+      color: #e6f4ff;
+    }
+    html.dark-mode .hero-cust-tune-axis {
+      color: #c7d0da;
+    }
+    html.dark-mode .hero-cust-tune-button,
+    html.dark-mode .hero-cust-tune-reset,
+    html.dark-mode .hero-cust-tune-value {
+      background: #1d2230;
+      color: #e9ecf2;
+      border-color: #6b778c;
+    }
+    html.dark-mode .hero-cust-tune-range {
+      accent-color: #8BB8E8;
+    }
+    html.dark-mode .hero-cust-tune-button:hover:not(:disabled),
+    html.dark-mode .hero-cust-tune-reset:hover {
+      border-color: #8BB8E8;
+      background: #30394d;
+      color: #f2f7ff;
     }
     html.dark-mode .hero-cust-radio-group label:hover,
     html.dark-mode .hero-cust-checkbox-group label:hover {
