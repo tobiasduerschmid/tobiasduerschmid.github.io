@@ -823,6 +823,29 @@
     'open-smile': { scaleX: 1.03, scaleY: 1.1, translateY: 2.4 },
     'excited-smile': { scaleX: 1.11, scaleY: 1.13, translateY: 3 }
   };
+  var JAW_ANCHORED_FACIAL_HAIR_STYLES = {
+    stubble: true,
+    'soft-beard-shadow': true,
+    'fine-mustache-stubble': true,
+    'soul-patch': true,
+    goatee: true,
+    'rounded-goatee': true,
+    'light-goatee': true,
+    sideburns: true,
+    'chin-strap': true,
+    'short-beard': true,
+    'trimmed-beard': true,
+    'full-beard': true
+  };
+  var BEARD_CONTOUR_FACIAL_HAIR_STYLES = {
+    stubble: true,
+    'soft-beard-shadow': true,
+    'fine-mustache-stubble': true,
+    'chin-strap': true,
+    'short-beard': true,
+    'trimmed-beard': true,
+    'full-beard': true
+  };
 
   // Body-type → body-shape (SVG geometry override). Average uses the default torso.
   // These use distinct but natural profiles so picker previews read without looking caricatured.
@@ -2120,6 +2143,11 @@
     return clampNumber(1 + widthDelta * weight, min, max);
   }
 
+  function weightedScale(value, weight) {
+    var normalized = value === undefined ? 1 : value;
+    return 1 + (normalized - 1) * weight;
+  }
+
   function setBaseTransform(group, transform) {
     if (!group) return;
     if (transform) {
@@ -2257,22 +2285,38 @@
     applyFitToAccessories(svg, sideAccessoryTransform, SIDE_FIT_ACCESSORIES, normalized);
   }
 
-  function facialHairFitForMouth(mouthStyle, headStyle) {
+  function facialHairFitForMouth(mouthStyle, headStyle, facialHairStyle) {
     var mouth = MOUTH_STYLE_FITS[canonicalChoiceValue('mouthStyle', mouthStyle || 'smile')] || MOUTH_STYLE_FITS.smile;
     var head = HEAD_STYLE_FITS[canonicalChoiceValue('headStyle', headStyle || 'default')] || HEAD_STYLE_FITS.default;
+    var normalizedStyle = canonicalChoiceValue('facialHair', facialHairStyle || 'none');
+    var isJawAnchored = !!JAW_ANCHORED_FACIAL_HAIR_STYLES[normalizedStyle];
+    var isBeardContour = !!BEARD_CONTOUR_FACIAL_HAIR_STYLES[normalizedStyle];
+    var widthDelta = (head.scaleX || 1) - 1;
+    var heightDelta = (head.scaleY || 1) - 1;
+    var headScaleX = isJawAnchored
+      ? headFitScaleX(widthDelta, isBeardContour ? 0.72 : 0.56, isBeardContour ? 0.88 : 0.68, 0.9, 1.12)
+      : clampNumber(1 + widthDelta * 0.32, 0.97, 1.04);
+    var headScaleY = isJawAnchored
+      ? clampNumber(1 + heightDelta * (isBeardContour ? 0.72 : 0.44), 0.95, 1.11)
+      : clampNumber(1 + heightDelta * 0.12, 0.98, 1.03);
+    var mouthScaleWeightX = isJawAnchored ? (isBeardContour ? 0.12 : 0.32) : 1;
+    var mouthScaleWeightY = isJawAnchored ? (isBeardContour ? 0.2 : 0.34) : 1;
+    var mouthTranslateWeight = isJawAnchored ? 0.42 : 1;
+    var headTranslateWeight = isJawAnchored ? 0.18 : 0.16;
     return {
-      scaleX: (mouth.scaleX || 1) * (1 + ((head.scaleX || 1) - 1) * 0.38),
-      scaleY: (mouth.scaleY || 1) * (1 + ((head.scaleY || 1) - 1) * 0.18),
-      translateY: (mouth.translateY || 0) + (head.translateY || 0) * 0.16
+      scaleX: weightedScale(mouth.scaleX, mouthScaleWeightX) * headScaleX,
+      scaleY: weightedScale(mouth.scaleY, mouthScaleWeightY) * headScaleY,
+      translateY: (mouth.translateY || 0) * mouthTranslateWeight + (head.translateY || 0) * headTranslateWeight
     };
   }
 
   function applyFacialHairFit(svg, mouthStyle, headStyle) {
     var normalizedMouth = canonicalChoiceValue('mouthStyle', mouthStyle || 'smile');
     var normalizedHead = canonicalChoiceValue('headStyle', headStyle || 'default');
-    var transform = affineFitTransform(facialHairFitForMouth(normalizedMouth, normalizedHead), 400, 224);
     var groups = svg.querySelectorAll('[data-hero-slot="facial-hair"]');
     for (var i = 0; i < groups.length; i++) {
+      var normalizedStyle = canonicalChoiceValue('facialHair', groups[i].getAttribute('data-hero-option') || 'none');
+      var transform = affineFitTransform(facialHairFitForMouth(normalizedMouth, normalizedHead, normalizedStyle), 400, 224);
       setGroupTransform(groups[i], transform, 'data-hero-mouth-fit', normalizedMouth);
       groups[i].setAttribute('data-hero-head-fit', normalizedHead);
     }

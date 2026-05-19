@@ -3362,9 +3362,9 @@
         <path d="M 442 188 Q 434 198, 436 220 Q 440 230, 446 220 Q 446 198, 442 188 Z" fill="var(--hero-hair, #1f140c)"/>
       </g>
       <g data-hero-slot="facial-hair" data-hero-option="chin-strap" display="none">
-        <path d="M 362 210 C 370 229, 383 243, 398 250 L 400 244 C 385 239, 374 226, 366 211 Z" fill="var(--hero-hair, #1f140c)"/>
-        <path d="M 438 210 C 430 229, 417 243, 402 250 L 400 244 C 415 239, 426 226, 434 211 Z" fill="var(--hero-hair, #1f140c)"/>
-        <path d="M 386 242 Q 400 251, 414 242 Q 408 252, 400 255 Q 392 252, 386 242 Z" fill="var(--hero-hair, #1f140c)" opacity=".78"/>
+        <path d="M 364 208 C 371 225, 383 238, 397 244 C 398 244.6, 399 245, 400 245.2 C 399.6 247.2, 399 249, 398.4 250.4 C 381 243.8, 368 228.8, 360.6 210 C 361.4 209, 362.6 208.3, 364 208 Z" fill="var(--hero-hair, #1f140c)" opacity=".96"/>
+        <path d="M 436 208 C 429 225, 417 238, 403 244 C 402 244.6, 401 245, 400 245.2 C 400.4 247.2, 401 249, 401.6 250.4 C 419 243.8, 432 228.8, 439.4 210 C 438.6 209, 437.4 208.3, 436 208 Z" fill="var(--hero-hair, #1f140c)" opacity=".96"/>
+        <path d="M 389 241 C 394 246, 397.8 248.2, 400 248.5 C 402.2 248.2, 406 246, 411 241 C 408.4 248, 404.2 252.2, 400 253.2 C 395.8 252.2, 391.6 248, 389 241 Z" fill="var(--hero-hair, #1f140c)" opacity=".68"/>
       </g>
       <g data-hero-slot="facial-hair" data-hero-option="short-beard" display="none">
         <path d="M 362 210 C 368 232, 382 248, 400 252 C 418 248, 432 232, 438 210 C 426 224, 412 234, 400 236 C 388 234, 374 224, 362 210 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
@@ -3376,11 +3376,11 @@
         <path d="M 388 244 Q 400 252, 412 244" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.10" fill="none" opacity=".55"/>
       </g>
       <g data-hero-slot="facial-hair" data-hero-option="full-beard" display="none">
-        <path d="M 356 202 C 362 230, 378 250, 400 256 C 422 250, 438 230, 444 202 C 432 216, 416 226, 400 230 C 384 226, 368 216, 356 202 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <path d="M 373 216 C 383 211, 393 214, 399 220 C 390 221, 381 220, 373 216 Z" fill="var(--hero-hair-dark, #0f0905)"/>
-        <path d="M 427 216 C 417 211, 407 214, 401 220 C 410 221, 419 220, 427 216 Z" fill="var(--hero-hair-dark, #0f0905)"/>
-        <path d="M 376 236 C 384 246, 394 252, 400 254 C 406 252, 416 246, 424 236" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.40" fill="none" stroke-linecap="round" opacity=".24"/>
-        <path d="M 384 246 Q 400 254, 416 246" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.10" fill="none" stroke-linecap="round" opacity=".34"/>
+        <path d="M 360 203 C 365 228, 380 248, 400 254 C 420 248, 435 228, 440 203 C 429 216, 414 225, 400 229 C 386 225, 371 216, 360 203 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
+        <path d="M 377 216 C 386 212, 394 214, 399 220 C 390.5 221, 383 220, 377 216 Z" fill="var(--hero-hair-dark, #0f0905)"/>
+        <path d="M 423 216 C 414 212, 406 214, 401 220 C 409.5 221, 417 220, 423 216 Z" fill="var(--hero-hair-dark, #0f0905)"/>
+        <path d="M 378 236 C 386 245, 395 250.5, 400 252 C 405 250.5, 414 245, 422 236" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.30" fill="none" stroke-linecap="round" opacity=".24"/>
+        <path d="M 386 245 C 395 250.5, 405 250.5, 414 245" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.0" fill="none" stroke-linecap="round" opacity=".32"/>
       </g>
         <g data-hero-motion="mouth-breath-scale" transform="translate(400 226)">
           <animateTransform attributeName="transform" type="scale"
