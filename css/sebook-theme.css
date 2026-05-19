@@ -2192,3 +2192,226 @@ body.tutorial-layout :is(small, .small) {
     transition: none !important;
   }
 }
+
+/* ---------------------------------------------------------------- */
+/* SE Book homepage search                                           */
+/* ---------------------------------------------------------------- */
+
+/* The `display` rules below override the default UA `[hidden] { display: none }`,
+   so we need to re-assert it for every element that toggles via `.hidden`. */
+.sebook-search-clear[hidden],
+.sebook-search-results[hidden],
+.sebook-search-result[hidden],
+.sebook-search-no-results[hidden] {
+  display: none !important;
+}
+
+.sebook-search {
+  margin: 2em auto;
+  padding: 1.4em 1.6em 1.6em;
+  background: var(--sebook-surface);
+  border: 1px solid var(--sebook-border);
+  border-radius: 12px;
+  box-shadow: 0 4px 18px rgba(0, 59, 92, 0.07);
+  max-width: 900px;
+}
+
+html.dark-mode .sebook-search {
+  background: var(--sebook-surface);
+  border-color: var(--sebook-border);
+  box-shadow: 0 6px 22px rgba(0, 0, 0, 0.42);
+}
+
+.sebook-search > h2 {
+  margin: 0 0 0.6em;
+  font-size: 1.4em;
+  color: var(--sebook-navy);
+}
+
+html.dark-mode .sebook-search > h2 {
+  color: var(--sebook-navy);
+}
+
+.sebook-search-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+
+.sebook-search-label {
+  font-weight: 700;
+  color: var(--sebook-navy);
+  font-size: 1em;
+}
+
+html.dark-mode .sebook-search-label {
+  color: var(--sebook-navy);
+}
+
+.sebook-search-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.sebook-search-input {
+  flex: 1;
+  width: 100%;
+  font: inherit;
+  font-size: 1em;
+  padding: 0.6em 2.4em 0.6em 0.8em;
+  border: 2px solid var(--sebook-button-border);
+  border-radius: 8px;
+  background: var(--sebook-button-bg);
+  color: var(--sebook-button-text);
+  box-sizing: border-box;
+  min-height: 44px;
+}
+
+.sebook-search-input::placeholder {
+  color: #5a6f82;
+  opacity: 1;
+}
+
+html.dark-mode .sebook-search-input::placeholder {
+  color: #b8c6d4;
+  opacity: 1;
+}
+
+.sebook-search-input:focus-visible {
+  outline: var(--focus-width, 3px) solid var(--focus-color, #FFD100);
+  outline-offset: var(--focus-offset, 2px);
+}
+
+.sebook-search-clear {
+  position: absolute;
+  right: 0.4em;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  border: 2px solid var(--sebook-button-border);
+  border-radius: 50%;
+  background: var(--sebook-button-bg);
+  color: var(--sebook-button-text);
+  font-size: 1.2em;
+  line-height: 1;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.sebook-search-clear:hover {
+  background: var(--sebook-button-bg-hover);
+}
+
+.sebook-search-clear:focus-visible {
+  outline: var(--focus-width, 3px) solid var(--focus-color, #FFD100);
+  outline-offset: var(--focus-offset, 2px);
+}
+
+.sebook-search-hint {
+  margin: 0;
+  font-size: 0.95em;
+  color: var(--sebook-navy);
+  opacity: 0.85;
+}
+
+.sebook-search-summary {
+  margin: 0;
+  font-size: 0.95em;
+  color: var(--sebook-navy);
+  font-weight: 700;
+  min-height: 1.4em;
+}
+
+.sebook-search-results {
+  list-style: none;
+  margin: 1em 0 0;
+  padding: 0;
+  border-top: 1px solid var(--sebook-border);
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.sebook-search-result {
+  border-bottom: 1px solid var(--sebook-border);
+  margin: 0;
+}
+
+.sebook-search-result-link {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.8em;
+  padding: 0.7em 0.6em;
+  text-decoration: none;
+  color: var(--sebook-button-text);
+  border-radius: 6px;
+  min-height: 44px;
+  flex-wrap: wrap;
+}
+
+.sebook-search-result-link:hover {
+  background: var(--sebook-button-bg-hover);
+  text-decoration: underline;
+}
+
+.sebook-search-result-link:focus-visible {
+  outline: var(--focus-width, 3px) solid var(--focus-color, #FFD100);
+  outline-offset: var(--focus-offset, 2px);
+}
+
+html.dark-mode .sebook-search-result-link {
+  color: var(--sebook-button-text);
+}
+
+html.dark-mode .sebook-search-result-link:hover {
+  background: var(--sebook-button-bg-hover);
+}
+
+.sebook-search-result-title {
+  font-weight: 700;
+  flex: 1 1 auto;
+}
+
+.sebook-search-result-kind {
+  font-size: 0.85em;
+  color: #4a5d6f;
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+html.dark-mode .sebook-search-result-kind {
+  color: #b8c6d4;
+}
+
+.sebook-search-result--subtopic .sebook-search-result-link {
+  padding-left: 1.8em;
+}
+
+.sebook-search-result--item .sebook-search-result-link {
+  padding-left: 3em;
+}
+
+.sebook-search-no-results {
+  margin: 1em 0 0;
+  padding: 1em;
+  background: var(--sebook-surface-band);
+  border: 1px dashed var(--sebook-border);
+  border-radius: 8px;
+  color: var(--sebook-navy);
+  font-weight: 700;
+  text-align: center;
+}
+
+html.dark-mode .sebook-search-no-results {
+  background: var(--sebook-surface-band);
+  border-color: var(--sebook-border);
+  color: var(--sebook-navy);
+}
+
