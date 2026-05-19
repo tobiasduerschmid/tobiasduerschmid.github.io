@@ -254,8 +254,8 @@
     <circle cx="458" cy="272" r="4" fill="#5a3f00"/>
   </g>
   <ellipse cx="400" cy="220" rx="220" ry="240" fill="url(#hero-aura-glow-{{ hero_variant }})" pointer-events="none"/>
-  <!-- Whole-body micro-breath: a controlled postural sink on inhale, then recovery. -->
-  <g data-hero-kind-layer="human" data-hero-motion="body-lift"><animateTransform attributeName="transform" type="translate" values="0 -0.6;0 1.4;0 -0.6" keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1" />
+  <!-- Whole-body breath: a visible but calm postural sink on inhale, then recovery. -->
+  <g data-hero-kind-layer="human" data-hero-motion="body-lift"><animateTransform attributeName="transform" type="translate" values="0 -1.1;0 2.4;0 -1.1" keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite" additive="sum" calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1" />
     <path d="M 358 440 L 348 555 L 374 558 L 380 440 Z" fill="#052844"/>
     <path d="M 442 440 L 452 555 L 426 558 L 420 440 Z" fill="#052844"/>
     <path d="M 360 432 C 358 478, 358 518, 356 560 L 384 562 C 386 518, 386 478, 388 432 Z" fill="url(#suit-{{ hero_variant }})"/>
@@ -661,14 +661,14 @@
     <g data-hero-slot="emblem" data-hero-option="empty" display="none">
       <text data-hero-emblem-text="" x="400" y="430" text-anchor="middle" font-size="22" font-family="'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',emoji,'Twemoji Mozilla',sans-serif" dominant-baseline="alphabetic"></text>
     </g>
-    <!-- Chest plate expands just enough to signal inhale without becoming a separate effect. -->
-    <g transform="translate(400 332)">
+    <!-- Chest plate expands from the sternum on inhale, then settles back with the shared lift cycle. -->
+    <g data-hero-motion="chest-breath-scale" transform="translate(400 332)">
       <animateTransform attributeName="transform" type="scale"
-                        values="1 1; 1.025 1.018; 1 1"
+                        values="1 1; 1.045 1.028; 1 1"
                         keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                         additive="sum" calcMode="spline"
                         keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
-      <ellipse cx="0" cy="0" rx="60" ry="62" fill="url(#brain-glow-{{ hero_variant }})"><animate attributeName="opacity" values="0.58;0.9;0.58" keyTimes="0;0.55;1" dur="2.2s" repeatCount="indefinite" begin="0s" calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1" /></ellipse>
+      <ellipse cx="0" cy="0" rx="60" ry="62" fill="url(#brain-glow-{{ hero_variant }})"><animate attributeName="opacity" values="0.54;0.94;0.54" keyTimes="0;0.55;1" dur="2.2s" repeatCount="indefinite" begin="0s" calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1" /></ellipse>
       <path d="M -42 -32 Q -42 -40, -34 -40 L 34 -40 Q 42 -40, 42 -32 L 42 6 Q 42 28, 24 42 Q 9 54, 0 54 Q -9 54, -24 42 Q -42 28, -42 6 Z" fill="url(#gold-radial-{{ hero_variant }})" stroke="#604600" stroke-width="4.20" stroke-linejoin="round"/>
       <path d="M -34 -24 Q -34 -31, -27 -31 L 27 -31 Q 34 -31, 34 -24 L 34 4 Q 34 21, 20 34 Q 8 44, 0 44 Q -8 44, -20 34 Q -34 21, -34 4 Z" fill="none" stroke="#00385f" stroke-width="2.70"/>
       <path d="M -30 -30 H 30" stroke="#fff6c0" stroke-width="2.40" stroke-linecap="round" opacity=".72"/>
@@ -2929,13 +2929,13 @@
       </g>
       <g data-hero-motion="lower-face-breath-position">
         <animateTransform attributeName="transform" type="translate"
-                          values="0 0;0 .38;0 0"
+                          values="0 0;0 .72;0 0"
                           keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                           additive="sum" calcMode="spline"
                           keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
         <g data-hero-motion="nose-breath-scale" transform="translate(400 208)">
           <animateTransform attributeName="transform" type="scale"
-                            values="1 1;1.008 1.016;1 1"
+                            values="1 1;1.014 1.026;1 1"
                             keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                             additive="sum" calcMode="spline"
                             keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
@@ -3240,7 +3240,7 @@
       </g>
         <g data-hero-motion="mouth-breath-scale" transform="translate(400 226)">
           <animateTransform attributeName="transform" type="scale"
-                            values="1 1;1.012 1.028;1 1"
+                            values="1 1;1.02 1.045;1 1"
                             keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                             additive="sum" calcMode="spline"
                             keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
