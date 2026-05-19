@@ -12,6 +12,7 @@ const CHOICE_PREVIEW_VIEWBOXES = {
   hair: '292 54 216 346',
   eyebrows: '352 138 96 78',
   eyes: '352 154 96 78',
+  ears: '326 154 148 80',
   nose: '370 178 60 50',
   mouth: '360 202 80 66',
   cheeks: '342 178 116 94',
@@ -34,6 +35,7 @@ const DEFAULT_SAVED_HERO = {
     eyebrowStyle: 'arched',
     headStyle: 'default',
     eyeShape: 'round',
+    earShape: 'oval',
     eyelashStyle: 'none',
     noseShape: 'soft',
     mouthStyle: 'smile',
@@ -561,6 +563,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       { key: 'hairStyle', crop: 'hair', viewBox: CHOICE_PREVIEW_VIEWBOXES.hair },
       { key: 'eyebrowStyle', crop: 'eyebrows', viewBox: CHOICE_PREVIEW_VIEWBOXES.eyebrows },
       { key: 'eyeShape', crop: 'eyes', viewBox: CHOICE_PREVIEW_VIEWBOXES.eyes },
+      { key: 'earShape', crop: 'ears', viewBox: CHOICE_PREVIEW_VIEWBOXES.ears },
       { key: 'eyelashStyle', crop: 'eyes', viewBox: CHOICE_PREVIEW_VIEWBOXES.eyes },
       { key: 'noseShape', crop: 'nose', viewBox: CHOICE_PREVIEW_VIEWBOXES.nose },
       { key: 'mouthStyle', crop: 'mouth', viewBox: CHOICE_PREVIEW_VIEWBOXES.mouth },
@@ -1045,6 +1048,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       return {
         hairValues: flatten(window.HeroAvatar.CHOICE_SETS.hairStyle).map((option) => option.value),
         eyeValues: flatten(window.HeroAvatar.CHOICE_SETS.eyeShape).map((option) => option.value),
+        earValues: flatten(window.HeroAvatar.CHOICE_SETS.earShape).map((option) => option.value),
         eyelashValues: flatten(window.HeroAvatar.CHOICE_SETS.eyelashStyle).map((option) => option.value),
         noseValues: flatten(window.HeroAvatar.CHOICE_SETS.noseShape).map((option) => option.value),
         mouthValues: flatten(window.HeroAvatar.CHOICE_SETS.mouthStyle).map((option) => option.value),
@@ -1053,6 +1057,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         accessoryValues: flatten(window.HeroAvatar.CHOICE_SETS.accessory).map((option) => option.value),
         hairLabels: labelsByValue(window.HeroAvatar.CHOICE_SETS.hairStyle),
         eyeLabels: labelsByValue(window.HeroAvatar.CHOICE_SETS.eyeShape),
+        earLabels: labelsByValue(window.HeroAvatar.CHOICE_SETS.earShape),
         eyelashLabels: labelsByValue(window.HeroAvatar.CHOICE_SETS.eyelashStyle),
         noseLabels: labelsByValue(window.HeroAvatar.CHOICE_SETS.noseShape),
         mouthLabels: labelsByValue(window.HeroAvatar.CHOICE_SETS.mouthStyle),
@@ -1073,6 +1078,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(summary.eyeValues).not.toContain('monolid');
     expect(summary.eyeValues).not.toContain('soft-monolid');
     expect(summary.eyeValues).toEqual(expect.arrayContaining(['single-eyelid', 'soft-single-eyelid', 'wide-single-eyelid', 'tapered-almond', 'upturned-almond', 'downturned-soft', 'deep-set']));
+    expect(summary.earValues).toEqual(expect.arrayContaining(['oval', 'small-round', 'broad-round', 'narrow', 'attached-lobe', 'free-lobe', 'prominent', 'soft-angled']));
     expect(summary.eyelashValues).not.toContain('soft-lower');
     expect(summary.eyelashValues).not.toContain('short-lower');
     expect(summary.eyelashValues).toEqual(expect.arrayContaining(['none', 'short-soft', 'short-dense', 'barely-there', 'subtle', 'short-natural', 'short-corner', 'short-upper', 'outer-corner', 'soft-fan', 'full-upper', 'long-classic', 'long-doll', 'long-glam', 'winged', 'dense']));
@@ -1107,6 +1113,10 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(summary.eyeLabels['single-eyelid']).toBe('Single eyelid');
     expect(summary.eyeLabels['soft-single-eyelid']).toBe('Soft single eyelid');
     expect(summary.eyeLabels['wide-single-eyelid']).toBe('Wide single eyelid');
+    expect(summary.earLabels['oval']).toBe('Balanced oval');
+    expect(summary.earLabels['attached-lobe']).toBe('Attached lobes');
+    expect(summary.earLabels['free-lobe']).toBe('Free lobes');
+    expect(summary.earLabels['soft-angled']).toBe('Soft angled');
     expect(summary.eyelashLabels['short-soft']).toBe('Short soft');
     expect(summary.eyelashLabels['short-dense']).toBe('Short dense');
     expect(summary.eyelashLabels['outer-corner']).toBe('Outer-corner');
@@ -3498,6 +3508,31 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     }
     await expect(preview.locator('[data-hero-slot="head-shape"][data-hero-option="default"]'))
       .toHaveAttribute('display', 'none');
+  });
+
+  test('Ear shape choices update the preview and saved avatar', async ({ page }) => {
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+
+    const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
+    const earShape = page.getByLabel('Ears', { exact: true });
+    await expect(earShape.locator('option')).toHaveCount(9);
+
+    for (const shape of ['small-round', 'photo-rounded-lobe', 'free-lobe', 'prominent', 'soft-angled']) {
+      await earShape.selectOption(shape);
+      await expect(preview.locator(`[data-hero-slot="ear-shape"][data-hero-option="${shape}"]`))
+        .toHaveAttribute('display', 'inline');
+      await expect(earShape).toHaveValue(shape);
+    }
+    await expect(preview.locator('[data-hero-slot="ear-shape"][data-hero-option="oval"]'))
+      .toHaveAttribute('display', 'none');
+
+    await earShape.selectOption('photo-rounded-lobe');
+    await heroCustomizerAction(page, 'Save').click();
+
+    const saved = await page.evaluate(() => JSON.parse(localStorage.getItem('se-gym-hero-avatar')));
+    expect(saved.appearance.earShape).toBe('photo-rounded-lobe');
   });
 
   test('Facial hair and facial details update the preview', async ({ page }) => {

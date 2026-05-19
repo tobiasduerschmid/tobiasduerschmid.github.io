@@ -48,6 +48,7 @@ async function main() {
       hair: '292 54 216 346',
       eyebrows: '352 138 96 78',
       eyes: '352 154 96 78',
+      ears: '326 154 148 80',
       nose: '370 178 60 50',
       mouth: '360 202 80 66',
       cheeks: '342 178 116 94',
@@ -219,6 +220,8 @@ async function main() {
         selectors.push(`[data-hero-slot="eyebrow"][data-hero-option="${optionValue}"]`);
       } else if (definition.key === 'eyeShape') {
         selectors.push(`[data-hero-slot="eye-shape"][data-hero-option="${optionValue}"]`);
+      } else if (definition.key === 'earShape') {
+        selectors.push(`[data-hero-slot="ear-shape"][data-hero-option="${optionValue}"]`);
       } else if (definition.key === 'eyelashStyle') {
         selectors.push(`[data-hero-slot="eyelash-style"][data-hero-option="${optionValue}"]`);
       } else if (definition.key === 'noseShape') {

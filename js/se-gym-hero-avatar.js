@@ -179,6 +179,25 @@
         ])
       ]
     },
+    earShape: {
+      id: 'hero-cust-ear-shape',
+      label: 'Ears',
+      path: ['appearance', 'earShape'],
+      preview: 'ears',
+      groups: [
+        choiceGroup('Everyday ear shapes', [
+          choice('oval', 'Balanced oval'),
+          choice('small-round', 'Small rounded'),
+          choice('broad-round', 'Broad rounded'),
+          choice('photo-rounded-lobe', 'Photo rounded lobe'),
+          choice('narrow', 'Narrow'),
+          choice('attached-lobe', 'Attached lobes'),
+          choice('free-lobe', 'Free lobes'),
+          choice('prominent', 'Prominent'),
+          choice('soft-angled', 'Soft angled')
+        ])
+      ]
+    },
     eyelashStyle: {
       id: 'hero-cust-eyelash-style',
       label: 'Eyelashes',
@@ -286,6 +305,7 @@
           choice('round', 'Round face'),
           choice('full-cheeks', 'Full cheeks'),
           choice('full-oval', 'Full oval'),
+          choice('polished-photo-oval', 'Polished photo oval'),
           choice('soft-full-cheek-jaw', 'Soft full-cheek jaw'),
           choice('narrow', 'Narrow face'),
           choice('tapered-oval', 'Tapered oval'),
@@ -502,6 +522,7 @@
     hairStyle: choiceValues('hairStyle'),
     eyebrowStyle: choiceValues('eyebrowStyle'),
     eyeShape: choiceValues('eyeShape'),
+    earShape: choiceValues('earShape'),
     eyelashStyle: choiceValues('eyelashStyle'),
     noseShape: choiceValues('noseShape'),
     mouthStyle: choiceValues('mouthStyle'),
@@ -636,6 +657,7 @@
     'soft-square': { scaleX: 1.05, scaleY: 1, translateY: -1 },
     broad: { scaleX: 1.12, scaleY: 0.98, translateY: 0 },
     'full-oval': { scaleX: 1.09, scaleY: 1.03, translateY: -2 },
+    'polished-photo-oval': { scaleX: 1.01, scaleY: 1.06, translateY: -4 },
     'soft-full-cheek-jaw': { scaleX: 1.12, scaleY: 1.02, translateY: -1 },
     'tapered-oval': { scaleX: 0.98, scaleY: 1.06, translateY: -5 },
     'gentle-taper': { scaleX: 1.02, scaleY: 1.04, translateY: -4 },
@@ -694,6 +716,7 @@
       eyebrowStyle: 'arched',
       headStyle: 'default',
       eyeShape: 'round',
+      earShape: 'oval',
       eyelashStyle: 'none',
       noseShape: 'soft',
       mouthStyle: 'smile',
@@ -793,7 +816,7 @@
     .concat(weightedValues(['petite', 'tall', 'broad', 'full-frame'], 5))
     .concat(weightedValues(['muscular', 'fuller-hip', 'plus-size'], 3));
   var HEAD_STYLE_WEIGHTS = []
-    .concat(weightedValues(['default', 'soft-oval', 'round', 'full-cheeks', 'full-oval', 'soft-full-cheek-jaw', 'oval', 'soft-square', 'slim-square-jaw', 'slender-soft-square', 'soft-v-jaw', 'full-straight-jaw', 'soft-round-jaw'], 8))
+    .concat(weightedValues(['default', 'soft-oval', 'round', 'full-cheeks', 'full-oval', 'polished-photo-oval', 'soft-full-cheek-jaw', 'oval', 'soft-square', 'slim-square-jaw', 'slender-soft-square', 'soft-v-jaw', 'full-straight-jaw', 'soft-round-jaw'], 8))
     .concat(weightedValues(['heart', 'diamond', 'square', 'long-tapered-jaw', 'narrow-angular-jaw', 'broad', 'narrow', 'oblong', 'tapered-oval', 'gentle-taper', 'soft-angular', 'feminine'], 3));
   var PRESENTATION_BODY_WEIGHTS = {
     male: []
@@ -807,15 +830,18 @@
   };
   var PRESENTATION_HEAD_STYLE_WEIGHTS = {
     male: []
-      .concat(weightedValues(['default', 'soft-square', 'slim-square-jaw', 'slender-soft-square', 'full-straight-jaw', 'oval', 'soft-oval', 'broad', 'square', 'round', 'soft-angular'], 8))
+      .concat(weightedValues(['default', 'soft-square', 'slim-square-jaw', 'slender-soft-square', 'full-straight-jaw', 'oval', 'soft-oval', 'polished-photo-oval', 'broad', 'square', 'round', 'soft-angular'], 8))
       .concat(weightedValues(['long-tapered-jaw', 'narrow-angular-jaw', 'full-cheeks', 'full-oval', 'soft-full-cheek-jaw', 'narrow', 'oblong', 'diamond', 'tapered-oval', 'gentle-taper', 'soft-round-jaw', 'heart'], 3)),
     female: []
-      .concat(weightedValues(['soft-oval', 'round', 'full-cheeks', 'full-oval', 'soft-full-cheek-jaw', 'heart', 'oval', 'soft-v-jaw', 'soft-round-jaw', 'tapered-oval', 'gentle-taper'], 8))
+      .concat(weightedValues(['soft-oval', 'round', 'full-cheeks', 'full-oval', 'polished-photo-oval', 'soft-full-cheek-jaw', 'heart', 'oval', 'soft-v-jaw', 'soft-round-jaw', 'tapered-oval', 'gentle-taper'], 8))
       .concat(weightedValues(['default', 'diamond', 'soft-square', 'slender-soft-square', 'narrow', 'oblong', 'soft-angular', 'square', 'broad', 'feminine'], 3))
   };
   var FACE_FEATURE_WEIGHTS = []
     .concat(weightedValues(['none'], 15))
     .concat(weightedValues(['freckles', 'nose-freckles', 'beauty-mark', 'small-moles', 'dimples', 'chin-dimple', 'smile-lines', 'under-eye-lines'], 2));
+  var EAR_SHAPE_WEIGHTS = []
+    .concat(weightedValues(['oval', 'small-round', 'broad-round', 'photo-rounded-lobe', 'narrow', 'attached-lobe', 'free-lobe'], 8))
+    .concat(weightedValues(['prominent', 'soft-angled'], 3));
   var EYELASH_STYLE_WEIGHTS = []
     .concat(weightedValues(['none'], 18))
     .concat(weightedValues(['short-soft', 'short-dense', 'barely-there', 'subtle', 'short-natural', 'short-corner', 'short-upper', 'outer-corner'], 4))
@@ -1369,6 +1395,8 @@
       if (obj.appearance.eyeShape !== undefined) obj.appearance.eyeShape = canonicalChoiceValue('eyeShape', obj.appearance.eyeShape);
       if (obj.appearance.headStyle === undefined) obj.appearance.headStyle = 'default';
       if (obj.appearance.eyeShape === undefined) obj.appearance.eyeShape = 'round';
+      if (obj.appearance.earShape === undefined) obj.appearance.earShape = 'oval';
+      obj.appearance.earShape = canonicalChoiceValue('earShape', obj.appearance.earShape);
       if (obj.appearance.eyelashStyle === undefined) obj.appearance.eyelashStyle = 'none';
       if (obj.appearance.noseShape === undefined) obj.appearance.noseShape = 'soft';
       if (obj.appearance.mouthStyle === undefined) obj.appearance.mouthStyle = 'smile';
@@ -1399,6 +1427,7 @@
         eyebrowStyle: weightedFrom(weightedValues(['arched', 'straight', 'rounded', 'light-straight', 'full-straight'], 4).concat(weightedValues(['thick', 'thin', 'angular'], 2))),
         headStyle: weightedFrom(PRESENTATION_HEAD_STYLE_WEIGHTS[selectedPresentation] || HEAD_STYLE_WEIGHTS),
         eyeShape: randomFrom(recipe.eyeShapes),
+        earShape: heroKind === 'bruin' ? 'oval' : weightedFrom(EAR_SHAPE_WEIGHTS),
         eyelashStyle: randomEyelashStyle(selectedPresentation, heroKind),
         noseShape: randomFrom(recipe.noseShapes),
         mouthStyle: randomMouthStyle(recipe),
@@ -1880,6 +1909,7 @@
     applyFitToSlot(svg, 'hair', hairTransform, 'data-hero-head-fit', normalized);
     applyFitToSlot(svg, 'hairline', hairlineTransform, 'data-hero-head-fit', normalized);
     applyFitToSlot(svg, 'hair-root', hairRootTransform, 'data-hero-head-fit', normalized);
+    applyFitToSlot(svg, 'ear-shape', sideAccessoryTransform, 'data-hero-head-fit', normalized);
     applyFitToSlot(svg, 'face-feature', faceFeatureTransform, 'data-hero-head-fit', normalized);
     applyFitToAccessories(svg, headwearTransform, HEADWEAR_FIT_ACCESSORIES, normalized);
     applyFitToAccessories(svg, faceAccessoryTransform, FACE_FIT_ACCESSORIES, normalized);
@@ -2173,6 +2203,7 @@
     var bodyType = canonicalChoiceValue('bodyType', state.body.type);
     var hairStyle = canonicalChoiceValue('hairStyle', state.appearance.hairStyle);
     var eyeShape = canonicalChoiceValue('eyeShape', state.appearance.eyeShape || 'round');
+    var earShape = canonicalChoiceValue('earShape', state.appearance.earShape || 'oval');
     var headStyle = canonicalChoiceValue('headStyle', state.appearance.headStyle || 'default');
     var mouthStyle = canonicalChoiceValue('mouthStyle', state.appearance.mouthStyle || 'smile');
     var contrastTokens = avatarContrastTokens(state.appearance.skin, state.appearance.hairColor);
@@ -2188,6 +2219,7 @@
     setSlot(svg, 'hair', renderedHairStyle);
     setSlot(svg, 'eyebrow', state.appearance.eyebrowStyle);
     setSlot(svg, 'eye-shape', eyeShape);
+    setSlot(svg, 'ear-shape', earShape);
     setSlot(svg, 'eyelash-style', state.appearance.eyelashStyle || 'none');
     applyEyelashFit(svg, eyeShape);
     setSlot(svg, 'head-shape', headStyle);
@@ -2278,6 +2310,7 @@
     if (!inEnum(a.eyebrowStyle, 'eyebrowStyle')) return { ok: false, error: 'Invalid eyebrow style.' };
     if (a.headStyle !== undefined && !inEnum(a.headStyle, 'headStyle')) return { ok: false, error: 'Invalid head style.' };
     if (a.eyeShape !== undefined && !inEnum(a.eyeShape, 'eyeShape')) return { ok: false, error: 'Invalid eye shape.' };
+    if (a.earShape !== undefined && !inEnum(a.earShape, 'earShape')) return { ok: false, error: 'Invalid ear shape.' };
     if (a.eyelashStyle !== undefined && !inEnum(a.eyelashStyle, 'eyelashStyle')) return { ok: false, error: 'Invalid eyelash style.' };
     if (a.noseShape !== undefined && !inEnum(a.noseShape, 'noseShape')) return { ok: false, error: 'Invalid nose shape.' };
     if (a.mouthStyle !== undefined && !inEnum(a.mouthStyle, 'mouthStyle')) return { ok: false, error: 'Invalid mouth style.' };
@@ -2810,6 +2843,7 @@
       hair: '292 54 216 346',
       eyebrows: '352 138 96 78',
       eyes: '352 154 96 78',
+      ears: '326 154 148 80',
       nose: '370 178 60 50',
       mouth: '360 202 80 66',
       cheeks: '342 178 116 94',
@@ -2829,6 +2863,7 @@
       hair: true,
       eyebrows: true,
       eyes: true,
+      ears: true,
       nose: true,
       mouth: true,
       cheeks: true,
@@ -2960,6 +2995,8 @@
         selectors.push('[data-hero-slot="eyebrow"][data-hero-option="' + optionValue + '"]');
       } else if (definition.key === 'eyeShape') {
         selectors.push('[data-hero-slot="eye-shape"][data-hero-option="' + optionValue + '"]');
+      } else if (definition.key === 'earShape') {
+        selectors.push('[data-hero-slot="ear-shape"][data-hero-option="' + optionValue + '"]');
       } else if (definition.key === 'eyelashStyle') {
         selectors.push('[data-hero-slot="eyelash-style"][data-hero-option="' + optionValue + '"]');
       } else if (definition.key === 'noseShape') {
@@ -3085,6 +3122,9 @@
       } else if (definition.key === 'eyeShape') {
         setSlot(svg, 'eye-shape', canonicalChoiceValue('eyeShape', optionValue));
         applyEyelashFit(svg, optionValue);
+      } else if (definition.key === 'earShape') {
+        setSlot(svg, 'ear-shape', canonicalChoiceValue('earShape', optionValue));
+        applyHeadShapeFit(svg, baseState.appearance.headStyle || 'default');
       } else if (definition.key === 'eyelashStyle') {
         setSlot(svg, 'eyelash-style', optionValue);
         applyEyelashFit(svg, baseState.appearance.eyeShape || 'round');
@@ -3295,6 +3335,7 @@
       if (key === 'hairStyle') return canonicalChoiceValue('hairStyle', baseState.appearance.hairStyle);
       if (key === 'eyebrowStyle') return baseState.appearance.eyebrowStyle;
       if (key === 'eyeShape') return canonicalChoiceValue('eyeShape', baseState.appearance.eyeShape || 'round');
+      if (key === 'earShape') return canonicalChoiceValue('earShape', baseState.appearance.earShape || 'oval');
       if (key === 'eyelashStyle') return baseState.appearance.eyelashStyle || 'none';
       if (key === 'noseShape') return baseState.appearance.noseShape || 'soft';
       if (key === 'mouthStyle') return baseState.appearance.mouthStyle || 'smile';
@@ -3315,6 +3356,7 @@
         hairStyle: choicePreviewValue(definition, optionValue, baseState, 'hairStyle'),
         eyebrowStyle: choicePreviewValue(definition, optionValue, baseState, 'eyebrowStyle'),
         eyeShape: choicePreviewValue(definition, optionValue, baseState, 'eyeShape'),
+        earShape: choicePreviewValue(definition, optionValue, baseState, 'earShape'),
         eyelashStyle: choicePreviewValue(definition, optionValue, baseState, 'eyelashStyle'),
         noseShape: choicePreviewValue(definition, optionValue, baseState, 'noseShape'),
         mouthStyle: choicePreviewValue(definition, optionValue, baseState, 'mouthStyle'),
@@ -3725,6 +3767,7 @@
           eyebrowStyle: $('hero-cust-eyebrow').value,
           headStyle: ($('hero-cust-head-style') ? $('hero-cust-head-style').value : 'default'),
           eyeShape: ($('hero-cust-eye-shape') ? $('hero-cust-eye-shape').value : 'round'),
+          earShape: ($('hero-cust-ear-shape') ? $('hero-cust-ear-shape').value : 'oval'),
           eyelashStyle: ($('hero-cust-eyelash-style') ? $('hero-cust-eyelash-style').value : 'none'),
           noseShape: ($('hero-cust-nose-shape') ? $('hero-cust-nose-shape').value : 'soft'),
           mouthStyle: ($('hero-cust-mouth-style') ? $('hero-cust-mouth-style').value : 'smile'),
@@ -3754,6 +3797,7 @@
       $('hero-cust-eyebrow').value = state.appearance.eyebrowStyle;
       if ($('hero-cust-head-style')) $('hero-cust-head-style').value = state.appearance.headStyle || 'default';
       if ($('hero-cust-eye-shape')) $('hero-cust-eye-shape').value = canonicalChoiceValue('eyeShape', state.appearance.eyeShape || 'round');
+      if ($('hero-cust-ear-shape')) $('hero-cust-ear-shape').value = canonicalChoiceValue('earShape', state.appearance.earShape || 'oval');
       if ($('hero-cust-eyelash-style')) $('hero-cust-eyelash-style').value = state.appearance.eyelashStyle || 'none';
       if ($('hero-cust-nose-shape')) $('hero-cust-nose-shape').value = state.appearance.noseShape || 'soft';
       if ($('hero-cust-mouth-style')) $('hero-cust-mouth-style').value = state.appearance.mouthStyle || 'smile';
@@ -3777,6 +3821,7 @@
       if ($('hero-cust-hair-color')) updateColorInput($('hero-cust-hair-color'), BRUIN_DEFAULTS.hairColor, null, true);
       if ($('hero-cust-eye-color')) updateColorInput($('hero-cust-eye-color'), BRUIN_DEFAULTS.eyeColor, null, true);
       if ($('hero-cust-hair-style')) $('hero-cust-hair-style').value = 'bald';
+      if ($('hero-cust-ear-shape')) $('hero-cust-ear-shape').value = 'oval';
       if ($('hero-cust-eyelash-style')) $('hero-cust-eyelash-style').value = 'none';
       if ($('hero-cust-facial-hair')) $('hero-cust-facial-hair').value = 'none';
       if ($('hero-cust-face-feature')) $('hero-cust-face-feature').value = 'none';
