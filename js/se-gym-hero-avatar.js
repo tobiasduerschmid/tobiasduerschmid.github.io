@@ -1935,7 +1935,7 @@
       featureRim: darkSkin ? 'rgba(255, 226, 185, 0.72)' : 'rgba(44, 21, 8, 0.22)',
       featureShadow: darkSkin ? 'rgba(0, 0, 0, 0.44)' : 'rgba(0, 47, 82, 0.18)',
       noseOpacity: darkSkin ? '0.55' : '0.35',
-      noseHighlightOpacity: darkSkin ? '0.12' : '0.36',
+      noseHighlightOpacity: darkSkin ? '0.08' : '0.36',
       nostrilOpacity: darkSkin ? '0.96' : '0.3',
       cheekOpacity: darkSkin ? '0.18' : '0.3',
       contourOpacity: darkSkin ? '0.38' : '0.18',

@@ -3272,6 +3272,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       const eyebrow = svg.querySelector('[data-hero-slot="eyebrow"][data-hero-option="arched"]');
       return {
         skin: styles.getPropertyValue('--hero-skin-light').trim(),
+        skinScatter: styles.getPropertyValue('--hero-skin-scatter').trim(),
         skinHighlightSoft: styles.getPropertyValue('--hero-skin-highlight-soft').trim(),
         skinMid: styles.getPropertyValue('--hero-skin-mid').trim(),
         facePlaneShadow: styles.getPropertyValue('--hero-face-plane-shadow').trim(),
@@ -3293,6 +3294,12 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         noseHighlightOpacity: styles.getPropertyValue('--hero-nose-highlight-opacity').trim(),
         contourOpacity: styles.getPropertyValue('--hero-contour-opacity').trim(),
         hairDetailOpacity: styles.getPropertyValue('--hero-hair-detail-opacity').trim(),
+        faceCoreHighlightOpacity: styles.getPropertyValue('--hero-face-core-highlight-opacity').trim(),
+        faceFormShadowOpacity: styles.getPropertyValue('--hero-face-form-shadow-opacity').trim(),
+        faceSoftShadowOpacity: styles.getPropertyValue('--hero-face-soft-shadow-opacity').trim(),
+        faceScatterOpacity: styles.getPropertyValue('--hero-face-scatter-opacity').trim(),
+        faceAoOpacity: styles.getPropertyValue('--hero-face-ao-opacity').trim(),
+        faceRimOpacity: styles.getPropertyValue('--hero-face-rim-opacity').trim(),
         faceHighlightOpacity: styles.getPropertyValue('--hero-face-highlight-opacity').trim(),
         faceShadowOpacity: styles.getPropertyValue('--hero-face-shadow-opacity').trim(),
         jawLineOpacity: styles.getPropertyValue('--hero-jaw-line-opacity').trim(),
@@ -3306,6 +3313,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
           (faceClear.compareDocumentPosition(facePolish) & Node.DOCUMENT_POSITION_FOLLOWING)
         ),
         facePolishPathCount: facePolish ? facePolish.querySelectorAll('path').length : -1,
+        facePolishEllipseCount: facePolish ? facePolish.querySelectorAll('ellipse').length : -1,
         featuresAfterPolish: Boolean(
           facePolish &&
           eyebrow &&
@@ -3316,6 +3324,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
     expect(tokens.polishAfterFaceClear).toBe(true);
     expect(tokens.facePolishPathCount).toBe(0);
+    expect(tokens.facePolishEllipseCount).toBeGreaterThanOrEqual(6);
     expect(tokens.featuresAfterPolish).toBe(true);
     expect(tokens.skinHighlightSoft.toLowerCase()).not.toBe(tokens.skin.toLowerCase());
     expect(tokens.skinMid.toLowerCase()).not.toBe(tokens.skin.toLowerCase());
@@ -3326,6 +3335,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(contrastRatio(tokens.faceLine, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.faceMark, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.facePlaneShadow, tokens.skin)).toBeLessThanOrEqual(1.8);
+    expect(contrastRatio(tokens.skinScatter, tokens.skin)).toBeLessThanOrEqual(1.75);
     expect(contrastRatio(tokens.cheekFill, tokens.skin)).toBeLessThanOrEqual(1.8);
     expect(contrastRatio(tokens.lipFill, tokens.skin)).toBeLessThanOrEqual(2.1);
     expect(contrastRatio(tokens.lipHighlight, tokens.lipFill)).toBeLessThanOrEqual(1.6);
@@ -3336,10 +3346,16 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(contrastRatio(tokens.jawLine, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(Number(tokens.noseOpacity)).toBeGreaterThanOrEqual(0.45);
     expect(Number(tokens.noseOpacity)).toBeLessThanOrEqual(0.6);
-    expect(Number(tokens.noseHighlightOpacity)).toBeLessThanOrEqual(0.14);
+    expect(Number(tokens.noseHighlightOpacity)).toBeLessThanOrEqual(0.1);
     expect(Number(tokens.cheekOpacity)).toBeLessThanOrEqual(0.22);
     expect(Number(tokens.contourOpacity)).toBeLessThanOrEqual(0.4);
     expect(Number(tokens.hairDetailOpacity)).toBeGreaterThanOrEqual(0.7);
+    expect(Number(tokens.faceCoreHighlightOpacity)).toBeGreaterThanOrEqual(0.6);
+    expect(Number(tokens.faceFormShadowOpacity)).toBeLessThanOrEqual(0.5);
+    expect(Number(tokens.faceSoftShadowOpacity)).toBeLessThanOrEqual(0.16);
+    expect(Number(tokens.faceScatterOpacity)).toBeLessThanOrEqual(0.12);
+    expect(Number(tokens.faceAoOpacity)).toBeLessThanOrEqual(0.14);
+    expect(Number(tokens.faceRimOpacity)).toBeLessThanOrEqual(0.14);
     expect(Number(tokens.faceHighlightOpacity)).toBeLessThanOrEqual(0.14);
     expect(Number(tokens.faceShadowOpacity)).toBeLessThanOrEqual(0.16);
     expect(Number(tokens.jawLineOpacity)).toBeLessThanOrEqual(0.3);
