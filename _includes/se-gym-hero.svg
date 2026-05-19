@@ -36,11 +36,11 @@
     <radialGradient id="milestone-glow-{{ hero_variant }}" cx=".5" cy=".42" r=".58"><stop offset="0" stop-color="var(--hero-milestone-glow, #f5a35c)" stop-opacity=".34"/><stop offset=".65" stop-color="var(--hero-milestone-glow, #f5a35c)" stop-opacity=".12"/><stop offset="1" stop-color="var(--hero-milestone-glow, #f5a35c)" stop-opacity="0"/></radialGradient>
     <radialGradient id="milestone-jewel-{{ hero_variant }}" cx=".38" cy=".3" r=".85"><stop offset="0" stop-color="#ffffff"/><stop offset=".42" stop-color="var(--hero-milestone-jewel, #f2a45d)"/><stop offset="1" stop-color="var(--hero-milestone-metal-dark, #6b3e1d)"/></radialGradient>
     <linearGradient id="skin-{{ hero_variant }}" gradientUnits="userSpaceOnUse" x1="0" y1="82" x2="0" y2="270"><stop offset="0" stop-color="var(--hero-skin-highlight-soft, var(--hero-skin-light, #dfa07a))"/><stop offset=".38" stop-color="var(--hero-skin-light, #dfa07a)"/><stop offset=".78" stop-color="var(--hero-skin-mid, #c5815b)"/><stop offset="1" stop-color="var(--hero-skin, #b46a3d)"/></linearGradient>
-    <radialGradient id="face-round-light-{{ hero_variant }}" gradientUnits="userSpaceOnUse" cx="383" cy="170" r="78"><stop offset="0" stop-color="var(--hero-skin-highlight-soft, #fff1dc)" stop-opacity=".58"/><stop offset=".34" stop-color="var(--hero-skin-highlight-soft, #fff1dc)" stop-opacity=".28"/><stop offset=".72" stop-color="var(--hero-skin-light, #dfa07a)" stop-opacity=".1"/><stop offset="1" stop-color="var(--hero-skin-light, #dfa07a)" stop-opacity="0"/></radialGradient>
-    <radialGradient id="face-form-shadow-{{ hero_variant }}" gradientUnits="userSpaceOnUse" cx="429" cy="226" r="82"><stop offset="0" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity=".28"/><stop offset=".42" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity=".15"/><stop offset="1" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity="0"/></radialGradient>
-    <radialGradient id="face-scatter-{{ hero_variant }}"><stop offset="0" stop-color="var(--hero-skin-scatter, #a14e47)" stop-opacity=".78"/><stop offset=".58" stop-color="var(--hero-skin-scatter, #a14e47)" stop-opacity=".22"/><stop offset="1" stop-color="var(--hero-skin-scatter, #a14e47)" stop-opacity="0"/></radialGradient>
-    <radialGradient id="face-soft-shadow-{{ hero_variant }}"><stop offset="0" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity=".52"/><stop offset=".64" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity=".16"/><stop offset="1" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity="0"/></radialGradient>
-    <radialGradient id="face-rim-light-{{ hero_variant }}"><stop offset="0" stop-color="var(--hero-skin-ambient, #dfa07a)" stop-opacity=".62"/><stop offset=".54" stop-color="var(--hero-skin-ambient, #dfa07a)" stop-opacity=".18"/><stop offset="1" stop-color="var(--hero-skin-ambient, #dfa07a)" stop-opacity="0"/></radialGradient>
+    <radialGradient id="face-round-light-{{ hero_variant }}" gradientUnits="userSpaceOnUse" cx="386" cy="198" r="88"><stop offset="0" stop-color="var(--hero-skin-highlight-soft, #fff1dc)" stop-opacity=".42"/><stop offset=".42" stop-color="var(--hero-skin-highlight-soft, #fff1dc)" stop-opacity=".18"/><stop offset=".78" stop-color="var(--hero-skin-light, #dfa07a)" stop-opacity=".06"/><stop offset="1" stop-color="var(--hero-skin-light, #dfa07a)" stop-opacity="0"/></radialGradient>
+    <radialGradient id="face-form-shadow-{{ hero_variant }}" gradientUnits="userSpaceOnUse" cx="430" cy="228" r="82"><stop offset="0" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity=".22"/><stop offset=".48" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity=".11"/><stop offset="1" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity="0"/></radialGradient>
+    <radialGradient id="face-scatter-{{ hero_variant }}"><stop offset="0" stop-color="var(--hero-skin-scatter, #a14e47)" stop-opacity=".62"/><stop offset=".56" stop-color="var(--hero-skin-scatter, #a14e47)" stop-opacity=".18"/><stop offset="1" stop-color="var(--hero-skin-scatter, #a14e47)" stop-opacity="0"/></radialGradient>
+    <radialGradient id="face-soft-shadow-{{ hero_variant }}"><stop offset="0" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity=".42"/><stop offset=".66" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity=".12"/><stop offset="1" stop-color="var(--hero-face-plane-shadow, #7a4a2a)" stop-opacity="0"/></radialGradient>
+    <radialGradient id="face-rim-light-{{ hero_variant }}"><stop offset="0" stop-color="var(--hero-skin-ambient, #dfa07a)" stop-opacity=".52"/><stop offset=".58" stop-color="var(--hero-skin-ambient, #dfa07a)" stop-opacity=".14"/><stop offset="1" stop-color="var(--hero-skin-ambient, #dfa07a)" stop-opacity="0"/></radialGradient>
     <linearGradient id="steel-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7e8895"/><stop offset=".35" stop-color="#e6ebf1"/><stop offset=".55" stop-color="#c0c8d2"/><stop offset="1" stop-color="#42495a"/></linearGradient>
     <linearGradient id="steel-dark-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b6470"/><stop offset=".5" stop-color="#aab3be"/><stop offset="1" stop-color="#2a323d"/></linearGradient>
     <radialGradient id="plate-face-{{ hero_variant }}" cx=".38" cy=".3" r=".95"><stop offset="0" stop-color="#58bff4"/><stop offset=".52" stop-color="#1f82ce"/><stop offset="1" stop-color="#00345f"/></radialGradient>
@@ -55,20 +55,20 @@
       <stop offset="1" stop-color="var(--hero-hair-dark, #0f0905)" stop-opacity=".74"/>
     </linearGradient>
     <radialGradient id="hair-luster-{{ hero_variant }}" cx=".4" cy=".25" r=".6">
-      <stop offset="0" stop-color="#ffffff" stop-opacity=".28"/>
-      <stop offset=".25" stop-color="var(--hero-hair-light, #4a3220)" stop-opacity=".4"/>
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".18"/>
+      <stop offset=".25" stop-color="var(--hero-hair-light, #4a3220)" stop-opacity=".34"/>
       <stop offset="1" stop-color="var(--hero-hair, #1f140c)" stop-opacity="0"/>
     </radialGradient>
     <radialGradient id="hair-sheen-{{ hero_variant }}" cx=".35" cy=".2" r=".8">
-      <stop offset="0" stop-color="#ffffff" stop-opacity=".38"/>
-      <stop offset=".12" stop-color="var(--hero-hair-light, #4a3220)" stop-opacity=".9"/>
-      <stop offset=".45" stop-color="var(--hero-hair, #1f140c)" stop-opacity=".4"/>
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".24"/>
+      <stop offset=".12" stop-color="var(--hero-hair-light, #4a3220)" stop-opacity=".72"/>
+      <stop offset=".45" stop-color="var(--hero-hair, #1f140c)" stop-opacity=".32"/>
       <stop offset="1" stop-color="var(--hero-hair, #1f140c)" stop-opacity="0"/>
     </radialGradient>
     <linearGradient id="hair-comic-highlight-{{ hero_variant }}" gradientUnits="userSpaceOnUse" x1="360" y1="112" x2="440" y2="166">
-      <stop offset="0" stop-color="#ffffff" stop-opacity=".36"/>
-      <stop offset=".36" stop-color="var(--hero-hair-light, #4a3220)" stop-opacity=".74"/>
-      <stop offset=".72" stop-color="var(--hero-hair-light, #4a3220)" stop-opacity=".22"/>
+      <stop offset="0" stop-color="#ffffff" stop-opacity=".18"/>
+      <stop offset=".36" stop-color="var(--hero-hair-light, #4a3220)" stop-opacity=".54"/>
+      <stop offset=".72" stop-color="var(--hero-hair-light, #4a3220)" stop-opacity=".14"/>
       <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
     </linearGradient>
     <linearGradient id="hair-comic-shadow-{{ hero_variant }}" gradientUnits="userSpaceOnUse" x1="360" y1="158" x2="440" y2="176">
@@ -77,7 +77,7 @@
       <stop offset="1" stop-color="var(--hero-hair-dark, #0f0905)" stop-opacity=".16"/>
     </linearGradient>
     <filter id="hair-depth-{{ hero_variant }}" x="-35%" y="-35%" width="170%" height="170%">
-      <feDropShadow dx="0" dy="2.2" stdDeviation="1.5" flood-color="#160b04" flood-opacity=".3"/>
+      <feDropShadow dx="0" dy="2" stdDeviation="1.4" flood-color="#160b04" flood-opacity=".22"/>
     </filter>
     <clipPath id="comic-crown-hair-clip-{{ hero_variant }}" clipPathUnits="userSpaceOnUse">
       <path d="M 350 180 C 346 140, 368 108, 400 106 C 432 108, 454 140, 450 180 C 436 166, 418 158, 400 158 C 382 158, 364 166, 350 180 Z"/>
@@ -107,6 +107,9 @@
       <path d="M 344 174 C 334 214, 338 264, 354 296 C 362 304, 374 302, 380 290 C 368 256, 367 218, 378 182 C 364 174, 354 171, 344 174 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
       <path d="M 456 174 C 466 214, 462 264, 446 296 C 438 304, 426 302, 420 290 C 432 256, 433 218, 422 182 C 436 174, 446 171, 456 174 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
     </g>
+    <!-- Reusable curl symbol per research: a small S-spiral that can be rotated/scaled into the silhouette. -->
+    <path id="curl-symbol-{{ hero_variant }}" d="M 0 0 C 7 -8 16 2 11 9 C 7 14 9 21 18 22"
+          fill="none" stroke-linecap="round" stroke-linejoin="round"/>
     <pattern id="knurl-{{ hero_variant }}" patternUnits="userSpaceOnUse" width="3" height="3" patternTransform="rotate(45)"><rect width="3" height="3" fill="#aab3be"/><line x1="0" y1="0" x2="0" y2="3" stroke="#5b6470" stroke-width="0.90"/></pattern>
     <g id="hero-topic-icon-code-{{ hero_variant }}" fill="none" stroke="currentColor" stroke-width="9" stroke-linecap="round" stroke-linejoin="round">
       <polyline points="-18,-22 -40,0 -18,22"/>
@@ -704,44 +707,26 @@
                           keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                           calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
 
-        <!-- LEFT UPPER ARM sleeve — the shoulder root is narrow because
-             the torso overlap covers it; textile folds carry the volume. -->
-        <path d="M 305 268
-                 C 300 250, 301 225, 307 199
-                 C 311 181, 317 168, 323 160
-                 C 331 166, 337 181, 341 201
-                 C 346 228, 345 252, 339 269
-                 C 329 276, 315 276, 305 268 Z"
+        <!-- LEFT UPPER ARM — smooth tapered sleeve from shoulder (y=268) to elbow (y=162) -->
+        <path d="M 308 268
+                 C 304 248, 304 218, 311 192
+                 C 316 175, 321 166, 324 162
+                 C 327 166, 332 175, 337 192
+                 C 344 218, 344 248, 340 268
+                 C 329 274, 319 274, 308 268 Z"
               fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
-              stroke-width="2.25" stroke-linejoin="round" opacity="1"/>
-        <path d="M 306 266 C 311 257, 317 252, 324 252 C 331 252, 337 258, 340 268 C 330 274, 316 274, 306 266 Z"
-              fill="var(--hero-suit-dark, #064b7b)" opacity=".14"/>
-        <path d="M 313 264 C 310 238, 312 204, 318 178 C 315 194, 316 235, 321 264 Z"
-              fill="var(--hero-suit-light, #68c4ea)" opacity=".2"/>
-        <path d="M 336 266 C 340 240, 339 210, 332 183 C 336 204, 335 242, 330 269 Z"
-              fill="var(--hero-suit-dark, #064b7b)" opacity=".2"/>
-        <path d="M 309 226 C 317 222, 329 222, 338 226 M 310 207 C 318 203, 329 204, 337 209"
-              stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.35" fill="none" stroke-linecap="round" opacity=".18"/>
-        <path d="M 312 248 C 319 253, 329 253, 336 248 M 311 235 C 319 239, 330 239, 338 234"
-              stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.35" fill="none" stroke-linecap="round" opacity=".24"/>
-
-        <!-- Folded sleeve overlap at the elbow: fills the hinge without a spherical joint. -->
-        <path d="M 309 158
-                 C 313 150, 321 147, 329 151
-                 C 336 155, 340 162, 337 169
-                 C 333 176, 323 179, 315 175
-                 C 308 171, 305 164, 309 158 Z"
-              fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
-              stroke-width="1.95" stroke-linejoin="round"/>
-        <path d="M 310 160 C 319 164, 329 164, 336 160 M 313 171 C 321 174, 329 172, 335 168"
-              stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.35" fill="none" stroke-linecap="round" opacity=".32"/>
-
-        <path d="M 310 252 C 307 225, 308 195, 314 176"
+              stroke-width="2.25" stroke-linejoin="round"/>
+        <!-- Shoulder cap shadow (subtle inner shadow at root) -->
+        <path d="M 308 268 C 316 272, 332 272, 340 268 C 332 274, 316 274, 308 268 Z"
+              fill="var(--hero-suit-dark, #064b7b)" opacity=".18"/>
+        <!-- Bicep highlight (light side) -->
+        <path d="M 314 250 C 311 222, 313 192, 318 174"
               stroke="var(--hero-suit-light, #68c4ea)" stroke-width="2" fill="none"
-              stroke-linecap="round" opacity=".45"/>
-        <path d="M 334 252 C 337 226, 337 197, 331 178"
-              stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.8" fill="none"
-              stroke-linecap="round" opacity=".35"/>
+              stroke-linecap="round" opacity=".42"/>
+        <!-- Back shadow stroke -->
+        <path d="M 334 250 C 337 222, 335 192, 330 174"
+              stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.6" fill="none"
+              stroke-linecap="round" opacity=".3"/>
 
         <!-- ===== Forearm group — pivots at ELBOW (322,162) ===== -->
         <g data-arm-side="left-forearm">
@@ -750,22 +735,23 @@
                             keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                             calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
 
-          <!-- LEFT FOREARM sleeve — tapered cloth tube with a soft elbow fold and wrist cuff. -->
-          <path d="M 309 164
-                   C 306 145, 309 118, 314 88
-                   C 315 78, 318 70, 322 67
-                   C 327 68, 331 77, 333 88
-                   C 338 116, 340 143, 335 164
-                   C 331 172, 326 176, 320 175
-                   C 314 174, 310 170, 309 164 Z"
+          <!-- LEFT FOREARM — smooth tapered tube from elbow (y=164) to wrist (y=68) -->
+          <path d="M 314 164
+                   C 311 142, 312 115, 316 90
+                   C 318 78, 321 71, 322 68
+                   C 324 71, 326 78, 328 90
+                   C 332 115, 333 142, 330 164
+                   C 326 168, 318 168, 314 164 Z"
                 fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
-                stroke-width="2.10" stroke-linejoin="round" opacity="1"/>
-          <path d="M 310 156 C 318 160, 327 160, 335 156 M 311 142 C 319 145, 327 145, 334 141"
-                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.25" fill="none" stroke-linecap="round" opacity=".24"/>
-          <path d="M 312 128 C 319 132, 328 132, 334 127 M 313 112 C 320 116, 327 116, 333 112"
-                stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.25" fill="none" stroke-linecap="round" opacity=".24"/>
-          <path d="M 318 168 C 315 144, 316 112, 319 86" stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.75" fill="none" stroke-linecap="round" opacity=".42"/>
-          <path d="M 332 158 C 334 133, 331 105, 327 84" stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.55" fill="none" stroke-linecap="round" opacity=".34"/>
+                stroke-width="2.1" stroke-linejoin="round"/>
+          <!-- Forearm highlight (light side) -->
+          <path d="M 317 150 C 314 125, 315 95, 319 78"
+                stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.75" fill="none"
+                stroke-linecap="round" opacity=".42"/>
+          <!-- Forearm back shadow -->
+          <path d="M 331 150 C 334 125, 332 100, 327 80"
+                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.5" fill="none"
+                stroke-linecap="round" opacity=".3"/>
           <path d="M 314 78 C 316 72, 328 72, 330 78 L 329 86 C 326 89, 318 89, 315 86 Z"
                 fill="url(#gold-{{ hero_variant }})" stroke="#6f4f00" stroke-width="1.50" stroke-linejoin="round"/>
           <path d="M 316 80 C 320 77, 326 77, 329 80" stroke="#fff6c0" stroke-width="1.35"
@@ -780,41 +766,23 @@
                           keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                           calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
 
-        <path d="M 495 268
-                 C 500 250, 499 225, 493 199
-                 C 489 181, 483 168, 477 160
-                 C 469 166, 463 181, 459 201
-                 C 454 228, 455 252, 461 269
-                 C 471 276, 485 276, 495 268 Z"
+        <!-- RIGHT UPPER ARM (mirror of left across x=400) -->
+        <path d="M 492 268
+                 C 496 248, 496 218, 489 192
+                 C 484 175, 479 166, 476 162
+                 C 473 166, 468 175, 463 192
+                 C 456 218, 456 248, 460 268
+                 C 471 274, 481 274, 492 268 Z"
               fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
-              stroke-width="2.25" stroke-linejoin="round" opacity="1"/>
-        <path d="M 494 266 C 489 257, 483 252, 476 252 C 469 252, 463 258, 460 268 C 470 274, 484 274, 494 266 Z"
-              fill="var(--hero-suit-dark, #064b7b)" opacity=".14"/>
-        <path d="M 487 264 C 490 238, 488 204, 482 178 C 485 194, 484 235, 479 264 Z"
-              fill="var(--hero-suit-light, #68c4ea)" opacity=".2"/>
-        <path d="M 464 266 C 460 240, 461 210, 468 183 C 464 204, 465 242, 470 269 Z"
-              fill="var(--hero-suit-dark, #064b7b)" opacity=".2"/>
-        <path d="M 491 226 C 483 222, 471 222, 462 226 M 490 207 C 482 203, 471 204, 463 209"
-              stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.35" fill="none" stroke-linecap="round" opacity=".18"/>
-        <path d="M 488 248 C 481 253, 471 253, 464 248 M 489 235 C 481 239, 470 239, 462 234"
-              stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.35" fill="none" stroke-linecap="round" opacity=".24"/>
-
-        <path d="M 491 158
-                 C 487 150, 479 147, 471 151
-                 C 464 155, 460 162, 463 169
-                 C 467 176, 477 179, 485 175
-                 C 492 171, 495 164, 491 158 Z"
-              fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
-              stroke-width="1.95" stroke-linejoin="round"/>
-        <path d="M 490 160 C 481 164, 471 164, 464 160 M 487 171 C 479 174, 471 172, 465 168"
-              stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.35" fill="none" stroke-linecap="round" opacity=".32"/>
-
-        <path d="M 490 252 C 493 225, 492 195, 486 176"
+              stroke-width="2.25" stroke-linejoin="round"/>
+        <path d="M 492 268 C 484 272, 468 272, 460 268 C 468 274, 484 274, 492 268 Z"
+              fill="var(--hero-suit-dark, #064b7b)" opacity=".18"/>
+        <path d="M 486 250 C 489 222, 487 192, 482 174"
               stroke="var(--hero-suit-light, #68c4ea)" stroke-width="2" fill="none"
-              stroke-linecap="round" opacity=".45"/>
-        <path d="M 466 252 C 463 226, 463 197, 469 178"
-              stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.8" fill="none"
-              stroke-linecap="round" opacity=".35"/>
+              stroke-linecap="round" opacity=".42"/>
+        <path d="M 466 250 C 463 222, 465 192, 470 174"
+              stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.6" fill="none"
+              stroke-linecap="round" opacity=".3"/>
 
         <g data-arm-side="right-forearm">
           <animateTransform attributeName="transform" type="rotate"
@@ -822,21 +790,21 @@
                             keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                             calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
 
-          <path d="M 491 164
-                   C 494 145, 491 118, 486 88
-                   C 485 78, 482 70, 478 67
-                   C 473 68, 469 77, 467 88
-                   C 462 116, 460 143, 465 164
-                   C 469 172, 474 176, 480 175
-                   C 486 174, 490 170, 491 164 Z"
+          <!-- RIGHT FOREARM (mirror of left across x=400) -->
+          <path d="M 486 164
+                   C 489 142, 488 115, 484 90
+                   C 482 78, 479 71, 478 68
+                   C 476 71, 474 78, 472 90
+                   C 468 115, 467 142, 470 164
+                   C 474 168, 482 168, 486 164 Z"
                 fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
-                stroke-width="2.10" stroke-linejoin="round" opacity="1"/>
-          <path d="M 490 156 C 482 160, 473 160, 465 156 M 489 142 C 481 145, 473 145, 466 141"
-                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.25" fill="none" stroke-linecap="round" opacity=".24"/>
-          <path d="M 488 128 C 481 132, 472 132, 466 127 M 487 112 C 480 116, 473 116, 467 112"
-                stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.25" fill="none" stroke-linecap="round" opacity=".24"/>
-          <path d="M 482 168 C 485 144, 484 112, 481 86" stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.75" fill="none" stroke-linecap="round" opacity=".42"/>
-          <path d="M 468 158 C 466 133, 469 105, 473 84" stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.55" fill="none" stroke-linecap="round" opacity=".34"/>
+                stroke-width="2.1" stroke-linejoin="round"/>
+          <path d="M 483 150 C 486 125, 485 95, 481 78"
+                stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.75" fill="none"
+                stroke-linecap="round" opacity=".42"/>
+          <path d="M 469 150 C 466 125, 468 100, 473 80"
+                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.5" fill="none"
+                stroke-linecap="round" opacity=".3"/>
           <path d="M 486 78 C 484 72, 472 72, 470 78 L 471 86 C 474 89, 482 89, 485 86 Z"
                 fill="url(#gold-{{ hero_variant }})" stroke="#6f4f00" stroke-width="1.50" stroke-linejoin="round"/>
           <path d="M 484 80 C 480 77, 474 77, 471 80" stroke="#fff6c0" stroke-width="1.35"
@@ -1469,14 +1437,26 @@
               stroke="#ffffff" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".34"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="buzz" display="none">
-        <!-- Buzz cut: close-shaved dome. -->
+        <!-- Buzz cut: close-shaved dome + scalp-stipple texture (research: "scalp shading matters more than locks"). -->
         <path d="M 350 178 C 344 146, 362 116, 400 112 C 438 116, 456 146, 450 178 C 440 168, 422 162, 400 162 C 378 162, 360 168, 350 178 Z"
               fill="var(--hero-hair-dark, #0f0905)" opacity=".5"/>
         <path d="M 354 178 C 350 142, 370 112, 400 110 C 430 112, 450 142, 446 178 C 434 164, 418 158, 400 158 C 382 158, 366 164, 354 178 Z"
-              fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" opacity=".88"/>
+              fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round" opacity=".82"/>
+        <!-- Scalp stipple dots (clipped to silhouette), 4 staggered rows. -->
+        <g clip-path="url(#comic-crown-hair-clip-{{ hero_variant }})" fill="var(--hero-hair-dark, #0f0905)" opacity=".42">
+          <circle cx="362" cy="130" r="1.3"/><circle cx="372" cy="124" r="1.4"/><circle cx="384" cy="120" r="1.4"/>
+          <circle cx="396" cy="118" r="1.5"/><circle cx="408" cy="118" r="1.5"/><circle cx="420" cy="121" r="1.4"/>
+          <circle cx="432" cy="126" r="1.4"/><circle cx="440" cy="132" r="1.3"/>
+          <circle cx="360" cy="140" r="1.3"/><circle cx="372" cy="136" r="1.3"/><circle cx="386" cy="132" r="1.4"/>
+          <circle cx="400" cy="130" r="1.4"/><circle cx="414" cy="132" r="1.4"/><circle cx="428" cy="136" r="1.3"/>
+          <circle cx="440" cy="140" r="1.3"/>
+          <circle cx="358" cy="150" r="1.2"/><circle cx="372" cy="148" r="1.3"/><circle cx="388" cy="146" r="1.3"/>
+          <circle cx="402" cy="144" r="1.3"/><circle cx="416" cy="146" r="1.3"/><circle cx="430" cy="148" r="1.3"/>
+          <circle cx="442" cy="150" r="1.2"/>
+        </g>
         <path d="M 368 142 C 380 134, 396 130, 400 134 C 410 132, 422 134, 432 142 C 422 134, 408 134, 396 136 C 384 140, 374 142, 368 142 Z"
-              fill="var(--hero-hair-light, #4a3220)" opacity=".4"/>
-        <path d="M 374 134 C 388 128, 408 128, 422 134"
+              fill="var(--hero-hair-light, #4a3220)" opacity=".34"/>
+        <path d="M 374 130 C 388 124, 408 124, 422 130"
               stroke="#ffffff" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".3"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="long" display="none">
@@ -1570,61 +1550,167 @@
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="curly" display="none">
-        <circle cx="368" cy="124" r="18" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="396" cy="110" r="22" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="428" cy="120" r="20" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="348" cy="148" r="18" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="452" cy="148" r="18" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="378" cy="142" r="14" fill="var(--hero-hair, #1f140c)"/>
-        <circle cx="416" cy="142" r="14" fill="var(--hero-hair, #1f140c)"/>
-        <circle cx="358" cy="172" r="14" fill="var(--hero-hair, #1f140c)"/>
-        <circle cx="442" cy="172" r="14" fill="var(--hero-hair, #1f140c)"/>
-        <path d="M 354 178 C 350 158, 358 138, 372 128 L 428 128 C 442 138, 450 158, 446 178 C 444 166, 436 154, 424 150 C 414 148, 408 150, 400 152 C 392 150, 386 148, 376 150 C 364 154, 356 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="380" cy="125" r="4" fill="var(--hero-hair-rim, #4a3220)" opacity=".7"/>
-        <circle cx="410" cy="118" r="4" fill="var(--hero-hair-rim, #4a3220)" opacity=".7"/>
-        <circle cx="420" cy="130" r="3" fill="var(--hero-hair-rim, #4a3220)" opacity=".5"/>
+        <!-- Curly: puffier envelope silhouette + clipped curl symbols (research-grounded). -->
+        <!-- 1. Back-layer halo. -->
+        <path d="M 340 178 C 332 130, 358 96, 400 92 C 442 96, 468 130, 460 178 C 444 168, 422 160, 400 160 C 378 160, 356 168, 340 178 Z"
+              fill="var(--hero-hair-dark, #0f0905)" opacity=".44"/>
+        <!-- 2. Main silhouette: puffier curl envelope, single complex path. -->
+        <path d="M 346 178
+                 C 338 152, 340 122, 354 110
+                 C 358 100, 366 98, 372 106
+                 C 374 94, 382 92, 388 102
+                 C 392 90, 402 90, 406 102
+                 C 412 92, 420 94, 422 106
+                 C 430 100, 438 102, 442 112
+                 C 456 124, 458 152, 454 178
+                 C 442 168, 424 162, 400 162
+                 C 376 162, 358 168, 346 178 Z"
+              fill="url(#hair-grad-{{ hero_variant }})"
+              stroke="var(--hero-hair-dark, #0f0905)"
+              stroke-width="3.2"
+              stroke-linejoin="round"
+              stroke-linecap="round"/>
+        <!-- 3. Mid-tone shadow plate. -->
+        <path d="M 358 168 C 374 158, 392 154, 402 156 C 416 154, 434 158, 442 168 C 432 158, 416 152, 402 152 C 386 150, 372 154, 364 160 C 360 162, 358 164, 358 168 Z"
+              fill="var(--hero-hair, #1f140c)" opacity=".38"/>
+        <!-- 4. Top-light highlight plate. -->
+        <path d="M 368 124 C 378 114, 392 110, 400 114 C 410 112, 422 116, 432 126 C 422 116, 406 114, 392 118 C 380 122, 372 124, 368 124 Z"
+              fill="var(--hero-hair-light, #4a3220)" opacity=".58"/>
+        <!-- 5. Clipped curl indicators (3 small S-curls, asymmetric placement). -->
+        <g clip-path="url(#comic-crown-hair-clip-{{ hero_variant }})" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.8" fill="none" opacity=".42">
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(364 118) rotate(-12) scale(.85)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(396 108) rotate(8) scale(.9)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(424 122) rotate(18) scale(.85)"/>
+        </g>
+        <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="curly-bob" display="none">
-          <path d="M 354 170 C 347 136, 366 108, 400 106 C 434 108, 453 136, 446 170 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="360" cy="150" r="15" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="382" cy="126" r="17" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="410" cy="124" r="18" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="438" cy="150" r="16" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="348" cy="190" r="14" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="452" cy="190" r="14" fill="url(#hair-grad-{{ hero_variant }})"/>
-          <path d="M 346 170 C 338 202, 346 234, 370 242 C 372 214, 374 190, 382 170 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
-          <path d="M 454 170 C 462 202, 454 234, 430 242 C 428 214, 426 190, 418 170 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
+        <!-- Curly bob: puffier silhouette + chin-length side panels + curl indicators. -->
+        <path d="M 340 178 C 332 130, 358 100, 400 96 C 442 100, 468 130, 460 178 C 444 168, 422 162, 400 162 C 378 162, 356 168, 340 178 Z"
+              fill="var(--hero-hair-dark, #0f0905)" opacity=".42"/>
+        <path d="M 346 178
+                 C 338 144, 348 118, 360 108
+                 C 366 100, 374 102, 376 110
+                 C 380 100, 390 100, 394 110
+                 C 398 100, 408 100, 412 110
+                 C 416 100, 424 102, 430 108
+                 C 442 116, 456 138, 454 178
+                 C 442 168, 422 162, 400 162
+                 C 378 162, 358 168, 346 178 Z"
+              fill="url(#hair-grad-{{ hero_variant }})"
+              stroke="var(--hero-hair-dark, #0f0905)"
+              stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+        <!-- Chin-length curly side panels. -->
+        <path d="M 346 170 C 338 196, 344 224, 366 240 C 372 224, 374 200, 382 172 C 368 168, 354 168, 346 170 Z"
+              fill="url(#hair-grad-{{ hero_variant }})"
+              stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.6" stroke-linejoin="round"/>
+        <path d="M 454 170 C 462 196, 456 224, 434 240 C 428 224, 426 200, 418 172 C 432 168, 446 168, 454 170 Z"
+              fill="url(#hair-grad-{{ hero_variant }})"
+              stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.6" stroke-linejoin="round"/>
+        <path d="M 366 124 C 380 116, 420 116, 434 124 C 422 120, 400 120, 378 122 C 372 124, 368 124, 366 124 Z"
+              fill="var(--hero-hair-light, #4a3220)" opacity=".5"/>
+        <!-- Curl indicators. -->
+        <g clip-path="url(#comic-crown-hair-clip-{{ hero_variant }})" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.6" fill="none" opacity=".4">
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(366 116) rotate(-10) scale(.8)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(400 110) rotate(6) scale(.85)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(422 122) rotate(16) scale(.8)"/>
+        </g>
+        <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="voluminous-curls" display="none">
-          <path d="M 346 170 C 339 132, 362 102, 400 98 C 438 102, 461 132, 454 170 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="356" cy="142" r="22" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="382" cy="116" r="24" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="414" cy="116" r="24" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="444" cy="144" r="22" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="344" cy="186" r="20" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="456" cy="186" r="20" fill="url(#hair-grad-{{ hero_variant }})"/>
-          <path d="M 344 172 C 336 208, 344 246, 366 258 C 372 228, 374 198, 384 170 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
-          <path d="M 456 172 C 464 208, 456 246, 434 258 C 428 228, 426 198, 416 170 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
+        <!-- Voluminous curls: extra-puffy silhouette + medium side panels. -->
+        <path d="M 330 178 C 322 122, 354 86, 400 82 C 446 86, 478 122, 470 178 C 452 168, 426 160, 400 160 C 374 160, 348 168, 330 178 Z"
+              fill="var(--hero-hair-dark, #0f0905)" opacity=".44"/>
+        <path d="M 336 178
+                 C 326 132, 340 96, 358 88
+                 C 364 78, 374 80, 376 92
+                 C 380 76, 392 76, 396 90
+                 C 402 74, 412 74, 416 90
+                 C 420 76, 432 80, 436 92
+                 C 450 100, 472 130, 464 178
+                 C 446 168, 422 160, 400 160
+                 C 378 160, 354 168, 336 178 Z"
+              fill="url(#hair-grad-{{ hero_variant }})"
+              stroke="var(--hero-hair-dark, #0f0905)"
+              stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/>
+        <!-- Voluminous side panels (longer than curly-bob). -->
+        <path d="M 336 172 C 326 212, 336 252, 360 264 C 368 232, 372 200, 380 174 C 364 170, 348 170, 336 172 Z"
+              fill="url(#hair-grad-{{ hero_variant }})"
+              stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.8" stroke-linejoin="round"/>
+        <path d="M 464 172 C 474 212, 464 252, 440 264 C 432 232, 428 200, 420 174 C 436 170, 452 170, 464 172 Z"
+              fill="url(#hair-grad-{{ hero_variant }})"
+              stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.8" stroke-linejoin="round"/>
+        <path d="M 358 110 C 376 100, 424 100, 442 110 C 422 106, 400 106, 376 108 C 366 110, 360 110, 358 110 Z"
+              fill="var(--hero-hair-light, #4a3220)" opacity=".52"/>
+        <g clip-path="url(#comic-crown-hair-clip-{{ hero_variant }})" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.8" fill="none" opacity=".42">
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(358 108) rotate(-14) scale(.95)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(396 96) rotate(6) scale(1)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(432 110) rotate(20) scale(.95)"/>
+        </g>
+        <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="curly-layers" display="none">
-          <path d="M 346 170 C 339 132, 362 102, 400 98 C 438 102, 461 132, 454 170 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="356" cy="140" r="20" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="382" cy="116" r="22" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="414" cy="116" r="22" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="444" cy="142" r="20" fill="url(#hair-grad-{{ hero_variant }})"/>
-          <path d="M 346 170 C 336 216, 342 278, 360 320 C 372 328, 386 320, 388 304 C 372 266, 374 214, 384 170 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
-          <path d="M 454 170 C 464 216, 458 278, 440 320 C 428 328, 414 320, 412 304 C 428 266, 426 214, 416 170 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
+        <!-- Curly with long layers. -->
+        <path d="M 334 178 C 326 124, 354 90, 400 86 C 446 90, 474 124, 466 178 C 448 168, 422 160, 400 160 C 378 160, 352 168, 334 178 Z"
+              fill="var(--hero-hair-dark, #0f0905)" opacity=".42"/>
+        <path d="M 340 178
+                 C 330 138, 344 102, 360 92
+                 C 366 82, 376 86, 378 96
+                 C 384 80, 394 80, 398 94
+                 C 402 80, 412 82, 416 94
+                 C 422 84, 432 86, 436 96
+                 C 452 104, 472 138, 462 178
+                 C 446 168, 422 160, 400 160
+                 C 378 160, 354 168, 340 178 Z"
+              fill="url(#hair-grad-{{ hero_variant }})"
+              stroke="var(--hero-hair-dark, #0f0905)"
+              stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/>
+        <!-- Long layered side panels. -->
+        <path d="M 340 174 C 332 218, 340 280, 358 320 C 366 326, 380 322, 384 308 C 372 270, 374 220, 382 178 C 366 174, 350 172, 340 174 Z"
+              fill="url(#hair-grad-{{ hero_variant }})"
+              stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.8" stroke-linejoin="round"/>
+        <path d="M 460 174 C 468 218, 460 280, 442 320 C 434 326, 420 322, 416 308 C 428 270, 426 220, 418 178 C 434 174, 450 172, 460 174 Z"
+              fill="url(#hair-grad-{{ hero_variant }})"
+              stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.8" stroke-linejoin="round"/>
+        <path d="M 360 110 C 376 100, 424 100, 440 110 C 422 106, 400 106, 378 108 C 368 110, 362 110, 360 110 Z"
+              fill="var(--hero-hair-light, #4a3220)" opacity=".5"/>
+        <g clip-path="url(#comic-crown-hair-clip-{{ hero_variant }})" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.7" fill="none" opacity=".42">
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(360 108) rotate(-12) scale(.9)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(398 96) rotate(8) scale(.95)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(432 110) rotate(18) scale(.9)"/>
+        </g>
+        <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="coils" display="none">
-        <circle cx="366" cy="122" r="15" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="392" cy="108" r="18" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="420" cy="112" r="17" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="444" cy="136" r="16" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="354" cy="148" r="17" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="376" cy="150" r="13" fill="var(--hero-hair, #1f140c)"/>
-        <circle cx="404" cy="144" r="14" fill="var(--hero-hair, #1f140c)"/>
-        <circle cx="432" cy="158" r="13" fill="var(--hero-hair, #1f140c)"/>
-        <path d="M 356 178 C 352 158, 362 136, 380 128 C 392 122, 408 122, 422 128 C 438 136, 448 158, 444 178 C 432 164, 416 158, 400 158 C 384 158, 368 164, 356 178 Z" fill="var(--hero-hair, #1f140c)"/>
+        <!-- Coils: tight curl envelope + denser curl indicators. -->
+        <path d="M 342 178 C 334 128, 358 96, 400 92 C 442 96, 466 128, 458 178 C 442 168, 422 162, 400 162 C 378 162, 358 168, 342 178 Z"
+              fill="var(--hero-hair-dark, #0f0905)" opacity=".46"/>
+        <path d="M 348 178
+                 C 340 144, 350 116, 364 106
+                 C 368 100, 374 102, 376 110
+                 C 380 100, 388 100, 390 110
+                 C 394 100, 402 100, 404 110
+                 C 408 100, 416 100, 420 110
+                 C 422 100, 430 102, 434 108
+                 C 446 116, 458 144, 452 178
+                 C 440 168, 422 162, 400 162
+                 C 378 162, 360 168, 348 178 Z"
+              fill="url(#hair-grad-{{ hero_variant }})"
+              stroke="var(--hero-hair-dark, #0f0905)"
+              stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+        <path d="M 360 168 C 376 158, 392 154, 402 156 C 416 154, 432 158, 440 168 C 430 158, 414 152, 400 152 C 386 150, 372 154, 364 160 C 360 162, 358 164, 360 168 Z"
+              fill="var(--hero-hair, #1f140c)" opacity=".4"/>
+        <path d="M 366 122 C 380 114, 420 114, 434 122 C 422 118, 400 118, 378 120 C 372 122, 368 122, 366 122 Z"
+              fill="var(--hero-hair-light, #4a3220)" opacity=".5"/>
+        <!-- Coil indicators (denser, smaller, tighter than curly). -->
+        <g clip-path="url(#comic-crown-hair-clip-{{ hero_variant }})" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.6" fill="none" opacity=".48">
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(358 122) rotate(-14) scale(.65)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(378 114) rotate(-4) scale(.7)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(400 110) rotate(4) scale(.7)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(420 114) rotate(12) scale(.7)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(438 122) rotate(20) scale(.65)"/>
+        </g>
+        <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="two-strand-twists" display="none">
         <path d="M 354 178 C 348 142, 368 112, 400 110 C 432 112, 452 142, 446 178 C 434 164, 418 158, 400 158 C 382 158, 366 164, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
@@ -1717,53 +1803,86 @@
         <circle cx="450" cy="336" r="3.5" fill="var(--hero-hair-rim, #4a3220)" opacity=".7"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="afro" display="none">
-        <path d="M 342 162 C 344 124, 368 96, 400 94 C 432 96, 456 124, 458 162 C 444 154, 428 150, 412 152 C 404 154, 396 154, 388 152 C 372 150, 356 154, 342 162 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="360" cy="132" r="24" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="384" cy="108" r="24" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="414" cy="108" r="24" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="440" cy="132" r="24" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="342" cy="158" r="20" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="458" cy="158" r="20" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <ellipse cx="346" cy="184" rx="14" ry="22" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <ellipse cx="454" cy="184" rx="14" ry="22" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <path d="M 358 160 C 372 150, 386 148, 400 152 C 414 148, 428 150, 442 160 C 430 158, 418 160, 408 164 C 402 166, 398 166, 392 164 C 382 160, 370 158, 358 160 Z" fill="var(--hero-hair, #1f140c)" opacity=".88"/>
-        <circle cx="378" cy="132" r="5" fill="var(--hero-hair-rim, #4a3220)" opacity=".5"/>
-        <circle cx="420" cy="128" r="5" fill="var(--hero-hair-rim, #4a3220)" opacity=".5"/>
-        <circle cx="400" cy="120" r="4" fill="var(--hero-hair-rim, #4a3220)" opacity=".4"/>
-        <circle cx="360" cy="154" r="4" fill="var(--hero-hair-rim, #4a3220)" opacity=".4"/>
-        <circle cx="440" cy="154" r="4" fill="var(--hero-hair-rim, #4a3220)" opacity=".4"/>
+        <!-- Afro: large puffer envelope, single complex silhouette + curl indicators. -->
+        <path d="M 322 178 C 314 110, 352 76, 400 72 C 448 76, 486 110, 478 178 C 458 168, 428 158, 400 158 C 372 158, 342 168, 322 178 Z"
+              fill="var(--hero-hair-dark, #0f0905)" opacity=".44"/>
+        <path d="M 330 178
+                 C 318 122, 340 84, 360 78
+                 C 366 70, 378 72, 380 84
+                 C 386 68, 396 68, 400 80
+                 C 404 68, 414 68, 420 84
+                 C 422 72, 434 70, 440 78
+                 C 460 84, 482 122, 470 178
+                 C 452 168, 426 160, 400 160
+                 C 374 160, 348 168, 330 178 Z"
+              fill="url(#hair-grad-{{ hero_variant }})"
+              stroke="var(--hero-hair-dark, #0f0905)"
+              stroke-width="3.4" stroke-linejoin="round" stroke-linecap="round"/>
+        <path d="M 358 168 C 374 158, 392 154, 402 156 C 416 154, 432 158, 442 168 C 432 158, 416 152, 402 152 C 386 150, 372 154, 364 160 C 360 162, 358 164, 358 168 Z"
+              fill="var(--hero-hair, #1f140c)" opacity=".4"/>
+        <path d="M 358 108 C 378 96, 422 96, 442 108 C 422 102, 400 102, 378 104 C 368 108, 362 108, 358 108 Z"
+              fill="var(--hero-hair-light, #4a3220)" opacity=".5"/>
+        <g clip-path="url(#comic-crown-hair-clip-{{ hero_variant }})" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.7" fill="none" opacity=".42">
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(354 110) rotate(-15) scale(.9)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(384 92) rotate(-3) scale(.95)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(414 94) rotate(10) scale(.95)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(440 112) rotate(22) scale(.9)"/>
+        </g>
       </g>
       <g data-hero-slot="hair" data-hero-option="rounded-afro" display="none">
-        <circle cx="400" cy="126" r="42" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="362" cy="142" r="28" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="438" cy="142" r="28" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="382" cy="102" r="24" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="418" cy="102" r="24" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <ellipse cx="344" cy="174" rx="18" ry="24" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <ellipse cx="456" cy="174" rx="18" ry="24" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <path d="M 354 178 C 350 158, 362 144, 382 140 C 392 138, 408 138, 420 140 C 438 144, 450 158, 446 178 C 432 166, 416 160, 400 160 C 384 160, 368 166, 354 178 Z" fill="var(--hero-hair, #1f140c)" opacity=".86"/>
+        <!-- Rounded afro: ultra-round single silhouette. -->
+        <path d="M 320 178 C 312 108, 350 70, 400 66 C 450 70, 488 108, 480 178 C 460 168, 428 158, 400 158 C 372 158, 340 168, 320 178 Z"
+              fill="var(--hero-hair-dark, #0f0905)" opacity=".44"/>
+        <path d="M 328 178 C 320 110, 354 76, 400 72 C 446 76, 480 110, 472 178 C 452 168, 426 160, 400 160 C 374 160, 348 168, 328 178 Z"
+              fill="url(#hair-grad-{{ hero_variant }})"
+              stroke="var(--hero-hair-dark, #0f0905)"
+              stroke-width="3.4" stroke-linejoin="round" stroke-linecap="round"/>
+        <path d="M 358 168 C 374 158, 392 154, 402 156 C 416 154, 432 158, 442 168 C 432 158, 416 152, 402 152 C 386 150, 372 154, 364 160 C 360 162, 358 164, 358 168 Z"
+              fill="var(--hero-hair, #1f140c)" opacity=".4"/>
+        <path d="M 356 102 C 378 92, 422 92, 444 102 C 422 96, 400 96, 378 98 C 368 102, 360 102, 356 102 Z"
+              fill="var(--hero-hair-light, #4a3220)" opacity=".5"/>
+        <g clip-path="url(#comic-crown-hair-clip-{{ hero_variant }})" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.7" fill="none" opacity=".4">
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(354 104) rotate(-14) scale(.9)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(394 88) rotate(2) scale(.95)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(434 104) rotate(20) scale(.9)"/>
+        </g>
       </g>
       <g data-hero-slot="hair" data-hero-option="coily-puff" display="none">
-        <path d="M 356 178 C 350 154, 370 134, 400 132 C 430 134, 450 154, 444 178 C 432 164, 416 158, 400 158 C 384 158, 368 164, 356 178 Z" fill="var(--hero-hair, #1f140c)"/>
-        <circle cx="400" cy="100" r="30" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="378" cy="112" r="18" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="422" cy="112" r="18" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="400" cy="126" r="20" fill="url(#hair-grad-{{ hero_variant }})"/>
+        <!-- Coily puff: tight scalp + one elevated rounded dome. -->
+        <path d="M 356 178 C 350 154, 370 134, 400 132 C 430 134, 450 154, 444 178 C 432 164, 416 158, 400 158 C 384 158, 368 164, 356 178 Z"
+              fill="var(--hero-hair, #1f140c)" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.6" stroke-linejoin="round"/>
+        <ellipse cx="400" cy="106" rx="36" ry="32" fill="url(#hair-grad-{{ hero_variant }})"
+                 stroke="var(--hero-hair-dark, #0f0905)" stroke-width="3" stroke-linejoin="round"/>
+        <path d="M 374 96 C 392 86, 416 88, 426 100 C 414 92, 398 92, 386 96 C 378 100, 374 100, 374 96 Z"
+              fill="var(--hero-hair-light, #4a3220)" opacity=".5"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="double-puffs" display="none">
-        <path d="M 356 178 C 350 154, 370 136, 400 134 C 430 136, 450 154, 444 178 C 432 164, 416 158, 400 158 C 384 158, 368 164, 356 178 Z" fill="var(--hero-hair, #1f140c)"/>
-        <circle cx="362" cy="122" r="28" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="438" cy="122" r="28" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="378" cy="132" r="14" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="422" cy="132" r="14" fill="url(#hair-grad-{{ hero_variant }})"/>
+        <!-- Double puffs: two clean ellipses (research: ribbon/cylinder, not strand carpets). -->
+        <path d="M 356 178 C 350 154, 370 136, 400 134 C 430 136, 450 154, 444 178 C 432 164, 416 158, 400 158 C 384 158, 368 164, 356 178 Z"
+              fill="var(--hero-hair, #1f140c)" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.6" stroke-linejoin="round"/>
+        <ellipse cx="362" cy="118" rx="30" ry="28" fill="url(#hair-grad-{{ hero_variant }})"
+                 stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.8" stroke-linejoin="round"/>
+        <ellipse cx="438" cy="118" rx="30" ry="28" fill="url(#hair-grad-{{ hero_variant }})"
+                 stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.8" stroke-linejoin="round"/>
+        <path d="M 348 108 C 358 100, 372 100, 376 106 C 366 102, 356 104, 350 108 Z"
+              fill="var(--hero-hair-light, #4a3220)" opacity=".5"/>
+        <path d="M 424 108 C 434 100, 448 100, 452 106 C 442 102, 432 104, 426 108 Z"
+              fill="var(--hero-hair-light, #4a3220)" opacity=".5"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="bantu-knots" display="none">
-        <path d="M 350 178 C 348 146, 370 120, 400 118 C 430 120, 452 146, 450 178 C 436 164, 418 157, 400 158 C 382 157, 364 164, 350 178 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="368" cy="120" r="13" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="400" cy="106" r="15" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="432" cy="120" r="13" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="384" cy="138" r="11.5" fill="url(#hair-grad-{{ hero_variant }})"/>
-        <circle cx="416" cy="138" r="11.5" fill="url(#hair-grad-{{ hero_variant }})"/>
+        <!-- Bantu knots: 5 distinct knot beads. -->
+        <path d="M 350 178 C 348 146, 370 120, 400 118 C 430 120, 452 146, 450 178 C 436 164, 418 157, 400 158 C 382 157, 364 164, 350 178 Z"
+              fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.8" stroke-linejoin="round"/>
+        <ellipse cx="368" cy="118" rx="14" ry="13" fill="url(#hair-grad-{{ hero_variant }})"
+                 stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.4"/>
+        <ellipse cx="400" cy="104" rx="16" ry="14" fill="url(#hair-grad-{{ hero_variant }})"
+                 stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.4"/>
+        <ellipse cx="432" cy="118" rx="14" ry="13" fill="url(#hair-grad-{{ hero_variant }})"
+                 stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.4"/>
+        <ellipse cx="384" cy="138" rx="12" ry="11" fill="url(#hair-grad-{{ hero_variant }})"
+                 stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.4"/>
+        <ellipse cx="416" cy="138" rx="12" ry="11" fill="url(#hair-grad-{{ hero_variant }})"
+                 stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.4"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="bun" display="none">
         <path d="M 355 178 C 348 148, 366 122, 400 120 C 434 122, 452 148, 445 178 Z" fill="url(#hair-grad-{{ hero_variant }})"/>
@@ -2039,13 +2158,15 @@
         <path d="M 350 180 C 350 146, 370 124, 400 122 C 430 124, 450 146, 450 180 C 452 214, 434 236, 414 242 L 386 242 C 366 236, 348 214, 350 180 Z" fill="url(#skin-{{ hero_variant }})" clip-path="url(#face-clear-clip-{{ hero_variant }})"/>
       </g>
       <g data-hero-polish="face" clip-path="url(#face-clear-clip-{{ hero_variant }})" pointer-events="none">
-        <ellipse cx="390" cy="181" rx="52" ry="66" fill="url(#face-round-light-{{ hero_variant }})" opacity="var(--hero-face-core-highlight-opacity, .72)"/>
-        <ellipse cx="420" cy="213" rx="54" ry="58" fill="url(#face-form-shadow-{{ hero_variant }})" opacity="var(--hero-face-form-shadow-opacity, .5)"/>
-        <ellipse cx="364" cy="207" rx="32" ry="22" fill="url(#face-scatter-{{ hero_variant }})" opacity="var(--hero-face-scatter-opacity, .1)"/>
-        <ellipse cx="431" cy="210" rx="30" ry="30" fill="url(#face-soft-shadow-{{ hero_variant }})" opacity="var(--hero-face-soft-shadow-opacity, .16)"/>
-        <ellipse cx="400" cy="238" rx="38" ry="16" fill="url(#face-soft-shadow-{{ hero_variant }})" opacity="var(--hero-face-ao-opacity, .12)"/>
-        <ellipse cx="378" cy="228" rx="42" ry="20" fill="url(#face-rim-light-{{ hero_variant }})" opacity="var(--hero-face-bounce-opacity, .08)"/>
-        <ellipse cx="357" cy="192" rx="18" ry="58" fill="url(#face-rim-light-{{ hero_variant }})" opacity="var(--hero-face-rim-opacity, .1)"/>
+        <ellipse cx="390" cy="198" rx="54" ry="54" fill="url(#face-round-light-{{ hero_variant }})" opacity="var(--hero-face-core-highlight-opacity, .48)"/>
+        <ellipse cx="425" cy="224" rx="50" ry="54" fill="url(#face-form-shadow-{{ hero_variant }})" opacity="var(--hero-face-form-shadow-opacity, .32)"/>
+        <ellipse cx="367" cy="212" rx="24" ry="15" fill="url(#face-scatter-{{ hero_variant }})" opacity="var(--hero-face-scatter-opacity, .08)"/>
+        <ellipse cx="433" cy="212" rx="24" ry="15" fill="url(#face-scatter-{{ hero_variant }})" opacity="var(--hero-face-scatter-opacity, .08)"/>
+        <ellipse cx="432" cy="220" rx="28" ry="30" fill="url(#face-soft-shadow-{{ hero_variant }})" opacity="var(--hero-face-soft-shadow-opacity, .1)"/>
+        <ellipse cx="400" cy="239" rx="34" ry="12" fill="url(#face-soft-shadow-{{ hero_variant }})" opacity="var(--hero-face-ao-opacity, .08)"/>
+        <ellipse cx="399" cy="204" rx="7" ry="20" fill="url(#face-rim-light-{{ hero_variant }})" opacity="var(--hero-face-highlight-opacity, .08)" transform="rotate(-7 399 204)"/>
+        <ellipse cx="378" cy="228" rx="34" ry="16" fill="url(#face-rim-light-{{ hero_variant }})" opacity="var(--hero-face-bounce-opacity, .06)"/>
+        <ellipse cx="357" cy="194" rx="14" ry="52" fill="url(#face-rim-light-{{ hero_variant }})" opacity="var(--hero-face-rim-opacity, .07)"/>
       </g>
       <g data-hero-slot="hair-cap" data-hero-option="head-covering" display="none">
         <path d="M 342 172 C 340 140, 366 112, 400 110 C 434 112, 460 140, 458 172 C 444 164, 424 158, 400 158 C 376 158, 356 164, 342 172 Z" fill="url(#hair-grad-{{ hero_variant }})"/>

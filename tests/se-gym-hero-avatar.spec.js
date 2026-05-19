@@ -3350,8 +3350,10 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(Number(tokens.noseHighlightOpacity)).toBeLessThanOrEqual(0.1);
     expect(Number(tokens.cheekOpacity)).toBeLessThanOrEqual(0.22);
     expect(Number(tokens.contourOpacity)).toBeLessThanOrEqual(0.4);
-    expect(Number(tokens.hairDetailOpacity)).toBeGreaterThanOrEqual(0.7);
-    expect(Number(tokens.faceCoreHighlightOpacity)).toBeGreaterThanOrEqual(0.6);
+    expect(Number(tokens.hairDetailOpacity)).toBeGreaterThanOrEqual(0.35);
+    expect(Number(tokens.hairDetailOpacity)).toBeLessThanOrEqual(0.55);
+    expect(Number(tokens.faceCoreHighlightOpacity)).toBeGreaterThanOrEqual(0.35);
+    expect(Number(tokens.faceCoreHighlightOpacity)).toBeLessThanOrEqual(0.5);
     expect(Number(tokens.faceFormShadowOpacity)).toBeLessThanOrEqual(0.5);
     expect(Number(tokens.faceSoftShadowOpacity)).toBeLessThanOrEqual(0.16);
     expect(Number(tokens.faceScatterOpacity)).toBeLessThanOrEqual(0.12);
@@ -3361,7 +3363,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(Number(tokens.faceHighlightOpacity)).toBeLessThanOrEqual(0.14);
     expect(Number(tokens.faceShadowOpacity)).toBeLessThanOrEqual(0.16);
     expect(Number(tokens.jawLineOpacity)).toBeLessThanOrEqual(0.3);
-    expect(Number(tokens.neckShadowOpacity)).toBeGreaterThanOrEqual(0.5);
+    expect(Number(tokens.neckShadowOpacity)).toBeGreaterThanOrEqual(0.35);
+    expect(Number(tokens.neckShadowOpacity)).toBeLessThanOrEqual(0.48);
     expect(tokens.hairLight.toLowerCase()).not.toBe(tokens.hairRim.toLowerCase());
     expect(tokens.gradientStop).toContain('--hero-hair-light');
   });

@@ -611,8 +611,8 @@
   var DEEP_SET_EYE_SHAPES = { 'deep-set': true };
   var ANGLED_ALMOND_EYE_SHAPES = { 'tapered-almond': true, 'upturned-almond': true, 'downturned-soft': true };
   var EYELASH_STYLE_GEOMETRY = {
-    'short-soft': { count: 6, length: 2.3, reach: 0.86, strokeWidth: 0.48, opacity: 0.34 },
-    'short-dense': { count: 8, length: 2.2, reach: 0.96, strokeWidth: 0.48, opacity: 0.36 },
+    'short-soft': { count: 9, length: 2.3, reach: 0.86, strokeWidth: 0.48, opacity: 0.34 },
+    'short-dense': { count: 11, length: 2.2, reach: 0.96, strokeWidth: 0.48, opacity: 0.36 },
     'barely-there': { count: 3, length: 2.75, reach: 0.64, strokeWidth: 0.54, opacity: 0.34 },
     subtle: { count: 5, length: 2.95, reach: 0.88, strokeWidth: 0.56, opacity: 0.38 },
     'short-natural': { count: 5, length: 2.72, reach: 0.86, strokeWidth: 0.54, opacity: 0.36 },
@@ -621,11 +621,11 @@
     'outer-corner': { count: 4, length: 3.55, reach: 0.66, strokeWidth: 0.58, opacity: 0.38 },
     'soft-fan': { count: 7, length: 3.75, reach: 0.94, strokeWidth: 0.58, opacity: 0.4 },
     'full-upper': { count: 8, length: 3.95, reach: 0.96, strokeWidth: 0.6, opacity: 0.42 },
-    'long-classic': { count: 8, length: 4.35, reach: 0.96, strokeWidth: 0.62, opacity: 0.42 },
-    'long-doll': { count: 9, length: 4.6, reach: 0.96, strokeWidth: 0.64, opacity: 0.42, outerBoost: 0.18 },
-    'long-glam': { count: 9, length: 4.9, reach: 0.96, strokeWidth: 0.66, opacity: 0.42, outerBoost: 0.35 },
+    'long-classic': { count: 11, length: 4.35, reach: 0.96, strokeWidth: 0.62, opacity: 0.42 },
+    'long-doll': { count: 13, length: 4.6, reach: 0.96, strokeWidth: 0.64, opacity: 0.42, outerBoost: 0.18 },
+    'long-glam': { count: 14, length: 4.9, reach: 0.96, strokeWidth: 0.66, opacity: 0.42, outerBoost: 0.35 },
     winged: { count: 7, length: 4.4, reach: 0.74, strokeWidth: 0.62, opacity: 0.42, outerBoost: 0.55 },
-    dense: { count: 9, length: 4.05, reach: 0.96, strokeWidth: 0.6, opacity: 0.4 }
+    dense: { count: 14, length: 4.05, reach: 0.96, strokeWidth: 0.6, opacity: 0.4 }
   };
   var EYELASH_FAMILY_GEOMETRY = {
     round: { kind: 'ellipse', cx: 381, cy: 185, rx: 7, ry: 8.5, startAngle: 205, endAngle: 335, lengthScale: 1, fanBias: 0.18, riseBias: 0.1 },
@@ -1786,7 +1786,7 @@
     var skinLum = relativeLuminance(skin);
     var hairLum = relativeLuminance(hair);
     var skinShadow = darken(skin, 0.22);
-    var skinMid = mix(skin, skinShadow, skinLum < 0.2 ? 0.36 : 0.28);
+    var skinMid = mix(skin, skinShadow, skinLum < 0.13 ? 0.24 : (skinLum < 0.2 ? 0.28 : 0.24));
     var skinRamp = [skin, skinShadow];
     var darkSkin = skinLum < 0.24;
     var deepSkin = skinLum < 0.13;
@@ -1893,14 +1893,14 @@
       ? firstContrastColorAgainstAll([hairRim, faceLine, lighten(hair, 0.58), mix(hair, '#f1c27d', 0.38), darken(hair, 0.5)], skinRamp, featureTarget)
       : hair;
     var skinHighlightSoft = darkSkin
-      ? mix(skin, warmHighlight, deepSkin ? 0.34 : 0.28)
-      : mix(skin, '#fff2df', 0.28);
+      ? mix(skin, warmHighlight, deepSkin ? 0.28 : 0.24)
+      : mix(skin, '#fff2df', 0.2);
     var skinAmbient = darkSkin
-      ? mix(skin, warmHighlight, 0.16)
-      : mix(skin, '#ffe6cc', 0.18);
+      ? mix(skin, '#7c7180', deepSkin ? 0.18 : 0.14)
+      : mix(skin, '#ffe6cc', 0.14);
     var facePlaneShadow = darkSkin
-      ? mix(skinShadow, '#160c07', deepSkin ? 0.18 : 0.1)
-      : darken(skin, 0.24);
+      ? mix(skinShadow, '#2a1710', deepSkin ? 0.1 : 0.06)
+      : darken(skin, 0.2);
     var jawLine = firstContrastColorAgainstAll(
       darkSkin
         ? [faceLine, '#b08a69', mix(skin, '#f1c27d', 0.68), '#f4d7b5']
@@ -1938,31 +1938,31 @@
       noseOpacity: darkSkin ? '0.55' : '0.35',
       noseBridgeOpacity: darkSkin ? '0.26' : '0.16',
       nosePlaneOpacity: darkSkin ? '0.2' : '0.14',
-      noseHighlightOpacity: darkSkin ? '0.07' : '0.28',
+      noseHighlightOpacity: darkSkin ? (deepSkin ? '0.1' : '0.13') : '0.22',
       nostrilOpacity: darkSkin ? '0.64' : '0.3',
       cheekOpacity: darkSkin ? '0.16' : '0.28',
       contourOpacity: darkSkin ? '0.38' : '0.18',
-      subtleLineOpacity: darkSkin ? '0.2' : '0.18',
-      smileCreaseOpacity: darkSkin ? '0.1' : '0.12',
-      faceDetailLineOpacity: darkSkin ? '0.11' : '0.13',
+      subtleLineOpacity: darkSkin ? '0.16' : '0.14',
+      smileCreaseOpacity: darkSkin ? '0.07' : '0.08',
+      faceDetailLineOpacity: darkSkin ? '0.09' : '0.1',
       underEyeLineOpacity: darkSkin ? '0.06' : '0.08',
       faceMarkSoftOpacity: darkSkin ? '0.22' : '0.28',
       faceMarkOpacity: darkSkin ? '0.28' : '0.34',
       faceMarkStrongOpacity: darkSkin ? '0.38' : '0.48',
-      hairDetailOpacity: darkSkin && darkHair ? '0.74' : '0.5',
-      faceCoreHighlightOpacity: darkSkin ? '0.66' : '0.72',
-      faceFormShadowOpacity: darkSkin ? '0.46' : '0.42',
-      faceSoftShadowOpacity: darkSkin ? '0.14' : '0.12',
-      faceScatterOpacity: darkSkin ? '0.11' : '0.08',
-      faceAoOpacity: darkSkin ? '0.12' : '0.08',
-      faceBounceOpacity: darkSkin ? '0.1' : '0.07',
-      faceRimOpacity: darkSkin ? '0.12' : '0.08',
-      faceHighlightOpacity: darkSkin ? '0.12' : '0.14',
-      faceAmbientOpacity: darkSkin ? '0.1' : '0.1',
-      faceShadowOpacity: darkSkin ? '0.14' : '0.1',
-      jawLineOpacity: darkSkin ? '0.26' : '0.22',
-      neckShadowOpacity: darkSkin ? '0.52' : '0.28',
-      neckHighlightOpacity: darkSkin ? '0.22' : '0.18',
+      hairDetailOpacity: darkHair ? (darkSkin ? '0.48' : '0.42') : '0.46',
+      faceCoreHighlightOpacity: darkSkin ? '0.44' : '0.42',
+      faceFormShadowOpacity: darkSkin ? '0.34' : '0.28',
+      faceSoftShadowOpacity: darkSkin ? '0.1' : '0.08',
+      faceScatterOpacity: darkSkin ? '0.1' : '0.07',
+      faceAoOpacity: darkSkin ? '0.08' : '0.06',
+      faceBounceOpacity: darkSkin ? '0.07' : '0.05',
+      faceRimOpacity: darkSkin ? '0.08' : '0.05',
+      faceHighlightOpacity: darkSkin ? '0.09' : '0.07',
+      faceAmbientOpacity: darkSkin ? '0.08' : '0.07',
+      faceShadowOpacity: darkSkin ? '0.1' : '0.08',
+      jawLineOpacity: darkSkin ? '0.18' : '0.16',
+      neckShadowOpacity: darkSkin ? '0.42' : '0.24',
+      neckHighlightOpacity: darkSkin ? '0.18' : '0.14',
       glassesFrame: glassesFrame,
       glassesFrameDark: glassesFrameDark,
       glassesMetal: metalFrame,
