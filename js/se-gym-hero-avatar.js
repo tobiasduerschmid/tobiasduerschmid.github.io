@@ -1946,6 +1946,7 @@
       faceSoftShadowOpacity: darkSkin ? '0.14' : '0.12',
       faceScatterOpacity: darkSkin ? '0.11' : '0.08',
       faceAoOpacity: darkSkin ? '0.12' : '0.08',
+      faceBounceOpacity: darkSkin ? '0.1' : '0.07',
       faceRimOpacity: darkSkin ? '0.12' : '0.08',
       faceHighlightOpacity: darkSkin ? '0.12' : '0.14',
       faceAmbientOpacity: darkSkin ? '0.1' : '0.1',
@@ -2470,6 +2471,7 @@
     svg.style.setProperty('--hero-face-soft-shadow-opacity', contrastTokens.faceSoftShadowOpacity);
     svg.style.setProperty('--hero-face-scatter-opacity', contrastTokens.faceScatterOpacity);
     svg.style.setProperty('--hero-face-ao-opacity', contrastTokens.faceAoOpacity);
+    svg.style.setProperty('--hero-face-bounce-opacity', contrastTokens.faceBounceOpacity);
     svg.style.setProperty('--hero-face-rim-opacity', contrastTokens.faceRimOpacity);
     svg.style.setProperty('--hero-face-highlight-opacity', contrastTokens.faceHighlightOpacity);
     svg.style.setProperty('--hero-face-ambient-opacity', contrastTokens.faceAmbientOpacity);

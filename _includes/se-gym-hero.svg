@@ -685,7 +685,7 @@
            • Forearm bone (109 px) rotates around the ELBOW joint
              (nested inside the upper arm so the elbow tracks it)
          Motion (2.2 s overhead-press cycle, sync'd with barbell-lift):
-           • At t=0,1 (barbell UP):  α=0°,  β=0°  → arms fully extended
+           • At t=0,1 (barbell UP):  α=−4°/+4°, β=+8°/−8° → soft lockout
            • At t=0.55 (barbell DOWN):
                 LEFT:  α=−28°  β=+56°
                 RIGHT: α=+28°  β=−56°
@@ -700,7 +700,7 @@
            ============================================================ -->
       <g data-arm-side="left-upper">
         <animateTransform attributeName="transform" type="rotate"
-                          values="0 322 268; -28 322 268; 0 322 268"
+                          values="-4 322 268; -28 322 268; -4 322 268"
                           keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                           calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
 
@@ -746,7 +746,7 @@
         <!-- ===== Forearm group — pivots at ELBOW (322,162) ===== -->
         <g data-arm-side="left-forearm">
           <animateTransform attributeName="transform" type="rotate"
-                            values="0 322 162; 56 322 162; 0 322 162"
+                            values="8 322 162; 56 322 162; 8 322 162"
                             keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                             calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
 
@@ -776,7 +776,7 @@
       <!-- ===== RIGHT ARM (mirror of left) ===== -->
       <g data-arm-side="right-upper">
         <animateTransform attributeName="transform" type="rotate"
-                          values="0 478 268; 28 478 268; 0 478 268"
+                          values="4 478 268; 28 478 268; 4 478 268"
                           keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                           calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
 
@@ -818,7 +818,7 @@
 
         <g data-arm-side="right-forearm">
           <animateTransform attributeName="transform" type="rotate"
-                            values="0 478 162; -56 478 162; 0 478 162"
+                            values="-8 478 162; -56 478 162; -8 478 162"
                             keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                             calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
 
@@ -1860,6 +1860,7 @@
         <ellipse cx="364" cy="207" rx="32" ry="22" fill="url(#face-scatter-{{ hero_variant }})" opacity="var(--hero-face-scatter-opacity, .1)"/>
         <ellipse cx="431" cy="210" rx="30" ry="30" fill="url(#face-soft-shadow-{{ hero_variant }})" opacity="var(--hero-face-soft-shadow-opacity, .16)"/>
         <ellipse cx="400" cy="238" rx="38" ry="16" fill="url(#face-soft-shadow-{{ hero_variant }})" opacity="var(--hero-face-ao-opacity, .12)"/>
+        <ellipse cx="378" cy="228" rx="42" ry="20" fill="url(#face-rim-light-{{ hero_variant }})" opacity="var(--hero-face-bounce-opacity, .08)"/>
         <ellipse cx="357" cy="192" rx="18" ry="58" fill="url(#face-rim-light-{{ hero_variant }})" opacity="var(--hero-face-rim-opacity, .1)"/>
       </g>
       <g data-hero-slot="hair-cap" data-hero-option="head-covering" display="none">

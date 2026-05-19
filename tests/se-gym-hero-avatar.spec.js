@@ -3299,6 +3299,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         faceSoftShadowOpacity: styles.getPropertyValue('--hero-face-soft-shadow-opacity').trim(),
         faceScatterOpacity: styles.getPropertyValue('--hero-face-scatter-opacity').trim(),
         faceAoOpacity: styles.getPropertyValue('--hero-face-ao-opacity').trim(),
+        faceBounceOpacity: styles.getPropertyValue('--hero-face-bounce-opacity').trim(),
         faceRimOpacity: styles.getPropertyValue('--hero-face-rim-opacity').trim(),
         faceHighlightOpacity: styles.getPropertyValue('--hero-face-highlight-opacity').trim(),
         faceShadowOpacity: styles.getPropertyValue('--hero-face-shadow-opacity').trim(),
@@ -3355,6 +3356,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(Number(tokens.faceSoftShadowOpacity)).toBeLessThanOrEqual(0.16);
     expect(Number(tokens.faceScatterOpacity)).toBeLessThanOrEqual(0.12);
     expect(Number(tokens.faceAoOpacity)).toBeLessThanOrEqual(0.14);
+    expect(Number(tokens.faceBounceOpacity)).toBeLessThanOrEqual(0.11);
     expect(Number(tokens.faceRimOpacity)).toBeLessThanOrEqual(0.14);
     expect(Number(tokens.faceHighlightOpacity)).toBeLessThanOrEqual(0.14);
     expect(Number(tokens.faceShadowOpacity)).toBeLessThanOrEqual(0.16);
