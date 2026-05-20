@@ -2143,11 +2143,26 @@
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="locs-bun" display="none">
+        <!-- Crown hair (gathered upward). -->
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.8" stroke-linejoin="round"/>
         <ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
-
+        <!-- Bun base ellipse. -->
         <ellipse cx="400" cy="96" rx="29" ry="22" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.7"/>
-        <path d="M 384 92 C 394 84, 410 84, 418 94" stroke="var(--hero-hair-light, #4a3220)" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".58"/>
+        <!-- Loc strands wrapping the bun (visible as curving rope shapes). -->
+        <g fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.6" stroke-linejoin="round" opacity=".95">
+          <path d="M 374 88 C 378 80 388 78 396 82 C 400 86 402 90 400 94 C 392 90 384 92 376 94 C 372 92 372 90 374 88 Z"/>
+          <path d="M 426 88 C 422 80 412 78 404 82 C 400 86 398 90 400 94 C 408 90 416 92 424 94 C 428 92 428 90 426 88 Z"/>
+          <path d="M 374 104 C 376 110 386 114 396 112 C 400 110 402 106 400 102 C 392 106 384 104 376 102 C 372 102 372 102 374 104 Z"/>
+          <path d="M 426 104 C 424 110 414 114 404 112 C 400 110 398 106 400 102 C 408 106 416 104 424 102 C 428 102 428 102 426 104 Z"/>
+        </g>
+        <!-- Loc segmentation notches on bun. -->
+        <g stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1" fill="none" stroke-linecap="round" opacity=".55">
+          <path d="M 380 86 C 384 84 388 84 392 86 M 408 86 C 412 84 416 84 420 86 M 380 100 C 384 102 388 102 392 100 M 408 100 C 412 102 416 102 420 100"/>
+        </g>
+        <!-- Bun highlight + base shadow. -->
+        <path d="M 380 84 C 392 76, 408 76, 418 86" stroke="#ffffff" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".42"/>
+        <path d="M 376 112 C 388 122, 412 122, 424 112" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".42"/>
+        <!-- Side-sweep crown lines. -->
         <path d="M 366 130 C 384 116, 416 116, 434 130 M 362 166 C 376 157, 388 154, 400 156 C 412 154, 424 157, 438 166" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="bald" display="none">
