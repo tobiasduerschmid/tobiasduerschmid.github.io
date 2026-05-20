@@ -1495,12 +1495,29 @@
         <path d="M 370 126 C 386 116, 414 116, 430 126" stroke="#ffffff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".3"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="braided-pony" display="none">
+        <!-- Crown hair. -->
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.8" stroke-linejoin="round"/>
         <ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
-
-
-        <path d="M 448 178 C 464 210, 460 292, 448 356" stroke="var(--hero-hair, #1f140c)" stroke-width="22" fill="none" stroke-linecap="round"/>
-        <path d="M 366 130 C 384 116, 416 116, 434 130 M 362 166 C 376 157, 388 154, 400 156 C 412 154, 424 157, 438 166" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
+        <!-- Connector panel: crown to gather. -->
+        <path d="M 446 174 C 440 168 426 168 420 174 C 420 182 426 188 434 188 C 442 188 446 184 446 174 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.2" stroke-linejoin="round"/>
+        <!-- Braid body: filled tapered teardrop. -->
+        <path d="M 446 178 C 458 188 466 212 470 244 C 474 280 472 314 464 348 C 460 362 456 368 452 370 C 448 372 444 368 444 362 C 446 334 450 306 450 276 C 450 242 446 214 442 196 C 440 188 440 180 446 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+        <!-- Braid weave: alternating chevrons. -->
+        <g stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".75">
+          <path d="M 442 202 C 450 208 462 208 466 202 M 442 224 C 450 230 462 230 466 224 M 441 248 C 450 254 463 254 467 248 M 441 272 C 450 278 463 278 467 272 M 441 296 C 450 302 463 302 467 296 M 442 320 C 450 326 462 326 466 320 M 443 342 C 451 348 461 348 465 342"/>
+          <path d="M 442 202 C 448 214 448 219 442 224 M 466 202 C 462 214 462 219 466 224 M 442 224 C 448 236 448 242 441 248 M 466 224 C 462 236 462 242 467 248 M 441 248 C 448 260 448 266 441 272 M 467 248 C 463 260 463 266 467 272 M 441 272 C 448 284 448 290 441 296 M 467 272 C 463 284 463 290 467 296 M 441 296 C 448 308 448 314 442 320 M 467 296 C 463 308 463 314 466 320"/>
+        </g>
+        <!-- Tip: tassel + tie. -->
+        <path d="M 447 364 C 452 376 458 378 462 374 C 464 368 460 362 455 358 Z" fill="var(--hero-hair-dark, #0f0905)"/>
+        <path d="M 450 372 C 448 380 450 384 453 384 M 455 370 C 456 378 460 382 463 378" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".62"/>
+        <!-- Specular sheen. -->
+        <path d="M 464 214 C 470 248 472 286 468 326" stroke="#ffffff" stroke-width="1.4" fill="none" stroke-linecap="round" opacity=".22"/>
+        <!-- Band/tie at the gather. -->
+        <path d="M 438 172 C 436 167 443 163 449 164 C 455 163 462 166 462 172 C 462 180 458 184 453 184 C 449 184 443 184 440 184 C 436 184 436 178 438 172 Z" fill="var(--hero-hair-dark, #0f0905)" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.4" stroke-linejoin="round"/>
+        <path d="M 441 170 C 445 167 455 167 459 170 M 441 178 C 445 182 455 182 459 178" stroke="var(--hero-hair-light, #4a3220)" stroke-width="1.3" fill="none" stroke-linecap="round" opacity=".68"/>
+        <!-- Side-sweep crown lines. -->
+        <path d="M 366 130 C 384 116, 416 116, 434 130 M 362 166 C 376 157, 388 154, 400 156 C 412 154, 424 157, 438 166 M 380 152 C 396 148 414 146 430 150 M 384 168 C 400 164 418 162 434 166" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.7" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
+        <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="side-braid" display="none">
         <path d="M 352 176 C 344 140, 366 110, 400 108 C 434 110, 456 140, 448 176 C 434 164, 418 158, 400 158 C 382 158, 366 164, 352 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.9" stroke-linejoin="round"/>
