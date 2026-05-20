@@ -1413,13 +1413,30 @@
       </g>
       <g data-hero-slot="hair" data-hero-option="wolf-cut" display="none">
         <use href="#shoulder-hair-backfill-{{ hero_variant }}"/>
+        <!-- Crown silhouette. -->
         <path d="M 352 176 C 344 136, 366 106, 400 104 C 434 106, 456 136, 448 176 C 434 162, 416 156, 400 158 C 384 156, 366 162, 352 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+        <!-- Shaggy short top layer (the defining wolf-cut feature). -->
+        <path d="M 350 178 C 344 198 348 222 358 236 C 366 248 376 246 380 232 C 376 218 376 200 378 188 C 366 178 354 176 350 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.4" stroke-linejoin="round"/>
+        <path d="M 450 178 C 456 198 452 222 442 236 C 434 248 424 246 420 232 C 424 218 424 200 422 188 C 434 178 446 176 450 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.4" stroke-linejoin="round"/>
+        <!-- Longer outer mane layer. -->
         <path d="M 346 176 C 334 222, 340 278, 354 304 C 366 314, 380 302, 386 286 C 370 286, 372 226, 380 184 C 366 176, 354 174, 346 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.55" stroke-linejoin="round"/>
         <path d="M 454 176 C 466 222, 460 278, 446 304 C 434 314, 420 302, 414 286 C 430 286, 428 226, 420 184 C 434 176, 446 174, 454 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.55" stroke-linejoin="round"/>
-
-        <path d="M 366 126 C 382 116, 418 116, 434 126 C 420 121, 400 121, 380 124 C 373 126, 368 127, 366 126 Z" fill="var(--hero-hair-light, #4a3220)" opacity=".5"/>
-        <path d="M 372 118 C 388 110, 412 110, 428 118" stroke="#ffffff" stroke-width="2.15" fill="none" stroke-linecap="round" opacity=".34"/>
-        <path d="M 358 166 C 374 154, 388 152, 400 158 C 412 152, 426 154, 442 166 M 356 212 C 366 238, 364 272, 356 288 M 444 212 C 434 238, 436 272, 444 288" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.75" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .38)"/>
+        <!-- Inner shadow plates. -->
+        <path d="M 378 188 C 372 220 374 264 380 286 C 380 290 376 290 374 286 C 366 264 366 220 374 184 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".3"/>
+        <path d="M 422 188 C 428 220 426 264 420 286 C 420 290 424 290 426 286 C 434 264 434 220 426 184 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".3"/>
+        <!-- Hairline shadow + crown highlight. -->
+        <path d="M 366 126 C 382 116, 418 116, 434 126 C 420 121, 400 121, 380 124 C 373 126, 368 127, 366 126 Z" fill="var(--hero-hair-light, #4a3220)" opacity=".55"/>
+        <path d="M 372 118 C 388 110, 412 110, 428 118" stroke="#ffffff" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".48"/>
+        <!-- Layered specular sheens. -->
+        <path d="M 358 188 C 354 210, 354 226, 360 240" stroke="#ffffff" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".42"/>
+        <path d="M 360 252 C 356 280, 358 296, 364 306" stroke="#ffffff" stroke-width="1.7" fill="none" stroke-linecap="round" opacity=".28"/>
+        <path d="M 442 188 C 446 210, 446 226, 440 240" stroke="#ffffff" stroke-width="1.8" fill="none" stroke-linecap="round" opacity=".42"/>
+        <path d="M 440 252 C 444 280, 442 296, 436 306" stroke="#ffffff" stroke-width="1.7" fill="none" stroke-linecap="round" opacity=".28"/>
+        <!-- Shaggy tip ticks at the layer transitions (the wolf-cut signature). -->
+        <path d="M 358 240 C 358 246 362 248 366 246 M 384 240 C 386 246 388 248 390 246 M 410 240 C 412 248 414 248 416 246 M 434 240 C 438 248 442 248 442 244" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.4" fill="none" stroke-linecap="round" opacity=".55"/>
+        <!-- Hairline trace + lock separators. -->
+        <path d="M 358 166 C 374 154, 388 152, 400 158 C 412 152, 426 154, 442 166" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.75" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
+        <path d="M 352 200 C 348 220, 352 232, 358 240 M 372 200 C 370 218, 372 232, 376 240 M 428 200 C 430 218, 428 232, 424 240 M 448 200 C 452 220, 448 232, 442 240" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.4" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .38)"/>
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="curtain-bangs" display="none">
