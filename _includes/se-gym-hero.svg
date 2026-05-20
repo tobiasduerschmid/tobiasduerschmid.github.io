@@ -1491,8 +1491,27 @@
         <path d="M 362 132 C 380 122, 420 122, 438 132" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".5"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="loose-locs" display="none">
+        <!-- Crown hair. -->
         <path d="M 352 176 C 344 140, 366 110, 400 108 C 434 110, 456 140, 448 176 C 434 164, 418 158, 400 158 C 382 158, 366 164, 352 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.9" stroke-linejoin="round"/>
-        <path d="M 346 174 C 338 218, 338 266, 332 316 M 360 174 C 352 220, 354 286, 350 342 M 376 172 C 370 210, 372 260, 368 304 M 424 172 C 430 210, 428 260, 432 304 M 440 174 C 448 220, 446 286, 450 342 M 454 174 C 462 218, 462 266, 468 316" stroke="var(--hero-hair, #1f140c)" stroke-width="15" fill="none" stroke-linecap="round"/>
+        <!-- Loose locs: filled rope shapes (6), slightly wider and more relaxed than locs. -->
+        <g fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.2" stroke-linejoin="round">
+          <path d="M 352 174 C 344 200 340 240 334 290 C 330 308 332 326 337 326 C 341 326 346 308 348 290 C 354 240 358 200 360 176 C 360 172 354 172 352 174 Z"/>
+          <path d="M 366 172 C 358 200 354 244 350 302 C 348 330 350 350 355 352 C 360 352 364 332 366 302 C 368 244 372 200 374 174 C 374 170 368 170 366 172 Z"/>
+          <path d="M 380 170 C 374 192 372 226 370 268 C 368 296 370 314 374 316 C 378 316 382 298 384 268 C 386 226 388 192 388 172 C 388 168 382 168 380 170 Z"/>
+          <path d="M 420 170 C 426 192 428 226 430 268 C 432 296 430 314 426 316 C 422 316 418 298 416 268 C 414 226 412 192 412 172 C 412 168 418 168 420 170 Z"/>
+          <path d="M 434 172 C 442 200 446 244 450 302 C 452 330 450 350 445 352 C 440 352 436 332 434 302 C 432 244 428 200 426 174 C 426 170 432 170 434 172 Z"/>
+          <path d="M 448 174 C 456 200 460 240 466 290 C 470 308 468 326 463 326 C 459 326 454 308 452 290 C 446 240 442 200 440 176 C 440 172 446 172 448 174 Z"/>
+        </g>
+        <!-- Looser segmentation (fewer notches, softer rhythm). -->
+        <g stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.1" fill="none" stroke-linecap="round" opacity=".5">
+          <path d="M 340 230 C 346 228 352 228 358 230 M 336 280 C 344 278 350 278 356 280"/>
+          <path d="M 354 230 C 362 228 368 228 374 230 M 352 290 C 360 288 366 288 372 290"/>
+          <path d="M 370 220 C 378 218 384 218 388 220 M 368 270 C 376 268 382 268 388 270"/>
+          <path d="M 412 220 C 416 218 422 218 430 220 M 412 270 C 418 268 424 268 432 270"/>
+          <path d="M 426 230 C 432 228 438 228 446 230 M 428 290 C 434 288 440 288 448 290"/>
+          <path d="M 442 230 C 448 228 454 228 460 230 M 444 280 C 450 278 456 278 464 280"/>
+        </g>
+        <!-- Crown highlight. -->
         <path d="M 362 132 C 380 122, 420 122, 438 132" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".5"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="braids" display="none">
