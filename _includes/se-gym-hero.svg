@@ -1467,8 +1467,27 @@
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="locs" display="none">
+        <!-- Crown hair. -->
         <path d="M 352 176 C 344 140, 366 110, 400 108 C 434 110, 456 140, 448 176 C 434 164, 418 158, 400 158 C 382 158, 366 164, 352 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.9" stroke-linejoin="round"/>
-        <path d="M 346 174 C 338 218, 338 266, 332 316 M 360 174 C 352 220, 354 286, 350 342 M 376 172 C 370 210, 372 260, 368 304 M 424 172 C 430 210, 428 260, 432 304 M 440 174 C 448 220, 446 286, 450 342 M 454 174 C 462 218, 462 266, 468 316" stroke="var(--hero-hair, #1f140c)" stroke-width="13.5" fill="none" stroke-linecap="round"/>
+        <!-- Locs: filled rope shapes (6) with slight irregular bulges. -->
+        <g fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.1" stroke-linejoin="round">
+          <path d="M 352 174 C 346 200 343 240 336 290 C 333 308 335 322 339 322 C 342 322 346 308 348 290 C 354 240 356 200 358 176 C 358 172 354 172 352 174 Z"/>
+          <path d="M 366 172 C 360 200 358 244 354 302 C 352 330 354 348 358 350 C 361 350 364 332 366 302 C 368 244 370 200 372 174 C 372 170 368 170 366 172 Z"/>
+          <path d="M 380 170 C 376 192 376 226 372 268 C 370 296 372 312 376 314 C 379 314 382 298 384 268 C 386 226 388 192 386 172 C 386 168 382 168 380 170 Z"/>
+          <path d="M 420 170 C 424 192 424 226 428 268 C 430 296 428 312 424 314 C 421 314 418 298 416 268 C 414 226 412 192 414 172 C 414 168 418 168 420 170 Z"/>
+          <path d="M 434 172 C 440 200 442 244 446 302 C 448 330 446 348 442 350 C 439 350 436 332 434 302 C 432 244 430 200 428 174 C 428 170 432 170 434 172 Z"/>
+          <path d="M 448 174 C 454 200 457 240 464 290 C 467 308 465 322 461 322 C 458 322 454 308 452 290 C 446 240 444 200 442 176 C 442 172 446 172 448 174 Z"/>
+        </g>
+        <!-- Loc segmentation notches (small horizontal lines suggesting natural locking). -->
+        <g stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.1" fill="none" stroke-linecap="round" opacity=".55">
+          <path d="M 343 210 C 348 208 352 208 356 210 M 340 250 C 346 248 350 248 354 250 M 338 286 C 344 284 349 284 354 286"/>
+          <path d="M 357 210 C 362 208 366 208 370 210 M 354 250 C 360 248 364 248 368 250 M 352 290 C 358 288 363 288 368 290 M 352 330 C 358 328 363 328 368 330"/>
+          <path d="M 371 200 C 376 198 380 198 384 200 M 369 240 C 376 238 381 238 386 240 M 368 280 C 374 278 380 278 386 280"/>
+          <path d="M 414 200 C 418 198 422 198 426 200 M 416 240 C 422 238 427 238 432 240 M 416 280 C 422 278 428 278 434 280"/>
+          <path d="M 430 210 C 434 208 438 208 442 210 M 432 250 C 436 248 440 248 444 250 M 432 290 C 438 288 443 288 448 290 M 432 330 C 438 328 443 328 448 330"/>
+          <path d="M 444 210 C 448 208 452 208 456 210 M 446 250 C 450 248 454 248 458 250 M 446 286 C 452 284 456 284 462 286"/>
+        </g>
+        <!-- Crown highlight. -->
         <path d="M 362 132 C 380 122, 420 122, 438 132" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".5"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="loose-locs" display="none">
