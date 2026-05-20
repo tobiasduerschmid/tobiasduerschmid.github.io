@@ -1444,9 +1444,23 @@
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="two-strand-twists" display="none">
+        <!-- Crown hair. -->
         <path d="M 352 176 C 344 140, 366 110, 400 108 C 434 110, 456 140, 448 176 C 434 164, 418 158, 400 158 C 382 158, 366 164, 352 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.9" stroke-linejoin="round"/>
         <path d="M 362 132 C 380 122, 420 122, 438 132 C 422 128, 400 128, 378 130 C 372 132, 366 132, 362 132 Z" fill="var(--hero-hair-light, #4a3220)" opacity=".5"/>
-        <path d="M 356 174 C 346 202, 350 234, 338 268 M 374 178 C 364 210, 372 242, 360 280 M 426 178 C 436 210, 428 242, 440 280 M 444 174 C 454 202, 450 234, 462 268" stroke="var(--hero-hair, #1f140c)" stroke-width="13.5" fill="none" stroke-linecap="round"/>
+        <!-- Two-strand twists: filled rope shapes (4) with internal twist S-curves. -->
+        <g fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2" stroke-linejoin="round">
+          <path d="M 356 172 C 348 196 348 224 340 254 C 336 268 339 274 343 274 C 347 274 350 264 352 254 C 358 224 362 196 362 174 C 362 170 358 170 356 172 Z"/>
+          <path d="M 372 176 C 366 200 370 232 360 264 C 356 276 360 286 364 284 C 368 282 372 270 374 264 C 380 232 378 200 378 178 C 378 174 374 174 372 176 Z"/>
+          <path d="M 426 176 C 432 200 428 232 438 264 C 442 276 438 286 434 284 C 430 282 426 270 424 264 C 418 232 420 200 420 178 C 420 174 424 174 426 176 Z"/>
+          <path d="M 442 172 C 450 196 450 224 458 254 C 462 268 459 274 455 274 C 451 274 448 264 446 254 C 440 224 436 196 436 174 C 436 170 440 170 442 172 Z"/>
+        </g>
+        <!-- Twist S-curves on each strand (the defining two-strand wrap). -->
+        <g stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".68">
+          <path d="M 347 196 C 354 200 352 208 346 212 C 340 216 338 224 344 228 M 348 240 C 354 244 352 252 346 256"/>
+          <path d="M 366 200 C 372 204 370 212 364 216 C 358 220 358 228 364 232 M 365 244 C 371 248 369 256 363 260"/>
+          <path d="M 434 200 C 428 204 430 212 436 216 C 442 220 442 228 436 232 M 435 244 C 429 248 431 256 437 260"/>
+          <path d="M 453 196 C 446 200 448 208 454 212 C 460 216 462 224 456 228 M 452 240 C 446 244 448 252 454 256"/>
+        </g>
         <path d="M 370 126 C 386 116, 414 116, 430 126" stroke="#ffffff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".3"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="twist-out" display="none">
