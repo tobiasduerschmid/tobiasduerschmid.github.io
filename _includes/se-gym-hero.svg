@@ -1673,12 +1673,27 @@
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="sleek-low-pony" display="none">
+        <!-- Crown hair (sleek, hugs head). -->
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.8" stroke-linejoin="round"/>
         <ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
-
-
-        <path d="M 448 178 C 464 210, 460 292, 448 356" stroke="var(--hero-hair, #1f140c)" stroke-width="18" fill="none" stroke-linecap="round"/>
-        <path d="M 366 130 C 384 116, 416 116, 434 130 M 362 166 C 376 157, 388 154, 400 156 C 412 154, 424 157, 438 166" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
+        <!-- Connector panel from crown to low nape gather. -->
+        <path d="M 446 178 C 442 184 432 192 426 196 C 422 200 426 206 434 206 C 442 206 448 200 448 188 C 448 182 448 178 446 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.2" stroke-linejoin="round"/>
+        <!-- Sleek slim tail emerging from low nape area. -->
+        <path d="M 442 198 C 450 208 458 230 460 258 C 462 290 460 320 454 348 C 451 360 448 366 446 366 C 442 368 440 364 442 358 C 444 332 446 306 446 280 C 446 252 444 230 440 214 C 438 206 438 200 442 198 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+        <!-- Tail inner shadow. -->
+        <path d="M 446 218 C 450 244 452 274 452 304 C 451 326 450 346 448 360" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="5" fill="none" stroke-linecap="round" opacity=".26"/>
+        <!-- Internal flow lines. -->
+        <path d="M 446 212 C 451 244 454 280 452 322" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.3" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .45)"/>
+        <!-- Specular sheen. -->
+        <path d="M 454 226 C 459 256 460 290 458 322" stroke="#ffffff" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".24"/>
+        <!-- Tip flick. -->
+        <path d="M 444 358 C 450 364 456 366 458 362 C 458 358 454 354 448 354 Z" fill="var(--hero-hair-light, #4a3220)" opacity=".48"/>
+        <!-- Sleek band/wrap. -->
+        <path d="M 432 192 C 432 188 448 187 452 192 C 456 198 452 206 446 206 C 440 206 434 202 432 198 C 430 196 430 193 432 192 Z" fill="var(--hero-hair-dark, #0f0905)" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.3" stroke-linejoin="round"/>
+        <path d="M 434 190 C 440 188 448 188 452 192" stroke="var(--hero-hair-light, #4a3220)" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".64"/>
+        <!-- Slick-back flow lines on crown. -->
+        <path d="M 366 130 C 384 116, 416 116, 434 130 M 362 166 C 376 157, 388 154, 400 156 C 412 154, 424 157, 438 166 M 376 142 C 396 138 416 138 436 144 M 378 156 C 398 152 418 152 436 158" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.6" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
+        <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="low-pony-bangs" display="none">
         <!-- Back-layer (covers behind the head + side panels). -->
