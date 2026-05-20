@@ -1698,11 +1698,26 @@
       <g data-hero-slot="hair" data-hero-option="low-pony-bangs" display="none">
         <!-- Back-layer (covers behind the head + side panels). -->
         <use href="#shoulder-hair-backfill-{{ hero_variant }}"/>
+        <!-- Crown hair. -->
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.8" stroke-linejoin="round"/>
         <ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
-        <path d="M 354 148 C 376 132, 424 132, 446 148 C 444 157, 438 165, 426 170 C 416 162, 406 158, 400 160 C 390 158, 376 162, 360 170 C 356 164, 354 156, 354 148 Z" fill="var(--hero-hair, #1f140c)" opacity=".76"/>
-        <!-- Ponytail tail. -->
-        <path d="M 448 178 C 464 210, 460 292, 448 356" stroke="var(--hero-hair, #1f140c)" stroke-width="22" fill="none" stroke-linecap="round"/>
+        <!-- Bangs: hairline coverage. -->
+        <path d="M 354 148 C 376 132, 424 132, 446 148 C 444 157, 438 165, 426 170 C 416 162, 406 158, 400 160 C 390 158, 376 162, 360 170 C 356 164, 354 156, 354 148 Z" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
+        <!-- Connector panel from crown to low gather. -->
+        <path d="M 446 178 C 442 184 432 192 426 196 C 422 200 426 206 434 206 C 442 206 448 200 448 188 C 448 182 448 178 446 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.2" stroke-linejoin="round"/>
+        <!-- Tail: filled tapered teardrop. -->
+        <path d="M 442 198 C 454 208 464 232 468 264 C 472 300 470 332 462 360 C 458 372 454 378 450 378 C 446 378 442 374 442 368 C 444 340 448 314 448 286 C 448 252 444 224 438 206 C 436 200 436 198 442 198 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+        <!-- Tail inner shadow. -->
+        <path d="M 446 218 C 452 244 456 280 456 312 C 455 340 452 360 450 372" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="6" fill="none" stroke-linecap="round" opacity=".26"/>
+        <!-- Internal flow lines. -->
+        <path d="M 446 212 C 452 244 456 280 454 330 M 454 222 C 460 252 462 286 460 326" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.3" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .45)"/>
+        <!-- Specular sheen. -->
+        <path d="M 460 226 C 466 256 468 290 464 326" stroke="#ffffff" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".25"/>
+        <!-- Tip flick. -->
+        <path d="M 444 366 C 452 374 458 374 460 370 C 460 364 456 360 450 358 Z" fill="var(--hero-hair-light, #4a3220)" opacity=".5"/>
+        <!-- Band/tie. -->
+        <path d="M 434 192 C 434 186 454 184 458 190 C 462 198 458 206 452 206 C 444 206 436 202 434 198 C 432 196 432 193 434 192 Z" fill="var(--hero-hair-dark, #0f0905)" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.3" stroke-linejoin="round"/>
+        <path d="M 438 190 C 444 187 454 187 458 192 M 438 198 C 444 202 454 202 458 198" stroke="var(--hero-hair-light, #4a3220)" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".64"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="half-up" display="none">
         <!-- Back-layer (covers behind the head + side panels). -->
