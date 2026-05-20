@@ -2184,13 +2184,28 @@
       </g>
       <g data-hero-slot="hair" data-hero-option="layered-bob" display="none">
         <use href="#shoulder-hair-backfill-{{ hero_variant }}"/>
+        <!-- Crown silhouette. -->
         <path d="M 352 176 C 344 136, 366 106, 400 104 C 434 106, 456 136, 448 176 C 434 162, 416 156, 400 158 C 384 156, 366 162, 352 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+        <!-- Shorter top layer (visible layered cut). -->
+        <path d="M 348 176 C 340 200 340 230 348 246 C 358 256 372 256 378 240 C 372 220 372 198 378 184 C 364 176 354 174 348 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.4" stroke-linejoin="round"/>
+        <path d="M 452 176 C 460 200 460 230 452 246 C 442 256 428 256 422 240 C 428 220 428 198 422 184 C 436 176 446 174 452 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.4" stroke-linejoin="round"/>
+        <!-- Longer outer back layer. -->
         <path d="M 346 176 C 334 226, 336 296, 352 258 C 362 268, 376 264, 384 250 C 368 296, 368 230, 378 184 C 364 176, 354 174, 346 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.55" stroke-linejoin="round"/>
         <path d="M 454 176 C 466 226, 464 296, 448 258 C 438 268, 424 264, 416 250 C 432 296, 432 230, 422 184 C 436 176, 446 174, 454 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.55" stroke-linejoin="round"/>
-
-        <path d="M 366 126 C 382 116, 418 116, 434 126 C 420 121, 400 121, 380 124 C 373 126, 368 127, 366 126 Z" fill="var(--hero-hair-light, #4a3220)" opacity=".5"/>
-        <path d="M 372 118 C 388 110, 412 110, 428 118" stroke="#ffffff" stroke-width="2.15" fill="none" stroke-linecap="round" opacity=".34"/>
-        <path d="M 360 166 C 374 158, 388 154, 400 158 C 412 154, 426 158, 440 166 M 366 190 C 360 236, 360 292, 366 288 M 434 190 C 440 236, 440 292, 434 288" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .34)"/>
+        <!-- Inner shadow plates. -->
+        <path d="M 378 188 C 372 220 374 248 380 252 C 378 254 374 254 374 250 C 368 244 366 218 374 184 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".3"/>
+        <path d="M 422 188 C 428 220 426 248 420 252 C 422 254 426 254 426 250 C 432 244 434 218 426 184 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".3"/>
+        <!-- Hairline shadow + crown highlight. -->
+        <path d="M 366 126 C 382 116, 418 116, 434 126 C 420 121, 400 121, 380 124 C 373 126, 368 127, 366 126 Z" fill="var(--hero-hair-light, #4a3220)" opacity=".55"/>
+        <path d="M 372 118 C 388 110, 412 110, 428 118" stroke="#ffffff" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".48"/>
+        <!-- Layered specular sheens. -->
+        <path d="M 358 188 C 354 216, 354 240, 358 250" stroke="#ffffff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".4"/>
+        <path d="M 360 264 C 358 280, 360 290, 364 290" stroke="#ffffff" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".28"/>
+        <path d="M 442 188 C 446 216, 446 240, 442 250" stroke="#ffffff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".4"/>
+        <path d="M 440 264 C 442 280, 440 290, 436 290" stroke="#ffffff" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".28"/>
+        <!-- Hairline trace + lock separators. -->
+        <path d="M 360 166 C 374 158, 388 154, 400 158 C 412 154, 426 158, 440 166" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
+        <path d="M 350 198 C 348 226, 350 248, 354 250 M 368 198 C 366 226, 368 248, 372 250 M 432 198 C 434 226, 432 248, 428 250 M 450 198 C 452 226, 450 248, 446 250" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.3" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .38)"/>
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="sleek-bob-bangs" display="none">
