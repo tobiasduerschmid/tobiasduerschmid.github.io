@@ -2022,12 +2022,101 @@ steps:
         - **Why `void*`?** C has no templates or generics. `void*` is the only way to write type-agnostic functions. You trade type safety for flexibility.
 
     tests:
-      - description: "Implemented compare_ascending with void* casting"
-        command: "cd /tutorial/c_project && grep -q 'const int \\*)' funcptr_lab.c && ! grep -q 'return 0; // Replace' funcptr_lab.c"
-      - description: "Implemented compare_descending"
-        command: "cd /tutorial/c_project && grep -A3 'compare_descending' funcptr_lab.c | grep -v 'return 0; // Replace' | grep -q 'return'"
+      - description: "compare_ascending satisfies qsort ordering contract"
+        command: |
+          cd /tutorial/c_project
+          gcc -Wall -Wextra -std=c11 -x c -o funcptr_compare_ascending_check - <<'CHECK'
+          #define main tutorial_student_main
+          #include "funcptr_lab.c"
+          #undef main
+          #include <limits.h>
+          #include <stdio.h>
+
+          static int signum(int value) {
+              return (value > 0) - (value < 0);
+          }
+
+          int main(void) {
+              struct {
+                  int left;
+                  int right;
+                  int expected_sign;
+                  const char *label;
+              } cases[] = {
+                  {8, 17, -1, "smaller left value"},
+                  {42, 42, 0, "equal values"},
+                  {93, 31, 1, "larger left value"},
+                  {INT_MIN, INT_MAX, -1, "full int range"},
+              };
+
+              for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+                  int actual = compare_ascending(&cases[i].left, &cases[i].right);
+                  if (signum(actual) != cases[i].expected_sign) {
+                      printf("compare_ascending failed for %s: left=%d right=%d returned %d\n",
+                             cases[i].label, cases[i].left, cases[i].right, actual);
+                      return 1;
+                  }
+              }
+
+              return 0;
+            }
+          CHECK
+          ./funcptr_compare_ascending_check
+      - description: "compare_descending satisfies qsort ordering contract"
+        command: |
+          cd /tutorial/c_project
+          gcc -Wall -Wextra -std=c11 -x c -o funcptr_compare_descending_check - <<'CHECK'
+          #define main tutorial_student_main
+          #include "funcptr_lab.c"
+          #undef main
+          #include <limits.h>
+          #include <stdio.h>
+
+          static int signum(int value) {
+              return (value > 0) - (value < 0);
+          }
+
+          int main(void) {
+              struct {
+                  int left;
+                  int right;
+                  int expected_sign;
+                  const char *label;
+              } cases[] = {
+                  {8, 17, 1, "smaller left value"},
+                  {42, 42, 0, "equal values"},
+                  {93, 31, -1, "larger left value"},
+                  {INT_MIN, INT_MAX, 1, "full int range"},
+              };
+
+              for (size_t i = 0; i < sizeof(cases) / sizeof(cases[0]); i++) {
+                  int actual = compare_descending(&cases[i].left, &cases[i].right);
+                  if (signum(actual) != cases[i].expected_sign) {
+                      printf("compare_descending failed for %s: left=%d right=%d returned %d\n",
+                             cases[i].label, cases[i].left, cases[i].right, actual);
+                      return 1;
+                  }
+              }
+
+              return 0;
+            }
+          CHECK
+          ./funcptr_compare_descending_check
       - description: "Program sorts correctly in both directions"
-        command: "cd /tutorial/c_project && gcc -Wall -std=c11 funcptr_lab.c -o funcptr_lab && ./funcptr_lab | grep -q 'Ascending: 8 17 31 42 56 74 93' && ./funcptr_lab | grep -q 'Descending: 93 74 56 42 31 17 8'"
+        command: |
+          cd /tutorial/c_project
+          gcc -Wall -std=c11 funcptr_lab.c -o funcptr_lab
+          output="$(./funcptr_lab)"
+          printf '%s\n' "$output" | grep -Fq 'Ascending: 8 17 31 42 56 74 93' || {
+            echo "Expected ascending sort output was not found. Full output:"
+            printf '%s\n' "$output"
+            exit 1
+          }
+          printf '%s\n' "$output" | grep -Fq 'Descending: 93 74 56 42 31 17 8' || {
+            echo "Expected descending sort output was not found. Full output:"
+            printf '%s\n' "$output"
+            exit 1
+          }
 
     quiz:
       title: "Step 8 — Knowledge Check"
