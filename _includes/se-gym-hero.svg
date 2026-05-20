@@ -2210,13 +2210,27 @@
       </g>
       <g data-hero-slot="hair" data-hero-option="sleek-bob-bangs" display="none">
         <use href="#shoulder-hair-backfill-{{ hero_variant }}"/>
+        <!-- Crown silhouette. -->
         <path d="M 352 176 C 344 136, 366 106, 400 104 C 434 106, 456 136, 448 176 C 434 162, 416 156, 400 158 C 384 156, 366 162, 352 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"/>
+        <!-- Left side panel (curl-under bob). -->
         <path d="M 346 176 C 334 226, 336 296, 352 244 C 362 254, 376 250, 384 236 C 368 296, 368 230, 378 184 C 364 176, 354 174, 346 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.55" stroke-linejoin="round"/>
         <path d="M 454 176 C 466 226, 464 296, 448 244 C 438 254, 424 250, 416 236 C 432 296, 432 230, 422 184 C 436 176, 446 174, 454 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.55" stroke-linejoin="round"/>
-        <path d="M 354 148 C 375 131, 425 131, 446 148 C 443 159, 436 167, 424 170 C 414 162, 405 158, 400 160 C 392 157, 379 160, 362 170 C 357 164, 354 156, 354 148 Z" fill="var(--hero-hair, #1f140c)" opacity=".7"/>
-        <path d="M 366 126 C 382 116, 418 116, 434 126 C 420 121, 400 121, 380 124 C 373 126, 368 127, 366 126 Z" fill="var(--hero-hair-light, #4a3220)" opacity=".5"/>
-        <path d="M 372 118 C 388 110, 412 110, 428 118" stroke="#ffffff" stroke-width="2.15" fill="none" stroke-linecap="round" opacity=".34"/>
-        <path d="M 360 166 C 374 158, 388 154, 400 158 C 412 154, 426 158, 440 166 M 366 190 C 360 236, 360 292, 366 288 M 434 190 C 440 236, 440 292, 434 288" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .34)"/>
+        <!-- Inner shadow plates. -->
+        <path d="M 378 188 C 372 230 374 280 380 240 C 380 232 376 228 374 232 C 372 240 370 220 374 188 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".3"/>
+        <path d="M 422 188 C 428 230 426 280 420 240 C 420 232 424 228 426 232 C 428 240 430 220 426 188 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".3"/>
+        <!-- Sleek bangs (front fringe with subtle wisp tips). -->
+        <path d="M 354 148 C 375 131, 425 131, 446 148 C 443 159, 436 167, 424 170 C 414 162, 405 158, 400 160 C 392 157, 379 160, 362 170 C 357 164, 354 156, 354 148 Z" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
+        <!-- Bang highlight. -->
+        <path d="M 368 152 C 384 144, 416 144, 432 152" stroke="#ffffff" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".34"/>
+        <!-- Hairline shadow + crown highlight. -->
+        <path d="M 366 126 C 382 116, 418 116, 434 126 C 420 121, 400 121, 380 124 C 373 126, 368 127, 366 126 Z" fill="var(--hero-hair-light, #4a3220)" opacity=".55"/>
+        <path d="M 372 118 C 388 110, 412 110, 428 118" stroke="#ffffff" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".48"/>
+        <!-- Specular sheen down each side. -->
+        <path d="M 358 188 C 354 220, 354 250, 360 244" stroke="#ffffff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".4"/>
+        <path d="M 442 188 C 446 220, 446 250, 440 244" stroke="#ffffff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".4"/>
+        <!-- Lock separators. -->
+        <path d="M 360 166 C 374 158, 388 154, 400 158 C 412 154, 426 158, 440 166" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
+        <path d="M 350 200 C 348 230, 350 262, 354 250 M 368 202 C 366 232, 368 260, 372 244 M 432 202 C 434 232, 432 260, 428 244 M 450 200 C 452 230, 450 262, 446 250" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.3" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .36)"/>
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="shoulder-length" display="none">
