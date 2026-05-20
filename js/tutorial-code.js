@@ -832,7 +832,10 @@
     }
 
     var outputContainerHtml = '<div class="tvm-output-container" tabindex="0" role="region" aria-label="Program output"><pre class="tvm-output-pre"></pre></div>';
-    var diagramContentHtml = '<div class="tvm-diagram-content" tabindex="0"></div>';
+    // tabindex="0" makes this container focusable so keyboard users can pan
+    // and zoom the diagram; without role+aria-label the WCAG 4.1.2 audit
+    // flags it as an interactive element missing an accessible name.
+    var diagramContentHtml = '<div class="tvm-diagram-content" tabindex="0" role="region" aria-label="Interactive UML diagram viewer"></div>';
     var terminalHtml;
     if (this.config.useTerminal) {
       // Terminal (xterm-backed: v86 / webcontainer) is intentionally NOT

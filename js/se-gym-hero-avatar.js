@@ -4073,7 +4073,13 @@
       if (!source) return null;
       var template = source.cloneNode(true);
       template.querySelectorAll('animate, animateTransform').forEach(function (node) { node.remove(); });
-      if (snapshot) applyChoicePreviewSnapshot(template, snapshot, baseState);
+      // Apply the representative base state to the template so the pruning
+      // step keeps the representative slots (e.g. short hair behind a face
+      // preview) and removes only the always-hidden alternates. The snapshot
+      // was previously applied here, but it bakes the user's current avatar
+      // (e.g. a hijab that hides every hair slot) into the cache, which then
+      // strips hair entirely from face / body / outfit previews.
+      applyToSvg(template, representativeChoiceBaseState(definition));
       pruneChoicePreviewTemplate(template, definition);
       choicePreviewTemplateCache[cacheKey] = template;
       return template.cloneNode(true);
@@ -4095,16 +4101,17 @@
     }
 
     function updateChoicePreviewSvg(svg, definition, optionValue, baseState, snapshot) {
-      var previewBase = normalizeAvatar(cloneAvatarState(baseState || DEFAULTS));
-      var state = snapshot
-        ? choiceState(definition, optionValue, previewBase)
-        : representativeChoiceState(definition, optionValue);
-      if (snapshot && definition.key !== 'heroKind') {
-        applyChoicePreviewSnapshot(svg, snapshot, previewBase);
-        applyChoicePreviewDelta(svg, definition, optionValue, previewBase);
-      } else {
-        applyToSvg(svg, state);
-      }
+      // Choice preview thumbnails must stay representative — their job is to
+      // show "what this option looks like", not "what your avatar would look
+      // like with this option". The live snapshot was previously applied
+      // here as a perf shortcut, but it copies the user's skin/hair/suit
+      // tones and accessory-induced slot visibilities (e.g. hidden hair
+      // under a hijab) into every preview, which fails the contract checked
+      // by "Style preview buttons keep representative thumbnails after
+      // randomize…" and "…remain representative across mixed avatar
+      // changes". Always render the representative state instead.
+      var state = representativeChoiceState(definition, optionValue);
+      applyToSvg(svg, state);
       svg._heroChoiceRepresentativeState = state;
       pruneChoicePreviewSvg(svg);
       if (!svg._heroChoicePreviewIdsUnique) {

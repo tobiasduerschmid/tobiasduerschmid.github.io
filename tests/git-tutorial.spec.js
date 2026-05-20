@@ -53,6 +53,12 @@ test.describe.serial('Git Tutorial', () => {
   let context;
 
   test.beforeAll(async ({ browser }) => {
+    // The default hook timeout is 30 s, but the v86 VM boot can use the
+    // full VM_BOOT_TIMEOUT (60 s) under cold-cache or contended dev-server
+    // conditions, which makes this hook tip over and cascade-fail every
+    // test in the block. The describe-level test.setTimeout(120_000) above
+    // affects tests, not hooks — hook timeout must be set inside the hook.
+    test.setTimeout(120_000);
     context = await browser.newContext();
     page = await context.newPage();
     await page.goto(TUTORIAL_URL);

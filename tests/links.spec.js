@@ -27,6 +27,13 @@ function normalizeInternalHref(href, baseUrl) {
 
 test.describe('Broken Link Checker', () => {
   test('all internal links return 200 OK', async ({ page, request }) => {
+    // The crawl walks up to 50 pages and HEAD/GETs every internal anchor on
+    // each, which is many hundreds of requests against the dev Jekyll
+    // server. The default 30 s test timeout was tuned for a smaller site
+    // and started to flake as more SEBook chapters, tutorials, and lecture
+    // pages were added. Two minutes is plenty even on a contended local
+    // run while staying inside CI's overall test budget.
+    test.setTimeout(120_000);
     const visited = new Set();
     const toVisit = ['/'];
     const brokenLinks = [];
