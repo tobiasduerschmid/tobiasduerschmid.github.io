@@ -1378,15 +1378,33 @@
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="curly" display="none">
+        <!-- Back-layer halo (puffier silhouette for curl volume). -->
         <path d="M 338 178 C 330 136, 360 100, 400 96 C 440 100, 470 136, 462 178 C 446 168, 424 160, 400 160 C 376 160, 354 168, 338 178 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".44"/>
+        <!-- Main silhouette with curl bumps around the perimeter. -->
         <path d="M 342 178 C 334 146, 352 116, 370 108 C 376 98, 388 100, 392 112 C 400 96, 412 96, 400 108 C 388 96, 400 96, 408 112 C 412 100, 424 98, 430 108 C 448 116, 466 146, 458 178 C 444 168, 424 162, 400 162 C 376 162, 356 168, 342 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="3.2" stroke-linejoin="round" stroke-linecap="round"/>
-
-        <path d="M 358 130 C 378 118, 422 118, 442 130 C 422 124, 400 124, 378 126 C 368 129, 361 131, 358 130 Z" fill="var(--hero-hair-light, #4a3220)" opacity=".5"/>
-        <path d="M 360 168 C 376 158, 392 154, 402 156 C 416 154, 432 158, 440 168 C 430 158, 414 152, 400 152 C 386 150, 372 154, 364 160 C 360 162, 358 164, 360 168 Z" fill="var(--hero-hair, #1f140c)" opacity=".32"/>
-        <g clip-path="url(#comic-crown-hair-clip-{{ hero_variant }})" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.65" fill="none" opacity="var(--hero-hair-detail-opacity, .42)">
-          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(362 120) rotate(-12) scale(.82)"/>
-          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(396 108) rotate(6) scale(.86)"/>
-          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(424 122) rotate(18) scale(.82)"/>
+        <!-- Hairline shadow band. -->
+        <path d="M 358 130 C 378 118, 422 118, 442 130 C 422 124, 400 124, 378 126 C 368 129, 361 131, 358 130 Z" fill="var(--hero-hair-light, #4a3220)" opacity=".58"/>
+        <!-- Soft inner shadow at the bottom edge. -->
+        <path d="M 360 168 C 376 158, 392 154, 402 156 C 416 154, 432 158, 440 168 C 430 158, 414 152, 400 152 C 386 150, 372 154, 364 160 C 360 162, 358 164, 360 168 Z" fill="var(--hero-hair, #1f140c)" opacity=".34"/>
+        <!-- Crown specular sheen on the brightest curl lit-side. -->
+        <path d="M 372 116 C 386 108, 410 108, 424 116" stroke="#ffffff" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".42"/>
+        <!-- Internal curl symbols (more dense to convey curly texture). -->
+        <g clip-path="url(#comic-crown-hair-clip-{{ hero_variant }})" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.65" fill="none" opacity="var(--hero-hair-detail-opacity, .5)">
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(354 122) rotate(-22) scale(.7)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(372 112) rotate(-10) scale(.78)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(394 106) rotate(4) scale(.82)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(416 110) rotate(14) scale(.78)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(440 122) rotate(24) scale(.7)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(362 144) rotate(-14) scale(.66)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(386 138) rotate(2) scale(.7)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(414 140) rotate(12) scale(.7)"/>
+          <use href="#curl-symbol-{{ hero_variant }}" transform="translate(434 146) rotate(20) scale(.62)"/>
+        </g>
+        <!-- Highlights nestled inside top curls. -->
+        <g stroke="#ffffff" stroke-width="1.4" fill="none" stroke-linecap="round" opacity=".32">
+          <path d="M 376 116 C 380 112 384 112 386 116"/>
+          <path d="M 396 108 C 400 105 404 105 406 108"/>
+          <path d="M 416 116 C 420 112 424 112 426 116"/>
         </g>
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
