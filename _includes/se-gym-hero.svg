@@ -1464,9 +1464,26 @@
         <path d="M 370 126 C 386 116, 414 116, 430 126" stroke="#ffffff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".3"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="twist-out" display="none">
+        <!-- Crown hair. -->
         <path d="M 352 176 C 344 140, 366 110, 400 108 C 434 110, 456 140, 448 176 C 434 164, 418 158, 400 158 C 382 158, 366 164, 352 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.9" stroke-linejoin="round"/>
         <path d="M 362 132 C 380 122, 420 122, 438 132 C 422 128, 400 128, 378 130 C 372 132, 366 132, 362 132 Z" fill="var(--hero-hair-light, #4a3220)" opacity=".5"/>
-        <path d="M 356 174 C 346 202, 350 234, 338 268 M 374 178 C 364 210, 372 242, 360 280 M 426 178 C 436 210, 428 242, 440 280 M 444 174 C 454 202, 450 234, 462 268" stroke="var(--hero-hair, #1f140c)" stroke-width="15" fill="none" stroke-linecap="round"/>
+        <!-- Twist-out: filled rope shapes (4), wider and bouncier than twists (unraveled twists give voluminous waves). -->
+        <g fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.1" stroke-linejoin="round">
+          <path d="M 354 172 C 344 196 342 226 332 256 C 326 272 330 282 336 282 C 342 282 346 266 350 256 C 358 226 364 196 364 174 C 364 168 358 168 354 172 Z"/>
+          <path d="M 372 174 C 364 200 366 232 354 268 C 350 280 354 290 360 288 C 366 286 372 268 374 264 C 380 232 380 200 380 176 C 380 172 374 172 372 174 Z"/>
+          <path d="M 426 174 C 434 200 432 232 444 268 C 448 280 444 290 438 288 C 432 286 426 268 424 264 C 418 232 418 200 418 176 C 418 172 424 172 426 174 Z"/>
+          <path d="M 444 172 C 454 196 456 226 466 256 C 472 272 468 282 462 282 C 456 282 452 266 448 256 C 440 226 434 196 434 174 C 434 168 440 168 444 172 Z"/>
+        </g>
+        <!-- Inner wave highlights (showing the unraveled twist pattern). -->
+        <g stroke="#ffffff" stroke-width="1.4" fill="none" stroke-linecap="round" opacity=".25">
+          <path d="M 346 198 C 343 220 343 240 346 260 M 366 200 C 363 222 363 244 366 264"/>
+          <path d="M 434 200 C 437 222 437 244 434 264 M 454 198 C 457 220 457 240 454 260"/>
+        </g>
+        <!-- Wave inner shadow lines. -->
+        <g stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".4">
+          <path d="M 352 200 C 348 220 348 244 350 264 M 370 204 C 368 224 368 246 370 264"/>
+          <path d="M 430 204 C 432 224 432 246 430 264 M 448 200 C 452 220 452 244 450 264"/>
+        </g>
         <path d="M 370 126 C 386 116, 414 116, 430 126" stroke="#ffffff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".3"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="wavy" display="none">
