@@ -1623,12 +1623,28 @@
         <path d="M 366 130 C 384 116, 416 116, 434 130 M 362 166 C 376 157, 388 154, 400 156 C 412 154, 424 157, 438 166" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="ponytail" display="none">
+        <!-- Crown hair. -->
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.8" stroke-linejoin="round"/>
         <ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
-
-
-        <path d="M 448 178 C 464 210, 460 292, 448 356" stroke="var(--hero-hair, #1f140c)" stroke-width="22" fill="none" stroke-linecap="round"/>
-        <path d="M 366 130 C 384 116, 416 116, 434 130 M 362 166 C 376 157, 388 154, 400 156 C 412 154, 424 157, 438 166" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
+        <!-- Connector panel: bridges crown to gather (always attached). -->
+        <path d="M 446 174 C 440 168 426 168 420 174 C 420 182 426 188 434 188 C 442 188 446 184 446 174 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.2" stroke-linejoin="round"/>
+        <!-- Tail: filled tapered teardrop falling down behind the shoulder. -->
+        <path d="M 446 178 C 458 188 466 212 470 244 C 474 280 472 314 464 348 C 460 362 456 368 452 370 C 448 372 444 368 444 362 C 446 334 450 306 450 276 C 450 242 446 214 442 196 C 440 188 440 180 446 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+        <!-- Tail inner shadow plate. -->
+        <path d="M 450 198 C 456 226 458 260 458 292 C 457 322 454 348 451 364" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="6" fill="none" stroke-linecap="round" opacity=".26"/>
+        <!-- Internal flow lines. -->
+        <path d="M 448 196 C 454 228 458 268 456 316 M 456 202 C 462 236 466 276 464 316" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.3" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .45)"/>
+        <!-- Specular sheen. -->
+        <path d="M 462 212 C 468 246 470 284 466 324" stroke="#ffffff" stroke-width="1.7" fill="none" stroke-linecap="round" opacity=".26"/>
+        <!-- Tip flick. -->
+        <path d="M 446 362 C 454 370 462 372 464 368 C 464 362 460 356 454 354 Z" fill="var(--hero-hair-light, #4a3220)" opacity=".5"/>
+        <!-- Band/tie at the gather (sits on the crown edge). -->
+        <path d="M 438 172 C 436 167 443 163 449 164 C 455 163 462 166 462 172 C 462 180 458 184 453 184 C 449 184 443 184 440 184 C 436 184 436 178 438 172 Z" fill="var(--hero-hair-dark, #0f0905)" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.4" stroke-linejoin="round"/>
+        <path d="M 441 170 C 445 167 455 167 459 170 M 441 178 C 445 182 455 182 459 178" stroke="var(--hero-hair-light, #4a3220)" stroke-width="1.3" fill="none" stroke-linecap="round" opacity=".68"/>
+        <path d="M 459 174 C 463 172 465 176 462 179 C 460 180 458 178 459 174 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".85"/>
+        <!-- Side-sweep flow lines on crown. -->
+        <path d="M 366 130 C 384 116, 416 116, 434 130 M 362 166 C 376 157, 388 154, 400 156 C 412 154, 424 157, 438 166 M 380 152 C 396 148 414 146 430 150 M 384 168 C 400 164 418 162 434 166" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.7" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
+        <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="high-pony" display="none">
         <!-- Crown hair. -->
