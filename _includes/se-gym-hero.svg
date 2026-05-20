@@ -1477,10 +1477,35 @@
         <path d="M 362 132 C 380 122, 420 122, 438 132" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".5"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="braids" display="none">
+        <!-- Crown hair. -->
         <path d="M 352 176 C 344 140, 366 110, 400 108 C 434 110, 456 140, 448 176 C 434 164, 418 158, 400 158 C 382 158, 366 164, 352 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.9" stroke-linejoin="round"/>
         <path d="M 362 132 C 380 122, 420 122, 438 132 C 422 128, 400 128, 378 130 C 372 132, 366 132, 362 132 Z" fill="var(--hero-hair-light, #4a3220)" opacity=".5"/>
-        <path d="M 344 180 C 332 210, 358 238, 346 268 C 334 298, 360 320, 348 344 M 456 180 C 468 210, 442 238, 454 268 C 466 298, 440 320, 452 344" stroke="var(--hero-hair, #1f140c)" stroke-width="20" fill="none" stroke-linecap="round"/>
+        <!-- Connector panels: bridge crown to side gathers across all head shapes. -->
+        <path d="M 352 174 C 358 168 372 168 378 174 C 378 182 372 188 364 188 C 356 188 352 184 352 174 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.2" stroke-linejoin="round"/>
+        <path d="M 448 174 C 442 168 428 168 422 174 C 422 182 428 188 436 188 C 444 188 448 184 448 174 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.2" stroke-linejoin="round"/>
+        <!-- Left braid: filled tapered body. -->
+        <path d="M 352 178 C 346 184 340 200 338 224 C 336 252 340 282 344 312 C 347 330 349 342 350 350 C 351 356 354 356 355 350 C 356 342 358 330 360 312 C 364 282 366 252 364 224 C 362 202 358 188 356 178 C 354 174 352 174 352 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+        <!-- Right braid: filled tapered body. -->
+        <path d="M 448 178 C 454 184 460 200 462 224 C 464 252 460 282 456 312 C 453 330 451 342 450 350 C 449 356 446 356 445 350 C 444 342 442 330 440 312 C 436 282 434 252 436 224 C 438 202 442 188 444 178 C 446 174 448 174 448 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+        <!-- Left braid weave: chevrons + S-curves. -->
+        <g stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".7">
+          <path d="M 338 196 C 346 192 356 192 364 196 M 338 218 C 346 214 356 214 364 218 M 338 240 C 346 236 356 236 364 240 M 338 262 C 346 258 356 258 364 262 M 338 284 C 346 280 356 280 364 284 M 339 306 C 346 302 356 302 363 306 M 341 326 C 347 322 355 322 361 326"/>
+          <path d="M 338 196 C 344 206 344 212 338 218 M 364 196 C 358 206 358 212 364 218 M 338 218 C 344 228 344 234 338 240 M 364 218 C 358 228 358 234 364 240 M 338 240 C 344 250 344 256 338 262 M 364 240 C 358 250 358 256 364 262 M 338 262 C 344 272 344 278 338 284 M 364 262 C 358 272 358 278 364 284 M 338 284 C 344 294 344 300 339 306 M 364 284 C 358 294 358 300 363 306"/>
+        </g>
+        <!-- Right braid weave. -->
+        <g stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".7">
+          <path d="M 436 196 C 444 192 454 192 462 196 M 436 218 C 444 214 454 214 462 218 M 436 240 C 444 236 454 236 462 240 M 436 262 C 444 258 454 258 462 262 M 436 284 C 444 280 454 280 462 284 M 437 306 C 444 302 454 302 461 306 M 439 326 C 445 322 453 322 459 326"/>
+          <path d="M 436 196 C 442 206 442 212 436 218 M 462 196 C 456 206 456 212 462 218 M 436 218 C 442 228 442 234 436 240 M 462 218 C 456 228 456 234 462 240 M 436 240 C 442 250 442 256 436 262 M 462 240 C 456 250 456 256 462 262 M 436 262 C 442 272 442 278 436 284 M 462 262 C 456 272 456 278 462 284 M 436 284 C 442 294 442 300 437 306 M 462 284 C 456 294 456 300 461 306"/>
+        </g>
+        <!-- Left tassel + tie at the tip. -->
+        <path d="M 346 348 C 345 352 345 356 347 358 C 347 362 352 362 352 358 C 353 356 353 352 352 348 Z" fill="var(--hero-hair-dark, #0f0905)"/>
+        <path d="M 348 358 C 346 366 348 370 350 372 M 351 358 C 353 366 356 368 358 366" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".62"/>
+        <!-- Right tassel + tie. -->
+        <path d="M 454 348 C 455 352 455 356 453 358 C 453 362 448 362 448 358 C 447 356 447 352 448 348 Z" fill="var(--hero-hair-dark, #0f0905)"/>
+        <path d="M 452 358 C 454 366 452 370 450 372 M 449 358 C 447 366 444 368 442 366" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.2" fill="none" stroke-linecap="round" opacity=".62"/>
+        <!-- Crown highlight. -->
         <path d="M 370 126 C 386 116, 414 116, 430 126" stroke="#ffffff" stroke-width="2" fill="none" stroke-linecap="round" opacity=".3"/>
+        <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="long-braid" display="none">
         <path d="M 352 176 C 344 140, 366 110, 400 108 C 434 110, 456 140, 448 176 C 434 164, 418 158, 400 158 C 382 158, 366 164, 352 176 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.9" stroke-linejoin="round"/>
