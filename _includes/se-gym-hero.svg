@@ -1676,11 +1676,25 @@
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="braided-bun" display="none">
+        <!-- Crown hair (gathered toward the top). -->
         <path d="M 354 178 C 348 144, 368 116, 400 114 C 432 116, 452 144, 446 178 C 434 166, 418 160, 400 160 C 382 160, 366 166, 354 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.8" stroke-linejoin="round"/>
         <ellipse cx="400" cy="160" rx="40" ry="11" fill="var(--hero-hair, #1f140c)" opacity=".82"/>
-
-        <ellipse cx="400" cy="96" rx="24" ry="17" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.7"/>
-        <path d="M 384 92 C 394 84, 410 84, 418 94" stroke="var(--hero-hair-light, #4a3220)" stroke-width="2.2" fill="none" stroke-linecap="round" opacity=".58"/>
+        <!-- Bun base ellipse. -->
+        <ellipse cx="400" cy="96" rx="26" ry="18" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.7"/>
+        <!-- Braid weave on bun: coiled braid pattern. -->
+        <g stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.4" fill="none" stroke-linecap="round" opacity=".7">
+          <path d="M 378 92 C 382 86 392 84 398 88 C 404 84 414 86 418 92"/>
+          <path d="M 378 96 C 384 100 394 102 400 100 C 406 102 416 100 422 96"/>
+          <path d="M 380 102 C 386 96 394 96 400 100 C 406 96 414 96 420 102"/>
+          <path d="M 378 92 C 382 96 384 100 380 102 M 418 92 C 414 96 412 100 416 102"/>
+          <path d="M 394 86 C 396 90 396 96 398 100 M 406 86 C 404 90 404 96 402 100"/>
+        </g>
+        <!-- Bun highlight + shadow. -->
+        <path d="M 382 88 C 392 82, 408 82, 416 90" stroke="#ffffff" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".42"/>
+        <path d="M 378 102 C 388 110, 412 110, 422 102" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="1.6" fill="none" stroke-linecap="round" opacity=".42"/>
+        <!-- Connector showing braid running from crown to bun. -->
+        <path d="M 388 118 C 392 110, 408 110, 412 118" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.5" fill="none" stroke-linecap="round" opacity=".6"/>
+        <!-- Side-sweep crown lines. -->
         <path d="M 366 130 C 384 116, 416 116, 434 130 M 362 166 C 376 157, 388 154, 400 156 C 412 154, 424 157, 438 166" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="2" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .42)"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="box-braids" display="none">
