@@ -5,71 +5,71 @@ cards:
   - id: 1
     difficulty: basic
     question: "Why is coverage a *map* rather than a *grade* of test quality?"
-    answer: "Coverage tells you which lines or branches were **executed**. It does not tell you whether the test **checked the right result** — a high-coverage suite can still have weak assertions, missing oracles, and untested boundaries."
+    answer: "Coverage tells you which lines/branches were **executed**. It does not tell you whether the test **checked the right result** — high coverage can coexist with weak assertions and missing boundaries."
     explanation: "Inozemtseva and Holmes (2014) found that coverage has only low-to-moderate correlation with suite effectiveness once suite size is controlled. Treat coverage as a navigational tool ('what didn't I exercise yet?') not as a quality target ('we hit 90, ship it'). Once coverage becomes the goal, students and teams learn to satisfy the metric instead of the specification."
 
   - id: 2
     difficulty: basic
     question: "Define **mutation testing** in one sentence, and name the question a *surviving* mutant asks of your suite."
-    answer: "Mutation testing creates many small faulty versions of the program and asks whether the existing tests detect them. A **surviving mutant** asks: *Is an assertion too weak, did we forget a boundary, or is this code underspecified?*"
+    answer: "Mutation testing creates many small faulty versions of the program and asks whether existing tests detect them. A **surviving mutant** asks: *Is an assertion too weak, did we forget a boundary, or is this code underspecified?*"
     explanation: "DeMillo, Lipton, and Sayward (1978) introduced mutation-based test-data selection. Just et al. (2014) found that mutant detection correlates with real-fault detection independently of code coverage — a stronger signal than coverage alone. Treat the mutation score as a diagnostic, not a moral scoreboard."
 
   - id: 3
     difficulty: intermediate
-    question: "Name the five oracle types from the chapter and give one sentence on when each is the right choice."
-    answer: "**Exact value** — compare output to a known result (the strongest oracle when feasible). **State** — check externally visible state after an operation. **Interaction** — verify an observable collaboration when the collaboration *is* the behavior (e.g. 'one receipt email after payment'). **Exception** — check that invalid input fails in the specified way. **Property** — check an invariant that should hold across many generated inputs."
-    explanation: "Use the strongest oracle you can afford for the situation. Property oracles shine when one exact expected value matters less than a rule that should hold over a large input space — QuickCheck (Claessen & Hughes 2000) and its descendants generate inputs automatically. Interaction oracles are appropriate sparingly — overusing them produces tests that freeze how the current implementation happens to collaborate internally."
+    question: "Name the five oracle types from the chapter."
+    answer: "**Exact value** (compare to known result); **state** (check observable state after); **interaction** (verify a collaboration when *that* is the contract); **exception** (specified failure mode); **property** (invariant across many inputs)."
+    explanation: "Use the strongest oracle you can afford. Property oracles shine when one exact value matters less than a rule that should hold over a large input space — QuickCheck (Claessen & Hughes 2000) and its descendants generate inputs automatically. Interaction oracles are appropriate sparingly — overusing them produces tests that freeze how the current implementation happens to collaborate internally."
 
   - id: 4
     difficulty: intermediate
-    question: "List at least four of the recurring causes of flaky tests that Luo et al. identified in their empirical study."
-    answer: "**Asynchronous waiting** (sleeps instead of waiting on a condition); **concurrency** (race conditions); **test-order dependencies** (leaked state); **time assumptions** (real clock); **randomness** (unseeded); **external resources** (network, file system, real databases)."
-    explanation: "Luo et al. (2014) analysed fixed flaky tests across large open-source projects. Async waiting was by far the most common cause. The fix for each is structural: wait on observable conditions, isolate state, freeze or inject the clock, seed randomness, replace external services with fakes for the fast suite. Flakiness damages the social contract: a red test should mean *investigate*, not *rerun and hope*."
+    question: "List at least four of the recurring causes of flaky tests that Luo et al. identified."
+    answer: "**Asynchronous waiting** (sleeps); **concurrency** (races); **test-order dependencies** (leaked state); **time assumptions** (real clock); **randomness** (unseeded); **external resources** (network, FS, real DB)."
+    explanation: "Luo et al. (2014) analysed fixed flaky tests across large open-source projects. Async waiting was by far the most common cause. The fix for each is structural: wait on observable conditions, isolate state, freeze or inject the clock, seed randomness, replace external services with fakes for the fast suite. Flakiness damages the social contract: a red test should mean *investigate*, not *rerun*."
 
   - id: 5
     difficulty: intermediate
-    question: "Name three classic *test smells* from the van Deursen catalog and what each one looks like in practice."
-    answer: "**Excessive setup** — most of a test is fixture construction, drowning the actual behavior. **Assertion roulette** — many bare assertions in one test, no diagnostic message, hard to tell which one failed. **Mystery guest** — the test relies on a file, DB row, or shared object the reader cannot see in the test body. **Eager test** — one test exercises multiple unrelated behaviors at once."
+    question: "Name three classic *test smells* from the van Deursen catalog."
+    answer: "**Excessive setup** (fixture drowns the actual behavior); **assertion roulette** (many bare assertions, no diagnostic); **mystery guest** (depends on hidden file/object); **eager test** (one test, many unrelated behaviors)."
     explanation: "Van Deursen et al. (2001) catalogued test-code smells; Meszaros (2007) systematized them in *xUnit Test Patterns*. Bavota et al. (2015) found high diffusion of these smells in real projects and evidence that their presence harms comprehension and maintenance. Test code is production code for confidence — it needs the same design care."
 
   - id: 6
     difficulty: intermediate
-    question: "Translate this signal into a quality concern: *'Coverage is 88%, the suite passes consistently, but two engineers report being afraid to refactor module X because they don't trust the tests.'* What is the most likely problem?"
-    answer: "The tests probably suffer from **weak oracles and over-coupling to implementation**: they pass when code runs, but engineers know from experience that real bugs slip through and that refactors trigger false failures. High coverage and consistent passing are necessary, not sufficient."
+    question: "Diagnose this: *'Coverage is 88%, suite passes consistently, but engineers report being afraid to refactor module X because they don't trust the tests.'*"
+    answer: "Likely **weak oracles and over-coupling to implementation** — tests pass when code runs, but engineers know from experience that real bugs slip through and that refactors trigger false failures."
     explanation: "This is the textbook gap between coverage as a measurement and quality as an experience. Engineer fear is a real signal — it usually traces to assertions that don't catch the bugs that matter (weak oracles) or assertions that catch refactors that don't matter (over-coupling). Mutation testing diagnoses the first; reviewing what each test asserts on diagnoses the second."
 
   - id: 7
     difficulty: advanced
-    question: "You're choosing between an example-based test and a property-based test for: *'My CSV parser should round-trip — `parse(format(rows)) == rows` for any list of rows.'* Which is the stronger choice, and why?"
-    answer: "**Property-based** is stronger here. The round-trip is naturally expressed as `∀ rows: parse(format(rows)) == rows`, and a generator can produce hundreds of input shapes — empty rows, embedded commas, quote characters, Unicode — many of which a human author would never write by hand."
+    question: "Choose between an example-based test and a property-based test for: *'CSV parser round-trip — `parse(format(rows)) == rows` for any rows.'* Which is stronger here?"
+    answer: "**Property-based**. The round-trip is naturally `∀ rows: parse(format(rows)) == rows`, and a generator produces input shapes (embedded commas, quotes, Unicode) a human author would never write."
     explanation: "Round-trip is one of the canonical patterns property-based testing exploits, alongside identity, commutativity, associativity, and idempotence. The generator finds boundary cases the author didn't think of. Pair the property with two or three hand-chosen example tests for cases you care about specifically — properties and examples complement each other."
 
   - id: 8
     difficulty: advanced
-    question: "Mutation testing on a service module reports a *95% mutation score*, but a postmortem finds a real bug in that module that no test caught. What does this contradict — and what does it really tell you?"
-    answer: "It is not a contradiction. Mutation testing measures **fault-revealing strength against the kinds of small syntactic faults the mutation operators inject**. Real bugs often live at higher-level seams — wrong specification, missed boundary, missing scenario — that no syntactic mutant exercises."
+    question: "Mutation testing reports 95% on a service module, but a postmortem finds a real bug no test caught. What does that contradict, and what does it really tell you?"
+    answer: "Not a contradiction. Mutation tests **small syntactic faults**; real bugs often live at higher-level seams — wrong spec, missed boundary, missing scenario — that no syntactic mutant exercises."
     explanation: "Just et al. (2014) found mutation score correlates with real-fault detection but explains only part of it. Treat mutation as one signal in a dashboard: coverage (what wasn't visited), mutation/seeded-fault detection (oracle strength), flake rate (trust), bug-regression rate (real escapes), runtime by layer (fast feedback). No single metric captures test quality."
 
   - id: 9
     difficulty: intermediate
-    question: "Sketch the *quality rubric* a reviewer should walk through when reviewing a test suite — name at least five dimensions."
-    answer: "**Behavioral relevance** (tests come from requirements, not branches); **oracle strength** (every test has a meaningful assertion); **input selection** (boundaries, invalid, exceptional); **fault-revealing ability** (mutation/seeded-fault checks); **determinism** (consistent pass/fail); **diagnosis** (a failure points to one behavior); **maintainability** (helpers hide noise, not intent); **speed and layering** (fast feedback locally, slower system tests separately)."
+    question: "Sketch a quality rubric a reviewer should walk through when reviewing a test suite — at least five dimensions."
+    answer: "Behavioral relevance · oracle strength · input selection (boundaries, invalid) · fault-revealing ability · determinism · diagnosis quality · maintainability · speed and layering."
     explanation: "The rubric in the chapter is structured this way deliberately — each row has a *strong evidence* description and a *warning sign*. Use it as a checklist when reviewing PRs or auditing a suite. The point is not to score; it is to make weakness diagnosable, so concrete fixes follow."
 
   - id: 10
     difficulty: advanced
-    question: "Your CI dashboard tracks: coverage, mutation score, flake rate, suite runtime, and escaped-bug count per quarter. Three months in, mutation score stays at 80%, coverage rises to 92%, but escaped-bug count doubles. Diagnose."
-    answer: "Coverage rose without oracle strength — engineers added tests that *execute* new code without *checking* it meaningfully. The static mutation score with rising coverage is the tell: the new tests are not killing many new mutants. The escaped-bug count is the leading indicator the suite is regressing in fault-revealing power."
+    question: "Dashboard: coverage 92% (up from 88%), mutation score steady at 80%, escaped-bug count doubled in three months. Diagnose."
+    answer: "Coverage rose without oracle strength — new tests *execute* new code without *checking* it. The static mutation score with rising coverage and rising escapes is the tell: new tests are not killing new mutants."
     explanation: "This is exactly the failure mode coverage-as-grade produces. Tying performance metrics or release gates to coverage creates pressure for execution without verification. The remedy is to weight mutation/seeded-fault scores or to peer-review oracle strength explicitly on each new test. The goal is to keep asking whether the suite would fail if the system broke in a way users care about."
 
   - id: 11
     difficulty: intermediate
-    question: "A team uses the same suite for both *formative* quick feedback during development and *summative* release-gate sign-off. Why is this risky, and what's the typical resolution?"
-    answer: "A suite optimised for fast feedback (seconds, isolated, mocked) makes weaker assurance claims than one designed for release sign-off (realistic dependencies, longer run, broader scenarios). Conflating them usually makes the fast suite too slow *and* the release gate too narrow. Resolution: separate **layers** — fast unit/component tests run on every save; slower integration/system tests run on PR or nightly."
+    question: "Why is using one test suite for both *formative* fast feedback and *summative* release sign-off risky?"
+    answer: "The two goals pull opposite ways — fast suites need isolation and mocks; release gates need realism and breadth. Conflating them makes the fast suite slow *and* the release gate narrow. Separate them into layers."
     explanation: "This mirrors the formative-vs-summative distinction in assessment. A 'one suite to rule them all' design forces tradeoffs that hurt both purposes. The healthier model is to keep the fast feedback loop trustworthy and quick, and treat the larger gate as a *separate* artifact with its own runtime and scope expectations."
 
   - id: 12
     difficulty: expert
-    question: "Critique this practice: *'We require 100% line coverage on every PR; tests are reviewed only by the author.'* Name at least three failure modes it invites."
-    answer: "(1) **Coverage gaming** — tests are written to execute lines without asserting on results, so the metric is hit without improving quality. (2) **Weak oracles unreviewed** — without peer review, vacuous assertions slip through. (3) **Hostile refactoring** — to maintain 100%, engineers leave tests that pin implementation details, making future change expensive. (4) **Slowed feedback** — exhaustive coverage often forces tests that are slow or brittle."
+    question: "Critique: *'We require 100% line coverage on every PR; tests are reviewed only by the author.'* Name at least three failure modes this invites."
+    answer: "(1) **Coverage gaming** — execute lines without assertions. (2) **Weak oracles unreviewed** — vacuous assertions slip through. (3) **Hostile refactoring** — tests pin implementation details. (4) **Slowed feedback** — exhaustive coverage forces slow tests."
     explanation: "Goodhart's Law in test design: when a measure becomes a target, it ceases to be a good measure. A healthier policy specifies *what the suite must demonstrate* (behavior coverage for new features, mutation kills on critical modules) and includes test review as part of code review. Coverage is one signal among several, not the sole release gate."

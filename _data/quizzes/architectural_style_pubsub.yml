@@ -46,27 +46,27 @@ questions:
     difficulty: intermediate
     type: single
     question: |
-      Your billing service publishes `InvoicePaid` events. Losing one means a customer gets a duplicate charge or no service. Latency is acceptable. Which MQTT QoS level applies?
+      A team uses an MQTT broker to publish `InvoicePaid` events to a billing-fulfillment consumer. The consumer is **not idempotent**, so a duplicate `InvoicePaid` would charge the customer twice. Loss would mean a paid invoice is never recorded. Latency is acceptable. Which MQTT QoS level fits this *exact* stem?
     options:
-      - "QoS 0 — lowest latency, fire-and-forget."
-      - "QoS 1 — at-least-once delivery; if the consumer is idempotent, duplicates are harmless."
-      - "QoS 2 — exactly-once delivery via four-step handshake."
-      - "QoS does not matter here — any level works because the subscriber acknowledges processing."
+      - "QoS 0 — broker performs lowest-latency, fire-and-forget delivery with no acknowledgments."
+      - "QoS 1 — broker retries until the consumer acknowledges, accepting that duplicates may reach the consumer."
+      - "QoS 2 — broker and consumer run a four-step handshake to guarantee exactly-once delivery."
+      - "QoS choice is irrelevant — the broker always guarantees exactly-once delivery regardless of the level set."
     correct_index: 2
     option_feedback:
       0: |
-        QoS 0 may silently drop the message — the worst case is a paid invoice never recorded. For billing that's a regulatory and reputational disaster, not just a UX bug.
+        QoS 0 may silently drop the message — a paid invoice never recorded is a regulatory and reputational disaster, not just a UX bug.
       1: |
-        QoS 1 may duplicate the message — the worst case is the customer charged twice. The stem says "duplicate charge" is unacceptable; QoS 1 only works if the consumer is provably idempotent, and the stem does not promise that.
+        QoS 1 retries until acknowledged, which works fine *if* the consumer is idempotent — but the stem stipulates it is not, so duplicates would double-charge. In real billing systems most teams **make the consumer idempotent** (idempotency keys) and use QoS 1 (or REST), since QoS 2 is expensive and idempotent design is robust to retries from any source.
       3: |
-        QoS controls per-message delivery semantics; subscriber acknowledgment is a separate concern. Without setting QoS 2, neither the broker nor the subscriber can guarantee exactly-once delivery on its own.
-    explanation: "**QoS 2 pays the highest latency cost (four-step PUBLISH/PUBREC/PUBREL/PUBCOMP handshake) for the only delivery guarantee that admits neither loss nor duplication.** Billing, transactional commits, and one-shot critical workflows pick QoS 2. Sensor telemetry where one missed reading is harmless picks QoS 0. Most application events pick QoS 1 with idempotent handlers."
+        QoS controls per-message delivery semantics; the broker does *not* default to exactly-once. Without setting QoS 2 explicitly, neither the broker nor the consumer can guarantee it on its own.
+    explanation: "**Given the stem's constraint (non-idempotent consumer, neither loss nor duplication acceptable), QoS 2's four-step PUBLISH/PUBREC/PUBREL/PUBCOMP handshake is the only level that satisfies both.** Treat this as 'understand the QoS levels' — not 'always pick QoS 2 for money movement.' In real-world billing (Stripe, PayPal, banks) the much more common pattern is *idempotent consumers + QoS 1*, or synchronous REST with idempotency keys."
 
   - id: 4
     difficulty: advanced
     type: multiple
     question: |
-      Your manager wants to use pub-sub for the **money-transfer engine** of a retail bank. Transfers must commit in a strictly defined order, must never be lost, and an ops team must be able to trace why any specific transfer failed within seconds. Which of these are *legitimate* warning signs that pub-sub is the wrong tool here? Select all that apply.
+      Your manager wants to use a *typical* asynchronous pub-sub bus (e.g., Kafka with default settings) for the **money-transfer engine** of a retail bank. Transfers must commit in a strictly defined order, must never be lost, and an ops team must be able to trace why any specific transfer failed within seconds. Which of these are *legitimate* warning signs that this style is the wrong fit *as proposed*? Select all that apply.
     options:
       - "Bus dispatch is asynchronous and gives no ordering guarantee across subscribers."
       - "Tracing causality through a bus during incident response is significantly harder than tracing a synchronous call stack."
@@ -85,7 +85,7 @@ questions:
         Each new subscriber can react to events from any publisher and emit its own events, fanning out the reachable state space. Formal verification and reasoning become exponentially harder.
       4: |
         Pub-sub middleware routinely uses TCP (Kafka, RabbitMQ over AMQP, MQTT). Transport reliability is independent of the style.
-    explanation: "**Pub-sub is the wrong default for ordered, traceable, transactional workflows in regulated domains.** Banks reach for synchronous request/response with strong consistency, or event sourcing with explicit causal ordering, when guarantees matter more than evolvability. The 'too flexible to add subscribers' argument is not a real cost — the real costs are ordering, traceability, and verification."
+    explanation: "**Default-config asynchronous pub-sub is the wrong fit for ordered, traceable, transactional workflows.** Banks reach for synchronous request/response with strong consistency, or event sourcing with explicit causal ordering, when guarantees matter more than evolvability. With careful design — per-account partitioning for ordering, idempotency keys, strict QoS, and full distributed tracing — pub-sub *can* be made to work in finance (some banks do exactly this), but you're paying significant engineering effort to claw back what the style gives up by default. The 'too flexible to add subscribers' argument is not a real cost; the real costs are ordering, traceability, and verification."
 
   - id: 5
     difficulty: advanced

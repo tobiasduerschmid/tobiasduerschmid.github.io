@@ -30,13 +30,19 @@ cards:
     difficulty: intermediate
     question: "Define the **Driver** and **Navigator** roles in pair programming."
     answer: "**Driver:** hands on the keyboard, focusing on local implementation — typing, syntax, immediate logic. **Navigator:** watching for bugs and thinking about high-level architecture, edge cases, and design implications. The roles rotate frequently (every 20–30 minutes is typical), keeping both developers engaged and bringing both perspectives to bear."
-    explanation: "Research shows pair programming improves product quality (fewer defects), reduces risk (knowledge spread), and supports knowledge management (juniors learn from seniors, both ways of thinking shared). The 2x cost objection misses that pairs match or exceed two solo developers on end-to-end output quality."
+    explanation: "Empirical studies (Williams; Lui & Chan; Cockburn & Williams) find pairs take *modestly more* total developer-time than two solo developers but produce *fewer defects*, with the gap widening on harder tasks. The 2x-cost framing only works if defect rate, design quality, and knowledge spread are ignored — and those are what decide long-term velocity."
 
   - id: 6
+    difficulty: basic
+    question: "What does **Continuous Integration** mean in XP?"
+    answer: "The team merges and tests the *full system* multiple times a day, so integration problems surface within hours rather than weeks. Avoids 'integration hell' — the late-cycle scramble when developers who worked in isolation try to merge weeks of divergent work."
+    explanation: "CI is XP's mechanism for keeping the codebase always-near-shippable. The cultural shift it requires is harder than the tooling: developers commit small, integrated changes rather than working in isolation on long-lived branches."
+
+  - id: 6b
     difficulty: advanced
-    question: "What is **Continuous Integration** in XP, and what's the 10-minute build benchmark?"
-    answer: "**Continuous Integration:** the team merges and tests the full system multiple times a day, so integration problems surface within hours, not weeks. **10-minute build:** XP's operational benchmark — if the build and test process takes longer than 10 minutes, the feedback loop becomes too slow; developers stop running it locally, batch changes, and CI loses its function as an early warning system."
-    explanation: "Mitigations when the build slows past 10 minutes: parallelize tests, split into fast smoke tests + slower extended suites, invest in test selection (only run tests affected by a change), or remove redundant/slow tests. The benchmark forces the conversation about feedback-loop speed."
+    question: "What is XP's **10-minute build** benchmark, and why does it matter?"
+    answer: "XP's operational rule: if the full build + test process takes longer than 10 minutes, the feedback loop is too slow. Past that threshold, developers stop running it locally, batch up changes, and CI loses its function as an early warning system."
+    explanation: "Mitigations when the build slows past 10 minutes: parallelize tests, split into fast smoke tests + slower extended suites, invest in test selection (only run tests affected by a change), or remove redundant/slow tests. The benchmark itself is what forces the team to have the conversation."
 
   - id: 7
     difficulty: intermediate

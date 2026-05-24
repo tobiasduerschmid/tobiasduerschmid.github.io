@@ -22,15 +22,27 @@ cards:
 
   - id: 4
     difficulty: intermediate
-    question: "Compare **topic-based**, **content-based**, and **type-based** subscription models."
-    answer: "**Topic-based:** subscribers register on a named channel (e.g., `market.quotes.NASDAQ`); routing is a cheap hash lookup. **Content-based:** subscribers register a predicate over event attributes (e.g., `price < 100`); fine-grained but expensive at the broker. **Type-based:** subscribers register on a class/type; events of that type *and subclasses* match, giving compile-time type safety in strongly typed languages."
-    explanation: "Topic-based is the most widespread (MQTT, Kafka). Content-based gives the strongest decoupling. Type-based is common in language-integrated middleware (e.g., Java event buses)."
+    question: "How does **topic-based** subscription work, and what's its main trade-off?"
+    answer: "Subscribers register on a named channel string (e.g., `market.quotes.NASDAQ`), often with wildcards (`market.quotes.*`). Routing is a cheap hash lookup, so it's fast and scales well. Trade-off: less expressive than content-based — subscribers may receive events they don't care about and must filter locally."
+    explanation: "Topic-based is the most widespread model (MQTT, Kafka, JMS topics). The cost of its simplicity is granularity: if your interests don't naturally partition into a small number of stable named channels, you'll either get over-broad routing or proliferate topics until management overhead dominates."
+
+  - id: 4b
+    difficulty: intermediate
+    question: "How does **content-based** subscription work, and what's its main trade-off?"
+    answer: "Subscribers register a predicate over event attributes (e.g., `region == 'EU' AND amount > 10000`). The broker evaluates each event's payload against every active predicate and delivers only matches. Trade-off: per-event predicate evaluation is far more expensive than a topic hash lookup, so broker CPU scales with subscription complexity."
+    explanation: "Content-based gives the strongest decoupling and finest-grained routing. Production systems (Siena, Rebeca) optimize with covering- and merging-based routing to reduce broker work. Use when filtering must happen on payload attributes and topic partitioning would be unnatural."
+
+  - id: 4c
+    difficulty: intermediate
+    question: "How does **type-based** subscription work, and where is it typically used?"
+    answer: "Subscribers register on a programming-language class or type. Events of that type *and its subclasses* match, giving compile-time type safety. Used heavily in language-integrated middleware where the bus and the application share a runtime — Java event buses, Guava EventBus, RxJava."
+    explanation: "Type-based bridges middleware to strongly-typed programming languages, so subscribers receive correctly-typed objects without casting. It is less common across heterogeneous networks (the type system has to be shared), so it usually appears in single-language in-process or close-coupled distributed systems."
 
   - id: 5
     difficulty: advanced
-    question: "Why is publish-subscribe a poor fit for hard real-time systems?"
-    answer: "Asynchronous bus dispatch provides **no guarantees about ordering, timing, or delivery**. Events may arrive out of order, be delayed by bus load, or be dropped under best-effort QoS. Hard real-time deadlines require a style with deterministic latency bounds."
-    explanation: "This is why DDS (used in aerospace, defense) goes to extreme lengths with QoS policies to bound delivery, and even then is paired with strict design discipline. Plain MQTT or Kafka would not meet a hard real-time SLA."
+    question: "Why are *typical* pub-sub buses (Kafka, RabbitMQ, MQTT) a poor fit for hard real-time systems?"
+    answer: "Their default asynchronous dispatch provides **no guarantees about ordering, timing, or delivery**. Events may arrive out of order, be delayed by broker load, or be dropped under best-effort QoS. Hard real-time deadlines require a transport with deterministic latency bounds, which mainstream brokers don't promise."
+    explanation: "Pub-sub *as a style* is not inherently disqualified — **DDS** is pub-sub purpose-built for hard real-time aerospace and defense, with an extremely rich QoS catalog (deadline, latency budget, transport priority, lifespan). It works precisely because every default has been replaced with explicit bounds. The poor fit is for *default-configured* mainstream brokers, not for the style itself."
 
   - id: 6
     difficulty: advanced

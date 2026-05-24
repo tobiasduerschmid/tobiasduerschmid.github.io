@@ -4,66 +4,78 @@ active: true
 cards:
   - id: 1
     difficulty: basic
-    question: "Define **SUT** and **DOC**, and explain why the distinction matters for test doubles."
-    answer: "**SUT** — *System Under Test*, the unit you actually want to verify. **DOC** — *Depended-On Component*, something the SUT calls into. Replacing a DOC with a test double is what lets the SUT be tested in isolation."
+    question: "Define **SUT** and **DOC**, and why the distinction matters."
+    answer: "**SUT** — *System Under Test*, the unit you want to verify. **DOC** — *Depended-On Component*, something the SUT calls into. Replacing a DOC with a double is what lets the SUT be tested in isolation."
     explanation: "The vocabulary comes from Meszaros, *xUnit Test Patterns* (2007). When you reach for a mock or stub, naming the SUT and the DOC keeps the test honest: you are checking the SUT's behavior, and you are controlling or observing the DOC's role in it. Confusion between the two is the root of many over-mocked, brittle suites."
 
   - id: 2
     difficulty: basic
-    question: "What is the difference between an **indirect input** to the SUT and an **indirect output** from the SUT? Give an example of each."
-    answer: "**Indirect input** — a value the SUT receives *from* a DOC (return value, modified parameter, exception). Example: a database query result. **Indirect output** — an effect the SUT produces *through* a DOC (a network message sent, a log row written, an SMS dispatched)."
+    question: "Difference between an **indirect input** to the SUT and an **indirect output** from the SUT? One example each."
+    answer: "**Indirect input** — a value the SUT *receives from* a DOC (return, exception). Example: DB query result. **Indirect output** — an effect the SUT *produces through* a DOC. Example: SMS sent."
     explanation: "The choice of test double follows from which direction matters: control indirect inputs with a **Stub**; observe indirect outputs with a **Spy** or **Mock**. Tests that try to do both with one double are often the ones that feel tangled — separate the concerns and the test usually clarifies."
 
   - id: 3
     difficulty: basic
-    question: "Name all five kinds of test double in Meszaros's taxonomy, and one sentence on what each is for."
-    answer: "**Dummy** — passed but never used (fills a parameter you don't care about). **Fake** — working implementation with shortcuts unsuitable for production (in-memory DB). **Stub** — controls indirect inputs by returning pre-canned values. **Spy** — records calls for after-the-fact verification. **Mock** — pre-programmed with expectations; fails the test *during* execution if reality diverges."
+    question: "Name all five kinds of test double in Meszaros's taxonomy and what each one is for."
+    answer: "**Dummy** — fills a parameter, never used. **Fake** — working implementation with shortcuts (in-memory DB). **Stub** — returns canned values. **Spy** — records calls for after-the-fact assertion. **Mock** — pre-programmed expectations, fails *during* execution."
     explanation: "The five live on two axes: which direction of data flow they control (input vs output) and when verification happens (after vs during). Knowing the full taxonomy keeps you from reaching for a Mock when a Stub or Spy is closer to what you actually need."
 
   - id: 4
     difficulty: intermediate
-    question: "You need a test that drives the SUT down its error-handling branch — the one where the payment gateway returns `Status.TIMEOUT`. What kind of double is the right choice, and why?"
-    answer: "A **Stub**. You need to control what the SUT receives from the gateway (an indirect *input*) to force execution down a specific path. You don't need to observe what the SUT sends — just to feed it the timeout value."
+    question: "You need to drive the SUT down its error-handling branch — the one where the payment gateway returns `Status.TIMEOUT`. Which double, and why?"
+    answer: "A **Stub**. You need to control what the SUT *receives* from the gateway (indirect input) to force the path. You don't need to observe what the SUT sent."
     explanation: "Stubs shine for exercising paths that are hard to trigger with real DOCs — error responses, slow paths, rare states. They establish a control point in the SUT's input space. If you also need to verify *what message the SUT sent in response* to the timeout, you would add a Spy or Mock — but the *input control* belongs to a Stub."
 
   - id: 5
     difficulty: intermediate
     question: "Compare **Spy** and **Mock**: when does failure occur, and what style of test does each produce?"
-    answer: "A **Spy** records calls quietly; the test asserts on the recording *after* the SUT runs (*procedural behavior verification*). A **Mock** is pre-programmed with expectations; it fails *during* the SUT's execution if a call doesn't match (*expected behavior specification*)."
+    answer: "**Spy** records calls quietly; test asserts on the recording *after* the SUT runs (*procedural verification*). **Mock** is pre-programmed with expectations; fails *during* the SUT's execution if a call doesn't match (*expected behavior specification*)."
     explanation: "Spy-based tests put assertions in the test method, so the reader sees what is being verified next to the act step. Mock-based tests push expectations into setup; failures point at the call site but the test body shows less. Spies are friendlier when you can't predict all attributes of the interaction up front; mocks fail faster when you can specify the contract precisely."
 
   - id: 6
     difficulty: intermediate
-    question: "What is a **Fake**, and what is the canonical example? How is a Fake different from a Stub?"
-    answer: "A **Fake** is a *working* alternative implementation with shortcuts that make it unsuitable for production. Canonical example: an in-memory database that satisfies the same interface as the real one. A Stub just returns canned values for specific calls; a Fake actually implements the behavior."
+    question: "What is a **Fake**? Canonical example? How is it different from a Stub?"
+    answer: "A **Fake** is a *working* alternative implementation with shortcuts unsuitable for production (e.g. in-memory DB satisfying the real interface). A **Stub** returns canned values for specific calls; a Fake actually implements the behavior."
     explanation: "Fakes are ideal when you want realistic behavior at high speed — write a row, read it back, query by index — without standing up the real dependency. They cost more to build but pay back across many tests. Stubs are cheap and case-specific; Fakes are richer and scenario-general."
 
   - id: 7
     difficulty: intermediate
-    question: "A junior engineer asserts `mock.method.assert_called_once_with(...)` after every line of the SUT's body. Diagnose the design problem."
-    answer: "The test has crossed from *checking behavior* to *encoding the implementation step-by-step*. Any refactor that changes how the SUT calls its collaborators — even one that preserves user-visible behavior — will break these tests. The test is testing the mock, not the system."
+    question: "A junior engineer asserts `mock.method.assert_called_once_with(...)` after every line of the SUT's body. Diagnose."
+    answer: "The test has crossed from *checking behavior* to *encoding the implementation*. Any refactor that changes how the SUT calls its collaborators breaks the test — even when user-visible behavior is preserved. The test is testing the mock, not the system."
     explanation: "This is the most common Mock anti-pattern. Interaction checks are useful when the interaction *is* the contract ('exactly one receipt email after payment succeeds') and harmful when they merely freeze the current implementation's wiring. The remedy is usually to assert on the SUT's outputs or persisted state instead, reserving interaction assertions for the cases where collaboration is the behavior."
 
   - id: 8
     difficulty: advanced
-    question: "Your SUT calls `notifier.send(channel, body)` four times during a single workflow, in an order that depends on data. You want to assert that every call had the right channel, but you can't predict the order. Which double type fits best, and why?"
-    answer: "A **Spy** fits best. You can let the SUT run, retrieve the recorded calls afterward, sort or group them by channel, and assert each. A Mock with strict-order expectations would fail on the first reorder; a Spy collects everything for a flexible after-the-fact check."
+    question: "Your SUT calls `notifier.send(channel, body)` four times in a single workflow, in a data-dependent order. You want to assert each call had the right channel but can't predict the order. Which double fits best?"
+    answer: "A **Spy**. Let the SUT run, retrieve the recorded calls, sort or group them, and assert each. A Mock with strict-order expectations would fail on the first reorder; a Spy collects everything for flexible after-the-fact assertion."
     explanation: "Procedural verification with a Spy is well suited when you cannot predict all attributes of the interactions up front or when assertions need richer logic (grouping, sorting, set comparisons). The cost is that errors are detected at assertion time, not the moment they happen — but you trade that for flexibility the Mock model lacks."
 
   - id: 9
     difficulty: advanced
-    question: "Pick a single test double for: *'My SUT loads a config from disk; the config method is `loader.load_config()` and never inspected further by the test.'* Name the double and justify."
-    answer: "A **Dummy** suffices (if the test never inspects the config) — the loader is required by a signature but its returned object is never used. If the SUT *does* read fields off the returned config, escalate to a **Stub** that returns a specific config object."
+    question: "Pick a double for: *'My SUT loads a config via `loader.load_config()`; the test never inspects the result.'*"
+    answer: "A **Dummy** suffices — the loader satisfies the signature but its returned object is never used. If the SUT *does* read fields off the config, escalate to a **Stub** returning a specific config."
     explanation: "Reaching for a Mock or Spy here would over-specify the test. Dummies are the lightest double — they exist to satisfy the type system / signature. The minimum-viable-double rule: pick the simplest double that lets the test do its job. Anything heavier is extra coupling for no benefit."
 
   - id: 10
     difficulty: advanced
     question: "Sketch the **procedural verification** lifecycle of a Spy-based test in four steps."
-    answer: "(1) Install the **Spy** in place of the DOC during setup. (2) **Exercise** the SUT. (3) Retrieve the recorded information from the Spy (often via a *Retrieval Interface*). (4) Use ordinary assertion methods to compare the recorded values against the expected values."
+    answer: "(1) Install the **Spy** in place of the DOC. (2) **Exercise** the SUT. (3) Retrieve recorded calls from the Spy. (4) Use ordinary assertions to compare recorded vs expected values."
     explanation: "This is the chapter's four-step lifecycle. The contrast with mocks is the *placement of the verification*: spies make it explicit in the test body (visible, flexible, late); mocks make it implicit in setup (terse, strict, early). Both are valid; each suits a different shape of test."
 
   - id: 11
     difficulty: expert
-    question: "A team's controller test does this:<br><br>```python\nuser_repo = Mock()\nuser_repo.get.return_value = User(id=1)\nemail_service = Mock()\ncontroller = Controller(user_repo, email_service)\ncontroller.signup(email='a@b.c')\nemail_service.send.assert_called_once_with('a@b.c', subject='Welcome')\n```<br><br>Identify whether each Mock is acting as a **Stub** or a **Mock**, and whether either should be a different kind of double."
-    answer: "`user_repo` is acting as a **Stub** (it returns a canned `User`; the test never asserts what the controller called on it). `email_service` is acting as a **Mock** (it has an expectation verified via `assert_called_once_with`). The `user_repo` Mock could be replaced with a plain Stub or even a Fake `InMemoryUserRepo` to reduce coupling; `email_service` as a Mock is appropriate *only if* sending the welcome email is part of the controller's contract."
-    explanation: "Mock libraries blur the taxonomy — `unittest.mock.Mock` plays every role. Naming the role each instance plays is what keeps the test honest. The rule of thumb: if you only configure return values, that double is a Stub. If you only assert on calls, it's a Spy. If both, it's a Mock. Replacing the user-repo Stub with a Fake (`InMemoryUserRepo`) often pays off when many tests share the same configuration."
+    question: |
+      A controller test does this:
+
+      ```python
+      user_repo = Mock()
+      user_repo.get.return_value = User(id=1)
+      email_service = Mock()
+      controller = Controller(user_repo, email_service)
+      controller.signup(email='a@b.c')
+      email_service.send.assert_called_once_with('a@b.c', subject='Welcome')
+      ```
+
+      Classify each `Mock()` instance by the role it actually plays.
+    answer: "`user_repo` acts as a **Stub** (returns canned `User`, no call assertion). `email_service` acts as a **Mock** (has an expectation via `assert_called_once_with`). The role is what the test does with the object, not the library type."
+    explanation: "Mock libraries blur the taxonomy — `unittest.mock.Mock` plays every role. Naming the role each instance plays is what keeps the test honest. Rule of thumb: only return values configured → Stub. Only call assertions → Spy. Both → Mock. Replacing the user-repo Stub with a Fake `InMemoryUserRepo` often pays off when many tests share the same configuration."

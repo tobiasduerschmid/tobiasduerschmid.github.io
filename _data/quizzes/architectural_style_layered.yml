@@ -6,21 +6,21 @@ questions:
     difficulty: intermediate
     type: single
     question: |
-      A code review surfaces this line in your team's `OrderRepository` (the Data layer): `import { CheckoutController } from '../presentation/CheckoutController'`. Why is this a layering violation, and what is the fix?
+      A code review surfaces this line in your team's `OrderRepository` (the Data layer): `import { CheckoutController } from '../presentation/CheckoutController'`. The repository's intent is to *notify* the controller when an order has been persisted. What is going on and what is the cleanest fix?
     options:
-      - "It's not a violation — repositories are allowed to talk to controllers because they share the same module."
-      - "Lower layers must never depend on upper layers (the golden rule). Replace the dependency with a callback or event the controller registers on the repository, so dependency direction stays downward."
-      - "It violates the strict-layering rule because it skips the Domain layer. Add a Domain-layer wrapper so the call is adjacent."
-      - "It's a tiering violation — repositories and controllers belong on different physical machines."
+      - "No violation — repositories and controllers in the same project may freely reference each other."
+      - "Upward dependency violates the **golden rule**; fix by inverting it with a callback or event the controller registers on the repository."
+      - "Layer-bridging smell — fix by routing the dependency through a Domain-layer adapter so the call is adjacent."
+      - "Tiering violation — fix by deploying repository and controller to separate processes so the import becomes a network call."
     correct_index: 1
     option_feedback:
       0: |
-        "Same module" is a packaging concern, not a layering one. Layering constrains *who is allowed to use whom* across abstraction strata; sharing a module does not legalize an upward dependency.
+        Same-project packaging is a build-system concern, not a layering one. Layering constrains *who is allowed to use whom* across abstraction strata; co-location does not legalize an upward dependency.
       2: |
-        Skipping the Domain layer would be *layer bridging* (a smell in strict layering). The deeper problem here is *direction*: any upward dependency, adjacent or not, is forbidden.
+        Layer bridging is calling a non-adjacent *lower* layer downward. The problem here is *direction* (upward), not *distance*. An adapter on the Domain layer would still leave the repository depending upward.
       3: |
-        Tiering describes runtime deployment to machines. The violation here is at design time in the source code — independent of whether controller and repository run on the same machine.
-    explanation: "**The golden rule of layered architecture: lower layers must never use upper layers.** Even a single upward import creates a cycle that invalidates the layering and ruins portability. The standard escape for upward notification is callbacks / Observer / Pub-Sub: the upper layer registers a listener; the lower layer triggers it without holding a static reference to anything above."
+        Tiering is about runtime deployment to machines. The violation is at design time in the import graph — moving to separate processes only converts an in-process upward dependency into a cross-process upward dependency.
+    explanation: "**The golden rule of layered architecture: lower layers must never use upper layers.** Even a single upward import creates a cycle that invalidates the layering and ruins portability. The standard escape for upward notification is callbacks / Observer / Pub-Sub: the upper layer registers a listener; the lower layer triggers it without holding a static reference to anything above. Control flows upward; compile-time dependency stays downward."
 
   - id: 2
     difficulty: advanced
@@ -113,19 +113,19 @@ questions:
     question: |
       Three months ago your team was a clean strict-layered stack. Today, code review shows: the UI imports from the Repository, two Service classes import each other, and the Domain layer instantiates a concrete database driver. Which term best describes the result?
     options:
-      - "Relaxed layering — a deliberate optimization that's still architecturally sound."
-      - "Architectural erosion toward a 'big ball of mud' — the rules of the style have been silently broken across multiple violations, and the modifiability and portability the style promised are now lost."
-      - "Hexagonal architecture — the domain calling outward to infrastructure is the Hexagonal style."
-      - "Clean architecture — Service classes calling each other is a hallmark of Clean."
+      - "**Relaxed layering** — a deliberate optimization that retains the style's modifiability and portability guarantees."
+      - "**Architectural erosion toward a 'big ball of mud'** — multiple silent rule violations have invalidated the topology and lost the style's promised qualities."
+      - "**Hexagonal architecture** — domain calling outward to infrastructure is its defining inversion."
+      - "**Clean Architecture** — Service-to-Service references are a hallmark of Clean's reduced ceremony."
     correct_index: 1
     option_feedback:
       0: |
-        Relaxed layering only relaxes *downward* calls to non-adjacent lower layers. Mutual Service imports, UI→Repository bypass, and Domain→driver instantiation are none of those — they violate different rules.
+        Relaxed layering only loosens *downward* calls to non-adjacent lower layers. Mutual Service imports, UI→Repository bypass, and Domain→driver instantiation are different rule violations, not what "relaxed" sanctions.
       2: |
-        Hexagonal architecture inverts the dependency so domain *does not* depend on infrastructure. The team described here is doing the opposite — domain depends directly on a concrete driver.
+        Hexagonal inverts the dependency so domain *does not* depend on infrastructure. The team described here is doing the opposite — domain depends directly on a concrete driver.
       3: |
-        Clean Architecture forbids inter-Service circular dependencies as much as classical layering does. Service-to-Service calls would route through the Domain or via published events.
-    explanation: "**This is textbook architectural erosion: each individual violation looked locally reasonable but together they invalidate the topology the style was designed around.** The modifiability promise is gone (changing the database now ripples through Domain and Services), and the portability promise is gone (UI depends on the concrete repository). The fix is not a single PR; it requires re-establishing the architectural rules and a refactor budget across multiple cycles."
+        Clean Architecture also forbids inter-Service circular dependencies; Service-to-Service calls would route through the Domain or via published events.
+    explanation: "**This is textbook architectural erosion: each individual violation looked locally reasonable but together they invalidate the topology the style was designed around.** The modifiability promise is gone (changing the database now ripples through Domain and Services); the portability promise is gone (UI depends on the concrete repository). The fix is not a single PR; it requires re-establishing the architectural rules and a refactor budget across multiple cycles."
 
   - id: 7
     difficulty: intermediate
@@ -173,19 +173,19 @@ questions:
     question: |
       You're designing a small CLI tool that parses CSV files, transforms records, and writes JSON output. A senior engineer suggests skipping layered architecture for this project. Why is that reasonable?
     options:
-      - "Layered architecture is forbidden for CLI tools."
-      - "The tool is short-lived, single-purpose, and unlikely to evolve — the modifiability and portability layering buys would not be exercised, while the up-front design cost is paid every day. A pipe-and-filter style or a flat single-module structure is appropriate."
-      - "Layered architectures only work in object-oriented languages."
-      - "CLI tools always require a stateful runtime, which layered architecture cannot model."
+      - "Layered architecture is forbidden by Jekyll-style static-site generators for performance reasons."
+      - "The tool is short-lived and single-purpose — layering's modifiability and portability benefits would not be exercised, so the up-front design cost would pay no dividend. A pipe-and-filter or flat structure fits the scope better."
+      - "Layered architecture only works in object-oriented languages, and the tool is in a procedural language."
+      - "CLI tools require a stateful runtime, which the layered style cannot model."
     correct_index: 1
     option_feedback:
       0: |
-        There is no such prohibition; many CLI tools are layered. The question is whether the layering's benefits are worth the design cost for *this* tool.
+        Jekyll has no opinion on application architecture. The distractor is invented. The real question is whether layering's benefits are worth the design cost for *this* tool.
       2: |
-        Layered architecture is language-agnostic. It is implemented in C, Rust, Go, Python, JavaScript, and every other production language.
+        Layered architecture is language-agnostic — implemented in C, Rust, Go, Python, JavaScript, and every other production language. Many small CLI tools in OO languages are also unlayered for the same scope reason.
       3: |
-        Stateless functional tools are *easier* to layer than stateful ones; the claim is false on its merits. The reason to skip layering here is scope, not state.
-    explanation: "**Architectural styles are tools, not commandments — pick the one whose promised qualities you actually need.** A small, single-purpose, short-lived utility does not benefit from the modifiability and portability layering promises, so the design cost is wasted. The same principle (pipe and filter for data transformation, flat module for small scope) applies to throwaway scripts, single-author tools, and short-fuse prototypes."
+        Stateless functional tools are if anything *easier* to layer than stateful ones; the claim is false on its merits. The reason to skip layering is scope, not state.
+    explanation: "**This is a *judgment call*, not a hard rule.** Architectural styles are tools — pick the one whose promised qualities you actually need. A small, single-purpose, short-lived utility doesn't benefit from layering's modifiability or portability promises, so a pipe-and-filter or flat module is often a better fit. Reasonable engineers disagree on where the threshold is; a layered CLI tool is not wrong, just usually over-engineered for the scope."
 
   - id: 10
     difficulty: advanced
@@ -193,10 +193,10 @@ questions:
     question: |
       A team has two systems running side by side: System A is strictly layered (every call goes through the layer immediately below). System B is relaxed (any downward call to any lower layer is allowed). They share the same lower-layer code. After two years, which system is more likely to have remained portable, and why?
     options:
-      - "System B — relaxed layering makes refactoring easier."
-      - "System A — strict layering means each layer above depends on exactly one lower-layer interface, so when the lower-layer implementation changes, only the immediate consumer needs to adapt. System B's many bypasses spread the coupling, so a lower-layer change ripples to many non-adjacent consumers."
-      - "Both are equally portable — strict vs relaxed has no effect on portability."
-      - "Neither — over two years all real systems become balls of mud regardless of style."
+      - "**System B** — relaxed layering's looser rules make refactoring easier and preserve portability better than strict layering's rigidity."
+      - "**System A** — strict layering keeps each lower-layer interface's consumer count to one, so an implementation change touches only the immediate consumer; System B's many bypasses spread the coupling across non-adjacent layers."
+      - "**Both equally portable** — the strict vs relaxed distinction has no effect on long-term portability."
+      - "**Neither** — every real system becomes a ball of mud over two years regardless of style, so the comparison is moot."
     correct_index: 1
     option_feedback:
       0: |

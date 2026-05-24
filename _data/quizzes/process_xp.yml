@@ -93,19 +93,20 @@ questions:
     question: |
       Two developers pair-program for a week. One says "Pair programming costs us 2x the head count for the same output — it's wasteful." What is the strongest *defense* of the practice?
     options:
-      - "Pair programming is mandatory in XP; the cost doesn't matter."
-      - "Pair programming reduces defect rates (catching bugs in the moment), spreads knowledge across the team (raising bus factor), produces better designs (the Navigator catches structural issues the Driver misses), and accelerates onboarding. End-to-end output (features shipped × low defect rate × team knowledge × onboarding speed) typically equals or exceeds two solo developers — the apparent 2x cost only shows up if you measure raw typing throughput."
-      - "Pair programming is a social activity that improves morale; engineering output is irrelevant."
-      - "Pair programming only matters for senior developers; juniors should code solo."
+      - "The two pair-developers will spend twice as long debugging anyway, so the costs even out automatically."
+      - "Raw typing throughput is the wrong productivity measure for engineering work. Pair programming typically catches more defects in the moment, spreads knowledge across the team (raising bus factor), and improves design quality (the Navigator catches structural issues the Driver misses). Williams's and Lui & Chan's studies found pairs took modestly more total time but produced measurably fewer defects than two solo developers, so the right comparison is value-shipped over a longer horizon, not lines-per-second."
+      - "Pair programming is purely a morale exercise; engineering output is not the point."
+      - "Pair programming only matters for senior developers; juniors should code solo to avoid slowing the team down."
     correct_index: 1
     option_feedback:
       0: |
-        Defending a practice as 'mandatory' provides no rebuttal to the cost objection. The defense must be that the practice is worth the cost in measurable engineering outcomes.
+        "Costs even out automatically" is a faith-based answer; the actual evidence is that pair programming has measurable defect-rate and knowledge-distribution effects that change the calculus. Without naming those, you've conceded the cost objection.
       2: |
-        Morale is a real secondary benefit, but framing it as the *primary* defense concedes the engineering argument — which is the strongest case. Pair programming demonstrably improves measurable engineering outcomes; that's the headline defense.
+        Morale is a real secondary benefit, but framing it as the *primary* defense concedes the engineering argument — which is where the strongest case sits. Pair programming has measurable defect-rate and design-quality effects; lead with those.
       3: |
-        The opposite is often true: junior developers benefit *most* from pair programming because they learn through navigated practice with a senior. Excluding them from pairing forfeits one of the practice's strongest applications.
-    explanation: "**Raw character-count throughput is the wrong productivity measure for engineering work. Defect-free shipped features per week, knowledge spread across the team, design quality, and onboarding speed all matter — and pair programming improves all four. Studies consistently find pairs match or exceed two solo developers on those metrics.** The '2x cost' framing only works if you measure lines per second; the real measure is value-shipped over a longer horizon."
+        Junior developers often benefit *most* from pair programming because they learn through navigated practice with a senior. Excluding them forfeits one of the practice's strongest applications.
+    explanation: |
+      **Raw character-count throughput is the wrong productivity measure for engineering work. Defect rate, knowledge spread, design quality, and onboarding speed all matter — and pair programming improves them.** Empirically, pairs take *modestly more* total developer-time than two solo developers but produce *fewer defects* (Williams; Lui & Chan; Cockburn & Williams). The honest framing isn't "pairs always beat solos" — it's that the 2x-cost framing only works if you ignore defect rate, design quality, and knowledge distribution, and those are the things that decide long-term velocity.
 
   - id: 6
     difficulty: advanced

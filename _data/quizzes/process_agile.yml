@@ -28,19 +28,19 @@ questions:
     question: |
       A consultant says "Agile means no documentation and no planning." How would you respond, citing the Agile Manifesto?
     options:
-      - "They're correct — Agile rejects documentation and planning entirely."
-      - "The Manifesto says 'working software *over* comprehensive documentation' and 'responding to change *over* following a plan' — the word 'over' means *more critical than*, not *instead of*. The authors explicitly stated 'while we value the items on the right, we value the items on the left more.' Agile teams document and plan; they just don't let those activities dominate over working software and adaptability."
-      - "Agile rejects documentation but requires more planning than Waterfall."
-      - "Agile rejects planning but requires more documentation than Waterfall."
+      - "Agile replaces documentation with verbal communication and replaces planning with reaction — the consultant is essentially right."
+      - "The Manifesto says 'working software *over* comprehensive documentation' and 'responding to change *over* following a plan' — 'over' means *more critical than*, not *instead of*. Agile teams still document and plan; they just don't let those activities dominate when working software and adaptability are at stake."
+      - "Agile rejects documentation but requires *more* up-front planning than Waterfall, just framed differently."
+      - "Agile rejects planning but requires extensive end-of-project documentation as a deliverable artifact."
     correct_index: 1
     option_feedback:
       0: |
-        This is the most common misreading of the Manifesto. The 'over' language was deliberate precisely *because* the authors knew this misreading would be tempting.
+        Verbal communication and reactive iteration are real Agile preferences, but the Manifesto explicitly says documentation and planning have value. Treating "less of" as "none of" is the most common misreading and is what produces undisciplined teams that mistake disorganization for agility.
       2: |
-        Both planning *and* documentation are present in Agile, just adapted (iteration planning, lightweight design docs, working code as living documentation). Framing it as 'more planning than Waterfall' inverts the actual reality.
+        Agile typically does *less* up-front planning than Waterfall, not more — planning is iterative and time-boxed. Framing it as "more upfront planning, framed differently" inverts the actual practice.
       3: |
-        Same mistake in reverse — both activities exist in adapted forms. Neither is rejected.
-    explanation: "**The Manifesto's 'A over B' formulation values *both* sides but prioritizes A when they conflict. Working software, individual interactions, customer collaboration, and adaptability are the *first-resort* priorities; documentation, processes, contracts, and plans serve those priorities, they don't replace them.** Misreading 'over' as 'instead of' produces undisciplined teams that mistake disorganization for Agility."
+        End-of-project documentation is exactly the artifact Agile tries to de-emphasize in favor of working software as the primary measure. The framing here describes Waterfall's deliverable model, not Agile's.
+    explanation: "**The Manifesto's 'A over B' formulation values *both* sides but prioritizes A when they conflict. Working software, individual interactions, customer collaboration, and adaptability are the *first-resort* priorities; documentation, processes, contracts, and plans serve those priorities, they don't replace them.** Misreading 'over' as 'instead of' produces undisciplined teams that mistake disorganization for agility."
 
   - id: 3
     difficulty: intermediate
@@ -48,19 +48,19 @@ questions:
     question: |
       A team practices what they call Agile: they hold daily standups, run two-week sprints, and have a Scrum Master. But they also produce a 150-page requirements document up front, refuse to change any requirement once a sprint starts, and demo to the customer only at the end of the engagement. Diagnose what's actually going on.
     options:
-      - "This is by-the-book Agile."
-      - "This is **Waterfall with Agile ceremonies** ('cargo-cult Agile'): they've adopted the visible rituals (standups, sprints, Scrum Master) without the underlying values (responsiveness to change, customer collaboration, working software early). The 150-page upfront doc, refusal to change requirements mid-sprint, and end-only demo all violate core Agile values. The ceremonies become theater."
-      - "This is XP."
-      - "This is a hybrid Agile-Waterfall (Wagile) that combines the best of both."
+      - "By-the-book Agile — the ceremonies are exactly what Scrum prescribes, so the team is following the framework correctly."
+      - "**Cargo-cult Agile** — adopting the visible *rituals* (standups, sprints, Scrum Master) while ignoring the underlying *values* (responsiveness, customer collaboration, working software early). The ceremonies become theater."
+      - "Disciplined Scrum-XP hybrid — the upfront doc gives the team a stable target while the ceremonies handle execution; this is how mature teams scale."
+      - "A *Wagile* mix that captures the best of both worlds — Waterfall's deliverables and Agile's rhythms — and is often the right choice for fixed-scope contracts."
     correct_index: 1
     option_feedback:
       0: |
-        By-the-book Agile would deliver working software at the end of each sprint to the customer, accept story changes between sprints (and often within them), and use lightweight up-front exploration rather than 150-page documents.
+        Scrum requires a demonstrable working increment at the end of each sprint *to the customer*, and Scrum's own scope-change rules apply between sprints. End-only demos and frozen specs violate the framework, not exemplify it.
       2: |
-        XP would add pair programming, TDD, CI, and small frequent releases — none of which are mentioned. The described team has none of XP's engineering practices either.
+        XP adds pair programming, TDD, CI, and small frequent releases — none of which appear here. The described team has Scrum's ceremonies without XP's engineering practices and without Agile's customer loop.
       3: |
-        'Wagile' is sometimes used to defend exactly this dysfunction. In practice, the described pattern combines Waterfall's worst feature (no customer feedback until the end) with Agile's overhead (ceremonies that consume time without producing value). It is not best-of-both — it's worst-of-both.
-    explanation: "**Cargo-cult Agile adopts the visible rituals (standups, sprints, retrospectives, Scrum Master role) without the values (responsiveness, customer collaboration, working software early). The result is ceremonies-as-theater: the team feels Agile, the work behaves like Waterfall, and customers see broken software at the end as if nothing changed.** The fix is to start with the values and let the ceremonies serve them — not the reverse."
+        "Wagile" combines Waterfall's *worst* feature (no customer feedback until the end) with Agile's overhead (ceremonies that consume time without producing value). It is not best-of-both; it is worst-of-both, and is one of the most-studied Agile-adoption failure modes.
+    explanation: "**Cargo-cult Agile adopts the visible rituals (standups, sprints, retrospectives, Scrum Master role) without the values (responsiveness, customer collaboration, working software early). The team feels Agile, the work behaves like Waterfall, and customers see broken software at the end as if nothing changed.** The fix is to start with the values and let the ceremonies serve them — not the reverse."
 
   - id: 4
     difficulty: advanced

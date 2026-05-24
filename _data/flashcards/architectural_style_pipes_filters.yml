@@ -10,7 +10,7 @@ cards:
 
   - id: 2
     difficulty: basic
-    question: "What are the two strict constraints on filters in the platonic pipe-and-filter style?"
+    question: "What are the two strict constraints on filters in the basic pipe-and-filter style?"
     answer: "**Strict Independence:** filters share no state or memory with other filters or external resources. **Agnosticism:** a filter does not know the identity of its upstream or downstream neighbors — it only knows its own input and output ports."
     explanation: "Fairbanks's metaphor: a filter is 'a simple clerk in a locked room who receives message envelopes slipped under one door and slips another message envelope under another door.' These constraints are what enable filter reusability and natural concurrency."
 
@@ -46,9 +46,9 @@ cards:
 
   - id: 8
     difficulty: advanced
-    question: "What is a *broadcasting filter* (Lattanze), and what problem does it solve?"
-    answer: "A filter equipped with an Observer/event mechanism that asynchronously broadcasts errors to an external monitor — creating a hybrid event-driven/data-flow architecture. It addresses pipe-and-filter's recognized error-handling weakness by providing a side channel for failure signals without breaking the data-flow main path."
-    explanation: "Traditional pipe-and-filter offers two weak error options: special marker values in the pipe (fragile, every filter must understand them) or a single `stderr` channel (no structure). Broadcasting filters introduce structured error propagation, at the cost of architectural purity — the system is no longer pure data-flow."
+    question: "Real-world pipelines often have a filter that reaches into a shared database or cache to enrich the data stream. Which pipe-and-filter constraint does this break, and what is the consequence?"
+    answer: "It breaks **strict independence** — filters are required to share no state with other filters or external resources, communicating only through pipes. The consequence is that the system loses its compositional analyzability (you can no longer reason about behavior from the filter graph alone) and its natural parallelism (filters now contend on the shared resource), even though the violation often looks like a harmless convenience."
+    explanation: "This is the classic Fairbanks **platonic-vs-embodied** gap: the textbook style and the implementation diverge. Academics argue the violation is a basic-tenet failure; pragmatists argue it is a necessary adaptation. Either framing only helps if you recognize you've made the trade — accepting lost concurrency and reusability for a real engineering need — rather than discovering the loss after the architecture has decayed."
 
   - id: 9
     difficulty: intermediate

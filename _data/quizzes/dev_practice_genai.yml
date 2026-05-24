@@ -29,7 +29,7 @@ questions:
       A developer says "Copilot wrote the whole feature in 5 minutes — I'm so much more productive!" Two days later they're still debugging it and have shipped a security vulnerability. Which trap have they fallen into?
     options:
       - "Cognitive offloading — they let the AI think for them."
-      - "The **illusion of AI productivity**: generation speed feels like productivity, but if the output is subtly wrong, the time saved in writing is dwarfed by the time spent debugging — sometimes turning a 6-hour task into a 24-hour one. Real productivity is measured end-to-end (generate + understand + debug + ship), not by lines per minute."
+      - "The **illusion of AI productivity**: generation speed feels like productivity, but if the output is subtly wrong, the time saved in writing can be dwarfed by the time spent debugging — a task that took 6 hours can balloon to many more once debugging starts. Real productivity is measured end-to-end (generate + understand + debug + ship), not by lines per minute."
       - "Hallucination — the AI invented APIs that didn't exist."
       - "Premature optimization — the AI optimized too early."
     correct_index: 1
@@ -40,7 +40,7 @@ questions:
         Hallucination is one *cause* of bugs in AI output, but the framing of the question is about how 'fast' the generation felt vs how slow the end-to-end work was. The illusion is a measurement error, not a single defect type.
       3: |
         Premature optimization is unrelated — the issue isn't over-engineering, it's that the generated code is subtly broken and the bug-tail is long.
-    explanation: "**The illusion of AI productivity is the gap between *generation* (fast, satisfying, visible) and *end-to-end shipping* (debug, fix, verify, secure — slow and invisible). 5 minutes to type + 24 hours to debug is a net loss, even though the typing felt 10x faster.** Measure productivity in features shipped per week with acceptable defect/security rates — not in characters generated per minute. Studies consistently show developers *feel* more productive with AI even when they ship less."
+    explanation: "**The illusion of AI productivity is the gap between *generation* (fast, satisfying, visible) and *end-to-end shipping* (debug, fix, verify, secure — slow and invisible). The vivid '5 minutes to type, then a day to debug' framing in the SEBook is illustrative, but the underlying asymmetry is real.** Measure productivity in features shipped per week with acceptable defect and security rates — not in characters generated per minute. Multiple studies (METR 2025, GitClear, others) report that developers *feel* more productive with AI even when measured throughput is flat or lower."
 
   - id: 3
     difficulty: intermediate
@@ -80,7 +80,7 @@ questions:
       1: |
         The **explainability rule** prevents the team from accumulating code nobody understands. When the bug appears at 3 AM, you'll need to debug it — being able to explain it is a precondition for being able to fix it.
       2: |
-        40% of Copilot-generated code is estimated to contain vulnerabilities (study cited in the SEBook). Working from the assumption of subtle incorrectness changes review quality immediately.
+        Pearce et al. (2022) found roughly 40% of Copilot suggestions in *security-sensitive CWE-specific scenarios* contained vulnerabilities. Even outside that narrow setting, AI fluently produces plausible-but-wrong patterns it pattern-matched from training data. Defaulting to "subtly broken until proven otherwise" changes review quality immediately.
       3: |
         Reading more code does not produce better judgment. AI lacks domain context, system-specific constraints, and accountability — all of which experienced human teammates bring. Trusting it more is the inversion of the right calibration.
       4: |
@@ -171,21 +171,21 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      Research found that codebases using AI coding agents had a **41.6% increase in code complexity** and a **30.3% rise in static analysis warnings**. What is the architectural risk this represents?
+      One published industry analysis (GitClear, 2024) reported codebases using AI coding assistants had a noticeable rise in **code complexity** and **static-analysis warnings** relative to pre-AI baselines. Assume the finding generalizes. What is the architectural risk?
     options:
-      - "AI tools are getting worse over time — quality is declining."
-      - "Accumulated **technical debt**: AI tends to generate verbose, duplicated, or pattern-matched solutions rather than refactoring toward the system's existing structure. Without a deliberate refactor habit, accepting AI suggestions repeatedly grows complexity faster than human-written code would — eventually slowing every future change."
-      - "Static analyzers are buggy and over-report on AI code."
-      - "AI is detecting more pre-existing problems."
-    correct_index: 1
+      - "AI duplicates and adds code instead of refactoring — accepting AI suggestions repeatedly compounds **technical debt** because each suggestion solves the local problem without removing duplication or reshaping toward the system's existing structure."
+      - "Developers are writing more code overall, so complexity grows proportionally with the codebase size."
+      - "AI introduces new programming paradigms that legacy static analyzers haven't been updated to handle."
+      - "The increases reflect richer test coverage, which static analyzers misclassify as warnings."
+    correct_index: 0
     option_feedback:
-      0: |
-        Tool quality has improved year-over-year on most benchmarks. The complexity rise is not a tool defect — it's a *process* defect from accepting AI output without refactoring it into the existing structure.
+      1: |
+        Proportional growth would not produce *per-file* or *per-function* complexity rises — the metrics cited normalize for size. The rise is in complexity-per-unit-code, not just total lines.
       2: |
-        The same static analyzers are used on human-written code as a baseline; the 30%+ rise is relative to that baseline, not absolute. The over-reporting framing tries to explain away the gap; the gap is real.
+        Mainstream static analyzers handle the same languages and constructs whether code is human- or AI-written. The "new paradigms" framing tries to attribute the gap to tool blind spots; the gap is in the code, not the analyzer.
       3: |
-        Pre-existing problems would show up the same before and after AI adoption. The 41.6% / 30.3% rises are *increases* after adopting AI assistants, attributable to what was newly written under the new workflow.
-    explanation: "**AI assistants tend to produce *additive* solutions — adding code that solves the local problem rather than refactoring to fit the system's idioms or remove duplication. Without an explicit refactor step in the workflow, complexity compounds and static-analysis warnings climb.** The fix is process-level: pair AI generation with a deliberate refactor pass (often the same AI, asked to refactor), enforce linters and complexity limits in CI, and reject AI-suggested duplication that human review would have rejected."
+        Tests are typically excluded or analyzed separately. Even if included, the complexity-per-function metric doesn't credit tests as warnings; the increase is in production code structure.
+    explanation: "**AI assistants tend to produce *additive* solutions — adding code that solves the local problem rather than refactoring to fit the system's idioms or remove duplication. Without an explicit refactor step in the workflow, complexity compounds and static-analysis warnings climb.** The published metrics come from a single source and specific windows, so treat the exact percentages as one data point rather than consensus — but the *direction* (additive AI output → growing debt) is the architectural pattern to design against. Fix: pair AI generation with a deliberate refactor pass, enforce complexity limits in CI, and reject AI-suggested duplication that human review would have rejected."
 
   - id: 10
     difficulty: advanced
