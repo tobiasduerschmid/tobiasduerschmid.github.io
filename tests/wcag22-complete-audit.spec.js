@@ -1046,6 +1046,15 @@ function runDomAudit() {
     if (!iframe.getAttribute('title')) findings.push({ criterion: '4.1.2', severity: 'fail', message: `Iframe is missing title: ${shortNode(iframe)}` });
   });
 
+  document.querySelectorAll('[title]:not(iframe):not([data-no-tooltip])').forEach((el) => {
+    if (!isVisible(el)) return;
+    findings.push({
+      criterion: '1.4.13',
+      severity: 'fail',
+      message: `Visible element still exposes a native browser title tooltip instead of the site tooltip system: ${shortNode(el)}`,
+    });
+  });
+
   const vagueLinkText = new Set([
     'here', 'click here', 'click', 'read more', 'more', 'see more',
     'see this', 'see here', 'this', 'this link', 'learn more', 'details',
