@@ -82,7 +82,7 @@ topics:
       - name: Test Doubles
         url: /SEBook/testing/testdoubles.html
       - name: Test Doubles Tutorial
-        url: /SEBook/tools/test-doubles-tutorial.html
+        url: /SEBook/testing/test-doubles-tutorial.html
 
 
   - name: Quality Attributes

@@ -35,7 +35,7 @@ const A11Y_FEATURE = 'tdd-tutorial';
  * synthesis. Prerequisite content lives in the Testing Foundations tutorial.
  */
 
-const TUTORIAL_URL     = '/SEBook/tools/tdd-tutorial';
+const TUTORIAL_URL     = '/SEBook/testing/tdd-tutorial';
 const BOOT_TIMEOUT     = 60_000;
 const TEST_RUN_TIMEOUT = 90_000;
 

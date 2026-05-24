@@ -84,7 +84,7 @@ steps:
 
       ### 🧭 What you already know — and what's about to shift
 
-      From [Testing Foundations](/SEBook/tools/testing-foundations-tutorial) you know how to write a strong oracle, choose partition + boundary inputs, and avoid peeking at private state. From [TDD](/SEBook/tools/tdd-tutorial) you know the Red-Green-Refactor rhythm. Every example so far has had one thing in common: the *function under test was self-contained*. Pass it inputs, observe the output, done.
+      From [Testing Foundations](/SEBook/testing/testing-foundations-tutorial) you know how to write a strong oracle, choose partition + boundary inputs, and avoid peeking at private state. From [TDD](/SEBook/testing/tdd-tutorial) you know the Red-Green-Refactor rhythm. Every example so far has had one thing in common: the *function under test was self-contained*. Pass it inputs, observe the output, done.
 
       Real code is rarely like that. Real functions **talk to collaborators** — clocks, network APIs, databases, payment gateways, email services. Each of those collaborators turns a deterministic test into a *flaky* test, a *slow* test, or — worst — a test that *appears* green but actually never exercised the behavior you cared about. This entire tutorial is about that problem.
 
@@ -2544,7 +2544,7 @@ steps:
 
       🔭 **Where this leads in the rest of the curriculum:**
       - **[SOLID Tutorial](/SEBook/tools/solid-tutorial)** — *Dependency Inversion* makes doubles trivial: define an interface, have the SUT depend on it, swap implementations at test time. Most painful mocks are caused by skipped DIP.
-      - **[TDD](/SEBook/tools/tdd-tutorial)** — the next natural sequel: TDD where the SUT *has* collaborators from the start. Red phase becomes "decide what to double, then write the failing test."
+      - **[TDD](/SEBook/testing/tdd-tutorial)** — the next natural sequel: TDD where the SUT *has* collaborators from the start. Red phase becomes "decide what to double, then write the failing test."
 
       🪞 **Recalibrate.** Look back at Step 1 — the test that passed today and would have failed tomorrow. Your toolkit now has six things to do instead of "ship and pray":
 

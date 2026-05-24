@@ -531,6 +531,14 @@
     }
     return dir < 0 ? '#1a1a1a' : '#ffffff';
   }
+  function _documentIsDarkMode() {
+    return typeof document !== 'undefined' &&
+      document.documentElement &&
+      document.documentElement.classList.contains('dark-mode');
+  }
+  function _branchLabelTextFill(color, chipBg) {
+    return _documentIsDarkMode() ? '#eef7ff' : _adjustForContrast(color, chipBg, 4.5);
+  }
   // Read the current label background from the CSS custom property. Falls
   // back to the light-mode default if the variable isn't set yet (e.g. when
   // the helper is called before the host is mounted).
@@ -2555,8 +2563,9 @@
     chip.appendChild(this._svgEl('path', borderAttrs));
     var brChipBg = _compositeOver(color, _currentLabelBg(this.container), isRemote ? 0.10 : 0.22);
     var tL = this._svgEl('text', {
-      x: brXL + textW / 2, y: labelMidY + 4,
-      'text-anchor': 'middle', fill: _adjustForContrast(color, brChipBg, 4.5), 'font-size': 13,
+      x: brXL + textW / 2, y: labelMidY,
+      'text-anchor': 'middle', 'dominant-baseline': 'central',
+      fill: _branchLabelTextFill(color, brChipBg), 'font-size': 13,
       'font-weight': isRemote ? 400 : 700, 'font-style': isRemote ? 'italic' : 'normal',
       'class': 'git-graph-branch-label',
     });
@@ -2593,8 +2602,9 @@
       'class': 'git-graph-head-chip',
     }));
     var t = this._svgEl('text', {
-      x: -PTR_DEPTH - headTextW / 2, y: 4,
-      'text-anchor': 'middle', fill: textColor,
+      x: -PTR_DEPTH - headTextW / 2, y: 0,
+      'text-anchor': 'middle', 'dominant-baseline': 'central',
+      fill: textColor,
       'font-size': 13, 'font-weight': 700,
       'class': 'git-graph-head-text',
     });
@@ -2799,8 +2809,8 @@
         svg += '<path d="' + brD + '" ' +
           'fill="' + color + '" fill-opacity="0.22" stroke="' + color + '" stroke-width="1.5"/>';
         var brChipBgStr = _compositeOver(color, _currentLabelBg(this.container), 0.22);
-        svg += '<text x="' + (brX + textW / 2) + '" y="' + (labelMidY + 4) + '" ' +
-          'text-anchor="middle" fill="' + _adjustForContrast(color, brChipBgStr, 4.5) + '" font-size="13" font-weight="700" ' +
+        svg += '<text x="' + (brX + textW / 2) + '" y="' + labelMidY + '" ' +
+          'text-anchor="middle" dominant-baseline="central" fill="' + _branchLabelTextFill(color, brChipBgStr) + '" font-size="13" font-weight="700" ' +
           'class="git-graph-branch-label">' + this._escapeXml(br.name) + '</text>';
         svg += '</g>';
         svg += lConnector(tipX, labelMidY, cx - NODE_RADIUS - 2, cy, color, true);
@@ -2818,8 +2828,8 @@
           svg += '<path d="' + headD + '" fill="' + LABEL_BG + '" stroke="none" class="git-graph-label-bg"/>';
           svg += '<path d="' + headD + '" ' +
             'fill="' + HEAD_COLOR + '" fill-opacity="0.95" stroke="' + color + '" stroke-width="1.5"/>';
-          svg += '<text x="' + (headX + headTextW / 2) + '" y="' + (labelMidY + 4) + '" ' +
-            'text-anchor="middle" fill="#1a1a1a" font-size="13" font-weight="700">HEAD</text>';
+          svg += '<text x="' + (headX + headTextW / 2) + '" y="' + labelMidY + '" ' +
+            'text-anchor="middle" dominant-baseline="central" fill="#1a1a1a" font-size="13" font-weight="700">HEAD</text>';
           svg += '<line x1="' + headTipX + '" y1="' + labelMidY + '" ' +
             'x2="' + brX + '" y2="' + labelMidY + '" stroke="' + color + '" stroke-width="1.5"/>';
           svg += '</g>';
@@ -2850,8 +2860,8 @@
       svg += '<path d="' + hD + '" fill="' + LABEL_BG + '" stroke="none" class="git-graph-label-bg"/>';
       svg += '<path d="' + hD + '" ' +
         'fill="' + DC + '" fill-opacity="0.25" stroke="' + DC + '" stroke-width="1.5"/>';
-      svg += '<text x="' + (hX + htextW / 2) + '" y="' + (hlabelMidY + 4) + '" ' +
-        'text-anchor="middle" fill="' + _adjustForContrast(DC, _compositeOver(DC, _currentLabelBg(this.container), 0.25), 4.5) + '" font-size="13" font-weight="700">HEAD</text>';
+      svg += '<text x="' + (hX + htextW / 2) + '" y="' + hlabelMidY + '" ' +
+        'text-anchor="middle" dominant-baseline="central" fill="' + _adjustForContrast(DC, _compositeOver(DC, _currentLabelBg(this.container), 0.25), 4.5) + '" font-size="13" font-weight="700">HEAD</text>';
       svg += lConnector(htipX, hlabelMidY, hcx - NODE_RADIUS - 2, hcy, DC, true);
       svg += '</g>';
     }

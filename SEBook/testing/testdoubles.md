@@ -213,7 +213,7 @@ Every test double trades reality for control. That is usually the right trade in
 
 ## Apply what you've read
 
-Build the skill in the [Test Doubles Tutorial](/SEBook/tools/test-doubles-tutorial), which takes you through six steps in a Python sandbox: introducing a seam, hand-rolling a stub, hand-rolling a spy, recognizing the same roles inside `unittest.mock`, navigating the "patch where the SUT looks up the name" pitfall, and deciding when *not* to use a double at all.
+Build the skill in the [Test Doubles Tutorial](/SEBook/testing/test-doubles-tutorial), which takes you through six steps in a Python sandbox: introducing a seam, hand-rolling a stub, hand-rolling a spy, recognizing the same roles inside `unittest.mock`, navigating the "patch where the SUT looks up the name" pitfall, and deciding when *not* to use a double at all.
 
 ## Practice
 

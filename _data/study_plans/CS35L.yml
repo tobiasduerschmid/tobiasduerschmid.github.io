@@ -90,10 +90,13 @@ items:
   # Testing
   - title: "Testing Foundations Tutorial"
     type: tutorial
-    url: /SEBook/tools/testing-foundations-tutorial.html
+    url: /SEBook/testing/testing-foundations-tutorial.html
   - title: "TDD Tutorial"
     type: tutorial
-    url: /SEBook/tools/tdd-tutorial.html
+    url: /SEBook/testing/tdd-tutorial.html
+  - title: "Test Doubles Tutorial"
+    type: tutorial
+    url: /SEBook/testing/test-doubles-tutorial.html
 
   # UML
   - title: "UML Class Diagram Tutorial (Python)"

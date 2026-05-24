@@ -25,10 +25,11 @@ These levels include:
 
 # Interactive Tutorials
 
-Two browser-based tutorials let you practice these ideas on live code:
+Three browser-based tutorials let you practice these ideas on live code:
 
-* **[Testing Foundations](/SEBook/tools/testing-foundations-tutorial)** — assertions, equivalence partitions, boundary values, oracle strength, and testing behavior rather than implementation.
-* **[TDD](/SEBook/tools/tdd-tutorial)** — Red-Green-Refactor with pytest, katas, and AI-assisted TDD. Builds on Testing Foundations.
+* **[Testing Foundations](/SEBook/testing/testing-foundations-tutorial)** — assertions, equivalence partitions, boundary values, oracle strength, and testing behavior rather than implementation.
+* **[TDD](/SEBook/testing/tdd-tutorial)** — Red-Green-Refactor with pytest, katas, and AI-assisted TDD. Builds on Testing Foundations.
+* **[Test Doubles](/SEBook/testing/test-doubles-tutorial)** — stubs, spies, mocks, fakes, the `unittest.mock` API, the "patch where the SUT looks the name up" pitfall, and when *not* to reach for a double. Builds on Testing Foundations and TDD.
 
 # Test Quality and Test Design
 

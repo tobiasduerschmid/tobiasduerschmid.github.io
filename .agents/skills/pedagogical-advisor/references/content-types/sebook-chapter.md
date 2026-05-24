@@ -39,7 +39,7 @@ implications you should reason about explicitly:
    highest-utility study technique, already built into the chapter format.
 
 3. **Outbound links to hands-on tutorials** — Markdown links like
-   `[Testing Foundations](/SEBook/tools/testing-foundations-tutorial)`
+   `[Testing Foundations](/SEBook/testing/testing-foundations-tutorial)`
    that send readers into a sandboxed code editor at
    `_data/tutorials/<slug>.yml`. Chapter ↔ tutorial pairs implement the
    read-then-do rhythm.

@@ -105,10 +105,16 @@ topics:
         url: /SEBook/testing/testquality.html
       - name: Writing Good Tests
         url: /SEBook/testing/goodtests.html
+      - name: Testing Foundations Tutorial
+        url: /SEBook/testing/testing-foundations-tutorial.html
       - name: Test-Driven Development (TDD)
         url: /SEBook/testing/tdd.html
+      - name: TDD Tutorial
+        url: /SEBook/testing/tdd-tutorial.html
       - name: Test Doubles
         url: /SEBook/testing/testdoubles.html
+      - name: Test Doubles Tutorial
+        url: /SEBook/testing/test-doubles-tutorial.html
 
 
   - name: UML
@@ -196,12 +202,6 @@ topics:
         url: /SEBook/tools/make.html
       - name: Makefile Tutorial
         url: /SEBook/tools/makefile-tutorial.html
-      - name: Testing Foundations Tutorial
-        url: /SEBook/tools/testing-foundations-tutorial.html
-      - name: TDD Tutorial
-        url: /SEBook/tools/tdd-tutorial.html
-      - name: Test Doubles Tutorial
-        url: /SEBook/tools/test-doubles-tutorial.html
       - name: Playwright Tutorial
         url: /SEBook/tools/playwright-tutorial.html
   - name: Systems

@@ -29,7 +29,7 @@ const A11Y_FEATURE = 'testing-foundations-tutorial';
  *           answers the quiz, and advances to the next step.
  */
 
-const TUTORIAL_URL     = '/SEBook/tools/testing-foundations-tutorial';
+const TUTORIAL_URL     = '/SEBook/testing/testing-foundations-tutorial';
 const BOOT_TIMEOUT     = 60_000;
 const TEST_RUN_TIMEOUT = 90_000;
 

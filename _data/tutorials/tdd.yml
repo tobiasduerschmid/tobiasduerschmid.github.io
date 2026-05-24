@@ -94,7 +94,7 @@ steps:
       - Analyze a pytest failure and distinguish a *right-reason* RED (`ImportError` / `AssertionError` on the assertion you wrote) from a *wrong-reason* RED (typo / missing colon)
       - Evaluate why a surprise *green* on a brand-new test should be treated as a Liar test until proven otherwise
 
-      > **Prerequisite:** [Testing Foundations](/SEBook/tools/testing-foundations-tutorial) — pytest discovery, `assert`, partitions, behavior-not-implementation. If those feel new, do that one first.
+      > **Prerequisite:** [Testing Foundations](/SEBook/testing/testing-foundations-tutorial) — pytest discovery, `assert`, partitions, behavior-not-implementation. If those feel new, do that one first.
 
       ## What you're building — *Dragon Dice*
 

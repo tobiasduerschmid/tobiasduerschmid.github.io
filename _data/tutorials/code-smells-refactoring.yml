@@ -111,7 +111,7 @@ steps:
 
       The codebase grows over the tutorial: you start with three small functions and end with a small music streaming app. Most of the typing is done by Monaco's refactoring tools — you'll select code, pick a refactoring, and judge the diff. The *thinking* is yours.
 
-      > **Prerequisite:** [Testing Foundations](/SEBook/tools/testing-foundations-tutorial) — pytest discovery, `assert`, and `@pytest.mark.parametrize`. If those feel new, do that one first.
+      > **Prerequisite:** [Testing Foundations](/SEBook/testing/testing-foundations-tutorial) — pytest discovery, `assert`, and `@pytest.mark.parametrize`. If those feel new, do that one first.
 
       ### Why this matters
 

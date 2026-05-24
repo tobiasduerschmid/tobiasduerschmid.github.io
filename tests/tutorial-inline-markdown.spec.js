@@ -57,7 +57,7 @@ test.describe('tutorial inline Markdown rendering', () => {
   });
 
   test('print tutorial renders inline Markdown in real step heading surfaces', async ({ page }) => {
-    await page.goto('/SEBook/tools/test-doubles-tutorial/print.html');
+    await page.goto('/SEBook/testing/test-doubles-tutorial/print.html');
 
     const title = page.locator('.step-title').filter({
       hasText: 'Library Doubles with unittest.mock: Same Roles, Less Typing',
