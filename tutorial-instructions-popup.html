@@ -89,7 +89,10 @@
         var isUnlocked = unlocked && unlocked.indexOf(i) !== -1;
         btn.className = 'tvm-step-btn' + (i === currentStep ? ' active' : '') + (isUnlocked ? '' : ' locked');
         btn.textContent = (i + 1);
-        btn.title = isUnlocked ? (step.title || '') : ((step.title || '') + ' (locked)');
+        var titleText = isUnlocked ? (step.title || '') : ((step.title || '') + ' (locked)');
+        btn.setAttribute('data-original-title', titleText);
+        btn.removeAttribute('title');
+        btn.setAttribute('aria-label', 'Step ' + (i + 1) + ': ' + titleText);
         if (isUnlocked) {
           btn.addEventListener('click', function () { client.post('request-step-change', { stepIndex: i }); });
         } else {
@@ -115,7 +118,7 @@
       var aria = 'Test My Work locked, ' + remaining + ' second' + (remaining === 1 ? '' : 's') + ' remaining';
       return '<span class="tvm-test-btn-group">'
         + '<button class="tvm-btn tvm-btn-test tvm-btn-test-cooldown" disabled aria-label="' + aria + '">' + label + '</button>'
-        + '<button class="tvm-btn tvm-btn-test-sure" title="Run tests now without seeing results — passes still unlock Next">I’m sure</button>'
+        + '<button class="tvm-btn tvm-btn-test-sure" data-original-title="Run tests now without seeing results — passes still unlock Next">I’m sure</button>'
         + '</span>';
     }
 

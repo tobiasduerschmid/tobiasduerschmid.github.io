@@ -279,6 +279,23 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
     color: #111 !important;
   }
 
+  body.se-gym-page .gym-btn,
+  html.dark-mode body.se-gym-page .gym-btn,
+  html.dark-mode body.se-gym-page .gym-btn.primary,
+  html.dark-mode body.se-gym-page .gym-btn.secondary,
+  html.dark-mode body.se-gym-page .gym-btn.danger,
+  html.dark-mode body.se-gym-page .gym-btn.primary:disabled {
+    background: #fff !important;
+    border: 1px solid #767676 !important;
+    color: #111 !important;
+    box-shadow: none !important;
+  }
+
+  body.se-gym-page .gym-btn.primary,
+  body.se-gym-page .gym-btn.danger {
+    border-color: #2774AE !important;
+  }
+
   html.dark-mode .quiz-container .option-checkbox,
   html.dark-mode .tvm-quiz-panel .option-checkbox,
   html.dark-mode .workout-quiz-card .option-checkbox {

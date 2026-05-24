@@ -22,7 +22,7 @@
       </div>
       <div class="navbar-right tutorial-navbar-actions">
         <label id="autoSaveLabel" class="tutorial-nav-control tutorial-nav-hidden"
-               title="Automatically save step and code so you can resume later">
+               data-original-title="Automatically save step and code so you can resume later">
           <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Auto-save
           <span id="tutorialAutosaveStatus" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
           <span class="tvm-dark-toggle-wrap">
@@ -33,18 +33,18 @@
           </span>
         </label>
         <a id="resetStepBtn" href="#" class="tutorial-nav-link tutorial-nav-hidden"
-           title="Reset current step to original code">
+           data-original-title="Reset current step to original code">
           <i class="fa fa-undo" aria-hidden="true"></i> Reset Current Step
         </a>
         <a id="solutionBtn" href="#" class="tutorial-nav-link tutorial-nav-hidden"
-           title="Apply solution for current step">
+           data-original-title="Apply solution for current step">
           <i class="fa fa-key" aria-hidden="true"></i> Solution
         </a>
         <a id="printBtn" href="{{ page.url | replace: '.html', '' }}/print" target="_blank"
-           class="tutorial-nav-link" title="Print view">
+           class="tutorial-nav-link" data-original-title="Print view">
           <i class="fa fa-print" aria-hidden="true"></i> Print
         </a>
-        <button id="tts-read-btn" class="tutorial-nav-button" title="Read current step aloud" aria-label="Read Aloud: read current step aloud">
+        <button id="tts-read-btn" class="tutorial-nav-button" data-original-title="Read current step aloud" aria-label="Read Aloud: read current step aloud">
           <i class="fa fa-volume-up" aria-hidden="true"></i> Read Aloud
         </button>
         <label id="darkModeLabel" class="tutorial-nav-control">
@@ -206,7 +206,7 @@
             <div class="tvm-steps-view">
               <div class="tvm-step-nav-bar">
                 <div class="tvm-step-nav"></div>
-                <button class="tvm-instructions-popout-btn" type="button" title="Open instructions in separate window">⧉<span class="sr-only">Open instructions in separate window</span></button>
+                <button class="tvm-instructions-popout-btn" type="button" data-original-title="Open instructions in separate window">⧉<span class="sr-only">Open instructions in separate window</span></button>
               </div>
               <div class="tvm-step-content-wrap scrollable-region-focus-target" tabindex="0">
                 <div class="tvm-step-content"></div>
@@ -215,7 +215,7 @@
               <div class="tvm-step-controls-bar"><div class="tvm-step-controls"></div></div>
             </div>
           </div>
-          <div class="tvm-hsplitter" title="Drag to resize"></div>
+          <div class="tvm-hsplitter" data-original-title="Drag to resize"></div>
           <section class="tvm-workspace tvm-uml-editor-workspace" aria-label="UML editor workspace">
             {% include uml-editor.html types="class,sequence,state,component,deployment,usecase,activity" default_type="class" default_layout="square" start="empty" persistence="true" storage_key=page.tutorial reset_label="Empty" reset_title="Discard your current diagram and return to an empty diagram" hide_archuml=true hide_syntax_help=true %}
           </section>
@@ -618,20 +618,20 @@
     <span class="tts-control-label">
       <i class="fa fa-volume-up" aria-hidden="true"></i> Reading aloud
     </span>
-    <button id="tts-playpause" class="tts-control-button is-primary" title="Pause / Resume" aria-label="Pause reading" aria-pressed="true">
+    <button id="tts-playpause" class="tts-control-button is-primary" data-original-title="Pause / Resume" aria-label="Pause reading" aria-pressed="true">
       <i class="fa fa-pause" aria-hidden="true"></i>
     </button>
-    <button id="tts-slower" class="tts-control-button" title="Slower">
+    <button id="tts-slower" class="tts-control-button" data-original-title="Slower">
       &#8722; Slower
     </button>
     <span id="tts-rate" class="tts-control-rate">1.0x</span>
-    <button id="tts-faster" class="tts-control-button" title="Faster">
+    <button id="tts-faster" class="tts-control-button" data-original-title="Faster">
       + Faster
     </button>
-    <select id="tts-voice-select" class="tts-control-select" title="Select voice" aria-label="Select the voice used for reading aloud">
+    <select id="tts-voice-select" class="tts-control-select" data-original-title="Select voice" aria-label="Select the voice used for reading aloud">
       <option value="">Default voice</option>
     </select>
-    <button id="tts-stop" class="tts-control-button is-danger" title="Stop reading">
+    <button id="tts-stop" class="tts-control-button is-danger" data-original-title="Stop reading">
       <i class="fa fa-stop" aria-hidden="true"></i> Stop
     </button>
   </div>
@@ -723,7 +723,11 @@
             playPauseBtn.innerHTML = paused
               ? '<i class="fa fa-play" aria-hidden="true"></i>'
               : '<i class="fa fa-pause" aria-hidden="true"></i>';
-            playPauseBtn.title = paused ? 'Resume' : 'Pause';
+            playPauseBtn.setAttribute('data-original-title', paused ? 'Resume' : 'Pause');
+            playPauseBtn.removeAttribute('title');
+            if (window.jQuery && window.jQuery.fn.tooltip) {
+              window.jQuery(playPauseBtn).tooltip('hide').attr('data-original-title', playPauseBtn.getAttribute('data-original-title'));
+            }
             playPauseBtn.setAttribute('aria-label', paused ? 'Resume reading' : 'Pause reading');
             playPauseBtn.setAttribute('aria-pressed', paused ? 'false' : 'true');
           }
@@ -920,7 +924,10 @@
       if (window.MutationObserver) {
         new MutationObserver(function (mutations) {
           mutations.forEach(function (mutation) {
-            if (mutation.type === 'attributes' && mutation.attributeName === 'title') {
+          if (mutation.type === 'attributes' && (
+              mutation.attributeName === 'title' ||
+              mutation.attributeName === 'data-original-title' ||
+              mutation.attributeName === 'data-tooltip')) {
               if (mutation.target.matches && mutation.target.matches(tooltipSelector)) {
                 initTooltips();
               }
@@ -939,7 +946,7 @@
           });
         }).observe(document.documentElement, {
           attributes: true,
-          attributeFilter: ['title'],
+        attributeFilter: ['title', 'data-original-title', 'data-tooltip'],
           childList: true,
           subtree: true
         });

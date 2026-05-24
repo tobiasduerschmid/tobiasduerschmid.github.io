@@ -513,7 +513,7 @@ steps:
 
       ✏️ **Before you read the table — commit to a one-sentence answer:** *"This test would still pass even if ___ were wrong about the real `QuestApiClient`."* Fill in the blank from your own head, then compare to the breakdown below.
 
-      | | |
+      | Claim | What it means |
       |---|---|
       | **Proves** | Given a Tuesday clock and a canned quest list with one Tuesday entry, `daily_quest_title` returns that entry's title. |
       | **Does not prove** | That the real `QuestApiClient` actually returns dicts shaped `{"weekday": ..., "title": ...}` — only that *if* it does, the SUT picks the right one. |
@@ -1013,7 +1013,7 @@ steps:
 
       ✏️ **Predict first:** the spy verified that `credit` was *called* with the right arguments. Name one thing the SUT could *still* be broken about that this test would not catch. Commit to an answer in your head, then check below.
 
-      | | |
+      | Claim | What it means |
       |---|---|
       | **Proves** | The SUT *did* call `ledger.credit(user_id, gold)` with the exact `(user_id, gold)` pair the spec mandates. |
       | **Does not prove** | That the real `RewardLedger.credit(...)` actually persists the credit, handles duplicate writes idempotently, or recovers from a database failure mid-write. |
@@ -1538,7 +1538,7 @@ steps:
 
       ✏️ **Predict first:** a vanilla `Mock()` records calls but does *not* know anything about the real `RewardLedger` class. Name one realistic refactor a teammate could make that would break production while leaving this test green. Commit to an answer in your head, then check below.
 
-      | | |
+      | Claim | What it means |
       |---|---|
       | **Proves** | The SUT calls `ledger.credit` once with the right arguments — the same contract Step 3's hand-rolled spy verified. |
       | **Does not prove** | That the real `RewardLedger` actually has a `credit` method with that signature. A vanilla `Mock()` accepts any attribute name, any signature, silently. Test D's `side_effect = ConnectionError` proves nothing about the real `QuestApiClient`'s exception classes either — just that the SUT handles *that* class. |
@@ -2052,7 +2052,7 @@ steps:
 
       ✏️ **Predict first:** the patched test confirmed the SUT *makes the call* with the right arguments. What real-world failure mode does the test still not catch — even with the patch target correct and `autospec=True` enabled? Commit to an answer in your head, then check below.
 
-      | | |
+      | Claim | What it means |
       |---|---|
       | **Proves** | The SUT looks `send_push` up in `quest_service`'s namespace and calls it with the right arguments when the streak hits a multiple of 7. `autospec=True` (Test C) also proves the signature matches the real callable's. |
       | **Does not prove** | That the real `push_notifier.send_push` actually dispatches a notification to APNS/FCM, handles delivery failures, or respects rate limits. |

@@ -54,7 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 const muted = v === 0;
                 volBtn.setAttribute('aria-pressed', muted ? 'true' : 'false');
                 volBtn.setAttribute('aria-label', muted ? 'Unmute' : 'Mute');
-                volBtn.setAttribute('title', muted ? 'Unmute' : 'Mute');
+                volBtn.setAttribute('data-original-title', muted ? 'Unmute' : 'Mute');
+                volBtn.removeAttribute('title');
             }
         }
 

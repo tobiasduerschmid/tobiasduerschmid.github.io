@@ -642,9 +642,13 @@
       main,
       .step,
       .step-instructions,
+      .step-instructions .highlighter-rouge,
+      .step-instructions .highlight,
       .starter-files,
       .starter-file,
       .starter-file-content,
+      .starter-file-content .highlighter-rouge,
+      .starter-file-content .highlight,
       .step-solution,
       .print-quiz {
         min-width: 0;
@@ -688,8 +692,20 @@
       .step-instructions table,
       .starter-file-content table {
         display: block;
+        width: 100%;
         max-width: 100%;
         overflow-x: auto;
+        overflow-y: clip;
+      }
+
+      .step-instructions th,
+      .step-instructions td,
+      .starter-file-content th,
+      .starter-file-content td {
+        min-width: 0;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+        word-break: break-word;
       }
 
       .step-instructions img,

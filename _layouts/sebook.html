@@ -149,7 +149,12 @@
     (function () {
       document.addEventListener('focusin', function (e) {
         var target = e.target;
-        if (!target || !target.matches || !target.matches('#main-content pre[tabindex], .inline-language-panel pre')) return;
+        if (!target || !target.matches) return;
+        if (target.matches('#main-content table a, #main-content table button, #main-content table [tabindex]:not([tabindex="-1"])')) {
+          target.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+          return;
+        }
+        if (!target.matches('#main-content pre[tabindex], .inline-language-panel pre')) return;
         var rect = target.getBoundingClientRect();
         if (rect.top < 96 || rect.bottom > window.innerHeight) {
           target.scrollIntoView({ block: 'center', inline: 'nearest' });
@@ -430,32 +435,32 @@
     <span class="tts-control-label">
       <i class="fa fa-volume-up" aria-hidden="true"></i> Reading aloud
     </span>
-    <button id="tts-prev-heading" class="tts-control-button is-square tts-control-hidden" title="Previous heading" aria-label="Jump to previous heading">
+    <button id="tts-prev-heading" class="tts-control-button is-square tts-control-hidden" data-original-title="Previous heading" aria-label="Jump to previous heading">
       <i class="fa fa-step-backward" aria-hidden="true"></i>
     </button>
-    <button id="tts-back-10s" class="tts-control-button" title="Back 10 seconds" aria-label="Back 10 seconds">
+    <button id="tts-back-10s" class="tts-control-button" data-original-title="Back 10 seconds" aria-label="Back 10 seconds">
       <i class="fa fa-undo" aria-hidden="true"></i> 10s
     </button>
-    <button id="tts-playpause" class="tts-control-button is-primary" title="Pause / Resume" aria-label="Pause reading" aria-pressed="true">
+    <button id="tts-playpause" class="tts-control-button is-primary" data-original-title="Pause / Resume" aria-label="Pause reading" aria-pressed="true">
       <i class="fa fa-pause" aria-hidden="true"></i>
     </button>
-    <button id="tts-fwd-10s" class="tts-control-button" title="Forward 10 seconds" aria-label="Forward 10 seconds">
+    <button id="tts-fwd-10s" class="tts-control-button" data-original-title="Forward 10 seconds" aria-label="Forward 10 seconds">
       10s <i class="fa fa-redo" aria-hidden="true"></i>
     </button>
-    <button id="tts-next-heading" class="tts-control-button is-square tts-control-hidden" title="Next heading" aria-label="Jump to next heading">
+    <button id="tts-next-heading" class="tts-control-button is-square tts-control-hidden" data-original-title="Next heading" aria-label="Jump to next heading">
       <i class="fa fa-step-forward" aria-hidden="true"></i>
     </button>
-    <button id="tts-slower" class="tts-control-button" title="Slower">
+    <button id="tts-slower" class="tts-control-button" data-original-title="Slower">
       &#8722; Slower
     </button>
     <span id="tts-rate" class="tts-control-rate">1.0x</span>
-    <button id="tts-faster" class="tts-control-button" title="Faster">
+    <button id="tts-faster" class="tts-control-button" data-original-title="Faster">
       + Faster
     </button>
-    <select id="tts-voice-select" class="tts-control-select" title="Select voice" aria-label="Select the voice used for reading aloud">
+    <select id="tts-voice-select" class="tts-control-select" data-original-title="Select voice" aria-label="Select the voice used for reading aloud">
       <option value="">Default voice</option>
     </select>
-    <button id="tts-stop" class="tts-control-button is-danger" title="Stop reading">
+    <button id="tts-stop" class="tts-control-button is-danger" data-original-title="Stop reading">
       <i class="fa fa-stop" aria-hidden="true"></i> Stop
     </button>
   </div>
@@ -551,7 +556,11 @@
             playPauseBtn.innerHTML = paused
               ? '<i class="fa fa-play" aria-hidden="true"></i>'
               : '<i class="fa fa-pause" aria-hidden="true"></i>';
-            playPauseBtn.title = paused ? 'Resume' : 'Pause';
+            playPauseBtn.setAttribute('data-original-title', paused ? 'Resume' : 'Pause');
+            playPauseBtn.removeAttribute('title');
+            if (window.jQuery && window.jQuery.fn.tooltip) {
+              window.jQuery(playPauseBtn).tooltip('hide').attr('data-original-title', playPauseBtn.getAttribute('data-original-title'));
+            }
             playPauseBtn.setAttribute('aria-label', paused ? 'Resume reading' : 'Pause reading');
             playPauseBtn.setAttribute('aria-pressed', paused ? 'false' : 'true');
           }

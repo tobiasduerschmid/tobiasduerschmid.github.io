@@ -11,9 +11,9 @@
 
 {% if show_header %}
 <div class="print-header">
-  <h1>{{ tutorial_data.title }}</h1>
+  <h1>{{ tutorial_data.title | escape | replace: '=', '&#61;' }}</h1>
   {% if tutorial_data.description %}
-  <p>{{ tutorial_data.description }}</p>
+  <p>{{ tutorial_data.description | escape | replace: '=', '&#61;' }}</p>
   {% endif %}
 </div>
 {% endif %}
@@ -22,7 +22,7 @@
 <div class="step">
   <div class="step-header">
     <span class="step-number">{{ forloop.index }}</span>
-    <h2 class="step-title">{{ step.title | markdownify | remove: '<p>' | remove: '</p>' | strip }}</h2>
+    <h2 class="step-title">{{ step.title | strip | escape | replace: '=', '&#61;' }}</h2>
   </div>
 
   <div class="step-instructions">
@@ -89,7 +89,7 @@
   <div class="print-quiz">
     <div class="print-quiz-header">
       <span class="print-quiz-icon"><i class="fa fa-question-circle"></i></span>
-      <h3 class="print-quiz-title">{{ quiz.title }}</h3>
+      <h3 class="print-quiz-title">{{ quiz.title | escape | replace: '=', '&#61;' }}</h3>
       {% if quiz.min_score %}
       <span class="print-quiz-threshold">Min. score: {{ quiz.min_score | times: 100 | round }}%</span>
       {% endif %}

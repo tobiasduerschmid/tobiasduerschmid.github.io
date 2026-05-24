@@ -3291,7 +3291,7 @@
       field.autocomplete = 'off';
       field.spellcheck = false;
       field.setAttribute('aria-label', 'Hex color for ' + swatchLabel);
-      field.title = 'Enter a hex color like #2774AE';
+      field.setAttribute('data-original-title', 'Enter a hex color like #2774AE');
       field.addEventListener('input', function () { updateColorFromHex(input, false); });
       field.addEventListener('change', function () { updateColorFromHex(input, true); });
       field.addEventListener('blur', function () { updateColorFromHex(input, true); });

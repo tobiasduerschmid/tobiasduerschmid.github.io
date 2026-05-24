@@ -2255,14 +2255,14 @@
     }
 
     html.dark-mode .info-btn {
-      background: #2774AE;
+      background: #005587;
       border-color: #8BB8E8;
       color: #fff;
     }
 
     html.dark-mode .info-btn:hover,
     html.dark-mode .info-btn:focus {
-      background: #888;
+      background: #144f7a;
     }
 
     /* Dark-mode focus color is provided by --focus-color via cascade. */

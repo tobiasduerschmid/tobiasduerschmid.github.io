@@ -241,7 +241,7 @@
     var btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'tvm-debug-btn tvm-debug-btn-unavailable';
-    btn.title = details.title;
+    btn.setAttribute('data-original-title', details.title);
     btn.innerHTML = '<i class="fa fa-bug" aria-hidden="true"></i> Debug';
     btn.addEventListener('click', function () {
       if (activateDebugTab) activateDebugTab();
@@ -266,7 +266,7 @@
         var note = document.createElement('button');
         note.type = 'button';
         note.className = 'sebook-dbg-reload-note';
-        note.title = details.title;
+        note.setAttribute('data-original-title', details.title);
         note.textContent = details.action;
         note.addEventListener('click', function () { window.location.reload(); });
         host.appendChild(note);
@@ -1263,7 +1263,7 @@
     // Debug button — sits next to Run.
     this.debugBtn = document.createElement('button');
     this.debugBtn.className = 'tvm-debug-btn';
-    this.debugBtn.title = 'Start debugger (F5)';
+    this.debugBtn.setAttribute('data-original-title', 'Start debugger (F5)');
     this.debugBtn.innerHTML = '<i class="fa fa-bug"></i> Debug';
     this.debugBtn.addEventListener('click', function () { self.startSession(); });
 
@@ -1271,7 +1271,8 @@
     // mirrors all state in real time, so popping out mid-session is safe.
     this.debugPopoutBtn = document.createElement('button');
     this.debugPopoutBtn.className = 'tvm-debug-popout-btn';
-    this.debugPopoutBtn.title = 'Open debugger in a separate window';
+    this.debugPopoutBtn.setAttribute('data-original-title', 'Open debugger in a separate window');
+    this.debugPopoutBtn.setAttribute('aria-label', 'Open debugger in a separate window');
     this.debugPopoutBtn.innerHTML = '<i class="fa fa-up-right-from-square"></i>';
     this.debugPopoutBtn.style.marginLeft = '4px';
     this.debugPopoutBtn.addEventListener('click', function () { self.popoutDebugger(); });
@@ -1354,16 +1355,16 @@
 
     this.stepToolbar.innerHTML =
       '<span class="tvm-debug-status" role="status" aria-live="polite" aria-atomic="true"></span>' +
-      '<button class="tvm-debug-step" data-cmd="continue" title="Continue (F5)" aria-label="Continue">' + svgPlay + '</button>' +
-      '<button class="tvm-debug-step" data-cmd="next"     title="Step Over (F10)" aria-label="Step Over">' + svgOver + '</button>' +
-      '<button class="tvm-debug-step" data-cmd="step"     title="Step Into (F11)" aria-label="Step Into">' + svgInto + '</button>' +
-      '<button class="tvm-debug-step" data-cmd="return"   title="Step Out (Shift+F11)" aria-label="Step Out">' + svgOut + '</button>' +
+      '<button class="tvm-debug-step" data-cmd="continue" data-original-title="Continue (F5)" aria-label="Continue">' + svgPlay + '</button>' +
+      '<button class="tvm-debug-step" data-cmd="next"     data-original-title="Step Over (F10)" aria-label="Step Over">' + svgOver + '</button>' +
+      '<button class="tvm-debug-step" data-cmd="step"     data-original-title="Step Into (F11)" aria-label="Step Into">' + svgInto + '</button>' +
+      '<button class="tvm-debug-step" data-cmd="return"   data-original-title="Step Out (Shift+F11)" aria-label="Step Out">' + svgOut + '</button>' +
       '<span class="tvm-debug-divider"></span>' +
-      '<button class="tvm-debug-step" data-cmd="back"     title="Step Back (Shift+F10)" aria-label="Step Back">' + svgBack + '</button>' +
-      '<button class="tvm-debug-step" data-cmd="backContinue" title="Run Back to Breakpoint (Alt+Shift+F5)" aria-label="Run Back to Breakpoint">' + svgBackContinue + '</button>' +
-      '<button class="tvm-debug-step" data-cmd="backOut"  title="Step Back Out (Alt+Shift+F10)" aria-label="Step Back Out">' + svgBackOut + '</button>' +
+      '<button class="tvm-debug-step" data-cmd="back"     data-original-title="Step Back (Shift+F10)" aria-label="Step Back">' + svgBack + '</button>' +
+      '<button class="tvm-debug-step" data-cmd="backContinue" data-original-title="Run Back to Breakpoint (Alt+Shift+F5)" aria-label="Run Back to Breakpoint">' + svgBackContinue + '</button>' +
+      '<button class="tvm-debug-step" data-cmd="backOut"  data-original-title="Step Back Out (Alt+Shift+F10)" aria-label="Step Back Out">' + svgBackOut + '</button>' +
       '<span class="tvm-debug-divider"></span>' +
-      '<button class="tvm-debug-step" data-cmd="stop"     title="Stop (Shift+F5)" aria-label="Stop">' + svgStop + '</button>';
+      '<button class="tvm-debug-step" data-cmd="stop"     data-original-title="Stop (Shift+F5)" aria-label="Stop">' + svgStop + '</button>';
     actions.appendChild(this.stepToolbar);
 
     var btns = this.stepToolbar.querySelectorAll('.tvm-debug-step');
@@ -2376,7 +2377,8 @@
   DebuggerController.prototype.setStatus = function (text) {
     if (this.statusEl) {
       this.statusEl.textContent = text || '';
-      this.statusEl.title = text || '';
+      if (text) this.statusEl.setAttribute('data-original-title', text);
+      else this.statusEl.removeAttribute('data-original-title');
     }
     if (this._scheduleToolbarLayout) this._scheduleToolbarLayout();
     this._publishSession();
@@ -3085,7 +3087,11 @@
 
     // Disable Run/Test
     var runBtn = this.t.root.querySelector('.tvm-run-btn');
-    if (runBtn) { runBtn.disabled = true; runBtn.title = 'Stop the debugger to run/test'; }
+    if (runBtn) {
+      runBtn.disabled = true;
+      runBtn.setAttribute('data-original-title', 'Stop the debugger to run/test');
+      runBtn.removeAttribute('title');
+    }
 
     // Show step toolbar; hide Debug button
     if (this.debugBtn) this.debugBtn.style.display = 'none';
@@ -3416,7 +3422,11 @@
       if (this.t.editor2) this.t.editor2.updateOptions({ readOnly: this._editor2WasReadOnly });
     }
     var runBtn = this.t.root.querySelector('.tvm-run-btn');
-    if (runBtn) { runBtn.disabled = false; runBtn.title = 'Run current file (Ctrl+Enter)'; }
+    if (runBtn) {
+      runBtn.disabled = false;
+      runBtn.setAttribute('data-original-title', 'Run current file (Ctrl+Enter)');
+      runBtn.removeAttribute('title');
+    }
     if (this.stepToolbar) this.stepToolbar.style.display = 'none';
     var actions = this.t.root && this.t.root.querySelector('.tvm-output-actions');
     if (actions) actions.classList.remove('tvm-debug-toolbar-new-row');
@@ -3436,7 +3446,8 @@
     this.paused = false;
     if (this.statusEl) {
       this.statusEl.textContent = '';
-      this.statusEl.title = '';
+      this.statusEl.removeAttribute('data-original-title');
+      this.statusEl.removeAttribute('title');
     }
     if (!keepHistory) {
       this._resetExecutionTrace(false);
@@ -3580,7 +3591,7 @@
       var oid = resolved.oid;
       var aliasBadge = '';
       if (oid && seenOids[oid]) {
-        aliasBadge = ' <span class="tvm-debug-alias" title="Same object as ' +
+        aliasBadge = ' <span class="tvm-debug-alias" data-original-title="Same object as ' +
                      this.escape(seenOids[oid]) + ' (oid ' + oid + ')">↔ ' +
                      this.escape(seenOids[oid]) + '</span>';
       } else if (oid) {
@@ -3614,7 +3625,7 @@
     // either Locals or Globals. Nested children are not editable in v1
     // (would require expression paths like `foo.bar[2]`). The editKey carries
     // the (scope, name) tuple so the click handler knows what to mutate.
-    var editAttr = editKey ? ' data-edit-key="' + this.escape(editKey) + '" title="Click to edit"' : '';
+    var editAttr = editKey ? ' data-edit-key="' + this.escape(editKey) + '" data-original-title="Click to edit"' : '';
     var valueHtml = '<span class="tvm-debug-var-value' + (editKey ? ' tvm-debug-var-editable' : '') + '"' + editAttr +
                     '>' + this.escape(val.repr || val.preview || '') + '</span>';
     var hasChildren = val.kind === 'collection' || (val.kind === 'object' && val.attrs && Object.keys(val.attrs).length);
@@ -3717,7 +3728,8 @@
       if (!unchanged) {
         valueEl.textContent = expr;
         valueEl.classList.add('tvm-debug-var-edit-pending');
-        valueEl.setAttribute('title', 'Applying edit… (was: ' + originalText + ')');
+        valueEl.setAttribute('data-original-title', 'Applying edit… (was: ' + originalText + ')');
+        valueEl.removeAttribute('title');
       }
       input.replaceWith(valueEl);
       if (!unchanged) self.applyVarEdit(scope, frameIdx, name, expr);
@@ -3874,14 +3886,14 @@
                 '<span class="tvm-debug-watch-expr">' + this.escape(expr) + '</span>' +
                 '<span class="tvm-debug-watch-arrow">→</span>' +
                 '<span class="tvm-debug-watch-val">' + valStr + '</span>' +
-                '<button class="tvm-debug-watch-action tvm-debug-watch-promote" data-i="' + i + '" title="Watch for data value changes" aria-label="Watch for data value changes">' + debugManagerIcon('dataWatch') + '</button>' +
-                '<button class="tvm-debug-watch-action tvm-debug-watch-remove" data-i="' + i + '" title="Remove" aria-label="Remove">' + debugManagerIcon('trash') + '</button>' +
+                '<button class="tvm-debug-watch-action tvm-debug-watch-promote" data-i="' + i + '" data-original-title="Watch for data value changes" aria-label="Watch for data value changes">' + debugManagerIcon('dataWatch') + '</button>' +
+                '<button class="tvm-debug-watch-action tvm-debug-watch-remove" data-i="' + i + '" data-original-title="Remove" aria-label="Remove">' + debugManagerIcon('trash') + '</button>' +
                 '</div>');
     }
     view.innerHTML =
       '<div class="tvm-debug-watch-list">' + rows.join('') + '</div>' +
       '<div class="tvm-debug-watch-add">' +
-      '<input type="text" class="tvm-debug-watch-input" placeholder="Add a Python expression to watch (e.g. len(items))" title="Watch expression" aria-label="Watch expression" />' +
+      '<input type="text" class="tvm-debug-watch-input" placeholder="Add a Python expression to watch (e.g. len(items))" data-original-title="Watch expression" aria-label="Watch expression" />' +
       '<button class="tvm-debug-watch-add-btn">+ Add</button>' +
       '</div>' +
       (watches.length === 0 ? '<div class="tvm-debug-empty">Watches are evaluated on every step. Avoid expressions with side effects.</div>' : '');
@@ -3962,8 +3974,8 @@
           '<span class="tvm-debug-manager-title">' + self.escape(self.basename(path)) + ':' + line + '</span>' +
           cond + hits + err +
           '</span>' +
-          '<button class="tvm-debug-manager-icon" data-bp-edit="1" data-path="' + self.escape(path) + '" data-line="' + line + '" title="Edit condition" aria-label="Edit condition">' + debugManagerIcon('edit') + '</button>' +
-          '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-bp-remove="1" data-path="' + self.escape(path) + '" data-line="' + line + '" title="Remove breakpoint" aria-label="Remove breakpoint">' + debugManagerIcon('trash') + '</button>' +
+          '<button class="tvm-debug-manager-icon" data-bp-edit="1" data-path="' + self.escape(path) + '" data-line="' + line + '" data-original-title="Edit condition" aria-label="Edit condition">' + debugManagerIcon('edit') + '</button>' +
+          '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-bp-remove="1" data-path="' + self.escape(path) + '" data-line="' + line + '" data-original-title="Remove breakpoint" aria-label="Remove breakpoint">' + debugManagerIcon('trash') + '</button>' +
           '</div>'
         );
       });
@@ -3974,7 +3986,7 @@
       var disabled = wp.enabled === false;
       var toggleLabel = disabled ? 'Enable data watchpoint' : 'Disable data watchpoint';
       return '<div class="tvm-debug-manager-row tvm-debug-manager-watchpoint-row' + (disabled ? ' disabled' : '') + '">' +
-        '<label class="tvm-debug-manager-toggle" title="' + toggleLabel + '">' +
+        '<label class="tvm-debug-manager-toggle" data-original-title="' + toggleLabel + '">' +
         '<input type="checkbox" aria-label="' + toggleLabel + '" data-wp-toggle="' + self.escape(wp.id) + '"' + (disabled ? '' : ' checked') + '>' +
         '<span></span><em class="sr-only">' + toggleLabel + '</em>' +
         '</label>' +
@@ -3982,14 +3994,14 @@
         '<span class="tvm-debug-manager-title">' + self.escape(wp.expr) + '</span>' +
         '<span class="tvm-debug-manager-value">' + val + '</span>' +
         '</span>' +
-        '<button class="tvm-debug-manager-icon" data-wp-run="' + self.escape(wp.id) + '" title="Run to this data value change" aria-label="Run to this data value change">' + debugManagerIcon('playData') + '</button>' +
-        '<button class="tvm-debug-manager-icon" data-wp-back="' + self.escape(wp.id) + '" title="Run back to this data value change" aria-label="Run back to this data value change">' + debugManagerIcon('backData') + '</button>' +
-        '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-wp-remove="' + self.escape(wp.id) + '" title="Remove data watchpoint" aria-label="Remove data watchpoint">' + debugManagerIcon('trash') + '</button>' +
+        '<button class="tvm-debug-manager-icon" data-wp-run="' + self.escape(wp.id) + '" data-original-title="Run to this data value change" aria-label="Run to this data value change">' + debugManagerIcon('playData') + '</button>' +
+        '<button class="tvm-debug-manager-icon" data-wp-back="' + self.escape(wp.id) + '" data-original-title="Run back to this data value change" aria-label="Run back to this data value change">' + debugManagerIcon('backData') + '</button>' +
+        '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-wp-remove="' + self.escape(wp.id) + '" data-original-title="Remove data watchpoint" aria-label="Remove data watchpoint">' + debugManagerIcon('trash') + '</button>' +
         '</div>';
     });
     var watchpointControls =
       '<div class="tvm-debug-manager-add">' +
-      '<input type="text" class="tvm-debug-watchpoint-input" placeholder="Break when expression changes value" title="Data watchpoint expression" aria-label="Data watchpoint expression" />' +
+      '<input type="text" class="tvm-debug-watchpoint-input" placeholder="Break when expression changes value" data-original-title="Data watchpoint expression" aria-label="Data watchpoint expression" />' +
       '<button class="tvm-debug-watchpoint-add-btn">' + debugManagerIcon('plus') + '<span>Add Data Watchpoint</span></button>' +
       '</div>' +
       '<div class="tvm-debug-manager-actions">' +
@@ -4003,20 +4015,20 @@
       var modeAll = eb.mode === 'all';
       var toggleLabel = disabled ? 'Enable exception breakpoint' : 'Disable exception breakpoint';
       return '<div class="tvm-debug-manager-row tvm-debug-manager-exception-row' + (disabled ? ' disabled' : '') + '" data-exc-bp="' + eb.id + '">' +
-        '<label class="tvm-debug-manager-toggle" title="' + toggleLabel + '">' +
+        '<label class="tvm-debug-manager-toggle" data-original-title="' + toggleLabel + '">' +
         '<input type="checkbox" aria-label="' + toggleLabel + '" data-exc-toggle="' + eb.id + '"' + (disabled ? '' : ' checked') + '>' +
         '<span></span><em class="sr-only">' + toggleLabel + '</em>' +
         '</label>' +
         '<span class="tvm-debug-manager-main">' +
-        '<input type="text" class="tvm-debug-manager-exc-type" placeholder="Any exception type" title="Exception type filter" aria-label="Exception type filter" value="' + typeAttr + '" data-exc-type="' + eb.id + '" spellcheck="false" autocomplete="off">' +
+        '<input type="text" class="tvm-debug-manager-exc-type" placeholder="Any exception type" data-original-title="Exception type filter" aria-label="Exception type filter" value="' + typeAttr + '" data-exc-type="' + eb.id + '" spellcheck="false" autocomplete="off">' +
         '<span class="tvm-debug-manager-exc-modes">' +
         '<label><input type="radio" name="exc-mode-' + eb.id + '" value="uncaught" data-exc-mode="' + eb.id + '"' + (modeAll ? '' : ' checked') + '>Uncaught</label>' +
         '<label><input type="radio" name="exc-mode-' + eb.id + '" value="all" data-exc-mode="' + eb.id + '"' + (modeAll ? ' checked' : '') + '>All raised</label>' +
         '</span>' +
         '</span>' +
-        '<button class="tvm-debug-manager-icon" data-exc-run="' + eb.id + '" title="Run to this exception" aria-label="Run to this exception">' + debugManagerIcon('playException') + '</button>' +
-        '<button class="tvm-debug-manager-icon" data-exc-back="' + eb.id + '" title="Run back to this exception" aria-label="Run back to this exception">' + debugManagerIcon('backException') + '</button>' +
-        '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-exc-remove="' + eb.id + '" title="Remove exception breakpoint" aria-label="Remove exception breakpoint">' + debugManagerIcon('trash') + '</button>' +
+        '<button class="tvm-debug-manager-icon" data-exc-run="' + eb.id + '" data-original-title="Run to this exception" aria-label="Run to this exception">' + debugManagerIcon('playException') + '</button>' +
+        '<button class="tvm-debug-manager-icon" data-exc-back="' + eb.id + '" data-original-title="Run back to this exception" aria-label="Run back to this exception">' + debugManagerIcon('backException') + '</button>' +
+        '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-exc-remove="' + eb.id + '" data-original-title="Remove exception breakpoint" aria-label="Remove exception breakpoint">' + debugManagerIcon('trash') + '</button>' +
         '</div>';
     });
     var exceptionControls =
@@ -4192,7 +4204,7 @@
     }
     var n = this.history.length;
     var html = '<div class="tvm-debug-history-controls">' +
-      '<input type="range" class="tvm-debug-history-slider" min="0" max="' + (n - 1) + '" value="' + this.historyIdx + '" title="Execution history position" aria-label="Execution history position">' +
+      '<input type="range" class="tvm-debug-history-slider" min="0" max="' + (n - 1) + '" value="' + this.historyIdx + '" data-original-title="Execution history position" aria-label="Execution history position">' +
       '<span class="tvm-debug-history-pos">' + (this.historyIdx + 1) + ' / ' + n + '</span>' +
       (this.historyIdx === this.liveIdx
         ? '<span class="tvm-debug-history-live">● live</span>'

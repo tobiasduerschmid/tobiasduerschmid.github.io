@@ -90,27 +90,27 @@ Supported options:
       </label>
     </span>
     <span class="uml-pg-toolbar-group uml-pg-toolbar-group-history" role="group" aria-label="History">
-      <button id="uml-pg-undo" type="button" title="Undo (Cmd/Ctrl+Z)" aria-keyshortcuts="Control+Z" disabled>↶ Undo</button>
-      <button id="uml-pg-redo" type="button" title="Redo (Cmd/Ctrl+Shift+Z)" aria-keyshortcuts="Control+Shift+Z" disabled>↷ Redo</button>
+      <button id="uml-pg-undo" type="button" data-original-title="Undo (Cmd/Ctrl+Z)" aria-keyshortcuts="Control+Z" disabled>↶ Undo</button>
+      <button id="uml-pg-redo" type="button" data-original-title="Redo (Cmd/Ctrl+Shift+Z)" aria-keyshortcuts="Control+Shift+Z" disabled>↷ Redo</button>
     </span>
     <span class="uml-pg-toolbar-group uml-pg-toolbar-group-reset" role="group" aria-label="Reset">
-      <button id="uml-pg-reset-one" title="Reset selected layout override" disabled>Reset Selected</button>
-      <button id="uml-pg-reset-layout" title="Remove layout overrides">Reset Layout</button>
-      <button id="uml-pg-reset-example" title="{{ uml_editor_reset_title | escape }}" type="button">↺ {{ uml_editor_reset_label }}</button>
+      <button id="uml-pg-reset-one" data-original-title="Reset selected layout override" disabled>Reset Selected</button>
+      <button id="uml-pg-reset-layout" data-original-title="Remove layout overrides">Reset Layout</button>
+      <button id="uml-pg-reset-example" data-original-title="{{ uml_editor_reset_title | escape }}" type="button">↺ {{ uml_editor_reset_label }}</button>
     </span>
     <span class="uml-pg-toolbar-group uml-pg-toolbar-group-export" role="group" aria-label="Export">
-      <button id="uml-pg-copy-source" title="Copy generated ArchUML">Copy ArchUML</button>
-      <button id="uml-pg-export-source" title="Download encrypted ArchUML as a UML file" type="button">Export UML</button>
-      <button id="uml-pg-generate-python" title="Open generated Python in a runnable tutorial workspace" type="button">Generate Python</button>
-      <button id="uml-pg-download" title="Download diagram as SVG file">&#8595; Download SVG</button>
+      <button id="uml-pg-copy-source" data-original-title="Copy generated ArchUML">Copy ArchUML</button>
+      <button id="uml-pg-export-source" data-original-title="Download encrypted ArchUML as a UML file" type="button">Export UML</button>
+      <button id="uml-pg-generate-python" data-original-title="Open generated Python in a runnable tutorial workspace" type="button">Generate Python</button>
+      <button id="uml-pg-download" data-original-title="Download diagram as SVG file">&#8595; Download SVG</button>
     </span>
     <span class="uml-pg-toolbar-group uml-pg-toolbar-group-view" role="group" aria-label="View">
       <span class="uml-pg-zoom-group" role="group" aria-label="Zoom">
-        <button id="uml-pg-zoom-out" type="button" title="Zoom out (Cmd/Ctrl+−)" aria-keyshortcuts="Control+-" aria-label="Zoom out">−</button>
-        <button id="uml-pg-zoom-readout-btn" type="button" title="Reset zoom to 100% (Cmd/Ctrl+0)" aria-keyshortcuts="Control+0"><span id="uml-pg-zoom-readout">100%</span></button>
-        <button id="uml-pg-zoom-in" type="button" title="Zoom in (Cmd/Ctrl++)" aria-keyshortcuts="Control+=" aria-label="Zoom in">+</button>
+        <button id="uml-pg-zoom-out" type="button" data-original-title="Zoom out (Cmd/Ctrl+−)" aria-keyshortcuts="Control+-" aria-label="Zoom out">−</button>
+        <button id="uml-pg-zoom-readout-btn" type="button" data-original-title="Reset zoom to 100% (Cmd/Ctrl+0)" aria-keyshortcuts="Control+0"><span id="uml-pg-zoom-readout">100%</span></button>
+        <button id="uml-pg-zoom-in" type="button" data-original-title="Zoom in (Cmd/Ctrl++)" aria-keyshortcuts="Control+=" aria-label="Zoom in">+</button>
       </span>
-      <button id="uml-pg-fullscreen" type="button" title="Toggle full-screen (F)" aria-pressed="false">⛶ Full screen</button>
+      <button id="uml-pg-fullscreen" type="button" data-original-title="Toggle full-screen (F)" aria-pressed="false">⛶ Full screen</button>
     </span>
     <span id="uml-pg-autosave" role="status" aria-live="polite" aria-atomic="true"></span>
     <span id="uml-pg-status" role="status" aria-live="polite" aria-atomic="true"></span>
@@ -164,7 +164,7 @@ Supported options:
     <aside id="uml-pg-props-pane" hidden role="region" aria-labelledby="uml-pg-props-title" aria-live="polite">
       <div class="uml-pg-props-header">
         <h2 id="uml-pg-props-title">Properties</h2>
-        <button id="uml-pg-props-delete" type="button" title="Delete selected (Del)">&#x2715; Delete</button>
+        <button id="uml-pg-props-delete" type="button" data-original-title="Delete selected (Del)">&#x2715; Delete</button>
       </div>
       <div id="uml-pg-props-content"></div>
       <div id="uml-pg-props-empty" class="uml-pg-props-empty" aria-hidden="true">
@@ -3438,7 +3438,8 @@ Supported options:
       btn.appendChild(document.createTextNode(spec.label));
       var aria = (kind === 'element' ? 'Add element: ' : 'Add relation: ') + spec.label;
       btn.setAttribute('aria-label', aria);
-      btn.title = aria + ' — click to arm, then click on the diagram. Or drag onto the diagram.';
+      btn.setAttribute('data-original-title', aria + ' — click to arm, then click on the diagram. Or drag onto the diagram.');
+      btn.removeAttribute('title');
       // Click-to-arm interaction
       btn.addEventListener('click', function () {
         if (suppressPaletteClick) {

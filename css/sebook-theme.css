@@ -1975,6 +1975,13 @@ html.dark-mode .tts-control-rate {
     overflow-y: clip;
   }
 
+  body.sebook-layout #main-content table th,
+  body.sebook-layout #main-content table td {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
   body.sebook-layout #main-content img,
   body.sebook-layout #main-content svg {
     max-width: 100%;
@@ -2065,6 +2072,13 @@ html.dark-mode .tts-control-rate {
     display: block;
     max-width: 100%;
     overflow-x: auto;
+  }
+
+  body.sebook-combined-layout #main-content table th,
+  body.sebook-combined-layout #main-content table td {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
   }
 
   body.sebook-combined-layout #main-content img,
@@ -2415,4 +2429,3 @@ html.dark-mode .sebook-search-no-results {
   border-color: var(--sebook-border);
   color: var(--sebook-navy);
 }
-

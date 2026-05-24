@@ -17,8 +17,12 @@
     (function () {
       var root = document.documentElement;
       function forcePrintLightMode() {
-        root.classList.add('print-light-mode');
-        root.classList.remove('dark-mode');
+        if (!root.classList.contains('print-light-mode')) {
+          root.classList.add('print-light-mode');
+        }
+        if (root.classList.contains('dark-mode')) {
+          root.classList.remove('dark-mode');
+        }
       }
       forcePrintLightMode();
       if (window.MutationObserver) {

@@ -390,7 +390,8 @@
         var tab = document.createElement('div');
         tab.className = 'tvm-tab' + (fn === activeFile ? ' active' : '');
         tab.textContent = fn;
-        tab.title = fn;
+        tab.setAttribute('data-original-title', fn);
+        tab.setAttribute('aria-label', fn);
         tab.addEventListener('click', function () { setActiveFile(fn); });
         els.tabBar.appendChild(tab);
       });

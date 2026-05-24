@@ -124,7 +124,7 @@ test.describe('SEBook page toggles', () => {
   });
 
   test('read-aloud toggle is shown only when audio players exist and controls player visibility', async ({ page }) => {
-    await page.goto('/SEBook/process/scrum.html');
+    await page.goto('/blog/evidence-based-study-tips-for-college-students/');
 
     await expect(page.locator('#main-content .cap').first()).toBeVisible();
     await expectToggleRowVisible(page, 'readAloudToggle', true);

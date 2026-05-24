@@ -46,19 +46,19 @@ Why this exists (WCAG 2.2 §1.2.1, WCAG 3 §2.1):
     <!-- Bottom Row: Controls, Speeds, Volume -->
     <div class="cap__bottom-row">
         <div class="cap__transport" role="group" aria-label="Playback controls">
-            <button type="button" class="cap__skip-btn" data-skip="-15" title="Back 15s" aria-label="Skip back 15 seconds">
+            <button type="button" class="cap__skip-btn" data-skip="-15" data-original-title="Back 15s" aria-label="Skip back 15 seconds">
                 <i class="fa-solid fa-rotate-left" aria-hidden="true"></i><span aria-hidden="true">15</span>
             </button>
-            <button type="button" class="cap__ctrl-btn cap__ctrl-btn--prev" title="Restart" aria-label="Restart from beginning">
+            <button type="button" class="cap__ctrl-btn cap__ctrl-btn--prev" data-original-title="Restart" aria-label="Restart from beginning">
                 <i class="fa-solid fa-backward-step" aria-hidden="true"></i>
             </button>
-            <button type="button" class="cap__play-btn" title="Play / Pause" aria-label="Play" aria-pressed="false">
+            <button type="button" class="cap__play-btn" data-original-title="Play / Pause" aria-label="Play" aria-pressed="false">
                 <i class="fa-solid fa-play" aria-hidden="true"></i>
             </button>
-            <button type="button" class="cap__ctrl-btn cap__ctrl-btn--next" title="Skip to end" aria-label="Skip to end">
+            <button type="button" class="cap__ctrl-btn cap__ctrl-btn--next" data-original-title="Skip to end" aria-label="Skip to end">
                 <i class="fa-solid fa-forward-step" aria-hidden="true"></i>
             </button>
-            <button type="button" class="cap__skip-btn" data-skip="15" title="Forward 15s" aria-label="Skip forward 15 seconds">
+            <button type="button" class="cap__skip-btn" data-skip="15" data-original-title="Forward 15s" aria-label="Skip forward 15 seconds">
                 <i class="fa-solid fa-rotate-right" aria-hidden="true"></i><span aria-hidden="true">15</span>
             </button>
         </div>
@@ -72,7 +72,7 @@ Why this exists (WCAG 2.2 §1.2.1, WCAG 3 §2.1):
         </div>
 
         <div class="cap__volume">
-            <button type="button" class="cap__vol-btn" title="Mute" aria-label="Mute" aria-pressed="false">
+            <button type="button" class="cap__vol-btn" data-original-title="Mute" aria-label="Mute" aria-pressed="false">
                 <i class="fa-solid fa-volume-low cap__vol-icon" aria-hidden="true"></i>
             </button>
             <input class="cap__volume-slider" type="range" min="0" max="1" step="0.05" value="1"

@@ -152,7 +152,10 @@
     if (window.MutationObserver) {
       new MutationObserver(function (mutations) {
         mutations.forEach(function (mutation) {
-          if (mutation.type === 'attributes' && mutation.attributeName === 'title') {
+          if (mutation.type === 'attributes' && (
+              mutation.attributeName === 'title' ||
+              mutation.attributeName === 'data-original-title' ||
+              mutation.attributeName === 'data-tooltip')) {
             if (mutation.target.matches && mutation.target.matches(tooltipSelector)) {
               initAccessibleTooltips(mutation.target);
             }
@@ -173,7 +176,7 @@
         });
       }).observe(document.documentElement, {
         attributes: true,
-        attributeFilter: ['title'],
+        attributeFilter: ['title', 'data-original-title', 'data-tooltip'],
         childList: true,
         subtree: true
       });

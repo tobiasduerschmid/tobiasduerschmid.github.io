@@ -53,7 +53,7 @@ async function clickRun(page) {
   await expect(runBtn).toBeVisible({ timeout: 5_000 });
   await expect(async () => {
     await runBtn.click();
-    await expect(runBtn).toHaveText(/▶|Run/, { timeout: TEST_RUN_TIMEOUT });
+    await expect(runBtn).toHaveText(/^▶\s+/, { timeout: TEST_RUN_TIMEOUT });
     const output = await page.locator('.tvm-output-pre').textContent().catch(() => '');
     expect(output || '').not.toContain('Already running');
   }).toPass({ timeout: TEST_RUN_TIMEOUT });

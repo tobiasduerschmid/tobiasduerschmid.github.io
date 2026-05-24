@@ -352,6 +352,10 @@ html.dark-mode :is(.git-graph-canvas, .git-command-lab__graph, .git-command-lab-
   fill: #eef7ff;
 }
 
+html.dark-mode .git-graph-svg .git-graph-label-g:not(.git-graph-label-g--head) .git-graph-branch-label {
+  fill: #eef7ff !important;
+}
+
 /* portfolio.css applies `filter: invert(1) hue-rotate(180deg)` to every SVG
    under .post-content in dark mode so generic SVG icons/diagrams flip to
    light-on-dark. The git-graph already themes itself via CSS variables

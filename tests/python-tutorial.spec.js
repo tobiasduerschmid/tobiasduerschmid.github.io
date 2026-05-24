@@ -45,26 +45,26 @@ async function clickRun(page) {
   await expect(runBtn).toBeVisible({ timeout: 5_000 });
   await expect(async () => {
     await runBtn.click();
-    await expect(runBtn).toHaveText(/▶|Run/, { timeout: TEST_RUN_TIMEOUT });
+    await expect(runBtn).toHaveText(/^▶\s+/, { timeout: TEST_RUN_TIMEOUT });
     const output = await page.locator('.tvm-output-pre').textContent().catch(() => '');
     expect(output || '').not.toContain('Already running');
   }).toPass({ timeout: TEST_RUN_TIMEOUT });
 }
 
 /**
- * Pyodide + linter + debugger tutorials need background work (pyflakes
- * micropip-install on first lint, applySolution's fire-and-forget cache-clear
- * `runCode`) to settle before the test button fires its own `runCode` — otherwise
- * the worker's `_running` guard rejects the test code or its `loadPackagesFromImports`
- * queues behind the in-flight micropip install. Running the active file first
- * also primes any imports the solution declares. Same shape as the TDD and
- * Testing Foundations specs.
+ * Pyodide: make the solution's editor models durable in the worker before
+ * clicking Test. The tutorial validates files from /tutorial, so the harness
+ * must not race Monaco's autosave debounce or a UI Run click.
  */
 async function passCurrentStepTestsPython(page, timeout = TEST_RUN_TIMEOUT) {
   await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
     { timeout: 15_000 });
   await page.evaluate(() => window._tutorial.applySolution());
-  await clickRun(page);
+  await page.evaluate(async () => {
+    const tutorial = window._tutorial;
+    const files = Object.keys(tutorial?.editorModels || {});
+    await Promise.all(files.map((filename) => tutorial._syncFileToBackend(filename)));
+  });
   await page.locator('.tvm-btn-test').click();
   await expect(page.locator('.tvm-test-summary')).toContainText(/All \d+ tests passed!/, { timeout });
 }

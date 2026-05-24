@@ -275,16 +275,16 @@
       rootEl.classList.add('tvm-debug-toolbar');
       rootEl.innerHTML =
         '<span class="tvm-debug-status" role="status" aria-live="polite" aria-atomic="true"></span>' +
-        '<button class="tvm-debug-step" data-cmd="continue" title="Continue (F5)" aria-label="Continue">' + debugToolbarIcon('play') + '</button>' +
-        '<button class="tvm-debug-step" data-cmd="next"     title="Step Over (F10)" aria-label="Step Over">' + debugToolbarIcon('over') + '</button>' +
-        '<button class="tvm-debug-step" data-cmd="step"     title="Step Into (F11)" aria-label="Step Into">' + debugToolbarIcon('into') + '</button>' +
-        '<button class="tvm-debug-step" data-cmd="return"   title="Step Out (Shift+F11)" aria-label="Step Out">' + debugToolbarIcon('out') + '</button>' +
+        '<button class="tvm-debug-step" data-cmd="continue" data-original-title="Continue (F5)" aria-label="Continue">' + debugToolbarIcon('play') + '</button>' +
+        '<button class="tvm-debug-step" data-cmd="next"     data-original-title="Step Over (F10)" aria-label="Step Over">' + debugToolbarIcon('over') + '</button>' +
+        '<button class="tvm-debug-step" data-cmd="step"     data-original-title="Step Into (F11)" aria-label="Step Into">' + debugToolbarIcon('into') + '</button>' +
+        '<button class="tvm-debug-step" data-cmd="return"   data-original-title="Step Out (Shift+F11)" aria-label="Step Out">' + debugToolbarIcon('out') + '</button>' +
         '<span class="tvm-debug-divider"></span>' +
-        '<button class="tvm-debug-step" data-cmd="back"     title="Step Back (Shift+F10)" aria-label="Step Back">' + debugToolbarIcon('back') + '</button>' +
-        '<button class="tvm-debug-step" data-cmd="backContinue" title="Run Back to Breakpoint (Alt+Shift+F5)" aria-label="Run Back to Breakpoint">' + debugToolbarIcon('backContinue') + '</button>' +
-        '<button class="tvm-debug-step" data-cmd="backOut"  title="Step Back Out (Alt+Shift+F10)" aria-label="Step Back Out">' + debugToolbarIcon('backOut') + '</button>' +
+        '<button class="tvm-debug-step" data-cmd="back"     data-original-title="Step Back (Shift+F10)" aria-label="Step Back">' + debugToolbarIcon('back') + '</button>' +
+        '<button class="tvm-debug-step" data-cmd="backContinue" data-original-title="Run Back to Breakpoint (Alt+Shift+F5)" aria-label="Run Back to Breakpoint">' + debugToolbarIcon('backContinue') + '</button>' +
+        '<button class="tvm-debug-step" data-cmd="backOut"  data-original-title="Step Back Out (Alt+Shift+F10)" aria-label="Step Back Out">' + debugToolbarIcon('backOut') + '</button>' +
         '<span class="tvm-debug-divider"></span>' +
-        '<button class="tvm-debug-step" data-cmd="stop"     title="Stop (Shift+F5)" aria-label="Stop">' + debugToolbarIcon('stop') + '</button>';
+        '<button class="tvm-debug-step" data-cmd="stop"     data-original-title="Stop (Shift+F5)" aria-label="Stop">' + debugToolbarIcon('stop') + '</button>';
       var btns = rootEl.querySelectorAll('.tvm-debug-step');
       for (var i = 0; i < btns.length; i++) {
         (function (btn) {
@@ -310,7 +310,9 @@
     var statusEl = rootEl.querySelector('.tvm-debug-status');
     if (statusEl) {
       statusEl.textContent = session.status || '';
-      statusEl.title = session.status || '';
+      if (session.status) statusEl.setAttribute('data-original-title', session.status);
+      else statusEl.removeAttribute('data-original-title');
+      statusEl.removeAttribute('title');
     }
   }
 
@@ -448,7 +450,7 @@
       var oid = resolved.oid;
       var aliasBadge = '';
       if (oid && seenOids[oid]) {
-        aliasBadge = ' <span class="tvm-debug-alias" title="Same object as ' +
+        aliasBadge = ' <span class="tvm-debug-alias" data-original-title="Same object as ' +
                      helpers.escape(seenOids[oid]) + ' (oid ' + oid + ')">↔ ' +
                      helpers.escape(seenOids[oid]) + '</span>';
       } else if (oid) {
@@ -464,7 +466,7 @@
     if (!val) return '';
     var nameHtml = '<span class="tvm-debug-var-name">' + helpers.escape(name) + '</span>';
     var typeHtml = '<span class="tvm-debug-var-type">' + helpers.escape(val.type || val.kind || '') + '</span>';
-    var editAttr = editKey ? ' data-edit-key="' + helpers.escape(editKey) + '" title="Click to edit"' : '';
+    var editAttr = editKey ? ' data-edit-key="' + helpers.escape(editKey) + '" data-original-title="Click to edit"' : '';
     var valueHtml = '<span class="tvm-debug-var-value' + (editKey ? ' tvm-debug-var-editable' : '') + '"' + editAttr +
                     '>' + helpers.escape(val.repr || val.preview || '') + '</span>';
     var hasChildren = val.kind === 'collection' || (val.kind === 'object' && val.attrs && Object.keys(val.attrs).length);
@@ -554,7 +556,8 @@
       if (!unchanged) {
         valueEl.textContent = expr;
         valueEl.classList.add('tvm-debug-var-edit-pending');
-        valueEl.setAttribute('title', 'Applying edit… (was: ' + originalText + ')');
+        valueEl.setAttribute('data-original-title', 'Applying edit… (was: ' + originalText + ')');
+        valueEl.removeAttribute('title');
       }
       input.replaceWith(valueEl);
       if (!unchanged) {
@@ -671,14 +674,14 @@
                 '<span class="tvm-debug-watch-expr">' + helpers.escape(expr) + '</span>' +
                 '<span class="tvm-debug-watch-arrow">→</span>' +
                 '<span class="tvm-debug-watch-val">' + valStr + '</span>' +
-                '<button class="tvm-debug-watch-action tvm-debug-watch-promote" data-i="' + i + '" title="Watch for data value changes" aria-label="Watch for data value changes">' + debugManagerIcon('dataWatch') + '</button>' +
-                '<button class="tvm-debug-watch-action tvm-debug-watch-remove" data-i="' + i + '" title="Remove" aria-label="Remove">' + debugManagerIcon('trash') + '</button>' +
+                '<button class="tvm-debug-watch-action tvm-debug-watch-promote" data-i="' + i + '" data-original-title="Watch for data value changes" aria-label="Watch for data value changes">' + debugManagerIcon('dataWatch') + '</button>' +
+                '<button class="tvm-debug-watch-action tvm-debug-watch-remove" data-i="' + i + '" data-original-title="Remove" aria-label="Remove">' + debugManagerIcon('trash') + '</button>' +
                 '</div>');
     }
     view.innerHTML =
       '<div class="tvm-debug-watch-list">' + rows.join('') + '</div>' +
       '<div class="tvm-debug-watch-add">' +
-      '<input type="text" class="tvm-debug-watch-input" placeholder="Add a Python expression to watch (e.g. len(items))" title="Watch expression" aria-label="Watch expression" />' +
+      '<input type="text" class="tvm-debug-watch-input" placeholder="Add a Python expression to watch (e.g. len(items))" data-original-title="Watch expression" aria-label="Watch expression" />' +
       '<button class="tvm-debug-watch-add-btn">+ Add</button>' +
       '</div>' +
       (watches.length === 0 ? '<div class="tvm-debug-empty">Watches are evaluated on every step. Avoid expressions with side effects.</div>' : '');
@@ -743,8 +746,8 @@
           '<span class="tvm-debug-manager-title">' + helpers.escape(helpers.basename(path)) + ':' + line + '</span>' +
           cond + hits + err +
           '</span>' +
-          '<button class="tvm-debug-manager-icon" data-bp-edit="1" data-path="' + helpers.escape(path) + '" data-line="' + line + '" title="Edit condition" aria-label="Edit condition">' + debugManagerIcon('edit') + '</button>' +
-          '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-bp-remove="1" data-path="' + helpers.escape(path) + '" data-line="' + line + '" title="Remove breakpoint" aria-label="Remove breakpoint">' + debugManagerIcon('trash') + '</button>' +
+          '<button class="tvm-debug-manager-icon" data-bp-edit="1" data-path="' + helpers.escape(path) + '" data-line="' + line + '" data-original-title="Edit condition" aria-label="Edit condition">' + debugManagerIcon('edit') + '</button>' +
+          '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-bp-remove="1" data-path="' + helpers.escape(path) + '" data-line="' + line + '" data-original-title="Remove breakpoint" aria-label="Remove breakpoint">' + debugManagerIcon('trash') + '</button>' +
           '</div>'
         );
       });
@@ -756,7 +759,7 @@
       var disabled = wp.enabled === false;
       var toggleLabel = disabled ? 'Enable data watchpoint' : 'Disable data watchpoint';
       return '<div class="tvm-debug-manager-row tvm-debug-manager-watchpoint-row' + (disabled ? ' disabled' : '') + '">' +
-        '<label class="tvm-debug-manager-toggle" title="' + toggleLabel + '">' +
+        '<label class="tvm-debug-manager-toggle" data-original-title="' + toggleLabel + '">' +
         '<input type="checkbox" aria-label="' + toggleLabel + '" data-wp-toggle="' + helpers.escape(wp.id) + '"' + (disabled ? '' : ' checked') + '>' +
         '<span></span><em class="sr-only">' + toggleLabel + '</em>' +
         '</label>' +
@@ -764,14 +767,14 @@
         '<span class="tvm-debug-manager-title">' + helpers.escape(wp.expr) + '</span>' +
         '<span class="tvm-debug-manager-value">' + renderWatchValue(v, helpers) + '</span>' +
         '</span>' +
-        '<button class="tvm-debug-manager-icon" data-wp-run="' + helpers.escape(wp.id) + '" title="Run to this data value change" aria-label="Run to this data value change">' + debugManagerIcon('playData') + '</button>' +
-        '<button class="tvm-debug-manager-icon" data-wp-back="' + helpers.escape(wp.id) + '" title="Run back to this data value change" aria-label="Run back to this data value change">' + debugManagerIcon('backData') + '</button>' +
-        '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-wp-remove="' + helpers.escape(wp.id) + '" title="Remove data watchpoint" aria-label="Remove data watchpoint">' + debugManagerIcon('trash') + '</button>' +
+        '<button class="tvm-debug-manager-icon" data-wp-run="' + helpers.escape(wp.id) + '" data-original-title="Run to this data value change" aria-label="Run to this data value change">' + debugManagerIcon('playData') + '</button>' +
+        '<button class="tvm-debug-manager-icon" data-wp-back="' + helpers.escape(wp.id) + '" data-original-title="Run back to this data value change" aria-label="Run back to this data value change">' + debugManagerIcon('backData') + '</button>' +
+        '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-wp-remove="' + helpers.escape(wp.id) + '" data-original-title="Remove data watchpoint" aria-label="Remove data watchpoint">' + debugManagerIcon('trash') + '</button>' +
         '</div>';
     });
     var watchpointControls =
       '<div class="tvm-debug-manager-add">' +
-      '<input type="text" class="tvm-debug-watchpoint-input" placeholder="Break when expression changes value" title="Data watchpoint expression" aria-label="Data watchpoint expression" />' +
+      '<input type="text" class="tvm-debug-watchpoint-input" placeholder="Break when expression changes value" data-original-title="Data watchpoint expression" aria-label="Data watchpoint expression" />' +
       '<button class="tvm-debug-watchpoint-add-btn">' + debugManagerIcon('plus') + '<span>Add Data Watchpoint</span></button>' +
       '</div>' +
       '<div class="tvm-debug-manager-actions">' +
@@ -786,20 +789,20 @@
       var modeAll = eb.mode === 'all';
       var toggleLabel = disabled ? 'Enable exception breakpoint' : 'Disable exception breakpoint';
       return '<div class="tvm-debug-manager-row tvm-debug-manager-exception-row' + (disabled ? ' disabled' : '') + '" data-exc-bp="' + eb.id + '">' +
-        '<label class="tvm-debug-manager-toggle" title="' + toggleLabel + '">' +
+        '<label class="tvm-debug-manager-toggle" data-original-title="' + toggleLabel + '">' +
         '<input type="checkbox" aria-label="' + toggleLabel + '" data-exc-toggle="' + eb.id + '"' + (disabled ? '' : ' checked') + '>' +
         '<span></span><em class="sr-only">' + toggleLabel + '</em>' +
         '</label>' +
         '<span class="tvm-debug-manager-main">' +
-        '<input type="text" class="tvm-debug-manager-exc-type" placeholder="Any exception type" title="Exception type filter" aria-label="Exception type filter" value="' + typeAttr + '" data-exc-type="' + eb.id + '" spellcheck="false" autocomplete="off">' +
+        '<input type="text" class="tvm-debug-manager-exc-type" placeholder="Any exception type" data-original-title="Exception type filter" aria-label="Exception type filter" value="' + typeAttr + '" data-exc-type="' + eb.id + '" spellcheck="false" autocomplete="off">' +
         '<span class="tvm-debug-manager-exc-modes">' +
         '<label><input type="radio" name="exc-mode-' + eb.id + '" value="uncaught" data-exc-mode="' + eb.id + '"' + (modeAll ? '' : ' checked') + '>Uncaught</label>' +
         '<label><input type="radio" name="exc-mode-' + eb.id + '" value="all" data-exc-mode="' + eb.id + '"' + (modeAll ? ' checked' : '') + '>All raised</label>' +
         '</span>' +
         '</span>' +
-        '<button class="tvm-debug-manager-icon" data-exc-run="' + eb.id + '" title="Run to this exception" aria-label="Run to this exception">' + debugManagerIcon('playException') + '</button>' +
-        '<button class="tvm-debug-manager-icon" data-exc-back="' + eb.id + '" title="Run back to this exception" aria-label="Run back to this exception">' + debugManagerIcon('backException') + '</button>' +
-        '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-exc-remove="' + eb.id + '" title="Remove exception breakpoint" aria-label="Remove exception breakpoint">' + debugManagerIcon('trash') + '</button>' +
+        '<button class="tvm-debug-manager-icon" data-exc-run="' + eb.id + '" data-original-title="Run to this exception" aria-label="Run to this exception">' + debugManagerIcon('playException') + '</button>' +
+        '<button class="tvm-debug-manager-icon" data-exc-back="' + eb.id + '" data-original-title="Run back to this exception" aria-label="Run back to this exception">' + debugManagerIcon('backException') + '</button>' +
+        '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-exc-remove="' + eb.id + '" data-original-title="Remove exception breakpoint" aria-label="Remove exception breakpoint">' + debugManagerIcon('trash') + '</button>' +
         '</div>';
     });
     var exceptionControls =
@@ -998,7 +1001,7 @@
     }
     var n = state.history.length;
     var html = '<div class="tvm-debug-history-controls">' +
-      '<input type="range" class="tvm-debug-history-slider" min="0" max="' + (n - 1) + '" value="' + hi + '" title="Execution history position" aria-label="Execution history position">' +
+      '<input type="range" class="tvm-debug-history-slider" min="0" max="' + (n - 1) + '" value="' + hi + '" data-original-title="Execution history position" aria-label="Execution history position">' +
       '<span class="tvm-debug-history-pos">' + (hi + 1) + ' / ' + n + '</span>' +
       (hi === state.liveIdx
         ? '<span class="tvm-debug-history-live">● live</span>'

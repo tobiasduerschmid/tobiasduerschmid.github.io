@@ -182,6 +182,10 @@
   font-weight: 700;
 }
 
+html.dark-mode .rt-delim {
+  color: #cbd5e1;
+}
+
 .rt-input {
   font-family: "Courier New", Courier, monospace;
   font-size: 1.05em;

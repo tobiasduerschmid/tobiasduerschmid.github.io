@@ -255,7 +255,7 @@
       var unlocked = self.instructorMode || self._stepsUnlocked.has(index);
       btn.className = 'tvm-step-btn' + (index === self.currentStep ? ' active' : '') + (unlocked ? '' : ' locked');
       btn.textContent = String(index + 1);
-      btn.title = unlocked ? (step.title || 'Step') : (step.title || 'Step') + ' (locked)';
+      btn.setAttribute('data-original-title', unlocked ? (step.title || 'Step') : (step.title || 'Step') + ' (locked)');
       btn.setAttribute('aria-label', unlocked
         ? 'Step ' + (index + 1) + ': ' + (step.title || 'Step')
         : 'Step ' + (index + 1) + ': ' + (step.title || 'Step') + ' (locked, complete the previous step to unlock)');
@@ -276,14 +276,14 @@
     var nextLocked = this._isNextStepLocked(index);
     var html = '';
     html += index > 0
-      ? '<button class="tvm-btn tvm-btn-prev" title="Previous step">&larr; Previous</button>'
+      ? '<button class="tvm-btn tvm-btn-prev" data-original-title="Previous step">&larr; Previous</button>'
       : '<span></span>';
     html += '<span class="tvm-step-actions">' +
-      '<button class="tvm-btn tvm-btn-clear-model" title="Remove all UML elements from this step" type="button">Remove All Elements</button>';
+      '<button class="tvm-btn tvm-btn-clear-model" data-original-title="Remove all UML elements from this step" type="button">Remove All Elements</button>';
     html += this._stepHasTests(step) ? this._buildTestButtonHTML(index) : '';
     html += '</span>';
     html += index < this.steps.length - 1
-      ? '<button class="tvm-btn tvm-btn-next"' + (nextLocked ? ' disabled title="Pass all tests to continue"' : ' title="Next step"') + '>Next &rarr;</button>'
+      ? '<button class="tvm-btn tvm-btn-next"' + (nextLocked ? ' disabled data-original-title="Pass all tests to continue"' : ' data-original-title="Next step"') + '>Next &rarr;</button>'
       : '<span></span>';
     this.controlsEl.innerHTML = html;
 
@@ -376,13 +376,13 @@
   UMLTutorialEditor.prototype._buildTestButtonHTML = function (index) {
     var remaining = this._cooldownRemaining(index);
     if (remaining <= 0) {
-      return '<button class="tvm-btn tvm-btn-test" title="Check the UML diagram for this step">&#10003; Test My Work</button>';
+      return '<button class="tvm-btn tvm-btn-test" data-original-title="Check the UML diagram for this step">&#10003; Test My Work</button>';
     }
     var label = '⏱ Test My Work (' + this._formatCooldown(remaining) + ')';
     var aria = 'Test My Work locked, ' + remaining + ' second' + (remaining === 1 ? '' : 's') + ' remaining';
     var html = '<span class="tvm-test-btn-group">';
     html += '<button class="tvm-btn tvm-btn-test tvm-btn-test-cooldown" disabled aria-label="' + aria + '">' + label + '</button>';
-    html += '<button class="tvm-btn tvm-btn-test-sure" title="Run tests now without seeing results — passes still unlock Next">I’m sure</button>';
+    html += '<button class="tvm-btn tvm-btn-test-sure" data-original-title="Run tests now without seeing results — passes still unlock Next">I’m sure</button>';
     html += '</span>';
     return html;
   };

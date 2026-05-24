@@ -80,11 +80,12 @@
             return;
           }
           if (tag === 'a' && name === 'title') {
-            child.setAttribute('title', attr.value);
+            child.setAttribute('data-original-title', attr.value);
             return;
           }
           if (tag === 'abbr' && name === 'title') {
             child.setAttribute('title', attr.value);
+            child.setAttribute('data-no-tooltip', 'true');
             return;
           }
           child.removeAttribute(attr.name);

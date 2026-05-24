@@ -179,11 +179,16 @@ async function settleLoadedPage(page) {
 
 async function waitForAnimationFrames(page, count = 2) {
   await page.evaluate((frameCount) => new Promise((resolve) => {
+    const fallback = setTimeout(resolve, 250);
     let remaining = Math.max(1, frameCount);
     function tick() {
       remaining -= 1;
-      if (remaining <= 0) resolve();
-      else requestAnimationFrame(tick);
+      if (remaining <= 0) {
+        clearTimeout(fallback);
+        resolve();
+      } else {
+        requestAnimationFrame(tick);
+      }
     }
     requestAnimationFrame(tick);
   }), count);

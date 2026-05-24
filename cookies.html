@@ -586,7 +586,7 @@ info_nav_title: "Browser storage"
     var safeValue = isSet ? value : '';
     if (safeValue.length > 120) safeValue = safeValue.slice(0, 120) + '…';
     statusCell.innerHTML = isSet
-      ? '<span class="storage-badge set" title="' + escapeAttr(safeValue) + '">set</span>'
+      ? '<span class="storage-badge set" data-original-title="' + escapeAttr(safeValue) + '">set</span>'
       : '<span class="storage-badge unset">not set</span>';
 
     // Trash button
@@ -596,7 +596,8 @@ info_nav_title: "Browser storage"
     btn.className = 'trash-btn';
     btn.innerHTML = '<i class="fa fa-trash-can" aria-hidden="true"></i>';
     btn.setAttribute('aria-label', 'Delete ' + key);
-    btn.title = isSet ? ('Delete ' + key) : (key + ' is not set');
+    btn.setAttribute('data-original-title', isSet ? ('Delete ' + key) : (key + ' is not set'));
+    btn.removeAttribute('title');
     btn.disabled = !isSet;
     btn.addEventListener('click', function () {
       if (isDestructiveStorageKey(key) && !confirm('Delete ' + key + '? This may remove saved tutorial work, bookmarks, or SE Gym data and cannot be undone.')) return;

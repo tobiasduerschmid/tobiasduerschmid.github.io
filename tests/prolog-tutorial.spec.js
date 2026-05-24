@@ -48,7 +48,7 @@ async function clickRun(page) {
   const runBtn = page.locator('.tvm-run-btn');
   await expect(runBtn).toBeVisible({ timeout: 5_000 });
   await runBtn.click();
-  await expect(runBtn).toHaveText(/▶|Run/, { timeout: TEST_RUN_TIMEOUT });
+  await expect(runBtn).toHaveText(/^▶\s+/, { timeout: TEST_RUN_TIMEOUT });
 }
 
 // =============================================================================

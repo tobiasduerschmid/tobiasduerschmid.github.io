@@ -101,11 +101,14 @@ test.describe.serial('Shell Scripting Tutorial', () => {
     const after = await page.evaluate(() =>
       window.monaco.editor.getEditors()[0].getModel().getValue());
     expect(after).toContain('echo "test"');
+    await setEditorContent(page, before);
   });
 
   // --- Quiz flow (also leaves page on step 2 for the navigation test below) ---
 
   test('quiz flow: passing step 1 → next → quiz → continue advances to step 2', async () => {
+    await page.reload();
+    await waitForTutorialReady(page);
     await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
     await page.locator('.tvm-btn-next').click();
     await page.waitForSelector('.tvm-quiz-panel .quiz-question-card.active', { timeout: 5_000 });

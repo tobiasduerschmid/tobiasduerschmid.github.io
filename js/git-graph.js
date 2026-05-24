@@ -86,6 +86,24 @@
   var _instanceCounter = 0;
   var _liveInstances = [];
   var _themeObserver = null;
+  function _syncStaticBranchLabelFills() {
+    if (typeof document === 'undefined' || !document.querySelectorAll || !document.documentElement) return;
+    var dark = document.documentElement.classList.contains('dark-mode');
+    var labels = document.querySelectorAll('svg.git-graph-svg .git-graph-label-g:not(.git-graph-label-g--head) .git-graph-branch-label');
+    for (var i = 0; i < labels.length; i++) {
+      var label = labels[i];
+      if (!label.hasAttribute('data-git-graph-light-fill')) {
+        label.setAttribute('data-git-graph-light-fill', label.getAttribute('fill') || '');
+      }
+      if (dark) {
+        label.setAttribute('fill', '#eef7ff');
+      } else {
+        var lightFill = label.getAttribute('data-git-graph-light-fill');
+        if (lightFill) label.setAttribute('fill', lightFill);
+        else label.removeAttribute('fill');
+      }
+    }
+  }
   function _ensureThemeObserver() {
     if (_themeObserver || typeof MutationObserver === 'undefined' || !document.documentElement) return;
     _themeObserver = new MutationObserver(function (mutations) {
@@ -105,6 +123,7 @@
           try { inst.render(inst._data); } catch (e) { /* ignore re-render errors */ }
         }
       }
+      _syncStaticBranchLabelFills();
     });
     _themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
   }
@@ -2631,6 +2650,8 @@
   GitGraph.renderToSVG = function (data, host) {
     var g = new GitGraph(null);
     if (host) g.container = host;
+    _ensureThemeObserver();
+    setTimeout(_syncStaticBranchLabelFills, 0);
     return g.toSVG(data);
   };
 
@@ -2896,7 +2917,7 @@
           '<span class="git-workbench-path">' + esc(it.path) + '</span>' +
           '</li>';
       }
-      var titleAttr = ' title="' + esc(ZONE_HEADERS_FULL[name] + ':') + '"';
+      var titleAttr = ' data-original-title="' + esc(ZONE_HEADERS_FULL[name] + ':') + '" aria-label="' + esc(ZONE_HEADERS_FULL[name] + ':') + '"';
       return '<section class="git-workbench-zone git-workbench-zone--' + name + '" data-zone="' + name + '">' +
         '<header class="git-workbench-zone-header"' + titleAttr + '>' + esc(ZONE_HEADERS[name]) + ':</header>' +
         '<ul class="git-workbench-rows">' + rowsHtml + '</ul>' +
@@ -3012,15 +3033,15 @@
     if (!wb.querySelector('.git-workbench-strip')) {
       wb.innerHTML = '<div class="git-workbench-strip">' +
         '<section class="git-workbench-zone git-workbench-zone--untracked" data-zone="untracked">' +
-          '<header class="git-workbench-zone-header" title="Untracked files:">Untracked:</header>' +
+          '<header class="git-workbench-zone-header" data-original-title="Untracked files:" aria-label="Untracked files:">Untracked:</header>' +
           '<ul class="git-workbench-rows"></ul>' +
         '</section>' +
         '<section class="git-workbench-zone git-workbench-zone--unstaged" data-zone="unstaged">' +
-          '<header class="git-workbench-zone-header" title="Changes not staged for commit:">Not staged:</header>' +
+          '<header class="git-workbench-zone-header" data-original-title="Changes not staged for commit:" aria-label="Changes not staged for commit:">Not staged:</header>' +
           '<ul class="git-workbench-rows"></ul>' +
         '</section>' +
         '<section class="git-workbench-zone git-workbench-zone--staged" data-zone="staged">' +
-          '<header class="git-workbench-zone-header" title="Changes to be committed:">Staged:</header>' +
+          '<header class="git-workbench-zone-header" data-original-title="Changes to be committed:" aria-label="Changes to be committed:">Staged:</header>' +
           '<ul class="git-workbench-rows"></ul>' +
         '</section>' +
       '</div>';

@@ -851,9 +851,9 @@
         '<div class="tvm-preview-header">' +
         '<span>Live Preview</span>' +
         '<div class="tvm-preview-actions">' +
-        (this._playwrightMode ? '<button class="tvm-preview-test-btn" title="Run Playwright tests from the test files">✓ Test</button>' : '') +
-        '<button class="tvm-refresh-btn" title="Rebuild preview">\u21bb Refresh</button>' +
-        '<button class="tvm-output-popout-btn" title="Open preview in separate window">\u29c9<span class="sr-only">Open preview in separate window</span></button>' +
+        (this._playwrightMode ? '<button class="tvm-preview-test-btn" data-original-title="Run Playwright tests from the test files">✓ Test</button>' : '') +
+        '<button class="tvm-refresh-btn" data-original-title="Rebuild preview">\u21bb Refresh</button>' +
+        '<button class="tvm-output-popout-btn" data-original-title="Open preview in separate window">\u29c9<span class="sr-only">Open preview in separate window</span></button>' +
         '</div></div>' +
         '<div class="tvm-preview-test-panel" style="display:none"></div>' +
         '<div class="tvm-preview-container">' +
@@ -870,16 +870,16 @@
         '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class" aria-pressed="' + (this._umlActiveType === 'class' ? 'true' : 'false') + '">Class Diagram</button>' +
         '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence" aria-pressed="' + (this._umlActiveType === 'sequence' ? 'true' : 'false') + '">Sequence Diagram</button>' +
         '<div class="tvm-diagram-zoom-controls">' +
-        '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
+        '<button class="tvm-diagram-zoom-btn" data-zoom="out" data-original-title="Zoom out">\u2212</button>' +
         '<span class="tvm-diagram-zoom-label">100%</span>' +
-        '<button class="tvm-diagram-zoom-btn" data-zoom="in" title="Zoom in" aria-label="Zoom in">+</button>' +
-        '<button class="tvm-diagram-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
+        '<button class="tvm-diagram-zoom-btn" data-zoom="in" data-original-title="Zoom in" aria-label="Zoom in">+</button>' +
+        '<button class="tvm-diagram-zoom-btn" data-zoom="reset" data-original-title="Reset zoom">\u2715</button>' +
         '</div>' +
-        '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
-        '<button class="tvm-diagram-popout-btn" title="Open in separate window">\u29c9</button>' +
-        '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
-        '<label class="tvm-diagram-color-btn" title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
-        '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
+        '<button class="tvm-diagram-fullscreen-btn" data-original-title="Fullscreen">\u26f6</button>' +
+        '<button class="tvm-diagram-popout-btn" data-original-title="Open in separate window">\u29c9</button>' +
+        '<button class="tvm-diagram-refresh-btn" data-original-title="Re-analyze code">\u21bb Refresh</button>' +
+        '<label class="tvm-diagram-color-btn" data-original-title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
+        '<button class="tvm-diagram-color-reset-btn" data-original-title="Reset to default color">\u21bb</button>' +
         '</div>';
 
       terminalHtml =
@@ -892,17 +892,17 @@
         '<div class="tvm-output-header">' +
         '<div class="tvm-output-actions">' +
         '<span class="tvm-args-label" style="display:none; font-size:11px; color:#888; font-family:\'Fira Code\', \'Cascadia Code\', Menlo, monospace;">args:</span>' +
-        '<input type="text" class="tvm-args-input" placeholder="Program args..." style="display:none;" title="Command-line arguments (sys.argv)" aria-label="Command-line arguments (sys.argv)" />' +
-        '<select class="tvm-stream-filter" style="display:none;" title="Filter output streams" aria-label="Filter output streams">' +
+        '<input type="text" class="tvm-args-input" placeholder="Program args..." style="display:none;" data-original-title="Command-line arguments (sys.argv)" aria-label="Command-line arguments (sys.argv)" />' +
+        '<select class="tvm-stream-filter" style="display:none;" data-original-title="Filter output streams" aria-label="Filter output streams">' +
         '<option value="all">All Output</option>' +
         '<option value="stdout">Stdout Only</option>' +
         '<option value="stderr">Stderr Only</option>' +
         '</select>' +
-        '<button class="tvm-run-btn" title="Run current file (Ctrl+Enter)">&#9654; ' + this._runLabel + '</button>' +
-        '<button class="tvm-test-run-btn" title="Run the test file" style="display:none;">&#10003; Test</button>' +
-        '<button class="tvm-stop-btn" title="Stop execution" style="display:none;">&#9208; Stop</button>' +
-        '<button class="tvm-clear-btn" title="Clear output">Clear</button>' +
-        '<button class="tvm-output-popout-btn" title="Open output in separate window">⧉<span class="sr-only">Open output in separate window</span></button>' +
+        '<button class="tvm-run-btn" data-original-title="Run current file (Ctrl+Enter)">&#9654; ' + this._runLabel + '</button>' +
+        '<button class="tvm-test-run-btn" data-original-title="Run the test file" style="display:none;">&#10003; Test</button>' +
+        '<button class="tvm-stop-btn" data-original-title="Stop execution" style="display:none;">&#9208; Stop</button>' +
+        '<button class="tvm-clear-btn" data-original-title="Clear output">Clear</button>' +
+        '<button class="tvm-output-popout-btn" data-original-title="Open output in separate window">⧉<span class="sr-only">Open output in separate window</span></button>' +
         '</div></div>' +
         outputContainerHtml +
         '</div>' +
@@ -919,17 +919,17 @@
         '<span>Output</span>' +
         '<div class="tvm-output-actions">' +
         '<span class="tvm-args-label" style="display:none; font-size:11px; color:#888; font-family:\'Fira Code\', \'Cascadia Code\', Menlo, monospace;">args:</span>' +
-        '<input type="text" class="tvm-args-input" placeholder="Program args..." style="display:none;" title="Command-line arguments (sys.argv)" aria-label="Command-line arguments (sys.argv)" />' +
-        '<select class="tvm-stream-filter" style="display:none;" title="Filter output streams" aria-label="Filter output streams">' +
+        '<input type="text" class="tvm-args-input" placeholder="Program args..." style="display:none;" data-original-title="Command-line arguments (sys.argv)" aria-label="Command-line arguments (sys.argv)" />' +
+        '<select class="tvm-stream-filter" style="display:none;" data-original-title="Filter output streams" aria-label="Filter output streams">' +
         '<option value="all">All Output</option>' +
         '<option value="stdout">Stdout Only</option>' +
         '<option value="stderr">Stderr Only</option>' +
         '</select>' +
-        '<button class="tvm-run-btn" title="Run current file (Ctrl+Enter)">&#9654; ' + this._runLabel + '</button>' +
-        '<button class="tvm-test-run-btn" title="Run the test file" style="display:none;">&#10003; Test</button>' +
-        '<button class="tvm-stop-btn" title="Stop execution" style="display:none;">&#9208; Stop</button>' +
-        '<button class="tvm-clear-btn" title="Clear output">Clear</button>' +
-        '<button class="tvm-output-popout-btn" title="Open output in separate window">⧉<span class="sr-only">Open output in separate window</span></button>' +
+        '<button class="tvm-run-btn" data-original-title="Run current file (Ctrl+Enter)">&#9654; ' + this._runLabel + '</button>' +
+        '<button class="tvm-test-run-btn" data-original-title="Run the test file" style="display:none;">&#10003; Test</button>' +
+        '<button class="tvm-stop-btn" data-original-title="Stop execution" style="display:none;">&#9208; Stop</button>' +
+        '<button class="tvm-clear-btn" data-original-title="Clear output">Clear</button>' +
+        '<button class="tvm-output-popout-btn" data-original-title="Open output in separate window">⧉<span class="sr-only">Open output in separate window</span></button>' +
         '</div></div>' +
         outputContainerHtml;
 
@@ -979,7 +979,7 @@
       '<div class="tvm-steps-view">' +
       '<div class="tvm-step-nav-bar">' +
       '<div class="tvm-step-nav"></div>' +
-      '<button class="tvm-instructions-popout-btn" title="Open instructions in separate window">⧉<span class="sr-only">Open instructions in separate window</span></button>' +
+      '<button class="tvm-instructions-popout-btn" data-original-title="Open instructions in separate window">⧉<span class="sr-only">Open instructions in separate window</span></button>' +
       '</div>' +
       '<div class="tvm-step-content-wrap scrollable-region-focus-target" tabindex="0"><div class="tvm-step-content"></div></div>' +
       (useBelowUml
@@ -988,16 +988,16 @@
           '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class" aria-pressed="' + (this._umlActiveType === 'class' ? 'true' : 'false') + '">Class Diagram</button>' +
           '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence" aria-pressed="' + (this._umlActiveType === 'sequence' ? 'true' : 'false') + '">Sequence Diagram</button>' +
           '<div class="tvm-diagram-zoom-controls">' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="out" data-original-title="Zoom out">\u2212</button>' +
           '<span class="tvm-diagram-zoom-label">100%</span>' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="in" title="Zoom in" aria-label="Zoom in">+</button>' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="in" data-original-title="Zoom in" aria-label="Zoom in">+</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="reset" data-original-title="Reset zoom">\u2715</button>' +
           '</div>' +
-          '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
-          '<button class="tvm-diagram-popout-btn" title="Open in separate window">\u29c9</button>' +
-          '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
-          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
-        '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
+          '<button class="tvm-diagram-fullscreen-btn" data-original-title="Fullscreen">\u26f6</button>' +
+          '<button class="tvm-diagram-popout-btn" data-original-title="Open in separate window">\u29c9</button>' +
+          '<button class="tvm-diagram-refresh-btn" data-original-title="Re-analyze code">\u21bb Refresh</button>' +
+          '<label class="tvm-diagram-color-btn" data-original-title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
+        '<button class="tvm-diagram-color-reset-btn" data-original-title="Reset to default color">\u21bb</button>' +
           '</div>' +
           diagramContentHtml +
           '</div>'
@@ -1027,37 +1027,37 @@
           '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class" aria-pressed="' + (this._umlActiveType === 'class' ? 'true' : 'false') + '">Class Diagram</button>' +
           '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence" aria-pressed="' + (this._umlActiveType === 'sequence' ? 'true' : 'false') + '">Sequence Diagram</button>' +
           '<div class="tvm-diagram-zoom-controls">' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="out" data-original-title="Zoom out">\u2212</button>' +
           '<span class="tvm-diagram-zoom-label">100%</span>' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="in" title="Zoom in" aria-label="Zoom in">+</button>' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="in" data-original-title="Zoom in" aria-label="Zoom in">+</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="reset" data-original-title="Reset zoom">\u2715</button>' +
           '</div>' +
-          '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
-          '<button class="tvm-diagram-popout-btn" title="Open in separate window">\u29c9</button>' +
-          '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
-          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
-        '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
+          '<button class="tvm-diagram-fullscreen-btn" data-original-title="Fullscreen">\u26f6</button>' +
+          '<button class="tvm-diagram-popout-btn" data-original-title="Open in separate window">\u29c9</button>' +
+          '<button class="tvm-diagram-refresh-btn" data-original-title="Re-analyze code">\u21bb Refresh</button>' +
+          '<label class="tvm-diagram-color-btn" data-original-title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
+        '<button class="tvm-diagram-color-reset-btn" data-original-title="Reset to default color">\u21bb</button>' +
           '</div>' +
           diagramContentHtml +
           '</div>'
         : '') +
       (useBottomLeftUml
-        ? '<div class="tvm-uml-bottom-left-splitter" title="Drag to resize"></div>' +
+        ? '<div class="tvm-uml-bottom-left-splitter" data-original-title="Drag to resize"></div>' +
           '<div class="tvm-uml-bottom-left-view">' +
           '<div class="tvm-diagram-toolbar">' +
           '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class" aria-pressed="' + (this._umlActiveType === 'class' ? 'true' : 'false') + '">Class Diagram</button>' +
           '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence" aria-pressed="' + (this._umlActiveType === 'sequence' ? 'true' : 'false') + '">Sequence Diagram</button>' +
           '<div class="tvm-diagram-zoom-controls">' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="out" data-original-title="Zoom out">\u2212</button>' +
           '<span class="tvm-diagram-zoom-label">100%</span>' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="in" title="Zoom in" aria-label="Zoom in">+</button>' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="in" data-original-title="Zoom in" aria-label="Zoom in">+</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="reset" data-original-title="Reset zoom">\u2715</button>' +
           '</div>' +
-          '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen">\u26f6</button>' +
-          '<button class="tvm-diagram-popout-btn" title="Open in separate window">\u29c9</button>' +
-          '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">\u21bb Refresh</button>' +
-          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
-          '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
+          '<button class="tvm-diagram-fullscreen-btn" data-original-title="Fullscreen">\u26f6</button>' +
+          '<button class="tvm-diagram-popout-btn" data-original-title="Open in separate window">\u29c9</button>' +
+          '<button class="tvm-diagram-refresh-btn" data-original-title="Re-analyze code">\u21bb Refresh</button>' +
+          '<label class="tvm-diagram-color-btn" data-original-title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
+          '<button class="tvm-diagram-color-reset-btn" data-original-title="Reset to default color">\u21bb</button>' +
           '</div>' +
           diagramContentHtml +
           '</div>'
@@ -1068,18 +1068,18 @@
       // and inserts the Output panel directly — all existing CSS rules and the
       // splitter-resize wiring just work.
       (useBottomLeftOutput
-        ? '<div class="tvm-uml-bottom-left-splitter" title="Drag to resize"></div>' +
+        ? '<div class="tvm-uml-bottom-left-splitter" data-original-title="Drag to resize"></div>' +
           terminalHtml
         : '') +
       '</div>' +
-      '<div class="tvm-hsplitter" title="Drag to resize"></div>' +
+      '<div class="tvm-hsplitter" data-original-title="Drag to resize"></div>' +
       '<div class="tvm-workspace' + (this._umlPositionRight ? ' tvm-uml-right' : '') + '">' +
       (this.makeDagPath
         ? '<div class="tvm-view-toggle">' +
           '<button class="tvm-view-btn tvm-view-btn-editor active" data-view="editor">' +
           '<svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M1 2.5A1.5 1.5 0 012.5 1h11A1.5 1.5 0 0115 2.5v11a1.5 1.5 0 01-1.5 1.5h-11A1.5 1.5 0 011 13.5v-11zM2.5 2a.5.5 0 00-.5.5v11a.5.5 0 00.5.5h11a.5.5 0 00.5-.5v-11a.5.5 0 00-.5-.5h-11z"/><path d="M4 5.5a.5.5 0 01.5-.5h7a.5.5 0 010 1h-7a.5.5 0 01-.5-.5zm0 3a.5.5 0 01.5-.5h4a.5.5 0 010 1h-4a.5.5 0 01-.5-.5z"/></svg>' +
           ' Editor</button>' +
-          '<button class="tvm-view-btn tvm-view-btn-make-dag" data-view="make_dag" title="Show the dependency graph (what `make -n` would walk)">' +
+          '<button class="tvm-view-btn tvm-view-btn-make-dag" data-view="make_dag" data-original-title="Show the dependency graph (what `make -n` would walk)">' +
           '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
           '<rect x="6" y="1" width="6" height="3" rx="0.7" stroke="currentColor" stroke-width="1.4" fill="none"/>' +
           '<rect x="2" y="7" width="5" height="3" rx="0.7" stroke="currentColor" stroke-width="1.4" fill="none"/>' +
@@ -1117,7 +1117,7 @@
         ? '<div class="tvm-editor-pane-tab-row">' +
           '<div class="tvm-editor-pane-label" data-pane="left">' +
             '<span class="tvm-editor-pane-label-text">Code</span>' +
-            '<button class="tvm-editor-pane-popout-btn" data-pane="left" title="Open this pane in separate window">⧉<span class="sr-only">Open code pane in separate window</span></button>' +
+            '<button class="tvm-editor-pane-popout-btn" data-pane="left" data-original-title="Open this pane in separate window">⧉<span class="sr-only">Open code pane in separate window</span></button>' +
           '</div>' +
           '<div class="tvm-editor-tabs"></div>' +
           '</div>'
@@ -1125,12 +1125,12 @@
       '<div class="tvm-editor-container"></div>' +
       '</div>' +
       (this.editorSplitSupported
-        ? '<div class="tvm-editor-pane-divider" title="Drag to resize"></div>' +
+        ? '<div class="tvm-editor-pane-divider" data-original-title="Drag to resize"></div>' +
           '<div class="tvm-editor-pane tvm-editor-pane-right">' +
           '<div class="tvm-editor-pane-tab-row">' +
           '<div class="tvm-editor-pane-label" data-pane="right">' +
             '<span class="tvm-editor-pane-label-text">Tests</span>' +
-            '<button class="tvm-editor-pane-popout-btn" data-pane="right" title="Open this pane in separate window">⧉<span class="sr-only">Open tests pane in separate window</span></button>' +
+            '<button class="tvm-editor-pane-popout-btn" data-pane="right" data-original-title="Open this pane in separate window">⧉<span class="sr-only">Open tests pane in separate window</span></button>' +
           '</div>' +
           '<div class="tvm-editor-tabs tvm-editor-tabs-right"></div>' +
           '</div>' +
@@ -1141,10 +1141,10 @@
       (this.editorSplitSupported
         ? '<div class="tvm-editor-mode-toggle" role="group" aria-label="Editor layout">' +
           '<button class="tvm-editor-mode-btn' + (!this._splitActive ? ' active' : '') +
-            '" data-mode="tabs" aria-pressed="' + (!this._splitActive ? 'true' : 'false') + '" title="Tab view — single editor, tabs for every file">' +
+            '" data-mode="tabs" aria-pressed="' + (!this._splitActive ? 'true' : 'false') + '" data-original-title="Tab view — single editor, tabs for every file">' +
             '<i class="fa fa-window-maximize"></i> Tabs</button>' +
           '<button class="tvm-editor-mode-btn' + (this._splitActive ? ' active' : '') +
-            '" data-mode="split" aria-pressed="' + (this._splitActive ? 'true' : 'false') + '" title="Split view — code on the left, tests on the right">' +
+            '" data-mode="split" aria-pressed="' + (this._splitActive ? 'true' : 'false') + '" data-original-title="Split view — code on the left, tests on the right">' +
             '<i class="fa fa-columns"></i> Split</button>' +
           '</div>'
         : '') +
@@ -1154,14 +1154,14 @@
       '<button class="tvm-diagram-fs-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class" aria-pressed="' + (this._umlActiveType === 'class' ? 'true' : 'false') + '">Class Diagram</button>' +
       '<button class="tvm-diagram-fs-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence" aria-pressed="' + (this._umlActiveType === 'sequence' ? 'true' : 'false') + '">Sequence Diagram</button>' +
       '<div class="tvm-diagram-zoom-controls">' +
-      '<button class="tvm-diagram-fs-zoom-btn" data-zoom="out" title="Zoom out">\u2212</button>' +
+      '<button class="tvm-diagram-fs-zoom-btn" data-zoom="out" data-original-title="Zoom out">\u2212</button>' +
       '<span class="tvm-diagram-fs-zoom-label">100%</span>' +
-      '<button class="tvm-diagram-fs-zoom-btn" data-zoom="in" title="Zoom in">+</button>' +
-      '<button class="tvm-diagram-fs-zoom-btn" data-zoom="reset" title="Reset zoom">\u2715</button>' +
+      '<button class="tvm-diagram-fs-zoom-btn" data-zoom="in" data-original-title="Zoom in">+</button>' +
+      '<button class="tvm-diagram-fs-zoom-btn" data-zoom="reset" data-original-title="Reset zoom">\u2715</button>' +
       '</div>' +
-      '<button class="tvm-diagram-fs-close" title="Exit fullscreen">\u2715 Close</button>' +
-      '<label class="tvm-diagram-color-btn" title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input tvm-diagram-fs-color-input" aria-label="Diagram accent color"></label>' +
-      '<button class="tvm-diagram-color-reset-btn" title="Reset to default color">\u21bb</button>' +
+      '<button class="tvm-diagram-fs-close" data-original-title="Exit fullscreen">\u2715 Close</button>' +
+      '<label class="tvm-diagram-color-btn" data-original-title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input tvm-diagram-fs-color-input" aria-label="Diagram accent color"></label>' +
+      '<button class="tvm-diagram-color-reset-btn" data-original-title="Reset to default color">\u21bb</button>' +
       '</div>' +
       '<div class="tvm-diagram-fs-content"></div>' +
       '</div>' +
@@ -1170,8 +1170,8 @@
           '<div class="tvm-git-graph-header">' +
           '<span>Git Graph</span>' +
           '<div class="tvm-git-graph-header-actions">' +
-          '<button class="tvm-git-graph-refresh" title="Refresh graph">&#x21bb; Refresh</button>' +
-          '<button class="tvm-git-graph-popout-btn" title="Pop out git graph to a new window">&#x29c9;</button>' +
+          '<button class="tvm-git-graph-refresh" data-original-title="Refresh graph">&#x21bb; Refresh</button>' +
+          '<button class="tvm-git-graph-popout-btn" data-original-title="Pop out git graph to a new window">&#x29c9;</button>' +
           '</div>' +
           '</div>' +
           '<div class="tvm-git-graph-container"></div>' +
@@ -1185,13 +1185,13 @@
           '<div class="tvm-make-dag-header">' +
           '<span>Make DAG <small>(what <code>make -n</code> would walk)</small></span>' +
           '<div class="tvm-make-dag-header-actions">' +
-          '<button class="tvm-make-dag-refresh" title="Refresh dependency graph">&#x21bb; Refresh</button>' +
+          '<button class="tvm-make-dag-refresh" data-original-title="Refresh dependency graph">&#x21bb; Refresh</button>' +
           '</div>' +
           '</div>' +
           '<div class="tvm-make-dag-container" aria-live="polite"></div>' +
           '</div>'
         : '') +
-      '<div class="tvm-vsplitter" title="Drag to resize"></div>' +
+      '<div class="tvm-vsplitter" data-original-title="Drag to resize"></div>' +
       // Workspace bottom-pane:
       //   - If Output was hoisted to bottom-left AND uml_position is 'right',
       //     render the SAME UML pane that the bottom-left mode uses (same
@@ -1210,16 +1210,16 @@
           '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class" aria-pressed="' + (this._umlActiveType === 'class' ? 'true' : 'false') + '">Class Diagram</button>' +
           '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence" aria-pressed="' + (this._umlActiveType === 'sequence' ? 'true' : 'false') + '">Sequence Diagram</button>' +
           '<div class="tvm-diagram-zoom-controls">' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="out" title="Zoom out" aria-label="Zoom out">−</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="out" data-original-title="Zoom out" aria-label="Zoom out">−</button>' +
           '<span class="tvm-diagram-zoom-label">100%</span>' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="in" title="Zoom in" aria-label="Zoom in">+</button>' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="reset" title="Reset zoom" aria-label="Reset zoom">✕</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="in" data-original-title="Zoom in" aria-label="Zoom in">+</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="reset" data-original-title="Reset zoom" aria-label="Reset zoom">✕</button>' +
           '</div>' +
-          '<button class="tvm-diagram-fullscreen-btn" title="Fullscreen" aria-label="Toggle fullscreen diagram view">⛶</button>' +
-          '<button class="tvm-diagram-popout-btn" title="Open in separate window" aria-label="Open diagram in separate window">⧉</button>' +
-          '<button class="tvm-diagram-refresh-btn" title="Re-analyze code">↻ Refresh</button>' +
-          '<label class="tvm-diagram-color-btn" title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
-          '<button class="tvm-diagram-color-reset-btn" title="Reset to default color" aria-label="Reset diagram accent colour to default">↻</button>' +
+          '<button class="tvm-diagram-fullscreen-btn" data-original-title="Fullscreen" aria-label="Toggle fullscreen diagram view">⛶</button>' +
+          '<button class="tvm-diagram-popout-btn" data-original-title="Open in separate window" aria-label="Open diagram in separate window">⧉</button>' +
+          '<button class="tvm-diagram-refresh-btn" data-original-title="Re-analyze code">↻ Refresh</button>' +
+          '<label class="tvm-diagram-color-btn" data-original-title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
+          '<button class="tvm-diagram-color-reset-btn" data-original-title="Reset to default color" aria-label="Reset diagram accent colour to default">↻</button>' +
           '</div>' +
           diagramContentHtml +
           '</div>'
@@ -5491,7 +5491,8 @@
         + (isActive && !detached ? ' active' : '')
         + (detached ? ' detached' : '');
       tab.setAttribute('role', 'presentation');
-      tab.title = detached ? filename + ' (open in popup window \u2014 click to focus)' : filename;
+      tab.setAttribute('data-original-title', detached ? filename + ' (open in popup window \u2014 click to focus)' : filename);
+      tab.removeAttribute('title');
       var label = document.createElement('button');
       label.type = 'button';
       label.className = 'tvm-tab-label';
@@ -5553,7 +5554,8 @@
         reattachOnly.type = 'button';
         reattachOnly.className = 'tvm-tab-reattach';
         reattachOnly.textContent = '\u21a9';
-        reattachOnly.title = 'Bring file back to this window';
+        reattachOnly.setAttribute('data-original-title', 'Bring file back to this window');
+        reattachOnly.removeAttribute('title');
         reattachOnly.setAttribute('aria-label', 'Bring ' + filename + ' back to this window');
         reattachOnly.addEventListener('click', function (e) {
           e.stopPropagation();
@@ -5566,7 +5568,8 @@
         pop.type = 'button';
         pop.className = 'tvm-tab-popout';
         pop.textContent = '\u29c9';
-        pop.title = 'Open file in separate window';
+        pop.setAttribute('data-original-title', 'Open file in separate window');
+        pop.removeAttribute('title');
         pop.setAttribute('aria-label', 'Open ' + filename + ' in a separate window');
         pop.addEventListener('click', function (e) {
           e.stopPropagation();
@@ -5651,7 +5654,7 @@
           var ind = document.createElement('span');
           ind.className = 'tvm-pane-detached-indicator';
           ind.innerHTML = '<span class="tvm-tab-detached-badge">(detached)</span>'
-            + '<button class="tvm-tab-reattach" type="button" title="Bring this pane back to the main view">↩</button>';
+            + '<button class="tvm-tab-reattach" type="button" data-original-title="Bring this pane back to the main view">↩</button>';
           label.appendChild(ind);
           ind.querySelector('.tvm-tab-reattach').addEventListener('click', function (e) {
             e.stopPropagation();
@@ -6149,7 +6152,7 @@
           : panel.classList.contains('tvm-terminal-panel') ? 'Terminal'
           : 'Output';
         chip.innerHTML = '<span class="tvm-tab-detached-badge">' + label + ' detached</span>'
-          + '<button class="tvm-tab-reattach" type="button" title="Bring it back to the main view">↩</button>';
+          + '<button class="tvm-tab-reattach" type="button" data-original-title="Bring it back to the main view">↩</button>';
         workspace.appendChild(chip);
         var self = this;
         chip.querySelector('.tvm-tab-reattach').addEventListener('click', function (e) {
@@ -6508,7 +6511,7 @@
       if (!panel.querySelector('.tvm-instructions-detached-placeholder')) {
         var placeholder = document.createElement('div');
         placeholder.className = 'tvm-instructions-detached-placeholder';
-        placeholder.innerHTML = '<button class="tvm-btn tvm-btn-reattach" title="Bring instructions back to this window">↩</button>'
+        placeholder.innerHTML = '<button class="tvm-btn tvm-btn-reattach" data-original-title="Bring instructions back to this window">↩</button>'
           + '<div class="tvm-detached-msg">Instructions popped out</div>';
         // Insert before the steps-view so the placeholder stays visible while
         // steps-view is hidden by CSS in the detached state.
@@ -7484,6 +7487,7 @@
     var reqId = ++this._umlRenderRequestId;
     function isCurrent() { return reqId === self._umlRenderRequestId; }
 
+    this._setUMLDiagramAccessibleName();
     el.innerHTML = '';                       // clear FIRST so snapshot is right
     this._applyUMLColors(el);
     // The bundle's prepareDiagramContainer (which the main-thread render path
@@ -7567,15 +7571,25 @@
       })
       .catch(function (err) {
         console.error('Mermaid render error:', err);
+        self._setUMLDiagramAccessibleName('Diagram rendering error.');
         self._umlContentEl.innerHTML =
           '<div class="tvm-diagram-empty">Diagram rendering error.<br>' +
           '<small style="opacity:0.7">' + (err.message || err) + '</small></div>';
       });
   };
 
+  TutorialCode.prototype._setUMLDiagramAccessibleName = function (statusText) {
+    if (!this._umlContentEl) return;
+    var name = 'Interactive UML diagram viewer';
+    var status = String(statusText || '').trim();
+    if (status) name += ': ' + status;
+    this._umlContentEl.setAttribute('aria-label', name);
+  };
+
   /** Show an empty-state message in the diagram area */
   TutorialCode.prototype._showUMLEmpty = function (msg) {
     if (this._umlContentEl) {
+      this._setUMLDiagramAccessibleName(msg);
       this._umlContentEl.innerHTML = '<div class="tvm-diagram-empty">' + msg + '</div>';
     }
   };
@@ -7583,6 +7597,7 @@
   /** Show an error message in the diagram area */
   TutorialCode.prototype._showUMLError = function (msg) {
     if (this._umlContentEl) {
+      this._setUMLDiagramAccessibleName(msg);
       this._umlContentEl.innerHTML = '<div class="tvm-diagram-empty" style="color:#e55;">' + msg + '</div>';
     }
   };
@@ -8356,21 +8371,28 @@
     var solution = step.solution;
     var self = this;
 
-    // 1. Pyodide: clear Python import cache before writing files
+    var p = this._stepSetupPromise ? this._stepSetupPromise.catch(function () {}) : Promise.resolve();
+
+    // 1. Pyodide: clear Python import cache before writing files. This must be
+    // awaited so a following Run/Test click cannot collide with the worker's
+    // `_running` guard while the cache-clear snippet is still active.
     if (this.config.backend === 'pyodide' && solution.files) {
-      this._postWorker({
-        type: 'runCode',
-        code: [
-          'import sys as _sys',
-          'for _m in list(_sys.modules):',
-          '    _f = getattr(_sys.modules[_m], "__file__", "") or ""',
-          '    if "/tutorial/" in _f: del _sys.modules[_m]',
-        ].join('\n'),
-        silent: true
+      p = p.then(function () {
+        return new Promise(function (resolve) {
+          self._postWorker({
+            type: 'runCode',
+            code: [
+              'import sys as _sys',
+              'for _m in list(_sys.modules):',
+              '    _f = getattr(_sys.modules[_m], "__file__", "") or ""',
+              '    if "/tutorial/" in _f: del _sys.modules[_m]',
+            ].join('\n'),
+            silent: true
+          }, resolve);
+        });
       });
     }
 
-    var p = this._stepSetupPromise ? this._stepSetupPromise.catch(function () {}) : Promise.resolve();
     if (this.config.backend === 'v86') {
       p = p.then(function () { return self._runSilent(':'); });
     }
@@ -9227,7 +9249,8 @@
         plArgsInp.style.flex = '1';
         plArgsInp.placeholder = 'e.g. parent(tom, X)';
         plArgsInp.value = step.default_query || '';
-        plArgsInp.title = 'Prolog query (without trailing period)';
+        plArgsInp.setAttribute('data-original-title', 'Prolog query (without trailing period)');
+        plArgsInp.removeAttribute('title');
       }
       if (plArgsLbl) {
         plArgsLbl.style.display = 'inline-block';
@@ -9269,8 +9292,9 @@
         wcArgsInp.style.display = step.has_args ? 'inline-block' : 'none';
         wcArgsInp.value = step.default_args || '';
         wcArgsInp.placeholder = step.args_placeholder || 'argv...';
-        wcArgsInp.title = step.args_title || 'Command-line arguments (process.argv)';
-        wcArgsInp.setAttribute('aria-label', wcArgsInp.title);
+        wcArgsInp.setAttribute('data-original-title', step.args_title || 'Command-line arguments (process.argv)');
+        wcArgsInp.removeAttribute('title');
+        wcArgsInp.setAttribute('aria-label', wcArgsInp.getAttribute('data-original-title'));
       }
       if (wcArgsLbl) {
         wcArgsLbl.style.display = step.has_args ? 'inline-block' : 'none';
@@ -9286,9 +9310,11 @@
       testRunBtn.style.display = step.test_file ? 'inline-block' : 'none';
       testRunBtn.disabled = false;
       testRunBtn.textContent = '✓ Test';
-      testRunBtn.title = step.test_file
-        ? 'Run ' + step.test_file
-        : 'Run the test file';
+      testRunBtn.setAttribute(
+        'data-original-title',
+        step.test_file ? 'Run ' + step.test_file : 'Run the test file'
+      );
+      testRunBtn.removeAttribute('title');
     }
 
     // Clear output panel between steps
@@ -9417,7 +9443,8 @@
       var srLabel = unlocked
         ? 'Step ' + (i + 1) + ': ' + step.title
         : 'Step ' + (i + 1) + ': ' + step.title + ' (locked, complete the previous step to unlock)';
-      btn.title = unlocked ? step.title : step.title + ' (locked)';
+      btn.setAttribute('data-original-title', unlocked ? step.title : step.title + ' (locked)');
+      btn.removeAttribute('title');
       btn.setAttribute('aria-label', srLabel);
       if (i === self.currentStep) btn.setAttribute('aria-current', 'step');
       if (unlocked) {
@@ -9439,7 +9466,7 @@
 
     var html = '';
     html += index > 0
-      ? '<button class="tvm-btn tvm-btn-prev" title="Previous step">\u2190 Previous</button>'
+      ? '<button class="tvm-btn tvm-btn-prev" data-original-title="Previous step">\u2190 Previous</button>'
       : '<span></span>';
     html += this._stepHasTests(step)
       ? this._buildTestButtonHTML(index)
@@ -9449,7 +9476,7 @@
     var hasNextStep = index < this.steps.length - 1;
     var showNext = hasNextStep || hasUnpassedQuiz;
     html += showNext
-      ? '<button class="tvm-btn tvm-btn-next"' + (nextLocked ? ' disabled title="Pass all tests to continue"' : ' title="Next step"') + '>Next \u2192</button>'
+      ? '<button class="tvm-btn tvm-btn-next"' + (nextLocked ? ' disabled data-original-title="Pass all tests to continue"' : ' data-original-title="Next step"') + '>Next \u2192</button>'
       : '<span></span>';
 
     this.stepControlsEl.innerHTML = html;
@@ -9560,13 +9587,13 @@
   TutorialCode.prototype._buildTestButtonHTML = function (index) {
     var remaining = this._cooldownRemaining(index);
     if (remaining <= 0) {
-      return '<button class="tvm-btn tvm-btn-test" title="Run the tests for this step">\u2713 Test My Work</button>';
+      return '<button class="tvm-btn tvm-btn-test" data-original-title="Run the tests for this step">\u2713 Test My Work</button>';
     }
     var label = '\u23f1 Test My Work (' + this._formatCooldown(remaining) + ')';
     var aria = 'Test My Work locked, ' + remaining + ' second' + (remaining === 1 ? '' : 's') + ' remaining';
     var html = '<span class="tvm-test-btn-group">';
     html += '<button class="tvm-btn tvm-btn-test tvm-btn-test-cooldown" disabled aria-label="' + aria + '">' + label + '</button>';
-    html += '<button class="tvm-btn tvm-btn-test-sure" title="Run tests now without seeing results \u2014 passes still unlock Next">I\u2019m sure</button>';
+    html += '<button class="tvm-btn tvm-btn-test-sure" data-original-title="Run tests now without seeing results \u2014 passes still unlock Next">I\u2019m sure</button>';
     html += '</span>';
     return html;
   };
@@ -9667,7 +9694,7 @@
       this._initTooltips(this.quizPanelEl);
     }
     this.stepControlsEl.innerHTML =
-      '<button class="tvm-btn tvm-btn-prev tvm-quiz-back" title="Back to step">\u2190 Back to Step</button>' +
+      '<button class="tvm-btn tvm-btn-prev tvm-quiz-back" data-original-title="Back to step">\u2190 Back to Step</button>' +
       '<span class="tvm-quiz-status" role="status" aria-live="polite" aria-atomic="true">Question 1\u2009/\u2009' + quiz.questions.length + '</span>' +
       '<span></span>';
     var back = this.stepControlsEl.querySelector('.tvm-quiz-back');
