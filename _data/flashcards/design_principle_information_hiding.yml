@@ -1,5 +1,5 @@
 title: "Information Hiding Flashcards"
-description: "Key definitions, examples, trade-offs, and misconceptions of the Information Hiding principle (Parnas 1972)."
+description: "Key definitions, examples, trade-offs, design-doc practices, and misconceptions of the Information Hiding principle (Parnas 1972)."
 active: true
 cards:
   - id: 1
@@ -97,3 +97,51 @@ cards:
     question: "How does Information Hiding relate to **Separation of Concerns** (SoC)?"
     answer: "**SoC** decides *which* aspects of the system should live in separate modules. **Information Hiding** decides *how* each module protects its design decisions behind a stable interface. SoC without Information Hiding gives you separate modules that still break each other when details change."
     explanation: "They are complementary principles, not synonyms. Most modern principles (SRP, DIP, layered architecture, microservices) are specific applications of one or both."
+
+  - id: 17
+    difficulty: basic
+    question: "Why did the lecture connect Information Hiding to the Software Crisis and modern software scale?"
+    answer: "Because software systems grew far beyond what one person can understand at once. Faster hardware lets us run larger systems, but **architecture** makes them understandable: Information Hiding bounds what each developer has to know."
+    explanation: "The Apollo software was already considered highly complex in the 1960s. Modern systems can be orders of magnitude larger, while human working memory has not grown. The design has to reduce cognitive load."
+
+  - id: 18
+    difficulty: intermediate
+    question: "What does the formula `n * (n - 1) / 2` remind you about module design?"
+    answer: "It is the number of possible pairwise relationships among `n` modules. As module count grows, possible relationships grow roughly **quadratically**, so uncontrolled dependencies quickly become unmanageable."
+    explanation: "Information Hiding does not eliminate modules; it keeps the actual dependency graph much smaller than the possible one by exposing narrow, stable contracts."
+
+  - id: 19
+    difficulty: intermediate
+    question: "What are the symptoms of a **Big Ball of Mud** architecture?"
+    answer: "Low maintainability, low understandability, and high fragility: small changes touch many unrelated modules, readers must know too much at once, and local edits produce surprising distant bugs."
+    explanation: "A Big Ball of Mud is what happens when design decisions leak everywhere and the dependency graph grows without a disciplined modular structure."
+
+  - id: 20
+    difficulty: advanced
+    question: "State the **Single Choice principle**."
+    answer: "If a system chooses among several alternatives, **only one module should know the exhaustive list** of alternatives."
+    explanation: "Repeated switches over the same alternatives leak the choice list. A common fix is polymorphism plus one factory, configuration module, or dependency-injection boundary that owns the list."
+
+  - id: 21
+    difficulty: advanced
+    question: "Why can PayPal be both **visible** and **hidden**, depending on the boundary?"
+    answer: "The user-facing checkout flow may need to show PayPal as a supported option, and the server must verify it securely. But backend services should not know the PayPal SDK; they should depend on a vendor-neutral `PaymentGateway`."
+    explanation: "Information Hiding is boundary-relative: expose what callers need to use the system correctly; hide the implementation decisions that callers do not need."
+
+  - id: 22
+    difficulty: advanced
+    question: "What four sections should a useful **design doc** include for an Information Hiding decision?"
+    answer: "**Context and scope**, **goals and non-goals**, the **proposed design**, and **alternatives with trade-offs**."
+    explanation: "The alternatives-and-trade-offs section is especially important because it preserves why a boundary exists and which future changes it was designed to absorb."
+
+  - id: 23
+    difficulty: intermediate
+    question: "What question tests whether a module deserves to exist under Information Hiding?"
+    answer: "**What secret does this module own?** If you cannot name a difficult or likely-to-change design decision it hides, the module needs another clear justification or it may be shallow-module overhead."
+    explanation: "A module can still be justified by ownership, testability, or a real boundary around an external dependency. But a module that hides nothing and only forwards calls adds vocabulary without reducing cognitive load."
+
+  - id: 24
+    difficulty: intermediate
+    question: "Name two operating-system design decisions that user programs should not have to know."
+    answer: "Examples include **file-system layout**, **disk caching**, **CPU scheduling**, **device-driver details**, **virtual-memory paging**, and **network-stack internals**."
+    explanation: "The OS exposes stable abstractions such as files, processes, memory, and sockets. If applications depended on the hidden decisions directly, changing the scheduler, storage hardware, or file system would break ordinary programs."

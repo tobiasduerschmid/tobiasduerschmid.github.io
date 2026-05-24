@@ -233,7 +233,7 @@ questions:
   - id: 11
     difficulty: intermediate
     question: |
-      **[Technique Selection]** You are building a TikTok-style feed. Match each task to the best array method:
+      You are building a TikTok-style feed. Match each task to the best array method:
       - Task A: Remove videos the user has already seen
       - Task B: Convert each video object into a `<VideoCard>` component
       - Task C: Calculate the total watch time across all videos
@@ -257,7 +257,7 @@ questions:
   - id: 12
     difficulty: advanced
     question: |
-      **[Interleaving: Async + Types]** A Discord bot fetches a user's message count from an API. The API returns `"42"` (a string). The bot checks `if (count == 42)` to award a badge. What are ALL the problems?
+      A Discord bot fetches a user's message count from an API. The API returns `"42"` (a string). The bot checks `if (count == 42)` to award a badge. What are ALL the problems?
     options:
       - "Only one problem: `==` should be `===`"
       - "Two problems: (1) `==` coerces the string to a number, hiding a type mismatch — use `===`. (2) The comparison will silently 'work' with `==` but break if the badge threshold changes to `0` (since `'' == 0` is `true`)"

@@ -55,6 +55,10 @@ topics:
         url: /SEBook/systems/data_management.html
       - name: Security and Authentication
         url: /SEBook/systems/security.html
+      - name: C Programming
+        url: /SEBook/tools/c.html
+      - name: C for C++ Programmers Tutorial
+        url: /SEBook/tools/c-tutorial.html
 
   - name: Design Patterns
     icon: null

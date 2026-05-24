@@ -914,6 +914,10 @@ html.dark-mode .highlight .sx,
 html.dark-mode .highlight .sr,
 html.dark-mode .highlight .ss { color: #ce9178; }
 html.dark-mode .highlight .si { color: #d4d4d4; }
+html.dark-mode .highlight .gh,
+html.dark-mode .highlight .go,
+html.dark-mode .highlight .gp,
+html.dark-mode .highlight .gu { color: #c8c8c8; }
 html.dark-mode .highlight .nf { color: #dcdcaa; }
 html.dark-mode .highlight .na,
 html.dark-mode .highlight .no,
@@ -961,6 +965,10 @@ html.dark-mode .highlight .ss,
 html.dark-mode .highlight .dl { color: #ce9178 !important; }
 html.dark-mode .highlight .si,
 html.dark-mode .highlight .o { color: #d4d4d4 !important; }
+html.dark-mode .highlight .gh,
+html.dark-mode .highlight .go,
+html.dark-mode .highlight .gp,
+html.dark-mode .highlight .gu { color: #c8c8c8 !important; }
 html.dark-mode .highlight .nf { color: #dcdcaa !important; }
 html.dark-mode .highlight .na,
 html.dark-mode .highlight .no,

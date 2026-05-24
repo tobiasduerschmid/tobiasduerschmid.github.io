@@ -1,0 +1,216 @@
+title: "C Programming Quiz"
+description: "Test your understanding of C — what's different from C++, how memory and the compilation pipeline actually work, and the design tradeoffs that motivate the language."
+active: true
+questions:
+
+  - id: 1
+    difficulty: basic
+    question: "In C, what is the difference between `'a'` and `\"a\"`?"
+    options:
+      - "They are identical — both create a `char` value, and C uses single and double quotes interchangeably like Python."
+      - "`'a'` is a single `char` with the ASCII value 97. `\"a\"` is a `char` array of two bytes — the character `a` followed by the null terminator `'\\0'`."
+      - "`'a'` is a `char`. `\"a\"` is a Unicode string object — C's only built-in string type."
+      - "`'a'` is a one-character pointer. `\"a\"` is a `char` array of one byte; both end with no terminator."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Python lets you swap quote styles freely, but C distinguishes them: single quotes produce a
+        single `char`, double quotes produce a null-terminated `char` array.
+      2: |
+        C has no built-in string object — `"a"` is just memory containing the byte `'a'` followed by
+        `'\0'`. String functions in `<string.h>` walk that array until they hit the terminator.
+      3: |
+        Every C string literal ends with the null byte `'\0'`. Library functions like `strlen` and
+        `strcmp` rely on it; without the terminator they would read past the array.
+    explanation: "**`'a'` is a single `char`; `\"a\"` is a two-byte `char` array — the letter plus the null terminator `'\\0'`.** This distinction is enforced by the type system: passing `'a'` to a function expecting `char*` is a type error, and the string-library functions in `<string.h>` rely on the trailing `'\\0'` to know where the string ends."
+
+  - id: 2
+    difficulty: basic
+    question: "C does not support function overloading. If you want both `int` and `float` versions of a `print` function, what does the standard C convention look like?"
+    options:
+      - "Write `void print(int)` and `void print(float)` — C resolves overloads using the same name-mangling C++ uses, just less visibly."
+      - "Write two functions with distinct names, e.g. `printInt(int)` and `printFloat(float)`. C requires every function in a translation unit to have a unique name."
+      - "Write one `print(void*)` that takes any pointer; the function inspects the bytes at runtime to determine the type."
+      - "Use macros — `#define print(x) _Generic((x), int: printInt, float: printFloat)(x)` is required for every C call site."
+    correct_index: 1
+    option_feedback:
+      0: |
+        C does not mangle names; the linker sees raw symbols and rejects duplicates. That is precisely
+        why C symbols are callable from any language without runtime metadata.
+      2: |
+        C pointers do not carry runtime type information. Inspecting the bytes would require an extra
+        tag the caller has to pass, which is exactly what unique names already encode.
+      3: |
+        `_Generic` (C11) does enable type-keyed dispatch through a macro, but everyday C code follows
+        the simpler convention of distinct names like `printInt` and `printFloat`.
+    explanation: "**Every C function in a translation unit needs a unique name, so the convention is `printInt`, `printFloat`, etc.** This is why the C standard library has families like `abs` / `fabs` / `labs` instead of overloads, and why `printf` uses format specifiers (`%d`, `%f`) instead of taking arbitrary argument types. Avoiding name mangling is also what makes C symbols straightforward to call from Python, Java, Rust, and almost every other language."
+
+  - id: 3
+    difficulty: basic
+    question: "A C++ programmer wants to translate this swap function to C:\n\n```cpp\nvoid swap(int& a, int& b) {\n    int t = a; a = b; b = t;\n}\n// call site:\nswap(x, y);\n```\n\nWhat is the correct C version, including the call site?"
+    options:
+      - "`void swap(int a, int b) { ... }` and call site `swap(x, y);` — C passes everything by reference automatically."
+      - "`void swap(int* a, int* b) { int t = *a; *a = *b; *b = t; }` and call site `swap(&x, &y);` — C has no references, so both the signature and the call site must use pointers explicitly."
+      - "`void swap(int& a, int& b) { ... }` and call site `swap(x, y);` — C added references in C99."
+      - "`void swap(int** a, int** b) { ... }` and call site `swap(&&x, &&y);` — C requires double indirection because the values must be modifiable."
+    correct_index: 1
+    option_feedback:
+      0: |
+        C is pass-by-value: a function gets a copy of every argument it receives. To let it mutate a
+        caller's variable, the caller must pass a pointer and the function must dereference it.
+      2: |
+        C99 added many features but not references. The `&` symbol in C means "address-of" at a
+        use site and bitwise-AND as an operator — never the pass-by-reference declarator.
+      3: |
+        Single indirection is enough — a single pointer lets the function read and write the caller's
+        `int`. Double indirection is only needed to change what the caller's pointer itself points to.
+    explanation: "**C has no references — the function takes `int*` parameters and the caller writes `&x`, `&y` at the call site.** Every signature in C therefore tells you whether a function can mutate its argument: a value parameter cannot; a pointer parameter might. C++ references hide this at the call site, which is more convenient but less explicit about who can change what."
+
+  - id: 4
+    difficulty: intermediate
+    question: "A C function `int safe_divide(int num, int den, int* result)` returns 0 on success and -1 on division by zero. Which call site uses this contract correctly?"
+    options:
+      - "`int z = safe_divide(10, 2, NULL);` — the result is returned directly, and passing `NULL` discards it."
+      - "`int z; safe_divide(10, 2, &z); printf(\"%d\", z);` — pass `&z` and ignore the return value because divide-by-zero is rare."
+      - "`int z; if (safe_divide(10, 2, &z) != 0) { /* handle error */ } else { printf(\"%d\", z); }` — pass `&z` to receive the result, and check the return value before using `z`."
+      - "`int z = safe_divide(10, 2, &z);` — capture the result by storing the return value into the same variable whose address you also pass in."
+    correct_index: 2
+    option_feedback:
+      0: |
+        `safe_divide` writes the quotient through the pointer; passing `NULL` would cause it to
+        dereference a null pointer and segfault.
+      1: |
+        Ignoring the return value of an error-coded C function defeats the entire convention. On
+        division by zero `z` is left uninitialized and the `printf` reads garbage.
+      3: |
+        Mixing the return value and the output pointer like this is undefined behavior — `z` would be
+        read on the right-hand side before it is written, even on success.
+    explanation: "**The output-pointer convention requires passing the address of a result variable *and* checking the integer return code on every call.** Functions that report errors through return codes only work when callers actually check them. Forgetting the check is one of the most common bugs in C code — it leaves the program running on uninitialized memory after a silent failure."
+
+  - id: 5
+    difficulty: intermediate
+    question: "Consider this C code:\n\n```c\nint* arr = malloc(10 * sizeof(int));\nfree(arr);\narr[0] = 42;        // Line A\nfree(arr);          // Line B\n```\n\nWhat is the most likely consequence?"
+    options:
+      - "Both Line A and Line B are harmless — `free` does not actually release memory until the program exits, so `arr` is still valid."
+      - "Line A is undefined behavior (use-after-free); Line B is undefined behavior (double-free). Both can segfault or, worse, silently corrupt unrelated allocations."
+      - "Line A is fine because `arr` still holds the same address. Line B is a compile error — the compiler tracks freed pointers and rejects a second `free`."
+      - "Both lines are fine — `free` zeroes the memory and resets the pointer to `NULL`, so subsequent operations are safe no-ops."
+    correct_index: 1
+    option_feedback:
+      0: |
+        `free` immediately returns the block to the allocator; the program does not wait until exit.
+        After `free` the address may be reused by the next `malloc`.
+      2: |
+        The C compiler does not track freed pointers — that would require runtime bookkeeping the
+        language deliberately avoids. Both errors slip past the compiler and surface at runtime.
+      3: |
+        `free` does not modify the pointer variable or zero the released memory. The pointer keeps
+        pointing at the (now invalid) address — which is exactly what makes use-after-free dangerous.
+    explanation: "**Use-after-free and double-free are both undefined behavior — they can crash, corrupt other allocations, or appear to work and fail later.** A common defensive habit is to write `free(arr); arr = NULL;` after every free. Subsequent writes through a `NULL` pointer fail loudly with a segfault instead of silently corrupting whatever the allocator handed to the next caller."
+
+  - id: 6
+    difficulty: intermediate
+    question: "What is the role of libc (the C standard library) in a typical C program?"
+    options:
+      - "libc is a runtime virtual machine that interprets C bytecode at execution time — analogous to the JVM for Java."
+      - "libc provides a portable API (`fopen`, `malloc`, `printf`, `strlen`, ...) that wraps the underlying operating system's syscalls, letting the same C source compile and run on Linux, macOS, and Windows."
+      - "libc is the in-browser sandbox that lets JavaScript safely invoke C functions through a foreign-function interface."
+      - "libc is a build tool that converts `.c` files into `.o` object files — equivalent to `gcc -c`."
+    correct_index: 1
+    option_feedback:
+      0: |
+        C is compiled to native machine code; there is no interpreter or bytecode VM at runtime. libc
+        is an ordinary library linked into your executable, not a runtime engine.
+      2: |
+        Browser JavaScript is sandboxed precisely so it cannot call into native C. libc has no role
+        here — for browser code you would compile C to WebAssembly instead.
+      3: |
+        Compiling source to object files is the compiler's job, not the library's. libc is the
+        collection of functions the *linker* binds your object files against.
+    explanation: "**libc is the portability layer between your C source and the OS — same API everywhere, different syscalls underneath.** Each operating system ships its own implementation (glibc on Linux, libSystem on macOS, MSVCRT on Windows). The linker selects the right one for your target platform at build time, which is what makes a single C source compile to working executables on three different operating systems."
+
+  - id: 7
+    difficulty: intermediate
+    question: "Dijkstra's 1968 note \"Go To Statement Considered Harmful\" effectively retired `goto` from mainstream programming, yet the C language still has it and the Linux kernel uses it heavily. Which use of `goto` is widely accepted in modern C style guides?"
+    options:
+      - "Using `goto` inside an inner loop to jump back to the top of an outer loop, replacing nested `break` and a flag variable."
+      - "Using a single forward `goto cleanup;` per function to free resources (`fclose`, `free`, …) on every error path, with one cleanup label at the function's end."
+      - "Using `goto` to jump from one function into a labeled position inside a different function, as a lightweight tail call."
+      - "Using `goto` backward to implement a `while` loop, since C lacks structured looping primitives."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Crossing loop boundaries with `goto` makes the control flow exactly the kind of jungle gym
+        Dijkstra warned about. Refactoring the inner loop into its own function is cleaner.
+      2: |
+        C's `goto` only targets labels in the *same* function — the language does not let you jump
+        across function boundaries. Inter-function jumps are what function calls are for.
+      3: |
+        C has `while`, `for`, and `do`/`while` for structured looping. Hand-rolled loops via `goto`
+        bypass the readability the structured-programming movement was built around.
+    explanation: "**Forward `goto` to a single per-function cleanup label is the accepted idiom — every error path frees resources by jumping to one place, avoiding nested `if` pyramids or duplicated cleanup code.** This is what the Linux kernel does throughout. The pattern stays structured because every jump goes forward to one label; it never simulates loops, cross-function jumps, or unbounded control flow."
+
+  - id: 8
+    difficulty: advanced
+    question: "NASA's coding standards for flight software permit C and a restricted subset of C++ — explicitly forbidding exceptions and most polymorphism. What is the strongest pedagogical reason for that restriction?"
+    options:
+      - "C++ exceptions and virtual calls hide control-flow edges from automated verification tools, making it harder to prove that the program behaves correctly under every possible execution path."
+      - "C++ compilers produce slower executables than C compilers; aerospace code has tight performance budgets."
+      - "C++ source files are larger than C source files and would exceed the storage capacity of flight computers."
+      - "C++ is a younger language with fewer mature compilers, so NASA's tooling cannot build it reliably."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Modern C++ compilers can match C performance on the same code path. The verification problem
+        is the binding constraint — predictability of *control flow*, not raw speed.
+      2: |
+        Source-file size is not the relevant constraint. Flight computers run compiled machine code,
+        and many modern aerospace platforms have ample storage for either language's source.
+      3: |
+        C++ has been mature for decades and has multiple production-grade compilers. The restriction
+        is about the language's *semantics*, not the compilers' maturity.
+    explanation: "**Polymorphism and exceptions introduce hidden control-flow edges that automated verification can't easily reason about — and you cannot debug a Mars rover.** Every line of code inside a `try` block has an implicit edge to a `catch` handler; every virtual call may dispatch to any subclass override. Tools that prove safety properties have to reason about all of those edges; banning them keeps the control-flow graph small and analyzable."
+
+  - id: 9
+    difficulty: advanced
+    question: "Almost every mainstream language can call into a C library — Python, Java, C#, Rust, Go, Ruby — but **browser JavaScript cannot directly call C functions on the user's machine**. What is the strongest reason?"
+    options:
+      - "JavaScript has no foreign-function interface — its language specification omits the feature entirely."
+      - "Browser JavaScript runs inside a security sandbox that deliberately blocks native code access; C would let untrusted page scripts read files, drive hardware, and bypass the sandbox guarantees."
+      - "C functions return data in a binary layout that JavaScript engines cannot decode."
+      - "JavaScript is interpreted and C is compiled, and interpreters cannot make function calls into compiled code."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Server-side JavaScript (Node.js) does have FFI options (N-API, `ffi-napi`). The constraint is
+        specific to the browser sandbox, not to the language.
+      2: |
+        Engines can describe ABIs and decode binary returns — Wasm and Node FFI both do this. The
+        blocker is the security boundary, not the data layout.
+      3: |
+        Interpreters routinely call into compiled native code — every JavaScript engine itself does
+        this constantly. The browser blocks JS→C calls by design, not because it can't make them.
+    explanation: "**Browser JavaScript is sandboxed precisely so a page cannot touch the filesystem, hardware, or memory outside the engine — and C has unrestricted access to all of those.** WebAssembly is the modern workaround: C compiled to Wasm runs in the *same* sandbox as JavaScript, with no privileged hardware access. The sandbox is not a limitation of the language but a deliberate security boundary."
+
+  - id: 10
+    difficulty: advanced
+    question: "You are shipping a CLI tool that depends on `libssl`. Compare static and dynamic linking — which statement is correct?"
+    options:
+      - "Static linking produces a larger but self-contained executable; dynamic linking produces a smaller executable that depends on `libssl.so` being present at run time and lets a system-wide security update fix every dynamically-linked program at once."
+      - "Static linking links at run time; dynamic linking links at build time. Static linking is therefore always slower at startup."
+      - "Static and dynamic linking differ only in file extension (`.a` vs `.so`); the resulting executable is identical."
+      - "Dynamic linking produces a single, self-contained binary; static linking always requires the user to install all referenced libraries separately."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Static linking happens at build time and produces a self-contained binary. Dynamic linking
+        defers resolution until program startup, which is what creates the runtime dependency.
+      2: |
+        The two produce different artifacts: a static binary contains the library code; a dynamic
+        binary contains references that are resolved at load time against shared libraries on the
+        system.
+      3: |
+        It is the other way around — static linking copies library code into the executable, and
+        dynamic linking is what splits responsibility between the executable and external `.so` /
+        `.dll` files.
+    explanation: "**Static linking trades binary size for portability and update independence; dynamic linking trades a runtime dependency for smaller executables and shared security updates.** A pure-static binary will run on any compatible OS without external libraries. A dynamic binary needs the right shared libraries present at startup, but a single `libssl` update on the system fixes every dynamically-linked program — you don't have to recompile each one."

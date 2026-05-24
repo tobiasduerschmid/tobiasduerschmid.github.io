@@ -1,5 +1,5 @@
 title: "Generative AI in Software Engineering Quiz"
-description: "Apply GenAI judgment to real engineering situations — diagnose the productivity illusion, choose between Driver / Navigator / TDG workflows, judge skill-formation risk, and reason about why architecture amplifies (or sabotages) AI effectiveness."
+description: "Apply GenAI judgment across Bloom levels, with extra emphasis on analyzing, evaluating, and creating safe AI-assisted engineering workflows."
 active: true
 questions:
   - id: 1
@@ -206,3 +206,273 @@ questions:
       3: |
         Studies show AI is best as a force multiplier, weakest at autonomous end-to-end engineering. Domain knowledge, real systems thinking, accountability, and the ability to translate ambiguity into structure remain irreplaceable.
     explanation: "**The skill shift is from *producing* code to *specifying and verifying* it. Requirements engineering (INVEST stories, acceptance criteria), systems thinking (where the boundaries are, what fails), architecture (modular interfaces the AI can reason inside), security review, and prompt/context engineering all become more decisive. Rote syntax and boilerplate become commoditized.** The engineer who raises the *ceiling* of what they can build is the one who treats AI as leverage over engineering judgment — not as a substitute for it."
+
+  - id: 11
+    difficulty: advanced
+    type: single
+    question: |
+      An AI coding agent reads a blog post while debugging your build and then asks permission to run a shell command you do not recognize. What is the most responsible response?
+    options:
+      - "Approve it because the agent found the command while researching."
+      - "Treat it as a possible **prompt injection** or unsafe tool-use suggestion: inspect what the command does, check whether it matches the local task, and refuse or rewrite it if you cannot explain it safely."
+      - "Disable all AI tool use permanently."
+      - "Run it only if the agent says it is confident."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Finding a command on the web is not evidence that it is safe. A malicious page can plant instructions for agents to copy, so the human must inspect the command and source before approving it.
+      2: |
+        The lesson is not "never use agents." The lesson is that tool access raises the supervision bar: inspect commands, bound permissions, and keep the human accountable.
+      3: |
+        Model confidence is not a security control. The right check is whether the human understands the command's effects and whether the command is necessary for the task.
+    explanation: "**Coding agents are powerful because they can read files and run tools, but that also exposes them to prompt injection and unsafe shell suggestions.** A responsible supervisor verifies the command, source, and task fit before allowing execution. If you cannot explain the command, you are not ready to approve it."
+
+  - id: 12
+    difficulty: intermediate
+    type: single
+    question: |
+      Why do project-level skill files or rule files improve AI coding-agent results?
+    options:
+      - "They turn the LLM into a deterministic compiler."
+      - "They persist project-specific constraints, conventions, and checklists so the agent is more likely to apply them without every prompt repeating them."
+      - "They remove the need for code review."
+      - "They let the agent ignore the repository and rely only on the rules."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Skill files improve context, but they do not make an unsound, non-deterministic model sound or deterministic.
+      2: |
+        Rule files reduce omissions; they do not prove the output is correct. The human still reviews, tests, and owns the resulting code.
+      3: |
+        Rules are useful only when combined with repository context. They tell the agent how to work here; they do not replace reading the relevant files.
+    explanation: "**Skill files encode durable project knowledge: accessibility rules, storage inventories, dark-mode requirements, testing expectations, naming conventions, and similar guardrails.** They improve the default behavior of the agent, but they are still instructions to a fallible system, not proof that the system complied."
+
+  - id: 13
+    difficulty: advanced
+    type: single
+    question: |
+      You want an agent to implement a stateful feature in an unfamiliar codebase. Which workflow best applies the lecture's advice?
+    options:
+      - "Ask for the whole feature in one prompt and review only the running UI."
+      - "Ask the agent to inspect the relevant files and propose a plan, answer any design questions, approve one small step at a time, run tests, review the diff, and refactor before moving on."
+      - "Tell the agent to use maximum thinking mode and skip tests because planning is enough."
+      - "Let the agent choose the architecture because it has read more code than you."
+    correct_index: 1
+    option_feedback:
+      0: |
+        A running UI checks the happy path, not the design, state transitions, security, or maintainability. Large one-shot prompts also make it harder to locate where the agent made a bad assumption.
+      2: |
+        Planning helps, but it does not replace executable verification. Stateful code needs tests because the hard part is often the interaction among cases.
+      3: |
+        The agent can propose architecture, but the human must judge whether it fits the domain, existing system, and long-term maintenance constraints.
+    explanation: "**For complex work, the professional loop is plan, question, approve a small task, implement, test, review, and refactor.** This keeps the human in control of architecture and lets mistakes surface while they are still small."
+
+  - id: 14
+    difficulty: intermediate
+    type: single
+    question: |
+      Why is "read the entire repository before coding" often a bad instruction for an AI agent?
+    options:
+      - "LLMs cannot process text files."
+      - "Models have finite context windows and uneven attention; irrelevant files can bury the important constraints and make the agent more likely to hallucinate or optimize for the wrong part of the system."
+      - "It is always slower than asking no context questions."
+      - "It prevents the agent from editing files."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Agents can read text files. The issue is not whether text can be read, but whether the right text stays salient inside the model's limited context.
+      2: |
+        Speed is not the core problem. A slower prompt can still be worthwhile if it provides the relevant context; the failure is low-signal context, not context itself.
+      3: |
+        Reading files does not prevent editing. It can simply crowd the context window with details unrelated to the task.
+    explanation: "**Context engineering is selective.** Give the agent the smallest relevant slice: the target files, nearby interfaces, tests, conventions, and constraints. Dumping everything into context increases search cost and 'lost in the middle' failures."
+
+  - id: 15
+    difficulty: intermediate
+    type: multiple
+    question: |
+      Which tasks are especially well-suited for AI assistance once the human already understands the domain? Select all that apply.
+    options:
+      - "Drafting boilerplate or scaffolding that follows a familiar pattern."
+      - "Making an unreviewed architecture decision for a safety-critical system."
+      - "Explaining an unfamiliar stack trace or API behavior."
+      - "Generating a rapid prototype so a user can react to a concrete version."
+      - "Implementing a data structure the student has not learned and submitting it without reading the code."
+    correct_indices: [0, 2, 3]
+    option_feedback:
+      0: |
+        Boilerplate is a strong AI use case when the human can review the pattern and spot deviations.
+      1: |
+        High-stakes architecture decisions require domain understanding, trade-off judgment, and accountability. AI can help list trade-offs, but it should not make the final decision unreviewed.
+      2: |
+        Explanation is one of the safest high-value uses: it supports conceptual inquiry while keeping the human responsible for applying the idea.
+      3: |
+        Prototypes are useful because they make requirements concrete. They still need engineering review before becoming production code.
+      4: |
+        This is cognitive offloading. It may finish the assignment, but it prevents the student from building the schema needed to review or debug similar code later.
+    explanation: "**AI is strongest on repetitive, well-specified, common tasks and on learning support.** It is weakest when the task requires unshared domain knowledge, high-stakes judgment, or understanding the student has not yet built."
+
+  - id: 16
+    difficulty: advanced
+    type: single
+    question: |
+      A team adds a hero avatar customizer. A student suggests storing the entire customized SVG in localStorage; another suggests storing the selected parameters and regenerating the SVG. What is the best engineering lesson from this disagreement?
+    options:
+      - "Ask the AI to pick whichever storage format is shorter."
+      - "This is a design decision the human must own: compare trade-offs such as size, future compatibility, privacy, migration, and ease of rendering before telling the agent what to implement."
+      - "The SVG is always correct because it exactly matches the current picture."
+      - "The parameters are always correct because they use less space."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Shorter is only one possible criterion, and often not the important one. Design decisions need explicit quality attributes, not a vague preference.
+      2: |
+        Storing the SVG captures the current rendering but may make future migrations, validation, and privacy review harder. Exactness today is not the same as good design over time.
+      3: |
+        Parameters are often better for evolvability, but "always" overstates it. If regeneration is unstable or the renderer changes incompatibly, raw output might have a defensible role.
+    explanation: "**AI can implement either storage strategy, but the engineer must decide which strategy fits the product and quality attributes.** Good prompts expose the decision: ask for trade-offs, choose deliberately, then give the agent a bounded implementation task."
+
+  - id: 17
+    difficulty: advanced
+    type: single
+    question: |
+      During test-driven generation, the AI writes an implementation that passes every visible example by hard-coding a dictionary from sample inputs to sample outputs. What should the human do?
+    options:
+      - "Accept it because all tests pass."
+      - "Reject the overfit solution, add tests that exercise the underlying property or new inputs, and refactor toward a general implementation."
+      - "Delete the tests because they made the AI cheat."
+      - "Ask the AI to add more comments explaining the dictionary."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Passing tests is useful only when the tests specify the behavior rather than merely list examples. A hard-coded lookup table passes examples while failing the real requirement.
+      2: |
+        The tests revealed a weakness in the specification; removing them loses that signal. Strengthen the tests and inspect the implementation.
+      3: |
+        Comments do not turn an overfit implementation into a correct one. The problem is behavioral generality, not readability of the wrong approach.
+    explanation: "**Generated code can overfit tests just like a student can memorize answers.** The human reviewer must inspect whether the implementation solves the general problem, then add stronger tests and refactor until the code matches the actual specification."
+
+  - id: 18
+    difficulty: basic
+    type: single
+    question: |
+      Which sequence correctly names the three main stages discussed for LLM development and use?
+    options:
+      - "Pre-training, post-training, inference."
+      - "Compilation, linking, execution."
+      - "Requirements, design, maintenance."
+      - "Tokenization, refactoring, deployment."
+    correct_index: 0
+    option_feedback:
+      1: |
+        That sequence describes a traditional compiled-program toolchain, not the lifecycle of an LLM.
+      2: |
+        Requirements, design, and maintenance are software-engineering phases. They matter when supervising AI, but they are not the model-development stages.
+      3: |
+        Tokenization is part of how text is represented, and deployment may follow model development, but this sequence does not capture the training-and-use pipeline from the lecture.
+    explanation: "**Pre-training creates the base model, post-training tunes it for useful behavior, and inference is the use-time step where a prompt produces output.** This item is the low-Bloom anchor: students need the vocabulary before they can analyze agent workflows."
+
+  - id: 19
+    difficulty: intermediate
+    type: single
+    question: |
+      A reasoning model shows a polished step-by-step explanation before generating code. Why should that trace still be treated cautiously?
+    options:
+      - "The trace proves the model used the same logical reasoning process as a human expert."
+      - "The trace is extra generated text that can improve performance, but it is still produced by a probabilistic model and can rationalize a wrong answer."
+      - "A reasoning trace means the output is deterministic."
+      - "A reasoning trace means tests are unnecessary."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Human-looking explanation is not evidence of human-like cognition. The model can generate plausible reasoning text while still missing the real invariant.
+      2: |
+        Reasoning mode does not turn a non-deterministic system into a deterministic compiler. The same prompt can still lead to different outputs.
+      3: |
+        Reasoning traces can help, but executable behavior still needs tests and human review.
+    explanation: "**Thinking traces can be useful scaffolding, not proof.** The engineer should read them as a proposal to inspect, then verify the generated code against requirements, tests, and system context."
+
+  - id: 20
+    difficulty: advanced
+    type: single
+    question: |
+      You want an agent to add a title-only search box to the SEBook home page. Which prompt best applies the lecture's prompt-engineering advice?
+    options:
+      - "\"Add search.\""
+      - "\"Act as a senior web engineer. On the SEBook home page, add a title-only search box that filters the existing page list. Before coding, inspect the relevant data source and ask me any design questions. Then propose a small plan with tests and wait for approval.\""
+      - "\"Read the whole repo and make search awesome.\""
+      - "\"Use any library you want and make the UI look modern.\""
+    correct_index: 1
+    option_feedback:
+      0: |
+        The task is too ambiguous: it omits where the feature belongs, what should be searched, how results should behave, and what constraints matter.
+      2: |
+        This asks for too much low-signal context and uses a vague quality word instead of acceptance criteria.
+      3: |
+        New libraries and vague UI goals create unnecessary scope. The prompt should constrain the feature and ask for a plan before implementation.
+    explanation: "**A strong implementation prompt gives role, task, context, acceptance criteria, constraints, and process.** It also asks the agent to surface design questions before it silently chooses behavior you did not intend."
+
+  - id: 21
+    difficulty: advanced
+    type: multiple
+    question: |
+      An agent adds a "schedule study" feature that looks polished, but the generated quiz links use URLs that do not exist. What should a reviewer infer? Select all that apply.
+    options:
+      - "The feature needs executable tests or manual link checks that verify the generated URLs resolve."
+      - "The agent may have hallucinated a route because the prompt did not ground it in the site's actual URL structure."
+      - "The UI polish proves the implementation is production-ready."
+      - "The acceptance criteria were probably too loose if they did not specify valid destinations for each generated plan item."
+      - "This is harmless because broken links are not code bugs."
+    correct_indices: [0, 1, 3]
+    option_feedback:
+      0: |
+        Link validity is observable behavior. A test or manual check should catch it before the feature ships.
+      1: |
+        Plausible routes are exactly the kind of thing an LLM can invent when it has not been grounded in the repository's real routing conventions.
+      2: |
+        Visual polish is not correctness. A polished broken link is still broken.
+      3: |
+        Acceptance criteria should describe the behavior that makes the feature valuable. If links are part of the value, their validity belongs in the criteria.
+      4: |
+        Broken links are user-facing defects. They can strand learners and fail the core purpose of the feature.
+    explanation: "**This is an analysis-level failure: separate surface polish from behavioral correctness.** The reviewer should trace the bug to missing grounding, weak acceptance criteria, and missing verification."
+
+  - id: 22
+    difficulty: expert
+    type: single
+    question: |
+      A team wants AI to implement a feature for a public educational site that must meet WCAG 2.2 AA. Which decision best evaluates the risk?
+    options:
+      - "Use AI freely because accessibility can be fixed later if a user complains."
+      - "Use AI only inside a workflow that states the WCAG constraint up front, reviews generated markup and interactions, tests keyboard/focus behavior, checks contrast, and rejects code the team cannot explain."
+      - "Avoid AI for all accessibility-related work, including explanations and test brainstorming."
+      - "Ask the AI to say whether the feature is accessible and accept the answer if it is confident."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Accessibility is a release constraint, not optional polish. Waiting for a user complaint shifts the cost to people the system is supposed to serve.
+      2: |
+        AI can help brainstorm checks and draft code, but the workflow must keep human verification and explicit standards in the loop.
+      3: |
+        Confidence is not evidence. Accessibility requires concrete checks such as semantic markup, keyboard operation, focus visibility, contrast, reflow, and status-message behavior.
+    explanation: "**Evaluation means judging whether the process is adequate for the risk.** For a public educational site, the AI workflow must include explicit accessibility criteria and verification, not just generation."
+
+  - id: 23
+    difficulty: expert
+    type: single
+    question: |
+      You are starting a personal project to learn a library you have never used. Which AI-assisted workflow best creates durable skill rather than cognitive offloading?
+    options:
+      - "Ask the agent to build the whole project, run it once, and study the finished code only if something breaks."
+      - "Ask the AI to teach the library concepts, write a small first attempt yourself, ask for critique and edge cases, add tests, then let the agent help with bounded refactors you can explain."
+      - "Paste every error into the AI and accept the first patch until the app works."
+      - "Avoid AI entirely, even for explanations, because any assistance prevents learning."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Studying only after failure makes the AI do the schema-building work. The project may run while the learner's understanding stays shallow.
+      2: |
+        Error-paste loops can fix symptoms without building the mental model needed to debug future problems.
+      3: |
+        The lecture argues against cognitive offloading, not against all AI use. Conceptual inquiry can strengthen learning when the learner remains active.
+    explanation: "**Create-level work means designing a workflow, not just choosing a tool.** This plan uses AI as a tutor, reviewer, and bounded helper while preserving the student's own implementation effort, retrieval, testing, and explanation."

@@ -204,6 +204,10 @@ topics:
         url: /SEBook/tools/networking.html
       - name: Data Management
         url: /SEBook/systems/data_management.html
+      - name: C Programming
+        url: /SEBook/tools/c.html
+      - name: C for C++ Programmers Tutorial
+        url: /SEBook/tools/c-tutorial.html
   - name: SE Gym
     icon: null
     url: /se-gym/

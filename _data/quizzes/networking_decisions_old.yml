@@ -168,7 +168,7 @@ questions:
       3: |
         The sensors are not sharing readings directly with every nurses’ station in the scenario. The
         central data server mediates access.
-    explanation: "**Client-server is correct — polling does not change the architecture.** The nurses' station (client) initiates every request; the central server responds. The 2-second interval is just polling frequency, not a P2P arrangement. The client always initiates; the server always only responds."
+    explanation: "**Client-server is correct — polling does not change the architecture.** The nurses' station (client) initiates each polling request; the central server responds with the latest sensor data. The 2-second interval is just polling frequency, not a P2P arrangement. A different design could add server-push, but the scenario described here is ordinary client-server polling."
 
   - id: 9
     difficulty: intermediate
@@ -191,9 +191,10 @@ questions:
         Fresh GPS readings replace old ones quickly. A missed coordinate is often less harmful than
         delaying the stream to recover it.
       2: |
-        A bank transfer must be recorded exactly once and acknowledged reliably. Transport loss or
-        reordering would be unacceptable at this boundary.
+        A bank-transfer request and acknowledgment need reliable, in-order delivery. The application still
+        needs transaction logic to prevent duplicate transfers, but the transport should not expose raw
+        loss or reordering.
       3: |
         Software package downloads need exact bytes. A single corrupted package byte can break
         installation or verification.
-    explanation: "**SSH** requires every keystroke and every line of output to arrive in order — a dropped character would produce a garbled or dangerous command. **Bank transfers** must not be lost or corrupted — a missing confirmation message could charge a customer without recording it. **`apt-get`** downloads binary packages where a single corrupted byte can break the installation. By contrast, **live GPS coordinates** are real-time positional data: a missed reading is harmless since the next one arrives a second later with a fresh position, making UDP the better fit."
+    explanation: "**SSH** requires every keystroke and every line of output to arrive in order — a dropped character would produce a garbled or dangerous command. **Bank-transfer requests** need reliable, ordered request and acknowledgment bytes, with application-level transaction logic layered on top. **`apt-get`** downloads binary packages where a single corrupted byte can break the installation. By contrast, **live GPS coordinates** are real-time positional data: a missed reading is harmless since the next one arrives a second later with a fresh position, making UDP the better fit."

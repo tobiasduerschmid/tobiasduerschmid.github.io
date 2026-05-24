@@ -233,7 +233,7 @@ questions:
   - id: 10
     difficulty: intermediate
     question: |
-      **[Technique Selection]** Match each task to the best collection:
+      Match each task to the best collection:
       - **A:** Track which students have submitted homework (no duplicates, O(1) lookup by name)
       - **B:** Map each student ID (int) to their final grade (double)
       - **C:** Maintain an ordered history of grade submissions (newest at the end, access by index)
@@ -425,7 +425,7 @@ questions:
   - id: 18
     difficulty: expert
     question: |
-      **[Interleaving: Interfaces + Collections + OOP]** You're designing a `Course` class. It needs:
+      You're designing a `Course` class. It needs:
       - A way for other classes to enroll/drop students without knowing the internal storage
       - Fast O(1) lookup for `isEnrolled(String name)`
       - No duplicate enrollments

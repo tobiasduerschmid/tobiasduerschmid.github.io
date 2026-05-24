@@ -365,7 +365,7 @@ steps:
             - "\"42\","
           explanation: "`%s` matches the string `\"xX_SlayerKing_Xx\"`, `%d` matches ints `42` and `100`, `%.1f` matches the double `42.0`, and `%%` is the printf escape that produces a single literal `%` in the output. The distractor `\"42\"` is wrong because `%d` expects an int, not a string."
 
-        - question: "**[Interleaved: Revisit Step 1]** Which of the following C++ features does NOT exist in C?"
+        - question: "Which of the following C++ features does NOT exist in C?"
           options:
             - "Pointers"
             - "Structs"
@@ -576,7 +576,7 @@ steps:
             - "char city[1000];"
           explanation: "Declare a buffer with a sensible bound (30 chars covers most real city names — bigger isn't always better; oversized buffers waste stack and don't fix the safety issue), prompt, read safely with `fgets` (which limits input to `sizeof(city) - 1` chars), strip the trailing newline that `fgets` includes, then print with the format the question asked for. `scanf(\"%s\")` and `gets()` are both unsafe — `gets` was removed from the C standard entirely because it cannot be used safely. `char city[1000]` would also work but it's not a *fix* — even a 1000-char buffer can be overflowed; the right defense is fgets-with-sizeof, not just larger buffers."
 
-        - question: "**[Interleaved: Revisit Step 2]** What does `printf(\"%05d\", 42)` print?"
+        - question: "What does `printf(\"%05d\", 42)` print?"
           options:
             - "   42 (3 spaces then 42)"
             - "00042"
@@ -916,7 +916,7 @@ steps:
             - "delete[] data;"
           explanation: "The sequence is: (1) allocate with `malloc`, (2) check for NULL, (3) use the memory, (4) print, (5) free. The distractors use C++ syntax (`new`/`delete[]`), which doesn't exist in C."
 
-        - question: "**[Interleaved: Revisit Step 3]** You write `scanf(\"%d\", age)` (without `&`). What happens?"
+        - question: "You write `scanf(\"%d\", age)` (without `&`). What happens?"
           options:
             - "scanf stores the value in age normally"
             - "Compile error — scanf requires a pointer"
@@ -1189,7 +1189,7 @@ steps:
             - "dest = src;"
           explanation: "Declare the buffer, define the source, copy safely with `strncpy` (reserving space for `\\0`), manually null-terminate, then print. `strcpy` has no size limit (unsafe). `dest = src` doesn't copy — it just changes the pointer (and is illegal for arrays)."
 
-        - question: "**[Interleaved: Revisit Step 4]** After `char *s = malloc(50);`, what is the content of the 50 bytes?"
+        - question: "After `char *s = malloc(50);`, what is the content of the 50 bytes?"
           options:
             - "All zeros"
             - "All null characters (\\0)"
@@ -1516,7 +1516,7 @@ steps:
             - "    return r.width * r.height;"
           explanation: "`typedef struct { ... } Rectangle;` defines the struct. The area function takes a `const` pointer (read-only) and uses `->` to access members through the pointer. `class` doesn't exist in C. `r.width` would be wrong because `r` is a pointer — you need `r->width`."
 
-        - question: "**[Interleaved: Revisit Step 5]** Why does `character_init` use `strncpy` instead of `strcpy` for the name?"
+        - question: "Why does `character_init` use `strncpy` instead of `strcpy` for the name?"
           options:
             - "strncpy is faster than strcpy"
             - "strncpy limits the number of characters copied, preventing buffer overflow if the name is too long"
@@ -1796,7 +1796,7 @@ steps:
             - "class Shape { virtual double area(); };"
           explanation: "First define the enum for shape types, then the tagged struct with an anonymous union containing either a `radius` or a `{w, h}` sub-struct. The `if` dispatches on the tag. The distractor uses C++ classes/virtual functions, which don't exist in C."
 
-        - question: "**[Interleaved: Revisit Step 5]** In the `TaggedValue` struct, the string member is `char s[32]`. If you assign `strncpy(v.s, \"hello\", sizeof(v.s))`, is the string safely null-terminated?"
+        - question: "In the `TaggedValue` struct, the string member is `char s[32]`. If you assign `strncpy(v.s, \"hello\", sizeof(v.s))`, is the string safely null-terminated?"
           options:
             - "Yes — strncpy always null-terminates"
             - "Yes — because \"hello\" is shorter than 32 chars, strncpy will null-terminate in this case"
@@ -2163,7 +2163,7 @@ steps:
             - "std::sort(words, words + 3);"
           explanation: "For an array of `char*` strings, `qsort` passes pointers to array elements — i.e., `char**` cast as `void*`. We cast back to `const char**` and dereference to get the `char*`, then compare with `strcmp`. The distractor `*(char*)a - *(char*)b` compares single characters, not full strings. `std::sort` is C++ only."
 
-        - question: "**[Interleaved: Revisit Step 6]** How do function pointers relate to structs in C?"
+        - question: "How do function pointers relate to structs in C?"
           options:
             - "Structs automatically generate function pointers for each field"
             - "You can store function pointers as struct members, simulating methods from C++"
@@ -2420,7 +2420,7 @@ steps:
             - "void double_array(int arr[100]) {"
           explanation: "The function must accept `len` as a parameter because `sizeof(arr)` would return 8 (pointer size) due to array decay. The distractor `sizeof(arr) / sizeof(arr[0])` is the classic bug this step teaches. `int arr[100]` in a parameter is misleading — it's still just a pointer."
 
-        - question: "**[Interleaved: Revisit Step 4]** After `free(p)`, what state is the pointer `p` in (using the pointer lifecycle model)?"
+        - question: "After `free(p)`, what state is the pointer `p` in (using the pointer lifecycle model)?"
           options:
             - "Null — free automatically sets pointers to NULL"
             - "Dead — the pointer still holds the old address, but the memory is no longer valid"
@@ -2730,7 +2730,7 @@ steps:
             - "fp.close();"
           explanation: "Open the file, check for NULL, declare buffer and counter, loop with `fgets` (which returns NULL at EOF), print each line with its number, then close. The distractor `while (!feof(fp))` is a classic C bug — `feof` only returns true *after* a read fails, causing the last line to be processed twice. `fp.close()` is C++/Java syntax — C uses `fclose(fp)`."
 
-        - question: "**[Interleaved: Revisit Step 3]** How is `fprintf(fp, \"%s\\n\", word)` related to `printf(\"%s\\n\", word)`?"
+        - question: "How is `fprintf(fp, \"%s\\n\", word)` related to `printf(\"%s\\n\", word)`?"
           options:
             - "They are completely different functions with different syntax"
             - "fprintf writes to a file (FILE*); printf writes to stdout. Otherwise identical format strings."
@@ -3111,7 +3111,7 @@ steps:
           explanation: "Allocate a new node, set its value, set its next to NULL (it's the new tail). Link it to the current tail with `tail->next = new_node`, then update the tail pointer. `new_node->next = tail` would create a circular reference (wrong direction). `head = new_node` would lose the rest of the list."
 
         - question: |
-            **[Evaluate]** Your `main()` keeps both a `head` and a `tail` pointer. A teammate proposes simplifying it to *only* a `head` pointer — every insertion would walk to the end of the list before linking the new node. For a list of *N* existing nodes, what's the cost of inserting *one* new node at the tail under each design?
+            Your `main()` keeps both a `head` and a `tail` pointer. A teammate proposes simplifying it to *only* a `head` pointer — every insertion would walk to the end of the list before linking the new node. For a list of *N* existing nodes, what's the cost of inserting *one* new node at the tail under each design?
           options:
             - "head+tail: O(1). head-only: O(1). Pointers are free, so the design choice doesn't matter."
             - "head+tail: O(1). head-only: O(N). Without a tail pointer, every insertion walks the entire list."
@@ -3124,7 +3124,7 @@ steps:
             3: "Linked lists don't have logarithmic access at all — that's balanced trees. Linked lists give you O(1) at the head and O(N) anywhere else."
           explanation: "With a tail pointer, each tail-insert is two pointer assignments — O(1). Without one, you walk the entire list to find the tail before linking — O(N) per insert, O(N²) for building a list of N nodes. This is the same cost analysis behind C++'s `std::list` (which also stores both endpoints) and Python's `collections.deque` (doubly-linked, both ends O(1))."
 
-        - question: "**[Final Integration]** Which of the following C features have you used in the linked list program? (Select all that apply)"
+        - question: "Which of the following C features have you used in the linked list program? (Select all that apply)"
           type: multiple
           options:
             - "Structs with typedef for the Node type"

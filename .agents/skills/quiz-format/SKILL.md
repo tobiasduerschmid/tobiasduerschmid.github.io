@@ -55,6 +55,16 @@ For tutorial quizzes the same block nests under each step's `quiz:` key inside `
 
 Parsons (code-ordering) questions use `lines:` and `distractors:` instead of `options:`. They do **not** support `option_feedback`. See `references/schema.md`.
 
+## No inline Bloom-level markers in question text
+
+**Do not embed Bloom's taxonomy level labels in `question:` text as bold bracket tags.** This pattern has been removed from this project and must not be reintroduced.
+
+Banned patterns — any `**[...]**` label in question or answer prose, including:
+- Pure Bloom levels: `**[Remember]**`, `**[Understand]**`, `**[Apply]**`, `**[Analyze]**`, `**[Evaluate]**`, `**[Create]**`
+- Compound and compound-activity forms: `**[Evaluate + Apply]**`, `**[Apply — debugging toolkit]**`, `**[Technique Selection]**`, `**[Interleaving: Async + Types]**`, etc.
+
+A `bloom:` YAML field on a question or flashcard card is fine — it is metadata used internally and is never shown to the learner. The `difficulty` field is the learner-facing level signal.
+
 ## When `option_feedback[i]` fires
 
 | Question type | Option `i` is in… | Student action | Feedback fires? |
@@ -168,6 +178,7 @@ Before merging a quiz file with new `option_feedback`:
 - [ ] **At least one distractor encodes the canonical novice misconception** for this concept (mutable defaults, `==` vs `is`, forgotten base case, `WHERE` vs `HAVING`, off-by-one). If none do, the question tests recall, not discrimination.
 - [ ] **Difficulty calibrated.** Target ~70–80% correct on first attempt for an in-tutorial gate (`min_score: 0.8` only works when items hit this band). For SEGym workout questions, 50–70% is appropriate (deliberate practice tolerates more failure). If you'd expect <40% correct, the prerequisite isn't in place — fix the tutorial, not the quiz.
 - [ ] For tutorial quizzes: `min_score:` set deliberately (default 0.8), or omitted if you accept the default.
+- [ ] **No inline Bloom-level markers.** No `**[Remember]**` / `**[Apply]**` / `**[Evaluate + Create]**` / `**[Technique Selection]**` bold bracket tags in `question:` or `answer:` prose. A `bloom:` YAML field is fine (it is not learner-facing).
 
 ## File pointers (project structure)
 

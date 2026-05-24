@@ -1,0 +1,235 @@
+title: "C Programming Flashcards"
+description: "Cards span Remember through Create. Mix of definition recall, code prediction, design-decision reasoning, and small code-writing problems for spaced retrieval practice."
+active: true
+cards:
+
+  - id: 1
+    difficulty: basic
+    question: |
+      What does `void* malloc(size_t size)` return on success, and what does it return when the OS cannot satisfy the request?
+    answer: |
+      On **success**, `malloc` returns a `void*` pointing to a freshly-allocated block of at least `size` bytes on the heap. The block's contents are *uninitialized* — they hold whatever bytes were last in that memory.
+
+      On **failure** (the OS cannot give you that many bytes), `malloc` returns `NULL`.
+
+      **You must check for `NULL` before dereferencing the result.** Forgetting this check turns an out-of-memory condition into a silent segfault, often far from the actual allocation site.
+
+  - id: 2
+    difficulty: basic
+    question: |
+      In C, what is `'\0'`? Distinguish it from `'0'` and explain why C strings need it.
+    answer: |
+      `'\0'` is the **null terminator** — the byte with ASCII value 0. It is *not* the digit `'0'`, which has ASCII value 48.
+
+      Every C string is a `char` array that ends with `'\0'`. Library functions in `<string.h>` (`strlen`, `strcpy`, `strcmp`, …) walk the array byte-by-byte until they hit the terminator — that's how they know where the string ends, because C strings carry no length metadata.
+
+      A `char` array without a terminator is *not* a string for these functions; they will read past the end of the array.
+
+  - id: 3
+    difficulty: basic
+    question: |
+      Why does C have no function overloading? Explain the design tradeoff.
+    answer: |
+      C does not mangle function names — every symbol in an object file is the literal name you wrote in the source. Overloading would require encoding parameter types into the symbol name (the C++ approach), which C explicitly avoids.
+
+      **The tradeoff:** C source code has to use distinct names like `printInt` / `printFloat` instead of two `print` overloads, but **C symbols are callable from any other language** because the symbol you wrote is the symbol the linker sees. This is the main reason almost every language has a clean foreign-function interface to C, but calling into C++ requires extra work to handle mangled names.
+
+  - id: 4
+    difficulty: basic
+    question: |
+      Explain the difference between `char` and `char*` in C.
+
+      ```c
+      char  c = 'A';
+      char* s = "Alice";
+      ```
+    answer: |
+      `char c = 'A'` is a **single byte** holding the ASCII value 65. It lives directly in the variable's storage.
+
+      `char* s = "Alice"` is a **pointer** holding the address of the first byte of the string literal `"Alice\0"` in read-only memory. The literal itself is 6 bytes (5 characters plus the null terminator); `s` holds an 8-byte address (on a 64-bit system).
+
+      Modifying `c` is fine — it's an ordinary local variable. Writing through `s` (e.g., `s[0] = 'B'`) is **undefined behavior** because string literals live in read-only memory.
+
+  - id: 5
+    difficulty: basic
+    question: |
+      Predict what this program prints:
+
+      ```c
+      #include <stdio.h>
+      int main(void) {
+          int   n = 42;
+          float f = 3.5;
+          printf("n=%d f=%.1f size=%zu\n", n, f, sizeof(n));
+          return 0;
+      }
+      ```
+    answer: |
+      Output: `n=42 f=3.5 size=4`
+
+      - `%d` formats the `int`.
+      - `%.1f` formats the `float` to 1 decimal place.
+      - `%zu` is the format specifier for `size_t` (the type `sizeof` returns); on most platforms `sizeof(int)` is 4.
+
+      **Negative-transfer trap from C++:** mismatched format specifiers (`%d` for a `float`, `%f` for an `int`) compile cleanly but produce garbage at runtime, because `printf` blindly trusts the format string. Always compile with `-Wall -Wformat` to catch this.
+
+  - id: 6
+    difficulty: intermediate
+    question: |
+      Write a C function `void swap(int* a, int* b)` that swaps the values pointed to by `a` and `b`, plus the call site that swaps two local variables `x` and `y`.
+    answer: |
+      ```c
+      void swap(int* a, int* b) {
+          int temp = *a;
+          *a = *b;
+          *b = temp;
+      }
+
+      int main(void) {
+          int x = 30, y = 40;
+          swap(&x, &y);
+          // x is now 40, y is now 30
+      }
+      ```
+
+      **Key points:**
+
+      - The function dereferences with `*a` to read or write the caller's `int`.
+      - The call site writes `&x`, `&y` — C has no pass-by-reference, so the *caller* has to take the address explicitly.
+      - The signature `swap(int*, int*)` advertises that the function may mutate both arguments. That advertisement is more explicit than C++'s `swap(int&, int&)`.
+
+  - id: 7
+    difficulty: intermediate
+    question: |
+      Allocate a flat `rows × cols` matrix of `int` on the heap, write the index expression for element `(i, j)` in row-major order, and free the allocation.
+    answer: |
+      ```c
+      int* matrix = malloc(rows * cols * sizeof(int));
+      if (matrix == NULL) {
+          fprintf(stderr, "out of memory\n");
+          return 1;
+      }
+
+      // Element (i, j) in row-major order:
+      matrix[i * cols + j] = 42;
+
+      free(matrix);
+      matrix = NULL;        // defensive — turns accidental reuse into a fast segfault
+      ```
+
+      `sizeof(int)` is needed because `malloc` takes a byte count, not an element count. Forgetting it (`malloc(rows * cols)`) would allocate only one byte per element, and the index expression would walk into unrelated memory.
+
+  - id: 8
+    difficulty: intermediate
+    question: |
+      What is the bug in this code, and what is the most likely runtime symptom?
+
+      ```c
+      char* greeting(void) {
+          char buf[64];
+          snprintf(buf, sizeof(buf), "Hello, world!");
+          return buf;
+      }
+      ```
+    answer: |
+      `buf` is a **stack-allocated** local array. When `greeting` returns, that stack frame is reclaimed; the pointer the caller receives points into memory the runtime may reuse for the next function call.
+
+      **Symptom:** Often the call site prints the right string on the first read (because no other function has reused that stack space yet), then garbage after the next function call clobbers the buffer. This is the classic "returns-pointer-to-stack" bug — and because the first read often works, it can ship for months before manifesting under load.
+
+      **Fix options:**
+
+      1. Allocate on the heap: `char* buf = malloc(64); ...; return buf;` — caller must `free`.
+      2. Have the caller pass a buffer: `void greeting(char* buf, size_t n);`.
+      3. Return a pointer to a `static` buffer — works but is not thread-safe.
+
+  - id: 9
+    difficulty: intermediate
+    question: |
+      What is the role of libc, and how does it relate to operating-system system calls?
+    answer: |
+      libc is the C standard library. It provides a **portable API** (`fopen`, `malloc`, `printf`, `strlen`, …) that your C program calls.
+
+      Inside libc, those functions ultimately invoke **system calls** — privileged operations the kernel performs on behalf of user-space programs. The system-call ABI is different on every operating system (the `open` syscall on Linux takes different arguments than the equivalent on Windows).
+
+      libc papers over those differences. The result: your `fopen` call compiles into different machine code on Linux vs. macOS vs. Windows, but your *source* is identical. libc is the layer that makes C source portable across operating systems.
+
+  - id: 10
+    difficulty: intermediate
+    question: |
+      Walk through what happens at runtime when this code executes:
+
+      ```c
+      int* p = malloc(sizeof(int));
+      *p = 7;
+      free(p);
+      free(p);
+      ```
+    answer: |
+      Line 1 allocates 4 bytes on the heap; `p` holds its address.
+
+      Line 2 writes 7 into that block.
+
+      Line 3 (`free(p)`) returns the block to the allocator. **The allocator marks it free; the pointer variable `p` still holds the old address.**
+
+      Line 4 is a **double-free** — undefined behavior. Concretely:
+
+      - If the allocator has not yet reused that block, it sees a freed entry being freed again and corrupts its internal bookkeeping. The next `malloc` may return the same address to two callers, or may crash inside the allocator.
+      - If the block has already been re-allocated to another caller, this `free` returns *their* memory to the allocator. They will eventually write through a freed pointer.
+
+      **Defensive habit:** `free(p); p = NULL;` makes a subsequent `free(p)` a no-op (the standard guarantees `free(NULL)` does nothing).
+
+  - id: 11
+    difficulty: advanced
+    question: |
+      Name two distinct production scenarios where you would deliberately choose C over C++, and explain *why* each scenario favors C.
+    answer: |
+      **1. Aerospace / medical / safety-critical firmware.** NASA's coding rules restrict flight software to a subset that excludes exceptions and most polymorphism, because hidden control-flow edges (every `try` block, every virtual call) make it harder for automated verification tools to prove the program meets its specification. C's smaller, more predictable control-flow graph buys you analyzability.
+
+      **2. Cross-language library.** If you write a high-performance routine that callers in Python, Java, Rust, and Go all need to use, exposing a C ABI is the lingua franca. C symbols are unmangled, so every language's foreign-function interface can bind to them directly. A C++ library forces every caller to deal with mangled names, ABI versions, and runtime initialization.
+
+      Either reason can justify the discipline cost of manual memory management.
+
+  - id: 12
+    difficulty: advanced
+    question: |
+      Almost every major language (Python, Java, C#, Rust, Go, Ruby) supports calling into a C library. **Browser JavaScript** does not — and this is not an accident. What is the design rationale?
+    answer: |
+      Browser JavaScript runs inside a **security sandbox** that prevents pages from touching your filesystem, hardware, or arbitrary memory. C has *unrestricted* access to all of those.
+
+      If browser JavaScript could call native C functions on your machine, a malicious page could read your private files, drive attached devices, or execute arbitrary code — the entire sandbox guarantee would evaporate.
+
+      **The modern workaround is WebAssembly**: you compile C source to Wasm bytecode, which the browser runs in *the same sandbox* as JavaScript. Wasm has no syscall access by default — it can only see what the page explicitly hands it. You keep the performance of C without breaking the browser's security model.
+
+  - id: 13
+    difficulty: advanced
+    question: |
+      Design a C `struct` for a singly-linked-list node that stores an `int` value. Then write the prototype for a function `list_prepend` that takes the current head and an `int`, and returns the new head.
+    answer: |
+      ```c
+      struct list_node {
+          int value;
+          struct list_node* next;   // self-referential pointer; NULL marks end
+      };
+
+      // Returns a new head whose `next` is the old head; caller owns the returned pointer.
+      struct list_node* list_prepend(struct list_node* head, int value);
+      ```
+
+      **Design choices worth naming:**
+
+      - The `next` field must come *after* `value` of any type, because the compiler needs every prior field's size to compute offsets. (Self-referential pointers are fine because pointer size is fixed.)
+      - The function returns a new head rather than mutating in place — this lets the caller chain prepends and handle an empty list (`head == NULL`) uniformly.
+      - The doc comment names ownership: the caller must eventually walk the list and `free` each node.
+
+  - id: 14
+    difficulty: advanced
+    question: |
+      Compare **static** and **dynamic** linking on three axes: when linking happens, what gets shipped, and the consequence for security updates.
+    answer: |
+      | Axis | Static linking | Dynamic linking |
+      |---|---|---|
+      | **When** | At build time | At program-start time (or lazily, on first call) |
+      | **Ships** | One self-contained executable with library code copied in | Executable + separate `.so` / `.dll` files the OS resolves at load time |
+      | **Security update** | Every program statically linked against the buggy library must be **re-linked and re-shipped** | One library file replaced; **every** dynamically-linked program picks up the fix on next start |
+
+      **The tradeoff in one sentence:** static linking maximizes portability and run-time predictability at the cost of binary size and update agility; dynamic linking does the reverse. Embedded firmware tends toward static; OS distributions tend toward dynamic.

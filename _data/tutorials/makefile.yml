@@ -616,7 +616,7 @@ steps:
             3: "Within a rule, target and prerequisites have distinct roles separated by the colon. Calling 'the whole line' the target loses that structure."
           explanation: "Even when using variables like `$(OBJS)`, the basic Rule structure remains `target: prerequisites`. Everything to the left of the colon is the target (what you want to build)."
 
-        - question: "**[Interleaved: Revisit Step 1]** What is the core problem that Make solves compared to running a manual `gcc` command on all files?"
+        - question: "What is the core problem that Make solves compared to running a manual `gcc` command on all files?"
           options:
             - "Make automatically fixes syntax errors"
             - "Make recompiles every file in parallel by default"
@@ -877,7 +877,7 @@ steps:
           explanation: "The 'missing separator' error is Make's cryptic way of saying it found spaces where it expected a Tab. This remains the #1 cause of build failures, even in advanced professional Makefiles."
 
         - question: |
-            **[Interleaved: Revisit Step 2]** Pattern rules use the same `target: prerequisites` structure you learned in Step 2. In the rule below, identify the **target**, the **prerequisites**, and the **recipe**:
+            Pattern rules use the same `target: prerequisites` structure you learned in Step 2. In the rule below, identify the **target**, the **prerequisites**, and the **recipe**:
 
             ```make
             %.o: %.c %.h
@@ -1241,7 +1241,7 @@ steps:
             3: "You can do this — and you'll need to occasionally — but `--trace` automates the reasoning Make is already doing internally. Cheaper than reasoning by hand."
           explanation: "`make --trace` runs the build *and* prints the prerequisite that triggered each recipe (e.g. `target 'app' is older than prerequisite 'math.o'`). When `-n` shows you something surprising, escalate to `--trace` to get the causal reason."
 
-        - question: "**[Interleaved: Revisit Step 3]** What is the correct syntax to reference a variable named `CC` inside a Makefile recipe?"
+        - question: "What is the correct syntax to reference a variable named `CC` inside a Makefile recipe?"
           options:
             - "`${CC}`"
             - "`$(CC)`"
@@ -1517,7 +1517,7 @@ steps:
             3: "They absolutely can be combined. The whole point of one `.PHONY:` line is that you can list all phony targets at once."
           explanation: "The conventional form is `.PHONY: clean test install` — space-separated, single line. As you add more phony targets (`run`, `lint`, `docs`, `format`...), you extend that one line rather than adding new declarations."
 
-        - question: "**[Interleaved: Revisit Step 4]** In the pattern rule `%.o: %.c`, which automatic variable expands to the **target** (the `.o` file)?"
+        - question: "In the pattern rule `%.o: %.c`, which automatic variable expands to the **target** (the `.o` file)?"
           options:
             - "`$<`"
             - "`$^`"
@@ -1689,7 +1689,7 @@ steps:
       shuffle: true
       questions:
         - question: |
-            **[Synthesis — Steps 3 + 4]** Your final Makefile uses `OBJS = main.o math.o io.o` and the pattern rule `%.o: %.c`. A teammate adds a new source file `parser.c` to the project. What is the **minimal** change to integrate it into the build?
+            Your final Makefile uses `OBJS = main.o math.o io.o` and the pattern rule `%.o: %.c`. A teammate adds a new source file `parser.c` to the project. What is the **minimal** change to integrate it into the build?
           options:
             - "Add `parser.o` to the `OBJS` line — the pattern rule handles the rest"
             - "Write a new explicit `parser.o: parser.c` rule and add it to OBJS"
@@ -1703,7 +1703,7 @@ steps:
           explanation: "Add `parser.o` to `OBJS` — that's it. The pattern rule `%.o: %.c` handles compilation, the `app:` rule sees `parser.o` as a prerequisite via `$(OBJS)`, and the automatic variable `$^` feeds it to the linker. This is what scalability looks like — the design from Step 4 pays off here."
 
         - question: |
-            **[Step 5 + Step 6]** A teammate writes `app: clean $(OBJS)` so that `make app` always starts fresh. What goes wrong?
+            A teammate writes `app: clean $(OBJS)` so that `make app` always starts fresh. What goes wrong?
           options:
             - "Nothing — this is a smart way to ensure clean builds"
             - "`app` will be re-linked on every single `make` invocation, even when nothing changed — the incremental-build benefit is gone"
@@ -1717,7 +1717,7 @@ steps:
           explanation: "Phony targets (Step 6) are *never* considered up-to-date. A real target depending on a phony one inherits that property — so `app` is always considered stale, and Make re-links every time. This silently destroys the incremental-build property from Step 5. The right pattern: keep `clean` separate, run `make clean && make` when you actually want a fresh build."
 
         - question: |
-            **[Step 2 + Step 4]** You write the following pattern rule and run `make`:
+            You write the following pattern rule and run `make`:
 
             ```make
             %.o: %.c
@@ -1738,7 +1738,7 @@ steps:
           explanation: "Pattern rules don't escape the Tab Trap. Make's parser identifies recipe lines by a literal Tab byte at column 0 — applies to every rule, simple or pattern, every time. The fix is the same as Step 2: replace the leading spaces with a Tab. Most editors silently auto-convert, which is why this trap stays dangerous even for advanced authors."
 
         - question: |
-            **[Step 5 footgun]** Your project uses the final Makefile. You edit `math.h` (a header included by `main.c` and `math.c`) but don't touch any `.c` file. You run `make`. What happens?
+            Your project uses the final Makefile. You edit `math.h` (a header included by `main.c` and `math.c`) but don't touch any `.c` file. You run `make`. What happens?
           options:
             - "Make rebuilds `main.o` and `math.o` because they include `math.h`"
             - "Make says `'app' is up to date` and skips everything — even though the header changed"
@@ -1752,7 +1752,7 @@ steps:
           explanation: "This is the silent footgun from the Step 5 `<details>` callout. The Makefile only knows what you wrote on the prerequisites line — `main.o: main.c` doesn't mention `math.h`. So Make happily reports 'up to date' while your `.o` files are now built against a stale header. Real-world fix: `gcc -MMD` to auto-emit `.d` dependency files (Step 5 callout). Cultural fix: always run `make clean && make` after pulling header changes from a teammate."
 
         - question: |
-            **[Analyze]** Your Makefile builds successfully under `make -j1` (serial), but `make -j8 --shuffle=random` sometimes fails with errors like `gcc: error: main.o: No such file or directory`. What's the most likely cause?
+            Your Makefile builds successfully under `make -j1` (serial), but `make -j8 --shuffle=random` sometimes fails with errors like `gcc: error: main.o: No such file or directory`. What's the most likely cause?
           options:
             - "Make has a known race condition with `-j` greater than 4"
             - "`--shuffle` is broken in newer versions of Make and produces nondeterministic results"
@@ -1766,7 +1766,7 @@ steps:
           explanation: "When prerequisites are missing, the build *appears* to work in serial mode because Make happens to process targets in source order — which is often correct by accident. `--shuffle=random` randomizes the order, so any unlucky permutation surfaces the missing prerequisite. The fix is *not* to avoid `--shuffle` — it's to declare every prerequisite your recipes actually need. Real CI pipelines run with shuffle exactly to catch these bugs before merge."
 
         - question: |
-            **[Apply — debugging toolkit]** You wrote `$(CFLAS)` (typo: missing `G`) instead of `$(CFLAGS)` somewhere in your Makefile. The build still runs but flags like `-Wall` are silently dropped. Which flag would catch this typo?
+            You wrote `$(CFLAS)` (typo: missing `G`) instead of `$(CFLAGS)` somewhere in your Makefile. The build still runs but flags like `-Wall` are silently dropped. Which flag would catch this typo?
           options:
             - "`make -n`"
             - "`make --warn-undefined-variables`"
@@ -1780,7 +1780,7 @@ steps:
           explanation: "`make --warn-undefined-variables` makes Make warn whenever you reference a variable that hasn't been defined. It's noisy by default (since Make's built-in rules reference many implicit variables), so you usually grep for warnings in *your own* code. But for hunting a stubborn typo bug, it's gold."
 
         - question: |
-            **[Create — Parsons synthesis]** Reconstruct the final Makefile in correct order. The result should compile a 3-file C project (`main.c`, `math.c`, `io.c`) into `app` with incremental builds, a `clean` target, and a `run` phony target. (Recipe lines have a literal Tab character — represented here as `\\t` for clarity.)
+            Reconstruct the final Makefile in correct order. The result should compile a 3-file C project (`main.c`, `math.c`, `io.c`) into `app` with incremental builds, a `clean` target, and a `run` phony target. (Recipe lines have a literal Tab character — represented here as `\\t` for clarity.)
           type: parsons
           lines:
             - "CC = gcc"

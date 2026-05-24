@@ -35,8 +35,8 @@ cards:
   - id: 6
     difficulty: advanced
     question: "How is **REST** an example of an architectural-style overlay?"
-    answer: "REST is a deliberately engineered composite of three styles, all bound by a uniform-interface constraint: **Client-Server** (asymmetric separation of user agent and origin server), **Layered** (transparent intermediaries — proxies, caches, CDNs — between client and server), and **Mobile Code** (server can extend the client with downloaded scripts, e.g., HTML + JS)."
-    explanation: "Fielding's PhD thesis was a deliberate design exercise: pick constraints from existing styles that produce the desired emergent properties (cacheability, scalability, evolvability, intermediary transparency). REST is not 'just client-server' — it is a carefully composed multi-style overlay."
+    answer: "REST is a deliberately engineered composite bound by a uniform-interface constraint: **Client-Server** (asymmetric separation of user agent and origin server), **Layered** (transparent intermediaries — proxies, caches, CDNs — between client and server), and optional **Code-on-Demand / Mobile Code** (server can extend the client with downloaded scripts, e.g., HTML + JS)."
+    explanation: "Fielding's PhD thesis was a deliberate design exercise: pick constraints from existing styles that produce the desired emergent properties (cacheability, scalability, evolvability, intermediary transparency). REST is not 'just client-server' — it is a carefully composed multi-style overlay. Code-on-Demand is optional, so many REST APIs omit it while still satisfying the core REST constraints."
 
   - id: 7
     difficulty: intermediate

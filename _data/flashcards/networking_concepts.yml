@@ -4,8 +4,8 @@ active: true
 cards:
   - id: 1
     difficulty: basic
-    question: "What are the two roles in a **client-server architecture**, and who initiates the connection?"
-    answer: "The **client** consumes resources and always **initiates** the connection. The **server** provides resources and passively listens for incoming requests. Multiple clients can connect to the same server simultaneously."
+    question: "What are the two roles in a **client-server architecture**, and who initiates contact in the basic request-response model?"
+    answer: "The **client** consumes resources and initiates contact in the basic request-response model. The **server** provides resources, listens for incoming requests, and responds. Multiple clients can connect to the same server simultaneously; server-initiated updates require an established channel or an extra mechanism such as WebSockets, server-sent events, or push notifications."
 
   - id: 2
     difficulty: basic
@@ -40,7 +40,7 @@ cards:
   - id: 8
     difficulty: advanced
     question: "How does TCP guarantee reliable delivery during data transfer?"
-    answer: "TCP sends data in **ordered** segments with **checksums** for error detection. The receiver sends **ACKs** to confirm receipt (a single ACK can cover multiple segments). If the sender doesn't receive an ACK within a **timeout**, it **retransmits** the missing data. This guarantees delivery, order, and integrity — at the cost of additional overhead."
+    answer: "TCP sends data in **ordered** segments with **checksums** for error detection. The receiver sends **ACKs** to confirm receipt (a single ACK can cover multiple segments). If the sender doesn't receive an ACK within a **timeout**, it **retransmits** the missing data. This provides reliable, in-order byte-stream delivery while the connection remains usable; applications still need their own checks for end-to-end business invariants."
 
   - id: 10
     difficulty: basic
@@ -65,4 +65,4 @@ cards:
   - id: 14
     difficulty: basic
     question: "What does **HTTPS** add on top of HTTP, and why is it important?"
-    answer: "HTTPS adds **SSL/TLS encryption** to HTTP. It protects sensitive data (passwords, personal info) from being intercepted in transit. It has become the **default for all public web pages**, even those without sensitive data, because it also prevents tampering and ensures you're talking to the real server."
+    answer: "HTTPS adds **TLS encryption, integrity protection, and server authentication** to HTTP. It protects sensitive data (passwords, personal info) from being read or modified in transit. Modern web guidance is to serve public pages and subresources over HTTPS, even when the page itself is not collecting sensitive data."

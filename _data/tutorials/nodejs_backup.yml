@@ -951,7 +951,7 @@ steps:
             - "const sum = grades.reduce((acc, g) => acc + g);"
           explanation: "`.map()` with destructuring extracts just the grades. `.reduce()` sums them — the `0` initial value is critical (the distractor without it throws on empty arrays). `.filter()` selects elements, not transforms — wrong method for extracting grades."
 
-        - question: "**[Spaced Practice: Revisit Step 3]** A student writes `numbers.filter(isEven)` where `isEven` is a function. Why does this work without calling `isEven()` with parentheses?"
+        - question: "A student writes `numbers.filter(isEven)` where `isEven` is a function. Why does this work without calling `isEven()` with parentheses?"
           options:
             - "JavaScript automatically adds the parentheses at runtime"
             - "`isEven` without parentheses is a **reference to the function** — `.filter()` will call it for each element. Adding `()` would call it immediately and pass the *return value* instead"
@@ -960,7 +960,7 @@ steps:
           correct_index: 1
           explanation: "Functions are first-class values. `isEven` is the function itself; `isEven()` is the result of calling it. `.filter(isEven)` says 'here is a function — you call it.' `.filter(isEven())` says 'call isEven now and pass whatever it returns.' This distinction is fundamental to callbacks."
 
-        - question: "**[Spaced Practice: Revisit Step 2]** A function receives a user ID from a form field. The code uses `if (userId == 42)` to check for the admin. The ID arrives as the string `'42'`. Will this check correctly identify the admin? Should you keep it as-is?"
+        - question: "A function receives a user ID from a form field. The code uses `if (userId == 42)` to check for the admin. The ID arrives as the string `'42'`. Will this check correctly identify the admin? Should you keep it as-is?"
           options:
             - "Yes, it works and is safe to keep — the comparison correctly identifies the admin"
             - "Yes, it works due to type coercion, but you should change it to `===` and explicitly convert the ID to a number — relying on coercion hides a fragile assumption"
@@ -1137,7 +1137,7 @@ steps:
           explanation: "The Event Loop has exactly one job: check if the Call Stack is empty, and if so, dequeue the next callback from the Task Queue and push it onto the stack. It never interrupts mid-execution — run-to-completion is guaranteed in JavaScript. This is why a blocked call stack prevents ALL other work."
 
         - question: |
-            **[Technique Selection — Interleaving]** You are building a Discord bot. For each of these tasks, which array method is the best fit?
+            You are building a Discord bot. For each of these tasks, which array method is the best fit?
             - Task A: Get only the messages from a specific channel
             - Task B: Convert each message object into a display string
             - Task C: Count the total character length of all messages
@@ -1159,7 +1159,7 @@ steps:
           correct_index: 1
           explanation: "Node.js handles thousands of concurrent connections using a SINGLE thread. If that thread is occupied with a slow synchronous operation, no other request can be processed until it finishes. Under load, this is catastrophic. This is why Node.js best practices mandate non-blocking I/O."
 
-        - question: "**[Spaced Practice: Revisit Step 3]** Why does Node.js use callbacks (functions passed as arguments) for async I/O — rather than making file reads and network requests synchronous?"
+        - question: "Why does Node.js use callbacks (functions passed as arguments) for async I/O — rather than making file reads and network requests synchronous?"
           options:
             - "Callbacks are faster to type and produce more readable code than synchronous alternatives like `readFileSync()`"
             - "A synchronous read would block the Chef until I/O completes — a callback lets the Chef serve other orders while the oven runs"
@@ -1168,7 +1168,7 @@ steps:
           correct_index: 1
           explanation: "A synchronous file read would block the entire application — the Chef stares at the oven. A callback lets Node.js say: 'Start reading the file; call this function when done.' The call stack is free to handle other requests while the OS performs the actual I/O. This is the fundamental design that makes Node.js efficient."
 
-        - question: "**[Spaced Practice: Revisit Step 2]** A config file returns the string `'true'` (not the boolean `true`). A developer writes `if (value == true)`. Does this work?"
+        - question: "A config file returns the string `'true'` (not the boolean `true`). A developer writes `if (value == true)`. Does this work?"
           options:
             - "Yes — `==` coerces `'true'` to the boolean `true`, so the check passes correctly"
             - "Yes — strings and booleans are interchangeable in JavaScript's type system"
@@ -1448,7 +1448,7 @@ steps:
           correct_index: 1
           explanation: "An unhandled Promise rejection in an async function behaves like an uncaught exception. In modern Node.js (v15+), this crashes the process by default. Always wrap `await` calls in `try`/`catch` — just like you would use `try`/`catch` in C++ or `try`/`except` in Python for operations that can fail."
 
-        - question: "**[Spaced Practice: Revisit Step 5]** What is the output order?\n```javascript\nasync function demo() {\n    console.log('A');\n    await new Promise(r => setTimeout(r, 0));\n    console.log('B');\n}\ndemo();\nconsole.log('C');\n```"
+        - question: "What is the output order?\n```javascript\nasync function demo() {\n    console.log('A');\n    await new Promise(r => setTimeout(r, 0));\n    console.log('B');\n}\ndemo();\nconsole.log('C');\n```"
           options:
             - "A, B, C"
             - "A, C, B"
@@ -1457,7 +1457,7 @@ steps:
           correct_index: 1
           explanation: "'A' prints synchronously. Then `await` suspends `demo()` and frees the call stack. 'C' prints (it is synchronous code after the `demo()` call). When the Promise resolves, 'B' prints. This is the same Event Loop principle from Step 4: synchronous code always completes before callbacks/continuations fire."
 
-        - question: "**[Spaced Practice: Revisit Step 3]** In the Promise constructor `new Promise((resolve, reject) => { ... })`, what are `resolve` and `reject`?"
+        - question: "In the Promise constructor `new Promise((resolve, reject) => { ... })`, what are `resolve` and `reject`?"
           options:
             - "Global variables provided by Node.js for error handling"
             - "Callbacks — functions passed as arguments that you call to signal success or failure"
@@ -1466,7 +1466,7 @@ steps:
           correct_index: 1
           explanation: "`resolve` and `reject` are callbacks — the same pattern you learned in Step 3. The Promise machinery passes these functions to you as arguments. You call `resolve(value)` when the work succeeds and `reject(error)` when it fails. Promises are built on top of callbacks, not a replacement for the concept."
 
-        - question: "**[Spaced Practice: Revisit Step 1]** A teammate says: 'Node.js is multi-threaded — that is how it handles thousands of connections at once.' What is wrong with this claim?"
+        - question: "A teammate says: 'Node.js is multi-threaded — that is how it handles thousands of connections at once.' What is wrong with this claim?"
           options:
             - "Nothing — Node.js does use multiple threads, one per connection, managed by libuv"
             - "Node.js is single-threaded. It handles concurrency via the Event Loop and non-blocking I/O, not by spawning a thread per connection"
@@ -1728,7 +1728,7 @@ steps:
           explanation: "Two bugs: (1) `.reduce((sum, g) => sum + g)` with no initial value throws on empty arrays — always pass `0` as the second argument. (2) Dividing by `grades.length` (all grades) instead of the filtered array's length gives the wrong average. Also, `==` should be `===` for strict comparison (Step 2)."
 
         - question: |
-            **[Spaced Practice: Revisit Step 5]** In the capstone, `fetchRoster()` and `fetchGrades()` both use `setTimeout` with 50ms. If you `await fetchRoster()` first (line A) then `await fetchGrades()` (line B), what is the minimum total wait time?
+            In the capstone, `fetchRoster()` and `fetchGrades()` both use `setTimeout` with 50ms. If you `await fetchRoster()` first (line A) then `await fetchGrades()` (line B), what is the minimum total wait time?
           type: single
           options:
             - "~50ms — both timers run concurrently on the Event Loop"
@@ -1739,7 +1739,7 @@ steps:
           explanation: "When you `await` sequentially, the second call does not execute until the first Promise resolves. The first timer fires after ~50ms, then the second starts and fires after another ~50ms — total ~100ms. This is why `Promise.all` matters: it starts both timers at the same time."
 
         - question: |
-            **[Technique Selection — Interleaving]** A Spotify-like app needs to: (1) fetch a user's playlists, (2) for each playlist, fetch its tracks, (3) display all track names. Which combination of array methods and async patterns is most appropriate?
+            A Spotify-like app needs to: (1) fetch a user's playlists, (2) for each playlist, fetch its tracks, (3) display all track names. Which combination of array methods and async patterns is most appropriate?
           type: single
           options:
             - "`.filter()` to select playlists, then `await` each track fetch sequentially"
@@ -1749,7 +1749,7 @@ steps:
           correct_index: 1
           explanation: "`.map()` transforms each playlist into a Promise (the fetch call). `Promise.all()` fires all fetches concurrently — much faster than sequential `await`. `.flat()` merges the nested arrays of tracks into one list. This combines Step 4 (`.map()`), Step 6 (`Promise.all`), and Step 5 (Event Loop concurrency)."
 
-        - question: "**[Spaced Practice: Revisit Step 6]** A `try`/`catch` block wraps an `await` call, but the developer forgot to add `async` to the function declaration. What happens?"
+        - question: "A `try`/`catch` block wraps an `await` call, but the developer forgot to add `async` to the function declaration. What happens?"
           options:
             - "The code works fine — `async` is optional when using `await` inside `try`/`catch`"
             - "`await` is only valid inside `async` functions. Without `async`, JavaScript throws a SyntaxError before the code even runs"

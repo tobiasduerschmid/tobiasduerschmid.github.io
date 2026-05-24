@@ -346,7 +346,7 @@ steps:
           correct_index: 2
           explanation: "An **untracked** file is one Git has never been told to follow. It shows up in red under 'Untracked files'. Once you run `git add`, it moves to the staging area and Git begins tracking it."
 
-        - question: "**[Interleaved: Revisit Step 1]** You run `git add hero_registry.py` in a freshly created directory and get: `fatal: not a git repository (or any of the parent directories): .git`. What is the root cause, and what is the fix?"
+        - question: "You run `git add hero_registry.py` in a freshly created directory and get: `fatal: not a git repository (or any of the parent directories): .git`. What is the root cause, and what is the fix?"
           options:
             - "The file `hero_registry.py` doesn't exist yet — create it first, then re-run `git add`"
             - "The `.git` directory is missing — the folder was never initialized as a repository; run `git init` first"
@@ -534,7 +534,7 @@ steps:
           correct_index: 2
           explanation: "`git diff` (with no arguments) compares your **working directory** to the **staging area**. Since nothing is staged yet, the staging area still matches the last commit, so you see all your unstaged modifications."
 
-        - question: "**[Interleaved: Revisit Step 2]** If you run `git commit` without running `git add` first on a new file, what happens?"
+        - question: "If you run `git commit` without running `git add` first on a new file, what happens?"
           options:
             - "Git automatically adds the file and commits it"
             - "Git ignores the new file and nothing is committed"
@@ -543,7 +543,7 @@ steps:
           correct_index: 1
           explanation: "Git only commits what is currently in the **staging area**. New files must be explicitly added with `git add` to be included in a commit snapshot."
 
-        - question: "**[Interleaved: Revisit Step 1]** You accidentally delete the `.git/` folder from your project. What is the consequence?"
+        - question: "You accidentally delete the `.git/` folder from your project. What is the consequence?"
           options:
             - "Nothing — Git stores history on a remote server by default"
             - "Only the latest commit is lost; older history is preserved in the working directory"
@@ -760,7 +760,7 @@ steps:
           correct_index: 1
           explanation: "Naming the file explicitly (`git add test_main.py`) stages only that file. `git add .` and `git add --all` would stage everything, making it impossible to create a focused commit."
 
-        - question: "**[Interleaved: Revisit Step 3]** You edited a tracked file but have NOT staged it yet. What does `git diff` (with no arguments) compare?"
+        - question: "You edited a tracked file but have NOT staged it yet. What does `git diff` (with no arguments) compare?"
           options:
             - "Your working directory to the remote repository"
             - "Your working directory to the staging area"
@@ -769,7 +769,7 @@ steps:
           correct_index: 1
           explanation: "As we practiced in Step 3, `git diff` compares your **working directory** to the **staging area**. Since nothing new is staged, the staging area still matches the last commit — so you see all your unstaged modifications."
 
-        - question: "**[Interleaved: Revisit Step 2]** A teammate always runs `git add .` before every commit, saying 'it's simpler.' What is the most significant hidden risk of this habit?"
+        - question: "A teammate always runs `git add .` before every commit, saying 'it's simpler.' What is the most significant hidden risk of this habit?"
           options:
             - "No risk — `git add .` is exactly equivalent to staging files by name"
             - "It can accidentally stage debug files, secrets, or half-finished work alongside your real changes — and once committed, those changes are permanently in history"
@@ -940,7 +940,7 @@ steps:
             3: "`git rm --cached` removes the file from Git's tracking entirely (and stages a deletion), as if you had never added it. That's a different operation — used for files that should never have been tracked (like `.env`), not for routine unstaging."
           explanation: "`git restore --staged <file>` unstages the file — it moves it off the post editor back to the working directory. Your edits are **preserved**. Without `--staged`, `git restore` would discard the edits entirely."
 
-        - question: "**[Interleaved: Revisit Step 2]** You edited `main.py`, `test_main.py`, and `debug.log` in one sitting. Your next commit should contain only the test file. Which Git feature makes this possible without reverting the other edits?"
+        - question: "You edited `main.py`, `test_main.py`, and `debug.log` in one sitting. Your next commit should contain only the test file. Which Git feature makes this possible without reverting the other edits?"
           options:
             - "The working directory — Git automatically excludes non-source files"
             - "The staging area — you `git add` only `test_main.py`, leaving the others untouched in the working directory"
@@ -1185,7 +1185,7 @@ steps:
           correct_index: 1
           explanation: "`.gitignore` tells Git to **pretend matching files don't exist** for tracking purposes. The files remain on disk — they simply won't appear in `git status` as untracked, and `git add .` won't stage them."
 
-        - question: "**[Interleaved: Revisit Steps 4–5]** You ran `git add .` and accidentally staged `app.py`, `style.css`, AND `secrets.env`. You only want `app.py` in this commit. What is the correct recovery sequence?"
+        - question: "You ran `git add .` and accidentally staged `app.py`, `style.css`, AND `secrets.env`. You only want `app.py` in this commit. What is the correct recovery sequence?"
           options:
             - "`git restore secrets.env` then `git restore style.css` — removes both files from staging and discards their edits"
             - "`git restore --staged secrets.env` then `git restore --staged style.css` — unstages both files while keeping their working-directory edits intact"
@@ -1194,7 +1194,7 @@ steps:
           correct_index: 1
           explanation: "`git restore --staged <file>` is the surgical undo for `git add`: it moves a file off the staging area without touching your working-directory edits. After running it for both unwanted files, only `app.py` remains staged — ready for a clean, focused commit. `git restore` (without `--staged`) would permanently discard the edits, which is not what you want here."
 
-        - question: "**[Interleaved: Revisit Step 1]** Is a Git commit better described as a 'backup diff' or a 'permanent snapshot'?"
+        - question: "Is a Git commit better described as a 'backup diff' or a 'permanent snapshot'?"
           options:
             - "A backup diff — it only stores what changed since the last version"
             - "A permanent snapshot — Git stores a complete picture of your project at that moment"
@@ -1371,7 +1371,7 @@ steps:
             3: "`HEAD~N` walks the parent chain *backwards* (HEAD → parent → grandparent), not a numeric index into log output. The numbering is by ancestry, not by display order — they coincide for linear history but diverge after merges."
           explanation: "`HEAD` points to the latest commit. `HEAD~1` is one commit before it, `HEAD~2` is two commits back, and so on. This relative notation lets you reference commits without copying their hash."
 
-        - question: "**[Interleaved: Revisit Step 5]** You staged `config.py` and `app.py`. You then realize `config.py` contains a half-finished change that shouldn't be in this commit. You want to keep your edits to `config.py` in the working directory. What do you run?"
+        - question: "You staged `config.py` and `app.py`. You then realize `config.py` contains a half-finished change that shouldn't be in this commit. You want to keep your edits to `config.py` in the working directory. What do you run?"
           options:
             - "`git restore config.py` — discards the edits and unstages"
             - "`git restore --staged config.py` — moves config.py off the staging area while keeping your edits"
@@ -1581,7 +1581,7 @@ steps:
           correct_index: 1
           explanation: "`git reset --hard` is the nuclear option: it wipes everything — both the changes you wanted to discard AND any in-progress work you wanted to keep. The targeted approach (`restore --staged` + `restore`) lets you be surgical. Understanding the trade-offs is the mark of a confident Git user."
 
-        - question: "**[Interleaved: Revisit Step 6]** You added `scratch.py` to `.gitignore` and committed it. The file still shows up when you run `ls`. Why?"
+        - question: "You added `scratch.py` to `.gitignore` and committed it. The file still shows up when you run `ls`. Why?"
           options:
             - "`.gitignore` patterns must be reloaded by restarting Git"
             - "`.gitignore` prevents tracking — it does not delete files from your filesystem"
@@ -1866,7 +1866,7 @@ steps:
           correct_index: 1
           explanation: "This is a common misconception. A branch is just a tiny pointer file, not a copy. You can create hundreds of branches with negligible disk cost. Understanding this changes how you think about branching strategy — branches should be cheap and frequent, not rare and expensive."
 
-        - question: "**[Interleaved: Revisit Step 5]** Before running `git switch feature-team-up`, you notice you have unstaged edits to `hero_registry.py`. What is the safest approach?"
+        - question: "Before running `git switch feature-team-up`, you notice you have unstaged edits to `hero_registry.py`. What is the safest approach?"
           options:
             - "Run `git switch` anyway — Git auto-saves all unstaged changes to the current branch"
             - "Run `git restore hero_registry.py` to discard the edits, then switch freely"
@@ -2338,7 +2338,7 @@ steps:
           correct_index: 1
           explanation: "A conflict occurs when Git cannot automatically reconcile two changes because they touch the **exact same lines** in a file. If different lines were changed, Git merges them silently without any conflict."
 
-        - question: "**[Interleaved: Revisit Step 8]** You're on `main` with two modified files you haven't committed yet. Your lead asks you to start work on `update-recruit` immediately. What should you do **first**, and why does the order matter?"
+        - question: "You're on `main` with two modified files you haven't committed yet. Your lead asks you to start work on `update-recruit` immediately. What should you do **first**, and why does the order matter?"
           options:
             - "Run `git switch -c update-recruit` immediately — uncommitted changes carry over to the new branch automatically, which is fine"
             - "Stage and commit your current work first, then create the branch — so the new branch starts from a known, clean state and those changes aren't mixed into the feature"
@@ -2687,7 +2687,7 @@ steps:
             - 3
           explanation: "Conflicts are **not errors** — they are Git's deliberate safety mechanism asking for human judgment. You must remove all markers (leaving them in is a bug). The resolution can be either version, a combination, or even entirely new code."
 
-        - question: "**[Interleaved: Revisit Step 2]** During a merge, `git status` shows `hero_registry.py` as 'both modified'. After you edit the file and remove all conflict markers, what does `git add hero_registry.py` signal to Git — and why is this the same command you used in Step 2?"
+        - question: "During a merge, `git status` shows `hero_registry.py` as 'both modified'. After you edit the file and remove all conflict markers, what does `git add hero_registry.py` signal to Git — and why is this the same command you used in Step 2?"
           options:
             - "It signals that you want to discard the incoming branch's changes"
             - "It signals that the conflict is resolved AND stages the content — the same dual role `git add` always plays: move content to the staging area"
@@ -2985,7 +2985,7 @@ steps:
           correct_index: 1
           explanation: "`git revert` creates an **anti-commit** — a new commit that exactly undoes the target commit's changes. The original bad commit remains in history. This is safe because it never rewrites history."
 
-        - question: "**[Interleaved: Revisit Step 7]** Before running `git revert HEAD --no-edit` you have 4 commits in your log. After the command finishes, how many commits are in the log, and what does the new entry look like?"
+        - question: "Before running `git revert HEAD --no-edit` you have 4 commits in your log. After the command finishes, how many commits are in the log, and what does the new entry look like?"
           options:
             - "Still 4 — `git revert` replaces the bad commit in-place with the corrected version"
             - "5 — a new 'Revert \"...\"' commit is appended at the top; the original bad commit remains in history"
@@ -3291,7 +3291,7 @@ steps:
           correct_index: 0
           explanation: "`git push` sends your local commits upstream. `git pull` fetches new commits from the remote and merges them into your local branch. Together, they keep your local and remote repositories in sync."
 
-        - question: "**[Interleaved: Revisit Step 12]** A colleague pushed a broken commit to `main`. Which command should you use to undo it safely on the shared branch?"
+        - question: "A colleague pushed a broken commit to `main`. Which command should you use to undo it safely on the shared branch?"
           options:
             - "`git reset --hard HEAD~1` then `git push -f`"
             - "`git revert HEAD`"

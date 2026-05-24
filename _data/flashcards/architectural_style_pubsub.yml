@@ -47,8 +47,8 @@ cards:
   - id: 6
     difficulty: advanced
     question: "What are MQTT's three QoS levels?"
-    answer: "**QoS 0 ('at most once'):** fire-and-forget; messages may be lost; lowest latency. **QoS 1 ('at least once'):** acknowledged and retransmitted on timeout; messages may be duplicated. **QoS 2 ('exactly once'):** four-step handshake guarantees one and only one delivery; highest latency."
-    explanation: "Sensor telemetry typically uses QoS 0 — losing one reading is cheap, latency matters. Billing and transactional events use QoS 2. Most application events use QoS 1 paired with idempotent handlers to tolerate duplicates."
+    answer: "**QoS 0 ('at most once'):** fire-and-forget; messages may be lost; lowest latency. **QoS 1 ('at least once'):** acknowledged and retransmitted on timeout; messages may be duplicated. **QoS 2 ('exactly once'):** PUBLISH/PUBREC/PUBREL/PUBCOMP handshake delivers the message once at that MQTT protocol boundary; highest latency."
+    explanation: "Sensor telemetry typically uses QoS 0 — losing one reading is cheap, latency matters. Events that cannot tolerate duplicate message delivery may use QoS 2, but business transactions still need idempotency or transaction safeguards. Most application events use QoS 1 paired with idempotent handlers to tolerate duplicates."
 
   - id: 7
     difficulty: intermediate
@@ -78,13 +78,13 @@ cards:
     difficulty: advanced
     question: "Compare Apache Kafka and RabbitMQ as pub-sub technologies."
     answer: "**Kafka** is a distributed commit log — events are partitioned across brokers, durably stored on disk for a retention window, and consumers track their position via offsets; designed for very high throughput and replay. **RabbitMQ** is traditional message-oriented middleware (AMQP) — strong routing flexibility (exchanges, queues, bindings), but messages are typically deleted once consumed."
-    explanation: "Kafka shines for event streaming, log aggregation, and offline analytics where replay matters. RabbitMQ shines for complex routing and task queues where each message is processed exactly once and then discarded."
+    explanation: "Kafka shines for event streaming, log aggregation, and offline analytics where replay matters. RabbitMQ shines for complex routing and task queues where messages are acknowledged and then typically removed; its acknowledgments provide at-least-once delivery, so exactly-once effects require idempotent consumers or deduplication."
 
   - id: 12
     difficulty: intermediate
     question: "Why does pub-sub force architects to embrace *eventual consistency*?"
-    answer: "Because the bus delivers asynchronously and best-effort by default, subscribers update their local state at different moments. Different parts of the system therefore hold inconsistent views for a bounded period, until all subscribers have processed the event."
-    explanation: "This is the CAP theorem trade-off in action: pub-sub typically prioritizes Availability and Partition tolerance over strong Consistency. Architectures that need strong consistency between subscribers must layer in distributed transactions, sagas, or two-phase commits on top."
+    answer: "Because typical pub-sub delivery is asynchronous: subscribers update their local state at different moments. Different parts of the system therefore hold inconsistent views for a bounded period, until all relevant subscribers have processed the event."
+    explanation: "This is an eventual-consistency trade-off, not a magic property of every bus. Architectures that need strong consistency between subscribers must add explicit coordination, such as a single source of truth, distributed transactions, sagas with compensation, or carefully designed idempotent workflows."
 
   - id: 13
     difficulty: advanced
@@ -101,5 +101,5 @@ cards:
   - id: 15
     difficulty: advanced
     question: "When should you NOT use publish-subscribe?"
-    answer: "When (a) you need strict ordering or hard real-time delivery guarantees, (b) the producer requires synchronous confirmation that consumers acted on the event, (c) the system has only one consumer per event and direct call would suffice, or (d) the team lacks the operational maturity to debug asynchronous, non-deterministic flows."
+    answer: "When (a) you need global strict ordering or hard real-time delivery guarantees without investing in specialized middleware/QoS, (b) the producer requires synchronous confirmation that consumers acted on the event, (c) the system has only one consumer per event and direct call would suffice, or (d) the team lacks the operational maturity to debug asynchronous, non-deterministic flows."
     explanation: "Pub-sub solves coupling problems; it creates observability problems. If your bottleneck is rigidity of direct calls and your team has tracing/replay infrastructure, pub-sub is excellent. If your bottleneck is debuggability and you have one producer talking to one consumer, a synchronous call is simpler."

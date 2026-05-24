@@ -134,7 +134,7 @@ questions:
       Your bank's payment service uses TCP (acknowledged, retried delivery). A consultant suggests UDP to cut latency. The trade-off they don't mention is:
     options:
       - "UDP is more secure than TCP."
-      - "UDP gives up TCP's reliability guarantees — packets may be lost, duplicated, or arrive out of order. For payment messaging, lost or duplicated transactions are unacceptable, so the latency saving costs you correctness."
+      - "UDP gives up TCP's reliability guarantees — packets may be lost, duplicated, or arrive out of order. For payment messaging, the transport should not expose raw loss or reordering; the application still needs idempotency/transaction logic for retries."
       - "UDP is slower than TCP at small payload sizes."
       - "UDP cannot cross firewalls."
     correct_index: 1
@@ -145,7 +145,7 @@ questions:
         UDP is faster than TCP at small payload sizes; that's part of the consultant's pitch. The hidden cost is reliability, not throughput.
       3: |
         UDP traverses firewalls (DNS, video calls, game traffic all use it). Some configurations may block it, but framing it as unreachable is incorrect.
-    explanation: "**Reliability and performance are classical competing quality attributes: TCP's acknowledgments and retransmissions cost latency, UDP's fire-and-forget saves latency but admits loss and duplication.** For payments — where each message must arrive exactly once, in order — the reliability win is decisive. For video streams or DNS lookups, the latency win is decisive. The architect's job is to align the protocol with the system's correctness needs, not to optimize one axis in isolation."
+    explanation: "**Reliability and performance are classical competing quality attributes: TCP's acknowledgments and retransmissions cost latency, UDP's fire-and-forget saves latency but admits loss, duplication, or reordering.** For payments, the request and acknowledgment bytes must arrive intact and in order, and the application must add idempotency or transaction logic so retries do not create duplicate charges. For video streams or DNS lookups, the latency win may be decisive. The architect's job is to align the protocol with the system's correctness needs, not to optimize one axis in isolation."
 
   - id: 8
     difficulty: advanced

@@ -91,10 +91,10 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      REST is famously described as an *engineered composite*. Which three architectural styles does it deliberately combine, and what does each contribute?
+      REST is famously described as an *engineered composite*. Which architectural-style constraints from Fielding's derivation are the relevant ones here, and what does each contribute?
     options:
       - "It combines pipe-and-filter, pub-sub, and microservices."
-      - "It combines **Client-Server** (for separation of concerns between user agent and origin server), **Layered** (to allow transparent intermediaries like proxies, caches, and CDNs between client and server), and **Mobile Code** (to allow dynamic client extension via downloaded scripts), all unified by a uniform interface."
+      - "It combines **Client-Server** (for separation of concerns between user agent and origin server), **Layered** (to allow transparent intermediaries like proxies, caches, and CDNs between client and server), and optional **Code-on-Demand / Mobile Code** (to allow dynamic client extension via downloaded scripts), all unified by a uniform interface."
       - "It is just client-server; the other styles are coincidental."
       - "It combines pub-sub, layered, and microservices."
     correct_index: 1
@@ -105,7 +105,7 @@ questions:
         Calling the other styles coincidental ignores Fielding's deliberate design rationale in his thesis. The layered constraint, for example, is what makes HTTP caching and reverse proxies architecturally legitimate. Removing it would break the web.
       3: |
         Microservices is a *higher-level* architectural style that uses REST (and other protocols), not a constituent of REST itself.
-    explanation: "**REST is a deliberately engineered composite: Client-Server provides asymmetric separation; Layered makes intermediaries (CDNs, proxies, caches) transparent and architecturally legitimate; Mobile Code allows the server to extend the client with downloaded scripts (HTML+JS).** All three are bound together by REST's uniform-interface constraint (URIs, HTTP verbs, MIME types, hypermedia). This is the textbook example of how multiple styles combine into a higher-level style with emergent properties."
+    explanation: "**REST is a deliberately engineered composite: Client-Server provides asymmetric separation; Layered makes intermediaries (CDNs, proxies, caches) transparent and architecturally legitimate; optional Code-on-Demand lets the server extend the client with downloaded scripts (HTML+JS).** These constraints are bound together by REST's uniform-interface constraint (URIs, HTTP verbs, MIME types, hypermedia). Code-on-Demand is optional in Fielding's derivation, so an API can still be RESTful without sending executable client code."
 
   - id: 6
     difficulty: intermediate

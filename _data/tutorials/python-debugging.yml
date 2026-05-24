@@ -1920,9 +1920,9 @@ steps:
 
           1. **Symptom** (one sentence — expected vs actual): _..._
           2. **Predict** (which end of the waitlist should `pop()` remove from, given FIFO?): _..._
-          3. **[Stage name?]**: _..._
-          4. **[Stage name?]**: _..._
-          5. **[Stage name?]**: _..._
+          3. : _..._
+          4. : _..._
+          5. : _..._
           6. **Fix**: _..._
           7. **Verify**: _..._
 
@@ -2581,9 +2581,9 @@ steps:
 
           1. **Symptom** (one sentence — expected vs actual): _..._
           2. **Predict** (what should the state be at the suspect line?): _..._
-          3. **[Stage name?]** (technique chosen and why — write: "I used [tool] because [cue]"): _..._
-          4. **[Stage name?]** (one sentence — *what* is wrong, *where* it lives): _..._
-          5. **[Stage name?]** (the line where intended and actual first diverge): _..._
+          3. (technique chosen and why — write: "I used [tool] because [cue]"): _..._
+          4. (one sentence — *what* is wrong, *where* it lives): _..._
+          5. (the line where intended and actual first diverge): _..._
           6. **Fix** (file, line, minimal change): _..._
           7. **Verify** (which tests pass now; any regressions?): _..._
 

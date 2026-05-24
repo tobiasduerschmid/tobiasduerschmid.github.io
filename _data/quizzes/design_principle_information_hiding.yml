@@ -355,3 +355,164 @@ questions:
         Predictions of stability are often wrong, but abstractions still have costs. For genuinely
         throwaway stable code, skipping the boundary can be reasonable.
     explanation: "Information Hiding has real costs: indirection, file count, vocabulary. Spending those costs on a decision that genuinely will never change is wasted ceremony. But 'we'll never need another database' is one of the most commonly falsified predictions in software, so the argument earns scrutiny — and is usually weakest in long-lived systems with multiple teams."
+
+  - id: 16
+    difficulty: basic
+    type: single
+    question: |
+      Why does unmanaged complexity grow so quickly as a system adds more modules?
+    options:
+      - "Every new module creates possible relationships with the modules already present, so possible pairwise relationships grow roughly quadratically"
+      - "Every new module must contain more lines of code than the previous module"
+      - "Modern developers are less able to understand software than developers in the 1960s"
+      - "Hardware improvements automatically make software design harder"
+    correct_index: 0
+    option_feedback:
+      1: |
+        Module count and line count are related, but the design problem is the number of possible
+        relationships and assumptions between modules.
+      2: |
+        The lecture's point is almost the opposite: human cognitive capacity has not grown enough to
+        explain modern software scale. Architecture has to reduce what each developer must understand.
+      3: |
+        Faster hardware lets us run larger programs, but it does not by itself make those programs
+        understandable or maintainable.
+    explanation: "With `n` modules, there are `n * (n - 1) / 2` possible pairwise relationships. A good architecture keeps the *actual* dependency graph much smaller by hiding decisions behind stable interfaces. A Big Ball of Mud lets too many of those possible relationships become real."
+
+  - id: 17
+    difficulty: advanced
+    type: single
+    question: |
+      In a client/server checkout system, which statement best handles the PayPal decision?
+    options:
+      - "PayPal should be hidden from every boundary, including the user interface; the client can simply report that payment succeeded"
+      - "Supported payment methods may be visible in the client/server contract, but backend services should still hide the provider SDK behind a vendor-neutral `PaymentGateway`"
+      - "Every backend service should call the PayPal SDK directly so the implementation is easier to trace"
+      - "All payment logic should run in the browser because that keeps the server independent"
+    correct_index: 1
+    option_feedback:
+      0: |
+        The client must know enough to display and initiate supported payment methods, and the server must
+        verify payment securely. Hiding the user-facing method everywhere would make the contract unusable.
+      2: |
+        Direct SDK calls make the vendor decision leak into every service. Tracing one concrete API becomes
+        easier, but changing providers becomes much harder.
+      3: |
+        Client-only payment logic is not trustworthy for real transactions. The server still needs a secure
+        payment boundary that can verify what happened.
+    explanation: "Information Hiding is boundary-relative. The checkout UI and server contract may need to expose supported payment methods, while order, refund, and wallet services should not know which vendor SDK implements those methods. The backend implementation detail belongs behind `PaymentGateway`."
+
+  - id: 18
+    difficulty: intermediate
+    type: single
+    question: |
+      `OrderService`, `RefundService`, and `WalletService` each contain the same `switch` over `paypal`, `stripe`, and `apple-pay`. Which principle is most directly being violated?
+    options:
+      - "The Single Choice principle, because multiple modules know the exhaustive list of payment alternatives"
+      - "DRY only, because duplicating any text is the entire design problem"
+      - "Encapsulation, because the payment-provider fields should all be `private`"
+      - "The Open/Closed Principle only, because Information Hiding does not apply to lists of alternatives"
+    correct_index: 0
+    option_feedback:
+      1: |
+        Repeated code is part of the smell, but the deeper issue is shared knowledge of the exhaustive
+        provider list. Removing textual duplication without hiding the list would not fix the design.
+      2: |
+        Private fields do not help if several public modules still know every provider alternative. The
+        choice list itself needs one owner.
+      3: |
+        The Open/Closed Principle is related, but the Single Choice principle names the more specific
+        information-hiding failure: the list of alternatives is not owned in one place.
+    explanation: "The Single Choice principle says only one module should know the exhaustive list of alternatives. A common repair is polymorphism: services call `PaymentGateway`, and one factory or configuration boundary chooses which implementation to supply."
+
+  - id: 19
+    difficulty: intermediate
+    type: single
+    question: |
+      What is the strongest evidence that a design is turning into a **Big Ball of Mud**?
+    options:
+      - "A small feature change regularly requires edits across many unrelated modules, and nobody can predict the side effects confidently"
+      - "The system has more than one programming language in its repository"
+      - "Some modules are implemented with abstract interfaces"
+      - "The codebase contains comments explaining why functions exist"
+    correct_index: 0
+    option_feedback:
+      1: |
+        Multiple languages can be fine when each boundary has a clear contract. The issue is uncontrolled
+        coupling, not language count.
+      2: |
+        Abstract interfaces can be useful information-hiding mechanisms. They become harmful only when
+        they hide nothing or expose the wrong contract.
+      3: |
+        Good comments can support comprehension. They are a problem only when comments substitute for an
+        actual boundary around a leaked decision.
+    explanation: "A Big Ball of Mud is characterized by high coupling, low cohesion, low understandability, and high fragility. The practical symptom is wide, unpredictable change impact: the team cannot make a local change locally."
+
+  - id: 20
+    difficulty: advanced
+    type: single
+    question: |
+      Which design-doc content is most useful to a future maintainer who asks, "Why does this `PaymentGateway` abstraction exist?"
+    options:
+      - "A screenshot of the current checkout page"
+      - "The alternatives considered, the quality attributes evaluated, and the trade-offs accepted when choosing the gateway boundary"
+      - "A statement that the team used interfaces because interfaces are always better"
+      - "Only the final UML diagram, with no rejected alternatives"
+    correct_index: 1
+    option_feedback:
+      0: |
+        A screenshot may give context, but it does not explain the design reasoning or the change pressure
+        the abstraction was meant to absorb.
+      2: |
+        Interfaces are not always better. A useful design doc explains the concrete decision, not a blanket
+        rule.
+      3: |
+        The final diagram shows what was chosen, but future maintainers also need to know why other options
+        were rejected.
+    explanation: "Design docs create organizational memory. The most valuable part is often the alternatives-and-trade-offs section: it records why the team chose a boundary, which future changes it anticipated, and which costs it accepted."
+
+  - id: 21
+    difficulty: intermediate
+    type: single
+    question: |
+      You are reviewing a proposed `EmailHelper` module. Nobody can name a design decision it owns, and every method is a one-line pass-through to a library call. What is the best Information Hiding critique?
+    options:
+      - "The module may not justify its existence; a separate module should hide a meaningful secret or provide another clear boundary value"
+      - "The module is automatically good because all library calls are now in a separate file"
+      - "The module is automatically bad because helper modules can never hide information"
+      - "The module should expose the library's full API so callers have maximum flexibility"
+    correct_index: 0
+    option_feedback:
+      1: |
+        Moving calls into a separate file does not by itself hide a design decision. A boundary earns its
+        keep when it reduces what callers need to know or localizes future change.
+      2: |
+        Helper modules can be useful when they hide a real policy, library choice, format, or tricky
+        sequence. The issue is not the word helper; it is whether anything meaningful is hidden.
+      3: |
+        Exposing the full library API usually leaks the very dependency the wrapper was supposed to hide.
+        A good wrapper exposes the operations callers need, not every underlying capability.
+    explanation: "A practical Information Hiding test is: list the module's secrets. If the list is empty, the module needs another justification, such as ownership, testability, or a real abstraction boundary. Otherwise it may just be shallow-module overhead."
+
+  - id: 22
+    difficulty: intermediate
+    type: single
+    question: |
+      Which operating-system example best illustrates Information Hiding?
+    options:
+      - "Applications call stable file and process APIs while the OS hides file-system layout, disk caching, scheduling, and device-driver details"
+      - "Applications directly choose the disk block layout so they can optimize every file write"
+      - "Every application bundles its own CPU scheduler so the OS can stay simple"
+      - "The OS exposes every hardware interrupt to every program because hidden details are always bad"
+    correct_index: 0
+    option_feedback:
+      1: |
+        Directly depending on disk layout would make applications fragile whenever the OS changed file
+        systems, caching, or storage hardware.
+      2: |
+        Per-application schedulers would destroy the shared contract that lets many programs run safely on
+        one machine.
+      3: |
+        Exposing every low-level hardware detail would make ordinary programs harder to write and easier to
+        break. Hidden details are good when callers do not need them.
+    explanation: "Operating systems are deep modules: they expose relatively stable abstractions like files, processes, sockets, and memory mappings while hiding difficult design decisions such as scheduling, device management, caching, and file-system implementation."

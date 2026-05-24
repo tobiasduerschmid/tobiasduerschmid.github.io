@@ -754,7 +754,7 @@ steps:
           correct_index: 1
           explanation: "Functions are first-class values. `isEven` is the function itself; `isEven()` is the result of calling it. `.filter(isEven)` says 'here is a function — you call it.' `.filter(isEven())` says 'call isEven now and pass whatever it returns.' This distinction is fundamental to callbacks."
 
-        - question: "**[Spaced Practice: Revisit Step 2]** A student declares `let API_URL = 'https://api.school.edu'` and never reassigns it. What change should they make, and why?"
+        - question: "A student declares `let API_URL = 'https://api.school.edu'` and never reassigns it. What change should they make, and why?"
           options:
             - "Change `let` to `var` — `var` is the standard keyword for declaring constant URLs in Node.js"
             - "Change `let` to `const` — the value never changes, so `const` prevents accidental reassignment"
@@ -1124,7 +1124,7 @@ steps:
             - "const sum = grades.reduce((acc, g) => acc + g);"
           explanation: "`.map()` with destructuring extracts just the grades. `.reduce()` sums them — the `0` initial value is critical because without it, `.reduce()` uses the first element as the initial accumulator (which happens to work for non-empty arrays but throws a TypeError on empty arrays — a silent bug waiting to happen). `.filter()` selects elements, not transforms — wrong method for extracting grades."
 
-        - question: "**[Spaced Practice: Revisit Step 3]** A student writes `const result = students.filter(s => s.grade >= 60).map(s => s.name)`. What does this expression produce?"
+        - question: "A student writes `const result = students.filter(s => s.grade >= 60).map(s => s.name)`. What does this expression produce?"
           options:
             - "An array of the full student objects whose grade is at least 60"
             - "An array of name strings for students with grade >= 60"
@@ -1133,7 +1133,7 @@ steps:
           correct_index: 1
           explanation: "`.filter()` returns a new array of student objects matching the condition. `.map()` then transforms each object into just its `name` string. Method chaining works because each method returns a new array. This chain combines skills from Step 3 (`.filter()`) and Step 4 (`.map()`)."
 
-        - question: "**[Spaced Practice: Revisit Step 2]** A function receives a user ID from a form field. The code uses `if (userId == 42)` to check for the admin. The ID arrives as the string `'42'`. Will this check correctly identify the admin? Should you keep it as-is?"
+        - question: "A function receives a user ID from a form field. The code uses `if (userId == 42)` to check for the admin. The ID arrives as the string `'42'`. Will this check correctly identify the admin? Should you keep it as-is?"
           options:
             - "Yes, it works and is safe to keep — the comparison is correct and there is no risk"
             - "Yes, it works via coercion, but use `===` with `Number()` to make the intent explicit"
@@ -1330,7 +1330,7 @@ steps:
           correct_index: 1
           explanation: "`app.listen(3000)` starts the HTTP server on port 3000. Without it, your route definitions exist in memory but nothing is listening for HTTP requests. This is like defining functions but never calling them — the code exists but nothing happens."
 
-        - question: "**[Spaced Practice: Revisit Step 3]** Why is the Express route handler `(req, res) => { ... }` conceptually the same as the `.filter()` callback `n => n > 2`?"
+        - question: "Why is the Express route handler `(req, res) => { ... }` conceptually the same as the `.filter()` callback `n => n > 2`?"
           options:
             - "Both are arrow functions, but they serve completely different purposes in practice"
             - "Both are callbacks — you provide a function, and someone else calls it later"
@@ -1339,7 +1339,7 @@ steps:
           correct_index: 1
           explanation: "The core pattern is identical: you pass a function, and the caller invokes it with arguments. `.filter()` calls your function with each array element. Express calls your route handler with `req` and `res`. Understanding this *one pattern* — callbacks — unlocks both data processing and web servers."
 
-        - question: "**[Spaced Practice: Revisit Step 2]** In the Express route `res.send(`Score: ${grade}`)`, what JavaScript feature makes the `${grade}` work?"
+        - question: "In the Express route `res.send(`Score: ${grade}`)`, what JavaScript feature makes the `${grade}` work?"
           options:
             - "Regular string concatenation using the `+` operator applied automatically by V8"
             - "Template literals — backtick strings with `${expression}` interpolation"
@@ -1655,7 +1655,7 @@ steps:
           correct_index: 1
           explanation: "GET is for *reading* data — parameters are visible in the URL. POST is for *sending* data that creates or modifies resources — data is hidden in the request body. GET requests can also be bookmarked and cached; POST cannot. These are HTTP conventions used by every web API."
 
-        - question: "**[Spaced Practice: Revisit Step 3]** In `app.get('/students', (req, res) => { ... })`, if a student writes `app.get('/students', handler())` with parentheses on `handler`, what goes wrong?"
+        - question: "In `app.get('/students', (req, res) => { ... })`, if a student writes `app.get('/students', handler())` with parentheses on `handler`, what goes wrong?"
           options:
             - "Nothing — JavaScript treats `handler` and `handler()` identically in this context"
             - "`handler()` calls the function now and passes the return value, not the function"
@@ -1664,7 +1664,7 @@ steps:
           correct_index: 1
           explanation: "This is the same function reference vs. function call distinction from Step 3. `handler` is the function itself — Express stores it and calls it later. `handler()` calls it *now* and passes the return value. Express needs the function, not its result. This mistake causes routes to fail."
 
-        - question: "**[Technique Selection — Interleaving]** Match each Express data source to its use case:\n- Task A: Filter a product list by category\n- Task B: Retrieve a specific user by their ID\n- Task C: Submit a new blog post with title and content"
+        - question: "Match each Express data source to its use case:\n- Task A: Filter a product list by category\n- Task B: Retrieve a specific user by their ID\n- Task C: Submit a new blog post with title and content"
           type: single
           options:
             - "A: `req.params`, B: `req.query`, C: `req.body`"
@@ -1674,7 +1674,7 @@ steps:
           correct_index: 1
           explanation: "Filtering/searching uses query parameters (`?category=electronics`). Identifying one specific resource uses route parameters (`/users/42`). Submitting new data uses the request body (POST). This discrimination — knowing *which* data source applies — is the key skill."
 
-        - question: "**[Spaced Practice: Revisit Step 2]** A Twitch-like streaming API has `req.query.maxViewers` as the string `'500'`. A developer writes `if (stream.viewers < req.query.maxViewers)`. Will this comparison work correctly?"
+        - question: "A Twitch-like streaming API has `req.query.maxViewers` as the string `'500'`. A developer writes `if (stream.viewers < req.query.maxViewers)`. Will this comparison work correctly?"
           options:
             - "Yes — JavaScript automatically converts the string to a number for the `<` comparison"
             - "It works for most cases due to type coercion, but it is fragile. Convert explicitly with `Number(req.query.maxViewers)` to be safe and clear."
@@ -1954,7 +1954,7 @@ steps:
           correct_index: 1
           explanation: "Routes on a router are *relative* to the mount path. `app.use('/api/books', router)` prepends `/api/books` to every route on that router. So `router.get('/:id')` becomes `/api/books/:id`."
 
-        - question: "**[Evaluate]** A student forgets `module.exports = router` in `studentRoutes.js` but writes correct routes. When they send `GET /api/students`, they get `Cannot GET /api/students`. Why?"
+        - question: "A student forgets `module.exports = router` in `studentRoutes.js` but writes correct routes. When they send `GET /api/students`, they get `Cannot GET /api/students`. Why?"
           options:
             - "The routes are syntactically invalid without the export statement at the bottom"
             - "Without `module.exports`, `require()` returns an empty object — `app.use()` mounts nothing, so no routes match"
@@ -1963,7 +1963,7 @@ steps:
           correct_index: 1
           explanation: "Without `module.exports = router`, `require('./studentRoutes')` returns `{}` (an empty object). `app.use('/api/students', {})` silently mounts nothing. The server starts fine but no routes are registered, so every request gets 404. This is a common debugging scenario — the error is silent."
 
-        - question: "**[Spaced Practice: Revisit Step 6]** In a route handler, how do you access a query parameter `?sort=name` vs. a URL parameter `/students/42`?"
+        - question: "In a route handler, how do you access a query parameter `?sort=name` vs. a URL parameter `/students/42`?"
           options:
             - "Both use `req.params` — query and URL parameters are stored in the same object"
             - "Query parameters use `req.query.sort`; URL parameters use `req.params.id` — they are separate objects"
@@ -1972,7 +1972,7 @@ steps:
           correct_index: 1
           explanation: "`req.query` contains key-value pairs from the URL after `?`. `req.params` contains values captured by `:placeholder` in the route path. `req.body` contains data from POST/PUT request bodies. These are three separate objects — mixing them up is a common mistake."
 
-        - question: "**[Technique Selection — Interleaving]** For each Express operation, which method do you define on the router?\n- Task A: Fetch a list of courses\n- Task B: Create a new enrollment\n- Task C: Get details for one specific course"
+        - question: "For each Express operation, which method do you define on the router?\n- Task A: Fetch a list of courses\n- Task B: Create a new enrollment\n- Task C: Get details for one specific course"
           type: single
           options:
             - "A: `router.get('/')`, B: `router.post('/')`, C: `router.get('/:id')`"
@@ -1982,7 +1982,7 @@ steps:
           correct_index: 0
           explanation: "Fetching a *list* uses `GET /`. Creating a new resource uses `POST /`. Getting *one specific* resource uses `GET /:id`. This RESTful pattern is used by every professional API: GET for reading, POST for creating, and route parameters for identifying specific resources."
 
-        - question: "**[Spaced Practice: Revisit Step 3]** Inside `router.get('/', (req, res) => { ... })`, what role does the arrow function play?"
+        - question: "Inside `router.get('/', (req, res) => { ... })`, what role does the arrow function play?"
           options:
             - "It creates the router object"
             - "It is a callback — the function that Express calls when a matching request arrives"
@@ -1991,7 +1991,7 @@ steps:
           correct_index: 1
           explanation: "The arrow function is a callback — the same pattern from Step 3's `.filter()`. You pass a function, Express stores it, and calls it later when a request matches the route. The first argument (route path) says *when* to call it; the second argument (the callback) says *what* to do."
 
-        - question: "**[Evaluate]** A teammate is building a quick 3-route prototype for a hackathon demo. They put all routes in `app.js` without using `express.Router()`. Should you ask them to refactor into a Router? Why or why not?"
+        - question: "A teammate is building a quick 3-route prototype for a hackathon demo. They put all routes in `app.js` without using `express.Router()`. Should you ask them to refactor into a Router? Why or why not?"
           options:
             - "Yes — routes must always use `express.Router()` or Express cannot process them correctly"
             - "No — for a 3-route prototype, the organizational overhead of a Router is unnecessary. Routers pay off when the codebase grows to many routes across multiple domains"
@@ -2267,7 +2267,7 @@ steps:
           explanation: "This is the Event Loop in action. The 3-second loop holds the Call Stack. The Event Loop only processes queued callbacks (like the `/fast` handler) when the stack empties. The `/fast` user is stuck waiting ~2.5 seconds for a response that should take microseconds — demonstrating exactly why blocking operations in route handlers are catastrophic in Node.js."
           type: single
 
-        - question: "**[Spaced Practice: Revisit Step 5]** An Express route handler has a 5-second synchronous loop. During those 5 seconds, 100 other requests arrive. What happens to them?"
+        - question: "An Express route handler has a 5-second synchronous loop. During those 5 seconds, 100 other requests arrive. What happens to them?"
           options:
             - "Express spawns new worker threads to handle each of the 100 incoming requests in parallel"
             - "All 100 requests wait — the call stack is occupied and no callbacks can run"
@@ -2276,7 +2276,7 @@ steps:
           correct_index: 1
           explanation: "Node.js is single-threaded. While the slow synchronous loop runs, the Call Stack is occupied. The Event Loop cannot hand any other callbacks (including route handlers for the 100 waiting requests) to the Chef until the loop finishes. This is why blocking the event loop is catastrophic for Express servers."
 
-        - question: "**[Technique Selection — Interleaving]** You are building a Discord bot. For each of these tasks, which array method is the best fit?\n- Task A: Get only the messages from a specific channel\n- Task B: Convert each message object into a display string\n- Task C: Count the total character length of all messages"
+        - question: "You are building a Discord bot. For each of these tasks, which array method is the best fit?\n- Task A: Get only the messages from a specific channel\n- Task B: Convert each message object into a display string\n- Task C: Count the total character length of all messages"
           type: single
           options:
             - "A: `.map()`, B: `.filter()`, C: `.reduce()`"
@@ -2286,7 +2286,7 @@ steps:
           correct_index: 1
           explanation: "`.filter()` selects elements matching a condition (messages from a channel). `.map()` transforms each element (message → display string). `.reduce()` accumulates a single value (total character count). This discrimination — knowing *which* method to apply — is the key skill that interleaving builds."
 
-        - question: "**[Spaced Practice: Revisit Step 7]** Does `express.Router()` create a separate thread or Event Loop for handling its routes?"
+        - question: "Does `express.Router()` create a separate thread or Event Loop for handling its routes?"
           options:
             - "Yes — each Router gets its own Event Loop, which is how Express handles concurrent requests efficiently"
             - "No — Routers are a code organization tool. All routes still execute on the same single-threaded Event Loop"
@@ -2595,7 +2595,7 @@ steps:
             - "    } finally {"
           explanation: "The route callback is marked `async` so it can use `await`. The `try`/`catch` handles database errors gracefully by returning a 500 status. The distractor without `await` would assign the Promise object itself, not the resolved data."
 
-        - question: "**[Spaced Practice: Revisit Step 8]** What is the output order?\n```javascript\nasync function demo() {\n    console.log('A');\n    await new Promise(r => setTimeout(r, 0));\n    console.log('B');\n}\ndemo();\nconsole.log('C');\n```"
+        - question: "What is the output order?\n```javascript\nasync function demo() {\n    console.log('A');\n    await new Promise(r => setTimeout(r, 0));\n    console.log('B');\n}\ndemo();\nconsole.log('C');\n```"
           options:
             - "A, B, C"
             - "A, C, B"
@@ -2604,7 +2604,7 @@ steps:
           correct_index: 1
           explanation: "'A' prints synchronously. Then `await` suspends `demo()` and frees the call stack. 'C' prints (synchronous code after `demo()` call). When the Promise resolves, 'B' prints. Same Event Loop principle from Step 8."
 
-        - question: "**[Spaced Practice: Revisit Step 7]** An Express Router has three async route handlers that each query a database. How many threads are used to execute these handlers?"
+        - question: "An Express Router has three async route handlers that each query a database. How many threads are used to execute these handlers?"
           options:
             - "Three — one thread per route handler for parallel execution"
             - "One — all route handlers execute on the single-threaded Event Loop, but `await` frees the call stack between database queries"
@@ -2613,7 +2613,7 @@ steps:
           correct_index: 1
           explanation: "Node.js is single-threaded. All route handlers — whether on the main app or on Routers — execute on the same Event Loop. The magic of `async`/`await` is that `await` suspends the handler and frees the call stack, allowing other handlers to run. This is concurrency without parallelism."
 
-        - question: "**[Spaced Practice: Revisit Step 3]** In the Promise constructor `new Promise((resolve, reject) => { ... })`, what are `resolve` and `reject`?"
+        - question: "In the Promise constructor `new Promise((resolve, reject) => { ... })`, what are `resolve` and `reject`?"
           options:
             - "Global variables provided by Node.js for error handling"
             - "Callbacks — functions passed as arguments that you call to signal success or failure"
@@ -2974,7 +2974,7 @@ steps:
           correct_index: 0
           explanation: "Three bugs: (1) `.reduce()` without an initial value throws on empty arrays. (2) Dividing by `grades.length` (all grades) instead of filtered length gives wrong averages. (3) `==` should be `===` for strict comparison (Step 2)."
 
-        - question: "**[Technique Selection]** A Spotify-like app needs to: (1) fetch a user's playlists, (2) for each playlist fetch its tracks, (3) display all track names. Which combination is most appropriate?"
+        - question: "A Spotify-like app needs to: (1) fetch a user's playlists, (2) for each playlist fetch its tracks, (3) display all track names. Which combination is most appropriate?"
           type: single
           options:
             - "`.filter()` to select playlists, then `await` each track fetch sequentially"
@@ -3057,7 +3057,7 @@ steps:
           correct_index: 1
           explanation: "[Step 9] Without `await`, `data` holds a Promise, not the resolved string. The most common async/await mistake."
 
-        - question: "**[Evaluate]** Review this route. Identify ALL the problems:\n```javascript\napp.get('/students', (req, res) => {\n    const data = fs.readFileSync('students.json', 'utf8');\n    const students = JSON.parse(data);\n    const passing = students.filter(s => s.grade == 60);\n    res.json(passing);\n});\n```"
+        - question: "Review this route. Identify ALL the problems:\n```javascript\napp.get('/students', (req, res) => {\n    const data = fs.readFileSync('students.json', 'utf8');\n    const students = JSON.parse(data);\n    const passing = students.filter(s => s.grade == 60);\n    res.json(passing);\n});\n```"
           options:
             - "No problems — this is a correct, production-ready Express route handler"
             - "Only one problem: the `==` loose comparison should be `===` for strict equality"

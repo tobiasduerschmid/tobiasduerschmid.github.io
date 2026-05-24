@@ -29,7 +29,7 @@ cards:
   - id: 5
     difficulty: intermediate
     question: "How do you implement upward notification (e.g., a sensor driver notifying the UI) without violating the golden rule?"
-    answer: "**Callback / Observer / Publish-Subscribe.** The upper layer implements an abstract listener interface defined in or below the lower layer, and registers an instance with the lower layer at startup. The lower layer calls the listener without holding any reference to the upper layer."
+    answer: "**Callback / Observer / Publish-Subscribe.** The upper layer implements an abstract listener interface defined in or below the lower layer, and registers an instance with the lower layer at startup. The lower layer holds only an interface-typed callback reference, so control can flow upward without a compile-time dependency on the upper layer."
     explanation: "Control flows upward (the driver invokes the listener); dependency stays downward (the UI depends on the driver's listener interface, not vice versa). This pattern is everywhere in real layered systems: OS interrupts, GUI event loops, network protocol upcalls."
 
   - id: 6
@@ -65,8 +65,8 @@ cards:
   - id: 11
     difficulty: intermediate
     question: "Is REST a layered architecture? Explain."
-    answer: "Yes, partially. REST is an **engineered composite style** that combines *Client-Server*, *Layered* (allowing intermediaries like proxies and caches between client and server), and *Mobile Code* (allowing dynamic client extension), all constrained by a uniform interface."
-    explanation: "The layered aspect of REST is what makes HTTP intermediaries (CDNs, caching proxies, load balancers, reverse proxies) transparent to the application. A REST client cannot tell whether it is talking to the origin server or to a CloudFront edge — that's the layered style at work."
+    answer: "Yes, partially. REST is an **engineered composite style** that combines *Client-Server*, *Layered* (allowing intermediaries like proxies and caches between client and server), and optional *Code-on-Demand / Mobile Code* (allowing dynamic client extension), all constrained by a uniform interface."
+    explanation: "The layered aspect of REST is what makes HTTP intermediaries (CDNs, caching proxies, load balancers, reverse proxies) transparent to the application. A REST client cannot tell whether it is talking to the origin server or to a CloudFront edge — that's the layered style at work. Code-on-Demand is optional, so REST does not require every system to download executable client code."
 
   - id: 12
     difficulty: advanced

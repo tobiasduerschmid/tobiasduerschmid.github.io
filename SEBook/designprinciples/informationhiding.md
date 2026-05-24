@@ -5,6 +5,16 @@ layout: sebook
 
 # Background and Motivation
 
+## What You Should Be Able to Do
+
+By the end of this chapter, you should be able to:
+
+* Explain why Information Hiding is a response to the problem of **software complexity**, not just a style rule about `private` fields.
+* Identify design decisions that are **difficult** or **likely to change**, and decide whether each one belongs in a hidden implementation or a visible interface contract.
+* Refactor a leaky design, such as services that know about `PayPal`, into a design where one module owns the volatile decision behind a stable abstraction.
+* Use coupling, cohesion, module depth, the Single Choice principle, and change impact analysis to evaluate whether a design actually hides information well.
+* Document a design decision by naming the requirements, alternatives, trade-offs, and delayed decisions that led to it.
+
 ## A Motivating Story: The PayPal Tangle
 
 Imagine you joined a team building an online store. The first sprint went well: you shipped checkout, refunds, and a wallet. But you used PayPal directly everywhere — `OrderService`, `RefundService`, and `WalletService` each call `PayPal.charge(...)`, `PayPal.refund(...)`, `paypal.authenticate(...)`, and so on. Every service knows that **PayPal exists**, knows how to authenticate to PayPal, and constructs PayPal-specific objects like `PayPalCharge`.
@@ -676,7 +686,21 @@ The fix in our PayPal story is one module — `PaymentGateway` — that is the *
 
 By the mid-1960s, software had quietly become more complex than the hardware that ran it. **Margaret Hamilton**, lead software engineer for the Apollo missions, famously observed that *"the software was more complex [than the hardware] for the manned missions".* In 1968 the NATO conference on software engineering crystallized the **"Software Crisis"** — the recognition that software projects were systematically late, over budget, and failing to meet specifications. Brooks would later capture the same lament in *The Mythical Man-Month*.
 
+That crisis did not disappear; it scaled. The Apollo Guidance Computer software was on the order of 145,000 lines of code. Modern cars can contain more than 100 million lines. The engineers building today's systems are not a thousand times smarter than the engineers of the 1960s. The only way this works is architectural: we build systems so that no one person has to understand every part at once.
+
 A central question came out of that conference: *how do you decompose a large program so that complexity does not bury the team?* For most of the 1960s the answer was: **break the program into the steps of a flowchart, and make each step a module**. This is the natural impulse — it mirrors how humans describe procedures. But it scales badly: when a step's *details* change, every step that depended on those details breaks too.
+
+### Why Connections Grow Faster Than Modules
+
+Adding a module does not just add one more thing to understand. It also adds possible relationships with every module already present. The number of possible pairwise relationships grows as `n * (n - 1) / 2`:
+
+| Modules | Possible pairwise relationships |
+|---:|---:|
+| 4 | 6 |
+| 8 | 28 |
+| 16 | 120 |
+
+Real systems do not use every possible relationship, and they should not. But the growth pattern explains why unmanaged designs turn painful so quickly. A system with too many unplanned dependencies becomes a **Big Ball of Mud**: low maintainability, low understandability, and high fragility. Small changes force edits across many modules, and a change that looked local produces bugs somewhere else. Information Hiding is one of the main ways we keep the actual dependency graph much smaller than the possible one.
 
 ### David Parnas, 1972, and the KWIC Example
 
@@ -725,7 +749,7 @@ Parnas's paper was deliberately abstract, but five decades of practice have prod
 
 * **Data structures and data formats.** Whether names are stored as a `String`, a normalized `Person` record, an array of glyphs, or a row in a database. Whether IDs are integers or UUIDs.
 * **Storage location.** Whether information lives in memory, on a local disk, in a SQL database, in S3, in Redis, or behind a third-party API.
-* **Algorithms and computational steps.** A* vs. Dijkstra for routing. Quicksort vs. mergesort. Greedy vs. dynamic-programming for an optimization. Whether results are cached.
+* **Algorithms and computational steps.** A* vs. Dijkstra for routing. Quicksort vs. mergesort. Greedy vs. dynamic-programming for an optimization. Which AI model is used. Whether results are cached.
 * **External dependencies — libraries, frameworks, vendors.** Axios vs. Fetch. MongoDB vs. Postgres vs. Supabase. PayPal vs. Stripe vs. Braintree. OpenGL vs. Vulkan.
 * **Hardware and platform details.** CPU word size, byte ordering, screen resolution, file-path separators, OS-specific APIs.
 * **Network protocols.** REST vs. gRPC, JSON vs. Protobuf, HTTP/1.1 vs. HTTP/2 — *as a transport detail*. (Whether the protocol is **stateful or stateless**, however, is often part of the interface; see below.)
@@ -745,7 +769,9 @@ Try each of these before reading the answer:
 | Whether the database is **SQL or NoSQL** | **Hidden** | Storage is the canonical secret. The application layer should not know. |
 | Whether the network protocol is **stateful or stateless** | **Visible (in the contract)** | Statefulness changes how clients interact (do they reconnect? retransmit? carry a session token?). Clients cannot ignore it. |
 | Whether the server is implemented in **Node.js, Java, or Dart** | **Hidden** | The wire protocol is the contract; the implementation language is irrelevant to the client. |
+| Whether two in-process classes can call each other across different language runtimes | **Visible (at that boundary)** | Unlike HTTP, ordinary method calls depend on language/runtime calling conventions. If callers must know how to invoke the code, it is contract material. |
 | Whether **PayPal is the payment provider** | **Hidden** | Vendors change. The interface should be `PaymentGateway`, not `PayPalGateway`. |
+| Whether PayPal is offered as a **user-facing checkout option** | **Visible between client and server; hidden inside backend services** | The client must display supported payment methods and the server must verify payment securely. But order, refund, and wallet services should still depend on a vendor-neutral gateway. |
 | Whether a function may **throw an exception** | **Visible** | Callers must handle it. A "silent" exception breaks contracts. |
 | Whether requests are **rate-limited** | **Visible** | Callers need to back off. Hiding it produces mysterious failures. |
 | Whether a list is stored as an **array or a linked list** | **Hidden** | A canonical Parnas example. Choose the data structure that fits, change it later if needed. |
@@ -986,6 +1012,16 @@ Knowing what to hide is one skill; knowing the *moves* to actually hide it is an
 
 You will rarely use only one of these. A good design typically composes several: an `OrderService` depends on a `PaymentGateway` interface (mechanism 1 + 2); the concrete `PayPalGateway` is a facade (3) over the messy PayPal SDK; the SDK is itself adapted (4) so swapping it out is bounded; the whole thing lives in a `payments/` package whose exports are restricted (6 + 7).
 
+## Single Choice Principle: Hide the Exhaustive List
+
+The **Single Choice principle** is a focused version of Information Hiding for designs with a fixed set of alternatives. It says:
+
+> If a system must choose among several alternatives, only one module should know the exhaustive list of those alternatives.
+
+If `OrderService`, `RefundService`, `WalletService`, and `AnalyticsService` all contain a switch over `"paypal"`, `"stripe"`, and `"apple-pay"`, then every one of those modules knows the payment-provider list. Adding `"openai-pay"` becomes a four-module edit. That is a leaked design decision.
+
+The usual fix is **polymorphism**: define one abstract operation (`PaymentGateway.charge`, `PaymentGateway.refund`) and let each provider implement it. Callers invoke the operation; they do not switch on the provider. One factory, dependency-injection module, or configuration boundary may still know the exhaustive list, but the rest of the system does not. The choice is made in one place.
+
 ## Change Impact Analysis: Evaluating Whether Your Design Hides Well
 
 Information Hiding is verified by *simulating change*. The procedure, used in industry as **change impact analysis**:
@@ -997,6 +1033,27 @@ Information Hiding is verified by *simulating change*. The procedure, used in in
 
 This is also the procedure to apply when **reviewing** somebody else's design: open the code, pick a plausible future change, and trace what would have to be edited. A well-hidden design lights up one module; a poorly-hidden one lights up the whole tree.
 
+## Design Docs: Recording the Reasoning
+
+Information Hiding helps you delay decisions because a hidden implementation can change after the interface is stable. But you still need a disciplined way to decide what to hide, what to expose, and what trade-offs you are accepting. A practical design process is:
+
+1. **Identify requirements.** Use user stories for functional behavior, then add quality attributes such as maintainability, security, performance, reliability, availability, and testability.
+2. **Generate several alternatives.** Do not fall in love with the first design. For novice designers especially, producing multiple options reliably improves the final choice because it exposes trade-offs that a single design hides.
+3. **Evaluate the alternatives.** Ask how each option handles the likely changes. Which modules change if the database changes? Which if the payment provider changes? Which if security requirements tighten?
+4. **Choose and document the trade-off.** Most real designs are not "best at everything". They sacrifice one quality to protect another.
+5. **Delay decisions when evidence is missing.** If you do not yet know which storage engine or AI model you need, design an interface that lets that decision remain hidden until better information arrives.
+
+Industry teams often capture this reasoning in a **design doc**. A useful design doc usually includes:
+
+| Section | What it records |
+|---|---|
+| **Context and scope** | The background facts and boundaries of the problem |
+| **Goals and non-goals** | Requirements, quality attributes, and deliberately excluded concerns |
+| **Proposed design** | The chosen architecture, APIs, data model, and module responsibilities |
+| **Alternatives and trade-offs** | The options considered, why they were rejected, and what risks remain |
+
+This is not bureaucracy for its own sake. It creates organizational memory. Six months later, when a teammate asks why `PaymentGateway` exists, the design doc should answer: which decision it hides, which alternatives were considered, and which future changes the boundary was meant to absorb.
+
 ## A Five-Step Method for Applying Information Hiding
 
 When you are designing (or reviewing) a module, run this checklist:
@@ -1005,7 +1062,7 @@ When you are designing (or reviewing) a module, run this checklist:
 2. **Verify each secret is owned in *exactly one* place.** If two modules both "know" the secret, they are semantically coupled. Pick one.
 3. **Inspect the interface for leaks.** Read every public method signature. Does any parameter type, return type, or thrown exception name a vendor, a database, a library, or a low-level data structure? If yes, the secret has leaked into the contract.
 4. **Simulate a likely change.** Pick a realistic future change and trace what would need to be edited. If the answer is more than this module, redesign.
-5. **Check for shallowness.** Is the implementation behind the interface non-trivial? If your "module" is a thin pass-through, merge it back into its caller — you have added an interface without buying any hiding.
+5. **Check for shallowness and payoff.** Is the implementation behind the interface non-trivial? A thin adapter can be worthwhile if it centralizes a volatile vendor, storage engine, or exhaustive choice list. But if the module is a pass-through with no plausible variation to protect, merge it back into its caller — you have added an interface without buying hiding.
 
 ## When NOT to Apply Information Hiding (Trade-offs Are Real)
 
@@ -1031,6 +1088,7 @@ Recognizing failure is half the skill.
 * **Shallow modules.** A "service" class whose every method is a one-line pass-through to another class. The reader pays the cost of two interfaces and gets the abstraction value of one.
 * **Conditional types in clients.** `if (paymentProvider == "paypal") { ... } else if (paymentProvider == "stripe") { ... }` scattered across the code. The provider is supposed to be hidden — but every site that branches on it is implicitly knowing the secret. Replace with polymorphism.
 * **Documentation as a substitute for hiding.** A long comment explaining "this method is fragile because internally it depends on the order being stored as a list, please don't change it". If a secret has to be documented to clients, it has not been hidden.
+* **Repeated exhaustive switches.** The same `switch` or `if/else` ladder over provider types, file formats, user roles, or states appears in multiple modules. Replace the scattered choice logic with one choice point plus polymorphic implementations.
 
 ## Predict-Before-You-Read: Spot the Violation
 
@@ -1105,6 +1163,8 @@ class OrderService:
 * Common secrets include data structures, storage, algorithms, libraries, hardware, and processing sequence. Some things — statefulness, rate limits, exception behavior — belong in the interface.
 * **Deep modules** hide a lot of complexity behind a small interface. **Shallow modules** add overhead without value.
 * Coupling and cohesion are the *metrics* by which Information Hiding is measured. Low coupling, high cohesion = secrets are well hidden.
+* The **Single Choice principle** says only one module should know the exhaustive list of alternatives; repeated switches over the same choices are leaked design decisions.
+* Good design work generates and evaluates multiple alternatives, records trade-offs in design docs, and delays implementation decisions when the interface can stay stable.
 * Information Hiding is *not* the same as `private`. Visibility modifiers are tools; Information Hiding is the principle that tells you *what* to hide.
 * Verify a design with **change impact analysis**: simulate plausible changes and count the modules that would need to change.
 * Don't over-apply: throwaway scripts, single-variant systems, and hot inner loops sometimes pay the cost of hiding without enjoying the benefit.
@@ -1123,15 +1183,7 @@ class OrderService:
 
 ## Practice
 
-Test your understanding below. Effortful retrieval is exactly what builds durable mental models. Come back tomorrow for the spacing benefit.
-
-### Reflection Questions
-
-1. Pick a class or module in a codebase you've worked on. List the **secrets** it owns. If you cannot list any, what is its justification for existing as a separate module?
-2. The lecture argues that "If I make my fields `private`, I have hidden the data". Why is this only half right? Give a small code example where every field is `private` but Information Hiding is still violated.
-3. Think of the **operating system** you use daily. Name two *difficult* or *likely-to-change* design decisions an OS hides (e.g., the file system, the scheduler) and describe what would happen to user programs if those decisions stopped being hidden.
-4. Some properties of a module belong in its **interface**, not in its hidden implementation — for example, whether a network protocol is stateful or stateless. Why? What makes a property "interface material" rather than "secret material"?
-5. The lecture mentions that "program comprehension takes up 58% of professional developers' time". Connect this statistic to the design decisions you make as a programmer: what kinds of information hiding most directly reduce cognitive load on future readers?
+Test your understanding below. The flashcards and quiz turn the chapter's core prompts into retrieval practice: naming module secrets, spotting leaky `private` fields, deciding what belongs in an interface, identifying Single Choice violations, and explaining design trade-offs.
 
 {% include flashcards.html id="design_principle_information_hiding" %}
 

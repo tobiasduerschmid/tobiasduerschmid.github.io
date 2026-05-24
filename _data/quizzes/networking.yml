@@ -8,7 +8,7 @@ questions:
     options:
       - "Both clients and servers can initiate connections to each other."
       - "The server proactively pushes updates to clients without being asked."
-      - "Connections are always initiated by the client, not the server."
+      - "In the basic request-response model, the client initiates contact and the server listens/responds."
       - "Only one client can be connected to a server at any given time."
     correct_index: 2
     option_feedback:
@@ -20,7 +20,7 @@ questions:
         not the default meaning of client-server architecture.
       3: |
         Many clients can connect to one server. The architecture centralizes service, not exclusivity.
-    explanation: "**In client-server architecture, the client always initiates the connection — the server passively listens and never reaches out to a client unprompted.** In client-server architectures, the client always initiates the connection. The server passively listens for incoming requests and responds to them. Multiple clients can connect to the same server simultaneously, and the server never reaches out to a client unprompted (unless a different pattern like WebSockets is used on top)."
+    explanation: "**In the basic client-server request-response model, the client initiates contact and the server listens/responds.** Multiple clients can connect to the same server simultaneously. A server can send data after a connection or session exists — for example through WebSockets, server-sent events, or push notifications — but that is an additional interaction mechanism layered on top of the basic client-server shape."
 
   - id: 2
     difficulty: basic
@@ -172,7 +172,7 @@ questions:
     question: "Why was HTTPS created, and what does it add on top of HTTP?"
     options:
       - "HTTPS is faster than HTTP because it compresses data before transmission."
-      - "HTTPS uses SSL/TLS to encrypt the connection, protecting data like passwords from being read or tampered with in transit."
+      - "HTTPS uses TLS to encrypt and authenticate the connection, protecting data like passwords from being read or tampered with in transit."
       - "HTTPS replaces TCP with UDP to reduce round-trip latency for web browsing."
       - "HTTPS adds server-side caching so the browser avoids repeated database lookups."
     correct_index: 1

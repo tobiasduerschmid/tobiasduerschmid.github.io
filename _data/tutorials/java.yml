@@ -744,7 +744,7 @@ steps:
             - "There is no performance difference"
           correct_index: 1
           explanation: "Auto-boxing/unboxing creates temporary wrapper objects on every iteration. With `int`, the operation is pure arithmetic on the stack — no object allocation."
-        - question: "**[Spaced Practice: Step 2]** You need to check if two `Integer` variables hold the same value. Which approach is always correct?"
+        - question: "You need to check if two `Integer` variables hold the same value. Which approach is always correct?"
           options:
             - "`a == b` — works for all integer values"
             - "`a.equals(b)` — compares values regardless of caching"
@@ -994,7 +994,7 @@ steps:
             - "Java requires all fields to be private"
           correct_index: 0
           explanation: "Encapsulation's power is controlling access: you can validate inputs, compute derived values, or change internal representation — all without breaking code that uses your class. If `balance` were public, any code could set it to -999."
-        - question: "**[Spaced Practice: Step 2]** Why does the test use `a.getOwner().equals(\"Test\")` instead of `a.getOwner() == \"Test\"`?"
+        - question: "Why does the test use `a.getOwner().equals(\"Test\")` instead of `a.getOwner() == \"Test\"`?"
           options:
             - "Because `==` on String objects checks reference identity, not value equality"
             - "Because `.equals()` is faster than `==`"
@@ -1633,7 +1633,7 @@ steps:
             - "Only new classes need to implement it"
           correct_index: 0
           explanation: "The compiler enforces the contract. Adding a method to an interface breaks all implementing classes until they provide an implementation. This is the power of `implements` — compile-time safety that Python's duck typing can't provide."
-        - question: "**[Spaced Practice: Step 4]** Why declare `Shape c = new Circle(5.0)` instead of `Circle c = new Circle(5.0)`?"
+        - question: "Why declare `Shape c = new Circle(5.0)` instead of `Circle c = new Circle(5.0)`?"
           options:
             - "Programming to the interface — you can later swap Circle for any Shape implementation without changing the variable type"
             - "Shape uses less memory than Circle"
@@ -1953,7 +1953,7 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "**[Spaced Practice: Step 2]** What does `==` do when comparing two String objects in Java?"
+        - question: "What does `==` do when comparing two String objects in Java?"
           options:
             - "Compares their text content character by character"
             - "Checks if they refer to the same object in memory"
@@ -1977,7 +1977,7 @@ steps:
             - "Always — abstract classes are superior to interfaces"
           correct_index: 1
           explanation: "Abstract classes can have instance fields and constructors, making them ideal for sharing state across subclasses. Interfaces define contracts (behavior) without state. Use interfaces for unrelated classes that share behavior; abstract classes for related classes that share implementation."
-        - question: "**[Spaced Practice: Step 4]** In the UML class diagram notation, what does a `-` prefix on a field mean?"
+        - question: "In the UML class diagram notation, what does a `-` prefix on a field mean?"
           options:
             - "The field is private"
             - "The field is protected"
@@ -2279,7 +2279,7 @@ steps:
             2: "Multi-parameter generic instantiation works exactly like single-parameter: each `<T>` is checked at compile time and erased at runtime. The `\"a\"` and `1` are passed as `Object`s after erasure."
             3: "Generic methods are also a compile-time feature; `<T>` is erased and `T` becomes `Object` in the bytecode. The trick is that we never *invoke* a constructor on `T` here — we just receive and return it."
           explanation: "After type erasure, `T` becomes `Object` at runtime — Java doesn't know which constructor to call. `new T()` is illegal. All other options work because the compiler inserts the right casts."
-        - question: "**[Spaced Practice: Step 3]** Why can't you write `ArrayList<int>` in Java?"
+        - question: "Why can't you write `ArrayList<int>` in Java?"
           options:
             - "Because `int` is not an object — generics require wrapper types like `Integer`"
             - "Because ArrayList is only for strings"
@@ -2625,7 +2625,7 @@ steps:
             - "ClassCastException — String keys can't return Integer values"
           correct_index: 1
           explanation: "HashMap.get() returns null when a key is missing. Auto-unboxing null to int throws NullPointerException. Use containsKey() first, or getOrDefault(key, 0)."
-        - question: "**[Technique Selection]** Match each scenario to the best collection: (A) Counting word frequencies. (B) Removing duplicate email addresses. (C) Maintaining an ordered list of recent commands."
+        - question: "Match each scenario to the best collection: (A) Counting word frequencies. (B) Removing duplicate email addresses. (C) Maintaining an ordered list of recent commands."
           options:
             - "A: HashMap, B: HashSet, C: ArrayList"
             - "A: HashSet, B: HashMap, C: ArrayList"
@@ -2916,7 +2916,7 @@ steps:
             - "Only NullPointerException"
           correct_index: 1
           explanation: "Checked exceptions (subclasses of Exception but NOT RuntimeException) must be caught or declared with `throws`. Unchecked exceptions (RuntimeException and its subclasses) have no compiler enforcement."
-        - question: "**[Spaced Practice: Step 5]** What keyword does a Java class use to declare that it fulfills an interface contract?"
+        - question: "What keyword does a Java class use to declare that it fulfills an interface contract?"
           options:
             - "extends"
             - "implements"
@@ -2924,7 +2924,7 @@ steps:
             - "interface"
           correct_index: 1
           explanation: "`implements` declares that a class fulfills an interface contract. `extends` is for class inheritance. A class can implement multiple interfaces but can only extend one class."
-        - question: "**[Spaced Practice: Step 7]** Why can't you write `ArrayList<int>` in Java?"
+        - question: "Why can't you write `ArrayList<int>` in Java?"
           options:
             - "Because int is too small for ArrayList"
             - "Because Java generics use type erasure, which only works with objects — use `ArrayList<Integer>` instead"
@@ -2932,7 +2932,7 @@ steps:
             - "Because you should use int[] arrays instead"
           correct_index: 1
           explanation: "Java generics are erased at compile time — they become raw types operating on `Object`. Primitives like `int` are not objects, so they can't participate in generics. The wrapper class `Integer` is used instead."
-        - question: "**[Technique Selection]** Match each scenario to the correct Java construct: (A) Multiple unrelated classes need a `serialize()` method. (B) Dog and Cat share `name`, `age` fields and `eat()` behavior. (C) You need a type-safe list that works for any element type."
+        - question: "Match each scenario to the correct Java construct: (A) Multiple unrelated classes need a `serialize()` method. (B) Dog and Cat share `name`, `age` fields and `eat()` behavior. (C) You need a type-safe list that works for any element type."
           options:
             - "A: interface, B: abstract class, C: generics"
             - "A: abstract class, B: interface, C: generics"

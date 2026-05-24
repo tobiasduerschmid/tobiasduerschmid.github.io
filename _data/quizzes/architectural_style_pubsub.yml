@@ -50,7 +50,7 @@ questions:
     options:
       - "QoS 0 — broker performs lowest-latency, fire-and-forget delivery with no acknowledgments."
       - "QoS 1 — broker retries until the consumer acknowledges, accepting that duplicates may reach the consumer."
-      - "QoS 2 — broker and consumer run a four-step handshake to guarantee exactly-once delivery."
+      - "QoS 2 — sender and receiver run the MQTT QoS 2 handshake so the message is delivered once at that protocol boundary."
       - "QoS choice is irrelevant — the broker always guarantees exactly-once delivery regardless of the level set."
     correct_index: 2
     option_feedback:
@@ -59,8 +59,8 @@ questions:
       1: |
         QoS 1 retries until acknowledged, which works fine *if* the consumer is idempotent — but the stem stipulates it is not, so duplicates would double-charge. In real billing systems most teams **make the consumer idempotent** (idempotency keys) and use QoS 1 (or REST), since QoS 2 is expensive and idempotent design is robust to retries from any source.
       3: |
-        QoS controls per-message delivery semantics; the broker does *not* default to exactly-once. Without setting QoS 2 explicitly, neither the broker nor the consumer can guarantee it on its own.
-    explanation: "**Given the stem's constraint (non-idempotent consumer, neither loss nor duplication acceptable), QoS 2's four-step PUBLISH/PUBREC/PUBREL/PUBCOMP handshake is the only level that satisfies both.** Treat this as 'understand the QoS levels' — not 'always pick QoS 2 for money movement.' In real-world billing (Stripe, PayPal, banks) the much more common pattern is *idempotent consumers + QoS 1*, or synchronous REST with idempotency keys."
+        QoS controls per-message delivery semantics; the broker does *not* default to exactly-once. Without setting QoS 2 explicitly, neither the broker nor the consumer gets that MQTT protocol-level guarantee.
+    explanation: "**Given the stem's constraint (non-idempotent consumer, neither loss nor duplication acceptable), QoS 2's PUBLISH/PUBREC/PUBREL/PUBCOMP handshake is the only MQTT QoS level that fits the stated delivery requirement.** Treat this as 'understand the QoS levels' — not 'always pick QoS 2 for money movement.' QoS 2 is a protocol-level delivery guarantee, not a complete business-transaction guarantee; real billing systems more commonly use idempotent consumers plus QoS 1, or synchronous REST with idempotency keys."
 
   - id: 4
     difficulty: advanced
@@ -154,7 +154,7 @@ questions:
       An architect proposes pub-sub for syncing inventory counts across a global e-commerce platform. The product manager pushes back: "we need every region to see the same count instantly so we never oversell." How should the architect respond?
     options:
       - "Agree — pub-sub delivers events instantly to all subscribers, so all regions will see the same count."
-      - "Pub-sub is asynchronous and best-effort, so regions will hold inconsistent counts for short windows. We have to choose: accept eventual consistency and reserve stock optimistically, or use a different style with strong consistency."
+      - "Typical asynchronous pub-sub lets regions apply events at different times, so they will hold inconsistent counts for short windows. We have to choose: design around eventual consistency, or use a different coordination style for strong consistency."
       - "Switch to topic-based pub-sub, which guarantees consistency across topics."
       - "Use QoS 2, which makes pub-sub strongly consistent."
     correct_index: 1
@@ -164,8 +164,8 @@ questions:
       2: |
         Topic-based vs content-based is about routing, not consistency. Neither variant guarantees synchronous global state.
       3: |
-        QoS 2 guarantees exactly-once *delivery* per subscriber. It does not synchronize their state — subscriber A and subscriber B still apply the event at different wall-clock times.
-    explanation: "**Pub-sub embodies the CAP-theorem trade-off: it sacrifices Consistency for Availability and Partition tolerance, so subscribers hold inconsistent state for bounded windows.** The architecturally honest answer is to name the trade-off explicitly: either redesign the business process around eventual consistency (reserve-then-confirm), or pick a style with strong consistency (distributed transactions, single source-of-truth with synchronous reads)."
+        QoS 2 guarantees exactly-once *delivery* at the MQTT protocol boundary. It does not synchronize subscriber state — subscriber A and subscriber B still apply the event at different wall-clock times.
+    explanation: "**Typical asynchronous pub-sub favors decoupled, available event propagation over immediate globally consistent state.** The architecturally honest answer is to name the trade-off explicitly: either redesign the business process around eventual consistency (reserve-then-confirm), or pick a coordination style with strong consistency (distributed transactions, single source-of-truth with synchronous reads)."
 
   - id: 9
     difficulty: intermediate

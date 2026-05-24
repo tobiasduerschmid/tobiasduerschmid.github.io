@@ -14,6 +14,8 @@ decks:
   - design_pattern_observer
   - networking
   - networking_decisions
+  - c
+  - design_principle_information_hiding
   - design_principle_solid
   - design_with_reuse
   - uml_class_diagram_examples

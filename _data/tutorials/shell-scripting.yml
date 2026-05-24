@@ -436,7 +436,7 @@ steps:
           correct_index: 1
           explanation: "`cp` (copy) creates a second copy of the file — the original remains untouched. `mv` (move) relocates the file — it disappears from its original location. `mv` also doubles as a rename command when source and destination are in the same directory."
 
-        - question: "**[Interleaved: Revisit Hello, Shell!]** After running `chmod +x morning.sh && ./morning.sh`, you move the script: `mv morning.sh scripts/morning.sh`. Can you still run it with `./morning.sh`?"
+        - question: "After running `chmod +x morning.sh && ./morning.sh`, you move the script: `mv morning.sh scripts/morning.sh`. Can you still run it with `./morning.sh`?"
           options:
             - "Yes — `chmod +x` is permanent and follows the file"
             - "No — the file is no longer at `./morning.sh`; you'd need `./scripts/morning.sh`"
@@ -719,7 +719,7 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "**[Interleaved: Revisit Hello, Shell!]** A script starts with `#!/bin/bash` and `set -e`. The first command is `cd /nonexistent`. What happens?"
+        - question: "A script starts with `#!/bin/bash` and `set -e`. The first command is `cd /nonexistent`. What happens?"
           options:
             - "Bash prints a warning but continues running the rest of the script"
             - "Bash silently ignores the failed `cd` and stays in the current directory"
@@ -930,7 +930,7 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "**[Interleaved: Revisit Pipes]** You want to count only lines containing `ERROR` in `server.log` and save that number to a variable. Which is correct?"
+        - question: "You want to count only lines containing `ERROR` in `server.log` and save that number to a variable. Which is correct?"
           options:
             - "`count=grep -c ERROR server.log`"
             - "`count=$(grep -c ERROR server.log)`"
@@ -957,7 +957,7 @@ steps:
           correct_index: 1
           explanation: "Without quotes, Bash **word-splits** the expanded value on spaces. `ls $dir` becomes `ls my documents` — two arguments. The fix is always `\"$dir\"`."
 
-        - question: "**[Interleaved: Revisit Hello, Shell!]** What does the `#!/bin/bash` line at the very top of a script tell the Operating System?"
+        - question: "What does the `#!/bin/bash` line at the very top of a script tell the Operating System?"
           options:
             - "It is a comment for documentation"
             - "It specifies the interpreter that should execute the file"
@@ -1184,7 +1184,7 @@ steps:
           correct_index: 2
           explanation: "Bash uses **`-eq`, `-lt`, `-gt`, `-le`, `-ge`, `-ne`** for integer comparisons. The `=` and `==` operators do string comparison."
 
-        - question: "**[Interleaved: Revisit Pipes]** Which operator is used to **append** output to an existing file without overwriting it?"
+        - question: "Which operator is used to **append** output to an existing file without overwriting it?"
           options:
             - "`>`"
             - "`>>`"
@@ -1380,7 +1380,7 @@ steps:
           correct_index: 1
           explanation: "`$(( ))` is **arithmetic expansion** — Bash evaluates the expression and substitutes the result as a string. The expression `$((counter + 1))` does **not** change `counter`; you must assign it back: `counter=$((counter + 1))`. Expressions that use assignment operators like `$((counter++))` or `$((counter += 1))` *do* modify the variable in place as a side effect, but for the simple `a + b` form shown here, you always assign back."
 
-        - question: "**[Interleaved: Revisit Variables & Quoting]** Inside a loop, you use `wc -l $f`. If a file is named `data 2024.txt`, how does Bash interpret the unquoted `$f`?"
+        - question: "Inside a loop, you use `wc -l $f`. If a file is named `data 2024.txt`, how does Bash interpret the unquoted `$f`?"
           options:
             - "It correctly processes the single file `data 2024.txt`"
             - "It word-splits the name into two separate arguments: `data` and `2024.txt`"
@@ -1389,7 +1389,7 @@ steps:
           correct_index: 1
           explanation: "As we learned in the Variables step, unquoted variables undergo **word-splitting**. The space in the filename breaks it into two arguments, likely causing `wc` to fail. Always use `\"$f\"` to treat the value as a single unit."
 
-        - question: "**[Interleaved: Revisit Navigating the Filesystem]** Your loop creates a directory for each `.sh` file: `mkdir results/$f`. But `results/` doesn't exist yet. What happens?"
+        - question: "Your loop creates a directory for each `.sh` file: `mkdir results/$f`. But `results/` doesn't exist yet. What happens?"
           options:
             - "Bash creates `results/` automatically when a subdirectory is needed"
             - "`mkdir` fails because the parent directory `results/` doesn't exist — you need `mkdir -p`"
@@ -1518,7 +1518,7 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "**[Interleaved: Revisit Conditionals]** Your script receives a filename as `$1`. You want to check if the file exists before processing it. Which conditional is correct?"
+        - question: "Your script receives a filename as `$1`. You want to check if the file exists before processing it. Which conditional is correct?"
           options:
             - "`if $1 -f; then`"
             - "`if [ -f \"$1\" ]; then`"
@@ -1678,7 +1678,7 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "**[Interleaved: Revisit Loops]** A function `process_all` is called as `process_all file1.txt \"my report.txt\"`. Inside, it runs `for f in $@; do`. How many iterations does the loop perform?"
+        - question: "A function `process_all` is called as `process_all file1.txt \"my report.txt\"`. Inside, it runs `for f in $@; do`. How many iterations does the loop perform?"
           options:
             - "2 — the two properly-separated arguments"
             - "3 — word-splitting on the space inside `my report.txt` creates a third element"
@@ -1885,7 +1885,7 @@ steps:
           correct_index: 1
           explanation: "Exit code **0 always means success** in Unix. Non-zero values indicate failure. This contrasts with how most languages evaluate boolean truthiness in code (where `0` is false and non-zero is true), even though languages like C and Java also use `return 0` / `exit(0)` to indicate process success to the OS."
 
-        - question: "**[Interleaved: Revisit Arguments]** Which special variable contains the **number of arguments** passed to the script?"
+        - question: "Which special variable contains the **number of arguments** passed to the script?"
           options:
             - "`$@`"
             - "`$#`"
@@ -2102,7 +2102,7 @@ steps:
       shuffle: true
       questions:
         - question: |
-            **[Interleaved: Revisit Hello, Shell!]** **Scenario:** A developer wrote the following deployment script but forgot to include `set -e` at the top:
+            **Scenario:** A developer wrote the following deployment script but forgot to include `set -e` at the top:
             ```bash
             #!/bin/bash
             cd /var/www/production_app
@@ -2120,7 +2120,7 @@ steps:
           explanation: "Without `set -e`, Bash continues executing every line regardless of failures. The `cd` fails silently, and the script proceeds in whatever directory it was already in — potentially running `git pull` and `rm -rf` in the wrong location. This is exactly why `set -e` is a critical safety net."
 
         - question: |
-            **[Interleaved: Revisit Pipes]** **Scenario:** You are given a massive log file, `server.log`. You need to find out how many times the user "admin" triggered a "WARN" event. Which pipeline correctly filters and counts these logs?
+            **Scenario:** You are given a massive log file, `server.log`. You need to find out how many times the user "admin" triggered a "WARN" event. Which pipeline correctly filters and counts these logs?
           options:
             - "`grep \"WARN\" server.log | grep \"admin\" | wc -l`"
             - "`cat server.log | grep \"WARN\" && grep \"admin\" > wc -l`"
@@ -2248,7 +2248,7 @@ steps:
           explanation: "`$1` receives `DEBUG`, so `LOG_LEVEL` is set to `DEBUG`. `$2` is empty, so `${2:-8080}` falls back to its default value `8080`. The `:-` operator substitutes the default only when the variable is unset or empty — it does not cause an error."
 
         - question: |
-            **[Interleaved: Revisit Case Statements & Exit Codes]** **Scenario:** A deployment script contains this line:
+            **Scenario:** A deployment script contains this line:
             ```bash
             cd /var/www/app && git pull && systemctl restart app
             ```

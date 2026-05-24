@@ -64,7 +64,7 @@ questions:
       3: |
         HTTP is request-response and runs over TCP — it is poorly suited to 60-Hz position broadcasts. The
         transport choice should match each data type's tolerance for loss, not default to one application protocol.
-    explanation: "**A hybrid is correct because position updates and progression events have opposite requirements.** Car positions arrive at 60 Hz with absolute coordinates — a missed snapshot is replaced within ~17 ms, so UDP is ideal. But a lost lap completion or purchase would corrupt persistent state — those need TCP's reliable, ordered delivery. This is the same hybrid pattern the SEBook describes for live online stock-trading platforms: UDP for the high-frequency snapshot stream of values that supersede each other, TCP for the events that must be recorded once and exactly once."
+    explanation: "**A hybrid is correct because position updates and progression events have opposite requirements.** Car positions arrive at 60 Hz with absolute coordinates — a missed snapshot is replaced within ~17 ms, so UDP is ideal. But a lost lap completion or purchase would corrupt persistent state — those need reliable, ordered delivery plus application-level transaction safeguards. This is the same hybrid pattern the SEBook describes for live online stock-trading platforms: UDP for the high-frequency snapshot stream of values that supersede each other, TCP for durable events whose bytes must arrive intact and in order."
 
   - id: 4
     difficulty: basic
@@ -177,7 +177,7 @@ questions:
     type: multiple
     question: "For which of the following would **TCP** be the better choice over UDP? (Select all that apply)"
     options:
-      - "Submitting a credit-card payment over HTTPS at the checkout of an online store"
+      - "Submitting an order request where the complete request and confirmation response must arrive intact and in order"
       - "A two-way video call where participants need sub-second audio and video"
       - "Sending an email with a 5 MB PDF attachment from a webmail interface to a recipient"
       - "An HTTPS download of a 100 MB software update from the vendor's update server"
@@ -187,8 +187,9 @@ questions:
       - 3
     option_feedback:
       0: |
-        A payment submission must be recorded once and exactly once. Transport-level loss or reordering
-        would either drop the charge or duplicate it — neither acceptable at a payment boundary.
+        The complete request and confirmation response need reliable, in-order delivery. The application
+        still needs idempotency keys or transaction logic to prevent duplicate charges, but the transport
+        should not expose raw loss or reordering.
       1: |
         Interactive calls prize low latency. A late packet from half a second ago is often less useful
         than keeping the current conversation moving, so UDP-based media protocols are common.
@@ -199,4 +200,4 @@ questions:
       3: |
         A software update must arrive byte-for-byte intact — a single corrupted byte can break installation
         or fail the package's signature verification.
-    explanation: "**Payments, emails, and software downloads all require byte-perfect, ordered delivery — exactly what TCP provides.** A missing or duplicated payment would lose money or charge a customer twice; a corrupted email body or attachment would render text as gibberish or break the file the recipient is trying to open; a single corrupted byte can break a software install. The **two-way video call** is the UDP case: preserving the current conversation is more important than waiting for stale media packets."
+    explanation: "**Order submissions, emails, and software downloads all require byte-perfect, ordered delivery — exactly what TCP provides.** The order system also needs application-level transaction safety, but the transport should deliver the request and confirmation bytes intact and in order. A corrupted email body or attachment would render text as gibberish or break the file the recipient is trying to open; a single corrupted byte can break a software install. The **two-way video call** is the UDP case: preserving the current conversation is more important than waiting for stale media packets."

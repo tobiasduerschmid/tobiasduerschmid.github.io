@@ -1,5 +1,5 @@
 title: "Generative AI in Software Engineering Flashcards"
-description: "Core concepts, productivity trade-offs, skill-formation risks, and best practices for using Generative AI in software engineering."
+description: "Core concepts, productivity trade-offs, skill-formation risks, coding-agent safety, and best practices for using Generative AI in software engineering."
 active: true
 cards:
   - id: 1
@@ -97,3 +97,57 @@ cards:
     question: "What is **vibe coding**, and what is the professional alternative?"
     answer: "**Vibe coding** is forgetting the code exists and relying on 'vibes' — letting the AI generate, paste, run, and ship without intellectual ownership of the result. The professional alternative is the **Supervisor Mentality**: review every block, explain every commit, assume subtle incorrectness, and maintain end-to-end accountability for what ships."
     explanation: "Vibe coding produces immediate results and accumulating hidden debt. It also crushes skill formation, especially for juniors. The Supervisor Mentality is slower per-commit but produces shippable, defensible, debuggable code — and grows the engineer's skills rather than substituting for them."
+
+  - id: 16
+    difficulty: intermediate
+    question: "What does an **AI coding agent** add on top of a plain chatbot?"
+    answer: "A coding agent places an LLM inside a development environment: it can inspect files, search the repository, edit code, run tests, read errors, inspect Git history, and sometimes browse documentation. This makes it a workflow participant rather than only a text generator."
+    explanation: "The added tool access is why agents feel powerful, but it also raises the supervision bar. If an agent can run useful commands, it can also propose dangerous ones."
+
+  - id: 17
+    difficulty: advanced
+    question: "What is a **prompt injection** risk for coding agents?"
+    answer: "Prompt injection happens when malicious or irrelevant instructions hidden in a web page, issue, document, or code comment are read by the agent and treated as task instructions. For coding agents, this can lead to unsafe commands, data exposure, or unrelated code changes."
+    explanation: "The mitigation is not blind trust: inspect tool calls, understand shell commands before approving them, limit permissions, and keep the task context bounded."
+
+  - id: 18
+    difficulty: intermediate
+    question: "Why are **skill files** or project rule files useful for AI-assisted development?"
+    answer: "They persist project-specific constraints and checklists — for example accessibility rules, test expectations, storage inventories, dark-mode requirements, naming conventions, or architecture boundaries — so the agent is more likely to apply them without every prompt repeating them."
+    explanation: "Skill files improve the agent's default behavior; they do not remove the need for review. A rule file is an instruction, not proof of compliance."
+
+  - id: 19
+    difficulty: advanced
+    question: "Why should large AI tasks start in **plan mode**?"
+    answer: "A plan makes the agent's assumptions visible before code exists. The human can review architecture, state transitions, tests, security, accessibility, and scope, then approve one small step at a time."
+    explanation: "Planning changes the workflow from 'generate a pile of code and hope' to 'surface design decisions, bound the task, implement, test, review, refactor.'"
+
+  - id: 20
+    difficulty: intermediate
+    question: "Why is dumping the entire repository into an AI context often worse than selecting relevant files?"
+    answer: "LLMs have finite context windows and uneven attention. Irrelevant files can bury the important constraints, causing lost-in-the-middle failures or hallucinations. Good context engineering provides the smallest relevant slice: target files, nearby interfaces, tests, and constraints."
+    explanation: "More context is not automatically better. High-signal context beats huge low-signal context."
+
+  - id: 21
+    difficulty: advanced
+    question: "What is a **design-decision prompt**, and why is it useful?"
+    answer: "A design-decision prompt asks the AI to compare trade-offs before implementation, such as 'Should we store the generated SVG or the avatar parameters?' The AI can list consequences; the human chooses based on product goals and quality attributes."
+    explanation: "This preserves human ownership of architecture. The AI helps enumerate options, but the engineer decides which trade-off fits the system."
+
+  - id: 22
+    difficulty: intermediate
+    question: "Which tasks are good candidates for AI assistance once you already understand the domain?"
+    answer: "Repetitive scaffolding, familiar boilerplate, first drafts of tests or documentation, simple debugging help, explaining stack traces or APIs, rapid prototypes, edge-case brainstorming, and small refactorings with tests."
+    explanation: "These tasks are common, well-bounded, and reviewable. The human still checks the output and quality attributes before shipping."
+
+  - id: 23
+    difficulty: advanced
+    question: "Which tasks should you be cautious about delegating to AI?"
+    answer: "High-stakes security, safety, legal, medical, financial, or accessibility-sensitive work; complex stateful workflows; novel architecture decisions; and any problem you do not understand well enough to review."
+    explanation: "AI is an amplifier of engineering skill. If the human lacks the schema needed to evaluate the output, the agent can create an illusion of competence rather than reliable progress."
+
+  - id: 24
+    difficulty: advanced
+    question: "What is the overfitting failure mode in **Test-Driven Generation**?"
+    answer: "The AI may pass visible tests by hard-coding sample inputs and outputs instead of implementing the general rule. The code looks green but fails the real specification."
+    explanation: "The fix is to inspect the implementation, add tests for properties and novel inputs, and refactor toward a general solution. Passing weak tests is not enough."
