@@ -42,7 +42,7 @@ questions:
       3: |
         Video still uses the transport layer. UDP-based protocols are common because they fit real-time
         media tradeoffs.
-    explanation: "**UDP is correct because a late packet is worse than no packet.** A single dropped frame is virtually unnoticeable — the decoder skips ahead to the next frame, which arrives within milliseconds. TCP's retransmission mechanism would cause visible stutter: the stream pauses to wait for a stale packet that describes video the viewer has already missed. This is why platforms like Zoom and Discord use UDP (via WebRTC) for video calls."
+    explanation: "**UDP is correct because a late packet is worse than no packet in an interactive video call.** A single dropped frame is often barely noticeable — the decoder skips ahead to the next frame, which arrives within milliseconds. TCP's retransmission mechanism can cause visible stutter: the stream pauses to wait for a stale packet that describes video the viewer has already missed. Interactive video platforms commonly use UDP-based media protocols such as RTP/WebRTC for this reason, though restrictive networks may force fallbacks."
 
   - id: 3
     difficulty: advanced
@@ -147,7 +147,7 @@ questions:
       3: |
         Voice data still travels using transport protocols. RTP over UDP is a common example, not a
         bypass of the transport layer.
-    explanation: "**UDP is correct because in real-time voice, a retransmitted packet arrives too late to be useful.** TCP's retransmission delay causes audible jitter — the stream stalls waiting for a packet describing audio the listener has already missed. A tiny gap from a dropped UDP packet lasts only milliseconds and is largely imperceptible. This is why all major VoIP systems (WhatsApp, FaceTime, Skype) use UDP, or protocols like RTP built on top of UDP."
+    explanation: "**UDP is correct because in real-time voice, a retransmitted packet often arrives too late to be useful.** TCP's retransmission delay can cause audible jitter — the stream stalls waiting for a packet describing audio the listener has already missed. A tiny gap from a dropped UDP packet is often easier to conceal than a playback stall. VoIP systems commonly use UDP-based media protocols such as RTP/WebRTC, with fallbacks for networks that block UDP."
 
   - id: 8
     difficulty: basic

@@ -144,7 +144,7 @@ questions:
       - "Estimable"
       - "Small"
       - "Testable"
-    correct_indices: [4]
+    correct_indices: [3, 4]
     option_feedback:
       0: |
         The scenario does not describe dependency on another story. It describes many unrelated hospital
@@ -156,15 +156,15 @@ questions:
         Running hospital operations is valuable. The issue is that too much value is bundled into one
         story.
       3: |
-        The broad epic would be hard to estimate precisely, but the INVEST criterion most directly
-        violated by the listed acceptance criteria is size.
+        The story bundles multiple product areas with different stakeholders, risks, and delivery paths.
+        That makes it hard to estimate as one coherent backlog item.
       4: |
         Patient records, payroll, inventory, and scheduling are separate product areas. Keeping them in
         one story makes the work too large to deliver and validate as one slice.
       5: |
         Each listed behavior has a plausible acceptance check. The problem is scope, not the complete
         absence of tests.
-    explanation: "**This violates Small because it is a massive Epic combining patient records, payroll, inventory, and scheduling into one story that would take months to build.** This violates **Small** because it is a massive 'Epic' (with many user stories combined into one) that would take months or years to build. Even though 'run the entire hospital effectively' is broad and subjective it is not part of the requirement (since it is in the 'so that' clause) so it does not impact testable or estimable."
+    explanation: "**This violates Small and Estimable because it is a massive Epic combining patient records, payroll, inventory, and scheduling into one backlog item.** Those are separate product areas with different users, risks, and acceptance paths, so the team cannot reasonably size or deliver the story as one slice. The listed acceptance criteria are individually checkable, so Testable is not the central failure; the central problem is that too much work has been bundled together to estimate and complete as a single story."
   - id: 5
     difficulty: basic
     type: multiple

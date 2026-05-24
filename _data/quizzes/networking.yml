@@ -110,7 +110,7 @@ questions:
     difficulty: basic
     question: "A student runs `node server.js` and their terminal shows: `Server listening on http://localhost:5000`. They open a browser on the same machine. Which URL should they visit?"
     options:
-      - "http://127.0.0.1:5000 — the loopback address the server is listening on"
+      - "http://localhost:5000 — the exact loopback URL printed by the server"
       - "http://0.0.0.0:5000 — the universal interface address"
       - "They cannot connect without a public IP address and port-forwarding."
       - "http://mymachine.local:5000 — the local DNS hostname"
@@ -122,9 +122,9 @@ questions:
       2: |
         A browser on the same machine can reach a loopback server without public IPs or port forwarding.
       3: |
-        A local hostname may work if name resolution is configured, but the reliable loopback URL shown
-        by `localhost` is `127.0.0.1` with the port.
-    explanation: "**`127.0.0.1` is the loopback address that always refers to the local machine itself, so a server listening there is reachable only from that same machine — no internet connection required.** `127.0.0.1` is the loopback (localhost) address that always refers to the local machine itself. A server listening on `127.0.0.1:5000` is reachable from any browser on the *same* machine at that exact address — no internet connection or public IP required. This is the standard local development workflow."
+        A local hostname may work if local name resolution is configured, but it is not the URL the
+        server printed. Start with the shown `localhost` URL.
+    explanation: "**The browser should visit the exact `localhost` URL printed by the server.** `localhost` is the local loopback name; on most systems it resolves to a loopback address such as `127.0.0.1` or `::1`. A browser on the same machine can reach that server without a public IP address or port forwarding. Typing `127.0.0.1:5000` often works for IPv4 loopback too, but the most direct answer is the URL the terminal already gave: `http://localhost:5000`."
 
   - id: 7
     difficulty: basic
@@ -181,12 +181,13 @@ questions:
         HTTPS may have performance optimizations in practice, but its defining addition is TLS security,
         not compression.
       2: |
-        HTTPS still commonly runs HTTP over TLS over TCP. It does not replace TCP with UDP just by
-        adding security.
+        Adding HTTPS does not mean the protocol simply swaps TCP for UDP. HTTP/1.1 and HTTP/2 over
+        HTTPS commonly use TLS over TCP; HTTP/3 uses QUIC over UDP, but security is still the defining
+        addition.
       3: |
         Caching is an HTTP/application concern. HTTPS protects traffic in transit rather than adding
         server-side caching.
-    explanation: "**HTTPS wraps HTTP in SSL/TLS encryption to prevent eavesdropping and tampering in transit — it does not change the underlying TCP transport or add server-side caching.** HTTPS (HTTP Secure) wraps HTTP inside an SSL/TLS encryption layer. This prevents anyone intercepting traffic between the client and server from reading or modifying it — critical for passwords, personal information, and financial transactions. HTTPS has become the default for all public web pages, even static ones without sensitive data, because it also verifies the server's identity."
+    explanation: "**HTTPS adds TLS security to HTTP: confidentiality, integrity, and server authentication.** This prevents someone intercepting traffic between the client and server from reading or modifying it — critical for passwords, personal information, and financial transactions. Historically, HTTPS most often meant HTTP over TLS over TCP; modern HTTP/3 carries the same HTTP semantics over QUIC, which runs over UDP. The key idea is therefore security in transit, not caching, compression, or one fixed transport protocol."
 
   - id: 10
     difficulty: intermediate
@@ -206,26 +207,26 @@ questions:
   - id: 11
     difficulty: intermediate
     type: multiple
-    question: "Which of the following are guarantees provided by **TCP** but **NOT** by UDP? (Select all that apply)"
+    question: "Which of the following are guarantees provided by **TCP** but **NOT** by UDP by itself? (Select all that apply)"
     options:
-      - "Messages are delivered in the order they were sent."
-      - "Lost messages are automatically detected and retransmitted."
-      - "Each message gets retransmitted in cases of bit flips identified via checksum-based error detection."
-      - "Messages are delivered with zero additional latency or overhead."
+      - "Application bytes are delivered to the receiver in order."
+      - "Lost data is detected and retransmitted."
+      - "Corrupted TCP segments are discarded and the affected data is recovered through TCP's reliability mechanisms."
+      - "Data is delivered with no setup, acknowledgment, or reliability overhead."
     correct_indices:
       - 0
       - 1
       - 2
     option_feedback:
       0: |
-        Ordering is one of the central TCP guarantees. UDP datagrams can arrive out of order unless the
-        application adds its own sequencing.
+        In-order byte delivery is one of TCP's central guarantees. UDP datagrams can arrive out of
+        order unless the application adds its own sequencing.
       1: |
         TCP detects missing data and retransmits. UDP leaves loss handling to the application.
       2: |
-        TCP checksum failures cause bad segments to be discarded, and reliability mechanisms lead to
-        retransmission. UDP has a checksum too, but not the same delivery recovery guarantee.
+        TCP checksum failures cause bad segments to be discarded, and missing acknowledgments lead to
+        retransmission. UDP has a checksum too, but not the same recovery guarantee.
       3: |
         TCP’s guarantees require acknowledgments, sequencing, and retransmission machinery. Those
-        mechanisms add overhead rather than eliminating latency.
-    explanation: "**TCP guarantees ordering, retransmission, and error detection at the cost of overhead — 'zero additional latency' is a property of UDP, not TCP.** TCP guarantees ordering (sequence numbers), retransmission of lost messages (ACK + timeout), and error detection (checksums) — but all three come at a cost: the 3-way handshake, per-message ACKs, and connection teardown add overhead. 'Zero additional latency' is a property of **UDP**, which fires data at the receiver with no setup and no acknowledgment."
+        mechanisms add overhead rather than eliminating it. UDP is lower-overhead, not zero-overhead.
+    explanation: "**TCP provides reliable, in-order byte-stream delivery; UDP provides a minimal datagram service and leaves reliability to the application.** TCP uses sequence numbers, checksums, acknowledgments, and retransmission to recover from loss or corruption. UDP has much less protocol machinery and can be a better fit for latency-sensitive traffic, but it does not provide zero latency, zero overhead, ordered delivery, duplicate protection, or automatic retransmission."

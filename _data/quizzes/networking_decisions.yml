@@ -43,7 +43,7 @@ questions:
       3: |
         Live video still travels over the transport layer. Real-time media commonly uses UDP-based protocols
         (RTP, WebRTC); it does not skip the transport layer.
-    explanation: "**UDP is correct because a re-sent video frame arrives too late to be useful.** A dropped UDP packet causes a tiny visual glitch (often imperceptible — the next frame arrives within milliseconds), but TCP's retransmission would *pause the entire stream* to wait for a packet describing what the visitor was doing a moment ago — exactly when the homeowner needs the present view. Every live-video product (FaceTime, Zoom, real-time camera feeds) uses UDP-based protocols for this reason."
+    explanation: "**UDP is correct because a re-sent video frame arrives too late to be useful in an interactive camera feed.** A dropped UDP packet causes a tiny visual glitch (often imperceptible — the next frame arrives within milliseconds), but TCP's retransmission can *pause the stream* to wait for a packet describing what the visitor was doing a moment ago — exactly when the homeowner needs the present view. Low-latency interactive video products commonly use UDP-based media protocols such as RTP/WebRTC for this reason. Buffered broadcast streaming is a different trade-off and may use HTTP-based delivery."
 
   - id: 3
     difficulty: advanced
@@ -149,7 +149,7 @@ questions:
       3: |
         Voice audio still uses transport-layer protocols. Real-time voice typically rides on UDP (often via
         RTP or WebRTC); it does not skip the transport layer.
-    explanation: "**UDP is correct because in real-time voice, a re-sent packet arrives too late to be useful.** TCP's retransmission would stall the audio waiting for a packet describing a moment the listener has already passed — producing audible jitter exactly when the speaker is mid-word. A dropped UDP packet creates a sub-millisecond gap that is largely imperceptible. This is why every real-time voice product (FaceTime audio, Discord voice, push-to-talk apps) uses UDP, often via RTP or WebRTC."
+    explanation: "**UDP is correct because in real-time voice, a re-sent packet often arrives too late to be useful.** TCP's retransmission can stall the audio waiting for a packet describing a moment the listener has already passed — producing audible jitter exactly when the speaker is mid-word. A dropped UDP packet creates a brief gap that codecs can often conceal better than a playback stall. Real-time voice products commonly use UDP-based media protocols, often via RTP or WebRTC, while still needing fallbacks on restrictive networks."
 
   - id: 8
     difficulty: basic
@@ -178,7 +178,7 @@ questions:
     question: "For which of the following would **TCP** be the better choice over UDP? (Select all that apply)"
     options:
       - "Submitting a credit-card payment over HTTPS at the checkout of an online store"
-      - "A live sports broadcast (a soccer match) streamed to a fan's phone app while the match is happening"
+      - "A two-way video call where participants need sub-second audio and video"
       - "Sending an email with a 5 MB PDF attachment from a webmail interface to a recipient"
       - "An HTTPS download of a 100 MB software update from the vendor's update server"
     correct_indices:
@@ -190,9 +190,8 @@ questions:
         A payment submission must be recorded once and exactly once. Transport-level loss or reordering
         would either drop the charge or duplicate it — neither acceptable at a payment boundary.
       1: |
-        Live broadcast frames are only useful while they're current. A re-sent frame describing a moment
-        of the match that has already passed is no longer worth waiting for, and the wait itself would
-        freeze the stream right when the action is happening.
+        Interactive calls prize low latency. A late packet from half a second ago is often less useful
+        than keeping the current conversation moving, so UDP-based media protocols are common.
       2: |
         Email content must arrive complete and uncorrupted. A missing or reordered byte in the message
         body or the PDF attachment would render the text as gibberish or break the attached file when the
@@ -200,4 +199,4 @@ questions:
       3: |
         A software update must arrive byte-for-byte intact — a single corrupted byte can break installation
         or fail the package's signature verification.
-    explanation: "**Payments, emails, and software downloads all require byte-perfect, ordered delivery — exactly what TCP provides.** A missing or duplicated payment would lose money or charge a customer twice; a corrupted email body or attachment would render text as gibberish or break the file the recipient is trying to open; a single corrupted byte can break a software install. The **live sports broadcast** is the UDP case: a re-sent frame from a few seconds ago is useless to a viewer watching the action live — the same trade-off the SEBook describes for any live media stream."
+    explanation: "**Payments, emails, and software downloads all require byte-perfect, ordered delivery — exactly what TCP provides.** A missing or duplicated payment would lose money or charge a customer twice; a corrupted email body or attachment would render text as gibberish or break the file the recipient is trying to open; a single corrupted byte can break a software install. The **two-way video call** is the UDP case: preserving the current conversation is more important than waiting for stale media packets."

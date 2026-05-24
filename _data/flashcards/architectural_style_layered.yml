@@ -83,7 +83,7 @@ cards:
   - id: 14
     difficulty: basic
     question: "Give two concrete real-world examples of layered architecture."
-    answer: "The **OSI 7-layer model** / **TCP/IP stack** (Physical → Link → Network → Transport → Session → Presentation → Application) and the **Java EE / Jakarta EE** application stack (Presentation → Business → Persistence → Database). Operating systems (kernel → device drivers → system calls → user-space) are another canonical example."
+    answer: "The **OSI 7-layer model** (Physical → Data Link → Network → Transport → Session → Presentation → Application) and the **Java EE / Jakarta EE** application stack (Presentation → Business → Persistence → Database). The related **TCP/IP / Internet stack** is coarser — Link → Internet → Transport → Application — and should not be labeled with OSI's Session and Presentation layers. Operating systems (kernel → device drivers → system calls → user-space) are another canonical example."
     explanation: "Other examples: Android (Apps → App Framework → Libraries → Linux Kernel), web browsers (DOM → Rendering → Layout → Painting → Compositing), and any compiler (Lexer → Parser → IR → Optimizer → Backend)."
 
   - id: 15

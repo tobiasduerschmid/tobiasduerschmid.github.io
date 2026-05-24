@@ -105,6 +105,15 @@ questions:
       - "Every integer pair from -100 to 100 — exhaustive enumeration eliminates the chance of missing a problematic combination."
     correct_indices: [0, 1, 2]
     option_feedback:
+      0: |
+        A representative valid case anchors the ordinary behavior. Without it, the test set can cover
+        unusual paths while missing the function's main promise.
+      1: |
+        Zero as the numerator is a boundary worth testing because it changes the shape of the result.
+        Boundary values are where small implementation assumptions often show up.
+      2: |
+        Division by zero is the invalid-input class for this function. A reasonable test set should assert
+        the specified error behavior instead of only checking successful calculations.
       3: |
         Exhaustive enumeration adds runtime without adding fault-finding strength beyond a few well-chosen representatives. Equivalence partitioning groups inputs into classes the code treats the same way; one or two per class beats brute force.
     explanation: "The standard categories from black-box test design are: representative valid, boundaries (empty / one / many; min / max / just-below / just-above), invalid inputs, exceptional states, and regression examples. For `divide` the boundary at zero numerator and the invalid divide-by-zero are the high-information cases — exactly where implementation bugs cluster. Coverage tools tell you which lines ran, not whether you chose these classes well."
@@ -209,6 +218,15 @@ questions:
       - "Tests should never use the word 'helper' even when the production code does — vocabulary in tests should describe the domain, not the codebase's internal naming."
     correct_indices: [0, 1, 2]
     option_feedback:
+      0: |
+        A test name is part of the test's specification. If it names private machinery, it points future
+        maintainers toward implementation details instead of the behavior under protection.
+      1: |
+        Asserting on a private cache pins the current strategy rather than the public promise. That makes
+        a legitimate refactor look like a regression.
+      2: |
+        The behavioral rewrite is the constructive fix, not just a naming preference. It keeps the test
+        focused on what callers can rely on.
       3: |
         Avoiding a single word is not the issue. The real concern is that the *name and assertions* together pin the test to implementation details — using or avoiding any specific vocabulary is a symptom, not the cause.
     explanation: "Tests that mirror implementation details become brittle. The fix is to name the *behavioral promise* (idempotent lookups, eventual consistency, repeated reads cheap) and to assert at the public boundary. The cache then becomes one of many valid implementations of that promise — and refactoring the cache no longer breaks the suite."

@@ -100,6 +100,15 @@ questions:
       - "Property-based testing makes white-box testing obsolete — generating thousands of inputs around the spec gives the same coverage signal that white-box ever provided, but at the spec layer."
     correct_indices: [0, 1, 2]
     option_feedback:
+      0: |
+        White-box tests are useful when the implementation has real risk the public spec does not name,
+        such as defensive paths or edge-case branches.
+      1: |
+        Coverage is a white-box signal: it shows which code the current tests have not exercised. It does
+        not prove correctness, but it is still useful navigation.
+      2: |
+        Some failures live in implementation choices the black-box spec never mentions. A carefully chosen
+        white-box test can target that risk directly.
       3: |
         Property-based testing is powerful but addresses input variety at the spec boundary — it doesn't reach into private implementation paths the spec is silent on. The two techniques live at different layers and aren't substitutes for each other.
     explanation: "Black-box and white-box are complementary lenses, not competing methodologies. Black-box tests survive refactoring and pin behavior at the spec boundary; white-box tests catch implementation-specific risks the spec doesn't enumerate. Coverage tools, mutation testing, and property-based testing all draw on white-box intuitions even in modern suites. The mature view is *both, in the right proportion* — not one or the other."

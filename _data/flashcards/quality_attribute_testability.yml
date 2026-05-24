@@ -59,8 +59,8 @@ cards:
   - id: 10
     difficulty: advanced
     question: "What does **TDD** actually guarantee about testability, and what does it not?"
-    answer: "TDD **guarantees** that every line of production code was written in response to a failing test, which results in highly testable, modular, decoupled design. It **does not** guarantee 100% coverage — entire edge cases or error paths can still slip through if the test list itself was incomplete."
-    explanation: "TDD is a *design technique* that happens to produce tests as a byproduct. Its biggest benefit is the design pressure (write the test → think about how the unit will be used → keep the unit small and isolated). The coverage gap is real and must be addressed separately with techniques like mutation testing or property-based testing."
+    answer: "TDD **strongly encourages** production code to be written in response to failing tests, which can push the design toward small, testable units. It **does not** guarantee 100% coverage, modularity, decoupling, or that every production line was actually test-first — incomplete test lists, skipped Refactor steps, and untested error paths can still slip through."
+    explanation: "TDD is a *design technique* that happens to produce tests as a byproduct. Its biggest benefit is the design pressure (write the test → think about how the unit will be used → keep the unit small and isolated). That pressure is valuable, but it depends on disciplined practice and a strong test list; coverage gaps still need techniques like mutation testing, property-based testing, and code review."
 
   - id: 11
     difficulty: intermediate

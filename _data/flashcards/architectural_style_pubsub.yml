@@ -41,8 +41,8 @@ cards:
   - id: 5
     difficulty: advanced
     question: "Why are *typical* pub-sub buses (Kafka, RabbitMQ, MQTT) a poor fit for hard real-time systems?"
-    answer: "Their default asynchronous dispatch provides **no guarantees about ordering, timing, or delivery**. Events may arrive out of order, be delayed by broker load, or be dropped under best-effort QoS. Hard real-time deadlines require a transport with deterministic latency bounds, which mainstream brokers don't promise."
-    explanation: "Pub-sub *as a style* is not inherently disqualified — **DDS** is pub-sub purpose-built for hard real-time aerospace and defense, with an extremely rich QoS catalog (deadline, latency budget, transport priority, lifespan). It works precisely because every default has been replaced with explicit bounds. The poor fit is for *default-configured* mainstream brokers, not for the style itself."
+    answer: "Their default asynchronous dispatch usually provides **no deterministic timing guarantee**, and ordering/delivery guarantees are product- and configuration-specific. Kafka preserves order within a partition; MQTT delivery depends on QoS; RabbitMQ behavior depends on exchanges, queues, acknowledgments, and durability settings. Hard real-time deadlines require explicit latency bounds, which mainstream broker defaults don't promise."
+    explanation: "Pub-sub *as a style* is not inherently disqualified — **DDS** is pub-sub purpose-built for hard real-time aerospace and defense, with an extremely rich QoS catalog (deadline, latency budget, transport priority, lifespan). It works precisely because timing, delivery, and priority are made explicit. The poor fit is for *default-configured* mainstream brokers, not for the style itself."
 
   - id: 6
     difficulty: advanced
@@ -53,8 +53,8 @@ cards:
   - id: 7
     difficulty: intermediate
     question: "What three forms of decoupling does pub-sub provide?"
-    answer: "**Space decoupling:** parties do not know each other's identities or locations. **Time decoupling:** parties do not need to be active simultaneously — a subscriber can receive events published while it was offline. **Synchronization decoupling:** neither party blocks on the other; publishers don't wait for delivery, subscribers don't block while emitting."
-    explanation: "Time decoupling is what enables Kafka's log replay, MQTT's retained messages, and JMS durable subscriptions — features that let new or recovered subscribers catch up on state."
+    answer: "**Space decoupling:** parties do not know each other's identities or locations. **Time decoupling:** parties do not need to be active simultaneously *when the middleware persists or retains matching events*; otherwise offline subscribers miss events. **Synchronization decoupling:** neither party blocks on the other; publishers don't wait for delivery, subscribers don't block while emitting."
+    explanation: "Time decoupling is implemented by features such as Kafka log retention, MQTT retained messages or persistent sessions, and JMS durable subscriptions. Without one of those persistence mechanisms, a subscriber that is offline during publication has a delivery gap."
 
   - id: 8
     difficulty: advanced

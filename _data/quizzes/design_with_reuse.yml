@@ -206,10 +206,22 @@ questions:
     correct_indices: [0, 1, 2, 4]
     optional_indices: []
     option_feedback:
+      0: |
+        Reuse rarely drops cleanly into an architecture. Adapter code, lifecycle assumptions, error
+        handling, and data-shape mismatches are real integration costs.
+      1: |
+        External reuse creates an ongoing maintenance obligation. Someone has to watch for security fixes,
+        compatibility changes, and deprecations.
+      2: |
+        A dependency brings a worldview with it: APIs, data models, extension points, and constraints. The
+        more central it becomes, the more future design choices have to fit that worldview.
       3: |
         Reused code is not, in general, slower than hand-written code — often it is faster because
         popular libraries get aggressive optimization. Performance is not on the cost side of the
         external-reuse scale in the chapter.
+      4: |
+        Choosing a dependency is itself work. Teams must compare alternatives, inspect maintenance health,
+        read licenses, and judge fit before adding the module.
     explanation: "The chapter's cost-benefit scale for external reuse names: integration effort, finding & evaluating the module, ongoing updating effort, and limits on changeability — counterbalanced by saved implementation effort, saved testing effort, and the benefit of update propagation."
 
   - id: 10

@@ -114,7 +114,7 @@ questions:
       The team adopts TDD: write a failing test, write the minimum code to pass, refactor, repeat. A junior developer says: "TDD guarantees 100% coverage." Why is this overstated?
     options:
       - "TDD is just a buzzword and provides no real benefit."
-      - "TDD ensures every *deliberately added line* is in response to a failing test, but the test list itself may be incomplete — entire edge cases, error paths, or unintended behaviors can still slip through. TDD strongly *promotes* testability and coverage, but coverage depends on the author's imagination, not the methodology."
+      - "TDD strongly encourages production code to be driven by failing tests, but the test list itself may be incomplete — entire edge cases, error paths, or unintended behaviors can still slip through. TDD strongly *promotes* testability and coverage, but coverage depends on the author's imagination and discipline, not the methodology alone."
       - "TDD only works for object-oriented code."
       - "TDD requires writing tests *after* the code, not before."
     correct_index: 1
@@ -125,7 +125,7 @@ questions:
         TDD works in any paradigm — there are widely-cited TDD examples in functional Haskell, procedural C, and embedded firmware. Paradigm independence is one of its strengths.
       3: |
         Writing tests after the code is *not* TDD — it's just unit testing. TDD specifically requires the test to be written first and fail before the implementation exists.
-    explanation: "**TDD guarantees coverage of the cases the developer *thought to write tests for* — not coverage of all reachable behavior. Untested branches, edge cases, and emergent system behaviors still slip through unless the test list is itself exhaustive.** The methodology produces highly testable code (because every line was written in response to a test) but does not magically generate test cases the author would otherwise have missed."
+    explanation: "**TDD gives coverage for the cases the developer actually drove with failing tests — not coverage of all reachable behavior.** Untested branches, edge cases, and emergent system behaviors still slip through unless the test list itself is strong. Practiced well, TDD pushes code toward testable design because the developer has to use the code before implementing it, but it does not magically generate missing test cases or guarantee that every production line was test-first."
 
   - id: 7
     difficulty: advanced

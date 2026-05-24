@@ -210,7 +210,7 @@ questions:
       2: |
         Trades can be viewed as relationships, but the key requirement is transactional integrity and
         auditability across structured records.
-    explanation: "Transactional, audited, well-structured data with cross-row invariants is the textbook RDBMS sweet spot. Multi-row ACID transactions, foreign-key integrity, and SQL joins are exactly what brokerage ledgers need. A key-value store gives none of those; a graph database models relationships but not multi-entity ACID transactions. This is a case where RDBMS is the obvious, correct choice — the 'always reach for NoSQL' reflex is a real anti-pattern."
+    explanation: "Transactional, audited, well-structured data with cross-row invariants is the textbook RDBMS sweet spot. Multi-row ACID transactions, foreign-key integrity, SQL joins, mature constraint tooling, and audit-friendly schemas are exactly what brokerage ledgers need. Some graph databases do support ACID transactions, so the issue is not that graphs cannot be transactional; the issue is that the dominant workload here is a regulated ledger of structured records, not graph traversal. This is a case where RDBMS is the obvious, correct choice — the 'always reach for NoSQL' reflex is a real anti-pattern."
 
   - id: 12
     difficulty: advanced

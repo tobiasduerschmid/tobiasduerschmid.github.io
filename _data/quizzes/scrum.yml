@@ -159,6 +159,15 @@ questions:
       - "Commitment"
     correct_indices: [0, 1, 2]
     option_feedback:
+      0: |
+        Transparency is one of the three pillars because inspection depends on visible work, artifacts,
+        and progress. Without transparency, decisions are based on guesses.
+      1: |
+        Inspection is the pillar that turns visible work into evidence. Scrum's events exist largely to
+        create regular opportunities to inspect progress and artifacts.
+      2: |
+        Adaptation closes the empirical loop. Scrum expects the team to change course when inspection
+        shows the current path is unacceptable.
       3: |
         Velocity is a *metric* some teams choose to track (e.g., story points completed per Sprint). Scrum does not require it, and it is not part of the empirical foundation.
       4: |

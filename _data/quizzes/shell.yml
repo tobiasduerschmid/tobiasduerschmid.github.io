@@ -180,7 +180,7 @@ questions:
     question: "In Bash, exit codes are crucial for determining if a command succeeded or failed. Which of the following statements are true regarding how Bash handles exit statuses and control flow? (Select all that apply)"
     options:
       - "The `false` command does absolutely nothing except return an error exit code (a non-zero value)."
-      - "Running the `set -e` command configures the script to abort immediately if any command within it exits with a non-zero status."
+      - "Running the `set -e` command configures the script to abort on many unhandled non-zero statuses, with documented exceptions."
       - "An exit status of '1' universally indicates complete, bug-free success in UNIX shell scripting."
       - "Control structures like `if` statements evaluate the underlying exit code of a command, rather than looking for a boolean literal like 'true' or 'false'."
     correct_indices: [0, 1, 3]
@@ -189,15 +189,15 @@ questions:
         `false` is useful precisely because it does no work except return a failing status. It is a tiny
         command for testing shell control flow.
       1: |
-        `set -e` changes the script into fail-fast mode for many unhandled nonzero statuses. That is why
-        it is often used in deployment scripts.
+        `set -e` changes the script into fail-fast mode for many unhandled nonzero statuses, but it is
+        not a blanket "any nonzero exits" rule. Bash ignores `-e` in several control-flow contexts.
       2: |
         Shell success is exit status `0`; nonzero values indicate failure. That is the reverse of
         treating `1` as boolean true.
       3: |
         Bash `if` runs a command and checks its exit status. It is not looking for a boolean object
         named `true` or `false`.
-    explanation: "**Exit code 0 means success; `if` tests exit codes not booleans; and `set -e` aborts on any non-zero exit.** In UNIX, an exit code of 0 means success, while non-zero (like 1) means failure/error. `if` statements work by running a command and proceeding if its exit code is 0. `set -e` is a common safety mechanism to fail fast if an error occurs."
+    explanation: "**Exit code 0 means success; `if` tests exit codes not booleans; and `set -e` creates fail-fast behavior for many unhandled failures.** In UNIX, an exit code of 0 means success, while non-zero (like 1) means failure/error. `if` statements work by running a command and proceeding if its exit code is 0. `set -e` is useful, but Bash intentionally does not exit for every nonzero status: tests in `if`/`while`, non-final commands in `&&`/`||` lists, non-final pipeline commands unless `pipefail` is set, and commands inverted with `!` are common exceptions."
   - id: 10
     difficulty: advanced
     type: multiple
@@ -343,8 +343,8 @@ questions:
       - "echo \"Processing $1...\""
     distractors:
       - "    return 1"
-      - "fi;"
-    explanation: "**The script starts with the shebang, uses `[ $# -lt 1 ]` to check arguments, redirects errors to stderr with `>&2`, exits with `1` on failure, and closes with `fi` — no semicolon.** The shebang (`#!/bin/bash`) must be the first line. The `if [ $# -lt 1 ]` test checks argument count, `>&2` redirects echo to stderr, and `exit 1` terminates with a failure code. `fi` closes the `if` block (no semicolon). The distractor `return 1` only works inside functions, not at the top level of a script. `fi;` with a trailing semicolon is unnecessary and unconventional."
+      - "endif"
+    explanation: "**The script starts with the shebang, uses `[ $# -lt 1 ]` to check arguments, redirects errors to stderr with `>&2`, exits with `1` on failure, and closes the conditional with `fi`.** The shebang (`#!/bin/bash`) must be the first line. The `if [ $# -lt 1 ]` test checks argument count, `>&2` redirects echo to stderr, and `exit 1` terminates with a failure code. The distractor `return 1` only works inside functions, not at the top level of a script. Bash closes an `if` block with `fi`, not `endif`."
 
   - id: 17
     difficulty: advanced
