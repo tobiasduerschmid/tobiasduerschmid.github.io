@@ -130,6 +130,7 @@ module Jekyll
       def collect_data_attribute_blocks(content)
         blocks = []
         content.scan(%r{<div\b(?=[^>]*\bdata-uml-type=)(?=[^>]*\bdata-uml-spec=)([^>]*)>[\s\S]*?</div>}mi) do |attrs|
+          attrs = attrs[0] if attrs.is_a?(Array)
           original = Regexp.last_match(0)
           type = html_attr(attrs, 'data-uml-type')
           spec = html_attr(attrs, 'data-uml-spec')
