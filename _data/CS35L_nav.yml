@@ -103,6 +103,15 @@ topics:
       - name: Test Doubles
         url: /SEBook/testing/testdoubles.html
 
+  - name: Development Practices
+    icon: null
+    url: /SEBook/development_practices/index.html
+    subtopics:
+      - name: Debugging
+        url: /SEBook/development_practices/debugging.html
+      - name: Python Debugging Tutorial
+        url: /SEBook/tools/python-debugging.html
+
   - name: UML
     icon: null
     url: /SEBook/uml.html

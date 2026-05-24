@@ -794,19 +794,22 @@
   <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js" crossorigin="anonymous"></script>
   <script>
     (function () {
+      var tooltipSelector = '[data-toggle="tooltip"], [data-original-title], [data-tooltip], [title]:not([data-no-tooltip]):not(iframe)';
+
+      function normalizeTooltipTrigger(trigger) {
+        var $trigger = jQuery(trigger);
+        var nativeTitle = $trigger.attr('title');
+        if (nativeTitle && !$trigger.attr('data-original-title')) {
+          $trigger.attr('data-original-title', nativeTitle);
+        }
+        $trigger.removeAttr('title');
+      }
+
       function initTooltips() {
         if (!window.jQuery || !jQuery.fn.tooltip) return;
-        var selector = '[data-toggle="tooltip"], [data-original-title], [data-tooltip], [title]:not([data-no-tooltip])';
-        var $triggers = jQuery(selector);
+        var $triggers = jQuery(tooltipSelector);
         if (!$triggers.length) return;
-        $triggers.each(function () {
-          var $trigger = jQuery(this);
-          var nativeTitle = $trigger.attr('title');
-          if (nativeTitle && !$trigger.attr('data-original-title')) {
-            $trigger.attr('data-original-title', nativeTitle);
-          }
-          $trigger.removeAttr('title');
-        });
+        $triggers.each(function () { normalizeTooltipTrigger(this); });
         $triggers.tooltip({
           trigger: 'manual',
           delay: 0,
@@ -913,6 +916,33 @@
         document.addEventListener('DOMContentLoaded', initTooltips);
       } else {
         initTooltips();
+      }
+      if (window.MutationObserver) {
+        new MutationObserver(function (mutations) {
+          mutations.forEach(function (mutation) {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'title') {
+              if (mutation.target.matches && mutation.target.matches(tooltipSelector)) {
+                initTooltips();
+              }
+            }
+            if (mutation.type === 'childList') {
+              var sawTooltip = false;
+              mutation.addedNodes.forEach(function (node) {
+                if (!node || node.nodeType !== 1) return;
+                if ((node.matches && node.matches(tooltipSelector)) ||
+                    (node.querySelector && node.querySelector(tooltipSelector))) {
+                  sawTooltip = true;
+                }
+              });
+              if (sawTooltip) initTooltips();
+            }
+          });
+        }).observe(document.documentElement, {
+          attributes: true,
+          attributeFilter: ['title'],
+          childList: true,
+          subtree: true
+        });
       }
     })();
   </script>

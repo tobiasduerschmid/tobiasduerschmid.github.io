@@ -511,6 +511,8 @@ steps:
 
       ### 🪞 What this test proves — and doesn't
 
+      ✏️ **Before you read the table — commit to a one-sentence answer:** *"This test would still pass even if ___ were wrong about the real `QuestApiClient`."* Fill in the blank from your own head, then compare to the breakdown below.
+
       | | |
       |---|---|
       | **Proves** | Given a Tuesday clock and a canned quest list with one Tuesday entry, `daily_quest_title` returns that entry's title. |
@@ -782,9 +784,9 @@ steps:
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"Some tests still failing:\n{output}"
         hints:
-          - title: "Small nudge"
+          - title: "Walk the SUT against a Thursday clock"
             text: "Walk through the SUT's logic with `clock=FrozenClock(datetime(2026, 4, 30, ...))`. The clock's weekday is Thursday (use a calendar to verify). The SUT iterates the canned list looking for the matching weekday entry."
-          - title: "Strategic hint"
+          - title: "April 30 2026 is the Thursday in this canned list"
             text: "April 30, 2026 is a Thursday. The canned API list has exactly one Thursday entry. The SUT returns that entry's `title` field."
             condition: "code_missing: Battle the Lich King"
           - title: "Fill in the title"
@@ -1008,6 +1010,8 @@ steps:
       </details>
 
       ### 🪞 What this test proves — and doesn't
+
+      ✏️ **Predict first:** the spy verified that `credit` was *called* with the right arguments. Name one thing the SUT could *still* be broken about that this test would not catch. Commit to an answer in your head, then check below.
 
       | | |
       |---|---|
@@ -1300,9 +1304,9 @@ steps:
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"Some tests are failing:\n{output}"
         hints:
-          - title: "Small nudge — Liar comment"
+          - title: "Name *why* `len(...) >= 0` is structurally trivial"
             text: "Above the `assert len(spy.calls) >= 0` line, add something like `# Liar test — len() is always >= 0, so this passes regardless of whether the SUT called the spy at all.`"
-          - title: "Small nudge — streak bonus"
+          - title: "Compute gold from days × rate, capped at 100"
             text: "The spec: 10 gold per day, capped at 100. For 5 days, that's 5 * 10 = 50 (under the cap). Pin `assert spy.calls == [(\"u2\", 50)]`."
             condition: "code_missing: 50"
           - title: "Fill the blanks (do not paste the answer)"
@@ -1531,6 +1535,8 @@ steps:
       </details>
 
       ### 🪞 What this test proves — and doesn't
+
+      ✏️ **Predict first:** a vanilla `Mock()` records calls but does *not* know anything about the real `RewardLedger` class. Name one realistic refactor a teammate could make that would break production while leaving this test green. Commit to an answer in your head, then check below.
 
       | | |
       |---|---|
@@ -1773,9 +1779,9 @@ steps:
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"Some tests failed:\n{output}"
         hints:
-          - title: "Small nudge"
+          - title: "Read the SUT's `except` clause"
             text: "Look at `quest_service.py`'s `daily_quest_title` method. The `try`/`except` block names a specific exception class — that's the one to use as `side_effect`."
-          - title: "Strategic hint"
+          - title: "The SUT catches `ConnectionError` — match that class"
             text: "The SUT does `try: quests = self._api.fetch_quests(user_id) except ConnectionError: return 'No quests today'`. So `side_effect = ConnectionError` will trigger the catch branch."
             condition: "code_contains: side_effect = ValueError"
           - title: "Fill in the exception class"
@@ -2044,6 +2050,8 @@ steps:
 
       ### 🪞 What this test proves — and doesn't
 
+      ✏️ **Predict first:** the patched test confirmed the SUT *makes the call* with the right arguments. What real-world failure mode does the test still not catch — even with the patch target correct and `autospec=True` enabled? Commit to an answer in your head, then check below.
+
       | | |
       |---|---|
       | **Proves** | The SUT looks `send_push` up in `quest_service`'s namespace and calls it with the right arguments when the streak hits a multiple of 7. `autospec=True` (Test C) also proves the signature matches the real callable's. |
@@ -2251,9 +2259,9 @@ steps:
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"Some tests are still failing:\n{output}"
         hints:
-          - title: "Small nudge"
+          - title: "`from ... import` creates a local reference"
             text: "Look at quest_service.py's top: `from push_notifier import send_push`. That import gives `quest_service` its OWN reference to the function. The SUT's `send_push(...)` call uses that local reference."
-          - title: "Strategic hint"
+          - title: "Patch the importing module's namespace, not the defining one"
             text: "Patch the namespace where the SUT will *resolve* the name at runtime. The SUT is `quest_service.celebrate_milestone`; the name `send_push` was imported INTO `quest_service`'s namespace. So the target string is `\"quest_service.send_push\"`."
             condition: "code_contains: patch(\"push_notifier.send_push\")"
           - title: "Fill in the namespace"
@@ -2845,9 +2853,9 @@ steps:
           sys.stdout = old; output = buf.getvalue(); print(output)
           assert code == 0, f"The clean test file should still pass — it tests the pure function directly:\n{output}"
         hints:
-          - title: "Small nudge — critique line"
+          - title: "Name what was mocked and what it cost"
             text: "The over-mocked test patches `_filter_completed`, `_apply_multipliers`, and `_sum_xp`. With those mocked, the test verifies nothing about the SUT's actual behavior — only that the SUT calls some helpers. Any rename of an internal would break the test for no good reason."
-          - title: "Small nudge — scenarios"
+          - title: "Match each scenario to one rubric row"
             text: "Use the decision rubric in the instructions. Pure function = no double. Clock = stub. Fire-and-forget call = mock/spy. Stateful round-trip = fake. Third-party = adapter. Fake drift / real-boundary confidence = contract."
             condition: "code_missing: adapter"
           - title: "The rubric, with no answers attached"

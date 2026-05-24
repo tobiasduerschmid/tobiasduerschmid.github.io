@@ -9864,7 +9864,7 @@
 
   TutorialCode.prototype._initTooltips = function (rootEl) {
     if (!rootEl || !window.jQuery || !jQuery.fn || !jQuery.fn.tooltip) return;
-    var $triggers = jQuery(rootEl).find('[data-toggle="tooltip"], [data-original-title], [data-tooltip], [title]:not([data-no-tooltip])');
+    var $triggers = jQuery(rootEl).find('[data-toggle="tooltip"], [data-original-title], [data-tooltip], [title]:not([data-no-tooltip]):not(iframe)');
     if (!$triggers.length) return;
     $triggers.each(function () {
       var $trigger = jQuery(this);

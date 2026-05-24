@@ -35,17 +35,21 @@
   $(document).ready(function () {
     // Tooltips: manual triggers keep the tooltip hoverable and persistent
     // while focus/hover remains, and Esc dismisses without moving focus.
+    var tooltipSelector = '[data-toggle="tooltip"], [data-original-title], [data-tooltip], [title]:not([data-no-tooltip]):not(iframe)';
+
+    function normalizeTooltipTrigger(trigger) {
+      var $trigger = $(trigger);
+      var nativeTitle = $trigger.attr('title');
+      if (nativeTitle && !$trigger.attr('data-original-title')) {
+        $trigger.attr('data-original-title', nativeTitle);
+      }
+      $trigger.removeAttr('title');
+    }
+
     function initAccessibleTooltips(selector, options) {
       var $triggers = $(selector);
       if (!$triggers.length) return;
-      $triggers.each(function () {
-        var $trigger = $(this);
-        var nativeTitle = $trigger.attr('title');
-        if (nativeTitle && !$trigger.attr('data-original-title')) {
-          $trigger.attr('data-original-title', nativeTitle);
-        }
-        $trigger.removeAttr('title');
-      });
+      $triggers.each(function () { normalizeTooltipTrigger(this); });
       $triggers.tooltip($.extend({
         trigger: 'manual',
         delay: 0,
@@ -144,7 +148,36 @@
     }
 
     window.initAccessibleTooltips = initAccessibleTooltips;
-    initAccessibleTooltips('[data-toggle="tooltip"], [data-original-title], [data-tooltip], [title]:not([data-no-tooltip])');
+    initAccessibleTooltips(tooltipSelector);
+    if (window.MutationObserver) {
+      new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+          if (mutation.type === 'attributes' && mutation.attributeName === 'title') {
+            if (mutation.target.matches && mutation.target.matches(tooltipSelector)) {
+              initAccessibleTooltips(mutation.target);
+            }
+          }
+          if (mutation.type === 'childList') {
+            mutation.addedNodes.forEach(function (node) {
+              if (!node || node.nodeType !== 1) return;
+              if (node.matches && node.matches(tooltipSelector)) {
+                initAccessibleTooltips(node);
+              }
+              if (node.querySelectorAll) {
+                node.querySelectorAll(tooltipSelector).forEach(function (child) {
+                  initAccessibleTooltips(child);
+                });
+              }
+            });
+          }
+        });
+      }).observe(document.documentElement, {
+        attributes: true,
+        attributeFilter: ['title'],
+        childList: true,
+        subtree: true
+      });
+    }
 
     // Keep the navbar hamburger's aria-expanded in sync with the Bootstrap 3
     // collapse state (SC 4.1.2). The toggle button points at the collapse
