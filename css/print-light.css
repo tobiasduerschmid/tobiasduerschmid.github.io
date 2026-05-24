@@ -1,0 +1,234 @@
+/*
+ * Print surfaces are always light mode, even when the user has selected the
+ * site's dark theme. This stylesheet is loaded after the theme stylesheets so
+ * print-media rules can beat dark-mode selectors from sebook-theme.css and
+ * uml-diagram.css without changing the user's saved preference.
+ */
+
+html.print-light-mode,
+html.print-light-mode body {
+  color-scheme: light;
+  background: #fff;
+  color: #111;
+}
+
+html.print-light-mode {
+  --git-graph-text: #222;
+  --git-graph-bg: #fafbfc;
+}
+
+html.print-light-mode.dark-mode .uml-class-diagram-container svg,
+html.print-light-mode.dark-mode .uml-sequence-diagram-container svg,
+html.print-light-mode.dark-mode .uml-state-diagram-container svg,
+html.print-light-mode.dark-mode .uml-activity-diagram-container svg,
+html.print-light-mode.dark-mode .uml-usecase-diagram-container svg,
+html.print-light-mode.dark-mode .uml-component-diagram-container svg,
+html.print-light-mode.dark-mode .uml-deployment-diagram-container svg,
+html.print-light-mode.dark-mode .uml-freeform-diagram-container svg,
+html.print-light-mode.dark-mode .uml-folder-tree-diagram-container svg,
+html.print-light-mode.dark-mode .uml-sym svg {
+  filter: none !important;
+}
+
+html.print-light-mode.dark-mode .uml-empty-msg,
+html.print-light-mode.dark-mode .uml-gitgraph-fallback-empty {
+  color: #555;
+}
+
+html.print-light-mode.dark-mode .uml-error-msg,
+html.print-light-mode.dark-mode .uml-gitgraph-fallback-error {
+  color: #b00000;
+}
+
+html.print-light-mode.dark-mode .sebook-figure__caption {
+  color: #444;
+}
+
+html.print-light-mode.dark-mode .sebook-figure__verbose {
+  background: #fafbfc;
+  border-color: #d6dae0;
+}
+
+html.print-light-mode.dark-mode .sebook-figure__verbose > summary {
+  color: #364152;
+}
+
+html.print-light-mode.dark-mode .sebook-figure__verbose-body {
+  border-top-color: #e6e9ee;
+}
+
+html.print-light-mode.dark-mode .sebook-figure__verbose-body h4,
+html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__verbose-heading {
+  color: #1f2937;
+}
+
+@media print {
+  body.sebook-layout:not(.se-gym-page) .quiz-avatar-side,
+  body.sebook-layout:not(.se-gym-page) .flashcards-avatar-side,
+  body.sebook-layout:not(.se-gym-page) .tvm-quiz-avatar-wrap,
+  body.sebook-layout:not(.se-gym-page) .tvm-hero-celebration-avatar {
+    display: none !important;
+  }
+
+  body.sebook-layout:not(.se-gym-page) .quiz-outer-wrap,
+  body.sebook-layout:not(.se-gym-page) .flashcards-outer-wrap {
+    display: block !important;
+  }
+
+  html,
+  html.dark-mode,
+  html.dark-mode body,
+  html.dark-mode body.default-layout,
+  html.dark-mode body.blog-layout,
+  html.dark-mode body.sebook-layout,
+  html.dark-mode body.framework-layout,
+  html.dark-mode body.sebook-combined-layout,
+  html.dark-mode body.tutorial-layout {
+    color-scheme: light !important;
+    background: #fff !important;
+    color: #111 !important;
+  }
+
+  html.dark-mode #sebook-content-wrapper,
+  html.dark-mode #blog-content-wrapper,
+  html.dark-mode #main-content,
+  html.dark-mode .container,
+  html.dark-mode article.post-content,
+  html.dark-mode body.sebook-layout #main-content,
+  html.dark-mode body.blog-layout #main-content,
+  html.dark-mode body.framework-layout #main-content,
+  html.dark-mode body.framework-layout article.post-content,
+  html.dark-mode body.sebook-combined-layout #main-content {
+    background: #fff !important;
+    color: #111 !important;
+    box-shadow: none !important;
+  }
+
+  html.dark-mode h1,
+  html.dark-mode h2,
+  html.dark-mode h3,
+  html.dark-mode h4,
+  html.dark-mode h5,
+  html.dark-mode h6,
+  html.dark-mode .post-title,
+  html.dark-mode .page-heading,
+  html.dark-mode .blog-post-header h1,
+  html.dark-mode body.sebook-layout #main-content h1,
+  html.dark-mode body.sebook-layout #main-content h2,
+  html.dark-mode body.blog-layout #main-content h1,
+  html.dark-mode body.blog-layout #main-content h2,
+  html.dark-mode body.framework-layout #main-content h1,
+  html.dark-mode body.framework-layout #main-content h2,
+  html.dark-mode body.sebook-combined-layout #main-content h1,
+  html.dark-mode body.sebook-combined-layout #main-content h2 {
+    color: #2774AE !important;
+  }
+
+  html.dark-mode a,
+  html.dark-mode a:visited {
+    color: #2774AE !important;
+  }
+
+  html.dark-mode blockquote,
+  html.dark-mode code,
+  html.dark-mode pre,
+  html.dark-mode .highlight,
+  html.dark-mode .highlight pre,
+  html.dark-mode body.sebook-layout #main-content pre,
+  html.dark-mode body.sebook-layout #main-content code,
+  html.dark-mode body.sebook-layout #main-content .highlight pre,
+  html.dark-mode body.framework-layout #main-content pre,
+  html.dark-mode body.framework-layout #main-content code,
+  html.dark-mode body.framework-layout #main-content .highlight pre,
+  html.dark-mode body.sebook-combined-layout #main-content pre,
+  html.dark-mode body.sebook-combined-layout #main-content code,
+  html.dark-mode body.sebook-combined-layout #main-content .highlight pre {
+    background: #eef !important;
+    border-color: #eee !important;
+    color: #111 !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  html.dark-mode pre code,
+  html.dark-mode .highlight code,
+  html.dark-mode .highlight pre code {
+    background: transparent !important;
+    border-color: transparent !important;
+    color: #111 !important;
+  }
+
+  html.dark-mode table,
+  html.dark-mode th,
+  html.dark-mode td {
+    background: #fff !important;
+    border-color: #ddd !important;
+    color: #111 !important;
+  }
+
+  html.dark-mode th {
+    background: #f8f9fa !important;
+    border-bottom-color: #2774AE !important;
+    color: #2774AE !important;
+  }
+
+  html.dark-mode tr:nth-child(even),
+  html.dark-mode tr:nth-child(even) td {
+    background: #fafafa !important;
+  }
+
+  html.dark-mode input,
+  html.dark-mode textarea,
+  html.dark-mode select,
+  html.dark-mode button,
+  html.dark-mode .form-control {
+    background: #fff !important;
+    border-color: #767676 !important;
+    color: #111 !important;
+  }
+
+  html.dark-mode .uml-class-diagram-container svg,
+  html.dark-mode .uml-sequence-diagram-container svg,
+  html.dark-mode .uml-state-diagram-container svg,
+  html.dark-mode .uml-activity-diagram-container svg,
+  html.dark-mode .uml-usecase-diagram-container svg,
+  html.dark-mode .uml-component-diagram-container svg,
+  html.dark-mode .uml-deployment-diagram-container svg,
+  html.dark-mode .uml-freeform-diagram-container svg,
+  html.dark-mode .uml-folder-tree-diagram-container svg,
+  html.dark-mode .uml-sym svg {
+    filter: none !important;
+  }
+
+  html.dark-mode .uml-empty-msg,
+  html.dark-mode .uml-gitgraph-fallback-empty {
+    color: #555 !important;
+  }
+
+  html.dark-mode .uml-error-msg,
+  html.dark-mode .uml-gitgraph-fallback-error {
+    color: #b00000 !important;
+  }
+
+  html.dark-mode .sebook-figure__caption {
+    color: #444 !important;
+  }
+
+  html.dark-mode .sebook-figure__verbose {
+    background: #fafbfc !important;
+    border-color: #d6dae0 !important;
+  }
+
+  html.dark-mode .sebook-figure__verbose > summary {
+    color: #364152 !important;
+  }
+
+  html.dark-mode .sebook-figure__verbose-body {
+    border-top-color: #e6e9ee !important;
+  }
+
+  html.dark-mode .sebook-figure__verbose-body h4,
+  html.dark-mode .sebook-figure__verbose-body .sebook-figure__verbose-heading {
+    color: #1f2937 !important;
+  }
+}

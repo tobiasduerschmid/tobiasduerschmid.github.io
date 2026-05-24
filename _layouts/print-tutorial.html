@@ -1,15 +1,30 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="print-light-mode">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
   {% assign print_title = page.print_title | default: page.title | replace: ' — Print View', '' %}
   <title>{{ print_title }} — Print View</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css">
   <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
   <script src="{{ '/js/ArchUML/uml-bundle.js' | relative_url }}" defer></script>
   <script src="{{ '/js/uml-auto-describe.js' | relative_url }}" defer></script>
   <script src="{{ '/js/tutorial-inline-markdown.js' | relative_url }}"></script>
+  <script>
+    (function () {
+      var root = document.documentElement;
+      function forcePrintLightMode() {
+        root.classList.add('print-light-mode');
+        root.classList.remove('dark-mode');
+      }
+      forcePrintLightMode();
+      if (window.MutationObserver) {
+        new MutationObserver(forcePrintLightMode).observe(root, { attributes: true, attributeFilter: ['class'] });
+      }
+    })();
+  </script>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 

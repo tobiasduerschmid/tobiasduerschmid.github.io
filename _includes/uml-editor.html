@@ -142,7 +142,7 @@ Supported options:
         <li><span class="uml-pg-help-key" aria-hidden="true">Edit</span> Double-click to rename. Click a relation to set its label, multiplicity, or navigability.</li>
         <li><span class="uml-pg-help-key" aria-hidden="true">Move</span> Drag to reposition. <kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+click multi-selects. Drag empty canvas to pan.</li>
       </ul>
-      <p class="uml-pg-help-footer">Press <kbd>?</kbd> any time to show or hide these tips · <kbd>F</kbd> for fullscreen · <kbd>Del</kbd> to remove · <kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+<kbd>Z</kbd> to undo</p>
+      <p class="uml-pg-help-footer">Press <kbd>?</kbd> in the editor to show or hide these tips · <kbd>F</kbd> for fullscreen · <kbd>Del</kbd> to remove · <kbd>Cmd</kbd>/<kbd>Ctrl</kbd>+<kbd>Z</kbd> to undo</p>
     </div>
     <button id="uml-pg-help-dismiss" type="button" aria-label="Got it — dismiss tips">Got it</button>
   </div>
@@ -2974,6 +2974,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     var LIVE_RENDER_DEBOUNCE_MS = 120;
     var currentType = supportedTypes.indexOf(typeSelect.value) >= 0 ? typeSelect.value : defaultType;
     typeSelect.value = currentType;
+    var sourceDrafts = Object.create(null);
     var selectedLayoutId = null;
     var selectedLayoutKind = null;
     // Multi-select: keys = ids, values = 'node' | 'route'. Single-select scalars
@@ -4299,6 +4300,14 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         return all;
       }
       if (count === 2) return [0];
+      if (count === 3) {
+        var a = route.points[0];
+        var b = route.points[1];
+        var c = route.points[2];
+        var firstLen = Math.abs((b.x || 0) - (a.x || 0)) + Math.abs((b.y || 0) - (a.y || 0));
+        var secondLen = Math.abs((c.x || 0) - (b.x || 0)) + Math.abs((c.y || 0) - (b.y || 0));
+        return [secondLen >= firstLen ? 1 : 0];
+      }
       var inner = [];
       for (var ii = 1; ii < count - 2; ii++) inner.push(ii);
       return inner;
@@ -4322,6 +4331,32 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         { x: a.x + moveX, y: a.y },
         { x: b.x + moveX, y: b.y },
         { x: b.x, y: b.y }
+      ];
+    }
+
+    function anchoredThreePointRoute(points, segmentIndex, moveX, moveY) {
+      if (!points || points.length !== 3) return clonePoints(points);
+      var start = points[0];
+      var a = points[segmentIndex] || points[0];
+      var b = points[segmentIndex + 1] || points[2];
+      var end = points[2];
+      var segDx = b.x - a.x;
+      var segDy = b.y - a.y;
+      if (Math.abs(segDx) >= Math.abs(segDy)) {
+        var y = a.y + moveY;
+        return [
+          { x: start.x, y: start.y },
+          { x: start.x, y: y },
+          { x: end.x, y: y },
+          { x: end.x, y: end.y }
+        ];
+      }
+      var x = a.x + moveX;
+      return [
+        { x: start.x, y: start.y },
+        { x: x, y: start.y },
+        { x: x, y: end.y },
+        { x: end.x, y: end.y }
       ];
     }
 
@@ -5658,6 +5693,10 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       btn.title = aria + ' — click to arm, then click on the diagram. Or drag onto the diagram.';
       // Click-to-arm interaction
       btn.addEventListener('click', function () {
+        if (suppressPaletteClick) {
+          suppressPaletteClick = false;
+          return;
+        }
         if (paletteDragState) return; // ignore the click that follows a drag
         if (kind === 'element' && !output.querySelector('svg') && addElementWithoutCanvas(spec)) {
           return;
@@ -5672,30 +5711,54 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       // a small threshold so a normal click still works.
       btn.addEventListener('pointerdown', function (event) {
         if (event.button !== 0) return;
+        if (btn.setPointerCapture && event.pointerId != null) {
+          try { btn.setPointerCapture(event.pointerId); } catch (e) {}
+        }
         var startX = event.clientX, startY = event.clientY;
         var armed = false;
         function onMove(ev) {
           if (armed) return;
           if (Math.abs(ev.clientX - startX) > 5 || Math.abs(ev.clientY - startY) > 5) {
             armed = true;
+            suppressPaletteClick = true;
             paletteDragState = { kind: kind, spec: spec, x: ev.clientX, y: ev.clientY, sourceId: null };
             announce('Drop on the canvas to ' + (kind === 'element' ? 'place a ' + spec.label : 'start a ' + spec.label + ' relation') + '. Esc to cancel.', true);
             // Visual hint on the button
             btn.style.opacity = '0.6';
           }
         }
-        function onUp() {
+        function cleanupDragListeners(ev) {
           document.removeEventListener('pointermove', onMove, true);
+          document.removeEventListener('mousemove', onMove, true);
           document.removeEventListener('pointerup', onUp, true);
+          document.removeEventListener('mouseup', onUp, true);
+          document.removeEventListener('pointercancel', onCancel, true);
+          if (ev && btn.releasePointerCapture && ev.pointerId != null &&
+              (!btn.hasPointerCapture || btn.hasPointerCapture(ev.pointerId))) {
+            try { btn.releasePointerCapture(ev.pointerId); } catch (e) {}
+          }
+        }
+        function onUp(ev) {
+          cleanupDragListeners(ev);
           btn.style.opacity = '';
+          if (paletteDragState) updatePaletteDrag(ev, true);
+        }
+        function onCancel(ev) {
+          cleanupDragListeners(ev);
+          btn.style.opacity = '';
+          paletteDragState = null;
         }
         document.addEventListener('pointermove', onMove, true);
+        document.addEventListener('mousemove', onMove, true);
         document.addEventListener('pointerup', onUp, true);
+        document.addEventListener('mouseup', onUp, true);
+        document.addEventListener('pointercancel', onCancel, true);
       });
       return btn;
     }
 
     var paletteDragState = null;
+    var suppressPaletteClick = false;
     function updatePaletteDrag(event, finish) {
       if (!paletteDragState) return;
       paletteDragState.x = event.clientX;
@@ -6950,22 +7013,32 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
     // ─── Hover-to-extend "+" handle + relation chooser popup ───
     var relationChooser = null;
+    var relationChooserReturnFocus = null;
     var extendDragState = null;
     var sequenceMessageDragState = null;
     var fragmentDragState = null;
 
-    function closeRelationChooser() {
+    function closeRelationChooser(restoreFocus) {
       if (relationChooser && relationChooser.parentNode) relationChooser.parentNode.removeChild(relationChooser);
       relationChooser = null;
+      if (restoreFocus && relationChooserReturnFocus && relationChooserReturnFocus.focus) {
+        try { relationChooserReturnFocus.focus(); } catch (e) {}
+      }
+      relationChooserReturnFocus = null;
     }
 
     // ─── Right-click context menu ───
     var contextMenu = null;
-    function closeContextMenu() {
+    var contextMenuReturnFocus = null;
+    function closeContextMenu(restoreFocus) {
       if (contextMenu && contextMenu.parentNode) contextMenu.parentNode.removeChild(contextMenu);
       contextMenu = null;
       document.removeEventListener('pointerdown', dismissContextMenuOnOutside, true);
       document.removeEventListener('keydown', dismissContextMenuOnEsc, true);
+      if (restoreFocus && contextMenuReturnFocus && contextMenuReturnFocus.focus) {
+        try { contextMenuReturnFocus.focus(); } catch (e) {}
+      }
+      contextMenuReturnFocus = null;
     }
     function dismissContextMenuOnOutside(ev) {
       if (!contextMenu) return closeContextMenu();
@@ -6973,7 +7046,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     }
     function dismissContextMenuOnEsc(ev) {
       if (!contextMenu) return closeContextMenu();
-      if (ev.key === 'Escape') { ev.preventDefault(); closeContextMenu(); }
+      if (ev.key === 'Escape') { ev.preventDefault(); closeContextMenu(true); }
       else if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
         ev.preventDefault();
         var btns = Array.prototype.slice.call(contextMenu.querySelectorAll('button'));
@@ -6989,6 +7062,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
      */
     function showContextMenu(clientX, clientY, items) {
       closeContextMenu();
+      contextMenuReturnFocus = document.activeElement;
       var box = document.createElement('div');
       box.className = 'uml-pg-context-menu';
       box.setAttribute('role', 'menu');
@@ -7103,6 +7177,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
      */
     function showElementChooser(clientX, clientY, sourceId, onPick) {
       closeRelationChooser();
+      relationChooserReturnFocus = document.activeElement;
       var type = typeSelect.value;
       var els = elementSchemasFor(type).filter(function (spec) {
         if (type === 'sequence') return !spec.sequenceControl && !spec.sequenceNote;
@@ -7155,6 +7230,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
 
     function showRelationChooser(clientX, clientY, sourceId, targetId) {
       closeRelationChooser();
+      relationChooserReturnFocus = document.activeElement;
       var type = typeSelect.value;
       var rels = relationSchemasFor(type);
       if (!rels.length) return;
@@ -7248,7 +7324,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       if (!relationChooser) return cleanupChooserListeners();
       if (ev.key === 'Escape') {
         ev.preventDefault();
-        closeRelationChooser();
+        closeRelationChooser(true);
         cleanupChooserListeners();
       } else if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') {
         ev.preventDefault();
@@ -7343,6 +7419,16 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
             (el.classList.contains('uml-pg-edit-hitbox') ||
              el.classList.contains('uml-pg-edit-a11y-target'))) {
           return { id: el.getAttribute('data-layout-id'), hitbox: el };
+        }
+      }
+      var pt = editorCanvasPoint(svg, clientX, clientY);
+      var editables = findEditableElements(svg);
+      for (var j = editables.length - 1; j >= 0; j--) {
+        var item = editables[j];
+        if (!item || !item.box) continue;
+        if (pt.x >= item.box.x && pt.x <= item.box.x + item.box.width &&
+            pt.y >= item.box.y && pt.y <= item.box.y + item.box.height) {
+          return { id: item.id, hitbox: null };
         }
       }
       return null;
@@ -11329,12 +11415,12 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       textarea.value = writePositionsIntoSource(textarea.value, typeSelect.value, positions, routes);
       pendingSelect = { id: id, kind: 'node' };
       renderDiagram();
-      // Restore focus to the same hitbox after the re-render.
+      // Restore focus to the keyboard-operable target after the re-render.
       setTimeout(function () {
         var newSvg = output.querySelector('svg');
         if (!newSvg) return;
-        var hitbox = newSvg.querySelector('.uml-pg-edit-hitbox[data-layout-id="' + cssAttrEscape(id) + '"]');
-        if (hitbox && hitbox.focus) hitbox.focus();
+        var target = newSvg.querySelector('.uml-pg-edit-a11y-target[data-layout-id="' + cssAttrEscape(id) + '"]');
+        if (target && target.focus) target.focus();
       }, 0);
     }
 
@@ -11471,6 +11557,8 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
         }
         if (dragState.lockedEndpoints && dragState.points.length === 2) {
           nextPoints = anchoredTwoPointRoute(dragState.points, moveX, moveY);
+        } else if (dragState.lockedEndpoints && dragState.points.length === 3) {
+          nextPoints = anchoredThreePointRoute(dragState.points, si, moveX, moveY);
         } else {
           nextPoints[si] = { x: a.x + moveX, y: a.y + moveY };
           nextPoints[si + 1] = { x: b.x + moveX, y: b.y + moveY };
@@ -11619,10 +11707,12 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     } else {
       textarea.value = starterText(currentType, layoutSelect.value);
     }
+    rememberCurrentSource(currentType);
     updateLayoutVisibility();
 
     function renderDiagram(options) {
       options = options || {};
+      rememberCurrentSource(currentType);
       renderGeneration++;
       cancelVisualEditorInstall();
       var text = textarea.value.trim();
@@ -11735,18 +11825,21 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     // class-diagram note attaching itself to the next sequence participant).
     typeSelect.addEventListener('change', function () {
       var prev = currentType;
-      currentType = typeSelect.value;
+      var nextType = typeSelect.value;
+      rememberCurrentSource(prev);
       // Persist whatever's in the editor under the *previous* type before loading
       // the new type's content, so each type keeps its own draft.
       if (persistenceEnabled) {
         try { localStorage.setItem(autosaveKey(prev), textarea.value); } catch (e) {}
       }
-      var saved = loadAutosaved(currentType);
+      var saved = storedSourceForType(nextType);
+      currentType = nextType;
       if (saved && saved.trim()) {
         textarea.value = saved;
       } else {
         textarea.value = starterText(currentType, layoutSelect.value);
       }
+      rememberCurrentSource(currentType);
       updateLayoutVisibility();
       setActiveTool(null);
       setSelectedLayoutId(null);
@@ -11854,6 +11947,20 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     function clearAutosaved(type) {
       if (!persistenceEnabled) return;
       try { localStorage.removeItem(autosaveKey(type)); } catch (e) {}
+    }
+    function hasSourceDraft(type) {
+      return Object.prototype.hasOwnProperty.call(sourceDrafts, type);
+    }
+    function rememberCurrentSource(type) {
+      sourceDrafts[type || currentType] = textarea.value || '';
+    }
+    function storedSourceForType(type) {
+      if (hasSourceDraft(type)) return sourceDrafts[type] || '';
+      return loadAutosaved(type) || '';
+    }
+    function sourceDraftForType(type) {
+      if (typeSelect.value === type && currentType === type) return textarea.value || '';
+      return storedSourceForType(type);
     }
     var helpBanner = document.getElementById('uml-pg-help-banner');
     var helpDismiss = document.getElementById('uml-pg-help-dismiss');
@@ -12085,7 +12192,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       } else if ((key === 'f' || key === 'F') && inWrap && !inFormControl) {
         event.preventDefault();
         setFullscreen(!wrap.classList.contains('is-fullscreen'));
-      } else if (key === '?' && !inFormControl) {
+      } else if (key === '?' && inWrap && !inFormControl) {
         // ? toggles the help banner — useful for getting tips back after
         // dismissing them. Standard convention from GitHub, Gmail, Notion.
         event.preventDefault();
@@ -12148,19 +12255,29 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
       });
     }
 
+    function resetCurrentDiagramToStarter(options) {
+      options = options || {};
+      var confirmText = startMode === 'empty'
+        ? 'Discard your current draft and return to an empty diagram? (Use Cmd/Ctrl+Z to undo if you change your mind.)'
+        : 'Discard your current draft and load the built-in example for this diagram type? (Use Cmd/Ctrl+Z to undo if you change your mind.)';
+      if (options.confirm !== false && !confirm(confirmText)) return false;
+      snapshotForUndo();
+      textarea.value = starterText(currentType, layoutSelect.value);
+      rememberCurrentSource(currentType);
+      clearAutosaved(currentType);
+      setSelectedLayoutId(null);
+      resetView();
+      renderDiagram();
+      return true;
+    }
+
+    window.UMLEditor = window.UMLEditor || {};
+    window.UMLEditor.resetCurrentDiagram = resetCurrentDiagramToStarter;
+
     var resetExampleBtn = document.getElementById('uml-pg-reset-example');
     if (resetExampleBtn) {
       resetExampleBtn.addEventListener('click', function () {
-        var confirmText = startMode === 'empty'
-          ? 'Discard your current draft and return to an empty diagram? (Use Cmd/Ctrl+Z to undo if you change your mind.)'
-          : 'Discard your current draft and load the built-in example for this diagram type? (Use Cmd/Ctrl+Z to undo if you change your mind.)';
-        if (!confirm(confirmText)) return;
-        snapshotForUndo();
-        textarea.value = starterText(currentType, layoutSelect.value);
-        clearAutosaved(currentType);
-        setSelectedLayoutId(null);
-        resetView();
-        renderDiagram();
+        resetCurrentDiagramToStarter();
       });
     }
 
@@ -13053,8 +13170,7 @@ html.dark-mode .uml-pg-edit-hitbox.is-relation-source {
     }
 
     function currentSourceForType(type) {
-      if (typeSelect.value === type) return textarea.value || '';
-      return loadAutosaved(type) || '';
+      return sourceDraftForType(type);
     }
 
     function generatePythonFromDiagrams() {
