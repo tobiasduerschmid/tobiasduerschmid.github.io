@@ -439,13 +439,22 @@ students are confused" reports.
 - [ ] **Pedagogy decision per step** — PRIMM phase + any named technique
       (mistake-based, productive failure, worked-example-with-fading,
       negative-transfer callout). Note in YAML comments above each step.
-- [ ] **Consult `cs-tutorial-design` and `pedagogy-advisor` agents.**
-      These are subagents (when present) specialized in CS pedagogy and
-      tutorial-system design — give them the tutorial draft for review
-      before you commit. If those subagents aren't installed locally,
-      mirror their checklist here: PRIMM coverage, Bloom mix in quizzes,
-      misconception coverage in `option_feedback`, scaffolding fade,
-      spaced practice across steps.
+- [ ] **Consult the `cs-tutorial-design` and `pedagogical-advisor`
+      project skills** (at
+      [`.agents/skills/cs-tutorial-design/SKILL.md`](../cs-tutorial-design/SKILL.md)
+      and
+      [`.agents/skills/pedagogical-advisor/SKILL.md`](../pedagogical-advisor/SKILL.md)).
+      `cs-tutorial-design` covers programming-tutorial pedagogy
+      specifically (CLT, PRIMM, worked-examples-with-fading,
+      desirable difficulties, growth mindset, paradigm transitions,
+      AI-enhanced learning, ready-to-use exercise templates).
+      `pedagogical-advisor` covers the broader learning-science lens
+      (Mayer's multimedia, ICAP, Variation Theory, UDL, UbD) for
+      content that's *not* a tutorial. Read the relevant one and
+      mirror its checks against your draft before you commit: PRIMM
+      coverage, Bloom mix in quizzes, misconception coverage in
+      `option_feedback`, scaffolding fade, spaced practice across
+      steps.
 
 ### YAML & content
 
@@ -1362,7 +1371,8 @@ didn't write this down?* If yes, write it down here.
 | Authoring a quiz block (`quiz:` inside a step, or any `_data/quizzes/*.yml`) | `.agents/skills/quiz-format/SKILL.md` — `option_feedback` schema, shuffle-safe phrasing, Parsons format |
 | Deciding *whether* a diagram earns its place | `.agents/skills/good-diagrams/SKILL.md` |
 | Picking a diagram type and syntax (Mermaid / ArchUML / etc.) | `.agents/skills/diagrams/SKILL.md` |
-| Pedagogy review of a tutorial draft | `cs-tutorial-design` and `pedagogy-advisor` subagents (when installed). If unavailable, mirror their checks: PRIMM coverage per step, Bloom mix in quizzes, misconception-grade `option_feedback`, scaffolding fade across steps, spaced practice across steps, `tests` precision against 3 plausible wrong solutions and 2 alternative correct ones, hint laddering. |
+| Pedagogy of a programming tutorial — sequencing, exercise design, paradigm-transition pitfalls, AI-enhanced learning, growth-mindset framing, PRIMM / fading / worked-examples / desirable-difficulties application | `.agents/skills/cs-tutorial-design/SKILL.md` |
+| Broader pedagogical lens for non-tutorial content (lectures, slide decks, chapters, exams, rubrics, syllabi) — Mayer's multimedia, ICAP, Variation Theory, UDL, UbD | `.agents/skills/pedagogical-advisor/SKILL.md` |
 
 ---
 

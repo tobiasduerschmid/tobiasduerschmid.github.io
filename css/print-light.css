@@ -129,6 +129,33 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
     box-shadow: none !important;
   }
 
+  html.dark-mode body * {
+    color: #111 !important;
+    border-color: #ddd !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  html.dark-mode body *:not(svg):not(path):not(rect):not(circle):not(ellipse):not(line):not(polyline):not(polygon):not(text):not(tspan) {
+    background-color: transparent !important;
+  }
+
+  html.dark-mode .panel,
+  html.dark-mode .panel-default,
+  html.dark-mode .panel-heading,
+  html.dark-mode .panel-body,
+  html.dark-mode .jumbotron,
+  html.dark-mode .blog-post-item,
+  html.dark-mode .card,
+  html.dark-mode .well,
+  html.dark-mode .list-group,
+  html.dark-mode .list-group-item,
+  html.dark-mode .alert {
+    background: #fff !important;
+    border-color: #ddd !important;
+    color: #111 !important;
+  }
+
   html.dark-mode h1,
   html.dark-mode h2,
   html.dark-mode h3,
@@ -149,9 +176,45 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
     color: #2774AE !important;
   }
 
+  html.dark-mode .jumbotron h1,
+  html.dark-mode .jumbotron h2,
+  html.dark-mode body.default-layout header h1,
+  html.dark-mode body.default-layout #page-top header h1,
+  html.dark-mode .blog-post-title a,
+  html.dark-mode .blog-post-title a:visited,
+  html.dark-mode .blog-post-title a:hover,
+  html.dark-mode .blog-post-title a:focus {
+    color: #2774AE !important;
+  }
+
   html.dark-mode a,
   html.dark-mode a:visited {
     color: #2774AE !important;
+  }
+
+  html.dark-mode .text-danger,
+  html.dark-mode p.lead,
+  html.dark-mode .lead,
+  html.dark-mode legend,
+  html.dark-mode .form-control-static,
+  html.dark-mode .panel-title,
+  html.dark-mode .panel-heading,
+  html.dark-mode .panel-body,
+  html.dark-mode .blog-post-excerpt,
+  html.dark-mode .blog-post-info {
+    color: #111 !important;
+  }
+
+  html.dark-mode .post-date,
+  html.dark-mode .post-meta {
+    color: #555 !important;
+  }
+
+  html.dark-mode .blog-featured-badge,
+  html.dark-mode .blog-featured-badge:visited {
+    background: #FFD100 !important;
+    color: #000 !important;
+    border-color: #8a6d00 !important;
   }
 
   html.dark-mode blockquote,
@@ -210,6 +273,22 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
     background: #fff !important;
     border-color: #767676 !important;
     color: #111 !important;
+  }
+
+  html.dark-mode .quiz-container .option-checkbox,
+  html.dark-mode .tvm-quiz-panel .option-checkbox,
+  html.dark-mode .workout-quiz-card .option-checkbox {
+    background: #fff !important;
+    border-color: #2774AE !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  html.dark-mode .quiz-container .quiz-option.selected .option-checkbox::after,
+  html.dark-mode .tvm-quiz-panel .quiz-option.selected .option-checkbox::after,
+  html.dark-mode .workout-quiz-card .quiz-option.selected .option-checkbox::after {
+    border-color: #2774AE !important;
   }
 
   html.dark-mode .uml-class-diagram-container svg,

@@ -88,6 +88,19 @@ steps:
 
       Real code is rarely like that. Real functions **talk to collaborators** — clocks, network APIs, databases, payment gateways, email services. Each of those collaborators turns a deterministic test into a *flaky* test, a *slow* test, or — worst — a test that *appears* green but actually never exercised the behavior you cared about. This entire tutorial is about that problem.
 
+      ### 🔑 The four questions every test double answers
+
+      Before any vocabulary lands, lock in the four questions that decide which double fits. Every kind of double exists to answer exactly one of these:
+
+      | Question the test is asking | What the double provides | Role (you'll meet by Step 5) |
+      |---|---|---|
+      | "What should this collaborator return so I can drive the SUT down a specific branch?" | **Control** over *indirect input* | Stub |
+      | "Did the SUT actually call this collaborator, and with what arguments?" | **Observation** of *indirect output* | Spy |
+      | "Does the SUT follow the expected collaboration protocol — call this once, with these args?" | **Verification** of interaction | Mock Object |
+      | "I need a working-but-cheap replacement that behaves like the real collaborator across many calls." | **Substitution** with simpler behavior | Fake |
+
+      Memorize the *questions*, not the role names — the role names are answers, and answers are easier to look up than questions. Across the next six steps you'll use this table as a touchstone: every time you reach for a double, name which of the four questions you're answering, and the role falls out.
+
       ### 📖 New vocabulary (visible glossary)
 
       | Term | Meaning |
@@ -95,6 +108,7 @@ steps:
       | **System Under Test (SUT)** | The code being tested. Here: `is_today_event_day`. |
       | **Collaborator** | Anything the SUT calls into. Here: `datetime.now()`. |
       | **Indirect input** | A value the SUT *receives* from a collaborator (rather than from its caller). Here: today's date from the clock. |
+      | **Indirect output** | An effect the SUT *produces through* a collaborator (rather than via its return value). You'll meet this in Step 3. |
       | **Seam** | A point where you can substitute a collaborator at test time without changing production behavior. We're about to introduce one. |
       | **Dependency Injection** | The technique: pass the collaborator in as a parameter instead of hard-coding it. *(Meszaros, [Dependency Injection](http://xunitpatterns.com/Dependency%20Injection.html).)* |
 
@@ -494,6 +508,16 @@ steps:
 
       Same role; different syntax. Frameworks (`unittest.mock`, Jest, Mockito) generate these objects more concisely — but that's *boilerplate reduction*, not a different idea.
       </details>
+
+      ### 🪞 What this test proves — and doesn't
+
+      | | |
+      |---|---|
+      | **Proves** | Given a Tuesday clock and a canned quest list with one Tuesday entry, `daily_quest_title` returns that entry's title. |
+      | **Does not prove** | That the real `QuestApiClient` actually returns dicts shaped `{"weekday": ..., "title": ...}` — only that *if* it does, the SUT picks the right one. |
+      | **Remaining risk** | The stub encodes our assumption about the API's response shape. If the real API ships `{"day_of_week": ..., "name": ...}` instead, this test still passes while production breaks. **Complementary check:** a contract test or one sandbox-integration test against the real `QuestApiClient`. |
+
+      Every doubled unit test creates this gap. Naming it explicitly is what separates a thoughtful test plan from a green-CI illusion.
 
       🔭 **Coming in Step 3:** A stub *answers* questions. What if your SUT's interesting behavior is *whom it asks* — like a `complete_quest` that should call `ledger.credit(user_id, gold)`? That's where **Test Spy** comes in.
 
@@ -982,6 +1006,14 @@ steps:
 
       Same role; different syntax. The hand-rolled `SpyLedger` class makes the recording mechanism *visible*; framework spies (Step 4) hide the boilerplate.
       </details>
+
+      ### 🪞 What this test proves — and doesn't
+
+      | | |
+      |---|---|
+      | **Proves** | The SUT *did* call `ledger.credit(user_id, gold)` with the exact `(user_id, gold)` pair the spec mandates. |
+      | **Does not prove** | That the real `RewardLedger.credit(...)` actually persists the credit, handles duplicate writes idempotently, or recovers from a database failure mid-write. |
+      | **Remaining risk** | The spy intercepts the call but cannot verify what would have happened *downstream* of it. **Complementary check:** an integration test against the real `RewardLedger` (against a sandbox or test database) to confirm the credit lands and persists. |
 
       🔭 **Coming in Step 4:** Hand-rolling spies gets repetitive — you're writing the same `self.calls.append(...)` boilerplate every time. Python's `unittest.mock.Mock` *generates the entire SpyLedger class for you in a single line*. But it's the *same conceptual object* — just less typing.
 
@@ -1498,6 +1530,14 @@ steps:
       Same conceptual moves: tell the double "return X" or "raise X." The names of the methods differ across libraries — the *roles* don't.
       </details>
 
+      ### 🪞 What this test proves — and doesn't
+
+      | | |
+      |---|---|
+      | **Proves** | The SUT calls `ledger.credit` once with the right arguments — the same contract Step 3's hand-rolled spy verified. |
+      | **Does not prove** | That the real `RewardLedger` actually has a `credit` method with that signature. A vanilla `Mock()` accepts any attribute name, any signature, silently. Test D's `side_effect = ConnectionError` proves nothing about the real `QuestApiClient`'s exception classes either — just that the SUT handles *that* class. |
+      | **Remaining risk** | Signature drift. If a teammate renames `credit` to `award` or changes its signature to `(user_id, gold, reason)`, this test stays green while production breaks. **Complementary check:** `autospec=True` (Step 5) enforces the real signature; mypy or pyright catches typos like `assrt_called_once_with` at edit time. |
+
       🔭 **Coming in Step 5:** `Mock` can also play the third role — **Mock Object** in Meszaros' strict sense (behavior verification). To see it cleanly, we need one more idea: `patch()`, and *where* in the namespace to patch. That's the #1 Python-mocking pitfall.
 
     files:
@@ -1975,6 +2015,22 @@ steps:
       **The general lesson, language-independent:** *a name lives in the namespace of the module that introduces it*. Patch there.
       </details>
 
+      <details markdown="1"><summary>📖 `spec`, `spec_set`, `autospec`, `seal` — four progressively-stricter guardrails</summary>
+
+      Python's `unittest.mock` offers a small family of guardrails that *all* solve the same broad problem (a vanilla `Mock()` accepts every attribute access and every call), but at different levels of strictness:
+
+      | Guardrail | What it restricts | Catches |
+      |---|---|---|
+      | `Mock(spec=Foo)` | Attribute *access* — `mock.bogus_method` raises `AttributeError` | Calls to methods the real class doesn't have |
+      | `Mock(spec_set=Foo)` | Attribute access AND attribute *assignment* — `mock.new_attr = 5` also fails | The above, plus tests that accidentally add bogus state to the mock |
+      | `patch(..., autospec=True)` / `create_autospec(Foo)` | All of the above, *plus* call-signature enforcement | Calls with the wrong number/types of arguments — signature drift |
+      | `mock.seal(m)` | Stops further auto-attribute creation on an *existing* Mock tree from that point onward | Late additions of bogus attributes after partial configuration |
+
+      Use `autospec` (or `create_autospec`) as the default for patched callables. Reach for `spec_set` when you want strict attribute control without paying the cost of full signature inspection. Reach for `seal` when you've configured a Mock with a few legitimate attributes and want everything *else* on it to fail loudly.
+
+      None of these are silver bullets — they catch signature and attribute drift, not assertion-method typos. For typos, mypy/pyright and linters are still the right answer.
+      </details>
+
       <details markdown="1"><summary>🧠 The typo trap and `autospec` — the precise truth</summary>
 
       A common claim: "autospec catches typos like `assrt_called_once_with`." Half-true. Here's the precise picture.
@@ -1985,6 +2041,14 @@ steps:
 
       **The reliable defense against signature drift** (calling `send_push("u1")` when the real function needs `send_push("u1", "msg")`): **autospec catches this immediately**. That's the use case worth the keystrokes.
       </details>
+
+      ### 🪞 What this test proves — and doesn't
+
+      | | |
+      |---|---|
+      | **Proves** | The SUT looks `send_push` up in `quest_service`'s namespace and calls it with the right arguments when the streak hits a multiple of 7. `autospec=True` (Test C) also proves the signature matches the real callable's. |
+      | **Does not prove** | That the real `push_notifier.send_push` actually dispatches a notification to APNS/FCM, handles delivery failures, or respects rate limits. |
+      | **Remaining risk** | The patch intercepts the *call*; it cannot verify what would have happened *through* the call. **Complementary check:** an integration test that uses a real (sandbox) APNS endpoint, or — more commonly — an adapter test where `push_notifier` is wrapped in a class your code owns, and the adapter has its own contract tests against the real third-party (Step 6 covers this pattern). |
 
       🔭 **Coming in Step 6:** You can build any of the three roles and you know the patching pitfalls. The harder skill is choosing which one — *and choosing none at all when over-mocking would brittlify the test*.
 
@@ -2395,6 +2459,21 @@ steps:
       | **Over-mocking** | Every internal helper is mocked; the test asserts only on the mocks. | "Isolation feels safe; more mocks = more tested." | Mock at the *architectural boundary* (HTTP, DB, clock), not at every internal function. |
       | **Mocking what you don't own** | A third-party library's API is mocked directly, scattered across many tests. | The library is brittle and the team doesn't want to wait for real responses. | Wrap the third-party in an *Adapter* (Adapter pattern); mock the Adapter. The third-party's internals stay invisible to your tests. |
       | **Coverage chasing** | Every line of the SUT runs in some test, but assertions are weak (`is not None`) or mocked-on-mocks. | Coverage is misread as a quality signal. | Stronger oracles, real collaborators where possible, fewer tests that test more meaningfully. *Coverage ≠ correctness* (Testing Foundations Step 3). |
+
+      ### 📖 Named test-double smells (Meszaros / van Deursen)
+
+      The antipatterns above are the broad strokes; the literature names finer-grained smells you'll see in real code review. Naming them sharpens the eye:
+
+      | Smell | What it looks like | Why it hurts |
+      |---|---|---|
+      | **The Mockery** | A test with so many mocks that nearly every line of the SUT is replaced. | Verifies orchestration, not behavior. Pure refactors break it. |
+      | **Counting on Spies** | The test pins `assert_called_once_with(...)` after every internal call. | Couples the test to the SUT's call sequence; refactoring becomes brittle. |
+      | **Unnecessary Stubs** | Stubs configured for calls the SUT does not make in this path. | Adds maintenance burden; misleads readers about what the test exercises. |
+      | **Mystery Guest** | The test reads from an external file, fixture, or DB row not visible in the test method. | The reader cannot tell from the test alone what was set up or why. |
+      | **Eager Test** | A single test exercises many behaviors of the SUT at once. | When it fails, the failure does not localize *which* behavior broke. |
+      | **Assertion Roulette** | Many unexplained assertions in one test, none with messages. | A failure tells you the test broke; figuring out *which* assertion requires reading the code. |
+
+      You don't have to memorize every name — the value of the catalog is *recognition*. When a teammate says "this test is a Mockery" in code review, you and they should mean the same thing.
 
       ## Part 1 — Read the over-mocked vs clean tests
 

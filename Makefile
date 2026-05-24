@@ -54,8 +54,9 @@ all: test run
 
 # --- Accessibility audits ---
 #
-# `audit-a11y` runs the full URL-driven WCAG 2.2 AA sweep — the same job CI
-# runs when a commit message contains "[WCAG audit]". Slow (30–90 min).
+# `audit-a11y` runs the URL-driven WCAG 2.2 AA sweep, the print-media sweep,
+# and the source/static accessibility checks. The full URL + print sweeps are
+# slow (30–90 min).
 #
 # `audit-a11y-interactive` adds the post-interaction sweep on top of the URL
 # audit: the gym/quiz/tutorial behavior tests run with `A11Y_INTERACTIVE_CHECKS=1`,
@@ -69,7 +70,7 @@ all: test run
 # a regression in one area and don't want to wait for the full sweep.
 
 audit-a11y:
-	npx playwright test tests/wcag22-complete-audit.spec.js tests/wcag22-source-implementation-sweep.spec.js tests/accessibility.spec.js
+	npx playwright test tests/wcag22-complete-audit.spec.js tests/wcag22-print-audit.spec.js tests/wcag22-source-implementation-sweep.spec.js tests/accessibility.spec.js
 	@# Run with `WCAG_AUDIT_FULL_SWEEP=1 make audit-a11y` for the full URL sweep.
 
 audit-a11y-interactive:

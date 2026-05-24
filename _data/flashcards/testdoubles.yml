@@ -79,3 +79,54 @@ cards:
       Classify each `Mock()` instance by the role it actually plays.
     answer: "`user_repo` acts as a **Stub** (returns canned `User`, no call assertion). `email_service` acts as a **Mock** (has an expectation via `assert_called_once_with`). The role is what the test does with the object, not the library type."
     explanation: "Mock libraries blur the taxonomy — `unittest.mock.Mock` plays every role. Naming the role each instance plays is what keeps the test honest. Rule of thumb: only return values configured → Stub. Only call assertions → Spy. Both → Mock. Replacing the user-repo Stub with a Fake `InMemoryUserRepo` often pays off when many tests share the same configuration."
+
+  - id: 12
+    difficulty: intermediate
+    question: |
+      Module `app/report.py` does `from services.users import fetch_user` and then calls `fetch_user(user_id)`. Which `patch()` target intercepts the call from a test of `app.report` — `"services.users.fetch_user"` or `"app.report.fetch_user"`? Why?
+    answer: "`\"app.report.fetch_user\"`. After `from services.users import fetch_user`, the name `fetch_user` is bound in `app.report`'s namespace; the SUT looks it up *there*. Patching `services.users.fetch_user` leaves `app.report`'s local reference untouched."
+    explanation: "**Patch where the SUT looks up the name, not where it was defined.** This is the #1 Python mocking pitfall. The same principle applies to JavaScript CommonJS (`const { y } = require('x')` creates a similar local binding) and to Java static imports — names live in the namespace of the module that introduces them."
+
+  - id: 13
+    difficulty: intermediate
+    question: |
+      Your SUT catches `ConnectionError` and returns a fallback value. Sketch the `Mock()` configuration that drives the SUT down that branch deterministically. Why does setting `return_value` not work?
+    answer: |
+      Set `side_effect` to the exception class:
+
+      ```python
+      api.fetch.side_effect = ConnectionError
+      ```
+
+      `side_effect = <exception class>` makes the mock *raise* the exception on call — driving the SUT into its `except` branch. `return_value = ConnectionError()` would *return* an instance of the exception, which the SUT receives as a value rather than as a raise.
+    explanation: "`side_effect` is `Mock`'s lever for behavior beyond returning a canned value: set it to an exception class to raise; set it to an iterable to return different values across consecutive calls; set it to a callable to compute the return value from the arguments. `return_value` and `side_effect` answer different test-design needs and are *not* interchangeable."
+
+  - id: 14
+    difficulty: advanced
+    question: |
+      A team's tests directly mock `requests.get` in twelve different modules. A `requests` version upgrade just broke 30 of those tests. What's the structural fix — and what's the principle?
+    answer: "Wrap `requests` in a thin **Adapter** class (e.g., `HttpClient`) that exposes only the methods the codebase needs. Have all twelve modules depend on `HttpClient`. Mock the Adapter, not `requests` directly. Principle: **don't mock what you don't own.**"
+    explanation: "When tests depend on a third-party's API directly, every library upgrade can ripple through the suite. The Adapter pattern (named in design-patterns literature) flips the dependency direction: the codebase depends on an interface the team controls, and tests double that interface. The third-party stays invisible to the test suite."
+
+  - id: 15
+    difficulty: advanced
+    question: |
+      You use a `FakeUserRepository` (in-memory dict) for fast unit tests. The unit tests pass. Production then fails because the real `PostgresUserRepository` raises `IntegrityError` on a duplicate email, while the Fake had been raising `ValueError`. How do you keep the Fake's speed *and* defend against this drift?
+    answer: "Write a **shared contract test** that both `FakeUserRepository` and `PostgresUserRepository` must pass — including the duplicate-email exception class. Run it against the Fake every commit (fast) and against the real repository on a schedule, against a sandbox database (slower)."
+    explanation: "Every Fake is a *promise* that it behaves enough like the real collaborator. That promise can break silently. A contract test captures the behavioral expectations once and is run against both implementations, surfacing drift the moment one side changes. The Fake stays useful; the drift becomes visible."
+
+  - id: 16
+    difficulty: advanced
+    question: |
+      Diagnose the test smell:
+
+      ```python
+      def test_processes_orders():
+          loader = Mock()
+          loader.load.return_value = open("/tmp/test_orders.csv").read()
+          processor = OrderProcessor(loader)
+          processor.process_all()
+          assert processor.summary == "5 orders, $1240 total"
+      ```
+    answer: "**Mystery Guest** (van Deursen et al.; Meszaros). The test depends on the contents of `/tmp/test_orders.csv` — an external file invisible from the test body. A reader cannot tell what `5 orders, $1240 total` is computed *from*, only that the assertion exists."
+    explanation: "Mystery Guest is one of several named test-double smells. Others: **The Mockery** (so many mocks that the test verifies orchestration instead of behavior); **Counting on Spies** (asserting on every internal call, freezing the implementation); **Unnecessary Stubs** (stubs configured for calls the SUT does not make); **Eager Test** (one test exercises many behaviors). Naming the smell makes it easier to spot in code review."

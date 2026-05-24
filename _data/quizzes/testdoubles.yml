@@ -190,3 +190,109 @@ questions:
       3: |
         A Fake list-logger is overkill for a test that ignores logs entirely. Building real behavior earns its keep only when many tests need it — premature investment costs more than it saves.
     explanation: "The minimum-viable-double rule: pick the simplest double that makes the test work and adds no further coupling. A Dummy is the lightest — it exists only to satisfy the signature. Escalating to a Stub, Spy, Mock, or Fake should be justified by what the test actually needs to *verify* or *control*."
+
+  - id: 9
+    difficulty: intermediate
+    type: single
+    question: |
+      Module `app/report.py` does `from services.users import fetch_user`, and the function `display_name(user_id)` then calls `fetch_user(user_id)` directly. A test does:
+
+      ```python
+      with patch("services.users.fetch_user", return_value={"name": "Ada"}):
+          assert display_name("u1") == "ADA"
+      ```
+
+      The test fails because the assertion saw the real `fetch_user` run, not the patched one. What is wrong?
+    options:
+      - "`patch()` needs `autospec=True` to take effect — without it, the patch is silently ignored."
+      - "The patch target should be `\"app.report.fetch_user\"` — the namespace where the SUT looks the name up, not where it was defined."
+      - "Functions imported via `from ... import` cannot be patched — the test must reshape the SUT to use `import services.users` instead."
+      - "`patch()` only works on class methods — the test must switch to `monkeypatch.setattr` for a module-level function."
+    correct_index: 1
+    option_feedback:
+      0: |
+        `autospec` enforces the patched callable's signature on the mock — it does not affect whether the patch *intercepts* the call. The patch is being applied; it's just being applied in the wrong namespace.
+      2: |
+        `from ... import` is perfectly patchable — the rule is just that you must target the *importing* module's namespace. Reshaping the SUT works but is far heavier than the one-line patch-target fix.
+      3: |
+        `patch()` works on any importable name — module-level functions, class methods, attributes, dict entries. `monkeypatch` is the pytest-fixture equivalent and follows the same where-to-patch rule.
+    explanation: "After `from services.users import fetch_user`, the name `fetch_user` is bound in `app.report`'s namespace. The SUT looks it up *there* when it calls `fetch_user(user_id)`. Patching the original `services.users` binding leaves `app.report`'s local reference untouched — the real function runs, the patch never intercepts. **Rule:** patch where the SUT looks the name up, not where it was originally defined."
+
+  - id: 10
+    difficulty: advanced
+    type: single
+    question: |
+      A team imports `requests` directly in twelve different modules and uses `patch("requests.get")` (or similar) in each of their tests. The patches are fragile, the tests are slow, and a `requests` version bump recently broke 30 tests because the library's exception class names changed. Which refactor most directly addresses the structural problem?
+    options:
+      - "Replace each `patch(\"requests.get\")` with `Mock(spec=requests.get)` so the signatures are checked at test time."
+      - "Wrap `requests` in a thin **Adapter** class your code owns; have all twelve modules depend on the Adapter; double the Adapter in tests."
+      - "Pin the `requests` version in `requirements.txt` so the library's API stops changing, and keep the existing `patch(\"requests.get\")` calls."
+      - "Move the `patch(\"requests.get\")` calls into a shared `conftest.py` so the patching boilerplate lives in one place."
+    correct_index: 1
+    option_feedback:
+      0: "`spec=` would tighten the signature check but the underlying coupling stays — twelve test files still depend on the shape of an API the team doesn't own. The next `requests` upgrade still ripples through all twelve."
+      2: "Pinning versions postpones the problem until the next security patch forces an upgrade. The structural issue is that the team's tests are coupled to a third-party's contract; pinning doesn't decouple them."
+      3: "Centralizing the patching reduces duplication but every test still names `requests.get`. The third-party API still leaks into the test suite. Centralization without an Adapter is a tidier version of the same coupling."
+    explanation: "**Don't mock what you don't own.** When tests depend on a third-party's API surface directly, every library upgrade can ripple through the suite. The Adapter pattern flips the dependency: the codebase depends on an interface the team controls, and the tests double that interface. The third-party is wrapped once, in one place, and the tests stay decoupled from it. (Hynek Schlawack's essay popularized this phrasing; the underlying idea is older.)"
+
+  - id: 11
+    difficulty: advanced
+    type: single
+    question: |
+      A team uses `FakeUserRepository` (in-memory dict) for fast unit tests of `UserService`. The unit tests pass on every commit. In production, a bug surfaces: the real `PostgresUserRepository` raises `IntegrityError` on duplicate emails, but `UserService` had been written assuming a `ValueError`, which the Fake was happily raising. What is the most direct defense against this class of bug *without* abandoning the Fake?
+    options:
+      - "Delete the Fake and use the real Postgres repository in every unit test, even if tests run 50× slower as a result."
+      - "Write a shared **contract test** that both the Fake and the real repository must satisfy, and run it against both on CI."
+      - "Add `autospec=True` to every test that uses the Fake so the Mock library checks the signatures it's exercising."
+      - "Move all `UserService` tests to integration-only — production parity becomes the only acceptable signal."
+    correct_index: 1
+    option_feedback:
+      0: "Abandoning the Fake forfeits its main benefit (fast, deterministic unit tests). The structural issue is that the Fake and the real repository drifted; the fix is to *detect drift*, not to remove the Fake."
+      2: "`autospec` enforces the method *signature*, not the behavioral contract. Two implementations can share the same signature and still disagree on which exception class they raise — that's the exact bug this team hit."
+      3: "Unit tests catch design issues fast; abandoning them in favor of integration-only coverage trades one signal for another rather than fixing the gap. A small contract test is the proportionate defense, not a full coverage strategy swap."
+    explanation: "Every Fake is a promise that it behaves enough like the real collaborator. That promise can break silently. A **contract test** is a single shared test that both the Fake and the real implementation must satisfy — exception classes, return shapes, edge-case behavior. Run it fast against the Fake (every commit) and slower against the real repository (on a schedule, against a sandbox database). When they diverge, you find out at the contract test, not at 3 a.m. in production."
+
+  - id: 12
+    difficulty: intermediate
+    type: single
+    question: |
+      Your SUT catches `ConnectionError` from a weather API and returns a fallback value. You want a unit test that drives the SUT down the error-handling branch *deterministically* — without waiting for the real network to fail. Which configuration on a `Mock()` weather client gets you there?
+    options:
+      - "`weather.fetch.return_value = ConnectionError()` — set the return value to an instance of the exception."
+      - "`weather.fetch.side_effect = ConnectionError` — `side_effect` set to an exception class makes the mock *raise* that exception on call."
+      - "`weather.fetch.assert_raises(ConnectionError)` — declare up-front that the call must raise the exception."
+      - "Patch `socket.gaierror` globally so any network code raises `ConnectionError`."
+    correct_index: 1
+    option_feedback:
+      0: "`return_value = ConnectionError()` makes the mock *return* the exception object as a value — the SUT receives an exception instance as the function's result. It does not raise. The SUT's `except` branch never fires."
+      2: "There is no `assert_raises` method on `Mock`. The pattern you may be thinking of is `pytest.raises(...)` in the test body, but that's an assertion about the SUT's behavior, not a configuration of the mock."
+      3: "Patching low-level socket exceptions is a long way around for what `side_effect` does in one line. It is also fragile: real network code raises many exception classes, and emulating the right one at the socket level is harder than telling the mock to raise the class the SUT already catches."
+    explanation: "`side_effect` is `Mock`'s lever for *behavior beyond returning a canned value*. Set it to an exception class (or instance) and the mock raises on call; set it to an iterable to return different values on consecutive calls; set it to a callable to compute the return value dynamically from the arguments. Using `side_effect = ConnectionError` (the class) is the canonical way to drive the SUT into its error-handling branch in a deterministic, network-free test."
+
+  - id: 13
+    difficulty: advanced
+    type: single
+    question: |
+      A teammate's test reads:
+
+      ```python
+      def test_processes_orders():
+          loader = Mock()
+          loader.load.return_value = open("/tmp/test_orders.csv").read()
+          processor = OrderProcessor(loader)
+          processor.process_all()
+          assert processor.summary == "5 orders, $1240 total"
+      ```
+
+      Which **test smell** is this?
+    options:
+      - "**The Mockery** — the test has so many mocks it verifies orchestration instead of behavior."
+      - "**Mystery Guest** — the test depends on `/tmp/test_orders.csv`, an external file not visible in the test body."
+      - "**Assertion Roulette** — many unexplained assertions in one test, none of them with messages to localize failure."
+      - "**Eager Test** — one test exercises many behaviors of the SUT, so a failure does not localize which one broke."
+    correct_index: 1
+    option_feedback:
+      0: "Only one mock appears in the test — far from a mockery. The smell here is about *where the data lives*, not how many doubles were used."
+      2: "The test has exactly one assertion. The smell here is about a hidden input, not unexplained outputs."
+      3: "The test exercises exactly one behavior — `process_all` summarizing a batch of orders. The smell here is about visibility of inputs, not breadth of coverage."
+    explanation: "**Mystery Guest** (van Deursen et al.; Meszaros) is the smell where a test depends on data living outside the test method — a file, a shared fixture, a row in a database, a JSON blob on disk. A reader cannot tell from the test alone what `5 orders, $1240 total` is computed *from*. The fix is to inline the relevant test data into the test body (or a clearly-named local builder), so the reader can see both halves of the assertion: what went in and what came out."
