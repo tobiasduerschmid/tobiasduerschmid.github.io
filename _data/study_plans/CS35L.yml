@@ -1,0 +1,110 @@
+# CS 35L Study Plan source list.
+#
+# Items are listed in the recommended pedagogical order. The schedule
+# generator (see js/study-schedule.js) distributes them across the
+# number of days the student chose (4–14, inclusive) while keeping
+# the order intact.
+#
+# Each item has:
+#   title — display name on the schedule card.
+#   type  — "tutorial" (browser tutorial) or "gym" (SE Gym quiz).
+#   url   — link to the underlying page or quiz.
+
+title: "CS 35L study plan"
+description: "Software Construction — recommended order for working through the SE Book."
+
+items:
+  # Foundations
+  - title: "Shell Scripting Tutorial"
+    type: tutorial
+    url: /SEBook/tools/shell-tutorial.html
+  - title: "Shell Quiz"
+    type: gym
+    url: /se-gym/?quiz=shell
+  - title: "Regular Expressions Tutorial (Basics)"
+    type: tutorial
+    url: /SEBook/tools/regex-tutorial.html
+  - title: "Regular Expressions Tutorial (Advanced)"
+    type: tutorial
+    url: /SEBook/tools/regex-tutorial-advanced.html
+  - title: "Regex Quiz"
+    type: gym
+    url: /se-gym/?quiz=regex
+
+  # Programming languages
+  - title: "Python Tutorial"
+    type: tutorial
+    url: /SEBook/tools/python-tutorial.html
+  - title: "Python Quiz"
+    type: gym
+    url: /se-gym/?quiz=python
+  - title: "Node.js Tutorial"
+    type: tutorial
+    url: /SEBook/tools/nodejs-tutorial.html
+  - title: "Node.js Quiz"
+    type: gym
+    url: /se-gym/?quiz=nodejs
+  - title: "React Tutorial"
+    type: tutorial
+    url: /SEBook/tools/react-tutorial.html
+  - title: "React Quiz"
+    type: gym
+    url: /se-gym/?quiz=react
+
+  # Build tools and version control
+  - title: "Git Tutorial"
+    type: tutorial
+    url: /SEBook/tools/git-tutorial.html
+  - title: "Advanced Git Tutorial"
+    type: tutorial
+    url: /SEBook/tools/git-advanced-tutorial.html
+  - title: "Git Quiz"
+    type: gym
+    url: /se-gym/?quiz=git_basic
+  - title: "Makefile Tutorial"
+    type: tutorial
+    url: /SEBook/tools/makefile-tutorial.html
+
+  # Systems
+  - title: "Networking Quiz"
+    type: gym
+    url: /se-gym/?quiz=networking
+  - title: "Data Management Quiz"
+    type: gym
+    url: /se-gym/?quiz=data_management
+  - title: "Security Quiz"
+    type: gym
+    url: /se-gym/?quiz=security
+
+  # Design and process
+  - title: "Observer Pattern Quiz"
+    type: gym
+    url: /se-gym/?quiz=design_pattern_observer
+  - title: "SOLID Quiz"
+    type: gym
+    url: /se-gym/?quiz=design_principle_solid
+  - title: "Design with Reuse Quiz"
+    type: gym
+    url: /se-gym/?quiz=design_with_reuse
+
+  # Testing
+  - title: "Testing Foundations Tutorial"
+    type: tutorial
+    url: /SEBook/tools/testing-foundations-tutorial.html
+  - title: "TDD Tutorial"
+    type: tutorial
+    url: /SEBook/tools/tdd-tutorial.html
+
+  # UML
+  - title: "UML Class Diagram Tutorial (Python)"
+    type: tutorial
+    url: /SEBook/tools/uml-class-diagram-python.html
+  - title: "UML Class Diagram Quiz"
+    type: gym
+    url: /se-gym/?quiz=uml_class_diagram_examples
+  - title: "UML Sequence Diagram Tutorial (Python)"
+    type: tutorial
+    url: /SEBook/tools/uml-sequence-diagram-python.html
+  - title: "UML Sequence Diagram Quiz"
+    type: gym
+    url: /se-gym/?quiz=uml_sequence_diagram_examples
