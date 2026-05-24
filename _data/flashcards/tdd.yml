@@ -1,0 +1,75 @@
+title: "Test-Driven Development (TDD)"
+description: "Retrieval practice for TDD as a development rhythm — the Three Rules, Red-Green-Refactor, BUFD vs. evolutionary design, the Patterns-Happy malady, the Rocket Ship analogy, living documentation, and where TDD struggles. Cards span Remember through Evaluate."
+active: true
+cards:
+  - id: 1
+    difficulty: basic
+    question: "State Beck's **Three Rules of TDD** in order."
+    answer: "(1) You may not write any production code unless it is to make a failing unit test pass. (2) You may not write more of a unit test than is sufficient to fail — *and failing to compile is a failure*. (3) You may not write more production code than is sufficient to pass the one failing unit test."
+    explanation: "The rules are deliberately strict. Rule 2's compile-as-failure clause forces you to define the *interface* (how the code is called) before the *implementation*. The rules' point is not bureaucratic compliance — it is keeping every step small enough that the working system is never more than a few minutes away."
+
+  - id: 2
+    difficulty: basic
+    question: "Name the three phases of the **Red-Green-Refactor** cycle and the one rule for each phase."
+    answer: "**Red** — write a tiny failing test (specifies intent). **Green** — write the simplest code that passes (shortcuts and naive code are fine). **Refactor** — remove duplication and clarify intent while the bar stays green."
+    explanation: "Each full cycle should take *minutes, not hours*. If you can't get back to green quickly, the step was too large — shrink the test or split the behavior. Romano et al. (2017) found that developers often skip the Refactor step, even though that is where much of TDD's design value lives — make refactor a discipline, not an optional cleanup."
+
+  - id: 3
+    difficulty: intermediate
+    question: "Translate this scenario into the TDD vocabulary: *'A developer spends an hour writing a clever interface, finally runs the tests, and finds twelve failures across the codebase.'* What went wrong and what's the rhythm fix?"
+    answer: "The developer entered a **'World of Red'** — they made changes too large to verify in one Red→Green cycle. The feedback loop is severed and the productivity benefit is lost. The fix is **smaller steps**: write a single failing test, get to green, refactor, repeat — every few minutes."
+    explanation: "Kerievsky's small-steps methodology is central: if a step is too large, you cannot tell which change broke which test, debugging becomes a scavenger hunt, and the safety net of continuously-green tests is gone. The discipline is to *shrink the test* until the next Green is minutes away, not hours."
+
+  - id: 4
+    difficulty: intermediate
+    question: "Contrast **BUFD (Big Upfront Design)** with **TDD's evolutionary design**. What core fear drove BUFD, and what assumption does TDD challenge?"
+    answer: "**BUFD** assumed that 'bad design' woven into the foundation would become impossible to fix later, so design must be finalized before coding. **TDD** challenges that assumption: with continuous refactoring under a green test suite, design can *emerge* and improve as requirements clarify — you no longer need to predict the future before the first line of code."
+    explanation: "BUFD was a defensive posture against the perceived high cost of change. XP and TDD lowered that cost by keeping the system continuously testable and refactorable, which made the upfront prediction unnecessary. The shift is also philosophical: from 'design as prophecy' to 'design as response to what you now know'."
+
+  - id: 5
+    difficulty: intermediate
+    question: "What is the **'Patterns Happy' malady**, and how does TDD prevent it?"
+    answer: "**Patterns Happy** — after reading the GoF book, developers force complex patterns (Strategy, Decorator, Factory) into simple codebases that don't need them, zapping productivity. TDD prevents it because patterns must *emerge* from refactoring in response to actual duplication or pain, not be imposed upfront for hypothetical flexibility."
+    explanation: "Kerievsky's *Refactoring to Patterns* (2004) is the canonical response — patterns are targets you refactor *toward* when the code earns them, not templates you apply by default. The TDD discipline of 'simplest thing that could possibly work' in the Green phase actively pushes against premature pattern application."
+
+  - id: 6
+    difficulty: intermediate
+    question: "Explain the **'Rocket Ship to the Moon'** analogy in TDD."
+    answer: "TDD evolves an architecture by *incremental* growth — like building a taller and taller tower to get closer to the moon. Eventually, you hit a limit where the tower is physically impossible: the moon needs a *fundamentally different* architecture (a rocket). For some systems — ACID-compliant databases, certain distributed systems — incremental growth cannot reach the target, and high-level upfront design is required before TDD applies."
+    explanation: "The analogy frames TDD's scope honestly: it is exceptional for evolving local design, weak for jumping to a fundamentally new architectural paradigm. The remedy is not to abandon TDD but to *pair* it with high-level architectural thinking for non-modularizable risks like platform selection, security protocols, and performance targets."
+
+  - id: 7
+    difficulty: intermediate
+    question: "How does TDD produce **'living documentation'** and increase the **bus factor**?"
+    answer: "TDD tests are continuously executed, so they remain an always-accurate specification of behavior — unlike prose docs that rot silently. New team members learn the system by reading the tests; original authors can leave without taking the only working specification with them (the **bus factor** goes up)."
+    explanation: "This is one of TDD's understated benefits. Conventional documentation describes intended behavior; TDD tests describe verified behavior. The gap matters most precisely when it matters most — when authors are gone and the system has drifted from the docs everyone assumed were accurate."
+
+  - id: 8
+    difficulty: advanced
+    question: "Critique this claim: *'TDD is a complete development methodology — every line of every system should be developed test-first.'* Name at least three contexts where TDD as the *sole* methodology is a poor fit."
+    answer: "(1) **Non-incremental architectures** — distributed systems, ACID databases, anything that needs high-level upfront design (Rocket Ship analogy). (2) **Non-binary outcomes** — ML, image recognition, anything judged on confidence intervals rather than pass/fail. (3) **Non-functional properties** — security, performance, reliability often can't be captured in a unit test and need specialized risk-driven design. (4) Some greenfield exploration where you don't yet know the contract."
+    explanation: "TDD is exceptional for managing technical debt and evolving local design under known requirements. It's weaker — and sometimes harmful — when used as a complete methodology. The mature stance is to *pair* TDD with risk-driven design for NFRs, with high-level architectural work for non-incremental systems, and with separate quality activities (property tests, statistical evaluation) for non-binary outcomes."
+
+  - id: 9
+    difficulty: advanced
+    question: "Connect TDD to **Lehman's Laws of Software Evolution**. Which law does TDD directly counter, and how?"
+    answer: "Lehman observed that software systems naturally **increase in complexity** and **decline in internal quality** over time. TDD acts as a **counter-entropic force**: continuous refactoring under green tests systematically restores quality before debt compounds, so the predicted decay is interrupted rather than absorbed."
+    explanation: "Without an active force pushing back, code drifts toward complexity because each change is a local optimization made under deadline. TDD bakes the counter-force into the day-to-day rhythm: every Green is followed by a Refactor in which the engineer is empowered (and obligated) to improve the design. The discipline is what keeps Lehman's prediction from being deterministic."
+
+  - id: 10
+    difficulty: advanced
+    question: "Walk through what the **Green** step should look like for: *'Given the failing test `assert order.cancel().status == \"cancelled\"`, write the simplest passing code.'* Be specific."
+    answer: "Add a `cancel` method to `Order` whose body is `self.status = 'cancelled'; return self`. That's it — no validation, no state machine, no event publishing, no logging. The point of Green is to satisfy the *one* failing test as simply as possible; richer behavior earns its place in a *future* Red→Green cycle."
+    explanation: "Beck's slogan in the Green phase is *'do the simplest thing that could possibly work'* — sometimes called Gall's Law in the design literature. Shortcuts here are not sloppy; they preserve the rhythm. The Refactor step is where duplication and design clarity get addressed; trying to do everything in Green is how steps become too large and the World-of-Red trap opens up."
+
+  - id: 11
+    difficulty: expert
+    question: "A senior engineer says: *'TDD locally enforces Parnas's Information Hiding, but globally it can be hostile to it. Explain that tension.'* Resolve it in one paragraph."
+    answer: "**Locally**: TDD forces a tiny interface (the test calls one thing) before any implementation, naturally hiding implementation details behind a minimal API — the Information Hiding ideal. **Globally**: a purely incremental approach can miss *non-modularizable* risks (platform choice, security protocols, performance targets) — decisions that *must* be made at the system boundary and cannot be refactored in later. The resolution: pair the low-level TDD rhythm with high-level architectural thinking — TDD handles emergent local modularity; risk-driven design handles the non-modularizable bets."
+    explanation: "Parnas (1972) defined modularity as decomposition that hides design decisions from clients. TDD operationalises that locally because the test is the first client and writes the interface. But TDD's incrementalism can blind a team to decisions whose cost only shows up at system scale. The mature engineer holds both: TDD for the local design loop; an explicit architectural conversation for choices the loop can't reach."
+
+  - id: 12
+    difficulty: intermediate
+    question: "Two empirical findings on TDD are worth knowing. What did Nagappan et al. (2008) and Fucci et al. (2017) each find?"
+    answer: "**Nagappan et al. (2008)**: industrial case studies at IBM and Microsoft found **large reductions in pre-release defect density** in teams using TDD, with an **initial development-time increase**. **Fucci et al. (2017)**: quality and productivity gains were primarily associated with **fine granularity and a uniform rhythm** of small steps, *not* simply with test-first ordering."
+    explanation: "These findings together complicate the slogan 'red-green-refactor'. The benefit comes from the *cadence* of small verified steps, not from the ritual ordering of test-before-code. A team that writes tests after the code but in equally small steps captures most of the benefit; a team that nominally writes tests first but in giant batches captures little. The point is the rhythm."

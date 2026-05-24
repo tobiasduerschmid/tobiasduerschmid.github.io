@@ -23,3 +23,9 @@ decks:
   - uml_sequence_diagram_examples
   - data_management
   - security
+  - testing_overview
+  - goodtests
+  - testquality
+  - testdoubles
+  - tdd
+  - dev_practice_genai

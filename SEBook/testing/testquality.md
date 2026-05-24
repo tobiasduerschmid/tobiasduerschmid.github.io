@@ -97,3 +97,10 @@ No single metric captures test quality. A healthier dashboard combines several s
 * **Review findings:** repeated test smells point to design or teaching gaps.
 
 The goal is not to worship metrics. The goal is to keep asking whether the suite would fail if the system broke in a way users, maintainers, or operators care about.
+
+## Practice
+
+{% include flashcards.html id="testquality" %}
+
+{% include quiz.html id="testquality" %}
+

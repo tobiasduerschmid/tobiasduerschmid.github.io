@@ -525,3 +525,10 @@ Before you commit a test, ask:
 * If this test failed next month, would the failure message help?
 
 If the answer is "no", improve the test before trusting the green bar.
+
+## Practice
+
+{% include flashcards.html id="goodtests" %}
+
+{% include quiz.html id="goodtests" %}
+

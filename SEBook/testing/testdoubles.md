@@ -62,3 +62,9 @@ A software engineer should utilize a Test Spy when they want the assertions to r
 # Mock Object
 A Mock Object, like a Test Spy, acts as an observation point to verify the indirect outputs of the SUT. However, a Mock Object operates using a fundamentally different paradigm known as "Expected Behavior Specification".
 Instead of waiting until after the SUT executes to verify the outputs procedurally, a Mock Object is configured before the SUT is exercised with the exact method calls and arguments it should expect to receive. The Mock Object essentially acts as an active verification engine during the execution phase. As the SUT executes and calls the Mock Object, the mock dynamically compares the actual arguments received against its programmed expectations. If an unexpected call occurs, or if the arguments do not match, the Mock Object fails the test immediately.
+
+## Practice
+
+{% include flashcards.html id="testdoubles" %}
+
+{% include quiz.html id="testdoubles" %}

@@ -1,0 +1,208 @@
+title: "Publish-Subscribe Quiz"
+description: "Apply the publish-subscribe style to real architectural decisions — choose between push and pull, diagnose coupling smells, pick QoS levels, and judge when pub-sub is the wrong tool."
+active: true
+questions:
+  - id: 1
+    difficulty: basic
+    type: single
+    question: |
+      Your team runs an e-commerce backend. A new `Recommendations` service needs to react to every `OrderPlaced` event the `Checkout` service emits. The architect insists no code in `Checkout` may change to add the new consumer. Which style makes this possible?
+    options:
+      - "Direct method call — `Checkout` calls `Recommendations.handleOrder()` after writing to the database."
+      - "Publish-subscribe — `Checkout` publishes `OrderPlaced` to a bus; `Recommendations` registers as a subscriber."
+      - "Layered architecture — `Recommendations` is placed below `Checkout` so `Checkout` can call down to it."
+      - "Pipes and filters — `OrderPlaced` events stream through a fixed pipeline ending in `Recommendations`."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Direct call forces a code change in `Checkout` to add the new consumer — the exact constraint the architect ruled out. Every future subscriber would require another `Checkout` edit.
+      2: |
+        Layering would require `Checkout` to know about `Recommendations` (it would be making the downward call), again violating the no-change-to-`Checkout` constraint.
+      3: |
+        A fixed pipeline forces every event through `Recommendations`, even ones that should not reach it, and adding a *parallel* consumer like `Inventory` would require restructuring the pipeline.
+    explanation: "**Pub-sub is the only style here that lets a new consumer be added without touching the producer.** The publisher's dual ignorance — it doesn't know who subscribes — is what makes runtime extensibility possible. This is the headline reason to reach for pub-sub: evolvability of the consumer set."
+
+  - id: 2
+    difficulty: intermediate
+    type: single
+    question: |
+      A real-time stock-trading dashboard pushes `PriceChanged` events at ~5,000 per second. Subscribers (chart, alert engine, order matcher) all need the new price every tick. The team is choosing between push and pull. Which is correct?
+    options:
+      - "Pull — minimal notifications reduce bandwidth, and subscribers fetch only when interested."
+      - "Push — bundling the price in the notification avoids a second round trip per subscriber per tick."
+      - "Pull — it lets each subscriber decide whether to re-query, which scales better at 5,000 events/sec."
+      - "Push is unsafe at this rate because the publisher could become a bottleneck — only pull avoids that risk."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Pull adds a round trip per interested subscriber per event. At 5,000 events × 3 subscribers, that's 15,000 extra round trips per second — exactly the wrong direction for a hot path.
+      2: |
+        Every subscriber here always wants the price. "Decide whether to re-query" optimizes for a case that doesn't exist; you're paying for flexibility you don't use.
+      3: |
+        Pull does not reduce publisher load — the publisher still answers every fetch. Bandwidth concerns are real for very large payloads, but a price tick is a small number.
+    explanation: "**Push wins when every interested subscriber will use the payload, especially at high event rates with small payloads.** Pull wins for large or expensive-to-produce payloads where most subscribers will discard them. A price tick going to three always-interested subscribers is the canonical push case."
+
+  - id: 3
+    difficulty: intermediate
+    type: single
+    question: |
+      Your billing service publishes `InvoicePaid` events. Losing one means a customer gets a duplicate charge or no service. Latency is acceptable. Which MQTT QoS level applies?
+    options:
+      - "QoS 0 — lowest latency, fire-and-forget."
+      - "QoS 1 — at-least-once delivery; if the consumer is idempotent, duplicates are harmless."
+      - "QoS 2 — exactly-once delivery via four-step handshake."
+      - "QoS does not matter here — any level works because the subscriber acknowledges processing."
+    correct_index: 2
+    option_feedback:
+      0: |
+        QoS 0 may silently drop the message — the worst case is a paid invoice never recorded. For billing that's a regulatory and reputational disaster, not just a UX bug.
+      1: |
+        QoS 1 may duplicate the message — the worst case is the customer charged twice. The stem says "duplicate charge" is unacceptable; QoS 1 only works if the consumer is provably idempotent, and the stem does not promise that.
+      3: |
+        QoS controls per-message delivery semantics; subscriber acknowledgment is a separate concern. Without setting QoS 2, neither the broker nor the subscriber can guarantee exactly-once delivery on its own.
+    explanation: "**QoS 2 pays the highest latency cost (four-step PUBLISH/PUBREC/PUBREL/PUBCOMP handshake) for the only delivery guarantee that admits neither loss nor duplication.** Billing, transactional commits, and one-shot critical workflows pick QoS 2. Sensor telemetry where one missed reading is harmless picks QoS 0. Most application events pick QoS 1 with idempotent handlers."
+
+  - id: 4
+    difficulty: advanced
+    type: multiple
+    question: |
+      Your manager wants to use pub-sub for the **money-transfer engine** of a retail bank. Transfers must commit in a strictly defined order, must never be lost, and an ops team must be able to trace why any specific transfer failed within seconds. Which of these are *legitimate* warning signs that pub-sub is the wrong tool here? Select all that apply.
+    options:
+      - "Bus dispatch is asynchronous and gives no ordering guarantee across subscribers."
+      - "Tracing causality through a bus during incident response is significantly harder than tracing a synchronous call stack."
+      - "Adding new subscribers in the future would be easy — that flexibility is unwanted in a regulated context."
+      - "The combinatorial number of reachable system states grows quickly with each new subscriber, complicating verification."
+      - "Pub-sub cannot be implemented with reliable transport — TCP is forbidden."
+    correct_indices: [0, 1, 3]
+    option_feedback:
+      0: |
+        Strict ordering is exactly what asynchronous bus dispatch does not guarantee. For money movement where order matters (debit-before-credit, idempotency keys in sequence), this is disqualifying.
+      1: |
+        Pub-sub turns a stack trace into a graph trace across asynchronous boundaries. For sub-second incident triage in a regulated industry, this is a real operational cost.
+      2: |
+        Easy extensibility is a *feature* of pub-sub, not a problem. Even in regulated contexts, you'd want to gate which subscribers are allowed via configuration — not abandon pub-sub for being too flexible.
+      3: |
+        Each new subscriber can react to events from any publisher and emit its own events, fanning out the reachable state space. Formal verification and reasoning become exponentially harder.
+      4: |
+        Pub-sub middleware routinely uses TCP (Kafka, RabbitMQ over AMQP, MQTT). Transport reliability is independent of the style.
+    explanation: "**Pub-sub is the wrong default for ordered, traceable, transactional workflows in regulated domains.** Banks reach for synchronous request/response with strong consistency, or event sourcing with explicit causal ordering, when guarantees matter more than evolvability. The 'too flexible to add subscribers' argument is not a real cost — the real costs are ordering, traceability, and verification."
+
+  - id: 5
+    difficulty: advanced
+    type: single
+    question: |
+      A microservices team's bus is implemented with a single method `bus.send(Message msg)` and every subscriber casts the message to a concrete type. After 18 months the team can no longer answer "what breaks if I change `OrderPlaced`'s `currency` field?" without a manual codebase grep. Which architectural smell does this match, and what is the right refactor?
+    options:
+      - "Layer bridging; refactor by re-introducing a strict layer between publishers and subscribers."
+      - "Wide coupling; refactor by replacing the generic `send`/`receive` interface with typed channels or per-event-class topics so each subscription is statically traceable."
+      - "Big ball of mud; refactor by deleting the bus and reverting to direct calls."
+      - "Cyclic dependency; refactor by topologically sorting the publishers."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Layer bridging is the layered-style smell of calling non-adjacent layers downward. The problem described is not about call direction; it is about losing the dependency graph between publishers and subscribers.
+      2: |
+        Deleting the bus would replace one problem with a much worse one: tightly coupled point-to-point dependencies between services. The fix is to restore *visibility* of the existing coupling, not to remove the bus.
+      3: |
+        Cycles arise when A depends on B and B depends on A. The smell here is *opacity* of the dependency graph, not its directionality.
+    explanation: "**Wide coupling (Garcia et al. 2009) is the pub-sub smell where every subscriber appears coupled to every publisher because the bus's type erasure hides the real dependency graph.** Typed channels — one per event class — restore the static visibility so a maintenance engineer can answer 'who breaks if I change this payload?' from the type system alone."
+
+  - id: 6
+    difficulty: intermediate
+    type: single
+    question: |
+      A mobile chat app must continue to deliver messages to users whose phones were offline for hours. Which pub-sub feature is the team relying on?
+    options:
+      - "Space decoupling — subscribers don't need to know publisher addresses."
+      - "Time decoupling, implemented as durable subscriptions or retained messages — the broker buffers events for offline subscribers."
+      - "Synchronization decoupling — the publisher does not block."
+      - "Content-based routing — only relevant messages are delivered."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Space decoupling means parties don't know each other's locations. It does not address the case where one party is unreachable at the moment of publication.
+      2: |
+        Synchronization decoupling means neither party blocks during the call. It does not survive the subscriber being absent entirely.
+      3: |
+        Content-based routing controls *which* events match, not *when* they are delivered. An offline subscriber still misses events without time decoupling.
+    explanation: "**Time decoupling — implemented via durable subscriptions (JMS), retained messages (MQTT), or log retention (Kafka) — is what lets a subscriber receive events that were published while it was unreachable.** Without it, every offline minute is a delivery gap. With it, the subscriber catches up on reconnect."
+
+  - id: 7
+    difficulty: advanced
+    type: single
+    question: |
+      Your team adopts a content-based pub-sub broker so subscribers can register predicates like `region == 'EU' AND amount > 10000`. After three months, broker CPU is saturated at 80% and the team is debating switching to topic-based. Under what condition is this switch justified?
+    options:
+      - "Always — content-based is never appropriate at scale."
+      - "When the subscription predicates partition cleanly into a small number of stable categories that can become topics, so the broker's matching work moves from per-event predicate evaluation to a hash lookup."
+      - "When the team wants to add wildcard support, since content-based has no equivalent."
+      - "When the team wants stronger delivery guarantees — only topic-based supports QoS."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Content-based is *expensive*, not *inappropriate*. It is the correct choice when fine-grained payload filtering is needed and broker capacity can handle the load. Many systems run it successfully.
+      2: |
+        Wildcard matching is more expressive than literal topic strings but strictly less expressive than predicates over payload attributes. The motivation for switching would be cost, not capability.
+      3: |
+        QoS is a delivery-guarantee concern independent of routing style. Both topic-based and content-based brokers support QoS levels.
+    explanation: "**Switch from content-based to topic-based when the subscription space naturally partitions: each distinct predicate category becomes a topic, and the broker's job becomes a hash lookup instead of per-event predicate evaluation.** If predicates are highly dynamic or numerically constrained (`amount > X` for arbitrary X), topics cannot replace them and content-based is the necessary cost."
+
+  - id: 8
+    difficulty: advanced
+    type: single
+    question: |
+      An architect proposes pub-sub for syncing inventory counts across a global e-commerce platform. The product manager pushes back: "we need every region to see the same count instantly so we never oversell." How should the architect respond?
+    options:
+      - "Agree — pub-sub delivers events instantly to all subscribers, so all regions will see the same count."
+      - "Pub-sub is asynchronous and best-effort, so regions will hold inconsistent counts for short windows. We have to choose: accept eventual consistency and reserve stock optimistically, or use a different style with strong consistency."
+      - "Switch to topic-based pub-sub, which guarantees consistency across topics."
+      - "Use QoS 2, which makes pub-sub strongly consistent."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Pub-sub delivers asynchronously; "instantly" is marketing language, not an architectural guarantee. Network partitions and bus delays produce real inconsistency windows.
+      2: |
+        Topic-based vs content-based is about routing, not consistency. Neither variant guarantees synchronous global state.
+      3: |
+        QoS 2 guarantees exactly-once *delivery* per subscriber. It does not synchronize their state — subscriber A and subscriber B still apply the event at different wall-clock times.
+    explanation: "**Pub-sub embodies the CAP-theorem trade-off: it sacrifices Consistency for Availability and Partition tolerance, so subscribers hold inconsistent state for bounded windows.** The architecturally honest answer is to name the trade-off explicitly: either redesign the business process around eventual consistency (reserve-then-confirm), or pick a style with strong consistency (distributed transactions, single source-of-truth with synchronous reads)."
+
+  - id: 9
+    difficulty: intermediate
+    type: single
+    question: |
+      You inherit a system whose architecture diagram shows 20 microservices, each connected by a single arrow to a central "Event Bus" component. After three weeks you still cannot answer "which services break if we change the `UserDeleted` payload?" What is the root cause of your confusion, per Fairbanks?
+    options:
+      - "The diagram is missing the QoS configuration on each connection."
+      - "The diagram captures *runtime* obliviousness faithfully, but discards the *design-time* producer→consumer relationships you actually need to understand and maintain the system."
+      - "The diagram should also show the deployment tiers, since pub-sub depends on them."
+      - "Microservice architectures cannot be diagrammed; you need to read the code instead."
+    correct_index: 1
+    option_feedback:
+      0: |
+        QoS detail would not answer "which services break if a payload changes." Even fully annotated, the diagram still wouldn't show conceptual producer→consumer links.
+      2: |
+        Tier information explains *where* services run, not *which* of them depend on a given event payload. The missing information is conceptual, not deployment.
+      3: |
+        Microservice systems can absolutely be diagrammed at the architecture level — and must be, for change-impact analysis. The diagram failure here is in *what* it shows, not whether to draw one.
+    explanation: "**Fairbanks calls this the *illusion of obliviousness*: technically every service is just attached to the bus, but the *design intent* — which producer exists because which consumer needs it — is the load-bearing information that maintenance engineers rely on.** Document conceptual producer→consumer relationships explicitly (event catalog, service-to-event matrix, contract tests) so the design rationale survives the runtime decoupling."
+
+  - id: 10
+    difficulty: advanced
+    type: single
+    question: |
+      Two designs for an IoT temperature monitor are on the table. **Design A:** sensors call `monitor.report(temp)` directly via REST. **Design B:** sensors publish `TempReading` to MQTT; the monitor subscribes. The PM says "Design B is obviously more decoupled, so it's better." Which counter-argument best frames the *honest* trade-off?
+    options:
+      - "Design B is always better for IoT because MQTT is the standard."
+      - "Design A is always better because synchronous calls are easier to debug."
+      - "Design B buys evolvability (new subscribers can join without touching sensors) at the cost of debuggability and ordering guarantees; if neither future subscriber nor offline tolerance is needed, Design A is simpler and equally correct."
+      - "The two are equivalent — there is no architectural difference."
+    correct_index: 2
+    option_feedback:
+      0: |
+        "Standard" is not an architectural argument. MQTT being widely used is a *deployment* benefit; it does not justify the style choice on its own.
+      1: |
+        Debuggability is a real Design A advantage, but framing it as "always better" ignores legitimate Design B wins (offline sensors, multiple consumers, decoupled deployment).
+      3: |
+        The two have markedly different consequences for evolvability, debugging, ordering, and offline tolerance. Calling them equivalent ignores the load-bearing trade-off the architect is making.
+    explanation: "**The pedagogically honest answer in any 'should we use pub-sub?' debate is to name the trade-off explicitly — pub-sub buys decoupling and evolvability, and pays for it with ordering, debuggability, and per-event latency.** If the system has only one consumer today, no plans for more, and runs on a reliable network with always-online endpoints, the synchronous alternative is often the right call. Decoupling is not free."

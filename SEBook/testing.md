@@ -38,3 +38,9 @@ Before choosing a tool or chasing a coverage number, ask whether the tests are g
 * **[Writing Good Tests](/SEBook/testing/goodtests.html)** gives a practical recipe for individual tests: behavior-focused names, small fixtures, strong assertions, systematic input selection, deterministic execution, and TDD as a rhythm of small verified steps.
 
 # Testability
+
+## Practice
+
+{% include flashcards.html id="testing_overview" %}
+
+{% include quiz.html id="testing_overview" %}

@@ -1,0 +1,208 @@
+title: "Generative AI in Software Engineering Quiz"
+description: "Apply GenAI judgment to real engineering situations — diagnose the productivity illusion, choose between Driver / Navigator / TDG workflows, judge skill-formation risk, and reason about why architecture amplifies (or sabotages) AI effectiveness."
+active: true
+questions:
+  - id: 1
+    difficulty: intermediate
+    type: single
+    question: |
+      Compilers (1960s) delivered a 10x productivity gain. Current research estimates GenAI delivers 21%–50%. What is the most accurate explanation for the gap?
+    options:
+      - "Compilers ran faster than today's LLMs."
+      - "Compilers automated **accidental complexity** (the repetitive mechanics of coding); GenAI helps with parts of that too but does not yet automate **essential complexity** (the core logic and design decisions inherent to the problem), which is where most of a software engineer's time still goes."
+      - "GenAI is being measured wrong — once measured correctly it also delivers 10x."
+      - "Compilers and GenAI have the same productivity effect; the difference is purely marketing."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Compilers were vastly slower than LLMs (compilation took hours on 1960s hardware). Execution speed of the *tool* is not what produces engineering productivity. The compiler's leverage came from what it automated, not how fast it ran.
+      2: |
+        The 21–50% range is the consistent finding across multiple controlled studies (METR, GitClear, others) — not a measurement artifact. Treating it as undercounted overstates current AI capability and underestimates the work that essential complexity still demands.
+      3: |
+        Compilers eliminated whole categories of repetitive translation work that previously consumed half a developer's day. GenAI's reduction is real but smaller in scope. The asymmetry is well-documented, not marketing.
+    explanation: "**Compilers automated *accidental* complexity (translating high-level intent into machine instructions) — a near-pure mechanical task. GenAI helps with parts of that but leaves *essential* complexity (understanding requirements, choosing data structures, navigating trade-offs, integrating with messy real systems) largely intact.** This is why productivity gains plateau where genuine engineering judgment is needed, and why systems-thinking and requirements skills remain decisive even with AI assistance."
+
+  - id: 2
+    difficulty: advanced
+    type: single
+    question: |
+      A developer says "Copilot wrote the whole feature in 5 minutes — I'm so much more productive!" Two days later they're still debugging it and have shipped a security vulnerability. Which trap have they fallen into?
+    options:
+      - "Cognitive offloading — they let the AI think for them."
+      - "The **illusion of AI productivity**: generation speed feels like productivity, but if the output is subtly wrong, the time saved in writing is dwarfed by the time spent debugging — sometimes turning a 6-hour task into a 24-hour one. Real productivity is measured end-to-end (generate + understand + debug + ship), not by lines per minute."
+      - "Hallucination — the AI invented APIs that didn't exist."
+      - "Premature optimization — the AI optimized too early."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Cognitive offloading is a *separate* trap — it concerns *skill formation*, not the productivity illusion specifically. The pattern described is about misattributing speed to productivity, then paying the debt downstream.
+      2: |
+        Hallucination is one *cause* of bugs in AI output, but the framing of the question is about how 'fast' the generation felt vs how slow the end-to-end work was. The illusion is a measurement error, not a single defect type.
+      3: |
+        Premature optimization is unrelated — the issue isn't over-engineering, it's that the generated code is subtly broken and the bug-tail is long.
+    explanation: "**The illusion of AI productivity is the gap between *generation* (fast, satisfying, visible) and *end-to-end shipping* (debug, fix, verify, secure — slow and invisible). 5 minutes to type + 24 hours to debug is a net loss, even though the typing felt 10x faster.** Measure productivity in features shipped per week with acceptable defect/security rates — not in characters generated per minute. Studies consistently show developers *feel* more productive with AI even when they ship less."
+
+  - id: 3
+    difficulty: intermediate
+    type: single
+    question: |
+      Two computer-science students use a chatbot to learn linked lists. Student A pastes the assignment prompt and copies the answer. Student B asks the chatbot to explain why a tail pointer matters, then implements it themselves. Six months later, which is most likely to struggle on the data-structures exam, and why?
+    options:
+      - "Student B — they spent more time on the problem and got tired."
+      - "Student A — they engaged in **cognitive offloading**, which minimizes learning. Student B treated the AI as a **digital teaching assistant** (conceptual inquiry), which exercises continual learning — the human skill AI cannot replace."
+      - "Neither — both will perform equally."
+      - "Student A — they didn't pay for the chatbot subscription."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Time-on-task with active engagement is what builds long-term memory. Student B's extra time was *productive struggle*, the strongest predictor of durable learning.
+      2: |
+        Equal performance would mean cognitive engagement has no effect on learning — which contradicts decades of cognitive-science research (effortful retrieval, generation effect, desirable difficulties).
+      3: |
+        Subscription tier is irrelevant. The difference is *how* the AI was used, not which version answered.
+    explanation: "**Cognitive offloading (paste-prompt, copy-answer) bypasses the effortful retrieval that builds durable knowledge — the same reason students who only re-read notes fail compared to those who self-test. Conceptual inquiry (asking the AI to explain, compare, justify) preserves cognitive engagement and exercises the continual-learning skill humans retain over AI.** For junior engineers especially, the way GenAI is used predicts whether it accelerates or kneecaps skill formation."
+
+  - id: 4
+    difficulty: advanced
+    type: multiple
+    question: |
+      Which of these are valid items in the **Supervisor Mentality** for working with GenAI? Select all that apply.
+    options:
+      - "Always review AI-generated code before committing."
+      - "Never commit AI-generated code you cannot comfortably explain to a colleague."
+      - "Assume the AI's output is subtly buggy or insecure until proven otherwise."
+      - "Trust AI more than human teammates because it has read more code."
+      - "Treat the AI as a knowledgeable but unreliable intern."
+    correct_indices: [0, 1, 2, 4]
+    option_feedback:
+      0: |
+        AI output looks polished even when wrong. Every block needs review at the same scrutiny a junior teammate's code would receive — same defect rate, more confident phrasing.
+      1: |
+        The **explainability rule** prevents the team from accumulating code nobody understands. When the bug appears at 3 AM, you'll need to debug it — being able to explain it is a precondition for being able to fix it.
+      2: |
+        40% of Copilot-generated code is estimated to contain vulnerabilities (study cited in the SEBook). Working from the assumption of subtle incorrectness changes review quality immediately.
+      3: |
+        Reading more code does not produce better judgment. AI lacks domain context, system-specific constraints, and accountability — all of which experienced human teammates bring. Trusting it more is the inversion of the right calibration.
+      4: |
+        Capable but unreliable is the right mental model: useful for first drafts, dangerous when given final authority. The same trust calibration you'd extend to a smart intern: review, verify, don't auto-merge.
+    explanation: "**The Supervisor Mentality is the antidote to vibe coding. It treats GenAI as a capable but unreliable contributor — every output gets the same scrutiny as an unfamiliar teammate's PR, and nothing ships that the human can't explain or own.** This calibration is what separates engineers who scale up safely with AI from those who accumulate bugs and security debt invisibly until production catches fire."
+
+  - id: 5
+    difficulty: advanced
+    type: single
+    question: |
+      Your team adopts **Test-Driven Generation**. Walk through the correct sequence.
+    options:
+      - "Generate the implementation, then generate tests that pass it."
+      - "Prompt the AI to **generate tests** from a problem description, **review** them as a specification, prompt the AI to **generate the implementation**, then use a **remediation loop** (feed failing stack traces back to the AI) until tests pass."
+      - "Write tests yourself, then ask the AI to write code that defeats them."
+      - "Generate everything in one prompt, then run it."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Reversing the order destroys the entire benefit: tests written *for* the existing implementation just rubber-stamp it instead of constraining it. This is the textbook TDD anti-pattern, AI version.
+      2: |
+        Tests that 'defeat' code is adversarial security testing, not TDG. The point of TDG is to use generated tests as a *specification* the implementation must satisfy.
+      3: |
+        Single-shot prompts give the AI no feedback loop to correct itself, and the developer no opportunity to verify the tests before committing to them as the spec. Throughput is fast, defect rate is high.
+    explanation: "**Test-Driven Generation: (1) AI generates tests from the description → (2) human reviews tests as the specification → (3) AI generates implementation → (4) remediation loop feeds failing test output back to the AI.** The review step in (2) is what gives the workflow its quality: the tests are the contract, and the human's job is to make sure the contract is right *before* the AI is asked to satisfy it. Skipping review means the implementation passes broken tests."
+
+  - id: 6
+    difficulty: intermediate
+    type: single
+    question: |
+      Two teams adopt the same AI coding assistant. Team A's codebase is a tightly coupled monolith ("spaghetti"); Team B's is a set of well-bounded microservices with clean interfaces. Both apply AI to similar tasks. Why does Team B see substantially larger productivity gains?
+    options:
+      - "Team B uses better prompt engineering by coincidence."
+      - "AI benefits are **amplified in loosely coupled architectures**: smaller, well-named modules fit cleanly in the AI's context window, the AI sees only the relevant interface boundary, and fewer surprising dependencies break the generated code. In tightly coupled systems the AI cannot see (or fit) enough context to reason correctly, so its output magnifies the existing dysfunction."
+      - "Microservices use newer programming languages that AI handles better."
+      - "Team A is staffed with weaker engineers."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Same assistant, similar tasks — the structural difference between codebases is the variable, not prompt skill. Even strong prompt engineering on a spaghetti codebase will run into context-window limits and hidden coupling.
+      2: |
+        Microservices can be written in any language; many are in the same languages as monoliths. The benefit comes from *modularity*, not language choice.
+      3: |
+        Attributing the difference to staff skill ignores the architectural variable explicitly described. The same engineers in either codebase would see the same architecture-mediated effect.
+    explanation: "**Information Hiding and modularity *limit the context window* the AI needs to process — bounded interfaces mean the AI sees only the relevant slice, hidden internals don't leak unexpected coupling, and generated code can be reasoned about locally. In spaghetti codebases the AI is asked to operate in a context it cannot fully see, and its plausible-looking output silently breaks distant code.** Good architecture is now a force multiplier for AI productivity, not just a maintainability concern — sloppy architecture pays a compounding tax."
+
+  - id: 7
+    difficulty: advanced
+    type: single
+    question: |
+      An LLM confidently produces this line in a Python script: `import datafetcher_v2 as dfv2`. The library does not exist. What is this called, and why does it happen?
+    options:
+      - "A compiler error — the IDE will catch it."
+      - "A **hallucination**: LLMs predict the most likely next token based on statistical patterns in their training data, not by checking whether referenced APIs or libraries actually exist. They confidently produce plausible-looking but factually wrong calls — a direct consequence of being **'statistical parrots'** rather than reasoning systems."
+      - "An old version reference — the library used to exist."
+      - "A network failure — the model couldn't reach pypi."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Python is interpreted; the missing import is caught at run time, not by an IDE that does only static checks. Calling this a 'compiler error' frames the wrong tool as the safety net.
+      2: |
+        Some hallucinations *are* references to deleted libraries, but most are fabricated names that never existed. The mechanism is the same — token prediction without verification — but framing it as 'old version' understates the breadth of the problem.
+      3: |
+        The model has no network connection during inference. Hallucination is a property of the model's generation process, not of any external lookup.
+    explanation: "**Hallucinations come from how LLMs work: they predict the *most likely next token* given prior context, without any grounding in real-world facts. A plausible-looking import like `datafetcher_v2` is *linguistically* plausible — but linguistic plausibility is not factual existence.** This is the 'statistical parrot' framing: the model produces sequences that look like correct code without any knowledge of whether the code is correct. Tools like retrieval-augmented generation and IDE integrations help by grounding suggestions in real codebases, but the underlying risk remains."
+
+  - id: 8
+    difficulty: intermediate
+    type: single
+    question: |
+      Two pair-programming modes with AI: in the **Driver** mode, the human writes the code; in the **Navigator** mode, the human directs the AI to write blocks. Which role assignment is correct?
+    options:
+      - "Driver = human writes code and asks AI to critique it for performance/security; Navigator = human directs AI to write blocks while ensuring they understand every line."
+      - "Driver = AI writes everything; Navigator = human reviews after."
+      - "Driver = human types prompts; Navigator = AI handles all decisions."
+      - "Driver and Navigator are just informal terms — they don't change the workflow."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Letting the AI fully drive while a human reviews after is the **vibe-coding** anti-pattern the SEBook explicitly warns against. The human's role in both roles is to retain understanding and accountability for every line shipped.
+      2: |
+        AI handling all decisions removes engineering judgment from the loop and abandons the explainability rule. Pair programming with AI is collaborative, not delegated.
+      3: |
+        The roles are deliberate and well-defined — they describe different distributions of writing vs reviewing work between human and AI, each appropriate in different situations.
+    explanation: "**Both AI-pair-programming roles keep the human in active intellectual control. Driver: human writes, AI critiques (good for security review, performance ideas, edge-case enumeration). Navigator: AI writes under human direction, and the human verifies every line.** The crucial invariant in both: the human retains explainability and ownership of the result. The roles change *who types*, not who *understands*."
+
+  - id: 9
+    difficulty: advanced
+    type: single
+    question: |
+      Research found that codebases using AI coding agents had a **41.6% increase in code complexity** and a **30.3% rise in static analysis warnings**. What is the architectural risk this represents?
+    options:
+      - "AI tools are getting worse over time — quality is declining."
+      - "Accumulated **technical debt**: AI tends to generate verbose, duplicated, or pattern-matched solutions rather than refactoring toward the system's existing structure. Without a deliberate refactor habit, accepting AI suggestions repeatedly grows complexity faster than human-written code would — eventually slowing every future change."
+      - "Static analyzers are buggy and over-report on AI code."
+      - "AI is detecting more pre-existing problems."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Tool quality has improved year-over-year on most benchmarks. The complexity rise is not a tool defect — it's a *process* defect from accepting AI output without refactoring it into the existing structure.
+      2: |
+        The same static analyzers are used on human-written code as a baseline; the 30%+ rise is relative to that baseline, not absolute. The over-reporting framing tries to explain away the gap; the gap is real.
+      3: |
+        Pre-existing problems would show up the same before and after AI adoption. The 41.6% / 30.3% rises are *increases* after adopting AI assistants, attributable to what was newly written under the new workflow.
+    explanation: "**AI assistants tend to produce *additive* solutions — adding code that solves the local problem rather than refactoring to fit the system's idioms or remove duplication. Without an explicit refactor step in the workflow, complexity compounds and static-analysis warnings climb.** The fix is process-level: pair AI generation with a deliberate refactor pass (often the same AI, asked to refactor), enforce linters and complexity limits in CI, and reject AI-suggested duplication that human review would have rejected."
+
+  - id: 10
+    difficulty: advanced
+    type: single
+    question: |
+      A senior architect predicts: "The future belongs to engineers who can **orchestrate AI agents**, not just write code." What underlying skills does that prediction imply will become more valuable, and which less?
+    options:
+      - "More valuable: typing speed and language-syntax memorization. Less valuable: requirements engineering and architecture."
+      - "More valuable: **requirements engineering** (translating ambiguity into structure), **systems thinking**, **architecture design**, code review, security review, prompt and context engineering. Less valuable: rote syntax memorization, repetitive boilerplate authoring. The leverage shifts from *producing* code to *specifying and verifying* it."
+      - "All skills will become equally valued."
+      - "No skill change is needed — AI will replace engineers entirely."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Typing speed and syntax memorization are exactly the work AI is best at automating. Predicting they will become *more* valuable inverts the trend.
+      2: |
+        Equal valuation would mean the skill mix is unchanged, which contradicts every workflow analysis from the past three years. The shift is real and one-directional toward specification, judgment, and verification.
+      3: |
+        Studies show AI is best as a force multiplier, weakest at autonomous end-to-end engineering. Domain knowledge, real systems thinking, accountability, and the ability to translate ambiguity into structure remain irreplaceable.
+    explanation: "**The skill shift is from *producing* code to *specifying and verifying* it. Requirements engineering (INVEST stories, acceptance criteria), systems thinking (where the boundaries are, what fails), architecture (modular interfaces the AI can reason inside), security review, and prompt/context engineering all become more decisive. Rote syntax and boilerplate become commoditized.** The engineer who raises the *ceiling* of what they can build is the one who treats AI as leverage over engineering judgment — not as a substitute for it."

@@ -1,0 +1,208 @@
+title: "Testability Quiz"
+description: "Apply testability thinking to real code and architecture — diagnose controllability and observability problems, pick the right test double, recognize SOLID synergies, and judge when monkey vs metamorphic vs TDD is the right approach."
+active: true
+questions:
+  - id: 1
+    difficulty: intermediate
+    type: single
+    question: |
+      Your team is testing a `BookingService` that calls a real Global Distribution System (GDS) for flight availability. Running the full test suite costs $50/run in GDS API fees and occasionally books actual flights when tests crash. What testability properties are you struggling with, and what is the right tool?
+    options:
+      - "Performance — switch to a faster machine."
+      - "**Controllability** (you can't easily put GDS into the state your test needs) and **observability** (you can't observe what your code sent to GDS without inspecting the real network). Replace the GDS dependency with a **test stub** (returns pre-coded GDS responses) or a **test spy** (records what the BookingService sent), removing the real GDS from the loop."
+      - "Security — your tests are leaking credentials."
+      - "Code coverage — write more tests."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Test speed is a real concern but framed at the wrong layer. The deeper architectural problem is that real GDS calls cost money, are non-deterministic, and can cause real-world side effects — none of which faster hardware fixes.
+      2: |
+        Security may be a concern but is incidental to the controllability/observability framing. Even with perfect credential handling, you would still be at the mercy of real GDS state and side effects.
+      3: |
+        Writing more tests against the real GDS multiplies the problems, doesn't fix them. The fix is to *substitute* the dependency, not to test it harder.
+    explanation: "**Testability is the combination of *controllability* (can you put the system into the desired state?) and *observability* (can you see its behavior?). External dependencies like GDS frustrate both, so test doubles substitute a controllable, observable stand-in for the real dependency.** Stubs provide pre-coded responses (controllability); spies/mocks record the calls your code made (observability of indirect outputs). Both let you verify behavior without the real, expensive, non-deterministic dependency in the loop."
+
+  - id: 2
+    difficulty: advanced
+    type: multiple
+    question: |
+      Which of these architectural decisions **improve testability**? Select all that apply.
+    options:
+      - "Single Responsibility Principle — each class does one thing, so each is easy to test in isolation."
+      - "Interface Segregation Principle — small interfaces are easier to mock or stub than large ones."
+      - "Dependency Inversion Principle — depending on abstractions lets you inject test doubles instead of real dependencies."
+      - "Minimize cyclic dependencies — components can be tested in isolation only if they can be instantiated without bringing their cycle partners along."
+      - "Encapsulate all internal state and forbid all external inspection — this guarantees the test only checks public behavior."
+    correct_indices: [0, 1, 2, 3]
+    option_feedback:
+      0: |
+        A class with one responsibility has one reason to change and one behavior to verify. A class with five responsibilities needs five times the test scaffolding and produces tests that constantly break for unrelated reasons.
+      1: |
+        Mocking a large interface forces the test to provide N method implementations even when only one is exercised. Small interfaces reduce the boilerplate and make tests focused.
+      2: |
+        Without DIP, the class instantiates its concrete dependencies directly, so the test cannot substitute them. With DIP, dependencies arrive through the constructor or a setter, and a test can pass in a stub.
+      3: |
+        If A depends on B and B depends on A, you cannot instantiate either without the other. Test setup balloons, and isolated unit testing becomes impossible.
+      4: |
+        Total encapsulation is a *design* virtue, not a testability one. Tests sometimes need to access internal state to verify correctness — over-encapsulation forces tests to rely on indirect observation, which is brittle and less informative. The right rule is *minimize* state exposure, not *forbid* it.
+    explanation: "**SOLID principles and minimizing cyclic dependencies all synergize with testability — they were derived in part from observing what makes code easy to test.** This is one of the strongest synergies in software engineering: the same patterns that make code maintainable also make it testable, and the same patterns that resist testing also resist evolution."
+
+  - id: 3
+    difficulty: intermediate
+    type: single
+    question: |
+      A team needs to test that their `OrderProcessor` correctly notifies the warehouse system when an order is placed, *without* actually contacting the warehouse. Which test double type is the right fit?
+    options:
+      - "**Stub** — provides pre-coded responses to calls the system under test makes."
+      - "**Spy** or **Mock** — records or verifies the calls the system under test makes (verifying outgoing messages = indirect outputs)."
+      - "**Fake** — a working in-memory implementation of the warehouse."
+      - "**Dummy** — a placeholder object that is never actually called."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Stubs answer *incoming* questions (controllability of indirect inputs). They do not record or verify what the SUT called.
+      2: |
+        A fake would let you test the warehouse's behavior too, but it's far more code than needed to verify a single notification. The test asks "did we notify?", not "what does the warehouse do with notifications?"
+      3: |
+        A dummy is for parameters that the test doesn't care about — the test here *does* care about the call.
+    explanation: "**Verifying that your code correctly sent a message to a collaborator (the indirect output) is the canonical use of spies and mocks.** The distinction: a *spy* records calls so you can assert on them after the fact; a *mock* is set up with expectations and verifies them automatically. Both observe indirect outputs that ordinary assertions cannot reach."
+
+  - id: 4
+    difficulty: advanced
+    type: single
+    question: |
+      Netflix famously runs **Chaos Monkey**, which randomly terminates production services to test resilience. Map this to the testability framework: what challenge does it create, and what challenge does it solve?
+    options:
+      - "Chaos Monkey solves both controllability and observability automatically."
+      - "Chaos Monkey solves a **controllability** problem (it is hard to reliably bring a real distributed system into a 'this service just died' state during testing) by injecting the failure deliberately. The remaining challenge is **observability**: instrument the system to see how the rest of the system reacts."
+      - "Chaos Monkey is purely a performance test; it has no relationship to testability."
+      - "Chaos Monkey is the same as a unit test, just at a larger scale."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Chaos Monkey provides the failure injection (controllability) but not the observation infrastructure. Netflix had to build extensive monitoring to interpret the chaos.
+      2: |
+        Chaos Monkey is explicitly a *reliability* test, not a performance test. Its purpose is to verify the system stays available when components fail, which is testability of a quality attribute.
+      3: |
+        Unit tests cover individual components in isolation. Chaos Monkey tests the *system's* response to failures — a fundamentally different scope (system-level fault-injection test).
+    explanation: "**Chaos Monkey is a fault-injection tool — it solves the controllability problem of reliably triggering rare failure conditions by causing them on purpose. Observability is the separate challenge: extensive metrics, traces, and dashboards are required to see how the rest of the system reacts.** This is the canonical pattern for testing reliability quality attributes: inject the rare condition, then observe the system's response under controlled chaos."
+
+  - id: 5
+    difficulty: advanced
+    type: single
+    question: |
+      Your team wants to verify that the search engine returns identical results for the same query made twice in a row — even though they don't know which results are 'correct' (the *oracle problem*). Which testing technique fits?
+    options:
+      - "Unit testing — test each subcomponent in isolation."
+      - "**Metamorphic testing** — sample the input space and check that essential *invariants* hold (e.g., 'the same query twice yields the same results'). You don't need to know the correct output, only the relationship the system must preserve."
+      - "Monkey testing — randomly click in the UI."
+      - "TDD — write the test first, then implement."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Unit tests still need an oracle (the expected output). They do not help when you don't know what the correct output should be.
+      2: |
+        Monkey testing finds crashes, but cannot tell you whether a non-crashing output is *correct*. It does not address the oracle problem.
+      3: |
+        TDD also requires you to know what the test should check. It doesn't help when you cannot specify the expected output for a given input.
+    explanation: "**Metamorphic testing solves the oracle problem by testing *invariants* rather than specific input-output pairs.** Classic examples: 'the same query twice yields the same results,' 'sorting a list and then sorting it again is idempotent,' 'translating English → French → English approximately recovers the original.' These properties hold regardless of the specific output, so the test passes without needing to know the 'right' answer for each input."
+
+  - id: 6
+    difficulty: intermediate
+    type: single
+    question: |
+      The team adopts TDD: write a failing test, write the minimum code to pass, refactor, repeat. A junior developer says: "TDD guarantees 100% coverage." Why is this overstated?
+    options:
+      - "TDD is just a buzzword and provides no real benefit."
+      - "TDD ensures every *deliberately added line* is in response to a failing test, but the test list itself may be incomplete — entire edge cases, error paths, or unintended behaviors can still slip through. TDD strongly *promotes* testability and coverage, but coverage depends on the author's imagination, not the methodology."
+      - "TDD only works for object-oriented code."
+      - "TDD requires writing tests *after* the code, not before."
+    correct_index: 1
+    option_feedback:
+      0: |
+        TDD has well-documented benefits (testable design, smaller commits, regression safety net). Calling it a buzzword dismisses real wins.
+      2: |
+        TDD works in any paradigm — there are widely-cited TDD examples in functional Haskell, procedural C, and embedded firmware. Paradigm independence is one of its strengths.
+      3: |
+        Writing tests after the code is *not* TDD — it's just unit testing. TDD specifically requires the test to be written first and fail before the implementation exists.
+    explanation: "**TDD guarantees coverage of the cases the developer *thought to write tests for* — not coverage of all reachable behavior. Untested branches, edge cases, and emergent system behaviors still slip through unless the test list is itself exhaustive.** The methodology produces highly testable code (because every line was written in response to a test) but does not magically generate test cases the author would otherwise have missed."
+
+  - id: 7
+    difficulty: advanced
+    type: single
+    question: |
+      NASA's spacecraft software bans recursion as a language construct. How does this design constraint connect to testability?
+    options:
+      - "Recursion is too slow for embedded systems."
+      - "Recursion makes stack-depth bounds harder to verify statically, which makes worst-case stack usage harder to test. Banning recursion preserves controllability of memory bounds in a context where running out of stack in space would be unrecoverable."
+      - "Recursion is forbidden by NASA's coding style guide for readability reasons."
+      - "Recursion is incompatible with the C programming language."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Recursion has small overhead in modern compilers; speed is not the reason. The reason is *predictability of resource use*, not speed.
+      2: |
+        Readability is a downstream benefit, but the primary motivation in MISRA-C, JPL 10, and similar standards is *worst-case stack-bound verification*. Style standards exist *because* of the safety implications, not the other way around.
+      3: |
+        C absolutely supports recursion (every textbook covers it). The ban is policy, not a language limitation.
+    explanation: "**In safety-critical domains, testability extends beyond functional correctness to bounding worst-case resource usage. Recursion makes maximum stack depth dependent on input, which is hard to verify statically and impossible to retest after launch. Banning it makes stack bounds checkable.** This is a domain-specific testability decision: in a web app, the cost of unbounded recursion is a 500 error; in a Mars rover, it's mission loss. Different domains, different constraints."
+
+  - id: 8
+    difficulty: intermediate
+    type: single
+    question: |
+      A team has 30 tests pass and 1 test fail. The failing test is for a function that depends on a shared module-level cache that other tests warm up first. The failure only happens when this test runs alone. What testability principle was violated?
+    options:
+      - "The test is just flaky — re-run it until it passes."
+      - "The cache is shared global state — its presence violates **test isolation**, an essential testability property. Each test should be controllable into its required state without depending on other tests, so refactor the cache to be injectable or to reset between tests."
+      - "30 tests is too many — combine them into fewer."
+      - "The test is for a feature that doesn't matter."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Re-running flaky tests masks real architectural problems. The shared cache will continue to cause failures whenever the order or selection of tests changes (e.g., parallel CI runs, test-filter runs).
+      2: |
+        Test count is irrelevant — the problem is dependence, not volume. Combining unrelated tests would couple them further and make failures harder to diagnose.
+      3: |
+        The team has chosen to test the feature; that's the line where the answer matters. The right fix is to make the test deterministic, not to abandon the test.
+    explanation: "**Global mutable state shared across tests destroys controllability — a test cannot reliably put the system into its required initial state if previous tests already mutated the shared cache.** Fix: inject the cache as a dependency, reset it between tests with a fixture, or make the function pure. Test isolation is what lets the test suite run in any order, in parallel, in any subset — properties that mature CI systems depend on."
+
+  - id: 9
+    difficulty: advanced
+    type: single
+    question: |
+      An e-commerce monolith has hit 200K LOC with no tests. A consultant suggests "let's just write tests now." Why is this typically the wrong response, and what's the right approach?
+    options:
+      - "It's the right response — start writing tests immediately for everything."
+      - "It's wrong because untested legacy code is usually *structurally hostile* to testing — tightly coupled, globally stateful, with hidden dependencies — so 'just write tests' produces brittle, low-coverage tests at high effort. The right approach is **incremental**: instrument seams (e.g., introducing interfaces at module boundaries), retrofit dependency injection, and write tests as part of every change (the Michael Feathers 'Working Effectively with Legacy Code' approach)."
+      - "Tests are unnecessary for monoliths."
+      - "Outsource the testing to a contractor."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Plowing through 200K LOC to add tests, without first making the code testable, produces tests that are difficult to write, easily broken by unrelated changes, and provide little design feedback. Many teams abandon the effort halfway through.
+      2: |
+        Monoliths can and do have extensive test suites (Stripe, Shopify, GitHub all run highly-tested monoliths). The size doesn't preclude testing; the structure can.
+      3: |
+        Outsourcing testing for a codebase that resists testing produces low-value tests at high cost. The investment must come with the architectural changes to enable it.
+    explanation: "**Untested legacy code is usually structurally testable-hostile (tight coupling, global state, hidden dependencies). Writing tests against it produces high-effort, brittle, low-value tests.** The Feathers approach is incremental: introduce seams (interfaces at boundaries) carefully, retrofit dependency injection at each touch site, write tests for the seam before changing the code behind it. Over time the testable surface grows; trying to do it in one sprint typically fails."
+
+  - id: 10
+    difficulty: advanced
+    type: single
+    question: |
+      A startup uses 'Wizard of Oz' testing — a human secretly fulfills the operation a real system would eventually automate, while users interact with what appears to be a working product. What testability concept does this illustrate?
+    options:
+      - "Production deployment automation."
+      - "Testability as a tool for *value-proposition evaluation*: the team is testing whether the *concept* works — whether users want and pay for the operation — before building the engineering. The human substitution lets them observe (controllability + observability) user behavior under realistic conditions without the engineering cost."
+      - "Test doubles applied to humans."
+      - "A violation of testing ethics."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Production deployment automation is unrelated. Wizard of Oz is a research/validation technique, not a deployment style.
+      2: |
+        It's metaphorically true that the human substitutes for a system, but this misses the *purpose*: the team isn't testing the implementation, they're testing whether the feature is worth implementing.
+      3: |
+        If users are informed it's an MVP, it's an ethical user-research technique. Wizard of Oz is widely used in industry and academic HCI research; it's not inherently a violation.
+    explanation: "**Wizard of Oz testing applies testability thinking at the product level: before building the feature, you create a controllable + observable mock (a human in the loop) that lets you measure user response under realistic conditions.** This saves engineering effort on features users don't want and surfaces real usability problems before the architecture is built around the wrong assumptions. It is the testability equivalent of a stub at the human-product boundary."

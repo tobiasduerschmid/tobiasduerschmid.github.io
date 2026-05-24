@@ -1,0 +1,175 @@
+title: "Test Quality Quiz"
+description: "Apply, Analyze, and Evaluate-level questions on whole-suite quality — coverage vs. oracle strength, mutation testing, flake diagnosis, oracle choice, and quality metrics."
+active: true
+questions:
+  - id: 1
+    difficulty: intermediate
+    type: single
+    question: |
+      A reviewer asks: *"Our suite has 95% line coverage and 100% pass rate. Are we good?"* What is the strongest response, in one move?
+    options:
+      - "Yes — 95% coverage and a green build are the standard quality signals that release decisions can be based on."
+      - "Run mutation testing on a critical module — if many mutants survive, coverage is masking weak assertions that pass without checking results."
+      - "Add property-based tests on every public function — broader input coverage will surface gaps that example-based tests have missed at the current coverage level."
+      - "Push the coverage gate to 100% — the remaining 5% almost certainly contains the lines where the real bugs are hiding."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Coverage measures *execution*, not *verification*. A suite can hit 95% and still ship serious bugs because assertions are vacuous — the question deserves a stronger diagnostic than just two summary numbers.
+      2: |
+        Property-based tests are valuable but address input variety, not oracle strength. They expand *what is tested*; they don't reveal whether the *existing* assertions are too weak. Mutation testing diagnoses that directly.
+      3: |
+        The remaining 5% may or may not contain bugs — but the more likely failure mode is in the 95%, where code runs without being meaningfully checked. Pushing coverage higher often makes that problem worse, not better.
+    explanation: "Mutation testing (DeMillo, Lipton, Sayward 1978; Just et al. 2014) creates many small faulty versions of the program and asks whether the tests catch them. Surviving mutants point directly at weak oracles, missed boundaries, and underspecified code — exactly the gaps that high coverage can hide. Use coverage as a navigational map ('what didn't I exercise yet?') and mutation/seeded-fault detection as the diagnostic for whether what *was* exercised is being meaningfully checked."
+
+  - id: 2
+    difficulty: intermediate
+    type: single
+    question: |
+      You inherit a test that fails on CI roughly 1 run in 10, with the message `AssertionError: expected [3, 1, 2], got [1, 2, 3]`. The system under test is a function that returns the keys of a `dict` built from a `set`. What's going on, and what's the right fix?
+    options:
+      - "The function is buggy — Python `dict` ordering is deterministic in 3.7+, so any non-deterministic key order indicates the implementation is wrong."
+      - "The test's oracle is wrong — it asserts a specific ordering that the function doesn't promise. Fix the assertion to compare as a *set* (or sort both sides) so it tests the actual contract."
+      - "Add `@pytest.mark.flaky(reruns=3)` so the rerun masks the failure — order-sensitive tests are inherently flaky and reruns are the standard mitigation."
+      - "Move the test to the integration suite — flakiness from data-structure ordering is unavoidable for unit tests touching dictionaries, and integration is more tolerant."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Insertion-order preservation in `dict` is a Python 3.7+ guarantee, but the dict here is built from a `set` whose iteration order is hash-derived and not guaranteed. The function isn't buggy; the test asserts a stronger contract than the function promises.
+      2: |
+        Reruns paper over the symptom and teach the team that a red build means "try again". They never reveal that the test is asserting a stronger property than the function actually promises.
+      3: |
+        Flakiness here is not unavoidable — it is a direct consequence of an overspecified oracle. Moving the test to a different suite changes nothing about the false claim being made.
+    explanation: "Luo et al. (2014) call this *over-specification* — the test asserts more than the function promises. The cure is to weaken the assertion to match the contract: compare as a set, sort both sides, or assert on individual key/value properties. Flakiness is a trust killer: a red test should mean 'investigate the behavior', not 'rerun and hope'. Diagnose the assertion before reaching for retries."
+
+  - id: 3
+    difficulty: intermediate
+    type: single
+    question: |
+      You need to test that a `Discount` service applies the right amount when called by a checkout flow. The spec mentions the resulting total on the cart, not which internal call was made. Which oracle should you reach for first?
+    options:
+      - "An interaction oracle that asserts `discount_service.apply()` was called once with the right arguments — interactions are the most precise way to verify the discount was actually used."
+      - "A state oracle on the cart that asserts the resulting `cart.total_cents()` matches the expected discounted total — the spec's own boundary is the cart total."
+      - "A property oracle that asserts `discount >= 0` for any input — invariant-style assertions catch the broadest class of bugs in pricing logic."
+      - "An exception oracle that asserts no exception is raised during the discount call — confirming a clean execution path is the foundation other assertions can build on."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Asserting the call freezes how the current implementation collaborates internally — a refactor that produces the same total via a different mechanism would break the test even though behavior is preserved. Use interaction oracles only when the collaboration *is* the contract.
+      2: |
+        `discount >= 0` is necessary but far too weak — it accepts any nonnegative wrong answer (a $0 discount on a premium order would pass). Properties shine when you cannot compute the exact value, not when you can.
+      3: |
+        "No exception raised" passes for almost any implementation, including ones that produce the wrong total silently. Exception oracles fit specified failure modes, not happy paths where you can check the actual result.
+    explanation: "The chapter's principle is *use the strongest oracle you can afford*, and prefer oracles at stable boundaries. The cart total is the boundary the spec describes — assert there. Interaction oracles are useful when the interaction *is* the behavior ('exactly one receipt email after payment') but harmful when they merely pin the current implementation's wiring."
+
+  - id: 4
+    difficulty: advanced
+    type: single
+    question: |
+      You run mutation testing on a sorting module and find that mutating `<` to `<=` inside the comparison consistently survives. Which conclusion is best supported by this single signal?
+    options:
+      - "The sort implementation is broken — a surviving mutant on the comparison operator indicates the production sort is producing wrong order on the inputs covered."
+      - "Some test input is missing where the difference between `<` and `<=` matters — likely an input with *equal keys whose secondary attributes differ*."
+      - "Mutation testing produced an equivalent mutant — the operator change is semantically indistinguishable here, and the survival is a measurement artifact rather than a real gap."
+      - "Coverage is the gap — pushing line coverage above the current level on this module would automatically kill this mutant by exercising the comparison more thoroughly."
+    correct_index: 1
+    option_feedback:
+      0: |
+        A surviving mutant on `<` vs `<=` doesn't mean the production implementation is wrong — it means the *suite* would accept either version. The implementation may sort correctly; the tests simply can't tell.
+      2: |
+        Equivalent mutants do exist (mutants semantically indistinguishable from the original), but for a comparator the `<` → `<=` change usually *does* alter behavior — typically on inputs with equal keys. Reaching for "equivalent" before checking discriminating inputs would skip the diagnostic.
+      3: |
+        Coverage and oracle strength are different axes. A line can be 100% covered while a mutant on it survives — exactly because covered ≠ checked. Adding inputs that exercise equal keys is the targeted fix, not raising coverage.
+    explanation: "Surviving mutants ask the suite useful questions. Here the most common cause is the absence of a *discriminating input* — for a sort, equal keys whose secondary attributes differ. That input distinguishes stable from unstable sorts, and it is also the canonical case where `<` vs `<=` changes observed behavior. Add such an input and you either kill the mutant (the spec requires stability) or reveal that the spec is silent about a property the team did care about."
+
+  - id: 5
+    difficulty: advanced
+    type: multiple
+    question: |
+      A team's CI dashboard shows: coverage steady at 88%, mutation score steady at 75%, flake rate climbing from 1% to 6% over a quarter, and a 25% increase in escaped bugs. Which interpretations are best supported? (Select all that apply.)
+    options:
+      - "Trust in the suite is eroding — the climbing flake rate predicts engineers will start ignoring red builds and that behavior amplifies the escaped-bug trend."
+      - "Test quality is regressing in a way coverage alone wouldn't detect — the static mutation score plus rising escapes is consistent with new tests that execute code without strengthening oracles."
+      - "The escaped-bug increase proves the production code is getting buggier; the test signals are noise and the right response is to staff up production code review."
+      - "Coverage should be pushed to 95%+ to catch the escaping bugs — the dashboard's most actionable signal is the coverage line, not the others."
+    correct_indices: [0, 1]
+    option_feedback:
+      0: |
+        Omitted: trust erosion is one of the strongest predictors that escaped bugs continue to rise — once engineers learn red builds are unreliable, real failures get ignored alongside the flakes. Recognize this as a leading indicator, not a side effect.
+      1: |
+        Omitted: when coverage and mutation score don't move with rising escapes, the test-side hypothesis (weaker oracles, narrower scenarios) deserves equal weight. Missing this leaves you reading only half the dashboard.
+      2: |
+        Escaped-bug rate is a *joint* signal of code quality and test quality. When coverage and mutation score don't move with it, the test-side hypothesis (weaker oracles, narrower scenarios) deserves at least equal attention. Blaming only the production code overlooks the suite's job of catching it.
+      3: |
+        Raising coverage from 88% to 95% is unlikely to help if existing tests have weak oracles — covered code is not the same as verified code. The dashboard signal points at oracle strength and trust, not at unvisited code.
+    explanation: "Healthy test-quality monitoring combines several signals: coverage (what was visited), mutation/seeded-fault score (oracle strength), flake rate (trust), runtime by layer (feedback speed), escaped bugs (real-world miss rate). When the metrics move out of sync, the diagnosis usually lives where the signal *isn't* moving. Here, coverage and mutation score are flat while escapes rise — the dashboard is telling you the existing tests are increasingly missing the bugs that ship."
+
+  - id: 6
+    difficulty: intermediate
+    type: single
+    question: |
+      A teammate proposes a 'quality goal': *every test file must achieve 100% mutation score before merge*. What is the strongest reason this is a bad goal as stated?
+    options:
+      - "Mutation testing is too slow to run on every PR — the CI overhead alone would push merge times beyond what the team can tolerate."
+      - "Equivalent mutants exist by construction — 100% is sometimes unachievable, and the gate pressures engineers to game the metric."
+      - "Mutation testing isn't reliable enough to use at all — the kill-rate measurement varies too much between runs to base a merge decision on it."
+      - "100% mutation score would slow CI so much that engineers stop running it locally — the suite becomes invisible and quality regresses despite the score."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Speed is a real consideration but solvable (incremental mutation, scoped runs, sampling operators). The deeper problem is structural — the metric itself has an unreachable ceiling on many real codebases, regardless of speed.
+      2: |
+        Mutation testing is a useful diagnostic. The criticism is not 'unreliable' — it is that *as a fixed gate* it suffers the same Goodhart trap as any other metric. Use it as a signal, not a pass/fail threshold.
+      3: |
+        CI speed is a constraint but not the core flaw. Promoting any metric to a mandatory gate distorts behavior; mutation has the additional twist that the maximum may be unreachable in the first place.
+    explanation: "Goodhart's Law: when a measure becomes a target, it ceases to be a good measure. Mutation score plus the equivalent-mutant problem means a 100% gate is both unreachable in general and easy to game (deleting the mutant operator that survived, weakening tests until the production code can be 'corrected'). Healthier policies: use mutation as part of code review, target critical modules, watch for *regressions* in mutation score over time rather than absolute thresholds."
+
+  - id: 7
+    difficulty: advanced
+    type: single
+    question: |
+      Your team has a CSV parser. You write three tests: two specific examples (`'a,b,c'` → `['a','b','c']`, and a trailing-newline case) and one property: `parse(format(rows)) == rows` for any list of rows generated by your tool. After merging, a teammate proposes deleting the property test, saying *'the two examples already test the parser.'* What's the strongest response?
+    options:
+      - "Agree — examples are easier to debug, so the property test is redundant once specific cases pin down the expected behavior."
+      - "Disagree — the property exercises hundreds of generated inputs the human author would never write (commas, quotes, Unicode, long lines)."
+      - "Agree — properties test general behavior, which is by definition vague compared to the concrete claims that examples make."
+      - "Disagree — properties should fully replace examples in any modern suite, because generated inputs subsume any specific case a human could write by hand."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Examples and properties cover *different* surface area. Two hand-written examples test exactly those two inputs; the property test exercises the parser on whatever the generator produces, including cases the author would never think to write.
+      2: |
+        Properties express *general invariants* (round-trip, idempotence, permutation). They are not vague — they are stronger than examples because they hold for the whole input class, not just one chosen point.
+      3: |
+        Examples and properties are complementary, not substitutes. Examples document specific scenarios that matter by name (regression cases, named requirements). Properties stress-test the rest of the input space. The healthiest suites use both.
+    explanation: "Claessen & Hughes's QuickCheck (2000) popularized property-based testing by letting authors state invariants and generate inputs automatically. The round-trip property `parse(format(rows)) == rows` finds quoting, escaping, and encoding bugs that example-based authors regularly miss. Keep both: examples document the specific cases you care about by name; properties cover the rest of the input space."
+
+  - id: 8
+    difficulty: intermediate
+    type: single
+    question: |
+      You're triaging this test:
+
+      ```python
+      def test_user_settings():
+          load_fixture("/var/tmp/users.json")
+          response = client.get("/api/me")
+          assert response.status_code == 200
+          assert "settings" in response.json()
+      ```
+
+      Which test smell is most clearly present, and what's the fix?
+    options:
+      - "**Mystery guest** — the test depends on `users.json` at a hidden path; the reader cannot tell which user or settings drive the assertions. Fix: construct data inline or in a named fixture."
+      - "**Assertion roulette** — two assertions in one test means it must be bundling unrelated behaviors. Fix: split into `test_returns_200` and `test_response_has_settings_field`."
+      - "**Slow test** — calling an HTTP client is too slow for unit tests, which should run in milliseconds. Fix: replace the HTTP layer with a direct in-process call to the controller."
+      - "There is no smell — the test exercises an endpoint and checks two facets of the same response, which is a normal pattern for a controller test."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Two assertions can describe one coherent behavior — here, both check facets of the same `/api/me` response. The smell is not the count of assertions; it is that the test depends on an unseen file the reader cannot inspect from the body.
+      2: |
+        Speed is a separate axis. The structural smell — depending on a hidden file at a hardcoded path — would still be present even if the HTTP layer were replaced with an in-process call running in microseconds.
+      3: |
+        The hidden fixture file *is* the smell. A future maintainer reading this test cannot tell what data triggers the expected response, which makes the test hard to update, hard to port, and prone to silent breakage when the file changes.
+    explanation: "Van Deursen et al. (2001) named the *mystery guest* smell: a test that depends on external data invisible at the call site. Bavota et al. (2015) found that test smells like this measurably harm comprehension and maintenance. The fix is to make the setup visible — either build the data inline with a clearly-named helper, or use an explicit fixture function whose name describes the data (e.g. `user_with_default_settings()`)."

@@ -1,0 +1,93 @@
+title: "Writing Good Tests"
+description: "Retrieval practice for writing readable, trustworthy unit tests — the four-part shape, strong oracles, systematic input selection, determinism, behavior over implementation, and TDD rhythm. Cards span Remember through Create; many are scenario-based."
+active: true
+cards:
+  - id: 1
+    difficulty: basic
+    question: "Name the four phases of the *Arrange / Act / Assert* shape and what each one does."
+    answer: "**Arrange** — build the fixture. **Act** — execute one behavior. **Assert** — check the observable result. **Clean up** — release external resources if needed."
+    explanation: "Meszaros (2007) calls these *fixture setup*, *exercise SUT*, *result verification*, and *teardown* in *xUnit Test Patterns*. The value is not ceremony — it is the visible separation between what was prepared, what happened, and what was checked. A reader should be able to find each part at a glance."
+
+  - id: 2
+    difficulty: basic
+    question: "What does 'a test should fail for one reason' mean — and how is it different from 'one assertion per test'?"
+    answer: "Each test exercises **one behavior**, so a failure points at one cause. *One assertion per test* is too rigid — a single behavior may need several assertions to describe one coherent outcome."
+    explanation: "Asserting `status == 'paid'`, `total == 2000`, and `confirmation_id is not None` for a checkout is one behavior (a successful payment was recorded). Asserting that an empty cart is rejected *and* a declined token fails *and* an email is sent is three behaviors — split it."
+
+  - id: 3
+    difficulty: intermediate
+    question: "You see `assert cart.total_cents() > 0` in a test named `test_total`. Why is this a weak test, and what is the minimum fix?"
+    answer: "The assertion is too loose — almost any wrong positive answer (5, 99, 7_000_000) would still pass. Fix: assert the **exact expected total** for a chosen fixture, e.g. `assert cart.total_cents() == 22_500`."
+    explanation: "A weak oracle means broken behavior slips through. Strengthening the assertion narrows the set of buggy implementations the test accepts. If the exact value is hard to know in general, you still want it for the *specific fixture* the test arranges."
+
+  - id: 4
+    difficulty: intermediate
+    question: "Given a `divide(a, b)` function, list at least four classes of input you would test."
+    answer: "Representative valid (`divide(10, 2)`); boundaries (`divide(0, 5)`); invalid (`divide(5, 0)`); regression examples from past bugs (`divide(MIN_INT, -1)` overflow)."
+    explanation: "Happy-path examples are necessary but not enough. The standard categories: representative valid, boundaries (empty / one / many; min / max / just-below / just-above), invalid, exceptional states (e.g. dependency unavailable), and inputs that once broke the system. Coverage tools can show what wasn't *executed*, but they can't tell you whether you chose these *behavioral classes* well."
+
+  - id: 5
+    difficulty: intermediate
+    question: "A test passes locally but fails on CI roughly one run in five. Before debugging the code, list the repairs that experience says to try first."
+    answer: "Freeze or inject the clock; seed or replace randomness; use fresh temporary directories/databases; reset shared state in teardown; replace external services with fakes; wait on observable conditions instead of fixed `sleep(n)`."
+    explanation: "Luo et al. (2014) catalogued the recurring causes of flakiness: asynchronous waiting, concurrency, test-order dependencies, time assumptions, randomness, external resources. A red test should mean 'investigate', not 'rerun and hope' — flakiness destroys that contract."
+
+  - id: 6
+    difficulty: intermediate
+    question: "When is `assert True` (or `assertTrue(true)`) ever a legitimate assertion in a real test?"
+    answer: "Essentially never. A test without a meaningful assertion is a smoke check, not a unit test — it would pass even if the behavior is broken."
+    explanation: "The deeper issue is the *oracle problem*: a test without an oracle gives no evidence about whether behavior is correct. If you genuinely have no way to check the result, use a partial oracle, a metamorphic relationship, or a property-based test — don't abandon the assertion. 'It shouldn't raise' is more honest as `act()` with no assert plus a comment, or as an explicit exception oracle."
+
+  - id: 7
+    difficulty: intermediate
+    question: "A teammate's test fails the day after you rename a private helper, even though all user-visible behavior is unchanged. What does that tell you about the test?"
+    answer: "It is **over-coupled to the implementation** — it asserts on private machinery rather than the public contract. Refactor it to check return values, public state, or messages at architectural boundaries."
+    explanation: "Brittle tests punish improvement. They send a false 'something broke' signal whenever the design is reshaped without changing behavior, eroding trust in the suite and discouraging refactoring. Use stable boundaries — return values, public state, persisted records, domain events — and reserve interaction checks for cases where the interaction *is* the contract (e.g. 'one receipt email after payment')."
+
+  - id: 8
+    difficulty: advanced
+    question: "You need to test that a complex sorting routine produces the correct order, but the inputs are large and the expected output is hard to compute by hand. Name three oracle strategies that still let you write a strong test."
+    answer: "**Metamorphic** (`sort(sort(xs)) == sort(xs)`, length preserved); **property-based** (output permutes input, output is non-decreasing); **differential** (compare against a slower reference implementation)."
+    explanation: "Weyuker (1982) named the oracle problem; Barr et al.'s 2015 survey is the modern reference. Property-based testing tools like QuickCheck let you express properties and generate hundreds of inputs automatically. None of these gives the strength of an exact-value oracle on a single example — combine them with hand-chosen examples for boundaries you care about."
+
+  - id: 9
+    difficulty: intermediate
+    question: "Given the test below, identify three things the helper hides that it *shouldn't* hide.<br><br>```python\ndef test_free_shipping():\n    cart = standard_cart()\n    assert shipping_cost_cents(cart) == 0\n```"
+    answer: "(1) The total **price** of items (the threshold is the whole point); (2) the **quantity** of items; (3) the **shipping address** if it can affect cost."
+    explanation: "Good helper extraction follows one rule: hide noise, not intent. `cart_with(items=[item('Shoes', price_cents=5_000)])` is better than `standard_cart()` because the reader sees *why* the cart meets (or doesn't meet) the threshold without leaving the test. Tests are documentation; if the reader has to jump elsewhere to find the salient data, the test isn't doing its job."
+
+  - id: 10
+    difficulty: advanced
+    question: "A test method is named `test_helper_caches_correctly`. Without reading the body, what design problem does the *name alone* suggest?"
+    answer: "It is named after **implementation machinery** (an internal cache) rather than user-observable behavior. The test likely asserts on the cache directly and breaks under any refactor that changes the caching strategy."
+    explanation: "Good test names describe the promise: `test_repeated_lookup_returns_same_result`, `test_invalidates_after_write`. Once the name mentions a private method, a loop, or a temporary variable, ask what behavior is really being protected. If you cannot answer in caller-visible terms, the test is testing the wrong layer."
+
+  - id: 11
+    difficulty: advanced
+    question: "A team has 92% line coverage but ships a regression where a paid order is recorded as `status='refunded'`. What is the *most likely* root cause, and what kind of evidence would have caught it?"
+    answer: "**Weak oracles** — tests execute the checkout path but don't assert on `status`. **Mutation testing** would flag that mutating `'paid'` to `'refunded'` produces a surviving mutant."
+    explanation: "Inozemtseva and Holmes (2014) found coverage has only low-to-moderate correlation with fault-finding strength once suite size is controlled. Coverage is a *map* of what was executed, not a *grade* of what was checked. Mutation testing (DeMillo, Lipton, Sayward 1978; Just et al. 2014) probes oracle strength directly by injecting small faults and asking whether the suite catches them."
+
+  - id: 12
+    difficulty: advanced
+    question: "Sketch a property-based test for: *'concatenating a list with the empty list gives back the same list'*. What inputs would you generate, and what is the property?"
+    answer: "Generate **arbitrary lists**. Property: for every list `xs`, `concat(xs, []) == xs` **and** `concat([], xs) == xs`. The tool runs the property on hundreds of inputs."
+    explanation: "This is an *identity* property — one of the small set of patterns property-based testing exploits (identity, commutativity, associativity, idempotence, round-trip). Claessen & Hughes's QuickCheck (2000) popularized the style. Properties shine when you cannot easily name the expected output for every input but can name an *invariant* that must hold across the whole input space."
+
+  - id: 13
+    difficulty: intermediate
+    question: "Compare the two test names. Which is better, and why?<br><br>(a) `test_calculate_total`<br>(b) `test_premium_customer_gets_ten_percent_discount`"
+    answer: "**(b) is better.** It names the *behavior* being protected, so a failure message tells the reader which guarantee was broken. (a) names a *method* — failure says nothing about which scenario regressed."
+    explanation: "Test names are the first thing a future maintainer sees when CI goes red. A name that describes the behavior turns a test list into a readable specification of the system. A name that describes a method just lets you locate the code; you still have to read the body to understand the failure."
+
+  - id: 14
+    difficulty: expert
+    question: "In TDD, you've just gotten a test to **Green** with the simplest passing code. What is the *very next* step, and what rule constrains what you may do during it?"
+    answer: "**Refactor**: remove duplication and clarify intent while the suite stays green. The rule: you may change the *design* but not the *behavior* — any change that breaks a test is rejected, the next behavior change goes in a new Red."
+    explanation: "Beck's original TDD emphasizes tiny steps and refactoring after green. Fucci et al. (2017) found that quality and productivity gains were associated less with test-first ordering than with **fine granularity and uniform rhythm**. Skipping Refactor (Romano et al. 2017) is where most of TDD's long-term value evaporates."
+
+  - id: 15
+    difficulty: basic
+    question: "Recall at least six questions from the checklist a test should pass before you commit it."
+    answer: "(1) Fails if the behavior were broken? (2) Name describes behavior, not implementation? (3) Setup minimal? (4) Assertion specific? (5) Boundary/invalid cases included? (6) Runs alone, in any order? (7) Survives reasonable refactoring? (8) Useful failure message in six months?"
+    explanation: "Use these eight checks as a self-review at commit time. A 'yes' to all is a green light; even one 'no' is worth fixing before merging — test debt compounds, and a flaky or brittle test left in the suite teaches the team to ignore failures."

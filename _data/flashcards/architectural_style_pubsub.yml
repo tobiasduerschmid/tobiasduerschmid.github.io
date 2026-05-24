@@ -1,0 +1,93 @@
+title: "Publish-Subscribe Flashcards"
+description: "Key concepts, structural elements, subscription models, and trade-offs of the publish-subscribe architectural style."
+active: true
+cards:
+  - id: 1
+    difficulty: basic
+    question: "What is the defining invariant of the publish-subscribe style?"
+    answer: "**Dual ignorance.** Publishers do not know the identity, location, or even the existence of any subscribers; subscribers depend on the *occurrence of an event*, not on which publisher produced it. All routing flows through the bus."
+    explanation: "This obliviousness is what makes pub-sub fundamentally different from direct procedure calls or even Observer (where the subject still holds a list of observers). The bus is the only thing in the system that knows who talks to whom."
+
+  - id: 2
+    difficulty: basic
+    question: "Name the three architectural elements of a publish-subscribe system."
+    answer: "**Publishers** (components with a publish port), **Subscribers** (components with a subscribe port), and the **Event Bus** (an N-way connector that accepts events and dispatches them to registered subscribers)."
+    explanation: "A single component may have both publish and subscribe ports — it can be a producer of some events and a consumer of others. The bus is the load-bearing connector; without it, you do not have pub-sub."
+
+  - id: 3
+    difficulty: intermediate
+    question: "What's the difference between the **push** and **pull** notification models in pub-sub?"
+    answer: "**Push:** the publisher sends the full event payload along with the notification. **Pull:** the publisher sends only a minimal 'something changed' notification; interested subscribers explicitly query the publisher for the data."
+    explanation: "Push is efficient when most subscribers will use the data. Pull is efficient when few will, or when the data is large — it trades extra round trips for lower bandwidth. The choice is per-event, not per-system."
+
+  - id: 4
+    difficulty: intermediate
+    question: "Compare **topic-based**, **content-based**, and **type-based** subscription models."
+    answer: "**Topic-based:** subscribers register on a named channel (e.g., `market.quotes.NASDAQ`); routing is a cheap hash lookup. **Content-based:** subscribers register a predicate over event attributes (e.g., `price < 100`); fine-grained but expensive at the broker. **Type-based:** subscribers register on a class/type; events of that type *and subclasses* match, giving compile-time type safety in strongly typed languages."
+    explanation: "Topic-based is the most widespread (MQTT, Kafka). Content-based gives the strongest decoupling. Type-based is common in language-integrated middleware (e.g., Java event buses)."
+
+  - id: 5
+    difficulty: advanced
+    question: "Why is publish-subscribe a poor fit for hard real-time systems?"
+    answer: "Asynchronous bus dispatch provides **no guarantees about ordering, timing, or delivery**. Events may arrive out of order, be delayed by bus load, or be dropped under best-effort QoS. Hard real-time deadlines require a style with deterministic latency bounds."
+    explanation: "This is why DDS (used in aerospace, defense) goes to extreme lengths with QoS policies to bound delivery, and even then is paired with strict design discipline. Plain MQTT or Kafka would not meet a hard real-time SLA."
+
+  - id: 6
+    difficulty: advanced
+    question: "What are MQTT's three QoS levels?"
+    answer: "**QoS 0 ('at most once'):** fire-and-forget; messages may be lost; lowest latency. **QoS 1 ('at least once'):** acknowledged and retransmitted on timeout; messages may be duplicated. **QoS 2 ('exactly once'):** four-step handshake guarantees one and only one delivery; highest latency."
+    explanation: "Sensor telemetry typically uses QoS 0 — losing one reading is cheap, latency matters. Billing and transactional events use QoS 2. Most application events use QoS 1 paired with idempotent handlers to tolerate duplicates."
+
+  - id: 7
+    difficulty: intermediate
+    question: "What three forms of decoupling does pub-sub provide?"
+    answer: "**Space decoupling:** parties do not know each other's identities or locations. **Time decoupling:** parties do not need to be active simultaneously — a subscriber can receive events published while it was offline. **Synchronization decoupling:** neither party blocks on the other; publishers don't wait for delivery, subscribers don't block while emitting."
+    explanation: "Time decoupling is what enables Kafka's log replay, MQTT's retained messages, and JMS durable subscriptions — features that let new or recovered subscribers catch up on state."
+
+  - id: 8
+    difficulty: advanced
+    question: "What is the *wide coupling smell* in pub-sub, and how do you avoid it?"
+    answer: "A bus exposed as a generic `receive(Message)` method where every subscriber casts to a specific type makes every subscriber appear coupled to every publisher — the dependency graph is invisible. **Fix:** use typed channels or per-event-class topics so each subscription is statically traceable to a payload schema."
+    explanation: "Named by Garcia et al. (2009). The smell is architectural, not just type-safety: even with safe casts, a maintenance engineer cannot statically determine which subscribers break when a publisher's payload changes."
+
+  - id: 9
+    difficulty: intermediate
+    question: "Name the four pub-sub topologies discussed in the literature."
+    answer: "**(1) Bus / event channel** (central broker, classic pub-sub). **(2) List-based** (each publisher maintains its own subscriber list — tighter coupling, no central failure point). **(3) Broadcast-based** (publishers broadcast to the whole network; subscribers filter locally — loosest coupling, highest waste). **(4) Content-based routing** (intelligent brokers evaluate event payloads against subscriber predicates)."
+    explanation: "List-based is common in in-process Observer implementations. Broadcast suits LANs with cheap bandwidth. Content-based scales for distributed systems via covering and merging optimizations (Siena, Rebeca)."
+
+  - id: 10
+    difficulty: basic
+    question: "What is a *durable subscription* in pub-sub middleware?"
+    answer: "A subscription that the broker persists across subscriber disconnections. While the subscriber is offline, the broker buffers matching events; when the subscriber reconnects, the buffered events are delivered."
+    explanation: "Without durable subscriptions, a subscriber that crashes or loses network connectivity misses every event during the outage. JMS, Kafka consumer groups, and MQTT 5 persistent sessions all implement variants of this idea."
+
+  - id: 11
+    difficulty: advanced
+    question: "Compare Apache Kafka and RabbitMQ as pub-sub technologies."
+    answer: "**Kafka** is a distributed commit log — events are partitioned across brokers, durably stored on disk for a retention window, and consumers track their position via offsets; designed for very high throughput and replay. **RabbitMQ** is traditional message-oriented middleware (AMQP) — strong routing flexibility (exchanges, queues, bindings), but messages are typically deleted once consumed."
+    explanation: "Kafka shines for event streaming, log aggregation, and offline analytics where replay matters. RabbitMQ shines for complex routing and task queues where each message is processed exactly once and then discarded."
+
+  - id: 12
+    difficulty: intermediate
+    question: "Why does pub-sub force architects to embrace *eventual consistency*?"
+    answer: "Because the bus delivers asynchronously and best-effort by default, subscribers update their local state at different moments. Different parts of the system therefore hold inconsistent views for a bounded period, until all subscribers have processed the event."
+    explanation: "This is the CAP theorem trade-off in action: pub-sub typically prioritizes Availability and Partition tolerance over strong Consistency. Architectures that need strong consistency between subscribers must layer in distributed transactions, sagas, or two-phase commits on top."
+
+  - id: 13
+    difficulty: advanced
+    question: "What is the *illusion of obliviousness* and why does Fairbanks warn about it?"
+    answer: "At runtime, components are oblivious to each other. But at design time, a developer chose to add the New-Employee publisher *specifically because* the Order-Computer subscriber needs it. Architectural diagrams that only show components attached to a bus hide this business intent."
+    explanation: "Document the conceptual producer→consumer relationships in design artifacts even though the runtime topology hides them — otherwise maintenance engineers cannot trace business logic through the bus, and the architecture becomes unrefactorable."
+
+  - id: 14
+    difficulty: basic
+    question: "Give three real-world examples of publish-subscribe in industry."
+    answer: "**Apache Kafka** (event streaming at LinkedIn, Uber). **MQTT** (IoT telemetry, smart homes, Facebook Messenger's mobile push). **DDS** (avionics, defense, real-time control systems)."
+    explanation: "Other examples: Redis Pub/Sub for cache invalidation, AWS SNS + SQS for cross-service notifications, Google Cloud Pub/Sub for serverless event glue, OS-level signals (technically a degenerate broadcast bus)."
+
+  - id: 15
+    difficulty: advanced
+    question: "When should you NOT use publish-subscribe?"
+    answer: "When (a) you need strict ordering or hard real-time delivery guarantees, (b) the producer requires synchronous confirmation that consumers acted on the event, (c) the system has only one consumer per event and direct call would suffice, or (d) the team lacks the operational maturity to debug asynchronous, non-deterministic flows."
+    explanation: "Pub-sub solves coupling problems; it creates observability problems. If your bottleneck is rigidity of direct calls and your team has tracing/replay infrastructure, pub-sub is excellent. If your bottleneck is debuggability and you have one producer talking to one consumer, a synchronous call is simpler."

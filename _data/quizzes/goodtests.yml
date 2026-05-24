@@ -1,0 +1,214 @@
+title: "Writing Good Tests Quiz"
+description: "Apply, Analyze, and Evaluate-level questions on test design — diagnose weak assertions, choose appropriate inputs, recognize behavior-coupling, and pick the right oracle. Distractors target the misconceptions students actually hold."
+active: true
+questions:
+  - id: 1
+    difficulty: basic
+    type: single
+    question: |
+      You are reviewing a teammate's new test:
+
+      ```python
+      def test_total():
+          cart = cart_with(items=[item("Refactoring", price_cents=10_000)])
+          cart.total_cents()
+          assert True
+      ```
+
+      What is the most useful critique?
+    options:
+      - "The test is fine — calling `total_cents()` exercises the production path, and `assert True` lets the test pass cleanly once that path runs without raising."
+      - "The test has no oracle — it would pass even if `total_cents()` returned the wrong number, since `assert True` checks no result."
+      - "The test needs `try/except` around `total_cents()` so that any exception is caught and reported, otherwise a thrown error masks the real behavior under test."
+      - "The test should use `assertTrue(cart.total_cents())` instead of `assert True` — the framework assertion is stronger because it checks that the returned value is truthy."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Calling a method only exercises the path — the test still produces no evidence about whether the returned number is correct. "It ran without raising" is a smoke check, not a unit test.
+      2: |
+        Catching exceptions inside the test would *hide* failures rather than reveal them. The right move is to assert on the expected return value; uncaught exceptions are already a useful failure signal.
+      3: |
+        `assertTrue(cart.total_cents())` accepts *any* nonzero integer (`5`, `99`, `7_000_000`), so it has nearly the same weakness as `assert True`. The strength of an assertion comes from the comparison, not the assertion verb.
+    explanation: "A test makes one executable claim about behavior: *given this situation, when this action happens, this observable result should follow.* Without an assertion that compares the actual result to an expected one, no claim is made and no evidence is produced. The fix is `assert cart.total_cents() == 10_000` for this fixture — an exact-value oracle that fails for almost every buggy implementation."
+
+  - id: 2
+    difficulty: intermediate
+    type: single
+    question: |
+      A test consistently passes locally but fails on CI about one run in five, in different places each time. You inspect the test and see:
+
+      ```python
+      def test_dashboard_loads_recent_events():
+          start_worker()
+          time.sleep(0.5)
+          assert dashboard.events() == ["login", "purchase"]
+      ```
+
+      What is the *primary* cause of the flakiness, and the best fix?
+    options:
+      - "The test depends on wall-clock time via `sleep` — replace it with an explicit wait that polls `dashboard.events()` until it reaches the expected state, with a timeout."
+      - "CI runs in parallel and the worker is contending for CPU — adding `@pytest.mark.serial` to force serial execution lets the worker finish before the assertion runs."
+      - "The flake will eventually disappear — adding `@pytest.mark.flaky(reruns=3)` retries the test on failure so transient timing issues stop blocking the build."
+      - "The sleep is too short for a loaded CI runner — increasing it to `sleep(5.0)` gives the worker enough headroom that the assertion almost always sees the completed state."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Forcing serial execution hides the race without removing it. A `sleep` that's sometimes long enough and sometimes not stays brittle whether or not other tests are running alongside it.
+      2: |
+        Automatic retries are the canonical anti-pattern: they teach the team that red means "rerun and hope" rather than "investigate". That destroys the trust the suite is supposed to provide and lets real flakes accumulate.
+      3: |
+        A longer fixed sleep lowers the failure *rate* but doesn't eliminate it on a loaded runner — and it slows every successful run in exchange for a guess. Waiting on an observable condition is both faster on average and reliably correct.
+    explanation: "Luo et al. (2014) catalogued the recurring causes of flakiness — asynchronous waiting, concurrency, time assumptions, randomness, external resources. Asynchronous waiting is by far the most common. The pattern that fixes it is the same in every framework: instead of pausing for an arbitrary duration, poll until the condition you care about becomes true, and fail with a clear timeout message if it doesn't. A red test should mean *investigate*, not *rerun*."
+
+  - id: 3
+    difficulty: intermediate
+    type: single
+    question: |
+      Two tests cover the same behavior. Which is more likely to survive a refactoring that preserves user-visible behavior?
+
+      **Test A:**
+      ```python
+      def test_discount_helper_returns_ninety_percent():
+          assert _apply_discount_table(100, "premium") == 90
+      ```
+
+      **Test B:**
+      ```python
+      def test_premium_customer_pays_ninety_dollars_on_hundred_dollar_cart():
+          cart = cart_with([item("Book", 10_000)], customer=premium())
+          assert cart.total_cents() == 9_000
+      ```
+    options:
+      - "Test A — isolating a smaller unit gives a more focused failure signal when the discount logic changes."
+      - "Test B — it asserts at the cart's public API, so any implementation that gives premium customers a 10% discount keeps it green."
+      - "Both are equally robust because they test the same behavior — the difference is only the level of granularity."
+      - "Test A — direct assertions on private helpers give the strongest correctness guarantees because nothing intermediate can hide a bug."
+    correct_index: 1
+    option_feedback:
+      0: |
+        A smaller unit isn't automatically a better test. Test A pins the *current implementation* of the discount table — renaming `_apply_discount_table`, inlining it, or replacing it with a rule engine all break Test A even when user-visible behavior is unchanged.
+      2: |
+        They look alike but couple very differently. Test A breaks on internal renames; Test B breaks only when premium customers stop getting their discount. That gap matters every time someone refactors.
+      3: |
+        Testing private machinery often does the opposite of strengthening guarantees — it *over-specifies* the implementation and makes the suite hostile to improvement. Stable boundaries give stronger refactoring guarantees than direct private access.
+    explanation: "Test B asserts at a stable boundary (the cart's public `total_cents()`), so any refactoring that keeps the rule 'premium customers pay 90%' leaves the test green. Test A is coupled to the private helper; renaming, inlining, or restructuring breaks it without changing behavior. Brittle tests punish improvement and erode trust in the suite over time."
+
+  - id: 4
+    difficulty: intermediate
+    type: multiple
+    question: |
+      You are writing tests for `divide(numerator, denominator) -> float`. Which input classes **must** appear in your test set to consider the behavior reasonably covered? (Select all that apply.)
+    options:
+      - "A representative valid case (e.g. `divide(10, 2)`) — the normal-use path the function will most often handle."
+      - "The boundary case `divide(0, 5)` — zero numerator, which is the boundary between positive, negative, and zero results."
+      - "The invalid case `divide(5, 0)` — division by zero, with a check that the specified error behavior (exception, NaN, sentinel) actually occurs."
+      - "Every integer pair from -100 to 100 — exhaustive enumeration eliminates the chance of missing a problematic combination."
+    correct_indices: [0, 1, 2]
+    option_feedback:
+      3: |
+        Exhaustive enumeration adds runtime without adding fault-finding strength beyond a few well-chosen representatives. Equivalence partitioning groups inputs into classes the code treats the same way; one or two per class beats brute force.
+    explanation: "The standard categories from black-box test design are: representative valid, boundaries (empty / one / many; min / max / just-below / just-above), invalid inputs, exceptional states, and regression examples. For `divide` the boundary at zero numerator and the invalid divide-by-zero are the high-information cases — exactly where implementation bugs cluster. Coverage tools tell you which lines ran, not whether you chose these classes well."
+
+  - id: 5
+    difficulty: intermediate
+    type: single
+    question: |
+      You inherit this test. It is green. What is the strongest critique?
+
+      ```python
+      def test_checkout_everything():
+          assert checkout(valid_cart(), "tok_ok").status == "paid"
+          assert checkout(empty_cart(), "tok_ok").status == "rejected"
+          assert checkout(valid_cart(), "tok_declined").status == "failed"
+          assert checkout(valid_cart(), "tok_ok").sends_email is True
+      ```
+    options:
+      - "Nothing — combining related assertions in one test reduces duplication and is good practice for tests that cover the same controller method."
+      - "It bundles four unrelated behaviors — when it fails, the message won't tell you which guarantee regressed, and later assertions never run if an earlier one fails."
+      - "It is missing a shared `setUp` method to deduplicate the `valid_cart()` construction; the test is otherwise structurally fine."
+      - "It should be *expanded* with more assertions on logging, timestamps, and downstream effects — comprehensive coverage in one test gives the strongest signal that checkout works end-to-end."
+    correct_index: 1
+    option_feedback:
+      0: |
+        The four assertions are *not* related — they describe four separate behaviors (success, rejection of empty cart, declined-token failure, email side effect). Sharing a test name does not make them one behavior.
+      2: |
+        Extracting a shared fixture would tidy a few lines but wouldn't address the underlying problem: a single failure tells the reader nothing about *which* of the four behaviors broke, and the run stops at the first failing assertion.
+      3: |
+        Adding more assertions to a test that already bundles four behaviors compounds the problem rather than relieving it — the diagnostic message gets noisier, not clearer. Split first, then verify each behavior comprehensively in its own test.
+    explanation: "The better rule is *one reason to fail*, not 'one assertion per test'. A test that exercises a single coherent outcome may need several assertions; a test that exercises four different outcomes should be four tests. Splitting this into `test_checkout_succeeds_for_valid_cart`, `test_checkout_rejects_empty_cart`, `test_checkout_fails_on_declined_token`, and `test_checkout_sends_confirmation_email` gives precise failure messages and lets all four run independently."
+
+  - id: 6
+    difficulty: advanced
+    type: single
+    question: |
+      You added a new sorting algorithm. You cannot easily hand-compute the expected output for the realistic inputs you care about (millions of records with mixed keys). Which oracle approach is most likely to produce a strong test?
+    options:
+      - "Skip the assertion — the oracle problem makes a meaningful comparison impossible for inputs whose expected output you can't compute by hand."
+      - "Assert only `len(sorted_xs) == len(xs)` — preserving length is the one property you can reliably check without knowing the expected order."
+      - "Combine metamorphic, permutation, and invariant properties — `sort(sort(xs)) == sort(xs)`, output is a rearrangement of input, output is non-decreasing — generated across many random inputs."
+      - "Compare the new implementation against itself: `assert new_sort(xs) == new_sort(xs)` — establishing determinism is enough since a deterministic sort is correct by construction."
+    correct_index: 2
+    option_feedback:
+      0: |
+        Abandoning the assertion is exactly the wrong response to the oracle problem. Partial oracles, metamorphic relations, and properties exist so you can assert *something meaningful* even when the exact expected output is hard to name.
+      1: |
+        Length alone is much too weak — a buggy sort that returns the input unmodified would pass it. Length is one ingredient of a property suite, not a substitute for one.
+      3: |
+        Comparing an implementation to itself only checks determinism, not correctness. A wrong but deterministic sort (returns the input unchanged, sorts descending) still passes this assertion every time.
+    explanation: "Weyuker (1982) named the oracle problem; the modern response is to combine **partial oracles** that each capture a different aspect of correctness. For sort: the output must be a permutation of the input, must be monotonically non-decreasing, and must be idempotent under re-sorting. Run these properties on hundreds of generated inputs (Claessen & Hughes 2000) and you have a strong test even without a hand-computed expected value."
+
+  - id: 7
+    difficulty: advanced
+    type: single
+    question: |
+      A team reports 92% line coverage. A regression ships in which a successful order is recorded with `status="refunded"` instead of `status="paid"`. Reviewing the test suite reveals that several tests execute the checkout path but only assert that `status is not None`. What does this episode most directly illustrate?
+    options:
+      - "The coverage tool measured incorrectly — the real coverage must have been much lower for a bug this obvious to escape."
+      - "High line coverage with weak oracles can leave critical behavior unchecked — coverage measures *execution*, not *what was verified*."
+      - "The team is using line coverage when they should be using branch coverage — switching metrics would catch this class of regression at the same coverage percentage."
+      - "Unit tests cannot find this kind of regression — the team needs end-to-end tests that exercise the full checkout flow in a realistic environment."
+    correct_index: 1
+    option_feedback:
+      0: |
+        The coverage measurement is almost certainly accurate. The problem is that *being executed* and *being verified* are different things — coverage answers the first question, not the second.
+      2: |
+        Branch coverage is stricter but suffers from the same blind spot. A branch that runs without a meaningful assertion still produces no evidence of correctness; the missing ingredient is oracle strength, not granularity.
+      3: |
+        End-to-end tests can help, but the underlying weakness — assertions that accept any non-null status — would carry over to E2E too. The fix is stronger oracles at whatever layer the behavior is being tested.
+    explanation: "Inozemtseva and Holmes (2014) found that coverage has only low-to-moderate correlation with suite effectiveness once suite size is controlled. The healthier model: coverage is a *map* of what wasn't visited; mutation testing or seeded-fault analysis is the diagnostic for whether what *was* visited is being checked meaningfully. Mutating `'paid'` to `'refunded'` here produces a surviving mutant — a direct signal that the assertion is too weak."
+
+  - id: 8
+    difficulty: intermediate
+    type: single
+    question: |
+      You are about to write the first test for a brand-new `Order.cancel()` method using TDD. Which of these is closest to the intended *Red* step?
+    options:
+      - "Write `Order.cancel()` to mark `status = 'cancelled'`, then add a passing test to confirm it works as expected."
+      - "Sketch the full `Order` class with `cancel`, `refund`, and `archive` methods first, then write a test for each so the design is consistent."
+      - "Write a tiny test that fails for the right reason — e.g. `assert order.cancel().status == 'cancelled'` — before any production code for `cancel()` exists."
+      - "Run the existing suite to confirm it is green, then add the production code and rely on coverage tools to flag whether new tests are needed."
+    correct_index: 2
+    option_feedback:
+      0: |
+        Writing production code first inverts the cycle. The point of *Red* is that the test specifies the behavior *before* the implementation — forcing you to decide what the calling interface should look like.
+      1: |
+        Sketching three methods first invites Big Upfront Design and large steps. TDD favors one tiny behavior at a time so each Red→Green→Refactor turn takes minutes, not hours.
+      3: |
+        Confirming a green starting point is fine practice but it isn't the *Red* step. *Red* is a new failing test that names the next behavior — production code comes *after*, in *Green*.
+    explanation: "Beck's *Three Rules of TDD* are explicit: you may not write production code unless it is to make a failing unit test pass, and you may not write more of a test than is sufficient to fail (where failing to compile counts as failing). The Red step is the smallest test that names the next behavior. Fucci et al. (2017) found that the productivity gain comes from *fine granularity and uniform rhythm*, not from test-first ordering as a slogan."
+
+  - id: 9
+    difficulty: advanced
+    type: multiple
+    question: |
+      A test method named `test_helper_caches_correctly` asserts on the size and contents of a private `_cache` dict inside a service class. Which of the following are valid concerns about this test? (Select all that apply.)
+    options:
+      - "The test name describes implementation machinery (`helper`, `caches`) rather than a user-observable behavior anyone outside the class would recognize."
+      - "Asserting on a private `_cache` couples the test to the current caching strategy — switching to an LRU cache, an external cache, or no cache breaks the test without changing user-visible behavior."
+      - "If the cache exists to make repeated lookups return the same value quickly, the test should be expressed as that behavior — e.g. `test_repeated_lookup_returns_same_result` — at the public API."
+      - "Tests should never use the word 'helper' even when the production code does — vocabulary in tests should describe the domain, not the codebase's internal naming."
+    correct_indices: [0, 1, 2]
+    option_feedback:
+      3: |
+        Avoiding a single word is not the issue. The real concern is that the *name and assertions* together pin the test to implementation details — using or avoiding any specific vocabulary is a symptom, not the cause.
+    explanation: "Tests that mirror implementation details become brittle. The fix is to name the *behavioral promise* (idempotent lookups, eventual consistency, repeated reads cheap) and to assert at the public boundary. The cache then becomes one of many valid implementations of that promise — and refactoring the cache no longer breaks the suite."

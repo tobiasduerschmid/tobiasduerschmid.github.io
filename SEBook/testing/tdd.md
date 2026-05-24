@@ -64,3 +64,10 @@ TDD remains the most effective tool for managing "Technical Debt"—those short-
 As we integrate TDD with Continuous Integration to avoid the "integration hassle" of the Waterfall era, we must remember that the wisdom of this craft lies in the journey, not just the destination. As Joshua Kerievsky concludes in Refactoring to Patterns:
 
 "If you’d like to become a better software designer, studying the evolution of great software designs will be more valuable than studying the great designs themselves. For it is in the evolution that the real wisdom lies."
+
+## Practice
+
+{% include flashcards.html id="tdd" %}
+
+{% include quiz.html id="tdd" %}
+

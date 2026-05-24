@@ -81,3 +81,16 @@ topics:
     subtopics:
       - name: Interoperability
         url: /SEBook/quality_attributes/interoperability.html
+      - name: Testability
+        url: /SEBook/quality_attributes/testability.html
+
+  - name: Architectural Styles
+    icon: null
+    url: /SEBook/architectural_styles/index.html
+    subtopics:
+      - name: Layered Style
+        url: /SEBook/architectural_styles/layers.html
+      - name: Pipes and Filters
+        url: /SEBook/architectural_styles/pipes_and_filters.html
+      - name: Publish-Subscribe
+        url: /SEBook/architectural_styles/pubsub.html

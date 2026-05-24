@@ -1,0 +1,166 @@
+title: "Test-Driven Development (TDD) Quiz"
+description: "Apply, Analyze, and Evaluate-level questions on TDD — diagnose violations of the Three Rules, pick the simplest passing implementation, recognize when TDD doesn't fit, and identify the rhythm that produces TDD's real benefit."
+active: true
+questions:
+  - id: 1
+    difficulty: basic
+    type: single
+    question: |
+      A developer is following TDD strictly. The failing test under their cursor is:
+
+      ```python
+      def test_order_starts_in_open_state():
+          assert Order().status == "open"
+      ```
+
+      No `Order` class exists yet. Which of the following is the *Green* step?
+    options:
+      - "Design the full `Order` class with `open`, `paid`, `cancelled`, and `refunded` states so future tests already have the state machine they will need to drive."
+      - "Add an `Order` class with `__init__` setting `self.status = 'open'` — and nothing else — so this one failing test passes with the minimum production code."
+      - "Write tests for `paid`, `cancelled`, and `refunded` first to specify the full state-machine contract before any production code is written."
+      - "Use a Mock to stand in for `Order` so the test passes without writing the class — let production code follow once the test surface is stable."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Designing the full class violates Rule 3 (no more production code than is sufficient to pass the one failing test). The other states are not specified by any failing test yet; their behavior should be driven in by future Red steps.
+      2: |
+        Writing more tests before the first one is green violates the rhythm. Stay in one Red→Green→Refactor cycle at a time — every new behavior becomes a new Red later, not a parallel test list.
+      3: |
+        Mocking `Order` would let the test pass without exercising the production behavior the test claims to verify. That defeats TDD entirely — you'd be writing a test of a mock, not of any real code.
+    explanation: "Green's mandate is *'the simplest piece of code that turns the bar green'*. The minimal class with `status = 'open'` in the constructor satisfies the one failing test and adds no behavior not yet specified. Rule 3 keeps each step small enough that the working system is never more than a few minutes away; a richer state machine waits for the next Red→Green cycle."
+
+  - id: 2
+    difficulty: intermediate
+    type: single
+    question: |
+      A team starts a 'TDD initiative'. After three months their CI is consistently red, engineers report tests are slowing them down, and pre-release defects are higher than before. A retrospective reveals that engineers write one big test for each feature, code for an hour, then debug for an afternoon. What is the most likely root cause?
+    options:
+      - "TDD doesn't work for this team — the productivity and defect-rate signals say they should switch to test-after for this codebase."
+      - "The team is in a 'World of Red' because steps are too large — TDD's benefit depends on a fast Red→Green→Refactor rhythm, not on test-first ordering."
+      - "The team needs to mock all external dependencies — defects come from real I/O bleeding into unit tests and slowing the feedback loop."
+      - "The team needs to enforce 100% line coverage on every PR — defects are escaping because uncovered code paths are shipping unverified."
+    correct_index: 1
+    option_feedback:
+      0: |
+        TDD didn't fail here; the *rhythm* failed. Fucci et al. (2017) found that the benefit comes from fine granularity and uniform rhythm, not from test-first as a slogan. Abandoning TDD wouldn't fix the underlying step-size problem.
+      2: |
+        Mocking everything is an over-correction that often makes tests brittle and uninformative. The root issue here is the size of each step, not the kind of doubles used.
+      3: |
+        Coverage targets often *create* this kind of pathology — engineers add execution without strengthening oracles. The diagnosis is the rhythm of the work, not coverage of the code.
+    explanation: "The World-of-Red trap is what happens when steps are too large. Each big change introduces multiple failures whose causes can't be untangled, so debugging dominates, the feedback loop is severed, and the suite stops being a safety net. The recovery is to shrink the next test until Green is minutes away — the discipline that Beck's Three Rules and Kerievsky's small-steps method both enforce."
+
+  - id: 3
+    difficulty: intermediate
+    type: single
+    question: |
+      A team is building an ACID-compliant distributed database from scratch. They plan to be 'TDD-only' from day one — no high-level design, no architecture document. What is the strongest concern?
+    options:
+      - "TDD is fine for any system — incremental refactoring eventually arrives at any target architecture if the team holds discipline, so the plan should work."
+      - "Some architectures cannot be reached by incremental refactoring (Rocket Ship to the Moon) — high-level design for consistency, replication, and consensus must precede TDD."
+      - "The team should write integration tests instead of unit tests — integration coverage at the database boundary will compensate for the missing architectural design."
+      - "TDD requires every developer to pair-program for the practice to work at this scale, and the team should adopt pairing before they adopt TDD."
+    correct_index: 1
+    option_feedback:
+      0: |
+        TDD is not universal. It evolves architecture incrementally; some target architectures cannot be reached that way. Acknowledging the limit is part of mature TDD practice, not abandoning the practice.
+      2: |
+        Test-layer choice is orthogonal to the architectural question. Integration tests still verify behavior; they cannot replace decisions about consistency models or consensus protocols that have to be made at the design level.
+      3: |
+        Pair programming is a separate XP practice and is not what makes TDD work or fail here. The structural issue is whether incremental refactoring can reach the target architecture, regardless of how many people are at the keyboard.
+    explanation: "The Rocket Ship analogy in the chapter is exactly this case: ACID guarantees, replication topologies, and consensus protocols are *non-modularizable* design decisions that cannot be refactored in after the fact. The mature pattern is to pair TDD's low-level rhythm with explicit high-level architectural thinking for risks that won't yield to incrementalism — TDD doesn't have to be the *only* tool to be a valuable one."
+
+  - id: 4
+    difficulty: basic
+    type: single
+    question: |
+      Which of the following best describes the *purpose* of the **Refactor** step in Red-Green-Refactor?
+    options:
+      - "Add more failing tests for the new behavior so the next Red has a richer specification to drive the design from."
+      - "Remove duplication and clarify intent — improving the design while the test suite stays green and behavior is preserved."
+      - "Optimize the implementation for performance — Refactor is the natural time to tune algorithms now that correctness is locked in by the green tests."
+      - "Add error handling and validation that was deliberately skipped during Green to keep the implementation as simple as possible."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Adding tests is the next *Red*, not Refactor. Refactor is a code-improvement phase that does not change behavior — the existing tests stay the safety net while design improves.
+      2: |
+        Performance optimization may sometimes be a Refactor target, but it is not the purpose of the phase. The general purpose is improving design (clarifying intent, removing duplication) for any reason that makes the code easier to change tomorrow.
+      3: |
+        Skipped error handling should be driven in by a new failing test (a new Red), not bolted on during Refactor. Refactor preserves behavior; adding error handling adds behavior.
+    explanation: "Refactor is the design step — the phase where TDD's design-emergence happens. The constraint is that behavior must stay observably the same (so the tests stay green), which forces the engineer to use small, safe restructurings. Romano et al. (2017) found that developers commonly skip this step; that's where most of TDD's long-term value evaporates."
+
+  - id: 5
+    difficulty: advanced
+    type: single
+    question: |
+      A team uses TDD diligently for application code but reports that their *security* and *performance* properties keep regressing in production. What is the most accurate diagnosis?
+    options:
+      - "The team isn't following TDD strictly enough — more tests at each Red→Green cycle would catch the regressions before they ship."
+      - "TDD's pass/fail oracle and unit-test scope often cannot capture non-functional properties — security, performance, and reliability need specialized risk-driven design."
+      - "The team should switch to BDD (Behavior-Driven Development) — its scenario language captures non-functional concerns that bare unit tests can't express."
+      - "The team should require 100% mutation score on all modules — stronger oracle pressure would force the missing security and performance checks into the suite."
+    correct_index: 1
+    option_feedback:
+      0: |
+        More unit tests won't help if the property being violated is one a unit test cannot express well. The diagnostic is that the *kind* of property has outgrown the *kind* of test TDD produces.
+      2: |
+        BDD is essentially a stylistic variant of TDD with different naming conventions. It addresses the same scope and would face the same limit for non-functional properties.
+      3: |
+        Mutation testing strengthens unit-test oracles but doesn't extend their scope to NFRs. A 100% mutation gate doesn't help when no unit test captures the performance or security property in the first place.
+    explanation: "TDD's binary pass/fail and unit scope make it a poor fit for properties that are statistical (performance under load) or holistic (security posture). The chapter calls these *non-functional properties* and notes they need risk-driven design and quality activities that go beyond unit tests — load tests, threat modeling, fuzzing, static analysis. Use TDD where it shines; reach for the other tool when the property is the wrong shape for a unit test."
+
+  - id: 6
+    difficulty: advanced
+    type: multiple
+    question: |
+      Two research findings shape modern thinking about TDD. Which of the following claims are well-supported by the studies cited in the chapter? (Select all that apply.)
+    options:
+      - "Nagappan et al. (2008) found industrial case studies with large reductions in pre-release defect density for TDD teams, with an initial development-time increase."
+      - "Fucci et al. (2017) found that quality and productivity gains were primarily associated with *fine granularity and uniform rhythm*, not simply with test-first ordering."
+      - "Empirical studies prove TDD always doubles team productivity within one quarter — the consensus number across published case studies is a 2× improvement."
+      - "Qualitative research shows developers commonly skip the Refactor step, eroding much of TDD's design value (Romano et al. 2017)."
+    correct_indices: [0, 1, 3]
+    option_feedback:
+      2: |
+        No empirical study claims a universal productivity doubling. Nagappan reported a defect-density reduction with an *initial cost* in development time; productivity claims that simple are sales pitches, not findings.
+    explanation: "The three findings together form the modern position on TDD: it can sharply reduce defects (Nagappan), the mechanism is the rhythm of small steps rather than the test-first ritual (Fucci), and the design payoff depends on actually doing the Refactor step that engineers tend to skip (Romano). 'TDD doubles productivity' is a slogan; the real story is more nuanced and more useful to teach."
+
+  - id: 7
+    difficulty: intermediate
+    type: single
+    question: |
+      A team adopts TDD for a new feature. After two weeks, they have 80 tests, the suite runs in 90 seconds, and the team reports they 'are now afraid to refactor because tests break too easily'. What is the strongest interpretation?
+    options:
+      - "TDD doesn't work for this team — fear of refactoring is a sign the practice is mismatched to the codebase and they should drop it before more debt accumulates."
+      - "The tests are likely too coupled to implementation details — private collaborators, call sequences, specific data structures — so refactoring breaks assertions while behavior is preserved."
+      - "The suite is too fast — slower, more comprehensive tests would be more robust to refactoring because they exercise broader scope per test."
+      - "80 tests is too few for confident refactoring — adding more tests of the same kind would build a wider safety net and reduce the fear of touching code."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Brittleness is a symptom of *how* the tests were written, not evidence that TDD is wrong for the team. Fixing the symptom is structurally different from abandoning the practice.
+      2: |
+        Speed is unrelated to robustness. A test that asserts on stable behavior at a public boundary is robust whether it runs in 5ms or 5 seconds; a test that asserts on private machinery is brittle either way.
+      3: |
+        More tests of the same kind would make the situation worse — more places where refactoring trips a false alarm. The cure is to rewrite the brittle tests, not to add more of them.
+    explanation: "Brittle TDD suites are usually a teaching gap: engineers learn the *ritual* of test-first without the discipline of *what to assert on*. Tests should pin behavior at stable boundaries (return values, public state, persisted records, domain events) and reserve interaction assertions for cases where the interaction is the contract. Once the team learns that, the same TDD practice produces a suite that *protects* refactoring rather than punishing it."
+
+  - id: 8
+    difficulty: advanced
+    type: single
+    question: |
+      A team wants to TDD an image-recognition model. They write `assert classify(cat_image) == "cat"` and another `assert classify(dog_image) == "dog"`. The model passes both but ships with poor accuracy on noisy inputs. What is the structural problem with their TDD approach here?
+    options:
+      - "The team should add more test cases — `cat_image_2`, `cat_image_3`, etc. — until the binary pass/fail count of examples is high enough that overall accuracy is implicitly tested."
+      - "ML systems are *non-binary* — quality is a confidence distribution, not pass/fail — so binary unit-test oracles can't capture the goal. Use a statistical evaluation harness with held-out test sets."
+      - "The team should use a Mock instead of a real model so the test runs faster and more examples can be added per CI cycle to drive quality up."
+      - "The team needs a different ML framework that supports TDD natively — modern frameworks can express binary oracles on aggregate metrics if you configure them correctly."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Adding examples one at a time scales poorly and still produces a binary oracle on each one. The model's actual quality is the *distribution* of behavior across inputs — that's the property that needs measuring.
+      2: |
+        Mocking the model would let the test pass with no real recognition behavior. TDD on a Mock would teach the team nothing about the real system's quality.
+      3: |
+        The limit is structural to TDD's pass/fail oracle, not a framework feature. No ML framework changes the fact that classification quality is statistical rather than binary.
+    explanation: "TDD's pass/fail oracle is one of its limits — the chapter explicitly names non-binary outcomes (AI, image recognition) as a case where TDD struggles. The mature pattern is a held-out evaluation set with thresholds on aggregate metrics (accuracy, F1, calibration), monitored over time. Specific input/output examples still have a place (regression tests for known failures), but they cannot substitute for the statistical evaluation the real quality goal demands."

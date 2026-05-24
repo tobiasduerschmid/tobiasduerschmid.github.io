@@ -1,0 +1,208 @@
+title: "Interoperability Quiz"
+description: "Apply interoperability principles to real integration problems — diagnose semantic vs syntactic failures, write measurable interop requirements, choose adapter strategies, and balance variability against implementation effort."
+active: true
+questions:
+  - id: 1
+    difficulty: intermediate
+    type: single
+    question: |
+      A mobile app sends a JSON payment request to a payment gateway. The gateway parses it without errors, returns a 200 OK, but the customer is charged $10,000 instead of $100. The app sent `{"amount": 100, "currency": "USD"}`; the gateway expected `amount` to be in **cents**. Which kind of interoperability failure is this?
+    options:
+      - "Syntactic interoperability failure — the JSON did not parse correctly."
+      - "Semantic interoperability failure — both sides agreed on the data structure but interpreted the `amount` field with different meanings (dollars vs cents)."
+      - "Transport-layer failure — the network corrupted the data."
+      - "Authentication failure — the gateway thought it was a different user."
+    correct_index: 1
+    option_feedback:
+      0: |
+        The JSON parsed without errors and the gateway returned 200 OK — syntactic interop succeeded. The catastrophe happened *after* parsing, in interpretation.
+      2: |
+        The data arrived unmodified — the gateway's parse succeeded. The error is in *meaning*, not transmission.
+      3: |
+        The charge went to the right customer; the wrong *amount* was charged. Authentication is not implicated.
+    explanation: "**Semantic interoperability means both sides interpret the data the same way. Syntactic interoperability (the JSON parsed) is necessary but not sufficient.** The Mars Climate Orbiter ($327M loss) failed for exactly this reason — one side computed impulses in pound-force-seconds while the other expected newton-seconds. Units, encoding, time zones, and reference frames are the classic semantic gotchas; documenting them rigorously (semantic view, shared dictionaries, schemas with units) is what prevents catastrophes."
+
+  - id: 2
+    difficulty: advanced
+    type: single
+    question: |
+      A health-system architect must integrate three hospitals' patient-record systems. They write the requirement: "The systems should be interoperable." Why is this insufficient, and what's a properly specified requirement?
+    options:
+      - "It's fine — engineers know what 'interoperable' means."
+      - "It needs a scenario and a metric. Better: 'When patient demographic and lab-result records are transferred between Hospital A and Hospitals B and C using HL7 FHIR R4, at least 99.5% of the fields defined in the FHIR Patient and Observation resources must be received and interpreted identically by the receiving system.'"
+      - "Add a deadline: 'systems should be interoperable by Q3.'"
+      - "Specify the technology: 'systems should be interoperable via REST.'"
+    correct_index: 1
+    option_feedback:
+      0: |
+        'Interoperable' has no calibrated meaning. One team hears 'the systems can exchange messages'; another hears 'all data round-trips losslessly with full semantic preservation.' Without measurement, you can't tell when you're done.
+      2: |
+        A deadline is a schedule, not a requirement. The requirement is what the system must achieve, and 'interoperable' alone is still unmeasurable when the deadline arrives.
+      3: |
+        Naming a technology constrains the implementation but does not specify the *behavior* — a REST API can be interoperable or not depending on its schemas, semantics, and error handling.
+    explanation: "**Interoperability requirements need the same scenario + metric structure as any quality requirement.** The canonical metric is *percentage of data exchanged correctly* under a specified scenario. Without it the requirement cannot be tested, can't drive design, and can't be verified at handover — exactly the conditions under which integration failures hide for years until they cost millions to fix."
+
+  - id: 3
+    difficulty: intermediate
+    type: single
+    question: |
+      Your team integrates with a third-party shipping API. The API returns weights in **pounds**, but your internal warehouse system uses **kilograms**. Per the literature, what is the standard design solution?
+    options:
+      - "Push back on the shipping provider until they change their API to use kilograms."
+      - "Introduce an **Adapter** — a translation component between the two systems that converts pounds to kilograms (semantic translation) on every interaction, leaving both systems' core logic untouched."
+      - "Modify your warehouse system to support both pounds and kilograms throughout the codebase."
+      - "Submit the request in pounds and convert on display only, since it doesn't really matter internally."
+    correct_index: 1
+    option_feedback:
+      0: |
+        You can't force a third party to redesign their API. Even with leverage, waiting for them to change is not a design strategy you can ship.
+      2: |
+        Spreading dual-unit support throughout your codebase pollutes every consumer of weight data with the translation concern, multiplying complexity and the risk of using the wrong unit at the wrong place. The Adapter centralizes this in one place.
+      3: |
+        Storing one unit and displaying another means every internal calculation operates in the wrong unit. Tax, shipping cost, and capacity calculations would all be wrong — a recipe for hidden disasters.
+    explanation: "**The Adapter design pattern is the textbook interoperability tactic when two systems have incompatible interfaces — it converts data formats (syntactic translation) or maps meanings and units (semantic translation) without requiring changes to either system's core logic.** The adapter is a single, testable place where every translation lives, so the dual-unit reality stays contained instead of spreading through every consumer."
+
+  - id: 4
+    difficulty: advanced
+    type: multiple
+    question: |
+      The Global Distribution System (GDS) case from the SEBook illustrates trade-offs interoperability creates. Which statements correctly characterize the GDS dilemma? Select all that apply.
+    options:
+      - "Highly standardized interfaces are difficult to evolve because every participating system must update simultaneously."
+      - "GDS struggled to support Southwest Airlines because Southwest's business model (no traditional seat assignments) didn't fit the standardized interface."
+      - "Updating the GDS standard for Southwest would have required every booking system and airline worldwide to change their software."
+      - "GDS proves that interoperability standards should be avoided entirely."
+      - "The lesson is that interoperability conflicts with changeability — standardized interfaces are inherently harder to evolve than localized ones."
+    correct_indices: [0, 1, 2, 4]
+    option_feedback:
+      0: |
+        A standard's value comes from its widespread adoption — and that same adoption is what makes change expensive. Every integrating system must coordinate to upgrade.
+      1: |
+        Southwest's no-seat-assignment model violated GDS's central assumption that flights have assigned seats. The standard could not accommodate a participant that broke the assumption.
+      2: |
+        This is the rippling change problem at planetary scale. Any change to the GDS schema would have required every airline, agency, and downstream system to update simultaneously — practically impossible.
+      3: |
+        Avoiding standards entirely would lose all of interoperability's benefits (cross-system data exchange, network effects). The case illustrates a *trade-off*, not a reason to abandon the approach.
+      4: |
+        Standards trade local flexibility for global compatibility. The same property that makes them valuable (everyone agrees) is what makes them hard to evolve (everyone must agree to change).
+    explanation: "**Interoperability and changeability are classical conflicting quality attributes: a widely-adopted standard interface cannot be evolved without coordinating all participants, so it becomes ossified.** This is why standards-driven systems (HL7, banking, EDI, telecom) move slowly — and why fast-evolving systems (microservices internal APIs) often deliberately *avoid* publishing stable interfaces beyond a small consumer set."
+
+  - id: 5
+    difficulty: advanced
+    type: single
+    question: |
+      An architect is designing a public API for a new fintech platform. They face a classic *practical interoperability* tension. Which framing captures it correctly?
+    options:
+      - "Make the interface as simple as possible — no complex features, no optional fields. Simplicity always wins."
+      - "Make the interface as feature-rich as possible — every conceivable use case supported. Variability always wins."
+      - "Find the sweet spot: enough variability to be useful across many integrators, but simple enough that the implementation cost is acceptable. Too complex and adoption fails; too simple and adopters cannot solve their problems and look elsewhere."
+      - "Defer the trade-off — ship v1 first, then iterate."
+    correct_index: 2
+    option_feedback:
+      0: |
+        Maximal simplicity often fails to support real customer use cases — integrators look elsewhere or build their own logic on top. The trade-off cannot be resolved on one axis alone.
+      1: |
+        Maximal variability raises implementation cost for every integrator. Many give up and look for simpler alternatives. The trade-off cannot be resolved on the other axis alone either.
+      3: |
+        Deferring the question means defaulting to whichever option the first developer happens to make. Once v1 ships, the interface is hard to change — exactly the changeability trap interoperability creates.
+    explanation: "**Practical interoperability requires balancing two conflicting forces: implementation effort (more complex → less adopted) vs variability (more flexible → more useful). The architectural job is to find the *sweet spot* for the specific integrator profile and use-case range.** Pure simplicity and pure feature-richness both fail in real markets; design choices like sensible defaults, optional fields, and tiered APIs help reach the sweet spot."
+
+  - id: 6
+    difficulty: intermediate
+    type: single
+    question: |
+      Two microservices in your e-commerce platform both manage data about 'Users'. The Cart service stores delivery preferences; the Auth service stores credentials and roles. A new engineer proposes sharing the full User model across both services. What does microservice / bounded-context theory recommend instead?
+    options:
+      - "Share the full User model — DRY (don't repeat yourself) requires a single canonical type."
+      - "Keep separate User models in each service's bounded context; share only the minimal information (a User ID) needed to correlate, so each service evolves its own model independently."
+      - "Merge Cart and Auth into one service since they both deal with Users."
+      - "Move all User data into a shared database accessed by both services."
+    correct_index: 1
+    option_feedback:
+      0: |
+        DRY across service boundaries creates coupling that defeats the point of microservices — every change to the User model now requires coordinating all services that share it.
+      2: |
+        Merging Cart and Auth would create one bloated service that conflates concerns (sessions, credentials, shipping). The original split exists for a reason; merging would discard it.
+      3: |
+        A shared database creates the tightest possible coupling — every schema change now coordinates across all consumers. This is exactly what microservice architectures are designed to avoid.
+    explanation: "**In microservice architectures, interoperability is managed through *bounded contexts*: each service owns its own model for an entity, and interfaces share only the minimal information (typically a unique identifier) needed for correlation.** This keeps each service's internal model free to evolve independently — the entire reason for microservices. 'DRY across services' is a textbook anti-pattern that re-creates a distributed monolith."
+
+  - id: 7
+    difficulty: advanced
+    type: single
+    question: |
+      Your team is integrating with a partner's API. The partner's spec says: "Returns a list of `Order` objects." Your team's QA finds three real interop failures *despite* the JSON parsing successfully every time. Which interop failure mode is most likely the root cause?
+    options:
+      - "Network packet loss between the two systems."
+      - "Semantic ambiguity: 'Order' is not a primitive — both sides agreed on the *name* but not on the *meaning*. Does 'amount' include tax? Are returns and cancellations 'orders'? Is an `Order` immutable or mutable after creation? Each interpretation gap is a semantic failure."
+      - "TLS handshake failure."
+      - "The partner's server is using a different programming language than yours."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Packet loss would manifest as parse failures or timeouts, not as data that 'looks fine but is wrong.' The clue is JSON parsing succeeded every time.
+      2: |
+        TLS handshake failure prevents any communication. The clue is JSON arrived and parsed.
+      3: |
+        Programming-language differences are abstracted away by the API. Both sides exchange JSON regardless of internal implementation.
+    explanation: "**Semantic interoperability failures hide inside successful syntactic exchanges — the most expensive kind, because they look fine until they cause real damage.** Domain-rich types like 'Order', 'Customer', 'Address' carry implicit assumptions (tax inclusion, currency, validity rules, lifecycle states) that both sides must explicitly document. Tools: semantic views in the interface spec, shared dictionaries (HL7, schema.org), worked example payloads, contract tests that verify interpretation."
+
+  - id: 8
+    difficulty: intermediate
+    type: single
+    question: |
+      An e-commerce platform allows the user to *use existing services* — third-party payment processing, email delivery, address validation. The CTO calls this "interoperability strategy". What is the underlying business motivation?
+    options:
+      - "Reduce vendor lock-in by spreading dependencies across many providers."
+      - "Leverage specialized, mature services instead of building and maintaining them in-house — saving engineering time, reducing risk on non-differentiating capabilities, and benefiting from the providers' continued investment."
+      - "Make the system harder to clone by competitors."
+      - "Comply with PCI-DSS by outsourcing all sensitive operations."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Spreading dependencies actually *increases* vendor lock-in (more contracts, more APIs, more migrations). Not a coherent reason for the strategy.
+      2: |
+        Cloneability is unrelated to integration choices. Many competitors integrate with the same payment processors and remain distinct.
+      3: |
+        Outsourcing PCI scope is one benefit, but it's narrow and specific. The general principle (don't reinvent the wheel for non-differentiating capabilities) covers many more cases than compliance.
+    explanation: "**The core business motivation for interoperability is 'use existing services instead of reinventing the wheel': specialized, mature providers (Stripe for payments, SendGrid for email, Twilio for SMS) deliver capabilities at a quality and reliability your team cannot match without massive investment.** This is why interoperability is treated as a strategic enabler, not a nice-to-have — it lets the team focus engineering effort on the few capabilities that differentiate the product."
+
+  - id: 9
+    difficulty: advanced
+    type: single
+    question: |
+      A medical records platform wants to demonstrate strong interoperability with hospital systems. They publish a 500-page specification with 200 optional fields and 40 custom data types. Adoption stalls — only 3 hospitals integrate in the first year. Which interop principle did they violate?
+    options:
+      - "Interoperability requires maximum variability — they should add more optional fields."
+      - "Implementation effort is a primary determinant of adoption: a complex interface raises the cost for every integrator, and many will look for simpler alternatives or skip integration entirely. The 'sweet spot' between variability and simplicity was missed by erring far on the variability side."
+      - "Hospitals do not need interoperability — they prefer isolated systems."
+      - "Interoperability standards must always be 500+ pages to be taken seriously."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Adding more optional fields makes the spec longer, more expensive to implement, and less likely to be adopted. The opposite direction is needed.
+      2: |
+        Hospitals very much need interoperability (patient transfers, lab results, prescriptions) — the failure here is that the interface was too expensive to integrate against, not that the need was absent.
+      3: |
+        Many successful interop standards are far shorter (the original REST and HTTP specs, the JSON spec, simple webhook patterns). Length is not a measure of seriousness; it is often a measure of integration cost.
+    explanation: "**A design that maximizes variability without bounding implementation effort fails in the market — adopters look elsewhere.** The medical-records platform paid heavily for variability they didn't need. A more adoptable design might have offered a tight core specification (10 required fields, 10 optional, 3 simple data types) plus an extension mechanism for advanced use, lowering the cost-of-first-integration enough to seed adoption."
+
+  - id: 10
+    difficulty: advanced
+    type: single
+    question: |
+      A microservices team faces a hard choice: maintain backward compatibility on their public API forever (so no consumers ever break) or release a clean v2 that simplifies the model but requires consumers to migrate. Which trade-off framing is correct?
+    options:
+      - "Always pick backward compatibility — never break consumers."
+      - "Always pick v2 — clean APIs are more important than legacy support."
+      - "Forever-backward-compatibility ossifies the system and accumulates support burden; constant breaking changes destroy trust and stall adoption. The architect chooses where on the spectrum to sit by considering the consumer base size, the cost of breaking changes for consumers, the cost of carrying legacy code, and how often the API changes."
+      - "There is no trade-off here — REST APIs handle this automatically through versioning."
+    correct_index: 2
+    option_feedback:
+      0: |
+        Forever backward compatibility burns budget every release on legacy code paths, raises the chance of subtle behavior drift, and discourages the architectural improvements that motivate v2. It's a real cost, not a free choice.
+      1: |
+        Constant breaking changes destroy customer trust — integrators stop investing, audit logs reveal regressions, and the platform's reputation suffers. 'Always v2' is as wrong as 'never v2.'
+      3: |
+        REST URI versioning (`/v1/`, `/v2/`) is a *mechanism*, not a solution to the trade-off. The team still has to decide which versions to support, for how long, and at what cost — exactly the trade-off the framing names.
+    explanation: "**Interoperability over time is a continuous trade-off between stability (don't break consumers) and evolution (let the architecture improve). The right balance depends on the size and replaceability of the consumer base, the cost of breaking changes, the rate of architectural improvement, and the team's appetite for legacy carry.** Major platforms publish explicit deprecation policies (e.g., 'v1 supported for 18 months after v2 ships') to make the trade-off transparent to consumers."

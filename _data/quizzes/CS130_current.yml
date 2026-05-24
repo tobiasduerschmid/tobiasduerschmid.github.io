@@ -10,3 +10,18 @@ decks:
   - uml_state_diagram_examples
   - uml_use_case_diagram_examples
   - design_pattern_strategy
+  - testing_overview
+  - goodtests
+  - testquality
+  - testdoubles
+  - tdd
+  - quality_attributes
+  - quality_attribute_interoperability
+  - quality_attribute_testability
+  - architectural_styles
+  - architectural_style_layered
+  - architectural_style_pipes_filters
+  - architectural_style_pubsub
+  - dev_practice_genai
+  - process_agile
+  - process_xp

@@ -1,0 +1,208 @@
+title: "Quality Attributes Quiz"
+description: "Apply quality-attribute thinking to real design decisions — write measurable requirements, reason about trade-offs and synergies, distinguish design-time from run-time qualities, and judge when to invest in non-functional concerns."
+active: true
+questions:
+  - id: 1
+    difficulty: intermediate
+    type: single
+    question: |
+      A product manager hands you the requirement: "the system must be **fast and reliable**." Why is this not a useful quality requirement, and what would make it useful?
+    options:
+      - "It's fine as written — engineering teams know what 'fast and reliable' means."
+      - "It is unmeasurable. A useful quality requirement names a specific **scenario** (what condition, what stimulus, what user) and a concrete **metric** (a number, threshold, or measurable target) — e.g., 'Under peak Friday-evening load, 95% of search requests return in under 200 ms with 99.9% availability over any 7-day window.'"
+      - "It conflates two requirements. Split into 'fast' and 'reliable' as separate sentences and the problem is solved."
+      - "Quality requirements are always vague; engineering converts them into design decisions afterward."
+    correct_index: 1
+    option_feedback:
+      0: |
+        "Fast" and "reliable" have no calibrated meaning across teams. One engineer hears 100ms p99; another hears 1s p50. Without a metric, you can't tell when you're done.
+      2: |
+        Splitting the conjunction does not add measurement. "Fast" alone is still unmeasurable; "reliable" alone is still unmeasurable. The problem is the absence of scenarios and metrics, not the conjunction.
+      3: |
+        Treating quality requirements as vague-by-default is how systems quietly fail to meet expectations. The engineering discipline is precisely *not* to accept vague quality requirements — to push back until they are measurable.
+    explanation: "**A useful quality requirement has two parts: a scenario (the specific condition or environment) and a metric (a concrete measure of goodness — a hard threshold like '< 1 s' or a soft goal like 'minimize effort').** Without both, the requirement cannot be tested, can't drive design decisions, and can't be falsified — it is engineering theater."
+
+  - id: 2
+    difficulty: intermediate
+    type: single
+    question: |
+      Classify these four qualities as either *design-time* or *run-time*: **performance**, **testability**, **availability**, **changeability**.
+    options:
+      - "All four are run-time qualities — they are observable while the system executes."
+      - "**Run-time:** performance, availability. **Design-time:** testability, changeability. Run-time qualities are experienced by users while the system executes; design-time qualities primarily affect developers building or maintaining the system."
+      - "All four are design-time qualities — they are decided during architecture."
+      - "**Run-time:** testability, changeability. **Design-time:** performance, availability."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Testability and changeability are properties of the codebase, not behaviors a user observes. A user does not notice that a test is easy to write; the developer does.
+      2: |
+        Performance and availability are behaviors that emerge at runtime under load — they cannot be fully evaluated in the architecture document alone, only by running the system.
+      3: |
+        The directions are reversed. Run-time qualities are user-facing; design-time qualities are developer-facing.
+    explanation: "**Design-time qualities (testability, changeability, extensibility, reusability) primarily affect the people maintaining and evolving the system. Run-time qualities (performance, availability, scalability) are experienced directly by the user when the system executes.** Both matter — but they are surfaced, measured, and traded against each other differently."
+
+  - id: 3
+    difficulty: advanced
+    type: single
+    question: |
+      Your team adds end-to-end TLS encryption to every internal microservice call to meet a new security mandate. p99 latency rises from 80 ms to 130 ms. What general principle does this illustrate?
+    options:
+      - "Encryption is inherently broken at scale."
+      - "Quality attributes frequently *conflict*: improving one (security) degrades another (performance). Architects must explicitly choose which to prioritize and document the trade-off, rather than pretending both can be maximized."
+      - "Quality attributes always synergize — security and performance must rise together."
+      - "TLS overhead is a bug; the fix is to disable encryption on internal paths."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Encryption works at scale (the entire internet runs on it). Framing the latency cost as 'inherently broken' misdiagnoses a normal engineering trade-off as a defect.
+      2: |
+        Some qualities synergize (performance + usability for interactive systems), but security and performance frequently conflict — encryption, validation, audit logging all cost CPU time. The reverse claim is wrong on its face.
+      3: |
+        Removing the security control to recover latency would violate the new mandate. The engineering question is how to balance, not how to revert.
+    explanation: "**You cannot maximize every quality attribute simultaneously — improvements in one often degrade another. The architect's job is to make the trade-off explicit and aligned with priorities, not to pretend the conflict away.** Common conflicts: security ↔ performance, reliability (TCP, retries) ↔ latency, modifiability (abstraction layers) ↔ performance, usability (rich client) ↔ portability (lowest-common-denominator)."
+
+  - id: 4
+    difficulty: intermediate
+    type: multiple
+    question: |
+      Quality attributes are sometimes described as the *load-bearing walls* of a software system. Which of these are valid reasons for that metaphor? Select all that apply.
+    options:
+      - "Early architectural decisions strongly constrain which quality attributes the system can later achieve."
+      - "Quality attributes are typically cross-cutting — they touch many parts of the codebase, not one isolated module."
+      - "Quality attributes are difficult and expensive to add after the system is built, just as moving a load-bearing wall is expensive after construction."
+      - "Quality attributes never change throughout a system's lifetime."
+      - "Quality attributes are the only requirements that drive architectural decisions."
+    correct_indices: [0, 1, 2]
+    option_feedback:
+      0: |
+        The choice of architectural style, framework, and dependency direction made on day one constrains what the system can reach on day 1,000. Some qualities (scalability, security posture) are nearly impossible to retrofit.
+      1: |
+        Security, performance, testability, and observability all touch the entire codebase — they are not modules you can drop in. That's why bolting them on later is so expensive.
+      2: |
+        Adding strong security or 10x scalability to a system designed without them is often more expensive than rebuilding. The load-bearing-wall metaphor captures this asymmetry.
+      3: |
+        Priorities change over a system's life — what was 'fast enough' at launch may become a bottleneck at 100x scale. Stability of importance is not part of the metaphor.
+      4: |
+        Functional requirements also drive architectural decisions (e.g., a real-time control system has fundamentally different architecture from a batch reporter regardless of quality preferences). Quality attributes are highly influential, not exclusive.
+    explanation: "**Quality attributes are load-bearing because they (a) are constrained by early architectural choices, (b) are cross-cutting across the codebase, and (c) are expensive to retrofit later.** This is why they belong in the architecture phase — not in the 'we'll handle that later' bucket. The cost asymmetry is what makes the metaphor accurate."
+
+  - id: 5
+    difficulty: advanced
+    type: single
+    question: |
+      A Mars rover requirement reads: "the rover should be robust." A senior architect calls this a *bad* specification and rewrites it. Which rewrite is correct?
+    options:
+      - "The rover must be highly robust and handle all errors gracefully."
+      - "Under dust-storm conditions reducing solar input by 60% for up to 72 hours, the rover must continue scientific measurements, transmit a beacon every 6 hours, and resume full operations within 1 hour of normal solar input returning."
+      - "The rover should never crash."
+      - "The rover should be built with high-quality components."
+    correct_index: 1
+    option_feedback:
+      0: |
+        "Highly robust" and "gracefully" add adjectives but no measurement. The requirement still cannot be tested or falsified.
+      2: |
+        "Never crash" is binary and absolute — no real system can promise it, and it does not specify which conditions are in scope. Without scenarios and metrics, the requirement is unactionable.
+      3: |
+        Component-quality decisions follow from requirements, they don't substitute for them. "High quality" is just another vague adjective.
+    explanation: "**A good quality specification names a scenario (the specific environmental or operational condition) and a metric (concrete numbers, durations, or thresholds the system must meet under that scenario).** 'Robust' alone is wishful thinking; 'continues measurements through a 60%-solar 72-hour dust storm and resumes full ops within 1 hour' is something the team can design for, test against, and report against."
+
+  - id: 6
+    difficulty: intermediate
+    type: single
+    question: |
+      A startup's MVP launches in three weeks. The team is debating whether to invest in **testability** infrastructure (dependency injection, test doubles, contract tests) before launch. What is the strongest *pro-testability* argument given the time pressure?
+    options:
+      - "Testability is non-negotiable — never ship without it."
+      - "Testability synergizes with changeability: the same architectural decisions that make code testable (small responsibilities, injected dependencies, no global state) also make it easy to evolve as you learn from real users — so the investment pays off through both lower bug rates and faster iteration."
+      - "Testability is a runtime quality, so the team can add it after launch with no design cost."
+      - "Skip testability entirely — startups don't need tests."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Absolutism ignores the calendar. The honest pitch is about *why* testability is worth the cost, not that it has no cost.
+      2: |
+        Testability is a *design-time* quality. Retrofitting it requires the architectural changes the team avoided on day one — typically much more expensive than baking it in early.
+      3: |
+        Untested startup codebases famously become unmaintainable within a year. The 'startups don't need tests' framing has buried real products under regression bugs that prevented further iteration.
+    explanation: "**Testability and changeability are strong synergistic qualities — the same architectural patterns (small classes, dependency injection, no global state, clear interfaces) buy both.** For a startup that will iterate aggressively post-launch, the investment compounds: every change is faster *and* less likely to introduce a regression. The trade-off question is real, but framing the synergy honestly is the strongest case."
+
+  - id: 7
+    difficulty: advanced
+    type: single
+    question: |
+      Your bank's payment service uses TCP (acknowledged, retried delivery). A consultant suggests UDP to cut latency. The trade-off they don't mention is:
+    options:
+      - "UDP is more secure than TCP."
+      - "UDP gives up TCP's reliability guarantees — packets may be lost, duplicated, or arrive out of order. For payment messaging, lost or duplicated transactions are unacceptable, so the latency saving costs you correctness."
+      - "UDP is slower than TCP at small payload sizes."
+      - "UDP cannot cross firewalls."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Security is orthogonal to UDP vs TCP — both are unencrypted by default; both can be wrapped in TLS/DTLS. Conflating these would let a security argument hide the real reliability cost.
+      2: |
+        UDP is faster than TCP at small payload sizes; that's part of the consultant's pitch. The hidden cost is reliability, not throughput.
+      3: |
+        UDP traverses firewalls (DNS, video calls, game traffic all use it). Some configurations may block it, but framing it as unreachable is incorrect.
+    explanation: "**Reliability and performance are classical competing quality attributes: TCP's acknowledgments and retransmissions cost latency, UDP's fire-and-forget saves latency but admits loss and duplication.** For payments — where each message must arrive exactly once, in order — the reliability win is decisive. For video streams or DNS lookups, the latency win is decisive. The architect's job is to align the protocol with the system's correctness needs, not to optimize one axis in isolation."
+
+  - id: 8
+    difficulty: advanced
+    type: single
+    question: |
+      Three months after launch, your team realizes the system cannot scale past 10,000 concurrent users — the bottleneck is the synchronous, monolithic request pipeline chosen on day one. What does this illustrate about quality attributes?
+    options:
+      - "Quality attributes can always be improved later with no architectural changes."
+      - "Scalability is a load-bearing quality attribute: an early architectural choice (synchronous monolith) has now constrained what the system can achieve, and improving it will require structural rework — not a localized patch."
+      - "The team should have built for 1,000,000 users from day one."
+      - "Scalability is a run-time quality, so it cannot be planned for in advance."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Some qualities *can* be improved with localized changes (UI polish, copy edits). Cross-cutting load-bearing qualities like scalability typically cannot — that's the point of the metaphor.
+      2: |
+        Over-engineering for 1M users on day one would have shipped late, paid for unused capacity, and slowed iteration. The fault is not in choosing a monolith — it's in not designing it for the *evolution path* the team now needs.
+      3: |
+        Scalability requires architectural planning (statelessness, horizontal partitioning, caching, async paths). It is observable at runtime but designed at architecture time.
+    explanation: "**Scalability is the classic load-bearing quality: choices made at architectural time (sync vs async, stateful vs stateless, monolithic vs partitioned) constrain how far the system can scale, and retrofitting is expensive.** The lesson is not 'always over-engineer' but 'understand the evolution profile of the system and pick an architecture whose scalability ceiling is high enough for the planned lifetime.'"
+
+  - id: 9
+    difficulty: intermediate
+    type: single
+    question: |
+      An e-commerce site adds image CDN caching. Page-load drops from 3 s to 800 ms. User satisfaction (Net Promoter Score) climbs. Which quality-attribute relationship is in evidence?
+    options:
+      - "Performance and usability *synergize* — for interactive systems, faster response improves the user's experience and therefore the system's usability."
+      - "Performance and usability *conflict* — the CDN is faster but harder to use."
+      - "Performance and usability are unrelated — the NPS change must come from something else."
+      - "The CDN improved security, which improved usability."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Conflict would mean the speedup hurt usability. The opposite happened — fast response improved the user's experience. The data refutes the conflict framing.
+      2: |
+        Latency directly influences perceived usability (Doherty threshold, ~400 ms beyond which users perceive the system as unresponsive). The NPS lift here is straightforwardly attributable to the latency reduction.
+      3: |
+        CDNs do not improve security as a side effect; they often *introduce* security concerns (additional perimeter, cache poisoning). The usability gain comes from latency.
+    explanation: "**Performance and usability are a classical *synergistic* pair for interactive systems: faster response leads to higher engagement and satisfaction.** Other synergies: testability + changeability (modular code is easy to test and easy to change); modifiability + reusability (loose coupling enables both). Recognizing synergies lets architects invest in choices that win on multiple axes simultaneously."
+
+  - id: 10
+    difficulty: advanced
+    type: single
+    question: |
+      Your team is asked to pick *which three* quality attributes to optimize for in a new system. The product manager says "let's just do all of them." How do you reframe the conversation?
+    options:
+      - "Agree — modern engineering can deliver all qualities simultaneously."
+      - "Pushback: quality attributes conflict, and trying to maximize all of them yields a system that is mediocre on every axis. The architect's job is to identify the 2–3 attributes that matter most for *this* system's context — and accept that others will be deliberately deprioritized — so design decisions can be made coherently."
+      - "Defer the question — pick whatever after the system is built."
+      - "Pick the three that are easiest to measure regardless of which matter most."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Agreeing pretends the trade-offs do not exist. Every architectural decision later will face hidden conflicts the team has no way to resolve, because no priority has been set.
+      2: |
+        Quality priorities must inform architectural decisions on day one. Deferring means defaulting to whichever quality happens to bubble up first — and inheriting whatever architecture was accidentally produced.
+      3: |
+        Measurability is a means, not an end. Picking attributes by ease-of-measurement could lead to optimizing the wrong things (e.g., optimizing latency because it's easy to measure, while ignoring testability that determines long-term velocity).
+    explanation: "**Architectural alignment requires explicit prioritization: 'we will optimize for security, scalability, and changeability; we will accept lower performance and a higher per-request latency budget.' This concrete commitment lets every later design decision be resolved coherently against the priorities.** Saying 'all of them' produces a system that's mediocre on every axis and unable to defend its choices when conflicts surface."

@@ -1,186 +1,186 @@
 title: "Scrum Quiz"
-description: "Recalling what you just learned is the best way to form lasting memory. Use this quiz to test your understanding of the Scrum framework, roles, events, and principles."
+description: "Recalling what you just learned is the best way to form lasting memory. Use this quiz to test your understanding of the Scrum framework — its empirical pillars, accountabilities, artifacts, and events."
 active: true
 questions:
   - id: 1
     difficulty: intermediate
-    question: "A software development group realizes their newest feature is confusing users based on early behavioral data. They immediately halt their current plan to redesign the user interface. Which foundational philosophy of their framework does this best illustrate?"
+    question: "Two days into a Sprint, analytics from a beta cohort show users are abandoning a newly shipped checkout flow. The team immediately stops the planned roadmap and reworks the flow. Which **pillar** of Scrum's empirical process does this most directly enact?"
     options:
-      - "Rigorous upfront predictive planning"
-      - "The empirical pillar of adaptation"
-      - "Expanding the project scope arbitrarily"
-      - "The prioritization duties of the Product Owner"
-      - "The daily synchronization meeting"
-    correct_index: 1
-    option_feedback:
-      0: |
-        The team is not following a fixed predictive plan; it is changing course because inspection
-        produced new evidence.
-      2: |
-        Adaptation is not arbitrary scope expansion. It is a deliberate response to evidence that the
-        current product direction is not working.
-      3: |
-        Backlog ordering matters in Scrum, but this scenario is about changing the plan after inspecting
-        user data.
-      4: |
-        A Daily Scrum is a specific event. The scenario describes the broader empirical habit of
-        adapting when evidence demands it.
-    explanation: "**Halting the plan to respond to new user data illustrates the empirical pillar of adaptation — adjusting course as soon as inspection reveals something isn't working.** Scrum is founded on **empiricism**, and **adaptation** requires adjusting the process or product as soon as possible if aspects deviate outside acceptable limits."
-
-  - id: 2
-    difficulty: intermediate
-    question: "In an environment that prioritizes agility, the individuals actually building the product must possess a specific dynamic. Which description best captures how this group should operate?"
-    options:
-      - "A siloed group of specialists awaiting detailed instructions from a project manager."
-      - "A self-managing unit equipped with all necessary skills to deliver a completed piece of value."
-      - "A hierarchy of junior and senior engineers reporting directly to external stakeholders."
-      - "A temporary task force assembled only for the duration of a single specific feature."
-    correct_index: 1
-    option_feedback:
-      0: |
-        Waiting for detailed instructions conflicts with self-management. Scrum expects the people doing
-        the work to decide how to deliver the Sprint Goal.
-      2: |
-        A reporting hierarchy is not the defining structure of a Scrum Team. The team should organize
-        around delivering value, not around seniority levels.
-      3: |
-        Scrum Teams are stable enough to learn and improve together across work, not disposable groups
-        assembled for one feature only.
-    explanation: "**Scrum Teams must be cross-functional (all skills needed to deliver value) and self-managing (deciding internally who does what, when, and how) — not siloed or manager-directed.** Scrum Teams are **cross-functional** (possessing all necessary skills) and **self-managing** (deciding internally who does what, when, and how)."
-
-  - id: 3
-    difficulty: basic
-    question: "The development group is completely blocked because they lack access to a third-party API required for their current iteration. Who is primarily responsible for facilitating the resolution of this organizational bottleneck?"
-    options:
-      - "The Developers, by pausing all development until the issue resolves itself."
-      - "The Product Owner, by rewriting the requirements to avoid the API."
-      - "The Scrum Master, by causing the removal of the impediment."
-      - "The external stakeholders, by extending the iteration's deadline."
+      - "Transparency"
+      - "Inspection"
+      - "Adaptation"
+      - "Time-boxing"
     correct_index: 2
     option_feedback:
       0: |
-        Developers may help diagnose the blocker, but simply pausing does not remove the organizational
-        impediment.
+        Transparency means the work — and the data about it — is visible to the people responsible. Visibility is a precondition for the change described, but seeing the data is not the act of changing course.
       1: |
-        The Product Owner can clarify value and ordering, but rewriting the requirement to avoid every
-        outside dependency is not the primary Scrum Master service here.
+        Inspection is the act of *examining* progress against the Sprint Goal. The behavior described — stopping the roadmap and reworking — is the *response* to inspection, not inspection itself. Inspection without adaptation is theater.
       3: |
-        Stakeholders do not solve the impediment by stretching the iteration. The blocker should be made
-        visible and removed.
-    explanation: "**Removing impediments to the team's progress is the Scrum Master's responsibility — not the Developers', the Product Owner's, or external stakeholders'.** The **Scrum Master** serves the team by causing the removal of **impediments** to their progress."
+        Time-boxing is a Scrum mechanism (each event has a fixed maximum duration), not one of the three pillars. It supports empiricism but does not name it.
+    explanation: "**Acting on evidence by changing course is adaptation — the third pillar of Scrum's empirical process.** The three pillars are *Transparency* (the work is visible), *Inspection* (frequent checks against the Sprint Goal), and *Adaptation* (course-correct as soon as inspection demands it). Adaptation is the pillar that turns visibility and observation into actual change."
+
+  - id: 2
+    difficulty: intermediate
+    question: "Which description best captures how a Scrum Team should operate?"
+    options:
+      - "A group of specialists who wait for detailed instructions from a project manager."
+      - "A cross-functional, self-managing team that holds all the skills needed to deliver a usable Increment and decides internally how to do the work."
+      - "A temporary task force assembled only for the duration of a single feature, then disbanded."
+      - "A pair of senior engineers who design the work and direct junior engineers to implement it."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Waiting on a manager for direction breaks self-management. Scrum expects the people doing the work to decide internally how to deliver the Sprint Goal.
+      2: |
+        A per-feature task force cannot build the shared rhythm or Definition of Done Scrum depends on. Scrum Teams are kept stable so they can inspect and improve together over many Sprints.
+      3: |
+        A senior-juniors hierarchy is not the defining structure of a Scrum Team. The team is organized around delivering value, not around seniority.
+    explanation: "**A Scrum Team must be both cross-functional (no external handoffs needed to ship) and self-managing (no external manager assigning the work).** The two properties protect different parts of the feedback loop: cross-functionality removes handoff delay, self-management removes direction delay."
+
+  - id: 3
+    difficulty: basic
+    question: "The Developers are blocked because they lack access to a third-party API needed for the current Sprint. Who on the Scrum Team is primarily accountable for getting the impediment removed?"
+    options:
+      - "The Product Owner — by rewriting the requirement to avoid the API."
+      - "The Scrum Master — by causing the impediment to be removed."
+      - "The external stakeholders — by extending the Sprint's deadline."
+      - "The Developers — by re-estimating the work to fit around the blocker."
+    correct_index: 1
+    option_feedback:
+      0: |
+        The Product Owner can clarify value and adjust priorities, but rewriting requirements to dodge every external dependency is not their Scrum accountability. The blocker should be made visible and removed, not engineered around.
+      2: |
+        Sprint length is fixed once a Sprint starts. Stretching the deadline hides the impediment rather than removing it, and breaks the cadence stakeholders rely on.
+      3: |
+        Developers can certainly help diagnose a blocker, but the Scrum Master is the one accountable for *causing its removal* — often by engaging people outside the team, which Developers usually cannot.
+    explanation: "**Removing impediments to the team's progress is one of the Scrum Master's core services.** The Scrum Master serves the team by causing impediments to be removed, often by working outside the team with the organization — something Developers and the Product Owner are not positioned to do alone."
 
   - id: 4
     difficulty: basic
-    question: "To ensure the team is consistently tackling the most crucial problems first, someone must dictate the priority of upcoming work items. Who holds this responsibility?"
+    question: "Who is accountable for ordering the Product Backlog so the team is always working on the most valuable items first?"
     options:
-      - "The individual contributors writing the code."
+      - "The Developers — they understand the technical risk of each item best."
       - "The Product Owner."
       - "The Scrum Master."
-      - "A consensus vote among all stakeholders during the review session."
-      - "The users submitting bug reports."
+      - "A consensus vote among all stakeholders at the Sprint Review."
     correct_index: 1
     option_feedback:
       0: |
-        Developers decide how to do the work and can advise on technical risk, but the Product Owner
-        orders the Product Backlog by value.
+        Developers decide *how* to do the work and can advise on technical risk and dependencies, but the *order* of the Product Backlog by value is the Product Owner's accountability.
       2: |
-        The Scrum Master facilitates Scrum and helps remove impediments. That is different from owning
-        product priority.
+        The Scrum Master facilitates Scrum and serves the team and Product Owner. That is different from owning what gets built next.
       3: |
-        Stakeholder input is valuable, but Product Backlog ordering is accountable to one Product Owner
-        rather than a vote.
-      4: |
-        User reports are inputs to prioritization. They do not themselves hold accountability for
-        ordering the backlog.
-    explanation: "**Ordering the Product Backlog to maximize value is the Product Owner's sole responsibility — the Scrum Master facilitates process, and Developers own technical decisions.** The **Product Owner** is the one who orders the work for a complex problem into a **Product Backlog** to maximize value."
+        Stakeholder input is valuable, but Product Backlog ordering is the accountability of one person — the Product Owner — so the team always has a single, unambiguous answer to *'what is next?'*.
+    explanation: "**The Product Owner is the single person accountable for ordering the Product Backlog to maximize the value of the product.** Splitting that accountability across a committee, the Scrum Master, or the Developers tends to produce competing priorities and slows the team down."
 
   - id: 5
     difficulty: intermediate
-    question: "What condition must be strictly satisfied before a newly developed feature is officially considered a completed, verifiable stepping stone toward the ultimate product vision?"
+    question: "When can a Product Backlog item officially be counted as part of the Sprint's Increment?"
     options:
-      - "It must be formally approved and signed off by the Scrum Master."
-      - "It must fulfill the team's agreed-upon checklist of quality measures."
-      - "It must be deployed to the live production environment for end-users."
-      - "It must be previewed in a slide deck for corporate stakeholders."
+      - "When the Scrum Master has signed off on it."
+      - "When it meets every item on the team's Definition of Done."
+      - "When it has been deployed to production for end users."
+      - "When it has been demonstrated to stakeholders at the Sprint Review."
     correct_index: 1
     option_feedback:
       0: |
-        Scrum does not make the Scrum Master a sign-off gate for completed work. Completion is judged
-        against the Definition of Done.
+        Scrum does not put the Scrum Master in the sign-off path for completed work. Completion is judged against the Definition of Done, not against a role's approval.
       2: |
-        Deployment can be part of a team’s Definition of Done, but Scrum does not require production
-        deployment for every item to count as done.
+        A team's Definition of Done *may* include production deployment, but Scrum itself does not require it. Items can be part of the Increment without yet being released, as long as the agreed quality bar is met.
       3: |
-        A presentation can communicate progress, but it does not prove the increment met the agreed
-        quality bar.
-    explanation: "**A feature is considered done only when it meets the team's agreed-upon Definition of Done — not when it is approved by a role, deployed, or presented in a slide deck.** The **Scrum Master** helps the team focus on creating high-value **Increments** that specifically meet the **Definition of Done** (the quality measures checklist)."
+        Demonstration is the *Sprint Review's* job. An item that has not yet met the Definition of Done is not part of the Increment in the first place — there is nothing to legitimately demonstrate.
+    explanation: "**An item belongs to the Increment only when it meets every item on the team's Definition of Done.** The Definition of Done is the team's shared checklist of quality measures — without it, *'done'* becomes negotiable and the Sprint Review loses its ability to give honest feedback on a working product."
 
   - id: 6
     difficulty: intermediate
-    question: "What is the primary objective of the Daily Scrum?"
+    question: "What is the primary purpose of the Daily Scrum?"
     options:
-      - "To provide a daily status report to upper management."
-      - "To evaluate progress toward the current iteration's goal and adjust the upcoming day's plan."
-      - "To demonstrate newly completed features to external clients."
-      - "To reflect on long-term team friction and interpersonal conflicts."
-      - "To refine and estimate future work items."
+      - "To give upper management a daily status report on each Developer's work."
+      - "For the Developers to inspect progress toward the Sprint Goal and adapt the plan for the next day."
+      - "To demonstrate newly completed features to external stakeholders."
+      - "To refine and estimate future Product Backlog items."
     correct_index: 1
     option_feedback:
       0: |
-        The Daily Scrum is for Developers to inspect progress and adapt their plan. It is not a
-        reporting ceremony for upper management.
+        The Daily Scrum is for the Developers, not for upward reporting. Redirecting it into status updates for management strips it of its purpose and erodes self-management.
       2: |
         Demonstrating completed work to stakeholders belongs to the Sprint Review, not the Daily Scrum.
       3: |
-        Longer-term collaboration issues are better handled in the Sprint Retrospective. The Daily Scrum
-        is about the Sprint Goal and near-term plan.
-      4: |
-        Future backlog refinement is separate from the Daily Scrum. The Daily Scrum focuses on current
-        Sprint progress.
-    explanation: "**The Daily Scrum's purpose is to inspect progress toward the Sprint Goal and adapt the plan for the next day — it is not a status report for management or a backlog refinement session.** The **Daily Scrum** focuses on progress toward the **Sprint Goal** and produces an actionable plan for the next day of work."
+        Refining and estimating future Product Backlog items is *Product Backlog refinement* — an ongoing activity that happens outside the Daily Scrum.
+    explanation: "**The Daily Scrum is a 15-minute planning event for the Developers** — they inspect progress toward the Sprint Goal and produce an actionable plan for the next day of work. Anything that pulls it away from those two activities is a sign the event has been miscast."
 
   - id: 7
     difficulty: basic
-    question: "At the conclusion of a work cycle, the team gathers specifically to discuss how they can improve their internal collaboration and technical practices for the next cycle. Which event does this describe?"
+    question: "Which Scrum event is dedicated to the team inspecting **its own process and collaboration** and agreeing on improvements for the next Sprint?"
     options:
-      - "The Sprint Planning session."
+      - "Sprint Planning."
       - "The Daily Scrum."
       - "The Sprint Review."
       - "The Sprint Retrospective."
     correct_index: 3
     option_feedback:
       0: |
-        Sprint Planning sets up the next Sprint. The event described is about improving the team’s
-        process after a Sprint.
+        Sprint Planning sets up the *next* Sprint's goal and plan. It is not the venue for inspecting how the team worked together.
       1: |
-        The Daily Scrum adapts the next day’s plan. It is too frequent and too narrow for the full-cycle
-        improvement discussion described here.
+        The Daily Scrum adapts the *next day's* plan toward the Sprint Goal. It is too frequent and too narrow for the cross-Sprint process improvement described here.
       2: |
-        The Sprint Review inspects the product increment with stakeholders. Internal collaboration and
-        technical-practice improvement is the Retrospective.
-    explanation: "**The Sprint Retrospective is for inspecting and improving the team's internal process — distinct from the Sprint Review which examines the product increment with stakeholders.** The **Sprint Retrospective** is an event for the team to inspect their process, reflect on it, and adjust for the next Sprint to continuously improve."
+        The Sprint Review inspects the *product Increment* with stakeholders. Process and collaboration improvement is the Retrospective, deliberately kept separate so the harder conversation about how the team works does not get crowded out by product feedback.
+    explanation: "**The Sprint Retrospective is the Scrum event where the team inspects its own process and commits to improvements** for the next Sprint. Scrum separates *product* inspection (Review) from *process* inspection (Retrospective) on purpose — combining them tends to drown out the process conversation, which is harder and more uncomfortable."
 
   - id: 8
     difficulty: advanced
-    question: "When a massive enterprise needs to coordinate dozens of teams working on the same vast product, they might adopt a 'team of teams' approach. According to common critiques, what is a potential drawback of this heavily synchronized model?"
+    question: "A large enterprise adopts SAFe (Scaled Agile Framework) to coordinate dozens of teams on one product. Critics often label SAFe *'Scrum-but-for-managers'*. What is the most substantive critique their label points at?"
     options:
-      - "It completely eliminates the need for any overarching business goals."
-      - "It restricts the self-governing autonomy of individual teams due to extensive planning constraints."
-      - "It forces development cycles to be reduced to daily, chaotic increments."
-      - "It removes the need for any formal quality checklists or verification."
-      - "It requires all developers to become management professionals."
+      - "SAFe replaces working software with documentation as the primary measure of progress."
+      - "SAFe reduces individual team autonomy through extensive cross-team planning and synchronization requirements."
+      - "SAFe forbids retrospectives at the team level, leaving teams unable to improve."
+      - "SAFe requires every Developer to take on managerial responsibilities."
     correct_index: 1
     option_feedback:
       0: |
-        Scaled coordination does not eliminate business goals. It usually adds mechanisms for aligning
-        many teams around them.
+        SAFe still produces working software each Program Increment; documentation is not its primary progress measure. The critique is about *how* the work gets coordinated, not what gets shipped.
       2: |
-        The critique is not that cycles become daily chaos. It is that heavy synchronization can reduce
-        local decision-making freedom.
+        Team-level retrospectives still exist in SAFe (Iteration Retrospectives). The critique is not that improvement is forbidden but that overall direction is set further from the team.
       3: |
-        Scaling frameworks do not remove quality expectations. Teams still need clear definitions of
-        done and verification practices.
+        Developers do not become managers in SAFe. The concern is the *amount* of planning and synchronization, not a change in individual job titles.
+    explanation: "**SAFe trades team autonomy for cross-team predictability — that is the trade-off the *'Scrum-but-for-managers'* label is pointing at.** SAFe's Program Increment planning, fixed cadences, and Agile Release Train ceremonies do produce alignment across many teams, but they also compress local decision-making in ways Scrum's self-management principle is designed to protect. Whether the trade is worth it depends on how tightly coupled the teams actually are."
+
+  - id: 9
+    difficulty: basic
+    type: multiple
+    question: "Which **three** of the following are the pillars of Scrum's empirical process? (Select exactly three.)"
+    options:
+      - "Transparency"
+      - "Inspection"
+      - "Adaptation"
+      - "Velocity"
+      - "Cross-functionality"
+      - "Commitment"
+    correct_indices: [0, 1, 2]
+    option_feedback:
+      3: |
+        Velocity is a *metric* some teams choose to track (e.g., story points completed per Sprint). Scrum does not require it, and it is not part of the empirical foundation.
       4: |
-        Developers do not need to become managers simply because a scaled process coordinates many
-        teams. The concern is planning overhead and autonomy.
-    explanation: "**A key critique of scaled frameworks like SAFe is that extensive cross-team planning and synchronization reduces individual team autonomy — the opposite of Scrum's self-managing principle.** Common critiques of frameworks like SAFe suggest they can reduce individual team autonomy through heavy planning and synchronization requirements."
+        Cross-functionality is a property of the *Scrum Team* (the team holds all skills needed to ship), not a pillar of the empirical *process*.
+      5: |
+        Commitment is one of Scrum's five *values* (Commitment, Focus, Openness, Respect, Courage). Values and pillars are deliberately separated — the values guide behavior, the pillars structure the empirical process.
+    explanation: "**Scrum's empirical process rests on three pillars: Transparency, Inspection, and Adaptation.** Transparency makes the work visible to everyone responsible; Inspection means checking progress against the Sprint Goal frequently; Adaptation means changing course as soon as inspection reveals the current direction is unacceptable. Remove any one and the empirical loop breaks."
+
+  - id: 10
+    difficulty: intermediate
+    question: "What is the **Sprint Review** primarily for, and how is it different from the Sprint Retrospective?"
+    options:
+      - "Inspecting the product Increment with stakeholders and adapting the Product Backlog based on their feedback — distinct from the Retrospective, which inspects the team's process."
+      - "Inspecting the team's internal collaboration and committing to a process improvement — the same purpose as the Retrospective, with stakeholders present."
+      - "Demonstrating slides about what the team plans to build next Sprint — distinct from the Retrospective, which reviews completed work."
+      - "Approving Developers' time-off and managing personnel issues — distinct from the Retrospective, which is purely about engineering practices."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Stakeholders are deliberately absent from the Retrospective so the team can speak openly about its own process. Merging the two events crowds out the harder process conversation and signals that team-internal issues are stakeholder business.
+      2: |
+        A Sprint Review is not a slide deck about future plans — it is a working session built around the *actual Increment* the Sprint produced. Demos that replace the Increment with slides usually mean the team did not produce a real Increment.
+      3: |
+        No Scrum event is a personnel-management meeting. Scrum has no manager role at all; people-management decisions sit outside the framework.
+    explanation: "**The Sprint Review inspects the *product Increment* with stakeholders and uses their feedback to adapt the Product Backlog; the Sprint Retrospective inspects the *team's process* and commits to a process improvement.** Review asks *'are we building the right thing?'* — a product question, with stakeholders in the room. Retrospective asks *'are we building it the right way?'* — a process question, behind closed doors. Keeping them separate protects both conversations."

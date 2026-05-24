@@ -1,0 +1,93 @@
+title: "Architectural Styles Flashcards"
+description: "Foundational vocabulary, taxonomy, and combination patterns for architectural styles — including style vs pattern, platonic vs embodied, heterogeneous architectures, and the styles taxonomy from data-flow to event-based."
+active: true
+cards:
+  - id: 1
+    difficulty: basic
+    question: "Define an *architectural style*."
+    answer: "A vocabulary of design elements (components and connectors) combined with a set of strict constraints on how those elements can be topologically arranged and how they can interact. By restricting the design vocabulary, a style guarantees that systems following its rules will exhibit specific quality attributes — and minimizes complexity, enables predictive analysis, and supports efficient team communication."
+    explanation: "Perry and Wolf's building-architecture analogy: just as the 'Gothic style' dictates stone and fluted vaults to evoke specific qualities, a software architectural style dictates engineering materials and topology to elicit specific systemic properties."
+
+  - id: 2
+    difficulty: intermediate
+    question: "Distinguish an architectural **style** from an architectural **pattern** (per Taylor et al.)."
+    answer: "A **style** is an abstract structural framework — declarative, focused on constraints — independent of any specific design situation; it is *strategic* ('highly distributed systems'). A **pattern** is a specific solution to a specific recurring problem in a given context (a context-problem-solution triple); it is *tactical* ('separating business logic from data management')."
+    explanation: "Practitioners often use the terms interchangeably and the literature is not uniformly precise. Taylor's distinction is useful: pick a style for the macro-structure; apply patterns inside it to solve specific local problems."
+
+  - id: 3
+    difficulty: intermediate
+    question: "What is the difference between **platonic** and **embodied** styles (per Fairbanks)?"
+    answer: "**Platonic styles** are the idealized, mathematically pure styles from textbooks — strictly satisfying all the style's constraints. If a system adheres perfectly, the architect can mathematically guarantee certain quality attributes. **Embodied styles** are the messy reality found in actual source code, where constraints are sometimes bent or broken to accommodate performance, legacy integrations, or third-party libraries."
+    explanation: "Real systems are always embodied — pure platonic implementations rarely exist outside textbooks. The architect's job is to recognize the gap between platonic intent and embodied reality, and to evaluate whether each deviation is acceptable trade-off or accumulating debt."
+
+  - id: 4
+    difficulty: advanced
+    question: "Name and briefly describe the main *foundational* architectural styles."
+    answer: "**Pipe-and-Filter** (data flow): independent filters transform streams; pipes connect output→input ports. **Layered** (call-return): hierarchical strata; upper layers use lower layers only. **Client-Server** (call-return): asymmetric request/response between clients and a server. **Publish-Subscribe / Event-Based** (implicit invocation): publishers emit events to a bus; subscribers register for events. **Repository** (data-centric): components communicate via a shared central data store. **Peer-to-Peer**: symmetric nodes share both client and server roles."
+    explanation: "These are the building blocks. Modern derived styles — SOA, microservices, REST, Event Sourcing, Hexagonal — are typically combinations or refinements of these foundational styles."
+
+  - id: 5
+    difficulty: intermediate
+    question: "What is a **heterogeneous architecture**, and why is it the norm in real systems?"
+    answer: "An architecture that combines multiple styles, because every style trades off some qualities for others and no single style suits every concern of a complex system. The two main combination patterns are **hierarchy** (one style governs the macro-structure, a different style governs each component's internals) and **overlay** (multiple styles applied concurrently to the same components, like REST)."
+    explanation: "A music app might use pipe-and-filter for the track-processing backend, pub-sub for notifications, REST for the public API, and Clean Architecture inside each microservice. Each concern picks the style whose promoted qualities best match its requirements."
+
+  - id: 6
+    difficulty: advanced
+    question: "How is **REST** an example of an architectural-style overlay?"
+    answer: "REST is a deliberately engineered composite of three styles, all bound by a uniform-interface constraint: **Client-Server** (asymmetric separation of user agent and origin server), **Layered** (transparent intermediaries — proxies, caches, CDNs — between client and server), and **Mobile Code** (server can extend the client with downloaded scripts, e.g., HTML + JS)."
+    explanation: "Fielding's PhD thesis was a deliberate design exercise: pick constraints from existing styles that produce the desired emergent properties (cacheability, scalability, evolvability, intermediary transparency). REST is not 'just client-server' — it is a carefully composed multi-style overlay."
+
+  - id: 7
+    difficulty: intermediate
+    question: "Compare **SOA** (Service-Oriented Architecture) and **Microservices**."
+    answer: "**SOA**: services communicate over heavy enterprise service buses (often SOAP); aimed at enterprise-wide integration; often shares data and orchestration centrally. **Microservices**: services map to *bounded contexts* of the business domain; are strictly independent; use lightweight protocols (REST/HTTP, gRPC); each owns its own decentralized data store. Microservices evolved from SOA in the 2010s, heavily influenced by Domain-Driven Design."
+    explanation: "The bounded-context and data-ownership differences cascade into operational complexity (microservices add DevOps overhead), team structure (independent teams per service), and evolution (microservices change independently). SOA dominates large legacy enterprises; microservices dominate cloud-native and modern web companies."
+
+  - id: 8
+    difficulty: advanced
+    question: "Why does style choice strongly influence achievable **quality attributes**?"
+    answer: "Each style is a *prefabricated set of constraints* designed to elicit specific qualities. Pipe-and-filter promotes modifiability and reusability while inhibiting interactivity and fault tolerance; pub-sub promotes evolvability while inhibiting predictability; layered promotes portability while inhibiting performance. **Choosing a style is implicitly choosing a quality profile.**"
+    explanation: "This is why style choice is a *load-bearing* architectural decision — it constrains which qualities the system can later achieve. Choosing a style without considering its quality consequences means inheriting whatever profile the style happens to give you, often the opposite of what the requirements demanded."
+
+  - id: 9
+    difficulty: intermediate
+    question: "What is the role of **constraints** in defining an architectural style?"
+    answer: "Constraints are *what makes a style a style* — they are the strict topological and interaction rules that, when followed, guarantee the style's quality attributes. 'Pipes only connect filter outputs to filter inputs'; 'lower layers may not call upper layers'; 'publishers do not reference subscribers directly'. Bending the constraints in embodied implementations erodes the very qualities the style was chosen for."
+    explanation: "Without constraints, you have a vocabulary of element types but no architectural discipline — just a kit of parts. The constraints are the contract: 'satisfy these and you get these quality properties.' Break the constraint, lose the guarantee."
+
+  - id: 10
+    difficulty: advanced
+    question: "Why is *every* successful style a deliberate trade-off?"
+    answer: "Because architectural styles are constrained vocabularies, they make some design choices impossible — and those impossible choices are exactly what would have delivered different quality attributes. Pipe-and-filter's filter independence buys recomposability and parallelism, and gives up shared state and interactivity. Pub-sub's bus indirection buys decoupling, and gives up synchronous determinism. There is no free lunch in style choice."
+    explanation: "This is why the experienced architect's first move is to identify the system's priority quality attributes, *then* pick the style whose promoted qualities align with the priorities — *and* manage the inhibited qualities deliberately with compensating mechanisms or hybrid composition."
+
+  - id: 11
+    difficulty: basic
+    question: "Define a **component** and a **connector** in architectural-style vocabulary."
+    answer: "**Components** are the computational elements (filters, services, layers, modules) — they do work. **Connectors** are the interaction mechanisms between components (pipes, event buses, procedure calls, HTTP, RPC, shared memory) — they route data and control. A style is defined by which types of components and connectors it permits and which topological arrangements are allowed."
+    explanation: "In pipe-and-filter the connectors (pipes) are first-class architectural elements — almost as important as the components. In layered architecture the connectors are typically just procedure calls and are less prominent. Distinguishing components from connectors makes it possible to design connectors deliberately rather than treating interaction as an afterthought."
+
+  - id: 12
+    difficulty: intermediate
+    question: "What does it mean to 'hoist a quality attribute into the structural skeleton' of a system?"
+    answer: "Architectural styles allow a designer to *intentionally* build the desired quality attribute into the structure itself, rather than relying on every developer to remember to support it on every change. A pub-sub architecture *structurally* enables runtime addition of subscribers; a layered architecture *structurally* enforces dependency direction. The structure itself does the work."
+    explanation: "This is the central practical insight of style-based design. Without architecture, a desired quality (say, modifiability) is a property the team must maintain by discipline. With the right architectural style, the quality is built into the structure and resists violation by construction."
+
+  - id: 13
+    difficulty: advanced
+    question: "Why is **Domain-Driven Design** influential in modern style choices?"
+    answer: "DDD provides the conceptual vocabulary — *bounded contexts*, *aggregates*, *ubiquitous language* — for deciding where to draw architectural boundaries. The microservices style emerged from DDD's insight that the right service boundary is the bounded context of a business capability. Without DDD's notion of bounded contexts, microservice boundaries tend to be drawn around technical concerns and produce a distributed monolith."
+    explanation: "Eric Evans's 2003 book introduced the vocabulary. Vaughn Vernon and others extended it into architectural practice in the 2010s. The DDD + microservices combination is the dominant cloud-native style for new systems built since ~2015."
+
+  - id: 14
+    difficulty: intermediate
+    question: "When evaluating whether a system 'is' a particular architectural style, what are you really evaluating?"
+    answer: "Whether the *embodied* code satisfies the style's constraints — its allowed element types, connector types, and topological rules. A team can *claim* to use any style; the question is whether the source code actually does. Architectural recovery tools and code reviews exist to detect when an embodied architecture has diverged from its stated style."
+    explanation: "Many systems claim to be 'microservices' but are distributed monoliths (shared databases, synchronous chains, deployment coupling). Many systems claim to be 'layered' but have widespread layer bridging and golden-rule violations. The claim is cheap; the constraint satisfaction is what matters."
+
+  - id: 15
+    difficulty: advanced
+    question: "Why is fluency in multiple architectural styles a high-leverage skill for software engineers?"
+    answer: "Because architectural styles are an *advanced vocabulary of trade-offs*. Knowing one style well lets you build one kind of system; knowing several lets you pick the right style for each subsystem, compose them coherently in heterogeneous architectures, and recognize when a system's embodied structure has drifted from its intended style. Each style is a lens that surfaces specific quality consequences that a single-style perspective would miss."
+    explanation: "The architect who only knows microservices forces every problem into microservices. The architect who knows pipe-and-filter, pub-sub, layered, client-server, repository, and peer-to-peer can pick fit-for-purpose styles per subproblem — and recognize, name, and trade off the qualities each one buys and gives up."

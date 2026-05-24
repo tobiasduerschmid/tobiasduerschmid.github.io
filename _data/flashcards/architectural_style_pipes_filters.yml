@@ -1,0 +1,93 @@
+title: "Pipes & Filters Flashcards"
+description: "Concepts, constraints, execution models, and trade-offs of the pipe-and-filter architectural style — including the sorting paradox, filter independence, and modern uses in compilers and data pipelines."
+active: true
+cards:
+  - id: 1
+    difficulty: basic
+    question: "Name the four element types in a pipe-and-filter architecture."
+    answer: "**Filters** (the computational components that transform streams), **Pipes** (the unidirectional, order-preserving conduits that connect filter outputs to filter inputs), **Sources** (filters with no input — they originate data), and **Sinks** (filters with no output — they terminate data)."
+    explanation: "Pipes can only connect filter outputs to filter inputs (never pipe-to-pipe). Sources and sinks define the system boundaries. The classic linear pipeline source → filter → ... → filter → sink generalizes to a directed acyclic graph (tee-and-join topologies)."
+
+  - id: 2
+    difficulty: basic
+    question: "What are the two strict constraints on filters in the platonic pipe-and-filter style?"
+    answer: "**Strict Independence:** filters share no state or memory with other filters or external resources. **Agnosticism:** a filter does not know the identity of its upstream or downstream neighbors — it only knows its own input and output ports."
+    explanation: "Fairbanks's metaphor: a filter is 'a simple clerk in a locked room who receives message envelopes slipped under one door and slips another message envelope under another door.' These constraints are what enable filter reusability and natural concurrency."
+
+  - id: 3
+    difficulty: intermediate
+    question: "What is the **sorting paradox** in pipe-and-filter design?"
+    answer: "True pipe-and-filter requires *incremental* processing — filters begin producing output before fully consuming their input. But `sort` is mathematically non-incremental: the first output element cannot be produced until all input has been examined. Including `sort` in a pipeline degenerates the affected segment into batch-sequential processing, losing the style's concurrency benefit."
+    explanation: "The literature debates whether this makes the whole system a 'degenerate' pipeline or a batch-sequential architecture. The practical consequence is the same: downstream filters cannot run in parallel with sort, so the multi-core throughput win is lost on the sort-to-sink segment."
+
+  - id: 4
+    difficulty: advanced
+    question: "Compare **push**, **pull**, and **active** pipeline execution models."
+    answer: "**Push:** the source initiates and pushes data through passive downstream filters; simplest but serializes all filters into one thread. **Pull:** the sink initiates and pulls upstream; equally serial. **Active:** every filter runs in its own thread of control, pulling from its input pipe and pushing to its output pipe in a continuous loop; pipe buffers naturally synchronize producers and consumers; saturates multiple cores."
+    explanation: "Active pipelines are the only model that delivers the style's headline concurrency benefit. Push and pull are simpler to implement but pin all activity to one thread, so they cannot exploit multi-core hardware for CPU-bound work."
+
+  - id: 5
+    difficulty: intermediate
+    question: "Which quality attributes does pipe-and-filter **promote** and which does it **inhibit**?"
+    answer: "**Promotes:** modifiability and reconfigurability (filters are easily added, removed, recombined), reusability (single-purpose filters work in many pipelines), concurrency (independent filters run in parallel), and compositional analysis (system behavior is the functional composition of filters). **Inhibits:** interactivity (no rich cyclic feedback), performance (constant parse/serialize between filters), and fault tolerance (the recognized 'Achilles' heel' — no built-in recovery from mid-stream crashes)."
+    explanation: "These trade-offs explain why the style dominates batch analytics, compilers, signal processing, and ETL, and is rarely the right call for interactive UIs, real-time control loops, or transactional workflows."
+
+  - id: 6
+    difficulty: advanced
+    question: "Why does the common-data-format requirement create overhead in pipe-and-filter systems?"
+    answer: "To support arbitrary filter recomposition, every filter must agree on a shared data format (often a lowest-common-denominator like ASCII or XML). Each filter parses incoming data and re-serializes outgoing data, repeated at every pipe. Profiling often shows 50–70% of CPU spent in this conversion."
+    explanation: "Mitigations: use compact binary formats (Protobuf, Arrow), pass partially-parsed in-memory representations within one process, or fuse adjacent filters that don't transform the data. Each mitigation gives up some of the recomposability the format choice was buying."
+
+  - id: 7
+    difficulty: intermediate
+    question: "What architectural framework does Unix provide to support pipe-and-filter, and what does it abstract away?"
+    answer: "The **Standard I/O library (`stdio`)** with abstractions like `stdin`, `stdout`, `stderr`, plus the shell's `|` operator. It abstracts away process creation, scheduling, pipe buffering, back-pressure, and concurrent execution — so a C program just calls `printf` and the OS handles concurrent piped execution."
+    explanation: "Without this framework, every C developer would have to manually fork processes, create pipes, and manage concurrent reads and writes. `stdio` is the canonical example of an architecture framework that hoists a style directly into the platform."
+
+  - id: 8
+    difficulty: advanced
+    question: "What is a *broadcasting filter* (Lattanze), and what problem does it solve?"
+    answer: "A filter equipped with an Observer/event mechanism that asynchronously broadcasts errors to an external monitor — creating a hybrid event-driven/data-flow architecture. It addresses pipe-and-filter's recognized error-handling weakness by providing a side channel for failure signals without breaking the data-flow main path."
+    explanation: "Traditional pipe-and-filter offers two weak error options: special marker values in the pipe (fragile, every filter must understand them) or a single `stderr` channel (no structure). Broadcasting filters introduce structured error propagation, at the cost of architectural purity — the system is no longer pure data-flow."
+
+  - id: 9
+    difficulty: intermediate
+    question: "When is pipe-and-filter the **wrong** style to choose?"
+    answer: "When the system requires (a) **rich interactivity** with cyclic user feedback, (b) **transactional consistency** across stages, (c) **fine-grained error recovery** mid-stream, or (d) **shared state** between processing stages. Interactive UIs, real-time control loops, OLTP workloads, and stateful gaming engines are all poor fits."
+    explanation: "The style excels at *transformational* work over well-defined streams. The moment per-user session state, cyclic feedback, or transactional rollback enters the requirements, an event-driven or layered style usually serves better."
+
+  - id: 10
+    difficulty: basic
+    question: "Give four diverse real-world examples of pipe-and-filter."
+    answer: "**Unix shell pipelines** (`cat | grep | sort | uniq`), **compilers** (lexer → parser → typecheck → optimize → codegen), **batch analytics frameworks** (Spark, MapReduce, Apache Beam), and **signal-processing toolchains** (audio/video transcoding, e.g., FFmpeg filter graphs). Yahoo! Pipes and Apache NiFi popularized GUI variants."
+    explanation: "The style is also visible in CSS-preprocessor pipelines, image-processing tools (ImageMagick), build tools (Webpack, Gulp), and even HTTP middleware chains (Express, Connect). Anywhere data flows linearly through transformations with no per-step state, the style is at work."
+
+  - id: 11
+    difficulty: advanced
+    question: "What is the difference between **pipe-and-filter** and **batch-sequential** styles?"
+    answer: "**Pipe-and-filter** requires *incremental* processing — data flows continuously and filters begin producing output before fully consuming input, enabling natural concurrency. **Batch-sequential** requires each stage to fully process all input before producing any output, so stages run strictly in order with no parallelism."
+    explanation: "A pipeline with even one non-incremental filter (like `sort`) degenerates at that boundary into batch-sequential behavior. Mainframe ETL jobs of the 1970s were classically batch-sequential; modern streaming systems aim for true pipe-and-filter incrementality with techniques like windowing to bound the per-stage state."
+
+  - id: 12
+    difficulty: intermediate
+    question: "What does it mean for a filter to be implemented in an *architecturally-evident coding style*?"
+    answer: "The code makes the architectural role explicit — e.g., in Java, an abstract `Filter` base class implementing `Runnable` (one thread per filter), and a `Pipe` class wrapping a `BlockingQueue` for thread-safe data transfer. Reading the code tells you what kind of architectural element each class is."
+    explanation: "The alternative — implementing filters as ordinary classes with no explicit Filter/Pipe types — leaves the architectural role implicit and unenforceable. Architecturally-evident code prevents drift: a reviewer can immediately spot a 'filter' that secretly holds state or imports another filter."
+
+  - id: 13
+    difficulty: advanced
+    question: "Why is pipe-and-filter's fault tolerance called the *Achilles' heel* of the style?"
+    answer: "Filters share no state, so when one crashes mid-stream, the pipeline has no way to checkpoint, resynchronize, or recover. The data already in transit through the pipes is lost, the upstream filters keep producing, and the downstream filters block waiting for data that will never arrive. Recovery typically requires restarting the entire pipeline from the source."
+    explanation: "Modern data systems (Kafka Streams, Flink, Spark Streaming) address this with **stateful checkpointing** and **exactly-once semantics** that explicitly add what the platonic style omits — at the cost of architectural complexity. Pure pipe-and-filter trades fault tolerance for simplicity."
+
+  - id: 14
+    difficulty: intermediate
+    question: "What is the difference between a *pipeline* (strictly linear) and the broader pipe-and-filter style?"
+    answer: "A **pipeline** is a strictly linear sequence: source → filter → filter → ... → sink. The broader **pipe-and-filter** style permits any directed acyclic graph (DAG), including tee (one output to multiple downstream filters) and join (multiple upstream filters into one) topologies. Both share the constraints of filter independence and pipe-only-to-port connection."
+    explanation: "Most Unix shell pipelines are strictly linear. Spark, FFmpeg filter graphs, and modern stream processors are DAG-shaped. The DAG generalization keeps every architectural property (independence, agnosticism, recomposability) while allowing fan-out and fan-in for parallelism and data merging."
+
+  - id: 15
+    difficulty: advanced
+    question: "Why is pure pipe-and-filter usually combined with other styles in real systems?"
+    answer: "Because the style's inhibited qualities (interactivity, error handling, shared state) are addressed by other styles. **Hybrids:** pipe-and-filter for transformation + publish-subscribe for error broadcasting (Lattanze's broadcasting filters); pipe-and-filter for batch stages + layered architecture inside each filter; pipe-and-filter for stream processing + event sourcing for replay and recovery."
+    explanation: "Architectural styles rarely appear pure in production. Heterogeneous architectures combine multiple styles to balance competing quality attributes — pipe-and-filter contributes the transformation backbone, and other styles fill the gaps it leaves open by design."

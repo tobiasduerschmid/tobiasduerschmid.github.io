@@ -3,10 +3,6 @@ title: Scrum
 layout: sebook
 ---
 
-{% include audio_player.html src="/SEBook/process/scrum.m4a" %}
-
-<p class="audio-transcript-note"><strong>Audio transcript:</strong> The Scrum Theory section below is an equivalent text alternative for this audio summary.</p>
-
 While many organizations claim to be "Agile", the ==vast majority — historically reported around 60–80% in the annual *State of Agile* surveys — implement the Scrum framework or a Scrum/Kanban hybrid==. 
 
 # Scrum Theory
@@ -19,10 +15,6 @@ To make empiricism actionable, Scrum rests on three core pillars:
 * **Adaptation**: If inspection reveals that the process or product is unacceptable, the team must adjust immediately to minimize further issues. It is important to realize that Scrum is not a fixed process but one designed to be tailored to a team's specific domain and needs.
 
 # Scrum Roles
-{% include audio_player.html src="/SEBook/process/scrum_roles.m4a" %}
-
-<p class="audio-transcript-note"><strong>Audio transcript:</strong> The Scrum Roles section below is an equivalent text alternative for this audio summary.</p>
-
 Scrum defines three specific roles — called *accountabilities* in the 2020 Scrum Guide {% cite ScrumGuide2020 %} — that are intentionally designed to exist in tension to ensure both speed and quality:
 
 * **The Product Owner** (The Value Navigator): This role is responsible for maximizing the value of the product resulting from the team’s work. They "own" the product vision, prioritize the backlog, and typically communicate requirements through user stories.
@@ -70,3 +62,5 @@ When a product is too massive for a single Scrum Team (typically 10 or fewer peo
 ## Practice
 
 {% include quiz.html id="scrum" %}
+
+{% include flashcards.html id="scrum" %}

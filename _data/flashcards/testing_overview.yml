@@ -1,0 +1,51 @@
+title: "Testing Foundations"
+description: "Retrieval practice for the core vocabulary of software testing — regression, black-box vs. white-box, and the testing pyramid (unit, component, integration, system). Cards span Remember through Evaluate; scenario-based wherever possible."
+active: true
+cards:
+  - id: 1
+    difficulty: basic
+    question: "What is **regression testing**, and why does it matter in CI?"
+    answer: "The repetition of previously-passing tests to confirm that new changes haven't broken existing functionality. In CI it runs on every commit, so today's regression surfaces today."
+    explanation: "Without regression testing, every change carries the silent risk of breaking unrelated behavior. The discipline pays off most when the codebase is changing fast or when many engineers are working in parallel — exactly the conditions modern agile teams operate under."
+
+  - id: 2
+    difficulty: basic
+    question: "What is the difference between **black-box** and **white-box** testing?"
+    answer: "**Black-box** — tests derived from the spec, no knowledge of internals. **White-box** — tests derived from the implementation to exercise specific paths or branches."
+    explanation: "The two are complementary, not competing. Black-box keeps tests honest to the spec and resistant to implementation drift. White-box exposes paths the spec doesn't enumerate and finds coverage gaps. A healthy suite uses both — black-box for behavior, white-box for implementation-specific risk."
+
+  - id: 3
+    difficulty: intermediate
+    question: "A teammate proposes deleting all white-box tests in favor of black-box tests, saying *'we should only test the spec'*. Critique this proposal."
+    answer: "Too aggressive. Black-box alone misses real implementation risks — error paths, defensive branches, behaviors the spec is vague about. Favor black-box for behavior coverage, keep targeted white-box tests for known implementation risks."
+    explanation: "The intuition behind the proposal is right — black-box tests survive refactoring better and pin user-visible behavior. The mistake is treating it as exclusive. A pragmatic ratio is many black-box tests with a smaller number of white-box tests for known risk hotspots. Both styles benefit from the same care: strong oracles, deterministic execution, clear failure messages."
+
+  - id: 4
+    difficulty: basic
+    question: "Name the four levels of the **testing pyramid** from smallest to largest."
+    answer: "**Unit** (class/routine in isolation), **Component** (package/larger element in isolation), **Integration** (multiple modules together), **System** (full configuration with real hardware and dependencies)."
+    explanation: "The pyramid metaphor suggests that the lowest levels (unit, component) should be the most numerous because they're fast, focused, and cheap to maintain. Higher levels are slower and more brittle but exercise real assumptions the lower levels can't. A healthy strategy mixes all four — not 'unit tests only' and not 'end-to-end tests only'."
+
+  - id: 5
+    difficulty: intermediate
+    question: "A team has 500 unit tests and 0 integration or system tests. They report production bugs where 'all the units passed but they didn't work together'. Diagnose and fix."
+    answer: "Missing upper layers. Add a layer of **integration tests** for module boundaries and a thin layer of **system tests** for critical end-to-end flows."
+    explanation: "Unit tests verify individual pieces in isolation — they cannot catch contract mismatches, configuration errors, or wiring bugs between components. The healthy shape *is* a pyramid: many fast tests at the base, fewer slower tests above, a handful at the top. All-base, no-tip and all-tip, no-base are both unhealthy."
+
+  - id: 6
+    difficulty: intermediate
+    question: "Translate into the pyramid: *'A test starts the full web server, opens a real browser, logs in, navigates to checkout, and clicks Buy.'* Which level, and what does it cost/buy you?"
+    answer: "**System test** (end-to-end / E2E). *Costs*: slow, fragile, sensitive to environment, hard to debug. *Buys*: realistic verification that the deployed system works for a real user flow."
+    explanation: "System tests are valuable in small numbers for the highest-stakes flows (login, checkout, payment). Keeping them few is part of the discipline; once you have hundreds, the cost dominates the benefit and the team starts ignoring failures. The pyramid shape is a budget guide as much as a coverage guide."
+
+  - id: 7
+    difficulty: advanced
+    question: "Quantify why a regression caught in CI is *cheaper* than the same regression caught in production."
+    answer: "Cost rises roughly *order-of-magnitude* per phase: commit-time fix in minutes; QA-time fix in hours-to-days (ticketing, reassignment, re-test); production fix in hours of incident response plus rollback, user impact, and lost trust."
+    explanation: "The 'cost of change curve' is a foundational argument for fast regression testing and for shifting tests left. CI's automated regression suite isn't just convenience — it is a deliberate move to keep the cost of every bug as close to the commit that introduced it as possible. The earlier the catch, the smaller the blast radius."
+
+  - id: 8
+    difficulty: intermediate
+    question: "Give a three-question heuristic for deciding which pyramid level a new test belongs at."
+    answer: "(1) What is the smallest unit whose failure invalidates the behavior? (2) Can it be expressed without infrastructure (DBs, network, browsers)? (3) Will many similar tests be needed?"
+    explanation: "Yes to small unit + no infra + many similar → **unit**. Real cross-module behavior with infra → **integration**. End-to-end user flow only → **system**. The default is to push every test as low as it can go without losing fidelity. Tests written at the wrong level are either too slow (system test of trivial logic) or too narrow (unit test that mocks the actual concern away)."

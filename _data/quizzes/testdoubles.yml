@@ -1,0 +1,192 @@
+title: "Test Doubles Quiz"
+description: "Apply, Analyze, and Evaluate-level questions on Meszaros's test-double taxonomy — pick the right double for a scenario, recognize Spy vs Mock by failure timing, and diagnose over-mocking that tests the mock instead of the SUT."
+active: true
+questions:
+  - id: 1
+    difficulty: basic
+    type: single
+    question: |
+      You are testing an `OrderProcessor` whose `process()` method calls `paymentGateway.charge(amount)` and then returns the gateway's response. For your test, you want to force `process()` down the "gateway returned `Status.DECLINED`" branch. Which test double is the right choice?
+    options:
+      - "**Dummy** — pass any object that fits the signature; the SUT compiles and the declined branch is reachable through normal execution."
+      - "**Stub** — configured to return `Status.DECLINED`, so the SUT receives that as an indirect input and takes the declined branch."
+      - "**Mock** — pre-program the expectation that `charge(amount)` is called, and let the mock's expectation engine drive the SUT into the declined path."
+      - "**Spy** — record every call to the gateway, then in the test body assert that the declined branch executed by inspecting the recordings."
+    correct_index: 1
+    option_feedback:
+      0: |
+        A Dummy is passed but never used. Here the SUT *does* use the gateway's return value to choose its branch — a Dummy gives the SUT no value to react to, so the declined path is never exercised.
+      2: |
+        Pre-programming the call as an expectation conflates two concerns. The behavior under test is what the SUT *does* with a declined response, not whether it called the gateway. Mocks fit best when the interaction itself is the contract.
+      3: |
+        A Spy records calls for after-the-fact checking, but the test needs to *control* the value the SUT receives — not observe what it sent. Spies observe; Stubs control.
+    explanation: "The cleanest framing is: which direction of data flow do you need? *Indirect input* (the SUT consumes a DOC's output) → **Stub**. *Indirect output* (the SUT produces something through the DOC) → **Spy** or **Mock**. Here you need to force a specific indirect input — `Status.DECLINED` — so a Stub is the minimum-viable double."
+
+  - id: 2
+    difficulty: intermediate
+    type: single
+    question: |
+      A test uses a double for `notifier`. The SUT may call `notifier.send(...)` zero or more times depending on user input. The test wants to assert that *when the user is a premium member, the notifier received exactly one call with `channel="sms"`*. Which double fits best?
+    options:
+      - "**Stub** — return a canned value when `notifier.send(...)` is called so the SUT can continue without errors and the premium path runs end-to-end."
+      - "**Spy** — let the SUT run, then retrieve the recording and assert in the test body that exactly one `send` call had `channel='sms'`."
+      - "**Dummy** — the notifier output isn't consumed by the SUT, so a Dummy satisfies the signature and the test can compare its end state."
+      - "**Mock** — pre-program every possible call sequence with strict expectations, and let the mock fail if any unexpected call occurs during execution."
+    correct_index: 1
+    option_feedback:
+      0: |
+        A Stub controls indirect *inputs*. The behavior here is what the SUT *sends* — an indirect *output* — so a Stub gives you no way to verify the call pattern that the test cares about.
+      2: |
+        A Dummy fits when the test ignores the DOC's role entirely. Here the test cares precisely about whether the SUT *called* the notifier with the right channel — that interaction is the contract under test.
+      3: |
+        Pre-programming every possible call sequence would tightly couple the test to the SUT's internal flow. A Mock fits when the contract specifies a precise call sequence; for "exactly one matching call", a Spy's after-the-fact assertion is simpler and less brittle.
+    explanation: "Spies record calls quietly during the SUT's execution and let the test do the verification afterward. That fits this scenario well because the SUT's behavior is data-dependent — the test can collect everything and then assert on the *property* it cares about (exactly one SMS call), without pre-specifying the full call sequence."
+
+  - id: 3
+    difficulty: intermediate
+    type: single
+    question: |
+      A team's controller test sets up a `Mock()` for `user_repo` with `user_repo.get.return_value = User(id=1)` and then asserts on the controller's HTTP response — nothing else. The teammate insists this is a Mock; you disagree. What is the most precise classification?
+    options:
+      - "It is a **Mock** — `Mock()` is in the variable name, and the role of an object in Meszaros's taxonomy is determined by which library construct created it."
+      - "It is acting as a **Stub** — it controls indirect input (the return of `get`) but no assertion is made on its calls, so the call-recording capability is unused."
+      - "It is acting as a **Dummy** — it is passed to the controller and never used to drive logic, so it exists only to satisfy the signature."
+      - "It is acting as a **Spy** — `Mock()` automatically records calls, so even without an assertion the test object is collecting interactions in the background."
+    correct_index: 1
+    option_feedback:
+      0: |
+        The class name from the mocking library doesn't determine the role the object plays. `unittest.mock.Mock` is one library construct used to implement many of Meszaros's roles — pick the name that matches the *behavior in this test*.
+      2: |
+        A Dummy is passed but never used. Here the controller *uses* the return value to do its work — the double is doing real work in the SUT's logic, so it is not a Dummy.
+      3: |
+        Spies *do* record calls, but a Spy is identified by the test actually inspecting those recordings. This test never asserts on `user_repo` calls, so it isn't using the recording capability at all.
+    explanation: "Meszaros's roles are about *what the double does in this test*, not which library type implements it. If only return values are configured and no calls are asserted on, the role is a Stub — regardless of whether the implementation is `Mock()`, a hand-rolled subclass, or a Fake with shortcuts. Naming the role explicitly keeps tests honest and helps reviewers spot over-mocking."
+
+  - id: 4
+    difficulty: intermediate
+    type: single
+    question: |
+      You are deciding between a **Spy** and a **Mock** to verify a notification interaction. Which factor most strongly favors a **Spy**?
+    options:
+      - "The test should fail at the exact line in the SUT where the wrong call was made — pinpoint failure location is the most useful diagnostic signal."
+      - "You cannot predict all attributes of the SUT's interactions ahead of time, and you want richer assertions (grouping, sorting, set comparisons) on the recorded calls."
+      - "The SUT calls the DOC many times and the call sequence is fixed and short — every call has known parameters that can be matched in order."
+      - "You want the test body to stay terse and push verification expectations into the setup section where they can be shared across cases."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Failing at the exact call site is a *Mock* property — Mocks compare during execution. Spies fail later, at assertion time. If pinpoint failure location matters most, a Mock fits better than a Spy.
+      2: |
+        A short, fixed call sequence is a textbook fit for a Mock with strict expectations — the contract is precise and the cost of strictness is low. Spies pay off when the call shape is harder to specify up front.
+      3: |
+        Pushing expectations into setup is a stylistic feature of Mocks. Spies move assertions into the test body, which is the opposite trade-off — visible and flexible, not terse and strict.
+    explanation: "Spies and Mocks both observe indirect outputs but differ in *when* and *how strictly* they verify. Spies record everything and let the test method assert flexibly afterward — ideal when the SUT's call pattern is data-dependent or when you want assertions richer than literal matchers. Mocks specify the contract up front and fail at the moment of divergence — ideal when the call sequence is precise and short."
+
+  - id: 5
+    difficulty: advanced
+    type: single
+    question: |
+      A teammate writes this test for a checkout controller:
+
+      ```python
+      def test_checkout_success():
+          repo = Mock()
+          gateway = Mock()
+          emailer = Mock()
+          repo.find_cart.return_value = Cart(items=[...])
+          gateway.charge.return_value = ChargeResult(ok=True)
+          controller = Controller(repo, gateway, emailer)
+          controller.checkout(cart_id=42, token="tok_ok")
+          repo.find_cart.assert_called_once_with(42)
+          gateway.charge.assert_called_once_with(amount=2000, token="tok_ok")
+          emailer.send.assert_called_once_with(template="receipt")
+          repo.mark_paid.assert_called_once_with(42)
+      ```
+
+      What's the strongest critique?
+    options:
+      - "The test is fine — verifying every collaboration is a thorough way to confirm the controller did each part of its job for a successful checkout."
+      - "The test asserts on *every* collaboration, freezing the controller's internal wiring — any refactor that reorders or reroutes calls breaks the test even when behavior is preserved."
+      - "The test should use real implementations of `repo`, `gateway`, and `emailer` instead of mocks — interaction assertions on real objects are more meaningful than on test doubles."
+      - "The test needs a `setUp` method to share the three mock objects across tests in this file — the duplicated setup is the structural problem to fix first."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Verifying every collaboration is exactly what makes the test brittle. The test is now a copy of the controller's body translated into assertions — it locks down the implementation rather than the behavior.
+      2: |
+        Real implementations for everything would turn this into an end-to-end test, a different artifact with different tradeoffs. The structural problem here — over-specifying the controller's collaboration sequence — would still be present with real DOCs.
+      3: |
+        Sharing setup would tidy the syntax but would not address the core problem: the test asserts on *how* the controller works rather than *what* the controller guarantees.
+    explanation: "This is the canonical *over-mocked test*: a test that mirrors the SUT's body line-for-line and breaks under any internal refactor. The fix is to assert on outcomes the contract actually specifies — `repo.mark_paid(42)` may be one of them, but `find_cart`, `charge`, and `emailer.send` are usually *implementation choices*, not contract obligations. The strongest tests assert on results (the cart is marked paid; the response is 200) and reserve interaction assertions for the cases where the interaction itself is the behavior."
+
+  - id: 6
+    difficulty: advanced
+    type: multiple
+    question: |
+      You're testing a `ReportService` that reads from a `UserRepository` (heavy I/O). Which of the following are *good* reasons to write a **Fake** `InMemoryUserRepository` instead of using a Stub or Mock for each test? (Select all that apply.)
+    options:
+      - "Multiple tests share the same data-setup needs, so a working in-memory store would deduplicate per-test stub configuration across the whole module."
+      - "Several tests need to write data and then read it back; modeling that with a Stub would require coordinating multiple `return_value` mappings that get harder to maintain."
+      - "The Fake will run in production to handle real users — keeping the same implementation in test and production reduces drift between environments."
+      - "Tests that ask 'does this query return the right rows?' would be more realistic against a working implementation than against a Stub returning canned responses."
+    correct_indices: [0, 1, 3]
+    option_feedback:
+      0: |
+        Omitted: deduplicating shared data-setup is one of the biggest payoffs of writing a Fake. If you've configured the same five `return_value`s across a dozen tests, the Fake is already cheaper than the Stub-heavy alternative.
+      1: |
+        Omitted: write-then-read sequences are particularly painful to model with Stubs because each call has to map to the right canned response. A Fake just stores and retrieves; the test reads as if against a real repository.
+      2: |
+        A Fake is by definition *unsuitable* for production — it takes shortcuts (no durability, no concurrency safety, no transactional guarantees) that make it light and fast for tests. If you intend to ship it, it's an alternative *implementation*, not a Fake.
+      3: |
+        Omitted: query-realism is the strongest case for a Fake over a Stub. A Stub returning canned rows can mask filtering, joining, or sorting bugs that a working in-memory implementation would reveal.
+    explanation: "Fakes earn their keep when many tests share the same dependency shape and the dependency has nontrivial *behavior* the tests rely on (queries, writes, joins). A Fake stores and retrieves data like the real thing but with shortcuts (no disk, no network, no transactions) that make it fast and disposable. The cost is the upfront work to build it; the payoff is dozens of tests that are simpler, more realistic, and less coupled to canned return values."
+
+  - id: 7
+    difficulty: advanced
+    type: single
+    question: |
+      A test does this:
+
+      ```python
+      gateway = Spy()
+      controller.checkout(...)
+      assert len(gateway.recorded_calls) == 1
+      assert gateway.recorded_calls[0].method == "charge"
+      assert gateway.recorded_calls[0].amount == 2000
+      ```
+
+      The team is migrating to a Mock-based assertion library and wants to express the *same* contract. Which Mock-style assertion captures the same behavior without strengthening or weakening it?
+    options:
+      - "`gateway.assert_called()` — assert that any method on the gateway was called at least once during the SUT's execution."
+      - "`gateway.charge.assert_called_once_with(amount=2000)` — assert that `charge` was called exactly once with `amount=2000` and nothing else."
+      - "`gateway.charge.assert_called_with(amount=2000)` — assert that the *most recent* call to `charge` had `amount=2000`, with no constraint on the total number of calls."
+      - "`gateway.charge.assert_not_called()` — assert that `charge` was never called, which is the negation of the original Spy's count-of-one assertion."
+    correct_index: 1
+    option_feedback:
+      0: |
+        `assert_called()` is much weaker — it permits any number of calls to any method. The Spy assertions pinned the count to 1 and the method to `charge`; this Mock call loses both constraints.
+      2: |
+        `assert_called_with()` only checks the *most recent* call. The Spy test required exactly one call total; allowing multiple `charge` calls where only the last matches would weaken the contract substantively.
+      3: |
+        `assert_not_called()` flips the assertion — the original Spy code requires that `charge` *was* called once with the right amount. This would invert the test, not preserve it.
+    explanation: "Translating between Spy-style and Mock-style assertions is a place tests quietly drift in strength. `assert_called_once_with(...)` corresponds to *exactly one call with these arguments* — the same contract the Spy expressed. The cousins (`assert_called_with`, `assert_called`) look similar but encode different contracts. When migrating, audit each translation: a test should make the *same* claim before and after, no more and no less."
+
+  - id: 8
+    difficulty: intermediate
+    type: single
+    question: |
+      Your SUT takes a `Logger` parameter. The test cares about the SUT's return value; it doesn't care what is logged. What is the lightest double that lets the test work?
+    options:
+      - "A **Mock** with `assert_not_called()` so the test fails loudly if the SUT logs anything, since the test claims logging is irrelevant."
+      - "A **Dummy** that satisfies the type signature; the test never inspects it because logging is genuinely out of scope."
+      - "A **Spy** to record every log call just in case a future test needs to assert on the logger's history."
+      - "A **Fake** that stores logged messages in a list so they are available for inspection if the test ever grows to care about them."
+    correct_index: 1
+    option_feedback:
+      0: |
+        `assert_not_called()` would actually constrain the SUT — it would fail if the SUT logged anything, which the test explicitly doesn't care about. That tightens the contract beyond what the test wants to assert.
+      2: |
+        Recording calls 'just in case' adds coupling and noise the test doesn't need today. Add the Spy when a future test actually asserts on logs; until then, the lightest double is best.
+      3: |
+        A Fake list-logger is overkill for a test that ignores logs entirely. Building real behavior earns its keep only when many tests need it — premature investment costs more than it saves.
+    explanation: "The minimum-viable-double rule: pick the simplest double that makes the test work and adds no further coupling. A Dummy is the lightest — it exists only to satisfy the signature. Escalating to a Stub, Spy, Mock, or Fake should be justified by what the test actually needs to *verify* or *control*."

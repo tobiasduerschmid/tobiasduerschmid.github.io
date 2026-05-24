@@ -1,0 +1,125 @@
+title: "Testing Foundations Quiz"
+description: "Apply, Analyze, and Evaluate-level questions on the core vocabulary of testing — regression, black-box vs. white-box, and choosing the right level of the testing pyramid."
+active: true
+questions:
+  - id: 1
+    difficulty: basic
+    type: single
+    question: |
+      A team disables their regression suite for two months 'because it's flaky and slow', planning to fix it later. After two months, a major feature ships with three regressions in unrelated areas. What is the most accurate diagnosis?
+    options:
+      - "The regressions are coincidental — three failures in two months is within normal variance and the slow regression suite was not worth running, so the decision to disable was sound."
+      - "Disabling regression testing removed the early-warning mechanism for unrelated breakage; finding regressions late is orders of magnitude more expensive than running the suite."
+      - "The team should add more unit tests to the new feature itself — focused coverage on the new code would have prevented the cross-area regressions without needing the regression suite."
+      - "Regressions can only be found in production by real users; an automated regression suite cannot detect them because the team can't anticipate which areas the feature would affect."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Three unrelated regressions over two months without a regression suite is the pattern the suite exists to prevent. Treating it as coincidence underweights the well-documented cost-of-change curve.
+      2: |
+        New-feature unit tests cover the new feature, not unrelated areas. The whole point of regression testing is to catch breakage *outside* the area someone is currently editing.
+      3: |
+        Regression suites can't prove that all regressions are caught, but they catch a large fraction of cross-area breakage in practice. Saying 'wouldn't have caught them' is post-hoc rationalization for disabling the safety net.
+    explanation: "Regression testing's value is *cross-area early warning*. When a developer touches module A and breaks module B, the regression suite is what fails. Disabling it removes the warning system; finding the same bugs in QA or production costs orders of magnitude more — developer hours, incident response, user impact, lost trust. Slowness and flakiness are real problems, but the right response is to fix them, not to disable the suite."
+
+  - id: 2
+    difficulty: intermediate
+    type: single
+    question: |
+      You are testing a new `discount(cart, customer)` function. You write two tests:
+
+      **Test A** (black-box): `assert discount(cart_with_100_dollars(), premium()) == 10_00`
+
+      **Test B** (white-box): `assert discount._tier_lookup_table["premium"] == 0.10`
+
+      Which test is more likely to survive a refactoring that preserves user-visible behavior, and what does that tell you about how to choose between black-box and white-box tests?
+    options:
+      - "Test B — it pins down the exact implementation, which gives the most precise failure signal when the discount logic changes in any way."
+      - "Test A — it asserts at the spec boundary, so any implementation that gives premium customers a 10% discount keeps it green."
+      - "Both — they test the same business rule and are equally robust to refactoring; the only difference is which layer they target."
+      - "Neither — both will break under any refactoring of the discount module, because both test the same logic that refactoring would touch."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Pinning the implementation is what makes Test B brittle. Renaming `_tier_lookup_table`, replacing it with a rule engine, or moving the lookup to a config service all break Test B without changing what the user sees.
+      2: |
+        They look similar but couple very differently. Test A breaks only when premium customers stop getting their discount; Test B breaks on internal renames. That's a meaningful difference in maintenance cost.
+      3: |
+        Test A actually survives a wide range of refactorings — anything that preserves the rule 'premium → 10% off $100 = $10' keeps it green. Treating it as equally brittle to Test B confuses *coupling to spec* with *coupling to implementation*.
+    explanation: "Black-box tests assert at the spec boundary and let any conforming implementation pass — they survive refactoring. White-box tests pin specific internal mechanisms and break when those mechanisms change, even when behavior is preserved. The healthy ratio is many black-box tests for behavior coverage plus a smaller number of white-box tests for known implementation-specific risks (off-by-one in a private helper, defensive branch the spec doesn't enumerate)."
+
+  - id: 3
+    difficulty: intermediate
+    type: single
+    question: |
+      You are about to test the behavior: *'when a user clicks "Save" in the profile editor, their changes persist and show up on next page load.'* Which level of the testing pyramid is the natural primary home for this test?
+    options:
+      - "**Unit test** — mock the database and assert `save_profile` was called with the right arguments, since the unit is the smallest scope where the save logic lives."
+      - "**Integration test** — exercise the save endpoint against a real (or in-memory) database and assert that subsequent reads return the new values."
+      - "**System test** — open a real browser, click Save, reload the page, and assert the UI shows the new value end-to-end through every layer."
+      - "**No test needed** — the framework's ORM handles persistence and is itself well-tested, so application code does not need an additional test."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Mocking the database removes the most interesting question — *does data actually persist?* A unit test on `save_profile` is fine for input validation or business logic, but it does not verify the persistence behavior the user actually relies on.
+      2: |
+        A browser-based system test would also verify this, but at higher cost (slower, flakier, harder to debug) than necessary. Integration is the appropriate level: it exercises the persistence layer realistically without the overhead of a real browser.
+      3: |
+        Persistence is a system behavior the framework is *part of*, not something the framework guarantees you don't need to verify. Configuration mistakes, transaction boundaries, and migration drift all cause real-world persistence bugs.
+    explanation: "Match the level to the behavior. Persistence is fundamentally a cross-module behavior — your code, your ORM, and the database all have to cooperate. Integration tests exercise that cooperation directly without the cost of a full browser. Reserve system/E2E tests for the end-to-end user flows that genuinely require the deployed environment (login, checkout)."
+
+  - id: 4
+    difficulty: intermediate
+    type: single
+    question: |
+      A team's test breakdown is: 5 unit tests, 2 integration tests, 250 system (end-to-end) tests. CI takes 90 minutes; flake rate is 12%. What test-pyramid concept is being violated, and what's the structural fix?
+    options:
+      - "Nothing — system tests are the most realistic, so concentrating coverage at the most realistic level produces the strongest assurance per release."
+      - "This is the *inverted pyramid* (ice-cream cone) — most coverage at the most expensive level. The fix is to push behavior down to unit tests and reserve system tests for critical flows."
+      - "The team needs to add more system tests so the slow ones become less of a bottleneck through parallelism, and 350 system tests would parallelize better than 250."
+      - "The team needs to remove all unit tests because they don't reflect production behavior, and the existing 5 are creating false confidence that hides the production-realism gap."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Realism is real, but the cost is also real — slow, flaky, hard to debug. The pyramid shape is a *budget* recommendation: lots of cheap fast tests, fewer expensive slow ones, because total feedback time and total flake rate compound.
+      2: |
+        Adding more system tests would push runtime and flake rate higher, making CI more painful. The diagnosis points the other way — push behavior coverage down to faster, cheaper levels.
+      3: |
+        Unit tests reflect *contract* behavior, not deployment behavior — both are needed. Removing unit tests would eliminate the fastest, most diagnostic layer of the suite while leaving the slow layer intact.
+    explanation: "The ice-cream-cone anti-pattern (mostly system tests) is one of the canonical failure modes the pyramid shape exists to prevent. The deeper logic: when feedback is slow and flake rate is high, engineers stop trusting the suite and start ignoring red builds. Restoring the pyramid shape — many fast unit tests, a layer of integration tests, a handful of system tests — restores the trust and speed the suite is supposed to provide."
+
+  - id: 5
+    difficulty: advanced
+    type: multiple
+    question: |
+      A reviewer says: *'White-box testing is just an outdated form of testing — the only modern style is black-box.'* Which of the following are valid counter-arguments? (Select all that apply.)
+    options:
+      - "White-box tests can intentionally exercise defensive branches, error paths, and edge cases that the spec doesn't enumerate — these are real implementation risks the spec is silent about."
+      - "Coverage tools, which are white-box by nature, remain useful as navigational maps for finding code that hasn't been exercised at all by the black-box suite."
+      - "Black-box tests cannot detect issues the spec is silent on (e.g. a race condition in a private cache); a white-box test that exercises the cache logic directly can surface them."
+      - "Property-based testing makes white-box testing obsolete — generating thousands of inputs around the spec gives the same coverage signal that white-box ever provided, but at the spec layer."
+    correct_indices: [0, 1, 2]
+    option_feedback:
+      3: |
+        Property-based testing is powerful but addresses input variety at the spec boundary — it doesn't reach into private implementation paths the spec is silent on. The two techniques live at different layers and aren't substitutes for each other.
+    explanation: "Black-box and white-box are complementary lenses, not competing methodologies. Black-box tests survive refactoring and pin behavior at the spec boundary; white-box tests catch implementation-specific risks the spec doesn't enumerate. Coverage tools, mutation testing, and property-based testing all draw on white-box intuitions even in modern suites. The mature view is *both, in the right proportion* — not one or the other."
+
+  - id: 6
+    difficulty: advanced
+    type: single
+    question: |
+      A team adds 'CI must pass' as a release gate. Within a month, the gate is bypassed for 'urgent fixes' every other week. A retrospective reveals that CI takes 45 minutes and fails 1 run in 8 due to flake. Which two-part fix would *restore the gate's value*?
+    options:
+      - "Increase CI parallelism so it finishes in 10 minutes, and fix the flake (replace real I/O with fakes, replace sleeps with observable-condition waits, isolate shared state)."
+      - "Remove the gate — it's slowing the team down and the bypasses prove the team has settled on a higher-throughput, lower-assurance equilibrium that fits their context better."
+      - "Lower the bar — require only 50% of CI checks to pass before merge, so the team can ship around the flaky checks without bypassing the entire gate."
+      - "Add automatic retries on every failing test so transient flake disappears from CI signal and the gate becomes practically green on every reasonable PR."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Removing the gate concedes the goal — preventing broken code from shipping. The right move is to remove the *friction* (slowness, flakiness) that made the gate impractical, not the gate itself.
+      2: |
+        A 50% pass requirement removes the gate's predictive power. Half the failing checks are now allowed; the cost-of-change curve reasserts itself and regressions ship through the holes.
+      3: |
+        Automatic retries paper over flake without fixing it, and they teach the team that a red test means 'rerun and hope'. They make the suite less trustworthy over time, not more.
+    explanation: "When a release gate is consistently bypassed, the gate isn't usually wrong — its *friction* has crossed a threshold beyond which the team can't sustain it. Fix the friction: faster feedback (parallelism, smarter test selection) and lower flake rate (replace timing-sensitive code, isolate state, mock external services in the fast suite). The gate's value comes from the team's willingness to respect it, which depends on whether the gate is trustworthy and tolerably fast."
