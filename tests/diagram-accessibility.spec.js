@@ -1,5 +1,9 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const { execFileSync } = require('child_process');
+const path = require('path');
+
+const repoRoot = path.resolve(__dirname, '..');
 
 test.describe('diagram accessibility text alternatives', () => {
   test('ArchUML verbose descriptions are screen-reader only and non-interactive', async ({ page }) => {
@@ -56,6 +60,55 @@ class Customer {
     expect(styles.height).toBe('1px');
     expect(styles.overflow).toBe('hidden');
     expect(styles.clipPath).toBe('inset(50%)');
+  });
+
+  test('build-time UML describer returns brief and verbose text alternatives', () => {
+    const input = {
+      classDiagram: {
+        type: 'class',
+        spec: '@startuml\nclass Customer {\n  +id\n}\n@enduml'
+      }
+    };
+
+    const stdout = execFileSync('node', ['js/uml-describe-cli.js'], {
+      cwd: repoRoot,
+      input: JSON.stringify(input),
+      encoding: 'utf8'
+    });
+    const result = JSON.parse(stdout);
+
+    expect(result.classDiagram.brief).toContain('UML class diagram');
+    expect(result.classDiagram.brief).toContain('Customer');
+    expect(result.classDiagram.verbose.summary).toContain('UML class diagram');
+    expect(result.classDiagram.verbose.sections.length).toBeGreaterThan(0);
+  });
+
+  test('build-time UML renderer supports static page diagram types', () => {
+    const input = {
+      classDiagram: {
+        type: 'class',
+        text: '@startuml\nclass Customer\n@enduml'
+      },
+      folderTree: {
+        type: 'folder-tree',
+        text: '@startuml\nproject/\n  src/\n    app.js\n@enduml'
+      },
+      erDiagram: {
+        type: 'er',
+        text: '@startuml\nentity User {\n  id key\n}\n@enduml'
+      }
+    };
+
+    const stdout = execFileSync('node', ['js/ArchUML/uml_to_svg.js'], {
+      cwd: repoRoot,
+      input: JSON.stringify(input),
+      encoding: 'utf8'
+    });
+    const result = JSON.parse(stdout);
+
+    for (const [name, svg] of Object.entries(result)) {
+      expect(svg.trim().startsWith('<svg'), `${name} should render to SVG`).toBe(true);
+    }
   });
 
   test('Git command lab keeps graph details in GitGraph sr-only nodes only', async ({ page }) => {

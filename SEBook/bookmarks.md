@@ -3,212 +3,6 @@ title: Bookmarks
 layout: sebook
 ---
 
-<style>
-  #bookmarks-app {
-    max-width: 700px;
-    margin: 0 auto;
-    padding: 0 0 40px 0;
-  }
-
-  .bookmarks-controls {
-    background: #f8f9fa;
-    border: 1px solid #e1e4e8;
-    border-radius: 10px;
-    padding: 16px;
-    margin-bottom: 24px;
-  }
-
-  .bookmarks-toggle-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    flex-wrap: wrap;
-  }
-
-  .bookmarks-info {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  /* Info button & tooltip (matches se-gym styles) */
-  .bookmarks-info-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: #555;
-    color: #fff;
-    border: none;
-    padding: 0;
-    font-size: 0.95em;
-    font-weight: 700;
-    cursor: pointer;
-    position: relative;
-    user-select: none;
-    margin-left: 4px;
-    flex-shrink: 0;
-  }
-
-  .bookmarks-info-btn:hover,
-  .bookmarks-info-btn:focus {
-    background: #333;
-    outline: 3px solid #2774AE;
-    outline-offset: 2px;
-  }
-
-  .bookmarks-info-btn:focus:not(:focus-visible) {
-    outline: none;
-  }
-
-  .bookmarks-info-btn:focus-visible {
-    outline: 3px solid #2774AE;
-    outline-offset: 2px;
-  }
-
-  .bookmarks-info-tooltip {
-    display: none;
-    position: absolute;
-    left: -20px;
-    top: calc(100% + 8px);
-    background: #333;
-    color: #fff;
-    font-size: 1.2em;
-    font-weight: 400;
-    padding: 8px 12px;
-    border-radius: 6px;
-    width: 260px;
-    max-width: 85vw;
-    line-height: 1.4;
-    z-index: 100;
-    pointer-events: auto;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-  }
-
-  .bookmarks-info-tooltip::after {
-    content: '';
-    position: absolute;
-    bottom: 100%;
-    left: 24px;
-    border: 6px solid transparent;
-    border-bottom-color: #333;
-  }
-
-  .bookmarks-info-btn:hover .bookmarks-info-tooltip,
-  .bookmarks-info-btn:focus .bookmarks-info-tooltip,
-  .bookmarks-info-btn:focus-within .bookmarks-info-tooltip,
-  .bookmarks-info-btn.active .bookmarks-info-tooltip {
-    display: block;
-  }
-
-  #bookmarks-list-section h2 {
-    color: #2774AE;
-    font-weight: 700;
-    border-bottom: 2px solid #e1e4e8;
-    padding-bottom: 8px;
-    margin-bottom: 16px;
-    -webkit-text-stroke: 0;
-  }
-
-  .bookmark-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    border: 1px solid #e1e4e8;
-    border-radius: 8px;
-    margin-bottom: 10px;
-    background: #fff;
-    transition: background 0.2s;
-  }
-
-  .bookmark-item:hover {
-    background: #f6f8fa;
-  }
-
-  .bookmark-item a,
-  .bookmark-item a:visited {
-    color: #2774AE;
-    text-decoration: none;
-    font-weight: 500;
-    flex: 1;
-  }
-
-  .bookmark-item a:hover {
-    text-decoration: underline;
-  }
-
-  .bookmark-remove-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #999;
-    font-size: 1em;
-    padding: 2px 6px;
-    border-radius: 4px;
-    transition: color 0.2s, background 0.2s;
-    margin-left: 12px;
-    flex-shrink: 0;
-  }
-
-  .bookmark-remove-btn:hover {
-    color: #c0392b;
-    background: #ffeef0;
-  }
-
-  #no-bookmarks-msg {
-    color: #555;
-    font-style: italic;
-    margin: 0;
-  }
-
-  .bookmarks-intro {
-    color: #555;
-    margin-bottom: 20px;
-  }
-
-  html.dark-mode .bookmarks-controls {
-    background: #1e2a35;
-    border-color: #3a4a5a;
-  }
-
-  html.dark-mode .bookmarks-intro {
-    color: #b0b8c4;
-  }
-
-  html.dark-mode .bookmarks-info-btn {
-    background: #666;
-  }
-
-  html.dark-mode .bookmarks-info-btn:hover,
-  html.dark-mode .bookmarks-info-btn:focus {
-    background: #888;
-  }
-
-  html.dark-mode .bookmarks-info-btn:focus-visible {
-    outline-color: #FFD100;
-  }
-
-  html.dark-mode .bookmark-item {
-    background: #1e2a35;
-    border-color: #3a4a5a;
-  }
-
-  html.dark-mode .bookmark-item:hover {
-    background: #25343f;
-  }
-
-  html.dark-mode #no-bookmarks-msg {
-    color: #aaa;
-  }
-
-  html.dark-mode #bookmarks-list-section h2 {
-    border-bottom-color: #3a4a5a;
-  }
-</style>
 
 <div id="bookmarks-app">
   <p class="bookmarks-intro">Bookmark SEBook pages for quick access. Enable bookmarks below, then use the <i class="fa-regular fa-bookmark"></i> icon on any SEBook page to save it here.</p>
@@ -227,7 +21,7 @@ layout: sebook
     </div>
   </div>
 
-  <div id="bookmarks-list-section" style="display:none;">
+  <div id="bookmarks-list-section" class="is-hidden">
     <h2>Your Bookmarks</h2>
     <div id="bookmarks-list">
       <p id="no-bookmarks-msg">No bookmarks yet. Visit any SEBook page and click the <i class="fa-regular fa-bookmark"></i> icon to add a bookmark.</p>
@@ -245,17 +39,17 @@ layout: sebook
     var bookmarks = window.SEBookmarks.getBookmarks();
     listContainer.querySelectorAll('.bookmark-item').forEach(function (el) { el.remove(); });
     if (bookmarks.length === 0) {
-      noMsg.style.display = '';
+      noMsg.classList.remove('is-hidden');
       return;
     }
-    noMsg.style.display = 'none';
+    noMsg.classList.add('is-hidden');
     bookmarks.forEach(function (b) {
       var item = document.createElement('div');
       item.className = 'bookmark-item';
 
       var link = document.createElement('a');
       link.href = b.url;
-      link.innerHTML = '<i class="fa-solid fa-bookmark" style="margin-right:8px; color:#2774AE;"></i>' + escapeHtml(b.title);
+      link.innerHTML = '<i class="fa-solid fa-bookmark bookmark-item-icon"></i>' + escapeHtml(b.title);
 
       var removeBtn = document.createElement('button');
       removeBtn.className = 'bookmark-remove-btn';
@@ -306,13 +100,13 @@ layout: sebook
     var active = SEBookmarks.isBookmarksActive();
     toggle.checked = active;
     if (active) {
-      listSection.style.display = '';
+      listSection.classList.remove('is-hidden');
       renderBookmarks(listContainer, noMsg);
     }
 
     toggle.addEventListener('change', function () {
       SEBookmarks.setBookmarksActive(this.checked);
-      listSection.style.display = this.checked ? '' : 'none';
+      listSection.classList.toggle('is-hidden', !this.checked);
       if (this.checked) renderBookmarks(listContainer, noMsg);
     });
   }

@@ -22,7 +22,7 @@ layout: blog
         </div>
 
         <!-- Toggles -->
-        <div class="highlight-toggle-container" id="togglesContainer" style="display: none;">
+        <div class="highlight-toggle-container is-hidden" id="togglesContainer">
           <div class="toggle-control-row">
             <span class="toggle-label">Dark Mode</span>
             <label class="switch">
@@ -112,6 +112,7 @@ layout: blog
       const audioPlayers = document.getElementsByClassName('cap');
 
       // Dark mode is always available, highlights only if marks exist
+      container.classList.remove('is-hidden');
       container.style.display = 'flex';
       if (marks.length === 0) {
         highlightToggle.parentElement.parentElement.style.display = 'none';

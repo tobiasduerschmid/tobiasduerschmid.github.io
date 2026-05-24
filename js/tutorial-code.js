@@ -9653,6 +9653,7 @@
     this._lastQuizHTML = { stepIndex: stepIndex, html: html, minScore: quiz.min_score, isFinalQuiz: isFinalQuiz };
 
     if (this.quizPanelEl) {
+      this.quizPanelEl.classList.remove('is-hidden');
       this.quizPanelEl.style.display = '';
       window.SebookQuiz.mount({
         hostEl: this.quizPanelEl,
@@ -9686,7 +9687,10 @@
   };
 
   TutorialCode.prototype._hideStepQuiz = function () {
-    if (this.quizPanelEl) this.quizPanelEl.style.display = 'none';
+    if (this.quizPanelEl) {
+      this.quizPanelEl.classList.add('is-hidden');
+      this.quizPanelEl.style.display = 'none';
+    }
     if (this.stepContentWrapEl) this.stepContentWrapEl.style.display = '';
     this._renderStepControls(this.currentStep);
     if (this._popoutManager) this._popoutManager._post('quiz-hide');

@@ -26,9 +26,13 @@ pre:has(> code[class*="language-uml-"]),
 pre:has(> code.diagram-freeform),
 pre:has(> code.diagram-gitgraph),
 pre:has(> code.diagram-folder-tree),
+pre:has(> code.diagram-venn),
+pre:has(> code.diagram-er),
 pre:has(> code.language-freeform),
 pre:has(> code.language-gitgraph),
 pre:has(> code.language-folder-tree),
+pre:has(> code.language-venn),
+pre:has(> code.language-er),
 [data-uml-type]:not([data-uml-rendered="true"]) {
   display: none !important;
 }
@@ -43,7 +47,9 @@ pre:has(> code.language-folder-tree),
 .uml-deployment-diagram-container,
 .uml-freeform-diagram-container,
 .uml-gitgraph-diagram-container,
-.uml-folder-tree-diagram-container {
+.uml-folder-tree-diagram-container,
+.uml-venn-diagram-container,
+.uml-er-diagram-container {
   display: block;
   --uml-stroke: #4060a0;
   --uml-text: #222;
@@ -69,7 +75,9 @@ html.dark-mode .uml-usecase-diagram-container svg,
 html.dark-mode .uml-component-diagram-container svg,
 html.dark-mode .uml-deployment-diagram-container svg,
 html.dark-mode .uml-freeform-diagram-container svg,
-html.dark-mode .uml-folder-tree-diagram-container svg {
+html.dark-mode .uml-folder-tree-diagram-container svg,
+html.dark-mode .uml-venn-diagram-container svg,
+html.dark-mode .uml-er-diagram-container svg {
   filter: invert(1) hue-rotate(180deg);
 }
 
@@ -110,7 +118,9 @@ html.dark-mode .uml-error-msg {
 .uml-deployment-diagram-container svg,
 .uml-freeform-diagram-container svg,
 .uml-gitgraph-diagram-container svg,
-.uml-folder-tree-diagram-container svg {
+.uml-folder-tree-diagram-container svg,
+.uml-venn-diagram-container svg,
+.uml-er-diagram-container svg {
   display: block;
   margin: 0 auto;
   overflow: visible;

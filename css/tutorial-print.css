@@ -1,0 +1,745 @@
+/*
+ * tutorial-print.css
+ *
+ * Presentation rules live in CSS modules, not inline HTML style blocks.
+ * Keep light mode, dark mode (html.dark-mode), and print behavior together
+ * with the component/page rules they affect.
+ */
+
+/* Extracted from _layouts/print-tutorial.html. */
+
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+
+    .is-hidden {
+      display: none;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+
+    .skip-link {
+      position: absolute;
+      left: -9999px;
+      top: 12px;
+      z-index: 1000;
+      padding: 8px 12px;
+      background: #005587;
+      color: #fff;
+      border-radius: 4px;
+      font-weight: 700;
+      text-decoration: none;
+    }
+
+    .skip-link:focus {
+      left: 12px;
+      outline: 3px solid #ffbf00;
+      outline-offset: 2px;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 16px;
+      line-height: 1.65;
+      color: #1a1a2e;
+      background: #fff;
+      margin: 0;
+      padding: 32px 48px;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .print-header {
+      border-bottom: 2px solid #0078d4;
+      padding-bottom: 16px;
+      margin-bottom: 32px;
+    }
+
+    .print-header h1 {
+      font-size: 1.8em;
+      font-weight: 700;
+      color: #0a0a20;
+      margin: 0 0 6px;
+    }
+
+    .print-header p {
+      color: #505070;
+      margin: 0;
+      font-size: 0.95em;
+    }
+
+    .print-controls {
+      text-align: right;
+      margin-bottom: 24px;
+    }
+
+    .print-controls button {
+      padding: 8px 20px;
+      background: #0078d4;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 600;
+    }
+
+    .print-help-links {
+      display: flex;
+      justify-content: center;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin: 28px 0 6px;
+      padding-top: 18px;
+      border-top: 1px solid #d8d8e8;
+      font-size: 16px;
+    }
+
+    .step-instructions button,
+    .step-code button,
+    .step button {
+      min-width: 24px;
+      min-height: 24px;
+    }
+
+    .step {
+      margin-bottom: 40px;
+      page-break-inside: avoid;
+    }
+
+    .step-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      margin-bottom: 14px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #d0d0e0;
+    }
+
+    .step-number {
+      font-size: 0.95em;
+      font-weight: 700;
+      color: #fff;
+      background: #0078d4;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .step-title {
+      font-size: 1.15em;
+      font-weight: 700;
+      color: #0a0a20;
+      margin: 0;
+    }
+
+    .step-instructions h2 { display: none; } /* title already shown in header */
+    .step-instructions h3 {
+      font-size: 1.05em;
+      font-weight: 600;
+      color: #0060a8;
+      margin: 14px 0 6px;
+    }
+
+    .step-instructions p {
+      margin: 8px 0;
+      color: #383848;
+    }
+
+    .step-title code,
+    .step-instructions code {
+      background: #eaeaf4;
+      color: #b03010;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 0.95em;
+      font-family: 'Fira Code', Menlo, monospace;
+    }
+
+    .step-instructions pre {
+      background: #f4f4f8;
+      border: 1px solid #d8d8e8;
+      border-radius: 6px;
+      padding: 12px 16px;
+      overflow-x: auto;
+      margin: 10px 0;
+      min-height: 32px;
+    }
+
+    .step-instructions pre code {
+      background: none;
+      color: #333333;
+      padding: 0;
+      font-size: 0.95em;
+      border-radius: 0;
+    }
+
+    /* Rouge syntax highlighting — VS Light theme */
+    .step-instructions .highlight,
+    .starter-file-content .highlight {
+      background: #f4f4f8;
+      border: 1px solid #d8d8e8;
+      border-radius: 6px;
+      margin: 10px 0;
+      overflow-x: auto;
+    }
+
+    .step-instructions .highlight pre,
+    .starter-file-content .highlight pre {
+      background: transparent;
+      border: none;
+      border-radius: 0;
+      margin: 0;
+      padding: 12px 16px;
+      overflow-x: auto;
+      min-height: 32px;
+    }
+
+    .step-instructions pre.highlight,
+    .starter-file-content pre.highlight {
+      min-height: 32px;
+    }
+
+    .step-instructions .highlight pre code,
+    .starter-file-content .highlight pre code {
+      background: none;
+      color: #333333;
+      padding: 0;
+      font-size: 0.95em;
+      border-radius: 0;
+      font-family: 'Fira Code', Menlo, monospace;
+    }
+
+    .step-instructions .highlight .c,
+    .step-instructions .highlight .cm,
+    .step-instructions .highlight .c1,
+    .step-instructions .highlight .cs,
+    .starter-file-content .highlight .c,
+    .starter-file-content .highlight .cm,
+    .starter-file-content .highlight .c1,
+    .starter-file-content .highlight .cs { color: #008000; font-style: italic; }
+
+    .step-instructions .highlight .k,
+    .step-instructions .highlight .kd,
+    .step-instructions .highlight .kp,
+    .step-instructions .highlight .kr,
+    .step-instructions .highlight .kc,
+    .step-instructions .highlight .ow,
+    .starter-file-content .highlight .k,
+    .starter-file-content .highlight .kd,
+    .starter-file-content .highlight .kp,
+    .starter-file-content .highlight .kr,
+    .starter-file-content .highlight .kc,
+    .starter-file-content .highlight .ow { color: #0000ff; }
+
+    .step-instructions .highlight .kt,
+    .step-instructions .highlight .nc,
+    .step-instructions .highlight .nn,
+    .starter-file-content .highlight .kt,
+    .starter-file-content .highlight .nc,
+    .starter-file-content .highlight .nn { color: #005f73; }
+
+    .step-instructions .highlight .m,
+    .step-instructions .highlight .mf,
+    .step-instructions .highlight .mh,
+    .step-instructions .highlight .mi,
+    .step-instructions .highlight .mo,
+    .step-instructions .highlight .il,
+    .starter-file-content .highlight .m,
+    .starter-file-content .highlight .mf,
+    .starter-file-content .highlight .mh,
+    .starter-file-content .highlight .mi,
+    .starter-file-content .highlight .mo,
+    .starter-file-content .highlight .il { color: #006b35; }
+
+    .step-instructions .highlight .s,
+    .step-instructions .highlight .s1,
+    .step-instructions .highlight .s2,
+    .step-instructions .highlight .sb,
+    .step-instructions .highlight .sc,
+    .step-instructions .highlight .sd,
+    .step-instructions .highlight .se,
+    .step-instructions .highlight .sh,
+    .step-instructions .highlight .sx,
+    .step-instructions .highlight .sr,
+    .step-instructions .highlight .ss,
+    .starter-file-content .highlight .s,
+    .starter-file-content .highlight .s1,
+    .starter-file-content .highlight .s2,
+    .starter-file-content .highlight .sb,
+    .starter-file-content .highlight .sc,
+    .starter-file-content .highlight .sd,
+    .starter-file-content .highlight .se,
+    .starter-file-content .highlight .sh,
+    .starter-file-content .highlight .sx,
+    .starter-file-content .highlight .sr,
+    .starter-file-content .highlight .ss { color: #a31515; }
+
+    .step-instructions .highlight .si,
+    .starter-file-content .highlight .si { color: #000000; }
+
+    .step-instructions .highlight .nb,
+    .step-instructions .highlight .bp,
+    .step-instructions .highlight .n,
+    .step-instructions .highlight .nf,
+    .starter-file-content .highlight .nb,
+    .starter-file-content .highlight .bp,
+    .starter-file-content .highlight .n,
+    .starter-file-content .highlight .nf { color: #005f73; }
+
+    .step-instructions .highlight .nt,
+    .starter-file-content .highlight .nt { color: #a31515; }
+
+    .step-instructions .highlight .o,
+    .starter-file-content .highlight .o { color: #000000; }
+
+    .step-instructions ul,
+    .step-instructions ol {
+      padding-left: 22px;
+      margin: 8px 0;
+    }
+
+    .step-instructions li { margin: 4px 0; color: #383848; }
+
+    .step-instructions strong { color: #0a0a20; font-weight: 600; }
+
+    .step-instructions a,
+    .step-instructions a:visited { color: #0060a8; }
+
+    .step-instructions table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 10px 0;
+      font-size: 1em;
+    }
+
+    .step-instructions thead tr { background: #e8e8f4; }
+
+    .step-instructions th {
+      padding: 7px 10px;
+      text-align: left;
+      color: #111120;
+      font-weight: 600;
+      border-bottom: 2px solid #c0c0d8;
+    }
+
+    .step-instructions td {
+      padding: 6px 10px;
+      color: #383848;
+      border-bottom: 1px solid #d8d8e8;
+    }
+
+    .step-instructions tr:nth-child(even) td { background: #f8f8ff; }
+
+    .step-instructions blockquote {
+      border-left: 3px solid #0078d4;
+      margin: 10px 0;
+      padding: 8px 14px;
+      background: rgba(0,120,212,0.06);
+      border-radius: 0 4px 4px 0;
+      color: #505070;
+    }
+
+    .starter-files {
+      margin-top: 14px;
+    }
+
+    .starter-files-label {
+      font-size: 0.95em;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.07em;
+      color: #565682;
+      margin-bottom: 8px;
+    }
+
+    .starter-file {
+      margin-bottom: 10px;
+    }
+
+    .starter-file-name {
+      font-size: 0.95em;
+      font-weight: 600;
+      color: #505070;
+      background: #eaeaf4;
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px 4px 0 0;
+      border: 1px solid #d0d0e0;
+      border-bottom: none;
+      font-family: 'Fira Code', Menlo, monospace;
+    }
+
+    .starter-file pre {
+      margin: 0;
+      background: #f4f4f8;
+      border: 1px solid #d0d0e0;
+      border-radius: 0 4px 4px 4px;
+      padding: 10px 14px;
+      font-size: 0.95em;
+      font-family: 'Fira Code', Menlo, monospace;
+      line-height: 1.5;
+      overflow-x: auto;
+      white-space: pre;
+      color: #333333;
+      min-height: 32px;
+    }
+
+    .starter-file-content .highlight {
+      border-radius: 0 4px 4px 4px;
+      margin: 0;
+    }
+
+    /* ── Quiz styles ── */
+    .print-quiz {
+      margin-top: 10px;
+      border: 1px solid #c0c0d8;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .print-quiz-header {
+      background: #e8eef8;
+      border-bottom: 1px solid #c0c0d8;
+      padding: 5px 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .print-quiz-icon {
+      font-size: 0.95em;
+      color: #0060a8;
+    }
+
+    .print-quiz-title {
+      font-size: 0.95em;
+      font-weight: 700;
+      color: #0060a8;
+      margin: 0;
+    }
+
+    .print-quiz-threshold {
+      margin-left: auto;
+      font-size: 0.95em;
+      color: #505070;
+      font-weight: 600;
+    }
+
+    .print-quiz-body {
+      padding: 6px 10px;
+    }
+
+    .print-quiz-question {
+      margin-bottom: 8px;
+    }
+
+    .print-quiz-question:last-child {
+      margin-bottom: 0;
+    }
+
+    .print-quiz-q-text {
+      font-size: 0.95em;
+      font-weight: 600;
+      color: #1a1a2e;
+      margin: 0 0 3px;
+    }
+
+    .print-quiz-q-type {
+      font-size: 0.95em;
+      color: #565682;
+      margin-left: 5px;
+      font-weight: 400;
+    }
+
+    .print-quiz-options {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .print-quiz-option {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      gap: 6px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 0.95em;
+      color: #383848;
+      margin-bottom: 1px;
+    }
+
+    .print-quiz-option.correct {
+      background: #e8f5e9;
+      color: #1a472a;
+      font-weight: 600;
+    }
+
+    .print-quiz-option-feedback {
+      flex: 0 0 100%;
+      margin: 2px 0 2px 20px;
+      padding: 2px 6px;
+      border-left: 2px solid #d97706;
+      background: #fff7ed;
+      color: #7c2d12;
+      font-size: 0.95em;
+      font-weight: 400;
+      line-height: 1.3;
+      page-break-inside: avoid;
+    }
+    .print-quiz-option-feedback p { margin: 0; }
+    .print-quiz-option-feedback code {
+      background: rgba(217, 119, 6, 0.12);
+      padding: 0 3px;
+      border-radius: 2px;
+    }
+
+    .print-quiz-option-marker {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      border: 1.5px solid #aaa;
+      border-radius: 50%;
+      margin-top: 2px;
+    }
+
+    .print-quiz-option.correct .print-quiz-option-marker {
+      border-color: #2e7d32;
+      background: #2e7d32;
+      position: relative;
+    }
+
+    .print-quiz-option.correct .print-quiz-option-marker::after {
+      content: '✓';
+      color: #fff;
+      font-size: 16px;
+      position: absolute;
+      top: -3px;
+      left: 2px;
+    }
+
+    .print-quiz-option-marker.multi {
+      border-radius: 2px;
+    }
+
+    .print-quiz-explanation {
+      display: none;
+    }
+
+    /* ── Parsons problem styles ── */
+    .print-parsons-lines {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 2px;
+      counter-reset: parsons-line;
+    }
+
+    .print-parsons-line {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 2px 8px;
+      margin-bottom: 2px;
+      border-radius: 3px;
+      font-size: 0.95em;
+      font-family: 'Fira Code', Menlo, monospace;
+      background: #e8f5e9;
+      color: #1a472a;
+      counter-increment: parsons-line;
+    }
+
+    .print-parsons-line::before {
+      content: counter(parsons-line);
+      flex-shrink: 0;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #2e7d32;
+      color: #fff;
+      font-size: 0.95em;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .print-parsons-distractor {
+      background: #fbe9e7;
+      color: #7f1d1d;
+      text-decoration: line-through;
+    }
+
+    .print-parsons-distractor::before {
+      content: '✗';
+      background: #c62828;
+    }
+
+    .print-parsons-label {
+      font-size: 0.95em;
+      font-weight: 600;
+      color: #565682;
+      margin-bottom: 2px;
+    }
+
+    @media print {
+      body { padding: 16px 24px; }
+      .print-controls,
+      .print-help-links { display: none; }
+      .step { page-break-inside: avoid; }
+      a { text-decoration: none; }
+      .print-quiz { page-break-inside: avoid; }
+      .step-solution { page-break-inside: avoid; }
+    }
+
+    /* The print-tutorial layout pins `body { background: #fff }` regardless
+       of `html.dark-mode` — there is no print dark mode. Stylesheets like
+       uml-diagram.css and css/main.css ship `html.dark-mode .X` rules that
+       lighten text colour on the assumption the page bg has flipped to
+       dark, which makes those colours unreadable on the still-white print
+       body. Pin the light-mode equivalents back here so a stray
+       `html.dark-mode` class (set by other pages' theme persistence or by
+       the WCAG audit toggling dark mode for a contrast pass) doesn't
+       degrade contrast in print view. */
+    html.dark-mode .uml-gitgraph-fallback-error { color: #b00000; }
+    html.dark-mode .uml-gitgraph-fallback-empty { color: #555; }
+    html.dark-mode .sebook-figure__caption { color: #444; }
+    /* uml-diagram.css flips .sebook-figure__verbose to a dark background in
+       dark mode but leaves the body text colour to be inherited. On the print
+       layout the body stays light (`color: #383848` on .step-instructions li,
+       etc.), so dark-on-dark drops to ~1.37:1. Pin verbose to light values. */
+    html.dark-mode .sebook-figure__verbose {
+      background: #fafbfc;
+      border-color: #d6dae0;
+    }
+    html.dark-mode .sebook-figure__verbose > summary { color: #364152; }
+    html.dark-mode .sebook-figure__verbose-body { border-top-color: #e6e9ee; }
+    html.dark-mode .sebook-figure__verbose-body h4,
+    html.dark-mode .sebook-figure__verbose-body .sebook-figure__verbose-heading {
+      color: #1f2937;
+    }
+
+    @media screen and (max-width: 640px) {
+      body {
+        width: 100%;
+        max-width: none;
+        padding: 18px 14px;
+      }
+
+      .print-header h1 {
+        font-size: 1.45em;
+        line-height: 1.25;
+      }
+
+      .step-header {
+        align-items: flex-start;
+      }
+
+      main,
+      .step,
+      .step-instructions,
+      .starter-files,
+      .starter-file,
+      .starter-file-content,
+      .step-solution,
+      .print-quiz {
+        min-width: 0;
+        max-width: 100%;
+        overflow-wrap: anywhere;
+      }
+
+      .step-title {
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+
+      .step-instructions pre,
+      .starter-file pre,
+      .step-instructions .highlight pre,
+      .starter-file-content .highlight pre,
+      .step-instructions pre.highlight,
+      .starter-file-content pre.highlight,
+      .step-solution-commands pre,
+      .step-instructions pre code,
+      .starter-file pre code,
+      .step-instructions .highlight code,
+      .starter-file-content .highlight code,
+      .step-solution-commands code,
+      /* Some authors embed `<pre>` blocks in step titles, headers, or
+         instructional prose outside the canonical containers above (e.g.
+         a `<mark>` wrapping highlighted code in an `<h2.step-title>`).
+         At 320 px those leak the document past viewport (WCAG 1.4.10). */
+      .step-header pre,
+      .step-header pre code,
+      .step-header pre span,
+      .step pre,
+      .step pre code,
+      .step pre span {
+        max-width: 100%;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        word-break: normal;
+      }
+
+      .step-instructions table,
+      .starter-file-content table {
+        display: block;
+        max-width: 100%;
+        overflow-x: auto;
+      }
+
+      .step-instructions img,
+      .step-instructions svg,
+      .starter-file-content img,
+      .starter-file-content svg,
+      .starter-file-content canvas {
+        max-width: 100% !important;
+        height: auto !important;
+      }
+
+      .starter-file-name,
+      .step-instructions code,
+      .starter-file-content code {
+        overflow-wrap: anywhere;
+        word-break: break-word;
+      }
+    }
+
+    /* Solution blocks (instructor mode) */
+    .step-solution {
+      margin-top: 18px;
+      border: 2px solid #f0ad4e;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .step-solution-header {
+      background: #fcf8e3;
+      border-bottom: 1px solid #f0ad4e;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .step-solution-icon {
+      font-size: 1.1em;
+      color: #8a6d3b;
+    }
+    .step-solution-title {
+      font-size: 1em;
+      font-weight: 700;
+      color: #8a6d3b;
+      margin: 0;
+    }
+    .step-solution-explanation {
+      padding: 12px 16px;
+      font-size: 0.95em;
+      line-height: 1.5;
+      border-top: 1px solid #f0e0b8;
+    }
+    .step-solution .starter-file {
+      margin: 0;
+    }

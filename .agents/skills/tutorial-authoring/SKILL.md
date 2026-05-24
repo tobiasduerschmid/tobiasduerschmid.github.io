@@ -1051,6 +1051,21 @@ help ladder** that responds to the student's actual mistake.
   live tutorial redirects to `<live-permalink>/print?autoprint=1` (preserving
   `?instructor-mode=true` if set).
 
+Tutorial presentation is stylesheet-owned:
+
+- The live layout loads `css/tutorial.css`, `css/tutor-chat.css`,
+  `css/uml-diagram.css`, and then `css/print-light.css` so print remains
+  light even when the live tutorial is in dark mode.
+- The print layout owns its static print presentation in
+  `css/tutorial-print.css` and also loads `css/print-light.css`.
+- Root popout windows share `css/tutorial-popouts.css`; generated UML/Python
+  workspaces use `css/uml-python-workspace.css`.
+- Do not put static `<style>` blocks or `style="..."` attributes in tutorial
+  layouts, popout HTML, or tutorial Markdown. Use CSS classes for authored
+  presentation and initial hidden states; JS may toggle classes or set only
+  genuinely computed runtime values such as pane sizes, progress widths,
+  pan/zoom transforms, or user-derived CSS custom properties.
+
 ### 4.2 Page-pair convention
 
 Every real tutorial has two `.md` files in `SEBook/`:

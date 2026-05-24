@@ -1,0 +1,894 @@
+/*
+ * info-pages.css
+ *
+ * Presentation rules live in CSS modules, not inline HTML style blocks.
+ * Keep light mode, dark mode (html.dark-mode), and print behavior together
+ * with the component/page rules they affect.
+ */
+
+/* Extracted from 404.html. */
+
+  .not-found-page {
+    max-width: 760px;
+    margin: 7rem auto 5rem;
+    padding: 0 1.5rem;
+    color: var(--color-text, #1f2937);
+  }
+
+  .not-found-eyebrow {
+    display: inline-block;
+    margin-bottom: 0.75rem;
+    font-size: clamp(18px, 1em + 0.8vw, 24px);
+    font-weight: 700;
+    letter-spacing: 0;
+    color: var(--color-primary-strong, #005587);
+  }
+
+  .not-found-page h1 {
+    margin: 0 0 1rem;
+    color: var(--color-text, #111827);
+    font-size: clamp(36px, 2em + 2vw, 50px);
+    line-height: 1.15;
+    -webkit-text-stroke: 0;
+    text-shadow: none;
+  }
+
+  .not-found-page p {
+    margin-bottom: 1rem;
+    font-size: clamp(17px, 1em + 0.3vw, 20px);
+    line-height: 1.6;
+  }
+
+  .not-found-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+
+  .not-found-actions a,
+  .not-found-actions a:visited {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+    border: 2px solid var(--color-primary-strong, #005587);
+    border-radius: var(--radius-md, 8px);
+    color: var(--color-primary-strong, #005587);
+    font-size: clamp(17px, 1em + 0.3vw, 20px);
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .not-found-actions a:first-child,
+  .not-found-actions a:first-child:visited {
+    background: var(--color-primary-strong, #005587);
+    color: var(--color-text-on-primary, #ffffff);
+  }
+
+  .not-found-actions a:focus,
+  .not-found-actions a:hover {
+    outline: var(--focus-width, 3px) solid var(--focus-color, #FFD100);
+    outline-offset: 3px;
+    background: #003b5c;
+    border-color: #003b5c;
+    color: #ffffff;
+  }
+
+  html.dark-mode .not-found-page h1 {
+    -webkit-text-stroke: 0;
+    text-shadow: none;
+  }
+
+  html.dark-mode .not-found-actions a,
+  html.dark-mode .not-found-actions a:visited {
+    background: transparent;
+  }
+
+  html.dark-mode .not-found-actions a:first-child,
+  html.dark-mode .not-found-actions a:first-child:visited {
+    background: var(--color-primary-strong, #5fa8d3);
+    color: var(--color-text-on-primary, #0a0a14) !important;
+  }
+
+  html.dark-mode .not-found-actions a:focus,
+  html.dark-mode .not-found-actions a:hover {
+    background: var(--color-primary, #4da3ff);
+    color: var(--color-text-on-primary, #0a0a14) !important;
+  }
+
+  @media (max-width: 480px) {
+    .not-found-page {
+      margin-top: 4rem;
+      padding: 0 1rem;
+    }
+
+    .not-found-actions {
+      flex-direction: column;
+    }
+  }
+
+/* Extracted from cookies.html. */
+
+  .cookies-page {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+    font-size: var(--font-size-readable-min, 16px);
+  }
+  .cookies-page h1 { margin-top: 0.6em; }
+  .cookies-page h2 {
+    margin-top: 1.8em;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--color-primary, #2774AE);
+  }
+
+  .cookies-page h3 {
+    margin-top: 1.4em;
+    font-size: 1.1em;
+    color: #555;
+  }
+  html.dark-mode .cookies-page h3 { color: #bbb; }
+
+  .cookies-intro {
+    background: var(--color-surface-2, #f8f9fa);
+    border-left: 3px solid var(--color-primary, #2774AE);
+    border-radius: var(--radius-md, 8px);
+    padding: 14px 18px;
+    line-height: 1.55;
+  }
+  html.dark-mode .cookies-intro {
+    background: var(--color-surface, #1e1e1e);
+    color: #ccc;
+  }
+
+  .cookies-bulk {
+    margin: 20px 0 8px;
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .cookies-btn {
+    background: var(--color-surface, #fff);
+    border: 1px solid var(--color-border, #d1d5da);
+    border-radius: var(--radius-md, 8px);
+    padding: 8px 14px;
+    font-size: 1em;
+    cursor: pointer;
+    color: var(--color-text, #24292e);
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+  }
+  .cookies-btn:hover {
+    background: #f3f4f6;
+    border-color: #888;
+  }
+  .cookies-btn.danger {
+    background: #fdecea;
+    border-color: #f5c2c0;
+    color: #b1281e;
+  }
+  .cookies-btn.danger:hover {
+    background: #f8d7d4;
+    border-color: #d1655d;
+    color: #8a1a13;
+  }
+  html.dark-mode .cookies-btn {
+    background: #2a2a2a;
+    border-color: #555;
+    color: #e0e0e0;
+  }
+  html.dark-mode .cookies-btn:hover {
+    background: #333;
+    border-color: #888;
+  }
+  html.dark-mode .cookies-btn.danger {
+    background: #3a1f1d;
+    border-color: #6b3431;
+    color: #f5a8a3;
+  }
+  html.dark-mode .cookies-btn.danger:hover {
+    background: #4a2826;
+    border-color: #8a4946;
+  }
+
+  .storage-table {
+    width: 100%;
+    table-layout: fixed;
+    border-collapse: collapse;
+    margin: 12px 0 8px;
+    font-size: 1em;
+  }
+  .storage-table th,
+  .storage-table td {
+    border: 1px solid var(--color-divider, #e1e4e8);
+    padding: 9px 11px;
+    text-align: left;
+    vertical-align: top;
+    overflow-wrap: anywhere;
+  }
+  .storage-table th {
+    background: var(--color-surface-2, #f6f8fa);
+    font-weight: 600;
+  }
+  html.dark-mode .storage-table th,
+  html.dark-mode .storage-table td {
+    border-color: #444;
+  }
+  html.dark-mode .storage-table th { background: #1e1e1e; }
+  html.dark-mode .storage-table td { background: #161616; }
+
+  .storage-key {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 1em;
+    color: #032f62;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+  html.dark-mode .storage-key { color: #79b8ff; }
+
+  .cookies-page code {
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  /* Prefix-list footnote under each table — pre-existing inline style was
+     #666 which fell to 3.26:1 in dark mode. Class-scoped so it themes
+     properly. */
+  .cookies-prefix-note {
+    font-size: 0.95em;
+    color: #555;
+    margin-top: -4px;
+  }
+  html.dark-mode .cookies-prefix-note { color: #b0b0b0; }
+
+  .storage-value {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.95em;
+    color: #555;
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: inline-block;
+    vertical-align: middle;
+  }
+  html.dark-mode .storage-value { color: #aaa; }
+
+  .storage-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-size: 1em;
+    font-weight: 600;
+  }
+  .storage-badge.set    { background: #d4edda; color: #155724; }
+  .storage-badge.unset  { background: #e9ecef; color: #4b5563; }
+  html.dark-mode .storage-badge.set   { background: #1e3a25; color: #6cd58a; }
+  html.dark-mode .storage-badge.unset { background: #2a2a2a; color: #cbd5e1; }
+
+  .trash-btn {
+    background: transparent;
+    border: 1px solid #e1e4e8;
+    border-radius: 5px;
+    padding: 5px 9px;
+    color: #b1281e;
+    cursor: pointer;
+    font-size: 0.95em;
+    transition: background 0.12s ease;
+  }
+  .trash-btn:hover {
+    background: #fdecea;
+    border-color: #d1655d;
+  }
+  .trash-btn:disabled {
+    color: #bbb;
+    cursor: not-allowed;
+    background: transparent;
+    border-color: #eee;
+  }
+  html.dark-mode .trash-btn {
+    border-color: #555;
+    color: #f5a8a3;
+  }
+  html.dark-mode .trash-btn:hover {
+    background: #3a1f1d;
+    border-color: #8a4946;
+  }
+  html.dark-mode .trash-btn:disabled {
+    color: #555;
+    border-color: #333;
+  }
+
+  .col-action  { width: 70px;  text-align: center !important; }
+  .col-status  { width: 92px;  text-align: center !important; }
+  .col-key     { width: 28%; }
+  .col-purpose { }
+
+  .cookies-toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    background: #1f2933;
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-size: 1em;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+    z-index: 5000;
+  }
+  .cookies-toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .empty-row td {
+    color: #555f6d;
+    font-style: italic;
+    text-align: center;
+  }
+  html.dark-mode .empty-row td { color: #cbd5e1; }
+
+  @media (max-width: 560px) {
+    .cookies-page {
+      padding: 0 12px 48px;
+    }
+
+    .storage-table {
+      font-size: 1em;
+    }
+
+    .storage-table th,
+    .storage-table td {
+      padding: 8px 6px;
+    }
+
+    .col-status { width: 76px; }
+    .col-action { width: 56px; }
+
+    .storage-badge {
+      padding: 2px 5px;
+      font-size: 1em;
+    }
+  }
+
+/* Extracted from glossary.html. */
+
+  .glossary-page {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+  }
+  .glossary-page h1 { margin-top: 0.6em; }
+  .glossary-page h2 {
+    margin-top: 1.6em;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--color-primary, #2774AE);
+  }
+
+  .glossary-intro {
+    background: var(--color-surface-2, #f8f9fa);
+    border-left: 3px solid var(--color-primary, #2774AE);
+    border-radius: var(--radius-md, 8px);
+    padding: 14px 18px;
+    line-height: 1.55;
+    margin: 16px 0 24px;
+  }
+  html.dark-mode .glossary-intro {
+    background: var(--color-surface, #1e1e1e);
+    color: #ccc;
+  }
+
+  .glossary-search-wrap {
+    margin: 18px 0 24px;
+  }
+  .glossary-search-label {
+    font-weight: 600;
+    display: block;
+    margin-bottom: 6px;
+  }
+  .glossary-search {
+    width: 100%;
+    max-width: 420px;
+    padding: 9px 12px;
+    border: 1px solid var(--color-border, #c0c4ca);
+    border-radius: var(--radius-md, 8px);
+    font-size: 1em;
+    background: var(--color-surface, #ffffff);
+    color: var(--color-text, #1f2328);
+  }
+  html.dark-mode .glossary-search {
+    background: #1f1f1f;
+    border-color: var(--color-border-strong, #555);
+    color: #e8e8e8;
+  }
+  .glossary-search:focus {
+    outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);
+    outline-offset: var(--focus-offset, 2px);
+  }
+
+  .glossary-status {
+    margin: 8px 0 0;
+    color: #555;
+    font-size: 0.92em;
+    min-height: 1.2em;
+  }
+  html.dark-mode .glossary-status { color: #b0b0b0; }
+
+  .glossary-jump {
+    margin: 8px 0 24px;
+    padding: 10px 14px;
+    background: var(--color-surface-2, #f6f8fa);
+    border-radius: var(--radius-md, 8px);
+    line-height: 2;
+  }
+  html.dark-mode .glossary-jump { background: var(--color-surface, #1e1e1e); }
+  .glossary-jump a {
+    display: inline-block;
+    min-width: 26px;
+    text-align: center;
+    margin: 0 2px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .glossary-jump a:hover,
+  .glossary-jump a:focus {
+    background: #e1e7ed;
+    text-decoration: underline;
+  }
+  html.dark-mode .glossary-jump a:hover,
+  html.dark-mode .glossary-jump a:focus { background: #2a2a2a; }
+  .glossary-jump a.is-empty,
+  .glossary-jump a.is-empty:visited {
+    color: #999;
+    pointer-events: none;
+  }
+  html.dark-mode .glossary-jump a.is-empty,
+  html.dark-mode .glossary-jump a.is-empty:visited { color: #666; }
+
+  .glossary-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .glossary-entry {
+    padding: 14px 0;
+    border-bottom: 1px solid var(--color-divider, #e1e4e8);
+  }
+  html.dark-mode .glossary-entry { border-bottom-color: #2a2a2a; }
+  .glossary-entry:last-child { border-bottom: none; }
+  .glossary-entry[hidden] { display: none; }
+
+  .glossary-term {
+    font-weight: 700;
+    font-size: 1.15em;
+    margin: 0 0 4px;
+  }
+  .glossary-term .glossary-anchor {
+    color: inherit;
+    text-decoration: none;
+  }
+  .glossary-term .glossary-anchor:hover,
+  .glossary-term .glossary-anchor:focus {
+    text-decoration: underline;
+  }
+  .glossary-definition {
+    color: #333;
+    font-size: 0.98em;
+    margin: 0 0 6px;
+    font-style: italic;
+  }
+  html.dark-mode .glossary-definition { color: #c8c8c8; }
+  .glossary-description {
+    margin: 0;
+    line-height: 1.5;
+  }
+  .glossary-related {
+    margin: 6px 0 0;
+    font-size: 0.9em;
+    color: #555;
+  }
+  html.dark-mode .glossary-related { color: #b0b0b0; }
+  .glossary-related a,
+  .glossary-related a:visited { color: inherit; }
+
+  .glossary-empty {
+    margin: 24px 0;
+    padding: 18px;
+    background: var(--color-surface-2, #f6f8fa);
+    border-radius: var(--radius-md, 8px);
+    color: #555;
+    text-align: center;
+  }
+  html.dark-mode .glossary-empty {
+    background: var(--color-surface, #1e1e1e);
+    color: #b0b0b0;
+  }
+
+/* Extracted from settings.html. */
+
+  .settings-page {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+    font-size: var(--font-size-readable-min, 16px);
+  }
+
+  .settings-hero-link {
+    min-height: 38px;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4em;
+    text-decoration: none;
+  }
+
+  .settings-hero-reset {
+    min-height: 38px;
+    margin-top: 0.4em;
+  }
+  .settings-page h1 { margin-top: 0.6em; }
+  /* Section headings match the h2 pattern used on the sibling
+     /cookies/ and /glossary/ pages (framework layout, same info-nav). */
+  .settings-section-title {
+    margin-top: 1.8em;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--color-primary, #2774AE);
+  }
+
+  .settings-intro {
+    background: var(--color-surface-2, #f8f9fa);
+    border-left: 3px solid var(--color-primary, #2774AE);
+    border-radius: var(--radius-md, 8px);
+    padding: 14px 18px;
+    line-height: 1.55;
+    margin: 16px 0 24px;
+  }
+  html.dark-mode .settings-intro {
+    background: var(--color-surface, #1e1e1e);
+    color: #ccc;
+  }
+  .settings-intro p:last-child {
+    margin-bottom: 0;
+  }
+
+  .settings-form {
+    display: block;
+  }
+  .settings-section {
+    border: 0;
+    margin: 0 0 24px;
+    padding: 0;
+  }
+  .settings-section-title {
+    display: block;
+    width: 100%;
+    margin-bottom: 0;
+    font-weight: 700;
+    color: inherit;
+  }
+  .settings-list {
+    border-top: 1px solid #e1e4e8;
+  }
+  html.dark-mode .settings-list { border-top-color: #444; }
+
+  .setting-row {
+    display: grid;
+    grid-template-columns: minmax(220px, 1fr) minmax(220px, 320px);
+    gap: 18px;
+    align-items: start;
+    padding: 16px 0;
+    border-bottom: 1px solid #e1e4e8;
+  }
+  html.dark-mode .setting-row { border-bottom-color: #444; }
+
+  .setting-name {
+    font-weight: 700;
+    margin: 0 0 6px;
+    font-size: 1.05em;
+    line-height: 1.3;
+    color: inherit;
+  }
+  .setting-description {
+    margin: 0;
+    color: #393f47;
+    line-height: 1.5;
+  }
+  html.dark-mode .setting-description { color: #d8dde3; }
+  .setting-description + .setting-description { margin-top: 6px; }
+
+  .setting-control {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: stretch;
+    justify-self: stretch;
+    padding-top: 2px;
+  }
+  /* Toggle row uses the site-wide .switch component (see css/portfolio.css)
+     so it matches the SE Gym and SEBook navbar toggles. The visible
+     status text on the right of the slider tells users at a glance
+     whether the option is on or off without forcing them to read the
+     slider position. */
+  .setting-toggle-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    min-height: 32px;
+  }
+  .setting-toggle-status {
+    font-weight: 600;
+    color: #393f47;
+    min-width: 28px;
+  }
+  html.dark-mode .setting-toggle-status { color: #e8edf2; }
+  .setting-control select,
+  .setting-control input[type="text"],
+  .setting-control input[type="number"],
+  .setting-control input[type="color"] {
+    min-height: 38px;
+    border: 1px solid var(--color-border, #c0c4ca);
+    border-radius: var(--radius-md, 8px);
+    background: var(--color-surface, #fff);
+    color: var(--color-text, #1f2328);
+    box-sizing: border-box;
+    font: inherit;
+  }
+  .setting-control select,
+  .setting-control input[type="text"],
+  .setting-control input[type="number"] {
+    width: 100%;
+    padding: 8px 10px;
+  }
+  .setting-control input[type="color"] {
+    width: 64px;
+    padding: 3px;
+  }
+  html.dark-mode .setting-control select,
+  html.dark-mode .setting-control input[type="text"],
+  html.dark-mode .setting-control input[type="number"],
+  html.dark-mode .setting-control input[type="color"] {
+    background: #1f1f1f;
+    border-color: #555;
+    color: #e8e8e8;
+  }
+  .setting-control select:focus,
+  .setting-control input:focus,
+  .settings-btn:focus {
+    outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);
+    outline-offset: var(--focus-offset, 2px);
+  }
+
+  .settings-range-line {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .settings-range-line input[type="range"] {
+    flex: 1 1 auto;
+    min-width: 120px;
+    min-height: 28px;
+  }
+  .settings-value {
+    min-width: 52px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-size: 1em;
+    color: #24292e;
+  }
+  html.dark-mode .settings-value { color: #e8e8e8; }
+  .settings-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+  }
+  .settings-btn {
+    min-height: 34px;
+    border: 1px solid var(--color-border, #d1d5da);
+    border-radius: var(--radius-md, 8px);
+    background: var(--color-surface, #fff);
+    color: var(--color-text, #24292e);
+    padding: 7px 12px;
+    cursor: pointer;
+  }
+  .settings-btn:hover {
+    background: #f3f4f6;
+    border-color: #888;
+  }
+  html.dark-mode .settings-btn {
+    background: #2a2a2a;
+    border-color: #555;
+    color: #e0e0e0;
+  }
+  html.dark-mode .settings-btn:hover {
+    background: #333;
+    border-color: #888;
+  }
+
+  .settings-note {
+    margin: 4px 0 0;
+    color: #555;
+    font-size: 0.95em;
+  }
+  html.dark-mode .settings-note { color: #b0b0b0; }
+  .settings-timed-fields {
+    display: grid;
+    gap: 10px;
+  }
+  .settings-timed-field[hidden] {
+    display: none !important;
+  }
+  .settings-inline-label {
+    display: block;
+    margin-bottom: 4px;
+    color: #393f47;
+    font-weight: 600;
+  }
+  html.dark-mode .settings-inline-label { color: #e8edf2; }
+  .settings-status {
+    min-height: 1.4em;
+    margin: 18px 0 0;
+    color: #276419;
+    font-weight: 600;
+  }
+  html.dark-mode .settings-status { color: #8bd17c; }
+
+  /* Rows that hold purely informational copy (no input on the right)
+     stretch full-width so the explanation can breathe. */
+  .setting-row-full { grid-template-columns: 1fr; }
+
+  /* Skip-difficulty checkbox group (Bookmarks, gym, and progress). */
+  .settings-difficulty-fieldset {
+    border: 1px solid var(--color-border, #c0c4ca);
+    border-radius: var(--radius-md, 8px);
+    padding: 8px 12px 10px;
+    margin: 0;
+  }
+  html.dark-mode .settings-difficulty-fieldset {
+    border-color: #555;
+  }
+  .settings-difficulty-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 14px;
+  }
+  .settings-difficulty-option {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    min-height: 32px;
+    font-weight: 600;
+    color: inherit;
+    cursor: pointer;
+  }
+  .settings-difficulty-option input[type="checkbox"] {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+    min-height: 24px;
+    margin: 0;
+    accent-color: var(--color-primary, #2774AE);
+    flex-shrink: 0;
+  }
+  .settings-difficulty-option:focus-within {
+    outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  @media (max-width: 680px) {
+    .settings-page {
+      padding: 0 12px 48px;
+    }
+    .setting-row {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+  }
+
+/* Extracted from shortcuts.html. */
+
+  .shortcuts-page {
+    max-width: 920px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+  }
+  .shortcuts-page h1 { margin-top: 0.6em; }
+  .shortcuts-page h2 {
+    margin-top: 1.8em;
+    padding-bottom: 6px;
+    border-bottom: 2px solid var(--color-primary, #2774AE);
+  }
+
+  .shortcuts-intro {
+    background: var(--color-surface-2, #f8f9fa);
+    border-left: 3px solid var(--color-primary, #2774AE);
+    border-radius: var(--radius-md, 8px);
+    padding: 14px 18px;
+    line-height: 1.55;
+    margin: 16px 0 24px;
+  }
+  html.dark-mode .shortcuts-intro {
+    background: var(--color-surface, #1e1e1e);
+    color: #ccc;
+  }
+
+  .shortcuts-toc {
+    margin: 12px 0 28px;
+    padding: 12px 18px;
+    background: var(--color-surface-2, #f6f8fa);
+    border-radius: var(--radius-md, 8px);
+  }
+  html.dark-mode .shortcuts-toc { background: var(--color-surface, #1e1e1e); color: #ddd; }
+  .shortcuts-toc ul { margin: 6px 0 0; padding-left: 20px; }
+  .shortcuts-toc li { margin: 3px 0; }
+
+  .shortcuts-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0 24px;
+  }
+  .shortcuts-table caption {
+    text-align: left;
+    font-weight: 600;
+    padding: 6px 0;
+    color: #24292e;
+  }
+  html.dark-mode .shortcuts-table caption { color: #e0e0e0; }
+  .shortcuts-table th,
+  .shortcuts-table td {
+    border: 1px solid var(--color-border, #d0d7de);
+    padding: 9px 11px;
+    text-align: left;
+    vertical-align: top;
+  }
+  .shortcuts-table th {
+    background: var(--color-surface-2, #f6f8fa);
+    font-weight: 600;
+  }
+  html.dark-mode .shortcuts-table th,
+  html.dark-mode .shortcuts-table td {
+    border-color: #444;
+  }
+  html.dark-mode .shortcuts-table th { background: #1e1e1e; color: #e0e0e0; }
+  html.dark-mode .shortcuts-table td { background: #161616; color: #d0d0d0; }
+
+  .shortcuts-page kbd {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 0.95em;
+    background: #fafbfc;
+    border: 1px solid #c0c4ca;
+    border-radius: 4px;
+    padding: 2px 6px;
+    box-shadow: inset 0 -1px 0 #c0c4ca;
+    color: #1f2328;
+    white-space: nowrap;
+    display: inline-block;
+    margin: 1px 0;
+  }
+  html.dark-mode .shortcuts-page kbd {
+    background: #2a2a2a;
+    border-color: #555;
+    box-shadow: inset 0 -1px 0 #555;
+    color: #e8e8e8;
+  }
+
+  .shortcuts-keys-cell { white-space: normal; }
+  .shortcuts-keys-cell .key-sep { color: #555; padding: 0 4px; }
+  html.dark-mode .shortcuts-keys-cell .key-sep { color: #b0b0b0; }
+
+  .shortcuts-note {
+    font-size: 0.95em;
+    color: #555;
+    margin-top: -8px;
+    margin-bottom: 22px;
+  }
+  html.dark-mode .shortcuts-note { color: #b0b0b0; }

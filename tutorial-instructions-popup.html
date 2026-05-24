@@ -12,38 +12,8 @@
     })();
   </script>
   <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
-  <style>
-    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-    body { display: flex; flex-direction: column; }
-    main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-    .tip-bar {
-      display: flex; align-items: center; gap: 10px;
-      padding: 6px 12px; background: #161618; border-bottom: 1px solid #2a2a2e;
-      flex-shrink: 0; font-size: 16px; color: #aaa;
-    }
-    html:not(.dark-mode) .tip-bar { background: #f3f3f3; border-bottom-color: #d4d4d4; color: #555; }
-    /* WCAG 1.4.3: light-mode variants must clear 4.5:1 on #f3f3f3. */
-    .tip-status { margin-left: auto; }
-    .tip-status.ok { color: #4caf50; }
-    .tip-status.warn { color: #d4a017; }
-    .tip-status.bad { color: #ff8a8a; }
-    html:not(.dark-mode) .tip-status.ok { color: #1f7a35; }
-    html:not(.dark-mode) .tip-status.warn { color: #75591a; }
-    html:not(.dark-mode) .tip-status.bad { color: #c0392b; }
-    .tvm-instructions-panel {
-      flex: 1; min-height: 0; display: flex; flex-direction: column;
-      background: var(--instr-bg, #14141c); width: 100%; max-width: 100%; min-width: 0;
-    }
-    html:not(.dark-mode) .tvm-instructions-panel { background: #fafafa; }
-    .tip-overlay {
-      position: absolute; inset: 0; background: rgba(20,20,28,0.86);
-      color: #ddd; display: flex; align-items: center; justify-content: center;
-      font-size: 16px; z-index: 999;
-    }
-    html:not(.dark-mode) .tip-overlay { background: rgba(255,255,255,0.92); color: #333; }
-    .tip-wrap { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; }
-  </style>
+  <link rel="stylesheet" href="{{ '/css/tutorial-popouts.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 </head>
 <body>
   <main aria-label="Tutorial instructions popout">
@@ -54,12 +24,12 @@
   </div>
   <div class="tip-wrap">
     <div class="tvm-instructions-panel" id="panelRoot">
-      <div class="tvm-steps-view" style="flex:1; min-height:0; display:flex; flex-direction:column;">
+      <div class="tvm-steps-view tip-steps-view">
         <div class="tvm-step-nav-bar"><div class="tvm-step-nav" id="stepNavEl"></div></div>
-        <div class="tvm-step-content-wrap" style="flex:1; min-height:0; overflow:auto;">
+        <div class="tvm-step-content-wrap tip-step-content-wrap">
           <div class="tvm-step-content" id="stepContentEl"></div>
         </div>
-        <div class="tvm-quiz-panel" id="quizPanelEl" style="display:none; flex:1; min-height:0; overflow:auto;"></div>
+        <div class="tvm-quiz-panel tip-quiz-panel is-hidden" id="quizPanelEl"></div>
         <div class="tvm-step-controls-bar"><div class="tvm-step-controls" id="stepControlsEl"></div></div>
       </div>
     </div>
@@ -304,6 +274,7 @@
     function showQuiz(msg) {
       if (!window.SebookQuiz) return;
       if (els.stepContentWrap) els.stepContentWrap.style.display = 'none';
+      els.quizPanel.classList.remove('is-hidden');
       els.quizPanel.style.display = '';
       // Mirror main's "Back / Question N / M" controls so the popup feels
       // identical to main during the quiz.
@@ -328,6 +299,7 @@
       });
     }
     function hideQuiz() {
+      els.quizPanel.classList.add('is-hidden');
       els.quizPanel.style.display = 'none';
       els.quizPanel.innerHTML = '';
       if (els.stepContentWrap) els.stepContentWrap.style.display = '';

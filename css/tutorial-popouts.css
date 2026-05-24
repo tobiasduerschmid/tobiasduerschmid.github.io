@@ -1,0 +1,426 @@
+/*
+ * Shared tutorial popout presentation.
+ *
+ * The root tutorial page owns behavior. Detached popout HTML owns structure.
+ * This file owns the repeated shell styling for code, output, graph,
+ * debugger, instructions, and UML popouts.
+ */
+
+.is-hidden {
+  display: none;
+}
+
+.u-full-height {
+  height: 100%;
+}
+
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  color: #222;
+}
+
+html.dark-mode body {
+  background: #1e1e1e;
+  color: #e8e8f0;
+}
+
+main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tdp-bar,
+.tip-bar,
+.top-bar,
+.tpp-bar,
+.ttp-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 12px;
+  background: #f3f3f3;
+  border-bottom: 1px solid #d4d4d4;
+  color: #555;
+  flex-shrink: 0;
+  font-size: 16px;
+}
+
+html.dark-mode .tdp-bar,
+html.dark-mode .tip-bar,
+html.dark-mode .top-bar,
+html.dark-mode .tpp-bar,
+html.dark-mode .ttp-bar {
+  background: #161618;
+  border-bottom-color: #2a2a2e;
+  color: #aaa;
+}
+
+.kind-name,
+.tdp-title,
+.tpp-pane-name,
+.ttp-filename {
+  font-weight: 600;
+  color: #333;
+}
+
+html.dark-mode .kind-name,
+html.dark-mode .tdp-title,
+html.dark-mode .tpp-pane-name,
+html.dark-mode .ttp-filename {
+  color: #e8e8f0;
+}
+
+.kind-name,
+.tpp-pane-name {
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.stat,
+.tdp-status,
+.tip-status,
+.tpp-status,
+.ttp-status {
+  margin-left: auto;
+  color: #5a5a5a;
+  font-size: 16px;
+}
+
+.stat.ok,
+.tdp-status.ok,
+.tip-status.ok,
+.tpp-status.ok,
+.ttp-status.ok {
+  color: #1f7a35;
+}
+
+.stat.warn,
+.tdp-status.warn,
+.tip-status.warn,
+.tpp-status.warn,
+.ttp-status.warn {
+  color: #75591a;
+}
+
+.stat.bad,
+.tdp-status.bad,
+.tip-status.bad,
+.tpp-status.bad,
+.ttp-status.bad {
+  color: #c0392b;
+}
+
+html.dark-mode .stat,
+html.dark-mode .tdp-status,
+html.dark-mode .tip-status,
+html.dark-mode .tpp-status,
+html.dark-mode .ttp-status {
+  color: #a0a0a0;
+}
+
+html.dark-mode .stat.ok,
+html.dark-mode .tdp-status.ok,
+html.dark-mode .tip-status.ok,
+html.dark-mode .tpp-status.ok,
+html.dark-mode .ttp-status.ok {
+  color: #4caf50;
+}
+
+html.dark-mode .stat.warn,
+html.dark-mode .tdp-status.warn,
+html.dark-mode .tip-status.warn,
+html.dark-mode .tpp-status.warn,
+html.dark-mode .ttp-status.warn {
+  color: #d4a017;
+}
+
+html.dark-mode .stat.bad,
+html.dark-mode .tdp-status.bad,
+html.dark-mode .tip-status.bad,
+html.dark-mode .tpp-status.bad,
+html.dark-mode .ttp-status.bad {
+  color: #ff8a8a;
+}
+
+.popup-wrap,
+.tdp-wrap,
+.tip-wrap,
+.tpp-wrap,
+.ttp-wrap,
+.wrap {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.overlay,
+.tdp-overlay,
+.tip-overlay,
+.tpp-overlay,
+.ttp-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.92);
+  color: #333;
+  font-size: 16px;
+}
+
+html.dark-mode .overlay,
+html.dark-mode .tdp-overlay,
+html.dark-mode .tip-overlay,
+html.dark-mode .tpp-overlay,
+html.dark-mode .ttp-overlay {
+  background: rgba(20, 20, 28, 0.86);
+  color: #ddd;
+}
+
+.tdp-overlay {
+  background: rgba(255, 255, 255, 0.94);
+}
+
+html.dark-mode .tdp-overlay {
+  background: rgba(20, 20, 28, 0.92);
+}
+
+.ttp-overlay {
+  backdrop-filter: blur(2px);
+}
+
+.tdp-toolbar-host {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: #fafafa;
+  border-bottom: 1px solid #d4d4d4;
+  flex-shrink: 0;
+}
+
+html.dark-mode .tdp-toolbar-host {
+  background: #1a1a1c;
+  border-bottom-color: #2a2a2e;
+}
+
+.tdp-toolbar-host .tvm-debug-toolbar {
+  display: flex;
+}
+
+#debugViewRoot,
+#editorRoot {
+  flex: 1;
+  min-height: 0;
+}
+
+#debugViewRoot {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.graph-host {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 12px;
+}
+
+.graph-host .tvm-git-graph-container {
+  width: 100%;
+  min-height: 100%;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.actions button {
+  padding: 3px 10px;
+  border: 1px solid #3a3a52;
+  border-radius: 3px;
+  background: #1f1f2a;
+  color: #c8d4e4;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.3;
+  cursor: pointer;
+}
+
+.actions button.primary {
+  background: #0078d4;
+  color: #fff;
+  border-color: #0078d4;
+}
+
+.actions button.primary:hover {
+  background: #1a8be0;
+}
+
+.actions button:hover {
+  background: #303046;
+  border-color: #5a5a78;
+}
+
+.actions input.args,
+.actions select {
+  border: 1px solid #3a3a52;
+  border-radius: 3px;
+  background: #1f1f2a;
+  color: #c8d4e4;
+  font-size: 16px;
+}
+
+.actions input.args {
+  width: 200px;
+  padding: 3px 8px;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+}
+
+.actions select {
+  padding: 3px 6px;
+  font-family: inherit;
+}
+
+html:not(.dark-mode) .actions button,
+html:not(.dark-mode) .actions input.args,
+html:not(.dark-mode) .actions select {
+  background: #fff;
+  color: #333;
+  border-color: #c8c8d0;
+}
+
+html:not(.dark-mode) .actions button:hover {
+  background: #e8edf3;
+  border-color: #8a96a8;
+}
+
+.out-pre {
+  flex: 1;
+  min-height: 0;
+  margin: 0;
+  overflow: auto;
+  background: #0e0e14;
+  color: #e0e0e8;
+  font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
+  font-size: 16px;
+  line-height: 1.5;
+  padding: 12px 14px;
+  white-space: pre-wrap;
+}
+
+html:not(.dark-mode) .out-pre {
+  background: #fafafa;
+  color: #1f1f1f;
+}
+
+.preview-frame {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: #fff;
+}
+
+.tvm-instructions-panel,
+.tip-steps-view,
+.tip-quiz-panel {
+  flex: 1;
+  min-height: 0;
+}
+
+.tvm-instructions-panel,
+.tip-steps-view {
+  display: flex;
+  flex-direction: column;
+}
+
+.tvm-instructions-panel {
+  width: 100%;
+  min-width: 0;
+  max-width: 100%;
+  background: #fafafa;
+}
+
+html.dark-mode .tvm-instructions-panel {
+  background: var(--instr-bg, #14141c);
+}
+
+.tip-step-content-wrap,
+.tip-quiz-panel {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.ttp-orphan {
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: #5a5a5a;
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.ttp-orphan:not(.is-hidden) {
+  display: flex;
+}
+
+html.dark-mode .ttp-orphan {
+  color: #a0a0a0;
+}
+
+.ttp-close-btn {
+  margin-top: 14px;
+}
+
+.popup-status {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  color: #666;
+  font-size: 16px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+html.dark-mode .popup-status {
+  color: #b0b0b0;
+}
+
+#diagramContent {
+  cursor: grab;
+}
+
+#diagramContent:focus-visible {
+  outline: 3px solid #FFD100;
+  outline-offset: -3px;
+}
+
+#diagramContent.panning {
+  cursor: grabbing;
+}

@@ -10,11 +10,7 @@ layout: sebook
 <link rel="stylesheet" href="/css/git-graph.css">
 <link rel="stylesheet" href="/css/git-command-lab.css">
 <link rel="stylesheet" href="/css/fs-command-lab.css">
-<style>
-.git-graph-svg { display: block; }
-.git-graph-svg .git-graph-node { filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
-.git-graph-canvas svg { max-width: 100%; height: auto; display: block; }
-</style>
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
   (function tryInit() {

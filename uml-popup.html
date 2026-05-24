@@ -7,26 +7,11 @@
   <title>UML Diagram | Tobias Dürschmid</title>
   <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
-  <style>
-    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden; font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-    body { display: flex; flex-direction: column; }
-    .popup-wrap { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-    .popup-status {
-      flex: 1; display: flex; align-items: center; justify-content: center;
-      color: #666; font-size: 16px; line-height: 1.5; padding: 24px; text-align: center;
-    }
-    html.dark-mode .popup-status { color: #b0b0b0; }
-    html:not(.dark-mode) body { background: #fff; }
-    #diagramContent { cursor: grab; }
-    #diagramContent:focus-visible {
-      outline: 3px solid #FFD100;
-      outline-offset: -3px;
-    }
-    #diagramContent.panning { cursor: grabbing; }
-  </style>
+  <link rel="stylesheet" href="{{ '/css/tutorial-popouts.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 </head>
 <body>
-  <main class="tvm-uml-left-view" aria-label="UML diagram popout" style="height:100%">
+  <main class="tvm-uml-left-view u-full-height" aria-label="UML diagram popout">
     <h1 class="sr-only">UML Diagram popout</h1>
     <div class="tvm-diagram-toolbar">
       <button class="tvm-diagram-type-btn active" data-type="class" aria-pressed="true">Class Diagram</button>
@@ -44,7 +29,7 @@
       <button class="tvm-diagram-color-reset-btn" aria-label="Reset to default color">&#x21bb;</button>
     </div>
     <div class="popup-wrap">
-      <div class="tvm-diagram-content" id="diagramContent" style="display:none" tabindex="0"
+      <div class="tvm-diagram-content is-hidden" id="diagramContent" tabindex="0"
         aria-label="UML diagram canvas. Use arrow keys to pan, Shift plus arrow keys to pan faster, plus or minus to zoom, and Home to reset pan."
         aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight Shift+ArrowUp Shift+ArrowDown Shift+ArrowLeft Shift+ArrowRight + - Home"></div>
       <div class="popup-status" id="popupStatus" role="status" aria-live="polite">Waiting for diagram from tutorial&hellip;</div>
@@ -135,6 +120,7 @@
       if (!state) return;
       var spec = activeType === 'sequence' ? state.sequenceDiagram : state.classDiagram;
       if (!spec) {
+        contentEl.classList.add('is-hidden');
         contentEl.style.display = 'none';
         statusEl.textContent = activeType === 'sequence'
           ? 'No sequence diagram available for this step.'
@@ -143,6 +129,7 @@
         return;
       }
       statusEl.style.display = 'none';
+      contentEl.classList.remove('is-hidden');
       contentEl.style.display = '';
       contentEl.innerHTML = '';
       applyColor(customColor);

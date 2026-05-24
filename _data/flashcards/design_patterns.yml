@@ -28,10 +28,10 @@ cards:
     answer: "The tendency for developers who just learned patterns to apply them to every problem, even when simple code would be a better solution."
     explanation: "Software quality is not measured by the number of patterns used. Often, keeping the code simple and avoiding a pattern entirely is the best solution."
   - id: 6
-    difficulty: basic
-    question: "What is the Rule of Three?"
-    answer: "Do not apply a pattern until you have seen the need at least three times."
-    explanation: "This prevents speculative abstraction—creating flexibility for variation points that may never actually vary. Premature pattern application adds complexity without benefit."
+    difficulty: advanced
+    question: "A team wants to introduce Observer because one object needs to update one other object after a change. What should they evaluate before applying the pattern?"
+    answer: "Whether the dependency is truly dynamic and one-to-many, whether subscribers need to vary independently, and whether Observer's subscription machinery is cheaper than a direct method call."
+    explanation: "The useful version of the Rule of Three is design judgment, not memorizing the number three. Patterns earn their keep when they make concrete evolution cheaper; without that pressure, they are speculative abstraction."
   - id: 7
     difficulty: intermediate
     question: "What is the difference between architectural patterns and design patterns?"

@@ -62,7 +62,7 @@
         {% include header_project.html title=page.title %}
 
         <!-- Toggles -->
-        <div class="highlight-toggle-container" id="togglesContainer" style="display: none;">
+        <div class="highlight-toggle-container is-hidden" id="togglesContainer">
           <div class="toggle-control-row">
             <span class="toggle-label">Dark Mode</span>
             <label class="switch">
@@ -94,7 +94,7 @@
             </button>
           </div>
           {% if site.bookmarks %}
-          <div id="bookmarkBtnWrapper" data-page-title="{{ page.title | escape }}" style="display:none;">
+          <div id="bookmarkBtnWrapper" class="is-hidden" data-page-title="{{ page.title | escape }}">
             <button id="bookmarkPageBtn" aria-label="Bookmark this page" type="button">
               <i id="bookmarkIcon" class="fa-regular fa-bookmark" aria-hidden="true"></i>
             </button>
@@ -258,6 +258,7 @@
 
         // Dark mode is always available; page-specific toggles appear only
         // when their matching content exists.
+        container.classList.remove('is-hidden');
         container.style.display = 'flex';
         setControlVisible(highlightToggle, hasHighlights);
 
@@ -355,9 +356,11 @@
         if (!wrapper || !btn || !icon) return;
         var url = window.location.pathname;
         var title = wrapper.getAttribute('data-page-title') || document.title;
+        wrapper.classList.remove('is-hidden');
         wrapper.style.display = 'flex';
         var container = document.getElementById('togglesContainer');
-        if (container && container.style.display === 'none') {
+        if (container && (container.style.display === 'none' || container.classList.contains('is-hidden'))) {
+          container.classList.remove('is-hidden');
           container.style.display = 'flex';
         }
         function updateIcon() {

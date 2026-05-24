@@ -5,16 +5,16 @@ title: Home
 
 <div class="home">
 
-  <div class="row" style="margin: 2em 0; max-width: 100%; align-items: center; display: flex; flex-wrap: wrap; gap: 2em;">
+  <div class="row home-intro-row">
     {% if site.portrait %}
-    <div style="flex: 0 0 auto;">
+    <div class="home-avatar-col">
       <img src="{{ site.portrait | prepend: site.baseurl }}"
            alt="Portrait of {{ site.author }}"
-           style="border-radius: 50%; width: 160px; height: 160px; object-fit: cover; box-shadow: 0 2px 8px rgba(0,0,0,0.15);">
+           class="home-avatar">
     </div>
     {% endif %}
-    <div style="flex: 1 1 260px;">
-      <h1 style="margin-top: 0;">{{ site.author }}</h1>
+    <div class="home-copy-col">
+      <h1>{{ site.author }}</h1>
       <p class="lead">{{ site.subheading }}</p>
     </div>
   </div>

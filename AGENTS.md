@@ -43,6 +43,14 @@ This rule applies anywhere CSS is written — `.css` / `.scss` files, inline `<s
 
 **Verify, don't assume.** After any CSS change that touches font sizes, open the page in the browser preview and read the affected text at normal zoom. If you have to lean in, the size is wrong.
 
+## Style ownership — presentation belongs in CSS modules
+
+HTML, Liquid, and Markdown own semantic structure, content, ARIA, and stable class hooks. They must not own static presentation. Do not add page-local `<style>` blocks or `style="..."` attributes in authored pages, includes, layouts, or rendered Markdown. Move static layout, spacing, color, typography, borders, shadows, component states, dark-mode variants, and print variants into named CSS modules under `css/`.
+
+JavaScript may still toggle state classes and set values that are genuinely computed at runtime, such as progress widths, drag coordinates, measured pane sizes, SVG pan/zoom transforms, or CSS custom properties derived from user input. For authored initial visibility, prefer `.is-hidden` or a component state class over inline `display:none`.
+
+Every browser-facing stylesheet change must keep the base, `html.dark-mode`, and `@media print` behavior coherent. Print pages are always light mode, regardless of the user's saved theme; load `css/print-light.css` after page-specific styles whenever a layout adds styles after the shared head.
+
 ## Project skills
 
 The project keeps a set of detailed, evidence-based playbooks in [`.agents/skills/`](./.agents/skills/). Claude Code auto-loads these via its skill mechanism, but other agents must read them explicitly when their triggers apply. **Before starting work that matches a trigger below, read the corresponding `SKILL.md` in full.**
@@ -51,6 +59,7 @@ For Claude Code only, the same files are also reachable via `.claude/skills/` (a
 
 | Trigger — start work that involves… | Read this skill |
 | --- | --- |
+| Any code edit, refactor, new module, file move, abstraction choice, CSS-module split, JS state change, or source-structure decision. Use it especially before moving presentation between HTML, CSS, and JS so concerns stay separated and duplication goes down instead of sideways. | [`.agents/skills/maintainable-code/SKILL.md`](./.agents/skills/maintainable-code/SKILL.md) |
 | Any HTML / CSS / JS / SVG / include / layout change that affects what reaches the browser, or any Markdown change that adds / removes / restructures an image, link, heading level, table, embedded HTML / SVG, inline `<style>`, Liquid include, or embedded widget. **Every triggering change must keep every reachable page WCAG 2.2 Level AA compliant** — full criteria reference, project-specific gotchas, and verification steps. Pure-prose Markdown edits (typo fixes, sentence rewordings, paragraph rewrites that only change words inside existing paragraphs / list items / code blocks) are **excluded** — the AA rule still holds, but the skill does not need to be loaded. | [`.agents/skills/wcag-aa-compliance/SKILL.md`](./.agents/skills/wcag-aa-compliance/SKILL.md) |
 | Any color / CSS / SCSS / inline `<style>` / JS-injected stylesheet / SVG `fill`/`stroke` change. **Every CSS change must work in both light and dark mode.** | [`.agents/skills/light-dark-mode/SKILL.md`](./.agents/skills/light-dark-mode/SKILL.md) |
 | Browser persistence: cookies, `localStorage`, `sessionStorage`, IndexedDB, Cache API, Service Worker registration, BroadcastChannel, File System Access API, third-party storage libs (`localforage`, `idb`, `js-cookie`, `Dexie`). The user-facing storage inventory at `/cookies/` and user-facing preferences page at `/settings/` must stay in sync. | [`.agents/skills/cookie-storage-tracker/SKILL.md`](./.agents/skills/cookie-storage-tracker/SKILL.md) |

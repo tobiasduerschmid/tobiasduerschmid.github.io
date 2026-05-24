@@ -6,14 +6,10 @@
   Usage: {% include carousel_pause.html target="#my-carousel-id" %}
 {% endcomment %}
 <button type="button"
-  class="carousel-pause-btn"
+  class="carousel-pause-btn carousel-pause"
   data-carousel-pause-target="{{ include.target }}"
   aria-pressed="false"
-  aria-label="Pause carousel auto-advance"
-  style="position:absolute; bottom:8px; right:8px; z-index:20;
-         background:#111827; color:#fff; border:0;
-         min-width:44px; min-height:44px; padding:8px 10px;
-         border-radius:4px; font-size:0.95em; cursor:pointer;">
+  aria-label="Pause carousel auto-advance">
   <span aria-hidden="true" class="carousel-pause-btn__icon">⏸</span>
   <span class="sr-only carousel-pause-btn__label">Pause</span>
 </button>

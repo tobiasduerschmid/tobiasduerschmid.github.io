@@ -26,6 +26,8 @@ html.print-light-mode.dark-mode .uml-component-diagram-container svg,
 html.print-light-mode.dark-mode .uml-deployment-diagram-container svg,
 html.print-light-mode.dark-mode .uml-freeform-diagram-container svg,
 html.print-light-mode.dark-mode .uml-folder-tree-diagram-container svg,
+html.print-light-mode.dark-mode .uml-venn-diagram-container svg,
+html.print-light-mode.dark-mode .uml-er-diagram-container svg,
 html.print-light-mode.dark-mode .uml-sym svg {
   filter: none !important;
 }
@@ -73,6 +75,29 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
   body.sebook-layout:not(.se-gym-page) .quiz-outer-wrap,
   body.sebook-layout:not(.se-gym-page) .flashcards-outer-wrap {
     display: block !important;
+  }
+
+  .quiz-container .option-checkbox,
+  .tvm-quiz-panel .option-checkbox,
+  .workout-quiz-card .option-checkbox {
+    background: #fff !important;
+    border-color: #2774AE !important;
+    box-shadow: none !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .quiz-container .quiz-option.selected .option-checkbox,
+  .tvm-quiz-panel .quiz-option.selected .option-checkbox,
+  .workout-quiz-card .quiz-option.selected .option-checkbox {
+    background: #fff !important;
+    border-color: #2774AE !important;
+  }
+
+  .quiz-container .quiz-option.selected .option-checkbox::after,
+  .tvm-quiz-panel .quiz-option.selected .option-checkbox::after,
+  .workout-quiz-card .quiz-option.selected .option-checkbox::after {
+    border-color: #2774AE !important;
   }
 
   html,
@@ -196,6 +221,8 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
   html.dark-mode .uml-deployment-diagram-container svg,
   html.dark-mode .uml-freeform-diagram-container svg,
   html.dark-mode .uml-folder-tree-diagram-container svg,
+  html.dark-mode .uml-venn-diagram-container svg,
+  html.dark-mode .uml-er-diagram-container svg,
   html.dark-mode .uml-sym svg {
     filter: none !important;
   }

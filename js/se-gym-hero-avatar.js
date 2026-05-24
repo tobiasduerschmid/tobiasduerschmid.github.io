@@ -2943,6 +2943,116 @@
     });
   }
 
+  function isPracticeHeroWrap(el) {
+    return !!(el && el.nodeType === 1 && el.classList &&
+      (el.classList.contains('quiz-outer-wrap') || el.classList.contains('flashcards-outer-wrap')));
+  }
+
+  function hasPracticeHeroGroupAncestor(el) {
+    var node = el ? el.parentElement : null;
+    while (node) {
+      if (node.classList && node.classList.contains('sebook-practice-hero-group')) return true;
+      node = node.parentElement;
+    }
+    return false;
+  }
+
+  function directPracticeHeroSide(wrap) {
+    if (!wrap) return null;
+    for (var i = 0; i < wrap.children.length; i++) {
+      var child = wrap.children[i];
+      if (child.classList &&
+          (child.classList.contains('quiz-avatar-side') || child.classList.contains('flashcards-avatar-side'))) {
+        return child;
+      }
+    }
+    return null;
+  }
+
+  function pickPracticeHeroSide(run) {
+    var firstSide = null;
+    for (var i = 0; i < run.length; i++) {
+      var side = directPracticeHeroSide(run[i]);
+      if (!side) continue;
+      if (!firstSide) firstSide = side;
+      if (side.querySelector('[data-gym-hero-svg]')) return side;
+    }
+    return firstSide;
+  }
+
+  function mountSharedPracticeHero(side) {
+    if (!side || side.querySelector('[data-gym-hero-svg]')) return;
+    mountSavedAvatar(side);
+  }
+
+  function groupPracticeHeroRun(run) {
+    if (!run || run.length < 2) return;
+    var parent = run[0].parentNode;
+    var sharedSide = pickPracticeHeroSide(run);
+    if (!parent || !sharedSide) return;
+
+    var group = document.createElement('div');
+    group.className = 'sebook-practice-hero-group';
+
+    var boxes = document.createElement('div');
+    boxes.className = 'sebook-practice-boxes';
+
+    parent.insertBefore(group, run[0]);
+    group.appendChild(boxes);
+
+    for (var i = 0; i < run.length; i++) {
+      var wrap = run[i];
+      var side = directPracticeHeroSide(wrap);
+      wrap.setAttribute('data-practice-hero-grouped', 'true');
+      if (side && side !== sharedSide) side.parentNode.removeChild(side);
+      boxes.appendChild(wrap);
+    }
+
+    sharedSide.classList.add('sebook-practice-hero-side');
+    sharedSide.setAttribute('data-practice-hero-shared', 'true');
+    group.appendChild(sharedSide);
+    mountSharedPracticeHero(sharedSide);
+  }
+
+  function consolidatePracticeHeroGroups(root) {
+    if (!root || !root.querySelectorAll) return;
+    var wraps = root.querySelectorAll('.quiz-outer-wrap, .flashcards-outer-wrap');
+    for (var i = 0; i < wraps.length; i++) {
+      var wrap = wraps[i];
+      if (!isPracticeHeroWrap(wrap) ||
+          wrap.getAttribute('data-practice-hero-grouped') === 'true' ||
+          hasPracticeHeroGroupAncestor(wrap)) {
+        continue;
+      }
+
+      var run = [wrap];
+      var next = wrap.nextElementSibling;
+      while (isPracticeHeroWrap(next) &&
+          next.getAttribute('data-practice-hero-grouped') !== 'true' &&
+          !hasPracticeHeroGroupAncestor(next)) {
+        run.push(next);
+        next = next.nextElementSibling;
+      }
+
+      groupPracticeHeroRun(run);
+    }
+  }
+
+  function initPracticeHeroGroups() {
+    function run() {
+      consolidatePracticeHeroGroups(document);
+      window.setTimeout(function () {
+        consolidatePracticeHeroGroups(document);
+      }, 250);
+    }
+
+    if (document.readyState === 'complete') {
+      run();
+    } else {
+      window.addEventListener('load', run);
+    }
+  }
+
   window.HeroAvatar = {
     STORAGE_KEY: STORAGE_KEY,
     SCHEMA_VERSION: SCHEMA_VERSION,
@@ -2967,6 +3077,7 @@
     applyAvatarToScope: applyAvatarToScope,
     applyToSvg: applyToSvg,
     mountSavedAvatar: mountSavedAvatar,
+    consolidatePracticeHeroGroups: consolidatePracticeHeroGroups,
     isValidEmblem: isValidEmblem
   };
 
@@ -5151,6 +5262,7 @@
     initAvatar();
     initModal();
     initButtonVisibility();
+    initPracticeHeroGroups();
   }
 
   if (document.readyState === 'loading') {

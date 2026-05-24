@@ -834,8 +834,8 @@ That is why Information Hiding should be evaluated under **change**, not only un
 
 A modern extension of Parnas's idea, due to **John Ousterhout** in *A Philosophy of Software Design* {% cite Ousterhout2021PSD %}, is the distinction between **deep** and **shallow** modules.
 
-<div style="display:flex;justify-content:center;margin:18px 0;">
-<svg xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Side-by-side comparison: a deep module has a small interface above a large hidden implementation, while a shallow module has a wide interface above a tiny implementation and hides little." viewBox="0 0 820 360" width="100%" style="max-width:820px;height:auto;font-family:'Segoe UI',system-ui,-apple-system,sans-serif;">
+<div class="deep-module-diagram-wrap">
+<svg class="deep-module-diagram" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Side-by-side comparison: a deep module has a small interface above a large hidden implementation, while a shallow module has a wide interface above a tiny implementation and hides little." viewBox="0 0 820 360" width="100%">
   <title>Deep and shallow module comparison</title>
   <defs>
     <filter id="ih-node-shadow" x="-14%" y="-14%" width="144%" height="156%" color-interpolation-filters="sRGB">

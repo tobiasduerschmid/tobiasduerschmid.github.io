@@ -7,16 +7,6 @@ no_auto_uml: true
 
 <p class="uml-reference-intro">Diagrams render after the page loads. Scroll to see each one.</p>
 
-<style>
-  .uml-reference-intro {
-    color: #555;
-    font-style: italic;
-    margin-bottom: 1.5em;
-  }
-  html.dark-mode .uml-reference-intro {
-    color: #b0b8c4;
-  }
-</style>
 
 {% capture ref_md %}{% include REFERENCE.md %}{% endcapture %}
 {% assign ref_md = ref_md | replace: '](../git-graph.js)', '](/js/git-graph.js)' %}
@@ -60,10 +50,6 @@ no_auto_uml: true
 
     var ph = document.createElement('div');
     ph.className = 'uml-lazy-placeholder';
-    // `currentColor` for fg and a tinted-ancestor border keeps the placeholder
-    // legible in both light and dark mode; the previous inline #555 / #d0d0d0
-    // hard-coded the light theme and failed contrast in dark mode.
-    ph.style.cssText = 'min-height:60px;padding:12px;color:currentColor;opacity:0.85;font-size:0.95em;border:1px solid currentColor;border-radius:4px;margin:0.5em 0;';
     ph.textContent = 'Diagram loading…';
     pre.parentElement.replaceChild(ph, pre);
     lazies.push({ el: ph, type: type, spec: spec, rendered: false });
@@ -75,7 +61,7 @@ no_auto_uml: true
     var R = window[TYPE_MAP[item.type]];
     if (!R || typeof R.render !== 'function') { item.el.textContent = ''; return; }
     item.el.textContent = '';
-    item.el.style.cssText = '';
+    item.el.classList.remove('uml-lazy-placeholder');
     try { R.render(item.el, item.spec); }
     catch (e) { item.el.textContent = '[Render error: ' + e.message + ']'; }
   }

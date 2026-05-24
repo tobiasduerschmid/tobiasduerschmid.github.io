@@ -12,72 +12,8 @@
     })();
   </script>
   <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
-  <style>
-    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-    body { display: flex; flex-direction: column; background: #1e1e1e; color: #e8e8f0; }
-    main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-    html:not(.dark-mode) body { background: #fff; color: #222; }
-    .top-bar {
-      display: flex; align-items: center; gap: 8px;
-      padding: 6px 12px; background: #161618; border-bottom: 1px solid #2a2a2e;
-      flex-shrink: 0; font-size: 16px;
-    }
-    html:not(.dark-mode) .top-bar { background: #f3f3f3; border-bottom-color: #d4d4d4; }
-    .kind-name { font-weight: 600; color: #e8e8f0; text-transform: uppercase;
-      letter-spacing: 0.04em; font-size: 16px; }
-    html:not(.dark-mode) .kind-name { color: #333; }
-    .stat { color: #5a5a5a; font-size: 16px; margin-left: auto; }
-    .stat.ok { color: #1f7a35; }
-    .stat.warn { color: #75591a; }
-    .stat.bad { color: #c0392b; }
-    html.dark-mode .stat { color: #a0a0a0; }
-    html.dark-mode .stat.ok { color: #4caf50; }
-    html.dark-mode .stat.warn { color: #d4a017; }
-    html.dark-mode .stat.bad { color: #ff8a8a; }
-    .actions { display: flex; align-items: center; gap: 6px; }
-    .actions button {
-      padding: 3px 10px; border: 1px solid #3a3a52; border-radius: 3px;
-      background: #1f1f2a; color: #c8d4e4; font-size: 16px; line-height: 1.3;
-      cursor: pointer; font-family: inherit;
-    }
-    .actions button.primary { background: #0078d4; color: #fff; border-color: #0078d4; }
-    .actions button.primary:hover { background: #1a8be0; }
-    .actions button:hover { background: #303046; border-color: #5a5a78; }
-    .actions input.args {
-      padding: 3px 8px; border: 1px solid #3a3a52; border-radius: 3px;
-      background: #1f1f2a; color: #c8d4e4; font-family: 'Fira Code','Cascadia Code',Menlo,monospace;
-      font-size: 16px; width: 200px;
-    }
-    .actions select {
-      padding: 3px 6px; border: 1px solid #3a3a52; border-radius: 3px;
-      background: #1f1f2a; color: #c8d4e4; font-size: 16px; font-family: inherit;
-    }
-    html:not(.dark-mode) .actions button {
-      background: #fff; color: #333; border-color: #c8c8d0;
-    }
-    html:not(.dark-mode) .actions button:hover {
-      background: #e8edf3; border-color: #8a96a8;
-    }
-    html:not(.dark-mode) .actions input.args,
-    html:not(.dark-mode) .actions select {
-      background: #fff; color: #333; border-color: #c8c8d0;
-    }
-    .wrap { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; }
-    .overlay {
-      position: absolute; inset: 0; background: rgba(20,20,28,0.86); color: #ddd;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px; z-index: 999;
-    }
-    html:not(.dark-mode) .overlay { background: rgba(255,255,255,0.92); color: #333; }
-    .out-pre {
-      flex: 1; min-height: 0; margin: 0; overflow: auto;
-      background: #0e0e14; color: #e0e0e8; font-family: 'Fira Code', 'Cascadia Code', Menlo, monospace;
-      font-size: 16px; line-height: 1.5; padding: 12px 14px; white-space: pre-wrap;
-    }
-    html:not(.dark-mode) .out-pre { background: #fafafa; color: #1f1f1f; }
-    .preview-frame { flex: 1; min-height: 0; border: 0; width: 100%; height: 100%; background: #fff; }
-  </style>
+  <link rel="stylesheet" href="{{ '/css/tutorial-popouts.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 </head>
 <body>
   <main aria-label="Tutorial output popout">
@@ -85,22 +21,22 @@
   <div class="top-bar">
     <span class="kind-name" id="kindEl">&hellip;</span>
     <div class="actions" id="actionsEl">
-      <input type="text" class="args" id="argsEl" placeholder="Program args…" aria-label="Program arguments" style="display:none">
-      <select id="streamFilterEl" aria-label="Filter output streams" style="display:none">
+      <input type="text" class="args is-hidden" id="argsEl" placeholder="Program args…" aria-label="Program arguments">
+      <select id="streamFilterEl" class="is-hidden" aria-label="Filter output streams">
         <option value="all">All Output</option>
         <option value="stdout">Stdout Only</option>
         <option value="stderr">Stderr Only</option>
       </select>
       <button id="runBtn" class="primary" aria-label="Run current file">▶ Run</button>
-      <button id="stopBtn" style="display:none" aria-label="Stop execution">◼ Stop</button>
+      <button id="stopBtn" class="is-hidden" aria-label="Stop execution">◼ Stop</button>
       <button id="clearBtn" aria-label="Clear output">Clear</button>
-      <button id="refreshBtn" style="display:none" aria-label="Rebuild preview">↻ Refresh</button>
+      <button id="refreshBtn" class="is-hidden" aria-label="Rebuild preview">↻ Refresh</button>
     </div>
     <span class="stat" id="statusEl" role="status" aria-live="polite">Connecting&hellip;</span>
   </div>
   <div class="wrap">
-    <pre class="out-pre" id="outEl" style="display:none"></pre>
-    <iframe class="preview-frame" id="frameEl" title="Live tutorial preview" style="display:none"
+    <pre class="out-pre is-hidden" id="outEl"></pre>
+    <iframe class="preview-frame is-hidden" id="frameEl" title="Live tutorial preview"
       sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
     <div class="overlay" id="overlayEl">Waiting for tutorial&hellip;</div>
   </div>
@@ -157,17 +93,22 @@
       // has no header controls (matches main's terminal panel).
       var preview = k === 'preview';
       var terminal = k === 'terminal';
-      els.run.style.display = preview || terminal ? 'none' : '';
-      els.stop.style.display = preview || terminal ? 'none' : els.stop.style.display;
-      els.clear.style.display = preview || terminal ? 'none' : '';
-      els.refresh.style.display = preview ? '' : 'none';
+      setVisible(els.run, !(preview || terminal));
+      setVisible(els.clear, !(preview || terminal));
+      setVisible(els.refresh, preview);
+      if (preview || terminal) setVisible(els.stop, false);
+    }
+    function setVisible(el, visible) {
+      if (!el) return;
+      el.classList.toggle('is-hidden', !visible);
+      el.style.display = visible ? '' : 'none';
     }
     function applyControlsState(c) {
       if (!c) return;
-      if (typeof c.argsVisible === 'boolean') els.args.style.display = c.argsVisible ? '' : 'none';
-      if (typeof c.streamFilterVisible === 'boolean') els.stream.style.display = c.streamFilterVisible ? '' : 'none';
+      if (typeof c.argsVisible === 'boolean') setVisible(els.args, c.argsVisible);
+      if (typeof c.streamFilterVisible === 'boolean') setVisible(els.stream, c.streamFilterVisible);
       if (typeof c.runDisabled === 'boolean') els.run.disabled = c.runDisabled;
-      if (typeof c.stopVisible === 'boolean') els.stop.style.display = c.stopVisible ? '' : 'none';
+      if (typeof c.stopVisible === 'boolean') setVisible(els.stop, c.stopVisible);
       if (typeof c.args === 'string' && document.activeElement !== els.args) els.args.value = c.args;
       if (typeof c.streamFilter === 'string') els.stream.value = c.streamFilter;
     }
@@ -180,8 +121,8 @@
       setKind(snap.kind || 'output');
       if (snap.controls) applyControlsState(snap.controls);
       if (kind === 'preview') {
-        els.out.style.display = 'none';
-        els.frame.style.display = '';
+        setVisible(els.out, false);
+        setVisible(els.frame, true);
         // URL vs srcdoc: short content starting with a URL scheme → src,
         // anything else (typically a full HTML doc) → srcdoc.
         var content = snap.content || '';
@@ -198,8 +139,8 @@
           }
         }
       } else {
-        els.frame.style.display = 'none';
-        els.out.style.display = '';
+        setVisible(els.frame, false);
+        setVisible(els.out, true);
         if (kind === 'terminal') els.out.textContent = snap.content || '';
         else els.out.innerHTML = snap.content || '';
         els.out.scrollTop = els.out.scrollHeight;

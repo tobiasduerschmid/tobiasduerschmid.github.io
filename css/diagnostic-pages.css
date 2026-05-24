@@ -1,0 +1,46 @@
+/*
+ * diagnostic-pages.css
+ *
+ * Presentation rules live in CSS modules, not inline HTML style blocks.
+ * Keep light mode, dark mode (html.dark-mode), and print behavior together
+ * with the component/page rules they affect.
+ */
+
+/* Extracted from test-uml.html. */
+
+    body { font-family: system-ui, sans-serif; max-width: 960px; margin: 40px auto; padding: 0 20px; }
+    h2 { margin-top: 50px; border-bottom: 2px solid #2774AE; padding-bottom: 8px; }
+    h1 { border-bottom: 3px solid #2774AE; padding-bottom: 12px; }
+
+/* Extracted from test-uml-js.html. */
+
+    body { font-family: system-ui, sans-serif; max-width: 1100px; margin: 40px auto; padding: 0 20px; }
+    h2 { margin-top: 50px; border-bottom: 2px solid #2774AE; padding-bottom: 8px; }
+    h1 { border-bottom: 3px solid #2774AE; padding-bottom: 12px; }
+    .test-case { display: flex; gap: 24px; margin-top: 16px; }
+    .test-source { flex: 1; min-width: 0; }
+    .test-output { flex: 1; min-width: 0; }
+    .test-source textarea { width: 100%; min-height: 220px; font-family: monospace; font-size: 16px; tab-size: 2; }
+    .test-syntax { background: #f5f5f5; border: 1px solid #ddd; padding: 12px; font-family: monospace; font-size: 16px; white-space: pre-wrap; max-height: 300px; overflow: auto; margin-bottom: 8px; }
+    .test-diagram { border: 1px solid #ccc; padding: 8px; min-height: 200px; }
+    .status { padding: 4px 8px; border-radius: 4px; font-size: 16px; margin-top: 8px; }
+    .status.loading { background: #fff3cd; color: #856404; }
+    .status.ok { background: #d4edda; color: #155724; }
+    .status.error { background: #f8d7da; color: #721c24; }
+    button { padding: 6px 16px; cursor: pointer; margin: 4px 2px; }
+    label { font-weight: bold; display: block; margin-bottom: 4px; }
+    .errors { color: #c00; font-size: 16px; margin-top: 4px; }
+
+/* Extracted from vm/snapshot/index.html. */
+
+  body { font-family: monospace; padding: 16px; background: #111; color: #ddd; }
+  #log { white-space: pre-wrap; max-height: 70vh; overflow: auto; background: #000; padding: 8px; border: 1px solid #333; }
+  .ok { color: #5f5; } .err { color: #f55; }
+
+.diagnostic-action-row {
+  margin-top: 40px;
+}
+
+.diagnostic-section-rule {
+  margin-top: 60px;
+}

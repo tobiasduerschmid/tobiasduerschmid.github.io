@@ -11,7 +11,7 @@ title: Blog
     </div>
   </div>
 
-  <div class="row" style="margin-top: 30px; margin-bottom: 40px;">
+  <div class="row blog-index-header-row">
     <div class="col-lg-10 col-lg-offset-1">
       <div id="category-filter" class="text-center">
         <button id="cat-all" class="btn btn-default filter-btn active" data-category="all" aria-pressed="true"
@@ -61,8 +61,7 @@ title: Blog
                 </span>
                 {% if post.category %}
                 <span class="post-category">
-                  <a href="#cat-{{ post.category | slugify }}" class="badge category-link"
-                    style="font-weight: bold; color: #000; background-color: #FFD100; margin-left: 10px;">{{
+                  <a href="#cat-{{ post.category | slugify }}" class="badge category-link blog-featured-badge">{{
                     post.category }}</a>
                 </span>
                 {% endif %}
@@ -78,13 +77,13 @@ title: Blog
               </a>
             </div>
           </div>
-          <hr style="margin: 30px 0; border: none; border-top: 1px solid #ddd;">
+          <hr class="blog-entry-rule">
         </article>
         {% endfor %}
       </div>
 
       {% if site.blog.size == 0 %}
-      <div class="alert alert-info text-center" style="margin-top: 30px;">
+      <div class="alert alert-info text-center blog-empty-alert">
         <p>No blog posts yet. Check back soon!</p>
       </div>
       {% endif %}

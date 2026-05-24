@@ -30,6 +30,16 @@ A concern is a reason a piece of code might change. The *Single Responsibility P
 
 When you write or edit code, name the concerns *before* you write a line. If you cannot say "this function/class/module is responsible for **X** and only **X**" in one sentence without using "and", the boundary is wrong. Mixing concerns is what produces *Divergent Change* (one module touched for many unrelated reasons), *Shotgun Surgery* (one change rippling across many modules), and *Feature Envy* (logic living far from the data it operates on) — three of the heaviest smells from Fowler's *Refactoring*.
 
+#### Browser presentation boundary
+
+For code that reaches the browser, the separation is concrete:
+
+- **HTML / Liquid / Markdown own structure, semantics, content, ARIA, and stable class hooks.**
+- **CSS modules own presentation.** Static layout, spacing, color, typography, borders, shadows, component states, dark-mode variants, and print variants belong in `.css` / `.scss` files, not in `<style>` blocks or `style="..."` attributes inside pages, includes, layouts, or rendered Markdown.
+- **JavaScript owns runtime state.** JS may toggle classes and may set computed values that only exist at runtime (progress width, drag coordinates, measured pane sizes, SVG pan/zoom transforms, CSS custom properties generated from user input). JS should not carry static presentation strings that could live in CSS. Prefer `.is-hidden` / state classes over `style.display` for authored initial states.
+
+Group CSS by ownership, not by accident: shared primitives in a shared module, page-family rules in a page-family module, and component rules near the component's conceptual owner. Keep base, `html.dark-mode`, and `@media print` rules close together so reviewers can audit all three modes at once. If a print surface must ignore user theme settings, load the print-policy stylesheet after page-specific CSS and make the light-mode contract explicit there.
+
 ### 2. Names carry the design
 
 > *The name of a variable, function, or class, should answer all the big questions. It should tell you why it exists, what it does, and how it is used.* — *Clean Code*

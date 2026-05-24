@@ -37,9 +37,9 @@ This means that ==**as a college student, your main goal should be to maximize y
 Unfortunately, AI as a technology often incentivizes behavior that reduces skill formation, if used inappropriately {% cite Yan2024promises BastaniEtAl2025 %}. 
 To use an analogy: **Using AI to do the heavy lifting in your coursework is like sending a robot to the gym instead of working out yourself**. 
 
-<div style="text-align: center; position: relative; margin: 20px auto; max-width: 750px;">
-  <img src="{{ '/img/genAI_gym_bw.jpg' | prepend: site.baseurl }}" onmousedown="this.src='{{ '/img/genAI_gym.jpg' | prepend: site.baseurl }}'" onmouseup="this.src='{{ '/img/genAI_gym_bw.jpg' | prepend: site.baseurl }}'" onmouseout="this.src='{{ '/img/genAI_gym_bw.jpg' | prepend: site.baseurl }}'" alt="Student standing relaxed in a gym while watching a robot lift heavy weights. Other students are working out actively in the gym. University buildings in the background." style="width: 100%; height: auto; border-radius: 12px; display: block;">
-  <div style="position: absolute; top: 0; left: 0; right: 0; background: #111; color: white; padding: 4px; border-top-left-radius: 12px; border-top-right-radius: 12px; font-weight: 500; font-size: 1.1em; line-height: 1.2;">
+<div class="ai-workout-figure">
+  <img class="ai-workout-image" src="{{ '/img/genAI_gym_bw.jpg' | prepend: site.baseurl }}" onmousedown="this.src='{{ '/img/genAI_gym.jpg' | prepend: site.baseurl }}'" onmouseup="this.src='{{ '/img/genAI_gym_bw.jpg' | prepend: site.baseurl }}'" onmouseout="this.src='{{ '/img/genAI_gym_bw.jpg' | prepend: site.baseurl }}'" alt="Student standing relaxed in a gym while watching a robot lift heavy weights. Other students are working out actively in the gym. University buildings in the background.">
+  <div class="ai-workout-caption">
     <strong>"Wow, I just discovered this AI that makes my workout so much easier and faster!"</strong>
   </div>
 </div>

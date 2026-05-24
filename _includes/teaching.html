@@ -8,11 +8,11 @@
       </div>
     </div>
 
-    <div class="row" style="display: flex; flex-wrap: wrap;" role="list" aria-label="Teaching terms">
+    <div class="row teaching-term-list" role="list" aria-label="Teaching terms">
       {% assign terms = site.data.teaching.teaching %}
       {% for t in terms reversed %}
-      <div class="col-md-6 col-sm-12 col-xs-12" style="display: flex; margin-bottom: 20px;" role="listitem">
-        <div class="panel panel-default" style="width: 100%; display: flex; flex-direction: column; margin-bottom: 0;">
+      <div class="col-md-6 col-sm-12 col-xs-12 teaching-term-item" role="listitem">
+        <div class="panel panel-default teaching-term-panel">
 
           <div class="panel-heading">{{ t.term }}</div>
           <div class="panel-body">

@@ -218,14 +218,20 @@
         try { monacoModel.setValue(snap.content || ''); }
         finally { suppressEditEvents = false; }
       }
-      if (els.orphan) els.orphan.style.display = 'none';
+      if (els.orphan) {
+        els.orphan.classList.add('is-hidden');
+        els.orphan.style.display = 'none';
+      }
       if (els.editor) els.editor.style.display = '';
       client.markConnected();
       ensureDebuggerAttached();
     }
 
     function showOrphaned() {
-      if (els.orphan) els.orphan.style.display = '';
+      if (els.orphan) {
+        els.orphan.classList.remove('is-hidden');
+        els.orphan.style.display = '';
+      }
       if (els.editor) els.editor.style.display = 'none';
       client.setStatus('File not in current step', 'warn');
     }

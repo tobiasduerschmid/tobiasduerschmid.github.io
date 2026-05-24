@@ -35,6 +35,13 @@
 .git-graph-svg .git-graph-node {
   filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
 }
+
+.git-graph-canvas svg {
+  max-width: 100%;
+  height: auto;
+  display: block;
+}
+
 .git-graph-svg .git-graph-head-glow {
   animation: git-graph-pulse 2s ease-in-out infinite;
 }

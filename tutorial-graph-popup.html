@@ -13,46 +13,8 @@
   </script>
   <link rel="stylesheet" href="{{ '/css/tutorial.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/git-graph.css' | relative_url }}">
-  <style>
-    html, body { margin: 0; padding: 0; height: 100%; overflow: hidden;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
-    body { display: flex; flex-direction: column; background: #fff; color: #222; }
-    main { flex: 1; min-height: 0; display: flex; flex-direction: column; }
-    html.dark-mode body { background: #1e1e1e; color: #e8e8f0; }
-    .top-bar {
-      display: flex; align-items: center; gap: 8px;
-      padding: 6px 12px; background: #f3f3f3; border-bottom: 1px solid #d4d4d4;
-      flex-shrink: 0; font-size: 16px; color: #555;
-    }
-    html.dark-mode .top-bar { background: #161618; border-bottom-color: #2a2a2e; color: #aaa; }
-    .kind-name { font-weight: 600; text-transform: uppercase;
-      letter-spacing: 0.04em; font-size: 16px; color: #333; }
-    html.dark-mode .kind-name { color: #e8e8f0; }
-    .stat { color: #5a5a5a; font-size: 16px; margin-left: auto; }
-    .stat.ok { color: #1f7a35; }
-    .stat.warn { color: #75591a; }
-    .stat.bad { color: #c0392b; }
-    html.dark-mode .stat { color: #a0a0a0; }
-    html.dark-mode .stat.ok { color: #4caf50; }
-    html.dark-mode .stat.warn { color: #d4a017; }
-    html.dark-mode .stat.bad { color: #ff8a8a; }
-    .wrap { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: column; }
-    .overlay {
-      position: absolute; inset: 0; background: rgba(255,255,255,0.92); color: #333;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 16px; z-index: 999;
-    }
-    html.dark-mode .overlay { background: rgba(20,20,28,0.86); color: #ddd; }
-    .graph-host {
-      flex: 1; min-height: 0; overflow: auto; padding: 12px;
-    }
-    /* The popup container reuses the same class as the in-tutorial container
-       so the existing git-graph.css rules style the SVG identically. */
-    .graph-host .tvm-git-graph-container {
-      width: 100%;
-      min-height: 100%;
-    }
-  </style>
+  <link rel="stylesheet" href="{{ '/css/tutorial-popouts.css' | relative_url }}">
+  <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
 </head>
 <body>
   <main aria-label="Git graph popout">

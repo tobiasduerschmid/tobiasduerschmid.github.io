@@ -42,6 +42,76 @@
     })();
   </script>
 
+  <!-- Print always uses the light palette, regardless of the saved site
+       theme. We remove only the runtime class while the browser is preparing
+       print/print-preview, then restore it after printing so the user's
+       preference and cookie stay unchanged. -->
+  <script>
+    (function () {
+      var root = document.documentElement;
+      var wasDarkBeforePrint = false;
+      var printModeActive = false;
+
+      function classText() {
+        return root.className || '';
+      }
+
+      function hasClass(name) {
+        return (' ' + classText() + ' ').indexOf(' ' + name + ' ') !== -1;
+      }
+
+      function addClass(name) {
+        if (root.classList && typeof root.classList.add === 'function') {
+          root.classList.add(name);
+          return;
+        }
+        if (!hasClass(name)) {
+          root.className = classText() ? classText() + ' ' + name : name;
+        }
+      }
+
+      function removeClass(name) {
+        if (root.classList && typeof root.classList.remove === 'function') {
+          root.classList.remove(name);
+          return;
+        }
+        root.className = (' ' + classText() + ' ').replace(' ' + name + ' ', ' ').trim();
+      }
+
+      function enterPrintMode() {
+        if (printModeActive) return;
+        printModeActive = true;
+        wasDarkBeforePrint = hasClass('dark-mode');
+        removeClass('dark-mode');
+        addClass('print-light-mode');
+      }
+
+      function exitPrintMode() {
+        if (!printModeActive) return;
+        printModeActive = false;
+        removeClass('print-light-mode');
+        if (wasDarkBeforePrint) {
+          addClass('dark-mode');
+        }
+        wasDarkBeforePrint = false;
+      }
+
+      window.addEventListener('beforeprint', enterPrintMode);
+      window.addEventListener('afterprint', exitPrintMode);
+
+      if (window.matchMedia) {
+        var printMedia = window.matchMedia('print');
+        var syncPrintMedia = function () {
+          if (printMedia.matches) enterPrintMode();
+          else exitPrintMode();
+        };
+        if (printMedia.addEventListener) printMedia.addEventListener('change', syncPrintMedia);
+        else if (printMedia.addListener) printMedia.addListener(syncPrintMedia);
+        syncPrintMedia();
+      }
+    })();
+  </script>
+
   <!-- Reduced-motion detection: runs BEFORE any other JS on the page so
        lab scripts that check `window.__prefersReducedMotion` on init see
        the final value, and so the `html.prm-reduce` class is applied in
@@ -162,6 +232,18 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.7.2/css/all.min.css">
   <link rel="stylesheet" href="{{ "/css/main.css" | prepend: site.baseurl }}?v={{ asset_version }}">
   <link rel="stylesheet" href="{{ "/css/sebook-theme.css" | prepend: site.baseurl }}?v={{ asset_version }}">
+  <link rel="stylesheet" href="{{ "/css/site-components.css" | prepend: site.baseurl }}?v={{ asset_version }}">
+  <link rel="stylesheet" href="{{ "/css/info-pages.css" | prepend: site.baseurl }}?v={{ asset_version }}">
+  <link rel="stylesheet" href="{{ "/css/sebook-content-pages.css" | prepend: site.baseurl }}?v={{ asset_version }}">
+  <link rel="stylesheet" href="{{ "/css/sebook-bookmarks.css" | prepend: site.baseurl }}?v={{ asset_version }}">
+  <link rel="stylesheet" href="{{ "/css/regex-pages.css" | prepend: site.baseurl }}?v={{ asset_version }}">
+  <link rel="stylesheet" href="{{ "/css/sebook-quiz.css" | prepend: site.baseurl }}?v={{ asset_version }}">
+  <link rel="stylesheet" href="{{ "/css/sebook-flashcards.css" | prepend: site.baseurl }}?v={{ asset_version }}">
+  <link rel="stylesheet" href="{{ "/css/spec-card.css" | prepend: site.baseurl }}?v={{ asset_version }}">
+  <link rel="stylesheet" href="{{ "/css/tutorial-uml-editor.css" | prepend: site.baseurl }}?v={{ asset_version }}">
+  {% if page.url == '/se-gym/' %}
+  <link rel="stylesheet" href="{{ "/css/se-gym.css" | prepend: site.baseurl }}?v={{ asset_version }}">
+  {% endif %}
   <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
   <link rel="stylesheet" href="{{ "/css/print-light.css" | prepend: site.baseurl }}?v={{ asset_version }}">
 
