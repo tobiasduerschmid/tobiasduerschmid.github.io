@@ -523,6 +523,20 @@ test.describe('Personal Gym - Workout', () => {
     await a11yCheckpoint(page, 'gym workout — quiz card showing', { feature: A11Y_FEATURE, darkMode: true });
   });
 
+  test('quiz URL parameter starts a transient workout and back cleans the URL', async ({ page, context }) => {
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'git' }]));
+    await page.goto(`${GYM_URL}?quiz=shell_parson&quiz=user_stories`);
+
+    await expect(page.locator('#gym-workout')).toBeVisible();
+    await expect(page.locator('#gym-entrance')).toBeHidden();
+    await expect(page.locator('#workout-total')).toHaveText('10');
+
+    await page.getByRole('button', { name: /Back to Gym Entrance/i }).click();
+    await expect(page).toHaveURL(/\/se-gym\/$/);
+    await expect(page.locator('#gym-entrance')).toBeVisible();
+    await expect(page.locator('#gym-selected .gym-item-title')).toContainText('Version Control and Git');
+  });
+
   test('workout shows progress bar', async ({ page, context }) => {
     await setCookie(context, 'se-gym-active', 'true');
     await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'git' }]));

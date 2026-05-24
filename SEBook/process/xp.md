@@ -48,3 +48,11 @@ To make collective ownership feasible, the team must adhere to strict coding sta
 A common critique of XP is that focusing solely on implementing features can lead to a violation of the **Information Hiding** principle. Because TDD focuses on the immediate requirements of a single feature, developers may fail to step back and structure modules around design decisions likely to change. 
 
 To mitigate this, XP advocates for "Continuous attention to technical excellence". While working software is the primary measure of progress, a team that ignores good design will eventually succumb to **technical debt**—short-term shortcuts that make future changes prohibitively expensive.
+
+# Practice This
+
+Use the flashcards to retrieve XP's practices and limits, then use the quiz to apply them to team-size, safety, CI, planning, and design trade-offs.
+
+{% include flashcards.html id="process_xp" %}
+
+{% include quiz.html id="process_xp" %}

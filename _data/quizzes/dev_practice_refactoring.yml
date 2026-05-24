@@ -1,0 +1,135 @@
+title: "Refactoring Quiz"
+description: "Apply refactoring concepts to behavior-preservation, smell diagnosis, safe process, and AI-assisted transformation scenarios."
+active: true
+questions:
+  - id: 1
+    difficulty: basic
+    bloom: understand
+    type: single
+    question: |
+      Which change is a true refactoring?
+    options:
+      - "Rename a private helper and update all internal call sites, with all public behavior and tests unchanged."
+      - "Change a validation function so it now rejects inputs that used to be accepted."
+      - "Add a new checkout feature requested by the product owner."
+      - "Delete a flaky test so the build is green."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Changing accepted inputs changes observable behavior. That may be a good bug fix or feature, but it is not refactoring.
+      2: |
+        Adding behavior is feature work. Refactoring may prepare for it, but the feature itself is not behavior-preserving.
+      3: |
+        Deleting a test changes the safety net and may hide behavior changes. It is not an internal structure improvement.
+    explanation: "Refactoring preserves observable behavior while improving internal structure. The behavior-preserving boundary is the key test."
+
+  - id: 2
+    difficulty: intermediate
+    bloom: apply
+    type: multiple
+    question: |
+      Match the refactoring to the smell it most directly addresses. Which pairings are reasonable? Select all that apply.
+    options:
+      - "Data Clumps -> Introduce Parameter Object."
+      - "Divergent Change -> Extract Class."
+      - "Repeated type-code conditional -> Replace Conditional with Polymorphism."
+      - "Lazy Class -> Inline Class."
+      - "Missing test -> Rename Variable."
+    correct_indices: [0, 1, 2, 3]
+    option_feedback:
+      0: |
+        Related values that travel together usually deserve a named object that captures the concept.
+      1: |
+        A class that changes for unrelated reasons likely contains responsibilities that should be split.
+      2: |
+        A repeated branch on type often means behavior wants to move behind subtype or strategy objects.
+      3: |
+        A class that does not justify its existence can be folded into a more useful owner.
+      4: |
+        A missing test is a safety-net gap, not a naming smell. Renaming may improve clarity, but it does not create behavioral evidence.
+    explanation: "Refactoring is strongest when the chosen transformation matches the design force behind the smell."
+
+  - id: 3
+    difficulty: intermediate
+    bloom: apply
+    type: single
+    question: |
+      A team wants to refactor a tangled billing module. What is the safest sequence?
+    options:
+      - "Rewrite the module in one branch, then run tests at the end."
+      - "Run the current tests, make one small transformation, run the tests again, commit or checkpoint, then repeat."
+      - "Disable tests that fail during the refactor because they probably depend on internals."
+      - "Start by extracting every class that looks large, then decide what behavior changed."
+    correct_index: 1
+    option_feedback:
+      0: |
+        A big rewrite delays feedback until many possible mistakes are mixed together. It becomes hard to know which change broke behavior.
+      2: |
+        Some tests may be implementation-coupled, but disabling failures before understanding them removes the behavior-preservation signal.
+      3: |
+        Mechanical extraction without a responsibility model can create shallow classes and new coupling.
+    explanation: "Safe refactoring is a tight feedback loop: green baseline, one behavior-preserving transformation, green verification, checkpoint."
+
+  - id: 4
+    difficulty: advanced
+    bloom: evaluate
+    type: single
+    question: |
+      During a feature crunch, a developer notices a misleading local variable name in the function they are already editing. They also wants to reorganize the whole package. What is the best refactoring judgment?
+    options:
+      - "Do both immediately; any cleanup is always worth bundling into the feature."
+      - "Make the tiny local rename if it clarifies the current change and is covered by tests, but split the package reorganization into a separate refactoring task or stacked PR."
+      - "Do no cleanup during feature work; refactoring is only allowed in dedicated refactoring sprints."
+      - "Reorganize the package first because large refactorings are safer under deadline pressure."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Bundling a large reorganization into a feature makes review harder and increases the chance of accidental behavior changes.
+      2: |
+        Refusing all small cleanup allows broken windows to spread. The key is scope control, not a blanket ban.
+      3: |
+        Deadline pressure is exactly when large structural changes are riskiest. Keep the current change reviewable.
+    explanation: "Refactoring judgment weighs payoff, scope, and reviewability. Small local improvements often belong with the change; large structural work usually deserves its own focused review."
+
+  - id: 5
+    difficulty: advanced
+    bloom: evaluate
+    type: single
+    question: |
+      An AI agent proposes to "refactor" a module by extracting helpers, changing error messages, and altering the order in which side effects occur. What should the human supervisor do?
+    options:
+      - "Accept because AI is good at catalog refactorings."
+      - "Reject or split the work: behavior changes and side-effect reordering must be reviewed as feature or bug-fix changes, while true refactorings should be small and test-verified."
+      - "Ask the AI to hide the behavior changes behind new names."
+      - "Run a formatter; formatting is enough to prove behavior preservation."
+    correct_index: 1
+    option_feedback:
+      0: |
+        AI can execute many transformations, but it can also quietly change behavior. Capability does not remove the need for verification.
+      2: |
+        Hiding behavior changes behind names makes review harder and violates the central contract of refactoring.
+      3: |
+        Formatting proves only surface consistency. It says nothing about observable behavior or side-effect order.
+    explanation: "AI-assisted refactoring still needs human scope control. Behavior changes and refactorings should be separated so reviewers know what contract they are checking."
+
+  - id: 6
+    difficulty: advanced
+    bloom: analyze
+    type: single
+    question: |
+      A checkout module has a `switch` on `paymentType` repeated in five places: fees, validation, receipt text, fraud rules, and retry policy. Which refactoring direction best fits the smell?
+    options:
+      - "Replace Conditional with Polymorphism or Strategy objects so each payment type owns its behavior behind a common interface."
+      - "Add comments above every `switch` explaining the branches."
+      - "Move all five switches into a larger `CheckoutUtils` class."
+      - "Inline every helper so all payment behavior is visible in one method."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Comments may help temporarily, but they do not remove the repeated change point. A new payment type would still require edits in five places.
+      2: |
+        Consolidating into a utility class may reduce search effort but can create a new god object and preserve the type-code smell.
+      3: |
+        Inlining worsens working-memory load and makes future payment-type changes harder.
+    explanation: "Repeated conditionals over the same type code are a classic sign that behavior wants to move behind polymorphism or a strategy boundary."
+

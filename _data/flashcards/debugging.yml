@@ -1,0 +1,94 @@
+title: "Debugging"
+description: "Retrieval practice for the four-step debugging process — fault / error / failure vocabulary, reproduction tactics, when to use logs vs the debugger vs rubber-ducking, conditional breakpoints, and the discipline of verifying a fix. Cards span Remember through Evaluate."
+active: true
+cards:
+  - id: 1
+    difficulty: basic
+    question: "Define **fault**, **error**, and **failure** — and explain why keeping them distinct changes how you debug."
+    answer: "**Fault** — the erroneous *location* in the code (e.g., `radius` never converted to a number). **Error** — an incorrect *state* during execution (e.g., `radius` holds `'10'` instead of `10`). **Failure** — observable incorrect *outside behavior* at the system boundary (e.g., wrong number printed)."
+    explanation: "Each term names a different observation point in the system. You **see** the failure (or the user does), the failure was caused by an **error** somewhere upstream in the execution, and the error was caused by a **fault** in the source code. Fixing the bug means changing the *fault* — but you usually start your investigation from the *failure*. A `try/catch` that swallows the exception suppresses the failure but leaves the fault and the error intact, which is why bare excepts make bugs harder to find, not easier."
+
+  - id: 2
+    difficulty: basic
+    question: "Name the four steps of the systematic debugging process, in order."
+    answer: "(1) **Investigate** symptoms to reproduce the bug. (2) **Locate** the faulty code. (3) Determine the **root cause**. (4) Implement and **verify** the fix."
+    explanation: "Order matters: jumping ahead is the most common way to lose hours. Starting in the debugger before you can reproduce the bug means the debugger has nothing to show you. Calling the bug fixed before running the test suite means you may have shipped a regression. Each step has a deliverable — a reproduction, a suspected file, a root-cause story, a passing test — and the next step depends on the previous one."
+
+  - id: 3
+    difficulty: basic
+    question: "Why does **reproducing the bug** come *before* trying to fix it? What are you trying to capture?"
+    answer: "A bug you cannot reproduce is a bug you cannot debug — and cannot verify the fix for. Capture two things: the **problem environment** (OS, browser, build version, configuration) and the **problem history** (the sequence of inputs and interactions that triggered the bug)."
+    explanation: "The Therac-25 case is the cautionary tale: a radiation therapy machine killed six patients in the 1980s with overdoses triggered by an operator typing faster than the developers expected. The bug was reproducible only with the operator's actual typing speed — which the test team never matched. Mature bug-report templates ask for environment and history precisely because reproduction is load-bearing for every step that follows."
+
+  - id: 4
+    difficulty: basic
+    question: "What is **regression testing**, and how does it relate to the bug-reproduction test you wrote in step 1?"
+    answer: "**Regression testing** = re-running existing tests after a code change to ensure new updates haven't broken previously-working behavior. The bug-reproduction test you wrote during debugging *becomes* a regression test once the fix lands — it stays in the suite forever to catch the same bug if it sneaks back."
+    explanation: "Every fixed bug is one assertion away from coming back. The reproduction test you wrote in step 1 is the cheapest insurance against that — it stays in CI, runs on every commit, and fails immediately if anyone (including your future self or an AI agent rewriting the area) reintroduces the same defect. This is one of the highest ROI moves in the entire process."
+
+  - id: 5
+    difficulty: intermediate
+    question: "When debugging your own code, when should you reach for **search engines / AI tools** vs **a debugger**? Give the rule."
+    answer: "**Search the error message** when it comes from a framework, library, or external service (not your own code) — strip project-specific identifiers first, keep error codes. **Use the debugger** when the error is in your own logic and you need to understand why your variables hold the values they do."
+    explanation: "Framework errors have almost always been hit before; a 30-second search beats 30 minutes of stepping. Your own logic errors are unique to your code — no one else has seen them — so the debugger (or a rubber duck) is the right tool. When you do run a command suggested by an AI search result, read it first: prompt-injection attacks on search-result pages occasionally suggest destructive operations like `git push --force` or `curl … | sudo bash`."
+
+  - id: 6
+    difficulty: intermediate
+    question: "You're explaining your code to a colleague at their desk. Halfway through line 12 you stop, stare, and say *'oh.'* You've just fixed the bug yourself. Name the phenomenon and the technique."
+    answer: "Phenomenon: **curse of knowledge** — when you read code you wrote, you see what you *intended* rather than what is actually there. Technique: **rubber-duck debugging** — explain your code line by line to anything (duck, plant, colleague), and you'll catch the gap between intent and actual text when you say it aloud."
+    explanation: "Verbalizing forces a comparison between *what the line should do* and *what it actually does* — that comparison rarely happens silently in your head. A duck is preferable to a colleague because the duck never interrupts, never confirms your biases, and is always available. For students: prefer rubber-ducking over asking an AI for the bug, especially early in your career — the act of explaining is what builds the mental model you'll need for the next bug."
+
+  - id: 7
+    difficulty: intermediate
+    question: "Compare an **assertion** (`assert x > 0`) and an **exception** (`if x <= 0: raise ValueError`). When is each appropriate?"
+    answer: "**Assertion** = a programmer's claim about an invariant that should *never* be false at runtime (catches developer mistakes). Compiled out in production. **Exception** = a runtime condition that *can* legitimately occur and should be handled (catches user / external mistakes). Always present."
+    explanation: "*'Should never happen'* → assertion. *'Could happen, here's the recovery'* → exception. Assertions document and enforce internal invariants; they fail loudly during development so the bug is found early. Exceptions handle external imperfection — bad user input, network failures, missing files. Catching an assertion is almost always a bug; catching an exception is often the point. Many languages let you compile assertions out of production binaries (`python -O`, `gcc -DNDEBUG`), which is why exceptions stay and assertions go."
+
+  - id: 8
+    difficulty: intermediate
+    question: "Your loop iterates 50,000 times and the bug only appears around iteration 12,000. How do you avoid clicking *Step Over* 12,000 times?"
+    answer: "**Conditional breakpoint** — right-click the breakpoint and set an expression like `i == 12000`. The debugger only pauses when the expression is true. Alternative: a **hit-count breakpoint** that fires on the Nth time the line is reached."
+    explanation: "Most IDEs support both. The conditional expression can include any variable or function the debugger can evaluate (`len(items) > 1000`, `user.role == 'admin' and amount > 50000`, `i % 1000 == 0`). They're indispensable for bugs that only manifest at scale, on specific records, or under particular state — exactly the bugs that simple breakpoints cannot help with."
+
+  - id: 9
+    difficulty: intermediate
+    question: "What is a **time-travel debugger**, and what does it do that an ordinary debugger cannot?"
+    answer: "A debugger that records the execution and lets you **step backwards** in time — re-examine a variable's value three statements ago, or replay forward from a point with a hypothetically modified value. Ordinary debuggers only move forward."
+    explanation: "When you set a breakpoint and *miss* the moment that mattered, an ordinary debugger forces you to re-run the program. A time-travel debugger lets you reverse-step within the same recorded execution. Not built into VS Code by default but available as extensions (Python's `rr`, Node's recording proxies, GDB's `record full` + `reverse-continue`). The SEBook ships a [time-travel-enabled Python debugger tutorial](/SEBook/tools/python-debugging) for practice."
+
+  - id: 10
+    difficulty: intermediate
+    question: "You write `try: do_thing(); except: pass` and tell your team *'this is fault-tolerant.'* Why is this misleading?"
+    answer: "A bare `except: pass` is the opposite of fault-tolerant — it **swallows every error silently** (including ones that leave the system in a partially-updated, inconsistent state) and gives no signal that anything went wrong. Real fault tolerance is *selective* handling of *known* failure modes with deliberate recovery and observability (logs, metrics, alerts, compensating transactions)."
+    explanation: "Bare-except patterns hide the bug *and* leave invariants violated. For a `transfer(from, to, amount)` that's debited the source but failed to credit the destination, *not crashing* is much worse than crashing — the crash would have prevented the half-done transaction; the swallow leaves money missing. The right pattern for monetary operations is an atomic transaction (both updates or neither); the right pattern for handled errors elsewhere is a narrowly-typed `except SpecificError:` with a log line and a recovery path."
+
+  - id: 11
+    difficulty: advanced
+    question: "A regression test passed two weeks ago and fails today. There are ~200 commits between the two versions and no obvious culprit in the diff. What's the right move, and why does it scale better than the alternatives?"
+    answer: "**`git bisect run ./failing-test.sh`** — git performs a binary search across the commits, running the test at each midpoint, and converges on the offending commit in roughly $\\log_2(200) \\approx 8$ test runs instead of ~200. Fully automated if you have a scripted reproduction."
+    explanation: "This is one of the highest-leverage payoffs from writing the automated reproduction test in step 1. Without a scripted test, `git bisect` falls back to manual *good/bad* judgments at each step — still useful, but slower. The bisect output is the commit that *introduced* the regression, which usually points straight at the change responsible — much more focused than `git blame`, which only tells you who last touched a particular line."
+
+  - id: 12
+    difficulty: advanced
+    question: "You just landed a bug fix. The failing reproduction test now passes. What three more things should you do *before* calling the bug closed?"
+    answer: "(1) **Add assertions** for nearby invariants — the conditions that produced this bug probably hold elsewhere. (2) **Run the whole test suite** — make sure the fix didn't break a previously-passing test (a *regression*). (3) **Document** the fix — code comment for the non-obvious why, ticket reference in the commit message, root cause in the bug report."
+    explanation: "Step 4 is where good debuggers get separated from average ones. The temptation is to mark the ticket FIXED the moment the failing test goes green, but that's a single data point. Running the full suite turns it into a population check. Adding assertions catches the next bug in the family before it ships. Documenting the *why* prevents an AI agent (or a teammate, or future you) from reverting the fix six months from now because the line *'looked unnecessary.'*"
+
+  - id: 13
+    difficulty: advanced
+    question: "Your team has a 200-step manual reproduction of an intermittent bug. Before fixing the bug, what should you do to the reproduction itself, and why?"
+    answer: "**Simplify it.** Iteratively remove steps and re-run; if the bug still occurs without the step, drop it from the reproduction. Most bug reproductions have ~5 essential steps and ~195 confounders. The smaller the reproduction, the faster every fix attempt, the cleaner the eventual regression test, and the less surface area for an unrelated change to mask the bug."
+    explanation: "This is called **delta debugging** when automated, and it generalizes: minimize the input that still triggers the bug. A 200-step repro that takes 5 minutes to run will burn an hour per fix attempt; a 5-step repro that takes 5 seconds lets you iterate dozens of times per hour. The simplified reproduction also tells you something about the root cause — *what is the minimal trigger?* — that the long one obscures. The committed regression test should embed the minimized form."
+
+  - id: 14
+    difficulty: advanced
+    question: "Look at this debugger trace. After `input_radius = sys.argv[1]`, the watch panel shows `input_radius = '10'` (with quotes). Two steps later, `diameter = 2 * radius` produces `diameter = '1010'`. What's the bug and where is it?"
+    answer: "The bug is **missing type conversion** at the assignment from `sys.argv[1]` — `sys.argv` always returns strings, so `2 * '10'` performs Python string repetition (`'10' + '10' = '1010'`), not arithmetic. The **fault** is one line: `input_radius = sys.argv[1]` should be `input_radius = float(sys.argv[1])`. The *symptom* shows up inside `cal_circumference`, but the *fix* belongs at the input boundary."
+    explanation: "Classic case of *where you observe the symptom* ≠ *where you fix the fault*. The debugger's quoted string `'10'` in the watch panel is the diagnostic clue — a number wouldn't be quoted. Boundary type conversion (string → number when reading CLI args, JSON bodies, query parameters, environment variables) is one of the most common bug sources in scripting languages. A defensive version would `assert isinstance(input_radius, (int, float))` immediately after conversion to fail loudly if the input was missing or malformed."
+
+  - id: 15
+    difficulty: expert
+    question: |
+      A new colleague says: *"I've been debugging for 4 hours. I've read the function 50 times. I just can't see what's wrong."* Diagnose what's happening and prescribe the next 30 minutes.
+    answer: "Diagnosis: **stuck mental model** — they keep reading what they intended rather than what's actually there (curse of knowledge). 50 readings won't fix that because each one applies the same broken model. Prescription: switch tactics. (a) Open the debugger and watch the actual variable values flow — let the program *show* you instead of inferring it. Or (b) explain the code aloud to a duck or colleague — verbalizing forces intent-vs-actual comparison. Or (c) take a 15-minute walk to reset before either."
+    explanation: "Three hours of staring is the canonical symptom that *the way you are looking* has stopped working. The remedy is almost never *try harder with the same approach* — it's *switch the approach*. Debuggers and rubber-ducking both break the curse of knowledge from different angles: the debugger overrides intent with empirical state; rubber-ducking surfaces the intent so you can compare it against the code. A new colleague stuck for 4 hours has, almost by definition, not yet developed the reflex of switching tactics — that reflex is itself the skill that separates 1× from 3× debuggers."

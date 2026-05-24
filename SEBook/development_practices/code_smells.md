@@ -58,3 +58,11 @@ Data clumps are groups of variables that are always seen together throughout the
 The primary cure for code smells is [**Refactoring**](/SEBook/development_practices/refactoring.html)—the process of changing a software system in such a way that it does not alter the external behavior of the code yet improves its internal structure. 
 
 By familiarizing yourself with these smells, you can train your "developer nose" to spot poor design early. Integrating continuous refactoring into your daily workflow ensures that your codebase remains clean, modular, and adaptable to change.
+
+# Practice This
+
+Use the flashcards to retrieve the smell vocabulary, then use the quiz to diagnose realistic maintenance symptoms and choose proportionate refactoring responses.
+
+{% include flashcards.html id="dev_practice_code_smells" %}
+
+{% include quiz.html id="dev_practice_code_smells" %}

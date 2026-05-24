@@ -796,9 +796,17 @@
     (function () {
       function initTooltips() {
         if (!window.jQuery || !jQuery.fn.tooltip) return;
-        var selector = '[data-toggle="tooltip"], [title]:not([data-no-tooltip])';
+        var selector = '[data-toggle="tooltip"], [data-original-title], [data-tooltip], [title]:not([data-no-tooltip])';
         var $triggers = jQuery(selector);
         if (!$triggers.length) return;
+        $triggers.each(function () {
+          var $trigger = jQuery(this);
+          var nativeTitle = $trigger.attr('title');
+          if (nativeTitle && !$trigger.attr('data-original-title')) {
+            $trigger.attr('data-original-title', nativeTitle);
+          }
+          $trigger.removeAttr('title');
+        });
         $triggers.tooltip({
           trigger: 'manual',
           delay: 0,

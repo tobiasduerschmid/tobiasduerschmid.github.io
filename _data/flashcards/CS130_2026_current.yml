@@ -23,5 +23,11 @@ decks:
   - architectural_style_pipes_filters
   - architectural_style_pubsub
   - dev_practice_genai
+  - dev_practice_code_comprehension
+  - dev_practice_modern_code_review
+  - dev_practice_topdown
+  - dev_practice_refactoring
+  - dev_practice_code_smells
+  - dev_practice_beacons
   - process_agile
   - process_xp

@@ -87,3 +87,11 @@ Educational frameworks, such as the Block Model, illustrate top-down comprehensi
 
 **Modern Code Review Tools**
 Effective code reviews begin with an orientation phase to build top-down annotations. However, modern tools predominantly default to a highlighted diff of changed files—a syntax-first, bottom-up presentation. Future tooling must visualize the macroscopic impact of changes and explicitly link high-level specifications to their atomic implementations to align with the brain's natural opportunistic strategies.
+
+# Practice This
+
+Use the flashcards to retrieve the top-down vocabulary, then use the quiz to practice hypothesis-driven review, beacon recognition, and strategic switching between top-down and bottom-up reading.
+
+{% include flashcards.html id="dev_practice_topdown" %}
+
+{% include quiz.html id="dev_practice_topdown" %}

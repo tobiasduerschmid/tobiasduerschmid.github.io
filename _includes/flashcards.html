@@ -31,7 +31,7 @@ Data source: _data/flashcards/{{ include.id }}.yml
       <{{ flashcard_heading_tag }}>{{ flashcard_data.title }}</{{ flashcard_heading_tag }}>
       {% if site.personal_gym %}
       <button type="button" class="se-gym-toggle is-hidden" data-gym-type="flashcard" data-gym-id="{{ include.id }}"
-        aria-label="Add to Personal Gym" aria-pressed="false" title="Add to Personal Gym" data-placement="left">
+        aria-label="Add to Personal Gym" aria-pressed="false" data-original-title="Add to Personal Gym" data-placement="left">
         <i class="fa-solid fa-plus" aria-hidden="true"></i>
       </button>
       {% endif %}
@@ -333,9 +333,13 @@ Data source: _data/flashcards/{{ include.id }}.yml
             const inGym = PersonalGym.isInGym(gymType, gymId);
             toggleBtn.classList.toggle('in-gym', inGym);
             toggleBtn.innerHTML = inGym ? '<i class="fa-solid fa-check"></i>' : '<i class="fa-solid fa-plus"></i>';
-            toggleBtn.title = inGym ? "Remove from Personal Gym" : "Add to Personal Gym";
+            toggleBtn.removeAttribute('title');
+            toggleBtn.setAttribute('data-original-title', inGym ? 'Remove from Personal Gym' : 'Add to Personal Gym');
             toggleBtn.setAttribute('aria-pressed', inGym ? 'true' : 'false');
             toggleBtn.setAttribute('aria-label', inGym ? 'Remove from Personal Gym' : 'Add to Personal Gym');
+            if (window.jQuery && window.jQuery.fn && window.jQuery.fn.tooltip) {
+              try { window.jQuery(toggleBtn).tooltip('hide').attr('data-original-title', toggleBtn.getAttribute('data-original-title')); } catch (err) { /* Bootstrap tooltip may not be initialized. */ }
+            }
           }
         }
 

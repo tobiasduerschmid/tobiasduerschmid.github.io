@@ -124,3 +124,10 @@ A fascinating tension exists in the literature regarding how developers *should*
 # Conclusion
 Mastering code reading requires transitioning from a systematic, line-by-line decoding process to an opportunistic, top-down strategy. By actively formulating hypotheses and utilizing IDE tools to hunt for structural and lexical beacons, a developer can rapidly construct an accurate mental model of a complex system without succumbing to cognitive overload.
 
+# Practice This
+
+Use the flashcards to retrieve the beacon types, then use the quiz to apply beacon-based reasoning to code review, naming, tests, assertions, and public API trade-offs.
+
+{% include flashcards.html id="dev_practice_beacons" %}
+
+{% include quiz.html id="dev_practice_beacons" %}

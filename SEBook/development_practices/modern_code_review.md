@@ -436,3 +436,11 @@ To safely harness AI without succumbing to the Rubber Stamp effect, the software
 
 1.  **The Human-in-the-Loop Imperative:** The consensus across modern literature is that AI should be implemented as an *AI-primed* co-reviewer rather than a replacement. AI should handle the first-pass triage—formatting, basic bug detection, and linting—while human engineers retain authority over architectural context, business logic, and security validation.
 2.  **The Shift to Preview Environments:** Because reading thousands of lines of AI-generated syntax is biologically impossible for a human reviewer to do accurately, the artifact of review must change. We are shifting from a *syntax-first* culture to an *outcome-first* culture {% cite Signadot2024 %}. Reviewing AI-authored code requires spinning up ephemeral, isolated "backend preview environments" where reviewers can actively execute and validate the behavior of the code, rather than passively reading text files. As the industry moves forward, the new standard becomes: *"If you cannot preview it, you cannot ship it"*.
+
+# Practice This
+
+Use the flashcards to retrieve the empirical limits and review vocabulary, then use the quiz to make review decisions about PR size, reviewer cognition, reviewable code, Google-scale workflow, and AI-generated changes.
+
+{% include flashcards.html id="dev_practice_modern_code_review" %}
+
+{% include quiz.html id="dev_practice_modern_code_review" %}

@@ -38,6 +38,14 @@
     function initAccessibleTooltips(selector, options) {
       var $triggers = $(selector);
       if (!$triggers.length) return;
+      $triggers.each(function () {
+        var $trigger = $(this);
+        var nativeTitle = $trigger.attr('title');
+        if (nativeTitle && !$trigger.attr('data-original-title')) {
+          $trigger.attr('data-original-title', nativeTitle);
+        }
+        $trigger.removeAttr('title');
+      });
       $triggers.tooltip($.extend({
         trigger: 'manual',
         delay: 0,
@@ -135,7 +143,8 @@
       });
     }
 
-    initAccessibleTooltips('[data-toggle="tooltip"], [title]:not([data-no-tooltip])');
+    window.initAccessibleTooltips = initAccessibleTooltips;
+    initAccessibleTooltips('[data-toggle="tooltip"], [data-original-title], [data-tooltip], [title]:not([data-no-tooltip])');
 
     // Keep the navbar hamburger's aria-expanded in sync with the Bootstrap 3
     // collapse state (SC 4.1.2). The toggle button points at the collapse

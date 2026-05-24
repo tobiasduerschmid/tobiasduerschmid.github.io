@@ -1,0 +1,135 @@
+title: "Code Beacons Quiz"
+description: "Recognize beacons, evaluate when they help or mislead, and apply beacon-based reading strategies in code review and education."
+active: true
+questions:
+  - id: 1
+    difficulty: intermediate
+    bloom: apply
+    type: single
+    question: |
+      Researchers want to measure bottom-up comprehension, so they rename `isPrimeNumber` to `pn` and remove comments from a code sample. Why does this manipulation matter?
+    options:
+      - "It removes lexical beacons, forcing participants to rely more on statement-level tracing."
+      - "It makes the algorithm faster."
+      - "It introduces a design pattern."
+      - "It proves that short names are always more readable."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Renaming identifiers does not change runtime behavior. The manipulation targets human comprehension, not performance.
+      2: |
+        Obfuscating names removes cues; it does not add a recognizable pattern.
+      3: |
+        Short names can work for narrow conventions, but arbitrary abbreviation destroys domain information.
+    explanation: "Beacons let readers jump to higher-level meaning. Removing them isolates the harder bottom-up work of reconstructing meaning from syntax."
+
+  - id: 2
+    difficulty: intermediate
+    bloom: apply
+    type: single
+    question: |
+      You are reviewing a PR with new production code and tests. Which use of tests best follows the chapter's beacon argument?
+    options:
+      - "Read the tests first to infer the intended behavior, then inspect whether production code satisfies that specification."
+      - "Skip the tests because only production code matters."
+      - "Read tests only after approving the implementation."
+      - "Delete tests that make the implementation harder to understand."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Tests often reveal the author's intent more directly than production code does, especially for edge cases.
+      2: |
+        Reading tests after approval wastes their value as specification-layer beacons.
+      3: |
+        Tests that are unclear may need improvement, but deleting them removes executable intent.
+    explanation: "Tests are powerful review beacons because they show expected behavior before the reviewer dives into implementation details."
+
+  - id: 3
+    difficulty: intermediate
+    bloom: analyze
+    type: multiple
+    question: |
+      Classify the beacons. Which examples are correctly identified? Select all that apply.
+    options:
+      - "`isPrimeNumber` is a lexical beacon."
+      - "A familiar accumulator loop is a structural beacon that can trigger a programming plan."
+      - "An assertion `assert balance >= 0` is a beacon for an invariant."
+      - "A PR title describing 'Reject expired coupons' is a contextual beacon."
+      - "A random single-letter variable is a strong domain beacon."
+    correct_indices: [0, 1, 2, 3]
+    option_feedback:
+      0: |
+        The name carries domain intent directly, which is exactly what lexical beacons do.
+      1: |
+        A recognizable code shape can activate a stored plan without full statement-by-statement reading.
+      2: |
+        The assertion exposes an assumption the surrounding code depends on.
+      3: |
+        Review metadata can establish the specification layer before source reading.
+      4: |
+        A random single-letter variable hides meaning rather than exposing it.
+    explanation: "Beacons operate at several levels: vocabulary, structure, tests, assertions, architecture, and workflow context."
+
+  - id: 4
+    difficulty: advanced
+    bloom: evaluate
+    type: single
+    question: |
+      A public class is named `GlobalConfigSingleton`. The name helps maintainers know there is only one instance, but clients now depend on that implementation detail. What is the best evaluation?
+    options:
+      - "The name is definitely right because every beacon should be as explicit as possible."
+      - "The name is definitely wrong because beacon value never matters."
+      - "There is a real trade-off: the pattern name is a beacon for maintainers, but it may violate information hiding if clients should not depend on the instantiation strategy."
+      - "The class should be renamed `ConfigThing` to avoid all design information."
+    correct_index: 2
+    option_feedback:
+      0: |
+        Beacon clarity is useful, but public names also define what clients learn and may depend on.
+      1: |
+        Beacon value does matter. The issue is whether that value belongs in the public abstraction.
+      3: |
+        Hiding all design information behind vague names destroys useful cues without necessarily protecting the right secret.
+    explanation: "Good naming balances reader support against information hiding. Some beacons belong in internal documentation or package structure rather than public API names."
+
+  - id: 5
+    difficulty: advanced
+    bloom: analyze
+    type: single
+    question: |
+      An expert reviewer skips a generated client file after confirming it matches the API schema, then spends most of the review on a small authorization change. Which principle explains this behavior?
+    options:
+      - "Experts are careless when files look boring."
+      - "Experts use beacons and difficulty-based reading to allocate attention where bottom-up tracing is most needed."
+      - "Generated code should never be reviewed by anyone."
+      - "Authorization changes are always larger than generated files."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Strategic attention allocation is not carelessness when the reviewer has reliable evidence about low-risk generated content.
+      2: |
+        Generated code still needs verification, but often through schema checks or generator trust rather than line-by-line reading.
+      3: |
+        Size and risk are different. A small authorization change can carry more risk than a large mechanical file.
+    explanation: "Beacon-based expertise means spending deep attention where the evidence is weak, the risk is high, or the hypothesis needs repair."
+
+  - id: 6
+    difficulty: advanced
+    bloom: create
+    type: single
+    question: |
+      You are designing a review template to help reviewers use contextual beacons. Which prompt belongs in the template?
+    options:
+      - "List the customer-visible behavior changed, the tests that specify it, and the files that contain the core design decision."
+      - "Paste every changed line into the description so reviewers do not need the diff."
+      - "State that CI passed and no further explanation is needed."
+      - "Ask reviewers to comment on formatting before reading intent."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Duplicating the diff adds reading load without creating a higher-level specification layer.
+      2: |
+        CI status is useful evidence, but it cannot explain intent, risk, or design structure.
+      3: |
+        Formatting should usually be automated; leading with it wastes attention before the review has a mental model.
+    explanation: "A good review template creates beacons: behavior, specification evidence, and the architectural center of the change."
+

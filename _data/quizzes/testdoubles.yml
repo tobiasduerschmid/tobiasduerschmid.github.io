@@ -258,10 +258,10 @@ questions:
     question: |
       Your SUT catches `ConnectionError` from a weather API and returns a fallback value. You want a unit test that drives the SUT down the error-handling branch *deterministically* — without waiting for the real network to fail. Which configuration on a `Mock()` weather client gets you there?
     options:
-      - "`weather.fetch.return_value = ConnectionError()` — set the return value to an instance of the exception."
-      - "`weather.fetch.side_effect = ConnectionError` — `side_effect` set to an exception class makes the mock *raise* that exception on call."
+      - "`weather.fetch.return_value = ConnectionError()` — set the return value to an instance of the exception class."
+      - "`weather.fetch.side_effect = ConnectionError` — set `side_effect` to an exception class so the mock raises it."
       - "`weather.fetch.assert_raises(ConnectionError)` — declare up-front that the call must raise the exception."
-      - "Patch `socket.gaierror` globally so any network code raises `ConnectionError`."
+      - "Patch `socket.gaierror` globally so any network code in the SUT raises `ConnectionError`."
     correct_index: 1
     option_feedback:
       0: "`return_value = ConnectionError()` makes the mock *return* the exception object as a value — the SUT receives an exception instance as the function's result. It does not raise. The SUT's `except` branch never fires."

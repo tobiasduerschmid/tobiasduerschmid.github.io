@@ -9864,8 +9864,16 @@
 
   TutorialCode.prototype._initTooltips = function (rootEl) {
     if (!rootEl || !window.jQuery || !jQuery.fn || !jQuery.fn.tooltip) return;
-    var $triggers = jQuery(rootEl).find('[data-toggle="tooltip"], [title]:not([data-no-tooltip])');
+    var $triggers = jQuery(rootEl).find('[data-toggle="tooltip"], [data-original-title], [data-tooltip], [title]:not([data-no-tooltip])');
     if (!$triggers.length) return;
+    $triggers.each(function () {
+      var $trigger = jQuery(this);
+      var nativeTitle = $trigger.attr('title');
+      if (nativeTitle && !$trigger.attr('data-original-title')) {
+        $trigger.attr('data-original-title', nativeTitle);
+      }
+      $trigger.removeAttr('title');
+    });
 
     $triggers.tooltip({
       trigger: 'manual',

@@ -1,0 +1,135 @@
+title: "Code Comprehension Quiz"
+description: "Apply code-comprehension research to realistic reading, review, architecture, and refactoring decisions."
+active: true
+questions:
+  - id: 1
+    difficulty: intermediate
+    bloom: apply
+    type: single
+    question: |
+      A function implements a simple discount rule, but the code uses five levels of nested conditionals, inconsistent variable names, and several helper calls whose names do not reveal their purpose. Which kind of cognitive load is the team mostly creating, and what should they do?
+    options:
+      - "Intrinsic load — the domain itself is inherently hard, so the team should accept the difficulty."
+      - "Extraneous load — the code presentation is making a simple rule harder than necessary, so the team should flatten control flow, improve names, and expose the rule's intent."
+      - "Germane load — the effort is productive because struggling through confusing code builds durable schemas."
+      - "Saturation load — the code has crossed a threshold where no improvement is possible."
+    correct_index: 1
+    option_feedback:
+      0: |
+        A discount rule may have some intrinsic load, but the stem describes avoidable presentation problems: nesting, names, and opaque helpers. That is the kind of load authors can reduce.
+      2: |
+        Germane load builds useful mental models. Confusing names and tangled control flow usually consume working memory without improving the reader's schema.
+      3: |
+        Saturation describes how perceived complexity can stop scaling linearly, not a reason to abandon improvement. The team still controls several obvious sources of avoidable load.
+    explanation: "The useful engineering move is to preserve the rule while reducing **extraneous load**. Code comprehension improves when the reader's scarce working memory is spent on the domain, not on deciphering avoidable presentation noise."
+
+  - id: 2
+    difficulty: basic
+    bloom: understand
+    type: single
+    question: |
+      A developer joins a legacy project with no domain knowledge and no reliable naming conventions. They must fix a localized bug in a small parsing function. Which comprehension strategy is most likely at first?
+    options:
+      - "Top-down only — they can rely on domain schemas even without domain knowledge."
+      - "Bottom-up — they will probably trace statements, group lines into chunks, and build understanding from the code outward."
+      - "Architecture recovery — they should run a clustering algorithm before reading the function."
+      - "Design-pattern recognition — all comprehension begins by identifying GoF patterns."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Top-down reading depends on prior schemas and reliable beacons. The question removes both, so the reader has little evidence to drive hypotheses.
+      2: |
+        Architecture recovery can help with system-level erosion, but it is disproportionate for a small localized parser bug.
+      3: |
+        Design patterns can be beacons, but many functions do not encode a formal pattern. Forcing pattern recognition here would add noise.
+    explanation: "Bottom-up comprehension is costly but appropriate when the reader lacks the context needed for top-down hypotheses. As the developer learns the domain and identifies reliable beacons, they can switch to more opportunistic strategies."
+
+  - id: 3
+    difficulty: advanced
+    bloom: analyze
+    type: multiple
+    question: |
+      Which artifacts or mental structures belong to the integrated meta-model of program comprehension? Select all that apply.
+    options:
+      - "A situational model of what the system does."
+      - "A program model built from low-level control-flow and code chunks."
+      - "A top-down domain model based on the reader's understanding of the business or problem space."
+      - "A personal knowledge base of programming and domain experience."
+      - "A fixed rule that expert readers must inspect files in alphabetical order."
+    correct_indices: [0, 1, 2, 3]
+    option_feedback:
+      0: |
+        The situational model is the reader's high-level understanding of system functions. Omitting it leaves only syntax, not purpose.
+      1: |
+        The program model captures the low-level implementation view. It is what bottom-up chunking builds.
+      2: |
+        The top-down domain model is what lets a reader generate expectations before seeing every statement.
+      3: |
+        The knowledge base supplies schemas and programming plans that make top-down reading possible.
+      4: |
+        The integrated model is opportunistic, not alphabetical. Expert readers choose routes based on hypotheses, beacons, and difficulty.
+    explanation: "The integrated meta-model explains why real comprehension moves among purpose, code, domain knowledge, and personal experience. It is not a file-order recipe."
+
+  - id: 4
+    difficulty: advanced
+    bloom: evaluate
+    type: single
+    question: |
+      A system's architecture document describes a clean separation between `presentation`, `domain`, and `data_access`, but the codebase contains a single `UserManager` class that validates forms, builds SQL, and formats UI strings. What is the strongest diagnosis?
+    options:
+      - "The team has an architecture-code gap: the intensional architecture says one thing, while the extensional code exposes a different structure. The fix should make architectural intent visible in packages, names, interfaces, and task-specific documentation."
+      - "The team has too much architecture; deleting the document will make the code easier to understand."
+      - "The code is probably fine because a single class is easier to search."
+      - "The only problem is cyclomatic complexity; reducing branch count will restore the architecture."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Removing the document hides the mismatch; it does not repair the code. The reader still lacks trustworthy cues about where responsibilities live.
+      2: |
+        Searchability is not the same as comprehensibility. A single class that mixes responsibilities may be easy to find and still hard to change safely.
+      3: |
+        Branch count might be one local symptom, but the stem describes responsibility drift across architectural boundaries.
+    explanation: "The architecture-code gap appears when the design vocabulary and code vocabulary diverge. Repairing it usually requires code structure and documentation that map high-level decisions to concrete source elements."
+
+  - id: 5
+    difficulty: advanced
+    bloom: evaluate
+    type: single
+    question: |
+      A senior engineer proposes adding design-pattern names to every class so future readers can understand the system faster. What is the best response?
+    options:
+      - "Do it everywhere — pattern names always reduce cognitive load."
+      - "Use pattern names only when they truthfully expose a stable design idea. A pattern can be a powerful beacon, but a misapplied or unnecessary pattern creates false expectations and extra abstraction."
+      - "Never use pattern names — readers should always infer design from code."
+      - "Use pattern names only for classes with the highest cyclomatic complexity."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Pattern names are helpful only when they map to a real, stable structure. Decorative pattern language can send readers down the wrong mental path.
+      2: |
+        Explicit vocabulary is often useful. Refusing to name real patterns removes a high-value beacon from the codebase.
+      3: |
+        Cyclomatic complexity is not the deciding factor. The deciding factor is whether the pattern name accurately communicates design intent that clients or maintainers should know.
+    explanation: "Design patterns are top-down beacons when they are true. They become cognitive debt when they imply a schema the code does not actually satisfy."
+
+  - id: 6
+    difficulty: intermediate
+    bloom: apply
+    type: single
+    question: |
+      You are assigned a 350-line pull request in an unfamiliar area. Which review sequence best applies the chapter's comprehension advice?
+    options:
+      - "Start at the first changed line and read every file in the order the review tool presents it."
+      - "Read the PR description, issue, and tests; form a hypothesis about the intended design; scan for the core change and likely trouble spots; then drill into the implementation paths that matter."
+      - "Approve once CI passes because unfamiliar code cannot be reviewed effectively."
+      - "Search for the longest file first because textual size is the only reliable measure of difficulty."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Linear reading can work for tiny changes, but a 350-line unfamiliar change risks exhausting working memory before the reviewer has a useful specification layer.
+      2: |
+        CI is evidence, not a substitute for human comprehension. It cannot judge architecture, requirements fit, or missing tests on its own.
+      3: |
+        Textual size is a useful heuristic, but not the only one. A small concurrency change may be harder than a large rename.
+    explanation: "Effective review starts by building top-down context, then uses opportunistic navigation to spend attention where it has the highest value."
+

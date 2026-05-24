@@ -45,3 +45,9 @@ However, the **Supervisor Mentality** remains critical. AI agents have limited c
 # Practice This
 
 Want to apply these concepts hands-on? The interactive **[Code Smells & Refactoring Tutorial](/SEBook/tools/code-smells-refactoring-tutorial)** walks through ten Python refactoring exercises on a music streaming codebase. The first refactoring is done by hand to anchor the safety dance (run tests → change → run tests → green); the remaining ones use Monaco's tool-supported refactorings (Extract Function, Introduce Parameter Object, Move Method, Move Field) so you spend your time choosing *which* refactoring to apply rather than typing. Live UML class diagrams in the editor make every structural change visible. The tutorial covers Long Method, boolean anti-patterns (including the IfsMerged trap), Duplicated Code, Long Parameter List, Feature Envy, God Class, and Replace Conditional with Polymorphism — all with tests preserved green throughout.
+
+Use the flashcards to retrieve the refactoring vocabulary, then use the quiz to decide whether a transformation is behavior-preserving, safe, and well matched to the smell.
+
+{% include flashcards.html id="dev_practice_refactoring" %}
+
+{% include quiz.html id="dev_practice_refactoring" %}

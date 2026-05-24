@@ -129,5 +129,12 @@ To facilitate top-down thinking for yourself and your team, you must design boun
 * **Adopt Hybrid Documentation:** Establish a *Documentation Roadmap* providing a bird's-eye view of subsystems for top-down navigation {% cite Aguiar2011 %}. Generate task-specific documentation that explicitly maps high-level components to specific source code elements {% cite Rost2016 %}.
 * **Practice Architecture-Guided Refactoring:** Adopt the "boy scout rule" by integrating top-down improvements into daily feature work to organically evolve modularity and prevent architectural drift, rather than waiting for technical debt sprints {% cite Jeffries2014 Martini2015 %}.
 
+# Practice This
+
+Use the flashcards to retrieve the cognitive models, then use the quiz to apply them to code review, architecture-code alignment, and comprehension trade-offs.
+
+{% include flashcards.html id="dev_practice_code_comprehension" %}
+
+{% include quiz.html id="dev_practice_code_comprehension" %}
 
 

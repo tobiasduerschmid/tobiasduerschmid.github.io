@@ -1,0 +1,88 @@
+title: "Modern Code Review Flashcards"
+description: "Formal inspections, modern asynchronous review, cognitive limits, socio-technical dynamics, reviewable code, Google-scale review, and AI-era review risks."
+active: true
+cards:
+  - id: 1
+    difficulty: basic
+    bloom: remember
+    question: "How did formal inspections differ from modern code review?"
+    answer: "Formal inspections were synchronous, role-heavy meetings with printed code and explicit roles like Moderator, Reader, and Reviewers. Modern Code Review is informal, tool-based, asynchronous, and centered on diffs in systems such as GitHub or Gerrit."
+    explanation: "MCR traded some rigor for speed and scalability, which fits Agile, CI, and distributed teams."
+
+  - id: 2
+    difficulty: intermediate
+    bloom: understand
+    question: "What is the defect-finding fallacy in Modern Code Review?"
+    answer: "Teams often say review is mainly for finding bugs, but empirical studies show only about 14% to 25% of comments identify functional defects. Most comments concern maintainability, readability, knowledge transfer, norms, and shared ownership."
+    explanation: "The practice still improves quality, but its dominant mechanism is broader than bug hunting."
+
+  - id: 3
+    difficulty: intermediate
+    bloom: understand
+    question: "Name three major non-defect functions of code review."
+    answer: "**Maintainability and code improvement**, **knowledge transfer and mentorship**, and **shared code ownership / team awareness**."
+    explanation: "These functions explain why review remains valuable even when few comments point to functional bugs."
+
+  - id: 4
+    difficulty: advanced
+    bloom: analyze
+    question: "What is the Code Review Comprehension Model (CRCM) asking a reviewer to hold in mind?"
+    answer: "The reviewer must compare the existing system, the proposed change, and an ideal solution. That comparison is cognitively expensive, so reviewers use linear, difficulty-based, and chunking strategies."
+    explanation: "This is why review quality collapses when a PR is too large or lacks context."
+
+  - id: 5
+    difficulty: intermediate
+    bloom: apply
+    question: "What practical limits should shape review size and speed?"
+    answer: "Keep reviews roughly below the 200-400 LOC danger zone, avoid sessions longer than about 60-90 minutes, and review at a measured pace rather than skimming hundreds of lines too quickly."
+    explanation: "The exact numbers are heuristics, not laws. The principle is that review effectiveness drops when the reader's attention and working memory are exhausted."
+
+  - id: 6
+    difficulty: advanced
+    bloom: apply
+    question: "Why do stacked pull requests help review quality?"
+    answer: "Stacking decomposes a large feature into small, dependent PRs that each fit within the reviewer's cognitive budget. Reviewers can inspect database, backend, and UI layers as coherent chunks instead of one monolithic code bomb."
+    explanation: "Stacking is process design around the human brain."
+
+  - id: 7
+    difficulty: advanced
+    bloom: analyze
+    question: "How do bikeshedding and linters relate?"
+    answer: "Bikeshedding wastes human review attention on trivial subjective details. Linters and formatters move style enforcement to automation so reviewers can spend scarce attention on design, correctness, and maintainability."
+    explanation: "The highest-value human comments are the ones automation cannot make."
+
+  - id: 8
+    difficulty: intermediate
+    bloom: apply
+    question: "What are five authoring practices that make code more reviewable?"
+    answer: "Design by Contract, assertions, guard clauses, meaningful abstractions for chunking, and the Boy Scout Rule."
+    explanation: "Each practice reduces the reviewer's cognitive load or makes hidden assumptions inspectable."
+
+  - id: 9
+    difficulty: advanced
+    bloom: analyze
+    question: "How do assertions and guard clauses differ?"
+    answer: "**Assertions** express programmer-error invariants that should never be false if the code is correct. **Guard clauses** handle expected invalid or edge-case inputs gracefully at the top of a function."
+    explanation: "Assertions fail fast on broken assumptions. Guard clauses keep normal control flow flat and readable while handling real runtime conditions."
+
+  - id: 10
+    difficulty: intermediate
+    bloom: understand
+    question: "What are Google's two approval gates in code review?"
+    answer: "**Ownership** approval from someone responsible for the directory and **Readability** approval from someone certified in the language style and quality norms."
+    explanation: "The gates separate domain authority from language and maintainability norms."
+
+  - id: 11
+    difficulty: advanced
+    bloom: evaluate
+    question: "Why can adding more reviewers reduce accountability?"
+    answer: "Large reviewer groups can trigger a bystander effect: each person assumes someone else will read carefully, so focused attention diffuses instead of multiplying."
+    explanation: "Review quality depends on active ownership of the review, not the raw number of people copied."
+
+  - id: 12
+    difficulty: advanced
+    bloom: evaluate
+    question: "Why does AI-generated code shift review toward outcome verification?"
+    answer: "AI can generate large, plausible diffs faster than humans can read them. Reviewers need executable evidence, preview environments, tests, security checks, and behavior validation instead of relying only on syntax inspection."
+    explanation: "The AI-era risk is rubber stamping plausible code. Outcome verification makes correctness observable."
+

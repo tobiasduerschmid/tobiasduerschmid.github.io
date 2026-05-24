@@ -306,9 +306,9 @@ steps:
               print("  This failure is the lesson — a test that depends on the wall clock rots on a schedule.")
               print("  In Step 2, we'll use the seam you just created to inject a `FrozenClock` and make the test deterministic.")
         hints:
-          - title: "Small nudge"
+          - title: "Add the parameter, then use it in the body"
             text: "The signature is `def is_today_event_day(event_date_str: str, clock=datetime.datetime) -> bool:`. Then inside the function, replace `datetime.now()` with `clock.now()`."
-          - title: "Strategic hint"
+          - title: "Use the `datetime` class as the default value"
             text: "Two changes: (1) add `clock=datetime.datetime` as a second parameter with the default value; (2) change the body to use `clock.now()` instead of `datetime.now()`. The default value is the `datetime` class — its classmethod `now()` returns the current datetime, which is what the original code did."
           - title: "Fill in the blanks"
             text: "```python\nimport datetime\n\ndef is_today_event_day(event_date_str: str, clock=___) -> bool:\n    today = clock.___().strftime('%Y-%m-%d')\n    return today == event_date_str\n```\nFill the two blanks. Hints: (1) the default for `clock` is the datetime *class* (it has a `.now()` classmethod) — *not* the module and not a function. (2) The body should use the parameter `clock`, not the imported module directly. Note the top-level `import datetime` (the module), so you can reference `datetime.datetime` as the default."

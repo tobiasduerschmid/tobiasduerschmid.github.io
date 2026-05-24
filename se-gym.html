@@ -868,6 +868,7 @@ layout: sebook
       var workoutTimerExtensionSeconds = 0;
       var workoutEndedByTimer = false;
       var lastTimedPracticeDrawCount = 0;
+      var requestedQuizIds = getRequestedQuizIds();
 
       // Per-difficulty tallies for the results breakdown. Each bucket is a
       // {seen, correct} pair; "untagged" collects cards with no difficulty.
@@ -897,6 +898,37 @@ layout: sebook
         startButtons.forEach(function (button) {
           button.disabled = disabled;
         });
+      }
+
+      function getRequestedQuizIds() {
+        var params = new URLSearchParams(window.location.search);
+        var values = params.getAll('quiz');
+        var seen = {};
+        var ids = [];
+        values.forEach(function (value) {
+          String(value || '').split(',').forEach(function (part) {
+            var id = part.trim();
+            if (!id || seen[id] || !ALL_CARD_DATA.quizzes[id]) return;
+            seen[id] = true;
+            ids.push(id);
+          });
+        });
+        return ids;
+      }
+
+      function requestedQuizGymEntries() {
+        return requestedQuizIds.map(function (id) {
+          return { type: 'quiz', id: id };
+        });
+      }
+
+      function clearRequestedQuizParamsFromUrl() {
+        if (!requestedQuizIds.length || !window.history || typeof window.history.replaceState !== 'function') return;
+        var url = new URL(window.location.href);
+        url.searchParams.delete('quiz');
+        var cleanPath = url.pathname + url.search + url.hash;
+        window.history.replaceState(window.history.state, document.title, cleanPath);
+        requestedQuizIds = [];
       }
 
       function shuffleArray(arr) {
@@ -1722,8 +1754,8 @@ layout: sebook
 
       // ==================== WORKOUT ====================
 
-      function buildWorkoutCards() {
-        var gym = PersonalGym.getGym();
+      function buildWorkoutCards(sourceGym) {
+        var gym = Array.isArray(sourceGym) ? sourceGym : PersonalGym.getGym();
         var cards = [];
         var seenQuestions = {};
         var active = PersonalGym.getActiveDifficulties();
@@ -1796,10 +1828,12 @@ layout: sebook
         return cards;
       }
 
-      function startWorkout() {
-        if (!PersonalGym.isPersonalGymActive()) return;
+      function startWorkout(options) {
+        var sourceGym = options && Array.isArray(options.sourceGym) ? options.sourceGym : null;
+        var requireActive = !(options && options.requireActive === false);
+        if (requireActive && !PersonalGym.isPersonalGymActive()) return;
         saveTimedPracticeSettingsFromInputs();
-        workoutCards = buildWorkoutCards();
+        workoutCards = buildWorkoutCards(sourceGym);
         if (workoutCards.length === 0) return;
 
         workoutCurrentStep = 0;
@@ -2700,6 +2734,7 @@ layout: sebook
 
       function goBackToLibrary() {
         stopWorkoutTimer(true);
+        clearRequestedQuizParamsFromUrl();
         workoutView.style.display = 'none';
         libraryView.style.display = '';
         setWorkoutMode(false);
@@ -2711,6 +2746,11 @@ layout: sebook
         var div = document.createElement('div');
         div.appendChild(document.createTextNode(str));
         return div.innerHTML.replace(/"/g, '&quot;');
+      }
+
+      function startRequestedQuizWorkout() {
+        if (!requestedQuizIds.length) return;
+        startWorkout({ sourceGym: requestedQuizGymEntries(), requireActive: false });
       }
 
       // ==================== EVENT BINDINGS ====================
@@ -2983,6 +3023,7 @@ layout: sebook
       // Initialize
       setWorkoutMode(false);
       refreshLibrary();
+      startRequestedQuizWorkout();
 
     })();
   </script>

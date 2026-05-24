@@ -1,0 +1,60 @@
+title: "Code Beacons Flashcards"
+description: "Lexical, structural, test, assertion, architectural, and contextual beacons for expert code comprehension and review."
+active: true
+cards:
+  - id: 1
+    difficulty: basic
+    bloom: remember
+    question: "What is a code beacon?"
+    answer: "A beacon is a recognizable, familiar point in code that gives the reader a hint about the code's purpose. It acts as evidence for a larger mental model."
+    explanation: "Beacons let readers avoid tracing every statement when a reliable clue can activate an existing schema."
+
+  - id: 2
+    difficulty: intermediate
+    bloom: understand
+    question: "Why are full-word identifiers powerful lexical beacons?"
+    answer: "A name like `isPrimeNumber` communicates domain intent immediately, while a name like `pn` forces the reader to infer meaning from surrounding code."
+    explanation: "Good names move information from working-memory reconstruction into immediate recognition."
+
+  - id: 3
+    difficulty: intermediate
+    bloom: apply
+    question: "What is a structural beacon?"
+    answer: "A structural beacon is a recognizable code shape, such as an accumulator loop, a sorting swap, or a standard request-validation-controller sequence that triggers a familiar programming plan."
+    explanation: "The reader recognizes the plan first, then only inspects details that might differ from the expected pattern."
+
+  - id: 4
+    difficulty: intermediate
+    bloom: apply
+    question: "How do tests act as beacons?"
+    answer: "Tests document intended behavior in executable form. A reviewer can read tests first to build a top-down expectation before reading the production implementation."
+    explanation: "Tests are especially valuable beacons during code review because they expose the author's specification layer."
+
+  - id: 5
+    difficulty: intermediate
+    bloom: understand
+    question: "How do assertions act as beacons?"
+    answer: "Assertions make assumptions explicit at the exact point where they matter. They tell readers what state the author believes must hold."
+    explanation: "The assertion is both a runtime check and a comprehension cue."
+
+  - id: 6
+    difficulty: advanced
+    bloom: evaluate
+    question: "What is the Singleton naming paradox for beacons?"
+    answer: "Including `Singleton` in a class name can help readers recognize the design, but it may also leak an implementation decision clients should not depend on."
+    explanation: "The trade-off is beacon visibility versus information hiding. Not every helpful cue belongs in a public name."
+
+  - id: 7
+    difficulty: advanced
+    bloom: analyze
+    question: "How do contextual beacons extend beyond source code during review?"
+    answer: "PR titles, descriptions, issue links, commit messages, file names, tests, and ownership boundaries all help reviewers build the specification layer before reading the diff."
+    explanation: "Modern code review is not just source reading. It is hypothesis formation across the whole change artifact."
+
+  - id: 8
+    difficulty: advanced
+    bloom: evaluate
+    question: "Why do experts avoid exhaustive tracing when beacons are reliable?"
+    answer: "Exhaustive tracing spends scarce working memory on details that a reliable beacon already compresses. Experts trace line-by-line only when a hypothesis fails or behavior is risky."
+    explanation: "Expertise includes knowing when not to trace. Strategic avoidance of unnecessary detail is a strength, not laziness."
+
