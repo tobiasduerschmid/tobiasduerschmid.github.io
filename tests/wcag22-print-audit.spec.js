@@ -46,6 +46,8 @@ test('print media keeps reachable layouts light, readable, and WCAG 2.2 AA compa
   for (const [feature, urls] of Object.entries(groups)) {
     report.groups[feature] = { pageCount: urls.length, pages: [] };
     for (const url of urls) {
+      const pageStartedAt = Date.now();
+      console.log(`Print WCAG audit: ${feature} ${url}`);
       const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
       await settleLoadedPage(page);
       await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
@@ -69,6 +71,7 @@ test('print media keeps reachable layouts light, readable, and WCAG 2.2 AA compa
         },
       };
       report.groups[feature].pages.push(pageRecord);
+      console.log(`Print WCAG audit finished: ${feature} ${url} (${Date.now() - pageStartedAt} ms, ${findings.length} finding(s))`);
       for (const finding of findings) {
         report.failures.push({ feature, url, ...finding });
       }
@@ -304,7 +307,7 @@ function runPrintDomAudit() {
         out.push({
           criterion: '1.4.3',
           severity: 'fail',
-          message: `Print text contrast ${ratio.toFixed(2)}:1 is below ${min}:1 for "${normalize(parent.textContent || '').slice(0, 70)}" in ${shortNode(parent)}`,
+          message: `Print text contrast ${ratio.toFixed(2)}:1 is below ${min}:1 for "${normalize(parent.textContent || '').slice(0, 70)}" in ${shortNode(parent)} (fg ${style.color}, bg rgba(${Math.round(bg.r)}, ${Math.round(bg.g)}, ${Math.round(bg.b)}, ${bg.a == null ? 1 : bg.a}))`,
         });
       }
     }

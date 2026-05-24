@@ -93,6 +93,10 @@ class Customer {
         type: 'folder-tree',
         text: '@startuml\nproject/\n  src/\n    app.js\n@enduml'
       },
+      gitGraph: {
+        type: 'gitgraph',
+        text: '@startuml\nbranch main:\n  A "Initial commit"\n  B "Add auth module"\nhead main\n@enduml'
+      },
       erDiagram: {
         type: 'er',
         text: '@startuml\nentity User {\n  id key\n}\n@enduml'

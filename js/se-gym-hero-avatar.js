@@ -2969,6 +2969,12 @@
     return null;
   }
 
+  function nextPracticeHeroCandidate(el) {
+    var next = el ? el.nextElementSibling : null;
+    while (next && next.tagName === 'SCRIPT') next = next.nextElementSibling;
+    return next;
+  }
+
   function pickPracticeHeroSide(run) {
     var firstSide = null;
     for (var i = 0; i < run.length; i++) {
@@ -3026,12 +3032,12 @@
       }
 
       var run = [wrap];
-      var next = wrap.nextElementSibling;
+      var next = nextPracticeHeroCandidate(wrap);
       while (isPracticeHeroWrap(next) &&
           next.getAttribute('data-practice-hero-grouped') !== 'true' &&
           !hasPracticeHeroGroupAncestor(next)) {
         run.push(next);
-        next = next.nextElementSibling;
+        next = nextPracticeHeroCandidate(next);
       }
 
       groupPracticeHeroRun(run);
