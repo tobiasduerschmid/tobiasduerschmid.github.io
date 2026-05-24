@@ -1256,3 +1256,7 @@ Test your understanding below. The flashcards and quiz turn the chapter's core p
 {% include quiz.html id="design_principle_information_hiding" %}
 
 *Pedagogical tip: Try to **explain** each concept out loud — to a teammate, a rubber duck, or your imaginary future self — before peeking at the answer. The "generation effect" strengthens memory more than re-reading ever will.*
+
+### Hands-on tutorial
+
+Once the flashcards and quiz feel solid, the [**Information Hiding in Python tutorial**](/SEBook/designprinciples/information-hiding-tutorial) walks you through six short PRIMM-shaped exercises that *operationalize* this chapter: you'll prove that `private` is not a secret, refactor a leaky `Playlist`, hide a ranking algorithm behind a `Protocol`, replace a `sqlite3.Connection` parameter with an `EventDirectory`, apply the Single Choice principle to a music streaming app, and finish with a change-impact analysis on a small system. Each step uses an **implementation-swap test** — same client code, two different implementations — as the operational oracle for "the secret is really hidden."
