@@ -1,5 +1,5 @@
 title: "Information Hiding Flashcards"
-description: "Key definitions, examples, trade-offs, design-doc practices, and misconceptions of the Information Hiding principle (Parnas 1972)."
+description: "Key definitions, examples, trade-offs, design-doc practices, software-aging lessons, and common confusions around Information Hiding."
 active: true
 cards:
   - id: 1
@@ -145,3 +145,57 @@ cards:
     question: "Name two operating-system design decisions that user programs should not have to know."
     answer: "Examples include **file-system layout**, **disk caching**, **CPU scheduling**, **device-driver details**, **virtual-memory paging**, and **network-stack internals**."
     explanation: "The OS exposes stable abstractions such as files, processes, memory, and sockets. If applications depended on the hidden decisions directly, changing the scheduler, storage hardware, or file system would break ordinary programs."
+
+  - id: 25
+    difficulty: advanced
+    question: "What problem does a **module guide** solve in a large information-hiding design?"
+    answer: "A module guide maps each important **secret** or responsibility to the module that owns it, so designers and maintainers can quickly find which module should change without reading irrelevant module internals."
+    explanation: "Parnas, Clements, and Weiss found that information hiding remained practical in a complex A-7E flight-software redesign only when paired with a guide organized around module secrets."
+
+  - id: 26
+    difficulty: intermediate
+    question: "What are Parnas's two main causes of **software aging**?"
+    answer: "**Lack of movement** — the environment, users, and market change while the software stands still. **Ignorant surgery** — repeated changes by maintainers who do not understand the original design gradually damage the structure."
+    explanation: "Information Hiding helps with both: it identifies likely classes of change early and keeps later edits from scattering exceptions across the codebase."
+
+  - id: 27
+    difficulty: intermediate
+    question: "Why does Parnas say, **'Designing for change is designing for success'**?"
+    answer: "Successful software attracts users, new requirements, platform changes, fixes, and extensions. If a product is valuable, it will change; the only products that avoid change are often the ones nobody wants to keep using."
+    explanation: "The goal is not to predict every future requirement. It is to predict likely classes of change and confine each class to a small, documented part of the system."
+
+  - id: 28
+    difficulty: advanced
+    question: "What does it mean to treat an **interface as permission to assume**?"
+    answer: "Every public name, type, return value, exception, ordering guarantee, flag, and data shape tells clients something they are allowed to rely on. A good interface exposes only stable, intentional assumptions and keeps volatile details private."
+    explanation: "This turns leak detection into a concrete review habit: ask what each public detail permits clients to know, then remove permissions that would make future changes ripple."
+
+  - id: 29
+    difficulty: advanced
+    question: "Why was Parnas's circular-shift ordering in the improved KWIC design still a design error?"
+    answer: "The interface specified an ordering that clients did not need. That extra promise restricted future implementations even though the module was otherwise closer to an information-hiding design."
+    explanation: "Information Hiding is not just about hiding data. It is also about avoiding over-specified contracts."
+
+  - id: 30
+    difficulty: intermediate
+    question: "What is the difference between a **primary secret** and a **secondary secret** in a module guide?"
+    answer: "A **primary secret** is the main likely-to-change decision the module exists to hide. A **secondary secret** is an implementation decision made while realizing that primary secret."
+    explanation: "For a payment gateway, the provider protocol may be the primary secret; retry policy, idempotency-key format, and provider response mapping may be secondary secrets."
+
+  - id: 31
+    difficulty: advanced
+    question: "Why can an API named `search_bm25` leak information even if its fields are private?"
+    answer: "The name and return shape can expose the ranking algorithm, score scale, storage row format, tie-break details, and pagination strategy. Clients should usually depend on domain-level search results, not BM25 internals."
+    explanation: "Access modifiers hide fields inside a class. Information Hiding also asks whether the public contract reveals volatile algorithm and representation decisions."
+
+  - id: 32
+    difficulty: advanced
+    question: "Why might a more modular design feel harder to understand at first?"
+    answer: "It can introduce extra abstractions that readers must learn before seeing the hidden implementation. The benefit often appears during modification: the right change stays local instead of spreading through clients."
+    explanation: "This is why modularity should be assessed with change-impact and modification tasks, not only by first-glance readability."
+
+  - id: 33
+    difficulty: intermediate
+    question: "How is a Parnas-style **module** different from a runtime process?"
+    answer: "A module is a work-assignment and secret boundary. A process is a runtime activity. One module can contribute code to several processes, and one process can execute code from many modules."
+    explanation: "Parnas, Clements, and Weiss separate module structure, uses structure, and process structure so designers do not confuse ownership of secrets with runtime execution."

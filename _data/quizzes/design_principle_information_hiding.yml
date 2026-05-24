@@ -516,3 +516,168 @@ questions:
         Exposing every low-level hardware detail would make ordinary programs harder to write and easier to
         break. Hidden details are good when callers do not need them.
     explanation: "Operating systems are deep modules: they expose relatively stable abstractions like files, processes, sockets, and memory mappings while hiding difficult design decisions such as scheduling, device management, caching, and file-system implementation."
+
+  - id: 23
+    difficulty: advanced
+    type: single
+    question: |
+      In Parnas, Clements, and Weiss's A-7E work, what is the main purpose of a **module guide**?
+    options:
+      - "To list every public function alphabetically so callers can look up parameter types"
+      - "To organize the system around module secrets, so designers and maintainers can find which module should change for a given design decision"
+      - "To replace all module specifications with a single runtime process diagram"
+      - "To prove that every module must be implemented as exactly one subroutine"
+    correct_index: 1
+    option_feedback:
+      0: |
+        Alphabetical API lookup helps callers use functions, but it does not explain which module owns a
+        design decision or where a future change should land.
+      2: |
+        A process diagram describes runtime activity. The module guide describes the module structure:
+        work assignments and hidden secrets.
+      3: |
+        Parnas explicitly rejects treating a module as necessarily one subroutine. A module is a
+        responsibility boundary around a secret.
+    explanation: "The module guide extends Information Hiding to complex systems. It records which secrets belong to which modules, so maintainers can identify the relevant module without reading unrelated internals or rediscovering the original design intent."
+
+  - id: 24
+    difficulty: intermediate
+    type: single
+    question: |
+      According to Parnas's *Software Aging*, why can a successful product become harder to maintain over time?
+    options:
+      - "Because software mathematically decays the way physical materials corrode"
+      - "Because memory leaks are the only meaningful source of software aging"
+      - "Because the product's environment changes, and repeated maintenance by people who do not understand the design can damage the original structure"
+      - "Because old programs automatically become slower whenever the hardware gets faster"
+    correct_index: 2
+    option_feedback:
+      0: |
+        Parnas's point is that the bits do not decay. The product ages because its world changes and its
+        structure can be damaged by maintenance.
+      1: |
+        Memory leaks can cause slowdowns, but Parnas separates that kind of failure from the broader
+        structural aging caused by environment change and poorly understood modifications.
+      3: |
+        Faster hardware can make larger systems possible, but it does not automatically make an old
+        program slower. The core problem is changing expectations and deteriorating structure.
+    explanation: "Parnas identifies two forces: lack of movement, where unchanged software falls behind a changing world, and change-induced aging, where maintenance that ignores the original design concept makes future changes harder."
+
+  - id: 25
+    difficulty: advanced
+    type: single
+    question: |
+      A support tool exposes this public API:
+
+      ```python
+      search_bm25(query: str) -> list[tuple[sqlite3.Row, float, int]]
+      ```
+
+      The caller uses the row fields, compares the BM25 score to `0.75`, and uses the integer as a posting-list tie breaker. Which redesign best follows Information Hiding?
+    options:
+      - "Keep the API, but document the BM25 score range more carefully"
+      - "Expose `search(query) -> SearchPage`, where each `SearchHit` contains domain fields such as title, excerpt, confidence, and an opaque cursor"
+      - "Return the SQL string used to produce the result so advanced clients can tune it"
+      - "Return the embedding vector as well, so clients can switch between keyword and vector search themselves"
+    correct_index: 1
+    option_feedback:
+      0: |
+        Better documentation does not hide the ranking algorithm, score scale, storage row, or tie-break
+        mechanism. It makes the leaked assumptions easier to depend on.
+      2: |
+        Returning SQL exposes storage and query details. That is the opposite of hiding the search
+        module's representation and ranking decisions.
+      3: |
+        Exposing vectors moves algorithm and representation choices into clients. A future search change
+        should usually stay inside the search module.
+    explanation: "The caller needs meaningful hits, not BM25 internals. A domain-level result keeps clients away from algorithm choice, score calibration, database row shape, and pagination mechanics."
+
+  - id: 26
+    difficulty: advanced
+    type: single
+    question: |
+      A team creates `DatabaseWrapper.execute_sql(sql)` and has service-layer code call it everywhere. What is the best critique?
+    options:
+      - "This is good Information Hiding because all database access now passes through one class"
+      - "This centralizes connection handling, but it still leaks the query language, table names, column names, and storage model into clients"
+      - "This is only a problem if the SQL strings are longer than one line"
+      - "This would become good Information Hiding if every service built SQL through helper functions instead of string literals"
+    correct_index: 1
+    option_feedback:
+      0: |
+        A wrapper can centralize mechanics without hiding the important secret. If callers still know SQL
+        schema details, the storage decision has leaked.
+      2: |
+        Line length is not the issue. The issue is what knowledge the interface permits clients to use.
+      3: |
+        Helper functions may reduce duplication, but callers would still depend on a storage-shaped
+        contract unless the interface becomes domain-shaped.
+    explanation: "A stronger boundary would expose operations such as `UserDirectory.find_by_email(email) -> UserProfile`, while keeping query language, schema, connection handling, and row mapping inside the persistence module."
+
+  - id: 27
+    difficulty: intermediate
+    type: single
+    question: |
+      In a module-guide card for `PaymentGateway`, which entry best distinguishes **primary** and **secondary** secrets?
+    options:
+      - "Primary secret: provider authorization protocol and response mapping. Secondary secrets: retry rules, idempotency-key format, and credential handling."
+      - "Primary secret: the class name. Secondary secrets: the method names."
+      - "Primary secret: users do not see the provider SDK. Secondary secret: the checkout page displays a provider logo."
+      - "Primary secret: all code in the `payments/` folder. Secondary secret: all tests for that folder."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Names matter, but the guide should identify design decisions likely to change, not merely list
+        syntactic parts of the class.
+      2: |
+        User-visible payment options may be part of the product contract. The backend gateway secret is
+        the provider integration decision and its implementation details.
+      3: |
+        A folder is a location, not a secret. The guide should say what knowledge belongs there and what
+        changes the module is meant to absorb.
+    explanation: "Primary secrets are the main likely-to-change decisions a module exists to hide. Secondary secrets are implementation decisions made while realizing those primary secrets."
+
+  - id: 28
+    difficulty: advanced
+    type: single
+    question: |
+      Which statement correctly separates Parnas's **module structure**, **uses structure**, and **process structure**?
+    options:
+      - "They are three names for the same diagram, so choosing one is mostly a notation preference"
+      - "Module structure is about work assignments and hidden secrets; uses structure is about execution dependencies; process structure is about runtime activities"
+      - "Module structure only applies to object-oriented classes; process structure only applies to operating systems"
+      - "A module must always compile to exactly one process, otherwise Information Hiding has failed"
+    correct_index: 1
+    option_feedback:
+      0: |
+        Treating the structures as one diagram hides important design questions. Ownership of secrets,
+        execution requirements, and runtime concurrency can differ.
+      2: |
+        Parnas-style modules are not limited to classes, and process structure appears in many kinds of
+        software, not just operating systems.
+      3: |
+        One process can run code from many modules, and one module can contribute code to multiple
+        processes. That does not violate Information Hiding.
+    explanation: "A module is a responsibility boundary around a secret. It is not necessarily one file, class, package, process, or runtime thread."
+
+  - id: 29
+    difficulty: intermediate
+    type: single
+    question: |
+      A student says, "The monolithic version is easier to understand because all the code is on one page. The modular version has more names to learn." What is the best response?
+    options:
+      - "The student is wrong because modular code is always easier to understand immediately"
+      - "The student may be noticing a real first-read cost; evaluate the design by a plausible modification or change-impact task"
+      - "The monolithic version is always better because fewer files means fewer dependencies"
+      - "The modular version is automatically better because any extra abstraction improves design"
+    correct_index: 1
+    option_feedback:
+      0: |
+        Good modularity can add an abstraction that must be learned. The payoff is often clearest when a
+        likely change stays local.
+      2: |
+        Fewer files can look simpler while still spreading volatile knowledge everywhere.
+      3: |
+        Extra abstractions are not automatically valuable. Each boundary should hide a real secret or
+        localize a plausible change.
+    explanation: "Information Hiding is a design-for-change principle. First-glance readability matters, but the central test is whether likely future changes stay local and clients avoid forbidden assumptions."

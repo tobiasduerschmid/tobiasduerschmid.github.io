@@ -103,3 +103,9 @@ cards:
     question: "When should you NOT use publish-subscribe?"
     answer: "When (a) you need global strict ordering or hard real-time delivery guarantees without investing in specialized middleware/QoS, (b) the producer requires synchronous confirmation that consumers acted on the event, (c) the system has only one consumer per event and direct call would suffice, or (d) the team lacks the operational maturity to debug asynchronous, non-deterministic flows."
     explanation: "Pub-sub solves coupling problems; it creates observability problems. If your bottleneck is rigidity of direct calls and your team has tracing/replay infrastructure, pub-sub is excellent. If your bottleneck is debuggability and you have one producer talking to one consumer, a synchronous call is simpler."
+
+  - id: 16
+    difficulty: intermediate
+    question: "Why are topic names architecturally significant in topic-based publish-subscribe?"
+    answer: "Topic names are the connectors that bind publishers and subscribers. If a publisher renames a topic but a subscriber keeps listening to the old name, the code may compile and run while the runtime message flow silently breaks."
+    explanation: "The lecture's Autoware.AI example used exactly this failure mode: some components changed from one topic string to another while others did not. Pub-sub decoupling makes extension easy, but it also makes tracing and contract validation load-bearing."

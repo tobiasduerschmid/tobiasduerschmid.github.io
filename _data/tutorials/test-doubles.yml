@@ -9,6 +9,7 @@ learning_objectives:
   - "Evaluate whether a passing test actually verifies anything (vs. tautologically agreeing with itself because both sides ask the same uncontrolled source)."
   - "Justify the choice to *not* use a test double — fakes for stateful collaborators, real objects for pure logic."
   - "Create a test from scratch that uses an appropriate double (stub, spy, or mock) for a previously-unseen SUT, with a strong oracle."
+  - "Explain what a doubled unit test does *not* prove, then name the contract or integration check that covers the remaining risk."
 
 backend: pyodide
 linter: true
@@ -2348,7 +2349,8 @@ steps:
   #   Spaced retrieval       — quizzes pull from every prior step + Testing
   #                            Foundations + TDD.
   #   Concept over syntax    — student writes ZERO test code. Fills in:
-  #                            (a) a critique comment, (b) five classification answers.
+  #                            (a) a critique comment, (b) classification answers,
+  #                            (c) a residual-risk recommendation.
   #   Transfer / consolidation
   #                          — final pass; closes the loop on "what kind of design
   #                            decision is choosing a double?"
@@ -2357,13 +2359,14 @@ steps:
     instructions: |
       ### Why this matters
 
-      A test double is a *tool* — not a default, not a sign of professionalism, not a coverage strategy. The right number of doubles for many tests is zero. Reaching for `Mock` reflexively produces brittle tests that break under harmless refactors and assert on choreography instead of behavior. This step builds the judgment to *not* reach for a double when a real collaborator would do — the capstone skill that separates "mocks everything" from "mocks at the right boundary."
+      A test double is a *tool* — not a default, not a sign of professionalism, not a coverage strategy. The right number of doubles for many tests is zero. Reaching for `Mock` reflexively produces brittle tests that break under harmless refactors and assert on choreography instead of behavior. This step builds the judgment to *not* reach for a double when a real collaborator would do — and to name the integration risk that remains when a double *is* the right tool.
 
       ### 🎯 You will learn to
 
       - Evaluate an over-mocked test and diagnose where it broke from the spec
-      - Apply a decision guide to classify scenarios as no-double / stub / spy / mock / fake / adapter
+      - Apply a decision guide to classify scenarios as no-double / stub / spy / mock / fake / adapter / contract check
       - Analyze the "mock what you own" heuristic and the Adapter wrap-and-mock pattern
+      - Justify what a doubled unit test proves, what it does not prove, and what complementary check covers the gap
 
       🧭 **The whole arc, in one sentence.** A test double is a *tool you reach for when a real collaborator would make the test flaky, slow, or unable to verify the right thing*. It is not a default. It is not a sign of professionalism. It is not a coverage strategy. *The right number of doubles for many tests is zero.*
 
@@ -2408,12 +2411,12 @@ steps:
       Same lesson as Testing Foundations Step 4 ("test behavior, not implementation"), now applied to mocks instead of internal state access. The principle is one principle.
       </details>
 
-      ## Part 2 — Classify five scenarios
+      ## Part 2 — Classify six scenarios
 
-      Open `scenarios.py`. For each of the five scenarios, set the variable to the **best single recommendation** from this list:
+      Open `scenarios.py`. For each of the six scenarios, set the variable to the **best single recommendation** from this list:
 
       ```
-      "no_double"   "stub"   "spy"   "mock"   "fake"   "adapter"
+      "no_double"   "stub"   "spy"   "mock"   "fake"   "adapter"   "contract"
       ```
 
       The validator accepts any *defensible* answer for each scenario (some scenarios have more than one defensible answer — e.g., spy and mock are often interchangeable for a single outbound call). It rejects clearly wrong choices.
@@ -2428,7 +2431,18 @@ steps:
       | …needs to round-trip with a stateful collaborator (write then read) | **Fake** |
       | …calls a third-party library you don't own | **Adapter** wrapper → double the adapter |
       | …is just simple math/string/list manipulation | **No double** (don't make work) |
+      | …already uses a fake or adapter, and you need confidence it still matches the real collaborator | **Contract / integration check** against the real boundary |
       </details>
+
+      ## Part 3 — Name the remaining risk
+
+      Every double trades reality for control. That is usually the right trade in a unit test, but it leaves a gap: a stub might not match the real API, a fake might drift from the real database, and an adapter mock cannot prove the third-party service accepts your actual request. A professional test plan says both halves out loud:
+
+      - **This unit test proves:** the SUT behaves correctly given a controlled collaborator.
+      - **This unit test does not prove:** the real collaborator still speaks the same contract.
+      - **Complementary check:** a contract test, sandbox integration test, or adapter-level test that exercises the real boundary at lower frequency.
+
+      In `scenarios.py`, classify Scenario 6 with the best recommendation for that leftover risk.
 
       <details markdown="1"><summary>🌍 The same decision in another language</summary>
 
@@ -2437,7 +2451,7 @@ steps:
       The frameworks differ; the design judgment doesn't.
       </details>
 
-      ## Part 3 — Forward pointers
+      ## Part 4 — Forward pointers
 
       You now have the **conceptual vocabulary** to read any test in any modern Python codebase and recognize what role each double is playing — even when the author called everything a "mock." That recognition transfers across languages.
 
@@ -2453,8 +2467,10 @@ steps:
       4. Substitute a [spy](http://xunitpatterns.com/Test%20Spy.html) when you need to verify a call (Step 3).
       5. Reach for `unittest.mock` when boilerplate gets tedious (Step 4) — but recognize the role you're playing.
       6. Use `patch()` carefully — *where the SUT looks the name up* — and prefer `autospec=True` (Step 5).
+      7. Choose **no double** when the real collaborator is fast, deterministic, and safe.
+      8. State what the double does **not** prove, then cover important gaps with a contract or integration check.
 
-      And the seventh, just learned: *sometimes the right answer is no double at all.* That judgment is what makes you good at this.
+      Those final judgments — when to skip a double, and when to back one up with a real-boundary check — are what make you good at this.
 
     files:
       - path: "xp_calculator.py"
@@ -2554,6 +2570,7 @@ steps:
             "mock"      — strict behavior verification of a single contract call
             "fake"      — stateful in-memory implementation across multiple calls
             "adapter"   — wrap a third-party library, then double the adapter
+            "contract"  — complementary contract/integration check for real boundary
           """
 
           # Scenario 1: A pure function `compute_tax(price: float, rate: float) -> float`
@@ -2576,6 +2593,11 @@ steps:
           # Scenario 5: Throughout the codebase, many modules call `requests.get(...)`
           # directly. Patching `requests` everywhere is fragile; the tests are slow.
           SCENARIO_5_BEST = "FILL_IN"
+
+          # Scenario 6: You used a FakeUserRepository for fast unit tests. Now you
+          # need confidence that the fake and the real Postgres-backed repository
+          # still honor the same save/find/update behavior.
+          SCENARIO_6_BEST = "FILL_IN"
         language: "python"
 
     open_file: "test_xp_clean.py"
@@ -2610,7 +2632,7 @@ steps:
           language: "python"
         - path: "scenarios.py"
           content: |
-            """Classification of five scenarios."""
+            """Classification of six scenarios."""
 
             # Pure function — call it directly, no double needed.
             SCENARIO_1_BEST = "no_double"
@@ -2630,6 +2652,10 @@ steps:
             # Wrap `requests` in your own class; mock the adapter; never patch
             # `requests` directly (don't mock what you don't own).
             SCENARIO_5_BEST = "adapter"
+
+            # Fake drift risk — use a shared contract/integration check against
+            # the real repository boundary so the fake cannot silently diverge.
+            SCENARIO_6_BEST = "contract"
           language: "python"
       explanation: |
         **Scenario 1 — pure function:** `compute_tax(price, rate) -> price * rate`
@@ -2659,6 +2685,11 @@ steps:
         heuristic in action — Hynek Schlawack's classic essay covers this
         well, and Meszaros covers it as the *Test Adapter* pattern (informally).
 
+        **Scenario 6 — fake drift risk:** a fake makes unit tests fast, but it
+        cannot prove the real Postgres repository still follows the same
+        save/find/update contract. A shared contract test (or sandbox
+        integration test) is the complementary check that keeps the fake honest.
+
     tests:
       - description: "Critique line in test_xp_clean.py is filled in with substantive content"
         command: |
@@ -2674,11 +2705,11 @@ steps:
               f"Your `mocked:` answer is too short ({len(mocked)} chars). Write a real one-line description of what was mocked."
           assert len(cost) >= 15, \
               f"Your `cost:` answer is too short ({len(cost)} chars). Write a real one-line description of what that mocking cost."
-      - description: "scenarios.py has all five FILL_IN replaced"
+      - description: "scenarios.py has all six FILL_IN replaced"
         command: |
           source = open('/tutorial/scenarios.py').read()
           assert 'FILL_IN' not in source, \
-              "Some scenarios in scenarios.py still have `FILL_IN`. Replace each with one of: \"no_double\", \"stub\", \"spy\", \"mock\", \"fake\", \"adapter\"."
+              "Some scenarios in scenarios.py still have `FILL_IN`. Replace each with one of: \"no_double\", \"stub\", \"spy\", \"mock\", \"fake\", \"adapter\", \"contract\"."
       - description: "Scenario 1 (pure function) — no double"
         command: |
           import importlib, sys
@@ -2719,6 +2750,14 @@ steps:
           val = scenarios.SCENARIO_5_BEST
           assert val == "adapter", \
               f"Scenario 5 — third-party library used across many modules. \"Don't mock what you don't own\": wrap it in an Adapter, then mock the Adapter. The right answer is `\"adapter\"`. (You answered `{val!r}`.)"
+      - description: "Scenario 6 (fake drift risk) — contract or integration check"
+        command: |
+          import importlib, sys
+          if 'scenarios' in sys.modules: del sys.modules['scenarios']
+          import scenarios
+          val = scenarios.SCENARIO_6_BEST
+          assert val == "contract", \
+              f"Scenario 6 — a fake repository can drift from the real Postgres-backed repository. The complementary recommendation is a shared contract/integration check. Use `\"contract\"`. (You answered `{val!r}`.)"
       - description: "test_xp_clean.py tests still pass (no doubles required)"
         command: |
           import pytest, io, sys
@@ -2730,11 +2769,11 @@ steps:
           - title: "Small nudge — critique line"
             text: "The over-mocked test patches `_filter_completed`, `_apply_multipliers`, and `_sum_xp`. With those mocked, the test verifies nothing about the SUT's actual behavior — only that the SUT calls some helpers. Any rename of an internal would break the test for no good reason."
           - title: "Small nudge — scenarios"
-            text: "Use the decision rubric in the instructions. Pure function = no double. Clock = stub. Fire-and-forget call = mock/spy. Stateful round-trip = fake. Third-party = adapter."
+            text: "Use the decision rubric in the instructions. Pure function = no double. Clock = stub. Fire-and-forget call = mock/spy. Stateful round-trip = fake. Third-party = adapter. Fake drift / real-boundary confidence = contract."
             condition: "code_missing: adapter"
           - title: "The rubric, with no answers attached"
             text: |
-              You'll classify five scenarios into one of these categories. Match each scenario by what the *test* needs from the collaborator:
+              You'll classify six scenarios into one of these categories. Match each scenario by what the *test* needs from the collaborator:
 
               - `"no_double"` — the collaborator is a pure function (no I/O, no state). Use the real one.
               - `"stub"` — the test only needs the collaborator to *return* a canned value (or raise).
@@ -2742,6 +2781,7 @@ steps:
               - `"mock"` — same as spy but with up-front behavior expectations (Meszaros-strict sense).
               - `"fake"` — the test needs the collaborator to behave like a real one but cheaper (e.g., in-memory DB).
               - `"adapter"` — the collaborator is a third-party library you don't own; wrap it, then mock the wrapper.
+              - `"contract"` — a double is already useful, but you need a complementary check that the fake/adapter still matches the real boundary.
 
               Now read each scenario and pick the smallest tool that does the job. Don't reach for the answer key — work through the rubric.
             condition: "code_missing: adapter"
@@ -2796,6 +2836,26 @@ steps:
             The rubric: pure → no double; non-deterministic → stub; outbound
             call → spy/mock; stateful sequence → fake. Memorize the rubric
             shape (the diagram in the instructions); the words follow.
+
+        - question: |
+            You use a `FakeUserRepository` so unit tests can run without Postgres. Those tests pass. What **remaining risk** should the test plan cover?
+          type: single
+          options:
+            - "No remaining risk — a passing fake-based unit test proves the real repository works too"
+            - "The fake may drift from the real repository's save/find/update contract, so add a shared contract test or sandbox integration test against the real boundary"
+            - "The unit test needs more mocks around the fake's internal dictionary"
+            - "The fake should be deleted immediately; fakes are never appropriate for repositories"
+          correct_index: 1
+          option_feedback:
+            0: "A fake trades reality for speed and control. Passing fake-based unit tests prove the SUT's behavior against the fake, not the real repository's schema, constraints, transactions, or adapter wiring."
+            1: "Right. Fakes are useful, but they are promises. A shared contract test or sandbox integration test keeps the fake and the real repository aligned on the behavior the SUT depends on."
+            2: "Mocking the fake's internals would make the test more coupled without checking the real risk. The risk is fake-vs-real drift at the repository boundary, not how the fake stores state internally."
+            3: "Fakes are often the cleanest choice for stateful collaborators. The professional move is not 'never fake'; it is 'fake for fast unit feedback, then cover important fake-vs-real gaps with contract or integration checks.'"
+          explanation: |
+            Every double creates a gap from reality. With a fake, the gap is
+            behavioral drift: the in-memory version may stop matching the real
+            repository. Cover that gap with a shared contract test or a
+            lower-frequency integration test against the real boundary.
 
         - question: |
             **"Don't mock what you don't own."** What does this rule *actually* mean?

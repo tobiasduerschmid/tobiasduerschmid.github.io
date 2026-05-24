@@ -91,3 +91,9 @@ cards:
     question: "What is *architectural erosion* in a layered system, and how does it happen?"
     answer: "Erosion is the gradual silent invalidation of the layering rules through small individually-reasonable violations — an upward import here, a layer bridge there, a circular Service dependency there. Each violation looks locally justified; together they destroy the topology the style promised, and the modifiability and portability disappear."
     explanation: "Erosion is rarely caused by malice or ignorance — it's caused by deadlines. The fix is structural and process-level: dependency-checking linters in CI (e.g., ArchUnit, depcruise), code-review checklists, and an explicit refactor budget when violations accumulate. Documentation alone never prevents erosion; tooling enforcement does."
+
+  - id: 16
+    difficulty: intermediate
+    question: "Why can't a layered module view by itself support an availability claim?"
+    answer: "Because layers are design-time code modules, not independently failing runtime processes. Availability depends on deployed components, communication paths, redundancy, fault detection, recovery behavior, and operational monitoring."
+    explanation: "A lower layer cannot be 'down' in the same way a deployed database, process, or broker is down. Layering can support maintainability and portability reasoning; availability requires component-and-connector, deployment, and behavioral views."

@@ -72,6 +72,10 @@ topics:
         - name: Testability
           url: /SEBook/quality_attributes/testability.html
 
+    - name: Architectural Tactics
+      icon: null
+      url: /SEBook/architectural_tactics.html
+
     - name: Architectural Styles
       icon: null
       url: /SEBook/architectural_styles/index.html
@@ -184,6 +188,10 @@ topics:
         url: /SEBook/tools/java.html
       - name: Java Tutorial
         url: /SEBook/tools/java-tutorial.html
+      - name: C Programming
+        url: /SEBook/tools/c.html
+      - name: C for C++ Programmers Tutorial
+        url: /SEBook/tools/c-tutorial.html
       - name: Make
         url: /SEBook/tools/make.html
       - name: Makefile Tutorial
@@ -204,10 +212,6 @@ topics:
         url: /SEBook/tools/networking.html
       - name: Data Management
         url: /SEBook/systems/data_management.html
-      - name: C Programming
-        url: /SEBook/tools/c.html
-      - name: C for C++ Programmers Tutorial
-        url: /SEBook/tools/c-tutorial.html
   - name: SE Gym
     icon: null
     url: /se-gym/

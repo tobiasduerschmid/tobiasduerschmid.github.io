@@ -206,3 +206,48 @@ questions:
       3: |
         Layering applies to the *system as actually realized in source*. In-house vs library code distinction matters for blame and modification cost, not for architectural impact.
     explanation: "**Third-party library violations are real embodied departures from the platonic style — they erode the same quality attributes (modifiability, portability, testability) as in-house violations.** The mature response: contain the violation behind an Adapter (isolate the library's behavior at a single seam), accept the trade-off explicitly, or pick an alternative library that respects the architecture. Pretending the violation doesn't exist accelerates architectural erosion silently."
+
+  - id: 11
+    difficulty: intermediate
+    type: multiple
+    question: |
+      Which items are architectural styles rather than architectural tactics? Select all that apply.
+    options:
+      - "Publish-subscribe."
+      - "Heartbeat."
+      - "Pipes and filters."
+      - "Caching."
+      - "Layered architecture."
+    correct_indices: [0, 2, 4]
+    option_feedback:
+      0: |
+        Publish-subscribe defines runtime elements, topics or buses, and constraints such as publisher and subscriber ignorance.
+      1: |
+        Heartbeat is a tactic for detecting failed components, usually used inside some larger style.
+      2: |
+        Pipes and filters defines filters, pipes, stream flow, and constraints such as filter independence.
+      3: |
+        Caching is a tactic for improving a performance scenario, not the dominant shape of the system.
+      4: |
+        Layered architecture defines modules, allowed-to-use relations, and dependency-direction constraints.
+    explanation: "**Styles define the gross structure and constraints; tactics are smaller quality-attribute moves.** A layered or pub-sub system can still use heartbeat, caching, redundancy, and other tactics."
+
+  - id: 12
+    difficulty: advanced
+    type: single
+    question: |
+      A diagram shows source-code packages organized into UI, Service, Domain, and Repository layers. A teammate claims the diagram proves the system will stay available if the Repository layer fails. What is the best correction?
+    options:
+      - "Correct: layered architecture directly proves availability because the upper layers can keep running."
+      - "The diagram is a module view, so it supports dependency and maintainability reasoning; availability requires runtime, deployment, failure, and recovery views."
+      - "The diagram proves performance, not availability."
+      - "A layered diagram is invalid unless every layer is deployed on a separate machine."
+    correct_index: 1
+    option_feedback:
+      0: |
+        A source-code layer is not an independently failing runtime process. Availability claims need runtime failure and recovery information.
+      2: |
+        Layered diagrams can reveal some performance costs, such as extra calls through layers, but that is not the claim in the stem.
+      3: |
+        Layers are design-time modules. Tiers are runtime deployment units; they do not have to correspond one-to-one.
+    explanation: "**The viewtype determines the claim you can make.** Layered architecture is primarily a module style, so it helps reason about modifiability, portability, and dependency direction. Availability needs component-and-connector, deployment, and behavioral evidence."

@@ -12,11 +12,17 @@ Drawing an analogy to building architecture, Dewayne Perry and Alexander Wolf no
 
 By voluntarily restricting the vocabulary of design alternatives to a relatively small number of proven solutions, architects minimize complexity, enable predictive analysis, and foster efficient communication among development teams. In essence, a style guarantees that if the architect follows the established rules, specific invariant quality attributes will emerge.
 
+An architectural style is therefore the **dominant shape** of a system or subsystem. It is like a design pattern at architectural scale: design patterns describe recurring arrangements of classes and objects, while architectural styles describe recurring arrangements of modules, runtime components, connectors, and constraints. Styles are also more language-agnostic. The publish-subscribe style can be implemented in C++, Python, JavaScript, Rust, or a robotics middleware framework; the idea is not tied to object-oriented programming.
+
+The constraints are what give the style its power. If filters in a pipe-and-filter architecture can share arbitrary memory, the system no longer gets the reusability and simple recomposition promised by the style. If lower layers call upper layers, the system no longer gets the portability promised by layering. Style constraints remove some design freedom, but that lost freedom is exactly what makes quality-attribute reasoning possible.
+
 ## Divergent Perspectives: Styles vs. Patterns
 A significant debate within the literature is the precise boundary between an *architectural style* and an *architectural pattern*. While some practitioners use the terms interchangeably, careful meta-analysis reveals a nuanced distinction:
 
 *   **The Problem-Context Distinction:** An *architectural pattern* is generally viewed as a specific solution to a specific recurring problem within a given context (a context-problem-solution triple). In contrast, an *architectural style* is an abstract structural framework independent of any specific design situation. As noted by Taylor et al., styles are *strategic* (e.g., "highly distributed systems"), while patterns are *tactical* (e.g., "separating business logic from data management") {% cite Taylor2009 %}.
 *   **The Constraint Focus:** Styles tend to be highly declarative, focusing on the constraints that must be obeyed (e.g., "pipes only connect to filters"). Patterns tend to be more constructive and specific, showing precise instances of elements interacting to solve a problem.
+
+Architectural tactics sit one level below both: they are reusable moves for improving a quality attribute, such as adding heartbeat messages for availability or caching for performance. See [Architectural Tactics](/SEBook/architectural_tactics.html) for that toolbox.
 
 ## The Ideal vs. The Real: Platonic vs. Embodied Styles
 When analyzing systems in the wild, architects must recognize the difference between theoretical blueprints and messy realities. George Fairbanks introduces a critical dichotomy {% cite Fairbanks2010 %}:
@@ -25,6 +31,8 @@ When analyzing systems in the wild, architects must recognize the difference bet
 
 ## A Taxonomy of Foundational Styles
 The literature universally categorizes architectural styles based on their underlying computational models. Here is a synthesis of the most foundational paradigms:
+
+One common student trap is mixing viewtypes. Pipe-and-filter and publish-subscribe are **component-and-connector styles** because their elements are runtime components and connectors. Layered architecture is primarily a **module style** because its elements are code modules organized by allowed-to-use dependencies. This means each style supports different claims: a layered module view can justify modifiability and portability claims, while a runtime publish-subscribe view can justify decoupling and message-flow claims.
 
 ### Data Flow Styles: [Pipes and Filters](/SEBook/architectural_styles/pipes_and_filters)
 In the *Pipe-and-Filter* style, the system is viewed as a series of transformations applied to streams of data. 
@@ -54,4 +62,3 @@ Styles can be combined in two primary ways:
 2.  **Overlays (Concurrent Styles):** A system might employ multiple styles across the same components to handle different concerns. For example, the REST (REpresentational State Transfer) architectural style—the foundation of the World Wide Web—is actually a deliberate, engineered composite. It combines the *Client-Server* style (for separation of concerns), the *Layered* style (to allow intermediaries like proxies and caches), and *Mobile Code* (to allow dynamic client extension), all constrained by a uniform interface. 
 
 Ultimately, mastering software architecture requires fluency in these diverse styles, recognizing them not as rigid dogma, but as an advanced vocabulary of trade-offs used to intentionally hoist quality attributes into the structural skeleton of a system.
-

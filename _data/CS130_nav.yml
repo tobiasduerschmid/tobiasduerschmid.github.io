@@ -73,6 +73,16 @@ topics:
     icon: null
     url: /SEBook/testing.html
     subtopics:
+      - name: Test Quality
+        url: /SEBook/testing/testquality.html
+      - name: Writing Good Tests
+        url: /SEBook/testing/goodtests.html
+      - name: Test-Driven Development (TDD)
+        url: /SEBook/testing/tdd.html
+      - name: Test Doubles
+        url: /SEBook/testing/testdoubles.html
+      - name: Test Doubles Tutorial
+        url: /SEBook/tools/test-doubles-tutorial.html
 
 
   - name: Quality Attributes
@@ -83,6 +93,10 @@ topics:
         url: /SEBook/quality_attributes/interoperability.html
       - name: Testability
         url: /SEBook/quality_attributes/testability.html
+
+  - name: Architectural Tactics
+    icon: null
+    url: /SEBook/architectural_tactics.html
 
   - name: Architectural Styles
     icon: null

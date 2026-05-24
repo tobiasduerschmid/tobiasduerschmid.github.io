@@ -91,3 +91,21 @@ cards:
     question: "Why is fluency in multiple architectural styles a high-leverage skill for software engineers?"
     answer: "Because architectural styles are an *advanced vocabulary of trade-offs*. Knowing one style well lets you build one kind of system; knowing several lets you pick the right style for each subsystem, compose them coherently in heterogeneous architectures, and recognize when a system's embodied structure has drifted from its intended style. Each style is a lens that surfaces specific quality consequences that a single-style perspective would miss."
     explanation: "The architect who only knows microservices forces every problem into microservices. The architect who knows pipe-and-filter, pub-sub, layered, client-server, repository, and peer-to-peer can pick fit-for-purpose styles per subproblem — and recognize, name, and trade off the qualities each one buys and gives up."
+
+  - id: 16
+    difficulty: intermediate
+    question: "Why do architectural-style constraints give architects power?"
+    answer: "Constraints remove some design freedom so the architect can make stronger predictions. If filters can communicate only through pipes, the team can predict recomposability. If lower layers cannot call upper layers, the team can predict dependency direction. The constraint is what makes the quality claim analyzable."
+    explanation: "Without constraints, a style is just vocabulary. The lecture's key point is that restrictions are not arbitrary ceremony; they are what let engineers reason about quality attributes before the whole system is built."
+
+  - id: 17
+    difficulty: intermediate
+    question: "Which architectural styles in this chapter are module styles, and which are component-and-connector styles?"
+    answer: "**Layered architecture** is primarily a module style: its elements are code modules or layers, and its relation is allowed-to-use. **Pipes-and-filters** and **publish-subscribe** are component-and-connector styles: their elements are runtime components and connectors such as pipes, topics, or event buses."
+    explanation: "The viewtype matters because it controls what claims are legitimate. A module style can support maintainability and dependency claims; runtime availability and message-flow claims need component-and-connector or behavioral views."
+
+  - id: 18
+    difficulty: basic
+    question: "Give one example each of an architectural style and an architectural tactic."
+    answer: "**Style:** publish-subscribe, layered architecture, or pipes-and-filters. **Tactic:** heartbeat, ping-echo, redundancy, caching, or dependency injection."
+    explanation: "A style shapes the dominant structure and constraints of a system. A tactic is a smaller reusable move for improving a specific quality attribute within that structure."

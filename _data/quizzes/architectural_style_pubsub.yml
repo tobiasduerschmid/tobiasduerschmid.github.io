@@ -206,3 +206,23 @@ questions:
       3: |
         The two have markedly different consequences for evolvability, debugging, ordering, and offline tolerance. Calling them equivalent ignores the load-bearing trade-off the architect is making.
     explanation: "**The pedagogically honest answer in any 'should we use pub-sub?' debate is to name the trade-off explicitly — pub-sub buys decoupling and evolvability, and pays for it with ordering, debuggability, and per-event latency.** If the system has only one consumer today, no plans for more, and runs on a reliable network with always-online endpoints, the synchronous alternative is often the right call. Decoupling is not free."
+
+  - id: 11
+    difficulty: advanced
+    type: single
+    question: |
+      In a robotics pub-sub system, one team renames the publisher topic from `line_class` to `line_topic`, but a safety component still subscribes to `line_class`. Tests compile, both components start, and the safety component silently receives no data. What architectural lesson does this illustrate?
+    options:
+      - "Topic names are implementation details and should never appear in architecture documentation."
+      - "Publish-subscribe removes all coupling, so the missing data must be a hardware fault."
+      - "Topic names are runtime connectors; pub-sub needs topic inventories, schemas, contract tests, or tracing to catch broken message-flow contracts."
+      - "The system should be converted to layered architecture because layered systems cannot have string mismatches."
+    correct_index: 2
+    option_feedback:
+      0: |
+        In topic-based pub-sub, the topic name is the connector. Hiding it from architecture documentation hides the thing that binds publishers to subscribers.
+      1: |
+        Pub-sub removes direct identity coupling, not semantic coupling to event names and payload contracts.
+      3: |
+        Layered systems can also have string mismatches. The right fix is not a blanket style conversion; it is better contract visibility and validation for the chosen style.
+    explanation: "**Pub-sub's decoupling makes this bug easy to create and hard to notice.** The architecture must treat topics and payload schemas as first-class contracts, then verify them with event catalogs, typed topics, contract tests, or runtime tracing."

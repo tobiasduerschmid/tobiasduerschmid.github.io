@@ -11,9 +11,11 @@ By the end of this chapter, you should be able to:
 
 * Explain why Information Hiding is a response to the problem of **software complexity**, not just a style rule about `private` fields.
 * Identify design decisions that are **difficult** or **likely to change**, and decide whether each one belongs in a hidden implementation or a visible interface contract.
+* Distinguish a Parnas-style **module** from a class, file, runtime process, or call graph node.
+* Inspect an interface as a set of **permitted assumptions**, and remove names, types, return values, ordering guarantees, flags, and error details that reveal more than clients need.
 * Refactor a leaky design, such as services that know about `PayPal`, into a design where one module owns the volatile decision behind a stable abstraction.
 * Use coupling, cohesion, module depth, the Single Choice principle, and change impact analysis to evaluate whether a design actually hides information well.
-* Document a design decision by naming the requirements, alternatives, trade-offs, and delayed decisions that led to it.
+* Document a design decision with a module-guide entry: primary secret, secondary secrets, stable interface, forbidden assumptions, and likely changes absorbed.
 
 ## A Motivating Story: The PayPal Tangle
 
@@ -668,7 +670,7 @@ When the CFO swaps providers, you write a new `StripeGateway implements PaymentG
 
 ## The Principle
 
-> *"We propose [...] that one begins with a list of difficult design decisions or design decisions which are likely to change. Each module is then designed to hide such a decision from the others."*
+> *"difficult design decisions or design decisions which are likely to change"*
 >
 > — David L. Parnas, *On the Criteria To Be Used in Decomposing Systems into Modules*, Communications of the ACM, December 1972
 
@@ -726,6 +728,41 @@ Parnas's conclusion was startling at the time:
 
 This paper is one of the most cited papers in all of software engineering. Many of the principles you will meet later — encapsulation, abstract data types, object-oriented design, layered architecture, dependency inversion, microservices — are direct descendants of this single argument.
 
+### 1985: Making Information Hiding Work at Real Scale
+
+The 1972 KWIC example explains the criterion. The 1985 paper *The Modular Structure of Complex Systems* shows what happens when the idea is applied to a real, constrained system: the A-7E aircraft's Operational Flight Program {% cite ParnasClementsWeiss1985 %}. That program had hard real-time constraints, tight memory limits, hardware interfaces, pilot-display behavior, physical models, and many arbitrary details that had to be precisely right. It was not a classroom toy.
+
+Parnas, Clements, and Weiss found that information hiding remained practical, but only with an extra design artifact: a **module guide**. At a dozen modules, a careful designer may remember where each secret lives. At hundreds of modules, that hope breaks. Maintainers need a map organized around the secrets, not just a directory tree or API reference. Their concise description is worth remembering: **"The module guide tells you which module(s) will require a change."**
+
+A module guide is therefore different from ordinary API documentation:
+
+| Document | Main question it answers |
+|---|---|
+| **Module guide** | Which module owns this design decision, and which module should change if the decision changes? |
+| **Module specification** | How do clients use this module, and what behavior does it promise? |
+| **Implementation notes** | How does the module currently keep its promise internally? |
+
+The paper also separates three structures that beginners often collapse into one:
+
+* **Module structure:** work assignments and hidden secrets — what this chapter is mostly about.
+* **Uses structure:** which programs require the presence of which other programs to execute.
+* **Process structure:** the run-time decomposition into concurrent activities or processes.
+
+Those structures can cut across each other. A module is not necessarily one class, one process, one package, or one deployment unit. A module is a responsibility boundary around a secret. In the A-7E redesign, the top-level module guide grouped secrets into **hardware-hiding**, **behavior-hiding**, and **software-decision** modules. That move is a useful model for modern systems too: separate decisions imposed by the platform, decisions imposed by required behavior, and decisions made internally by software designers.
+
+### 1994: Information Hiding Slows Software Aging
+
+Parnas later connected information hiding to the long-term health of software in his 1994 invited talk *Software Aging* {% cite Parnas1994SoftwareAging %}. The opening line is deliberately blunt: **"Programs, like people, get old."** His point is not that bits decay. Software ages because the world around it changes, and because repeated changes can damage the original design.
+
+He names two distinct causes:
+
+1. **Lack of movement.** A product can age even if nobody touches it. Users, hardware, operating systems, interfaces, regulations, and competitors move on. A program that was excellent in 1998 can be obsolete in 2026 because the environment changed around it.
+2. **Ignorant surgery.** A product can also age because people change it without understanding its original design concept. Each change adds an exception, bypass, duplicated assumption, or undocumented special case. Eventually, "nobody understands the modified product."
+
+Information hiding is preventive medicine for both causes. You cannot predict every future change, but you can predict **classes** of change: storage engines change, vendors change, hardware changes, UI expectations change, data formats change, algorithms change. Parnas's advice is to estimate which classes are likely over the product's lifetime and confine each one to a small amount of code. His compact slogan is: **"Designing for change is designing for success."**
+
+The second lesson from *Software Aging* is about documentation and review. If the secret a module hides is not recorded, future maintainers cannot preserve it. They may accidentally route around the boundary and restart the aging process. Parnas states the professional standard sharply: **"If it's not documented, it's not done."** Good design documentation is not ceremony after coding; it is part of the design medium itself.
+
 # The Mechanics: Modules, Secrets, and Interfaces
 
 ## The Anatomy of a Module: Interface and Secret
@@ -757,26 +794,22 @@ Parnas's paper was deliberately abstract, but five decades of practice have prod
 
 A useful question to ask while designing: *"If I can imagine a future where this decision changes, can I draw a circle around exactly the modules that would have to change"?* If the circle is small (ideally one module), the secret is well hidden. If the circle is large, the system has a structural problem you will pay for later.
 
-## Visible Contract or Secret Detail? Practice Recognizing Each
+## Interfaces Are Permission to Assume
 
-Information Hiding does not mean *hide everything*. Some things genuinely belong in the interface — they are *promises* the module makes to its clients. The skill is learning which decisions belong on which side of the line.
+An interface does not merely hide code. It gives clients **permission to assume** certain facts. Every public name, type, return shape, exception, ordering guarantee, flag, status code, score scale, and data field tells clients something they may build on. Once clients build on it, that fact is no longer private.
 
-Try each of these before reading the answer:
+Parnas made this point in his module-specification paper: a specification should give users what they need to use a module correctly, and **"nothing more"** {% cite Parnas1972ModuleSpecification %}. That is stricter than "make the code compile." A precise interface can still be too revealing.
 
-| Decision | Decision should be... | Why |
+| Leaky contract | What clients learn | Safer contract |
 |---|---|---|
-| Whether `MortgageCalculator` compounds **monthly or daily** | **Hidden** | Clients want a payment number; how it was computed is implementation detail. Future changes ("daily compounding for VIP customers") shouldn't ripple. |
-| Whether the database is **SQL or NoSQL** | **Hidden** | Storage is the canonical secret. The application layer should not know. |
-| Whether the network protocol is **stateful or stateless** | **Visible (in the contract)** | Statefulness changes how clients interact (do they reconnect? retransmit? carry a session token?). Clients cannot ignore it. |
-| Whether the server is implemented in **Node.js, Java, or Dart** | **Hidden** | The wire protocol is the contract; the implementation language is irrelevant to the client. |
-| Whether two in-process classes can call each other across different language runtimes | **Visible (at that boundary)** | Unlike HTTP, ordinary method calls depend on language/runtime calling conventions. If callers must know how to invoke the code, it is contract material. |
-| Whether **PayPal is the payment provider** | **Hidden** | Vendors change. The interface should be `PaymentGateway`, not `PayPalGateway`. |
-| Whether PayPal is offered as a **user-facing checkout option** | **Visible between client and server; hidden inside backend services** | The client must display supported payment methods and the server must verify payment securely. But order, refund, and wallet services should still depend on a vendor-neutral gateway. |
-| Whether a function may **throw an exception** | **Visible** | Callers must handle it. A "silent" exception breaks contracts. |
-| Whether requests are **rate-limited** | **Visible** | Callers need to back off. Hiding it produces mysterious failures. |
-| Whether a list is stored as an **array or a linked list** | **Hidden** | A canonical Parnas example. Choose the data structure that fits, change it later if needed. |
+| `search_bm25(query) -> list[(sqlite_row, bm25_score, posting_bucket)]` | The ranking algorithm, score scale, storage row shape, and tie-break mechanism | `search(query) -> SearchPage`, with domain-level `SearchHit` values and an opaque cursor |
+| `DatabaseWrapper.execute_sql(sql)` | The application stores data in SQL tables and lets callers know table and column names | `UserDirectory.find_by_email(email) -> UserProfile`, with storage details hidden |
+| `quote_monthly_compound_loan(principal, rate, months)` | The compounding policy is fixed into the public operation name | `quote(LoanTerms) -> RepaymentQuote`, with calculation policy owned by the quote module |
+| `load_users_sorted_by_internal_id()` | The representation has an internal ID and callers may rely on that order | `list_users(order: UserOrder)`, exposing only domain orders clients genuinely need |
 
-The general rule: **hide what only the module needs to know to do its job; expose what callers need to know to use it correctly.** Anything in between is a judgment call — and almost always the right call is "hide it until proven otherwise".
+This is also why one part of Parnas's improved KWIC design was still a design error: the circular-shift module specified an ordering that clients did not need. The interface was correct, but it revealed more than necessary and restricted future implementations. The design question is therefore not *"Can I expose this accurately?"* but *"Should any client be allowed to depend on this?"*
+
+The inverse mistake is hiding information that callers genuinely need. Whether a protocol is stateful, whether a request can be rate-limited, whether an operation can fail with a retryable error, and whether a payment method is offered to users are usually contract facts. Hide implementation details; expose the stable facts clients need to use the module correctly.
 
 ## Why Information Hiding Matters: Concrete Benefits
 
@@ -787,8 +820,15 @@ Information Hiding is not an aesthetic. It produces measurable outcomes that tea
 3. **Parallel work.** If `PaymentGateway`'s interface is fixed in week 1, two developers can work in parallel: one builds the PayPal implementation behind the interface; another builds `OrderService` against the interface, using a fake. Neither blocks the other.
 4. **Independent testability.** A module whose dependencies are abstracted behind interfaces can be tested with stubs and fakes. You do not need a real PayPal account to test `OrderService` — you supply a `FakePaymentGateway` that records what it was asked to do.
 5. **Replaceability.** When a vendor raises prices, a library is deprecated, or a database hits a scaling wall, the swap is bounded. The blast radius of "we're changing payment providers" is one module instead of one codebase.
+6. **Slower software aging.** Long-lived software changes because successful products attract users, feature requests, new platforms, and new regulations. Information Hiding keeps those changes from eroding the whole structure. A hidden secret can be repaired, replaced, or documented without turning one maintenance edit into system-wide surgery.
 
 The mirror-image of these benefits is the cost of *failing* to hide information: the **Big Ball of Mud** {% cite Foote1997BigBallOfMud %}, where unmanaged complexity leaves every module knowing every other module's secrets, and a one-line business change requires touching dozens of files. This is the modern face of the 1968 software crisis.
+
+## Why Good Modularity May Feel Harder at First
+
+Students sometimes report that the leaky version is "easier to understand" because it has fewer files, fewer abstractions, and all the details are visible in one place. That reaction is real. A better modular design can add first-read cost: you must learn the abstraction before you can see the hidden implementation.
+
+That is why Information Hiding should be evaluated under **change**, not only under first-glance readability. In a controlled study of 40 CS and software-engineering students, Tempero, Blincoe, and Lottridge found that students working with the higher-modularity design were more likely to complete a modification task successfully, while immediate understanding trended lower for that design {% cite TemperoBlincoeLottridge2023Modularity %}. The lesson is not "make code harder." The lesson is that the payoff appears when the system must evolve. A teaching example or code review that never asks "what changes next?" will often miss the value of hiding.
 
 ## Deep Modules vs. Shallow Modules
 
@@ -1008,7 +1048,7 @@ Knowing what to hide is one skill; knowing the *moves* to actually hide it is an
 5. **Repository / Gateway pattern.** Hide the storage decision (SQL? NoSQL? in-memory?) behind a domain-shaped interface (`OrderRepository.findById(id)`).
 6. **Modules, packages, namespaces.** The crudest mechanism — putting things in different files and folders — already provides a unit of hiding, especially when paired with strong language-level visibility.
 7. **Access modifiers.** `private`, `protected`, internal-only modules in Rust/Go/Swift, JavaScript closures. The enforcement layer that prevents accidental leakage.
-8. **Abstract data types (ADTs).** Define a type by its operations, not its representation. The original tool Parnas's followers (Liskov, Guttag) developed to operationalize the principle.
+8. **Abstract data types (ADTs).** Define a type by its operations, not its representation. Liskov and Zilles's account of ADTs is a direct way to operationalize Parnas's principle: clients use the type's operations while the representation stays inaccessible {% cite LiskovZilles1974ADT %}.
 
 You will rarely use only one of these. A good design typically composes several: an `OrderService` depends on a `PaymentGateway` interface (mechanism 1 + 2); the concrete `PayPalGateway` is a facade (3) over the messy PayPal SDK; the SDK is itself adapted (4) so swapping it out is bounded; the whole thing lives in a `payments/` package whose exports are restricted (6 + 7).
 
@@ -1054,13 +1094,30 @@ Industry teams often capture this reasoning in a **design doc**. A useful design
 
 This is not bureaucracy for its own sake. It creates organizational memory. Six months later, when a teammate asks why `PaymentGateway` exists, the design doc should answer: which decision it hides, which alternatives were considered, and which future changes the boundary was meant to absorb.
 
+For larger systems, add the **module-guide** layer from Parnas, Clements, and Weiss {% cite ParnasClementsWeiss1985 %}. A normal API reference tells a caller how to use `PaymentGateway`. A module guide tells a maintainer that "payment-provider choice" is the secret of the gateway module, that order/refund/wallet services are not allowed to depend on provider SDKs, and that a provider migration should start at that module. The guide protects the design intent after the original designers have moved on.
+
+A compact module-guide card is often enough for a class project or design review:
+
+| Field | Question it answers |
+|---|---|
+| **Module** | What work assignment or responsibility boundary are we naming? |
+| **Primary secret** | What externally meaningful, likely-to-change decision is this module supposed to hide? |
+| **Secondary secrets** | What additional implementation decisions did we make while realizing the primary secret? |
+| **Stable interface** | What are clients allowed to assume? |
+| **Forbidden assumptions** | What must clients not know, even if they could discover it by reading the implementation? |
+| **Likely absorbed changes** | Which future changes should stay local to this module? |
+| **Non-absorbed changes** | Which changes would legitimately require changing the interface or neighboring modules? |
+| **Fuzzy or restricted boundary** | Which helper module, adapter, or internal API may know part of the secret, and why? |
+
+The card is useful because it forces the central Parnas question into writing: *who is allowed to know what?* A vague entry like "Payment module handles payments" is almost useless. A strong entry says "payment-provider protocol and response mapping" is the primary secret, retry and idempotency details are secondary secrets, provider SDK types are forbidden outside the gateway, and a provider migration should not touch order checkout.
+
 ## A Five-Step Method for Applying Information Hiding
 
 When you are designing (or reviewing) a module, run this checklist:
 
 1. **List the secrets.** What design decisions does this module own? Whether it stores its data as an array vs. a tree; which library it uses; the algorithm; the data format. If you cannot list any secret, the module probably should not exist on its own.
 2. **Verify each secret is owned in *exactly one* place.** If two modules both "know" the secret, they are semantically coupled. Pick one.
-3. **Inspect the interface for leaks.** Read every public method signature. Does any parameter type, return type, or thrown exception name a vendor, a database, a library, or a low-level data structure? If yes, the secret has leaked into the contract.
+3. **Inspect the interface for leaks.** Read every public method signature, return value, event, exception, status code, ordering guarantee, flag, and test helper. Does any name or type reveal a vendor, database, library, file format, score scale, table name, storage row, algorithm, lifecycle rule, timing assumption, or low-level data structure? If yes, the secret has leaked into the contract.
 4. **Simulate a likely change.** Pick a realistic future change and trace what would need to be edited. If the answer is more than this module, redesign.
 5. **Check for shallowness and payoff.** Is the implementation behind the interface non-trivial? A thin adapter can be worthwhile if it centralizes a volatile vendor, storage engine, or exhaustive choice list. But if the module is a pass-through with no plausible variation to protect, merge it back into its caller — you have added an interface without buying hiding.
 
@@ -1159,14 +1216,17 @@ class OrderService:
 
 * **Information Hiding** decomposes a system by *design decisions*, not by processing steps. Each module owns one likely-to-change decision and hides it from the rest of the system.
 * Coined by **Parnas** {% cite Parnas1972 %} in response to the **Software Crisis**, it is the foundational principle behind modern modularity, encapsulation, abstract data types, and most of OOP.
+* Parnas, Clements, and Weiss later showed that information hiding needs a **module guide** at complex-system scale: a document organized around secrets so maintainers can find the modules affected by a change.
+* Software ages when its environment changes or when poorly understood maintenance damages the original design. Information Hiding slows that aging by keeping likely changes local and documented.
 * Every module has a stable **interface** (the public contract) and a hidden **implementation** (the secret). Clients depend on the interface; the implementation is free to change.
+* An interface is permission to assume. Public names, types, return values, errors, ordering guarantees, flags, and data shapes should expose stable, intentional information only.
 * Common secrets include data structures, storage, algorithms, libraries, hardware, and processing sequence. Some things — statefulness, rate limits, exception behavior — belong in the interface.
 * **Deep modules** hide a lot of complexity behind a small interface. **Shallow modules** add overhead without value.
 * Coupling and cohesion are the *metrics* by which Information Hiding is measured. Low coupling, high cohesion = secrets are well hidden.
 * The **Single Choice principle** says only one module should know the exhaustive list of alternatives; repeated switches over the same choices are leaked design decisions.
-* Good design work generates and evaluates multiple alternatives, records trade-offs in design docs, and delays implementation decisions when the interface can stay stable.
+* Good design work generates and evaluates multiple alternatives, records trade-offs in design docs, names primary and secondary secrets in a module-guide card, and delays implementation decisions when the interface can stay stable.
 * Information Hiding is *not* the same as `private`. Visibility modifiers are tools; Information Hiding is the principle that tells you *what* to hide.
-* Verify a design with **change impact analysis**: simulate plausible changes and count the modules that would need to change.
+* Verify a design with **change impact analysis**: simulate plausible changes and count the modules that would need to change. Good modularity may not feel cheaper on first read; its value becomes visible when the system evolves.
 * Don't over-apply: throwaway scripts, single-variant systems, and hot inner loops sometimes pay the cost of hiding without enjoying the benefit.
 
 # Further Reading and Practice
@@ -1174,6 +1234,12 @@ class OrderService:
 ## Further Reading
 
 * David L. Parnas. ["On the Criteria To Be Used in Decomposing Systems into Modules"](https://dl.acm.org/doi/10.1145/361598.361623). *Communications of the ACM*, 15(12), 1053–1058. December 1972. — *The original paper. Short, sharp, and one of the most-cited papers in software engineering.*
+* David L. Parnas. ["A Technique for Software Module Specification with Examples"](https://dl.acm.org/doi/10.1145/361598.361626). *Communications of the ACM*, 15(5), 330–336. May 1972. — *Explains why specifications should give clients enough information to use a module correctly, and no unnecessary details.*
+* David L. Parnas, Paul C. Clements, and David M. Weiss. ["The Modular Structure of Complex Systems"](https://doi.org/10.1109/TSE.1985.232209). *IEEE Transactions on Software Engineering*, SE-11(3), 259–266. March 1985. — *Shows how information hiding scales when paired with a module guide.*
+* David L. Parnas. ["Software Aging"](https://doi.org/10.1109/ICSE.1994.296790). *Proceedings of the 16th International Conference on Software Engineering*, 279–287. 1994. — *Connects information hiding, documentation, and reviews to the long-term health of software products.*
+* Barbara H. Liskov and Stephen N. Zilles. ["Programming with Abstract Data Types"](https://doi.org/10.1145/800233.807045). *Proceedings of the ACM SIGPLAN Symposium on Very High Level Languages*, 50–59. 1974. — *The classic bridge from information hiding to data abstraction.*
+* William R. Cook. ["On Understanding Data Abstraction, Revisited"](https://doi.org/10.1145/1640089.1640133). *OOPSLA*, 557–572. 2009. — *Clarifies why abstract data types and objects are related but not the same idea.*
+* Ewan Tempero, Kelly Blincoe, and Danielle M. Lottridge. ["An Experiment on the Effects of Modularity on Code Modification and Understanding"](https://doi.org/10.1145/3576123.3576138). *ACE '23*, 105–112. 2023. — *A useful empirical warning that students may need explicit support seeing modularity's change payoff.*
 * John K. Ousterhout. *A Philosophy of Software Design* (2nd ed.). Yaknyam Press, 2021. — *The contemporary treatment. Coined the deep / shallow module distinction.*
 * Robert C. Martin. *Clean Architecture: A Craftsman's Guide to Software Structure and Design*. Prentice Hall, 2017. — *Connects Information Hiding to SRP, DIP, and modern architecture.*
 * Frederick P. Brooks Jr. *The Mythical Man-Month* (Anniversary ed.). Addison-Wesley, 1995. — *The classic essays on the Software Crisis and "No Silver Bullet".*

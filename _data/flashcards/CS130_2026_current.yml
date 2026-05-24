@@ -13,9 +13,11 @@ decks:
   - testquality
   - testdoubles
   - tdd
+  - software_architecture
   - quality_attributes
   - quality_attribute_interoperability
   - quality_attribute_testability
+  - architectural_tactics
   - architectural_styles
   - architectural_style_layered
   - architectural_style_pipes_filters

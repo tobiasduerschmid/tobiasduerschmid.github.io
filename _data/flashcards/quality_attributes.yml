@@ -5,8 +5,8 @@ cards:
   - id: 1
     difficulty: basic
     question: "What is a *quality attribute*, and how does it differ from a *functional requirement*?"
-    answer: "A **quality attribute** describes *how well* a system performs its functions (e.g., performance, security, modifiability), as opposed to a **functional requirement** which describes *what* the system does. Quality attributes are often called non-functional requirements or 'the -ilities'."
-    explanation: "Two systems can implement the same functional requirements but have radically different quality profiles. A pocket calculator and a high-frequency trading engine both 'add numbers' — but their performance, reliability, and scalability profiles are different by orders of magnitude."
+    answer: "A **quality attribute** describes *how well* a system performs its functions (e.g., performance, security, modifiability), as opposed to a **functional requirement** which describes *what* the system does. They are sometimes called non-functional requirements, but they are usually attached to specific functionality."
+    explanation: "'Search' is functionality. 'During peak load, 95% of search requests return within 200 ms' is a performance quality attribute attached to that functionality. Two systems can implement the same functional requirement with radically different quality profiles."
 
   - id: 2
     difficulty: intermediate
@@ -91,3 +91,27 @@ cards:
     question: "Why is asking 'how do I improve software quality?' the wrong question?"
     answer: "'Quality' is not a single dimension — it is a vector of often-conflicting attributes. Improving one (e.g., security) typically degrades others (e.g., performance, usability). The right question is **'which quality attributes does this system most need, and how do I trade off the rest?'** That reframing lets the team make coherent, defensible architectural decisions."
     explanation: "Generic 'improve quality' efforts often produce diffuse, low-impact work — code-style cleanups, more linters, more tests of already-tested code — while the load-bearing qualities the system actually needs (say, scalability and security) go unaddressed. Specific, prioritized quality work compounds; generic quality work dissipates."
+
+  - id: 16
+    difficulty: intermediate
+    question: "Give a good **extensibility** quality-attribute specification for adding depth sensors."
+    answer: "\"Adding a new depth sensor requires implementing one sensor adapter and must not require changes to components that process depth images.\""
+    explanation: "This improves on 'adding sensors should be easy' because it names the class of change (new depth sensor) and the success measure (no changes to depth-image processing components)."
+
+  - id: 17
+    difficulty: intermediate
+    question: "Give a good **testability** quality-attribute specification for payment authorization code."
+    answer: "\"A developer can run deterministic tests for payment authorization outcomes, including declined cards and network timeouts, without contacting the real payment provider.\""
+    explanation: "The scenario is testing authorization outcomes, including rare or external-service cases. The measure is controllability and observability without using the real provider."
+
+  - id: 18
+    difficulty: intermediate
+    question: "Why can a structural boundary be a valid quality-attribute measure?"
+    answer: "Some design-time qualities are best measured by **what must not change** or **which dependencies must not be introduced**, not by runtime numbers. Example: adding a depth sensor must not require changing depth-image processors."
+    explanation: "Runtime qualities often use latency, throughput, or uptime. Design-time qualities often use developer time, number of modules touched, dependency direction, or forbidden ripple effects."
+
+  - id: 19
+    difficulty: advanced
+    question: "Why is \"Use Kafka for scalability\" a poor quality requirement?"
+    answer: "It chooses an implementation before stating the quality scenario. A quality requirement should say what scale must be supported, under which load, and with which metric; Kafka may be one candidate tactic or style choice afterward."
+    explanation: "Implementation choices can satisfy requirements, but they should not replace them. Otherwise the team cannot evaluate whether Kafka actually solves the right scalability problem."

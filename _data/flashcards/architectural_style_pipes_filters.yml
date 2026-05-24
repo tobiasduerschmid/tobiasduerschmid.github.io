@@ -91,3 +91,9 @@ cards:
     question: "Why is pure pipe-and-filter usually combined with other styles in real systems?"
     answer: "Because the style's inhibited qualities (interactivity, error handling, shared state) are addressed by other styles. **Hybrids:** pipe-and-filter for transformation + publish-subscribe for error broadcasting (Lattanze's broadcasting filters); pipe-and-filter for batch stages + layered architecture inside each filter; pipe-and-filter for stream processing + event sourcing for replay and recovery."
     explanation: "Architectural styles rarely appear pure in production. Heterogeneous architectures combine multiple styles to balance competing quality attributes — pipe-and-filter contributes the transformation backbone, and other styles fill the gaps it leaves open by design."
+
+  - id: 16
+    difficulty: basic
+    question: "In pipes-and-filters, what exactly is a *pipe*?"
+    answer: "A pipe is a connector that buffers and forwards a stream from one filter's output port to another filter's input port while preserving order. It is not a collection of filters."
+    explanation: "This distinction matters because the style treats connectors as load-bearing architecture. The Unix `|` operator is the familiar example: it connects two independent processes by a buffered stream."

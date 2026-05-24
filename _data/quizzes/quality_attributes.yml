@@ -206,3 +206,68 @@ questions:
       3: |
         Measurability is a means, not an end. Picking attributes by ease-of-measurement could lead to optimizing the wrong things (e.g., optimizing latency because it's easy to measure, while ignoring testability that determines long-term velocity).
     explanation: "**Architectural alignment requires explicit prioritization: 'we will optimize for security, scalability, and changeability; we will accept lower performance and a higher per-request latency budget.' This concrete commitment lets every later design decision be resolved coherently against the priorities.** Saying 'all of them' produces a system that's mediocre on every axis and unable to defend its choices when conflicts surface."
+
+  - id: 11
+    difficulty: intermediate
+    type: single
+    question: |
+      A robotics team writes: "Adding a new depth sensor requires implementing one sensor adapter and must not require changes to components that process depth images." Why is this a good extensibility specification?
+    options:
+      - "It names a class of change and a measurable boundary for success."
+      - "It promises that all future sensors will be added in under one hour."
+      - "It chooses ROS as the implementation framework."
+      - "It avoids mentioning any functionality, which all quality requirements should do."
+    correct_index: 0
+    option_feedback:
+      1: |
+        The statement does not give a time threshold. It measures extensibility through a dependency boundary: depth-image processors must not change.
+      2: |
+        It does not choose a framework. It leaves room for several designs that preserve the stated boundary.
+      3: |
+        Quality attributes are usually attached to functionality. Here the relevant functionality is adding new depth sensors.
+    explanation: "**Design-time quality attributes can be measured by ripple effects, not just by time.** This requirement is useful because it says what change is expected and which existing components must remain untouched."
+
+  - id: 12
+    difficulty: intermediate
+    type: single
+    question: |
+      Which rewrite turns "payment code should be easy to test" into a stronger testability requirement?
+    options:
+      - "Payment code should be very testable and highly modular."
+      - "The payment code shall use dependency injection."
+      - "A developer can run deterministic tests for approved cards, declined cards, and provider timeouts without contacting the real payment provider."
+      - "The payment code should have at least five tests."
+    correct_index: 2
+    option_feedback:
+      0: |
+        Adjectives such as "very" and "highly" do not make the requirement testable.
+      1: |
+        Dependency injection may be part of the solution, but the requirement should describe the scenario and success measure first.
+      3: |
+        A raw test count is a weak proxy. Five shallow tests may still leave the important hard-to-control provider scenarios uncovered.
+    explanation: "**A testability requirement should name controllability and observability goals.** The strong rewrite states which scenarios must be testable and removes the real provider as a dependency during those tests."
+
+  - id: 13
+    difficulty: advanced
+    type: multiple
+    question: |
+      Which statements are quality-requirement smells? Select all that apply.
+    options:
+      - "\"Use Kafka for scalability.\""
+      - "\"During 20,000 read requests per minute, p95 read latency stays below 300 ms.\""
+      - "\"The system should be secure and robust.\""
+      - "\"Every request in the whole system must complete within 1 second.\""
+      - "\"When the camera publishes 10 malformed frames, the perception component reports the fault within 1 second and continues processing valid lidar input.\""
+    correct_indices: [0, 2, 3]
+    option_feedback:
+      0: |
+        This names a solution before stating the scalability scenario and metric. Kafka might be appropriate, but the requirement is missing.
+      1: |
+        This has both scenario and metric: the request rate and the p95 latency threshold.
+      2: |
+        "Secure" and "robust" are adjectives without scenarios or measures.
+      3: |
+        Blanket system-wide latency claims are usually too broad. Architecture work needs the specific request types and conditions that matter.
+      4: |
+        This is a concrete robustness scenario with observable behavior and timing.
+    explanation: "**Good quality requirements are scenario-specific, measurable, and solution-neutral.** Smells include adjectives without measures, implementation-first statements, and blanket claims that ignore which requests or failures matter."

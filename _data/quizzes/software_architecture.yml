@@ -1,5 +1,5 @@
 title: "Software Architecture Quiz"
-description: "Recalling what you just learned is the best way to form lasting memory. Use this quiz to test your understanding of structural paradigms, decision-making, and architectural degradation."
+description: "Test your understanding of architecture definitions, drivers, views, decisions, and degradation."
 active: true
 questions:
   - id: 1
@@ -109,21 +109,105 @@ questions:
 
   - id: 6
     difficulty: intermediate
-    question: "In the context of the JackTrip project, what was identified as a primary driver of 'link overload smells' and erosion?"
+    type: single
+    question: |
+      A team says: "The system shall use the same PostgreSQL cluster the customer already uses for all analytics projects." How should an architect classify this statement?
     options:
-      - "Using too many descriptive diagrams."
-      - "Lack of research funding and recurring unmanaged changes."
-      - "Strict adherence to layered architecture."
-      - "Switching from structural to decision-based modeling."
+      - "A high-level functional requirement, because it says what users can do."
+      - "A constraint, because it is a business or technical decision already made that reduces the design space."
+      - "A quality attribute, because databases always determine performance."
+      - "A descriptive architecture, because it describes what the code currently does."
     correct_index: 1
     option_feedback:
       0: |
-        Diagrams can reveal architectural problems, but the JackTrip issue was not caused by having too
-        many descriptive diagrams.
+        Functional requirements describe capabilities such as booking flights or processing payments. This statement chooses part of the implementation environment.
       2: |
-        Strict layering would constrain links. Link overload smells arise when dependencies spread
-        without the intended control.
+        The database choice may affect performance, but the statement itself is not a measurable performance requirement. It is a pre-made design decision.
       3: |
-        Changing modeling paradigms is not the reported root cause. The erosion came from unmanaged
-        recurring changes under project pressure.
-    explanation: "**In JackTrip, time constraints and recurring unmanaged changes were the primary drivers of architectural erosion and link overload smells — not diagramming choices or adherence to a layered style.** The JackTrip case study showed that time constraints, funding issues, and undocumented changes drove architectural erosion symptoms like link overload."
+        Descriptive architecture is the architecture actually found in the built system. This statement is an input to design, not an observation of existing code.
+    explanation: "**A constraint is a decision already made for the architecture.** It does not say what user-visible capability the system must provide; it narrows the set of acceptable designs before the architect starts choosing among them."
+
+  - id: 7
+    difficulty: intermediate
+    type: single
+    question: |
+      Which statement best describes an **architectural driver**?
+    options:
+      - "Any requirement written by a stakeholder."
+      - "A requirement whose change would plausibly change the architecture, usually because it is important and difficult."
+      - "Any implementation detail chosen by a developer."
+      - "A diagram that shows component names and connectors."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Many stakeholder requirements are local or easy. Architectural drivers are the subset that materially shape the architecture.
+      2: |
+        Some implementation details are architectural, but most are local. Driver status comes from impact on architectural choice, not from being a code detail.
+      3: |
+        A diagram can document architecture, but it is not itself the input requirement that drives the design.
+    explanation: "**Architecturally significant requirements are the inputs that force architecture decisions.** If changing the requirement would change the design strategy, style, deployment, or major boundaries, it is probably a driver."
+
+  - id: 8
+    difficulty: advanced
+    type: single
+    question: |
+      A shared C++ library appears once in the source tree. At build time, it is compiled into both the client executable and the server executable. Which view explains this cleanly?
+    options:
+      - "The module view shows one code module; the component-and-connector view shows two runtime components that both contain that compiled code."
+      - "The component-and-connector view shows one component, because there is one source directory."
+      - "The data view shows two tables, because executables are data."
+      - "The behavioral view replaces both views because it contains the call order."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Runtime components are deployable/executable units. One source directory can contribute code to multiple runtime components.
+      2: |
+        Data views describe entities, tables, records, schemas, and their relationships. They do not explain how source code maps into executables.
+      3: |
+        Behavioral views describe interactions over time. They do not replace structural views that answer where code lives and what executes.
+    explanation: "**Module and runtime views are related but not isomorphic.** A module is a design-time code unit; a component is an independently deployable runtime unit. One module can be compiled into multiple components."
+
+  - id: 9
+    difficulty: advanced
+    type: multiple
+    question: |
+      Which view is the best starting point for each analysis? Select all correct matches.
+    options:
+      - "Whether a database schema represents customers, courses, and enrollments correctly → data view."
+      - "Whether a service can tolerate one process crashing and being restarted → module view."
+      - "Whether information hiding is preserved across packages → module view."
+      - "Whether a message protocol can deadlock because two participants wait for each other → behavioral view."
+      - "Whether two deployed services exchange messages through a broker → component-and-connector view."
+    correct_indices: [0, 2, 3, 4]
+    option_feedback:
+      0: |
+        The data view is exactly the structure for entities, tables, keys, records, and semantic relationships.
+      1: |
+        Process crashes are runtime availability concerns. Start with component-and-connector, deployment, and behavioral views, not just module organization.
+      2: |
+        Information hiding is visible in module boundaries, imports, allowed-to-use relationships, and interfaces.
+      3: |
+        Waiting, ordering, state transitions, and protocol deadlock are behavioral concerns.
+      4: |
+        Deployed runtime services and broker connections are component-and-connector concerns.
+    explanation: "**Each architectural view supports different claims.** Good architectural reasoning starts by choosing the view whose elements and relations match the property being analyzed."
+
+  - id: 10
+    difficulty: intermediate
+    type: single
+    question: |
+      Attribute-Driven Design (ADD) is best summarized as:
+    options:
+      - "Draw all architecture diagrams first, then infer the quality attributes afterward."
+      - "Iteratively select a quality attribute, refine part of the system, sketch candidate decisions, analyze trade-offs, and repeat."
+      - "Choose the most popular framework and let its architectural style decide the rest."
+      - "Implement the lowest-level modules first so upper layers have something concrete to call."
+    correct_index: 1
+    option_feedback:
+      0: |
+        ADD starts from drivers and quality goals, not from drawing every diagram in advance.
+      2: |
+        Frameworks often impose styles, but ADD is about deliberately analyzing the trade-offs rather than inheriting them blindly.
+      3: |
+        Bottom-up implementation order is a development strategy, not the architecture decision method described by ADD.
+    explanation: "**ADD is an iterative quality-attribute-driven design loop.** It makes architecture decisions by asking which quality should improve, what part of the system is affected, and what trade-offs each candidate design creates."

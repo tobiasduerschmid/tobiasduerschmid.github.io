@@ -206,3 +206,23 @@ questions:
       3: |
         Worker-task distribution is an *implementation* detail of how Spark schedules work; it does not change the architectural style of the user's pipeline, which is a series of data transformations.
     explanation: "**Spark batch jobs are textbook pipe-and-filter (often as a DAG rather than a linear chain): each transformation is an independent filter, data flows through pipes between stages, and the system gains the style's natural concurrency, reusability, and recomposition benefits.** Recognizing the style is what tells you what trade-offs to expect — easy to reorder transformations, brittle under mid-stream failure, no good support for interactive workloads. The same engine can also do streaming, which adds genuinely new event-driven concerns on top."
+
+  - id: 11
+    difficulty: basic
+    type: single
+    question: |
+      A student says, "A pipe is a collection of filters that run together." What is the correct clarification?
+    options:
+      - "Correct: a pipe is the whole pipeline from source to sink."
+      - "A pipe is the connector that buffers and forwards an ordered data stream from one filter output to another filter input."
+      - "A pipe is any filter that has no input."
+      - "A pipe is a publish-subscribe topic with a different name."
+    correct_index: 1
+    option_feedback:
+      0: |
+        The whole source-to-sink structure is a pipeline or filter graph. The pipe is the connector between adjacent filters.
+      2: |
+        A filter with no input is a source. A filter with no output is a sink.
+      3: |
+        A pub-sub topic routes events to subscribers. A pipe is a point-to-point stream connector in a data-flow architecture.
+    explanation: "**Pipes are connectors, not components.** Treating the pipe as first-class helps explain why the style can buffer, preserve order, synchronize active filters, and impose a common stream format."

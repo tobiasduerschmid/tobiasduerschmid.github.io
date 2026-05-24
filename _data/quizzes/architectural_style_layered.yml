@@ -206,3 +206,23 @@ questions:
       3: |
         Inevitability is not an excuse for failing to choose a style that resists degradation. Teams that maintain strict layering with discipline keep portability properties for many years (TCP/IP, OS kernels, Linux subsystems).
     explanation: "**Strict layering minimizes the set of consumers of each layer's interface — exactly one layer above. When the lower-layer implementation changes, only one consumer adapts. Relaxed layering expands that set arbitrarily, so a change ripples wider and unpredictably.** Portability decays with the number of consumers; strict layering keeps that number small by construction."
+
+  - id: 11
+    difficulty: intermediate
+    type: single
+    question: |
+      A teammate points at a layered source-code diagram and says: "If the bottom layer fails, the whole app is unavailable, so this diagram tells us our availability risk." What is the best response?
+    options:
+      - "Agree: layers are runtime components, so availability is directly visible in the layered diagram."
+      - "Disagree: a layered diagram is a module view. It can support dependency and portability claims, but availability needs runtime components, deployment, fault detection, and recovery information."
+      - "Agree only if the system uses strict layering rather than relaxed layering."
+      - "Disagree because lower layers can never affect upper-layer behavior."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Layers are code organization, not necessarily independently deployable or independently failing runtime units.
+      2: |
+        Strictness changes dependency coupling and performance trade-offs. It still does not turn a module view into a runtime failure model.
+      3: |
+        Lower-layer failures can absolutely affect upper behavior. The correction is about which architectural view can justify the claim.
+    explanation: "**Layered architecture is primarily a module style.** Availability is a runtime quality, so the architect needs component-and-connector, deployment, and behavioral views before making an availability claim."
