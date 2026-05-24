@@ -1412,7 +1412,7 @@ test.describe('Personal Gym - Toggle Button on Includes', () => {
   test('gym add controls use only the site tooltip metadata', async ({ page }) => {
     await page.goto(GYM_URL);
 
-    const addButton = page.locator('.gym-add-btn').first();
+    const addButton = page.locator('#available-quizzes .gym-add-btn').first();
     await expect(addButton).toBeVisible();
     await expect(addButton).not.toHaveAttribute('title', /.+/);
     await expect(addButton).toHaveAttribute('data-original-title', /gym/i);
