@@ -1,0 +1,2428 @@
+title: "Information Hiding in Python: Hide the Decision, Not Just the Field"
+description: "Refactor leaky Python modules so a plausible future change touches one file, not twenty. You will spot leaked design decisions in code that technically uses private fields, hide a storage representation behind domain operations, hide an algorithm choice behind a Protocol, swap implementations to prove the secret is really hidden, and apply Single Choice so adding a new streaming provider is one new class — not five if/else edits."
+
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+# These flow from David Parnas, "On the Criteria To Be Used in Decomposing
+# Systems into Modules" (CACM 1972), Parnas/Clements/Weiss, "The Modular
+# Structure of Complex Systems" (IEEE TSE 1985), and Ousterhout's deep-module
+# refinement in "A Philosophy of Software Design" (2021).
+learning_objectives:
+  - "Identify a module's secret — the volatile design decision it owns — and distinguish it from the module's topic, responsibility, or filename."
+  - "Analyze a Python module's public surface (method names, parameter types, return types, exposed identifiers) to spot which design decisions have leaked beyond their owner."
+  - "Refactor a leaky module by hiding its representation behind domain operations or a typing.Protocol, so a representation, algorithm, or vendor change is local to one file."
+  - "Evaluate two implementations of the same Protocol by running the same client code against both — an implementation-swap test is your oracle for did I actually hide the decision?"
+  - "Apply the Single Choice principle: replace scattered if provider == ... switches with polymorphism behind a hidden choice point, and predict the new blast radius."
+  - "Predict the change-impact radius of a plausible future change in a small system before attempting the change (change-impact analysis)."
+
+backend: pyodide
+linter: true                 # live pyflakes diagnostics in the Monaco gutter
+require_tests: true
+autosave_type: files
+
+setup_commands:
+  - "import sys; sys.path.insert(0, '/tutorial')"
+
+steps:
+
+  # =========================================================================
+  # STEP 1 — "Private Is Not a Secret"
+  # =========================================================================
+  # Pedagogy:
+  #   Mistake-based familiarization (Tan & Poskitt 2024) — students *break*
+  #     a private field's intended invariant through its own public API,
+  #     so the misconception "private = hidden" gets refuted by experience.
+  #   PRIMM — Predict before Run; the reveal-on-running is the lesson.
+  #   Prior-knowledge repair (Ambrose et al., "How Learning Works", ch. 1).
+  #   Bloom — Analyze (identify the leak), Evaluate (compare four claims
+  #     to hide information and rank them).
+  # =========================================================================
+  - title: "Private Is Not a Secret"
+    instructions: |
+      ### Why this matters
+
+      Most CS students learn `private` before they learn *what it's for*. So when someone asks "did you hide the information?", they answer "yes — the field is private." That answer is wrong often enough that a billion-dollar industry of code reviews exists. The next five minutes are an inoculation: you will hold a class whose fields are "private" and use its own public API to plant a fake entry — proving the secret leaked anyway.
+
+      ### 🎯 You will learn to
+
+      - **Distinguish** *information hiding* (a design decision about who is allowed to know what) from `private` (a syntax feature that helps enforce it, when used carefully)
+      - **Analyze** a public method signature for representation leaks — even when every field uses the `_underscore` convention
+
+      ### ✏️ Predict before you run
+
+      Open `watch_history.py`. Every field starts with `_` — Python's convention for "private." Will an *outside caller* still be able to make `history.recent()` return `[..., {"title": "Pirated Movie", "year": 1999}]` **without calling** `history.add(...)`?
+
+      - (a) No — the underscore convention prevents outside code from touching `_history`.
+      - (b) No — the only public modifier is `add()`, so `_history` can only change via `add()`.
+      - (c) Yes — because `recent()` returns the *actual* internal list, the caller can mutate it from outside.
+      - (d) Compile error — Python won't let you index into a `_` -prefixed attribute.
+
+      Commit to a letter, *then* try the task.
+
+      <details><summary>Reveal (after you've tried it)</summary>
+
+      Answer **(c)**. The "private" field has not been hidden — only renamed. `recent()` hands the caller a *reference* to `self._history`, which is a `list`, and `list.append(...)` mutates in place. Visibility modifiers stop nothing on their own. The **representation decision** ("storage is a list of dicts you may mutate by reference") has leaked through the public API.
+
+      Three other ways this same class still leaks even if `recent()` returned `tuple(self._history)`:
+      1. Callers see the element type (`dict[str, ...]`) and start writing code that depends on the keys.
+      2. Switching `_history` to a `dict[str, Episode]` keyed by title would change what `recent()` returns and break every caller.
+      3. `for entry in history.recent():` quietly depends on iteration order.
+
+      Information hiding isn't a marker on a field — it's a decision about *which design decisions clients may depend on*. The next five steps train that judgment.
+
+      </details>
+
+      ### Your task — make the leak happen
+
+      Open `watch_history.py`. Below the `# TODO` marker, write **one line** that — using only the public API `history.recent()` — plants a `{"title": "Pirated Movie", "year": 1999}` entry. **Do not call** `history.add(...)`. When the test runs, `history.recent()` must return a list containing that planted entry.
+
+      The point isn't that you *should* write code like this. The point is that the design *lets* you, even though the author thought they had hidden the field.
+
+    files:
+      - path: "watch_history.py"
+        language: "python"
+        content: |
+          class WatchHistory:
+              """Stores what you have watched.
+
+              The author thought ``_history`` was 'hidden' because of the
+              underscore convention.
+              """
+
+              def __init__(self) -> None:
+                  self._history: list[dict] = []
+
+              def add(self, title: str, year: int) -> None:
+                  self._history.append({"title": title, "year": year})
+
+              def recent(self) -> list[dict]:
+                  # The author meant this as a read-only view.
+                  # It is not. Find out why in the task below.
+                  return self._history
+
+
+          if __name__ == "__main__":
+              history = WatchHistory()
+              history.add("Stranger Things", 2016)
+              history.add("Severance", 2022)
+
+              # TODO: Without calling ``history.add(...)``, plant the fake entry
+              # ``{"title": "Pirated Movie", "year": 1999}`` so it shows up in
+              # ``history.recent()``. One line is enough. Use only the public
+              # API — meaning the method ``history.recent()``.
+              # planted = ...
+
+              print(history.recent())
+
+    open_file: "watch_history.py"
+    run_file: "watch_history.py"
+
+    tests:
+      - description: "After your line runs, history.recent() returns the planted entry"
+        command: |
+          source = open('/tutorial/watch_history.py').read()
+          ns: dict = {}
+          # Strip the __main__ guard so we can re-run the demo cleanly.
+          stripped = source.replace('if __name__ == "__main__":', "if True:")
+          exec(stripped, ns)
+
+          # The student's line should have planted the fake entry into the same
+          # WatchHistory whose state ``recent()`` returns.
+          history = ns.get('history')
+          assert history is not None, \
+              "Could not find ``history`` after running watch_history.py. Did you remove the demo block?"
+
+          current = history.recent()
+          assert any(
+              entry.get("title") == "Pirated Movie" and entry.get("year") == 1999
+              for entry in current
+          ), (
+              "history.recent() did not contain the planted entry. "
+              "Hint: recent() returns the *actual* internal list. "
+              "What can you do to a list reference?"
+          )
+        hints:
+          - text: "Run watch_history.py first. What does ``history.recent()`` return? Inspect the *type* of the value — what does Python let you do to it?"
+          - text: "``history.recent()`` returns the same list object that ``_history`` points to. You are holding a reference to a mutable list — and lists have a one-word method for adding an item in place."
+            condition: "code_missing: recent()"
+          - text: "Chain that in-place add method onto the result of ``history.recent()``. The dict to pass is the literal one quoted in the TODO comment."
+            condition: "code_missing: 'Pirated Movie'"
+
+    quiz:
+      title: "Step 1 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - type: single
+          question: |
+            Every field in `WatchHistory` starts with `_`. Which statement best
+            describes whether the **storage representation** is hidden?
+          options:
+            - "Yes — the leading underscore is Python's convention for private, so external code cannot access `_history`."
+            - "Yes — the public method `recent()` is the only way clients see the data, so it is encapsulated."
+            - "No — `recent()` returns a reference to the same list `_history` points to, so external code can mutate it and depend on it being a list."
+            - "No — leading underscores have no enforcement in Python at all; everything is public anyway."
+          correct_index: 2
+          option_feedback:
+            0: "The underscore is a convention, not enforcement. But that's the small problem — the big problem is what the public API *returns*. The list itself escapes through `recent()`, no underscore-bypassing needed."
+            1: "Having only one public read method is not the same as hiding. If that method exposes the internal representation by reference, clients can still depend on the representation. Encapsulation (one access point) ≠ information hiding (that access point reveals nothing volatile)."
+            3: "Half right — underscores aren't enforced. But the deeper leak isn't 'someone reaches in to `_history` directly.' It is that `recent()` hands out the list, which is the same thing in effect with no underscore-poking required. Read what the public method *returns*, not just what's named with `_`."
+          explanation: |
+            The fields are technically marked private by convention, but `recent()` returns **the actual list**. Any caller can mutate it (you just did) or write code that assumes "it is a list, I can iterate it in insertion order, I can index it by integer, I can `.append()` to it" — all of which the author did not intend. Hiding the field *name* doesn't hide the design *decision* ("storage = mutable list of dicts").
+
+        - type: single
+          question: |
+            Which future change does the current `WatchHistory` design make
+            **expensive** — meaning many callers would have to be edited?
+          options:
+            - "Adding a new dict key, like a rating, alongside title and year."
+            - "Renaming the private attribute `_history` to `_titles_watched`."
+            - "Switching internal storage from `list[dict]` to `dict[str, Episode]` for O(1) lookup by title."
+            - "Adding a brand-new public method like `clear()`."
+          correct_index: 2
+          option_feedback:
+            0: "Adding a key affects what's inside each entry, but callers that read existing keys still work. It is a small ripple at worst."
+            1: "Renaming an underscore-prefixed attribute is a local change. No caller mentions the attribute name."
+            3: "Adding a new method *extends* the public API without breaking existing callers. Open/Closed Principle in action."
+          explanation: |
+            A switch from `list` to `dict[str, Episode]` would change what `recent()` returns. Every caller that does `for entry in wh.recent():` expects insertion-order iteration. Every caller that does `wh.recent().append(...)` (the leak you just exploited) would crash. The **internal representation has leaked into the contract** because the return type of the public method exposes it.
+
+        - type: single
+          question: |
+            A different class has private fields and returns `tuple(self._items)`
+            (an immutable copy) from its only public getter. Is this enough to
+            **hide the secret** in Parnas's sense?
+          options:
+            - "Yes — fields are private and the return is immutable, so nothing leaks."
+            - "Not necessarily — the *element type* (what shape each item has) is still part of the contract, and changing it would still break clients."
+            - "Yes — immutability is the entire point of information hiding."
+            - "No — Python tuples are not really immutable; you can still mutate them with `__setitem__`."
+          correct_index: 1
+          option_feedback:
+            0: "A real improvement, but only for *mutation* leaks. Clients can still write code that depends on the *shape* of each element. Changing the element type still ripples."
+            2: "Immutability prevents accidental mutation. Information hiding is the *broader* discipline of choosing **which design decisions clients may depend on**. Element shape is one of those decisions."
+            3: "Python tuples are immutable in the sense that matters here — `t[0] = ...` raises `TypeError`, and `tuple` has no `__setitem__`. But this isn't the issue with the design."
+          explanation: |
+            Returning an immutable copy plugs the **mutation** leak, but it doesn't hide the **element type**. If `recent()` returns `tuple[dict, ...]`, clients still depend on each entry being a `dict` with specific keys. Replacing the entry with a `WatchEvent` dataclass still breaks them. Information hiding is about the volatile *decision* — in this case, the element representation — not just about preventing writes.
+
+        - type: single
+          question: |
+            Which is the most accurate **one-line definition** of information
+            hiding in Parnas's sense?
+          options:
+            - "Marking fields and methods `private` so external code can't access them."
+            - "Splitting a program into small files and functions."
+            - "Assigning each likely-to-change design decision to one module, so other modules use it through a stable interface."
+            - "Returning copies instead of references from getter methods."
+          correct_index: 2
+          option_feedback:
+            0: "Access modifiers help enforce information hiding when used well, but they don't define the principle. You can mark every field private and still leak the secret through return types and method signatures."
+            1: "Splitting code is *modularization*. Information hiding is the **criterion** for how to split — by hidden decisions, not by processing steps."
+            3: "Returning copies prevents one leak (mutation). It is a useful tactic, not the principle itself."
+          explanation: |
+            Parnas's 1972 definition is that modules should be organized around **design decisions that are difficult or likely to change**. Each such decision lives in one module; other modules interact with it through an interface that does not reveal the decision. `private`, returning copies, small files — all useful tactics that may *help*. But the principle is about *which design decisions get hidden, and from whom*.
+
+    solution:
+      files:
+        - path: "watch_history.py"
+          language: "python"
+          content: |
+            class WatchHistory:
+                """Stores what you have watched.
+
+                The author thought ``_history`` was 'hidden' because of the
+                underscore convention.
+                """
+
+                def __init__(self) -> None:
+                    self._history: list[dict] = []
+
+                def add(self, title: str, year: int) -> None:
+                    self._history.append({"title": title, "year": year})
+
+                def recent(self) -> list[dict]:
+                    return self._history
+
+
+            if __name__ == "__main__":
+                history = WatchHistory()
+                history.add("Stranger Things", 2016)
+                history.add("Severance", 2022)
+
+                # The leak: ``recent()`` returns the same list object that
+                # ``_history`` points to. Mutating that list mutates the field.
+                history.recent().append({"title": "Pirated Movie", "year": 1999})
+
+                print(history.recent())
+      explanation: |
+        **What you just proved.** The author marked `_history` as private and
+        thought clients could only modify the state via `add()`. But `recent()`
+        returns a *reference* to the same list — and `list.append(...)` mutates
+        in place. **One line of "client code" bypassed the entire intended
+        invariant.**
+
+        **The fix is not "make the underscore double".** Even `__history` only
+        triggers name-mangling (`_WatchHistory__history`), reachable from
+        outside if you really want. The fix is structural: `recent()` should
+        return an *immutable view* of the data *as domain objects*, not the
+        internal list of dicts. Something like:
+
+        ```python
+        from dataclasses import dataclass
+        from typing import Iterable
+
+        @dataclass(frozen=True)
+        class WatchedShow:
+            title: str
+            year: int
+
+        class WatchHistory:
+            def __init__(self) -> None:
+                self._shows: list[WatchedShow] = []
+
+            def add(self, title: str, year: int) -> None:
+                self._shows.append(WatchedShow(title, year))
+
+            def recent(self) -> tuple[WatchedShow, ...]:
+                return tuple(self._shows)   # immutable view, domain objects
+        ```
+
+        Now: (1) clients cannot mutate `_shows` through the return value, and
+        (2) the return *type* is a domain object (`WatchedShow`) rather than
+        a `dict`, so the storage decision can change later without breaking
+        callers. **You will do exactly this kind of refactor in the next step,
+        on a richer example.**
+
+  # =========================================================================
+  # STEP 2 — "The Playlist's Secret"
+  # =========================================================================
+  # Pedagogy:
+  #   Worked example with subgoal labels (Atkinson, Derry, Renkl, Wortham 2000)
+  #     — students see one fully-worked refactor with the five-step routine,
+  #     then apply it.
+  #   PRIMM — Predict (which change is expensive?) → Run → Modify (apply
+  #     refactor) → Make (add a new operation).
+  #   Change-impact demonstration (Parnas 1972 KWIC; Cai et al. 2013) —
+  #     the surprise change request makes the leak operational.
+  #   Implementation-swap as an oracle (this tutorial's hallmark technique):
+  #     a swap class in the test verifies the client doesn't reach into the
+  #     internal representation.
+  #   Bloom — Apply (refactor), Analyze (which assumption leaks?), Create
+  #     (write ``is_party_appropriate``).
+  # =========================================================================
+  - title: "The Playlist's Secret"
+    instructions: |
+      ### Why this matters
+
+      Step 1 showed you a leak the size of one line. Real codebases hide leaks the size of an org chart — and the same leak forces three teams to coordinate every time the data shape changes. The fastest way to feel the difference is to do a small refactor on a `Playlist` class and then run the *same* client tests against a *different* internal storage. If the client breaks, the secret was never hidden.
+
+      > **Connection to the chapter's KWIC example.** Parnas (1972) made the same point at the *system* level using a Key Word In Context indexer: decomposing by *processing steps* (input → shift → sort → print) spread the line-storage decision across every module, so a change to line storage broke every module. Decomposing by *hidden decisions* (line storage, shift generation, sort ordering) kept each change local. This step plays out Parnas's argument at the *class* level on a Playlist.
+
+      ### 🎯 You will learn to
+
+      - **Apply** the five-step routine for hiding a secret: name the change, name the secret, list the minimum client assumptions, remove the leak, verify with a swap test
+      - **Analyze** which lines of client code depend on the internal representation
+      - **Create** a new domain operation on the hidden module without changing any client
+
+      ### The scene
+
+      You are building a music app. `Playlist` exposes a raw `tracks: list[dict]`. Three client features reach in: a textual summary, a top-picks list, and a "party-ready?" check. Run `app.py` and see the current behavior. *Then* the product manager files a ticket: **"Add `remove(title)` — needs to be O(1)."** That requires switching internal storage from `list` to `dict` keyed by title. Run the same client code afterward and watch it break.
+
+      ### ✏️ Predict before you run
+
+      Look at `playlist.py` and `app.py`. If we change `Playlist.tracks` from a `list[dict]` to a `dict[str, Track]` (keyed by title, for O(1) `remove`), **how many files will need to change** to keep the demo running?
+
+      - (a) Only `playlist.py` — the field is private-ish; clients should not care.
+      - (b) `playlist.py` and `app.py` — every loop and indexing operation in `app.py` will break.
+      - (c) Only `app.py` — `Playlist` itself is fine.
+      - (d) Zero files — Python's duck typing handles it.
+
+      Commit to a letter. The first test enforces this.
+
+      ### The five-step routine
+
+      You will use this exact routine in every refactor from here on. Memorize the headings, not the lines:
+
+      ```text
+      1. Name the change.        What is about to change, and why is it likely?
+      2. Name the secret.        Which design decision should one module own?
+      3. Minimum client assumptions.   What does the client *actually* need to know?
+      4. Remove the leak.        Replace exposed representation with domain operations.
+      5. Verify with a swap.     Same client, different implementation, same output.
+      ```
+
+      Filled in for `Playlist`:
+
+      ```text
+      1. Change:    Internal storage may move from list to dict for O(1) remove.
+      2. Secret:    How tracks are stored and ordered for retrieval.
+      3. Client needs:  top N by popularity, total minutes, average popularity, count.
+      4. Remove:    Stop exposing ``tracks``; expose ``top_tracks(n)``,
+                    ``total_duration_minutes()``, ``average_popularity()``, ``__len__``.
+      5. Verify:    Hidden test runs the same client against a dict-backed Playlist.
+      ```
+
+      ### Your task
+
+      Refactor `playlist.py` so the **public API** is domain operations, not a raw list:
+
+      ```text
+      add(title, artist, duration_sec, popularity)
+      top_tracks(n) -> list[Track]          # n highest by popularity
+      total_duration_minutes() -> float
+      average_popularity() -> float         # 0 if empty
+      __len__() -> int
+      ```
+
+      Define a `Track` dataclass with the four attributes (`title`, `artist`, `duration_sec`, `popularity`) so `top_tracks` returns domain objects, not dicts.
+
+      Refactor `app.py` so `describe_playlist` and `is_party_appropriate` use *only* the four methods above. They must not touch `playlist.tracks`, `_tracks`, or any dict keys.
+
+      One method is up to you: in `app.py`, write `is_party_appropriate(playlist)` — returns `True` if total duration > 90 minutes AND average popularity > 60.
+
+      ### 🪞 Before clicking Next
+
+      Once all four tests pass, complete this sentence — out loud, to a rubber duck, or in your head — *before* taking the quiz. (The first quiz question reuses this structure.)
+
+      > "The decision *how tracks are stored* used to live in **___**. After the refactor it lives in **___**. So a switch from `list` to `dict` now changes **___** file(s) instead of **___**."
+
+      The "generation effect" (Chi et al., 1994) says producing the sentence yourself, even silently, strengthens what you just learned more than re-reading does. It takes 15 seconds.
+
+    files:
+      - path: "playlist.py"
+        language: "python"
+        content: |
+          """Music playlist.
+
+          STARTING STATE: leaks the internal list[dict] through ``tracks``.
+          Refactor so the only public surface is *domain operations*.
+          """
+
+
+          class Playlist:
+              def __init__(self) -> None:
+                  self.tracks: list[dict] = []
+
+              def add(self, title: str, artist: str, duration_sec: int, popularity: int) -> None:
+                  self.tracks.append({
+                      "title": title,
+                      "artist": artist,
+                      "duration_sec": duration_sec,
+                      "popularity": popularity,
+                  })
+
+          # TODO (Step 4 of the routine — "Remove the leak"):
+          #   1. Define a ``Track`` dataclass with title, artist, duration_sec, popularity.
+          #   2. Replace ``self.tracks`` with a hidden ``self._tracks``.
+          #   3. Add the four domain methods listed in the instructions.
+
+      - path: "app.py"
+        language: "python"
+        content: |
+          """Client of Playlist. Currently reaches into the raw list.
+
+          Refactor ``describe_playlist`` and ``is_party_appropriate`` to use
+          ONLY the new domain methods on Playlist (no ``playlist.tracks``,
+          no dict indexing).
+          """
+
+          from playlist import Playlist
+
+
+          def describe_playlist(playlist: Playlist) -> str:
+              total_minutes = sum(t["duration_sec"] for t in playlist.tracks) / 60
+              avg_popularity = (
+                  sum(t["popularity"] for t in playlist.tracks) / len(playlist.tracks)
+                  if playlist.tracks else 0
+              )
+              top_three = sorted(playlist.tracks, key=lambda t: t["popularity"], reverse=True)[:3]
+
+              lines = [
+                  f"{len(playlist.tracks)} tracks, "
+                  f"{total_minutes:.1f} min, "
+                  f"avg popularity {avg_popularity:.0f}"
+              ]
+              lines.append("Top picks:")
+              for t in top_three:
+                  lines.append(f"  - {t['title']} by {t['artist']}")
+              return "\n".join(lines)
+
+
+          def is_party_appropriate(playlist: Playlist) -> bool:
+              # TODO: rewrite using only Playlist's new domain methods.
+              # Spec: True iff total duration > 90 min AND avg popularity > 60.
+              raise NotImplementedError
+
+
+          if __name__ == "__main__":
+              p = Playlist()
+              p.add("Bad Guy", "Billie Eilish", 194, 95)
+              p.add("Levitating", "Dua Lipa", 203, 88)
+              p.add("Blinding Lights", "The Weeknd", 200, 92)
+              p.add("Heat Waves", "Glass Animals", 238, 80)
+              p.add("As It Was", "Harry Styles", 167, 90)
+              print(describe_playlist(p))
+              print("party-ready?", is_party_appropriate(p))
+
+    open_file: "playlist.py"
+    run_file: "app.py"
+
+    tests:
+      - description: "Playlist exposes the four domain methods (top_tracks, total_duration_minutes, average_popularity, __len__)"
+        command: |
+          import importlib, sys
+          for name in ("playlist", "app"):
+              sys.modules.pop(name, None)
+          playlist_mod = importlib.import_module("playlist")
+          P = playlist_mod.Playlist
+
+          missing = [m for m in ("add", "top_tracks", "total_duration_minutes",
+                                 "average_popularity", "__len__") if not hasattr(P, m)]
+          assert not missing, f"Playlist is missing required methods: {missing}"
+
+          # Track type exists
+          assert hasattr(playlist_mod, "Track"), (
+              "Define a ``Track`` dataclass in playlist.py with title, artist, "
+              "duration_sec, popularity."
+          )
+
+          # Quick smoke run
+          p = P()
+          p.add("Bad Guy", "Billie Eilish", 194, 95)
+          p.add("Levitating", "Dua Lipa", 203, 88)
+          p.add("Blinding Lights", "The Weeknd", 200, 92)
+          assert len(p) == 3, "len(Playlist) should report number of tracks added"
+          assert abs(p.total_duration_minutes() - (194 + 203 + 200) / 60) < 0.001, \
+              "total_duration_minutes() should sum durations and divide by 60"
+          assert abs(p.average_popularity() - (95 + 88 + 92) / 3) < 0.001, \
+              "average_popularity() should be the mean of popularity values"
+          assert p.average_popularity.__self__ is p, "average_popularity should be a method"
+          top_two = list(p.top_tracks(2))
+          assert len(top_two) == 2, "top_tracks(2) should return two items"
+          # Should be ordered by popularity descending
+          assert top_two[0].popularity >= top_two[1].popularity, \
+              "top_tracks should be ordered by popularity descending"
+        hints:
+          - text: "Subgoal 4 (remove the leak). Add the four methods to Playlist, each computing from ``self._tracks`` internally. ``top_tracks(n)`` should use ``sorted(..., reverse=True)``."
+          - text: "Define ``Track`` with ``from dataclasses import dataclass`` and ``@dataclass(frozen=True)``. Frozen so callers cannot mutate the object reference you handed them."
+            condition: "code_missing: dataclass"
+          - text: "Skeleton for top_tracks: ``return sorted(self._tracks, key=lambda t: t.popularity, reverse=True)[:n]``."
+            condition: "code_missing: top_tracks"
+
+      - description: "app.py uses only the domain methods (no reach-in to ``tracks`` or dict keys)"
+        command: |
+          import re
+          source = open("/tutorial/app.py").read()
+
+          # Forbid the leaky accesses. These are coarse, but combined with the
+          # implementation-swap test below they catch every realistic leak.
+          forbidden_patterns = [
+              (r"\.tracks\b",   "app.py still reads ``playlist.tracks`` directly."),
+              (r"\[['\"]title['\"]\]",   "app.py still indexes dict keys like ``['title']``."),
+              (r"\[['\"]artist['\"]\]",  "app.py still indexes dict keys like ``['artist']``."),
+              (r"\[['\"]duration_sec['\"]\]", "app.py still indexes dict keys like ``['duration_sec']``."),
+              (r"\[['\"]popularity['\"]\]",   "app.py still indexes dict keys like ``['popularity']``."),
+          ]
+          offenders = [msg for pattern, msg in forbidden_patterns if re.search(pattern, source)]
+          assert not offenders, "\n".join(offenders) + (
+              "\nUse Playlist's domain methods (top_tracks, total_duration_minutes, "
+              "average_popularity, __len__) and Track's attributes (.title, .artist, etc.) instead."
+          )
+
+      - description: "is_party_appropriate matches the spec"
+        command: |
+          import importlib, sys
+          for name in ("playlist", "app"):
+              sys.modules.pop(name, None)
+          import app
+          P = sys.modules["playlist"].Playlist
+
+          # Edge case: empty
+          p = P()
+          assert app.is_party_appropriate(p) is False, \
+              "Empty playlist should not be party-appropriate (0 minutes, 0 popularity)."
+
+          # Below the duration threshold
+          p = P()
+          for _ in range(5):
+              p.add("Short", "X", 30 * 60 // 5, 90)   # 30 total minutes, popularity 90
+          assert app.is_party_appropriate(p) is False, \
+              "Under 90 minutes total should not be party-appropriate."
+
+          # Above duration but below popularity
+          p = P()
+          for i in range(30):
+              p.add(f"Quiet {i}", "X", 200, 30)   # 100 min, popularity 30
+          assert app.is_party_appropriate(p) is False, \
+              "Below avg popularity 60 should not be party-appropriate."
+
+          # Above both thresholds
+          p = P()
+          for i in range(30):
+              p.add(f"Banger {i}", "X", 200, 75)   # 100 min, popularity 75
+          assert app.is_party_appropriate(p) is True, \
+              "Above 90 minutes and avg popularity 60 should be party-appropriate."
+        hints:
+          - text: "One-liner: ``return playlist.total_duration_minutes() > 90 and playlist.average_popularity() > 60``."
+          - text: "Watch the empty case. ``average_popularity()`` should return 0 for empty so the AND short-circuits correctly."
+            condition: "output_missing: empty"
+
+      - description: "Implementation-swap test: a different internal storage backend works with the same client code"
+        command: |
+          import importlib, sys
+          for name in ("playlist", "app"):
+              sys.modules.pop(name, None)
+          import app
+          import playlist as playlist_mod
+          P = playlist_mod.Playlist
+          Track = playlist_mod.Track
+
+          # Build a Playlist via the public API
+          real = P()
+          fixtures = [
+              ("Bad Guy", "Billie Eilish", 194, 95),
+              ("Levitating", "Dua Lipa", 203, 88),
+              ("Blinding Lights", "The Weeknd", 200, 92),
+              ("Heat Waves", "Glass Animals", 238, 80),
+              ("As It Was", "Harry Styles", 167, 90),
+          ]
+          for args in fixtures:
+              real.add(*args)
+
+          # Swap class: SAME public surface, ENTIRELY different internal storage
+          # (a dict keyed by title — what the product manager wanted for O(1) remove).
+          # If the client only uses the four domain methods, this works too.
+          class DictBackedPlaylist:
+              def __init__(self) -> None:
+                  self._by_title: dict = {}
+
+              def add(self, title, artist, duration_sec, popularity) -> None:
+                  self._by_title[title] = Track(title, artist, duration_sec, popularity)
+
+              def top_tracks(self, n):
+                  values = list(self._by_title.values())
+                  return sorted(values, key=lambda t: t.popularity, reverse=True)[:n]
+
+              def total_duration_minutes(self):
+                  return sum(t.duration_sec for t in self._by_title.values()) / 60
+
+              def average_popularity(self):
+                  values = list(self._by_title.values())
+                  if not values:
+                      return 0
+                  return sum(t.popularity for t in values) / len(values)
+
+              def __len__(self):
+                  return len(self._by_title)
+
+          swap = DictBackedPlaylist()
+          for args in fixtures:
+              swap.add(*args)
+
+          # The same client code should produce the same output for both.
+          real_desc = app.describe_playlist(real)
+          swap_desc = app.describe_playlist(swap)
+          assert real_desc == swap_desc, (
+              "describe_playlist produced DIFFERENT output for the two Playlist "
+              "implementations. Your client is still depending on something "
+              "specific to the list-backed Playlist (e.g. ``playlist.tracks`` "
+              "or ``['title']``). Hide it behind a domain method.\n\n"
+              f"Real:\n{real_desc}\n\nSwap:\n{swap_desc}"
+          )
+          assert app.is_party_appropriate(real) == app.is_party_appropriate(swap), (
+              "is_party_appropriate differed between implementations — the client "
+              "depends on more than the four public methods."
+          )
+        hints:
+          - text: "This is the payoff test. If it fails, your client.py is still reaching into Playlist's representation somewhere. Re-read the spec: only the four domain methods, plus ``.title`` / ``.artist`` on the Track objects you receive."
+          - text: "Hint to inspect: search app.py for ``.tracks``, ``[`` (any indexing into items), and ``len(playlist.tracks)``. They all need to become method calls."
+            condition: "default"
+
+    quiz:
+      title: "Step 2 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - type: single
+          question: |
+            In Parnas's terms, what is **`Playlist`'s secret** after your refactor?
+          options:
+            - "The fact that `_tracks` is named with an underscore."
+            - "The order in which tracks were added."
+            - "How tracks are stored internally and how queries like 'top N by popularity' are computed."
+            - "The exact value of the popularity threshold for party-readiness (60)."
+          correct_index: 2
+          option_feedback:
+            0: "Naming is a clue, not a secret. The secret is a design *decision*, not a syntactic marker."
+            1: "Insertion order may be a behavior the public API promises (e.g., 'top_tracks ties break by insertion order'), but it is not the central secret. The storage decision behind it is."
+            3: "That threshold is a *client policy*, owned by `app.is_party_appropriate`. It lives in the client because the client is the one who decides what 'party-ready' means. Playlist itself does not see that constant."
+          explanation: |
+            A module's **secret** is the volatile design decision it owns. `Playlist` owns *how tracks are stored* and *how they are queried*. The four public methods are the **stable contract**; the storage choice (list, dict, B-tree, eventually a database) is the **hidden decision** that can change without forcing changes elsewhere. The swap test you just passed is the operational proof.
+
+        - type: multiple
+          question: |
+            **(Select all that apply.)** Which of these future changes can your refactored `Playlist` absorb **without** forcing any change in `app.py`?
+          options:
+            - "Switching internal storage from a list to a dict keyed by title."
+            - "Adding a new field `release_year` to `Track` (the dataclass)."
+            - "Adding a new domain method `remove(title)` to `Playlist`."
+            - "Renaming the public method `top_tracks` to `most_popular`."
+          correct_indices: [0, 2]
+          optional_indices: [1]
+          option_feedback:
+            1: "Adding an *optional* field with a default value is absorbed; clients ignore it. But if you give it no default, callers of `Track(...)` must pass it — and `Playlist.add` calls `Track(...)`. So it's a 'sometimes yes, sometimes no' — we've marked it as optional credit."
+            3: "Renaming a *public* method on Playlist by definition breaks every client that calls it. That is the opposite of an absorbed change — you have changed the contract."
+          explanation: |
+            The shape of "what changes are local" follows directly from the contract you exposed. Internal storage choice is hidden, so (1) is absorbed. New domain methods are *additive*, so (3) is absorbed. Renaming a method on the contract is a contract change, so (4) ripples. Adding fields *can* be local — but it depends on whether you preserve the constructor signature (defaults vs. required), which is why (2) is partial credit.
+
+        - type: single
+          question: |
+            You read a teammate's class and the only thing wrong is that it
+            exposes `get_internal_list() -> list[dict]`. They argue: "It's
+            only used by one client right now, so it can't be a leak."
+            What is the strongest single counter?
+          options:
+            - "The method's name uses the word `internal`, so it's a smell."
+            - "The leak's cost shows up not at the moment of writing, but when the storage representation needs to change — by then, every new client written 'in the meantime' is also coupled."
+            - "Returning a list is always wrong in Python; tuples are required by best practice."
+            - "Information hiding requires zero exposed methods. Even `get_internal_list()` is too many."
+          correct_index: 1
+          option_feedback:
+            0: "Naming is a hint, not the argument. A method called `current_track()` could leak just as badly."
+            2: "Lists are fine to return; the question is whether the return *type* is a leak. Often `tuple[DomainObject, ...]` is the safer shape, but not always."
+            3: "Information hiding never says 'expose nothing'. It says 'expose only the stable contract'. Plenty of legitimate methods exist."
+          explanation: |
+            This is the **change-localization** argument and it is the strongest reason in Parnas's framing. A leak that costs nothing today costs everything the moment the storage decision needs to change — *every* client written between now and then will also depend on the leak, multiplying the eventual edit cost. Studies of professional developers find program comprehension (the activity that becomes painful when a representation change must be traced through many files) consumes around **58% of their working time** (Xia et al., IEEE TSE 2017). Information hiding is one of the cheapest ways to keep that number from compounding.
+
+        - type: single
+          question: |
+            **Spaced retrieval from Step 1.** Your `Playlist._tracks` is named
+            with one underscore. Does the underscore alone hide the storage
+            decision from `app.py`?
+          options:
+            - "Yes — Python respects the underscore convention strictly."
+            - "Yes — once a field is `_-prefixed`, no outside code can read it."
+            - "No — the underscore is a hint; what actually hides the decision is that no public method *returns the list* or *accepts a list parameter*."
+            - "No — only `__double_underscore` names are truly private in Python."
+          correct_index: 2
+          option_feedback:
+            0: "Linters and IDEs respect the convention, but it is exactly that — a convention. It does not 'hide' anything by itself."
+            1: "Outside code can still write `playlist._tracks` and Python will not raise. The convention is social, not enforced."
+            3: "Even `__double_underscore` names are reachable via `obj._ClassName__name` (name mangling, not access control). The real hiding always comes from what the public API does or does not expose."
+          explanation: |
+            Underscore prefixes are a **social signal**, not enforcement. The *real* hiding in your refactored `Playlist` comes from the fact that the public API exposes only domain operations (`top_tracks`, `total_duration_minutes`, etc.) — none of them returns the list or accepts a list parameter. **That** is what lets you swap the storage. The underscore just tells future maintainers "I meant for this to be local."
+
+    solution:
+      files:
+        - path: "playlist.py"
+          language: "python"
+          content: |
+            """Music playlist with the storage decision hidden behind domain operations.
+
+            The 5-step routine, annotated below as it appears in the code:
+              1. Change       : list -> dict for O(1) remove (anticipated next sprint)
+              2. Secret       : how tracks are stored AND how they are queried
+              3. Client needs : top-N, total minutes, avg popularity, count
+              4. Remove leak  : Track dataclass + four domain methods, no exposed list
+              5. Verify swap  : DictBackedPlaylist in the test produces identical output
+            """
+
+            from dataclasses import dataclass
+
+
+            # --- Subgoal 4a: domain object (so callers never see raw dicts) ---
+            @dataclass(frozen=True)
+            class Track:
+                title: str
+                artist: str
+                duration_sec: int
+                popularity: int
+
+
+            class Playlist:
+                # --- Subgoal 4b: hide the representation behind an underscore ---
+                def __init__(self) -> None:
+                    self._tracks: list[Track] = []
+
+                # --- Subgoal 4c: domain operations only, no list returned ---
+                def add(self, title: str, artist: str, duration_sec: int, popularity: int) -> None:
+                    self._tracks.append(Track(title, artist, duration_sec, popularity))
+
+                def top_tracks(self, n: int) -> list[Track]:
+                    return sorted(self._tracks, key=lambda t: t.popularity, reverse=True)[:n]
+
+                def total_duration_minutes(self) -> float:
+                    return sum(t.duration_sec for t in self._tracks) / 60
+
+                def average_popularity(self) -> float:
+                    if not self._tracks:
+                        return 0
+                    return sum(t.popularity for t in self._tracks) / len(self._tracks)
+
+                def __len__(self) -> int:
+                    return len(self._tracks)
+        - path: "app.py"
+          language: "python"
+          content: |
+            from playlist import Playlist
+
+
+            def describe_playlist(playlist: Playlist) -> str:
+                lines = [
+                    f"{len(playlist)} tracks, "
+                    f"{playlist.total_duration_minutes():.1f} min, "
+                    f"avg popularity {playlist.average_popularity():.0f}"
+                ]
+                lines.append("Top picks:")
+                for t in playlist.top_tracks(3):
+                    lines.append(f"  - {t.title} by {t.artist}")
+                return "\n".join(lines)
+
+
+            def is_party_appropriate(playlist: Playlist) -> bool:
+                return playlist.total_duration_minutes() > 90 and playlist.average_popularity() > 60
+
+
+            if __name__ == "__main__":
+                p = Playlist()
+                p.add("Bad Guy", "Billie Eilish", 194, 95)
+                p.add("Levitating", "Dua Lipa", 203, 88)
+                p.add("Blinding Lights", "The Weeknd", 200, 92)
+                p.add("Heat Waves", "Glass Animals", 238, 80)
+                p.add("As It Was", "Harry Styles", 167, 90)
+                print(describe_playlist(p))
+                print("party-ready?", is_party_appropriate(p))
+      explanation: |
+        **The routine you just ran:**
+
+        1. **Named the change.** "Storage may move from list to dict for O(1) remove."
+        2. **Named the secret.** "How tracks are stored and queried."
+        3. **Listed the minimum client assumptions.** Top N, total minutes, avg popularity, count.
+        4. **Removed the leak.** The four domain methods became the *entire* public surface. `_tracks` is internal.
+        5. **Verified with a swap.** The hidden test built `DictBackedPlaylist` with totally different storage. Your `app.py` produced **identical** output. That is the operational proof that the secret is hidden.
+
+        **What you didn't have to do.** You didn't have to write the dict-backed version. You didn't have to predict whether it would be a dict, a B-tree, a database, or a remote service. You bought the option to swap *any* of those in later, at the cost of writing four small methods today.
+
+        **One trap to remember.** A `@dataclass(frozen=True)` on `Track` was deliberate. If `Track` were mutable, `top_tracks(3)` could be modified by callers — re-leaking the data. Frozen dataclasses are the cheapest way to make a domain object both *typed* and *safe to hand out*. (`tuple(self._tracks)` would also work but loses the named fields.)
+
+  # =========================================================================
+  # STEP 3 — "An Interface That Tells You Too Much"
+  # =========================================================================
+  # Pedagogy:
+  #   Faded worked example (Renkl 2014) — scaffolding is reduced; students
+  #     define the Protocol and dataclass themselves given the contract.
+  #   Parnas's own "over-specified circular-shift" example (1972) — an
+  #     interface can be precise and STILL reveal too much, restricting
+  #     future implementations.
+  #   Module-guide mini-doc activity (Parnas, Clements & Weiss 1985) — the
+  #     student writes a four-line guide naming the secret, likely changes,
+  #     stable contract, and what is NOT promised.
+  #   Spaced retrieval — Step 2's "what is the secret?" pattern returns,
+  #     applied to a different kind of leak.
+  #   Bloom — Analyze (which detail is over-specified?), Create (write
+  #     the Protocol + dataclass + module guide), Evaluate (compare
+  #     two interfaces for leak severity).
+  # =========================================================================
+  - title: "An Interface That Tells You Too Much"
+    instructions: |
+      ### Why this matters
+
+      Step 2 fixed a *mutation* leak. This step fixes a subtler one — a contract that *looks* clean but **over-specifies** how it computes its answer. Parnas warned about this in 1972 with his KWIC example: an interface that says more than the client needs to know **restricts future implementations**. A music recommender that returns raw BM25 scores is the modern version. Switch the algorithm from BM25 to embeddings and every numeric threshold in the client breaks.
+
+      > **Heads up — this step adds two new Python features at once.** That's deliberate: `typing.Protocol` and `typing.Literal` are the cleanest way to express "any class with this shape works." If either feels foggy, walk to the primer below, then come back. Confusion on the first read is normal — Parnas's principle takes most engineers a couple of passes to internalize.
+
+      ### 🎯 You will learn to
+
+      - **Analyze** a read-only API for over-specification — which numeric scales, internal IDs, or raw rows are visible that clients did not need
+      - **Create** a `typing.Protocol` plus a small `dataclass` so two different ranking strategies satisfy the same contract
+      - **Apply** the Parnas/Clements/Weiss **module-guide** mini-doc format: secret, likely changes, stable contract, *what is not promised*
+
+      ### Two-minute primer on `Protocol` and `Literal`
+
+      You used Python's "duck typing" implicitly in Step 2 — the swap test defined `DictBackedPlaylist` and the client just worked, because Python checks methods at call time, not declaration time. `typing.Protocol` is how you make that duck typing **explicit and type-checkable**:
+
+      ```python
+      from typing import Protocol
+
+      class Recommender(Protocol):
+          def recommend(self, query: str, *, limit: int = 5) -> list[SongHit]: ...
+      ```
+
+      Any class that has a `recommend(query, *, limit) -> list[SongHit]` method **automatically** satisfies `Recommender`. No `class Foo(Recommender):` needed; structural matching only. That's the contract you'll write below.
+
+      `typing.Literal` lets a type be one of a fixed set of values:
+
+      ```python
+      from typing import Literal
+      Confidence = Literal["low", "medium", "high"]
+      ```
+
+      Now `confidence: Confidence` means "must be the string `low`, `medium`, or `high`, and your type checker will yell if you try anything else." It's the right tool for a small enum of domain-meaningful labels.
+
+      ### The scene
+
+      `recommender.py` ranks songs for a query. The current contract returns `list[tuple[int, float, dict]]` — `(bucket_id, similarity_score, raw_row)`. `sidebar.py` thresholds at `score >= 12.0` to call a hit "strong." Today's scorer is BM25-style; scores live in `0..30`. Next quarter the team plans to swap in vector embeddings; scores will live in `0..1`. **Every threshold in every client will silently produce wrong answers.**
+
+      ### ✏️ Predict before you run
+
+      The bad design returns `(bucket_id, score, row)`. If the recommender switches from BM25 to cosine-similarity embeddings, what is the most likely failure mode in the existing `sidebar.py`?
+
+      - (a) A crash — the new return type won't match.
+      - (b) An empty sidebar — every score will be below the threshold `12.0`, so no hits are "strong" anymore.
+      - (c) The sidebar shows literally every song — every score will be above `12.0`.
+      - (d) The sidebar is unchanged — the contract types are the same.
+
+      Commit before reading on.
+
+      <details><summary>Reveal</summary>
+
+      Answer **(b)**. Cosine-similarity scores live in `0..1`. The old threshold `12.0` is now larger than the highest possible score, so the strong-hit list is always empty. **The sidebar just goes blank in production** with no exception — the worst kind of bug.
+
+      The deep mistake is not in `sidebar.py`. It is in `recommender.py`'s contract, which exposed the numeric score and tied callers to its *scale*. Parnas's term for this in his 1972 paper: the interface "reveals more than is necessary," restricting which future implementations can satisfy it.
+
+      </details>
+
+      ### Your task
+
+      Refactor `recommender.py` so the contract exposes only what the client genuinely needs:
+
+      1. Define `Confidence = Literal["low", "medium", "high"]`.
+      2. Define `@dataclass(frozen=True) class SongHit` with `track_id: str`, `title: str`, `artist: str`, `confidence: Confidence`.
+      3. Define `class Recommender(Protocol)` with `def recommend(self, query: str, *, limit: int = 5) -> list[SongHit]: ...`.
+      4. Provide `class PopularityRecommender:` whose `recommend` method satisfies the Protocol. Use the helper `_strong_track_table()` already in the file to populate a few demo hits — assign confidence based on internal popularity buckets (you choose how).
+      5. Refactor `sidebar.py` so `support_sidebar(query, recommender)` takes a `Recommender` and returns titles of hits where `hit.confidence == "high"`. No numeric thresholds anywhere in `sidebar.py`.
+
+      Also: write a **module guide** comment at the top of `recommender.py` in this exact format (you can fill in the values):
+
+      ```python
+      """
+      Module guide:
+        Primary secret:   <one sentence — name the volatile decision>
+        Likely changes:   <bullets — BM25 -> embeddings, score scale shifts, ...>
+        Stable contract:  <one sentence — what callers can rely on>
+        Not promised:     <bullets — raw scores, bucket IDs, ranking algorithm, ...>
+      """
+      ```
+
+      Test 4 will look for those four words (`Primary secret`, `Likely changes`, `Stable contract`, `Not promised`) — Parnas, Clements, and Weiss called this artifact the **module guide** in their 1985 paper. It is the lightest-weight design-doc you can write that still records *why* the boundary exists.
+
+      ### 🪞 Before clicking Next
+
+      Once all four tests pass, take 20 seconds and answer in your head:
+
+      > "If a future engineer reads `sidebar.py`, can they tell which ranking algorithm runs underneath? Why or why not?"
+
+      The right answer ("no — sidebar only sees `hit.confidence`") is what you just bought with this refactor. Saying it out loud once makes the next refactor easier.
+
+    files:
+      - path: "recommender.py"
+        language: "python"
+        content: |
+          """STARTING STATE.
+
+          Today's design returns ``list[tuple[bucket_id, score, raw_row]]``.
+          Score scale is 0..30 (BM25-like). Refactor as the instructions ask
+          so a future swap to embeddings (scale 0..1) does NOT break callers.
+          """
+
+          # The recommender currently exposes raw scores, bucket IDs, and dict rows.
+          # That is an over-specified contract. Replace it.
+
+          _DEMO_CATALOG = [
+              # (track_id, title, artist, internal_popularity_0_to_100)
+              ("t1", "Bad Guy",          "Billie Eilish",          95),
+              ("t2", "Bury a Friend",    "Billie Eilish",          78),
+              ("t3", "Lovely",           "Billie Eilish, Khalid",  62),
+              ("t4", "Ocean Eyes",       "Billie Eilish",          55),
+              ("t5", "Happier Than Ever","Billie Eilish",          88),
+              ("t6", "All The Good Girls","Billie Eilish",         40),
+          ]
+
+
+          def _strong_track_table() -> list[tuple[str, str, str, int]]:
+              """Return the demo catalog. Use the int popularity to choose confidence."""
+              return list(_DEMO_CATALOG)
+
+
+          def recommend(query: str) -> list[tuple[int, float, dict]]:
+              """LEAKY contract — returns (bucket_id, score, raw_row)."""
+              raw = _strong_track_table()
+              # Pretend BM25 scores in 0..30 derived from the popularity field.
+              return [
+                  (
+                      i // 3,                       # bucket_id leaks an internal partition
+                      round(pop * 30 / 100, 2),     # score scale 0..30 leaks the algorithm
+                      {"track_id": tid, "title": title, "artist": artist, "popularity": pop},
+                  )
+                  for i, (tid, title, artist, pop) in enumerate(raw)
+              ]
+
+
+          # TODO replace the leaky surface above with:
+          #   1. ``Confidence = Literal["low", "medium", "high"]``
+          #   2. ``@dataclass(frozen=True) class SongHit`` with the fields named in the instructions
+          #   3. ``class Recommender(Protocol)`` with ``recommend(query, *, limit=5) -> list[SongHit]``
+          #   4. ``class PopularityRecommender`` implementing the Protocol
+          #
+          # And add the module-guide docstring at the top of the file.
+
+      - path: "sidebar.py"
+        language: "python"
+        content: |
+          """Client that knows too much.
+
+          Refactor ``support_sidebar`` to take a ``Recommender`` and ask for
+          high-confidence hits — no raw scores, no thresholds.
+          """
+
+          from recommender import recommend
+
+          STRONG_THRESHOLD = 12.0   # BM25 scale assumption — a leak waiting to break.
+
+
+          def support_sidebar(query: str) -> list[str]:
+              hits = recommend(query)
+              return [row["title"] for (_bucket, score, row) in hits if score >= STRONG_THRESHOLD]
+
+
+          if __name__ == "__main__":
+              for title in support_sidebar("billie eilish"):
+                  print(title)
+
+    open_file: "recommender.py"
+    run_file: "sidebar.py"
+
+    tests:
+      - description: "recommender.py defines SongHit, Confidence, Recommender Protocol, and PopularityRecommender"
+        command: |
+          import importlib, sys
+          for name in ("recommender", "sidebar"):
+              sys.modules.pop(name, None)
+          import recommender as r
+
+          for name in ("SongHit", "Confidence", "Recommender", "PopularityRecommender"):
+              assert hasattr(r, name), f"Define ``{name}`` in recommender.py."
+
+          # SongHit fields
+          from dataclasses import fields
+          field_names = {f.name for f in fields(r.SongHit)}
+          required = {"track_id", "title", "artist", "confidence"}
+          missing = required - field_names
+          assert not missing, f"SongHit is missing fields: {missing}"
+
+          # Recommender is a Protocol with a ``recommend`` method
+          assert hasattr(r.Recommender, "recommend"), \
+              "Recommender Protocol should declare ``recommend(query, *, limit=5)``."
+
+          # PopularityRecommender satisfies the surface
+          rec = r.PopularityRecommender()
+          page = rec.recommend("billie", limit=3)
+          assert isinstance(page, list), "recommend should return a list."
+          assert len(page) > 0, "recommend should return at least one hit on demo data."
+          assert all(isinstance(h, r.SongHit) for h in page), \
+              "Each element of the returned list should be a SongHit."
+          assert all(h.confidence in {"low", "medium", "high"} for h in page), \
+              "confidence on each SongHit must be one of 'low', 'medium', 'high'."
+          assert len(page) <= 3, "recommend should respect the limit kwarg."
+        hints:
+          - text: "Subgoal 4 (remove the leak): three small definitions plus one class. Start with ``from typing import Literal, Protocol`` and ``from dataclasses import dataclass``."
+          - text: "Confidence pattern: ``Confidence = Literal['low', 'medium', 'high']``. Then on each SongHit, set ``confidence`` from popularity buckets you choose (e.g. >= 80 high, >= 60 medium, else low)."
+            condition: "code_missing: Literal"
+          - text: "Skeleton for PopularityRecommender.recommend: build a list of SongHit from ``_strong_track_table()`` and return ``[...][:limit]``."
+            condition: "code_missing: SongHit"
+
+      - description: "sidebar.py has no numeric thresholds, accepts a Recommender, and filters by hit.confidence"
+        command: |
+          import re, importlib, sys
+          for name in ("recommender", "sidebar"):
+              sys.modules.pop(name, None)
+
+          src = open("/tutorial/sidebar.py").read()
+          # No raw thresholds left
+          assert not re.search(r"STRONG_THRESHOLD", src), \
+              "Remove the STRONG_THRESHOLD constant — confidence belongs in the recommender's contract."
+          assert not re.search(r">=\s*\d", src), \
+              "No numeric threshold (e.g. ``>= 12``) should remain in sidebar.py."
+          assert not re.search(r"\[['\"]title['\"]\]", src), \
+              "Stop indexing raw row dicts — use SongHit attributes (``.title``)."
+
+          import sidebar
+          import recommender as r
+
+          # support_sidebar must accept a Recommender now
+          import inspect
+          sig = inspect.signature(sidebar.support_sidebar)
+          params = list(sig.parameters.keys())
+          assert len(params) >= 2, (
+              "``support_sidebar`` should now take both ``query`` and a "
+              "``recommender`` parameter (dependency injection)."
+          )
+
+          # Call it with the student's PopularityRecommender
+          titles = sidebar.support_sidebar("billie", r.PopularityRecommender())
+          assert isinstance(titles, list), "support_sidebar should return a list of titles."
+          assert all(isinstance(t, str) for t in titles), \
+              "Each element returned should be a song title string."
+
+      - description: "Implementation-swap test: a different (embedding-style) recommender works with the same sidebar"
+        command: |
+          import importlib, sys
+          for name in ("recommender", "sidebar"):
+              sys.modules.pop(name, None)
+          import sidebar
+          import recommender as r
+
+          # A SECOND Recommender implementation, defined here — the student's
+          # sidebar should work with it without modification.
+          # The internal scoring is "embeddings" — cosine in 0..1 — so the
+          # confidence buckets are chosen differently. The PUBLIC CONTRACT
+          # is the only thing the sidebar sees, so it must still work.
+          class EmbeddingRecommender:
+              def recommend(self, query: str, *, limit: int = 5) -> list:
+                  # Different algorithm, different score scale, different ordering,
+                  # but the contract is identical: list[SongHit].
+                  return [
+                      r.SongHit("t1", "Bad Guy",          "Billie Eilish",          "high"),
+                      r.SongHit("t5", "Happier Than Ever","Billie Eilish",          "high"),
+                      r.SongHit("t2", "Bury a Friend",    "Billie Eilish",          "medium"),
+                      r.SongHit("t3", "Lovely",           "Billie Eilish, Khalid",  "low"),
+                  ][:limit]
+
+          titles_pop  = sidebar.support_sidebar("billie", r.PopularityRecommender())
+          titles_emb  = sidebar.support_sidebar("billie", EmbeddingRecommender())
+
+          # Both should return strings; both should respect the Protocol
+          assert isinstance(titles_pop, list) and isinstance(titles_emb, list), \
+              "sidebar should return a list for both recommenders."
+
+          # The embedding recommender has TWO 'high' hits — and zero numeric thresholds
+          # exist in sidebar.py anymore — so we expect exactly those titles.
+          assert set(titles_emb) == {"Bad Guy", "Happier Than Ever"}, (
+              f"Expected sidebar to surface the two 'high' hits from the embedding "
+              f"recommender ({{'Bad Guy', 'Happier Than Ever'}}), got: {set(titles_emb)}. "
+              f"If you got a different set, your filter probably looked at score, "
+              f"index, or order — not at ``hit.confidence``."
+          )
+
+      - description: "recommender.py has a Parnas-style module guide (Primary secret, Likely changes, Stable contract, Not promised)"
+        command: |
+          src = open("/tutorial/recommender.py").read()
+          required = ["Primary secret", "Likely changes", "Stable contract", "Not promised"]
+          missing = [tag for tag in required if tag not in src]
+          assert not missing, (
+              f"recommender.py's docstring is missing module-guide tag(s): {missing}. "
+              "Use the four labels exactly so a maintainer can find them by greping."
+          )
+        hints:
+          - text: "The module guide is a docstring at the very top of the file. Four labels, one or two lines after each."
+          - text: "Skeleton:\n\n```python\n\"\"\"\nModule guide:\n  Primary secret:   how songs are scored and ranked for a query\n  Likely changes:\n    - BM25 -> embeddings\n    - hybrid ranker (popularity * recency)\n    - per-user personalization\n  Stable contract:  recommend(query, *, limit) -> list[SongHit]\n  Not promised:\n    - raw scores or score scale\n    - bucket IDs or partition keys\n    - ordering beyond 'high before medium before low'\n\"\"\"\n```"
+            condition: "code_missing: Primary secret"
+
+    quiz:
+      title: "Step 3 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - type: single
+          question: |
+            Parnas's 1972 paper pointed out that even his "good" KWIC
+            decomposition had a leak: the circular-shift module exposed an
+            ordering its clients did not need. Which best matches the same
+            leak in **this step's** original `recommend()` function?
+          options:
+            - "The fact that `recommend` is a free function instead of a method on a class."
+            - "The exposure of the raw `score` and its scale 0..30 — a representation detail clients did not need to know, that locks the implementation to BM25-shaped scoring."
+            - "The fact that `recommend` returns more than one hit at a time."
+            - "The use of tuples instead of dicts as the return type."
+          correct_index: 1
+          option_feedback:
+            0: "Free vs. method is style. The leak is structural — what the contract *says*."
+            2: "Returning many hits is exactly what the client needs. Not a leak."
+            3: "Tuples vs. dicts is a shape choice; both can be over-specified. The deeper leak is the *score scale*, which would also leak whether you wrapped it in a dict."
+          explanation: |
+            Parnas's exact quote in the KWIC discussion: "we have specified more than was necessary and thereby reduced the number of possible implementations." Exposing the score and its scale is the same mistake: clients can write `score > 12.0` and now any new algorithm must produce numbers on the same scale. Confidence buckets (`"high"`, `"medium"`, `"low"`) reveal what the client needs — *is this hit strong enough to surface* — without naming the algorithm.
+
+        - type: multiple
+          question: |
+            **(Select all that apply.)** Which of these are legitimate facts
+            for the contract to **promise** to clients, and which would be
+            **leaks**?
+
+            *Mark all the items that are LEAKS the contract should hide.*
+          options:
+            - "Each hit's `confidence` is one of three labels: `low`, `medium`, or `high`."
+            - "Hits are returned in descending confidence order (high before medium before low)."
+            - "The exact numeric BM25 score for each hit."
+            - "The internal `bucket_id` used to partition the search index."
+            - "The query string can be empty (returns empty list)."
+          correct_indices: [2, 3]
+          option_feedback:
+            0: "Legitimate. The Confidence enum is part of the stable contract — clients need it to filter."
+            1: "Legitimate. Ordering by confidence is a domain promise the client genuinely needs. Note we don't promise the *secondary* ordering within a confidence band — that lets the implementation tie-break however it wants."
+            4: "Legitimate. Edge-case behavior on empty input is part of the contract."
+          explanation: |
+            A clean module guide for `Recommender` says exactly this: `Confidence` is in the contract because clients can't reason without it; descending-by-confidence is in the contract because it's a domain-level promise; raw scores and bucket IDs are *not* in the contract because they tie the implementation to one algorithm and one index layout. **The skill is naming what is allowed to vary later.**
+
+        - type: single
+          question: |
+            **Spaced retrieval from Step 2.** Suppose your `PopularityRecommender`
+            internally stores its catalog as a `list[tuple]`. Which class is
+            responsible for the decision "use a list of tuples"?
+          options:
+            - "`sidebar.py` — it consumes the data, so the storage is its responsibility."
+            - "`Recommender` — the Protocol owns all algorithmic decisions."
+            - "`PopularityRecommender` — it is the one implementation that *makes* this storage choice, behind the shared contract."
+            - "Both `PopularityRecommender` and `EmbeddingRecommender` — implementations of the same Protocol must agree on storage."
+          correct_index: 2
+          option_feedback:
+            0: "The client never sees the storage. If you made the client responsible, you'd be back in Step 1's leak."
+            1: "A Protocol describes the *contract*, not the storage. It cannot 'own' a storage choice."
+            3: "The whole point of the Protocol is that each implementation makes its *own* storage choice. `EmbeddingRecommender` might use a NumPy array; `PopularityRecommender` might use a list. They never compare notes."
+          explanation: |
+            Each implementation behind a Protocol owns its own storage secret. The Protocol's job is to make sure the *clients* never have to care. That is what lets `EmbeddingRecommender` use a vector store and `PopularityRecommender` use a list of tuples without forcing either choice on the other.
+
+        - type: single
+          question: |
+            You're reviewing a teammate's PR. They added a new method to
+            `Recommender`: `def raw_score(self, hit: SongHit) -> float`.
+            Should you approve?
+          options:
+            - "Yes — extra methods are additive, so they can't break clients."
+            - "No — that method puts the raw score (and its scale) back in the contract, exactly the leak we just removed. Confidence labels were chosen precisely so the score wouldn't be visible."
+            - "Yes, if they add a docstring saying clients shouldn't use it."
+            - "Yes, if they mark it as a static method."
+          correct_index: 1
+          option_feedback:
+            0: "Additive changes are usually safe. This one isn't, because it *re-adds* the very decision we worked to hide. Now `EmbeddingRecommender` must also expose a 'score' — even though embeddings don't have a meaningful single score in the same scale."
+            2: "'Please don't use this method' is documentation as a *substitute* for hiding. It always loses to the next intern who really needs that number."
+            3: "Static vs. instance doesn't affect contract leakage. The method is still on the Protocol."
+          explanation: |
+            A subtle anti-pattern: **adding** to the contract can re-leak a decision you previously hid. The right move is to ask the teammate *what client problem `raw_score` solves*, and address that problem at the right level — e.g., add a `is_top_match(hit)` predicate, expose a new confidence band like `"very_high"`, or expose an explanation token. **Never** re-expose the score itself.
+
+    solution:
+      files:
+        - path: "recommender.py"
+          language: "python"
+          content: |
+            """Recommender module.
+
+            Module guide:
+              Primary secret:   how songs are scored and ranked for a query
+              Likely changes:
+                - BM25 -> embeddings / hybrid retrieval
+                - score-scale shifts (0..30 today, 0..1 tomorrow)
+                - per-user personalization layer
+                - swapping the catalog source (in-memory list -> vector DB)
+              Stable contract:  recommend(query, *, limit) -> list[SongHit]
+                                with confidence in {"low", "medium", "high"}
+                                sorted high -> medium -> low
+              Not promised:
+                - raw scores or score scale
+                - bucket IDs or index-partition keys
+                - tie-breaking order within a confidence band
+            """
+
+            from dataclasses import dataclass
+            from typing import Literal, Protocol
+
+
+            Confidence = Literal["low", "medium", "high"]
+
+
+            @dataclass(frozen=True)
+            class SongHit:
+                track_id: str
+                title: str
+                artist: str
+                confidence: Confidence
+
+
+            class Recommender(Protocol):
+                def recommend(self, query: str, *, limit: int = 5) -> list[SongHit]: ...
+
+
+            _DEMO_CATALOG = [
+                ("t1", "Bad Guy",          "Billie Eilish",          95),
+                ("t2", "Bury a Friend",    "Billie Eilish",          78),
+                ("t3", "Lovely",           "Billie Eilish, Khalid",  62),
+                ("t4", "Ocean Eyes",       "Billie Eilish",          55),
+                ("t5", "Happier Than Ever","Billie Eilish",          88),
+                ("t6", "All The Good Girls","Billie Eilish",         40),
+            ]
+
+
+            def _strong_track_table() -> list[tuple[str, str, str, int]]:
+                return list(_DEMO_CATALOG)
+
+
+            class PopularityRecommender:
+                """Hidden secret: popularity-bucket ranking from an in-memory list."""
+
+                _HIGH = 80
+                _MEDIUM = 60
+
+                def recommend(self, query: str, *, limit: int = 5) -> list[SongHit]:
+                    rows = _strong_track_table()
+                    hits = [
+                        SongHit(tid, title, artist, self._confidence_for(pop))
+                        for (tid, title, artist, pop) in rows
+                    ]
+                    order = {"high": 0, "medium": 1, "low": 2}
+                    hits.sort(key=lambda h: order[h.confidence])
+                    return hits[:limit]
+
+                def _confidence_for(self, popularity: int) -> Confidence:
+                    if popularity >= self._HIGH:
+                        return "high"
+                    if popularity >= self._MEDIUM:
+                        return "medium"
+                    return "low"
+        - path: "sidebar.py"
+          language: "python"
+          content: |
+            """Client that depends only on the Recommender Protocol."""
+
+            from recommender import Recommender
+
+
+            def support_sidebar(query: str, recommender: Recommender) -> list[str]:
+                page = recommender.recommend(query, limit=5)
+                return [hit.title for hit in page if hit.confidence == "high"]
+
+
+            if __name__ == "__main__":
+                from recommender import PopularityRecommender
+                for title in support_sidebar("billie", PopularityRecommender()):
+                    print(title)
+      explanation: |
+        **What you just bought.** The sidebar now depends only on the
+        `Recommender` Protocol — a one-method shape. The popularity-based and
+        embedding-based recommenders both satisfy it. When the team eventually
+        swaps in embeddings, the sidebar code is untouched and the swap test
+        proves it. **Parnas in 1972**: the right interface "specifies no more
+        information than the client needs to use the module correctly."
+
+        **Why the module guide matters.** Six months from now, when a teammate
+        asks "can we add `raw_score`?", the docstring at the top of
+        `recommender.py` answers: *that field is on the "Not promised" list,
+        for these specific reasons.* The module guide is the lightest-weight
+        design doc you can write, and it costs four lines. Parnas, Clements,
+        and Weiss called this the *module guide* in their 1985 paper on the
+        A-7E flight-software project, where it was the artifact maintainers
+        consulted **first** to find which module to edit.
+
+        **One subtle move.** You also sorted the returned hits by confidence
+        band (high → medium → low). That ordering is part of the stable
+        contract — clients can rely on it. But notice that *within* a band
+        the order is unspecified. That preserves the option to tie-break by
+        recency, by user signal, by random shuffle for A/B testing — all
+        future decisions you have not yet made.
+
+  # =========================================================================
+  # STEP 4 — "Where Did You Put the Database?"
+  # =========================================================================
+  # Pedagogy:
+  #   Transfer challenge with most-independent design (Renkl's fading curve
+  #     reaches its final stage). The student now does the full routine on
+  #     a new domain with reduced scaffolding.
+  #   Parnas's canonical "storage is a secret" case — the most-cited example
+  #     in the Information Hiding literature.
+  #   Implementation-swap test as design proof — InMemoryEventDirectory and
+  #     a Json-backed one satisfy the same Protocol.
+  #   Spaced retrieval — Step 1 ("private isn't enough"), Step 2 ("hide the
+  #     representation"), Step 3 ("don't overspecify") all return as
+  #     concrete moves.
+  #   Bloom — Create (design the Protocol + dataclass + in-memory impl from
+  #     scratch), Apply (refactor the client), Evaluate (predict what
+  #     becomes cheap to change after the refactor).
+  # =========================================================================
+  - title: "Where Did You Put the Database?"
+    instructions: |
+      ### Why this matters
+
+      The single most common information-hiding leak in real code is *storage*. A function that takes a `sqlite3.Connection` (or a `MongoClient`, or an `S3` handle) and returns rows ties **every caller** to a specific persistence technology. When the team migrates from SQLite to Postgres, from rows to JSON, from synchronous to async, **everything moves**. This step is the canonical Parnas case made hands-on. You'll do the whole routine yourself.
+
+      ### 🎯 You will learn to
+
+      - **Create** a `Protocol` + dataclass + in-memory implementation from a leaky function — independently, using the five-step routine
+      - **Apply** dependency injection: pass the directory in to the client instead of constructing the storage inside it
+      - **Evaluate** the change-impact radius of a storage migration *before* and *after* your refactor
+
+      ### The scene
+
+      `events.py` looks up concerts by city. Today's implementation uses SQLite. The function signature reveals it — *every client compiles against `sqlite3`*. The product manager wants to add a JSON-file-backed test fixture for offline development, and the SRE wants to migrate the production catalog to a remote HTTP service. **Each of those is a separate file rewrite today.** Your job is to make them all one new class apiece.
+
+      ### ✏️ Predict before you run
+
+      Suppose we keep the current `events.py` signature and just *implement* a JSON-file fixture. How many files have to be edited to use it from `tour_planner.py`?
+
+      - (a) 1 — `events.py` only.
+      - (b) 2 — `events.py` and `tour_planner.py`.
+      - (c) 3+ — `events.py`, `tour_planner.py`, every test that constructs the connection, and any module that builds the SQL `table` string.
+      - (d) 0 — duck typing handles it; pass a JSON dict where a connection is expected.
+
+      Commit. After your refactor, the same change will require **one new class** in `events.py` and **zero edits** to `tour_planner.py` — that is your verification.
+
+      ### Your task
+
+      Refactor `events.py` so the persistence decision is hidden:
+
+      1. Define `@dataclass(frozen=True) class Event` with `title: str`, `venue: str`, `date_iso: str`, `city: str`, `ticket_price_cents: int`.
+      2. Define `class EventDirectory(Protocol)` with `def find_in(self, city: str) -> list[Event]: ...`.
+      3. Implement `class InMemoryEventDirectory:` — constructor takes a `list[Event]`, `find_in(city)` filters by city. This is your test/fixture implementation.
+      4. Implement `class SQLiteEventDirectory:` — constructor takes a `sqlite3.Connection` and a table name, `find_in(city)` runs the same SQL the original function ran and maps rows to `Event`. **This is the only file that may `import sqlite3`.**
+
+      Refactor `tour_planner.py` so `affordable_shows(directory, city, max_price_dollars=50)` takes an `EventDirectory` (not a connection). Filter inside the function using `event.ticket_price_cents` and return a `list[Event]`.
+
+      Add the module guide docstring to `events.py` using the same four labels you used in Step 3.
+
+      > **You will probably break the implementation-swap test first.** The most common cause is forgetting to map raw SQL row tuples back to `Event` objects in `SQLiteEventDirectory.find_in`. If the test fails, read its diff carefully — the failure is the lesson, not the verdict.
+
+      ### 🪞 Before clicking Next
+
+      Once all four tests pass, answer this in your head before the quiz:
+
+      > "After the refactor, `affordable_shows` calls *one method* on its parameter. Name that method and explain why that single call is enough to absorb every plausible storage migration (SQLite → Postgres → HTTP → file)."
+
+    files:
+      - path: "events.py"
+        language: "python"
+        content: |
+          """Concert directory.
+
+          STARTING STATE: leaks sqlite3 and the row dict shape into every caller.
+          """
+
+          import sqlite3
+
+
+          def find_events_in_city(
+              connection: sqlite3.Connection,
+              table: str,
+              city: str,
+          ) -> list[dict]:
+              rows = connection.execute(
+                  f"SELECT title, venue, date_iso, city, ticket_price_cents "
+                  f"FROM {table} WHERE city = ?",
+                  (city,),
+              ).fetchall()
+              return [
+                  {
+                      "title": r[0],
+                      "venue": r[1],
+                      "date_iso": r[2],
+                      "city": r[3],
+                      "ticket_price_cents": r[4],
+                  }
+                  for r in rows
+              ]
+
+
+          # TODO Run the five-step routine yourself:
+          #   1. Name the change. (One coming: SQLite -> Postgres -> HTTP service.)
+          #   2. Name the secret. (Persistence technology + schema mapping.)
+          #   3. Minimum client assumptions. (event has title, venue, date, city, price.)
+          #   4. Remove the leak.
+          #        - ``@dataclass(frozen=True) class Event``
+          #        - ``class EventDirectory(Protocol)`` with ``find_in(city) -> list[Event]``
+          #        - ``class InMemoryEventDirectory`` (constructor takes list[Event])
+          #        - ``class SQLiteEventDirectory`` (constructor takes connection + table)
+          #   5. Verify with a swap. (The hidden test will swap implementations.)
+
+      - path: "tour_planner.py"
+        language: "python"
+        content: |
+          """Client of events.py. Currently knows about sqlite3 by transitive coupling.
+
+          Refactor ``affordable_shows`` to take an EventDirectory instead.
+          """
+
+          from events import find_events_in_city
+
+
+          def affordable_shows(connection, table: str, city: str, max_price_dollars: int = 50):
+              cents_limit = max_price_dollars * 100
+              events = find_events_in_city(connection, table, city)
+              return [e for e in events if e["ticket_price_cents"] <= cents_limit]
+
+
+          if __name__ == "__main__":
+              # The demo wires SQLite in *this* file. That is the only place
+              # the sqlite3 import is allowed AFTER the refactor.
+              import sqlite3
+              conn = sqlite3.connect(":memory:")
+              conn.execute(
+                  "CREATE TABLE shows("
+                  "title TEXT, venue TEXT, date_iso TEXT, city TEXT, ticket_price_cents INT)"
+              )
+              conn.executemany(
+                  "INSERT INTO shows VALUES (?, ?, ?, ?, ?)",
+                  [
+                      ("Sabrina Carpenter",   "The Forum",        "2026-03-01", "Los Angeles", 11500),
+                      ("Olivia Rodrigo",      "Crypto.com Arena", "2026-03-05", "Los Angeles",  9800),
+                      ("Tame Impala",         "Hollywood Bowl",   "2026-04-12", "Los Angeles",  6700),
+                      ("Local Open Mic",      "Echo Park Bar",    "2026-03-15", "Los Angeles",  1500),
+                  ],
+              )
+              conn.commit()
+
+              # After refactor:
+              #   from events import SQLiteEventDirectory
+              #   directory = SQLiteEventDirectory(conn, "shows")
+              #   for ev in affordable_shows(directory, "Los Angeles", max_price_dollars=80):
+              #       print(ev)
+              for ev in affordable_shows(conn, "shows", "Los Angeles", max_price_dollars=80):
+                  print(ev)
+
+    open_file: "events.py"
+    run_file: "tour_planner.py"
+
+    tests:
+      - description: "events.py defines Event, EventDirectory, InMemoryEventDirectory, SQLiteEventDirectory"
+        command: |
+          import importlib, sys
+          for name in ("events", "tour_planner"):
+              sys.modules.pop(name, None)
+          import events as ev
+
+          for name in ("Event", "EventDirectory", "InMemoryEventDirectory", "SQLiteEventDirectory"):
+              assert hasattr(ev, name), f"events.py is missing ``{name}``."
+
+          from dataclasses import fields
+          got = {f.name for f in fields(ev.Event)}
+          required = {"title", "venue", "date_iso", "city", "ticket_price_cents"}
+          missing = required - got
+          assert not missing, f"Event is missing fields: {missing}"
+
+          # InMemoryEventDirectory works in isolation
+          e1 = ev.Event("X", "Venue A", "2026-01-01", "LA", 1500)
+          e2 = ev.Event("Y", "Venue B", "2026-01-02", "SF", 2500)
+          mem = ev.InMemoryEventDirectory([e1, e2])
+          hits = mem.find_in("LA")
+          assert hits == [e1], f"InMemoryEventDirectory.find_in('LA') should return [e1], got {hits}"
+        hints:
+          - text: "You wrote three new classes plus one dataclass. Skeleton order: dataclass first (Event), then Protocol (EventDirectory), then the two implementations."
+          - text: "InMemoryEventDirectory is intentionally tiny — the constructor stores the list, find_in filters by attribute access (``e.city == city``)."
+            condition: "code_missing: InMemoryEventDirectory"
+
+      - description: "tour_planner.py takes an EventDirectory, not a sqlite3 connection"
+        command: |
+          import re, importlib, sys, inspect
+          for name in ("events", "tour_planner"):
+              sys.modules.pop(name, None)
+
+          src = open("/tutorial/tour_planner.py").read()
+          # Strip the __main__ demo so import-time sqlite3 stays allowed there.
+          # We only check the affordable_shows function signature.
+          import tour_planner
+          sig = inspect.signature(tour_planner.affordable_shows)
+          params = list(sig.parameters.keys())
+          assert params[0] not in ("connection", "conn", "db"), (
+              "After the refactor, affordable_shows should take an EventDirectory "
+              "as its first parameter — not a raw connection."
+          )
+          # The function body should not call find_events_in_city or reach into dicts
+          body = inspect.getsource(tour_planner.affordable_shows)
+          assert "find_events_in_city" not in body, (
+              "Replace the call to the legacy ``find_events_in_city`` with "
+              "``directory.find_in(city)``."
+          )
+          assert "[\"ticket_price_cents\"]" not in body and "['ticket_price_cents']" not in body, (
+              "Use ``event.ticket_price_cents`` (attribute access on the Event "
+              "dataclass), not dict indexing."
+          )
+
+      - description: "Implementation-swap: InMemoryEventDirectory and SQLiteEventDirectory both work with the same affordable_shows"
+        command: |
+          import importlib, sqlite3, sys
+          for name in ("events", "tour_planner"):
+              sys.modules.pop(name, None)
+          import events as ev
+          import tour_planner as tp
+
+          # Build an in-memory directory
+          fixtures = [
+              ev.Event("Sabrina Carpenter",   "The Forum",        "2026-03-01", "Los Angeles", 11500),
+              ev.Event("Olivia Rodrigo",      "Crypto.com Arena", "2026-03-05", "Los Angeles",  9800),
+              ev.Event("Tame Impala",         "Hollywood Bowl",   "2026-04-12", "Los Angeles",  6700),
+              ev.Event("Local Open Mic",      "Echo Park Bar",    "2026-03-15", "Los Angeles",  1500),
+              ev.Event("Some SF Show",        "Fillmore",         "2026-05-01", "San Francisco", 5000),
+          ]
+          mem = ev.InMemoryEventDirectory(fixtures)
+
+          # Build a SQLite-backed directory pointing at the same data
+          conn = sqlite3.connect(":memory:")
+          conn.execute(
+              "CREATE TABLE shows("
+              "title TEXT, venue TEXT, date_iso TEXT, city TEXT, ticket_price_cents INT)"
+          )
+          conn.executemany(
+              "INSERT INTO shows VALUES (?, ?, ?, ?, ?)",
+              [(e.title, e.venue, e.date_iso, e.city, e.ticket_price_cents) for e in fixtures],
+          )
+          conn.commit()
+          sql_dir = ev.SQLiteEventDirectory(conn, "shows")
+
+          # Same client function should produce the same list (as sets of titles to ignore ordering)
+          mem_titles = {e.title for e in tp.affordable_shows(mem,     "Los Angeles", 80)}
+          sql_titles = {e.title for e in tp.affordable_shows(sql_dir, "Los Angeles", 80)}
+
+          expected = {"Tame Impala", "Local Open Mic"}  # 80 USD cap excludes Sabrina ($115) and Olivia ($98)
+          assert mem_titles == expected, (
+              f"InMemoryEventDirectory: expected {expected}, got {mem_titles}"
+          )
+          assert mem_titles == sql_titles, (
+              f"Two implementations of the same EventDirectory Protocol returned "
+              f"different sets of affordable shows:\n  in-memory: {mem_titles}\n  sqlite:    {sql_titles}\n"
+              f"That means your client (or one of the implementations) still depends "
+              f"on storage-specific behavior."
+          )
+        hints:
+          - text: "If this fails, run tour_planner.py and inspect the two outputs. The most common cause is forgetting to map SQL row tuples back to Event dataclasses in SQLiteEventDirectory."
+          - text: "SQLiteEventDirectory.find_in skeleton: ``rows = self._conn.execute('SELECT ... FROM ' + self._table + ' WHERE city = ?', (city,)).fetchall(); return [Event(*r) for r in rows]``"
+            condition: "code_missing: SQLiteEventDirectory"
+
+      - description: "events.py has a module guide and is the ONLY place that mentions sqlite3"
+        command: |
+          src_events = open("/tutorial/events.py").read()
+          src_planner = open("/tutorial/tour_planner.py").read()
+
+          for tag in ("Primary secret", "Likely changes", "Stable contract", "Not promised"):
+              assert tag in src_events, f"events.py is missing module-guide tag: {tag}"
+
+          # Storage decision is now hidden inside events.py — tour_planner mentions
+          # sqlite3 only in its __main__ demo (which is the wiring layer).
+          # Allow sqlite3 in tour_planner's __main__ but not in affordable_shows itself.
+          import inspect, importlib, sys
+          for name in ("tour_planner",):
+              sys.modules.pop(name, None)
+          import tour_planner
+          func_src = inspect.getsource(tour_planner.affordable_shows)
+          assert "sqlite3" not in func_src, (
+              "affordable_shows still references sqlite3. The whole point of the refactor "
+              "is that this function never sees a connection — only the EventDirectory Protocol."
+          )
+
+    quiz:
+      title: "Step 4 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - type: single
+          question: |
+            After the refactor, which of these changes touches **only one file**
+            (the file that owns the storage secret)?
+          options:
+            - "Switching the production catalog from SQLite to a remote HTTP service."
+            - "Renaming the `ticket_price_cents` field on `Event` to `cents`."
+            - "Changing `affordable_shows` to return JSON instead of `Event` objects."
+            - "Adding a new field `age_restriction` to `Event`."
+          correct_index: 0
+          option_feedback:
+            1: "Renaming a field on `Event` is a *contract* change — `Event` is shared by every client and every implementation. That ripples."
+            2: "`affordable_shows` returns to its caller. Changing the return type changes that contract."
+            3: "Adding a field touches `Event` (contract) AND every implementation that constructs Events (every directory). That's 2+ files."
+          explanation: |
+            Storage is the secret. A `HttpEventDirectory` is a new class behind the same `EventDirectory` Protocol — zero edits to `tour_planner.py`, zero edits to `Event`, zero edits to `InMemoryEventDirectory`. **That is what you bought** with the refactor.
+
+        - type: multiple
+          question: |
+            **(Select all that apply.)** Which of these are good reasons your
+            `InMemoryEventDirectory` is worth writing, even though production
+            uses SQLite?
+          options:
+            - "Tests don't need a real database — they construct events in Python and run instantly."
+            - "Two engineers can work in parallel: one builds the SQLite implementation, one builds the client features, both against `InMemoryEventDirectory`."
+            - "Future readers see two implementations and learn the Protocol is what the contract really is — not whatever SQLite happens to do."
+            - "It lets you ship the product to customers who don't have SQLite installed."
+          correct_indices: [0, 1, 2]
+          option_feedback:
+            3: "SQLite ships with Python's standard library — no install needed. This isn't a real win and you shouldn't reach for it as the justification. The other three reasons are the real ones."
+          explanation: |
+            Information hiding pays in three currencies, all visible here: **testability** (1), **parallel work** (2), and **comprehensibility** (3) — Parnas's original three benefits in the 1972 paper. The fourth option sounds plausible but isn't actually true.
+
+        - type: single
+          question: |
+            A teammate writes a new client function that takes an
+            `EventDirectory` parameter. But for "convenience," they also
+            add a second parameter `connection: sqlite3.Connection`,
+            because they need to do a one-off transaction-level operation.
+            What is the problem?
+          options:
+            - "Two parameters is too many; pick one."
+            - "It re-introduces the sqlite3 coupling that the EventDirectory Protocol was supposed to remove — this client now compiles only against SQLite."
+            - "Nothing — `EventDirectory` is just an interface, you can take other parameters too."
+            - "You shouldn't use `sqlite3` in Python; use SQLAlchemy."
+          correct_index: 1
+          option_feedback:
+            0: "Two parameters is fine. The number isn't the issue."
+            2: "It IS a Protocol you can take other parameters alongside — but if the *other* parameter re-introduces the very coupling the Protocol was meant to remove, you have undone the abstraction."
+            3: "The library choice isn't what's at stake. Even an SQLAlchemy session parameter would re-couple the same way."
+          explanation: |
+            This is a real, subtle anti-pattern: "leaky abstraction by parameter creep." The Protocol promises *you don't need a connection to ask about events* — and that promise breaks the moment a function also requires a connection. The fix is to push the transactional operation *behind* the Protocol (e.g., a new `EventDirectory.archive(event)` method) so the connection is still local to the directory implementation.
+
+        - type: single
+          question: |
+            **Spaced retrieval — Step 3.** Your `EventDirectory.find_in(city)` returns
+            `list[Event]`. The team is asked to add pagination. Two design proposals:
+
+            - **A:** `find_in(self, city: str, *, page: int, page_size: int) -> list[Event]`
+            - **B:** `find_in(self, city: str, *, cursor: str | None = None, limit: int = 50) -> EventPage`
+              where `EventPage` is `@dataclass(frozen=True)` with `events: list[Event]` and `next_cursor: str | None`.
+
+            Which design hides more, in Parnas's sense?
+          options:
+            - "A — page numbers are universal."
+            - "B — cursors hide whether pagination is offset-based, keyset-based, or token-based; clients only care that there is a `next_cursor` (or none)."
+            - "Neither — they hide the same amount."
+            - "A — `EventPage` adds a useless extra class."
+          correct_index: 1
+          option_feedback:
+            0: "Page numbers are familiar but they're an *implementation* detail. They imply numeric offset and stable ordering between calls — two assumptions that break the moment the directory is backed by an event stream or a sharded service."
+            2: "They look similar but B abstracts more: any pagination strategy can return *some* opaque cursor; only offset pagination can return a *page number*."
+            3: "Wrapping the result in a small dataclass costs almost nothing and lets you evolve the response shape without breaking callers. (Useless? Add `total_known: int` later and no caller breaks.)"
+          explanation: |
+            This is the same lesson as the recommender's `Confidence` enum. **Naming the domain concept (`next_cursor`) instead of the algorithm detail (`page: int`) hides one more design decision.** The reader who studied Step 3 should now find this pattern instinctive — a faded transfer of the exact same idea, applied to a different domain.
+
+    solution:
+      files:
+        - path: "events.py"
+          language: "python"
+          content: |
+            """Concert directory.
+
+            Module guide:
+              Primary secret:   how events are persisted and looked up
+              Likely changes:
+                - SQLite -> Postgres / remote HTTP service
+                - column / schema renames
+                - addition of caching or read replicas
+              Stable contract:  EventDirectory.find_in(city) -> list[Event]
+                                Event is a frozen dataclass of domain fields
+              Not promised:
+                - the storage technology, connection object, or table name
+                - SQL column names or row encoding
+                - whether results are cached, paginated, or streamed
+            """
+
+            from __future__ import annotations
+
+            import sqlite3
+            from dataclasses import dataclass
+            from typing import Protocol
+
+
+            @dataclass(frozen=True)
+            class Event:
+                title: str
+                venue: str
+                date_iso: str
+                city: str
+                ticket_price_cents: int
+
+
+            class EventDirectory(Protocol):
+                def find_in(self, city: str) -> list[Event]: ...
+
+
+            class InMemoryEventDirectory:
+                """Test/fixture implementation. Constructor takes the events directly."""
+
+                def __init__(self, events: list[Event]) -> None:
+                    self._events = list(events)
+
+                def find_in(self, city: str) -> list[Event]:
+                    return [e for e in self._events if e.city == city]
+
+
+            class SQLiteEventDirectory:
+                """Production implementation. This is the ONLY file that knows SQLite."""
+
+                _COLUMNS = "title, venue, date_iso, city, ticket_price_cents"
+
+                def __init__(self, connection: sqlite3.Connection, table: str) -> None:
+                    self._conn = connection
+                    self._table = table
+
+                def find_in(self, city: str) -> list[Event]:
+                    rows = self._conn.execute(
+                        f"SELECT {self._COLUMNS} FROM {self._table} WHERE city = ?",
+                        (city,),
+                    ).fetchall()
+                    return [Event(*r) for r in rows]
+        - path: "tour_planner.py"
+          language: "python"
+          content: |
+            from events import EventDirectory, Event
+
+
+            def affordable_shows(
+                directory: EventDirectory,
+                city: str,
+                max_price_dollars: int = 50,
+            ) -> list[Event]:
+                cents_limit = max_price_dollars * 100
+                return [e for e in directory.find_in(city) if e.ticket_price_cents <= cents_limit]
+
+
+            if __name__ == "__main__":
+                import sqlite3
+                from events import SQLiteEventDirectory
+
+                conn = sqlite3.connect(":memory:")
+                conn.execute(
+                    "CREATE TABLE shows("
+                    "title TEXT, venue TEXT, date_iso TEXT, city TEXT, ticket_price_cents INT)"
+                )
+                conn.executemany(
+                    "INSERT INTO shows VALUES (?, ?, ?, ?, ?)",
+                    [
+                        ("Sabrina Carpenter",   "The Forum",        "2026-03-01", "Los Angeles", 11500),
+                        ("Olivia Rodrigo",      "Crypto.com Arena", "2026-03-05", "Los Angeles",  9800),
+                        ("Tame Impala",         "Hollywood Bowl",   "2026-04-12", "Los Angeles",  6700),
+                        ("Local Open Mic",      "Echo Park Bar",    "2026-03-15", "Los Angeles",  1500),
+                    ],
+                )
+                conn.commit()
+
+                directory = SQLiteEventDirectory(conn, "shows")
+                for ev in affordable_shows(directory, "Los Angeles", max_price_dollars=80):
+                    print(ev)
+      explanation: |
+        **The Parnas case in one tutorial.** `events.py` is now the *only*
+        file that knows the persistence decision. `tour_planner.py` knows
+        only the `EventDirectory` Protocol and the `Event` dataclass.
+        Migrating to Postgres or an HTTP service is one new class.
+
+        **What you proved with the swap test.** When the *same* `affordable_shows`
+        function ran against `InMemoryEventDirectory` and `SQLiteEventDirectory`
+        and returned the same set of titles, you proved the function couldn't
+        be reaching into storage internals. That's the operational definition
+        of "the secret is hidden" — the test passing is the *evidence*.
+
+        **One pedagogically important note about your `__main__` demo.** The
+        `import sqlite3` in `tour_planner.py`'s `__main__` is fine — that's
+        the **wiring layer** (sometimes called *composition root* or *bootstrap*).
+        Wiring is where you finally pick which concrete implementation to use.
+        The rule isn't "nobody outside `events.py` may say `sqlite3`"; the rule
+        is "nobody outside `events.py` may *depend on* `sqlite3` in their
+        business logic." Wiring code is allowed — that's where the choice
+        actually has to live somewhere.
+
+  # =========================================================================
+  # STEP 5 — "Single Choice: Stop Repeating the Provider List"
+  # =========================================================================
+  # Pedagogy:
+  #   Application of the Single Choice principle (Meyer / Parnas) — direct
+  #     callback to the SEBook chapter on Information Hiding.
+  #   Polymorphism as the standard fix for scattered switches over
+  #     "exhaustive alternatives" (chapter's anti-pattern list).
+  #   The "add a fourth provider with zero edits" test — the operational
+  #     proof of Single Choice — replicates a real industry change request.
+  #   Spaced retrieval across Steps 2-4: Protocols, dataclasses, swap
+  #     tests, AST-level forbidden-name scans (from Step 4) all reappear.
+  #   Bloom — Apply (rewrite the switches), Analyze (find every duplicate
+  #     of the same choice), Create (define a new provider class).
+  # =========================================================================
+  - title: "Single Choice: Stop Repeating the Provider List"
+    instructions: |
+      ### Why this matters
+
+      Open any production codebase and search for `if provider ==`. You'll find the same alphabetical list of providers in four files. Add a fifth provider and you edit all four — and inevitably miss one, shipping a "feature works on Spotify but silently breaks on Tidal" bug. The SEBook chapter calls this the **Single Choice principle**: when a system supports several alternatives, **only one module should know the exhaustive list**. This step makes Single Choice operational. The killer test: you'll add a fourth provider — *invisible to your refactored code* — and three client functions will work with it unchanged.
+
+      ### 🎯 You will learn to
+
+      - **Apply** the Single Choice principle by replacing scattered `if provider == "..."` switches with polymorphism behind a hidden choice point
+      - **Analyze** code for repeated exhaustive lists (the same set of `"spotify"`, `"apple_music"`, `"tidal"` strings in multiple files is the smell)
+      - **Create** a new provider class that satisfies the `StreamingProvider` Protocol — and feel that no existing client function had to change to absorb it
+
+      ### The scene
+
+      `streaming.py` has three top-level functions: `play_track`, `share_track`, `like_track`. Each one has the identical `if provider == "spotify": ... elif provider == "apple_music": ... elif provider == "tidal": ...` ladder. The product manager just said: **"Add YouTube Music. Same operations."** The bad design: four edits across three files. The good design: one new class. The test enforces the second.
+
+      ### ✏️ Predict before you run
+
+      Today's `streaming.py` repeats the provider list in three functions. If we add YouTube Music in the current design, how many `elif` branches must be added across the file?
+
+      - (a) 1 — a new branch in one function is enough.
+      - (b) 3 — one new branch per function, three total.
+      - (c) 4 — three new branches plus a new helper function.
+      - (d) 0 — Python's `match` statement handles it.
+
+      Commit. Then refactor and see the answer for the *good* design.
+
+      ### Your task
+
+      Refactor `streaming.py`:
+
+      1. Define `class StreamingProvider(Protocol)` with `play(self, track_id) -> str`, `share(self, track_id, friend) -> str`, `like(self, track_id) -> str`. Each returns the message string that the current code prints.
+      2. Define `class SpotifyProvider`, `class AppleMusicProvider`, `class TidalProvider` — each implements all three methods.
+      3. Rewrite `play_track(provider: StreamingProvider, track_id: str)`, `share_track(...)`, and `like_track(...)` so each just **delegates** to the corresponding method on the passed-in provider — **no `if`/`elif`/`match` ladders anywhere**.
+
+      The hidden test will then construct a fourth provider — `YouTubeMusicProvider` — *which your code has never seen*. If your `play_track`/`share_track`/`like_track` functions are properly polymorphic, that fourth provider will Just Work. If any branching on `"youtube_music"` is needed, the test fails.
+
+      ### 🪞 Before clicking Next
+
+      Once all three tests pass, do this self-check before the quiz:
+
+      > "Search this tutorial mentally across all four refactors. In each one, you replaced *direct exposure* of a design decision with **what kind of thing**? The four answers are different in form but all an instance of the same *move*."
+
+      The four are: (Step 2) domain operations, (Step 3) a `Protocol` + dataclass, (Step 4) dependency injection of a `Protocol`, (Step 5) polymorphism on a `Protocol`. Each one is a different way to make a contract not name the volatile decision. The quiz's last question asks this in MCQ form.
+
+    files:
+      - path: "streaming.py"
+        language: "python"
+        content: |
+          """STARTING STATE.
+
+          Three functions, each with the same provider ladder. The "exhaustive
+          list of providers" is duplicated three times. Refactor with
+          polymorphism behind a hidden choice point.
+          """
+
+
+          def play_track(provider: str, track_id: str) -> str:
+              if provider == "spotify":
+                  return f"Playing {track_id} on Spotify..."
+              elif provider == "apple_music":
+                  return f"Playing {track_id} on Apple Music..."
+              elif provider == "tidal":
+                  return f"Streaming {track_id} on Tidal hi-fi..."
+              else:
+                  raise ValueError(f"Unknown provider: {provider}")
+
+
+          def share_track(provider: str, track_id: str, friend: str) -> str:
+              if provider == "spotify":
+                  return f"Shared Spotify link {track_id} with {friend}"
+              elif provider == "apple_music":
+                  return f"Sent Apple Music card for {track_id} to {friend}"
+              elif provider == "tidal":
+                  return f"Tidal shared {track_id} to {friend}"
+              else:
+                  raise ValueError(f"Unknown provider: {provider}")
+
+
+          def like_track(provider: str, track_id: str) -> str:
+              if provider == "spotify":
+                  return f"Liked Spotify track {track_id}"
+              elif provider == "apple_music":
+                  return f"Loved Apple Music track {track_id}"
+              elif provider == "tidal":
+                  return f"Added Tidal track {track_id} to favorites"
+              else:
+                  raise ValueError(f"Unknown provider: {provider}")
+
+
+          # TODO Replace the ladders with:
+          #   1. ``class StreamingProvider(Protocol)`` (play, share, like)
+          #   2. ``SpotifyProvider``, ``AppleMusicProvider``, ``TidalProvider``
+          #   3. Rewrite play_track / share_track / like_track to delegate
+
+          if __name__ == "__main__":
+              print(play_track("spotify", "t1"))
+              print(share_track("apple_music", "t1", "Alex"))
+              print(like_track("tidal", "t9"))
+
+    open_file: "streaming.py"
+    run_file: "streaming.py"
+
+    tests:
+      - description: "StreamingProvider Protocol and three concrete provider classes exist"
+        command: |
+          import importlib, sys
+          for name in ("streaming",):
+              sys.modules.pop(name, None)
+          import streaming as s
+
+          for name in ("StreamingProvider", "SpotifyProvider", "AppleMusicProvider", "TidalProvider"):
+              assert hasattr(s, name), f"streaming.py is missing ``{name}``."
+
+          for cls_name in ("SpotifyProvider", "AppleMusicProvider", "TidalProvider"):
+              cls = getattr(s, cls_name)
+              for method in ("play", "share", "like"):
+                  assert hasattr(cls, method), (
+                      f"{cls_name} is missing a ``{method}`` method."
+                  )
+
+          # Each concrete provider's methods produce strings (not None / not print)
+          for cls_name in ("SpotifyProvider", "AppleMusicProvider", "TidalProvider"):
+              provider = getattr(s, cls_name)()
+              played = provider.play("t1")
+              assert isinstance(played, str) and played, \
+                  f"{cls_name}.play should RETURN a non-empty string."
+              shared = provider.share("t1", "Alex")
+              assert isinstance(shared, str) and shared
+              liked = provider.like("t1")
+              assert isinstance(liked, str) and liked
+        hints:
+          - text: "Each provider class is small — three short methods. Each returns the same string the corresponding ``if`` branch used to print."
+          - text: "Skeleton:\n```python\nclass SpotifyProvider:\n    def play(self, track_id): return f\"Playing {track_id} on Spotify...\"\n    def share(self, track_id, friend): return f\"Shared Spotify link {track_id} with {friend}\"\n    def like(self, track_id): return f\"Liked Spotify track {track_id}\"\n```"
+            condition: "code_missing: SpotifyProvider"
+
+      - description: "play_track / share_track / like_track no longer branch on provider strings"
+        command: |
+          import ast
+          tree = ast.parse(open("/tutorial/streaming.py").read())
+
+          target_funcs = {"play_track", "share_track", "like_track"}
+
+          class Branching(ast.NodeVisitor):
+              def __init__(self):
+                  self.violations: list[str] = []
+
+              def visit_FunctionDef(self, node: ast.FunctionDef):
+                  if node.name in target_funcs:
+                      for sub in ast.walk(node):
+                          if isinstance(sub, ast.If) or isinstance(sub, ast.Match):
+                              self.violations.append(node.name)
+                              break
+                  self.generic_visit(node)
+
+          v = Branching()
+          v.visit(tree)
+          assert not v.violations, (
+              f"The following functions still branch (``if`` / ``match``) on a "
+              f"provider: {v.violations}. Replace each branch with one delegating "
+              f"call to ``provider.play(...)`` / ``provider.share(...)`` / "
+              f"``provider.like(...)`` — the polymorphic dispatch IS the choice."
+          )
+
+          # And the parameter name is no longer ``provider: str`` — it should be the Protocol
+          import importlib, sys, inspect
+          for name in ("streaming",):
+              sys.modules.pop(name, None)
+          import streaming as s
+
+          for fn_name in target_funcs:
+              fn = getattr(s, fn_name)
+              params = list(inspect.signature(fn).parameters.values())
+              first = params[0]
+              # Permissive: either no annotation, or any annotation other than ``str``.
+              ann = first.annotation
+              # If they used StreamingProvider directly, perfect.
+              # If they left no annotation, ok.
+              # If they wrote ``str`` again, that's the smell.
+              if ann is str:
+                  raise AssertionError(
+                      f"{fn_name}'s first parameter is still annotated ``str`` — "
+                      f"that's the old provider key. Accept a ``StreamingProvider`` instead."
+                  )
+
+      - description: "Adding a NEW provider requires ZERO edits to play_track / share_track / like_track"
+        command: |
+          # This is the Single Choice payoff test.
+          # We define a fourth provider in the test file and pass it through
+          # the same three client functions. If the student's refactor is real,
+          # nothing breaks.
+          import importlib, sys
+          for name in ("streaming",):
+              sys.modules.pop(name, None)
+          import streaming as s
+
+          class YouTubeMusicProvider:
+              def play(self, track_id):  return f"Now playing {track_id} on YouTube Music"
+              def share(self, track_id, friend): return f"Shared YouTube Music video {track_id} with {friend}"
+              def like(self, track_id):  return f"Saved {track_id} to your YouTube Music likes"
+
+          yt = YouTubeMusicProvider()
+
+          assert s.play_track(yt,  "t1")        == "Now playing t1 on YouTube Music"
+          assert s.share_track(yt, "t1", "Sam") == "Shared YouTube Music video t1 with Sam"
+          assert s.like_track(yt,  "t1")        == "Saved t1 to your YouTube Music likes"
+
+          # And the original three still work
+          for ProviderCls, prefix in [
+              (s.SpotifyProvider,     "Spotify"),
+              (s.AppleMusicProvider,  "Apple Music"),
+              (s.TidalProvider,       "Tidal"),
+          ]:
+              p = ProviderCls()
+              played = s.play_track(p, "t1")
+              shared = s.share_track(p, "t1", "Alex")
+              liked  = s.like_track(p, "t1")
+              for label, value in (("play", played), ("share", shared), ("like", liked)):
+                  assert isinstance(value, str) and value, \
+                      f"{ProviderCls.__name__}.{label} via the client function returned {value!r}"
+
+    quiz:
+      title: "Step 5 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - type: single
+          question: |
+            The Single Choice principle says: if a system supports several
+            alternatives, **only one module should know the exhaustive list**.
+            In your refactored code, where does the list of supported
+            providers actually live?
+          options:
+            - "Inside `play_track`, `share_track`, and `like_track` — they each list which providers they support."
+            - "Inside the `StreamingProvider` Protocol — it lists all valid implementers."
+            - "In one place: the wiring code that *constructs* the provider object and hands it to the client functions (the composition root)."
+            - "Nowhere — Python's duck typing means no module knows."
+          correct_index: 2
+          option_feedback:
+            0: "That's where it lived *before* the refactor. The three functions are now provider-agnostic. They never list providers."
+            1: "A Protocol describes the *shape* providers must satisfy. It doesn't list which providers exist — that's a runtime, not a type, concern."
+            3: "Duck typing tells you *how* the dispatch happens. The list of supported providers still has to be assembled somewhere — at the wiring layer. The win is that the list is in *one* place."
+          explanation: |
+            The polymorphic dispatch (`provider.play(track_id)`) replaces the **if/elif ladder**, but the list still has to exist somewhere — when the app starts up, *someone* decides "today we're using YouTube Music." That somewhere is the **wiring** code (composition root) — and now it's the *only* place that knows the full list. Adding a fifth provider is one new class + one new wiring entry. That's Single Choice.
+
+        - type: single
+          question: |
+            Before the refactor, the same `if provider == "spotify": ... elif "apple_music" ...`
+            ladder appeared in three functions. What kind of coupling
+            connected those three functions?
+          options:
+            - "Syntactic coupling — they all imported the same module."
+            - "Semantic coupling — none of them named each other, but all three shared the same assumption about the exhaustive list of provider strings. Change the list in one place and the others silently disagreed."
+            - "Inheritance coupling — they all derived from a common base."
+            - "There was no coupling — three separate functions are independent."
+          correct_index: 1
+          option_feedback:
+            0: "They all lived in the same file but didn't *import* each other. The coupling was deeper than syntax."
+            2: "They were functions, not classes. No inheritance involved."
+            3: "They were dangerously coupled — through a *shared assumption*, not through a call. That's the worst kind: invisible until something silently breaks."
+          explanation: |
+            **Semantic coupling** is the SEBook chapter's term for "two modules share the same assumption without saying so." The provider-list scattered across three functions was a textbook case. The compile-time tools (`grep`, type checkers) couldn't help you find it. The polymorphism refactor *removes the shared assumption from those three modules* — they now only know `provider.play(...)`. The assumption now lives in one place: the wiring.
+
+        - type: multiple
+          question: |
+            **(Select all that apply.)** Which of these is now CHEAP to do,
+            after your Single Choice refactor?
+          options:
+            - "Add a fourth provider, e.g. YouTube Music — one new class, no edits to `play_track`/`share_track`/`like_track`."
+            - "A/B-test two implementations of the Spotify provider at the same time (e.g., legacy SDK vs. new SDK) by passing different `SpotifyProvider` instances to different users."
+            - "Drop one provider entirely (e.g. drop Tidal): delete the `TidalProvider` class and remove it from the wiring map."
+            - "Rename the method `like` to `favorite` across all providers — that's one keyword change in one file."
+          correct_indices: [0, 1, 2]
+          option_feedback:
+            3: "Renaming a method on the Protocol is a **contract change** — every implementation must update, and every caller of `provider.like(...)` must update. That ripples. It's the same lesson as Step 2's quiz: renaming a public method on the contract is the opposite of an absorbed change."
+          explanation: |
+            Three of these are absorbed by the refactor; the fourth (renaming `like` to `favorite`) is a contract change and ripples. **A/B-testing two implementations of the same provider at once** is the test (2) — and it's only possible because the wiring layer hands out provider *instances*, not provider *strings*. That kind of flexibility is one of the quietest big wins of polymorphism-behind-a-Protocol.
+
+        - type: single
+          question: |
+            **Spaced retrieval across the tutorial.** Which of the following
+            best describes the *single* common move that connects Steps 2, 3,
+            4, and 5?
+          options:
+            - "Add a `@dataclass(frozen=True)` to every input."
+            - "Wrap each function in a class."
+            - "Replace direct exposure of a volatile decision with an interface (domain methods, a Protocol, an injected dependency, or polymorphism) so changing the decision is local."
+            - "Add type hints to every parameter."
+          correct_index: 2
+          option_feedback:
+            0: "Frozen dataclasses are a tool you used in three of the four steps — for *domain objects*. Not for every input. Hashing the tool to the goal loses the point."
+            1: "Wrapping things in classes was the visible artifact. The *principle* was always 'hide the volatile decision', not 'wrap in class'."
+            3: "Type hints helped the linter and the reader. They didn't hide anything by themselves."
+          explanation: |
+            Every step did the same operation at a different level: **identify the design decision that is likely to change, then replace its direct exposure with a stable contract that does not name it**. Storage (Step 2). Algorithm + score scale (Step 3). Persistence technology (Step 4). Exhaustive list of providers (Step 5). The *form* changes per step (domain methods, Protocol + dataclass, dependency injection, polymorphism), but the *principle* is one move repeated. **That's the entire skill this tutorial trains.**
+
+    solution:
+      files:
+        - path: "streaming.py"
+          language: "python"
+          content: |
+            """Polymorphism behind a hidden choice point — Single Choice in one file."""
+
+            from typing import Protocol
+
+
+            class StreamingProvider(Protocol):
+                def play(self, track_id: str) -> str: ...
+                def share(self, track_id: str, friend: str) -> str: ...
+                def like(self, track_id: str) -> str: ...
+
+
+            class SpotifyProvider:
+                def play(self, track_id):
+                    return f"Playing {track_id} on Spotify..."
+                def share(self, track_id, friend):
+                    return f"Shared Spotify link {track_id} with {friend}"
+                def like(self, track_id):
+                    return f"Liked Spotify track {track_id}"
+
+
+            class AppleMusicProvider:
+                def play(self, track_id):
+                    return f"Playing {track_id} on Apple Music..."
+                def share(self, track_id, friend):
+                    return f"Sent Apple Music card for {track_id} to {friend}"
+                def like(self, track_id):
+                    return f"Loved Apple Music track {track_id}"
+
+
+            class TidalProvider:
+                def play(self, track_id):
+                    return f"Streaming {track_id} on Tidal hi-fi..."
+                def share(self, track_id, friend):
+                    return f"Tidal shared {track_id} to {friend}"
+                def like(self, track_id):
+                    return f"Added Tidal track {track_id} to favorites"
+
+
+            def play_track(provider: StreamingProvider, track_id: str) -> str:
+                return provider.play(track_id)
+
+
+            def share_track(provider: StreamingProvider, track_id: str, friend: str) -> str:
+                return provider.share(track_id, friend)
+
+
+            def like_track(provider: StreamingProvider, track_id: str) -> str:
+                return provider.like(track_id)
+
+
+            # ---- Wiring (the ONE place that knows the exhaustive list of providers) ----
+            _REGISTRY: dict[str, type[StreamingProvider]] = {
+                "spotify":      SpotifyProvider,
+                "apple_music":  AppleMusicProvider,
+                "tidal":        TidalProvider,
+            }
+
+
+            def provider_for(name: str) -> StreamingProvider:
+                """Composition-root helper: pick a provider by name from a config string."""
+                if name not in _REGISTRY:
+                    raise ValueError(f"Unknown provider: {name}")
+                return _REGISTRY[name]()
+
+
+            if __name__ == "__main__":
+                print(play_track (provider_for("spotify"),     "t1"))
+                print(share_track(provider_for("apple_music"), "t1", "Alex"))
+                print(like_track (provider_for("tidal"),       "t9"))
+      explanation: |
+        **The Single Choice payoff, in one sentence.** Adding a fourth provider
+        is **one new class** and **one new entry** in the wiring registry. The
+        client functions `play_track`, `share_track`, `like_track` do not change.
+        The test proved it by constructing `YouTubeMusicProvider` outside your
+        code and passing it through — zero edits required.
+
+        **Where the choice still lives.** Notice that the exhaustive list of
+        provider names *does* still exist — in `_REGISTRY`. That's deliberate.
+        Single Choice doesn't say "no module knows the list." It says "**only
+        one module** knows the list." The wiring layer is that module. Every
+        other module sees a `StreamingProvider` and forgets which one it is.
+
+        **The general pattern this step taught.** When you find the same
+        exhaustive list (`provider`, `payment_method`, `tax_jurisdiction`,
+        `auth_strategy`, etc.) appearing in `if` ladders in multiple files,
+        the fix is always the same shape:
+
+        1. Define a `Protocol` for the operation set.
+        2. Make each alternative a class implementing the Protocol.
+        3. Have client code call the operation on an injected instance.
+        4. Put the exhaustive list in **one** wiring/registry module.
+
+        This is the chapter's Single Choice principle, made operational. Now,
+        when you encounter the same shape at work (or in your CS130 group
+        project), you have a routine — not just a name.
+
+  # =========================================================================
+  # STEP 6 — "Predict the Blast Radius"
+  # =========================================================================
+  # Pedagogy:
+  #   Change Impact Analysis as the capstone activity (industry-standard
+  #     evaluation routine; matches the SEBook chapter's five-step method).
+  #   Spaced retrieval pulled to its highest expression — every question
+  #     tests transfer of Steps 1-5's lessons to a brand-new system.
+  #   Honest tradeoff acknowledgement (Tempero, Blincoe, Lottridge 2023):
+  #     higher modularity helps modification but may not always help
+  #     first-read comprehension. Naming the tradeoff prevents the
+  #     dogmatic-application failure mode.
+  #   Bloom — Evaluate (compare designs), Analyze (trace change impact),
+  #     Apply (use the five-step routine on a new system).
+  # =========================================================================
+  - title: "Predict the Blast Radius"
+    instructions: |
+      ### Why this matters
+
+      Information hiding is verified by **simulating change** — Parnas's original test, and the one industry calls *change impact analysis*. A real engineer's job isn't to recite that classes should depend on abstractions. It's to read a system and predict: *if this changes, what else changes?* This step is your final exam for the tutorial: a fresh, never-seen MusicShare app with five modules, three plausible change requests, and one honest tradeoff. No coding. Pure judgment.
+
+      ### 🎯 You will learn to
+
+      - **Predict** the change-impact radius of a plausible future change in a small system before attempting the change
+      - **Evaluate** when a layer of information hiding pays for itself — and when it adds cognitive overhead without proportional benefit
+      - **Apply** the five-step routine on a system you've never seen before
+
+      ### The MusicShare app
+
+      MusicShare ships a web UI for discovering and sharing music. Its five real modules:
+
+      | Module | Public surface (the contract) | Hidden secret |
+      |---|---|---|
+      | `recommender.py` | `Recommender(Protocol).recommend(query, *, limit) -> list[SongHit]` | scoring / ranking algorithm |
+      | `streaming.py` | `StreamingProvider(Protocol)` + `play_track` / `share_track` / `like_track` | which streaming service is used today |
+      | `playlist.py` | `Playlist` class with `add`, `top_tracks(n)`, `total_duration_minutes()`, `average_popularity()`, `__len__` | internal storage representation |
+      | `events.py` | `EventDirectory(Protocol).find_in(city) -> list[Event]` | which persistence backend stores concert listings |
+      | `ui.py` | HTTP handlers for `/search`, `/share`, `/like`, `/concerts/<city>` | how requests are routed / rendered to HTML |
+
+      Plus the wiring layer (`composition_root.py`) that picks today's concrete `Recommender`, `StreamingProvider`, and `EventDirectory` instances.
+
+      Work through the four quiz questions below. The first three exercise change-impact reasoning on this system; the fourth tests an honest tradeoff (worth re-reading the *When NOT to apply* section of the chapter before answering).
+
+    files:
+      - path: "SYSTEM.md"
+        language: "markdown"
+        content: |
+          # MusicShare system map
+
+          Five modules + wiring:
+
+          - recommender.py    — Recommender Protocol; today's concrete is PopularityRecommender.
+                                Secret: scoring / ranking algorithm.
+          - streaming.py      — StreamingProvider Protocol; today's concretes are
+                                SpotifyProvider, AppleMusicProvider, TidalProvider.
+                                Secret: which streaming service is used.
+          - playlist.py       — Playlist class; secret: internal storage representation.
+          - events.py         — EventDirectory Protocol; today's concrete is SQLiteEventDirectory.
+                                Secret: which persistence backend stores concert listings.
+          - ui.py             — HTTP handlers for /search, /share, /like, /concerts/<city>.
+                                Calls only the four Protocols above (never the concrete classes).
+          - composition_root.py — picks today's concrete implementations and hands them to ui.py.
+
+          The quiz on the right asks you to predict, for several plausible future
+          changes, WHICH modules need to be edited. There is no code to write.
+
+    open_file: "SYSTEM.md"
+
+    quiz:
+      title: "Step 6 — Final Knowledge Check"
+      min_score: 0.8
+      shuffle: false       # questions build on each other; do not shuffle them
+      questions:
+
+        - type: multiple
+          question: |
+            **Change 1:** Add **YouTube Music** as a fourth streaming service.
+            Users should be able to play, share, and like tracks on it just
+            like the other three.
+
+            **Which files need to be edited?** (Select all that apply.)
+          options:
+            - "`streaming.py` — add a `YouTubeMusicProvider` class implementing the Protocol."
+            - "`composition_root.py` — add `\"youtube_music\": YouTubeMusicProvider` to the wiring registry."
+            - "`ui.py` — add a branch for the new provider in `/share` and `/like` handlers."
+            - "`playlist.py` — playlists need to track which provider each track came from."
+          correct_indices: [0, 1]
+          option_feedback:
+            2: "If `ui.py` needed a branch for each provider, you'd be back in the same Single Choice violation Step 5 was about. The whole point of polymorphism behind the `StreamingProvider` Protocol is that `ui.py` calls `provider.play(...)` without caring which provider it is."
+            3: "Tempting because YouTube Music tracks feel different, but the `Track` dataclass already has all the fields it needs. Provider is a concern of `streaming.py`, not `playlist.py`."
+          explanation: |
+            This is the Single Choice payoff. **One new class** in `streaming.py` and **one new entry** in the wiring registry. Zero edits to `ui.py`, zero edits to `playlist.py`. Compare with the pre-refactor design from Step 5, which would have required edits in three functions — and miss any single one, and your "Add YouTube Music" feature ships half-broken.
+
+        - type: multiple
+          question: |
+            **Change 2:** The SRE team migrates the production concert
+            catalog from **SQLite to a remote HTTP service** (an internal
+            REST API). The data shape is the same; only the storage moves.
+
+            **Which files need to be edited?** (Select all that apply.)
+          options:
+            - "`events.py` — add an `HttpEventDirectory` class implementing the `EventDirectory` Protocol."
+            - "`composition_root.py` — swap `SQLiteEventDirectory(...)` for `HttpEventDirectory(...)` when constructing the directory."
+            - "`ui.py` — change the `/concerts/<city>` handler to make HTTP requests instead of database queries."
+            - "Every test that builds an in-memory event directory — they all need to add an HTTP mock."
+          correct_indices: [0, 1]
+          option_feedback:
+            2: "`ui.py` only knows the `EventDirectory` Protocol — it calls `directory.find_in(city)`. The storage technology is hidden from it, by design."
+            3: "Tests that build `InMemoryEventDirectory` are *unaffected*. That's exactly why you wrote that in-memory class in Step 4 — fast, hermetic tests that don't care which production backend the app uses today."
+          explanation: |
+            The canonical Parnas case, made concrete. **One new class** in `events.py`. **One line** in the wiring. The 200 tests that build `InMemoryEventDirectory` still pass without changes — that's the testability benefit. The `ui.py` handlers compile against the Protocol and don't know HTTP from SQL — that's the comprehensibility benefit. The SRE migration ships in a week, not a quarter — that's the change-locality benefit.
+
+        - type: multiple
+          question: |
+            **Change 3:** Product wants the UI to show "about 3 minutes" instead
+            of "194 seconds" everywhere a track duration appears. A new
+            humanized-duration string is needed on each `Track`.
+
+            **Which files need to be edited?** (Select all that apply.)
+          options:
+            - "`playlist.py` — add a `humanized_duration` property to `Track`, OR a `Duration.humanize(seconds)` helper that lives near the data."
+            - "`ui.py` — call the new property/helper where tracks render."
+            - "`recommender.py` — `Recommender` returns song data, so it should carry the new humanized duration too."
+            - "`streaming.py` — `StreamingProvider.play()` should report the duration as part of its confirmation message."
+          correct_indices: [0, 1]
+          option_feedback:
+            2: "Tempting because the recommender returns song info — but check `SongHit`'s actual fields: `track_id`, `title`, `artist`, `confidence`. No `duration_sec`. The new humanized field isn't part of this contract, so the file doesn't need editing. Read the actual contract before predicting impact."
+            3: "Tempting because the streaming provider plays tracks — but check what `play()` actually returns: a confirmation string, not a duration. The humanized field doesn't belong in `streaming.py`'s contract."
+          explanation: |
+            This is the **honest** change in the set — a real, multi-file edit. Adding a new piece of presentation logic *does* mean changes in `playlist.py` (where `Track` is defined) and `ui.py` (where it renders). That's normal and fine. Information hiding **does not** promise every change is local — it promises that *change-prone decisions* stay local. Adding a new field is a *new feature*, not a *change-prone decision* leaking. The takeaway: don't over-claim what hiding buys you. Sometimes a two-file edit is the right answer.
+
+        - type: single
+          question: |
+            **The honest tradeoff.** Tempero, Blincoe, and Lottridge (2023)
+            found that more modular code helped students complete modification
+            tasks *but did not consistently make code easier to understand on
+            first encounter*. What is the right takeaway?
+          options:
+            - "Modularity is overrated; skip it."
+            - "Apply information hiding aggressively *everywhere*, including throwaway scripts and one-off demos."
+            - "Apply hiding where future change is plausible. The payoff is in maintenance and change, not in first-read clarity. A 50-line cron job does not need a `PaymentGateway` Protocol; a payments codebase does."
+            - "Hide everything — every method should be private, every class should have a Protocol."
+          correct_index: 2
+          option_feedback:
+            0: "The study showed modularity *helps* modification — the very task most engineers spend most of their time on. Skipping it is the wrong call."
+            1: "Aggressive hiding adds layers without payoff in places where the decision will never change. That's the trap this option warns against."
+            3: "'Hide everything' is the over-applied version of the principle that the chapter's *When NOT to apply* section warns about. Indirection has a real reading cost. Pay it where change is plausible; skip it where it isn't."
+          explanation: |
+            Information hiding is a **bet on future change**. It's a great bet where the design decision is plausibly volatile — vendors, storage, algorithms, regulatory rules. It's a *bad* bet on decisions that will never change (a 50-line throwaway script, an obviously stable algorithm in a hot inner loop, a single-variant system with no plausible alternatives). The SE maxim from the chapter: **the right number of abstractions is the smallest number that lets the system change gracefully.** Beyond that number, every extra layer is a tax on every reader.
+
+            **What you've actually learned in this tutorial.** You can now (a) name a module's secret, (b) spot the contract leaks, (c) refactor a leaky module behind a Protocol or domain methods, (d) verify the secret is hidden with an implementation-swap test, (e) apply Single Choice when alternatives are exhaustive, and (f) predict the change-impact radius before you start editing. That's the operational form of Parnas's principle — and it survives the move from a tutorial to a real codebase.
+
+    solution:
+      files:
+        - path: "SYSTEM.md"
+          language: "markdown"
+          content: |
+            # MusicShare system map — answer key
+
+            ## Change 1: Add YouTube Music
+            Edits: streaming.py (new YouTubeMusicProvider), composition_root.py (registry entry).
+            That's it. ui.py and playlist.py untouched. Single Choice payoff.
+
+            ## Change 2: Migrate events to a remote HTTP service
+            Edits: events.py (new HttpEventDirectory), composition_root.py (swap wiring).
+            ui.py untouched. The 200 tests that use InMemoryEventDirectory still pass.
+
+            ## Change 3: "Humanize" track durations in the UI
+            Edits: playlist.py (humanize helper on Track), ui.py (call it at render).
+            Honest: this IS a multi-file change. A new feature is not a hidden decision changing.
+
+            ## The tradeoff
+            Information hiding helps modification, not first-read clarity. Bet on it
+            where change is plausible; skip it where it isn't.
+      explanation: |
+        **Your training is complete.** Six steps ago you proved that `private`
+        is not a secret. You then ran the five-step routine on representation
+        (Playlist), over-specification (Recommender), persistence (EventDirectory),
+        and exhaustive alternatives (StreamingProvider) — and finally on a
+        whole system. The same routine, repeated four times across very
+        different domains, is the operational form of David Parnas's 1972
+        criterion.
+
+        **What to take with you.** When you next find yourself reading or
+        writing Python code, run this five-line audit on any module:
+
+        ```text
+        1. What is this module's secret? (A volatile decision, one sentence.)
+        2. What does its public API let clients see beyond that secret?
+        3. Could two different implementations both satisfy this contract?
+        4. If the secret changed, how many files would I edit?
+        5. Is the cost of the abstraction less than the cost of the future change?
+        ```
+
+        If the answer to (1) is *nothing*, the module is shallow — merge it
+        upward. If (2) reveals a leak, narrow the contract. If (3) is no, the
+        secret has not been hidden. If (4) is *many*, redesign. If (5) is no,
+        do not abstract — your reader pays for the layer every time, future
+        change or not.
+
+        Now go fix some real code.
