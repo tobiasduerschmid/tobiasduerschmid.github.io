@@ -5,12 +5,12 @@
   <div class="panel-body">
     <p>This slider adjusts the tickness of the pencil strokes to imitate shart of stumpy pencils.</p>
     <div class="col-sm-6">
-      <img src="img/pencilhatching/parameter/stroke_width_1.jpg" alt="Stroke thickness 1: thin pencil strokes." onmousedown="this.src='img/pencilhatching/parameter/stroke_width_org.jpg'; this.alt='Original photo before the stroke thickness comparison.'" onmouseup="this.src='img/pencilhatching/parameter/stroke_width_1.jpg'; this.alt='Stroke thickness 1: thin pencil strokes.'" onmouseout="this.src='img/pencilhatching/parameter/stroke_width_1.jpg'; this.alt='Stroke thickness 1: thin pencil strokes.'" class="img-responsive img-rounded" align="right" data-toggle="tooltip" title="Click for a before / after comparison.">
+      <img src="img/pencilhatching/parameter/stroke_width_1.jpg" alt="Stroke thickness 1: thin pencil strokes." onmousedown="this.src='img/pencilhatching/parameter/stroke_width_org.jpg'; this.alt='Original photo before the stroke thickness comparison.'" onmouseup="this.src='img/pencilhatching/parameter/stroke_width_1.jpg'; this.alt='Stroke thickness 1: thin pencil strokes.'" onmouseout="this.src='img/pencilhatching/parameter/stroke_width_1.jpg'; this.alt='Stroke thickness 1: thin pencil strokes.'" class="img-responsive img-rounded" align="right" data-toggle="tooltip" data-original-title="Click for a before / after comparison.">
       <center><p>Stroke thickness 1</p></center>
     </div>
     <div class="col-sm-6">
       <img src="img/pencilhatching/parameter/stroke_width_4.jpg" alt="Stroke thickness 4: broad pencil strokes." onmousedown="this.src='img/pencilhatching/parameter/stroke_width_org.jpg'; this.alt='Original photo before the stroke thickness comparison.'" onmouseup="this.src='img/pencilhatching/parameter/stroke_width_4.jpg'; this.alt='Stroke thickness 4: broad pencil strokes.'" onmouseout="this.src='img/pencilhatching/parameter/stroke_width_4.jpg'; this.alt='Stroke thickness 4: broad pencil strokes.'" class="img-responsive img-rounded" align="right"
-     data-toggle="tooltip" title="Click for a before / after comparison.">
+     data-toggle="tooltip" data-original-title="Click for a before / after comparison.">
       <center><p>Stroke thickness 4</p></center>
     </div>
   </div>
@@ -33,7 +33,8 @@
         img.setAttribute('tabindex', '0');
         img.setAttribute('data-ph-original', original);
         img.setAttribute('data-ph-rendered', rendered);
-        img.setAttribute('title', 'Press and hold, or focus and press Enter, for before / after comparison.');
+        img.setAttribute('data-original-title', 'Press and hold, or focus and press Enter, for before / after comparison.');
+        img.removeAttribute('title');
         img.setAttribute('alt', renderedAlt + ' Press and hold, or focus and press Enter, to view the original photo.');
 
         function showOriginal() {
@@ -75,12 +76,12 @@
   <div class="panel-body">
     <p>With this switch a colorful or black and white variant can be achieved.</p>
     <div class="col-sm-6">
-      <img src="img/pencilhatching/parameter/color.jpg" alt="Colorized strokes: pencil hatching keeps the source colors." onmousedown="this.src='img/pencilhatching/parameter/color_bw_org.jpg'; this.alt='Original photo before the colorized-strokes comparison.'" onmouseup="this.src='img/pencilhatching/parameter/color.jpg'; this.alt='Colorized strokes: pencil hatching keeps the source colors.'" onmouseout="this.src='img/pencilhatching/parameter/color.jpg'; this.alt='Colorized strokes: pencil hatching keeps the source colors.'" class="img-responsive img-rounded" align="right" data-toggle="tooltip" title="Click for a before / after comparison.">
+      <img src="img/pencilhatching/parameter/color.jpg" alt="Colorized strokes: pencil hatching keeps the source colors." onmousedown="this.src='img/pencilhatching/parameter/color_bw_org.jpg'; this.alt='Original photo before the colorized-strokes comparison.'" onmouseup="this.src='img/pencilhatching/parameter/color.jpg'; this.alt='Colorized strokes: pencil hatching keeps the source colors.'" onmouseout="this.src='img/pencilhatching/parameter/color.jpg'; this.alt='Colorized strokes: pencil hatching keeps the source colors.'" class="img-responsive img-rounded" align="right" data-toggle="tooltip" data-original-title="Click for a before / after comparison.">
       <center><p>colorful</p></center>
     </div>
     <div class="col-sm-6">
       <img src="img/pencilhatching/parameter/bw.jpg" alt="Black-and-white strokes: pencil hatching removes the source colors." onmousedown="this.src='img/pencilhatching/parameter/color_bw_org.jpg'; this.alt='Original photo before the black-and-white strokes comparison.'" onmouseup="this.src='img/pencilhatching/parameter/bw.jpg'; this.alt='Black-and-white strokes: pencil hatching removes the source colors.'" onmouseout="this.src='img/pencilhatching/parameter/bw.jpg'; this.alt='Black-and-white strokes: pencil hatching removes the source colors.'" class="img-responsive img-rounded" align="right"
-     data-toggle="tooltip" title="Click for a before / after comparison.">
+     data-toggle="tooltip" data-original-title="Click for a before / after comparison.">
       <center><p>black and white</p></center>
     </div>
   </div>
@@ -92,12 +93,12 @@
   <div class="panel-body">
     <p>This slider adjusts the length of the strokes to create fine or coarse drawings.</p>
     <div class="col-sm-6">
-      <img src="img/pencilhatching/parameter/stroke_scale_0_1.jpg" alt="Stroke granularity 0.1: short fine strokes." onmousedown="this.src='img/pencilhatching/parameter/stroke_scale_org.jpg'; this.alt='Original photo before the stroke granularity comparison.'" onmouseup="this.src='img/pencilhatching/parameter/stroke_scale_0_1.jpg'; this.alt='Stroke granularity 0.1: short fine strokes.'" onmouseout="this.src='img/pencilhatching/parameter/stroke_scale_0_1.jpg'; this.alt='Stroke granularity 0.1: short fine strokes.'" class="img-responsive img-rounded" align="right" data-toggle="tooltip" title="Click for a before / after comparison.">
+      <img src="img/pencilhatching/parameter/stroke_scale_0_1.jpg" alt="Stroke granularity 0.1: short fine strokes." onmousedown="this.src='img/pencilhatching/parameter/stroke_scale_org.jpg'; this.alt='Original photo before the stroke granularity comparison.'" onmouseup="this.src='img/pencilhatching/parameter/stroke_scale_0_1.jpg'; this.alt='Stroke granularity 0.1: short fine strokes.'" onmouseout="this.src='img/pencilhatching/parameter/stroke_scale_0_1.jpg'; this.alt='Stroke granularity 0.1: short fine strokes.'" class="img-responsive img-rounded" align="right" data-toggle="tooltip" data-original-title="Click for a before / after comparison.">
       <center><p>Stroke granularity 0,1</p></center>
     </div>
     <div class="col-sm-6">
       <img src="img/pencilhatching/parameter/stroke_scale_1_0.jpg" alt="Stroke granularity 1.0: longer coarse strokes." onmousedown="this.src='img/pencilhatching/parameter/stroke_scale_org.jpg'; this.alt='Original photo before the stroke granularity comparison.'" onmouseup="this.src='img/pencilhatching/parameter/stroke_scale_1_0.jpg'; this.alt='Stroke granularity 1.0: longer coarse strokes.'" onmouseout="this.src='img/pencilhatching/parameter/stroke_scale_1_0.jpg'; this.alt='Stroke granularity 1.0: longer coarse strokes.'" class="img-responsive img-rounded" align="right"
-     data-toggle="tooltip" title="Click for a before / after comparison.">
+     data-toggle="tooltip" data-original-title="Click for a before / after comparison.">
       <center><p>Stroke granularity 1,0</p></center>
     </div>
   </div>
@@ -109,12 +110,12 @@
   <div class="panel-body">
     <p>The amount of automatically detected contours can be manipulated using this slider.</p>
     <div class="col-sm-6">
-      <img src="img/pencilhatching/parameter/contours_1.jpg" alt="Contours 1: fewer automatically detected dark contours." onmousedown="this.src='img/pencilhatching/parameter/contours_org.jpg'; this.alt='Original photo before the contours comparison.'" onmouseup="this.src='img/pencilhatching/parameter/contours_1.jpg'; this.alt='Contours 1: fewer automatically detected dark contours.'" onmouseout="this.src='img/pencilhatching/parameter/contours_1.jpg'; this.alt='Contours 1: fewer automatically detected dark contours.'" class="img-responsive img-rounded" align="right" data-toggle="tooltip" title="Click for a before / after comparison.">
+      <img src="img/pencilhatching/parameter/contours_1.jpg" alt="Contours 1: fewer automatically detected dark contours." onmousedown="this.src='img/pencilhatching/parameter/contours_org.jpg'; this.alt='Original photo before the contours comparison.'" onmouseup="this.src='img/pencilhatching/parameter/contours_1.jpg'; this.alt='Contours 1: fewer automatically detected dark contours.'" onmouseout="this.src='img/pencilhatching/parameter/contours_1.jpg'; this.alt='Contours 1: fewer automatically detected dark contours.'" class="img-responsive img-rounded" align="right" data-toggle="tooltip" data-original-title="Click for a before / after comparison.">
       <center><p>Contours 1</p></center>
     </div>
     <div class="col-sm-6">
       <img src="img/pencilhatching/parameter/contours_2_5.jpg" alt="Contours 2.5: stronger automatically detected dark contours." onmousedown="this.src='img/pencilhatching/parameter/contours_org.jpg'; this.alt='Original photo before the contours comparison.'" onmouseup="this.src='img/pencilhatching/parameter/contours_2_5.jpg'; this.alt='Contours 2.5: stronger automatically detected dark contours.'" onmouseout="this.src='img/pencilhatching/parameter/contours_2_5.jpg'; this.alt='Contours 2.5: stronger automatically detected dark contours.'" class="img-responsive img-rounded" align="right"
-     data-toggle="tooltip" title="Click for a before / after comparison.">
+     data-toggle="tooltip" data-original-title="Click for a before / after comparison.">
       <center><p>Contours 2,5</p></center>
     </div>
   </div>
@@ -126,12 +127,12 @@
   <div class="panel-body">
     <p>This slider defines whether the strokes are drawn accurately or sketchy.</p>
     <div class="col-sm-6">
-      <img src="img/pencilhatching/parameter/angle_accuracy_0_1.jpg" alt="Stroke accuracy 0.1: loose sketchy stroke directions." onmousedown="this.src='img/pencilhatching/parameter/angle_accuracy_org.jpg'; this.alt='Original photo before the stroke accuracy comparison.'" onmouseup="this.src='img/pencilhatching/parameter/angle_accuracy_0_1.jpg'; this.alt='Stroke accuracy 0.1: loose sketchy stroke directions.'" onmouseout="this.src='img/pencilhatching/parameter/angle_accuracy_0_1.jpg'; this.alt='Stroke accuracy 0.1: loose sketchy stroke directions.'" class="img-responsive img-rounded" align="right" data-toggle="tooltip" title="Click for a before / after comparison.">
+      <img src="img/pencilhatching/parameter/angle_accuracy_0_1.jpg" alt="Stroke accuracy 0.1: loose sketchy stroke directions." onmousedown="this.src='img/pencilhatching/parameter/angle_accuracy_org.jpg'; this.alt='Original photo before the stroke accuracy comparison.'" onmouseup="this.src='img/pencilhatching/parameter/angle_accuracy_0_1.jpg'; this.alt='Stroke accuracy 0.1: loose sketchy stroke directions.'" onmouseout="this.src='img/pencilhatching/parameter/angle_accuracy_0_1.jpg'; this.alt='Stroke accuracy 0.1: loose sketchy stroke directions.'" class="img-responsive img-rounded" align="right" data-toggle="tooltip" data-original-title="Click for a before / after comparison.">
       <center><p>Stroke accuracy 0,1</p></center>
     </div>
     <div class="col-sm-6">
       <img src="img/pencilhatching/parameter/angle_accuracy_0_5.jpg" alt="Stroke accuracy 0.5: more precise stroke directions." onmousedown="this.src='img/pencilhatching/parameter/angle_accuracy_org.jpg'; this.alt='Original photo before the stroke accuracy comparison.'" onmouseup="this.src='img/pencilhatching/parameter/angle_accuracy_0_5.jpg'; this.alt='Stroke accuracy 0.5: more precise stroke directions.'" onmouseout="this.src='img/pencilhatching/parameter/angle_accuracy_0_5.jpg'; this.alt='Stroke accuracy 0.5: more precise stroke directions.'" class="img-responsive img-rounded" align="right"
-     data-toggle="tooltip" title="Click for a before / after comparison.">
+     data-toggle="tooltip" data-original-title="Click for a before / after comparison.">
       <center><p>Stroke accuracy 0,5</p></center>
     </div>
   </div>
@@ -143,15 +144,15 @@
   <div class="panel-body">
     <p>Using this slider, brightness of the image can be changed by adjusting the stroke density.</p>
     <div class="col-sm-4">
-      <img src="img/pencilhatching/parameter/brightness_-2.jpg" alt="Brightness -2.0: darker dense pencil hatching." onmousedown="this.src='img/pencilhatching/parameter/brightness_org.jpg'; this.alt='Original photo before the brightness comparison.'" onmouseup="this.src='img/pencilhatching/parameter/brightness_-2.jpg'; this.alt='Brightness -2.0: darker dense pencil hatching.'" onmouseout="this.src='img/pencilhatching/parameter/brightness_-2.jpg'; this.alt='Brightness -2.0: darker dense pencil hatching.'" class="img-responsive img-rounded" align="right" data-toggle="tooltip" title="Click for a before / after comparison.">
+      <img src="img/pencilhatching/parameter/brightness_-2.jpg" alt="Brightness -2.0: darker dense pencil hatching." onmousedown="this.src='img/pencilhatching/parameter/brightness_org.jpg'; this.alt='Original photo before the brightness comparison.'" onmouseup="this.src='img/pencilhatching/parameter/brightness_-2.jpg'; this.alt='Brightness -2.0: darker dense pencil hatching.'" onmouseout="this.src='img/pencilhatching/parameter/brightness_-2.jpg'; this.alt='Brightness -2.0: darker dense pencil hatching.'" class="img-responsive img-rounded" align="right" data-toggle="tooltip" data-original-title="Click for a before / after comparison.">
       <center><p>Brightness -2,0</p></center>
     </div>
     <div class="col-sm-4">
-      <img src="img/pencilhatching/parameter/brightness_0.jpg" alt="Default brightness: medium stroke density." onmousedown="this.src='img/pencilhatching/parameter/brightness_org.jpg'; this.alt='Original photo before the brightness comparison.'" onmouseup="this.src='img/pencilhatching/parameter/brightness_0.jpg'; this.alt='Default brightness: medium stroke density.'" onmouseout="this.src='img/pencilhatching/parameter/brightness_0.jpg'; this.alt='Default brightness: medium stroke density.'" class="img-responsive img-rounded" align="right" data-toggle="tooltip" title="Click for a before / after comparison.">
+      <img src="img/pencilhatching/parameter/brightness_0.jpg" alt="Default brightness: medium stroke density." onmousedown="this.src='img/pencilhatching/parameter/brightness_org.jpg'; this.alt='Original photo before the brightness comparison.'" onmouseup="this.src='img/pencilhatching/parameter/brightness_0.jpg'; this.alt='Default brightness: medium stroke density.'" onmouseout="this.src='img/pencilhatching/parameter/brightness_0.jpg'; this.alt='Default brightness: medium stroke density.'" class="img-responsive img-rounded" align="right" data-toggle="tooltip" data-original-title="Click for a before / after comparison.">
       <center><p>default brightness</p></center>
     </div>
     <div class="col-sm-4">
-      <img src="img/pencilhatching/parameter/brightness_2.jpg" alt="Brightness +2.0: lighter sparse pencil hatching." onmousedown="this.src='img/pencilhatching/parameter/brightness_org.jpg'; this.alt='Original photo before the brightness comparison.'" onmouseup="this.src='img/pencilhatching/parameter/brightness_2.jpg'; this.alt='Brightness +2.0: lighter sparse pencil hatching.'" onmouseout="this.src='img/pencilhatching/parameter/brightness_2.jpg'; this.alt='Brightness +2.0: lighter sparse pencil hatching.'" class="img-responsive img-rounded" align="right" data-toggle="tooltip" title="Click for a before / after comparison.">
+      <img src="img/pencilhatching/parameter/brightness_2.jpg" alt="Brightness +2.0: lighter sparse pencil hatching." onmousedown="this.src='img/pencilhatching/parameter/brightness_org.jpg'; this.alt='Original photo before the brightness comparison.'" onmouseup="this.src='img/pencilhatching/parameter/brightness_2.jpg'; this.alt='Brightness +2.0: lighter sparse pencil hatching.'" onmouseout="this.src='img/pencilhatching/parameter/brightness_2.jpg'; this.alt='Brightness +2.0: lighter sparse pencil hatching.'" class="img-responsive img-rounded" align="right" data-toggle="tooltip" data-original-title="Click for a before / after comparison.">
       <center><p>Brightness +2,0</p></center>
     </div>
   </div>
@@ -163,16 +164,16 @@
   <div class="panel-body">
     <p>The contrast that results from the stroke density.</p>
     <div class="col-sm-4">
-      <img src="img/pencilhatching/parameter/contrast_-1.jpg" alt="Contrast -1.0: soft low-contrast pencil hatching." onmousedown="this.src='img/pencilhatching/parameter/contrast_org.jpg'; this.alt='Original photo before the contrast comparison.'" onmouseup="this.src='img/pencilhatching/parameter/contrast_-1.jpg'; this.alt='Contrast -1.0: soft low-contrast pencil hatching.'" onmouseout="this.src='img/pencilhatching/parameter/contrast_-1.jpg'; this.alt='Contrast -1.0: soft low-contrast pencil hatching.'" class="img-responsive img-rounded" align="right" data-toggle="tooltip" title="Click for a before / after comparison.">
+      <img src="img/pencilhatching/parameter/contrast_-1.jpg" alt="Contrast -1.0: soft low-contrast pencil hatching." onmousedown="this.src='img/pencilhatching/parameter/contrast_org.jpg'; this.alt='Original photo before the contrast comparison.'" onmouseup="this.src='img/pencilhatching/parameter/contrast_-1.jpg'; this.alt='Contrast -1.0: soft low-contrast pencil hatching.'" onmouseout="this.src='img/pencilhatching/parameter/contrast_-1.jpg'; this.alt='Contrast -1.0: soft low-contrast pencil hatching.'" class="img-responsive img-rounded" align="right" data-toggle="tooltip" data-original-title="Click for a before / after comparison.">
       <center><p>Contrast -1,0</p></center>
     </div>
     <div class="col-sm-4">
-      <img src="img/pencilhatching/parameter/contrast_0.jpg" alt="Default contrast: balanced pencil hatching contrast." onmousedown="this.src='img/pencilhatching/parameter/contrast_org.jpg'; this.alt='Original photo before the contrast comparison.'" onmouseup="this.src='img/pencilhatching/parameter/contrast_0.jpg'; this.alt='Default contrast: balanced pencil hatching contrast.'" onmouseout="this.src='img/pencilhatching/parameter/contrast_0.jpg'; this.alt='Default contrast: balanced pencil hatching contrast.'" class="img-responsive img-rounded" align="right" data-toggle="tooltip" title="Click for a before / after comparison.">
+      <img src="img/pencilhatching/parameter/contrast_0.jpg" alt="Default contrast: balanced pencil hatching contrast." onmousedown="this.src='img/pencilhatching/parameter/contrast_org.jpg'; this.alt='Original photo before the contrast comparison.'" onmouseup="this.src='img/pencilhatching/parameter/contrast_0.jpg'; this.alt='Default contrast: balanced pencil hatching contrast.'" onmouseout="this.src='img/pencilhatching/parameter/contrast_0.jpg'; this.alt='Default contrast: balanced pencil hatching contrast.'" class="img-responsive img-rounded" align="right" data-toggle="tooltip" data-original-title="Click for a before / after comparison.">
       <center><p>default Contrast</p></center>
     </div>
     <div class="col-sm-4">
       <img src="img/pencilhatching/parameter/contrast_1.jpg" alt="Contrast +1.0: stronger high-contrast pencil hatching." onmousedown="this.src='img/pencilhatching/parameter/contrast_org.jpg'; this.alt='Original photo before the contrast comparison.'" onmouseup="this.src='img/pencilhatching/parameter/contrast_1.jpg'; this.alt='Contrast +1.0: stronger high-contrast pencil hatching.'" onmouseout="this.src='img/pencilhatching/parameter/contrast_1.jpg'; this.alt='Contrast +1.0: stronger high-contrast pencil hatching.'" class="img-responsive img-rounded" align="right"
-     data-toggle="tooltip" title="Click for a before / after comparison.">
+     data-toggle="tooltip" data-original-title="Click for a before / after comparison.">
       <center><p>Contrast +1,0</p></center>
     </div>
   </div>

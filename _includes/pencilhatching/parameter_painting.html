@@ -9,7 +9,11 @@
     var img = document.getElementById(image);
     img.src=src;
     img.alt=alt;
-    img.title=alt;
+    img.setAttribute('data-original-title', alt);
+    img.removeAttribute('title');
+    if (window.jQuery && window.jQuery.fn.tooltip) {
+      window.jQuery(img).tooltip('hide').attr('data-original-title', alt);
+    }
     return false;
   }
 
@@ -21,7 +25,7 @@
       <p lang="de">Ist der Parameter "Striche drehen" ausgewählt, so kann man die Richtung der Striche in das Bild hinein malen. D.h. die Richtung, in die man wischt wird als neue Strich-Richtung für diesen Bereich gewählt. Somit kann man die automatisch Fluss-Analyse korrigieren oder verfeinern.</p>
     </div>    
     <div class="col-md-6">
-      <img id="img_1" src="img/pencilhatching/painting_global.jpg" alt="Global parameter adjustment applied across the whole image before local parameter painting." class="img-responsive img-rounded" align="right" data-toggle="tooltip" title="Global parameter adjustment applied across the whole image before local parameter painting.">
+      <img id="img_1" src="img/pencilhatching/painting_global.jpg" alt="Global parameter adjustment applied across the whole image before local parameter painting." class="img-responsive img-rounded" align="right" data-toggle="tooltip" data-original-title="Global parameter adjustment applied across the whole image before local parameter painting.">
       <div class="btn-group btn-group-justified" role="group" aria-label="Exchange image">
         <div class="btn-group">
           <button class="btn btn-default" role="button" onclick="changeImage('img_1', 'img/pencilhatching/painting_org.jpg', 'Original photo before parameter painting.');">Original</button>
@@ -40,7 +44,7 @@
         </div>
       </div>
       <br><!--
-      <img id="img_2" src="img/pencilhatching/painting_global.jpg" alt="Global parameter adjustment applied across the whole image before local parameter painting." class="img-responsive img-rounded" align="right" data-toggle="tooltip" title="Global parameter adjustment applied across the whole image before local parameter painting.">
+      <img id="img_2" src="img/pencilhatching/painting_global.jpg" alt="Global parameter adjustment applied across the whole image before local parameter painting." class="img-responsive img-rounded" align="right" data-toggle="tooltip" data-original-title="Global parameter adjustment applied across the whole image before local parameter painting.">
       <div class="btn-group btn-group-justified" role="group" aria-label="Exchange image">
         <div class="btn-group">
           <button class="btn btn-default" role="button" onclick="changeImage('img_2', 'img/pencilhatching/painting_org.jpg', 'Original photo before parameter painting.');">Original</button>

@@ -525,7 +525,7 @@ test.describe('Personal Gym - Workout', () => {
 
   test('quiz URL parameter starts a transient workout and back cleans the URL', async ({ page, context }) => {
     await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'git' }]));
-    await page.goto(`${GYM_URL}?quiz=shell_parson&quiz=user_stories`);
+    await page.goto(`${GYM_URL}?quiz=shell_parson,user_stories&quiz=shell_parson`);
 
     await expect(page.locator('#gym-workout')).toBeVisible();
     await expect(page.locator('#gym-entrance')).toBeHidden();

@@ -65,6 +65,10 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
 }
 
 @media print {
+  abbr[data-original-title]::after {
+    content: " (" attr(data-original-title) ")";
+  }
+
   body.sebook-layout:not(.se-gym-page) .quiz-avatar-side,
   body.sebook-layout:not(.se-gym-page) .flashcards-avatar-side,
   body.sebook-layout:not(.se-gym-page) .tvm-quiz-avatar-wrap,
