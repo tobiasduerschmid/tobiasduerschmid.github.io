@@ -1,0 +1,160 @@
+{% assign tutorial_key = include.tutorial | default: page.tutorial %}
+{% assign tutorial_data = site.data.tutorials[tutorial_key] %}
+{% assign show_header = true %}
+{% if include.show_header == false %}
+  {% assign show_header = false %}
+{% endif %}
+{% assign instructor_mode = false %}
+{% if include.instructor_mode %}
+  {% assign instructor_mode = true %}
+{% endif %}
+
+{% if show_header %}
+<div class="print-header">
+  <h1>{{ tutorial_data.title }}</h1>
+  {% if tutorial_data.description %}
+  <p>{{ tutorial_data.description }}</p>
+  {% endif %}
+</div>
+{% endif %}
+
+{% for step in tutorial_data.steps %}
+<div class="step">
+  <div class="step-header">
+    <span class="step-number">{{ forloop.index }}</span>
+    <h2 class="step-title">{{ step.title | markdownify | remove: '<p>' | remove: '</p>' | strip }}</h2>
+  </div>
+
+  <div class="step-instructions">
+    {{ step.instructions | markdownify | replace: ' id="', ' data-print-id="' }}
+  </div>
+
+  {% if step.files %}
+  <div class="starter-files">
+    <div class="starter-files-label">Starter files</div>
+    {% for file in step.files %}
+    <div class="starter-file">
+      <div class="starter-file-name">{{ file.path }}</div>
+      {% assign print_lang = file.print_language | default: file.language %}
+      {% if print_lang %}
+        {% capture fenced_content %}~~~{{ print_lang }}
+{{ file.content }}~~~{% endcapture %}
+        <div class="starter-file-content">{{ fenced_content | markdownify | replace: ' id="', ' data-print-id="' }}</div>
+      {% else %}
+      <pre>{{ file.content }}</pre>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  {% if step.solution %}
+  <div class="step-solution"{% unless instructor_mode %} style="display:none;"{% endunless %}>
+    <div class="step-solution-header">
+      <span class="step-solution-icon"><i class="fa fa-key"></i></span>
+      <h3 class="step-solution-title">Solution</h3>
+    </div>
+    {% if step.solution.files %}
+    {% for file in step.solution.files %}
+    <div class="starter-file">
+      <div class="starter-file-name">{{ file.path }}</div>
+      {% assign sol_lang = file.language %}
+      {% if sol_lang %}
+        {% capture sol_fenced %}~~~{{ sol_lang }}
+{{ file.content }}~~~{% endcapture %}
+        <div class="starter-file-content">{{ sol_fenced | markdownify | replace: ' id="', ' data-print-id="' }}</div>
+      {% else %}
+      <pre>{{ file.content | xml_escape }}</pre>
+      {% endif %}
+    </div>
+    {% endfor %}
+    {% endif %}
+    {% if step.solution.commands %}
+    <div class="step-solution-commands">
+      <div class="starter-file-name">Commands</div>
+      <pre><code class="bash">{% for cmd in step.solution.commands %}{{ cmd }}
+{% endfor %}</code></pre>
+    </div>
+    {% endif %}
+    {% if step.solution.explanation %}
+    <div class="step-solution-explanation">
+      {{ step.solution.explanation | markdownify | replace: ' id="', ' data-print-id="' }}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if step.quiz %}
+  {% assign quiz = step.quiz %}
+  <div class="print-quiz">
+    <div class="print-quiz-header">
+      <span class="print-quiz-icon"><i class="fa fa-question-circle"></i></span>
+      <h3 class="print-quiz-title">{{ quiz.title }}</h3>
+      {% if quiz.min_score %}
+      <span class="print-quiz-threshold">Min. score: {{ quiz.min_score | times: 100 | round }}%</span>
+      {% endif %}
+    </div>
+    <div class="print-quiz-body">
+      {% for q in quiz.questions %}
+      <div class="print-quiz-question">
+        <p class="print-quiz-q-text">
+          {{ forloop.index }}. {{ q.question | markdownify | replace: ' id="', ' data-print-id="' | remove: '<p>' | remove: '</p>' | strip }}
+          {% if q.type == 'multiple' %}<span class="print-quiz-q-type">(select all that apply)</span>{% endif %}
+          {% if q.type == 'parsons' %}<span class="print-quiz-q-type">(arrange in order)</span>{% endif %}
+        </p>
+        {% if q.type == 'parsons' %}
+        <div class="print-parsons-label">Correct order:</div>
+        <ol class="print-parsons-lines">
+          {% for line in q.lines %}
+          <li class="print-parsons-line"><code>{{ line | xml_escape }}</code></li>
+          {% endfor %}
+        </ol>
+        {% if q.distractors %}
+        <div class="print-parsons-label">Distractors (not used):</div>
+        <ul class="print-parsons-lines">
+          {% for d in q.distractors %}
+          <li class="print-parsons-line print-parsons-distractor"><code>{{ d | xml_escape }}</code></li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% else %}
+        <ul class="print-quiz-options">
+          {% for opt in q.options %}
+          {% assign opt_index = forloop.index0 %}
+          {% if q.type == 'multiple' %}
+            {% assign is_correct = false %}
+            {% for ci in q.correct_indices %}
+              {% if ci == opt_index %}{% assign is_correct = true %}{% endif %}
+            {% endfor %}
+          {% else %}
+            {% if q.correct_index == opt_index %}
+              {% assign is_correct = true %}
+            {% else %}
+              {% assign is_correct = false %}
+            {% endif %}
+          {% endif %}
+          {% assign opt_fb = nil %}
+          {% if q.option_feedback %}
+            {% assign opt_fb = q.option_feedback[opt_index] %}
+            {% unless opt_fb %}{% assign opt_fb_key = opt_index | append: '' %}{% assign opt_fb = q.option_feedback[opt_fb_key] %}{% endunless %}
+          {% endif %}
+          <li class="print-quiz-option{% if is_correct %} correct{% endif %}">
+            <span class="print-quiz-option-marker{% if q.type == 'multiple' %} multi{% endif %}"></span>
+            <span>{{ opt | markdownify | replace: ' id="', ' data-print-id="' | remove: '<p>' | remove: '</p>' | strip }}</span>
+            {% if opt_fb %}
+            <div class="print-quiz-option-feedback">{{ opt_fb | markdownify | replace: ' id="', ' data-print-id="' }}</div>
+            {% endif %}
+          </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
+        {% if q.explanation %}
+        <div class="print-quiz-explanation">{{ q.explanation | markdownify | replace: ' id="', ' data-print-id="' }}</div>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endfor %}

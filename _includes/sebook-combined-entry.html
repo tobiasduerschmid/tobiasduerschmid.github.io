@@ -1,0 +1,22 @@
+{% assign combined_entry = include.entry %}
+{% if combined_entry %}
+<div role="region" aria-label="{{ combined_entry.name }} introduction">
+  {% include header_project.html title=combined_entry.name %}
+</div>
+
+{% assign combined_page = site.pages | where: "url", combined_entry.url | first %}
+{% unless combined_page %}
+  {% assign normalized_url = combined_entry.url | replace: '.html', '' %}
+  {% assign combined_page = site.pages | where: "url", normalized_url | first %}
+{% endunless %}
+
+{% if combined_page %}
+  {% if combined_page.layout == 'tutorial' and combined_page.tutorial %}
+    {% include tutorial-print-content.html tutorial=combined_page.tutorial show_header=false instructor_mode=true %}
+  {% elsif combined_page.path contains '.html' %}
+    {{ combined_page.content | liquid }}
+  {% else %}
+    {{ combined_page.content | liquid | markdownify }}
+  {% endif %}
+{% endif %}
+{% endif %}

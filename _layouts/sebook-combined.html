@@ -59,39 +59,15 @@
 
         <section id="{{topic_id}}">
 
-          {% assign current_topic = site.pages | where: "url", topic.url | first %}
-          <div role="region" aria-label="{{ topic.name }} introduction">
-            {% include header_project.html title=topic.name %}
-          </div>
-          {% if current_topic.path contains '.html' %}
-          {{ current_topic.content | liquid }}
-          {% else %}
-          {{ current_topic.content | liquid | markdownify }}
-          {% endif %}
+          {% include sebook-combined-entry.html entry=topic %}
 
           {% if topic.subtopics %}
           {% for subtopic in topic.subtopics %}
-          <div role="region" aria-label="{{ subtopic.name }} introduction">
-            {% include header_project.html title=subtopic.name %}
-          </div>
-          {% assign current_subtopic = site.pages | where: "url", subtopic.url | first %}
-          {% if current_subtopic.path contains '.html' %}
-          {{ current_subtopic.content | liquid }}
-          {% else %}
-          {{ current_subtopic.content | liquid | markdownify }}
-          {% endif %}
+          {% include sebook-combined-entry.html entry=subtopic %}
           {% if subtopic.items %}
           {% for item in subtopic.items %}
 
-          <div role="region" aria-label="{{ item.name }} introduction">
-            {% include header_project.html title=item.name %}
-          </div>
-          {% assign current_item = site.pages | where: "url", item.url | first %}
-          {% if current_item.path contains '.html' %}
-          {{ current_item.content | liquid }}
-          {% else %}
-          {{ current_item.content | liquid | markdownify }}
-          {% endif %}
+          {% include sebook-combined-entry.html entry=item %}
           {% endfor %}
           {% endif %}
           {% endfor %}
