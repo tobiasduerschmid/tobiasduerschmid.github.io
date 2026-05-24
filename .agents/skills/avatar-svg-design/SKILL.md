@@ -346,6 +346,50 @@ When adding a new body shape:
 
 The bruin mascot variant (`data-hero-kind-layer="bruin"`) is a parallel set of fur-and-muzzle paths that replace the human head, hands, and torso. It uses its own gradient (`bruin-fur-{{ hero_variant }}`). If you add a hero feature, you must usually also add a bruin equivalent (or explicitly opt it out of the bruin layer).
 
+## Arm muscle tiers (milestone-driven)
+
+The hero's arms are not one fixed shape — they swap between five sleeves depending on how many milestones the user has earned. The tiers are tied to the existing `data-hero-slot="milestone-power"` mechanism, so the same JS toggle that lights the bronze/silver/gold/diamond power glow and updates the boot plates *also* picks the corresponding arm geometry. No extra JS plumbing is required.
+
+```
+none    — slim cylindrical sleeve   (shoulder width ≈ 18 px in viewBox units)
+bronze  — toned, gentle bicep curve (shoulder width ≈ 24 px, peak ≈ 32 px)
+silver  — athletic, clear bicep peak + deltoid groove (peak ≈ 46 px)
+gold    — muscular, defined separation + rim light (peak ≈ 64 px)
+diamond — bodybuilder, dramatic peak + dual specular sheens (peak ≈ 84 px)
+```
+
+Each tier lives in its own `<g data-hero-slot="milestone-power" data-hero-option="…" data-hero-muscle-zone="…">` block inside the four arm sub-groups:
+
+- `data-hero-muscle-zone="left-upper"` — left shoulder / bicep / tricep
+- `data-hero-muscle-zone="left-forearm"` — left forearm (rotates with elbow pivot)
+- `data-hero-muscle-zone="right-upper"` — right shoulder / bicep / tricep (mirrored across x=400)
+- `data-hero-muscle-zone="right-forearm"` — right forearm
+
+Critical invariants the tiers must preserve:
+
+1. **Shared pivots.** The shoulder rotation centre is `(322, 268)` for the left arm and `(478, 268)` for the right; the elbow centre is `(322, 162)` / `(478, 162)`. These are referenced in the parent `<g data-arm-side="…"><animateTransform>` and **must not shift between tiers** — otherwise the overhead-press animation jerks on every milestone swap. All five silhouette paths therefore end at exactly `(322, 162)` / `(478, 162)` and start at exactly `(322 ± n, 268)` / `(478 ± n, 268)`.
+2. **One continuous cubic-Bezier silhouette per tier.** No `L` commands. The lateral side (away from body centerline x=400) bulges more than the medial side — that's the asymmetric anatomy that makes muscles read as natural instead of tubular.
+3. **Cel-shaded FILL plates, not strokes**, for primary form light/shadow. Strokes are reserved for specular sheens, deltoid grooves, brachialis lines, and rim lights. The shading reads as painted depth at any render size — including the 180 px customizer thumbnail and the 600 px hero.
+4. **Specular sheen** is always a thin near-white stroke at low opacity (~0.3–0.6) placed on the bicep peak's brightest point. For `diamond`, layer two sheens (wide + narrow) for tighter catchlight.
+5. **Rim light** (gold + diamond only) is a bright `--hero-suit-light` stroke along the lateral silhouette edge. This is what separates the arm from the cape behind it at higher tiers.
+6. **Anatomy lines** (gold + diamond) are thin dark grooves at muscle-separation points: the deltoid-bicep junction and the brachialis edge below the bicep.
+7. **The gold wristband cuff stays identical across all tiers** — it's a metal accessory that doesn't flex.
+
+The five tiers all live in `_includes/se-gym-hero.svg` between the `data-hero-human-arms` opening `<g>` and the matching closing `</g>`. The animation `<animateTransform>` elements sit outside the muscle-tier blocks, at the `data-arm-side` level, so they're shared across tiers and never duplicated.
+
+### Adding a new muscle tier (e.g. "platinum")
+
+If you ever add a sixth tier:
+
+1. Register the new option in `MILESTONE_TIERS` and `MILESTONE_TOKENS` in [`js/se-gym-hero-avatar.js`](../../../js/se-gym-hero-avatar.js:~1134).
+2. Add a `<g data-hero-slot="milestone-power" data-hero-option="<new>" data-hero-muscle-zone="<zone>" display="none">` block in **all four** arm zones (`left-upper`, `left-forearm`, `right-upper`, `right-forearm`).
+3. Match the pivot coordinates above. Bicep peak should sit at roughly `y=205–220` (slightly closer to the elbow than to the shoulder — anatomically the bicep belly peaks ~60% of the way down from the shoulder).
+4. Keep the lateral peak farther from x=400 than the medial peak by at least 4 px (asymmetry).
+
+### Editing existing muscle tiers
+
+When tweaking an existing tier's silhouette, **keep the start and end points unchanged**. The path should always start at `M <shoulder_x> 268` (where `shoulder_x` varies by tier — e.g. 313 for none, 299 for diamond on the left) and the curves should always pass through `(322, 162)` for left or `(478, 162)` for right. Otherwise the elbow joint stops tracking the upper-arm bottom, and you get a visible disconnect during the press cycle.
+
 ## Animation: the lift cycle
 
 Three SVG `<animateTransform>` blocks drive the "lifting a barbell" feel:

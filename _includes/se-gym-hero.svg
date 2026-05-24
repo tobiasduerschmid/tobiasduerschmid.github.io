@@ -723,11 +723,32 @@
          The torso has only the small shared breathing lift; arms/bar rotate from joints.
          ============================================================ -->
     <g data-hero-kind-layer="human" data-hero-human-arms>
-      <!-- ===== LEFT ARM ===== -->
       <!-- ============================================================
-           ARM SHAPE — Coherent soft-flat limbs with nested shoulder,
-           elbow, forearm, and wrist plates. The bones rotate, while
-           overlaps and cel-shaded plates keep the silhouette organic.
+           ARM MUSCLE TIERS — Five swappable arm builds, toggled by the
+           user's milestone tier via data-hero-slot="milestone-power":
+              none    — untrained, slim cylindrical sleeve
+              bronze  — toned, faint bicep curve, hint of deltoid dome
+              silver  — athletic, clear bicep peak, deltoid groove
+              gold    — muscular, defined bicep belly + peak, brachialis
+              diamond — bodybuilder, dramatic peak, rim light, vein hint
+           Construction follows the project's avatar-svg-design doctrine:
+             1. ONE continuous cubic-Bezier silhouette path per arm
+                (no `L` line commands — every edge is curved).
+             2. Asymmetric anatomy — the LATERAL side (away from body
+                centerline x=400) bulges more than the MEDIAL side, so
+                arms read as real anatomy rather than mirror tubes.
+             3. Cel-shaded FILL PLATES (not strokes) for primary form
+                light/shadow — gives painted depth at any render size.
+             4. Specular sheen — a thin near-white stroke on the bicep
+                peak's apex sells the suit as a glossy surface and
+                tracks the same lighting as the cape/boot speculars.
+             5. Rim light (gold/diamond only) — a bright lateral edge
+                stroke that separates the silhouette from the cape.
+             6. Anatomy lines (gold/diamond) — thin dark grooves at the
+                deltoid-bicep junction and brachialis edge.
+           All shoulder (322/478, 268) and elbow (322/478, 162) pivots
+           are identical across tiers so the overhead-press animation
+           swaps tiers without recomputing rotation centres.
            ============================================================ -->
       <g data-arm-side="left-upper">
         <animateTransform attributeName="transform" type="rotate"
@@ -735,26 +756,142 @@
                           keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                           calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
 
-        <!-- LEFT UPPER ARM — smooth tapered sleeve from shoulder (y=268) to elbow (y=162) -->
-        <path d="M 308 268
-                 C 304 248, 304 218, 311 192
-                 C 316 175, 321 166, 324 162
-                 C 327 166, 332 175, 337 192
-                 C 344 218, 344 248, 340 268
-                 C 329 274, 319 274, 308 268 Z"
-              fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
-              stroke-width="2.25" stroke-linejoin="round"/>
-        <!-- Shoulder cap shadow (subtle inner shadow at root) -->
-        <path d="M 308 268 C 316 272, 332 272, 340 268 C 332 274, 316 274, 308 268 Z"
-              fill="var(--hero-suit-dark, #064b7b)" opacity=".18"/>
-        <!-- Bicep highlight (light side) -->
-        <path d="M 314 250 C 311 222, 313 192, 318 174"
-              stroke="var(--hero-suit-light, #68c4ea)" stroke-width="2" fill="none"
-              stroke-linecap="round" opacity=".42"/>
-        <!-- Back shadow stroke -->
-        <path d="M 334 250 C 337 222, 335 192, 330 174"
-              stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.6" fill="none"
-              stroke-linecap="round" opacity=".3"/>
+        <!-- ===== LEFT UPPER ARM — TIER none (slim, untrained) ===== -->
+        <g data-hero-slot="milestone-power" data-hero-option="none" data-hero-muscle-zone="left-upper">
+          <path d="M 313 268
+                   C 311 248, 311 220, 313 196
+                   C 315 178, 320 168, 322 162
+                   C 324 168, 329 178, 331 196
+                   C 333 220, 333 248, 331 268
+                   C 322 272, 322 272, 313 268 Z"
+                fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+                stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round"/>
+          <path d="M 313 268 C 318 271, 326 271, 331 268 C 326 273, 318 273, 313 268 Z"
+                fill="var(--hero-suit-dark, #064b7b)" opacity=".16"/>
+          <path d="M 316 246 C 314 222, 314 196, 317 176 C 319 196, 318 222, 318 246 Z"
+                fill="var(--hero-suit-light, #68c4ea)" opacity=".18"/>
+          <path d="M 328 246 C 330 222, 330 196, 327 176 C 325 196, 326 222, 326 246 Z"
+                fill="var(--hero-suit-dark, #064b7b)" opacity=".16"/>
+        </g>
+        <!-- ===== LEFT UPPER ARM — TIER bronze (toned, gentle bicep) ===== -->
+        <g data-hero-slot="milestone-power" data-hero-option="bronze" data-hero-muscle-zone="left-upper" display="none">
+          <path d="M 309 268
+                   C 304 246, 304 220, 311 194
+                   C 315 178, 320 168, 322 162
+                   C 324 168, 329 178, 333 194
+                   C 339 220, 339 246, 334 268
+                   C 322 273, 322 273, 309 268 Z"
+                fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+                stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round"/>
+          <path d="M 309 268 C 317 272, 327 272, 334 268 C 327 274, 317 274, 309 268 Z"
+                fill="var(--hero-suit-dark, #064b7b)" opacity=".22"/>
+          <path d="M 312 248 C 307 222, 310 196, 316 176 C 320 196, 316 222, 317 248 Z"
+                fill="var(--hero-suit-light, #68c4ea)" opacity=".26"/>
+          <path d="M 332 248 C 336 222, 333 196, 327 176 C 324 196, 328 222, 327 248 Z"
+                fill="var(--hero-suit-dark, #064b7b)" opacity=".24"/>
+          <path d="M 308 252 C 305 246, 304 238, 306 230"
+                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.4" fill="none"
+                stroke-linecap="round" opacity=".26"/>
+          <path d="M 311 224 C 310 220, 311 215, 314 213"
+                stroke="#ffffff" stroke-width="1.05" fill="none"
+                stroke-linecap="round" opacity=".34"/>
+        </g>
+        <!-- ===== LEFT UPPER ARM — TIER silver (athletic, clear bicep peak) ===== -->
+        <g data-hero-slot="milestone-power" data-hero-option="silver" data-hero-muscle-zone="left-upper" display="none">
+          <path d="M 305 268
+                   C 297 244, 294 214, 305 184
+                   C 312 172, 319 167, 322 162
+                   C 325 167, 332 172, 337 184
+                   C 346 214, 343 244, 336 268
+                   C 322 274, 322 274, 305 268 Z"
+                fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+                stroke-width="2.35" stroke-linejoin="round" stroke-linecap="round"/>
+          <path d="M 305 268 C 315 272, 328 272, 336 268 C 328 274, 315 274, 305 268 Z"
+                fill="var(--hero-suit-dark, #064b7b)" opacity=".24"/>
+          <path d="M 309 246 C 302 220, 308 192, 316 173 C 320 192, 314 220, 314 246 Z"
+                fill="var(--hero-suit-light, #68c4ea)" opacity=".32"/>
+          <path d="M 297 220 C 296 213, 299 206, 304 202 C 307 206, 307 214, 304 220 Z"
+                fill="var(--hero-suit-light, #68c4ea)" opacity=".42"/>
+          <path d="M 335 246 C 340 220, 336 192, 329 173 C 325 192, 331 220, 330 246 Z"
+                fill="var(--hero-suit-dark, #064b7b)" opacity=".28"/>
+          <path d="M 306 252 C 302 246, 300 236, 303 226"
+                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.6" fill="none"
+                stroke-linecap="round" opacity=".34"/>
+          <path d="M 298 214 C 296 208, 298 202, 302 198"
+                stroke="#ffffff" stroke-width="1.25" fill="none"
+                stroke-linecap="round" opacity=".4"/>
+        </g>
+        <!-- ===== LEFT UPPER ARM — TIER gold (muscular, defined separation) ===== -->
+        <g data-hero-slot="milestone-power" data-hero-option="gold" data-hero-muscle-zone="left-upper" display="none">
+          <path d="M 302 268
+                   C 290 242, 286 212, 298 180
+                   C 306 167, 316 165, 322 162
+                   C 327 165, 333 167, 340 180
+                   C 352 212, 348 242, 339 268
+                   C 322 275, 322 275, 302 268 Z"
+                fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+                stroke-width="2.45" stroke-linejoin="round" stroke-linecap="round"/>
+          <path d="M 302 268 C 314 273, 329 273, 339 268 C 329 275, 314 275, 302 268 Z"
+                fill="var(--hero-suit-dark, #064b7b)" opacity=".26"/>
+          <path d="M 305 246 C 296 216, 305 188, 314 168 C 320 188, 312 216, 311 246 Z"
+                fill="var(--hero-suit-light, #68c4ea)" opacity=".36"/>
+          <path d="M 290 214 C 288 206, 292 200, 297 196 C 300 200, 300 208, 297 214 Z"
+                fill="var(--hero-suit-light, #68c4ea)" opacity=".5"/>
+          <path d="M 337 244 C 343 218, 339 188, 330 168 C 327 188, 333 218, 332 244 Z"
+                fill="var(--hero-suit-dark, #064b7b)" opacity=".32"/>
+          <path d="M 304 252 C 299 246, 297 234, 300 222"
+                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.8" fill="none"
+                stroke-linecap="round" opacity=".4"/>
+          <path d="M 309 178 C 313 172, 318 168, 321 167"
+                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.2" fill="none"
+                stroke-linecap="round" opacity=".3"/>
+          <path d="M 291 246 C 288 220, 290 194, 297 175"
+                stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.25" fill="none"
+                stroke-linecap="round" opacity=".34"/>
+          <path d="M 290 206 C 289 200, 292 195, 295 192"
+                stroke="#ffffff" stroke-width="1.4" fill="none"
+                stroke-linecap="round" opacity=".44"/>
+        </g>
+        <!-- ===== LEFT UPPER ARM — TIER diamond (bodybuilder, dramatic) ===== -->
+        <g data-hero-slot="milestone-power" data-hero-option="diamond" data-hero-muscle-zone="left-upper" display="none">
+          <path d="M 299 268
+                   C 284 240, 274 208, 290 174
+                   C 302 162, 314 163, 322 162
+                   C 330 163, 339 165, 346 178
+                   C 360 208, 352 240, 340 268
+                   C 322 277, 322 277, 299 268 Z"
+                fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+                stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+          <path d="M 299 268 C 312 274, 331 274, 340 268 C 331 276, 312 276, 299 268 Z"
+                fill="var(--hero-suit-dark, #064b7b)" opacity=".3"/>
+          <path d="M 302 246 C 290 214, 302 186, 311 164 C 318 186, 308 214, 308 246 Z"
+                fill="var(--hero-suit-light, #68c4ea)" opacity=".42"/>
+          <path d="M 283 210 C 281 202, 286 196, 291 192 C 295 196, 295 204, 291 210 Z"
+                fill="var(--hero-suit-light, #68c4ea)" opacity=".58"/>
+          <path d="M 340 244 C 348 218, 342 186, 332 164 C 329 186, 335 216, 334 244 Z"
+                fill="var(--hero-suit-dark, #064b7b)" opacity=".36"/>
+          <path d="M 302 254 C 295 246, 292 232, 296 218"
+                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="2" fill="none"
+                stroke-linecap="round" opacity=".46"/>
+          <path d="M 299 240 C 296 230, 297 220, 300 212"
+                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.3" fill="none"
+                stroke-linecap="round" opacity=".32"/>
+          <path d="M 305 178 C 311 172, 317 168, 322 166"
+                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.4" fill="none"
+                stroke-linecap="round" opacity=".34"/>
+          <path d="M 287 244 C 283 214, 285 186, 294 168"
+                stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.5" fill="none"
+                stroke-linecap="round" opacity=".48"/>
+          <path d="M 283 202 C 281 196, 285 190, 290 188"
+                stroke="#ffffff" stroke-width="1.6" fill="none"
+                stroke-linecap="round" opacity=".52"/>
+          <path d="M 286 200 C 285 196, 288 193, 291 192"
+                stroke="#ffffff" stroke-width="0.85" fill="none"
+                stroke-linecap="round" opacity=".62"/>
+          <path d="M 304 196 C 305 206, 304 218, 302 226"
+                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="0.75" fill="none"
+                stroke-linecap="round" opacity=".22"/>
+        </g>
 
         <!-- ===== Forearm group — pivots at ELBOW (322,162) ===== -->
         <g data-arm-side="left-forearm">
@@ -763,54 +900,257 @@
                             keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                             calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
 
-          <!-- LEFT FOREARM — smooth tapered tube from elbow (y=164) to wrist (y=68) -->
-          <path d="M 314 164
-                   C 311 142, 312 115, 316 90
-                   C 318 78, 321 71, 322 68
-                   C 324 71, 326 78, 328 90
-                   C 332 115, 333 142, 330 164
-                   C 326 168, 318 168, 314 164 Z"
-                fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
-                stroke-width="2.1" stroke-linejoin="round"/>
-          <!-- Forearm highlight (light side) -->
-          <path d="M 317 150 C 314 125, 315 95, 319 78"
-                stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.75" fill="none"
-                stroke-linecap="round" opacity=".42"/>
-          <!-- Forearm back shadow -->
-          <path d="M 331 150 C 334 125, 332 100, 327 80"
-                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.5" fill="none"
-                stroke-linecap="round" opacity=".3"/>
-          <path d="M 314 78 C 316 72, 328 72, 330 78 L 329 86 C 326 89, 318 89, 315 86 Z"
+          <!-- ===== LEFT FOREARM — TIER none ===== -->
+          <g data-hero-slot="milestone-power" data-hero-option="none" data-hero-muscle-zone="left-forearm">
+            <path d="M 316 164
+                     C 314 142, 315 114, 318 90
+                     C 320 78, 321 70, 322 68
+                     C 323 70, 324 78, 326 90
+                     C 329 114, 330 142, 328 164
+                     C 325 168, 319 168, 316 164 Z"
+                  fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+                  stroke-width="2.1" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M 318 150 C 316 126, 317 96, 320 80 C 322 96, 320 126, 320 150 Z"
+                  fill="var(--hero-suit-light, #68c4ea)" opacity=".18"/>
+            <path d="M 326 150 C 328 126, 327 100, 324 82 C 322 100, 324 126, 324 150 Z"
+                  fill="var(--hero-suit-dark, #064b7b)" opacity=".16"/>
+          </g>
+          <!-- ===== LEFT FOREARM — TIER bronze ===== -->
+          <g data-hero-slot="milestone-power" data-hero-option="bronze" data-hero-muscle-zone="left-forearm" display="none">
+            <path d="M 314 164
+                     C 311 138, 314 110, 318 88
+                     C 320 76, 321 70, 322 68
+                     C 323 70, 325 76, 327 88
+                     C 331 110, 333 138, 330 164
+                     C 326 168, 318 168, 314 164 Z"
+                  fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+                  stroke-width="2.15" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M 316 150 C 313 126, 316 96, 320 78 C 322 96, 318 126, 319 150 Z"
+                  fill="var(--hero-suit-light, #68c4ea)" opacity=".26"/>
+            <path d="M 328 150 C 331 124, 328 96, 324 80 C 322 96, 326 124, 325 150 Z"
+                  fill="var(--hero-suit-dark, #064b7b)" opacity=".22"/>
+          </g>
+          <!-- ===== LEFT FOREARM — TIER silver ===== -->
+          <g data-hero-slot="milestone-power" data-hero-option="silver" data-hero-muscle-zone="left-forearm" display="none">
+            <path d="M 312 164
+                     C 308 138, 311 108, 316 86
+                     C 318 76, 321 70, 322 68
+                     C 323 70, 326 76, 328 86
+                     C 333 108, 336 138, 332 164
+                     C 327 168, 317 168, 312 164 Z"
+                  fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+                  stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M 313 150 C 310 128, 314 96, 318 78 C 322 96, 316 128, 317 150 Z"
+                  fill="var(--hero-suit-light, #68c4ea)" opacity=".3"/>
+            <path d="M 307 130 C 305 122, 308 114, 311 110 C 313 114, 312 122, 309 128 Z"
+                  fill="var(--hero-suit-light, #68c4ea)" opacity=".4"/>
+            <path d="M 330 150 C 333 124, 330 94, 326 78 C 323 94, 327 124, 326 150 Z"
+                  fill="var(--hero-suit-dark, #064b7b)" opacity=".26"/>
+            <path d="M 308 124 C 307 118, 309 112, 312 110"
+                  stroke="#ffffff" stroke-width="0.9" fill="none"
+                  stroke-linecap="round" opacity=".26"/>
+          </g>
+          <!-- ===== LEFT FOREARM — TIER gold ===== -->
+          <g data-hero-slot="milestone-power" data-hero-option="gold" data-hero-muscle-zone="left-forearm" display="none">
+            <path d="M 310 164
+                     C 304 136, 308 106, 314 82
+                     C 317 73, 320 69, 322 68
+                     C 324 69, 327 73, 330 82
+                     C 336 106, 340 136, 334 164
+                     C 328 168, 316 168, 310 164 Z"
+                  fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+                  stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M 311 150 C 306 124, 312 92, 317 74 C 322 92, 314 124, 315 150 Z"
+                  fill="var(--hero-suit-light, #68c4ea)" opacity=".34"/>
+            <path d="M 304 126 C 302 118, 306 110, 310 106 C 313 110, 311 118, 308 124 Z"
+                  fill="var(--hero-suit-light, #68c4ea)" opacity=".46"/>
+            <path d="M 333 150 C 337 122, 334 90, 329 76 C 326 90, 331 122, 330 150 Z"
+                  fill="var(--hero-suit-dark, #064b7b)" opacity=".3"/>
+            <path d="M 305 120 C 303 114, 305 108, 308 106"
+                  stroke="#ffffff" stroke-width="1.1" fill="none"
+                  stroke-linecap="round" opacity=".34"/>
+            <path d="M 306 148 C 305 130, 308 110, 312 92"
+                  stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.1" fill="none"
+                  stroke-linecap="round" opacity=".3"/>
+          </g>
+          <!-- ===== LEFT FOREARM — TIER diamond ===== -->
+          <g data-hero-slot="milestone-power" data-hero-option="diamond" data-hero-muscle-zone="left-forearm" display="none">
+            <path d="M 306 164
+                     C 298 134, 303 102, 311 78
+                     C 315 70, 320 69, 322 68
+                     C 324 69, 328 70, 332 78
+                     C 340 102, 346 134, 338 164
+                     C 330 168, 314 168, 306 164 Z"
+                  fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+                  stroke-width="2.45" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M 308 150 C 302 122, 308 88, 314 72 C 320 88, 312 122, 313 150 Z"
+                  fill="var(--hero-suit-light, #68c4ea)" opacity=".4"/>
+            <path d="M 300 124 C 298 116, 303 106, 308 102 C 312 106, 310 116, 305 124 Z"
+                  fill="var(--hero-suit-light, #68c4ea)" opacity=".54"/>
+            <path d="M 335 150 C 340 120, 336 86, 330 72 C 327 86, 333 120, 332 150 Z"
+                  fill="var(--hero-suit-dark, #064b7b)" opacity=".34"/>
+            <path d="M 301 118 C 299 110, 302 104, 306 102"
+                  stroke="#ffffff" stroke-width="1.3" fill="none"
+                  stroke-linecap="round" opacity=".4"/>
+            <path d="M 303 148 C 301 122, 304 92, 310 74"
+                  stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.4" fill="none"
+                  stroke-linecap="round" opacity=".42"/>
+            <path d="M 318 108 C 320 122, 320 134, 318 146"
+                  stroke="var(--hero-suit-dark, #064b7b)" stroke-width="0.7" fill="none"
+                  stroke-linecap="round" opacity=".24"/>
+          </g>
+
+          <!-- Gold wristband cuff (identical across muscle tiers) -->
+          <path d="M 314 78 C 316 72, 328 72, 330 78 C 329 80, 329 84, 329 86 C 326 89, 318 89, 315 86 C 315 84, 315 80, 314 78 Z"
                 fill="url(#gold-{{ hero_variant }})" stroke="#6f4f00" stroke-width="1.50" stroke-linejoin="round"/>
           <path d="M 316 80 C 320 77, 326 77, 329 80" stroke="#fff6c0" stroke-width="1.35"
                 fill="none" stroke-linecap="round" opacity=".76"/>
         </g>
       </g>
 
-      <!-- ===== RIGHT ARM (mirror of left) ===== -->
+      <!-- ===== RIGHT ARM (mirror of left across x=400) ===== -->
       <g data-arm-side="right-upper">
         <animateTransform attributeName="transform" type="rotate"
                           values="4 478 268; 28 478 268; 4 478 268"
                           keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                           calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
 
-        <!-- RIGHT UPPER ARM (mirror of left across x=400) -->
-        <path d="M 492 268
-                 C 496 248, 496 218, 489 192
-                 C 484 175, 479 166, 476 162
-                 C 473 166, 468 175, 463 192
-                 C 456 218, 456 248, 460 268
-                 C 471 274, 481 274, 492 268 Z"
-              fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
-              stroke-width="2.25" stroke-linejoin="round"/>
-        <path d="M 492 268 C 484 272, 468 272, 460 268 C 468 274, 484 274, 492 268 Z"
-              fill="var(--hero-suit-dark, #064b7b)" opacity=".18"/>
-        <path d="M 486 250 C 489 222, 487 192, 482 174"
-              stroke="var(--hero-suit-light, #68c4ea)" stroke-width="2" fill="none"
-              stroke-linecap="round" opacity=".42"/>
-        <path d="M 466 250 C 463 222, 465 192, 470 174"
-              stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.6" fill="none"
-              stroke-linecap="round" opacity=".3"/>
+        <!-- ===== RIGHT UPPER ARM — TIER none ===== -->
+        <g data-hero-slot="milestone-power" data-hero-option="none" data-hero-muscle-zone="right-upper">
+          <path d="M 487 268
+                   C 489 248, 489 220, 487 196
+                   C 485 178, 480 168, 478 162
+                   C 476 168, 471 178, 469 196
+                   C 467 220, 467 248, 469 268
+                   C 478 272, 478 272, 487 268 Z"
+                fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+                stroke-width="2.25" stroke-linejoin="round" stroke-linecap="round"/>
+          <path d="M 487 268 C 482 271, 474 271, 469 268 C 474 273, 482 273, 487 268 Z"
+                fill="var(--hero-suit-dark, #064b7b)" opacity=".16"/>
+          <path d="M 484 246 C 486 222, 486 196, 483 176 C 481 196, 482 222, 482 246 Z"
+                fill="var(--hero-suit-light, #68c4ea)" opacity=".18"/>
+          <path d="M 472 246 C 470 222, 470 196, 473 176 C 475 196, 474 222, 474 246 Z"
+                fill="var(--hero-suit-dark, #064b7b)" opacity=".16"/>
+        </g>
+        <!-- ===== RIGHT UPPER ARM — TIER bronze ===== -->
+        <g data-hero-slot="milestone-power" data-hero-option="bronze" data-hero-muscle-zone="right-upper" display="none">
+          <path d="M 491 268
+                   C 496 246, 496 220, 489 194
+                   C 485 178, 480 168, 478 162
+                   C 476 168, 471 178, 467 194
+                   C 461 220, 461 246, 466 268
+                   C 478 273, 478 273, 491 268 Z"
+                fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+                stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round"/>
+          <path d="M 491 268 C 483 272, 473 272, 466 268 C 473 274, 483 274, 491 268 Z"
+                fill="var(--hero-suit-dark, #064b7b)" opacity=".22"/>
+          <path d="M 488 248 C 493 222, 490 196, 484 176 C 480 196, 484 222, 483 248 Z"
+                fill="var(--hero-suit-light, #68c4ea)" opacity=".26"/>
+          <path d="M 468 248 C 464 222, 467 196, 473 176 C 476 196, 472 222, 473 248 Z"
+                fill="var(--hero-suit-dark, #064b7b)" opacity=".24"/>
+          <path d="M 492 252 C 495 246, 496 238, 494 230"
+                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.4" fill="none"
+                stroke-linecap="round" opacity=".26"/>
+          <path d="M 489 224 C 490 220, 489 215, 486 213"
+                stroke="#ffffff" stroke-width="1.05" fill="none"
+                stroke-linecap="round" opacity=".34"/>
+        </g>
+        <!-- ===== RIGHT UPPER ARM — TIER silver ===== -->
+        <g data-hero-slot="milestone-power" data-hero-option="silver" data-hero-muscle-zone="right-upper" display="none">
+          <path d="M 495 268
+                   C 503 244, 506 214, 495 184
+                   C 488 172, 481 167, 478 162
+                   C 475 167, 468 172, 463 184
+                   C 454 214, 457 244, 464 268
+                   C 478 274, 478 274, 495 268 Z"
+                fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+                stroke-width="2.35" stroke-linejoin="round" stroke-linecap="round"/>
+          <path d="M 495 268 C 485 272, 472 272, 464 268 C 472 274, 485 274, 495 268 Z"
+                fill="var(--hero-suit-dark, #064b7b)" opacity=".24"/>
+          <path d="M 491 246 C 498 220, 492 192, 484 173 C 480 192, 486 220, 486 246 Z"
+                fill="var(--hero-suit-light, #68c4ea)" opacity=".32"/>
+          <path d="M 503 220 C 504 213, 501 206, 496 202 C 493 206, 493 214, 496 220 Z"
+                fill="var(--hero-suit-light, #68c4ea)" opacity=".42"/>
+          <path d="M 465 246 C 460 220, 464 192, 471 173 C 475 192, 469 220, 470 246 Z"
+                fill="var(--hero-suit-dark, #064b7b)" opacity=".28"/>
+          <path d="M 494 252 C 498 246, 500 236, 497 226"
+                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.6" fill="none"
+                stroke-linecap="round" opacity=".34"/>
+          <path d="M 502 214 C 504 208, 502 202, 498 198"
+                stroke="#ffffff" stroke-width="1.25" fill="none"
+                stroke-linecap="round" opacity=".4"/>
+        </g>
+        <!-- ===== RIGHT UPPER ARM — TIER gold ===== -->
+        <g data-hero-slot="milestone-power" data-hero-option="gold" data-hero-muscle-zone="right-upper" display="none">
+          <path d="M 498 268
+                   C 510 242, 514 212, 502 180
+                   C 494 167, 484 165, 478 162
+                   C 473 165, 467 167, 460 180
+                   C 448 212, 452 242, 461 268
+                   C 478 275, 478 275, 498 268 Z"
+                fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+                stroke-width="2.45" stroke-linejoin="round" stroke-linecap="round"/>
+          <path d="M 498 268 C 486 273, 471 273, 461 268 C 471 275, 486 275, 498 268 Z"
+                fill="var(--hero-suit-dark, #064b7b)" opacity=".26"/>
+          <path d="M 495 246 C 504 216, 495 188, 486 168 C 480 188, 488 216, 489 246 Z"
+                fill="var(--hero-suit-light, #68c4ea)" opacity=".36"/>
+          <path d="M 510 214 C 512 206, 508 200, 503 196 C 500 200, 500 208, 503 214 Z"
+                fill="var(--hero-suit-light, #68c4ea)" opacity=".5"/>
+          <path d="M 463 244 C 457 218, 461 188, 470 168 C 473 188, 467 218, 468 244 Z"
+                fill="var(--hero-suit-dark, #064b7b)" opacity=".32"/>
+          <path d="M 496 252 C 501 246, 503 234, 500 222"
+                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.8" fill="none"
+                stroke-linecap="round" opacity=".4"/>
+          <path d="M 491 178 C 487 172, 482 168, 479 167"
+                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.2" fill="none"
+                stroke-linecap="round" opacity=".3"/>
+          <path d="M 509 246 C 512 220, 510 194, 503 175"
+                stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.25" fill="none"
+                stroke-linecap="round" opacity=".34"/>
+          <path d="M 510 206 C 511 200, 508 195, 505 192"
+                stroke="#ffffff" stroke-width="1.4" fill="none"
+                stroke-linecap="round" opacity=".44"/>
+        </g>
+        <!-- ===== RIGHT UPPER ARM — TIER diamond ===== -->
+        <g data-hero-slot="milestone-power" data-hero-option="diamond" data-hero-muscle-zone="right-upper" display="none">
+          <path d="M 501 268
+                   C 516 240, 526 208, 510 174
+                   C 498 162, 486 163, 478 162
+                   C 470 163, 461 165, 454 178
+                   C 440 208, 448 240, 460 268
+                   C 478 277, 478 277, 501 268 Z"
+                fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+                stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"/>
+          <path d="M 501 268 C 488 274, 469 274, 460 268 C 469 276, 488 276, 501 268 Z"
+                fill="var(--hero-suit-dark, #064b7b)" opacity=".3"/>
+          <path d="M 498 246 C 510 214, 498 186, 489 164 C 482 186, 492 214, 492 246 Z"
+                fill="var(--hero-suit-light, #68c4ea)" opacity=".42"/>
+          <path d="M 517 210 C 519 202, 514 196, 509 192 C 505 196, 505 204, 509 210 Z"
+                fill="var(--hero-suit-light, #68c4ea)" opacity=".58"/>
+          <path d="M 460 244 C 452 218, 458 186, 468 164 C 471 186, 465 216, 466 244 Z"
+                fill="var(--hero-suit-dark, #064b7b)" opacity=".36"/>
+          <path d="M 498 254 C 505 246, 508 232, 504 218"
+                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="2" fill="none"
+                stroke-linecap="round" opacity=".46"/>
+          <path d="M 501 240 C 504 230, 503 220, 500 212"
+                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.3" fill="none"
+                stroke-linecap="round" opacity=".32"/>
+          <path d="M 495 178 C 489 172, 483 168, 478 166"
+                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.4" fill="none"
+                stroke-linecap="round" opacity=".34"/>
+          <path d="M 513 244 C 517 214, 515 186, 506 168"
+                stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.5" fill="none"
+                stroke-linecap="round" opacity=".48"/>
+          <path d="M 517 202 C 519 196, 515 190, 510 188"
+                stroke="#ffffff" stroke-width="1.6" fill="none"
+                stroke-linecap="round" opacity=".52"/>
+          <path d="M 514 200 C 515 196, 512 193, 509 192"
+                stroke="#ffffff" stroke-width="0.85" fill="none"
+                stroke-linecap="round" opacity=".62"/>
+          <path d="M 496 196 C 495 206, 496 218, 498 226"
+                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="0.75" fill="none"
+                stroke-linecap="round" opacity=".22"/>
+        </g>
 
         <g data-arm-side="right-forearm">
           <animateTransform attributeName="transform" type="rotate"
@@ -818,22 +1158,108 @@
                             keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                             calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
 
-          <!-- RIGHT FOREARM (mirror of left across x=400) -->
-          <path d="M 486 164
-                   C 489 142, 488 115, 484 90
-                   C 482 78, 479 71, 478 68
-                   C 476 71, 474 78, 472 90
-                   C 468 115, 467 142, 470 164
-                   C 474 168, 482 168, 486 164 Z"
-                fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
-                stroke-width="2.1" stroke-linejoin="round"/>
-          <path d="M 483 150 C 486 125, 485 95, 481 78"
-                stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.75" fill="none"
-                stroke-linecap="round" opacity=".42"/>
-          <path d="M 469 150 C 466 125, 468 100, 473 80"
-                stroke="var(--hero-suit-dark, #064b7b)" stroke-width="1.5" fill="none"
-                stroke-linecap="round" opacity=".3"/>
-          <path d="M 486 78 C 484 72, 472 72, 470 78 L 471 86 C 474 89, 482 89, 485 86 Z"
+          <!-- ===== RIGHT FOREARM — TIER none ===== -->
+          <g data-hero-slot="milestone-power" data-hero-option="none" data-hero-muscle-zone="right-forearm">
+            <path d="M 484 164
+                     C 486 142, 485 114, 482 90
+                     C 480 78, 479 70, 478 68
+                     C 477 70, 476 78, 474 90
+                     C 471 114, 470 142, 472 164
+                     C 475 168, 481 168, 484 164 Z"
+                  fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+                  stroke-width="2.1" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M 482 150 C 484 126, 483 96, 480 80 C 478 96, 480 126, 480 150 Z"
+                  fill="var(--hero-suit-light, #68c4ea)" opacity=".18"/>
+            <path d="M 474 150 C 472 126, 473 100, 476 82 C 478 100, 476 126, 476 150 Z"
+                  fill="var(--hero-suit-dark, #064b7b)" opacity=".16"/>
+          </g>
+          <!-- ===== RIGHT FOREARM — TIER bronze ===== -->
+          <g data-hero-slot="milestone-power" data-hero-option="bronze" data-hero-muscle-zone="right-forearm" display="none">
+            <path d="M 486 164
+                     C 489 138, 486 110, 482 88
+                     C 480 76, 479 70, 478 68
+                     C 477 70, 475 76, 473 88
+                     C 469 110, 467 138, 470 164
+                     C 474 168, 482 168, 486 164 Z"
+                  fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+                  stroke-width="2.15" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M 484 150 C 487 126, 484 96, 480 78 C 478 96, 482 126, 481 150 Z"
+                  fill="var(--hero-suit-light, #68c4ea)" opacity=".26"/>
+            <path d="M 472 150 C 469 124, 472 96, 476 80 C 478 96, 474 124, 475 150 Z"
+                  fill="var(--hero-suit-dark, #064b7b)" opacity=".22"/>
+          </g>
+          <!-- ===== RIGHT FOREARM — TIER silver ===== -->
+          <g data-hero-slot="milestone-power" data-hero-option="silver" data-hero-muscle-zone="right-forearm" display="none">
+            <path d="M 488 164
+                     C 492 138, 489 108, 484 86
+                     C 482 76, 479 70, 478 68
+                     C 477 70, 474 76, 472 86
+                     C 467 108, 464 138, 468 164
+                     C 473 168, 483 168, 488 164 Z"
+                  fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+                  stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M 487 150 C 490 128, 486 96, 482 78 C 478 96, 484 128, 483 150 Z"
+                  fill="var(--hero-suit-light, #68c4ea)" opacity=".3"/>
+            <path d="M 493 130 C 495 122, 492 114, 489 110 C 487 114, 488 122, 491 128 Z"
+                  fill="var(--hero-suit-light, #68c4ea)" opacity=".4"/>
+            <path d="M 470 150 C 467 124, 470 94, 474 78 C 477 94, 473 124, 474 150 Z"
+                  fill="var(--hero-suit-dark, #064b7b)" opacity=".26"/>
+            <path d="M 492 124 C 493 118, 491 112, 488 110"
+                  stroke="#ffffff" stroke-width="0.9" fill="none"
+                  stroke-linecap="round" opacity=".26"/>
+          </g>
+          <!-- ===== RIGHT FOREARM — TIER gold ===== -->
+          <g data-hero-slot="milestone-power" data-hero-option="gold" data-hero-muscle-zone="right-forearm" display="none">
+            <path d="M 490 164
+                     C 496 136, 492 106, 486 82
+                     C 483 73, 480 69, 478 68
+                     C 476 69, 473 73, 470 82
+                     C 464 106, 460 136, 466 164
+                     C 472 168, 484 168, 490 164 Z"
+                  fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+                  stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M 489 150 C 494 124, 488 92, 483 74 C 478 92, 486 124, 485 150 Z"
+                  fill="var(--hero-suit-light, #68c4ea)" opacity=".34"/>
+            <path d="M 496 126 C 498 118, 494 110, 490 106 C 487 110, 489 118, 492 124 Z"
+                  fill="var(--hero-suit-light, #68c4ea)" opacity=".46"/>
+            <path d="M 467 150 C 463 122, 466 90, 471 76 C 474 90, 469 122, 470 150 Z"
+                  fill="var(--hero-suit-dark, #064b7b)" opacity=".3"/>
+            <path d="M 495 120 C 497 114, 495 108, 492 106"
+                  stroke="#ffffff" stroke-width="1.1" fill="none"
+                  stroke-linecap="round" opacity=".34"/>
+            <path d="M 494 148 C 495 130, 492 110, 488 92"
+                  stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.1" fill="none"
+                  stroke-linecap="round" opacity=".3"/>
+          </g>
+          <!-- ===== RIGHT FOREARM — TIER diamond ===== -->
+          <g data-hero-slot="milestone-power" data-hero-option="diamond" data-hero-muscle-zone="right-forearm" display="none">
+            <path d="M 494 164
+                     C 502 134, 497 102, 489 78
+                     C 485 70, 480 69, 478 68
+                     C 476 69, 472 70, 468 78
+                     C 460 102, 454 134, 462 164
+                     C 470 168, 486 168, 494 164 Z"
+                  fill="url(#suit-{{ hero_variant }})" stroke="var(--hero-suit-dark, #064b7b)"
+                  stroke-width="2.45" stroke-linejoin="round" stroke-linecap="round"/>
+            <path d="M 492 150 C 498 122, 492 88, 486 72 C 480 88, 488 122, 487 150 Z"
+                  fill="var(--hero-suit-light, #68c4ea)" opacity=".4"/>
+            <path d="M 500 124 C 502 116, 497 106, 492 102 C 488 106, 490 116, 495 124 Z"
+                  fill="var(--hero-suit-light, #68c4ea)" opacity=".54"/>
+            <path d="M 465 150 C 460 120, 464 86, 470 72 C 473 86, 467 120, 468 150 Z"
+                  fill="var(--hero-suit-dark, #064b7b)" opacity=".34"/>
+            <path d="M 499 118 C 501 110, 498 104, 494 102"
+                  stroke="#ffffff" stroke-width="1.3" fill="none"
+                  stroke-linecap="round" opacity=".4"/>
+            <path d="M 497 148 C 499 122, 496 92, 490 74"
+                  stroke="var(--hero-suit-light, #68c4ea)" stroke-width="1.4" fill="none"
+                  stroke-linecap="round" opacity=".42"/>
+            <path d="M 482 108 C 480 122, 480 134, 482 146"
+                  stroke="var(--hero-suit-dark, #064b7b)" stroke-width="0.7" fill="none"
+                  stroke-linecap="round" opacity=".24"/>
+          </g>
+
+          <!-- Gold wristband cuff (identical across muscle tiers) -->
+          <path d="M 486 78 C 484 72, 472 72, 470 78 C 471 80, 471 84, 471 86 C 474 89, 482 89, 485 86 C 485 84, 485 80, 486 78 Z"
                 fill="url(#gold-{{ hero_variant }})" stroke="#6f4f00" stroke-width="1.50" stroke-linejoin="round"/>
           <path d="M 484 80 C 480 77, 474 77, 471 80" stroke="#fff6c0" stroke-width="1.35"
                 fill="none" stroke-linecap="round" opacity=".76"/>
