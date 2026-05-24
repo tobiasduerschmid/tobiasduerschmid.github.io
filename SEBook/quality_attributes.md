@@ -80,6 +80,7 @@ A fundamental reality of software design is that **you cannot always maximize al
 Because trade-offs are unavoidable, architecture work is partly the discipline of prioritizing. A system cannot be "maximally secure, maximally fast, maximally cheap, maximally portable, and maximally easy to change" all at once. A good architecture identifies the few quality attributes that are load-bearing for this system, then accepts and documents the costs paid on other dimensions.
 
 # Architectural Tactics
+{: #quality-attribute-architectural-tactics }
 
 Architectural styles shape the dominant structure of a system. **Architectural tactics** are smaller reusable design moves that improve a particular quality attribute inside that structure. For example, a publish-subscribe system might use the heartbeat tactic to detect failed subscribers, and a layered web application might use caching to reduce request latency.
 

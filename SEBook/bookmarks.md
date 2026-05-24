@@ -53,7 +53,7 @@ layout: sebook
 
       var removeBtn = document.createElement('button');
       removeBtn.className = 'bookmark-remove-btn';
-      removeBtn.title = 'Remove bookmark';
+      removeBtn.setAttribute('data-original-title', 'Remove bookmark');
       removeBtn.setAttribute('aria-label', 'Remove bookmark for ' + escapeHtml(b.title));
       removeBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
       removeBtn.addEventListener('click', function () {

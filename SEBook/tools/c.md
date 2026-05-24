@@ -323,7 +323,7 @@ Each `.c` file is compiled *independently*. The compiler doesn't know that `prin
 
 There are two ways the linker can wire your program to a library:
 
-| | **Static linking** | **Dynamic linking** |
+| Question | **Static linking** | **Dynamic linking** |
 |---|---|---|
 | When | At link time (build) | At program-start time (or first call) |
 | What ships | One self-contained executable | Executable + separate `.so` / `.dll` files |

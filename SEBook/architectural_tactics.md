@@ -4,6 +4,7 @@ layout: sebook
 ---
 
 # Architectural Tactics
+{: #architectural-tactics-overview }
 
 Architectural styles describe the dominant shape of a system: pipe-and-filter, layered, publish-subscribe, client-server, and so on. **Architectural tactics** are smaller design moves that an architect uses to improve one quality attribute inside that larger shape.
 

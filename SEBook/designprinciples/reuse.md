@@ -239,11 +239,11 @@ NASA's empirical approach is a striking illustration: integration and system-lev
 
 ### The Cost-Benefit Scale for Internal Reuse
 
-| Effort to **adapt** the reusable module (cost) | Effort **saved** by reusing it (benefit) |
+| Adaptation cost                                | Reuse benefit                            |
 |------------------------------------------------|------------------------------------------|
 | Identifying implicit assumptions               | Implementation effort                    |
 | Effort to create / identify reusable modules   | Testing effort                           |
-|                                                | Free update propagation                  |
+| Ongoing compatibility checks                   | Free update propagation                  |
 
 ## A Special Case: Libraries vs. Frameworks
 
