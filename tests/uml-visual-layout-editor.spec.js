@@ -150,6 +150,40 @@ async function dragLocatorCenter(page, locator, dx, dy) {
   await page.mouse.up();
 }
 
+async function dragLocatorToPoint(page, locator, x, y) {
+  await expect(locator).toHaveCount(1, { timeout: 2_000 });
+  await locator.evaluate((el) => el.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
+  await expect
+    .poll(() => locator.boundingBox(), {
+      timeout: 2_000,
+      message: 'drag source should have a bounding box',
+    })
+    .not.toBeNull();
+  const box = await locator.boundingBox();
+  if (!box) throw new Error('drag source should have a bounding box');
+  const cx = box.x + box.width / 2;
+  const cy = box.y + box.height / 2;
+  await page.mouse.move(cx, cy);
+  await page.mouse.down();
+  await page.mouse.move(cx + 8, cy + 8, { steps: 2 });
+  await page.mouse.move(x, y, { steps: 8 });
+  await page.mouse.up();
+}
+
+async function clickLocatorCenter(page, locator) {
+  await expect(locator).toHaveCount(1, { timeout: 2_000 });
+  await locator.evaluate((el) => el.scrollIntoView({ block: 'nearest', inline: 'nearest' }));
+  await expect
+    .poll(() => locator.boundingBox(), {
+      timeout: 2_000,
+      message: 'click target should have a bounding box',
+    })
+    .not.toBeNull();
+  const box = await locator.boundingBox();
+  if (!box) throw new Error('click target should have a bounding box');
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+}
+
 async function clientRectForLocator(locator) {
   await expect(locator).toHaveCount(1, { timeout: 2_000 });
   return locator.evaluate((el) => {
@@ -1135,6 +1169,83 @@ test.describe('UML playground visual editor', () => {
     await expect(page.locator('#uml-pg-tool-status')).toContainText('Click the source element');
   });
 
+  test('UML editor keeps keyboard focus while nudging elements across rerenders', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+
+    const before = await nodeHitboxBox(page, 'Animal');
+    expect(before, 'Animal should have an editable hitbox before keyboard nudging').not.toBeNull();
+
+    await page.getByRole('button', { name: /Element Animal/ }).focus();
+    await expect(page.getByRole('button', { name: /Element Animal/ })).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByRole('button', { name: /Element Animal/ })).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.getByRole('button', { name: /Element Animal/ })).toBeFocused();
+
+    const after = await nodeHitboxBox(page, 'Animal');
+    expect(after, 'Animal should still have an editable hitbox after keyboard nudging').not.toBeNull();
+    expect(after.x).toBeCloseTo(before.x + 20, 0);
+  });
+
+  test('UML editor help shortcut only toggles tips while focus is inside the editor', async ({ page }) => {
+    await page.addInitScript(() => localStorage.removeItem('uml-pg-help-dismissed'));
+    await page.goto(UML_EDITOR_URL);
+    await page.waitForSelector('#uml-pg-edit');
+
+    const tips = page.locator('#uml-pg-help-banner');
+    await expect(tips).toBeVisible();
+    await page.getByRole('button', { name: /Got it/ }).click();
+    await expect(tips).toBeHidden();
+
+    const main = page.locator('#main-content');
+    await main.evaluate((el) => {
+      el.setAttribute('tabindex', '-1');
+      el.focus();
+    });
+    await expect(main).toBeFocused();
+    await page.keyboard.type('?');
+    await expect(tips).toBeHidden();
+
+    await page.getByRole('button', { name: '100%' }).focus();
+    await expect(page.getByRole('button', { name: '100%' })).toBeFocused();
+    await page.keyboard.type('?');
+    await expect(tips).toBeVisible();
+  });
+
+  test('palette tools can be dragged onto the preview to place elements and start relations', async ({ page }) => {
+    await page.goto(UML_EDITOR_URL);
+    await page.waitForSelector('#uml-pg-edit');
+    await page.selectOption('#uml-pg-type', 'class');
+    await setUmlSource(page, `@startuml
+class Animal @pos(80, 110)
+class Dog @pos(330, 110)
+@enduml`);
+
+    const paneBox = await page.locator('#uml-pg-preview-pane').boundingBox();
+    if (!paneBox) throw new Error('class preview pane should have a bounding box');
+    await dragLocatorToPoint(
+      page,
+      page.getByRole('button', { name: 'Add element: Interface', exact: true }),
+      paneBox.x + paneBox.width - 120,
+      paneBox.y + 110,
+    );
+    await expect(page.getByRole('button', { name: /Element IFace/ })).toHaveCount(1);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/interface IFace @pos/);
+
+    const animalBox = await page.getByRole('button', { name: /Element Animal/ }).boundingBox();
+    if (!animalBox) throw new Error('Animal keyboard target should have a bounding box');
+    await dragLocatorToPoint(
+      page,
+      page.getByRole('button', { name: 'Add relation: Dependency', exact: true }),
+      animalBox.x + animalBox.width / 2,
+      animalBox.y + animalBox.height / 2,
+    );
+    await expect(page.locator('#uml-pg-tool-status')).toContainText('Source = "Animal"');
+    await page.locator('.uml-pg-edit-hitbox[data-layout-id="Dog"]').click();
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/Animal \.\.> Dog/);
+  });
+
   test('layout selector supports every ArchUML layout mode and preserves shadow directives', async ({ page }) => {
     await page.goto(UML_EDITOR_URL);
     await page.waitForSelector('#uml-pg-edit');
@@ -1362,6 +1473,28 @@ deactivate controller
     expect(pythonText).toContain('worker = Worker()  # create lifeline');
     expect(pythonText).toContain('# Destroy lifeline worker');
     expect(pythonText).not.toContain('Unsupported sequence fragment');
+    await popup.close();
+  });
+
+  test('Python generation uses in-memory drafts when the editor does not persist diagrams', async ({ page }) => {
+    await page.goto(UML_EDITOR_URL);
+    await page.waitForSelector('#uml-pg-edit');
+    await page.selectOption('#uml-pg-type', 'class');
+    await setUmlSource(page, `@startuml
+class Application { +run(): None }
+@enduml`);
+
+    await page.selectOption('#uml-pg-type', 'sequence');
+    await setUmlSource(page, `@startuml
+actor user: User
+participant app: Application
+user -> app: run()
+@enduml`);
+
+    const { popup, pythonText } = await openGeneratedPythonWorkspace(page);
+    expect(pythonText).toContain('class Application:');
+    expect(pythonText).toContain('def run(self) -> None:');
+    expect(pythonText).toContain('app.run()');
     await popup.close();
   });
 
@@ -2155,9 +2288,14 @@ app -> db: second()
     await page.locator('#uml-pg-palette-relations .uml-pg-tool-btn[data-tool-spec="arrow"]').click();
     await page.locator('.uml-pg-edit-hitbox[data-layout-id="Box"]').click();
     await page.locator('.uml-pg-edit-hitbox[data-layout-id="Round"]').click();
-    await expect(page.locator('.uml-pg-edge-hitbox')).toHaveCount(1);
+    const relationSegment = page.getByRole('button', { name: /Relation segment/ });
+    await expect(relationSegment).toHaveCount(1);
 
-    await page.locator('.uml-pg-edge-hitbox').first().click();
+    await dragLocatorCenter(page, relationSegment, 0, 30);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/edge "rel:\d+" points="/);
+    await expect(page.getByRole('button', { name: /Relation segment/ })).toHaveCount(1);
+
+    await clickLocatorCenter(page, page.getByRole('button', { name: /Relation segment/ }));
     await page.getByLabel('Label').fill('stores');
     await page.getByLabel('Label').press('Enter');
     const source = await page.locator('#uml-pg-input').inputValue();
@@ -3960,6 +4098,26 @@ Player --> NormalTurnState
     await expect.poll(async () => {
       return page.evaluate((key) => localStorage.getItem(key), classKey);
     }).toBe('@startuml\n@enduml');
+  });
+
+  test('UML tutorial reset confirms once and restores the current diagram', async ({ page }) => {
+    const classKey = tutorialAutosaveKey('class');
+    await page.addInitScript((key) => localStorage.removeItem(key), classKey);
+    const dialogs = [];
+    page.on('dialog', async (dialog) => {
+      dialogs.push(dialog.message());
+      await dialog.accept();
+    });
+
+    await page.goto(MONOPOLY_TUTORIAL_URL);
+    await page.waitForSelector('#uml-pg-output');
+    await setUmlSource(page, `@startuml
+class Player
+@enduml`);
+
+    await page.locator('#resetStepBtn').click();
+    await expect(page.locator('#uml-pg-input')).toHaveValue('@startuml\n@enduml');
+    expect(dialogs).toHaveLength(1);
   });
 
   test('UML tutorial instructions render diagrams created in previous steps', async ({ page }) => {

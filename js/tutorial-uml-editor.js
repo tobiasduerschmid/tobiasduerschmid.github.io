@@ -520,7 +520,11 @@
       this.typeEl.dispatchEvent(new Event('change', { bubbles: true }));
     }
     var reset = this.root.querySelector('#uml-pg-reset-example');
-    if (reset) reset.click();
+    if (window.UMLEditor && typeof window.UMLEditor.resetCurrentDiagram === 'function') {
+      window.UMLEditor.resetCurrentDiagram({ confirm: false });
+    } else if (reset) {
+      reset.click();
+    }
   };
 
   UMLTutorialEditor.prototype.currentStepDiagramType = function () {
