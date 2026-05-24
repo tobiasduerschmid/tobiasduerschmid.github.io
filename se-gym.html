@@ -237,7 +237,7 @@ layout: sebook
                   weak areas.</p>
               </div>
               <button class="gym-add-btn" id="difficult-add-btn" data-type="difficult" data-id="difficult"
-                title="Add to gym" data-original-title="Add to gym" aria-label="Add Difficult Questions to gym">
+                data-original-title="Add to gym" aria-label="Add Difficult Questions to gym">
                 <i class="fa-solid fa-plus" aria-hidden="true"></i>
               </button>
             </div>
@@ -246,7 +246,7 @@ layout: sebook
 
         <div id="your-gym-header" class="gym-section-header">
           <h2><i class="fa-solid fa-dumbbell section-heading-icon" aria-hidden="true"></i> Your Gym</h2>
-          <button id="empty-gym-btn" class="gym-btn secondary" title="Empty your gym">Empty Gym</button>
+          <button id="empty-gym-btn" class="gym-btn secondary" data-original-title="Empty your gym">Empty Gym</button>
         </div>
         <div id="gym-selected">
           <p class="empty-gym-msg">Your gym is empty. Add quizzes and flashcard sets below.</p>
@@ -265,7 +265,7 @@ layout: sebook
               <span class="gym-item-count">({{ qdata.questions | size }} questions)</span>
               <p class="gym-item-desc">{{ qdata.description }}</p>
             </div>
-            <button class="gym-add-btn" data-type="quiz" data-id="{{ qid }}" title="Add to gym" data-original-title="Add to gym" aria-label="Add {{ qdata.title | escape }} to gym">
+            <button class="gym-add-btn" data-type="quiz" data-id="{{ qid }}" data-original-title="Add to gym" aria-label="Add {{ qdata.title | escape }} to gym">
               <i class="fa-solid fa-plus" aria-hidden="true"></i>
             </button>
           </div>
@@ -284,7 +284,7 @@ layout: sebook
               <span class="gym-item-count">({{ meta_count }} questions)</span>
               <p class="gym-item-desc">{{ qdata.description }}</p>
             </div>
-            <button class="gym-add-btn" data-type="quiz" data-id="{{ qid }}" title="Add to gym" data-original-title="Add to gym" aria-label="Add {{ qdata.title | escape }} to gym">
+            <button class="gym-add-btn" data-type="quiz" data-id="{{ qid }}" data-original-title="Add to gym" aria-label="Add {{ qdata.title | escape }} to gym">
               <i class="fa-solid fa-plus" aria-hidden="true"></i>
             </button>
           </div>
@@ -305,7 +305,7 @@ layout: sebook
               <span class="gym-item-count">({{ fcdata.cards | size }} cards)</span>
               <p class="gym-item-desc">{{ fcdata.description }}</p>
             </div>
-            <button class="gym-add-btn" data-type="flashcard" data-id="{{ fcid }}" title="Add to gym" data-original-title="Add to gym" aria-label="Add {{ fcdata.title | escape }} to gym">
+            <button class="gym-add-btn" data-type="flashcard" data-id="{{ fcid }}" data-original-title="Add to gym" aria-label="Add {{ fcdata.title | escape }} to gym">
               <i class="fa-solid fa-plus" aria-hidden="true"></i>
             </button>
           </div>
@@ -324,7 +324,7 @@ layout: sebook
               <span class="gym-item-count">({{ meta_count }} cards)</span>
               <p class="gym-item-desc">{{ fcdata.description }}</p>
             </div>
-            <button class="gym-add-btn" data-type="flashcard" data-id="{{ fcid }}" title="Add to gym" data-original-title="Add to gym" aria-label="Add {{ fcdata.title | escape }} to gym">
+            <button class="gym-add-btn" data-type="flashcard" data-id="{{ fcid }}" data-original-title="Add to gym" aria-label="Add {{ fcdata.title | escape }} to gym">
               <i class="fa-solid fa-plus" aria-hidden="true"></i>
             </button>
           </div>
@@ -347,7 +347,7 @@ layout: sebook
             <i class="fa-solid fa-upload"></i> Upload Tutorial Progress
           </button>
           <input type="file" id="upload-tutorial-progress-input" accept="application/json,.json"
-            title="Upload tutorial progress JSON" aria-label="Upload tutorial progress JSON"
+            data-original-title="Upload tutorial progress JSON" aria-label="Upload tutorial progress JSON"
             class="is-hidden" />
         </div>
         <p id="tutorial-progress-status" class="gym-summary-text" role="status" aria-live="polite" aria-atomic="true"></p>
@@ -576,7 +576,7 @@ layout: sebook
                 <i class="fa-solid fa-upload" aria-hidden="true"></i> Upload
               </button>
               <input type="file" id="hero-cust-upload-input" accept="application/json,.json"
-                title="Upload hero avatar JSON" aria-label="Upload hero avatar JSON" class="is-hidden">
+                data-original-title="Upload hero avatar JSON" aria-label="Upload hero avatar JSON" class="is-hidden">
               <span class="hero-cust-action-spacer" aria-hidden="true"></span>
               <button type="button" id="hero-cust-cancel" class="gym-btn secondary" data-hero-cust-action="cancel">Cancel</button>
               <button type="button" id="hero-cust-save" class="gym-btn primary" data-hero-cust-action="save">
@@ -868,7 +868,7 @@ layout: sebook
       var workoutTimerExtensionSeconds = 0;
       var workoutEndedByTimer = false;
       var lastTimedPracticeDrawCount = 0;
-      var requestedQuizIds = getRequestedQuizIds();
+      var requestedWorkoutEntries = getRequestedWorkoutEntries();
 
       // Per-difficulty tallies for the results breakdown. Each bucket is a
       // {seen, correct} pair; "untagged" collects cards with no difficulty.
@@ -900,35 +900,36 @@ layout: sebook
         });
       }
 
-      function getRequestedQuizIds() {
-        var params = new URLSearchParams(window.location.search);
-        var values = params.getAll('quiz');
-        var seen = {};
-        var ids = [];
+      function appendRequestedWorkoutEntries(params, paramName, type, dataById, entries, seen) {
+        var values = params.getAll(paramName);
         values.forEach(function (value) {
           String(value || '').split(',').forEach(function (part) {
             var id = part.trim();
-            if (!id || seen[id] || !ALL_CARD_DATA.quizzes[id]) return;
-            seen[id] = true;
-            ids.push(id);
+            var key = type + ':' + id;
+            if (!id || seen[key] || !dataById[id]) return;
+            seen[key] = true;
+            entries.push({ type: type, id: id });
           });
         });
-        return ids;
       }
 
-      function requestedQuizGymEntries() {
-        return requestedQuizIds.map(function (id) {
-          return { type: 'quiz', id: id };
-        });
+      function getRequestedWorkoutEntries() {
+        var params = new URLSearchParams(window.location.search);
+        var seen = {};
+        var entries = [];
+        appendRequestedWorkoutEntries(params, 'quiz', 'quiz', ALL_CARD_DATA.quizzes, entries, seen);
+        appendRequestedWorkoutEntries(params, 'flashcards', 'flashcard', ALL_CARD_DATA.flashcards, entries, seen);
+        return entries;
       }
 
-      function clearRequestedQuizParamsFromUrl() {
-        if (!requestedQuizIds.length || !window.history || typeof window.history.replaceState !== 'function') return;
+      function clearRequestedWorkoutParamsFromUrl() {
+        if (!requestedWorkoutEntries.length || !window.history || typeof window.history.replaceState !== 'function') return;
         var url = new URL(window.location.href);
         url.searchParams.delete('quiz');
+        url.searchParams.delete('flashcards');
         var cleanPath = url.pathname + url.search + url.hash;
         window.history.replaceState(window.history.state, document.title, cleanPath);
-        requestedQuizIds = [];
+        requestedWorkoutEntries = [];
       }
 
       function shuffleArray(arr) {
@@ -1261,7 +1262,7 @@ layout: sebook
           icon.className = inGym ? 'fa-solid fa-check' : 'fa-solid fa-plus';
           icon.setAttribute('aria-hidden', 'true');
           var buttonTitle = inGym ? 'Remove from gym' : 'Add to gym';
-          btn.title = buttonTitle;
+          btn.removeAttribute('title');
           btn.setAttribute('data-original-title', buttonTitle);
           if (window.jQuery && window.jQuery.fn && window.jQuery.fn.tooltip) {
             try { window.jQuery(btn).tooltip('hide').attr('data-original-title', buttonTitle); } catch (err) { /* Bootstrap tooltip may not be initialized. */ }
@@ -1297,7 +1298,7 @@ layout: sebook
           var dIcon = difficultAddBtn.querySelector('i');
           dIcon.className = difficultInGym ? 'fa-solid fa-check' : 'fa-solid fa-plus';
 	          var difficultButtonTitle = difficultInGym ? 'Remove from gym' : 'Add to gym';
-	          difficultAddBtn.title = difficultButtonTitle;
+	          difficultAddBtn.removeAttribute('title');
 	          difficultAddBtn.setAttribute('data-original-title', difficultButtonTitle);
 	          if (window.jQuery && window.jQuery.fn && window.jQuery.fn.tooltip) {
 	            try { window.jQuery(difficultAddBtn).tooltip('hide').attr('data-original-title', difficultButtonTitle); } catch (err) { /* Bootstrap tooltip may not be initialized. */ }
@@ -1336,7 +1337,7 @@ layout: sebook
             '<strong class="gym-item-title">' + data.title + '</strong>' +
             '<span class="gym-item-count">(' + count + (entry.type === 'quiz' ? ' questions' : ' cards') + ')</span>' +
             '</div>' +
-            '<button class="gym-add-btn in-gym gym-remove-selected" data-type="' + entry.type + '" data-id="' + entry.id + '" title="Remove from gym" data-original-title="Remove from gym" aria-label="Remove ' + escapeHtml(data.title) + ' from gym">' +
+            '<button class="gym-add-btn in-gym gym-remove-selected" data-type="' + entry.type + '" data-id="' + entry.id + '" data-original-title="Remove from gym" aria-label="Remove ' + escapeHtml(data.title) + ' from gym">' +
             '<i class="fa-solid fa-check" aria-hidden="true"></i>' +
             '</button>' +
             '</div>';
@@ -1350,7 +1351,7 @@ layout: sebook
             '<strong class="gym-item-title">Difficult Questions</strong>' +
             '<span class="gym-item-count">(' + difficultCards.length + ' cards)</span>' +
             '</div>' +
-            '<button class="gym-add-btn in-gym gym-remove-selected" data-type="difficult" data-id="difficult" title="Remove from gym" data-original-title="Remove from gym" aria-label="Remove Difficult Questions from gym">' +
+            '<button class="gym-add-btn in-gym gym-remove-selected" data-type="difficult" data-id="difficult" data-original-title="Remove from gym" aria-label="Remove Difficult Questions from gym">' +
             '<i class="fa-solid fa-check" aria-hidden="true"></i>' +
             '</button>' +
             '</div>';
@@ -1361,6 +1362,9 @@ layout: sebook
           gymSelectedDiv.innerHTML = '<p class="empty-gym-msg">Your gym is empty. Add quizzes and flashcard sets below.</p>';
         } else {
           gymSelectedDiv.innerHTML = selectedHtml;
+          if (window.initAccessibleTooltips) {
+            window.initAccessibleTooltips('#gym-selected [data-original-title]');
+          }
           // Bind remove buttons in selected section
           gymSelectedDiv.querySelectorAll('.gym-remove-selected').forEach(function (btn) {
             btn.addEventListener('click', function () {
@@ -2491,13 +2495,16 @@ layout: sebook
           '<div class="flashcard-actions">' +
           '<button class="show-answer-btn" type="button">Show Answer</button>' +
           '<div class="assessment-buttons hidden">' +
-          '<button class="assess-btn correct-btn" type="button" aria-label="I got it right" title="I got it right" aria-keyshortcuts="ArrowLeft Z">&#x2714;</button>' +
-          '<button class="assess-btn incorrect-btn" type="button" aria-label="I got it wrong" title="I got it wrong" aria-keyshortcuts="ArrowRight X">&#x2716;</button>' +
+          '<button class="assess-btn correct-btn" type="button" aria-label="I got it right" data-original-title="I got it right" aria-keyshortcuts="ArrowLeft Z">&#x2714;</button>' +
+          '<button class="assess-btn incorrect-btn" type="button" aria-label="I got it wrong" data-original-title="I got it wrong" aria-keyshortcuts="ArrowRight X">&#x2716;</button>' +
           '</div>' +
           '<p class="flashcard-shortcuts-hint hidden">Shortcuts: <kbd>&larr;</kbd> or <kbd>Z</kbd> I got it right; <kbd>&rarr;</kbd> or <kbd>X</kbd> I got it wrong.</p>' +
           '</div>';
 
         workoutCardArea.appendChild(div);
+        if (window.initAccessibleTooltips) {
+          window.initAccessibleTooltips('#workout-card-area [data-original-title]');
+        }
 
         var showBtn = div.querySelector('.show-answer-btn');
         var answerContainer = div.querySelector('.flashcard-answer-container');
@@ -2734,7 +2741,7 @@ layout: sebook
 
       function goBackToLibrary() {
         stopWorkoutTimer(true);
-        clearRequestedQuizParamsFromUrl();
+        clearRequestedWorkoutParamsFromUrl();
         workoutView.style.display = 'none';
         libraryView.style.display = '';
         setWorkoutMode(false);
@@ -2748,9 +2755,9 @@ layout: sebook
         return div.innerHTML.replace(/"/g, '&quot;');
       }
 
-      function startRequestedQuizWorkout() {
-        if (!requestedQuizIds.length) return;
-        startWorkout({ sourceGym: requestedQuizGymEntries(), requireActive: false });
+      function startRequestedWorkout() {
+        if (!requestedWorkoutEntries.length) return;
+        startWorkout({ sourceGym: requestedWorkoutEntries.slice(), requireActive: false });
       }
 
       // ==================== EVENT BINDINGS ====================
@@ -3023,7 +3030,7 @@ layout: sebook
       // Initialize
       setWorkoutMode(false);
       refreshLibrary();
-      startRequestedQuizWorkout();
+      startRequestedWorkout();
 
     })();
   </script>

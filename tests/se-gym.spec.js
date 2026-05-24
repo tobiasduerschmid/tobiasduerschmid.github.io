@@ -537,6 +537,21 @@ test.describe('Personal Gym - Workout', () => {
     await expect(page.locator('#gym-selected .gym-item-title')).toContainText('Version Control and Git');
   });
 
+  test('flashcards URL parameter accepts a list and starts a transient workout', async ({ page, context }) => {
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'git' }]));
+    await page.goto(`${GYM_URL}?flashcards=design_pattern_singleton,user_stories`);
+
+    await expect(page.locator('#gym-workout')).toBeVisible();
+    await expect(page.locator('#gym-entrance')).toBeHidden();
+    await expect(page.locator('#workout-total')).toHaveText('14');
+    await expect(page.locator('.workout-flashcard')).toBeVisible();
+
+    await page.getByRole('button', { name: /Back to Gym Entrance/i }).click();
+    await expect(page).toHaveURL(/\/se-gym\/$/);
+    await expect(page.locator('#gym-entrance')).toBeVisible();
+    await expect(page.locator('#gym-selected .gym-item-title')).toContainText('Version Control and Git');
+  });
+
   test('workout shows progress bar', async ({ page, context }) => {
     await setCookie(context, 'se-gym-active', 'true');
     await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'git' }]));
@@ -1375,6 +1390,8 @@ test.describe('Personal Gym - Toggle Button on Includes', () => {
     await page.goto(GIT_PAGE_URL);
     const toggleBtn = page.locator('.se-gym-toggle').first();
     await expect(toggleBtn).toBeVisible();
+    await expect(toggleBtn).not.toHaveAttribute('title', /.+/);
+    await expect(toggleBtn).toHaveAttribute('data-original-title', 'Add to Personal Gym');
     await a11yCheckpoint(page, 'sebook page — gym toggle button visible', { feature: A11Y_FEATURE, darkMode: true });
   });
 
@@ -1388,6 +1405,18 @@ test.describe('Personal Gym - Toggle Button on Includes', () => {
     await toggleBtn.click();
     await expect(toggleBtn).toHaveClass(/in-gym/);
     await expect(toggleBtn.locator('i')).toHaveClass(/fa-check/);
+    await expect(toggleBtn).not.toHaveAttribute('title', /.+/);
+    await expect(toggleBtn).toHaveAttribute('data-original-title', 'Remove from Personal Gym');
+  });
+
+  test('gym add controls use only the site tooltip metadata', async ({ page }) => {
+    await page.goto(GYM_URL);
+
+    const addButton = page.locator('.gym-add-btn').first();
+    await expect(addButton).toBeVisible();
+    await expect(addButton).not.toHaveAttribute('title', /.+/);
+    await expect(addButton).toHaveAttribute('data-original-title', /gym/i);
+    await expect(page.locator('.gym-add-btn[title], .se-gym-toggle[title], #empty-gym-btn[title]')).toHaveCount(0);
   });
 
   test('+ button adds item to cookie gym', async ({ page, context }) => {
