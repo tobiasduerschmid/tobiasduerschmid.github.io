@@ -870,6 +870,22 @@ layout: sebook
       var lastTimedPracticeDrawCount = 0;
       var requestedWorkoutEntries = getRequestedWorkoutEntries();
 
+      function showElement(el) {
+        if (!el) return;
+        el.classList.remove('is-hidden');
+      }
+
+      function hideElement(el) {
+        if (!el) return;
+        el.classList.add('is-hidden');
+      }
+
+      function cardPassesDifficultyFilter(data, activeDifficulties) {
+        var difficulty = data && data.difficulty;
+        if (!difficulty) return true;
+        return activeDifficulties.indexOf(String(difficulty).toLowerCase()) !== -1;
+      }
+
       // Per-difficulty tallies for the results breakdown. Each bucket is a
       // {seen, correct} pair; "untagged" collects cards with no difficulty.
       var DIFFICULTY_LEVELS = ['basic', 'intermediate', 'advanced', 'expert'];
@@ -1215,7 +1231,7 @@ layout: sebook
             '<span class="milestone-icon" aria-hidden="true">' + icon + '</span>' +
             '<span class="milestone-text"><strong>' + heading + '</strong><span>' + detail + '</span></span>';
           milestoneBanner.classList.add(levelClass);
-          milestoneBanner.style.display = 'flex';
+          showElement(milestoneBanner);
         }
         if (PersonalGym.isAnalyzePerformance()) {
           var stats = PersonalGym.getStats();
@@ -1239,10 +1255,10 @@ layout: sebook
             heroMilestoneTier = 'bronze';
             showMilestoneBanner('milestone-bronze', '&#129353;', 'Bronze milestone', 'You\'ve completed ' + MILESTONE_BRONZE + '+ exercises. Keep going!');
           } else {
-            milestoneBanner.style.display = 'none';
+            hideElement(milestoneBanner);
           }
         } else {
-          milestoneBanner.style.display = 'none';
+          hideElement(milestoneBanner);
         }
         setHeroMilestoneTier(heroMilestoneTier);
 
@@ -1274,9 +1290,7 @@ layout: sebook
 
         var activeDifficulties = PersonalGym.getActiveDifficulties();
         function passesDifficultyFilter(item) {
-          // Untagged cards always pass — the filter targets tagged cards only.
-          if (!item || !item.difficulty) return true;
-          return activeDifficulties.indexOf(String(item.difficulty).toLowerCase()) !== -1;
+          return cardPassesDifficultyFilter(item, activeDifficulties);
         }
 
         // ---- Difficult Questions Gym ----
@@ -1292,7 +1306,7 @@ layout: sebook
         var difficultInGym = gym.some(function (d) { return d.type === 'difficult' && d.id === 'difficult'; });
 
         if (PersonalGym.isAnalyzePerformance() && hasDifficult) {
-          difficultSection.style.display = 'block';
+          showElement(difficultSection);
           difficultCountEl.textContent = '(' + difficultCards.length + ' cards)';
           difficultAddBtn.classList.toggle('in-gym', difficultInGym);
           var dIcon = difficultAddBtn.querySelector('i');
@@ -1307,7 +1321,7 @@ layout: sebook
             totalCards += difficultCards.length;
           }
         } else {
-          difficultSection.style.display = 'none';
+          hideElement(difficultSection);
           // Remove difficult from gym if no longer applicable
           if (gym.some(function (d) { return d.type === 'difficult'; })) {
             PersonalGym.removeFromGym('difficult', 'difficult');
@@ -1574,7 +1588,10 @@ layout: sebook
       // ---- Start Hard Workout Button ----
       document.getElementById('start-hard-workout-btn').addEventListener('click', function () {
         saveTimedPracticeSettingsFromInputs();
-        var difficultCards = getDifficultCards();
+        var activeDifficulties = PersonalGym.getActiveDifficulties();
+        var difficultCards = getDifficultCards().filter(function (dc) {
+          return cardPassesDifficultyFilter(dc.data, activeDifficulties);
+        });
         if (difficultCards.length === 0) return;
 
         shuffleArray(difficultCards);
@@ -1591,13 +1608,13 @@ layout: sebook
         workoutEndedByTimer = false;
         resetDifficultyStats();
 
-        libraryView.style.display = 'none';
-        workoutView.style.display = 'block';
+        hideElement(libraryView);
+        showElement(workoutView);
         workoutView.classList.remove('workout-results-active');
         syncWorkoutHeroVisibility();
         restartWorkoutHeroAnimations();
         setWorkoutMode(true);
-        workoutResults.style.display = 'none';
+        hideElement(workoutResults);
         workoutCardArea.innerHTML = '';
 
         workoutTotalEl.textContent = workoutCards.length;
@@ -1673,7 +1690,7 @@ layout: sebook
       }
       function closeManagedGymModal(modal) {
         if (!modal) return;
-        modal.style.display = 'none';
+        hideElement(modal);
         if (activeGymModal === modal) {
           document.removeEventListener('keydown', handleManagedGymModalKeydown);
           activeGymModal = null;
@@ -1708,7 +1725,7 @@ layout: sebook
       function openManagedGymModal(modal, defaultFocus) {
         activeGymModalPreviousFocus = document.activeElement;
         activeGymModal = modal;
-        modal.style.display = 'block';
+        showElement(modal);
         document.addEventListener('keydown', handleManagedGymModalKeydown);
         var target = defaultFocus || getModalFocusables(modal)[0];
         if (target && typeof target.focus === 'function') target.focus();
@@ -1764,13 +1781,8 @@ layout: sebook
         var seenQuestions = {};
         var active = PersonalGym.getActiveDifficulties();
 
-        // A tagged card runs only if its level is currently checked. Cards
-        // without a difficulty always run so legacy content (no difficulty
-        // set) stays in the workout regardless of these settings.
         function isAllowedDifficulty(data) {
-          var d = data && data.difficulty;
-          if (!d) return true;
-          return active.indexOf(String(d).toLowerCase()) !== -1;
+          return cardPassesDifficultyFilter(data, active);
         }
 
         gym.forEach(function (entry) {
@@ -1849,13 +1861,13 @@ layout: sebook
         workoutEndedByTimer = false;
         resetDifficultyStats();
 
-        libraryView.style.display = 'none';
-        workoutView.style.display = 'block';
+        hideElement(libraryView);
+        showElement(workoutView);
         workoutView.classList.remove('workout-results-active');
         syncWorkoutHeroVisibility();
         restartWorkoutHeroAnimations();
         setWorkoutMode(true);
-        workoutResults.style.display = 'none';
+        hideElement(workoutResults);
         workoutCardArea.innerHTML = '';
 
         workoutTotalEl.textContent = workoutCards.length;
@@ -2637,7 +2649,7 @@ layout: sebook
         stopWorkoutTimer(true);
         workoutCardArea.innerHTML = '';
         workoutView.classList.add('workout-results-active');
-        workoutResults.style.display = 'block';
+        showElement(workoutResults);
         workoutProgress.style.width = '100%';
         workoutScoreEl.textContent = workoutScore;
         renderWorkoutBreakdown();
@@ -2645,14 +2657,15 @@ layout: sebook
 
         if (workoutEndedByTimer) {
           workoutSummaryEl.textContent = 'Time is up. Review your score below, then restart or return to the gym entrance.';
-          workoutReviewBtn.style.display = workoutIncorrectIndices.length > 0 ? 'inline-block' : 'none';
+          if (workoutIncorrectIndices.length > 0) showElement(workoutReviewBtn);
+          else hideElement(workoutReviewBtn);
         } else if (workoutIncorrectIndices.length === 0 && workoutScore === workoutCards.length) {
           workoutSummaryEl.textContent = 'Perfect score! Come back later to improve your recall!';
-          workoutReviewBtn.style.display = 'none';
+          hideElement(workoutReviewBtn);
           if (typeof window.spawnConfetti === 'function') window.spawnConfetti(workoutResults);
         } else {
           workoutSummaryEl.textContent = 'Keep practicing to improve your recall!';
-          workoutReviewBtn.style.display = 'inline-block';
+          showElement(workoutReviewBtn);
           if (typeof window.spawnConfetti === 'function') window.spawnConfetti(workoutResults);
         }
         if (workoutResultShortcutHint) {
@@ -2715,7 +2728,7 @@ layout: sebook
         workoutIncorrectIndices = [];
         workoutReviewStep = 0;
         workoutEndedByTimer = false;
-        workoutResults.style.display = 'none';
+        hideElement(workoutResults);
         startWorkoutTimer(workoutReviewQueue.length);
         showWorkoutCard(workoutReviewQueue[0]);
         scrollToTop();
@@ -2732,7 +2745,7 @@ layout: sebook
         workoutEndedByTimer = false;
         resetDifficultyStats();
         restartWorkoutHeroAnimations();
-        workoutResults.style.display = 'none';
+        hideElement(workoutResults);
         if (workoutResultShortcutHint) workoutResultShortcutHint.classList.add('hidden');
         startWorkoutTimer(workoutCards.length);
         showWorkoutCard(0);
@@ -2742,8 +2755,8 @@ layout: sebook
       function goBackToLibrary() {
         stopWorkoutTimer(true);
         clearRequestedWorkoutParamsFromUrl();
-        workoutView.style.display = 'none';
-        libraryView.style.display = '';
+        hideElement(workoutView);
+        showElement(libraryView);
         setWorkoutMode(false);
         refreshLibrary();
         scrollToTop();
@@ -2861,14 +2874,14 @@ layout: sebook
       function openExportModal() {
         var keys = collectStoredTutorialKeys();
         if (keys.length === 0) {
-          exportEmptyMsg.style.display = 'block';
-          exportList.style.display = 'none';
+          showElement(exportEmptyMsg);
+          hideElement(exportList);
           exportConfirmBtn.disabled = true;
           exportSelectAllBtn.disabled = true;
           exportSelectNoneBtn.disabled = true;
         } else {
-          exportEmptyMsg.style.display = 'none';
-          exportList.style.display = 'block';
+          hideElement(exportEmptyMsg);
+          showElement(exportList);
           exportConfirmBtn.disabled = false;
           exportSelectAllBtn.disabled = false;
           exportSelectNoneBtn.disabled = false;
