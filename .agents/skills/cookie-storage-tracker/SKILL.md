@@ -135,7 +135,7 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - `tutorial-progress-<id>` — saved code & current step
 - `tutorial-editor-split-<id>` — split-pane preference
 - `tutorial-cooldown-<id>` — per-step "Test My Work" cooldown end times
-- `tutorial-time-practice-<id>` — timed-practice deadlines and lockout windows
+- `tutorial-time-practice-<id>` — timed-practice deadlines, lockout windows, and timer-off choices
 - `tutorial-popout-state-<path>` — detached editor crash-recovery snapshot
 - `tutorial-debug-bps-<id>` — debugger breakpoints
 - `tutorial-debug-watchpoint-remove-choice-<id>` — watchpoint removal preference

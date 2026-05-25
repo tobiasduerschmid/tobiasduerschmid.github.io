@@ -1,0 +1,818 @@
+title: "Code Comprehension Part 1: Hypotheses & Beacons"
+description: >-
+  Part 1 of a two-part code comprehension tutorial for students who have
+  completed the Python, React, and Node.js essentials tutorials. Practice
+  deciding where to focus attention, reading faster with beacons, and verifying
+  only the code that matters.
+
+learning_objectives:
+  - "Generate a purpose hypothesis from names, tests, public entry points, and surrounding context before tracing implementation details."
+  - "Select the highest-value code region to inspect when a comprehension question has a specific target."
+  - "Classify lexical, structural, framework, and test-based beacons in Python and React code."
+  - "Explain unfamiliar code with purpose, mechanism, evidence, and limits rather than long line-by-line narration."
+  - "Summarize unfamiliar code at macro, function, and block levels without narrating every line."
+
+backend: multiple
+require_tests: false
+autosave_type: none
+font_size: 16
+
+steps:
+  # =========================================================================
+  # STEP 1: Purpose Hypotheses
+  # =========================================================================
+  # Pedagogy: worked example with fading — expert think-aloud for Orient → Predict → Verify
+  - title: "Purpose Hypotheses"
+    backend: pyodide
+    instructions: |
+      ### Why this matters
+
+      When code feels overwhelming, the slowest move is often reading from the first line and hoping the purpose emerges. Strong readers start with a **hypothesis**: "This code probably does X, and these are the places that would prove or disprove it." That is not guessing. It is evidence-seeking with a plan.
+
+      ### 🎯 You will learn to
+
+      - Generate a purpose hypothesis before tracing code line by line
+      - Select which file or function deserves attention for a specific question
+      - Summarize code at macro, function, and block levels
+
+      ### The Basic Routine
+
+      Use this loop whenever you meet unfamiliar code:
+
+      1. **Orient:** read the file name, public function, test names, and comments that describe intent.
+      2. **Predict:** say what responsibilities you expect to find.
+      3. **Beacon-hunt:** scan for names, tests, data shapes, and familiar code plans.
+      4. **Descend selectively:** inspect the smallest region that can answer your question.
+      5. **Verify:** trace one path, map one test, or check one invariant.
+      6. **Summarize:** explain the code above the line-by-line level.
+
+      ### When to Switch Gears
+
+      Top-down reading is not permission to trust names blindly. Use beacons to
+      choose where to look, then switch to bottom-up tracing when the evidence
+      gets risky.
+
+      | Cue | Good next move |
+      |---|---|
+      | A beacon is vague, like `data` or `item` | Trace a small local chunk |
+      | A branch handles errors, hiding, or totals | Trace one representative input |
+      | A test contradicts your first hypothesis | Revise the hypothesis before reading more |
+      | Syntax is unfamiliar | Understand that small expression first, then return to the purpose |
+
+      ### Explain in Plain English
+
+      A strong answer is not the longest answer. Use this short EiPE-style frame:
+
+      | Part | What to say |
+      |---|---|
+      | Purpose | What the code is for |
+      | Mechanism | The main plan it uses |
+      | Evidence | The names, tests, or branches that prove it |
+      | Limit | What input, edge case, or behavior you have not verified yet |
+
+      Line-by-line narration can be useful while tracing, but it is not the final product. Your final explanation should be relational: how the pieces work together to serve the purpose.
+
+      In this step, the Python files show a tiny playlist summarizer. Do **not** start by tracing every expression. Start from the tests and the public function name.
+
+      ### Worked Reading Example
+
+      Suppose the question is:
+
+      > "Does the summary include hidden tracks?"
+
+      A bottom-up reader might trace every line. A hypothesis-driven reader does this:
+
+      | Move | What to read | Why |
+      |---|---|---|
+      | Orient | `test_hidden_tracks_do_not_appear` | The test names the behavior in student-friendly language |
+      | Predict | Expect a filtering step before summary construction | Hidden tracks should be removed before labels and totals are computed |
+      | Beacon-hunt | `visible_tracks`, `hidden`, `summarize_playlist` | These names are evidence about responsibility |
+      | Descend | Read `visible_tracks()` and where `summarize_playlist()` calls it | That is the shortest path to the answer |
+      | Verify | Trace one hidden track through `visible_tracks()` | One path is enough to confirm the hypothesis |
+
+      ### Variable Roles
+
+      Names become stronger beacons when you can say the role each value plays.
+
+      | Variable | Role |
+      |---|---|
+      | `public_tracks` | Filtered collection used by the rest of the summary |
+      | `total_seconds` | Accumulator result used to compute minutes |
+      | `label` | One display string for one visible track |
+
+      ### Your Turn
+
+      Read `test_playlist_summary.py` first, then scan `playlist_summary.py`. Write a one-sentence hypothesis:
+
+      > "This module probably..."
+
+      Then answer the knowledge check. You do not need to edit the code.
+
+    files:
+      - path: "playlist_summary.py"
+        language: "python"
+        content: |
+          TRACKS = [
+              {"title": "Compile Me Maybe", "artist": "Carly Rae JS", "seconds": 181, "explicit": False, "hidden": False},
+              {"title": "Null Pointer Mood", "artist": "The Exceptions", "seconds": 203, "explicit": True, "hidden": False},
+              {"title": "Draft Demo", "artist": "Lab Notebook", "seconds": 92, "explicit": False, "hidden": True},
+              {"title": "Cache Me Outside", "artist": "Miss Hit", "seconds": 228, "explicit": False, "hidden": False},
+          ]
+
+          def visible_tracks(tracks):
+              return [track for track in tracks if not track["hidden"]]
+
+          def label_track(track):
+              label = f"{track['title']} — {track['artist']}"
+              if track["explicit"]:
+                  label += " (explicit)"
+              return label
+
+          def summarize_playlist(tracks):
+              public_tracks = visible_tracks(tracks)
+              total_seconds = sum(track["seconds"] for track in public_tracks)
+              return {
+                  "track_count": len(public_tracks),
+                  "minutes": round(total_seconds / 60, 1),
+                  "labels": [label_track(track) for track in public_tracks],
+              }
+
+          if __name__ == "__main__":
+              print(summarize_playlist(TRACKS))
+
+      - path: "test_playlist_summary.py"
+        language: "python"
+        content: |
+          from playlist_summary import TRACKS, summarize_playlist
+
+          def test_hidden_tracks_do_not_appear():
+              summary = summarize_playlist(TRACKS)
+              assert "Draft Demo" not in " ".join(summary["labels"])
+              assert summary["track_count"] == 3
+
+          def test_explicit_tracks_are_labeled():
+              summary = summarize_playlist(TRACKS)
+              assert "Null Pointer Mood — The Exceptions (explicit)" in summary["labels"]
+
+          def test_minutes_count_only_visible_tracks():
+              summary = summarize_playlist(TRACKS)
+              assert summary["minutes"] == 10.2
+
+    open_file: "test_playlist_summary.py"
+    run_file: "playlist_summary.py"
+
+    quiz:
+      title: "Step 1 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          question: "Before tracing `playlist_summary.py`, which evidence gives the strongest first hypothesis about the module's purpose?"
+          options:
+            - "The exact number of dictionary keys in `TRACKS`"
+            - "The test names plus the public function `summarize_playlist`"
+            - "The fact that the file uses an `if __name__ == \"__main__\"` guard"
+            - "The presence of the string `(explicit)`"
+          correct_index: 1
+          option_feedback:
+            0: "Counting keys is low-level detail. It may matter later, but it does not name the module's responsibility."
+            2: "The main guard tells you the file can run as a script. It does not explain the summary behavior."
+            3: "The explicit label is one behavior, but the tests and public function reveal the broader responsibility."
+          explanation: "A purpose hypothesis should start from specification-level beacons: test names, public function names, and behavior words. Here they point to summarizing a public playlist while excluding hidden tracks."
+
+        - type: single
+          question: "The question is: 'Are hidden tracks included in the final summary?' Which region should you inspect first?"
+          options:
+            - "`visible_tracks()` and the call to it inside `summarize_playlist()`"
+            - "The exact seconds value for every track in `TRACKS`"
+            - "The string interpolation inside `label_track()`"
+            - "The final `print(...)` line under the main guard"
+          correct_index: 0
+          option_feedback:
+            1: "Durations answer the minutes question. The hidden-track question is about filtering before the summary is built."
+            2: "Label formatting answers how visible tracks are displayed, not whether hidden tracks are excluded."
+            3: "The print line only displays the result. It does not decide which tracks enter the result."
+          explanation: "`visible_tracks()` is the shortest path from the question to evidence. You only need to trace `hidden=True` through that filter and confirm `summarize_playlist()` uses the filtered list."
+
+        - type: single
+          question: "Which summary is strongest after reading this module?"
+          options:
+            - "`summarize_playlist()` makes a dictionary, calls a helper, and rounds a number."
+            - "The module builds a public-facing playlist summary: it removes hidden tracks, totals visible duration, and labels explicit songs."
+            - "The module has four tracks and one of them is hidden."
+            - "`label_track()` uses an `if` statement and returns a string."
+          correct_index: 1
+          option_feedback:
+            0: "That summary lists mechanics but misses the user-visible purpose."
+            2: "That fact is true for the sample data, but it does not generalize to what the code does."
+            3: "That describes one helper at the line/block level, not the module's overall purpose."
+          explanation: "A good comprehension summary climbs abstraction levels: user-visible purpose first, then the major behaviors that support it."
+
+        - type: multiple
+          question: "Which are reliable beacons in this small Python example?"
+          options:
+            - "`test_hidden_tracks_do_not_appear`"
+            - "`visible_tracks`"
+            - "`public_tracks`"
+            - "The variable name `label` by itself"
+          correct_indices: [0, 1, 2]
+          option_feedback:
+            0: "This test name is a specification beacon: it tells you what behavior the author expects."
+            1: "This helper name is a lexical beacon: it predicts a filter over tracks."
+            2: "This local variable confirms the filtered list's role after `visible_tracks()` returns."
+            3: "`label` is useful only after you know the surrounding helper. By itself, it is too generic to carry much hypothesis weight."
+          explanation: "The strongest beacons are the ones that connect names to behavior: tests, helper names, and role-revealing variables."
+
+        - type: single
+          question: "Which explanation best follows the Purpose / Mechanism / Evidence / Limit frame?"
+          options:
+            - "Purpose: the module builds a public playlist summary. Mechanism: it filters hidden tracks, totals visible duration, and labels explicit songs. Evidence: the tests and `visible_tracks()` support that reading. Limit: this does not prove how unusual data, such as negative durations, would behave."
+            - "`summarize_playlist()` makes a dictionary, calls a helper, rounds a number, and returns labels."
+            - "The module has four tracks, one hidden track, and one explicit track."
+            - "The module removes hidden tracks, so no other code needs attention."
+          correct_index: 0
+          option_feedback:
+            1: "This lists mechanics, but it does not say the purpose, evidence, or a limit on the claim."
+            2: "This summarizes the sample data rather than the behavior of the module."
+            3: "This overgeneralizes. Good comprehension also names what has not been verified yet."
+          explanation: "EiPE explanations combine purpose, mechanism, evidence, and a boundary on the claim, so the reader avoids both line narration and overconfidence."
+
+  # =========================================================================
+  # STEP 2: Python Reading Sprint
+  # =========================================================================
+  # Pedagogy: timed retrieval practice — short sprint applying the Step 1 routine
+  - title: "Python Reading Sprint"
+    backend: pyodide
+    max-time: 7
+    lockout-time: 5
+    instructions: |
+      ### Why this matters
+
+      Speed improves when you practice **attention control**, not when you rush. This timed round asks you to read just enough Python to answer targeted questions. The goal is not to finish perfectly; let's see how far you can make it.
+
+      ### 🎯 You will learn to
+
+      - Apply hypothesis-driven reading under a realistic time box
+      - Choose which details to ignore when the question is narrow
+      - Verify a Python comprehension hypothesis with one focused trace
+
+      ### Reading Goal
+
+      You have **7 minutes**. Read `event_cards.py` and answer the quiz. Use this plan:
+
+      1. Read function names and the sample data keys.
+      2. Predict what `build_event_cards()` returns.
+      3. Find the filtering step.
+      4. Trace only one event through the relevant branch if needed.
+      5. Vary the input mentally: change `today` or `tag` and predict what behavior should change.
+
+      Use `reading-notes.md` to jot the evidence you find. The core target is
+      the first three quiz questions. The full-event trace is a stretch target
+      if you still have time.
+
+      Do not edit the code. This is a reading sprint, not an implementation task.
+
+    files:
+      - path: "reading-notes.md"
+        language: "markdown"
+        content: |
+          # Python Reading Sprint Notes
+
+          Hypothesis:
+
+          Top 3 beacons:
+          1.
+          2.
+          3.
+
+          What I can ignore for this question:
+
+          Smallest trace:
+
+          Final EiPE summary:
+
+      - path: "event_cards.py"
+        language: "python"
+        content: |
+          EVENTS = [
+              {"title": "Debugging Jam", "day": 14, "capacity": 30, "registered": 27, "cancelled": False, "tags": ["python", "tools"]},
+              {"title": "React Snack Lab", "day": 17, "capacity": 24, "registered": 12, "cancelled": False, "tags": ["react", "frontend"]},
+              {"title": "Legacy Code Karaoke", "day": 10, "capacity": 20, "registered": 20, "cancelled": False, "tags": ["reading"]},
+              {"title": "Node Night Market", "day": 18, "capacity": 18, "registered": 18, "cancelled": False, "tags": ["node", "backend"]},
+              {"title": "Cancelled CSS Cafe", "day": 20, "capacity": 12, "registered": 4, "cancelled": True, "tags": ["frontend"]},
+          ]
+
+          def upcoming_events(events, today):
+              return [
+                  event
+                  for event in events
+                  if event["day"] >= today and not event["cancelled"]
+              ]
+
+          def seats_left(event):
+              return max(event["capacity"] - event["registered"], 0)
+
+          def matches_tag(event, tag):
+              return tag == "all" or tag in event["tags"]
+
+          def build_event_cards(events, today, tag="all"):
+              cards = []
+              for event in upcoming_events(events, today):
+                  if matches_tag(event, tag):
+                      spots = seats_left(event)
+                      cards.append({
+                          "title": event["title"],
+                          "spots": spots,
+                          "status": "full" if spots == 0 else "open",
+                      })
+              return cards
+
+          if __name__ == "__main__":
+              print(build_event_cards(EVENTS, today=14, tag="frontend"))
+
+    open_file: "event_cards.py"
+    run_file: "event_cards.py"
+
+    quiz:
+      title: "Step 2 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          question: "What is the best purpose hypothesis for `build_event_cards()`?"
+          options:
+            - "It mutates `EVENTS` so cancelled events are permanently removed."
+            - "It builds display-ready event card dictionaries for upcoming, non-cancelled events matching a tag."
+            - "It prints every event to the terminal in calendar order."
+            - "It counts the number of registered students across all events."
+          correct_index: 1
+          option_feedback:
+            0: "The function creates a new `cards` list. It never writes back into `EVENTS`."
+            2: "Printing happens only under the main guard. The function returns data."
+            3: "Registration numbers are used only to compute spots left, not to produce a total."
+          explanation: "The helper names form a chain: upcoming events, tag matching, seats left, then card construction."
+
+        - type: single
+          question: "For `today=14` and `tag=\"frontend\"`, which answer gives the result and the evidence?"
+          options:
+            - "`React Snack Lab` appears because it is upcoming, not cancelled, and has the frontend tag."
+            - "`Legacy Code Karaoke` appears because it is full."
+            - "`Cancelled CSS Cafe` appears because it has the frontend tag."
+            - "`Debugging Jam` appears because it is upcoming and has open seats."
+          correct_index: 0
+          option_feedback:
+            1: "Its day is before `today=14`, so `upcoming_events()` filters it out."
+            2: "It has a frontend tag, but `cancelled` is true, so `upcoming_events()` filters it out."
+            3: "It is upcoming and open, but it does not have the frontend tag."
+          explanation: "`React Snack Lab` is upcoming, not cancelled, and has the requested tag."
+
+        - type: single
+          question: "Which detail can you safely ignore when answering whether cancelled events appear?"
+          options:
+            - "The `not event[\"cancelled\"]` condition"
+            - "The call from `build_event_cards()` to `upcoming_events()`"
+            - "The exact formula inside `seats_left()`"
+            - "The `cancelled` values in the sample data"
+          correct_index: 2
+          option_feedback:
+            0: "That condition is the key evidence for the cancelled-event question."
+            1: "That call connects the public function to the filtering helper."
+            3: "The sample data lets you verify at least one cancelled path."
+          explanation: "Attention control includes deciding what not to read. Seat math does not determine whether cancelled events enter the result."
+
+        - type: single
+          question: "Which small trace best verifies the hypothesis that full events are still included?"
+          options:
+            - "Trace `Node Night Market` through `upcoming_events()`, `matches_tag(..., \"backend\")`, and `seats_left()`."
+            - "Trace every event through every helper."
+            - "Trace only the final `print(...)` statement."
+            - "Trace `Cancelled CSS Cafe` through `matches_tag(..., \"frontend\")` and stop there."
+          correct_index: 0
+          option_feedback:
+            1: "That is exhaustive tracing. The question only needs one event that is full but not cancelled."
+            2: "The print statement displays whatever the function returns; it does not verify the route to the result."
+            3: "That event is cancelled, so it tests cancellation, not whether full events are included."
+          explanation: "`Node Night Market` is full and not cancelled. Tracing it through the relevant helpers tests exactly the hypothesis."
+
+        - type: single
+          question: "Which note best shows useful vary-the-input reasoning?"
+          options:
+            - "If `today` changes to `18`, `React Snack Lab` should disappear because the date filter runs before card creation."
+            - "If `today` changes to `18`, every event should appear because later dates are less restrictive."
+            - "If `tag` changes to `all`, cancelled events should appear because the tag filter stops running."
+            - "If `registered` changes, the cancelled-event filter should change too."
+          correct_index: 0
+          option_feedback:
+            1: "A later `today` value is more restrictive because events must have `day >= today`."
+            2: "The cancelled-event filter still runs inside `upcoming_events()`."
+            3: "Registration affects spots left and full/open status, not cancellation."
+          explanation: "Varying one input at a time helps verify which branch or helper actually controls the behavior."
+
+  # =========================================================================
+  # STEP 3: Beacon Categories
+  # =========================================================================
+  # Pedagogy: PRIMM — Predict from beacons, then inspect React implementation
+  - title: "Beacon Categories"
+    backend: react
+    instructions: |
+      ### Why this matters
+
+      Beacons are the cues that let you read code faster without becoming careless. In React, many beacons are framework-shaped: `useState` suggests local component memory, props suggest parent-to-child data flow, and `.filter(...).map(...)` often means "derive a visible list from data." The skill is learning which cues deserve trust.
+
+      ### 🎯 You will learn to
+
+      - Classify lexical, structural, framework, and test/specification beacons
+      - Use React beacons to predict component responsibilities
+      - Decide when a beacon is too weak to trust without verification
+
+      ### Four Beacon Types
+
+      | Beacon type | What it looks like | What it helps you infer |
+      |---|---|---|
+      | Lexical | `SnackCard`, `visibleSnacks`, `onVote` | Domain responsibility and data flow |
+      | Structural | `.filter(...).map(...)`, accumulator loops, guard clauses | A familiar programming plan |
+      | Framework | `React.useState`, props, `onClick`, `key` | React-specific component behavior |
+      | Specification | Tests, assertions, user stories, acceptance criteria | Expected behavior before implementation |
+
+      A beacon can be weak. A CSS class such as `snack-grid` is useful
+      evidence about layout, but it is poor evidence for behavior such as
+      persistence, filtering, or state ownership.
+
+      ### Predict Before Reading
+
+      Look at the React files. Before reading every JSX element, predict:
+
+      - Which component owns the voting state?
+      - Which component only displays one snack?
+      - Which expression probably decides which snacks are visible?
+
+      Then inspect only the regions that can prove or disprove those predictions.
+
+    files:
+      - path: "snacks/styles.css"
+        language: "css"
+        content: |
+          .snack-shell {
+            max-width: 54rem;
+            margin: 0 auto;
+            padding: 1.5rem;
+          }
+
+          .snack-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+            gap: 1rem;
+          }
+
+      - path: "snacks/App.jsx"
+        language: "javascript"
+        content: |
+          const SNACKS = [
+            { id: 1, name: "Mango Mochi", category: "sweet", votes: 9 },
+            { id: 2, name: "Wasabi Peas", category: "savory", votes: 6 },
+            { id: 3, name: "Chocolate Pretzels", category: "sweet", votes: 12 },
+            { id: 4, name: "Seaweed Chips", category: "savory", votes: 4 },
+          ];
+
+          function SnackCard({ snack, onVote }) {
+            return (
+              <article className="border rounded p-3">
+                <h2 className="h5">{snack.name}</h2>
+                <p>Category: {snack.category}</p>
+                <p>Votes: {snack.votes}</p>
+                <button type="button" onClick={() => onVote(snack.id)}>
+                  Vote
+                </button>
+              </article>
+            );
+          }
+
+          function App() {
+            const [category, setCategory] = React.useState("all");
+            const [snacks, setSnacks] = React.useState(SNACKS);
+
+            function handleVote(id) {
+              setSnacks(snacks.map(snack =>
+                snack.id === id ? { ...snack, votes: snack.votes + 1 } : snack
+              ));
+            }
+
+            const visibleSnacks = snacks.filter(snack =>
+              category === "all" || snack.category === category
+            );
+
+            return (
+              <main className="snack-shell">
+                <h1>Snack Vote</h1>
+                <label>
+                  Category
+                  <select value={category} onChange={event => setCategory(event.target.value)}>
+                    <option value="all">All</option>
+                    <option value="sweet">Sweet</option>
+                    <option value="savory">Savory</option>
+                  </select>
+                </label>
+                <section className="snack-grid" aria-label="Snack choices">
+                  {visibleSnacks.map(snack => (
+                    <SnackCard key={snack.id} snack={snack} onVote={handleVote} />
+                  ))}
+                </section>
+              </main>
+            );
+          }
+
+          const root = ReactDOM.createRoot(document.getElementById("root"));
+          root.render(<App />);
+
+    react_files:
+      - "snacks/styles.css"
+      - "snacks/App.jsx"
+    open_file: "snacks/App.jsx"
+
+    quiz:
+      title: "Step 3 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          question: "Which beacon most strongly tells you that `App` owns state that can change over time?"
+          options:
+            - "`React.useState(...)` calls inside `App`"
+            - "The `<h1>Snack Vote</h1>` heading"
+            - "The CSS class name `snack-shell`"
+            - "The array literal named `SNACKS`"
+          correct_index: 0
+          option_feedback:
+            1: "The heading helps with user-facing purpose, but it does not identify mutable state."
+            2: "The CSS class is a presentation hook. It is weak evidence for behavior."
+            3: "`SNACKS` is starter data. The state beacon is where React stores the changing copy."
+          explanation: "`useState` is a React framework beacon: it marks component-owned memory and a setter that can trigger a re-render."
+
+        - type: single
+          question: "The expression `snacks.filter(...).map(...)` is mainly which kind of beacon?"
+          options:
+            - "A structural beacon for the plan: derive a visible list, then render one element per item"
+            - "A specification beacon because it proves the tests pass"
+            - "A false beacon because array methods never help comprehension"
+            - "A CSS beacon because it controls grid layout"
+          correct_index: 0
+          option_feedback:
+            1: "Tests and assertions are specification beacons. This expression is implementation structure."
+            2: "Array methods are often excellent structural beacons when the reader knows the plan they encode."
+            3: "CSS controls layout, but `.filter(...).map(...)` controls data selection and rendering."
+          explanation: "The structure compresses many details into a plan: choose the relevant data, then transform each item into JSX."
+
+        - type: single
+          question: "A reader wants to know what happens when the Vote button is clicked. Which path should they inspect?"
+          options:
+            - "`SnackCard`'s `onClick`, the `onVote` prop, and `handleVote` in `App`"
+            - "Only the CSS file"
+            - "Only the `SNACKS` array"
+            - "Only the `<option>` elements in the category selector"
+          correct_index: 0
+          option_feedback:
+            1: "CSS can change appearance, but the click behavior is in JSX and state updates."
+            2: "The starter data explains initial values, not the click interaction."
+            3: "The selector controls category filtering, not vote increments."
+          explanation: "The interaction crosses a component boundary: child button → callback prop → parent state update."
+
+        - type: multiple
+          question: "Which beacons are strong enough to support a first-pass prediction?"
+          options:
+            - "`visibleSnacks` suggests a filtered list of snacks."
+            - "`onVote` suggests a callback prop from parent to child."
+            - "`snack-grid` proves the app stores votes in localStorage."
+            - "`key={snack.id}` suggests React is rendering a list."
+          correct_indices: [0, 1, 3]
+          option_feedback:
+            0: "The name directly states the role of the derived list."
+            1: "The `on...` prop naming convention is a common React beacon for event callbacks."
+            2: "A CSS class can suggest layout, but it says nothing about persistence."
+            3: "`key` is a React list-rendering beacon."
+          explanation: "A useful beacon has a tight relationship to behavior. Presentation class names are usually weaker than state, props, and list-rendering patterns."
+
+        - type: single
+          question: "Which cue is the weakest evidence for how votes change?"
+          options:
+            - "`snack-grid`, because it mainly names a layout hook"
+            - "`onClick={() => onVote(snack.id)}`, because it shows the button sends an id"
+            - "`handleVote(id)`, because it names the parent-side update path"
+            - "`setSnacks(snacks.map(...))`, because it shows the state update"
+          correct_index: 0
+          option_feedback:
+            1: "This is strong interaction evidence: the click calls a callback with the snack id."
+            2: "This is strong lexical and structural evidence for the vote behavior."
+            3: "This is the strongest implementation evidence for how votes change."
+          explanation: "Weak-beacon diagnosis keeps fast reading from becoming careless guessing."
+
+  # =========================================================================
+  # STEP 4: React Reading Sprint
+  # =========================================================================
+  # Pedagogy: timed interleaved practice — React beacon reading with a spaced retrieval prompt
+  - title: "React Reading Sprint"
+    backend: react
+    max-time: 8
+    lockout-time: 5
+    instructions: |
+      ### Why this matters
+
+      React code can look visually busy because JSX mixes data, structure, and event wiring. Beacon reading lets you find the small number of expressions that control the behavior you care about. This sprint is a little larger than the Python one, so use the routine and let's see how far you can make it.
+
+      ### 🎯 You will learn to
+
+      - Apply React beacon reading to props, state, filters, and conditional rendering
+      - Explain a component's purpose without tracing every JSX tag
+      - Decide which component owns a behavior
+
+      ### Reading Goal
+
+      You have **8 minutes**. Your target is not "understand every line." Your target is:
+
+      - Who owns the selected topic?
+      - Which tasks are visible?
+      - When does the completion banner appear?
+      - Which component is display-only?
+
+      Use `reading-notes.md` to record your hypothesis, strongest beacons, and
+      smallest useful trace. As a transfer check, notice what this React code
+      shares with the Python sprint: both derive a visible list, then shape
+      that list for display.
+
+      After this step, **wait two or three days before starting the advanced tutorial**. That delay is not wasted time; it is how spacing turns today's code-reading routine into something you can retrieve later.
+
+    files:
+      - path: "reading-notes.md"
+        language: "markdown"
+        content: |
+          # React Reading Sprint Notes
+
+          Hypothesis:
+
+          Top 3 beacons:
+          1.
+          2.
+          3.
+
+          What I can ignore for this question:
+
+          Smallest trace:
+
+          Final EiPE summary:
+
+      - path: "study-queue/styles.css"
+        language: "css"
+        content: |
+          .queue-shell {
+            max-width: 58rem;
+            margin: 0 auto;
+            padding: 1.5rem;
+          }
+
+          .task-card {
+            border: 1px solid #c9d3df;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-block: 0.75rem;
+          }
+
+      - path: "study-queue/App.jsx"
+        language: "javascript"
+        content: |
+          const TASKS = [
+            { id: 1, title: "Read route tests", topic: "node", done: true },
+            { id: 2, title: "Trace prop callback", topic: "react", done: false },
+            { id: 3, title: "Label accumulator role", topic: "python", done: true },
+            { id: 4, title: "Map route to helper", topic: "node", done: false },
+          ];
+
+          function TopicFilter({ topic, onTopicChange }) {
+            return (
+              <label>
+                Topic
+                <select value={topic} onChange={event => onTopicChange(event.target.value)}>
+                  <option value="all">All</option>
+                  <option value="python">Python</option>
+                  <option value="react">React</option>
+                  <option value="node">Node</option>
+                </select>
+              </label>
+            );
+          }
+
+          function TaskCard({ task }) {
+            return (
+              <article className="task-card">
+                <h2 className="h5">{task.title}</h2>
+                <p>Topic: {task.topic}</p>
+                {task.done ? <strong>Done</strong> : <span>Still practicing</span>}
+              </article>
+            );
+          }
+
+          function App() {
+            const [topic, setTopic] = React.useState("all");
+
+            const visibleTasks = TASKS.filter(task =>
+              topic === "all" || task.topic === topic
+            );
+
+            const allVisibleDone = visibleTasks.length > 0 &&
+              visibleTasks.every(task => task.done);
+
+            return (
+              <main className="queue-shell">
+                <h1>Study Queue</h1>
+                <TopicFilter topic={topic} onTopicChange={setTopic} />
+                {allVisibleDone && <p role="status">Everything visible is done.</p>}
+                <section aria-label="Visible study tasks">
+                  {visibleTasks.map(task => (
+                    <TaskCard key={task.id} task={task} />
+                  ))}
+                </section>
+              </main>
+            );
+          }
+
+          const root = ReactDOM.createRoot(document.getElementById("root"));
+          root.render(<App />);
+
+    react_files:
+      - "study-queue/styles.css"
+      - "study-queue/App.jsx"
+    open_file: "study-queue/App.jsx"
+
+    quiz:
+      title: "Step 4 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          question: "Which component owns the selected topic state?"
+          options:
+            - "`App`, because it calls `React.useState(\"all\")` and passes `topic` plus `setTopic` down"
+            - "`TopicFilter`, because it renders the `<select>` element"
+            - "`TaskCard`, because each card displays a task topic"
+            - "`TASKS`, because it stores every task's topic string"
+          correct_index: 0
+          option_feedback:
+            1: "`TopicFilter` receives the current value and callback as props. Rendering a control does not mean owning its state."
+            2: "`TaskCard` is display-only in this code. It receives one task and does not call `useState`."
+            3: "`TASKS` is static data, not React state."
+          explanation: "`App` owns state and passes it down. The child component sends changes upward by calling the callback prop."
+
+        - type: single
+          question: "If the selected topic is `react`, which task appears?"
+          options:
+            - "`Trace prop callback`"
+            - "`Read route tests`"
+            - "`Label accumulator role`"
+            - "`Map route to helper`"
+          correct_index: 0
+          option_feedback:
+            1: "That task has topic `node`."
+            2: "That task has topic `python`."
+            3: "That task has topic `node`."
+          explanation: "`visibleTasks` keeps tasks where `task.topic === topic`, so the React task remains."
+
+        - type: single
+          question: "When does the `Everything visible is done.` status appear?"
+          options:
+            - "Only when there is at least one visible task and every visible task has `done: true`"
+            - "Whenever any task in `TASKS` has `done: true`"
+            - "Whenever the selected topic is `all`"
+            - "Only when `TaskCard` decides to render it"
+          correct_index: 0
+          option_feedback:
+            1: "The code uses `visibleTasks.every(...)`, so hidden tasks do not control the banner."
+            2: "The `all` topic includes unfinished tasks in the sample data, so the banner does not appear there."
+            3: "`TaskCard` renders individual task status. The overall banner is in `App`."
+          explanation: "The condition combines two checks: there must be visible tasks, and all of them must be done."
+
+        - type: multiple
+          question: "Which statements are good evidence-based summaries of this React code?"
+          options:
+            - "`App` owns the topic state and derives `visibleTasks` from static task data."
+            - "`TopicFilter` sends selection changes upward through `onTopicChange`."
+            - "`TaskCard` mutates each task's `done` value when it renders."
+            - "`visibleTasks.map(...)` renders one card per visible task."
+          correct_indices: [0, 1, 3]
+          option_feedback:
+            0: "This connects state ownership to derived data, which is the main behavior."
+            1: "This correctly follows the callback prop from child to parent."
+            2: "`TaskCard` only reads `task.done`; it never changes the task object."
+            3: "This is the list-rendering plan in the JSX."
+          explanation: "A strong React summary names state ownership, callback direction, and derived rendering."
+
+        - type: single
+          question: "What plan is shared by the Python event-card sprint and this React study-queue sprint?"
+          options:
+            - "Both filter a source collection into visible items, then shape those items for a user-facing result."
+            - "Both save user choices in localStorage."
+            - "Both mutate the original sample data before rendering."
+            - "Both use route handlers to return JSON."
+          correct_index: 0
+          option_feedback:
+            1: "Neither example persists data across page reloads."
+            2: "Both examples derive new values without mutating the starter collection."
+            3: "Route handlers are part of backend Node examples, not these Python and React snippets."
+          explanation: "Transfer improves when you name the shared code plan across languages: select relevant data, then shape it for the consumer."

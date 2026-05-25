@@ -806,7 +806,9 @@ steps:
                                              # quiz. Supports decimals for
                                              # demos/tests, but real tutorials
                                              # should use humane whole-minute
-                                             # values.
+                                             # values. Runtime controls let
+                                             # learners add time or turn off
+                                             # the timer for the current step.
     lockout-time: number                     # Optional timed-practice
                                              # lockout duration in minutes
                                              # after the countdown reaches 0.
@@ -1187,10 +1189,15 @@ channel.
   `lockout-time` (minutes, default 60). The countdown remains visible in the
   step nav while the step or quiz is active; at one minute or less it uses a
   heartbeat animation unless the site/OS reduced-motion preference is active.
+  Active timed steps include learner controls to add five minutes or turn off
+  the timer for the current step. If a step reaches its lockout screen, the
+  learner can continue the step without a timer instead of waiting for the
+  cooldown.
   The runtime stores deadlines and lockout windows in
-  `localStorage["tutorial-time-practice-<id>"]`, so refreshing the page does
-  not reset an attempt. When time expires, only that step is locked until the
-  lockout ends; students may still navigate to earlier unlocked steps.
+  `localStorage["tutorial-time-practice-<id>"]`, along with any per-step
+  timer-off choice, so refreshing the page does not reset an attempt. When
+  time expires, only that step is locked until the lockout ends; students may
+  still navigate to earlier unlocked steps.
   `applySolution()` returns a Promise; tests and runtime code that reveal
   solutions must await it before running step tests or advancing state, and it
   must wait for any active first-visit `setup_commands` chain before it mutates

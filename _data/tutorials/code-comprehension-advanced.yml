@@ -1,0 +1,1003 @@
+title: "Code Comprehension Part 2: Tests & Cross-File Flow"
+description: >-
+  Part 2 of the code comprehension tutorial. Return a few days after Part 1,
+  then practice testing hypotheses with Node.js behavior tests and mapping
+  interactions across React and backend files.
+
+learning_objectives:
+  - "Use behavior tests as specification beacons before reading Node.js implementation code."
+  - "Verify a comprehension hypothesis with a targeted trace through one branch, invariant, or helper call."
+  - "Map how state, callbacks, request data, and return values move across files in React and Node.js examples."
+  - "Locate where a domain concept is implemented and separate central files from nearby but incidental files."
+  - "Evaluate when to trust a top-down hypothesis and when to switch to bottom-up tracing."
+
+backend: multiple
+require_tests: false
+autosave_type: none
+font_size: 16
+
+steps:
+  # =========================================================================
+  # STEP 1: Tests as Specification Beacons
+  # =========================================================================
+  # Pedagogy: spaced retrieval + worked example — tests first, implementation second
+  - title: "Tests as Specification Beacons"
+    backend: webcontainer
+    instructions: |
+      ### Why this matters
+
+      If you just finished the basics tutorial today, stop here and come back in two or three days. That pause forces retrieval, which is exactly what makes the skill stick. When you return, this step starts with one of the strongest professional beacons: tests that describe the behavior before you read the implementation.
+
+      ### 🎯 You will learn to
+
+      - Use Node.js tests to form a behavior hypothesis
+      - Verify one expectation by reading the smallest relevant helper
+      - Decide when a test is a trustworthy beacon and when it needs implementation evidence
+
+      ### Retrieval Warm-Up
+
+      Before opening the code, recall the Part 1 routine without looking:
+
+      > Orient → Predict → Beacon-hunt → Descend selectively → Verify → Summarize
+
+      Then name one switch trigger. For example: if a behavior depends on a
+      risky branch, stop scanning and trace one input through that branch.
+
+      ### Tests First
+
+      Students often read tests only after code fails. For comprehension, read them **before** production code:
+
+      1. Test names tell you the intended behavior.
+      2. Setup data tells you the important objects.
+      3. Assertions tell you the invariant or postcondition.
+      4. Failing cases tell you where the implementation is risky.
+
+      ### Contract-to-Mechanism Map
+
+      After reading tests, write a tiny contract map before implementation:
+
+      | Contract clue | Mechanism to verify |
+      |---|---|
+      | "returns only sessions that fit" | A filter or guard using `minutes` |
+      | "prefers a matching topic" | A ranking or scoring rule using `topic` |
+      | "low energy gives solo sessions a boost" | A branch involving `energy` and `mode` |
+
+      This keeps your attention on the behavior the tests actually promise. You can always trace more later, but first you should know what you are trying to prove.
+
+      In this step, read `sessionPlanner.test.js` before `sessionPlanner.js`. Your first hypothesis should be about behavior, not implementation:
+
+      > "This planner probably returns short study sessions that fit the time box, prefers matching topics, and adjusts for energy level."
+
+      Then inspect only the helper that can confirm each part.
+
+      One syntax note: `.sort((left, right) => scoreSession(right, request) - scoreSession(left, request))`
+      puts higher-scoring sessions first. You do not need to master every
+      sorting detail here; just connect that expression to the ranking behavior
+      named by the tests.
+
+    files:
+      - path: "sessionPlanner.js"
+        language: "javascript"
+        content: |
+          const SESSIONS = [
+            { id: 1, title: "Trace one Python helper", topic: "python", minutes: 10, mode: "solo" },
+            { id: 2, title: "Pair-read a React component", topic: "react", minutes: 18, mode: "pair" },
+            { id: 3, title: "Map an Express route", topic: "node", minutes: 16, mode: "solo" },
+            { id: 4, title: "Sketch a full review plan", topic: "review", minutes: 30, mode: "pair" },
+          ];
+
+          function scoreSession(session, request) {
+            let score = 0;
+            if (session.topic === request.topic) {
+              score += 5;
+            }
+            if (session.minutes <= request.minutes) {
+              score += 2;
+            }
+            if (request.energy === "low" && session.mode === "solo") {
+              score += 2;
+            }
+            if (session.minutes > request.minutes) {
+              score -= 10;
+            }
+            return score;
+          }
+
+          function pickSessionPlan(request) {
+            return SESSIONS
+              .filter(session => session.minutes <= request.minutes)
+              .sort((left, right) => scoreSession(right, request) - scoreSession(left, request))
+              .slice(0, 2)
+              .map(session => session.title);
+          }
+
+          module.exports = { pickSessionPlan, scoreSession };
+
+      - path: "sessionPlanner.test.js"
+        language: "javascript"
+        content: |
+          const assert = require("assert");
+          const { pickSessionPlan, scoreSession } = require("./sessionPlanner");
+
+          function test(name, body) {
+            try {
+              body();
+              console.log(`PASS: ${name}`);
+            } catch (error) {
+              console.error(`FAIL: ${name}`);
+              throw error;
+            }
+          }
+
+          test("returns only sessions that fit the available minutes", () => {
+            const plan = pickSessionPlan({ topic: "review", minutes: 18, energy: "high" });
+            assert(!plan.includes("Sketch a full review plan"));
+          });
+
+          test("prefers a matching topic when it fits", () => {
+            const plan = pickSessionPlan({ topic: "node", minutes: 18, energy: "high" });
+            assert.strictEqual(plan[0], "Map an Express route");
+          });
+
+          test("low energy gives solo sessions a small boost", () => {
+            const soloScore = scoreSession(
+              { title: "Solo", topic: "python", minutes: 10, mode: "solo" },
+              { topic: "react", minutes: 20, energy: "low" }
+            );
+            const pairScore = scoreSession(
+              { title: "Pair", topic: "python", minutes: 10, mode: "pair" },
+              { topic: "react", minutes: 20, energy: "low" }
+            );
+            assert(soloScore > pairScore);
+          });
+
+    open_file: "sessionPlanner.test.js"
+    run_file: "sessionPlanner.test.js"
+
+    quiz:
+      title: "Step 1 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          question: "What behavior hypothesis should the tests give you before reading `sessionPlanner.js`?"
+          options:
+            - "The planner chooses sessions that fit the time box, prefers topic matches, and slightly favors solo work when energy is low."
+            - "The planner stores study sessions in a database and updates them after every request."
+            - "The planner renders React cards for each session."
+            - "The planner always returns every session sorted alphabetically."
+          correct_index: 0
+          option_feedback:
+            1: "The tests use plain functions and arrays. No database behavior appears in the setup or assertions."
+            2: "There is no JSX or React renderer in the test file."
+            3: "The assertions check filtering and ranking, not alphabetical sorting or returning all sessions."
+          explanation: "The tests give a specification-layer summary: fit the time, rank matching topics, and adjust scoring for low energy."
+
+        - type: single
+          question: "Which implementation region verifies the hypothesis that unavailable long sessions are excluded?"
+          options:
+            - "The `.filter(session => session.minutes <= request.minutes)` call in `pickSessionPlan()`"
+            - "The `request.energy === \"low\"` branch in `scoreSession()`"
+            - "The `.map(session => session.title)` call"
+            - "The `module.exports` line"
+          correct_index: 0
+          option_feedback:
+            1: "That branch adjusts ranking for low energy. It does not remove long sessions."
+            2: "Mapping to titles changes the output shape after sessions have already been selected."
+            3: "Exports make functions available to tests. They do not implement the filtering rule."
+          explanation: "The filtering predicate is the shortest verification path for the minutes invariant."
+
+        - type: single
+          question: "A low-energy request should favor solo sessions. What is the smallest useful trace?"
+          options:
+            - "Compare one solo session and one pair session through `scoreSession()` with the same request."
+            - "Run every test and inspect every console line."
+            - "Trace `.slice(0, 2)` for every possible request."
+            - "Inspect only the `SESSIONS` array and stop."
+          correct_index: 0
+          option_feedback:
+            1: "Running tests can reveal pass/fail, but the comprehension question needs the scoring reason."
+            2: "Slicing controls output size. It does not explain why solo sessions score higher."
+            3: "The data shows possible modes, but the behavior lives in the scoring helper."
+          explanation: "Targeted tracing means choosing the one comparison that exercises the uncertain branch."
+
+        - type: multiple
+          question: "Which cues make the tests useful beacons rather than just grading tools?"
+          options:
+            - "Behavior-focused names such as `prefers a matching topic when it fits`"
+            - "Assertions that name the expected title or invariant"
+            - "Setup objects with realistic request fields"
+            - "The fact that the file extension is `.js`"
+          correct_indices: [0, 1, 2]
+          option_feedback:
+            0: "Behavioral test names are high-value specification beacons."
+            1: "Assertions show what must be true after the function runs."
+            2: "Setup data reveals the important inputs: topic, minutes, and energy."
+            3: "The language matters for syntax, but the extension alone says little about behavior."
+          explanation: "Tests help comprehension when their names, setup, and assertions reveal intent."
+
+        - type: single
+          question: "What behavior is not fully specified by these tests?"
+          options:
+            - "How ties are broken when two sessions receive the same score"
+            - "Whether sessions longer than the request are excluded"
+            - "Whether a matching topic can appear first when it fits"
+            - "Whether low energy can boost solo sessions"
+          correct_index: 0
+          option_feedback:
+            1: "The first test directly specifies that long sessions should not appear."
+            2: "The matching-topic test directly checks the first returned session for a Node request."
+            3: "The low-energy test directly compares a solo and pair score."
+          explanation: "Tests are powerful specification beacons, but they are not complete specifications. Strong readers also notice what a test suite leaves open."
+
+  # =========================================================================
+  # STEP 2: Node Hypothesis Sprint
+  # =========================================================================
+  # Pedagogy: timed practice — tests-as-specification with targeted backend tracing
+  - title: "Node Hypothesis Sprint"
+    backend: webcontainer
+    max-time: 10
+    lockout-time: 5
+    instructions: |
+      ### Why this matters
+
+      Backend code often spreads behavior across route handlers, services, and data modules. Reading everything from top to bottom burns attention on details before you know what matters. This sprint asks you to read tests as beacons, choose a route, and trace only the path needed to answer the questions. Let's see how far you can make it.
+
+      ### 🎯 You will learn to
+
+      - Apply tests-as-specification reading to a multi-file Node.js example
+      - Trace request data from a route handler into a service helper
+      - Identify when a 404 behavior is implemented in the route rather than the data layer
+
+      ### Reading Goal
+
+      You have **10 minutes**. Read in this order:
+
+      1. `__tests__/sessionRoutes.test.js`
+      2. `routes/sessionRoutes.js`
+      3. Only the service helper needed for the current question
+      4. Write a one-line contract-to-mechanism note: expected behavior → code region that enforces it.
+
+      `fakeResponse()` is only a small test double for Express's `res` object.
+      Read its `status()` and `json()` methods only enough to know what the
+      route sent; do not treat it as production behavior.
+
+      Use `reading-notes.md` to write your reading path. Core target: answer
+      the route and service questions. Stretch target: locate where a field
+      leak would begin.
+
+      Do not edit the code. Your job is to answer with evidence.
+
+    files:
+      - path: "reading-notes.md"
+        language: "markdown"
+        content: |
+          # Node Hypothesis Sprint Notes
+
+          Contract hypothesis:
+
+          Top 3 beacons:
+          1.
+          2.
+          3.
+
+          What I can ignore for this question:
+
+          Smallest trace:
+
+          Final EiPE summary:
+
+      - path: "data/sessions.js"
+        language: "javascript"
+        content: |
+          const sessions = [
+            { id: 1, title: "Python filter drill", topic: "python", minutes: 12, nextStep: "Trace one hidden item" },
+            { id: 2, title: "React callback map", topic: "react", minutes: 18, nextStep: "Follow the callback prop" },
+            { id: 3, title: "Node route map", topic: "node", minutes: 16, nextStep: "Read tests before routes" },
+          ];
+
+          module.exports = { sessions };
+
+      - path: "services/sessionService.js"
+        language: "javascript"
+        content: |
+          const { sessions } = require("../data/sessions");
+
+          function findSessions(topic) {
+            if (!topic || topic === "all") {
+              return sessions;
+            }
+            return sessions.filter(session => session.topic === topic);
+          }
+
+          function findSessionById(id) {
+            return sessions.find(session => session.id === id);
+          }
+
+          function toSummary(session) {
+            return {
+              id: session.id,
+              title: session.title,
+              minutes: session.minutes,
+            };
+          }
+
+          function withNextStep(session) {
+            return {
+              ...toSummary(session),
+              topic: session.topic,
+              nextStep: session.nextStep,
+            };
+          }
+
+          module.exports = { findSessions, findSessionById, toSummary, withNextStep };
+
+      - path: "routes/sessionRoutes.js"
+        language: "javascript"
+        content: |
+          const {
+            findSessions,
+            findSessionById,
+            toSummary,
+            withNextStep,
+          } = require("../services/sessionService");
+
+          function listSessions(req, res) {
+            const topic = req.query.topic || "all";
+            const summaries = findSessions(topic).map(toSummary);
+            return res.json(summaries);
+          }
+
+          function sessionDetails(req, res) {
+            const id = Number(req.params.id);
+            const session = findSessionById(id);
+            if (!session) {
+              return res.status(404).json({ error: "session not found" });
+            }
+            return res.json(withNextStep(session));
+          }
+
+          module.exports = { listSessions, sessionDetails };
+
+      - path: "__tests__/sessionRoutes.test.js"
+        language: "javascript"
+        content: |
+          const assert = require("assert");
+          const { listSessions, sessionDetails } = require("../routes/sessionRoutes");
+
+          function fakeResponse() {
+            return {
+              statusCode: 200,
+              body: undefined,
+              status(code) {
+                this.statusCode = code;
+                return this;
+              },
+              json(payload) {
+                this.body = payload;
+                return this;
+              },
+            };
+          }
+
+          function test(name, body) {
+            body();
+            console.log(`PASS: ${name}`);
+          }
+
+          test("GET /sessions?topic=react returns only React summaries", () => {
+            const res = fakeResponse();
+            listSessions({ query: { topic: "react" } }, res);
+            assert.deepStrictEqual(res.body, [
+              { id: 2, title: "React callback map", minutes: 18 },
+            ]);
+          });
+
+          test("GET /sessions/:id includes the next recommended step", () => {
+            const res = fakeResponse();
+            sessionDetails({ params: { id: "3" } }, res);
+            assert.strictEqual(res.body.nextStep, "Read tests before routes");
+          });
+
+          test("GET /sessions/:id returns 404 for a missing session", () => {
+            const res = fakeResponse();
+            sessionDetails({ params: { id: "99" } }, res);
+            assert.strictEqual(res.statusCode, 404);
+            assert.deepStrictEqual(res.body, { error: "session not found" });
+          });
+
+    open_file: "__tests__/sessionRoutes.test.js"
+    run_file: "__tests__/sessionRoutes.test.js"
+
+    quiz:
+      title: "Step 2 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          question: "For `GET /sessions?topic=react`, what is the request-data path?"
+          options:
+            - "`req.query.topic` in `listSessions()` flows into `findSessions(topic)`, then each session becomes a summary."
+            - "`req.params.id` in `sessionDetails()` flows into `findSessions(topic)`, then each session becomes a summary."
+            - "`sessions` directly reads the URL query from the request object."
+            - "`toSummary()` decides which topic to filter by."
+          correct_index: 0
+          option_feedback:
+            1: "Route params are used by the details route, not the list-by-topic route."
+            2: "The data module exports plain data. It does not know about HTTP request objects."
+            3: "`toSummary()` changes output shape after filtering; it does not choose the topic."
+          explanation: "The query value is read at the route boundary, passed to the service, and only then mapped into response summaries."
+
+        - type: single
+          question: "Where is the missing-session 404 response implemented?"
+          options:
+            - "In `sessionDetails()` after `findSessionById(id)` returns no session"
+            - "In `findSessionById()` inside the service"
+            - "In the `sessions` array"
+            - "In `toSummary()`"
+          correct_index: 0
+          option_feedback:
+            1: "The service returns `undefined` when `.find(...)` misses. The route decides how to turn that into HTTP."
+            2: "The data array has no HTTP status behavior."
+            3: "`toSummary()` only formats a found session."
+          explanation: "The route owns HTTP response shape. The service owns data lookup."
+
+        - type: single
+          question: "Which helper should you inspect to answer why `nextStep` appears in the details response but not the list response?"
+          options:
+            - "`withNextStep()` and where `sessionDetails()` calls it"
+            - "`findSessions()`"
+            - "`fakeResponse()`"
+            - "`Number(req.params.id)`"
+          correct_index: 0
+          option_feedback:
+            1: "`findSessions()` controls list filtering, not details response shape."
+            2: "`fakeResponse()` simulates Express's response object for tests; it does not choose fields."
+            3: "Number conversion explains ID lookup, not which fields are returned."
+          explanation: "`listSessions()` maps through `toSummary()`, while `sessionDetails()` returns `withNextStep(session)`."
+
+        - type: multiple
+          question: "Which files are central implementation evidence for the missing-session 404 behavior?"
+          options:
+            - "`routes/sessionRoutes.js`, because it turns a missing lookup into `res.status(404).json(...)`"
+            - "`services/sessionService.js`, because `findSessionById()` performs the lookup that can miss"
+            - "`__tests__/sessionRoutes.test.js`, because it states the expected behavior but does not implement it"
+            - "`data/sessions.js`, because it is supporting data, but not where HTTP behavior is decided"
+          correct_indices: [0, 1]
+          option_feedback:
+            0: "The route owns the HTTP status and response body."
+            1: "The service lookup is part of the implementation path because it can return no session."
+            2: "The test is excellent specification evidence, but it is not implementation evidence."
+            3: "The data file supports the example, but the 404 behavior is not implemented there."
+          explanation: "Attention control means separating specification evidence, central implementation evidence, and supporting data."
+
+        - type: single
+          question: "A bug report says the list endpoint is leaking `nextStep`. Where should the search start?"
+          options:
+            - "`routes/sessionRoutes.js`, then compare `toSummary()` with `withNextStep()` in the service"
+            - "`data/sessions.js`, because every field leak starts in the data file"
+            - "`fakeResponse()`, because it stores the response body"
+            - "`Number(req.params.id)`, because IDs control every response field"
+          correct_index: 0
+          option_feedback:
+            1: "The field exists in the data, but the leak would depend on which formatter the route uses."
+            2: "`fakeResponse()` captures output for tests; it does not choose which fields are returned."
+            3: "ID conversion belongs to the details route, not the list response shape."
+          explanation: "Concept location starts from the user-visible concept, then follows the route boundary to the helper that shapes the response."
+
+  # =========================================================================
+  # STEP 3: Cross-File Interaction Maps
+  # =========================================================================
+  # Pedagogy: worked example with fading — map event flow across React files
+  - title: "Cross-File Interaction Maps"
+    backend: react
+    instructions: |
+      ### Why this matters
+
+      Large code rarely keeps cause and effect in one place. A click in one React file may update state in another file and change rendering in a third. Cross-file comprehension means turning scattered code into a small interaction map.
+
+      ### 🎯 You will learn to
+
+      - Map event flow across parent and child React components
+      - Identify which file owns state and which files only receive props
+      - Verify a cross-file hypothesis by following one callback path
+
+      ### The Interaction Map
+
+      Use a four-column map. This one is partly worked; fill the blanks in
+      your own notes before checking the code.
+
+      | Trigger | File / component | Evidence | Effect |
+      |---|---|---|---|
+      | User types in search box | `LessonSearch` | `onChange={event => onQueryChange(...)}` | Calls parent callback |
+      | Parent callback runs | _____ | `onQueryChange={setQuery}` | Updates `query` state |
+      | Derived list recalculates | `App` | _____ | Chooses visible lessons |
+      | List renders | `LessonList` | `lessons.map(...)` | _____ |
+
+      The point is not to memorize React syntax. The point is to name the connection between separated locations.
+
+      ### Predict Before Reading
+
+      Before opening every file, predict which file owns:
+
+      - the search text,
+      - the selected lesson,
+      - the display of matching lessons.
+
+      Then verify by following the callback props.
+
+    files:
+      - path: "lesson-map/styles.css"
+        language: "css"
+        content: |
+          .lesson-shell {
+            max-width: 60rem;
+            margin: 0 auto;
+            padding: 1.5rem;
+          }
+
+          .lesson-card {
+            border: 1px solid #ccd6e0;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-block: 0.75rem;
+          }
+
+      - path: "lesson-map/data.js"
+        language: "javascript"
+        content: |
+          const LESSONS = [
+            { id: 1, title: "Python filters", tag: "python", minutes: 12 },
+            { id: 2, title: "React callbacks", tag: "react", minutes: 18 },
+            { id: 3, title: "Node route tests", tag: "node", minutes: 16 },
+          ];
+
+      - path: "lesson-map/LessonSearch.jsx"
+        language: "javascript"
+        content: |
+          function LessonSearch({ query, onQueryChange }) {
+            return (
+              <label>
+                Search lessons
+                <input
+                  value={query}
+                  onChange={event => onQueryChange(event.target.value)}
+                  placeholder="python, react, node..."
+                />
+              </label>
+            );
+          }
+
+      - path: "lesson-map/LessonList.jsx"
+        language: "javascript"
+        content: |
+          function LessonList({ lessons, selectedId, onSelectLesson }) {
+            return (
+              <section aria-label="Matching lessons">
+                {lessons.map(lesson => (
+                  <article className="lesson-card" key={lesson.id}>
+                    <h2 className="h5">{lesson.title}</h2>
+                    <p>{lesson.minutes} minutes</p>
+                    <button type="button" onClick={() => onSelectLesson(lesson.id)}>
+                      {selectedId === lesson.id ? "Selected" : "Select"}
+                    </button>
+                  </article>
+                ))}
+              </section>
+            );
+          }
+
+      - path: "lesson-map/App.jsx"
+        language: "javascript"
+        content: |
+          function App() {
+            const [query, setQuery] = React.useState("");
+            const [selectedId, setSelectedId] = React.useState(null);
+
+            const visibleLessons = LESSONS.filter(lesson =>
+              lesson.title.toLowerCase().includes(query.toLowerCase()) ||
+              lesson.tag.includes(query.toLowerCase())
+            );
+
+            const selectedLesson = LESSONS.find(lesson => lesson.id === selectedId);
+
+            return (
+              <main className="lesson-shell">
+                <h1>Lesson Finder</h1>
+                <LessonSearch query={query} onQueryChange={setQuery} />
+                {selectedLesson && (
+                  <p role="status">Selected: {selectedLesson.title}</p>
+                )}
+                <LessonList
+                  lessons={visibleLessons}
+                  selectedId={selectedId}
+                  onSelectLesson={setSelectedId}
+                />
+              </main>
+            );
+          }
+
+          const root = ReactDOM.createRoot(document.getElementById("root"));
+          root.render(<App />);
+
+    react_files:
+      - "lesson-map/styles.css"
+      - "lesson-map/data.js"
+      - "lesson-map/LessonSearch.jsx"
+      - "lesson-map/LessonList.jsx"
+      - "lesson-map/App.jsx"
+    open_file: "lesson-map/App.jsx"
+
+    quiz:
+      title: "Step 3 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          question: "A user types `node` in the search input. What is the correct interaction path?"
+          options:
+            - "`LessonSearch` calls `onQueryChange`, `App` updates `query`, `visibleLessons` filters `LESSONS`, and `LessonList` renders the result."
+            - "`LessonList` directly reads the input value and filters lessons."
+            - "`data.js` updates `LESSONS` to remove non-Node lessons."
+            - "`LessonSearch` mutates `visibleLessons` directly."
+          correct_index: 0
+          option_feedback:
+            1: "`LessonList` receives the already-filtered `lessons` prop. It does not know about the input."
+            2: "`LESSONS` is static data in this example."
+            3: "`visibleLessons` is derived inside `App`; child components cannot mutate it directly."
+          explanation: "The search behavior crosses files through a callback prop and derived state in the parent."
+
+        - type: single
+          question: "Which file owns `selectedId`?"
+          options:
+            - "`App.jsx`, because it calls `React.useState(null)` and passes `setSelectedId` as `onSelectLesson`"
+            - "`LessonList.jsx`, because it renders the Select button"
+            - "`LessonSearch.jsx`, because it has an input"
+            - "`data.js`, because each lesson has an `id`"
+          correct_index: 0
+          option_feedback:
+            1: "`LessonList` triggers the update, but the state belongs to the component that calls `useState`."
+            2: "The search input controls `query`, not `selectedId`."
+            3: "The data file provides IDs. It does not own React state."
+          explanation: "In React, state ownership is usually marked by `useState`; child components receive values and callback props."
+
+        - type: single
+          question: "Which evidence proves that `LessonList` is display-and-event wiring, not the owner of lesson filtering?"
+          options:
+            - "It receives `lessons` as a prop and maps over that prop."
+            - "It contains an `<article>` element."
+            - "It has a CSS class named `lesson-card`."
+            - "It displays `lesson.minutes`."
+          correct_index: 0
+          option_feedback:
+            1: "The HTML structure says how content is grouped, not who filters data."
+            2: "The CSS class is presentation, not behavior ownership."
+            3: "Displaying a field does not mean owning the filtered collection."
+          explanation: "`LessonList` renders whatever list it receives; filtering happens before the prop crosses into the component."
+
+        - type: multiple
+          question: "Which cross-file links should appear in an accurate interaction map?"
+          options:
+            - "`LessonSearch` → `App` through `onQueryChange={setQuery}`"
+            - "`LessonList` → `App` through `onSelectLesson={setSelectedId}`"
+            - "`App` → `LessonList` through the `lessons={visibleLessons}` prop"
+            - "`styles.css` → `data.js` through class names"
+          correct_indices: [0, 1, 2]
+          option_feedback:
+            0: "This is the search callback path from child to parent."
+            1: "This is the selection callback path from child to parent."
+            2: "This is the derived-data path from parent to child."
+            3: "CSS class names affect presentation here; they do not connect to the data array."
+          explanation: "Cross-file maps should include both upward callback flow and downward data flow."
+
+        - type: single
+          question: "When should you switch from beacon reading to a small bottom-up trace in this React example?"
+          options:
+            - "When you need to prove that a click in `LessonList` actually changes `selectedId` in `App`"
+            - "Before reading any component names or props"
+            - "Never, because React prop names are always enough"
+            - "Only after editing `data.js`"
+          correct_index: 0
+          option_feedback:
+            1: "Starting with exhaustive tracing discards the useful top-down clues from names and props."
+            2: "Prop names guide attention, but cross-file behavior still needs verification."
+            3: "The goal is comprehension before editing, not after accidental changes."
+          explanation: "A callback crossing a file boundary is a good switch point: predict from the prop name, then trace one event path."
+
+  # =========================================================================
+  # STEP 4: Backend Interaction Sprint
+  # =========================================================================
+  # Pedagogy: timed transfer practice — larger Node example with cross-file flow
+  - title: "Backend Interaction Sprint"
+    backend: webcontainer
+    max-time: 15
+    lockout-time: 5
+    instructions: |
+      ### Why this matters
+
+      This final sprint combines the whole routine: orient from tests, predict the design, find beacons, trace one risky branch, and map files. It is also a **concept-location** task: you start with a domain idea such as "coupon" or "out of stock" and locate the files that realize it. The code is bigger than before, but the reading job is still bounded. Let's see how far you can make it.
+
+      ### 🎯 You will learn to
+
+      - Map request data through route, service, data, and discount helpers
+      - Verify one error path without tracing the entire backend
+      - Evaluate when a helper name is a reliable beacon for responsibility
+
+      ### Reading Goal
+
+      You have **15 minutes**. Read `__tests__/checkoutRoute.test.js` first. Then answer:
+
+      - What happens when an item is out of stock?
+      - Where is the coupon applied?
+      - Which helper computes the subtotal?
+      - Which files participate in a successful quote?
+      - Which files are central, supporting, or incidental to the concept you are investigating?
+
+      Use `reading-notes.md` to write a narrow interaction map. Core target:
+      stock, subtotal, and coupon flow. Stretch target: diagnose the weak
+      `TEA3` coupon beacon and identify the incidental receipt formatter.
+
+      Do not edit the code. Use a narrow interaction map.
+
+    files:
+      - path: "reading-notes.md"
+        language: "markdown"
+        content: |
+          # Backend Interaction Sprint Notes
+
+          Contract hypothesis:
+
+          Top 3 beacons:
+          1.
+          2.
+          3.
+
+          What I can ignore for this question:
+
+          Smallest trace:
+
+          Central / supporting / incidental files:
+
+          Final EiPE summary:
+
+      - path: "data/items.js"
+        language: "javascript"
+        content: |
+          const items = [
+            { sku: "mochi", name: "Mango Mochi", price: 4, stock: 8 },
+            { sku: "ramen", name: "Late-Night Ramen", price: 7, stock: 0 },
+            { sku: "tea", name: "Jasmine Tea", price: 3, stock: 15 },
+          ];
+
+          module.exports = { items };
+
+      - path: "services/stockService.js"
+        language: "javascript"
+        content: |
+          const { items } = require("../data/items");
+
+          function findItem(sku) {
+            return items.find(item => item.sku === sku);
+          }
+
+          function checkStock(lineItems) {
+            const missing = [];
+            for (const lineItem of lineItems) {
+              const item = findItem(lineItem.sku);
+              if (!item || item.stock < lineItem.quantity) {
+                missing.push(lineItem.sku);
+              }
+            }
+            return { ok: missing.length === 0, missing };
+          }
+
+          function subtotalFor(lineItems) {
+            return lineItems.reduce((total, lineItem) => {
+              const item = findItem(lineItem.sku);
+              return total + item.price * lineItem.quantity;
+            }, 0);
+          }
+
+          module.exports = { checkStock, subtotalFor };
+
+      - path: "services/discountService.js"
+        language: "javascript"
+        content: |
+          function discountFor(coupon, subtotal) {
+            if (coupon === "STUDY10" && subtotal >= 10) {
+              return Math.round(subtotal * 0.10);
+            }
+            if (coupon === "TEA3") {
+              return 3;
+            }
+            return 0;
+          }
+
+          module.exports = { discountFor };
+
+      - path: "services/receiptFormatter.js"
+        language: "javascript"
+        content: |
+          function formatReceiptLine(name, quantity, total) {
+            return `${quantity}x ${name}: $${total}`;
+          }
+
+          module.exports = { formatReceiptLine };
+
+      - path: "routes/checkoutRoute.js"
+        language: "javascript"
+        content: |
+          const { checkStock, subtotalFor } = require("../services/stockService");
+          const { discountFor } = require("../services/discountService");
+
+          function quoteCheckout(req, res) {
+            const lineItems = req.body.items || [];
+            const stockReport = checkStock(lineItems);
+
+            if (!stockReport.ok) {
+              return res.status(409).json({
+                error: "out of stock",
+                missing: stockReport.missing,
+              });
+            }
+
+            const subtotal = subtotalFor(lineItems);
+            const discount = discountFor(req.body.coupon, subtotal);
+
+            return res.json({
+              subtotal,
+              discount,
+              total: subtotal - discount,
+            });
+          }
+
+          module.exports = { quoteCheckout };
+
+      - path: "__tests__/checkoutRoute.test.js"
+        language: "javascript"
+        content: |
+          const assert = require("assert");
+          const { quoteCheckout } = require("../routes/checkoutRoute");
+
+          function fakeResponse() {
+            return {
+              statusCode: 200,
+              body: undefined,
+              status(code) {
+                this.statusCode = code;
+                return this;
+              },
+              json(payload) {
+                this.body = payload;
+                return this;
+              },
+            };
+          }
+
+          function test(name, body) {
+            body();
+            console.log(`PASS: ${name}`);
+          }
+
+          test("successful quote applies STUDY10 when subtotal is at least 10", () => {
+            const res = fakeResponse();
+            quoteCheckout({
+              body: {
+                coupon: "STUDY10",
+                items: [
+                  { sku: "mochi", quantity: 2 },
+                  { sku: "tea", quantity: 1 },
+                ],
+              },
+            }, res);
+            assert.deepStrictEqual(res.body, { subtotal: 11, discount: 1, total: 10 });
+          });
+
+          test("out-of-stock items return 409 and skip totals", () => {
+            const res = fakeResponse();
+            quoteCheckout({
+              body: {
+                coupon: "STUDY10",
+                items: [{ sku: "ramen", quantity: 1 }],
+              },
+            }, res);
+            assert.strictEqual(res.statusCode, 409);
+            assert.deepStrictEqual(res.body, { error: "out of stock", missing: ["ramen"] });
+          });
+
+    open_file: "__tests__/checkoutRoute.test.js"
+    run_file: "__tests__/checkoutRoute.test.js"
+
+    quiz:
+      title: "Step 4 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          question: "For the out-of-stock request, what is the shortest correct trace?"
+          options:
+            - "`quoteCheckout()` reads `req.body.items`, calls `checkStock()`, sees `ok: false`, and returns `res.status(409).json(...)`."
+            - "Trace `discountFor()` because coupons decide every response."
+            - "Trace `subtotalFor()` because every checkout must compute totals first."
+            - "Trace only the `items` array and infer the HTTP status from stock values."
+          correct_index: 0
+          option_feedback:
+            1: "The route returns early before coupon logic when stock is missing."
+            2: "The route returns early before subtotal calculation when stock is missing."
+            3: "The data is necessary evidence, but the HTTP status is created in the route."
+          explanation: "The relevant branch is route → stock check → early 409 response. A targeted trace stops before discount and subtotal helpers."
+
+        - type: single
+          question: "Where is the `STUDY10` coupon applied in a successful quote?"
+          options:
+            - "`discountFor(req.body.coupon, subtotal)` in `routes/checkoutRoute.js`, with rules defined in `services/discountService.js`"
+            - "`checkStock()` in `services/stockService.js`"
+            - "`findItem()` in `services/stockService.js`"
+            - "`fakeResponse()` in the test file"
+          correct_index: 0
+          option_feedback:
+            1: "Stock checking decides whether the request can proceed. It does not apply coupons."
+            2: "`findItem()` locates catalog items for stock and subtotal helpers."
+            3: "`fakeResponse()` captures what the route sends; it does not compute business rules."
+          explanation: "The route passes the coupon and subtotal to the discount helper. The helper owns coupon rules."
+
+        - type: single
+          question: "Which helper computes `subtotal: 11` for two mochi and one tea?"
+          options:
+            - "`subtotalFor(lineItems)`"
+            - "`discountFor(coupon, subtotal)`"
+            - "`checkStock(lineItems)`"
+            - "`quoteCheckout(req, res)` without any helper calls"
+          correct_index: 0
+          option_feedback:
+            1: "The discount helper subtracts from an already-computed subtotal."
+            2: "Stock checking returns availability, not price totals."
+            3: "The route coordinates the helpers; it does not contain the price multiplication."
+          explanation: "`subtotalFor()` reduces line items by looking up each item price and multiplying by quantity."
+
+        - type: multiple
+          question: "Which files are part of the runtime flow for a successful checkout quote?"
+          options:
+            - "`routes/checkoutRoute.js`"
+            - "`services/stockService.js`"
+            - "`services/discountService.js`"
+            - "`data/items.js`"
+            - "`__tests__/checkoutRoute.test.js`"
+            - "`services/receiptFormatter.js`"
+          correct_indices: [0, 1, 2, 3]
+          option_feedback:
+            0: "The route reads request data and sends the response."
+            1: "The stock service checks availability and computes the subtotal."
+            2: "The discount service applies coupon rules."
+            3: "The data file supplies prices and stock counts."
+            4: "The test is specification evidence, not part of the runtime flow."
+            5: "The receipt formatter is nearby code, but this route never imports or calls it."
+          explanation: "A successful quote is a runtime flow: route coordination, stock and price helpers, discount rules, and catalog data."
+
+        - type: single
+          question: "A bug report says `TEA3` can make tiny orders too cheap. Which beacon could mislead a fast reader, and what evidence corrects it?"
+          options:
+            - "The `discountFor(coupon, subtotal)` name sounds like every coupon uses the subtotal, but the `coupon === \"TEA3\"` branch returns `3` without checking the subtotal."
+            - "The `checkStock()` name sounds like it applies coupons, and the missing array proves it."
+            - "The `receiptFormatter.js` file name proves receipts control discounts."
+            - "The `items` array proves all coupons depend only on item names."
+          correct_index: 0
+          option_feedback:
+            1: "`checkStock()` is a stock beacon, not a coupon beacon."
+            2: "A nearby receipt formatter is incidental because the route never imports it."
+            3: "The catalog data supplies prices and stock, but coupon policy is in the discount helper."
+          explanation: "Concept location starts from domain language, then false-beacon diagnosis names both the tempting inference and the exact branch that corrects it."
+
+        - type: single
+          question: "When should a reader switch from top-down beacon reading to bottom-up tracing in this example?"
+          options:
+            - "When a hypothesis depends on a risky branch such as the early `409` return or a coupon boundary."
+            - "Immediately at the first line of every file, before reading tests."
+            - "Never; names are always enough if they are descriptive."
+            - "Only after changing the code."
+          correct_index: 0
+          option_feedback:
+            1: "Starting with exhaustive tracing wastes attention before you know the behavior question."
+            2: "Beacons guide attention, but behavior still needs verification when risk or ambiguity is present."
+            3: "Comprehension verification should happen before edits, especially around branches and boundaries."
+          explanation: "Top-down reading is efficient until the evidence gets risky, surprising, or incomplete. Then a short bottom-up trace repairs or confirms the model."

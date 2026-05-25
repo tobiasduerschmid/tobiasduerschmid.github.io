@@ -498,7 +498,7 @@
         if (contBtn) focusBtn = contBtn;
         if (isFinalQuiz) onPass(stepIndex);
       } else {
-        var needed = Math.round(minScore * total);
+        var needed = Math.ceil(minScore * total);
         if (summary) summary.textContent = 'You scored ' + score + '/' + total + '. Need at least '
           + needed + ' (' + Math.round(minScore * 100) + '%) to continue. Review and try again!';
         if (contBtn) contBtn.classList.add('hidden');

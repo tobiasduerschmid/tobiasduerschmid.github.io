@@ -176,6 +176,31 @@ test.describe.serial('Multi-backend placeholder tutorial', () => {
     await expect(timer).toHaveClass(/is-urgent/);
   });
 
+  test('timed practice controls allow extending or turning off the active timer', async () => {
+    await page.evaluate((storageKey) => {
+      const state = JSON.parse(localStorage.getItem(storageKey) || '{"steps":{}}');
+      state.steps = state.steps || {};
+      state.steps['1'] = {
+        completed: false,
+        deadline: Date.now() + 30_000,
+      };
+      return window._tutorial.loadStep(1);
+    }, TIMER_STORAGE_KEY);
+    await expectActiveStep(page, 1);
+    await expect(page.getByRole('timer', { name: /^Time left / })).toBeVisible();
+
+    await page.getByRole('button', { name: '+5 min' }).click();
+    await expect(page.getByRole('timer', { name: /^Time left 5:/ })).toBeVisible();
+
+    await page.getByRole('button', { name: 'Timer off' }).click();
+    await expect(page.getByRole('timer', { name: /^Time left / })).toBeHidden();
+    const disabled = await page.evaluate((storageKey) => {
+      const state = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      return state.steps?.['1']?.timerDisabled === true;
+    }, TIMER_STORAGE_KEY);
+    expect(disabled).toBe(true);
+  });
+
   test('timed practice lockout persists and still allows previous-step navigation', async () => {
     await page.evaluate((storageKey) => {
       localStorage.setItem(storageKey, JSON.stringify({
@@ -201,5 +226,32 @@ test.describe.serial('Multi-backend placeholder tutorial', () => {
     await page.locator('.tvm-btn-prev').click();
     await expectActiveStep(page, 3);
     await expectPreviewRuntime(page, 'React placeholder two');
+  });
+
+  test('timed practice lockout can continue without the timer', async () => {
+    await page.evaluate((storageKey) => {
+      localStorage.setItem(storageKey, JSON.stringify({
+        steps: {
+          4: {
+            completed: false,
+            deadline: Date.now() - 1000,
+          },
+        },
+      }));
+      return window._tutorial.loadStep(4);
+    }, TIMER_STORAGE_KEY);
+    await expectActiveStep(page, 4);
+    await expect(page.locator('.tvm-timed-practice-lockout')).toBeVisible();
+
+    await page.getByRole('button', { name: 'Continue without timer' }).click();
+    await expectActiveStep(page, 4);
+    await expect(page.locator('.tvm-timed-practice-lockout')).toBeHidden();
+    await expect(page.getByRole('timer', { name: /^Try again in / })).toBeHidden();
+
+    const disabled = await page.evaluate((storageKey) => {
+      const state = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      return state.steps?.['4']?.timerDisabled === true;
+    }, TIMER_STORAGE_KEY);
+    expect(disabled).toBe(true);
   });
 });

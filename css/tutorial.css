@@ -3508,6 +3508,36 @@ html:not(.dark-mode) .tvm-step-status {
   display: none;
 }
 
+.tvm-step-timer-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+}
+
+.tvm-step-timer-controls[hidden] {
+  display: none;
+}
+
+.tvm-step-timer-control-btn {
+  padding: 0.35em 0.65em;
+  border: 1px solid #5a5a78;
+  border-radius: 999px;
+  background: #252538;
+  color: #d6e0ec;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.tvm-step-timer-control-btn:hover,
+.tvm-step-timer-control-btn:focus-visible {
+  background: #35354e;
+  border-color: #8aa4c2;
+  color: #f8fafc;
+}
+
 .tvm-step-timer.is-urgent {
   color: #fff7ed;
   background: #7c2d12;
@@ -3525,6 +3555,19 @@ html:not(.dark-mode) .tvm-step-timer {
   color: #1f2937;
   background: #eef2f7;
   border-color: #9ca3af;
+}
+
+html:not(.dark-mode) .tvm-step-timer-control-btn {
+  background: #f8fafc;
+  border-color: #7b8794;
+  color: #1f2937;
+}
+
+html:not(.dark-mode) .tvm-step-timer-control-btn:hover,
+html:not(.dark-mode) .tvm-step-timer-control-btn:focus-visible {
+  background: #e6f0fb;
+  border-color: #2774AE;
+  color: #15324f;
 }
 
 html:not(.dark-mode) .tvm-step-timer.is-urgent {
