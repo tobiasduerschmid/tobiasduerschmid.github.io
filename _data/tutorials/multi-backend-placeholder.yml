@@ -22,6 +22,7 @@ steps:
 
   - title: "React Placeholder 1"
     backend: react
+    max-time: 10
     instructions: |
       This placeholder step verifies that a React step can use the live preview panel.
     files:
@@ -62,6 +63,7 @@ steps:
 
   - title: "Node.js Placeholder 1"
     backend: webcontainer
+    max-time: 10
     instructions: |
       This placeholder step verifies that a Node.js step can return to the output panel.
     files:
@@ -74,6 +76,7 @@ steps:
 
   - title: "React Placeholder 2"
     backend: react
+    max-time: 10
     instructions: |
       This placeholder step verifies that switching back to React rebuilds the preview.
     files:
@@ -126,6 +129,7 @@ steps:
 
   - title: "Node.js Placeholder 2"
     backend: webcontainer
+    max-time: 10
     instructions: |
       This placeholder step verifies that a later Node.js step remains usable.
     files:
@@ -135,3 +139,19 @@ steps:
         language: "javascript"
     open_file: "node-two.js"
     run_file: "node-two.js"
+    quiz:
+      title: "Step 6 — Knowledge Check"
+      min_score: 0.8
+      shuffle: false
+      questions:
+        - type: single
+          question: "Which backend runs this final placeholder step?"
+          options:
+            - "Pyodide Python"
+            - "React live preview"
+            - "WebContainer Node.js"
+          correct_index: 2
+          option_feedback:
+            0: "Pyodide runs the Python placeholder steps and uses the output panel."
+            1: "React runs the preview placeholder steps inside the live preview panel."
+          explanation: "This step uses the WebContainer Node.js backend, so its starter file runs with Node and writes to the output panel."

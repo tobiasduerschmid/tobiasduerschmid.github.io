@@ -2,6 +2,7 @@
 const { test, expect } = require('@playwright/test');
 const {
   loadTutorialConfig,
+  answerQuizCorrectly,
   expectActiveStep,
   expectStepCount,
 } = require('./tutorial-helpers');
@@ -10,6 +11,7 @@ const TUTORIAL_URL = '/SEBook/tools/multi-backend-placeholder-tutorial';
 const BOOT_TIMEOUT = 90_000;
 const RUN_TIMEOUT = 30_000;
 const WARM_SWITCH_TIMEOUT_MS = 10_000;
+const TIMER_STORAGE_KEY = 'tutorial-time-practice-multi-backend-placeholder';
 
 const config = loadTutorialConfig('multi-backend-placeholder');
 const steps = config.steps;
@@ -28,11 +30,19 @@ async function clickRun(page) {
   await expect(runBtn).toHaveText(/^▶\s+/, { timeout: RUN_TIMEOUT });
 }
 
+async function expectTimedPracticeClock(page) {
+  const timer = page.getByRole('timer', { name: /^Time left / });
+  await expect(timer).toBeVisible({ timeout: 10_000 });
+  await expect(timer).toContainText(/^Time left /);
+  return timer;
+}
+
 async function goNext(page, stepIndex, opts = {}) {
   const start = Date.now();
   await page.locator('.tvm-btn-next').click();
   await expectActiveStep(page, stepIndex);
   await expect(page.locator('.tvm-loading')).toBeHidden({ timeout: BOOT_TIMEOUT });
+  await expectTimedPracticeClock(page);
   const elapsed = Date.now() - start;
   if (opts.maxMs) {
     expect(elapsed, `step ${stepIndex + 1} should be warm after ${opts.label || 'backend prewarm'}`)
@@ -83,12 +93,15 @@ test.describe.serial('Multi-backend placeholder tutorial', () => {
       'pyodide',
       'webcontainer',
     ]);
+    expect(steps.map((step) => step['max-time'])).toEqual([10, 10, 10, 10, 10, 10]);
+    expect(steps[5].quiz?.title).toBe('Step 6 — Knowledge Check');
     await expectActiveStep(page, 0);
-    await expect(page.locator('.tvm-step-timer')).toContainText(/^Time left /);
+    await expectTimedPracticeClock(page);
   });
 
   test('python, react, node, react, python, node sequence remains usable', async () => {
     await expectOutputRuntime(page);
+    await expectTimedPracticeClock(page);
     await clickRun(page);
     await expect(page.locator('.tvm-output-pre'))
       .toContainText('Python placeholder one', { timeout: RUN_TIMEOUT });
@@ -118,9 +131,54 @@ test.describe.serial('Multi-backend placeholder tutorial', () => {
       .toContainText('Node placeholder two', { timeout: RUN_TIMEOUT });
   });
 
-  test('timed practice lockout persists and still allows previous-step navigation', async () => {
+  test('timed practice remains active through the final knowledge check and completes when passed', async () => {
+    await expectActiveStep(page, 5);
+    await expectTimedPracticeClock(page);
+
+    await page.locator('.tvm-btn-next').click();
+    await expect(page.locator('.tvm-quiz-panel')).toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole('heading', { name: 'Step 6 — Knowledge Check' })).toBeVisible();
+    await expectTimedPracticeClock(page);
+
+    await answerQuizCorrectly(page);
+    await expect(page.locator('.tvm-quiz-panel .quiz-results:not(.hidden)'))
+      .toBeVisible({ timeout: 5_000 });
+    await expect(page.getByRole('timer', { name: /^Time left / })).toBeHidden();
+
+    const completed = await page.evaluate((storageKey) => {
+      const state = JSON.parse(localStorage.getItem(storageKey) || '{}');
+      return state.steps?.['5']?.completed === true;
+    }, TIMER_STORAGE_KEY);
+    expect(completed).toBe(true);
+  });
+
+  test('urgent timed countdown respects reduced-motion preference', async () => {
+    await page.evaluate((storageKey) => {
+      const state = JSON.parse(localStorage.getItem(storageKey) || '{"steps":{}}');
+      state.steps = state.steps || {};
+      state.steps['1'] = {
+        completed: false,
+        deadline: Date.now() + 30_000,
+      };
+      localStorage.setItem(storageKey, JSON.stringify(state));
+      window.__prefersReducedMotion = () => true;
+      return window._tutorial.loadStep(1);
+    }, TIMER_STORAGE_KEY);
+    await expectActiveStep(page, 1);
+    const timer = await expectTimedPracticeClock(page);
+    await expect(timer).not.toHaveClass(/is-urgent/);
+
     await page.evaluate(() => {
-      localStorage.setItem('tutorial-time-practice-multi-backend-placeholder', JSON.stringify({
+      window.__prefersReducedMotion = () => false;
+      return window._tutorial.loadStep(1);
+    });
+    await expectActiveStep(page, 1);
+    await expect(timer).toHaveClass(/is-urgent/);
+  });
+
+  test('timed practice lockout persists and still allows previous-step navigation', async () => {
+    await page.evaluate((storageKey) => {
+      localStorage.setItem(storageKey, JSON.stringify({
         steps: {
           4: {
             completed: false,
@@ -128,15 +186,16 @@ test.describe.serial('Multi-backend placeholder tutorial', () => {
           },
         },
       }));
+      window.__prefersReducedMotion = undefined;
       return window._tutorial.loadStep(4);
-    });
+    }, TIMER_STORAGE_KEY);
     await expectActiveStep(page, 4);
     await expect(page.locator('.tvm-timed-practice-lockout')).toBeVisible();
-    await expect(page.locator('.tvm-step-timer')).toContainText(/^Try again in /);
-    const lockoutRemaining = await page.evaluate(() => {
-      const state = JSON.parse(localStorage.getItem('tutorial-time-practice-multi-backend-placeholder') || '{}');
+    await expect(page.getByRole('timer', { name: /^Try again in / })).toContainText(/^Try again in /);
+    const lockoutRemaining = await page.evaluate((storageKey) => {
+      const state = JSON.parse(localStorage.getItem(storageKey) || '{}');
       return state.steps['4'].lockoutUntil - Date.now();
-    });
+    }, TIMER_STORAGE_KEY);
     expect(lockoutRemaining).toBeGreaterThan(55 * 60 * 1000);
 
     await page.locator('.tvm-btn-prev').click();

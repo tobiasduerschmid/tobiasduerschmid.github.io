@@ -569,16 +569,19 @@
       self._backendReady[requested] = true;
       self._backendReady[resolved] = true;
       if (opts.prewarm) {
-        self.config.backend = previousBackend;
-        self._activeRequestedBackend = previousRequested;
-        self._updateRuntimePanelVisibility(previousBackend);
+        if (self._activeRequestedBackend === previousRequested) {
+          self._setActiveBackend(previousRequested);
+        }
       } else {
         self._setActiveBackend(requested);
       }
     }, function (err) {
       delete self._backendInitPromises[requested];
-      self.config.backend = previousBackend;
-      self._activeRequestedBackend = previousRequested;
+      if (!opts.prewarm || self._activeRequestedBackend === previousRequested) {
+        self.config.backend = previousBackend;
+        self._activeRequestedBackend = previousRequested;
+        self._updateRuntimePanelVisibility(previousBackend);
+      }
       throw err;
     }).then(function () {
       self._backgroundBackendLoadingSuppressed = previousSuppressLoading;
