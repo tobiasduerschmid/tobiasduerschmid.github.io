@@ -94,8 +94,12 @@
       }
 
       function renderInlineSummaryMarkdown() {
-        if (window.SebookInlineMarkdown && typeof window.SebookInlineMarkdown.renderSummaries === 'function') {
+        if (!window.SebookInlineMarkdown) return;
+        if (typeof window.SebookInlineMarkdown.renderSummaries === 'function') {
           window.SebookInlineMarkdown.renderSummaries(document);
+        }
+        if (typeof window.SebookInlineMarkdown.renderStepTitles === 'function') {
+          window.SebookInlineMarkdown.renderStepTitles(document);
         }
       }
 

@@ -1260,7 +1260,7 @@
     // We measure only the ADDITIONAL pixels beyond the last column's x — not the
     // full label width — so we don't over-inflate the message area.
     var PTR_D    = LABEL_HEIGHT / 2;   // 12
-    var HEAD_W   = (4 * 8.5 + 18) + PTR_D; // "HEAD" label full width
+    var HEAD_W   = (4 * 9.5 + 22) + PTR_D; // "HEAD" label full width
 
     // Compute minimum required left padding based on col-0 branch labels + HEAD.
     // Formula: NODE_RADIUS + TIP_TO_NODE(4) + branchLabelW + HEAD_GAP(4) + headLabelW + margin(15)
@@ -1268,7 +1268,7 @@
     for (var lb = 0; lb < branches.length; lb++) {
       var lbCommit = commitMap[branches[lb].hash];
       if (!lbCommit || lbCommit.col !== 0) continue;
-      var lbW = branches[lb].name.length * 8.5 + 18 + PTR_D;
+      var lbW = branches[lb].name.length * 9.5 + 22 + PTR_D;
       var leftNeeded = NODE_RADIUS + 4 + lbW + 15; // TIP_TO_NODE=4, 15px margin
       if (!data.head.detached && data.head.ref === branches[lb].name) {
         leftNeeded += 4 + HEAD_W; // HEAD_GAP=4
@@ -1293,7 +1293,7 @@
       var rbCommit = commitMap[branches[rb].hash];
       if (!rbCommit || rbCommit.col === 0) continue;
       var brTipX  = this._paddingLeft + rbCommit.col * COL_WIDTH + NODE_RADIUS + 10; // TIP_TO_NODE=10
-      var brW     = rbName.length * 8.5 + 18 + PTR_D;
+      var brW     = rbName.length * 9.5 + 22 + PTR_D;
       var rEdge   = brTipX + brW;
       // Add HEAD label width only when this branch actually carries HEAD
       if (!data.head.detached && data.head.ref === rbName) {
@@ -2455,7 +2455,7 @@
           if (siblings[sb].name === head.ref) { headBranchPos = sb; break; }
         }
         var stackIdxA = (headBranchPos >= 0) ? (siblings.length - 1 - headBranchPos) : 0;
-        var brW = (head.ref || '').length * 8.5 + 18 + PTR_DEPTH_H;
+        var brW = (head.ref || '').length * 9.5 + 22 + PTR_DEPTH_H;
         wrapperX = hcx - NODE_RADIUS - TIP_TO_NODE_H - brW - HEAD_GAP_H;
         wrapperY = hcy - stackIdxA * (LABEL_HEIGHT + LABEL_GAP);
       }
@@ -2542,7 +2542,7 @@
 
     var labelY = -LABEL_HEIGHT / 2;
     var labelMidY = 0;
-    var textW = name.length * 8.5 + 18;
+    var textW = name.length * 9.5 + 22;
     var brW = textW + PTR_DEPTH;
 
     var tipXL = -NODE_RADIUS - TIP_TO_NODE;
@@ -2577,7 +2577,7 @@
 
   GitGraph.prototype._buildHeadContent = function (g, isDetached, color, commitRelX, commitRelY) {
     var PTR_DEPTH = LABEL_HEIGHT / 2;
-    var headTextW = 4 * 8.5 + 18;
+    var headTextW = 4 * 9.5 + 22;
     var headW = headTextW + PTR_DEPTH;
     var fillColor = isDetached ? color : '#ffffff';
     var fillOpacity = isDetached ? 0.25 : 0.95;
@@ -2795,7 +2795,7 @@
         var color       = this._labelColorFor(br.name, commit);
         var labelY      = cy - LABEL_HEIGHT / 2 - (labels.length - 1 - l) * (LABEL_HEIGHT + LABEL_GAP);
         var labelMidY   = labelY + LABEL_HEIGHT / 2;
-        var textW       = br.name.length * 8.5 + 18;
+        var textW       = br.name.length * 9.5 + 22;
         var brW         = textW + PTR_DEPTH;
         var tipX        = cx - NODE_RADIUS - TIP_TO_NODE;
         var brX         = tipX - brW;
@@ -2817,7 +2817,7 @@
         svg += '</g>';
 
         if (isHeadBr) {
-          var headTextW = 4 * 8.5 + 18;
+          var headTextW = 4 * 9.5 + 22;
           var headW     = headTextW + PTR_DEPTH;
           var headTipX  = brX - HEAD_GAP;
           var headX     = headTipX - headW;
@@ -2842,7 +2842,7 @@
       var hcx        = this._cx(hCommit.col);
       var hcy        = this._cy(hCommit.row);
       var DC         = HEAD_DETACHED_COLOR;
-      var htextW     = 4 * 8.5 + 18;
+      var htextW     = 4 * 9.5 + 22;
       var hW         = htextW + PTR_DEPTH;
       var hlabelY    = hcy - LABEL_HEIGHT / 2;
       var hlabelMidY = hcy;

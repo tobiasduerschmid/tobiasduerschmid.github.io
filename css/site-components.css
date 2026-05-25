@@ -6,11 +6,12 @@
  * be audited from stylesheets.
  */
 
+/* The hidden state is semantic — it must beat element-type rules from frameworks
+   like Bootstrap (e.g. `input[type="file"] { display: block }`) that have higher
+   selector specificity than a plain class. Without !important, hidden file
+   inputs render at viewport-overflowing default width and break WCAG 1.4.10
+   reflow on narrow viewports. */
 .is-hidden {
-  display: none;
-}
-
-.se-gym-toggle.is-hidden {
   display: none !important;
 }
 

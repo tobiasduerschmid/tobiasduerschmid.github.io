@@ -1,0 +1,51 @@
+{%- comment -%}
+  Random superhero variant cycler.
+
+  - Renders all candidate hero SVGs inside a <template> so they stay inert
+    (no IDs activate, no animations run, no DOM weight on screen).
+  - At page load, a small inline script picks one variant uniformly at random
+    and clones it into every [data-gym-hero-slot] element on the page.
+  - When prefers-reduced-motion is "reduce", <animate> / <animateTransform>
+    elements are stripped from the clone before insertion so the chosen
+    superhero shows but does not move.
+  - All variants share the same viewBox (50 -20 700 665) and external class
+    contract (.se-gym-hero-svg) so the existing light/dark drop-shadow CSS
+    in se-gym.html applies unchanged.
+{%- endcomment -%}
+<template id="se-gym-hero-variants" aria-hidden="true">
+  <div data-hero-variant="ucla-classic">{% include se-gym-hero.svg variant="original" %}</div>
+  <div data-hero-variant="aqua-captain">{% include se-gym-hero-variants/aqua-captain.svg %}</div>
+  <div data-hero-variant="copper-visor">{% include se-gym-hero-variants/copper-visor.svg %}</div>
+  <div data-hero-variant="crimson-locs">{% include se-gym-hero-variants/crimson-locs.svg %}</div>
+  <div data-hero-variant="emerald-curls">{% include se-gym-hero-variants/emerald-curls.svg %}</div>
+  <div data-hero-variant="forest-engineer">{% include se-gym-hero-variants/forest-engineer.svg %}</div>
+  <div data-hero-variant="silver-spectacles">{% include se-gym-hero-variants/silver-spectacles.svg %}</div>
+  <div data-hero-variant="teal-headwrap">{% include se-gym-hero-variants/teal-headwrap.svg %}</div>
+</template>
+<script>
+  (function () {
+    var template = document.getElementById('se-gym-hero-variants');
+    var slots = document.querySelectorAll('[data-gym-hero-slot]');
+    if (!template || !slots.length) return;
+
+    var variants = template.content.children;
+    if (!variants.length) return;
+
+    var pick = variants[Math.floor(Math.random() * variants.length)];
+    var sourceSvg = pick.querySelector('svg');
+    if (!sourceSvg) return;
+
+    var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    slots.forEach(function (slot) {
+      var clone = sourceSvg.cloneNode(true);
+      if (reduced) {
+        clone.querySelectorAll('animate, animateTransform, animateMotion, set').forEach(function (n) {
+          n.remove();
+        });
+      }
+      clone.setAttribute('data-hero-variant', pick.getAttribute('data-hero-variant'));
+      slot.replaceChildren(clone);
+    });
+  })();
+</script>

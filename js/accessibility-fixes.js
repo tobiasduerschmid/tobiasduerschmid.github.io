@@ -102,11 +102,46 @@
     });
   }
 
+  // WCAG 2.4.11 (Focus Not Obscured, Minimum) — the browser's default
+  // scroll-on-focus pulls Tab-focused elements into view, but on very long
+  // pages (e.g. /SEBook/tools/uml-reference.html, ~50k px tall) under
+  // heavy axe-core + theme-toggle activity the browser sometimes skips the
+  // scroll entirely and the element stays off-viewport. This defensive
+  // listener calls scrollIntoView only when the focused element does not
+  // intersect the viewport at all (the test's 2.4.11 trigger condition).
+  // 'block: nearest' is idempotent when the element already intersects, so
+  // there is no visible jumpiness in the common case. Skip elements that
+  // are intentionally off-screen via CSS clip-path / clip / translate
+  // (e.g. the .skip-link), which scroll into view via their own focus rule.
+  function ensureFocusedIsVisible(event) {
+    const el = event.target;
+    if (!el || el === document.documentElement || el === document.body) return;
+    if (typeof el.getBoundingClientRect !== 'function') return;
+    const rect = el.getBoundingClientRect();
+    if (rect.width === 0 && rect.height === 0) return;
+    const intersectsViewport = rect.bottom > 0 && rect.right > 0
+      && rect.top < window.innerHeight && rect.left < window.innerWidth;
+    if (intersectsViewport) return;
+    // Skip skip-links and similar visually-hidden focusables that animate
+    // themselves into view via their :focus CSS rule.
+    if (el.classList && el.classList.contains('skip-link')) return;
+    const cs = (typeof getComputedStyle === 'function') ? getComputedStyle(el) : null;
+    if (cs && cs.clipPath && cs.clipPath !== 'none' && cs.clipPath !== 'auto') return;
+    try { el.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch (e) { /* non-fatal */ }
+  }
+
+  function installFocusVisibilityGuard() {
+    if (window.__sebookFocusVisibilityGuardInstalled) return;
+    window.__sebookFocusVisibilityGuardInstalled = true;
+    document.addEventListener('focusin', ensureFocusedIsVisible, true);
+  }
+
   function run() {
     try { makeScrollableCodeBlocksFocusable(); } catch (e) { /* non-fatal */ }
     try { deroleCarouselListboxes(); } catch (e) { /* non-fatal */ }
     try { enhanceTables(); } catch (e) { /* non-fatal */ }
     try { distinguishCitationLinks(); } catch (e) { /* non-fatal */ }
+    try { installFocusVisibilityGuard(); } catch (e) { /* non-fatal */ }
   }
 
   // Tutorial step content (.tvm-step-content-wrap), editor tab rows, and

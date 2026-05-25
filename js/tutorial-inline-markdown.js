@@ -107,21 +107,30 @@
     return fallbackRender(raw);
   }
 
-  function renderSummaries(rootEl) {
+  function renderTextOnly(rootEl, selector) {
     if (!rootEl || !rootEl.querySelectorAll) return;
-    Array.prototype.forEach.call(rootEl.querySelectorAll('summary'), function (summary) {
-      if (summary.getAttribute('data-sebook-inline-markdown') === 'done') return;
-      if (summary.children && summary.children.length > 0) return;
-      var text = summary.textContent || '';
+    Array.prototype.forEach.call(rootEl.querySelectorAll(selector), function (el) {
+      if (el.getAttribute('data-sebook-inline-markdown') === 'done') return;
+      if (el.children && el.children.length > 0) return;
+      var text = el.textContent || '';
       if (!/[`*_~\[]/.test(text)) return;
-      summary.innerHTML = render(text);
-      summary.setAttribute('data-sebook-inline-markdown', 'done');
+      el.innerHTML = render(text);
+      el.setAttribute('data-sebook-inline-markdown', 'done');
     });
+  }
+
+  function renderSummaries(rootEl) {
+    renderTextOnly(rootEl, 'summary');
+  }
+
+  function renderStepTitles(rootEl) {
+    renderTextOnly(rootEl, '.step-title');
   }
 
   window.SebookInlineMarkdown = {
     render: render,
     renderSummaries: renderSummaries,
+    renderStepTitles: renderStepTitles,
     _sanitizeInlineHtml: sanitizeInlineHtml,
   };
 })();
