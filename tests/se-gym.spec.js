@@ -429,10 +429,15 @@ test.describe('SE Gym - Mobile layout', () => {
     await page.getByRole('button', { name: 'Start Workout' }).click();
 
     await expect(page.getByRole('button', { name: /Back to Gym Entrance/i })).toBeVisible();
-    await expect(page.getByRole('radio').first()).toBeVisible();
+    const answerOptions = page
+      .getByRole('radiogroup', { name: 'Answer options' })
+      .or(page.getByRole('group', { name: 'Answer options' }))
+      .first();
+    const firstAnswerOption = answerOptions.getByRole('radio').or(answerOptions.getByRole('checkbox')).first();
+    await expect(firstAnswerOption).toBeVisible();
     await expectNoHorizontalScroll(page, 'SE Gym workout');
     await expectTapTarget(page.getByRole('button', { name: /Back to Gym Entrance/i }), 'Back to Gym Entrance button');
-    await expectTapTarget(page.getByRole('radio').first(), 'first answer option');
+    await expectTapTarget(firstAnswerOption, 'first answer option');
   });
 
   test('workout hero setting does not show side heroes on mobile', async ({ page, context }) => {
@@ -1518,6 +1523,37 @@ test.describe('Personal Gym - Performance Tracking', () => {
     await expect(page.locator('#difficult-gym-section')).toBeVisible();
     await expect(page.locator('.difficult-heading')).toContainText('Difficult Questions');
     await a11yCheckpoint(page, 'gym entrance — difficult questions section visible', { feature: A11Y_FEATURE, darkMode: true });
+  });
+
+  test('difficult questions section and hard workout honor active difficulty filters', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'analyze-performance', 'true');
+    await page.goto(GYM_URL);
+
+    await page.evaluate(() => {
+      const quizId = 'design_pattern_singleton';
+      const stats = {};
+      // Two difficult Singleton questions: one advanced and one intermediate.
+      // Filtering out advanced should leave exactly the intermediate card.
+      stats[`${quizId}:1`] = { seen: 10, correct: 1 };
+      stats[`${quizId}:3`] = { seen: 10, correct: 1 };
+      PersonalGym.saveStats(stats);
+    });
+    await page.reload();
+
+    await expect(page.getByRole('heading', { name: 'Difficult Questions' })).toBeVisible();
+    await expect(page.locator('#difficult-count')).toHaveText('(2 cards)');
+
+    await page.getByRole('checkbox', { name: 'Advanced' }).uncheck();
+    await expect(page.locator('#difficult-count')).toHaveText('(1 cards)');
+
+    const hardWorkoutButton = page.getByRole('button', { name: 'Start Hard Workout' });
+    await expect(hardWorkoutButton).toBeEnabled();
+    await hardWorkoutButton.click();
+
+    await expect(page.locator('#gym-workout')).toBeVisible();
+    await expect(page.locator('#gym-entrance')).toBeHidden();
+    await expect(page.locator('#workout-total')).toHaveText('1');
   });
 
   test('difficult gym can be added to workout', async ({ page, context }) => {
