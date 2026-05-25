@@ -199,6 +199,27 @@
   <main id="main-content" class="tutorial-page" tabindex="-1" aria-labelledby="tutorial-page-heading">
     <h1 id="tutorial-page-heading" class="sr-only">{{ tutorial_title }}</h1>
     {% assign tutorial_backend = tutorial_data.backend | default: 'v86' %}
+    {% assign tutorial_mixed_backend = false %}
+    {% assign tutorial_uses_webcontainer = false %}
+    {% assign tutorial_uses_v86 = false %}
+    {% if tutorial_backend == 'webcontainer' %}
+      {% assign tutorial_uses_webcontainer = true %}
+    {% endif %}
+    {% if tutorial_backend == 'v86' %}
+      {% assign tutorial_uses_v86 = true %}
+    {% endif %}
+    {% for step in tutorial_data.steps %}
+      {% assign step_backend = step.backend | default: tutorial_backend %}
+      {% if step.backend and step_backend != tutorial_backend %}
+        {% assign tutorial_mixed_backend = true %}
+      {% endif %}
+      {% if step_backend == 'webcontainer' %}
+        {% assign tutorial_uses_webcontainer = true %}
+      {% endif %}
+      {% if step_backend == 'v86' %}
+        {% assign tutorial_uses_v86 = true %}
+      {% endif %}
+    {% endfor %}
     {% if tutorial_backend == 'uml-editor' %}
       <div id="tutorial-container" class="tvm-root tvm-uml-editor-tutorial">
         <div class="tvm-container tvm-uml-editor-container">
@@ -305,7 +326,7 @@
         VM-asset cache (state.bin.gz alone is ~50 MB; Cache Storage avoids
         repeat downloads, while validator checks prevent stale snapshots).
   {%- endcomment -%}
-  {% if tutorial_backend == 'webcontainer' or tutorial_backend == 'v86' or tutorial_data.debugger %}
+  {% if tutorial_uses_webcontainer or tutorial_uses_v86 or tutorial_data.debugger %}
   <!-- Register Cross-Origin Isolation service worker.
        WebContainers needs it always; the time-travel debugger needs it for
        SharedArrayBuffer + Atomics.wait (used to block the pyodide worker on
@@ -415,6 +436,7 @@
         tutorialId:   '{{ page.tutorial }}',
         steps:        config.steps,
         setupCommands: config.setup_commands || [],
+        setupCommandsByBackend: config.setup_commands_by_backend || {},
         requireTests: config.require_tests || false,
         autosaveType: effectiveAutosaveType,
         resetType: '{{ tutorial_reset_type }}',

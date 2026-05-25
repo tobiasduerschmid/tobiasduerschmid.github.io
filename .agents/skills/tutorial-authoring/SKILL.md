@@ -603,7 +603,8 @@ exclude_from_index: boolean            # If true, /SEBook/tutorials hides
                                        # and any non-student-facing tutorial.
 
 # === Backend selection ===
-backend: v86 | pyodide | webcontainer | react | uml-editor   # default: v86
+backend: v86 | pyodide | webcontainer | react | uml-editor | multiple
+                                       # default: v86
 
 # v86           — full Linux VM (shell, gcc, git, etc.). Most tutorials.
 # pyodide       — Python in-browser, no shell. Required for `debugger: true`.
@@ -620,6 +621,17 @@ backend: v86 | pyodide | webcontainer | react | uml-editor   # default: v86
 #                 includes a confirmed "Remove All Elements" action that clears
 #                 the active step's diagram draft while leaving other diagram
 #                 types saved.
+#
+# multiple      — explicit marker for a mixed-backend tutorial. Every step
+#                 must set `steps[].backend`.
+#
+# Mixed-backend tutorials may also set `steps[].backend` to override a normal
+# tutorial-level default per step. First-pass mixed mode is intentionally
+# narrow: use only `pyodide`, `react`, `webcontainer`, or `browser` steps,
+# with `browser` serving as the in-page Node fallback if WebContainers cannot
+# boot. Keep `v86`, `uml-editor`, SQL, Prolog, Java, debugger tutorials, and
+# terminal-heavy WebContainer flows single-backend until the runtime explicitly
+# supports those combinations.
 
 # === Common feature flags ===
 require_tests: boolean                 # If true, student must pass each step's
@@ -730,19 +742,25 @@ run_label: string                      # Override Run button label
                                        # (e.g. "Test" for Playwright).
 
 # === Setup / lifecycle hooks ===
-setup_commands: [string]               # Run once at tutorial load.
+setup_commands: [string]               # Run once at tutorial load for
+                                       # single-backend tutorials only.
                                        # bash for v86, python for pyodide.
+setup_commands_by_backend:             # Mixed-backend tutorials only.
+  pyodide: [string]                    # Run once when that backend first
+  react: [string]                      # initializes. Usually empty for React.
+  webcontainer: [string]               # Shell commands in the WebContainer.
+  browser: [string]                    # Reserved for browser fallback setup.
 post_fileload_setup: [string]          # Run after files are synced.
 user_command_listener: string | null   # JS callback name for command events
                                        # (used by git-playground).
 
 # === Autosave / progress / reset ===
-autosave_type: files | commands-and-files | false    # default: files
+autosave_type: files | commands-and-files | none | false    # default: files
 reset_type:    files | commands                       # default: files
 # autosave: what is persisted to localStorage between visits.
 #   files                 — current contents of every editor.
 #   commands-and-files    — also replay saved solution commands on restore.
-#   false                 — no persistence. (Demos / lectures.)
+#   none / false          — no persistence. (Demos / lectures.)
 # reset:    what "Reset Step" replays.
 #   files                 — restore step's starter files only.
 #   commands              — also replay setup_commands + prior solution
@@ -773,6 +791,26 @@ steps:
                                              # in the visible heading for code
                                              # spans/emphasis; keep the plain
                                              # text descriptive for nav labels.
+    backend: pyodide | react | webcontainer | browser
+                                             # Optional per-step backend
+                                             # override. Inherits the
+                                             # tutorial-level backend when
+                                             # omitted. Mixed tutorials use
+                                             # this for author-controlled
+                                             # backend changes; students do
+                                             # not choose the backend at
+                                             # runtime.
+    max-time: number                         # Optional timed-practice limit
+                                             # in minutes for this step,
+                                             # including its knowledge-check
+                                             # quiz. Supports decimals for
+                                             # demos/tests, but real tutorials
+                                             # should use humane whole-minute
+                                             # values.
+    lockout-time: number                     # Optional timed-practice
+                                             # lockout duration in minutes
+                                             # after the countdown reaches 0.
+                                             # Default: 60.
     instructions: |                          # Required. Markdown.
       Multi-paragraph step instructions.
       Code blocks Rouge-highlighted.
@@ -1136,6 +1174,23 @@ channel.
 - **`js/tutorial-code.js`** — the unified tutorial runtime. Editor
   management, file I/O, test execution, autosave / restore, step
   progression, quiz gating, debugger sync. Where most behavioral changes go.
+  For mixed-backend tutorials, the runtime resolves the active backend as
+  `step.backend || backend || "v86"`, initializes each supported backend
+  lazily, runs `setup_commands_by_backend[backend]` once when that backend
+  first boots, then prewarms later step backends in the background. The active
+  backend is switched before step file sync, Run, Test My Work, Reset, and
+  Solution application. Mixed runtime UI keeps both the output panel and React
+  preview panel in the DOM, toggling the inactive one with `hidden` so it is
+  not exposed to assistive tech. Existing single-backend tutorials keep using
+  top-level `setup_commands`.
+  Timed practice is opt-in per step with `max-time` (minutes) and optional
+  `lockout-time` (minutes, default 60). The countdown remains visible in the
+  step nav while the step or quiz is active; at one minute or less it uses a
+  heartbeat animation unless the site/OS reduced-motion preference is active.
+  The runtime stores deadlines and lockout windows in
+  `localStorage["tutorial-time-practice-<id>"]`, so refreshing the page does
+  not reset an attempt. When time expires, only that step is locked until the
+  lockout ends; students may still navigate to earlier unlocked steps.
   `applySolution()` returns a Promise; tests and runtime code that reveal
   solutions must await it before running step tests or advancing state, and it
   must wait for any active first-visit `setup_commands` chain before it mutates
@@ -1217,17 +1272,22 @@ channel.
 
 ### 4.6 Backends — what each supports
 
-| Feature                | v86 | pyodide | webcontainer | react | uml-editor |
-|------------------------|-----|---------|--------------|-------|------------|
-| Shell terminal         | ✅  | ❌      | ✅           | ❌    | ❌         |
-| Compiled languages     | ✅  | ❌      | (npm only)   | ❌    | ❌         |
-| `git`                  | ✅  | mocked  | ✅           | ❌    | ❌         |
-| Time-travel debugger   | ❌  | ✅      | ❌           | ❌    | ❌         |
-| Live preview iframe    | ❌  | ❌      | ✅           | ✅    | ❌         |
-| Playwright tests       | ❌  | ❌      | ❌           | ✅    | ❌         |
-| UML assertion tests    | ❌  | ❌      | ❌           | ❌    | ✅         |
-| `pytest`               | ❌  | ✅      | ❌           | ❌    | ❌         |
-| Linter                 | ✅  | ✅      | ✅           | ✅    | ❌         |
+| Feature                | v86 | pyodide | webcontainer | browser | react | uml-editor |
+|------------------------|-----|---------|--------------|---------|-------|------------|
+| Shell terminal         | ✅  | ❌      | ✅           | ❌      | ❌    | ❌         |
+| Compiled languages     | ✅  | ❌      | (npm only)   | ❌      | ❌    | ❌         |
+| `git`                  | ✅  | mocked  | ✅           | ❌      | ❌    | ❌         |
+| Time-travel debugger   | ❌  | ✅      | ❌           | ❌      | ❌    | ❌         |
+| Live preview iframe    | ❌  | ❌      | ✅           | ❌      | ✅    | ❌         |
+| Playwright tests       | ❌  | ❌      | ❌           | ❌      | ✅    | ❌         |
+| UML assertion tests    | ❌  | ❌      | ❌           | ❌      | ❌    | ✅         |
+| `pytest`               | ❌  | ✅      | ❌           | ❌      | ❌    | ❌         |
+| Linter                 | ✅  | ✅      | ✅           | ✅      | ✅    | ❌         |
+
+Mixed-backend tutorials are supported only for `pyodide`, `react`,
+`webcontainer`, and `browser` in this first pass. They are for short
+author-controlled backend switches between steps, not for terminal-first
+Node labs, debugger flows, or VM-heavy tutorials.
 
 If you add a backend, update this table.
 

@@ -131,9 +131,11 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - `tutorial-autosave`
 - `regex-tutorial-progress`, `regex-tutorial-advanced-progress`
 
-**localStorage — dynamic prefixes (7)** (one entry per tutorial id / page path):
+**localStorage — dynamic prefixes (9)** (one entry per tutorial id / page path):
 - `tutorial-progress-<id>` — saved code & current step
 - `tutorial-editor-split-<id>` — split-pane preference
+- `tutorial-cooldown-<id>` — per-step "Test My Work" cooldown end times
+- `tutorial-time-practice-<id>` — timed-practice deadlines and lockout windows
 - `tutorial-popout-state-<path>` — detached editor crash-recovery snapshot
 - `tutorial-debug-bps-<id>` — debugger breakpoints
 - `tutorial-debug-watchpoint-remove-choice-<id>` — watchpoint removal preference
@@ -158,6 +160,6 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - UML accent color: `uml-accent-color`
 - SEBook bookmarks enabled: `se-bookmarks-active`
 - SE Gym enabled, timed practice, workout hero, difficulty visibility/filtering, and performance tracking: `se-gym-active`, `se-gym-timed-practice`, `se-gym-timer-mode`, `se-gym-timer-total-minutes`, `se-gym-timer-seconds-per-question`, `se-gym-show-workout-hero`, `se-gym-show-difficulty`, `se-gym-active-difficulties`, `analyze-performance`, `se-gym-stats`
-- Per-tutorial state and progress: `tutorial-progress-<id>`, `tutorial-editor-split-<id>`, `tutorial-popout-state-<path>`, `tutorial-debug-bps-<id>`, `tutorial-debug-watchpoint-remove-choice-<id>`, `tutorial-debug-section-<id>-<name>`, `tutorial-debug-subsection-<id>-<name>`, `regex-tutorial-progress`, `regex-tutorial-advanced-progress`
+- Per-tutorial state and progress: `tutorial-progress-<id>`, `tutorial-editor-split-<id>`, `tutorial-cooldown-<id>`, `tutorial-time-practice-<id>`, `tutorial-popout-state-<path>`, `tutorial-debug-bps-<id>`, `tutorial-debug-watchpoint-remove-choice-<id>`, `tutorial-debug-section-<id>-<name>`, `tutorial-debug-subsection-<id>-<name>`, `regex-tutorial-progress`, `regex-tutorial-advanced-progress`
 
 If your change makes any line in this section wrong, edit `cookies.html` first, then update this snapshot.

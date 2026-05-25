@@ -2648,6 +2648,31 @@ html:not(.dark-mode) .tvm-terminal-loading {
   background: #141414;
 }
 
+.tvm-runtime-panels {
+  display: flex;
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+}
+
+.tvm-runtime-panel {
+  flex: 1 1 0;
+  min-height: 0;
+  min-width: 0;
+}
+
+.tvm-runtime-panel[hidden] {
+  display: none;
+}
+
+.tvm-runtime-panels .tvm-args-label,
+.tvm-runtime-panels .tvm-args-input,
+.tvm-runtime-panels .tvm-stream-filter,
+.tvm-runtime-panels .tvm-test-run-btn,
+.tvm-runtime-panels .tvm-stop-btn {
+  display: none;
+}
+
 .tvm-output-header {
   background: #161618;
   color: #888;
@@ -2693,14 +2718,15 @@ html:not(.dark-mode) .tvm-terminal-loading {
 .tvm-run-btn,
 .tvm-stop-btn,
 .tvm-clear-btn {
-  padding: 3px 10px;
+  padding: 0.35em 0.75em;
   border: 1px solid #5a5a78;
   border-radius: 4px;
-  font-size: 11px;
+  font: inherit;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
-  letter-spacing: 0.03em;
+  letter-spacing: 0;
+  min-height: 34px;
 }
 
 .tvm-test-run-btn {
@@ -2892,13 +2918,13 @@ html:not(.dark-mode) .tvm-clear-btn:hover { background: #e0e0e8; border-color: #
 .tvm-preview-header {
   background: #161618;
   color: #888;
-  padding: 2px 10px;
-  font-size: 11px;
+  padding: 6px 10px;
+  font-size: inherit;
   font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
   border-bottom: 1px solid #2a2a2e;
-  min-height: 22px;
+  min-height: 36px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2932,18 +2958,18 @@ html:not(.dark-mode) .tvm-clear-btn:hover { background: #e0e0e8; border-color: #
 
 .tvm-refresh-btn,
 .tvm-preview-test-btn {
-  padding: 3px 10px;
+  padding: 0.35em 0.75em;
   border: 1px solid #5a5a78;
   border-radius: 4px;
-  font-size: 11px;
+  font: inherit;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s, border-color 0.15s;
-  letter-spacing: 0.03em;
+  letter-spacing: 0;
   background: transparent;
   color: #8ee8ff;
   border-color: rgba(142, 232, 255, 0.62);
-  min-height: 24px;
+  min-height: 34px;
 }
 .tvm-refresh-btn:hover,
 .tvm-preview-test-btn:hover { background: rgba(142,232,255,0.12); border-color: #8ee8ff; }
@@ -2970,6 +2996,34 @@ html:not(.dark-mode) .tvm-clear-btn:hover { background: #e0e0e8; border-color: #
   padding: 10px 12px;
   border-bottom: 1px solid #2a2a2e;
   background: #151518;
+}
+
+.tvm-preview-test-panel:empty {
+  display: none;
+}
+
+.tvm-timed-practice-lockout {
+  margin: 1rem 0;
+  padding: 1rem;
+  border: 2px solid #fca5a5;
+  border-radius: 6px;
+  background: #2a1717;
+  color: #fee2e2;
+}
+
+.tvm-timed-practice-lockout h3 {
+  margin-top: 0;
+  color: inherit;
+}
+
+.tvm-timed-practice-lockout-remaining {
+  font-weight: 700;
+}
+
+html:not(.dark-mode) .tvm-timed-practice-lockout {
+  border-color: #dc2626;
+  background: #fef2f2;
+  color: #7f1d1d;
 }
 
 .tvm-preview-test-panel .tvm-test-running {
@@ -3435,6 +3489,68 @@ html:not(.dark-mode) .tvm-http-empty-state {
 }
 html:not(.dark-mode) .tvm-step-status {
   color: #2c3138;
+}
+
+.tvm-step-timer {
+  margin-left: auto;
+  padding: 0.35em 0.75em;
+  border: 1px solid #6b7280;
+  border-radius: 999px;
+  color: #f8fafc;
+  background: #262a31;
+  font: inherit;
+  font-weight: 700;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.tvm-step-timer[hidden] {
+  display: none;
+}
+
+.tvm-step-timer.is-urgent {
+  color: #fff7ed;
+  background: #7c2d12;
+  border-color: #fdba74;
+  animation: tvm-timer-heartbeat 1s ease-in-out infinite;
+}
+
+.tvm-step-timer.is-locked {
+  color: #fee2e2;
+  background: #4a1d1d;
+  border-color: #fca5a5;
+}
+
+html:not(.dark-mode) .tvm-step-timer {
+  color: #1f2937;
+  background: #eef2f7;
+  border-color: #9ca3af;
+}
+
+html:not(.dark-mode) .tvm-step-timer.is-urgent {
+  color: #7c2d12;
+  background: #ffedd5;
+  border-color: #ea580c;
+}
+
+html:not(.dark-mode) .tvm-step-timer.is-locked {
+  color: #7f1d1d;
+  background: #fee2e2;
+  border-color: #dc2626;
+}
+
+@keyframes tvm-timer-heartbeat {
+  0%, 100% { transform: scale(1); }
+  14% { transform: scale(1.08); }
+  28% { transform: scale(1); }
+  42% { transform: scale(1.06); }
+  70% { transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tvm-step-timer.is-urgent {
+    animation: none;
+  }
 }
 
 .tvm-step-btn {

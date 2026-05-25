@@ -137,18 +137,62 @@
     return LANG_MAP[ext] || 'plaintext';
   }
 
+  var MIXED_BACKEND_SUPPORTED = {
+    pyodide: true,
+    react: true,
+    webcontainer: true,
+    browser: true,
+  };
+
+  function normalizeBackendName(name) {
+    return String(name || 'v86').trim().toLowerCase();
+  }
+
+  function backendLabel(name) {
+    var backend = normalizeBackendName(name);
+    if (backend === 'pyodide') return 'Python';
+    if (backend === 'react') return 'React';
+    if (backend === 'webcontainer') return 'Node.js';
+    if (backend === 'browser') return 'Browser Node sandbox';
+    if (backend === 'v86') return 'Linux VM';
+    return backend;
+  }
+
   // ---------------------------------------------------------------------------
   // TutorialCode — constructor
   // ---------------------------------------------------------------------------
   function TutorialCode(element, options) {
+    options = options || {};
     this.root = typeof element === 'string'
       ? document.querySelector(element) : element;
     if (!this.root) throw new Error('TutorialCode: container element not found');
 
-    var backend = options.backend || 'v86';
+    var backend = normalizeBackendName(options.backend || 'v86');
+    var steps = options.steps || [];
+    var declaredBackendMap = {};
+    var declaredBackends = [];
+    var hasStepBackend = false;
+    steps.forEach(function (step) {
+      var stepBackend = normalizeBackendName((step && step.backend) || backend);
+      if (step && step.backend) hasStepBackend = true;
+      if (!declaredBackendMap[stepBackend]) {
+        declaredBackendMap[stepBackend] = true;
+        declaredBackends.push(stepBackend);
+      }
+    });
+    var explicitMultipleBackend = backend === 'multiple';
+    if (!explicitMultipleBackend && !declaredBackendMap[backend]) declaredBackends.push(backend);
+    var mixedBackendMode = explicitMultipleBackend || (hasStepBackend && (
+      declaredBackends.length > 1 ||
+      normalizeBackendName(declaredBackends[0]) !== backend
+    ));
+    var hasReactStep = declaredBackends.indexOf('react') !== -1;
+    var useTerminal = !mixedBackendMode &&
+      (backend === 'v86' || (backend === 'webcontainer' && options.terminal === true));
 
     this.config = {
       backend: backend,
+      defaultBackend: backend,
       v86Path: options.v86Path || '/assets/v86',
       vmPath: options.vmPath || '/vm/dist',
       // 192 MB strikes the right balance: enough headroom for Linux to
@@ -168,8 +212,8 @@
       prologWorkerPath: options.prologWorkerPath || '/js/prolog-worker.js',
       javaWorkerPath: options.javaWorkerPath || '/js/java-worker.js',
       // Derived flags
-      useTerminal: (backend === 'v86' || (backend === 'webcontainer' && options.terminal === true)),
-      usePreview: (backend === 'react'),    // live iframe preview for React tutorials
+      useTerminal: useTerminal,
+      usePreview: (backend === 'react' || hasReactStep),    // live iframe preview for React tutorials
       umlPopupUrl: options.umlPopupUrl || '/uml-popup.html',
       // Editor IDE features (opt-in via YAML).
       //   linter: true / "pyflakes"  → live diagnostics in Monaco gutter
@@ -180,8 +224,15 @@
       enableGitGutter: !!options.gitGutter && !!options.gitGraph,
     };
 
-    this.steps = options.steps || [];
-    this.setupCommands = options.setupCommands || [];
+    this.steps = steps;
+    this.setupCommandsByBackend = options.setupCommandsByBackend || {};
+    this.setupCommands = mixedBackendMode ? [] : (options.setupCommands || []);
+    this._declaredBackends = declaredBackends;
+    this._mixedBackendMode = mixedBackendMode;
+    this._backendInitPromises = {};
+    this._backendReady = {};
+    this._activeRequestedBackend = backend;
+    this._backgroundBackendLoadingSuppressed = false;
     this.requireTests = options.requireTests || false;
     this.instructorMode = options.instructorMode || false;
     this.disableQuiz = options.disableQuiz || false;
@@ -194,7 +245,8 @@
     this.currentStep = -1;
     // autosaveType: falsy = disabled, "files" = save/restore files only (default),
     //              "commands-and-files" = replay solution commands on restore
-    this.autosaveType = options.autosaveType || null;   // tutorial-level mode
+    var autosaveType = options.autosaveType === 'none' ? null : options.autosaveType;
+    this.autosaveType = autosaveType || null;           // tutorial-level mode
     this.allowAutosave = !!this.autosaveType;            // computed convenience flag
     // resetType: "files" = reset only starter files (default),
     //            "commands" = replay all prior solutions + setup_commands (like autosave restore)
@@ -289,6 +341,13 @@
     if (this._testCooldownSeconds > 0) {
       this._testCooldownStorageKey = 'tutorial-cooldown-' + this.tutorialId;
     }
+
+    // Timed practice state is opt-in per step via `max-time` (minutes).
+    // Deadlines and lockout windows persist so refreshes cannot reset the
+    // clock for an active attempt.
+    this._timedPracticeStorageKey = 'tutorial-time-practice-' + this.tutorialId;
+    this._timedPracticeTimer = null;
+    this._timedPracticeCurrentStep = null;
 
     // Pyodide worker state
     this._worker = null;
@@ -425,6 +484,147 @@
     this.debuggerOptions = options.debuggerOptions || {};
   }
 
+  TutorialCode.prototype._stepRequestedBackend = function (step) {
+    return normalizeBackendName((step && step.backend) || this.config.defaultBackend || 'v86');
+  };
+
+  TutorialCode.prototype._effectiveBackend = function (requestedBackend) {
+    var requested = normalizeBackendName(requestedBackend);
+    if (requested === 'webcontainer' && this._webcontainerUnavailableReason) return 'browser';
+    return requested;
+  };
+
+  TutorialCode.prototype._setupCommandsForBackend = function (requestedBackend, effectiveBackend) {
+    var requested = normalizeBackendName(requestedBackend);
+    var effective = normalizeBackendName(effectiveBackend || requested);
+    var byBackend = this.setupCommandsByBackend || {};
+    var commands = byBackend[requested] || byBackend[effective] || [];
+    return Array.isArray(commands) ? commands : [];
+  };
+
+  TutorialCode.prototype._setActiveBackend = function (requestedBackend) {
+    var requested = normalizeBackendName(requestedBackend);
+    var effective = this._effectiveBackend(requested);
+    this._activeRequestedBackend = requested;
+    this.config.backend = effective;
+    if (!this._mixedBackendMode) {
+      this.config.useTerminal = (
+        effective === 'v86' ||
+        (effective === 'webcontainer' && this.config.useTerminal)
+      );
+      this.config.usePreview = effective === 'react';
+    }
+    if (this.root) {
+      this.root.setAttribute('data-requested-backend', requested);
+      this.root.setAttribute('data-active-backend', effective);
+    }
+    this._updateRuntimePanelVisibility(effective);
+    this._refreshRunButtonLabel();
+    this._updatePreviewTestButton();
+  };
+
+  TutorialCode.prototype._updateRuntimePanelVisibility = function (backend) {
+    if (!this._mixedBackendMode || !this.root) return;
+    var effective = normalizeBackendName(backend || this.config.backend);
+    var showPreview = effective === 'react';
+    var outputPanel = this.root.querySelector('.tvm-output-panel');
+    var previewPanel = this.root.querySelector('.tvm-preview-panel');
+    if (outputPanel) outputPanel.hidden = showPreview;
+    if (previewPanel) previewPanel.hidden = !showPreview;
+  };
+
+  TutorialCode.prototype._ensureBackendReady = function (requestedBackend, opts) {
+    var self = this;
+    opts = opts || {};
+    var requested = normalizeBackendName(requestedBackend);
+    if (this._mixedBackendMode && !MIXED_BACKEND_SUPPORTED[requested]) {
+      return Promise.reject(new Error(
+        'Mixed-backend tutorials currently support pyodide, react, webcontainer, and browser steps only.'
+      ));
+    }
+
+    var effective = this._effectiveBackend(requested);
+    if (!opts.prewarm) this._setActiveBackend(requested);
+    if (this._backendReady[requested] || this._backendReady[effective]) {
+      if (!opts.prewarm) this._setActiveBackend(requested);
+      return Promise.resolve();
+    }
+    if (this._backendInitPromises[requested]) {
+      return this._backendInitPromises[requested].then(function () {
+        if (!opts.prewarm) self._setActiveBackend(requested);
+      });
+    }
+
+    var previousRequested = this._activeRequestedBackend;
+    var previousBackend = this.config.backend;
+    var previousSuppressLoading = this._backgroundBackendLoadingSuppressed;
+    var setupCommandsForBackend = this._setupCommandsForBackend(requested, effective);
+    if (opts.prewarm) this._backgroundBackendLoadingSuppressed = true;
+    if (!opts.prewarm) this.config.backend = requested;
+
+    var initPromise = Promise.resolve().then(function () {
+      return self._initBackend(requested, setupCommandsForBackend);
+    }).then(function () {
+      var resolved = self._effectiveBackend(requested);
+      self._backendReady[requested] = true;
+      self._backendReady[resolved] = true;
+      if (opts.prewarm) {
+        self.config.backend = previousBackend;
+        self._activeRequestedBackend = previousRequested;
+        self._updateRuntimePanelVisibility(previousBackend);
+      } else {
+        self._setActiveBackend(requested);
+      }
+    }, function (err) {
+      delete self._backendInitPromises[requested];
+      self.config.backend = previousBackend;
+      self._activeRequestedBackend = previousRequested;
+      throw err;
+    }).then(function () {
+      self._backgroundBackendLoadingSuppressed = previousSuppressLoading;
+    }, function (err) {
+      self._backgroundBackendLoadingSuppressed = previousSuppressLoading;
+      throw err;
+    });
+
+    this._backendInitPromises[requested] = initPromise;
+    return initPromise;
+  };
+
+  TutorialCode.prototype._prewarmNextBackend = function (index) {
+    if (!this._mixedBackendMode) return;
+    var self = this;
+    var current = this._stepRequestedBackend(this.steps[index]);
+    var queued = {};
+    var chain = this._prewarmQueue || Promise.resolve();
+    for (var offset = 1; offset < this.steps.length; offset++) {
+      var nextIndex = (index + offset) % this.steps.length;
+      var nextBackend = this._stepRequestedBackend(this.steps[nextIndex]);
+      if (nextBackend !== current &&
+          !this._backendReady[nextBackend] &&
+          !this._backendInitPromises[nextBackend] &&
+          !queued[nextBackend]) {
+        queued[nextBackend] = true;
+        chain = chain.then((function (backendToWarm) {
+          return function () {
+            if (self._backendReady[backendToWarm] || self._backendInitPromises[backendToWarm]) return;
+            return self._ensureBackendReady(backendToWarm, { prewarm: true });
+          };
+        })(nextBackend)).catch(function (err) {
+          console.warn('[TutorialCode] Failed to prewarm backend:', err);
+        });
+      }
+    }
+    this._prewarmQueue = chain;
+  };
+
+  TutorialCode.prototype._prefersReducedMotion = function () {
+    if (typeof window.__prefersReducedMotion === 'function') {
+      return window.__prefersReducedMotion();
+    }
+    return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  };
+
   // ---------------------------------------------------------------------------
   // Lifecycle
   // ---------------------------------------------------------------------------
@@ -442,7 +642,7 @@
         return self._initEditor();
       })
       .then(function () {
-        return self._initBackend();
+        if (!self._mixedBackendMode) return self._initBackend();
       })
       .then(function () {
         // Time-travel debugger lazy-load. When `debugger: true` in YAML, fetch
@@ -485,10 +685,12 @@
             // starter-file content before the saved files have been applied.
             self._suppressAutoSave = true;
             self._pauseBackgroundSync();
-            self.loadStep(saved.step);
+            var savedStepLoaded = Promise.resolve(self.loadStep(saved.step));
             if (self.autosaveType === 'commands-and-files') {
               // _restoreCommandsAndFiles re-enables autosave after _applySavedFiles
-              self._restoreCommandsAndFiles(saved).then(function () {
+              savedStepLoaded.then(function () {
+                return self._restoreCommandsAndFiles(saved);
+              }).then(function () {
                 var curStep = self.steps[saved.step];
                 return self._runStepDir(curStep).then(function () {
                   return self._ensureGitGraphPromptHook();
@@ -505,7 +707,9 @@
                 console.error('TutorialCode restore error:', err);
               });
             } else {
-              self._applySavedFiles(saved.files, saved.activeFile).then(function () {
+              savedStepLoaded.then(function () {
+                return self._applySavedFiles(saved.files, saved.activeFile);
+              }).then(function () {
                 self._suppressAutoSave = false;
                 // Persist the correctly-restored state immediately
                 self._autoSaveProgress();
@@ -530,8 +734,9 @@
               // Unlock all steps up to the hash target so loadStep doesn't reject
               for (var hi = 0; hi <= hashStep; hi++) self._stepsUnlocked.add(hi);
             }
-            self.loadStep(hashStep >= 0 ? hashStep : 0);
-            Promise.resolve(self._refreshPrompt()).then(function () {
+            Promise.resolve(self.loadStep(hashStep >= 0 ? hashStep : 0)).then(function () {
+              return self._refreshPrompt();
+            }).then(function () {
               self._hideLoading();
             });
           }
@@ -743,6 +948,7 @@
   TutorialCode.prototype.destroy = function () {
     this._stopFileWatch();
     this._stopGuestClockSync();
+    this._clearTimedPracticeTimer();
     clearTimeout(this._terminalReadinessTimer);
     if (this.emulator) { this.emulator.stop(); this.emulator = null; }
     if (this._worker) { this._worker.terminate(); this._worker = null; }
@@ -845,6 +1051,40 @@
       terminalHtml = '<div class="tvm-terminal-panel">' +
         '<div class="tvm-terminal-header"><span>Terminal</span></div>' +
         '<div class="tvm-terminal-container"></div>' +
+        '</div>';
+    } else if (this._mixedBackendMode) {
+      var mixedOutputBody =
+        '<div class="tvm-output-header">' +
+        '<span>Output</span>' +
+        '<div class="tvm-output-actions">' +
+        '<span class="tvm-args-label">args:</span>' +
+        '<input type="text" class="tvm-args-input" placeholder="Program args..." data-original-title="Command-line arguments" aria-label="Command-line arguments" />' +
+        '<select class="tvm-stream-filter" data-original-title="Filter output streams" aria-label="Filter output streams">' +
+        '<option value="all">All Output</option>' +
+        '<option value="stdout">Stdout Only</option>' +
+        '<option value="stderr">Stderr Only</option>' +
+        '</select>' +
+        '<button class="tvm-run-btn" data-original-title="Run current file (Ctrl+Enter)">&#9654; ' + this._runLabel + '</button>' +
+        '<button class="tvm-test-run-btn" data-original-title="Run the test file">&#10003; Test</button>' +
+        '<button class="tvm-stop-btn" data-original-title="Stop execution">&#9208; Stop</button>' +
+        '<button class="tvm-clear-btn" data-original-title="Clear output">Clear</button>' +
+        '<button class="tvm-output-popout-btn" data-original-title="Open output in separate window">⧉<span class="sr-only">Open output in separate window</span></button>' +
+        '</div></div>' +
+        outputContainerHtml;
+      terminalHtml = '<div class="tvm-runtime-panels">' +
+        '<div class="tvm-output-panel tvm-runtime-panel">' + mixedOutputBody + '</div>' +
+        '<div class="tvm-preview-panel tvm-runtime-panel" hidden>' +
+        '<div class="tvm-preview-header">' +
+        '<span>Live Preview</span>' +
+        '<div class="tvm-preview-actions">' +
+        (this._playwrightMode ? '<button class="tvm-preview-test-btn" data-original-title="Run Playwright tests from the test files">✓ Test</button>' : '') +
+        '<button class="tvm-refresh-btn" data-original-title="Rebuild preview">\u21bb Refresh</button>' +
+        '<button class="tvm-output-popout-btn" data-original-title="Open preview in separate window">\u29c9<span class="sr-only">Open preview in separate window</span></button>' +
+        '</div></div>' +
+        '<div class="tvm-preview-test-panel"></div>' +
+        '<div class="tvm-preview-container">' +
+        '<iframe class="tvm-preview-frame" title="Live preview" aria-label="Live preview" data-no-tooltip="true" sandbox="allow-scripts allow-same-origin"></iframe>' +
+        '</div></div>' +
         '</div>';
     } else if (this.config.usePreview) {
       terminalHtml = '<div class="tvm-preview-panel">' +
@@ -979,6 +1219,7 @@
       '<div class="tvm-steps-view">' +
       '<div class="tvm-step-nav-bar">' +
       '<div class="tvm-step-nav"></div>' +
+      '<div class="tvm-step-timer" role="timer" aria-label="Step timer" hidden></div>' +
       '<button class="tvm-instructions-popout-btn" data-original-title="Open instructions in separate window">⧉<span class="sr-only">Open instructions in separate window</span></button>' +
       '</div>' +
       '<div class="tvm-step-content-wrap scrollable-region-focus-target" tabindex="0"><div class="tvm-step-content"></div></div>' +
@@ -1232,6 +1473,7 @@
     this.loadingEl = this.root.querySelector('.tvm-loading');
     this.containerEl = this.root.querySelector('.tvm-container');
     this.stepNavEl = this.root.querySelector('.tvm-step-nav');
+    this.stepTimerEl = this.root.querySelector('.tvm-step-timer');
     this.stepContentEl = this.root.querySelector('.tvm-step-content');
     this.stepContentWrapEl = this.root.querySelector('.tvm-step-content-wrap');
     this.quizPanelEl = this.root.querySelector('.tvm-quiz-panel');
@@ -1574,7 +1816,9 @@
 
     if (this.config.useTerminal) {
       this.terminalContainerEl = this.root.querySelector('.tvm-terminal-container');
-    } else if (this.config.usePreview) {
+    }
+
+    if (this.config.usePreview) {
       this._previewFrame = this.root.querySelector('.tvm-preview-frame');
       if (this._previewFrame && !this._previewFrame.getAttribute('title')) {
         this._previewFrame.setAttribute('title', 'Live preview');
@@ -1591,7 +1835,9 @@
       if (this._previewTestBtn) {
         this._previewTestBtn.addEventListener('click', function () { self._runStudentPlaywrightTests(); });
       }
-    } else {
+    }
+
+    if (!this.config.useTerminal || this._mixedBackendMode) {
       this.outputPre = this.root.querySelector('.tvm-output-pre');
       this.outputPanel = this.root.querySelector('.tvm-output-panel');
       var runBtn = this.root.querySelector('.tvm-run-btn');
@@ -1615,11 +1861,13 @@
         });
       }
     }
+    this._updateRuntimePanelVisibility(this.config.backend);
 
     this._initSplitters();
   };
 
   TutorialCode.prototype._showLoading = function (msg) {
+    if (this._backgroundBackendLoadingSuppressed) return;
     if (this.loadingEl) {
       this.loadingEl.style.display = 'flex';
       this.loadingEl.querySelector('.tvm-loading-text').textContent = msg;
@@ -1772,7 +2020,7 @@
       var sibling = vsplitter.nextElementSibling;
       while (sibling) {
         if (sibling.matches(
-              '.tvm-output-panel, .tvm-terminal-panel, .tvm-preview-panel,' +
+              '.tvm-output-panel, .tvm-terminal-panel, .tvm-preview-panel, .tvm-runtime-panels,' +
               ' .tvm-uml-bottom-left-view, .tvm-uml-below-view')) {
           workspaceBottom = sibling;
           break;
@@ -1817,7 +2065,8 @@
     if (this.outputHeight) {
       var bottomPanel = this.root.querySelector(
         this.config.useTerminal ? '.tvm-terminal-panel' :
-          this.config.usePreview ? '.tvm-preview-panel' : '.tvm-output-panel');
+          this._mixedBackendMode ? '.tvm-runtime-panels' :
+            this.config.usePreview ? '.tvm-preview-panel' : '.tvm-output-panel');
       var editorPanelEl = this.root.querySelector('.tvm-editor-panel');
       if (bottomPanel) bottomPanel.style.flex = '0 0 ' + this.outputHeight;
       if (editorPanelEl) editorPanelEl.style.flex = '1 1 auto';
@@ -2686,17 +2935,19 @@
   // ---------------------------------------------------------------------------
   // Backend Initialisation — routes to v86 / pyodide / webcontainer
   // ---------------------------------------------------------------------------
-  TutorialCode.prototype._initBackend = function () {
-    var backend = this.config.backend;
+  TutorialCode.prototype._initBackend = function (backendOverride, setupCommandsOverride) {
+    var backend = normalizeBackendName(backendOverride || this.config.backend);
     if (backend === 'v86') return this._initV86();
-    if (backend === 'pyodide') return this._initPyodide();
+    if (backend === 'pyodide') return this._initPyodide(setupCommandsOverride);
     if (backend === 'webcontainer') {
       var self = this;
-      return this._initWebContainer().catch(function (err) {
+      return this._initWebContainer(setupCommandsOverride).catch(function (err) {
         self._webcontainerUnavailableReason = err && (err.message || String(err)) || 'unknown error';
         console.warn('[TutorialCode] WebContainer unavailable; falling back to browser backend:', err);
-        self.config.backend = 'browser';
-        self.config.useTerminal = false;
+        if (!backendOverride) {
+          self.config.backend = 'browser';
+          self.config.useTerminal = false;
+        }
         self._showLoading('WebContainer unavailable — using browser Node sandbox…');
         return self._initBrowserBackend();
       });
@@ -3601,8 +3852,11 @@
   };
 
   // ---- Pyodide backend -------------------------------------------------------
-  TutorialCode.prototype._initPyodide = function () {
+  TutorialCode.prototype._initPyodide = function (setupCommandsOverride) {
     var self = this;
+    var setupCommands = Array.isArray(setupCommandsOverride)
+      ? setupCommandsOverride
+      : (self.setupCommands || []);
     this._showLoading('Loading Python runtime\u2026 (first load may take a moment)');
     return new Promise(function (resolve, reject) {
       self._worker = new Worker(self.config.workerPath);
@@ -3616,7 +3870,7 @@
         if (msg.type === 'ready') {
           self.booted = true;
           // Run global setup (treated as Python code for pyodide backend)
-          var setupCmds = self.setupCommands;
+          var setupCmds = setupCommands;
           var pythonSetup = setupCmds.length > 0
             ? new Promise(function (r) {
                 self._postWorker({ type: 'runCode', code: setupCmds.join('\n'), silent: true }, function () { r(); });
@@ -4001,9 +4255,17 @@
   };
 
   TutorialCode.prototype._runCurrentFile = function () {
-    var backend = this.config.backend;
     var self = this;
     var step = this.steps[this.currentStep >= 0 ? this.currentStep : 0];
+    if (this._mixedBackendMode) {
+      var requestedBackend = this._stepRequestedBackend(step);
+      if (this.config.backend !== this._effectiveBackend(requestedBackend)) {
+        return this._ensureBackendReady(requestedBackend).then(function () {
+          return self._runCurrentFile();
+        });
+      }
+    }
+    var backend = this.config.backend;
     var runFiles = this._stepRunFiles(step);
     if (!this.activeFileName && !runFiles.length) return;
     var filename = runFiles[0] || this.activeFileName;
@@ -4379,8 +4641,11 @@
   };
 
   // ---- WebContainers backend -------------------------------------------------
-  TutorialCode.prototype._initWebContainer = function () {
+  TutorialCode.prototype._initWebContainer = function (setupCommandsOverride) {
     var self = this;
+    var setupCommands = Array.isArray(setupCommandsOverride)
+      ? setupCommandsOverride
+      : (self.setupCommands || []);
     this._showLoading('Booting WebContainers\u2026');
 
     // Under COEP=credentialless (set by the COI service worker), dynamic
@@ -4431,12 +4696,12 @@
       self.booted = true;
 
       // Run setup commands in the shell
-      if (self.setupCommands.length > 0) {
+      if (setupCommands.length > 0) {
         if (self.config.useTerminal) {
-          self.setupCommands.forEach(function (cmd) { self.sendCommand(cmd); });
+          setupCommands.forEach(function (cmd) { self.sendCommand(cmd); });
         } else {
           var setupChain = Promise.resolve();
-          self.setupCommands.forEach(function (cmd) {
+          setupCommands.forEach(function (cmd) {
             setupChain = setupChain.then(function () { return self._runWebContainerShellCommand(cmd); });
           });
           return setupChain.then(function () { return delay(300); });
@@ -5318,7 +5583,7 @@
       monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
       function () { self._saveCurrentFile(); }
     );
-    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'java') {
+    if (this._mixedBackendMode || this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'java') {
       editor.addCommand(
         monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
         function () { self._runCurrentFile(); }
@@ -5823,6 +6088,9 @@
 
   TutorialCode.prototype._saveCurrentFile = function () {
     if (!this.activeFileName) return;
+    if (this._mixedBackendMode) {
+      this._setActiveBackend(this._stepRequestedBackend(this.steps[this.currentStep]));
+    }
     this._syncFileToBackend(this.activeFileName);
     var tab = this.editorTabsEl.querySelector('.tvm-tab.active');
     if (!tab && this.editorTabsElRight) tab = this.editorTabsElRight.querySelector('.tvm-tab.active');
@@ -8368,8 +8636,16 @@
   TutorialCode.prototype.applySolution = function () {
     var step = this.steps[this.currentStep];
     if (!step || !step.solution) return;
-    var solution = step.solution;
     var self = this;
+    if (this._mixedBackendMode) {
+      var requestedBackend = this._stepRequestedBackend(step);
+      if (this.config.backend !== this._effectiveBackend(requestedBackend)) {
+        return this._ensureBackendReady(requestedBackend).then(function () {
+          return self.applySolution();
+        });
+      }
+    }
+    var solution = step.solution;
 
     var p = this._stepSetupPromise ? this._stepSetupPromise.catch(function () {}) : Promise.resolve();
 
@@ -8706,6 +8982,14 @@
     var step = this.steps[this.currentStep];
     if (!step) return;
     var self = this;
+    if (this._mixedBackendMode) {
+      var requestedBackend = this._stepRequestedBackend(step);
+      if (this.config.backend !== this._effectiveBackend(requestedBackend)) {
+        return this._ensureBackendReady(requestedBackend).then(function () {
+          return self.resetStep();
+        });
+      }
+    }
 
     // Guard against re-entrant resets. Clicking Reset twice in quick
     // succession was layering concurrent restore_state + replay chains on
@@ -8744,6 +9028,276 @@
     }).then(function () {
       return self._updateUserCmdListener(step);
     });
+  };
+
+  // ---------------------------------------------------------------------------
+  // Timed practice (per-step max-time + lockout)
+  // ---------------------------------------------------------------------------
+  function timedPracticeMinutes(step, names) {
+    if (!step) return null;
+    for (var i = 0; i < names.length; i++) {
+      var raw = step[names[i]];
+      if (raw === undefined || raw === null || raw === '') continue;
+      var n = Number(raw);
+      if (isFinite(n) && n > 0) return n;
+    }
+    return null;
+  }
+
+  TutorialCode.prototype._timedPracticeConfig = function (step) {
+    var maxMinutes = timedPracticeMinutes(step, ['max-time', 'max_time', 'maxTime']);
+    if (!maxMinutes) return null;
+    var lockoutMinutes = timedPracticeMinutes(step, [
+      'lockout-time', 'lockout_time', 'lockoutTime',
+      'lock-out-time', 'lock_out_time', 'lockOutTime',
+    ]) || 60;
+    return {
+      maxMs: Math.max(1000, Math.round(maxMinutes * 60000)),
+      lockoutMs: Math.max(1000, Math.round(lockoutMinutes * 60000)),
+    };
+  };
+
+  TutorialCode.prototype._loadTimedPracticeState = function () {
+    try {
+      var raw = localStorage.getItem(this._timedPracticeStorageKey);
+      var parsed = raw ? JSON.parse(raw) : null;
+      if (!parsed || typeof parsed !== 'object') parsed = {};
+      if (!parsed.steps || typeof parsed.steps !== 'object') parsed.steps = {};
+      return parsed;
+    } catch (e) {
+      return { steps: {} };
+    }
+  };
+
+  TutorialCode.prototype._saveTimedPracticeState = function (state) {
+    try {
+      var steps = state && state.steps ? state.steps : {};
+      var hasAny = false;
+      for (var k in steps) {
+        if (steps.hasOwnProperty(k)) { hasAny = true; break; }
+      }
+      if (!hasAny) localStorage.removeItem(this._timedPracticeStorageKey);
+      else localStorage.setItem(this._timedPracticeStorageKey, JSON.stringify({ steps: steps }));
+    } catch (e) { /* storage unavailable — timer still runs for this session */ }
+  };
+
+  TutorialCode.prototype._timedPracticeEntry = function (index) {
+    var state = this._loadTimedPracticeState();
+    var entry = state.steps[String(index)] || {};
+    return { state: state, entry: entry };
+  };
+
+  TutorialCode.prototype._setTimedPracticeEntry = function (index, entry) {
+    var state = this._loadTimedPracticeState();
+    if (entry && Object.keys(entry).length) state.steps[String(index)] = entry;
+    else delete state.steps[String(index)];
+    this._saveTimedPracticeState(state);
+  };
+
+  TutorialCode.prototype._formatTimedPracticeDuration = function (ms) {
+    var total = Math.max(0, Math.ceil(ms / 1000));
+    var hours = Math.floor(total / 3600);
+    var minutes = Math.floor((total % 3600) / 60);
+    var seconds = total % 60;
+    if (hours > 0) {
+      return hours + ':' + (minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+    }
+    return minutes + ':' + (seconds < 10 ? '0' : '') + seconds;
+  };
+
+  TutorialCode.prototype._clearTimedPracticeTimer = function () {
+    if (this._timedPracticeTimer) {
+      clearInterval(this._timedPracticeTimer);
+      this._timedPracticeTimer = null;
+    }
+    this._timedPracticeCurrentStep = null;
+  };
+
+  TutorialCode.prototype._hideTimedPracticeClock = function () {
+    this._clearTimedPracticeTimer();
+    if (!this.stepTimerEl) return;
+    this.stepTimerEl.hidden = true;
+    this.stepTimerEl.textContent = '';
+    this.stepTimerEl.classList.remove('is-urgent', 'is-locked');
+  };
+
+  TutorialCode.prototype._renderTimedPracticeClock = function (label, remainingMs, stateClass) {
+    if (!this.stepTimerEl) return;
+    var text = label + ' ' + this._formatTimedPracticeDuration(remainingMs);
+    this.stepTimerEl.hidden = false;
+    this.stepTimerEl.textContent = text;
+    this.stepTimerEl.setAttribute('aria-label', text);
+    this.stepTimerEl.classList.toggle('is-locked', stateClass === 'locked');
+    this.stepTimerEl.classList.toggle(
+      'is-urgent',
+      stateClass !== 'locked' && remainingMs <= 60000 && !this._prefersReducedMotion()
+    );
+  };
+
+  TutorialCode.prototype._timedPracticeStatus = function (index) {
+    var step = this.steps[index];
+    var cfg = this._timedPracticeConfig(step);
+    if (!cfg) return { enabled: false };
+    var stateAndEntry = this._timedPracticeEntry(index);
+    var entry = stateAndEntry.entry || {};
+    var now = Date.now();
+    if (entry.completed) return { enabled: true, completed: true };
+    if (entry.lockoutUntil && entry.lockoutUntil > now) {
+      return { enabled: true, locked: true, remainingMs: entry.lockoutUntil - now };
+    }
+    if (entry.lockoutUntil && entry.lockoutUntil <= now) {
+      entry = {};
+      this._setTimedPracticeEntry(index, entry);
+      return { enabled: true, ready: true };
+    }
+    if (entry.deadline && entry.deadline <= now) {
+      return this._lockTimedPracticeStep(index, { render: false });
+    }
+    return {
+      enabled: true,
+      ready: true,
+      deadline: entry.deadline || null,
+      remainingMs: entry.deadline ? entry.deadline - now : cfg.maxMs,
+    };
+  };
+
+  TutorialCode.prototype._startTimedPractice = function (index) {
+    var self = this;
+    this._clearTimedPracticeTimer();
+    var step = this.steps[index];
+    var cfg = this._timedPracticeConfig(step);
+    if (!cfg) {
+      this._hideTimedPracticeClock();
+      return;
+    }
+    if (this._markTimedPracticeCompleteIfSolved(index)) return;
+
+    var status = this._timedPracticeStatus(index);
+    if (status.completed) {
+      this._hideTimedPracticeClock();
+      return;
+    }
+    if (status.locked) {
+      this._renderTimedPracticeLockout(index);
+      return;
+    }
+
+    var stateAndEntry = this._timedPracticeEntry(index);
+    var entry = stateAndEntry.entry || {};
+    if (!entry.deadline) {
+      entry.deadline = Date.now() + cfg.maxMs;
+      entry.completed = false;
+      this._setTimedPracticeEntry(index, entry);
+    }
+
+    function tick() {
+      var now = Date.now();
+      var remaining = entry.deadline - now;
+      if (remaining <= 0) {
+        self._lockTimedPracticeStep(index);
+        return;
+      }
+      self._renderTimedPracticeClock('Time left', remaining, 'running');
+    }
+    this._timedPracticeCurrentStep = index;
+    tick();
+    this._timedPracticeTimer = setInterval(tick, 1000);
+  };
+
+  TutorialCode.prototype._lockTimedPracticeStep = function (index, opts) {
+    opts = opts || {};
+    var cfg = this._timedPracticeConfig(this.steps[index]);
+    if (!cfg) return { enabled: false };
+    var entry = {
+      completed: false,
+      deadline: null,
+      lockoutUntil: Date.now() + cfg.lockoutMs,
+    };
+    this._setTimedPracticeEntry(index, entry);
+    var status = { enabled: true, locked: true, remainingMs: cfg.lockoutMs };
+    if (opts.render !== false && this.currentStep === index) this._renderTimedPracticeLockout(index);
+    return status;
+  };
+
+  TutorialCode.prototype._markTimedPracticeComplete = function (index) {
+    if (!this._timedPracticeConfig(this.steps[index])) return false;
+    this._setTimedPracticeEntry(index, { completed: true });
+    if (this.currentStep === index) this._hideTimedPracticeClock();
+    return true;
+  };
+
+  TutorialCode.prototype._timedPracticeStepSolved = function (index) {
+    var step = this.steps[index];
+    if (!step) return false;
+    var hasTests = this._stepHasTests(step);
+    var hasQuiz = !this.disableQuiz && step.quiz && step.quiz.questions && step.quiz.questions.length > 0;
+    if (!hasTests && !hasQuiz) return false;
+    var testsOk = !hasTests || this._stepsPassed.has(index);
+    var quizOk = !hasQuiz || this._quizPassed.has(index);
+    return testsOk && quizOk;
+  };
+
+  TutorialCode.prototype._markTimedPracticeCompleteIfSolved = function (index, opts) {
+    opts = opts || {};
+    if (!this._timedPracticeConfig(this.steps[index])) return false;
+    if (opts.force || this._timedPracticeStepSolved(index)) {
+      return this._markTimedPracticeComplete(index);
+    }
+    return false;
+  };
+
+  TutorialCode.prototype._renderTimedPracticeLockout = function (index) {
+    var self = this;
+    var step = this.steps[index];
+    if (!step) return;
+
+    this._clearTimedPracticeTimer();
+    if (window.TutorChat) { window.TutorChat.onStepChange(); }
+    if (this.debuggerEnabled && window.SEBookDebugger) {
+      window.SEBookDebugger.onStepChange(this);
+    }
+    this.currentStep = index;
+    this._stepsVisited.add(index);
+    if (this.quizPanelEl) this.quizPanelEl.style.display = 'none';
+    if (this.stepContentWrapEl) this.stepContentWrapEl.style.display = '';
+    this._renderStepNav();
+    this._clearStudentTestPanel();
+
+    Object.keys(this.editorModels || {}).slice().forEach(function (path) {
+      self._closeFile(path);
+    });
+    this.activeFileName = null;
+    this._renderTabs();
+    this._updateStepHash(index);
+
+    this.stepContentEl.innerHTML =
+      '<h2>' + this._renderInlineMarkdown(step.title || '') + '</h2>' +
+      '<div class="tvm-timed-practice-lockout" role="status" aria-live="polite" aria-atomic="true">' +
+      '<h3>Practice break</h3>' +
+      '<p>This timed practice attempt has ended. You can return to earlier steps while this one cools down.</p>' +
+      '<p class="tvm-timed-practice-lockout-remaining"></p>' +
+      '</div>';
+    if (this.stepContentWrapEl) this.stepContentWrapEl.scrollTop = 0;
+    this.stepControlsEl.innerHTML = index > 0
+      ? '<button class="tvm-btn tvm-btn-prev" data-original-title="Previous step">\u2190 Previous</button><span></span><span></span>'
+      : '<span></span><span></span><span></span>';
+    var prev = this.stepControlsEl.querySelector('.tvm-btn-prev');
+    if (prev) prev.addEventListener('click', function () { self.loadStep(index - 1); });
+
+    function tick() {
+      var status = self._timedPracticeStatus(index);
+      if (!status.locked) {
+        self.loadStep(index);
+        return;
+      }
+      var text = 'Try again in ' + self._formatTimedPracticeDuration(status.remainingMs) + '.';
+      self._renderTimedPracticeClock('Try again in', status.remainingMs, 'locked');
+      var remainingEl = self.stepContentEl.querySelector('.tvm-timed-practice-lockout-remaining');
+      if (remainingEl) remainingEl.textContent = text;
+    }
+    tick();
+    this._timedPracticeCurrentStep = index;
+    this._timedPracticeTimer = setInterval(tick, 1000);
   };
 
   /**
@@ -9061,6 +9615,40 @@
   };
 
   TutorialCode.prototype.loadStep = function (index) {
+    if (index < 0 || index >= this.steps.length) return Promise.resolve();
+    if (!this.instructorMode && !this._stepsUnlocked.has(index)) return Promise.resolve();
+
+    var self = this;
+    var step = this.steps[index];
+    var timedStatus = this._timedPracticeStatus(index);
+    if (timedStatus.locked) {
+      this._renderTimedPracticeLockout(index);
+      return Promise.resolve();
+    }
+    var requestedBackend = this._stepRequestedBackend(step);
+    var load = function () {
+      return Promise.resolve(self._loadStepContent(index)).then(function () {
+        self._prewarmNextBackend(index);
+      });
+    };
+    if (!this._mixedBackendMode) return load();
+
+    if (!this._backendReady[requestedBackend]) {
+      this._backgroundBackendLoadingSuppressed = false;
+      this._showLoading('Starting ' + backendLabel(requestedBackend) + ' runtime\u2026');
+    }
+    return this._ensureBackendReady(requestedBackend).then(function () {
+      return load();
+    }).then(function () {
+      self._hideLoading();
+    }, function (err) {
+      self._showError('Failed to start ' + backendLabel(requestedBackend) + ' runtime: ' + (err && err.message || err));
+      console.error('TutorialCode backend switch error:', err);
+      throw err;
+    });
+  };
+
+  TutorialCode.prototype._loadStepContent = function (index) {
     if (index < 0 || index >= this.steps.length) return;
     // Block navigation to locked steps (unless instructor mode)
     if (!this.instructorMode && !this._stepsUnlocked.has(index)) return;
@@ -9398,6 +9986,8 @@
 
     // Auto-save progress when navigating to a new step
     if (this.autoSaveEnabled) this._autoSaveProgress();
+
+    this._startTimedPractice(index);
   };
 
   // Update the URL hash to the current step's key (or clear it for step 0 without a key)
@@ -9490,6 +10080,11 @@
       if (hasQuiz && !self._quizPassed.has(index)) {
         self._showStepQuiz(index);
       } else {
+        if (!self._stepHasTests(step)) {
+          self._markTimedPracticeCompleteIfSolved(index, { force: true });
+        } else {
+          self._markTimedPracticeCompleteIfSolved(index);
+        }
         // Unlock the next step now (for non-test-gated steps; test-gated steps
         // unlock on passing, quiz-gated steps unlock in the quiz continue handler).
         self._stepsUnlocked.add(index + 1);
@@ -9728,6 +10323,7 @@
   // BroadcastChannel quiz-passed handler when the popup completes one.
   TutorialCode.prototype._completeQuiz = function (stepIndex) {
     this._quizPassed.add(stepIndex);
+    this._markTimedPracticeCompleteIfSolved(stepIndex);
     this._stepsUnlocked.add(stepIndex + 1);
     if (this.autoSaveEnabled) this._autoSaveProgress();
     var hasNextStep = stepIndex + 1 < this.steps.length;
@@ -10009,6 +10605,15 @@
     if (this._testRunInFlight) return;
     var step = this.steps[this.currentStep];
     if (!step || !this._stepHasTests(step)) return;
+    var self = this;
+    if (this._mixedBackendMode) {
+      var requestedBackend = this._stepRequestedBackend(step);
+      if (this.config.backend !== this._effectiveBackend(requestedBackend)) {
+        return this._ensureBackendReady(requestedBackend).then(function () {
+          return self._runTests(opts);
+        });
+      }
+    }
     var silent = !!(opts && opts.silent);
     // Refuse a non-silent run while cooldown is still active (the disabled
     // button can't be clicked, but a popout could still post 'request-run-tests').
@@ -10772,6 +11377,10 @@
       var nextBtn = this.stepControlsEl.querySelector('.tvm-btn-next');
       if (nextBtn) { nextBtn.disabled = false; nextBtn.removeAttribute('title'); }
       if (this.autoSaveEnabled) this._autoSaveProgress();
+    }
+    if (allPass && this._timedPracticeConfig(this.steps[this.currentStep])) {
+      this._stepsPassed.add(this.currentStep);
+      this._markTimedPracticeCompleteIfSolved(this.currentStep);
     }
     if (this._popoutManager) {
       if (!silent) {

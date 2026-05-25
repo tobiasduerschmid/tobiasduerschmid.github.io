@@ -1,0 +1,137 @@
+title: "Multi-Backend Placeholder Tutorial"
+description: "A hidden placeholder tutorial used to exercise per-step tutorial backends."
+
+backend: multiple
+exclude_from_index: true
+autosave_type: none
+require_tests: false
+
+steps:
+  - title: "Python Placeholder 1"
+    backend: pyodide
+    max-time: 10
+    lockout-time: 60
+    instructions: |
+      This placeholder step verifies that a Python step can use the output panel.
+    files:
+      - path: "python-one.py"
+        content: |
+          print("Python placeholder one")
+        language: "python"
+    open_file: "python-one.py"
+
+  - title: "React Placeholder 1"
+    backend: react
+    instructions: |
+      This placeholder step verifies that a React step can use the live preview panel.
+    files:
+      - path: "react-one/styles.css"
+        content: |
+          main {
+            max-width: 48rem;
+            margin: 0 auto;
+            padding: 2rem;
+          }
+
+          .placeholder-card {
+            border: 2px solid #2774ae;
+            border-radius: 6px;
+            padding: 1rem;
+          }
+        language: "css"
+      - path: "react-one/App.jsx"
+        content: |
+          function App() {
+            return (
+              <main>
+                <section className="placeholder-card" aria-labelledby="react-one-title">
+                  <h1 id="react-one-title">React placeholder one</h1>
+                  <p>This preview is rendered by the React backend.</p>
+                </section>
+              </main>
+            );
+          }
+
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+        language: "jsx"
+    react_files:
+      - "react-one/styles.css"
+      - "react-one/App.jsx"
+    open_file: "react-one/App.jsx"
+
+  - title: "Node.js Placeholder 1"
+    backend: webcontainer
+    instructions: |
+      This placeholder step verifies that a Node.js step can return to the output panel.
+    files:
+      - path: "node-one.js"
+        content: |
+          console.log("Node placeholder one");
+        language: "javascript"
+    open_file: "node-one.js"
+    run_file: "node-one.js"
+
+  - title: "React Placeholder 2"
+    backend: react
+    instructions: |
+      This placeholder step verifies that switching back to React rebuilds the preview.
+    files:
+      - path: "react-two/styles.css"
+        content: |
+          main {
+            max-width: 48rem;
+            margin: 0 auto;
+            padding: 2rem;
+          }
+
+          .placeholder-card {
+            border: 2px solid #2e7d32;
+            border-radius: 6px;
+            padding: 1rem;
+          }
+        language: "css"
+      - path: "react-two/App.jsx"
+        content: |
+          function App() {
+            return (
+              <main>
+                <section className="placeholder-card" aria-labelledby="react-two-title">
+                  <h1 id="react-two-title">React placeholder two</h1>
+                  <p>This preview is rendered after leaving Node.js.</p>
+                </section>
+              </main>
+            );
+          }
+
+          const root = ReactDOM.createRoot(document.getElementById('root'));
+          root.render(<App />);
+        language: "jsx"
+    react_files:
+      - "react-two/styles.css"
+      - "react-two/App.jsx"
+    open_file: "react-two/App.jsx"
+
+  - title: "Python Placeholder 2"
+    backend: pyodide
+    max-time: 10
+    instructions: |
+      This placeholder step verifies that switching back to Python restores the output panel.
+    files:
+      - path: "python-two.py"
+        content: |
+          print("Python placeholder two")
+        language: "python"
+    open_file: "python-two.py"
+
+  - title: "Node.js Placeholder 2"
+    backend: webcontainer
+    instructions: |
+      This placeholder step verifies that a later Node.js step remains usable.
+    files:
+      - path: "node-two.js"
+        content: |
+          console.log("Node placeholder two");
+        language: "javascript"
+    open_file: "node-two.js"
+    run_file: "node-two.js"
