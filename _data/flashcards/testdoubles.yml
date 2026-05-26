@@ -24,13 +24,13 @@ cards:
     difficulty: intermediate
     question: "You need to drive the SUT down its error-handling branch — the one where the payment gateway returns `Status.TIMEOUT`. Which double, and why?"
     answer: "A **Stub**. You need to control what the SUT *receives* from the gateway (indirect input) to force the path. You don't need to observe what the SUT sent."
-    explanation: "Stubs shine for exercising paths that are hard to trigger with real DOCs — error responses, slow paths, rare states. They establish a control point in the SUT's input space. If you also need to verify *what message the SUT sent in response* to the timeout, you would add a Spy or Mock — but the *input control* belongs to a Stub."
+    explanation: "Stubs shine for exercising paths that are hard to trigger with real DOCs — error responses, slow paths, rare states. If you also need to verify *what message the SUT sent in response* to the timeout, you would add a Spy or Mock — but the *input control* always belongs to a Stub."
 
   - id: 5
     difficulty: intermediate
     question: "Compare **Spy** and **Mock**: when does failure occur, and what style of test does each produce?"
     answer: "**Spy** records calls quietly; test asserts on the recording *after* the SUT runs (*procedural verification*). **Mock** is pre-programmed with expectations; fails *during* the SUT's execution if a call doesn't match (*expected behavior specification*)."
-    explanation: "Spy-based tests put assertions in the test method, so the reader sees what is being verified next to the act step. Mock-based tests push expectations into setup; failures point at the call site but the test body shows less. Spies are friendlier when you can't predict all attributes of the interaction up front; mocks fail faster when you can specify the contract precisely."
+    explanation: "Spy-based tests put assertions in the test method, so the reader sees what is verified next to the act step; Mock-based tests push expectations into setup. Spies are friendlier when you can't predict all attributes of the interaction up front; mocks fail faster, at the call site, when you can specify the contract precisely."
 
   - id: 6
     difficulty: intermediate
@@ -54,7 +54,7 @@ cards:
     difficulty: intermediate
     question: "Pick a double for: *'My SUT's constructor requires a `loader`, but this behavior never calls `loader.load_config()`.'*"
     answer: "A **Dummy** suffices — the loader satisfies the signature but is never used in this path. If the SUT *does* read fields from `loader.load_config()`, escalate to a **Stub** returning a specific config."
-    explanation: "Reaching for a Mock or Spy here would over-specify the test. Dummies are the lightest double — they exist to satisfy the type system / signature. The minimum-viable-double rule: pick the simplest double that lets the test do its job. Anything heavier is extra coupling for no benefit."
+    explanation: "Reaching for a Mock or Spy here would over-specify the test. The minimum-viable-double rule says pick the simplest double that lets the test do its job — a Dummy exists only to satisfy the signature, and anything heavier is extra coupling for no benefit."
 
   - id: 10
     difficulty: advanced
@@ -78,7 +78,7 @@ cards:
 
       Classify each `Mock()` instance by the role it actually plays.
     answer: "`user_repo` acts as a **Stub** (returns canned `User`, no call assertion). `email_service` is on the **Spy / Mock Object** boundary: the test verifies an outbound call after execution with `assert_called_once_with`, so the important classification is behavior verification, not the `Mock()` class name."
-    explanation: "Mock libraries blur the taxonomy — `unittest.mock.Mock` plays every role. Naming the role each instance plays is what keeps the test honest. Rule of thumb: configured return values → Stub; post-execution call assertions → Spy-style behavior verification; up-front strict expectations → Mock Object; a single object can combine roles. Replacing the user-repo Stub with a Fake `InMemoryUserRepo` often pays off when many tests share the same configuration."
+    explanation: "Mock libraries blur the taxonomy — `unittest.mock.Mock` plays every role, so naming the role each instance plays is what keeps the test honest. Rule of thumb: configured return values → Stub; post-execution call assertions → Spy-style behavior verification; up-front strict expectations → Mock Object. A single object can even combine roles within one test."
 
   - id: 12
     difficulty: advanced
@@ -113,7 +113,7 @@ cards:
     question: |
       You use a `FakeUserRepository` (in-memory dict) for fast unit tests. The unit tests pass. Production then fails because the real `PostgresUserRepository` raises `IntegrityError` on a duplicate email, while the Fake had been raising `ValueError`. How do you keep the Fake's speed *and* defend against this drift?
     answer: "Write a **shared contract test** that both `FakeUserRepository` and `PostgresUserRepository` must pass — including the duplicate-email exception class. Run it against the Fake every commit (fast) and against the real repository on a schedule, against a sandbox database (slower)."
-    explanation: "Every Fake is a *promise* that it behaves enough like the real collaborator. That promise can break silently. A contract test captures the behavioral expectations once and is run against both implementations, surfacing drift the moment one side changes. The Fake stays useful; the drift becomes visible."
+    explanation: "Every Fake is a *promise* that it behaves enough like the real collaborator, and that promise can break silently. A contract test captures the behavioral expectations once and runs against both implementations, so the Fake keeps its speed while drift becomes visible the moment one side changes."
 
   - id: 16
     difficulty: intermediate
@@ -129,4 +129,4 @@ cards:
           assert processor.summary == "5 orders, $1240 total"
       ```
     answer: "**Mystery Guest** (van Deursen et al.; Meszaros). The test depends on the contents of `/tmp/test_orders.csv` — an external file invisible from the test body. A reader cannot tell what `5 orders, $1240 total` is computed *from*, only that the assertion exists."
-    explanation: "Mystery Guest is one of several named test-double smells. Others: **The Mockery** (so many mocks that the test verifies orchestration instead of behavior); **Counting on Spies** (asserting on every internal call, freezing the implementation); **Unnecessary Stubs** (stubs configured for calls the SUT does not make); **Eager Test** (one test exercises many behaviors). Naming the smell makes it easier to spot in code review."
+    explanation: "Mystery Guest is one of several named test-double smells. Neighbors to keep distinct: **The Mockery** (so many mocks the test verifies orchestration, not behavior); **Counting on Spies** (asserting every internal call, freezing the implementation); **Unnecessary Stubs** (stubs for calls the SUT never makes); **Eager Test** (one test, many behaviors). Naming the smell makes it easier to spot in review."

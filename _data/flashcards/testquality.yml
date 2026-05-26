@@ -24,7 +24,7 @@ cards:
     difficulty: advanced
     question: "List at least four of the recurring causes of flaky tests that Luo et al. identified."
     answer: "**Asynchronous waiting** (sleeps); **concurrency** (races); **test-order dependencies** (leaked state); **time assumptions** (real clock); **randomness** (unseeded); **external resources** (network, FS, real DB)."
-    explanation: "Luo et al. (2014) analysed fixed flaky tests across large open-source projects. Async waiting was by far the most common cause. The fix for each is structural: wait on observable conditions, isolate state, freeze or inject the clock, seed randomness, replace external services with fakes for the fast suite. Flakiness damages the social contract: a red test should mean *investigate*, not *rerun*."
+    explanation: "Luo et al. (2014) analysed fixed flaky tests across large open-source projects; async waiting was by far the most common cause. Each cause has a structural fix — wait on observable conditions, isolate state, control the clock and randomness — rather than a retry. Flakiness damages the social contract: a red test should mean *investigate*, not *rerun*."
 
   - id: 5
     difficulty: intermediate
@@ -60,7 +60,7 @@ cards:
     difficulty: expert
     question: "Dashboard: coverage 92% (up from 88%), mutation score steady at 80%, escaped-bug count doubled in three months. Diagnose."
     answer: "Coverage rose without oracle strength — new tests *execute* new code without *checking* it. The static mutation score with rising coverage and rising escapes is the tell: new tests are not killing new mutants."
-    explanation: "This is exactly the failure mode coverage-as-grade produces. Tying performance metrics or release gates to coverage creates pressure for execution without verification. The remedy is to weight mutation/seeded-fault scores or to peer-review oracle strength explicitly on each new test. The goal is to keep asking whether the suite would fail if the system broke in a way users care about."
+    explanation: "Tying release gates or performance metrics to coverage creates pressure for execution without verification — exactly the failure mode here. The remedy is to weight mutation/seeded-fault scores or to peer-review oracle strength on each new test, and to keep asking whether the suite would fail if the system broke in a way users care about."
 
   - id: 11
     difficulty: expert
