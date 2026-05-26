@@ -22,7 +22,7 @@ questions:
         The final state uses the bullseye symbol: a filled circle inside a hollow circle. The solid black circle marks entry, not termination.
       3: |
         A choice point is a branching pseudostate, usually shown as a diamond. The solid black circle has one initial transition into the first real state.
-    explanation: "**The solid black circle is the initial pseudostate marking the entry point — the final state uses a different bullseye symbol (◎).** A **solid black circle** (<span class=\"uml-sym\" data-diagram=\"state\" data-sym=\"[*]\"></span>) is the **initial pseudostate**. It marks where the state machine or region begins. There is normally one initial pseudostate per region, and it has one outgoing transition with no trigger. The **final state** is a different symbol: a solid circle inside a hollow circle (◎)."
+    explanation: "**The solid black circle (<span class=\"uml-sym\" data-diagram=\"state\" data-sym=\"[*]\"></span>) is the initial pseudostate marking where the machine begins.** It has one outgoing, trigger-free transition. The final state is a different symbol — a bullseye (◎), a solid circle inside a hollow one."
 
   - id: 2
     difficulty: basic

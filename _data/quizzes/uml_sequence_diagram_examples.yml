@@ -158,7 +158,7 @@ questions:
         Sequence diagrams are specifically for ordering interactions. The vertical placement of messages carries time order.
       3: |
         Right-to-left is not the time direction. Participants can be arranged left-to-right for readability, but later messages appear lower.
-    explanation: "**Time flows top-to-bottom along the vertical axis — messages higher in the diagram happen first.** In sequence diagrams, **time flows top-to-bottom** along the vertical axis. Messages higher in the diagram occur before messages lower in the diagram. The horizontal axis shows the different participants (lifelines)."
+    explanation: "**Time flows top-to-bottom along the vertical axis — messages higher in the diagram happen first.** The horizontal axis carries no time meaning; it just separates the participants (lifelines)."
 
   - id: 8
     difficulty: basic
@@ -180,7 +180,7 @@ questions:
       3: |
         This combines the return-message line style with the synchronous arrowhead style. It is not the standard asynchronous message notation taught here.
     explanation: >
-      **An asynchronous message uses a solid line with an open (stick) arrowhead — the sender fires and continues without waiting.** An **asynchronous message** is drawn as a solid line with an **open (stick) arrowhead**. The sender fires off the message and continues immediately without waiting. This contrasts with synchronous messages (filled arrowhead) where the sender blocks.
+      **An asynchronous message uses a solid line with an open (stick) arrowhead — the sender fires and continues without waiting.** This contrasts with a synchronous message (filled arrowhead), where the sender blocks until the receiver finishes.
 
       <div data-uml-type='sequence' data-uml-spec='participant a: Sender&#10;participant b: Receiver&#10;a ->> b: notify()&#10;activate b&#10;deactivate b'></div>
 
@@ -204,7 +204,7 @@ questions:
         Destruction is shown with a destruction occurrence, often an X at the end of a lifeline. An activation bar is about execution.
       3: |
         UML activation bars do not mean a suspended state. They show an execution specification on that lifeline.
-    explanation: "**An activation bar shows the period during which an object is actively executing — it can nest when one method call triggers another.** An **activation bar** (execution specification) shows the period during which an object is **actively processing** — executing a method, performing computation, or waiting for a sub-call to return. Activation bars can nest when one method calls another."
+    explanation: "**An activation bar (execution specification) shows the period during which an object is actively processing — executing a method or waiting on a sub-call.** The bars nest when one method call triggers another."
 
   - id: 10
     difficulty: advanced
@@ -226,7 +226,7 @@ questions:
         `cart: ShoppingCart` is a named instance. The question asks for an unnamed instance, so the object name before the colon is omitted.
       3: |
         `class ShoppingCart` is class-declaration style, not lifeline-label style. Sequence lifelines model participants in one interaction.
-    explanation: "**An unnamed instance is written `: ClassName` with the colon — sequence diagrams model specific instances, not classes.** The standard UML format is `objectName : ClassName`. When the specific object name is irrelevant, you omit the name and write `: ShoppingCart` (with the colon). Sequence diagrams model interactions between **specific object instances**, not classes in general."
+    explanation: "**An unnamed instance is written `: ClassName` — the leading colon is what marks it as an instance.** The full form is `objectName : ClassName`; dropping the name still requires the colon, because lifelines model specific object instances, not classes in general."
 
   - id: 11
     difficulty: intermediate
@@ -255,7 +255,7 @@ questions:
         A return message would show a response after a call. The constructor call is the creation event itself.
       3: |
         A loop fragment is for repeated interaction. Creating one object once is modeled with a create message, not repetition.
-    explanation: "**`new Payment(amount)` becomes a create message — the Payment lifeline starts at the point of creation, not at the top of the diagram.** Constructor calls (`new`) in code become **create messages** in sequence diagrams. The new object's lifeline starts at the point in time when it is created (placed at that vertical position), rather than appearing at the top of the diagram like pre-existing objects."
+    explanation: "**A constructor call (`new`) becomes a create message — the new object's lifeline begins at the point of creation, not at the top.** Pre-existing objects appear at the top of the diagram; a created object's box drops in at the vertical position where it is instantiated."
 
   - id: 12
     difficulty: advanced
@@ -275,4 +275,4 @@ questions:
         `Inventory` could be a class or interface, but `Order` realizing `Inventory` would mean Order implements Inventory's contract. That is not implied by sending a message to inventory.
       3: |
         An attribute is one possible design if `Order` stores a reference, but the sequence message alone does not force that. The receiver still needs the operation being called.
-    explanation: "**The sequence diagram message requires a corresponding `checkStock(itemId)` method on the `Inventory` class because both diagrams must be consistent.** Sequence diagrams and class diagrams must be **consistent**. Every message in a sequence diagram must correspond to a method defined in the receiving object's class (or a superclass). The `Inventory` class must have a `checkStock` method that accepts the appropriate parameter type."
+    explanation: "**Every message arrow must correspond to a method on the receiving object's class (or a superclass), so `Inventory` needs a `checkStock(itemId)` method.** Sequence and class diagrams of the same system must stay consistent in method names, parameters, and return types."

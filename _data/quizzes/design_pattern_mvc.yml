@@ -126,7 +126,7 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      A team builds a server-side web app in Ruby on Rails. The Controller receives an HTTP request, updates the Model, then selects a template and renders HTML. The View never subscribes to model change events. Which statement best characterizes this architecture relative to Reenskaug's classic Smalltalk MVC?
+      A team builds a server-side web app in Ruby on Rails. The Controller receives an HTTP request, updates the Model, then selects a template and renders HTML. The View never subscribes to model change events. Which statement best characterizes this architecture relative to classic Smalltalk MVC?
     options:
       - "It is identical to classic MVC — the request-response cycle is just an implementation detail"
       - "It is a server-side adaptation sometimes called 'Model 2'; the View does not observe the Model, which is closer to Model-View-Adapter than to classic MVC"

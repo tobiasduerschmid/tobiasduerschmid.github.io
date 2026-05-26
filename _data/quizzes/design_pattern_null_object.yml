@@ -15,7 +15,7 @@ questions:
     correct_index: 0
     option_feedback:
       1: |
-        That's the [Proxy](https://en.wikipedia.org/wiki/Proxy_pattern) pattern. Woolf calls out the confusion explicitly — a Proxy controls access to a real subject, possibly forwarding calls; a Null Object replaces the real subject and never forwards anywhere.
+        That's the [Proxy](https://en.wikipedia.org/wiki/Proxy_pattern) pattern, and the two are easy to confuse — a Proxy controls access to a real subject, possibly forwarding calls; a Null Object replaces the real subject and never forwards anywhere.
       2: |
         Throwing on `null` access (e.g., `Objects.requireNonNull`) defends *against* missing collaborators — it does not give clients a do-nothing collaborator they can call uniformly. The Null Object's whole point is to avoid the conditional or exception-handling burden at the call site.
       3: |
@@ -121,7 +121,7 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      The State and Strategy patterns each have a "null variant" (Null State, Null Strategy). Why does Woolf's catalog say there is **no** Null Decorator?
+      The State and Strategy patterns each have a "null variant" (Null State, Null Strategy). Why is there **no** Null Decorator?
     options:
       - "Decorators were not part of the original GoF catalog."
       - "A Decorator must wrap a real object to forward calls to; an empty Decorator wrapping nothing has nothing to decorate."
