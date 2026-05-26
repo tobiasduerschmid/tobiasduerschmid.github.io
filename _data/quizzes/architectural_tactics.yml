@@ -23,7 +23,7 @@ questions:
     explanation: "**Styles are structural constraints at architectural scale; tactics are reusable quality-attribute moves.** A publish-subscribe system can still use heartbeat, redundancy, and caching."
 
   - id: 2
-    difficulty: expert
+    difficulty: basic
     type: single
     question: |
       A watchdog sends a request every 2 seconds to each worker. Each healthy worker replies immediately. If no reply arrives before timeout, the watchdog restarts the worker. Which tactic is this?
@@ -43,7 +43,7 @@ questions:
     explanation: "**Ping-echo has the watchdog initiate the check.** The monitored component only needs to answer the ping; missing echoes trigger recovery."
 
   - id: 3
-    difficulty: expert
+    difficulty: basic
     type: single
     question: |
       Each worker sends an "alive" message to a monitor every 5 seconds. If the monitor stops receiving messages from one worker, it replaces that worker. Which tactic is this, and what is one cost?
@@ -63,7 +63,7 @@ questions:
     explanation: "**Heartbeat shifts the periodic message to the monitored component.** It can use fewer messages than ping-echo, but it complicates each monitored component and still consumes network and processing resources."
 
   - id: 4
-    difficulty: expert
+    difficulty: intermediate
     type: multiple
     question: |
       A team is choosing between ping-echo and heartbeat for 10,000 IoT devices on a low-bandwidth network. Which trade-offs should they consider? Select all that apply.
@@ -88,7 +88,7 @@ questions:
     explanation: "**The useful comparison is who sends messages, how many messages exist, and where complexity lives.** Both tactics improve availability by detecting faults, and both charge a performance cost for monitoring."
 
   - id: 5
-    difficulty: expert
+    difficulty: basic
     type: single
     question: |
       A checkout service keeps a standby payment worker stopped until the active worker fails. On failure, the standby is started and warmed up. Which redundancy tactic is this?
@@ -108,7 +108,7 @@ questions:
     explanation: "**Cold spare saves steady-state resources but increases recovery time.** The system must start, warm, and synchronize the spare after detecting failure."
 
   - id: 6
-    difficulty: expert
+    difficulty: intermediate
     type: single
     question: |
       A product catalog receives repeated requests for the same item. A cache serves 92% of repeat requests and keeps p95 latency below 100 ms. Which quality attribute does the tactic primarily improve, and what risk did it introduce?
@@ -128,7 +128,7 @@ questions:
     explanation: "**Caching primarily improves performance by avoiding expensive reacquisition.** The architectural cost is deciding when cached data is fresh enough and how invalidation works."
 
   - id: 7
-    difficulty: expert
+    difficulty: intermediate
     type: single
     question: |
       A team says, "We should add caching." What is the best architectural response?
@@ -148,7 +148,7 @@ questions:
     explanation: "**Tactics should be tied to scenarios.** A cache is justified when the measured performance gain is worth the memory, invalidation, and stale-data costs."
 
   - id: 8
-    difficulty: basic
+    difficulty: advanced
     type: multiple
     question: |
       A quality scenario says: "If one perception worker crashes while the robot is operating, the system detects the crash within 2 seconds and starts a replacement worker within 5 seconds." Which architectural elements or tactics are likely relevant? Select all that apply.

@@ -15,7 +15,7 @@ cards:
     explanation: "The three objectives shape every XP practice: small releases for fast value, TDD for fast feedback, pair programming for risk reduction. Practices that don't serve these objectives are not part of XP."
 
   - id: 3
-    difficulty: basic
+    difficulty: intermediate
     question: "What are XP's **applicability boundaries**?"
     answer: "XP is designed for **small (4–10 people), co-located teams** in domains where **working software is continuously deployable** and **requirements evolve from user feedback**. It struggles to scale to thousands of people, is poorly suited to safety-critical domains (e.g., spacecraft) where failure cost is absolute, and breaks down without physical or close-virtual co-location."
     explanation: "These aren't moral limits — they reflect how the practices were engineered. Pair programming presumes proximity. Collective ownership presumes everyone fits in one team. Small releases presume the domain allows it. Different contexts (regulated, safety-critical, very large) need different frameworks."
@@ -39,49 +39,49 @@ cards:
     explanation: "CI is XP's mechanism for keeping the codebase always-near-shippable. The cultural shift it requires is harder than the tooling: developers commit small, integrated changes rather than working in isolation on long-lived branches."
 
   - id: 6b
-    difficulty: basic
+    difficulty: advanced
     question: "What is XP's **10-minute build** benchmark, and why does it matter?"
     answer: "XP's operational rule: if the full build + test process takes longer than 10 minutes, the feedback loop is too slow. Past that threshold, developers stop running it locally, batch up changes, and CI loses its function as an early warning system."
     explanation: "Mitigations when the build slows past 10 minutes: parallelize tests, split into fast smoke tests + slower extended suites, invest in test selection (only run tests affected by a change), or remove redundant/slow tests. The benchmark itself is what forces the team to have the conversation."
 
   - id: 7
-    difficulty: basic
+    difficulty: intermediate
     question: "What is **collective code ownership**, and what does it **require** to work?"
     answer: "**Collective code ownership:** no individual owners of modules; the entire team owns all the code. Any team member can fix a bug or improve any module. **Requires:** strict **coding standards** so the code looks unified regardless of who wrote it — otherwise every file becomes alien to non-original-author readers and the practice collapses."
     explanation: "The pair-program → collective-ownership → coding-standards triangle reinforces itself. Pair programming spreads knowledge across the team; collective ownership lets any pair fix any module; coding standards make any module readable to any pair. Drop one and the others lose their force."
 
   - id: 8
-    difficulty: basic
+    difficulty: intermediate
     question: "What is the **bus factor**, and how does collective code ownership improve it?"
     answer: "The **bus factor** is the number of people who can disappear (e.g., be hit by a bus, get sick, take a new job) before the project stalls because critical knowledge is lost. **Collective code ownership** distributes knowledge across the team so the bus factor approaches the team size — no single departure cripples the project."
     explanation: "Silos and individual code ownership produce bus factors of 1: lose one person, lose a critical capability. This is a serious operational risk that pair programming + collective ownership + coding standards together address. Knowledge sharing isn't a soft benefit — it's risk mitigation."
 
   - id: 9
-    difficulty: basic
+    difficulty: intermediate
     question: "What are **Release Planning** and **Iteration Planning**, and why are they separate?"
     answer: "**Release planning:** customer presents user stories, developers estimate effort, customer prioritizes by balancing business value and technical cost — sets the longer-horizon road map. **Iteration planning:** chosen stories are broken down into technical tasks for a 1–4-week cycle. Separating them keeps each conversation at its right altitude — business priorities vs technical execution."
     explanation: "If combined, the customer rabbit-holes into implementation details and developers rabbit-hole into priorities. Splitting the conversation lets each level focus on its right decisions, with the customer in the lead at release planning and the team in the lead at iteration planning."
 
   - id: 10
-    difficulty: basic
+    difficulty: intermediate
     question: "What is **Planning Poker**, and what makes it valuable beyond producing estimates?"
     answer: "Each team member secretly chooses a Fibonacci-number card representing 'story points' (imaginary effort units). When estimates diverge, the team discusses the reasoning until reaching consensus. The *discussion* is the actual value: divergent estimates reveal that members hold different mental models of the work — hidden complexity, helpful libraries, missing context — and resolving that gap is what produces realistic plans."
     explanation: "Teams that resolve divergence by averaging or majority vote throw away the most valuable information Planning Poker produces. The number you write down at the end matters less than the conversation that produced it."
 
   - id: 11
-    difficulty: basic
+    difficulty: intermediate
     question: "Why are **small releases** a core XP practice?"
     answer: "They maximize customer value by getting working software in front of users early and often, providing **rapid feedback** that validates assumptions in short cycles rather than after months or years. They reduce risk by surfacing problems while they're still cheap to fix, and they let priorities re-shape based on real-world response."
     explanation: "Small releases are XP's mechanism for honoring 'responding to change over following a plan.' A wrong assumption discovered after one iteration costs one iteration to fix; a wrong assumption discovered after a year costs a year."
 
   - id: 12
-    difficulty: basic
+    difficulty: advanced
     question: "What is the **common critique of XP** regarding design, and how does XP answer it?"
     answer: "**Critique:** TDD focuses on the immediate requirements of a single feature, so developers may fail to step back and structure modules around design decisions likely to change — leading to violations of **Information Hiding** and accumulating technical debt. **XP's answer:** 'continuous attention to technical excellence' — deliberate architectural refactoring that complements feature-by-feature TDD."
     explanation: "TDD alone is a local optimizer; it doesn't see structural debt accumulating. The 12th XP principle ('continuous attention to technical excellence and good design enhances agility') is the explicit acknowledgment that REFACTOR cycles must also climb to architecture level periodically, not just stay at the function level."
 
   - id: 13
-    difficulty: basic
+    difficulty: expert
     question: "Why are XP practices described as **loosely coupled but synergistic**?"
     answer: "Each practice has independent value, but they reinforce each other: pair programming spreads knowledge that collective ownership relies on; coding standards make collective ownership feasible; small releases provide feedback TDD targets; the planning game gives TDD specific stories to test. A team can drop any one practice, but doing so loses the synergies the kept practices were counting on."
     explanation: "This is why partial-XP adoption often disappoints. Teams that take TDD without pair programming lose the design feedback the Navigator provides. Teams that take pair programming without coding standards waste pair-time on style debates. The practices were engineered to compose; cherry-picking weakens the rest."
@@ -93,7 +93,7 @@ cards:
     explanation: "The 'over' wording matters: it doesn't say 'instead of' — it says 'more critical than.' Documentation, processes, contracts, and plans all have value; XP just refuses to let them dominate decisions when the left-hand-side values are at stake."
 
   - id: 15
-    difficulty: basic
+    difficulty: advanced
     question: "When is XP the **wrong** process to choose?"
     answer: "When (a) the team is very large (XP doesn't scale past ~10 people in one team), (b) the domain is safety-critical and working software cannot be continuously deployed (e.g., spacecraft, certified medical devices), (c) requirements are genuinely stable and won't evolve, or (d) the team is not co-located (physical or close-virtual proximity is needed for pair programming and verbal coordination)."
     explanation: "XP's practices were engineered for a specific context — small co-located teams in evolving-requirements environments with continuous-deployment domains. In other contexts, frameworks like SAFe (large enterprise Agile), V-model (safety-critical), or even Waterfall (genuinely stable requirements) can be better fits. Picking XP for the wrong context is using the right hammer on the wrong nail."

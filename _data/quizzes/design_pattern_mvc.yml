@@ -3,7 +3,7 @@ description: "Test your understanding of the MVC architectural pattern, its comp
 active: true
 questions:
   - id: 1
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       MVC is called a "compound pattern." Which three design patterns does it combine, and what role does each play?
@@ -23,7 +23,7 @@ questions:
     explanation: "**MVC combines Observer (model→view sync), Strategy (swappable controller), and Composite (view as a component tree) to achieve clean three-way separation.** MVC combines: **Observer** — the model acts as Subject and views register as Observers, enabling automatic synchronization. **Strategy** — the view delegates input handling to a controller, which can be swapped for different behaviors. **Composite** — the view is often a tree of nested UI components (windows > panels > buttons). The **emergent property** is clean three-way separation that no individual pattern achieves alone."
 
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       In MVC, the Model is completely independent of the View and Controller. Why is this considered the most important architectural property of MVC?
@@ -83,7 +83,7 @@ questions:
     explanation: "**MVC inherits the notification storm from Observer — every model change broadcasts to all 50 views even if most don't need to update.** When the Model changes, it blindly broadcasts to ALL 50 views, even if most don't need to update for a given change. For example, a view with an iconized window may not need an update until the window is restored. Solutions include batched/deferred notifications, granular event types, and smart change detection."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: advanced
     type: single
     question: |
       Modern frameworks like React effectively replace MVC's Observer mechanism with reactive state management (hooks, signals). Which core MVC principle do these frameworks still preserve?

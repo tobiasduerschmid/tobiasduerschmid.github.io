@@ -38,23 +38,22 @@ cards:
     explanation: "The assertion is both a runtime check and a comprehension cue."
 
   - id: 6
-    difficulty: basic
+    difficulty: advanced
     bloom: evaluate
     question: "What is the Singleton naming paradox for beacons?"
     answer: "Including `Singleton` in a class name can help readers recognize the design, but it may also leak an implementation decision clients should not depend on."
     explanation: "The trade-off is beacon visibility versus information hiding. Not every helpful cue belongs in a public name."
 
   - id: 7
-    difficulty: basic
+    difficulty: intermediate
     bloom: analyze
     question: "How do contextual beacons extend beyond source code during review?"
     answer: "PR titles, descriptions, issue links, commit messages, file names, tests, and ownership boundaries all help reviewers build the specification layer before reading the diff."
     explanation: "Modern code review is not just source reading. It is hypothesis formation across the whole change artifact."
 
   - id: 8
-    difficulty: basic
+    difficulty: intermediate
     bloom: evaluate
     question: "Why do experts avoid exhaustive tracing when beacons are reliable?"
     answer: "Exhaustive tracing spends scarce working memory on details that a reliable beacon already compresses. Experts trace line-by-line only when a hypothesis fails or behavior is risky."
     explanation: "Expertise includes knowing when not to trace. Strategic avoidance of unnecessary detail is a strength, not laziness."
-

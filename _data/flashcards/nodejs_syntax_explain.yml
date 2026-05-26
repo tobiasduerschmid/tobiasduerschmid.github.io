@@ -52,7 +52,7 @@ cards:
       ```
     answer: "Produces `[2, 4]` — `.filter()` creates a new array containing only elements where the callback returns `true`. The arrow function is a **callback** passed as an argument."
   - id: 6
-    difficulty: basic
+    difficulty: intermediate
     question: |
       You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
 
@@ -79,7 +79,7 @@ cards:
       ```
     answer: "**Array destructuring** — assigns items by position: `lat = 40.7`, `lng = -74.0`. This is the JavaScript equivalent of Python's tuple unpacking `lat, lng = (40.7, -74.0)`."
   - id: 9
-    difficulty: basic
+    difficulty: intermediate
     question: |
       You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
 
@@ -90,7 +90,7 @@ cards:
       ```
     answer: "Output: `A`, `C`, `B` — NOT `A`, `B`, `C`. The `setTimeout` callback goes to the **Task Queue** and only runs when the **Call Stack is empty**. Synchronous code always completes first, even with a 0ms delay."
   - id: 10
-    difficulty: basic
+    difficulty: intermediate
     question: |
       You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
 
@@ -102,7 +102,7 @@ cards:
       ```
     answer: "An **async function** that fetches data from an API. `await` suspends this function (non-blocking — the Event Loop can do other work) until the Promise from `fetch()` resolves. `result.json()` also returns a Promise."
   - id: 11
-    difficulty: basic
+    difficulty: intermediate
     question: |
       You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
 
@@ -131,7 +131,7 @@ cards:
     answer: "`console.log()` is JavaScript's equivalent of Python's `print()` and C++'s `printf()`. It writes to stdout with a trailing newline. It can print any value — strings, numbers, objects, arrays."
 
   - id: 14
-    difficulty: basic
+    difficulty: intermediate
     question: |
       You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
 
@@ -143,7 +143,7 @@ cards:
     answer: "Creates a Promise manually. The constructor takes a function with two callbacks: `resolve(value)` — call when work succeeds, `reject(error)` — call when it fails. In practice you rarely create Promises from scratch; you mostly consume them with `await` or `.then()`."
 
   - id: 15
-    difficulty: basic
+    difficulty: intermediate
     question: |
       You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
 
@@ -156,7 +156,7 @@ cards:
     answer: "`result` is a **Promise**, not `42`. Every `async` function always returns a Promise, even when the body just returns a plain value. To get `42`, you need `await getCount()` or `getCount().then(n => ...)`."
 
   - id: 16
-    difficulty: basic
+    difficulty: intermediate
     question: |
       You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
 
@@ -167,7 +167,7 @@ cards:
     answer: "**Optional chaining** `?.` safely accesses nested properties — returns `undefined` instead of throwing if any link is `null`/`undefined`. **Nullish coalescing** `??` provides a default only for `null`/`undefined` (unlike `||`, which also replaces `0`, `''`, and `false`)."
 
   - id: 17
-    difficulty: basic
+    difficulty: intermediate
     question: |
       You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
 
@@ -204,7 +204,7 @@ cards:
     answer: "`JSON.stringify(obj)` converts the object to the string `'{\"name\":\"Bob\",\"grade\":42}'`. `JSON.parse(json)` converts that string back to an object. JSON is the standard format for sending data over HTTP — `res.json()` in Express calls `JSON.stringify` for you."
 
   - id: 20
-    difficulty: basic
+    difficulty: intermediate
     question: |
       You are shown JavaScript/Node.js code. Explain what it does and what it outputs.
 

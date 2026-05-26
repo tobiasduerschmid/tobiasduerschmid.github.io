@@ -24,7 +24,7 @@ questions:
     explanation: "MCR arose because formal inspections were too slow for Agile, CI, and distributed teams. It keeps peer review but changes the workflow."
 
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     bloom: analyze
     type: single
     question: |
@@ -45,7 +45,7 @@ questions:
     explanation: "The defect-finding fallacy is assuming review is valuable only when it catches bugs. MCR also teaches teams, enforces norms, spreads context, and improves future modifiability."
 
   - id: 3
-    difficulty: basic
+    difficulty: intermediate
     bloom: apply
     type: single
     question: |
@@ -66,7 +66,7 @@ questions:
     explanation: "Stacking is a workflow answer to cognitive limits. It preserves reviewability by keeping each change small enough to understand."
 
   - id: 4
-    difficulty: basic
+    difficulty: advanced
     bloom: analyze
     type: multiple
     question: |
@@ -92,7 +92,7 @@ questions:
     explanation: "CRCM treats review as comparative comprehension: existing system, proposed change, and ideal solution. Good strategies manage that working-memory load explicitly."
 
   - id: 5
-    difficulty: basic
+    difficulty: intermediate
     bloom: apply
     type: multiple
     question: |
@@ -118,7 +118,7 @@ questions:
     explanation: "Reviewable code is designed around the reader's cognitive limits. Contracts, assertions, guard clauses, and chunks each make the reviewer's job more precise."
 
   - id: 6
-    difficulty: basic
+    difficulty: advanced
     bloom: analyze
     type: single
     question: |
@@ -139,7 +139,7 @@ questions:
     explanation: "Assertions and guard clauses both aid review, but they serve different contracts: impossible programmer-error invariants versus expected invalid inputs or edge cases."
 
   - id: 7
-    difficulty: basic
+    difficulty: intermediate
     bloom: understand
     type: single
     question: |
@@ -160,7 +160,7 @@ questions:
     explanation: "Google separates who knows the directory from who can certify language readability. The two gates protect different aspects of quality at scale."
 
   - id: 8
-    difficulty: basic
+    difficulty: advanced
     bloom: evaluate
     type: single
     question: |
@@ -179,4 +179,3 @@ questions:
       3: |
         More comments can help explain intent, but they do not prove behavior or security. Outcome evidence is needed.
     explanation: "AI-generated code raises the risk of plausible-but-wrong diffs overwhelming human attention. The review artifact must shift toward smaller slices and observable behavior."
-

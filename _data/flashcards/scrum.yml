@@ -31,14 +31,14 @@ cards:
     explanation: "Each artifact has a corresponding commitment that makes it transparent: the Product Backlog → the Product Goal; the Sprint Backlog → the Sprint Goal; the Increment → the Definition of Done. Without the commitment, the artifact is just a list."
 
   - id: 5
-    difficulty: basic
+    difficulty: advanced
     bloom: remember
     question: "Name the **five Scrum values** (separate from the three pillars)."
     answer: "**Commitment, Focus, Openness, Respect, and Courage.**"
     explanation: "Values and pillars are deliberately separated. The three pillars (Transparency, Inspection, Adaptation) structure the empirical *process*. The five values guide *team behavior* — how members commit to the goal, focus on the work, stay open with each other, treat each other with respect, and find the courage to surface hard truths."
 
   - id: 6
-    difficulty: basic
+    difficulty: intermediate
     bloom: understand
     question: "What is each Scrum accountability — Product Owner, Developers, Scrum Master — responsible for, in one phrase each?"
     answer: "**Product Owner** — maximize the value of the product (own the *what*). **Developers** — build the Increment to the Definition of Done (own the *how*). **Scrum Master** — establish Scrum and remove impediments to the team (own the *process*)."
@@ -52,18 +52,18 @@ cards:
     explanation: "If a Scrum Master starts assigning work or running status reports for upper management, they have collapsed the team's self-management. The team — not the Scrum Master — owns *how* the Sprint Goal is delivered. The Scrum Master's job is to protect the conditions that make that ownership possible."
 
   - id: 8
-    difficulty: basic
+    difficulty: intermediate
     bloom: understand
     question: "What two characteristics most distinguish a Scrum Team from a traditional team, and what does each protect against?"
     answer: "**Cross-functional** — the team collectively holds *all* the skills needed (UI, backend, testing, ops) to deliver a usable Increment without depending on an outside group. **Self-managing** — the team itself decides who does what, when, and how."
     explanation: "Cross-functionality fights *handoff delay* (waiting on another team to finish their part). Self-management fights *direction delay* (waiting on a manager to assign work). Together they shorten the feedback loop empiricism depends on. A team that needs an external 'DB team' to ship a feature, or an external manager to schedule the work, is not yet a Scrum Team."
 
   - id: 9
-    difficulty: basic
+    difficulty: intermediate
     bloom: understand
-    question: "What is the **Definition of Done**, and who authors it?"
-    answer: "A shared checklist of quality measures (e.g., tests pass, docs updated, performance benchmarks met) that a Product Backlog item must satisfy before it counts as part of the Increment. **The Scrum Team authors its own DoD** when no organization-wide standard exists; **if the organization has set a DoD as a standard**, the team must meet it as a minimum and may add to it — but never relax it."
-    explanation: "Without a Definition of Done, *'done'* becomes negotiable and Increments quietly accumulate hidden work. Organization-wide DoDs (common in regulated industries) exist to prevent the inverse problem — different teams shipping at incompatible quality bars. The team's DoD always sits on top of any organizational baseline, never below it."
+    question: "What is the **Definition of Done**, and why does it matter for the Increment?"
+    answer: "A shared checklist of quality measures (e.g., tests pass, docs updated, performance benchmarks met) that a Product Backlog item must satisfy before it counts as part of the Increment."
+    explanation: "Without a Definition of Done, *'done'* becomes negotiable and Increments quietly accumulate hidden work. The Definition of Done protects the Sprint Review by ensuring the team is showing work that has actually met its agreed quality bar."
 
   - id: 10
     difficulty: basic
@@ -73,70 +73,70 @@ cards:
     explanation: "Calling the Sprint an *event* (not a phase or stage) is deliberate: it has a fixed duration, a defined start and end, and contains the other four events (Sprint Planning, Daily Scrum, Sprint Review, Sprint Retrospective). Stretching a Sprint to fit unfinished work breaks the empirical cadence and removes the team's incentive to honestly inspect what went wrong."
 
   - id: 11
-    difficulty: basic
+    difficulty: intermediate
     bloom: apply
     question: "A feature has been coded and code-reviewed, but the team's Definition of Done also requires a load test that has not been run. Can the work be counted toward the Sprint's Increment?"
     answer: "**No.** Work that fails to meet *every* item in the Definition of Done is not part of the Increment, regardless of how much progress has been made."
     explanation: "*'Mostly done'* is not done in Scrum. Counting partial work as Increment hides risk and destroys the Sprint Review's ability to give honest feedback on a working product. The correct response is either to finish the load test inside the Sprint or to surface the gap at the Review and roll the item back into the Product Backlog."
 
   - id: 12
-    difficulty: basic
+    difficulty: intermediate
     bloom: apply
     question: "A team makes every Product Backlog item, every Sprint Backlog task, and the current Increment visible on a shared board that developers, the Product Owner, and stakeholders can see at any time. Which Scrum pillar does this most directly enact?"
     answer: "**Transparency.**"
     explanation: "Transparency is the precondition for the other two pillars — you cannot meaningfully *inspect* what you cannot see, and you cannot *adapt* to what you do not know about. The shared board is the most common physical embodiment of transparency, but transparency is the principle; the board is one possible artifact."
 
   - id: 13
-    difficulty: basic
+    difficulty: intermediate
     bloom: apply
     question: "Every morning, the Developers gather for 15 minutes to examine how yesterday's work moved them toward the Sprint Goal. They look at progress against the goal but have not yet decided what to change. Which Scrum pillar does this scenario most directly enact?"
     answer: "**Inspection.**"
     explanation: "Inspection is the act of *examining* progress against the Sprint Goal. The Daily Scrum is one ritualized form of inspection (and also includes the adaptation step that immediately follows), but inspection itself is the underlying principle. Inspection without adaptation is theater; adaptation without inspection is thrashing."
 
   - id: 14
-    difficulty: basic
+    difficulty: intermediate
     bloom: apply
     question: "Two days into a Sprint, behavioral data from a beta cohort shows users are confused by the new UI the team is building. The team halts and redesigns. Which Scrum pillar is the team enacting?"
     answer: "**Adaptation** — adjusting the product as soon as evidence reveals the current direction is unacceptable."
     explanation: "Adaptation is *not* scope creep. It is a deliberate course correction driven by evidence. Inspection (the team examined the data) and Transparency (the data was visible) were preconditions; adaptation is the pillar that turns the visibility and observation into actual change."
 
   - id: 15
-    difficulty: basic
+    difficulty: intermediate
     bloom: apply
     question: "A new team lead wants to use the Daily Scrum as a status meeting where each Developer briefs them on what they did yesterday. What is wrong with this framing, and what is the Daily Scrum actually for?"
     answer: "The Daily Scrum is for the **Developers** to inspect progress toward the Sprint Goal and adapt the next day's plan — it serves the team, not an outside reporter. Redirecting it into upward status reporting strips it of its purpose and quietly erodes self-management."
     explanation: "Status reporting *can* happen as a side effect of transparency (a visible board, a shared Sprint Backlog) but it is not the event's purpose. The Daily Scrum is a 15-minute *planning event* for the people doing the work, not a ceremony for managers."
 
   - id: 16
-    difficulty: basic
+    difficulty: advanced
     bloom: analyze
     question: "How does the **Sprint Review** differ from the **Sprint Retrospective** in audience, subject of inspection, and outcome?"
     answer: "**Sprint Review** — audience includes stakeholders; subject is the *product Increment*; outcome is an updated Product Backlog. **Sprint Retrospective** — audience is the Scrum Team only; subject is the *team's process and collaboration*; outcome is at least one concrete process improvement for the next Sprint."
     explanation: "The two events answer different questions. Review asks *'are we building the right thing?'* (a product question, with stakeholders in the room). Retrospective asks *'are we building it the right way?'* (a process question, behind closed doors). Conflating them tends to crowd out the harder process conversation, because product feedback is more concrete and easier to discuss."
 
   - id: 17
-    difficulty: basic
+    difficulty: advanced
     bloom: analyze
     question: "Why is it widely considered bad practice for one person to be **both** the Product Owner *and* the Scrum Master, even though the 2020 Scrum Guide does not formally prohibit it?"
     answer: "The roles enforce opposing pressures: the **Product Owner** pushes for *value* (more, sooner, ordered by priority) while the **Scrum Master** protects *process and team sustainability* (Definition of Done, removal of impediments, healthy retrospectives). When one person holds both, value pressure typically wins — the Definition of Done quietly slips, impediments get reframed as the team's fault, and retrospectives stop producing change."
     explanation: "The 2020 Scrum Guide defines the accountabilities as distinct but does not formally ban one person from holding both. The argument against doing so is practitioner consensus, not Guide canon — but it has been consistent for two decades because the two accountabilities encode the real tension between *what to build* and *how to build it sustainably*. Merging removes the friction that protects long-term capacity."
 
   - id: 18
-    difficulty: basic
+    difficulty: advanced
     bloom: evaluate
-    question: "**True or false:** In the official Scrum Guide vocabulary, a Sprint that ends without an Increment meeting the Definition of Done is a *'failed Sprint.'*"
-    answer: "**False.** The 2020 Scrum Guide has no concept of a *'failed Sprint.'* A Sprint without an Increment is simply a Sprint where the Sprint Goal was missed or no item reached the Definition of Done — a signal for the Retrospective to examine, not a verdict the Guide assigns."
+    question: "How should Scrum treat a Sprint that ends without an Increment meeting the Definition of Done?"
+    answer: "As empirical evidence to inspect and adapt from — not as a special Scrum Guide category called a *'failed Sprint.'* The team should examine why the Sprint Goal was missed or why no item reached the Definition of Done, then adapt in the Retrospective."
     explanation: "The *'failed Sprint'* label is common informal usage but it is not Scrum vocabulary. Scrum's response to missing the Sprint Goal is empirical: inspect what happened, adapt the process, and protect the cadence by starting the next Sprint on schedule. Naming Sprints *'successful'* or *'failed'* tends to push teams toward gaming the Definition of Done."
 
   - id: 19
-    difficulty: basic
+    difficulty: advanced
     bloom: evaluate
     question: "In one phrase, what is the central trade-off SAFe makes that draws the *'Scrum-but-for-managers'* critique?"
     answer: "**SAFe trades team autonomy for cross-team predictability.**"
     explanation: "SAFe's Program Increment planning, fixed cadences, and Agile Release Train ceremonies do produce alignment across many teams, but they compress local decision-making in ways Scrum's self-management principle protects. Whether the trade is worth it depends on how tightly coupled the teams actually are — for a small number of loosely coupled teams, the autonomy cost has no offsetting benefit."
 
   - id: 20
-    difficulty: basic
+    difficulty: expert
     bloom: analyze
     question: "Name three **categories** of items that almost any team's Definition of Done should cover, and the type of risk each addresses."
     answer: "**(1) Verification** (automated tests, code review) — guards against shipping regressions and against single-author blind spots. **(2) Documentation** (API contract, runbook, user-facing docs) — guards against the next on-caller losing tribal knowledge. **(3) Operability** (deploy + smoke test, observability) — guards against integration failures that unit tests miss and against being blind to production behavior."

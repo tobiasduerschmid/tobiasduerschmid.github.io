@@ -3,7 +3,7 @@ description: "Test your understanding of the Mediator pattern, its trade-offs, a
 active: true
 questions:
   - id: 1
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       In a smart home, the AlarmClock, CoffeeMaker, Calendar, and Sprinkler coordinate via a SmartHomeHub (Mediator). The rule is: "When the alarm rings on a weekday, brew coffee and skip watering." If the team used Observer instead (CoffeeMaker observes AlarmClock directly), where would the "only on weekdays" rule live?
@@ -23,7 +23,7 @@ questions:
     explanation: "**With Observer, the CoffeeMaker would have to check the Calendar itself, creating the tight coupling that Mediator was designed to prevent.** With Observer, each observer **independently decides** how to react. The CoffeeMaker would need to check the Calendar itself to know if it's a weekday — meaning the CoffeeMaker now **depends on** the Calendar, creating exactly the tight coupling that the Mediator was meant to prevent. The Mediator **centralizes** this rule: the Hub checks the calendar and commands the coffee maker, keeping each device independent."
 
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       What is the **core difference** between Observer and Mediator?
@@ -63,7 +63,7 @@ questions:
     explanation: "**A 2,000-line Mediator has become a god class — split it into multiple focused mediators for different subsystem concerns.** The Mediator does not **remove** complexity — it **displaces** it into a central location. If the coordination logic is genuinely complex, the Mediator becomes a genuinely complex **god class**. The remedy is to split it into multiple focused mediators, each handling a different aspect of coordination (e.g., a `MorningRoutineMediator` and a `SecurityMediator`). Simply replacing with Observer would scatter the logic without reducing complexity."
 
   - id: 4
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       A "Managed Observer" is a pattern compound that combines Observer and Mediator. What emergent property does this combination provide?
@@ -83,7 +83,7 @@ questions:
     explanation: "**The Managed Observer compound provides both loose coupling (Observer-style notifications) and centralized coordination (Mediator-style rules) — neither pattern alone offers both.** In a Managed Observer, colleagues use **Observer-style notifications** to inform the mediator ('I changed'), and the mediator uses **direct method calls** to coordinate the response ('You should update'). This gives you the **loose coupling** of Observer (colleagues don't know about each other) combined with the **centralized intelligence** of Mediator (complex rules live in one place). Neither pattern alone provides both properties."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: advanced
     type: single
     question: |
       A subsystem has five internal classes that need to coordinate with each other based on each other's state changes. The team also wants outside callers to have one simple entry point into the subsystem. Which pattern fits which need?
@@ -103,7 +103,7 @@ questions:
     explanation: "**Façade and Mediator solve different problems: Façade hides a subsystem from outside clients (one-way, subsystem unaware), Mediator coordinates peers that know they collaborate through it (multi-way, both sides aware).** A Façade is a one-way external entry point — outside clients call in, the subsystem objects do not know it exists. A Mediator is a multi-way internal coordinator — colleague classes are explicitly designed to talk through it, and it calls back into them. If the need is *internal peers reacting to each other*, that is Mediator; if the need is *outside callers wanting one simple way in*, that is Façade."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: advanced
     type: single
     question: |
       The Mediator pattern converts N-to-N dependencies into N-to-1 dependencies. Why doesn't this always reduce overall system complexity?

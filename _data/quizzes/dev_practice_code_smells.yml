@@ -24,7 +24,7 @@ questions:
     explanation: "A code smell is a warning sign. The code may run correctly today while still being expensive and risky to change tomorrow."
 
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     bloom: analyze
     type: single
     question: |
@@ -45,7 +45,7 @@ questions:
     explanation: "Divergent Change means one module changes in different ways for different reasons. The usual response is to split responsibilities along real change axes."
 
   - id: 3
-    difficulty: basic
+    difficulty: intermediate
     bloom: analyze
     type: single
     question: |
@@ -66,7 +66,7 @@ questions:
     explanation: "Shotgun Surgery makes a single conceptual change behave like a hunt across the codebase. The design should consolidate the tax-rule responsibility."
 
   - id: 4
-    difficulty: basic
+    difficulty: intermediate
     bloom: apply
     type: single
     question: |
@@ -87,7 +87,7 @@ questions:
     explanation: "A repeated group of related primitives is a Data Clump. A named object reduces call-site mistakes and gives the concept a stable home."
 
   - id: 5
-    difficulty: basic
+    difficulty: advanced
     bloom: analyze
     type: multiple
     question: |
@@ -110,7 +110,7 @@ questions:
     explanation: "The code may be asking the wrong object to make a billing decision. Smell diagnosis looks at where behavior and data naturally belong."
 
   - id: 6
-    difficulty: basic
+    difficulty: advanced
     bloom: evaluate
     type: single
     question: |
@@ -129,4 +129,3 @@ questions:
       3: |
         Shorter names are not automatically clearer. Domain-rich names are often the beacon that justifies the abstraction.
     explanation: "Smells require judgment. The question is whether the abstraction lowers future change cost and improves comprehension, not whether it satisfies a size heuristic."
-

@@ -3,7 +3,7 @@ description: "Apply refactoring concepts to behavior-preservation, smell diagnos
 active: true
 questions:
   - id: 1
-    difficulty: basic
+    difficulty: intermediate
     bloom: understand
     type: single
     question: |
@@ -24,7 +24,7 @@ questions:
     explanation: "Refactoring preserves observable behavior while improving internal structure. The behavior-preserving boundary is the key test."
 
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     bloom: apply
     type: multiple
     question: |
@@ -50,7 +50,7 @@ questions:
     explanation: "Refactoring is strongest when the chosen transformation matches the design force behind the smell."
 
   - id: 3
-    difficulty: basic
+    difficulty: intermediate
     bloom: apply
     type: single
     question: |
@@ -71,11 +71,11 @@ questions:
     explanation: "Safe refactoring is a tight feedback loop: green baseline, one behavior-preserving transformation, green verification, checkpoint."
 
   - id: 4
-    difficulty: basic
+    difficulty: advanced
     bloom: evaluate
     type: single
     question: |
-      During a feature crunch, a developer notices a misleading local variable name in the function they are already editing. They also wants to reorganize the whole package. What is the best refactoring judgment?
+      During a feature crunch, a developer notices a misleading local variable name in the function they are already editing. They also want to reorganize the whole package. What is the best refactoring judgment?
     options:
       - "Do both immediately; any cleanup is always worth bundling into the feature."
       - "Make the tiny local rename if it clarifies the current change and is covered by tests, but split the package reorganization into a separate refactoring task or stacked PR."
@@ -92,7 +92,7 @@ questions:
     explanation: "Refactoring judgment weighs payoff, scope, and reviewability. Small local improvements often belong with the change; large structural work usually deserves its own focused review."
 
   - id: 5
-    difficulty: basic
+    difficulty: advanced
     bloom: evaluate
     type: single
     question: |
@@ -113,7 +113,7 @@ questions:
     explanation: "AI-assisted refactoring still needs human scope control. Behavior changes and refactorings should be separated so reviewers know what contract they are checking."
 
   - id: 6
-    difficulty: basic
+    difficulty: intermediate
     bloom: analyze
     type: single
     question: |
@@ -132,4 +132,3 @@ questions:
       3: |
         Inlining worsens working-memory load and makes future payment-type changes harder.
     explanation: "Repeated conditionals over the same type code are a classic sign that behavior wants to move behind polymorphism or a strategy boundary."
-

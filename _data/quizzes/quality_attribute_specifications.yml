@@ -57,7 +57,7 @@ questions:
       This is an implementation-first smell. A better requirement would describe the traffic increase, acceptable downtime or latency, and any other success criteria before choosing a messaging system.
 
   - id: 4
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A team writes: "Adding a new depth sensor requires implementing one sensor adapter and must not require changes to components that process depth images." Is this a good quality-attribute requirement?
@@ -75,7 +75,7 @@ questions:
       This is a good extensibility requirement because it defines what change is expected and what ripple effect is unacceptable. Structural boundaries can be valid measures for design-time qualities.
 
   - id: 5
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A team writes: "During a payment-provider outage, checkout should keep working gracefully." Is this a good quality-attribute requirement?
@@ -93,7 +93,7 @@ questions:
       This is a scenario-without-success-criteria smell. A stronger version would state what checkout does during the outage, for how long, and what information is logged or shown to users.
 
   - id: 6
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A team writes: "Every request in the whole system must complete within 1 second." Is this a good quality-attribute requirement?
@@ -129,7 +129,7 @@ questions:
       This is a good modifiability requirement. It describes a likely future change, a development-time threshold, and the parts of the system that should remain unaffected.
 
   - id: 8
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A team writes: "The system should be secure, scalable, robust, and user-friendly." Is this a good quality-attribute requirement?
@@ -147,7 +147,7 @@ questions:
       This is the adjective-only smell. The words name desirable qualities, but they do not yet define requirements that can drive architecture or testing.
 
   - id: 9
-    difficulty: intermediate
+    difficulty: advanced
     type: single
     question: |
       A team writes: "When adding support for a new image format, minimize changes to existing preprocessing components." Is this a good quality-attribute requirement?

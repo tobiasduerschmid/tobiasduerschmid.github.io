@@ -147,7 +147,7 @@ questions:
     explanation: "**HTTP is stateless because the server retains no memory of previous requests — each request is treated as completely independent, which is why cookies and session tokens are needed.** Stateless means every HTTP request is treated as completely independent. The server does not automatically track which requests came from the same user or session. This is why web applications use mechanisms like cookies and session tokens to maintain state across multiple requests."
 
   - id: 8
-    difficulty: basic
+    difficulty: intermediate
     question: "Your Express route handler queries the database for a course by ID, but no matching course exists. Which HTTP status code should the handler return?"
     options:
       - "200 OK — the server processed the request without crashing."
@@ -205,7 +205,7 @@ questions:
     explanation: "**The correct bottom-to-top order is Link → Internet → Transport → Application, with each layer using only the layer immediately below it.** Bottom to top: **Link** (physical hardware — Ethernet, Wi-Fi), **Internet** (IP addressing and routing between networks), **Transport** (TCP/UDP end-to-end communication between applications), **Application** (HTTP, HTTPS, DNS, SSH — the protocols your code uses directly). Each layer uses only the layer immediately below it, enabling clean separation of concerns."
 
   - id: 11
-    difficulty: basic
+    difficulty: intermediate
     type: multiple
     question: "Which of the following are guarantees provided by **TCP** but **NOT** by UDP by itself? (Select all that apply)"
     options:

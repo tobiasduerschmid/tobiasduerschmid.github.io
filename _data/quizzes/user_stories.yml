@@ -3,17 +3,18 @@ description: "Test your ability to identify which of the INVEST principles are b
 active: true
 questions:
   - id: 1
-    difficulty: basic
+    difficulty: intermediate
     type: multiple
     question: |
       Read the following user story and its acceptance criteria: 
-      "As a customer, I want to pay for my items using a credit card, so that I can complete my purchase"
+      "As a customer, I want to pay for the items in my cart using a credit card, so that I can complete my purchase."
       
       Acceptance Criteria:
       - Given a user has items in their cart, when they enter valid credit card details and submit, then the payment is processed and an order confirmation is shown.
       - Given a user enters an expired credit card, when they submit, then the system displays an 'invalid card' error message.
 
-       (Note: The user stories on User Registration and Cart Management are still not implemented and still in the backlog)  
+      Assume this product requires a registered account and an existing shopping cart before payment can run. The registration and cart-management stories are separate backlog items, and neither has been implemented yet.
+
       Which INVEST criteria are violated? (Select all that apply)
     options:
       - "Independent"
@@ -44,15 +45,15 @@ questions:
         testable.
     explanation: "**This violates Independent because the payment story cannot be completed without the unimplemented user registration and cart management stories.** This user story violates the **Independent** criterion because it depends on the user registration and cart management stories. All other INVEST criteria are met."
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     type: multiple
     question: |
       Read the following user story and its acceptance criteria: 
-      "As a user, I want the application to be built using a React.js frontend, a Node.js backend, and a PostgreSQL database, so that I can view my profile."
+      "As a developer, I want the profile page implemented with a React.js frontend, a Node.js backend, and a PostgreSQL database, so that our engineering stack is standardized."
       
       Acceptance Criteria:
-      - Given a user is logged in, when they navigate to the profile route, then the React.js components mount and display their data.
-      - Given a profile update occurs, when the form is submitted, then a REST API call is made to the Node.js server to update the PostgreSQL database.
+      - Given the profile page route is opened, when the page loads, then the React.js components mount successfully.
+      - Given profile data is requested, when the request is handled, then the Node.js REST API reads the data from PostgreSQL.
           
       Which INVEST criteria are violated? (Select all that apply)
     options:
@@ -71,8 +72,8 @@ questions:
         Naming React, Node, PostgreSQL, REST, and component mounting turns the story into an
         implementation prescription. A negotiable story should leave room to choose the design.
       2: |
-        The user wants to view a profile, not to experience a particular stack. The stack may matter to
-        engineers, but it is not the user-visible value.
+        Standardizing a stack may matter to engineers, but the story does not describe an external effect
+        that a customer, purchaser, or end user would value.
       3: |
         The work may still be estimable because the requested implementation is overly specific.
         Specificity can make estimating possible while still making the story poor.
@@ -80,11 +81,11 @@ questions:
         The story is not necessarily too large; a profile page could be small. The violations come from
         implementation detail and weak user value.
       5: |
-        The stated route and update behavior can be tested. The issue is not absence of pass/fail
+        The stated route and data-access behavior can be tested. The issue is not absence of pass/fail
         checks.
-    explanation: "**This violates Negotiable (by dictating a specific tech stack) and Valuable (because the tech stack choice provides no direct business value to the user).** This violates **Negotiable** because it rigidly dictates the exact technical implementation rather than stating a problem for the developers to solve. It also violates **Valuable**, because the end-user generally derives no direct business value from the specific tech stack being used; their value comes solely from being able to view their profile."
+    explanation: "**This violates Negotiable (by dictating a specific tech stack) and Valuable (because stack standardization is an internal engineering goal, not a user-facing benefit).** This violates **Negotiable** because it rigidly dictates the exact technical implementation rather than stating a problem for the developers to solve. It also violates **Valuable** because the story is framed around internal implementation standardization rather than an external benefit a customer, purchaser, or end user can prioritize."
   - id: 3
-    difficulty: basic
+    difficulty: intermediate
     type: multiple
     question: |
       Read the following user story and its acceptance criteria: 
@@ -124,7 +125,7 @@ questions:
         no value.
     explanation: "**This violates Valuable (work with no utility produces no return on investment) and Negotiable (it prescribes a specific database change rather than expressing a user need).** This heavily violates **Valuable** because doing work that has no impact, utility, or visible outcome provides no return on investment. It also violates **Negotiable** by prescribing a hyper-specific database tweak rather than a flexible user need, completely missing the spirit of a user story."
   - id: 4
-    difficulty: basic
+    difficulty: intermediate
     type: multiple
     question: |
       Read the following user story and its acceptance criteria: 
@@ -166,7 +167,7 @@ questions:
         absence of tests.
     explanation: "**This violates Small and Estimable because it is a massive Epic combining patient records, payroll, inventory, and scheduling into one backlog item.** Those are separate product areas with different users, risks, and acceptance paths, so the team cannot reasonably size or deliver the story as one slice. The listed acceptance criteria are individually checkable, so Testable is not the central failure; the central problem is that too much work has been bundled together to estimate and complete as a single story."
   - id: 5
-    difficulty: basic
+    difficulty: advanced
     type: multiple
     question: |
       Read the following user story and its acceptance criteria: 
@@ -175,6 +176,8 @@ questions:
       Acceptance Criteria:
       - Given a user enters the website URL, when they press enter, then the page loads blazing fast.
       - Given the homepage renders, when the user looks at the UI, then the design feels extremely modern and pleasant.
+
+      Assume the team has no shared performance budget, design system, or user-testing target that defines those terms.
        
       Which INVEST criteria are violated? (Select all that apply)
     options:
@@ -202,4 +205,4 @@ questions:
       5: |
         A test needs an observable expected result. "Blazing fast" and "pleasant" need measurable
         targets, such as load time and design acceptance criteria, before they can be verified.
-    explanation: "**This violates Testable (subjective terms like 'blazing fast' and 'extremely modern' cannot be verified) and consequently Estimable (you cannot estimate effort for undefined standards).** This mainly violates **Testable** because 'blazing fast', 'extremely modern', and 'pleasant' are highly subjective; without objective metrics (like 'loads in < 2 seconds'), you can't test if it's done. Consequently, this ambiguity causes it to violate **Estimable**, because developers cannot estimate the effort required to satisfy a vaguely defined standard of 'modern' or 'fast'. Whether we consider it 'small' or not is subjective and either answer would be considered correct."
+    explanation: "**This violates Testable (subjective terms like 'blazing fast' and 'extremely modern' cannot be verified) and, in this scenario, Estimable (the team has no shared target for the undefined standards).** The central violation is **Testable** because 'blazing fast', 'extremely modern', and 'pleasant' are subjective without objective metrics or acceptance examples. Here that also violates **Estimable** because the team has no performance budget, design reference, or user-testing target to size against. Whether we consider it 'small' is context-dependent, so selecting Small is also acceptable."

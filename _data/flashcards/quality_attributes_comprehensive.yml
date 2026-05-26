@@ -66,7 +66,7 @@ cards:
       Availability requirements often use uptime, successful-response rate, mean time to repair, mean time between failures, or failover time.
 
   - id: 8
-    difficulty: intermediate
+    difficulty: advanced
     bloom: analyze
     question: "Why can a structural boundary be a valid measure for a design-time quality?"
     answer: |
@@ -147,7 +147,7 @@ cards:
       The useful question is not which tactic is best in general, but which tactic improves the target quality scenario and what it costs.
 
   - id: 17
-    difficulty: advanced
+    difficulty: expert
     bloom: create
     question: "Use this checklist to draft a quality requirement."
     answer: |

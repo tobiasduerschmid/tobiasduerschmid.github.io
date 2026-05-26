@@ -3,7 +3,7 @@ description: "Apply testability thinking to real code and architecture — diagn
 active: true
 questions:
   - id: 1
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       Your team is testing a `BookingService` that calls a real Global Distribution System (GDS) for flight availability. Running the full test suite costs $50/run in GDS API fees and occasionally books actual flights when tests crash. What testability properties are you struggling with, and what is the right tool?
@@ -23,7 +23,7 @@ questions:
     explanation: "**Testability is the combination of *controllability* (can you put the system into the desired state?) and *observability* (can you see its behavior?). External dependencies like GDS frustrate both, so test doubles substitute a controllable, observable stand-in for the real dependency.** Stubs provide pre-coded responses (controllability); spies/mocks record the calls your code made (observability of indirect outputs). Both let you verify behavior without the real, expensive, non-deterministic dependency in the loop."
 
   - id: 2
-    difficulty: basic
+    difficulty: advanced
     type: multiple
     question: |
       Which of these architectural decisions **improve testability**? Select all that apply.
@@ -48,7 +48,7 @@ questions:
     explanation: "**SOLID principles and minimizing cyclic dependencies all synergize with testability — they were derived in part from observing what makes code easy to test.** This is one of the strongest synergies in software engineering: the same patterns that make code maintainable also make it testable, and the same patterns that resist testing also resist evolution."
 
   - id: 3
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A team needs to test that their `OrderProcessor` correctly notifies the warehouse system when an order is placed, *without* actually contacting the warehouse. Which test double type is the right fit?
@@ -68,7 +68,7 @@ questions:
     explanation: "**Verifying that your code correctly sent a message to a collaborator (the indirect output) is the canonical use of spies and mocks.** The distinction: a *spy* records calls so you can assert on them after the fact; a *mock* is set up with expectations and verifies them automatically. Both observe indirect outputs that ordinary assertions cannot reach."
 
   - id: 4
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       Netflix famously runs **Chaos Monkey**, which randomly terminates production services to test resilience. Map this to the testability framework: what challenge does it create, and what challenge does it solve?
@@ -88,7 +88,7 @@ questions:
     explanation: "**Chaos Monkey is a fault-injection tool — it solves the controllability problem of reliably triggering rare failure conditions by causing them on purpose. Observability is the separate challenge: extensive metrics, traces, and dashboards are required to see how the rest of the system reacts.** This is the canonical pattern for testing reliability quality attributes: inject the rare condition, then observe the system's response under controlled chaos."
 
   - id: 5
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       Your team wants to verify that the search engine returns identical results for the same query made twice in a row — even though they don't know which results are 'correct' (the *oracle problem*). Which testing technique fits?
@@ -108,7 +108,7 @@ questions:
     explanation: "**Metamorphic testing solves the oracle problem by testing *invariants* rather than specific input-output pairs.** Classic examples: 'the same query twice yields the same results,' 'sorting a list and then sorting it again is idempotent,' 'translating English → French → English approximately recovers the original.' These properties hold regardless of the specific output, so the test passes without needing to know the 'right' answer for each input."
 
   - id: 6
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       The team adopts TDD: write a failing test, write the minimum code to pass, refactor, repeat. A junior developer says: "TDD guarantees 100% coverage." Why is this overstated?
@@ -128,7 +128,7 @@ questions:
     explanation: "**TDD gives coverage for the cases the developer actually drove with failing tests — not coverage of all reachable behavior.** Untested branches, edge cases, and emergent system behaviors still slip through unless the test list itself is strong. Practiced well, TDD pushes code toward testable design because the developer has to use the code before implementing it, but it does not magically generate missing test cases or guarantee that every production line was test-first."
 
   - id: 7
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       NASA's spacecraft software bans recursion as a language construct. How does this design constraint connect to testability?
@@ -148,7 +148,7 @@ questions:
     explanation: "**In safety-critical domains, testability extends beyond functional correctness to bounding worst-case resource usage. Recursion makes maximum stack depth dependent on input, which is hard to verify statically and impossible to retest after launch. Banning it makes stack bounds checkable.** This is a domain-specific testability decision: in a web app, the cost of unbounded recursion is a 500 error; in a Mars rover, it's mission loss. Different domains, different constraints."
 
   - id: 8
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       A team has 30 tests pass and 1 test fail. The failing test is for a function that depends on a shared module-level cache that other tests warm up first. The failure only happens when this test runs alone. What testability principle was violated?
@@ -168,7 +168,7 @@ questions:
     explanation: "**Global mutable state shared across tests destroys controllability — a test cannot reliably put the system into its required initial state if previous tests already mutated the shared cache.** Fix: inject the cache as a dependency, reset it between tests with a fixture, or make the function pure. Test isolation is what lets the test suite run in any order, in parallel, in any subset — properties that mature CI systems depend on."
 
   - id: 9
-    difficulty: basic
+    difficulty: expert
     type: single
     question: |
       An e-commerce monolith has hit 200K LOC with no tests. A consultant suggests "let's just write tests now." Why is this typically the wrong response, and what's the right approach?
@@ -188,7 +188,7 @@ questions:
     explanation: "**Untested legacy code is usually structurally testable-hostile (tight coupling, global state, hidden dependencies). Writing tests against it produces high-effort, brittle, low-value tests.** The Feathers approach is incremental: introduce seams (interfaces at boundaries) carefully, retrofit dependency injection at each touch site, write tests for the seam before changing the code behind it. Over time the testable surface grows; trying to do it in one sprint typically fails."
 
   - id: 10
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       A startup uses 'Wizard of Oz' testing — a human secretly fulfills the operation a real system would eventually automate, while users interact with what appears to be a working product. What testability concept does this illustrate?

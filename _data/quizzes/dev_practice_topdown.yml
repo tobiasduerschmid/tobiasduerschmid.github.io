@@ -3,7 +3,7 @@ description: "Practice hypothesis-driven code reading, beacon recognition, layou
 active: true
 questions:
   - id: 1
-    difficulty: basic
+    difficulty: intermediate
     bloom: apply
     type: single
     question: |
@@ -24,7 +24,7 @@ questions:
     explanation: "Top-down review starts by building the 'why' and 'what' of the change. The implementation becomes easier to inspect once the reader has a hypothesis to test."
 
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     bloom: analyze
     type: single
     question: |
@@ -45,7 +45,7 @@ questions:
     explanation: "Top-down layout lets a reader skim the main concept first, then descend into lower-level details only when needed."
 
   - id: 3
-    difficulty: basic
+    difficulty: intermediate
     bloom: analyze
     type: multiple
     question: |
@@ -71,7 +71,7 @@ questions:
     explanation: "Beacons are any reliable cues that help a reader connect low-level code to high-level purpose. They can live in source, tests, architecture, or review metadata."
 
   - id: 4
-    difficulty: basic
+    difficulty: advanced
     bloom: evaluate
     type: single
     question: |
@@ -92,7 +92,7 @@ questions:
     explanation: "Top-down comprehension is opportunistic. Experts switch strategies when evidence does not support the current model."
 
   - id: 5
-    difficulty: basic
+    difficulty: advanced
     bloom: analyze
     type: single
     question: |
@@ -113,7 +113,7 @@ questions:
     explanation: "A beacon is valuable only when it is reliable. Misleading beacons force readers to abandon top-down understanding and re-trace behavior from scratch."
 
   - id: 6
-    difficulty: basic
+    difficulty: advanced
     bloom: create
     type: single
     question: |
@@ -132,4 +132,3 @@ questions:
       3: |
         Pattern definitions without code recognition do not build the transfer skill students need.
     explanation: "Students need a bridge from accurate tracing to purposeful abstraction. Predict-then-verify teaches them when a beacon is strong enough to replace exhaustive line reading."
-

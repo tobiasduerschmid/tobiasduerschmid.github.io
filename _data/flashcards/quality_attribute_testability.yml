@@ -15,79 +15,79 @@ cards:
     explanation: "Both are necessary. A test needs to put the system into a known state (controllability) and then see what it does (observability). Either property absent and the test cannot be written or cannot be verified."
 
   - id: 3
-    difficulty: basic
+    difficulty: intermediate
     question: "Distinguish **indirect inputs** and **indirect outputs**, and how each is tested."
     answer: "**Indirect inputs:** responses from external components your code depends on (e.g., a database query result). Controlled via **stubs** that return pre-coded responses. **Indirect outputs:** messages your code sends to external components (e.g., an email, a payment API call). Observed via **spies** (record the calls) or **mocks** (set expectations and verify)."
     explanation: "Direct inputs (function arguments) and direct outputs (return values) are easy — the test just passes and inspects. Indirect inputs and outputs are the testability hard problem; they're why test doubles exist."
 
   - id: 4
-    difficulty: basic
+    difficulty: advanced
     question: "How do the **SOLID principles** synergize with testability?"
     answer: "**Single Responsibility** → small, focused units are easy to test in isolation. **Interface Segregation** → small interfaces are easy to mock or stub. **Dependency Inversion** → depending on abstractions lets you inject test doubles. **Open/Closed** → extending behavior without modifying existing code preserves existing test coverage. **Liskov Substitution** → subtypes are interchangeable in tests."
     explanation: "This is one of the strongest synergies in software design: the same patterns that make code maintainable also make it testable. Both result from low coupling and clear boundaries. Untestable code is usually unmaintainable code with the same root cause."
 
   - id: 5
-    difficulty: basic
+    difficulty: intermediate
     question: "What does it mean to **minimize cyclic dependencies** for testability, and why?"
     answer: "A cyclic dependency between modules A and B means you cannot instantiate one without the other — so isolated unit testing becomes impossible. Test setup balloons, every change in either component breaks tests in both, and you cannot meaningfully verify either in isolation."
     explanation: "Cycles are detectable with static-analysis tooling (madge, ArchUnit, depcruise). Most build systems can be configured to fail the build on cycle introduction, preventing the problem at the gate rather than chasing it after the fact."
 
   - id: 6
-    difficulty: basic
+    difficulty: advanced
     question: "How is **Chaos Monkey** an instance of testability for the *reliability* quality attribute?"
     answer: "It solves the **controllability** problem of reliably triggering rare component failures by causing them deliberately (fault injection). The remaining challenge is **observability** — extensive metrics, traces, and dashboards are needed to see how the rest of the system reacts to the injected failure."
     explanation: "Chaos engineering generalizes this pattern: latency injection (test performance under network slowdowns), resource exhaustion (test behavior under memory pressure), region failover (test multi-region resilience). The technique is fault-injection + observable response measurement."
 
   - id: 7
-    difficulty: basic
+    difficulty: advanced
     question: "Compare **stress testing**, **latency injection**, and **fault injection** as testability techniques for run-time quality attributes."
     answer: "**Stress testing:** push the system past nominal limits to test performance / availability. **Latency injection:** add artificial delays to connectors to test performance under network or service slowdowns. **Fault injection:** force components to fail to test reliability and recovery. All three solve controllability of rare conditions; observability is achieved through instrumentation."
     explanation: "All three are forms of *controllability-by-perturbation*. The system would not naturally enter these states often enough for the team to observe behavior in production, so the test deliberately creates the condition under controlled circumstances."
 
   - id: 8
-    difficulty: basic
+    difficulty: advanced
     question: "What is **metamorphic testing**, and which problem does it solve?"
     answer: "Testing **invariants** that must hold between related inputs and outputs (e.g., 'sorting twice = sorting once', 'searching the same query twice returns the same results', 'translating English → French → English approximately recovers the input'). It solves the **oracle problem** — testing systems where you cannot easily specify the correct output for a given input."
     explanation: "Classic applications: search engines, machine-learning models, compilers, simulations. You may not know the 'correct' search result for query X, but you know two identical searches must return the same list. The invariant becomes the oracle."
 
   - id: 9
-    difficulty: basic
+    difficulty: intermediate
     question: "What is **monkey testing**, and what does it find vs miss?"
     answer: "A 'monkey' (random testing tool) triggers random system events — UI clicks, random inputs, random sequences. **Finds:** crashes, hangs, security vulnerabilities, and resource leaks. **Misses:** logic errors. The monkey doesn't know what the correct output should be, so it cannot detect wrong-but-not-crashing behavior."
     explanation: "Monkey testing (Android's Monkey, fuzzers like AFL or libFuzzer) is excellent for finding robustness defects and crashes in input handling. It is the wrong tool for verifying business-rule correctness — for that, you need an oracle (or metamorphic invariants)."
 
   - id: 10
-    difficulty: basic
+    difficulty: advanced
     question: "What does **TDD** actually guarantee about testability, and what does it not?"
     answer: "TDD **strongly encourages** production code to be written in response to failing tests, which can push the design toward small, testable units. It **does not** guarantee 100% coverage, modularity, decoupling, or that every production line was actually test-first — incomplete test lists, skipped Refactor steps, and untested error paths can still slip through."
     explanation: "TDD is a *design technique* that happens to produce tests as a byproduct. Its biggest benefit is the design pressure (write the test → think about how the unit will be used → keep the unit small and isolated). That pressure is valuable, but it depends on disciplined practice and a strong test list; coverage gaps still need techniques like mutation testing, property-based testing, and code review."
 
   - id: 11
-    difficulty: basic
+    difficulty: advanced
     question: "Why is the *oracle problem* a fundamental testability challenge?"
     answer: "An *oracle* is a mechanism that decides whether a given output is correct. For many real systems — machine learning, search ranking, simulations, AI translation — you cannot easily specify the correct output for each input, so traditional input-output assertion testing breaks down. The oracle problem is the difficulty of writing tests when no such mechanism exists."
     explanation: "Solutions: metamorphic testing (test invariants instead of outputs), differential testing (compare against an existing implementation), human review (sample and inspect), property-based testing (assert general properties). The oracle problem is why pure-input/output unit testing is insufficient for many modern systems."
 
   - id: 12
-    difficulty: basic
+    difficulty: expert
     question: "How does **NASA spacecraft software** approach testability differently from a typical web app?"
     answer: "Failures in flight cannot be recovered, so testability must yield strong pre-launch guarantees: **rigorous formal design reviews** at every phase, **language-construct restrictions** (e.g., no recursion → bounded stack), and **trust earned by testing in space** — a piece of code only becomes trusted after it has run successfully in a real space mission. The domain's risk profile drives the testability strategy."
     explanation: "Compare to a typical web app where 'we'll catch it in staging' or 'we can roll back' is acceptable. For spacecraft, the domain forbids the rollback option, so the cost of preventing defects is paid up front. Same quality attribute (testability), radically different practical approach."
 
   - id: 13
-    difficulty: basic
+    difficulty: advanced
     question: "What is *Wizard of Oz* testing in startup contexts?"
     answer: "A research/validation technique where a human secretly performs the operation a system will eventually automate, while users interact with what appears to be a working product. It is used to evaluate the **value proposition** of a feature before paying the engineering cost to build it."
     explanation: "It is testability applied at the product level: the team creates a controllable + observable mock (the human) and measures user response under realistic conditions. This surfaces real usability issues and demand signals before architectural decisions are made around assumptions that may not hold."
 
   - id: 14
-    difficulty: basic
+    difficulty: advanced
     question: "Why is *test isolation* a controllability requirement?"
     answer: "If a test depends on state left behind by other tests (shared caches, modified global variables, database rows not rolled back), it cannot be reliably brought into its required initial state by itself. The test passes or fails based on run order, parallelism, or test selection — not on the code's correctness."
     explanation: "Mature CI pipelines run tests in arbitrary order, in parallel, in filtered subsets, and across many environments. Tests that depend on shared mutable state fail unpredictably. Fix: dependency injection of the state, test fixtures that reset between runs, or pure functions that have no shared state."
 
   - id: 15
-    difficulty: basic
+    difficulty: advanced
     question: "Why is the testing cost typically **30% to 50%** of a system's total cost, and what does that imply for design?"
     answer: "Tests must cover correctness across the input space, run reliably in CI, evolve alongside the code, and remain readable for future maintainers. That work is ongoing and proportional to the code's complexity. The implication: architectural decisions that improve testability (SOLID, dependency injection, minimal global state, small interfaces) have outsized return on investment because they reduce the largest line-item cost of building software."
     explanation: "This figure puts testability on equal footing with the implementation work itself. A 20% testability improvement is more impactful than a 50% improvement to a smaller cost line. Teams that treat testability as a first-class architectural concern routinely outperform teams that treat it as a downstream chore."

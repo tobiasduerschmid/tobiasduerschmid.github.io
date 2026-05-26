@@ -18,13 +18,13 @@ questions:
     explanation: "Information hiding limits the impact of changes. By defining a stable interface and concealing implementation details, a program ensures that modifying the internal logic of one module does not necessitate changes in other modules that depend on it."
 
   - id: 2
-    difficulty: basic
-    question: "Which software construction practice does NOT increase the bus factor?"
+    difficulty: intermediate
+    question: "Which software construction practice is least likely, by itself, to increase a team's bus factor?"
     options:
       - "Always conducting a code review before merging changes into main"
       - "Following all clean code guidelines taught in this course"
       - "Writing unit tests & integration tests with high coverage"
-      - "Generating code with genAI"
+      - "Generating code with GenAI without review or knowledge sharing"
     correct_index: 3
     option_feedback:
       0: "Code review spreads knowledge about a change before it reaches the main branch. That shared understanding usually raises the bus factor instead of lowering it."
@@ -33,7 +33,7 @@ questions:
     explanation: "The bus factor represents the number of team members who would need to suddenly leave the project before it stalls. Practices like code reviews and clean code distribute knowledge among the team. Generating code with AI does not inherently share project-specific architectural understanding among developers."
 
   - id: 3
-    difficulty: basic
+    difficulty: advanced
     question: "How does Test-Driven Development (TDD) relate to information hiding?"
     options:
       - "When precisely following all TDD steps, information hiding is always guaranteed"
@@ -48,8 +48,8 @@ questions:
     explanation: "Test-Driven Development naturally encourages creating small, decoupled interfaces to make testing easier. However, strictly writing tests and code incrementally without upfront planning can neglect the large-scale architecture. To achieve proper information hiding across complex systems, developers must engage in deliberate architectural design beyond localized refactoring."
 
   - id: 4
-    difficulty: basic
-    question: "The UNIX philosophy emphasizes writing programs to handle text streams (stdin, stdout, stderr) as a universal interface. This design choice primarily supports which concept of software construction? Check the one that is most appropriate."
+    difficulty: advanced
+    question: "The UNIX philosophy emphasizes writing programs to handle text streams (stdin, stdout, stderr) as a universal interface. Which software construction concept does this design choice most directly support?"
     options:
       - "Single Responsibility Principle, because each tool focuses on one task"
       - "Interface Segregation Principle, because they are three separate streams instead of one"
@@ -78,7 +78,7 @@ questions:
     explanation: "Prepared statements and parameterized queries separate the SQL code structure from the user-provided data. This ensures that the database engine treats all inputs strictly as literal values rather than executable commands, neutralizing attempts to inject malicious SQL logic."
 
   - id: 6
-    difficulty: basic
+    difficulty: intermediate
     question: "What does a test stub do?"
     options:
       - "Verifying indirect outputs by adding assertions"
@@ -108,7 +108,7 @@ questions:
     explanation: "Before attempting to find the root cause or implement a fix, a bug must be reliably reproduced. Consistent reproduction confirms the exact conditions under which the failure occurs and provides a definitive way to verify if the subsequent fix is actually successful."
 
   - id: 8
-    difficulty: basic
+    difficulty: advanced
     question: "The Single Choice Principle is a software modularity guideline proposed to handle systems that must support a set of alternatives (e.g., different DBMS, network protocols, or payment types). What does this principle mandate?"
     options:
       - "The system must delay the choice until runtime (e.g., using the Strategy design pattern)"
@@ -123,7 +123,7 @@ questions:
     explanation: "The Single Choice Principle dictates that whenever a software system must support a set of alternatives, one and only one module should know the exhaustive list of those alternatives. This isolates the knowledge so that adding a new alternative requires changes in only that single location."
 
   - id: 9
-    difficulty: basic
+    difficulty: intermediate
     question: "When integrating LLM-based generative AI into the development workflow for complex tasks, which approach is specifically recommended to improve the quality of the generated code?"
     options:
       - "Minimize the number of design decisions you share with the AI to keep the prompt concise"
@@ -138,7 +138,7 @@ questions:
     explanation: "Large Language Models perform best when complex problems are decomposed. Instead of relying on the AI to solve a massive design problem all at once, developers should break the task into small, bounded instructions and provide continuous, incremental guidance."
 
   - id: 10
-    difficulty: basic
+    difficulty: intermediate
     question: "For which use case is Python a better programming language choice than C?"
     options:
       - "Developing an operating system (like Linux or Windows)"
@@ -153,7 +153,7 @@ questions:
     explanation: "Python features an extensive ecosystem of libraries for data processing and scientific computing, making it highly effective for data analysis. Conversely, C and related systems languages provide fine-grained control over hardware and memory, which is why they are common choices for low-level firmware, operating systems, and performance-critical database engines."
 
   - id: 11
-    difficulty: basic
+    difficulty: advanced
     question: "In the TCP/IP model, which layer is responsible for breaking down Application Layer messages into smaller, reliable segments and ensuring they are delivered in the correct order?"
     options:
       - "The network layer"
@@ -183,7 +183,7 @@ questions:
     explanation: "The defining characteristic of a framework is the Inversion of Control. While a developer's code calls functions from a library, a framework dictates the overall application flow and architecture, making calls to the custom code plugged into it."
 
   - id: 13
-    difficulty: basic
+    difficulty: intermediate
     question: "What is a direct implication of the CAP theorem?"
     options:
       - "MySQL is more suitable for data-intense systems than MongoDB"
@@ -198,7 +198,7 @@ questions:
     explanation: "In distributed data stores, it is impossible to simultaneously guarantee Consistency, Availability, and Partition Tolerance. Systems must make architectural trade-offs, often sacrificing either consistency or availability during network partitions."
 
   - id: 14
-    difficulty: basic
+    difficulty: intermediate
     question: "Which of these systems is most prone to cross-site scripting attacks?"
     options:
       - "A web app that allows users to book flights"
@@ -213,7 +213,7 @@ questions:
     explanation: "Cross-Site Scripting (XSS) occurs when untrusted user input is rendered directly in a web application without proper sanitization. Applications that display user-generated text to other users are highly vulnerable, as malicious scripts can be injected and executed in victims' browsers."
 
   - id: 15
-    difficulty: basic
+    difficulty: intermediate
     question: "What is a primary benefit of employing rational decision making (as opposed to intuitive decision making) in software engineering?"
     options:
       - "It enables quicker decision-making when the problem is ill-defined or highly uncertain"
@@ -228,9 +228,9 @@ questions:
     explanation: "Rational decision making uses structured, logical processes rather than relying solely on intuition. This systematic approach documents the reasoning behind architectural choices, making the design process transparent and helping non-experts achieve robust design outcomes."
 
   - id: 16
-    difficulty: basic
+    difficulty: intermediate
     type: multiple
-    question: "Which of these git commands might create major challenges in team projects? Check all that apply!"
+    question: "Which of these git commands might create major challenges in team projects? Select all that apply."
     options:
       - "`git rebase -i`"
       - "`git cherry-pick`"
@@ -245,9 +245,9 @@ questions:
     explanation: "Commands that rewrite history, such as force pushing (`git push -f`) or interactive rebasing (`git rebase -i`), replace the branch's existing sequence of commits with a different sequence. If applied to shared branches, they can hide or orphan teammates' commits and cause serious repository coordination problems."
 
   - id: 17
-    difficulty: basic
+    difficulty: intermediate
     type: multiple
-    question: "In which situations would an agile software process be most appropriate (as compared to a plan-driven approach)? Check all that apply"
+    question: "In which situations would an agile software process be most appropriate, compared with a plan-driven approach? Select all that apply."
     options:
       - "Developing the software for a radiation therapy machine"
       - "Developing the software for the probe that should explore the moons of the planet Saturn"

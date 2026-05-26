@@ -1,7 +1,7 @@
 ---
 name: quiz-format
 description: >-
-  Authoring guide for the SEBook quiz YAML format — schema, pedagogy of misconception feedback, shuffle-safe authoring, and example questions. Use this skill EVERY TIME you're creating, editing, reviewing, or generating new content for any quiz file under `_data/quizzes/*.yml` (SEBook + SEGym standalone quizzes) or `_data/tutorials/*.yml` (in-tutorial step quizzes nested under `quiz:`). Also trigger on requests like "add a quiz on X", "improve this question", "draft a few quiz questions about Y", "what's the format for option_feedback", "review my quiz", "this quiz is missing wrong-answer feedback", "fix references to Option A/B in explanations", "audit quiz explanations for letter references", or any task that involves writing the `option_feedback`, `correct_indices`, `optional_indices`, `lines`, or `distractors` fields. The format has two non-obvious traps authors regularly hit without this guide: a sparse-hash field for per-option misconception feedback, and a shuffle mechanism that makes any "Option A/B" letter reference or "the third choice" position reference in an `explanation` unstable at render time.
+  Authoring guide for the SEBook quiz YAML format: schema, difficulty calibration, misconception feedback, shuffle-safe authoring, and examples. Use every time Codex creates, edits, reviews, or generates content for `_data/quizzes/*.yml` or tutorial-step quiz blocks under `_data/tutorials/*.yml`. Trigger on requests to add or improve quiz questions, draft questions, set `difficulty`, write or audit `option_feedback`, fix answer-choice explanations, or edit `correct_indices`, `optional_indices`, `lines`, or `distractors`. The key traps are that `option_feedback` is a sparse hash keyed by YAML option index, and quiz options shuffle at render time, so explanations must not refer to "Option A", "the third choice", or other display positions.
 ---
 
 # SEBook quiz authoring
@@ -54,6 +54,24 @@ questions:
 For tutorial quizzes the same block nests under each step's `quiz:` key inside `_data/tutorials/<name>.yml`, and may add `min_score: 0.8` (gating threshold), `shuffle: true` (default), `shuffle_questions: false` for deliberate difficulty ramps, and `shuffle_options: true` to keep answer choices randomized.
 
 Parsons (code-ordering) questions use `lines:` and `distractors:` instead of `options:`. They do **not** support `option_feedback`. See `references/schema.md`.
+
+## Difficulty calibration
+
+Use `difficulty` as a learner-facing estimate of the cognitive work the item asks for, not as a proxy for how long the text is or how obscure the author thinks the topic is. Calibrate with four lenses together:
+
+1. **Cognitive load.** Ask how many interacting ideas the learner must hold at once. A question is harder when it requires coordinating multiple concepts, reading code state across steps, comparing trade-offs, or resisting a plausible novice model. Do not count confusing wording, hidden assumptions, or excessive reading as legitimate difficulty; those are extraneous load and should be removed.
+2. **Bloom level.** Remember and straightforward Understand items tend toward `basic`. Apply and ordinary Analyze items usually land at `intermediate`. Subtle Analyze or Evaluate items tend toward `advanced`. Open transfer, design judgment, or Create-level work can be `expert`.
+3. **Expected retention after a week.** If a student who read the SEBook page carefully should still remember the answer as a central takeaway a week later, keep it lower. If the item asks for a small detail, an edge case, or a distinction that students often forget unless they practiced it, raise it one level. If the item requires connecting this page to earlier material, rate the connection work, not just the local fact.
+4. **Knowledge-pyramid position.** Ask whether the item sits low in the prerequisite pyramid (a foundational term or core idea that supports later questions) or higher up (a composite judgment that depends on several earlier answers). Foundational items can be `basic` even when important because they should become automatic. Items that require retrieving answers from other questions, coordinating prerequisite ideas, or applying a dependency chain should be rated higher than any single prerequisite item.
+
+Difficulty labels:
+
+- **`basic`** - Direct retrieval, recognition, or paraphrase of a central idea from the page or tutorial. The item has low element interactivity and should be answerable from the main thread of the lesson. Example: "What is the primary goal of information hiding?" or "Which shell operator pipes stdout from one command into the next?"
+- **`intermediate`** - Routine application, prediction, or discrimination using one taught concept in a familiar context. The learner must do a little reasoning, but the relevant schema is explicit in the lesson. Example: "Given this user story, which INVEST property is weakest?" or "What does this short Python loop print?"
+- **`advanced`** - Multi-step reasoning, subtle distinctions, edge cases, prerequisite chains, or details that are taught but not the headline takeaway. These items often require comparing two plausible options, applying a concept to a less familiar scenario, remembering a small but important constraint, or combining answers from earlier basic items. Example: "Why is `None` different from a Null Object in this design?" or "Which test double best fits this situation without over-specifying collaborator behavior?"
+- **`expert`** - High-transfer evaluation, design judgment, synthesis, or creation. The learner must choose among trade-offs, connect multiple topics, reason through a dependency chain, or reason beyond the local example while staying grounded in the lesson. Example: "Which architecture tactic best protects availability under this failure model, and what trade-off does it introduce?" or "How should this refactoring sequence change when the code smell, tests, and public API constraints pull in different directions?"
+
+When in doubt, choose the lower difficulty if the item is mainly about a central concept stated directly in the page. Choose the higher difficulty only when the learner's productive mental work is genuinely harder. A bad question can feel hard because it is ambiguous, verbose, or under-scaffolded; fix that question rather than labeling it `advanced` or `expert`.
 
 ## No inline Bloom-level markers in question text
 

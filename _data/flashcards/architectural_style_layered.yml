@@ -9,7 +9,7 @@ cards:
     explanation: "A layer is a cohesive grouping of modules; the allowed-to-use relation is what distinguishes layering from mere grouping. The unidirectional constraint is what buys modifiability, portability, and reusability."
 
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     question: "Distinguish **strict layering**, **relaxed layering**, and **layer bridging**."
     answer: "**Strict:** a layer may only use the layer *immediately* below it. **Relaxed:** a layer may use *any* layer below it. **Layer bridging:** a specific call that skips one or more layers downward. Occasional bridging in a strict system is tolerated; excessive bridging is an architectural smell."
     explanation: "Strict is the strongest portability guarantee at the highest indirection cost. Relaxed is a deliberate looser variant. Bridging in a strict architecture is an exception, not a style — every bridge is a coupling the strict topology was designed to prevent."
@@ -27,37 +27,37 @@ cards:
     explanation: "This is the single most common terminology error in software architecture. Calling deployment tiers 'layers' obscures whether you control dependency direction (layers) or where things run (tiers). A single physical web server frequently runs four or more layers in one tier."
 
   - id: 5
-    difficulty: basic
+    difficulty: intermediate
     question: "How do you implement upward notification (e.g., a sensor driver notifying the UI) without violating the golden rule?"
     answer: "**Callback / Observer / Publish-Subscribe.** The upper layer implements an abstract listener interface defined in or below the lower layer, and registers an instance with the lower layer at startup. The lower layer holds only an interface-typed callback reference, so control can flow upward without a compile-time dependency on the upper layer."
     explanation: "Control flows upward (the driver invokes the listener); dependency stays downward (the UI depends on the driver's listener interface, not vice versa). This pattern is everywhere in real layered systems: OS interrupts, GUI event loops, network protocol upcalls."
 
   - id: 6
-    difficulty: basic
+    difficulty: intermediate
     question: "Which quality attributes does layered architecture **promote**, and which does it **inhibit**?"
     answer: "**Promotes:** modifiability (changes inside a layer hide behind its interface), portability (platform-specific code isolated to the bottom), and reuse (a well-defined lower layer serves multiple applications). **Inhibits:** performance and efficiency (each layer adds indirection and often data is repeatedly transformed or buffered at each boundary). It also complicates Agile development by creating an upper-layer/lower-layer bottleneck."
     explanation: "Layering is a deliberate trade. The TCP/IP stack accepts the per-packet layer-traversal overhead because the modifiability and portability wins (any link layer, any application protocol) are decisive for an interoperable internet."
 
   - id: 7
-    difficulty: basic
+    difficulty: advanced
     question: "What is the dependency inversion in **Hexagonal**, **Onion**, and **Clean Architecture**?"
     answer: "Traditional layering places **Infrastructure** at the bottom, so business logic depends on it transitively. The inversion places the **Domain Model at the center** with no dependencies on infrastructure; UI, databases, and external services become outer-ring adapters that depend inward on domain-defined ports."
     explanation: "This buys testability (the domain runs without a database or HTTP stack) and infrastructure-swap freedom (PostgreSQL → DynamoDB requires zero domain changes). The cost is more interfaces, more indirection, and zero performance benefit — the payoff is long-term maintainability."
 
   - id: 8
-    difficulty: basic
+    difficulty: advanced
     question: "What is the difference between **technical layering** and **domain layering**?"
     answer: "**Technical layering** organizes code by horizontal function (UI / Service / Repository / Database). **Domain layering** organizes code by vertical business capability (Customer Management, Billing, Inventory). Modern systems combine both: domain slices on the outside, each internally technically layered."
     explanation: "Pure technical layering scales poorly because every business feature requires touching every horizontal layer — coordination across all teams. Domain layering reduces per-feature coordination by giving each team a vertical slice. The two styles compose rather than compete."
 
   - id: 9
-    difficulty: basic
+    difficulty: advanced
     question: "Where does layered architecture historically come from?"
     answer: "Edsger **Dijkstra's 1968 design of the T.H.E. operating system**, which structured an OS as a sequence of abstract virtual machines, each providing services to the layer above and depending only on the layer below."
     explanation: "This idea — that software can be organized as a hierarchy of abstractions, each acting as a virtual machine for the next — directly underlies TCP/IP, OSI, J2EE, MVC, and Clean Architecture. It is one of the most influential ideas in software engineering."
 
   - id: 10
-    difficulty: basic
+    difficulty: advanced
     question: "Why does the layered style often complicate Agile vertical-slice development?"
     answer: "Upper layers depend on lower layers, so upper-layer development is blocked until lower-layer interfaces stabilize. A feature that requires changes in every layer demands coordination across every team owning each layer. Teams mitigate this with up-front interface design and contract mocks so upper layers can develop against stubs."
     explanation: "This is not a fatal incompatibility — Agile teams ship layered architectures all the time — but it is a real planning cost. The mitigation discipline (stable interface contracts, mocks, and integration tests) becomes a development-process artifact, not just an architectural one."
@@ -69,7 +69,7 @@ cards:
     explanation: "This is information hiding raised to the architectural level. TCP gives the application protocol the illusion of a reliable byte stream; the file system gives a process the illusion of named persistent storage. Each abstraction internalizes the effects of change in the lower layer, which is what buys modifiability and portability."
 
   - id: 12
-    difficulty: basic
+    difficulty: advanced
     question: "Why does excessive **layer bridging** make a strict layered architecture decay?"
     answer: "Each bypass creates a coupling between non-adjacent layers that the strict topology was designed to prevent. The lower-layer interface now has more consumers, so any change to it ripples more widely. Over time the dependency graph approaches that of an unlayered system, and the portability and modifiability the style promised disappear."
     explanation: "One bridge is a documented exception. Ten bridges are an undocumented relaxed layering. A hundred bridges is a big ball of mud with leftover layering vocabulary. Teams that resist bridging keep their portability properties for decades; teams that bridge freely lose them in a year or two."
@@ -81,7 +81,7 @@ cards:
     explanation: "Architectural styles are tools, not commandments. The reflex to layer everything regardless of scope is over-engineering — pick the style whose promised qualities you actually need on the specific system's lifetime and change profile."
 
   - id: 14
-    difficulty: basic
+    difficulty: intermediate
     question: "Give two concrete real-world examples of layered architecture."
     answer: "The **TCP/IP stack** (application protocols like HTTP use transport protocols like TCP or UDP, which use internet protocols like IPv4 or IPv6, which use link-layer technologies like Ethernet or Wi-Fi) and **operating-system abstraction ladders** (user interface → file management → input/output → memory management → hardware abstraction). The **OSI 7-Layer Model** is the canonical example of *strict* layering specifically."
     explanation: "These examples share the same structural property: each layer uses the services of the one (or ones) below it, and never the other way around. That one-way usage is what lets you swap Ethernet for Wi-Fi at the bottom or HTTP/2 for HTTP/3 at the top without ripping the rest of the stack apart."
@@ -93,7 +93,7 @@ cards:
     explanation: "Erosion is rarely caused by malice or ignorance — it's caused by deadlines. The fix is structural and process-level: dependency-checking linters in CI (e.g., ArchUnit, depcruise), code-review checklists, and an explicit refactor budget when violations accumulate. Documentation alone never prevents erosion; tooling enforcement does."
 
   - id: 16
-    difficulty: basic
+    difficulty: intermediate
     question: "Why can't a layered module view by itself support an availability claim?"
     answer: "Because layers are design-time code modules, not independently failing runtime processes. Availability depends on deployed components, communication paths, redundancy, fault detection, recovery behavior, and operational monitoring."
     explanation: "A lower layer cannot be 'down' in the same way a deployed database, process, or broker is down. Layering can support maintainability and portability reasoning; availability requires component-and-connector, deployment, and behavioral views."

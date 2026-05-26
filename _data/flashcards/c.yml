@@ -15,7 +15,7 @@ cards:
       **You must check for `NULL` before dereferencing the result.** Forgetting this check turns an out-of-memory condition into a silent segfault, often far from the actual allocation site.
 
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     question: |
       In C, what is `'\0'`? Distinguish it from `'0'` and explain why C strings need it.
     answer: |
@@ -26,7 +26,7 @@ cards:
       A `char` array without a terminator is *not* a string for these functions; they will read past the end of the array.
 
   - id: 3
-    difficulty: basic
+    difficulty: advanced
     question: |
       Why does C have no function overloading? Explain the design tradeoff.
     answer: |
@@ -35,7 +35,7 @@ cards:
       **The tradeoff:** C source code has to use distinct names like `printInt` / `printFloat` instead of two `print` overloads, but **C symbols are callable from any other language** because the symbol you wrote is the symbol the linker sees. This is the main reason almost every language has a clean foreign-function interface to C, but calling into C++ requires extra work to handle mangled names.
 
   - id: 4
-    difficulty: basic
+    difficulty: intermediate
     question: |
       Explain the difference between `char` and `char*` in C.
 
@@ -51,7 +51,7 @@ cards:
       Modifying `c` is fine — it's an ordinary local variable. Writing through `s` (e.g., `s[0] = 'B'`) is **undefined behavior** because string literals live in read-only memory.
 
   - id: 5
-    difficulty: basic
+    difficulty: intermediate
     question: |
       Predict what this program prints:
 
@@ -74,7 +74,7 @@ cards:
       **Negative-transfer trap from C++:** mismatched format specifiers (`%d` for a `float`, `%f` for an `int`) compile cleanly but produce garbage at runtime, because `printf` blindly trusts the format string. Always compile with `-Wall -Wformat` to catch this.
 
   - id: 6
-    difficulty: basic
+    difficulty: intermediate
     question: |
       Write a C function `void swap(int* a, int* b)` that swaps the values pointed to by `a` and `b`, plus the call site that swaps two local variables `x` and `y`.
     answer: |
@@ -99,7 +99,7 @@ cards:
       - The signature `swap(int*, int*)` advertises that the function may mutate both arguments. That advertisement is more explicit than C++'s `swap(int&, int&)`.
 
   - id: 7
-    difficulty: basic
+    difficulty: advanced
     question: |
       Allocate a flat `rows × cols` matrix of `int` on the heap, write the index expression for element `(i, j)` in row-major order, and free the allocation.
     answer: |
@@ -120,7 +120,7 @@ cards:
       `sizeof(int)` is needed because `malloc` takes a byte count, not an element count. Forgetting it (`malloc(rows * cols)`) would allocate only one byte per element, and the index expression would walk into unrelated memory.
 
   - id: 8
-    difficulty: basic
+    difficulty: advanced
     question: |
       What is the bug in this code, and what is the most likely runtime symptom?
 
@@ -143,7 +143,7 @@ cards:
       3. Return a pointer to a `static` buffer — works but is not thread-safe.
 
   - id: 9
-    difficulty: basic
+    difficulty: intermediate
     question: |
       What is the role of libc, and how does it relate to operating-system system calls?
     answer: |
@@ -154,7 +154,7 @@ cards:
       libc papers over those differences. The result: your `fopen` call compiles into different machine code on Linux vs. macOS vs. Windows, but your *source* is identical. libc is the layer that makes C source portable across operating systems.
 
   - id: 10
-    difficulty: basic
+    difficulty: advanced
     question: |
       Walk through what happens at runtime when this code executes:
 
@@ -179,7 +179,7 @@ cards:
       **Defensive habit:** `free(p); p = NULL;` makes a subsequent `free(p)` a no-op (the standard guarantees `free(NULL)` does nothing).
 
   - id: 11
-    difficulty: basic
+    difficulty: expert
     question: |
       Name two distinct production scenarios where you would deliberately choose C over C++, and explain *why* each scenario favors C.
     answer: |
@@ -190,7 +190,7 @@ cards:
       Either reason can justify the discipline cost of manual memory management.
 
   - id: 12
-    difficulty: basic
+    difficulty: advanced
     question: |
       Almost every major language (Python, Java, C#, Rust, Go, Ruby) supports calling into a C library. **Browser JavaScript** does not — and this is not an accident. What is the design rationale?
     answer: |
@@ -201,7 +201,7 @@ cards:
       **The modern workaround is WebAssembly**: you compile C source to Wasm bytecode, which the browser runs in *the same sandbox* as JavaScript. Wasm has no syscall access by default — it can only see what the page explicitly hands it. You keep the performance of C without breaking the browser's security model.
 
   - id: 13
-    difficulty: basic
+    difficulty: advanced
     question: |
       Design a C `struct` for a singly-linked-list node that stores an `int` value. Then write the prototype for a function `list_prepend` that takes the current head and an `int`, and returns the new head.
     answer: |
@@ -217,12 +217,12 @@ cards:
 
       **Design choices worth naming:**
 
-      - The `next` field must come *after* `value` of any type, because the compiler needs every prior field's size to compute offsets. (Self-referential pointers are fine because pointer size is fixed.)
+      - The self-reference must be a pointer: `struct list_node* next` has a fixed pointer size, while embedding a full `struct list_node next` would require an infinitely large object.
       - The function returns a new head rather than mutating in place — this lets the caller chain prepends and handle an empty list (`head == NULL`) uniformly.
       - The doc comment names ownership: the caller must eventually walk the list and `free` each node.
 
   - id: 14
-    difficulty: basic
+    difficulty: advanced
     question: |
       Compare **static** and **dynamic** linking on three axes: when linking happens, what gets shipped, and the consequence for security updates.
     answer: |

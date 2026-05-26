@@ -25,7 +25,7 @@ questions:
       "Search by keyword" is functionality. "95% of keyword searches return within 200 ms during peak load" is a quality attribute attached to that function.
 
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     bloom: understand
     type: multiple
     question: |
@@ -145,7 +145,7 @@ questions:
       Heartbeat is an availability tactic: monitored components periodically report that they are alive, and the watchdog can react when the signal stops.
 
   - id: 7
-    difficulty: intermediate
+    difficulty: advanced
     bloom: analyze
     type: multiple
     question: |
@@ -194,7 +194,7 @@ questions:
       Interoperability requires more than exchanging bytes. The receiving system must interpret the fields with the same meaning.
 
   - id: 9
-    difficulty: intermediate
+    difficulty: advanced
     bloom: analyze
     type: multiple
     question: |
@@ -287,7 +287,7 @@ questions:
       The strong rewrite names the security scenario, the threshold for triggering the response, the response duration, and the audit-log timing requirement.
 
   - id: 13
-    difficulty: expert
+    difficulty: advanced
     bloom: evaluate
     type: single
     question: |

@@ -3,7 +3,7 @@ description: "Apply, Analyze, and Evaluate-level questions on whole-suite qualit
 active: true
 questions:
   - id: 1
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A reviewer asks: *"Our suite has 95% line coverage and 100% pass rate. Are we good?"* What is the strongest response, in one move?
@@ -23,7 +23,7 @@ questions:
     explanation: "Mutation testing (DeMillo, Lipton, Sayward 1978; Just et al. 2014) creates many small faulty versions of the program and asks whether the tests catch them. Surviving mutants point directly at weak oracles, missed boundaries, and underspecified code — exactly the gaps that high coverage can hide. Use coverage as a navigational map ('what didn't I exercise yet?') and mutation/seeded-fault detection as the diagnostic for whether what *was* exercised is being meaningfully checked."
 
   - id: 2
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       You inherit a test that fails on CI roughly 1 run in 10, with the message `AssertionError: expected [3, 1, 2], got [1, 2, 3]`. The system under test is a function that returns the keys of a `dict` built from a `set`. What's going on, and what's the right fix?
@@ -43,7 +43,7 @@ questions:
     explanation: "Luo et al. (2014) call this *over-specification* — the test asserts more than the function promises. The cure is to weaken the assertion to match the contract: compare as a set, sort both sides, or assert on individual key/value properties. Flakiness is a trust killer: a red test should mean 'investigate the behavior', not 'rerun and hope'. Diagnose the assertion before reaching for retries."
 
   - id: 3
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       You need to test that a `Discount` service applies the right amount when called by a checkout flow. The spec mentions the resulting total on the cart, not which internal call was made. Which oracle should you reach for first?
@@ -63,7 +63,7 @@ questions:
     explanation: "The chapter's principle is *use the strongest oracle you can afford*, and prefer oracles at stable boundaries. The cart total is the boundary the spec describes — assert there. Interaction oracles are useful when the interaction *is* the behavior ('exactly one receipt email after payment') but harmful when they merely pin the current implementation's wiring."
 
   - id: 4
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       You run mutation testing on a sorting module and find that mutating `<` to `<=` inside the comparison consistently survives. Which conclusion is best supported by this single signal?
@@ -83,7 +83,7 @@ questions:
     explanation: "Surviving mutants ask the suite useful questions. Here the most common cause is the absence of a *discriminating input* — for a sort, equal keys whose secondary attributes differ. That input distinguishes stable from unstable sorts, and it is also the canonical case where `<` vs `<=` changes observed behavior. Add such an input and you either kill the mutant (the spec requires stability) or reveal that the spec is silent about a property the team did care about."
 
   - id: 5
-    difficulty: basic
+    difficulty: expert
     type: multiple
     question: |
       A team's CI dashboard shows: coverage steady at 88%, mutation score steady at 75%, flake rate climbing from 1% to 6% over a quarter, and a 25% increase in escaped bugs. Which interpretations are best supported? (Select all that apply.)
@@ -105,7 +105,7 @@ questions:
     explanation: "Healthy test-quality monitoring combines several signals: coverage (what was visited), mutation/seeded-fault score (oracle strength), flake rate (trust), runtime by layer (feedback speed), escaped bugs (real-world miss rate). When the metrics move out of sync, the diagnosis usually lives where the signal *isn't* moving. Here, coverage and mutation score are flat while escapes rise — the dashboard is telling you the existing tests are increasingly missing the bugs that ship."
 
   - id: 6
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       A teammate proposes a 'quality goal': *every test file must achieve 100% mutation score before merge*. What is the strongest reason this is a bad goal as stated?
@@ -125,7 +125,7 @@ questions:
     explanation: "Goodhart's Law: when a measure becomes a target, it ceases to be a good measure. Mutation score plus the equivalent-mutant problem means a 100% gate is both unreachable in general and easy to game (deleting the mutant operator that survived, weakening tests until the production code can be 'corrected'). Healthier policies: use mutation as part of code review, target critical modules, watch for *regressions* in mutation score over time rather than absolute thresholds."
 
   - id: 7
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       Your team has a CSV parser. You write three tests: two specific examples (`'a,b,c'` → `['a','b','c']`, and a trailing-newline case) and one property: `parse(format(rows)) == rows` for any list of rows generated by your tool. After merging, a teammate proposes deleting the property test, saying *'the two examples already test the parser.'* What's the strongest response?
@@ -145,7 +145,7 @@ questions:
     explanation: "Claessen & Hughes's QuickCheck (2000) popularized property-based testing by letting authors state invariants and generate inputs automatically. The round-trip property `parse(format(rows)) == rows` finds quoting, escaping, and encoding bugs that example-based authors regularly miss. Keep both: examples document the specific cases you care about by name; properties cover the rest of the input space."
 
   - id: 8
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       You're triaging this test:

@@ -24,7 +24,7 @@ questions:
     explanation: "**The decision-based paradigm defines architecture as the set of principal design decisions, not just structural elements — championed by Taylor et al. as an alternative to the box-and-line view.** The **decision-based paradigm**, championed by Taylor et al., defines architecture as the sum of **principal design decisions** rather than just boxes and lines."
 
   - id: 2
-    difficulty: basic
+    difficulty: advanced
     question: "What formula did Perry and Wolf propose to define software architecture?"
     options:
       - "Architecture = {Components, Connectors, Style}"
@@ -45,7 +45,7 @@ questions:
     explanation: "**Perry and Wolf's 1992 formula defines architecture as Elements + Form + Rationale — not components/connectors (Bass) or modules/layers alone.** Perry and Wolf's original formula (1992) defined architecture as consisting of **Elements**, **Form**, and **Rationale**."
 
   - id: 3
-    difficulty: basic
+    difficulty: intermediate
     question: "What is the key difference between 'Architectural Drift' and 'Architectural Erosion'?"
     options:
       - "Drift is intentional, while erosion is accidental."
@@ -87,11 +87,11 @@ questions:
     explanation: "**Descriptive architecture is the 'as-realized' structure found in the actual source code and artifacts — it describes what was built, not what was intended.** **Descriptive architecture** is the 'as-realized' structure found in the actual source code and artifacts."
 
   - id: 5
-    difficulty: basic
+    difficulty: intermediate
     question: "According to the literature, what happens when a system's descriptive and prescriptive architectures diverge completely?"
     options:
       - "The system becomes more flexible."
-      - "It achieves 'Big Ball of Mud' status and loses conceptual integrity."
+      - "It loses conceptual integrity, accumulates technical debt, and becomes unmaintainable."
       - "The descriptive architecture becomes the new prescription."
       - "The system's performance improves through ad-hoc optimizations."
     correct_index: 1
@@ -105,10 +105,10 @@ questions:
       3: |
         Ad-hoc optimizations may improve one local metric, but total loss of conceptual integrity is a
         maintainability failure, not an architectural success.
-    explanation: "**When descriptive and prescriptive architectures diverge completely, the system loses conceptual integrity and accumulates technical debt until it becomes a 'Big Ball of Mud' — unmaintainable and unstructured.** Complete divergence leads to loss of conceptual integrity, technical debt accumulation, and unmaintainability (often resulting in a 'Big Ball of Mud')."
+    explanation: "**When descriptive and prescriptive architectures diverge completely, the system loses conceptual integrity and accumulates technical debt.** Complete divergence leaves the team without a coherent structure to reason about, so maintenance becomes increasingly expensive and may require architectural recovery or overhaul."
 
   - id: 6
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A team says: "The system shall use the same PostgreSQL cluster the customer already uses for all analytics projects." How should an architect classify this statement?
@@ -148,7 +148,7 @@ questions:
     explanation: "**Architecturally significant requirements are the inputs that force architecture decisions.** If changing the requirement would change the design strategy, style, deployment, or major boundaries, it is probably a driver."
 
   - id: 8
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A shared C++ library appears once in the source tree. At build time, it is compiled into both the client executable and the server executable. Which view explains this cleanly?
@@ -168,7 +168,7 @@ questions:
     explanation: "**Module and runtime views are related but not isomorphic.** A module is a design-time code unit; a component is an independently deployable runtime unit. One module can be compiled into multiple components."
 
   - id: 9
-    difficulty: basic
+    difficulty: advanced
     type: multiple
     question: |
       Which view is the best starting point for each analysis? Select all correct matches.
@@ -193,7 +193,7 @@ questions:
     explanation: "**Each architectural view supports different claims.** Good architectural reasoning starts by choosing the view whose elements and relations match the property being analyzed."
 
   - id: 10
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       Attribute-Driven Design (ADD) is best summarized as:

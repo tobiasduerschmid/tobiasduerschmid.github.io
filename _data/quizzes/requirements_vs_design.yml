@@ -123,7 +123,7 @@ questions:
       This is a design decision because it chooses specific authentication and session technologies. A requirement would describe the access policy those technologies must satisfy.
 
   - id: 7
-    difficulty: intermediate
+    difficulty: basic
     question: |
       A route-planning app team writes: "The system must display the shortest available route from the user's current location to the selected destination." How should this statement be classified?
     options:
@@ -143,7 +143,7 @@ questions:
       This is a requirement because it states what result the app must provide. Algorithms and map representations remain part of the design space.
 
   - id: 8
-    difficulty: intermediate
+    difficulty: basic
     question: |
       A route-planning design note says: "Represent roads as a weighted graph and run A* search with distance as the heuristic." How should this statement be classified?
     options:
@@ -163,7 +163,7 @@ questions:
       This is a design decision because it commits to both an internal map model and a search algorithm. The corresponding requirement would say what route the user must receive.
 
   - id: 9
-    difficulty: intermediate
+    difficulty: basic
     question: |
       A collaborative editor team writes: "Multiple users must be able to edit the same file at the same time and see each other's changes within 500 ms." How should this statement be classified?
     options:
@@ -183,7 +183,7 @@ questions:
       This is a requirement because it defines required behavior plus a measurable quality attribute. The team can still choose among different synchronization, conflict-resolution, and transport designs.
 
   - id: 10
-    difficulty: intermediate
+    difficulty: basic
     question: |
       A collaborative editor design says: "Use WebSockets for persistent two-way communication and Operational Transformation to resolve concurrent edits." How should this statement be classified?
     options:

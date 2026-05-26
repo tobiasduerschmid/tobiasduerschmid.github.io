@@ -134,6 +134,7 @@ If your change is in the territory of any of these, double-check it explicitly â
 
 A change is not done until you have verified it. The bar:
 
+0. **First decide whether an accessibility audit is actually relevant.** Do **not** run WCAG audit suites for changes that are only data/text and cannot affect accessibility: difficulty metadata, tags, IDs that are not rendered, typo fixes in existing prose, wording changes inside existing paragraphs/list items/code blocks, or data-only quiz/flashcard answer text that does not add/remove/restructure links, headings, images, media, embedded HTML, ARIA, labels, controls, or widget behavior. For those changes, use the right lightweight checks instead (YAML/JSON parsing, schema checks, `git diff --check`, and a build when the data pipeline needs exercising). Re-engage the audit the moment a data/text edit changes rendered structure, accessible names/labels, link purpose, alt text, heading hierarchy, form/control text, status/error text, media/diagram content, or any interactive behavior.
 1. **Run the audit test for any pages you touched.** The canonical sweep is [`tests/wcag22-complete-audit.spec.js`](../../../tests/wcag22-complete-audit.spec.js) (Playwright). Scope it with `WCAG_AUDIT_URL_FILTER` while iterating, e.g.:
    ```bash
    WCAG_AUDIT_URL_FILTER='/SEBook/tools/uml-playground' \

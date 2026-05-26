@@ -21,7 +21,7 @@ cards:
     explanation: "ER diagrams are *design artifacts*, not databases. The next step is to translate entities and relationships into tables, primary keys, and foreign keys."
 
   - id: 4
-    difficulty: basic
+    difficulty: intermediate
     question: "What does the **multiplicity** `N` to `M` mean on an ER relationship, and what does it force you to add to your schema?"
     answer: "`N` to `M` means *many-to-many*: many entities on each side can be associated with many on the other (one student takes many courses; one course has many students). Many-to-many cannot be stored as a single foreign-key column — it forces the introduction of a **join table** (also called a *bridge* or *associative* table), typically with a composite primary key from the two foreign keys."
     explanation: "Spotting many-to-many relationships is one of the most valuable skills in database design. If you see `N`–`M` multiplicity in the ER diagram, a join table is coming."
@@ -33,7 +33,7 @@ cards:
     explanation: "A single table has exactly one primary key but can have many foreign keys (each referencing a different parent table)."
 
   - id: 6
-    difficulty: basic
+    difficulty: intermediate
     question: "When would you use a **composite primary key**, and give one realistic example."
     answer: "When no single column is unique on its own, but a combination is. Example: in an `Enrollment(student_id, course_id, quarter)` table, neither `student_id` nor `course_id` alone is unique (a student takes many courses; a course has many students). The unique combination — the triple `(student_id, course_id, quarter)` — is the primary key."
     explanation: "Composite keys are standard in join tables that implement many-to-many relationships; they directly encode the uniqueness rule of the relationship."
@@ -69,7 +69,7 @@ cards:
     explanation: "Memorize the letters, the one-sentence intuition, and *what each protects against* — that's the unit you'll reason with on real systems."
 
   - id: 12
-    difficulty: basic
+    difficulty: intermediate
     question: "For each ACID letter, what class of failure does it **protect against**?"
     answer: "**Atomicity** protects against *partial writes* — a crash mid-transaction leaving half-applied state. **Consistency** protects against *invalid data* — constraint violations (negative balances, dangling foreign keys). **Isolation** protects against *concurrency anomalies* — lost updates, phantom reads, inconsistent snapshots. **Durability** protects against *losing acknowledged writes* to a power or process failure."
     explanation: "This failure-to-property mapping is often what a scenario question is really asking for. Practice it both directions: property → failure, and failure → property."
@@ -81,61 +81,61 @@ cards:
     explanation: "CAP-C is a property of *the global view across replicas*. ACID-C is a property of *the schema and constraints*. They share a name but not a meaning."
 
   - id: 16
-    difficulty: basic
+    difficulty: intermediate
     question: "State the **CAP theorem** precisely (not the 'pick 2 out of 3' slogan)."
     answer: "**When a network partition occurs** in a distributed system, the system must sacrifice either **Consistency** or **Availability** — it cannot keep both. Networks do partition in practice, so `P` is effectively mandatory, and the real operational choice is **CP** (refuse requests during a partition to stay correct) vs. **AP** (keep serving, accept staleness)."
     explanation: "Conjectured by Eric Brewer (2000), formally proved by Gilbert and Lynch (2002). The 'pick 2' slogan is memorable but misleading: C and A are only in tension *during* a partition."
 
   - id: 17
-    difficulty: basic
+    difficulty: intermediate
     question: "What is the difference between a **CP** and an **AP** system? Give a canonical example of each."
     answer: "A **CP** system *refuses requests* on the side of a partition that cannot reach the majority of replicas, to avoid stale reads. Example: majority-write MongoDB, HBase, ZooKeeper, classical RDBMS with synchronous replication. An **AP** system *keeps serving* on both sides, accepting that reads may be stale until the partition heals. Example: Amazon DynamoDB (default), Apache Cassandra, CouchDB, Riak."
     explanation: "CP = correctness over uptime; AP = uptime over correctness. Both are defensible choices — the right one depends on what the application can tolerate."
 
   - id: 18
-    difficulty: basic
+    difficulty: intermediate
     question: "What is **eventual consistency**, and with which CAP choice is it typically paired?"
     answer: "**Eventual consistency** guarantees that *if no new writes occur, all replicas will eventually converge to the same state* — but gives no bound on when. It is the typical consistency model of **AP** systems: during a partition, replicas diverge; after the partition heals, they reconcile."
     explanation: "Many AP systems pair eventual consistency with *conflict resolution rules* — last-writer-wins, vector clocks, CRDTs — that determine how divergent replicas reconverge."
 
   - id: 19
-    difficulty: basic
+    difficulty: advanced
     question: "Why is **ACID-Consistency ≠ CAP-Consistency** one of the most important distinctions in data management?"
     answer: "Because the two mean different things: **ACID-C** = *declared schema constraints are never violated by a committed transaction* (a property of a single logical database). **CAP-C** = *every read returns the latest written value across replicas* (a property of a distributed system). A relational DBMS with asynchronous replication honors ACID-C on the primary yet still serves stale reads from replicas — violating CAP-C. 'Strongly consistent because we use SQL' confuses the two."
     explanation: "This is the single most common misconception in the chapter. Whenever you see 'consistency', ask: which one?"
 
   - id: 20
-    difficulty: basic
+    difficulty: advanced
     question: "What is wrong with the claim that ATMs 'have all three' of CAP? What do ATMs actually demonstrate?"
     answer: "ATMs are **AP with eventual consistency**, not a system that defies CAP. During a WAN outage to the bank, many ATMs continue to allow withdrawals up to a *cached daily limit*, and the resulting transactions are reconciled once the link returns — sometimes producing *temporary overdrafts* that the bank absorbs. ATMs demonstrate a **deliberate Availability-over-Consistency** business choice: staying open is worth occasional post-hoc reconciliation cost."
     explanation: "ATMs are the motivating *counterexample* for CAP, not its exception. Banks explicitly accept the inconsistency because availability is more valuable than perfect correctness at withdrawal time."
 
   - id: 21
-    difficulty: basic
+    difficulty: advanced
     question: "List the **four NoSQL families** with one representative system and one typical fit each."
     answer: "**Document** (MongoDB, CouchDB) — nested JSON-like records; good for content with optional or variable fields. **Key-value** (Redis, DynamoDB, Riak) — simple `key → value` lookups; good for caches, session stores. **Wide-column** (Cassandra, HBase, ScyllaDB) — rows with families of sparse columns; good for time-series and very-wide denormalized data. **Graph** (Neo4j, Neptune, JanusGraph) — nodes and typed edges; good for social graphs, fraud detection, knowledge graphs."
     explanation: "The right NoSQL family is determined by **data shape and query pattern**, not by generic 'scale' or 'NoSQL-ness'."
 
   - id: 22
-    difficulty: basic
+    difficulty: advanced
     question: "What was 'NoSQL' originally reacting against, and what was it later redefined to mean?"
     answer: "It emerged (c. 2008–2012) against two constraints of traditional RDBMSs: **strict schemas** that do not fit rapidly-changing or semi-structured data, and **ACID across many nodes** becoming expensive in distributed settings. It was later redefined as **'Not Only SQL'** — many NoSQL systems have their own query languages and some even support SQL-like syntax. The name is about dropping the *relational* assumption, not about banning SQL."
     explanation: "The 'No' is *architectural*, not *lexical*. Read it as 'non-relational', not 'anti-SQL'."
 
   - id: 23
-    difficulty: basic
+    difficulty: intermediate
     question: "Sweet spot of **RDBMS** vs. sweet spot of **NoSQL** — state each in one sentence."
     answer: "**RDBMS**: well-structured data with cross-row invariants, where multi-row ACID transactions, referential integrity, and joins matter (finance, bookings, inventory of record). **NoSQL**: large, loosely-structured data where flexible schemas, horizontal scale, and availability matter more than strict consistency and transactional joins (feeds, catalogs, logs, caches)."
     explanation: "Most real production systems use *both*: a relational store for the transactional core, and a NoSQL store for high-volume side paths (search indices, caches, user-generated content)."
 
   - id: 24
-    difficulty: basic
+    difficulty: advanced
     question: "Why is 'we use SQL so we can swap databases at any time' an oversimplification?"
     answer: "The **ISO/IEC 9075 core** of SQL (basic DML/DDL, joins, group-by) is largely portable — but real applications rely on vendor-specific extensions: stored-procedure languages (PL/pgSQL vs. T-SQL vs. PL/SQL), window-function dialects, JSON operators, types, indexes, extensions. Migration of a non-trivial application across dialects almost always takes real engineering effort."
     explanation: "'SQL-compatible' ≠ 'drop-in replaceable'. Plan for the dialect work even when the core queries look identical."
 
   - id: 25
-    difficulty: basic
+    difficulty: advanced
     question: "Give the scenario-to-property mapping for CAP choices: for each application below, which property is primary?"
     answer: "(a) *Never double-spend money* → **Consistency (CP)**. (b) *Stale reads are fine; a 500 error is expensive* → **Availability (AP)**. (c) *Globally distributed service must survive transcontinental network failures* → **Partition Tolerance** (mandatory, combine with CP or AP as the application allows). (d) *ATM dispensing cash during a bank-link outage* → **Availability (AP)** with later reconciliation."
     explanation: "This mapping is the real payoff of CAP: a vocabulary for *picking* the right database for a requirement, not a Venn diagram to memorize."

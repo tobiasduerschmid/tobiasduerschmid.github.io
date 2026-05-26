@@ -9,7 +9,7 @@ cards:
     explanation: "This framing explains hallucinations (plausible-looking but fabricated APIs), outdated patterns (repeated from training data), and confident-but-wrong outputs. Linguistic plausibility is not factual correctness."
 
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     question: "Why is GenAI's productivity boost (21–50%) smaller than the **compiler revolution** (10x)?"
     answer: "Compilers automated **accidental complexity** — repetitive mechanical translation from high-level intent to machine instructions. GenAI helps with parts of accidental complexity too but does not yet automate **essential complexity** — understanding requirements, choosing data structures, navigating trade-offs, integrating with real systems. Most of an engineer's work still lives in essential complexity."
     explanation: "Brooks's accidental-vs-essential framing (No Silver Bullet, 1986) predicts exactly this ceiling: tools that automate mechanical work give big one-time gains; tools that touch judgment-heavy work give smaller, slower gains."
@@ -21,7 +21,7 @@ cards:
     explanation: "Each stage shapes the model's behavior. Pre-training determines what it 'knows.' Post-training (especially RLHF) calibrates what it produces in response to instructions. Inference parameters (temperature, top-p) control how deterministic the output is."
 
   - id: 4
-    difficulty: basic
+    difficulty: intermediate
     question: "What is the **illusion of AI productivity**, and how do you avoid being fooled by it?"
     answer: "Generation speed *feels* like productivity, but if the output is subtly wrong, debugging can dwarf the time saved. Avoid the illusion by measuring productivity *end-to-end* (features shipped per week with acceptable defect and security rates), not by characters generated per minute."
     explanation: "The SEBook's vivid '5 minutes to type, then a day to debug' is illustrative — not a measured ratio — but the asymmetry is real. METR 2025 found developers using AI on real OSS work felt 24% faster while measured throughput was ~19% slower. Generation is visible and fast; debugging is invisible and slow."
@@ -45,25 +45,25 @@ cards:
     explanation: "This calibration is the antidote to *vibe coding* (forgetting the code exists and shipping on 'vibes'). It maps to how a senior engineer would treat any unfamiliar contributor's PR: review, verify, don't auto-merge."
 
   - id: 8
-    difficulty: basic
+    difficulty: intermediate
     question: "Compare the **Driver** and **Navigator** roles in AI pair programming."
     answer: "**Driver:** the *human* writes the code and asks the AI to critique it for performance, security, or design issues. **Navigator:** the *human* directs the AI to write specific blocks while ensuring they understand every line produced. In both, the human retains intellectual ownership and accountability for the result."
     explanation: "Driver suits security/performance review and design exploration. Navigator suits boilerplate, idiomatic-syntax generation, and well-specified tasks. Both deliberately keep the human in active intellectual control — neither is delegation to autopilot."
 
   - id: 9
-    difficulty: basic
+    difficulty: intermediate
     question: "What is **Test-Driven Generation (TDG)**, and what are its four steps?"
     answer: "**(1)** Prompt the AI to generate **tests** from a problem description. **(2)** Carefully review the tests as a specification. **(3)** Prompt the AI to generate the **implementation** that passes those tests. **(4)** Use a **remediation loop** — feed failing test output (stack traces, mismatches) back to the AI until tests pass."
     explanation: "The review step (2) is where TDG earns its quality: if the tests are right, satisfying them produces correct code. Skipping review means satisfying broken tests. This mirrors TDD's RED-GREEN-REFACTOR rhythm with AI doing the writing under human verification."
 
   - id: 10
-    difficulty: basic
+    difficulty: advanced
     question: "Why does **loose coupling** amplify AI effectiveness, and **tight coupling** sabotage it?"
     answer: "Modular code (Information Hiding, microservices, well-bounded interfaces) limits the **context window** the AI needs to process. Smaller, well-named modules fit cleanly in context; hidden internals don't leak unexpected coupling; generated code can be locally verified. In tightly coupled spaghetti code, the AI cannot see (or fit) enough context to reason correctly, and its plausible-looking output silently breaks distant code."
     explanation: "Modern architecture has gained a new payoff: it is now a force multiplier for AI productivity, not just a maintainability concern. Teams that defer architectural cleanup pay a *compounding* AI-effectiveness tax on every future change."
 
   - id: 11
-    difficulty: basic
+    difficulty: intermediate
     question: "Why is AI inference typically **non-deterministic**, and what does that mean for testing?"
     answer: "LLMs sample from a probability distribution over next tokens; identical prompts can produce different outputs depending on the temperature parameter and random seed. Non-determinism means you cannot rely on bit-identical AI output for testing — your tests must verify properties of the result (it compiles, it passes tests, it satisfies a spec), not its exact text."
     explanation: "Some workflows set temperature=0 for more deterministic output, but even then small variations can occur. Anything that depends on the AI's text matching exactly is brittle; verify behavior or structure, not surface form."
@@ -81,13 +81,13 @@ cards:
     explanation: "GitClear's 2024 analysis reported ~41.6% rising complexity and ~30.3% more warnings in AI-augmented codebases — treat the exact numbers as one data point, not consensus, but the *direction* matches what review-heavy teams report. The underlying issue is workflow, not tool quality: teams that don't pair AI generation with refactoring accumulate debt faster than human-written code would."
 
   - id: 14
-    difficulty: basic
+    difficulty: intermediate
     question: "Why does the leverage of an engineer's work shift from *producing* code to *specifying and verifying* it in the GenAI era?"
     answer: "Because AI can produce plausible-looking code quickly, but cannot reliably decide *what* code should be produced or *whether* the produced code is correct in a specific system context. The bottleneck moves from typing-speed (now cheap) to figuring out the spec, designing the architecture, and verifying the output — the parts AI still stumbles on."
     explanation: "Concretely: requirements engineering, systems thinking, architecture, code review, security review, and prompt/context engineering all rise in importance; rote syntax memorization and boilerplate authoring fall. INVEST user stories, formal verification techniques, and architecture-for-context all become increasingly load-bearing skills."
 
   - id: 14b
-    difficulty: basic
+    difficulty: advanced
     question: "Why is **prompt and context engineering** considered a load-bearing engineering skill rather than a UI trick?"
     answer: "Because what an LLM produces depends sharply on what context it can see (architecture, file boundaries, surrounding code) and how the task is framed. An engineer who can shape both — by structuring the codebase for clean context windows and by writing prompts that surface real constraints — gets dramatically better output than one who treats the AI as a search box."
     explanation: "This is why modular architecture is now an AI multiplier: smaller bounded interfaces fit in context, hidden internals don't leak, and generated code can be reasoned about locally. Prompt and context engineering compose with architecture skill, not replace it."
@@ -105,7 +105,7 @@ cards:
     explanation: "The added tool access is why agents feel powerful, but it also raises the supervision bar. If an agent can run useful commands, it can also propose dangerous ones."
 
   - id: 17
-    difficulty: basic
+    difficulty: intermediate
     question: "What is a **prompt injection** risk for coding agents?"
     answer: "Prompt injection happens when malicious or irrelevant instructions hidden in a web page, issue, document, or code comment are read by the agent and treated as task instructions. For coding agents, this can lead to unsafe commands, data exposure, or unrelated code changes."
     explanation: "The mitigation is not blind trust: inspect tool calls, understand shell commands before approving them, limit permissions, and keep the task context bounded."
@@ -117,37 +117,37 @@ cards:
     explanation: "Skill files improve the agent's default behavior; they do not remove the need for review. A rule file is an instruction, not proof of compliance."
 
   - id: 19
-    difficulty: basic
+    difficulty: intermediate
     question: "Why should large AI tasks start in **plan mode**?"
     answer: "A plan makes the agent's assumptions visible before code exists. The human can review architecture, state transitions, tests, security, accessibility, and scope, then approve one small step at a time."
     explanation: "Planning changes the workflow from 'generate a pile of code and hope' to 'surface design decisions, bound the task, implement, test, review, refactor.'"
 
   - id: 20
-    difficulty: basic
+    difficulty: intermediate
     question: "Why is dumping the entire repository into an AI context often worse than selecting relevant files?"
     answer: "LLMs have finite context windows and uneven attention. Irrelevant files can bury the important constraints, causing lost-in-the-middle failures or hallucinations. Good context engineering provides the smallest relevant slice: target files, nearby interfaces, tests, and constraints."
     explanation: "More context is not automatically better. High-signal context beats huge low-signal context."
 
   - id: 21
-    difficulty: basic
+    difficulty: advanced
     question: "What is a **design-decision prompt**, and why is it useful?"
     answer: "A design-decision prompt asks the AI to compare trade-offs before implementation, such as 'Should we store the generated SVG or the avatar parameters?' The AI can list consequences; the human chooses based on product goals and quality attributes."
     explanation: "This preserves human ownership of architecture. The AI helps enumerate options, but the engineer decides which trade-off fits the system."
 
   - id: 22
-    difficulty: basic
+    difficulty: intermediate
     question: "Which tasks are good candidates for AI assistance once you already understand the domain?"
     answer: "Repetitive scaffolding, familiar boilerplate, first drafts of tests or documentation, simple debugging help, explaining stack traces or APIs, rapid prototypes, edge-case brainstorming, and small refactorings with tests."
     explanation: "These tasks are common, well-bounded, and reviewable. The human still checks the output and quality attributes before shipping."
 
   - id: 23
-    difficulty: basic
+    difficulty: intermediate
     question: "Which tasks should you be cautious about delegating to AI?"
     answer: "High-stakes security, safety, legal, medical, financial, or accessibility-sensitive work; complex stateful workflows; novel architecture decisions; and any problem you do not understand well enough to review."
     explanation: "AI is an amplifier of engineering skill. If the human lacks the schema needed to evaluate the output, the agent can create an illusion of competence rather than reliable progress."
 
   - id: 24
-    difficulty: basic
+    difficulty: advanced
     question: "What is the overfitting failure mode in **Test-Driven Generation**?"
     answer: "The AI may pass visible tests by hard-coding sample inputs and outputs instead of implementing the general rule. The code looks green but fails the real specification."
     explanation: "The fix is to inspect the implementation, add tests for properties and novel inputs, and refactor toward a general solution. Passing weak tests is not enough."

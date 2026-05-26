@@ -3,7 +3,7 @@ description: "Apply quality-attribute thinking to real design decisions — writ
 active: true
 questions:
   - id: 1
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A product manager hands you the requirement: "the system must be **fast and reliable**." Why is this not a useful quality requirement, and what would make it useful?
@@ -43,7 +43,7 @@ questions:
     explanation: "**Design-time qualities (testability, changeability, extensibility, reusability) primarily affect the people maintaining and evolving the system. Run-time qualities (performance, availability, scalability) are experienced directly by the user when the system executes.** Both matter — but they are surfaced, measured, and traded against each other differently."
 
   - id: 3
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       Your team adds end-to-end TLS encryption to every internal microservice call to meet a new security mandate. p99 latency rises from 80 ms to 130 ms. What general principle does this illustrate?
@@ -63,7 +63,7 @@ questions:
     explanation: "**You cannot maximize every quality attribute simultaneously — improvements in one often degrade another. The architect's job is to make the trade-off explicit and aligned with priorities, not to pretend the conflict away.** Common conflicts: security ↔ performance, reliability (TCP, retries) ↔ latency, modifiability (abstraction layers) ↔ performance, usability (rich client) ↔ portability (lowest-common-denominator)."
 
   - id: 4
-    difficulty: basic
+    difficulty: intermediate
     type: multiple
     question: |
       Quality attributes are sometimes described as the *load-bearing walls* of a software system. Which of these are valid reasons for that metaphor? Select all that apply.
@@ -88,7 +88,7 @@ questions:
     explanation: "**Quality attributes are load-bearing because they (a) are constrained by early architectural choices, (b) are cross-cutting across the codebase, and (c) are expensive to retrofit later.** This is why they belong in the architecture phase — not in the 'we'll handle that later' bucket. The cost asymmetry is what makes the metaphor accurate."
 
   - id: 5
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A Mars rover requirement reads: "the rover should be robust." A senior architect calls this a *bad* specification and rewrites it. Which rewrite is correct?
@@ -108,7 +108,7 @@ questions:
     explanation: "**A good quality specification names a scenario (the specific environmental or operational condition) and a metric (concrete numbers, durations, or thresholds the system must meet under that scenario).** 'Robust' alone is wishful thinking; 'continues measurements through a 60%-solar 72-hour dust storm and resumes full ops within 1 hour' is something the team can design for, test against, and report against."
 
   - id: 6
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       A startup's MVP launches in three weeks. The team is debating whether to invest in **testability** infrastructure (dependency injection, test doubles, contract tests) before launch. What is the strongest *pro-testability* argument given the time pressure?
@@ -128,7 +128,7 @@ questions:
     explanation: "**Testability and changeability are strong synergistic qualities — the same architectural patterns (small classes, dependency injection, no global state, clear interfaces) buy both.** For a startup that will iterate aggressively post-launch, the investment compounds: every change is faster *and* less likely to introduce a regression. The trade-off question is real, but framing the synergy honestly is the strongest case."
 
   - id: 7
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       Your bank's payment service uses TCP (acknowledged, retried delivery). A consultant suggests UDP to cut latency. The trade-off they don't mention is:
@@ -148,7 +148,7 @@ questions:
     explanation: "**Reliability and performance are classical competing quality attributes: TCP's acknowledgments and retransmissions cost latency, UDP's fire-and-forget saves latency but admits loss, duplication, or reordering.** For payments, the request and acknowledgment bytes must arrive intact and in order, and the application must add idempotency or transaction logic so retries do not create duplicate charges. For video streams or DNS lookups, the latency win may be decisive. The architect's job is to align the protocol with the system's correctness needs, not to optimize one axis in isolation."
 
   - id: 8
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       Three months after launch, your team realizes the system cannot scale past 10,000 concurrent users — the bottleneck is the synchronous, monolithic request pipeline chosen on day one. What does this illustrate about quality attributes?
@@ -168,7 +168,7 @@ questions:
     explanation: "**Scalability is the classic load-bearing quality: choices made at architectural time (sync vs async, stateful vs stateless, monolithic vs partitioned) constrain how far the system can scale, and retrofitting is expensive.** The lesson is not 'always over-engineer' but 'understand the evolution profile of the system and pick an architecture whose scalability ceiling is high enough for the planned lifetime.'"
 
   - id: 9
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       An e-commerce site adds image CDN caching. Page-load drops from 3 s to 800 ms. User satisfaction (Net Promoter Score) climbs. Which quality-attribute relationship is in evidence?
@@ -188,7 +188,7 @@ questions:
     explanation: "**Performance and usability are a classical *synergistic* pair for interactive systems: faster response leads to higher engagement and satisfaction.** Other synergies: testability + changeability (modular code is easy to test and easy to change); modifiability + reusability (loose coupling enables both). Recognizing synergies lets architects invest in choices that win on multiple axes simultaneously."
 
   - id: 10
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       Your team is asked to pick *which three* quality attributes to optimize for in a new system. The product manager says "let's just do all of them." How do you reframe the conversation?
@@ -208,7 +208,7 @@ questions:
     explanation: "**Architectural alignment requires explicit prioritization: 'we will optimize for security, scalability, and changeability; we will accept lower performance and a higher per-request latency budget.' This concrete commitment lets every later design decision be resolved coherently against the priorities.** Saying 'all of them' produces a system that's mediocre on every axis and unable to defend its choices when conflicts surface."
 
   - id: 11
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A robotics team writes: "Adding a new depth sensor requires implementing one sensor adapter and must not require changes to components that process depth images." Why is this a good extensibility specification?
@@ -228,7 +228,7 @@ questions:
     explanation: "**Design-time quality attributes can be measured by ripple effects, not just by time.** This requirement is useful because it says what change is expected and which existing components must remain untouched."
 
   - id: 12
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       Which rewrite turns "payment code should be easy to test" into a stronger testability requirement?
@@ -248,7 +248,7 @@ questions:
     explanation: "**A testability requirement should name controllability and observability goals.** The strong rewrite states which scenarios must be testable and removes the real provider as a dependency during those tests."
 
   - id: 13
-    difficulty: basic
+    difficulty: advanced
     type: multiple
     question: |
       Which statements are quality-requirement smells? Select all that apply.

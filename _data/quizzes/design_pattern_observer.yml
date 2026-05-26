@@ -3,7 +3,7 @@ description: "Test your understanding of the Observer pattern's design decisions
 active: true
 questions:
   - id: 1
-    difficulty: expert
+    difficulty: advanced
     type: single
     question: |
       A stock market dashboard updates 50 UI widgets whenever the price feed changes (1,000 updates/second). The team uses the **Push model**, sending the full price data to every observer on every update. What is the most significant problem with this approach?
@@ -43,7 +43,7 @@ questions:
     explanation: "**This is the lapsed listener problem — observers that never detach keep themselves alive in memory because the subject holds a reference to them.** The subject's reference list keeps the observer objects alive in memory, preventing garbage collection. The SEBook lists three solutions: **explicit unsubscribe** (disciplined but error-prone), **weak references** (language-dependent), or **scoped subscriptions** tied to lifecycle scope (common in modern UI frameworks)."
 
   - id: 3
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       The Observer pattern is widely cited as creating an "inverted dependency flow" that hurts program comprehension. What does this mean in practice?
@@ -63,7 +63,7 @@ questions:
     explanation: "**The inverted dependency means data flows from subject to observer, but in code observers call the subject to register — making the dependency invisible at the point of use.** The SEBook flags this as a comprehension hazard: when a reader encounters an observer for the first time, **there is no sign near the observer of what it depends on** — the wiring lives elsewhere, in the `attach()` call. Modern reactive frameworks try to make the dependency graph explicit at the call site for this reason."
 
   - id: 4
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A colleague says: "We only have one observer right now, so we don't need the Observer pattern — just call the method directly." When is this argument **most valid**?
@@ -83,7 +83,7 @@ questions:
     explanation: "**When there is only one observer that will never change, a direct method call is simpler and the Observer pattern adds complexity for no benefit.** Observer solves the problem of **dynamic, one-to-many** dependencies. If there is truly only one dependent that will never change, the pattern adds complexity (subscriber list, notification mechanism, interface abstractions) without addressing a real problem. The tutorial's design-judgment step makes the same call: a simple calculator with one fixed display does not need Observer."
 
   - id: 5
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       In MVC, the Model acts as the Observer's Subject. The View registers as an Observer, and the Model calls `update()` on all views whenever its setter methods mutate state. Which notification trigger approach is this?
@@ -103,7 +103,7 @@ questions:
     explanation: "**This is automatic notification — the Model's setter methods call `notifyObservers()` internally after every state change, without requiring the Controller to do so.** The SEBook contrasts this with **client-triggered** (the client explicitly calls `notifyObservers()` after a batch of changes, avoiding intermediate notifications but risking forgotten calls) and **batched/deferred** (notifications collected and dispatched at a synchronization point)."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: advanced
     type: single
     question: |
       A `Subject` subclass overrides a state-changing operation inherited from `Subject`. The inherited operation calls `notify()` at its end. Inside the override, the subclass updates its own additional state *after* calling `super()`. What problem does this create?
@@ -123,7 +123,7 @@ questions:
     explanation: "**The subject must be self-consistent before calling `notify()`.** When `super()` runs notify() before the subclass has finished its own state update, observers query a half-updated subject and read stale or inconsistent data. The SEBook recommends a **Template Method**: define a primitive operation for subclasses to override, and make `notify()` the last step of the template method in the abstract Subject — so the object is guaranteed self-consistent whenever subclasses extend Subject operations."
 
   - id: 7
-    difficulty: intermediate
+    difficulty: advanced
     type: multiple
     question: |
       Which of the following are documented **consequences** of the Observer pattern (per the GoF / SEBook)? (Select all that apply)
@@ -159,7 +159,7 @@ questions:
     explanation: "**The `update()` operation needs to tell the observer which subject changed — typically by passing the subject as a parameter.** This is the pull style's natural fit: `update(Subject* changedSubject)` lets the observer query the right source. A pure push style with no subject identity in the call signature cannot distinguish sources. The SEBook flags this under GoF Implementation issue #2 (observing multiple subjects)."
 
   - id: 9
-    difficulty: intermediate
+    difficulty: advanced
     type: single
     question: |
       A subject is destroyed while several observers still hold references to it (e.g., to query its state in `update()`). What is this problem called, and what is the standard remedy?
@@ -179,7 +179,7 @@ questions:
     explanation: "**This is the dangling-reference problem.** It is the dual of the lapsed-listener problem and matters most in languages without garbage collection (e.g., C++). The SEBook's recommended remedy is for the subject to notify its observers as it is destroyed, so they can null out their references — preventing later access through a stale pointer."
 
   - id: 10
-    difficulty: advanced
+    difficulty: expert
     type: single
     question: |
       The dependency graph between subjects and observers in a system is intricate: some observers depend on several subjects at once, and when multiple subjects change in one logical operation, observers must be updated exactly once — not once per source. Which structural addition does the GoF recommend?

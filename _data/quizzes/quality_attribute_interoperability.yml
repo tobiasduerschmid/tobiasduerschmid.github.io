@@ -3,10 +3,10 @@ description: "Apply interoperability principles to real integration problems —
 active: true
 questions:
   - id: 1
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
-      A mobile app sends a JSON payment request to a payment gateway. The gateway parses it without errors, returns a 200 OK, but the customer is charged $10,000 instead of $100. The app sent `{"amount": 100, "currency": "USD"}`; the gateway expected `amount` to be in **cents**. Which kind of interoperability failure is this?
+      A mobile app sends a JSON payment request to a payment gateway. The gateway parses it without errors, returns a 200 OK, but the customer is charged $1 instead of $100. The app sent `{"amount": 100, "currency": "USD"}`; the gateway expected `amount` to be in **cents**. Which kind of interoperability failure is this?
     options:
       - "Syntactic interoperability failure — the JSON did not parse correctly."
       - "Semantic interoperability failure — both sides agreed on the data structure but interpreted the `amount` field with different meanings (dollars vs cents)."
@@ -23,7 +23,7 @@ questions:
     explanation: "**Semantic interoperability means both sides interpret the data the same way. Syntactic interoperability (the JSON parsed) is necessary but not sufficient.** The Mars Climate Orbiter ($327M loss) failed for exactly this reason — one side computed impulses in pound-force-seconds while the other expected newton-seconds. Units, encoding, time zones, and reference frames are the classic semantic gotchas; documenting them rigorously (semantic view, shared dictionaries, schemas with units) is what prevents catastrophes."
 
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A health-system architect must integrate three hospitals' patient-record systems. They write the requirement: "The systems should be interoperable." Why is this insufficient, and what's a properly specified requirement?
@@ -43,7 +43,7 @@ questions:
     explanation: "**Interoperability requirements need the same scenario + metric structure as any quality requirement.** The canonical metric is *percentage of data exchanged correctly* under a specified scenario. Without it the requirement cannot be tested, can't drive design, and can't be verified at handover — exactly the conditions under which integration failures hide for years until they cost millions to fix."
 
   - id: 3
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       Your team integrates with a third-party shipping API. The API returns weights in **pounds**, but your internal warehouse system uses **kilograms**. Per the literature, what is the standard design solution?
@@ -63,7 +63,7 @@ questions:
     explanation: "**The Adapter design pattern is the textbook interoperability tactic when two systems have incompatible interfaces — it converts data formats (syntactic translation) or maps meanings and units (semantic translation) without requiring changes to either system's core logic.** The adapter is a single, testable place where every translation lives, so the dual-unit reality stays contained instead of spreading through every consumer."
 
   - id: 4
-    difficulty: basic
+    difficulty: advanced
     type: multiple
     question: |
       The Global Distribution System (GDS) case from the SEBook illustrates trade-offs interoperability creates. Which statements correctly characterize the GDS dilemma? Select all that apply.
@@ -88,7 +88,7 @@ questions:
     explanation: "**Interoperability and changeability are classical conflicting quality attributes: a widely-adopted standard interface cannot be evolved without coordinating all participants, so it becomes ossified.** This is why standards-driven systems (HL7, banking, EDI, telecom) move slowly — and why fast-evolving systems (microservices internal APIs) often deliberately *avoid* publishing stable interfaces beyond a small consumer set."
 
   - id: 5
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       An architect is designing a public API for a new fintech platform. They face a classic *practical interoperability* tension. Which framing captures it correctly?
@@ -108,7 +108,7 @@ questions:
     explanation: "**Practical interoperability requires balancing two conflicting forces: implementation effort (more complex → less adopted) vs variability (more flexible → more useful). The architectural job is to find the *sweet spot* for the specific integrator profile and use-case range.** Pure simplicity and pure feature-richness both fail in real markets; design choices like sensible defaults, optional fields, and tiered APIs help reach the sweet spot."
 
   - id: 6
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       Two microservices in your e-commerce platform both manage data about 'Users'. The Cart service stores delivery preferences; the Auth service stores credentials and roles. A new engineer proposes sharing the full User model across both services. What does microservice / bounded-context theory recommend instead?
@@ -128,7 +128,7 @@ questions:
     explanation: "**In microservice architectures, interoperability is managed through *bounded contexts*: each service owns its own model for an entity, and interfaces share only the minimal information (typically a unique identifier) needed for correlation.** This keeps each service's internal model free to evolve independently — the entire reason for microservices. 'DRY across services' is a textbook anti-pattern that re-creates a distributed monolith."
 
   - id: 7
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       Your team is integrating with a partner's API. The partner's spec says: "Returns a list of `Order` objects." Your team's QA finds three real interop failures *despite* the JSON parsing successfully every time. Which interop failure mode is most likely the root cause?
@@ -168,7 +168,7 @@ questions:
     explanation: "**The core business motivation for interoperability is 'use existing services instead of reinventing the wheel': specialized, mature providers (Stripe for payments, SendGrid for email, Twilio for SMS) deliver capabilities at a quality and reliability your team cannot match without massive investment.** This is why interoperability is treated as a strategic enabler, not a nice-to-have — it lets the team focus engineering effort on the few capabilities that differentiate the product."
 
   - id: 9
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       A medical records platform wants to demonstrate strong interoperability with hospital systems. They publish a 500-page specification with 200 optional fields and 40 custom data types. Adoption stalls — only 3 hospitals integrate in the first year. Which interop principle did they violate?
@@ -188,7 +188,7 @@ questions:
     explanation: "**A design that maximizes variability without bounding implementation effort fails in the market — adopters look elsewhere.** The medical-records platform paid heavily for variability they didn't need. A more adoptable design might have offered a tight core specification (10 required fields, 10 optional, 3 simple data types) plus an extension mechanism for advanced use, lowering the cost-of-first-integration enough to seed adoption."
 
   - id: 10
-    difficulty: basic
+    difficulty: expert
     type: single
     question: |
       A microservices team faces a hard choice: maintain backward compatibility on their public API forever (so no consumers ever break) or release a clean v2 that simplifies the model but requires consumers to migrate. Which trade-off framing is correct?

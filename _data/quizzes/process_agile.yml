@@ -3,7 +3,7 @@ description: "Apply software-process thinking to real situations — choose betw
 active: true
 questions:
   - id: 1
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       A team is building software for a Mars rover that must launch in 2 years, run autonomously for at least 5 more, and cannot receive software updates after the launch window closes. The product manager insists on Agile. What is the right pushback?
@@ -23,7 +23,7 @@ questions:
     explanation: "**Agile is a powerful default for evolving-requirements / redeployable-software contexts, but it is not universally superior. Safety-critical, single-shot, non-redeployable systems (spacecraft, certified medical implants, aircraft control systems) need processes whose assumptions match: heavy up-front formal specification, rigorous verification, V-model or similar.** The honest engineering response is to match process to context, not to evangelize one process across all contexts."
 
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A consultant says "Agile means no documentation and no planning." How would you respond, citing the Agile Manifesto?
@@ -43,7 +43,7 @@ questions:
     explanation: "**The Manifesto's 'A over B' formulation values *both* sides but prioritizes A when they conflict. Working software, individual interactions, customer collaboration, and adaptability are the *first-resort* priorities; documentation, processes, contracts, and plans serve those priorities, they don't replace them.** Misreading 'over' as 'instead of' produces undisciplined teams that mistake disorganization for agility."
 
   - id: 3
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       A team practices what they call Agile: they hold daily standups, run two-week sprints, and have a Scrum Master. But they also produce a 150-page requirements document up front, refuse to change any requirement once a sprint starts, and demo to the customer only at the end of the engagement. Diagnose what's actually going on.
@@ -63,7 +63,7 @@ questions:
     explanation: "**Cargo-cult Agile adopts the visible rituals (standups, sprints, retrospectives, Scrum Master role) without the values (responsiveness, customer collaboration, working software early). The team feels Agile, the work behaves like Waterfall, and customers see broken software at the end as if nothing changed.** The fix is to start with the values and let the ceremonies serve them — not the reverse."
 
   - id: 4
-    difficulty: basic
+    difficulty: intermediate
     type: multiple
     question: |
       Which of these are **core failures of Waterfall** that Agile was designed to address? Select all that apply.
@@ -88,7 +88,7 @@ questions:
     explanation: "**Waterfall's three core failures: (1) late customer feedback, (2) stability assumption violated by reality, (3) defects expensive to fix because so much depends on them. Agile attacks all three with iterative cycles that surface problems early.** The teams that misuse Agile by reintroducing big-upfront-design and end-only customer feedback re-create Waterfall's failures while paying Agile's ceremony costs."
 
   - id: 5
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       An Agile team is asked to estimate when they will be 'done' with a feature. They reply: "We're delivering a working increment every 2 weeks; you can stop us whenever the product is good enough." What Agile principle does this illustrate?
@@ -128,7 +128,7 @@ questions:
     explanation: "**Self-organizing teams is one of Agile's twelve principles: developers decide how to best organize their work, because they have the best context about trade-offs, dependencies, and risks. Treating them as 'coding monkeys' bypasses that judgment, demoralizes the team, and produces worse decisions.** Healthy Agile organizations push *what* decisions up (priorities, strategy) and *how* decisions down (implementation, tooling, organization).** "
 
   - id: 7
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       Compare **Scrum**, **XP**, and **Lean Software Development** at the highest level. Which framing is most accurate?
@@ -148,7 +148,7 @@ questions:
     explanation: "**The three frameworks emphasize different aspects: Scrum = workflow and roles; XP = engineering practices; Lean = waste elimination.** They are complementary, not alternatives — many teams use Scrum + XP (Scrum's ceremonies + XP's engineering practices) or Scrum + Lean (Scrum's structure + Lean's continuous improvement). Picking based on emphasis (what's the team's weakest area?) often works better than picking one in isolation."
 
   - id: 8
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A startup CEO says: "We're Agile, so we don't need any plans — we just react to customer feedback every two weeks." What's the right correction?
@@ -168,7 +168,7 @@ questions:
     explanation: "**Agile teams plan deliberately and then *revise* the plan based on iteration feedback. The plan is a starting hypothesis, not a commitment. Without any plan, the team has no shared direction; without willingness to revise, the team falls back to Waterfall.** The skill is to plan *just enough* to align effort and then let real evidence reshape the plan as it accumulates."
 
   - id: 9
-    difficulty: basic
+    difficulty: expert
     type: single
     question: |
       A team's product owner wants to demo working software to the customer every iteration but the engineering manager pushes back: "Two-week iterations are too short to produce anything demonstrable." Which Agile principle does the engineering manager's view violate, and what's the right architectural response?
@@ -188,7 +188,7 @@ questions:
     explanation: "**When iteration length friction surfaces, the answer is usually architectural — thinner vertical slices, better deployment automation, decoupled modules — not longer iterations. Lengthening iterations to accommodate big-batch work re-creates Waterfall in slow motion.** The root cause of 'we can't show anything in two weeks' is almost always that the work isn't being sliced thinly enough, often because the architecture forces large changes to ship together."
 
   - id: 10
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       A team is in iteration 7 of 12. Halfway through the iteration, the customer comes back with a high-priority requirement change that affects work already in progress. How should the team respond per Agile values?

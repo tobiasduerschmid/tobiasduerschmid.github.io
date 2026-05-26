@@ -24,21 +24,21 @@ cards:
       Ports organize a component's interfaces into logical groups. **portin** (incoming, on the left edge) receives requests. **portout** (outgoing, on the right edge) sends requests. Ports make it clear which side of the component handles which communication.
 
   - id: 4
-    difficulty: basic
+    difficulty: intermediate
     question: "What is an **assembly connector** (ball-and-socket)?"
     answer: "A connector that links one component's **required** interface to another component's **provided** interface."
     explanation: >
       The ball-and-socket notation shows that the dependency is satisfied: the requiring component can use the providing component. This enables **loose coupling** --- components depend on interfaces, not implementations, so you can swap providers without changing the consumer.
 
   - id: 5
-    difficulty: basic
+    difficulty: intermediate
     question: "When should you use a **component diagram** instead of a **class diagram**?"
     answer: "When modeling the **high-level deployable parts** of a system and their connections, rather than individual code-level classes."
     explanation: >
       Rule of thumb: if you can deploy it, containerize it, or replace it independently, it belongs in a component diagram. Internal implementation details (classes, methods, inheritance) belong in class diagrams.
 
   - id: 6
-    difficulty: basic
+    difficulty: intermediate
     question: "How is a **dependency** shown between components?"
     answer: "A **dashed arrow** from the dependent component to the component it depends on."
     explanation: >

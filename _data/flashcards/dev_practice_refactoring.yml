@@ -52,9 +52,8 @@ cards:
     explanation: "Large refactorings fail when they mix many transformations before feedback. The small-step rhythm makes behavior preservation observable."
 
   - id: 8
-    difficulty: basic
+    difficulty: advanced
     bloom: evaluate
     question: "What is the human supervisor's role when AI performs refactorings?"
     answer: "The human identifies the smell, chooses the transformation, bounds the scope, runs tests after each step, and rejects changes that alter behavior or hide system-level design problems."
     explanation: "AI can execute many catalog refactorings, but it cannot be trusted to decide that the system behavior is preserved without human verification."
-

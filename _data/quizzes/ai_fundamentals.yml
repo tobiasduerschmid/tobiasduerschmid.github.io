@@ -31,7 +31,7 @@ questions:
       3: "AI support is not equally useful in every learner's hands. People with stronger foundations are usually better able to ask precise questions, detect errors, and adapt the result."
     explanation: "**Skilled developers benefit more from AI because it amplifies their existing ability to guide and verify outputs.** Research shows that AI acts as an amplifier; those with stronger foundational skills can better guide, verify, and utilize AI outputs, leading to a larger productivity boost."
   - id: 3
-    difficulty: basic
+    difficulty: intermediate
     question: "Which of these is an example of **'Beneficial Offloading'** for a CS student?"
     options:
       - "Asking AI to solve the core algorithm of a homework assignment."
@@ -50,16 +50,16 @@ questions:
     options:
       - "Any difficulty that makes a student want to give up."
       - "Difficulties that appear during learning but actually trigger deeper processing."
-      - "The difficulty of finding a good internet connection."
+      - "Cognitive load that comes from confusing or poorly written course material."
       - "A state of confusion that has no educational benefit."
     correct_index: 1
     option_feedback:
       0: "Difficulty is only desirable when it remains productive and connected to the learning goal. Overload, discouragement, or impossible tasks can block learning instead of deepening it."
-      2: "An external obstacle is not automatically useful for learning. Desirable difficulties create effortful processing of the material itself."
+      2: "Struggle with badly explained material is *extraneous* cognitive load, not desirable difficulty. Desirable difficulty comes from the structure of the practice itself, not from having to decode unclear instruction."
       3: "An unresolved stuck state is not the goal. Productive challenge helps when it leads to retrieval, discrimination, explanation, or other deeper processing."
     explanation: "**Desirable difficulties** are challenges that might slow down initial performance but result in better long-term retention and deeper understanding."
   - id: 5
-    difficulty: basic
+    difficulty: intermediate
     type: multiple
     question: "Which of the following are considered 'desirable difficulties'? (Select all that apply)"
     options:

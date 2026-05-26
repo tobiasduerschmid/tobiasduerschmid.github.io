@@ -15,7 +15,7 @@ cards:
     explanation: "Disk encryption (e.g., FileVault, BitLocker, LUKS) is the standard countermeasure: a stolen disk reveals only ciphertext that the attacker cannot decrypt without the key."
 
   - id: 3
-    difficulty: basic
+    difficulty: intermediate
     question: "A ransomware attack encrypts the only copy of a database. **Which CIA properties are violated?**"
     answer: "**Integrity** — the on-disk bytes have been overwritten with attacker-controlled ciphertext, an unauthorized modification. **Availability** — the legitimate users can no longer read their data. (Pure ransomware does not violate Confidentiality; modern 'double-extortion' ransomware that *also* exfiltrates would add a confidentiality violation.)"
     explanation: "The standard countermeasures are *backups* (restore from before the attack) and *least-privilege filesystem permissions* (so a single compromised process can't rewrite everything)."
@@ -27,13 +27,13 @@ cards:
     explanation: "Every web vulnerability whose name contains 'injection' (SQL injection, command injection, LDAP injection, NoSQL injection) shares this same root cause."
 
   - id: 5
-    difficulty: basic
+    difficulty: intermediate
     question: "What is the **standard fix** for SQL injection, and *why* does it work?"
     answer: "Use **parameterized queries / prepared statements**: write the SQL with placeholders (`?`, `@0`, `$1`, …) and pass the values as separate arguments to the database driver. This works because the database **parses the SQL once with the placeholders in place** before the values are ever attached, so the values cannot grow new SQL syntax — they are bound into an already-parsed query plan as pure data."
     explanation: "Manual escaping is a fragile, error-prone alternative — it loses to subtleties of every database's quoting rules and to Unicode normalization tricks. Don't roll your own escaping."
 
   - id: 6
-    difficulty: basic
+    difficulty: intermediate
     question: "**Which CIA properties** can a successful SQL injection attack violate?"
     answer: "All three: **Confidentiality** (read sensitive rows from any table the connection can see), **Integrity** (modify, insert, or delete data — `UPDATE … SET role='admin'`, `INSERT` a backdoor account, `DROP TABLE`), and **Availability** (less common, but possible — drop tables, delete rows, or run very expensive queries to exhaust the database)."
     explanation: "SQLi is one of the few vulnerabilities that can hit all three CIA properties at once, which is part of why it has stayed so high on the OWASP Top 10 for so long."
@@ -45,13 +45,13 @@ cards:
     explanation: "SQLi: code-vs-data confusion in the database. XSS: code-vs-data confusion in the browser. Same underlying shape, different victim, different defenses."
 
   - id: 8
-    difficulty: basic
+    difficulty: intermediate
     question: "What are the main **defenses against XSS**?"
     answer: "(1) **Output encoding** — escape HTML metacharacters (`<` → `&lt;`, `>` → `&gt;`, `\"` → `&quot;`, `&` → `&amp;`) when rendering user content. Modern templating engines (React JSX, Vue `{{ }}`, Django, Jinja2) escape by default. (2) **Content Security Policy (CSP)** — an HTTP header that restricts which script sources the browser will execute, defending in depth even if encoding fails. (3) **`HttpOnly` cookies** for session tokens — so a successful XSS cannot directly read the token."
     explanation: "Escaping is the foundation; CSP and `HttpOnly` are layers on top. Most XSS bugs in the wild come from explicitly *bypassing* the templating engine's default escaping (`dangerouslySetInnerHTML`, `mark_safe`, `|safe`, `v-html`)."
 
   - id: 9
-    difficulty: basic
+    difficulty: intermediate
     question: "**Which CIA properties** does a successful XSS attack typically violate?"
     answer: "**Confidentiality** (script reads cookies, tokens, DOM contents, and exfiltrates them) and **Integrity** (script modifies the page, submits forms in the victim's name, posts on their behalf, changes settings). Availability violations are possible (a runaway script can wedge a browser tab) but uncommon in practice."
     explanation: "The reason XSS matters so much in the real world is that the attacker borrows the *trusted site's identity* in the victim's browser — the same-origin policy is no defense against a script that the trusted page itself appears to ship."
@@ -63,7 +63,7 @@ cards:
     explanation: "Symmetric encryption is what TLS uses for the bulk data channel after the handshake. The handshake itself uses public-key cryptography to *establish* the symmetric key — combining the two solves the key-distribution problem."
 
   - id: 11
-    difficulty: basic
+    difficulty: intermediate
     question: "Define **public-key (asymmetric) cryptography**, and explain how it solves the key-distribution problem."
     answer: "**Public-key cryptography** generates a *pair* of mathematically linked keys: a **public key** that anyone may have, and a **private key** kept secret by the owner. A message encrypted with one key of the pair can only be decrypted by the *other* key. To send Alice a private message, Bob encrypts with **Alice's public key** — only her private key can decrypt it. No prior shared secret is needed; Alice's public key can be published freely."
     explanation: "RSA, ECC (elliptic-curve), and Diffie-Hellman are the standard families. Public-key operations are slow per byte, so they are typically used to *negotiate a symmetric key* that does the bulk encryption — the design at the heart of TLS."
@@ -75,43 +75,43 @@ cards:
     explanation: "Common confusion: students reach for *Alice's* private key by analogy with signatures. That direction (encrypt with one's own private key) is what produces a **signature**, not a private message — anyone with Alice's public key could decrypt it, so the contents are not secret."
 
   - id: 13
-    difficulty: basic
+    difficulty: intermediate
     question: "What is a **digital signature**, and how does it work?"
     answer: "A **digital signature** proves that a document was produced by the holder of a particular private key, and that the document has not been altered. The signer (1) computes a cryptographic hash of the document (SHA-256, e.g.); (2) encrypts the *hash* with their *private* key — that encrypted hash is the signature. To verify, anyone with the document, the signature, and the signer's *public* key decrypts the signature, recomputes the hash from the document, and checks the two match."
     explanation: "Signatures provide *integrity and authenticity* — they do **not** provide confidentiality (the document is sent in the clear next to its signature). For both confidentiality and authenticity, encrypt-then-sign or sign-then-encrypt — there are subtle ordering issues; libraries like `libsodium` handle this for you."
 
   - id: 14
-    difficulty: basic
+    difficulty: advanced
     question: "**Why** do digital signature schemes hash the document first, instead of encrypting the whole document with the private key?"
     answer: "**Performance.** Public-key operations are roughly three orders of magnitude slower per byte than a fast hash like SHA-256. Hashing reduces every document — regardless of size — to a fixed-length digest (32 bytes for SHA-256), so the slow public-key operation runs over those 32 bytes instead of the whole document. The hash's collision-resistance also means an attacker cannot construct a *different* document with the same hash and therefore the same signature."
     explanation: "Without hashing, signing a 1 GB file would require running RSA over a gigabyte of data. With hashing, RSA still runs over 32 bytes — independent of the file's size."
 
   - id: 15
-    difficulty: basic
+    difficulty: intermediate
     question: "**Why is sending the username and password on every request** a bad authentication design?"
     answer: "(1) **Slow** — the server must verify the password (with a deliberately slow hash like bcrypt or Argon2) on every request, adding tens of milliseconds of CPU per call. (2) **Insecure** — the cleartext password lives in the client's memory for the lifetime of the session and crosses the network on every request, multiplying the chances of leaking via a log file, debug trace, or proxy header."
     explanation: "The standard fix is to authenticate *once* with username and password and then issue a short-lived token (session ID or JWT) that rides on subsequent requests. The expensive password check happens once; the cheap token check happens on every call."
 
   - id: 16
-    difficulty: basic
+    difficulty: advanced
     question: "How does **session-based authentication** (with a session cookie) work, and what are the three cookie flags that harden it?"
     answer: "After successful login, the server generates a random opaque **session ID** mapping to the user, stores it in a server-side session store, and returns it to the client in a cookie. The browser automatically attaches the cookie to every subsequent request to the same domain. Three hardening flags: **`HttpOnly`** (cookie not readable from JavaScript), **`Secure`** (cookie only sent over HTTPS), **`SameSite=Strict`** or **`Lax`** (cookie not attached to cross-site requests, defending against CSRF)."
     explanation: "Sessions are stateful (the server keeps a session store) but easy to revoke — invalidate the row in the store and the session is dead immediately."
 
   - id: 17
-    difficulty: basic
+    difficulty: intermediate
     question: "What is a **JSON Web Token (JWT)**, and how does it differ from a session cookie?"
     answer: "A **JWT** is a small encoded JSON document — typically `{ sub: <user-id>, exp: <expiry>, … }` — **digitally signed by the server's key**. The client attaches it to every request (in an `Authorization: Bearer …` header or in a cookie). The server verifies the signature with its own key and trusts the claims **without consulting any database**. Unlike a session cookie, there is no server-side session store; the JWT *is* the session, and the signature is what makes it forgery-proof."
     explanation: "Statelessness is the JWT win (no shared session store; easier horizontal scaling). The price is harder revocation — without a session store, a stolen JWT remains usable until its `exp` time."
 
   - id: 18
-    difficulty: basic
+    difficulty: advanced
     question: "What are the **trade-offs** between session cookies and JWTs?"
     answer: "**Session cookies:** stateful (need a session store), easy to revoke (delete the row), simple. **JWTs:** stateless on the server (no session store; easier horizontal scaling), but harder to revoke (a stolen JWT stays usable until `exp`). Both are vulnerable to XSS-driven session-riding; both should be served only over TLS. JWTs in `localStorage` are *XSS-readable* (avoid). JWTs in `HttpOnly` + `SameSite` cookies match the session-cookie security profile."
     explanation: "Standard production pattern for JWTs: short access-token expiry (5–15 min) plus a longer-lived refresh token tracked server-side. The refresh token gives you back a revocation lever; the short access-token expiry bounds the damage of a leak."
 
   - id: 19
-    difficulty: basic
+    difficulty: advanced
     question: "Does the **`HttpOnly`** cookie flag fully protect a session against XSS? Explain."
     answer: "**No.** `HttpOnly` prevents JavaScript from *reading* the cookie, so a successful XSS attack cannot directly *exfiltrate* the session token. But the script can still *use* the session: any `fetch('/api/...', { credentials: 'include' })` call will have the cookie attached automatically by the browser, so the attacker rides the session in the victim's browser without ever touching the raw token. This is sometimes called *session-riding*."
     explanation: "`HttpOnly` is valuable but not sufficient. Defense in depth: prevent XSS in the first place (output encoding), add a strict CSP, set `SameSite=Strict` on session cookies, and require fresh authentication for sensitive actions (transfer money, change password)."
@@ -123,31 +123,31 @@ cards:
     explanation: "Zero Trust replaced the older 'castle and moat' / perimeter model, which assumed that anything inside the corporate network was trustworthy. That assumption fails against insider threats, compromised internal hosts, and supply-chain attacks."
 
   - id: 21
-    difficulty: basic
+    difficulty: intermediate
     question: "What is **security through obscurity**, and why is it a bad foundation?"
     answer: "**Security through obscurity** is the practice of relying on *hiding the design or mechanism* of a system to keep it secure (a hidden URL, a custom-rolled hash, an unpublished port). It is a bad foundation because as soon as anyone reverses or discovers the design, the entire defense collapses — the lecture's analogy is hiding the house key in a flowerpot. Real security must rest on something that stays secret even when the design is public — typically a key — which is what the **Open Design** principle requires."
     explanation: "Obscurity is not useless; it is just not a foundation. Hiding your specific framework versions and config (*complementary obscurity*) is reasonable defense-in-depth on top of strong open mechanisms — never instead of them."
 
   - id: 22
-    difficulty: basic
+    difficulty: advanced
     question: "When should you apply **public scrutiny** vs. **complementary obscurity**?"
     answer: "**Public scrutiny** when proposing a *new* security approach or algorithm — expose the design to the security community so weaknesses are found before attackers exploit them. **Complementary obscurity** when *deploying* an existing, well-scrutinized technology in a real product — hide implementation specifics (framework versions, configuration, internal endpoints) to slow down opportunistic attackers who look for known vulnerabilities. The two apply to different layers and are not contradictory."
     explanation: "AES, RSA, and TLS are all openly published — they had to be, to earn trust. But you should not advertise that your production server runs Apache 2.4.49 with a particular CVE outstanding."
 
   - id: 23
-    difficulty: basic
+    difficulty: intermediate
     question: "State the **Principle of Least Privilege** and give one concrete application."
     answer: "**Principle of Least Privilege**: every program and every privileged user of the system should operate using the **least set of privileges necessary** to complete its job. Concrete application: split a monolithic app into small components, each with narrowly scoped permissions — the email-notification service holds *only* the email-API credential, the image-upload service holds *only* write access to the upload bucket. If one component is compromised, the blast radius is limited to what that component's credentials can do."
     explanation: "Originally formulated by Saltzer and Schroeder (1975). Cloud IAM systems (AWS IAM, GCP IAM, Kubernetes RBAC) are designed around it. Running every service as the database owner with full network egress is one of the most common findings in real security audits — and one of the most damaging when exploited."
 
   - id: 24
-    difficulty: basic
+    difficulty: intermediate
     question: "What four questions does a **security plan** answer?"
     answer: "(1) **Security model** — *what are you defending?* (assets: data, services, secrets, reputation). (2) **Threat model** — *who might be attacking, and what are they trying to achieve?* (3) **Attack surface** — *which parts of the system are exposed to an attacker?* (4) **Protection mechanisms** — *how do we prevent (or detect) compromise?*"
     explanation: "Walk these four for any system you build or inherit. A defense built without a matching threat model fails — the foil-cover-on-an-emergency-phone is the canonical example."
 
   - id: 25
-    difficulty: basic
+    difficulty: advanced
     question: "What four dimensions does a useful **threat model** describe?"
     answer: "(1) **Knowledge** — what does the attacker already know? (Public docs only? Stolen source code? Insider with credentials?) (2) **Actions** — what can they actually *do*? (Send web requests? Run code on a guest VM? Tap the network?) (3) **Resources** — how much time, money, and infrastructure can they spend? (Bored teenager? Criminal cartel? Nation-state?) (4) **Incentive** — *why* do they want to compromise the system? (Financial gain? Espionage? Vandalism?)"
     explanation: "Different threat models warrant different defenses. A consumer mobile app and a defense contractor's collaboration tool may use the same primitives (TLS, auth, encryption at rest) but the *strength* and *layering* differ by orders of magnitude."
@@ -159,13 +159,13 @@ cards:
     explanation: "Standard moves to shrink attack surface: turn off unused features, close unused ports, drop unused dependencies, restrict admin interfaces to a private network, expose only the smallest public API needed. The Principle of Least Privilege shrinks the *blast radius* once an attacker is in; shrinking the attack surface tries to keep them out in the first place."
 
   - id: 27
-    difficulty: basic
+    difficulty: advanced
     question: "**Why are session cookies still vulnerable to XSS** even when `HttpOnly` is set?"
     answer: "Because XSS gives the attacker code execution *inside the trusted page's origin*. Even though the script cannot read the cookie (thanks to `HttpOnly`), it can still issue authenticated `fetch` requests through the browser — the browser will attach the cookie automatically. So the attacker rides the session in the victim's browser without ever touching the raw token. This is sometimes called *session-riding*."
     explanation: "The right framing: `HttpOnly` prevents *theft* of the session ID, not *use* of the session. Defense in depth — strict CSP, output encoding, `SameSite=Strict` — is what prevents XSS from being weaponized in the first place."
 
   - id: 28
-    difficulty: basic
+    difficulty: advanced
     question: "Distinguish **authenticity** from the three CIA properties. Why isn't it part of the triad?"
     answer: "**Authenticity** is the property that a message can be reliably attributed to a particular sender — typically achieved with a digital signature or a message-authentication code. It is closely related to integrity (both detect tampering) but adds the *who*. The classical CIA triad omits it because authenticity and the related properties of *non-repudiation* and *accountability* were historically treated as distinct goals. Modern variants (CIANA, the Parkerian hexad) often add Authenticity (and sometimes Possession, Utility) explicitly — useful, but not what the standard CIA triad refers to."
     explanation: "On a quiz that asks about 'the CIA triad', stick with C/I/A. If the question is about general security goals, naming Authenticity / Non-repudiation alongside is reasonable and shows depth."

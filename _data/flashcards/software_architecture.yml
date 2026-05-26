@@ -9,7 +9,7 @@ cards:
     explanation: "The key phrase is 'needed to reason.' Architecture documentation is not just boxes and lines; it captures structures that let engineers predict qualities such as maintainability, performance, availability, and deployment behavior."
 
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     question: "How does the decision-based definition of architecture differ from the structural definition?"
     answer: "The **structural definition** treats architecture as a snapshot of analyzable structures. The **decision-based definition** treats architecture as the set or history of consequential design decisions, including rationale and trade-offs."
     explanation: "A component diagram may show that a service publishes to a broker; an architecture decision record explains why the team accepted asynchronous messaging's debugging cost to gain evolvability."
@@ -27,31 +27,31 @@ cards:
     explanation: "At architecture time, functional requirements are broad: 'book flights,' 'process payments,' 'control the robot.' Constraints shrink the design space; quality attributes decide which structures are worth paying for."
 
   - id: 5
-    difficulty: basic
+    difficulty: intermediate
     question: "Distinguish a requirement from a constraint."
     answer: "A **requirement** states what the system must accomplish. A **constraint** has already made part of the design decision and limits how the system can be built."
     explanation: "'Store records durably' is a requirement. 'Store records in the customer's existing PostgreSQL cluster' is a constraint. Both matter, but they play different roles in design."
 
   - id: 6
-    difficulty: basic
+    difficulty: intermediate
     question: "What is Attribute-Driven Design (ADD)?"
     answer: "ADD is an iterative architecture design method: select a quality attribute to improve, choose the part of the system to refine, sketch candidate decisions, analyze their impact on the target and competing qualities, then iterate."
     explanation: "ADD assumes architecture is trade-off work. The goal is not to draw the perfect architecture on the first pass; it is to improve the design deliberately against the most important drivers."
 
   - id: 7
-    difficulty: basic
+    difficulty: intermediate
     question: "What is the difference between a **module view** and a **component-and-connector view**?"
     answer: "A **module view** shows design-time code units such as files, packages, layers, and imports. A **component-and-connector view** shows runtime units such as processes, services, brokers, nodes, and the communication paths between them."
     explanation: "A shared library can appear once in the module view and be compiled into several runtime components. The views are related, but they are not interchangeable."
 
   - id: 8
-    difficulty: basic
+    difficulty: advanced
     question: "Which architectural view would you use to reason about each concern: maintainability, database structure, deployment/message flow, and protocol timing?"
     answer: "**Maintainability:** module view. **Database structure:** data view. **Deployment and message flow:** component-and-connector view. **Protocol timing or complex interactions:** behavioral view."
     explanation: "The point of multiple views is not documentation variety. Each view exposes a different structure, so each supports different claims."
 
   - id: 9
-    difficulty: basic
+    difficulty: advanced
     question: "Why can't a layered module view by itself prove availability?"
     answer: "Layers are code organization before deployment. Availability depends on runtime components, failure modes, redundancy, recovery, monitoring, and deployment topology."
     explanation: "A lower module is not independently 'down' while an upper module is 'up.' Availability is a runtime property, so the runtime and behavioral views must be part of the analysis."
@@ -63,7 +63,7 @@ cards:
     explanation: "Architecture diagrams are representations, not the architecture itself. The real architecture is embodied in the code and runtime artifacts."
 
   - id: 11
-    difficulty: basic
+    difficulty: intermediate
     question: "Distinguish architectural **drift** and **erosion**."
     answer: "**Drift** adds design decisions not captured in the intended architecture without directly violating its rules. **Erosion** directly violates the intended architecture's rules or constraints."
     explanation: "Both create a gap between plan and reality. Erosion is more severe because the implemented system contradicts the rules that were supposed to preserve the desired qualities."

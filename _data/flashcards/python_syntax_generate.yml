@@ -28,7 +28,7 @@ cards:
     answer: "`[x for x in nums if x > 20]`"
     explanation: "A list comprehension with a filter: `[expression for var in iterable if condition]`."
   - id: 6
-    difficulty: basic
+    difficulty: intermediate
     question: "Read a file called `data.txt` line by line, safely closing it even if an error occurs."
     answer: |
       ```python
@@ -47,7 +47,7 @@ cards:
       ```
     explanation: "`enumerate()` yields `(index, value)` pairs. This is the Pythonic alternative to `for i in range(len(fruits))`."
   - id: 8
-    difficulty: basic
+    difficulty: intermediate
     question: "Find all numbers (sequences of digits) in the string `\"Error 404 and 500\"` using regex."
     answer: |
       ```python
@@ -56,12 +56,12 @@ cards:
       ```
     explanation: "`re.findall()` returns a list of all matches. `\\d+` matches one or more digits. Use raw strings `r'...'` for regex patterns."
   - id: 9
-    difficulty: basic
+    difficulty: advanced
     question: "Replace all IP addresses in a string `text` with `\"x.x.x.x\"` using regex."
     answer: "`re.sub(r'\\d+\\.\\d+\\.\\d+\\.\\d+', 'x.x.x.x', text)`"
     explanation: "`re.sub(pattern, replacement, string)` replaces all matches. This is the Python equivalent of `sed 's/old/new/g'`."
   - id: 10
-    difficulty: basic
+    difficulty: advanced
     question: "Write a script that prints an error to stderr and exits with code 1 if no command-line argument is provided."
     answer: |
       ```python
@@ -77,7 +77,7 @@ cards:
     answer: "`print(type(x))`"
     explanation: "`type()` returns the type of any object. Python is dynamically typed — types are checked at runtime, not compile time."
   - id: 12
-    difficulty: basic
+    difficulty: intermediate
     question: "Check if a regex pattern matches anywhere in a string `line`, returning `True` or `False`."
     answer: |
       ```python

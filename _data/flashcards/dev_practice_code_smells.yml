@@ -24,21 +24,21 @@ cards:
     explanation: "The goal is not tiny methods for their own sake. The goal is to make each conceptual step visible and separately reviewable."
 
   - id: 4
-    difficulty: basic
+    difficulty: intermediate
     bloom: apply
     question: "How do Large Class and Divergent Change relate?"
     answer: "A Large Class often grows by taking on multiple responsibilities. Divergent Change is the behavioral symptom: the same class is edited for unrelated reasons."
     explanation: "Both point toward separating responsibilities so each class has one primary reason to change."
 
   - id: 5
-    difficulty: basic
+    difficulty: intermediate
     bloom: apply
     question: "How are Long Parameter List and Data Clumps related?"
     answer: "A Long Parameter List becomes especially suspicious when the same parameters travel together repeatedly. Those repeated groups are Data Clumps and often deserve a named object."
     explanation: "The named object both shortens signatures and captures a domain concept that primitives were hiding."
 
   - id: 6
-    difficulty: basic
+    difficulty: intermediate
     bloom: analyze
     question: "Distinguish Divergent Change from Shotgun Surgery."
     answer: "**Divergent Change:** one module changes for many unrelated reasons. **Shotgun Surgery:** one conceptual change requires many tiny edits across scattered modules."
@@ -52,9 +52,8 @@ cards:
     explanation: "The typical fix is Move Method or Extract Method plus Move Method, placing behavior closer to the data and invariants it uses."
 
   - id: 8
-    difficulty: basic
+    difficulty: advanced
     bloom: evaluate
     question: "Why should code smells be handled with judgment instead of automatic rules?"
     answer: "A smell may be justified by performance, framework constraints, simple one-off code, or a trade-off that keeps the design clearer. The question is whether the structure makes future change cheaper or more expensive."
     explanation: "Mechanical smell removal can create worse design. Good refactoring starts from the change pressure the code actually faces."
-

@@ -3,7 +3,7 @@ description: "Test your understanding of the Strategy pattern's structure, its c
 active: true
 questions:
   - id: 1
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A team is designing an e-commerce checkout system. Customers can pay by credit card, PayPal, gift card, or bank transfer. The CTO wants to add support for cryptocurrency next quarter without modifying any existing checkout code. Which design best fits?
@@ -23,7 +23,7 @@ questions:
     explanation: "**Strategy with `PaymentMethod` as the interface and concrete classes per method is the right fit.** Adding cryptocurrency means writing a new `CryptoPayment` class implementing `PaymentMethod` — no existing code changes (Open/Closed). The client picks which strategy to construct; `Checkout` delegates `pay()` to it without knowing the payment type."
 
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       Consider this UML structure: a `Context` class holds a reference to an interface, and several concrete classes implement that interface. The Context delegates an operation to the held implementation, which can be swapped via a setter. **Both** the State and Strategy patterns have exactly this structure. What actually distinguishes them?
@@ -43,7 +43,7 @@ questions:
     explanation: "**The distinguishing axis is *who decides the next implementation*.** In State, the Context's own internal logic transitions between concrete states (e.g., `NoQuarterState.insertQuarter()` calls `context.setState(new HasQuarterState())`). In Strategy, the client picks the implementation (`new Sort(new QuickSortStrategy())`) and strategies do not transition between each other. The UML is the same; the *intent* differs."
 
   - id: 3
-    difficulty: basic
+    difficulty: intermediate
     type: multiple
     question: |
       Which of the following are **valid reasons** to use the Strategy pattern? Select all that apply.
@@ -68,7 +68,7 @@ questions:
     explanation: "**Strategy is justified by present complexity (conditional dispatch, varying behavior, hidden data, multiple subclasses differing in one axis) — not by speculative future flexibility.** All four 'present complexity' cases are Applicability criteria from the GoF catalog. Speculation alone is the textbook anti-pattern: wait until you have at least three concrete variants or a concrete plan for runtime swapping."
 
   - id: 4
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       In Head First Design Patterns' SimUDuck example, a first attempt puts `fly()` and `quack()` directly on the `Duck` superclass. This is then refactored to use `Flyable` and `Quackable` interfaces. Why is the *interface* approach **still** considered inferior to a Strategy-based design?
@@ -88,7 +88,7 @@ questions:
     explanation: "**Plain interfaces fix the inheritance problem (no unwanted `fly()` on `RubberDuck`) but lose code reuse.** Two ducks that share an identical fly behavior must each provide their own `fly()` implementation. Strategy fixes both at once: a `FlyWithWings` ConcreteStrategy is implemented *once* and shared by every duck that flies normally — composition gives you both targeted behavior assignment *and* code reuse."
 
   - id: 5
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       A `Compositor` interface defines `compose(natural[], stretch[], shrink[], width, breaks[])`. Three ConcreteStrategies implement it: `SimpleCompositor` (greedy), `TeXCompositor` (paragraph-optimal), and `ArrayCompositor` (fixed-width grids). The `SimpleCompositor` ignores the `stretch` and `shrink` arrays entirely. Which Strategy *consequence* does this illustrate?
@@ -108,7 +108,7 @@ questions:
     explanation: "**This is the *communication overhead* consequence from the GoF Consequences list.** Because the Strategy interface is shared by all ConcreteStrategies, the Context must prepare data sufficient for the most demanding strategy — and simpler ones (like `SimpleCompositor`) waste that preparation. The fix is either to accept the overhead or tighten the coupling between Strategy and Context to allow strategy-specific interfaces."
 
   - id: 6
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A teammate writes:
@@ -136,7 +136,7 @@ questions:
     explanation: "**Null Object turns 'absence of behavior' into a real, polymorphic implementation of behavior.** The Context's call site stays uniform (`flyBehavior.fly()`) without scattered null guards, and the design intent — 'this duck does not fly' — is encoded as a named type (`FlyNullObject`) rather than as a missing reference. This is the same reason `Optional<T>.empty()` beats raw nulls in modern APIs."
 
   - id: 7
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       Which of the following common library mechanisms is **NOT** a use of the Strategy pattern?

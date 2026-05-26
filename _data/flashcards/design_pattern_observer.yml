@@ -8,17 +8,17 @@ cards:
     answer: "Maintaining a one-to-many dependency between objects efficiently and without tight coupling—when one object changes state, all dependents are notified automatically."
     explanation: "The Subject maintains a dynamic list of Observers and notifies them via `update()`. This avoids polling and avoids hardcoding the subject to specific dependents."
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     question: "Push vs. Pull model in Observer: which has tighter coupling?"
     answer: "The **Pull model**, because observers must hold a reference back to the subject and know its interface well enough to query for specific data."
     explanation: "Push: subject sends all data. Pull: subject sends minimal notification, observers query. A hybrid approach (push the event type, observers decide whether to pull) is most common in practice."
   - id: 3
-    difficulty: basic
+    difficulty: intermediate
     question: "What is the **lapsed listener problem**?"
     answer: "A memory leak where observers register with a subject but are never unsubscribed, causing the subject's reference to keep them alive in memory."
     explanation: "Solutions: explicit unsubscribe (disciplined but error-prone), weak references (language-dependent), or scoped subscriptions tied to lifecycle management."
   - id: 4
-    difficulty: basic
+    difficulty: advanced
     question: "What does 'inverted dependency flow' mean for Observer?"
     answer: "In code, observers call the subject to register (dependency points observer→subject), but data conceptually flows subject→observer—making it hard to trace what depends on what."
     explanation: "This inversion is widely cited as a comprehension hazard for the Observer pattern: when encountering an observer, there is no nearby sign of what it depends on; the reader must trace back to the registration call."

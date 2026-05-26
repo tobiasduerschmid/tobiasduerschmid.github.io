@@ -23,7 +23,7 @@ questions:
     explanation: "**Unix shell pipelines are the canonical pipes-and-filters example.** Each command is a stateless, independent filter; the `|` operator is the pipe connector that the OS implements via buffered file descriptors. The style's incremental-processing property is what lets a multi-gigabyte `cat` start producing output to `grep` immediately, without waiting for the whole file."
 
   - id: 2
-    difficulty: expert
+    difficulty: advanced
     type: single
     question: |
       A filter in your team's data pipeline reads from a Kafka topic, transforms records, **and also queries a shared Redis cache** to enrich the data. A reviewer flags this as a violation of the pipe-and-filter style. Which invariant is broken, and what is the consequence?
@@ -43,7 +43,7 @@ questions:
     explanation: "**Platonic pipe-and-filter requires filters to share no state with other filters or external resources — they communicate only through pipes.** When filters reach into a shared database or cache, the embodied style departs from the platonic ideal: the system loses its compositional analyzability (you can no longer reason about behavior from the filter graph alone) and breaks the easy parallelism guarantee, because filters now contend on the shared resource."
 
   - id: 3
-    difficulty: expert
+    difficulty: advanced
     type: single
     question: |
       A team builds a pipeline `parser | sort | aggregate | format`. They benchmark and find that despite each filter running in its own thread, the downstream stages cannot start work until `sort` finishes — the system runs in lockstep, not in parallel. What architectural property of `sort` causes this?
@@ -63,7 +63,7 @@ questions:
     explanation: "**This is the *sorting paradox*: a true pipe-and-filter pipeline requires *incremental* processing, but sort is mathematically non-incremental — the first output element cannot be produced until all input has been examined.** Including a non-incremental filter degenerates the pipeline into a batch-sequential system on the affected segment, sacrificing the concurrent-execution benefit the style promised. The literature debates whether this makes the entire system a batch-sequential architecture or merely a 'degenerate' pipeline."
 
   - id: 4
-    difficulty: basic
+    difficulty: intermediate
     type: multiple
     question: |
       Which quality attributes does pipe-and-filter **promote**? Select all that apply.
@@ -88,7 +88,7 @@ questions:
     explanation: "**Pipe-and-filter trades fault tolerance and interactivity for reconfigurability, reusability, and natural concurrency.** This is why it dominates batch data processing, ETL, signal processing, and compilers — where the inputs are well-defined streams and per-user interaction is not the model — and why it is a poor choice for interactive UIs or fault-critical real-time control systems."
 
   - id: 5
-    difficulty: expert
+    difficulty: intermediate
     type: single
     question: |
       A team has a CPU-bound image-processing pipeline (`decode | denoise | sharpen | encode`). They want maximum throughput on a 16-core server. Buschmann's three execution models are *push*, *pull*, and *active*. Which fits, and why?
@@ -108,7 +108,7 @@ questions:
     explanation: "**Active pipelines run each filter in its own thread of control, so independent filters can saturate multiple cores in parallel — the pipe buffers naturally synchronize producers and consumers.** Push and pull pipelines have a single active actor (source or sink) and run all filters on one thread. For CPU-bound work on multi-core hardware, the active model is the only one that scales."
 
   - id: 6
-    difficulty: expert
+    difficulty: advanced
     type: single
     question: |
       A team builds a transformation pipeline where every filter accepts and produces a complex XML document. Profiling shows 70% of CPU time is spent in XML parse and serialize. What design choice are they paying for, and what could they do?
@@ -128,7 +128,7 @@ questions:
     explanation: "**To buy filter recomposability, the style requires a common data format that every filter parses and re-serializes. The cost is repeated parse/serialize work at every pipe — sometimes a majority of CPU time.** Mitigations: use a compact binary format (Protobuf, Arrow), keep partially-parsed in-memory representations across pipe boundaries within one process, or fuse adjacent filters that pass data through unchanged. Each mitigation gives up some of the style's recomposability."
 
   - id: 7
-    difficulty: expert
+    difficulty: advanced
     type: single
     question: |
       Your batch ETL pipeline runs hourly. Filter 7 (out of 12) crashes mid-stream after 40 minutes of processing. The traditional pipe-and-filter style offers no built-in recovery. Which fix preserves the style's benefits best?
@@ -148,7 +148,7 @@ questions:
     explanation: "**Lattanze's broadcasting filter introduces a side-channel for errors via Observer/event signaling to an external monitor — a deliberate hybrid that adds event-driven structure on top of data-flow to address pipe-and-filter's recognized error-handling weakness.** This preserves filter independence on the happy path while giving operations a structured way to detect, log, and recover from failures. The trade-off is architectural complexity: the system is no longer a pure data-flow design."
 
   - id: 8
-    difficulty: expert
+    difficulty: intermediate
     type: single
     question: |
       A startup is building a real-time collaborative whiteboard. Users see each other's strokes instantly. A senior engineer suggests pipe-and-filter for the rendering pipeline. Push back — why is this a poor style fit?
@@ -168,7 +168,7 @@ questions:
     explanation: "**Interactivity is the style's headline inhibited quality — filters are transformational and have no concept of rich cyclic feedback or per-user session state.** Interactive systems are better served by an event-driven style (publish-subscribe, model-view-controller, reactive frameworks) where the runtime is built around responding to user input and propagating change in a graph, not pushing a stream through a chain."
 
   - id: 9
-    difficulty: expert
+    difficulty: intermediate
     type: single
     question: |
       A compiler is structured as `lexer | parser | typecheck | optimize | codegen`. Which property of this design is most directly attributable to the pipe-and-filter style (rather than just being a generic engineering benefit)?
@@ -188,7 +188,7 @@ questions:
     explanation: "**The replaceability of each pass is the pipe-and-filter payoff: filter agnosticism means swapping a parser for a new one doesn't touch the lexer or the typechecker — they continue to consume their inputs and produce their outputs.** This is why compilers like LLVM are explicitly architected as pipelines: research backends, new languages, and new optimizations can plug in without rewriting the whole chain."
 
   - id: 10
-    difficulty: expert
+    difficulty: intermediate
     type: single
     question: |
       Your team uses Apache Spark for batch analytics: `read | filter | join | aggregate | write`. A junior dev says "Spark is publish-subscribe because data flows through stages." Correct them.

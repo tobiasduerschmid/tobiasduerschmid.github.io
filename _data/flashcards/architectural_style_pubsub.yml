@@ -21,13 +21,13 @@ cards:
     explanation: "Push is efficient when most subscribers will use the data. Pull is efficient when few will, or when the data is large — it trades extra round trips for lower bandwidth. The choice is per-event, not per-system."
 
   - id: 4
-    difficulty: basic
+    difficulty: intermediate
     question: "How does **topic-based** routing work, and what's its main trade-off?"
     answer: "Subscribers register on a named channel string (e.g., `market.quotes.NASDAQ`). Routing is simple and fast, but topic names become part of the architecture — every publisher and subscriber agrees on the strings, so the names are load-bearing connectors."
     explanation: "Topic-based is the most widespread routing model. The cost of its simplicity is that the topic strings become first-class architectural contracts — rename one inconsistently (as the Autoware.AI ROS commit did) and the runtime message flow silently breaks."
 
   - id: 4b
-    difficulty: basic
+    difficulty: advanced
     question: "How does **content-based** routing work, and what's its main trade-off?"
     answer: "Subscribers express predicates over event contents (e.g., `company == 'TELCO' and price < 100`). The broker evaluates each event's attributes against subscriber-defined pattern rules and delivers only matches. Trade-off: matching is more expressive but costs more at the broker than a topic hash lookup."
     explanation: "Content-based routing gives finer-grained delivery and dynamic predicates rather than predefined channels. Use it when filtering must happen on payload attributes; expect higher broker CPU than topic-based when subscriptions are numerous or predicates are expensive."
@@ -39,7 +39,7 @@ cards:
     explanation: "The Event Channel is one of four topology variants the literature describes (alongside list-based, broadcast-based, and content-based). Its appeal is that complex QoS, buffering, and filtering live in the channel instead of being scattered across every publisher and subscriber."
 
   - id: 5
-    difficulty: basic
+    difficulty: intermediate
     question: "Why is pub-sub generally a poor fit for systems with hard real-time deadlines?"
     answer: "Pub-sub communication is asynchronous, so developers have less control over message ordering, and delivery is often not guaranteed. The event bus also adds a layer of indirection that fundamentally increases latency. The style is therefore generally inappropriate for hard real-time deadlines or strict transactional state sharing."
     explanation: "The style trades determinism for evolvability. DDS is one purpose-built exception — pub-sub for real-time distributed systems — but the mainstream default is asynchronous best-effort delivery, which cannot meet a hard deadline without significant additional engineering."
@@ -57,19 +57,19 @@ cards:
     explanation: "Time decoupling is implemented by features such as Kafka log retention, MQTT retained messages or persistent sessions, and JMS durable subscriptions. Without one of those persistence mechanisms, a subscriber that is offline during publication has a delivery gap."
 
   - id: 8
-    difficulty: basic
+    difficulty: advanced
     question: "What is the *wide coupling smell* in pub-sub, and how do you avoid it?"
     answer: "A bus exposed as a generic `receive(Message)` method where every subscriber casts to a specific type makes every subscriber appear coupled to every publisher — the dependency graph is invisible. **Fix:** use typed channels or per-event-class topics so each subscription is statically traceable to a payload schema."
     explanation: "Named by Garcia et al. (2009). The smell is architectural, not just type-safety: even with safe casts, a maintenance engineer cannot statically determine which subscribers break when a publisher's payload changes."
 
   - id: 9
-    difficulty: basic
+    difficulty: advanced
     question: "Name the four pub-sub topologies discussed in the literature."
     answer: "**(1) Bus / event channel** (central broker, classic pub-sub). **(2) List-based** (each publisher maintains its own subscriber list — tighter coupling, no central failure point). **(3) Broadcast-based** (publishers broadcast to the whole network; subscribers filter locally — loosest coupling, highest waste). **(4) Content-based routing** (intelligent brokers evaluate event payloads against subscriber predicates)."
     explanation: "List-based is common in in-process Observer implementations. Broadcast suits LANs with cheap bandwidth. Content-based scales for distributed systems via covering and merging optimizations (Siena, Rebeca)."
 
   - id: 10
-    difficulty: basic
+    difficulty: intermediate
     question: "What is a *durable subscription* in pub-sub middleware?"
     answer: "A subscription that the broker persists across subscriber disconnections. While the subscriber is offline, the broker buffers matching events; when the subscriber reconnects, the buffered events are delivered."
     explanation: "Without durable subscriptions, a subscriber that crashes or loses network connectivity misses every event during the outage. JMS, Kafka consumer groups, and MQTT 5 persistent sessions all implement variants of this idea."
@@ -77,17 +77,17 @@ cards:
   - id: 11
     difficulty: advanced
     question: "Compare Apache Kafka and RabbitMQ as pub-sub technologies."
-    answer: "**Kafka** is a distributed commit log — events are partitioned across brokers, durably stored on disk for a retention window, and consumers track their position via offsets; designed for very high throughput and replay. **RabbitMQ** is traditional message-oriented middleware (AMQP) — strong routing flexibility (exchanges, queues, bindings), but messages are typically deleted once consumed."
-    explanation: "Kafka shines for event streaming, log aggregation, and offline analytics where replay matters. RabbitMQ shines for complex routing and task queues where messages are acknowledged and then typically removed; its acknowledgments provide at-least-once delivery, so exactly-once effects require idempotent consumers or deduplication."
+    answer: "**Kafka** is a high-throughput event-streaming platform built around durable logs and partitioned topics, so it fits streams, replay, and analytics. **RabbitMQ** is message-oriented middleware with flexible routing and queue-based delivery, so it fits task queues and broker-mediated message routing."
+    explanation: "The chapter's point is not to memorize product trivia; it is to notice that each framework packages a different version of the pub-sub trade-off."
 
   - id: 12
-    difficulty: basic
+    difficulty: intermediate
     question: "Why does pub-sub force architects to embrace *eventual consistency*?"
     answer: "Because typical pub-sub delivery is asynchronous: subscribers update their local state at different moments. Different parts of the system therefore hold inconsistent views for a bounded period, until all relevant subscribers have processed the event."
     explanation: "This is an eventual-consistency trade-off, not a magic property of every bus. Architectures that need strong consistency between subscribers must add explicit coordination, such as a single source of truth, distributed transactions, sagas with compensation, or carefully designed idempotent workflows."
 
   - id: 13
-    difficulty: basic
+    difficulty: advanced
     question: "What is the *illusion of obliviousness* and why does Fairbanks warn about it?"
     answer: "At runtime, components are oblivious to each other. But at design time, a developer chose to add the New-Employee publisher *specifically because* the Order-Computer subscriber needs it. Architectural diagrams that only show components attached to a bus hide this business intent."
     explanation: "Document the conceptual producer→consumer relationships in design artifacts even though the runtime topology hides them — otherwise maintenance engineers cannot trace business logic through the bus, and the architecture becomes unrefactorable."
@@ -99,13 +99,13 @@ cards:
     explanation: "Other examples: Redis Pub/Sub for cache invalidation, AWS SNS + SQS for cross-service notifications, Google Cloud Pub/Sub for serverless event glue, OS-level signals (technically a degenerate broadcast bus)."
 
   - id: 15
-    difficulty: basic
+    difficulty: advanced
     question: "When should you NOT use publish-subscribe?"
     answer: "When (a) you need global strict ordering or hard real-time delivery guarantees without investing in specialized middleware/QoS, (b) the producer requires synchronous confirmation that consumers acted on the event, (c) the system has only one consumer per event and direct call would suffice, or (d) the team lacks the operational maturity to debug asynchronous, non-deterministic flows."
     explanation: "Pub-sub solves coupling problems; it creates observability problems. If your bottleneck is rigidity of direct calls and your team has tracing/replay infrastructure, pub-sub is excellent. If your bottleneck is debuggability and you have one producer talking to one consumer, a synchronous call is simpler."
 
   - id: 16
-    difficulty: basic
+    difficulty: intermediate
     question: "Why are topic names architecturally significant in topic-based publish-subscribe?"
     answer: "Topic names are the connectors that bind publishers and subscribers. If a publisher renames a topic but a subscriber keeps listening to the old name, the code may compile and run while the runtime message flow silently breaks."
     explanation: "The lecture's Autoware.AI example used exactly this failure mode: some components changed from one topic string to another while others did not. Pub-sub decoupling makes extension easy, but it also makes tracing and contract validation load-bearing."

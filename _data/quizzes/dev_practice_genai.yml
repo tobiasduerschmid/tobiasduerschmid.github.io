@@ -3,7 +3,7 @@ description: "Apply GenAI judgment across Bloom levels, with extra emphasis on a
 active: true
 questions:
   - id: 1
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       Compilers (1960s) delivered a 10x productivity gain. Current research estimates GenAI delivers 21%–50%. What is the most accurate explanation for the gap?
@@ -23,7 +23,7 @@ questions:
     explanation: "**Compilers automated *accidental* complexity (translating high-level intent into machine instructions) — a near-pure mechanical task. GenAI helps with parts of that but leaves *essential* complexity (understanding requirements, choosing data structures, navigating trade-offs, integrating with messy real systems) largely intact.** This is why productivity gains plateau where genuine engineering judgment is needed, and why systems-thinking and requirements skills remain decisive even with AI assistance."
 
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A developer says "Copilot wrote the whole feature in 5 minutes — I'm so much more productive!" Two days later they're still debugging it and have shipped a security vulnerability. Which trap have they fallen into?
@@ -43,7 +43,7 @@ questions:
     explanation: "**The illusion of AI productivity is the gap between *generation* (fast, satisfying, visible) and *end-to-end shipping* (debug, fix, verify, secure — slow and invisible). The vivid '5 minutes to type, then a day to debug' framing in the SEBook is illustrative, but the underlying asymmetry is real.** Measure productivity in features shipped per week with acceptable defect and security rates — not in characters generated per minute. Multiple studies (METR 2025, GitClear, others) report that developers *feel* more productive with AI even when measured throughput is flat or lower."
 
   - id: 3
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       Two computer-science students use a chatbot to learn linked lists. Student A pastes the assignment prompt and copies the answer. Student B asks the chatbot to explain why a tail pointer matters, then implements it themselves. Six months later, which is most likely to struggle on the data-structures exam, and why?
@@ -63,7 +63,7 @@ questions:
     explanation: "**Cognitive offloading (paste-prompt, copy-answer) bypasses the effortful retrieval that builds durable knowledge — the same reason students who only re-read notes fail compared to those who self-test. Conceptual inquiry (asking the AI to explain, compare, justify) preserves cognitive engagement and exercises the continual-learning skill humans retain over AI.** For junior engineers especially, the way GenAI is used predicts whether it accelerates or kneecaps skill formation."
 
   - id: 4
-    difficulty: basic
+    difficulty: intermediate
     type: multiple
     question: |
       Which of these are valid items in the **Supervisor Mentality** for working with GenAI? Select all that apply.
@@ -88,7 +88,7 @@ questions:
     explanation: "**The Supervisor Mentality is the antidote to vibe coding. It treats GenAI as a capable but unreliable contributor — every output gets the same scrutiny as an unfamiliar teammate's PR, and nothing ships that the human can't explain or own.** This calibration is what separates engineers who scale up safely with AI from those who accumulate bugs and security debt invisibly until production catches fire."
 
   - id: 5
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       Your team adopts **Test-Driven Generation**. Walk through the correct sequence.
@@ -108,7 +108,7 @@ questions:
     explanation: "**Test-Driven Generation: (1) AI generates tests from the description → (2) human reviews tests as the specification → (3) AI generates implementation → (4) remediation loop feeds failing test output back to the AI.** The review step in (2) is what gives the workflow its quality: the tests are the contract, and the human's job is to make sure the contract is right *before* the AI is asked to satisfy it. Skipping review means the implementation passes broken tests."
 
   - id: 6
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       Two teams adopt the same AI coding assistant. Team A's codebase is a tightly coupled monolith ("spaghetti"); Team B's is a set of well-bounded microservices with clean interfaces. Both apply AI to similar tasks. Why does Team B see substantially larger productivity gains?
@@ -188,7 +188,7 @@ questions:
     explanation: "**AI assistants tend to produce *additive* solutions — adding code that solves the local problem rather than refactoring to fit the system's idioms or remove duplication. Without an explicit refactor step in the workflow, complexity compounds and static-analysis warnings climb.** The published metrics come from a single source and specific windows, so treat the exact percentages as one data point rather than consensus — but the *direction* (additive AI output → growing debt) is the architectural pattern to design against. Fix: pair AI generation with a deliberate refactor pass, enforce complexity limits in CI, and reject AI-suggested duplication that human review would have rejected."
 
   - id: 10
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A senior architect predicts: "The future belongs to engineers who can **orchestrate AI agents**, not just write code." What underlying skills does that prediction imply will become more valuable, and which less?
@@ -208,7 +208,7 @@ questions:
     explanation: "**The skill shift is from *producing* code to *specifying and verifying* it. Requirements engineering (INVEST stories, acceptance criteria), systems thinking (where the boundaries are, what fails), architecture (modular interfaces the AI can reason inside), security review, and prompt/context engineering all become more decisive. Rote syntax and boilerplate become commoditized.** The engineer who raises the *ceiling* of what they can build is the one who treats AI as leverage over engineering judgment — not as a substitute for it."
 
   - id: 11
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       An AI coding agent reads a blog post while debugging your build and then asks permission to run a shell command you do not recognize. What is the most responsible response?
@@ -248,7 +248,7 @@ questions:
     explanation: "**Skill files encode durable project knowledge: accessibility rules, storage inventories, dark-mode requirements, testing expectations, naming conventions, and similar guardrails.** They improve the default behavior of the agent, but they are still instructions to a fallible system, not proof that the system complied."
 
   - id: 13
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       You want an agent to implement a stateful feature in an unfamiliar codebase. Which workflow best applies the lecture's advice?
@@ -268,7 +268,7 @@ questions:
     explanation: "**For complex work, the professional loop is plan, question, approve a small task, implement, test, review, and refactor.** This keeps the human in control of architecture and lets mistakes surface while they are still small."
 
   - id: 14
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       Why is "read the entire repository before coding" often a bad instruction for an AI agent?
@@ -288,7 +288,7 @@ questions:
     explanation: "**Context engineering is selective.** Give the agent the smallest relevant slice: the target files, nearby interfaces, tests, conventions, and constraints. Dumping everything into context increases search cost and 'lost in the middle' failures."
 
   - id: 15
-    difficulty: basic
+    difficulty: intermediate
     type: multiple
     question: |
       Which tasks are especially well-suited for AI assistance once the human already understands the domain? Select all that apply.
@@ -313,7 +313,7 @@ questions:
     explanation: "**AI is strongest on repetitive, well-specified, common tasks and on learning support.** It is weakest when the task requires unshared domain knowledge, high-stakes judgment, or understanding the student has not yet built."
 
   - id: 16
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       A team adds a hero avatar customizer. A student suggests storing the entire customized SVG in localStorage; another suggests storing the selected parameters and regenerating the SVG. What is the best engineering lesson from this disagreement?
@@ -333,7 +333,7 @@ questions:
     explanation: "**AI can implement either storage strategy, but the engineer must decide which strategy fits the product and quality attributes.** Good prompts expose the decision: ask for trade-offs, choose deliberately, then give the agent a bounded implementation task."
 
   - id: 17
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       During test-driven generation, the AI writes an implementation that passes every visible example by hard-coding a dictionary from sample inputs to sample outputs. What should the human do?
@@ -373,7 +373,7 @@ questions:
     explanation: "**Pre-training creates the base model, post-training tunes it for useful behavior, and inference is the use-time step where a prompt produces output.** This item is the low-Bloom anchor: students need the vocabulary before they can analyze agent workflows."
 
   - id: 19
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A reasoning model shows a polished step-by-step explanation before generating code. Why should that trace still be treated cautiously?
@@ -393,7 +393,7 @@ questions:
     explanation: "**Thinking traces can be useful scaffolding, not proof.** The engineer should read them as a proposal to inspect, then verify the generated code against requirements, tests, and system context."
 
   - id: 20
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       You want an agent to add a title-only search box to the SEBook home page. Which prompt best applies the lecture's prompt-engineering advice?
@@ -413,7 +413,7 @@ questions:
     explanation: "**A strong implementation prompt gives role, task, context, acceptance criteria, constraints, and process.** It also asks the agent to surface design questions before it silently chooses behavior you did not intend."
 
   - id: 21
-    difficulty: basic
+    difficulty: advanced
     type: multiple
     question: |
       An agent adds a "schedule study" feature that looks polished, but the generated quiz links use URLs that do not exist. What should a reviewer infer? Select all that apply.
@@ -438,7 +438,7 @@ questions:
     explanation: "**This is an analysis-level failure: separate surface polish from behavioral correctness.** The reviewer should trace the bug to missing grounding, weak acceptance criteria, and missing verification."
 
   - id: 22
-    difficulty: basic
+    difficulty: expert
     type: single
     question: |
       A team wants AI to implement a feature for a public educational site that must meet WCAG 2.2 AA. Which decision best evaluates the risk?
@@ -458,7 +458,7 @@ questions:
     explanation: "**Evaluation means judging whether the process is adequate for the risk.** For a public educational site, the AI workflow must include explicit accessibility criteria and verification, not just generation."
 
   - id: 23
-    difficulty: basic
+    difficulty: advanced
     type: single
     question: |
       You are starting a personal project to learn a library you have never used. Which AI-assisted workflow best creates durable skill rather than cognitive offloading?
