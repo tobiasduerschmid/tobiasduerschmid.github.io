@@ -10,8 +10,8 @@ cards:
 
   - id: 2
     difficulty: intermediate
-    question: "Who coined the term 'separation of concerns', and when?"
-    answer: "**Edsger W. Dijkstra**, in his 1974 note *On the Role of Scientific Thought* (EWD 447)."
+    question: "Who coined the term 'separation of concerns', and in what context?"
+    answer: "**Edsger W. Dijkstra**, in his note *On the Role of Scientific Thought* (EWD 447)."
     explanation: "Dijkstra originally framed SoC as a general *thinking* technique — the ability to focus on one aspect of a subject at a time. He called it 'the only available technique for effective ordering of one's thoughts'. The software-engineering usage grew out of that framing."
 
   - id: 3
@@ -60,7 +60,7 @@ cards:
     difficulty: intermediate
     question: "What is the **Massive View Controller** anti-pattern, and what principle does it violate?"
     answer: "An iOS/UIKit anti-pattern where `UIViewController` subclasses grow into 2,000-line monsters doing networking, parsing, caching, validation, navigation, *and* view layout. It violates **Separation of Concerns** — multiple unrelated concerns collapse into one module."
-    explanation: "Identified as a common architectural smell *(Dobrean & Dioşan, 2019)*. The fix is to extract Coordinating Controllers, view-models, and services — each handling a single concern, communicating through narrow interfaces."
+    explanation: "A common architectural smell. The fix is to extract Coordinating Controllers, view-models, and services — each handling a single concern, communicating through narrow interfaces."
 
   - id: 11
     difficulty: advanced

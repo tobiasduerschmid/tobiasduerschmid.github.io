@@ -19,7 +19,7 @@ cards:
   - id: 3
     difficulty: advanced
     bloom: apply
-    question: "What is a dangling purpose link in Letovsky's model?"
+    question: "What is a dangling purpose link in a reader's mental model?"
     answer: "It is a gap between knowing **what** a program should accomplish and not yet knowing **how** the implementation accomplishes it. The gap generates targeted 'how' questions that guide the reader into the code."
     explanation: "A good PR description intentionally creates the specification layer first, so the reader's implementation search is focused rather than random."
 

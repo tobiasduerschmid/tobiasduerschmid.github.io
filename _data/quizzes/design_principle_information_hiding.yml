@@ -8,21 +8,21 @@ questions:
     question: |
       Who introduced the Information Hiding principle, and in what paper?
     options:
-      - "Edsger W. Dijkstra, in *On the Role of Scientific Thought* (EWD 447), 1974"
-      - "David L. Parnas, in *On the Criteria To Be Used in Decomposing Systems into Modules*, Communications of the ACM, 1972"
-      - "Robert C. Martin, in *Clean Architecture*, 2017"
-      - "John Ousterhout, in *A Philosophy of Software Design*, 2018"
+      - "Edsger W. Dijkstra, in *On the Role of Scientific Thought* (EWD 447)"
+      - "David L. Parnas, in *On the Criteria To Be Used in Decomposing Systems into Modules*, Communications of the ACM"
+      - "Robert C. Martin, in *Clean Architecture*"
+      - "John Ousterhout, in *A Philosophy of Software Design*"
     correct_index: 1
     option_feedback:
       0: |
         Dijkstra coined separation of concerns, not the information-hiding principle introduced through
         the KWIC module-decomposition argument.
       2: |
-        Martin built on earlier modularity principles. He did not introduce information hiding in 2017.
+        Martin built on earlier modularity principles; he did not introduce information hiding.
       3: |
         Ousterhout explains deep modules and modern design practice, but the original information-hiding
-        paper is Parnas 1972.
-    explanation: "Parnas's 1972 *CACM* paper introduced the principle, four years after the 1968 NATO Software Crisis conference. Dijkstra coined *Separation of Concerns* (a related but broader principle); Martin and Ousterhout build on Parnas's ideas in modern form."
+        paper is Parnas's.
+    explanation: "Parnas's *CACM* paper introduced the principle, four years after the 1968 NATO Software Crisis conference. Dijkstra coined *Separation of Concerns* — a related but broader principle."
 
   - id: 2
     difficulty: basic
@@ -85,7 +85,7 @@ questions:
     difficulty: basic
     type: single
     question: |
-      What does Ousterhout mean by a **deep** module?
+      What is a **deep** module?
     options:
       - "A module with many subclasses arranged in a deep inheritance tree"
       - "A module that hides a lot of complexity behind a small interface"
@@ -125,7 +125,7 @@ questions:
       3: |
         Line count alone does not decide whether an abstraction is useful. A 30-line helper may hide an
         important policy, and a 100-line helper may still be one coherent detail.
-    explanation: "This is the **shallow module** trap (Ousterhout). If the new 'module' has nothing meaningful to hide and no plausible second variant, you have added an interface and a file without buying any abstraction value. Information Hiding pays off when there is a real secret worth hiding; otherwise, it just adds vocabulary the reader must learn."
+    explanation: "This is a **shallow module**: if the new 'module' has nothing meaningful to hide and no plausible second variant, you have added an interface and a file without buying any abstraction value. Information Hiding pays off when there is a real secret worth hiding; otherwise, it just adds vocabulary the reader must learn."
 
   - id: 6
     difficulty: advanced
@@ -331,7 +331,7 @@ questions:
       3: |
         Information hiding can use more files or fewer files depending on the design. The benefit is a
         smaller interface to reason about, not file count.
-    explanation: "Field studies of professional developers find that **program comprehension consumes ~58% of their time** *(Xia et al., 2017, IEEE TSE)*. A well-hidden module lets a reader load only the interface — not the entire implementation tree — into working memory. This is one of the most underrated practical benefits of the principle."
+    explanation: "Field studies of professional developers find that program comprehension consumes most of their time. A well-hidden module lets a reader load only the interface — not the entire implementation tree — into working memory. This is one of the most underrated practical benefits of the principle."
 
   - id: 15
     difficulty: advanced
@@ -521,7 +521,7 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      In Parnas, Clements, and Weiss's A-7E work, what is the main purpose of a **module guide**?
+      In Parnas's A-7E flight-software work, what is the main purpose of a **module guide**?
     options:
       - "To list every public function alphabetically so callers can look up parameter types"
       - "To organize the system around module secrets, so designers and maintainers can find which module should change for a given design decision"

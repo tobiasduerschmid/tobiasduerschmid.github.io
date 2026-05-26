@@ -24,7 +24,7 @@ cards:
     difficulty: intermediate
     question: "Why are quality attributes called the *load-bearing walls* of a software system?"
     answer: "Three reasons: (a) **early architectural decisions strongly constrain** which qualities the system can later achieve; (b) quality concerns are **cross-cutting** — they touch many modules, not one; (c) they are **expensive to retrofit** — bolting on scalability or security after the fact often requires rebuilding rather than patching."
-    explanation: "This is why architects insist on identifying critical quality attributes early. Once the foundation is poured, moving a load-bearing wall is more expensive than rebuilding the house. Once an architecture has shipped without designing for scalability or testability, retrofitting them often costs more than the original build."
+    explanation: "This is why architects identify critical quality attributes early. Once an architecture has shipped without designing for scalability or testability, retrofitting them often costs more than the original build — like moving a load-bearing wall after the house is finished."
 
   - id: 5
     difficulty: intermediate

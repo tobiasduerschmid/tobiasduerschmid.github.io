@@ -22,7 +22,7 @@ questions:
         Return messages are dashed lines going back to the caller. This solid call arrow is the request, not the response.
       3: |
         Creation is shown with a create message and a lifeline that begins at the creation point. This arrow is a normal synchronous call.
-    explanation: "**A solid line with a filled arrowhead is a synchronous message — the sender blocks until the receiver finishes processing.** A solid line with a **filled arrowhead** represents a **synchronous message**. The sender blocks and waits for the receiver to finish processing before continuing. An asynchronous message uses an **open (stick) arrowhead** instead."
+    explanation: "**A solid line with a filled arrowhead is a synchronous message — the sender blocks until the receiver finishes.** An asynchronous message uses an open (stick) arrowhead instead: filled means full commitment, open means fire-and-forget."
 
   - id: 2
     difficulty: basic
@@ -44,7 +44,7 @@ questions:
         Dependencies are structural relationships in class or component diagrams. Sequence diagrams use dashed return messages to show a response value or control returning.
       3: |
         A synchronous callback would be a new call message, not the return from the earlier `calculate()` call.
-    explanation: "**A dashed line with an open arrowhead is a return message, carrying the response back to the caller.** A **dashed line with an open arrowhead** represents a **return message** — the response flowing back from a called method. Return messages are optional in sequence diagrams but are shown when the return value is important to understand the interaction."
+    explanation: "**A dashed line with an open arrowhead is a return message, carrying the response back to the caller.** Return messages are optional — show them when the returned value matters to the interaction, omit them when a synchronous call obviously returns."
 
   - id: 3
     difficulty: basic
@@ -66,7 +66,7 @@ questions:
         `opt` is for one optional block with no else branch. If there are multiple possible branches, use `alt`.
       3: |
         `par` models concurrent regions. It does not choose one branch based on a guard.
-    explanation: "**`alt` models if-else logic by selecting one of multiple guarded branches — `opt` handles a simple if-without-else.** The **`alt`** (alternatives) fragment models if-else logic. It contains two or more regions separated by dashed lines, each with a guard condition. Only one region executes. The **`opt`** fragment is for a simple if-without-else."
+    explanation: "**`alt` models if-else by selecting one of several guarded branches; only one region executes.** Use `opt` for a simple if-without-else — a single guarded block with no alternative."
 
   - id: 4
     difficulty: intermediate
@@ -116,7 +116,7 @@ questions:
         UML does not use a `try` combined fragment. Exception-like or aborting behavior can be modeled with other interaction operators such as `break`, depending on the case.
       5: |
         `par` is valid when regions proceed in parallel or independently.
-    explanation: "**`alt`, `opt`, `loop`, and `par` are valid UML combined fragments — there is no `if` or `try` fragment in UML.** The valid UML combined fragment operators include **`alt`**, **`opt`**, **`loop`**, and **`par`**. There is no `if` or `try` fragment in UML — conditional logic uses `alt`/`opt`, and exception-like behavior uses the `break` fragment."
+    explanation: "**`alt`, `opt`, `loop`, and `par` are valid UML combined fragments; there is no `if` or `try` operator.** Conditional logic uses `alt`/`opt`, and exception-like aborting behavior uses the `break` fragment."
 
   - id: 6
     difficulty: intermediate
@@ -138,7 +138,7 @@ questions:
         There is no alternate branch here. Returning the final total happens after the optional block either way.
       3: |
         Repetition would use `loop`. `opt` describes one conditional execution of the enclosed messages.
-    explanation: "**`opt` is an if-without-else — the discount messages execute only if `hasPromoCode` is true, otherwise the entire fragment is skipped.** An **`opt` fragment** is equivalent to an `if` statement **without** an `else`. The enclosed messages execute only when the guard condition is true. If the guard is false, the entire fragment is skipped and execution continues after it."
+    explanation: "**`opt` is an if-without-else — the discount messages execute only if `hasPromoCode` is true, otherwise the whole fragment is skipped.** Execution then continues with the messages after the fragment regardless of the guard."
 
   - id: 7
     difficulty: basic

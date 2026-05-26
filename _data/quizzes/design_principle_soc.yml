@@ -8,10 +8,10 @@ questions:
     question: |
       Who coined the term "separation of concerns", and in what context was it first introduced?
     options:
-      - "Robert C. Martin, when he proposed the SOLID principles in the early 2000s"
-      - "Edsger W. Dijkstra, in his 1974 note 'On the Role of Scientific Thought' (EWD 447), about how intelligent thinking works"
-      - "David Parnas, in his 1972 paper on criteria for decomposing systems into modules"
-      - "Erich Gamma et al., in the 1994 'Design Patterns' book"
+      - "Robert C. Martin, when he proposed the SOLID principles"
+      - "Edsger W. Dijkstra, in his note 'On the Role of Scientific Thought' (EWD 447), about how intelligent thinking works"
+      - "David Parnas, in his paper on criteria for decomposing systems into modules"
+      - "The Gang of Four, in the 'Design Patterns' book"
     correct_index: 1
     option_feedback:
       0: |
@@ -22,7 +22,7 @@ questions:
       3: |
         The GoF catalog documents design patterns. It did not introduce the phrase separation of
         concerns.
-    explanation: "Dijkstra coined the phrase in EWD 447 (1974), describing it as 'the only available technique for effective ordering of one's thoughts'. He framed SoC first as a *thinking* technique, and the software-engineering usage followed. Parnas's 1972 paper is about **information hiding** — a related but distinct principle that tells you *how* to encapsulate one of those concerns."
+    explanation: "Dijkstra coined the phrase in EWD 447, describing it as 'the only available technique for effective ordering of one's thoughts'. He framed SoC first as a *thinking* technique, and the software-engineering usage followed. Parnas's paper is about **information hiding** — a related but distinct principle that tells you *how* to encapsulate one of those concerns."
 
   - id: 2
     difficulty: intermediate
@@ -96,7 +96,7 @@ questions:
       3: |
         A log format can be standardized, but the concern cuts across the system because many unrelated
         modules need to log.
-    explanation: "A crosscutting concern is one that **does not fit** within a single module in the main decomposition of the system. Logging is the textbook example: every service, every handler, every data layer wants to log something. If you put logging calls directly inside each of these, you get **tangling** (business code mixed with logging) and **scattering** (the same pattern copy-pasted everywhere). AOP, decorators, and middleware are common mechanisms to pull logging out into one place *(Marin et al., 2009)*."
+    explanation: "A crosscutting concern is one that **does not fit** within a single module in the main decomposition of the system. Logging is the textbook example: every service, every handler, every data layer wants to log something. If you put logging calls directly inside each of these, you get **tangling** (business code mixed with logging) and **scattering** (the same pattern copy-pasted everywhere). AOP, decorators, and middleware are common mechanisms to pull logging out into one place."
 
   - id: 5
     difficulty: advanced
@@ -143,7 +143,7 @@ questions:
       3: |
         Public fields are not the stated problem. The issue is collapsed concerns, even if all fields
         were private.
-    explanation: "Massive View Controller is the canonical mobile-development SoC failure *(Dobrean & Dioşan, 2019)*. MVC is supposed to *separate* Model, View, and Controller, but when developers treat 'Controller' as a dumping ground for everything not-obviously-Model-or-View, the Controller re-absorbs all the concerns MVC was designed to split apart. The fix is to extract Coordinating Controllers, view-models, and services — each handling a single concern."
+    explanation: "Massive View Controller is the canonical mobile-development SoC failure. MVC is supposed to *separate* Model, View, and Controller, but when developers treat 'Controller' as a dumping ground for everything not-obviously-Model-or-View, the Controller re-absorbs all the concerns MVC was designed to split apart. The fix is to extract Coordinating Controllers, view-models, and services — each handling a single concern."
 
   - id: 7
     difficulty: intermediate

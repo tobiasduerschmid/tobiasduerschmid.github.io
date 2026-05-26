@@ -6,17 +6,17 @@ cards:
     difficulty: basic
     question: "State the **Information Hiding principle** in one sentence."
     answer: "Design decisions that are likely to change independently should be the **secrets** of separate modules; the interface between modules should reveal only assumptions that are unlikely to change."
-    explanation: "From Parnas's 1972 paper *On the Criteria To Be Used in Decomposing Systems into Modules*. The point is to bound the impact of change: a likely-to-change decision should be hidden inside exactly one module, not scattered across the system."
+    explanation: "From Parnas's paper *On the Criteria To Be Used in Decomposing Systems into Modules*. The point is to bound the impact of change: a likely-to-change decision should be hidden inside exactly one module, not scattered across the system."
 
   - id: 2
     difficulty: advanced
-    question: "Who introduced the Information Hiding principle, and in what year and venue?"
-    answer: "**David L. Parnas**, in *On the Criteria To Be Used in Decomposing Systems into Modules*, **Communications of the ACM, December 1972**."
-    explanation: "Parnas wrote it four years after the 1968 NATO Software Crisis conference, in response to a decade of software projects failing because step-by-step (flowchart) module decomposition couldn't absorb change."
+    question: "Who introduced the Information Hiding principle, and in what paper?"
+    answer: "**David L. Parnas**, in *On the Criteria To Be Used in Decomposing Systems into Modules*, published in **Communications of the ACM**."
+    explanation: "Parnas wrote it in response to a decade of software projects failing because step-by-step (flowchart) module decomposition couldn't absorb change — the problem named at the 1968 NATO Software Crisis conference."
 
   - id: 3
     difficulty: intermediate
-    question: "What two example modularizations did Parnas compare in his 1972 paper, and which won?"
+    question: "What two example modularizations did Parnas compare in his paper, and which won?"
     answer: "He compared a **conventional flowchart-based decomposition** (one module per processing step) and an **information-hiding decomposition** (one module per design decision) using the **KWIC (Key Word In Context) index** program. The information-hiding decomposition was dramatically easier to change, understand, and develop in parallel."
     explanation: "Both decompositions worked, but in the conventional one almost every module had to change when the data structure changed. In the information-hiding version, exactly one module changed."
 
@@ -42,7 +42,7 @@ cards:
     difficulty: basic
     question: "What is the difference between a **deep** module and a **shallow** module?"
     answer: "A **deep module hides a lot of complexity behind a small interface** (e.g., the file system: open/read/write/close). A **shallow module exposes a wide interface that hides little** (e.g., a 'service' class whose methods one-to-one delegate to another class). Deep modules are the goal; shallow modules are tax."
-    explanation: "From John Ousterhout, *A Philosophy of Software Design*. Heuristic: the bigger the gap between interface size and implementation size, the deeper the module."
+    explanation: "Heuristic: the bigger the gap between interface size and implementation size, the deeper the module."
 
   - id: 8
     difficulty: basic
@@ -150,7 +150,7 @@ cards:
     difficulty: advanced
     question: "What problem does a **module guide** solve in a large information-hiding design?"
     answer: "A module guide maps each important **secret** or responsibility to the module that owns it, so designers and maintainers can quickly find which module should change without reading irrelevant module internals."
-    explanation: "Parnas, Clements, and Weiss found that information hiding remained practical in a complex A-7E flight-software redesign only when paired with a guide organized around module secrets."
+    explanation: "Parnas found that on a complex A-7E flight-software redesign, information hiding remained practical only when paired with a guide organized around module secrets."
 
   - id: 26
     difficulty: advanced
@@ -198,4 +198,4 @@ cards:
     difficulty: advanced
     question: "How is a Parnas-style **module** different from a runtime process?"
     answer: "A module is a work-assignment and secret boundary. A process is a runtime activity. One module can contribute code to several processes, and one process can execute code from many modules."
-    explanation: "Parnas, Clements, and Weiss separate module structure, uses structure, and process structure so designers do not confuse ownership of secrets with runtime execution."
+    explanation: "Parnas separates module structure, uses structure, and process structure so designers do not confuse ownership of secrets with runtime execution."

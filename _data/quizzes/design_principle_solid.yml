@@ -6,7 +6,7 @@ questions:
     difficulty: basic
     type: single
     question: |
-      Which of the following best captures Robert C. Martin's **modern** formulation of the Single Responsibility Principle (SRP)?
+      Which of the following best captures the **modern** formulation of the Single Responsibility Principle (SRP)?
     options:
       - "A class should contain only one public method"
       - "A module should be responsible to one, and only one, actor — a single stakeholder or group that requests changes"
@@ -18,12 +18,12 @@ questions:
         A one-method rule can split cohesive behavior into artificial fragments. SRP is about one actor
         or reason for change, not method count.
       2: |
-        The one-sentence test is a rough smell, not Martin’s modern formulation. Grammar does not
+        The one-sentence test is a rough smell, not the modern formulation. Grammar does not
         reliably identify who will request changes.
       3: |
         Line count can correlate with complexity, but it is not SRP. A short class can serve multiple
         actors, and a longer class can still have one reason to change.
-    explanation: "Martin's refined definition centers on **people, not grammar**. SRP is about actors — Accounting, HR, DBAs, compliance, etc. A class serving multiple actors will be pulled in conflicting directions, and a change requested by one actor may silently break another's feature. 'One method', 'no ands', and line-count rules are all folk-theoretic proxies that routinely misfire."
+    explanation: "The refined definition centers on **people, not grammar**. SRP is about actors — Accounting, HR, DBAs, compliance, etc. A class serving multiple actors will be pulled in conflicting directions, and a change requested by one actor may silently break another's feature. 'One method', 'no ands', and line-count rules are all folk-theoretic proxies that routinely misfire."
 
   - id: 2
     difficulty: intermediate
@@ -80,7 +80,7 @@ questions:
       3: |
         SRP does have something to say: if the split does not isolate an independent reason to change,
         it may be needless abstraction.
-    explanation: "SRP is about *axes of change*, not file count. If three classes always move together for the same reason, they serve **one** actor — and splitting them doubles maintenance cost with no benefit. This is the 'premature separation' trap. Martin's own guidance: wait for the second actor to appear before extracting."
+    explanation: "SRP is about *axes of change*, not file count. If three classes always move together for the same reason, they serve **one** actor — and splitting them doubles maintenance cost with no benefit. This is premature separation: wait for the second actor to appear before extracting."
 
   - id: 4
     difficulty: intermediate
