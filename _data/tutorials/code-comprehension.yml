@@ -85,7 +85,7 @@ steps:
 
       | Move | What to read | Why |
       |---|---|---|
-      | Orient | `test_hidden_tracks_do_not_appear` | The test names the behavior in student-friendly language |
+      | Orient | `test_summary_uses_only_visible_tracks` | The test names the behavior in student-friendly language |
       | Predict | Expect a filtering step before summary construction | Hidden tracks should be removed before labels and totals are computed |
       | Beacon-hunt | `visible_tracks`, `hidden`, `summarize_playlist` | These names are evidence about responsibility |
       | Descend | Read `visible_tracks()` and where `summarize_playlist()` calls it | That is the shortest path to the answer |
@@ -113,23 +113,40 @@ steps:
       - path: "playlist_summary.py"
         language: "python"
         content: |
-          TRACKS = [
+          from typing import TypedDict
+
+
+          class Track(TypedDict):
+              title: str
+              artist: str
+              seconds: int
+              explicit: bool
+              hidden: bool
+
+
+          class PlaylistSummary(TypedDict):
+              track_count: int
+              minutes: float
+              labels: list[str]
+
+
+          TRACKS: list[Track] = [
               {"title": "Compile Me Maybe", "artist": "Carly Rae JS", "seconds": 181, "explicit": False, "hidden": False},
               {"title": "Null Pointer Mood", "artist": "The Exceptions", "seconds": 203, "explicit": True, "hidden": False},
               {"title": "Draft Demo", "artist": "Lab Notebook", "seconds": 92, "explicit": False, "hidden": True},
               {"title": "Cache Me Outside", "artist": "Miss Hit", "seconds": 228, "explicit": False, "hidden": False},
           ]
 
-          def visible_tracks(tracks):
+          def visible_tracks(tracks: list[Track]) -> list[Track]:
               return [track for track in tracks if not track["hidden"]]
 
-          def label_track(track):
+          def label_track(track: Track) -> str:
               label = f"{track['title']} — {track['artist']}"
               if track["explicit"]:
                   label += " (explicit)"
               return label
 
-          def summarize_playlist(tracks):
+          def summarize_playlist(tracks: list[Track]) -> PlaylistSummary:
               public_tracks = visible_tracks(tracks)
               total_seconds = sum(track["seconds"] for track in public_tracks)
               return {
@@ -144,20 +161,74 @@ steps:
       - path: "test_playlist_summary.py"
         language: "python"
         content: |
-          from playlist_summary import TRACKS, summarize_playlist
+          import math
 
-          def test_hidden_tracks_do_not_appear():
-              summary = summarize_playlist(TRACKS)
-              assert "Draft Demo" not in " ".join(summary["labels"])
-              assert summary["track_count"] == 3
+          from playlist_summary import summarize_playlist
 
-          def test_explicit_tracks_are_labeled():
-              summary = summarize_playlist(TRACKS)
-              assert "Null Pointer Mood — The Exceptions (explicit)" in summary["labels"]
 
-          def test_minutes_count_only_visible_tracks():
-              summary = summarize_playlist(TRACKS)
-              assert summary["minutes"] == 10.2
+          TrackFixture = dict[str, object]
+
+
+          def make_track(
+              title: str,
+              seconds: int,
+              *,
+              artist: str = "The Testers",
+              explicit: bool = False,
+              hidden: bool = False,
+          ) -> TrackFixture:
+              return {
+                  "title": title,
+                  "artist": artist,
+                  "seconds": seconds,
+                  "explicit": explicit,
+                  "hidden": hidden,
+              }
+
+
+          def test_summary_uses_only_visible_tracks() -> None:
+              tracks = [
+                  make_track("Compile Me Maybe", 181),
+                  make_track("Draft Demo", 92, hidden=True),
+                  make_track("Cache Me Outside", 228),
+              ]
+
+              summary = summarize_playlist(tracks)
+
+              assert summary["track_count"] == 2
+              assert summary["labels"] == [
+                  "Compile Me Maybe — The Testers",
+                  "Cache Me Outside — The Testers",
+              ]
+
+
+          def test_explicit_visible_track_is_labeled() -> None:
+              tracks = [
+                  make_track(
+                      "Null Pointer Mood",
+                      203,
+                      artist="The Exceptions",
+                      explicit=True,
+                  ),
+              ]
+
+              summary = summarize_playlist(tracks)
+
+              assert summary["labels"] == [
+                  "Null Pointer Mood — The Exceptions (explicit)",
+              ]
+
+
+          def test_minutes_total_counts_only_visible_seconds() -> None:
+              tracks = [
+                  make_track("One Minute Opener", 60),
+                  make_track("Hidden Long Jam", 600, hidden=True),
+                  make_track("Two Minute Closer", 120),
+              ]
+
+              summary = summarize_playlist(tracks)
+
+              assert math.isclose(summary["minutes"], 3.0)
 
     open_file: "test_playlist_summary.py"
     run_file: "playlist_summary.py"
@@ -217,7 +288,7 @@ steps:
           difficulty: advanced
           question: "Which are reliable beacons in this small Python example?"
           options:
-            - "`test_hidden_tracks_do_not_appear`"
+            - "`test_summary_uses_only_visible_tracks`"
             - "`visible_tracks`"
             - "`public_tracks`"
             - "The variable name `label` by itself"
@@ -301,7 +372,25 @@ steps:
       - path: "event_cards.py"
         language: "python"
         content: |
-          EVENTS = [
+          from typing import TypedDict
+
+
+          class Event(TypedDict):
+              title: str
+              day: int
+              capacity: int
+              registered: int
+              cancelled: bool
+              tags: list[str]
+
+
+          class EventCard(TypedDict):
+              title: str
+              spots: int
+              status: str
+
+
+          EVENTS: list[Event] = [
               {"title": "Debugging Jam", "day": 14, "capacity": 30, "registered": 27, "cancelled": False, "tags": ["python", "tools"]},
               {"title": "React Snack Lab", "day": 17, "capacity": 24, "registered": 12, "cancelled": False, "tags": ["react", "frontend"]},
               {"title": "Legacy Code Karaoke", "day": 10, "capacity": 20, "registered": 20, "cancelled": False, "tags": ["reading"]},
@@ -309,21 +398,25 @@ steps:
               {"title": "Cancelled CSS Cafe", "day": 20, "capacity": 12, "registered": 4, "cancelled": True, "tags": ["frontend"]},
           ]
 
-          def upcoming_events(events, today):
+          def upcoming_events(events: list[Event], today: int) -> list[Event]:
               return [
                   event
                   for event in events
                   if event["day"] >= today and not event["cancelled"]
               ]
 
-          def seats_left(event):
+          def seats_left(event: Event) -> int:
               return max(event["capacity"] - event["registered"], 0)
 
-          def matches_tag(event, tag):
+          def matches_tag(event: Event, tag: str) -> bool:
               return tag == "all" or tag in event["tags"]
 
-          def build_event_cards(events, today, tag="all"):
-              cards = []
+          def build_event_cards(
+              events: list[Event],
+              today: int,
+              tag: str = "all",
+          ) -> list[EventCard]:
+              cards: list[EventCard] = []
               for event in upcoming_events(events, today):
                   if matches_tag(event, tag):
                       spots = seats_left(event)
@@ -505,7 +598,7 @@ steps:
             const [snacks, setSnacks] = React.useState(SNACKS);
 
             function handleVote(id) {
-              setSnacks(snacks.map(snack =>
+              setSnacks(currentSnacks => currentSnacks.map(snack =>
                 snack.id === id ? { ...snack, votes: snack.votes + 1 } : snack
               ));
             }
@@ -616,7 +709,7 @@ steps:
             - "`snack-grid`, because it mainly names a layout hook"
             - "`onClick={() => onVote(snack.id)}`, because it shows the button sends an id"
             - "`handleVote(id)`, because it names the parent-side update path"
-            - "`setSnacks(snacks.map(...))`, because it shows the state update"
+            - "`setSnacks(currentSnacks => currentSnacks.map(...))`, because it shows the state update"
           correct_index: 0
           option_feedback:
             1: "This is strong interaction evidence: the click calls a callback with the snack id."
@@ -901,7 +994,18 @@ steps:
       - path: "badge_recommender.py"
         language: "python"
         content: |
-          ACTIVITY_LOG = [
+          from typing import TypedDict
+
+
+          class ActivityEntry(TypedDict):
+              topic: str
+              minutes: int
+
+
+          TopicMinutes = dict[str, int]
+
+
+          ACTIVITY_LOG: list[ActivityEntry] = [
               {"topic": "python", "minutes": 18},
               {"topic": "react", "minutes": 12},
               {"topic": "python", "minutes": 22},
@@ -910,8 +1014,8 @@ steps:
               {"topic": "python", "minutes": 15},
           ]
 
-          def summarize_minutes(entries):
-              topic_minutes = {}
+          def summarize_minutes(entries: list[ActivityEntry]) -> TopicMinutes:
+              topic_minutes: TopicMinutes = {}
               for entry in entries:
                   if entry["minutes"] <= 0:
                       continue
@@ -919,8 +1023,8 @@ steps:
                   topic_minutes[topic] = topic_minutes.get(topic, 0) + entry["minutes"]
               return topic_minutes
 
-          def strongest_topic(topic_minutes):
-              best_topic = None
+          def strongest_topic(topic_minutes: TopicMinutes) -> tuple[str | None, int]:
+              best_topic: str | None = None
               best_minutes = 0
               for topic, minutes in topic_minutes.items():
                   if minutes > best_minutes:
@@ -928,11 +1032,14 @@ steps:
                       best_minutes = minutes
               return best_topic, best_minutes
 
-          def recommend_badges(entries, minimum_minutes=30):
+          def recommend_badges(
+              entries: list[ActivityEntry],
+              minimum_minutes: int = 30,
+          ) -> list[str]:
               topic_minutes = summarize_minutes(entries)
               topic, minutes = strongest_topic(topic_minutes)
 
-              badges = []
+              badges: list[str] = []
               for name, total in sorted(topic_minutes.items()):
                   if total >= minimum_minutes:
                       badges.append(f"{name}: {total} min")
@@ -1085,7 +1192,24 @@ steps:
       - path: "habit_report.py"
         language: "python"
         content: |
-          CHECKINS = [
+          from typing import TypedDict
+
+
+          class Checkin(TypedDict):
+              day: int
+              skill: str
+              minutes: int
+              skipped: bool
+
+
+          class HabitReport(TypedDict):
+              skills: list[str]
+              total_minutes: int
+              totals: dict[str, int]
+              longest_streak: int
+
+
+          CHECKINS: list[Checkin] = [
               {"day": 1, "skill": "python", "minutes": 25, "skipped": False},
               {"day": 2, "skill": "python", "minutes": 20, "skipped": False},
               {"day": 3, "skill": "react", "minutes": 15, "skipped": False},
@@ -1094,21 +1218,21 @@ steps:
               {"day": 6, "skill": "python", "minutes": 18, "skipped": False},
           ]
 
-          def useful_checkins(checkins):
+          def useful_checkins(checkins: list[Checkin]) -> list[Checkin]:
               return [
                   checkin
                   for checkin in checkins
                   if not checkin["skipped"] and checkin["minutes"] > 0
               ]
 
-          def minutes_by_skill(checkins):
-              totals = {}
+          def minutes_by_skill(checkins: list[Checkin]) -> dict[str, int]:
+              totals: dict[str, int] = {}
               for checkin in checkins:
                   skill = checkin["skill"]
                   totals[skill] = totals.get(skill, 0) + checkin["minutes"]
               return totals
 
-          def longest_streak(checkins, skill):
+          def longest_streak(checkins: list[Checkin], skill: str) -> int:
               days = sorted(
                   checkin["day"]
                   for checkin in checkins
@@ -1126,7 +1250,10 @@ steps:
                   previous_day = day
               return longest
 
-          def build_habit_report(checkins, skill="all"):
+          def build_habit_report(
+              checkins: list[Checkin],
+              skill: str = "all",
+          ) -> HabitReport:
               useful = useful_checkins(checkins)
               if skill != "all":
                   useful = [checkin for checkin in useful if checkin["skill"] == skill]

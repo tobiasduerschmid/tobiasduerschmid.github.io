@@ -1225,7 +1225,6 @@
       '<div class="tvm-step-timer" role="timer" aria-label="Step timer" hidden></div>' +
       '<div class="tvm-step-timer-controls" hidden>' +
       '<button class="tvm-step-timer-control-btn tvm-step-timer-extend-btn" type="button" data-original-title="Add 5 minutes to this timed step">+5 min</button>' +
-      '<button class="tvm-step-timer-control-btn tvm-step-timer-disable-btn" type="button" data-original-title="Turn off the timer for this step">Timer off</button>' +
       '</div>' +
       '<button class="tvm-instructions-popout-btn" data-original-title="Open instructions in separate window">⧉<span class="sr-only">Open instructions in separate window</span></button>' +
       '</div>' +
@@ -1483,7 +1482,6 @@
     this.stepTimerEl = this.root.querySelector('.tvm-step-timer');
     this.stepTimerControlsEl = this.root.querySelector('.tvm-step-timer-controls');
     this.stepTimerExtendBtn = this.root.querySelector('.tvm-step-timer-extend-btn');
-    this.stepTimerDisableBtn = this.root.querySelector('.tvm-step-timer-disable-btn');
     this.stepContentEl = this.root.querySelector('.tvm-step-content');
     this.stepContentWrapEl = this.root.querySelector('.tvm-step-content-wrap');
     this.quizPanelEl = this.root.querySelector('.tvm-quiz-panel');
@@ -1524,11 +1522,6 @@
     if (this.stepTimerExtendBtn) {
       this.stepTimerExtendBtn.addEventListener('click', function () {
         self._extendTimedPracticeStep(self.currentStep, 5);
-      });
-    }
-    if (this.stepTimerDisableBtn) {
-      this.stepTimerDisableBtn.addEventListener('click', function () {
-        self._disableTimedPracticeStep(self.currentStep);
       });
     }
 
@@ -9133,13 +9126,21 @@
     this._timedPracticeCurrentStep = null;
   };
 
+  TutorialCode.prototype._setTimedPracticeControlsMode = function (mode) {
+    if (!this.stepTimerControlsEl) return;
+    var running = mode === 'running';
+    this.stepTimerControlsEl.hidden = !running;
+    if (this.stepTimerExtendBtn) this.stepTimerExtendBtn.hidden = !running;
+  };
+
   TutorialCode.prototype._hideTimedPracticeClock = function () {
     this._clearTimedPracticeTimer();
     if (!this.stepTimerEl) return;
     this.stepTimerEl.hidden = true;
     this.stepTimerEl.textContent = '';
-    this.stepTimerEl.classList.remove('is-urgent', 'is-locked');
-    if (this.stepTimerControlsEl) this.stepTimerControlsEl.hidden = true;
+    this.stepTimerEl.setAttribute('role', 'timer');
+    this.stepTimerEl.classList.remove('is-urgent', 'is-locked', 'is-disabled', 'is-complete');
+    this._setTimedPracticeControlsMode('hidden');
   };
 
   TutorialCode.prototype._renderTimedPracticeClock = function (label, remainingMs, stateClass) {
@@ -9147,15 +9148,28 @@
     var text = label + ' ' + this._formatTimedPracticeDuration(remainingMs);
     this.stepTimerEl.hidden = false;
     this.stepTimerEl.textContent = text;
+    this.stepTimerEl.setAttribute('role', 'timer');
     this.stepTimerEl.setAttribute('aria-label', text);
-    if (this.stepTimerControlsEl) {
-      this.stepTimerControlsEl.hidden = stateClass !== 'running';
-    }
+    this._setTimedPracticeControlsMode(stateClass === 'running' ? 'running' : 'hidden');
     this.stepTimerEl.classList.toggle('is-locked', stateClass === 'locked');
+    this.stepTimerEl.classList.remove('is-disabled', 'is-complete');
     this.stepTimerEl.classList.toggle(
       'is-urgent',
       stateClass !== 'locked' && remainingMs <= 60000 && !this._prefersReducedMotion()
     );
+  };
+
+  TutorialCode.prototype._renderTimedPracticeStaticStatus = function (text, stateClass) {
+    if (!this.stepTimerEl) return;
+    this._clearTimedPracticeTimer();
+    this.stepTimerEl.hidden = false;
+    this.stepTimerEl.textContent = text;
+    this.stepTimerEl.setAttribute('role', 'status');
+    this.stepTimerEl.setAttribute('aria-label', text);
+    this.stepTimerEl.classList.remove('is-urgent', 'is-locked');
+    this.stepTimerEl.classList.remove('is-disabled');
+    this.stepTimerEl.classList.toggle('is-complete', stateClass === 'complete');
+    this._setTimedPracticeControlsMode('hidden');
   };
 
   TutorialCode.prototype._timedPracticeStatus = function (index) {
@@ -9165,8 +9179,15 @@
     var stateAndEntry = this._timedPracticeEntry(index);
     var entry = stateAndEntry.entry || {};
     var now = Date.now();
+    if (entry.timerDisabled) {
+      var migrated = {};
+      if (entry.completed) migrated.completed = entry.completed;
+      if (entry.deadline) migrated.deadline = entry.deadline;
+      if (entry.lockoutUntil) migrated.lockoutUntil = entry.lockoutUntil;
+      this._setTimedPracticeEntry(index, migrated);
+      entry = migrated;
+    }
     if (entry.completed) return { enabled: true, completed: true };
-    if (entry.timerDisabled) return { enabled: true, disabled: true };
     if (entry.lockoutUntil && entry.lockoutUntil > now) {
       return { enabled: true, locked: true, remainingMs: entry.lockoutUntil - now };
     }
@@ -9199,11 +9220,7 @@
 
     var status = this._timedPracticeStatus(index);
     if (status.completed) {
-      this._hideTimedPracticeClock();
-      return;
-    }
-    if (status.disabled) {
-      this._hideTimedPracticeClock();
+      this._renderTimedPracticeStaticStatus('Practice complete', 'complete');
       return;
     }
     if (status.locked) {
@@ -9221,8 +9238,8 @@
 
     function tick() {
       var status = self._timedPracticeStatus(index);
-      if (status.completed || status.disabled) {
-        self._hideTimedPracticeClock();
+      if (status.completed) {
+        self._renderTimedPracticeStaticStatus('Practice complete', 'complete');
         return;
       }
       if (status.locked) {
@@ -9242,24 +9259,13 @@
     var extraMs = Math.max(1000, Math.round((extraMinutes || 5) * 60000));
     var stateAndEntry = this._timedPracticeEntry(index);
     var entry = stateAndEntry.entry || {};
-    if (entry.completed || entry.timerDisabled || entry.lockoutUntil) return false;
+    if (entry.completed || entry.lockoutUntil) return false;
     var base = entry.deadline && entry.deadline > Date.now() ? entry.deadline : Date.now();
     entry.deadline = base + extraMs;
     entry.completed = false;
     this._setTimedPracticeEntry(index, entry);
     if (this.currentStep === index) {
       this._renderTimedPracticeClock('Time left', entry.deadline - Date.now(), 'running');
-    }
-    return true;
-  };
-
-  TutorialCode.prototype._disableTimedPracticeStep = function (index, opts) {
-    opts = opts || {};
-    if (!this._timedPracticeConfig(this.steps[index])) return false;
-    this._setTimedPracticeEntry(index, { timerDisabled: true });
-    if (this.currentStep === index) {
-      this._hideTimedPracticeClock();
-      if (opts.reload) this.loadStep(index);
     }
     return true;
   };
@@ -9335,9 +9341,7 @@
       '<div class="tvm-timed-practice-lockout" role="status" aria-live="polite" aria-atomic="true">' +
       '<h3>Practice break</h3>' +
       '<p>This timed practice attempt has ended. You can return to earlier steps while this one cools down.</p>' +
-      '<p>If the timer is not appropriate for you, continue this step without a timer.</p>' +
       '<p class="tvm-timed-practice-lockout-remaining"></p>' +
-      '<button class="tvm-btn tvm-timed-practice-disable-btn" type="button">Continue without timer</button>' +
       '</div>';
     if (this.stepContentWrapEl) this.stepContentWrapEl.scrollTop = 0;
     this.stepControlsEl.innerHTML = index > 0
@@ -9345,12 +9349,6 @@
       : '<span></span><span></span><span></span>';
     var prev = this.stepControlsEl.querySelector('.tvm-btn-prev');
     if (prev) prev.addEventListener('click', function () { self.loadStep(index - 1); });
-    var disableTimer = this.stepContentEl.querySelector('.tvm-timed-practice-disable-btn');
-    if (disableTimer) {
-      disableTimer.addEventListener('click', function () {
-        self._disableTimedPracticeStep(index, { reload: true });
-      });
-    }
 
     function tick() {
       var status = self._timedPracticeStatus(index);

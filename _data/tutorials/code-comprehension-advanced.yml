@@ -117,30 +117,21 @@ steps:
       - path: "sessionPlanner.test.js"
         language: "javascript"
         content: |
-          const assert = require("assert");
+          const test = require("node:test");
+          const assert = require("node:assert/strict");
           const { pickSessionPlan, scoreSession } = require("./sessionPlanner");
 
-          function test(name, body) {
-            try {
-              body();
-              console.log(`PASS: ${name}`);
-            } catch (error) {
-              console.error(`FAIL: ${name}`);
-              throw error;
-            }
-          }
-
-          test("returns only sessions that fit the available minutes", () => {
-            const plan = pickSessionPlan({ topic: "review", minutes: 18, energy: "high" });
-            assert(!plan.includes("Sketch a full review plan"));
+          test("returns the only session that fits a 12-minute request", () => {
+            const plan = pickSessionPlan({ topic: "python", minutes: 12, energy: "high" });
+            assert.deepEqual(plan, ["Trace one Python helper"]);
           });
 
-          test("prefers a matching topic when it fits", () => {
+          test("places a matching topic first when it fits", () => {
             const plan = pickSessionPlan({ topic: "node", minutes: 18, energy: "high" });
-            assert.strictEqual(plan[0], "Map an Express route");
+            assert.equal(plan[0], "Map an Express route");
           });
 
-          test("low energy gives solo sessions a small boost", () => {
+          test("scoreSession gives solo sessions a low-energy bonus", () => {
             const soloScore = scoreSession(
               { title: "Solo", topic: "python", minutes: 10, mode: "solo" },
               { topic: "react", minutes: 20, energy: "low" }
@@ -149,7 +140,7 @@ steps:
               { title: "Pair", topic: "python", minutes: 10, mode: "pair" },
               { topic: "react", minutes: 20, energy: "low" }
             );
-            assert(soloScore > pairScore);
+            assert.equal(soloScore, pairScore + 2);
           });
 
     open_file: "sessionPlanner.test.js"
@@ -312,7 +303,7 @@ steps:
 
           function findSessions(topic) {
             if (!topic || topic === "all") {
-              return sessions;
+              return [...sessions];
             }
             return sessions.filter(session => session.topic === topic);
           }
@@ -369,7 +360,8 @@ steps:
       - path: "__tests__/sessionRoutes.test.js"
         language: "javascript"
         content: |
-          const assert = require("assert");
+          const test = require("node:test");
+          const assert = require("node:assert/strict");
           const { listSessions, sessionDetails } = require("../routes/sessionRoutes");
 
           function fakeResponse() {
@@ -387,30 +379,33 @@ steps:
             };
           }
 
-          function test(name, body) {
-            body();
-            console.log(`PASS: ${name}`);
-          }
-
           test("GET /sessions?topic=react returns only React summaries", () => {
             const res = fakeResponse();
+
             listSessions({ query: { topic: "react" } }, res);
-            assert.deepStrictEqual(res.body, [
+
+            assert.equal(res.statusCode, 200);
+            assert.deepEqual(res.body, [
               { id: 2, title: "React callback map", minutes: 18 },
             ]);
           });
 
           test("GET /sessions/:id includes the next recommended step", () => {
             const res = fakeResponse();
+
             sessionDetails({ params: { id: "3" } }, res);
-            assert.strictEqual(res.body.nextStep, "Read tests before routes");
+
+            assert.equal(res.statusCode, 200);
+            assert.equal(res.body.nextStep, "Read tests before routes");
           });
 
           test("GET /sessions/:id returns 404 for a missing session", () => {
             const res = fakeResponse();
+
             sessionDetails({ params: { id: "99" } }, res);
-            assert.strictEqual(res.statusCode, 404);
-            assert.deepStrictEqual(res.body, { error: "session not found" });
+
+            assert.equal(res.statusCode, 404);
+            assert.deepEqual(res.body, { error: "session not found" });
           });
 
     open_file: "__tests__/sessionRoutes.test.js"
@@ -606,10 +601,11 @@ steps:
           function App() {
             const [query, setQuery] = React.useState("");
             const [selectedId, setSelectedId] = React.useState(null);
+            const normalizedQuery = query.trim().toLowerCase();
 
             const visibleLessons = LESSONS.filter(lesson =>
-              lesson.title.toLowerCase().includes(query.toLowerCase()) ||
-              lesson.tag.includes(query.toLowerCase())
+              lesson.title.toLowerCase().includes(normalizedQuery) ||
+              lesson.tag.includes(normalizedQuery)
             );
 
             const selectedLesson = LESSONS.find(lesson => lesson.id === selectedId);
@@ -850,7 +846,7 @@ steps:
           const { discountFor } = require("../services/discountService");
 
           function quoteCheckout(req, res) {
-            const lineItems = req.body.items || [];
+            const lineItems = req.body?.items ?? [];
             const stockReport = checkStock(lineItems);
 
             if (!stockReport.ok) {
@@ -861,7 +857,7 @@ steps:
             }
 
             const subtotal = subtotalFor(lineItems);
-            const discount = discountFor(req.body.coupon, subtotal);
+            const discount = discountFor(req.body?.coupon, subtotal);
 
             return res.json({
               subtotal,
@@ -875,7 +871,8 @@ steps:
       - path: "__tests__/checkoutRoute.test.js"
         language: "javascript"
         content: |
-          const assert = require("assert");
+          const test = require("node:test");
+          const assert = require("node:assert/strict");
           const { quoteCheckout } = require("../routes/checkoutRoute");
 
           function fakeResponse() {
@@ -893,13 +890,9 @@ steps:
             };
           }
 
-          function test(name, body) {
-            body();
-            console.log(`PASS: ${name}`);
-          }
-
-          test("successful quote applies STUDY10 when subtotal is at least 10", () => {
+          test("successful quote applies STUDY10 to an eligible subtotal", () => {
             const res = fakeResponse();
+
             quoteCheckout({
               body: {
                 coupon: "STUDY10",
@@ -909,19 +902,23 @@ steps:
                 ],
               },
             }, res);
-            assert.deepStrictEqual(res.body, { subtotal: 11, discount: 1, total: 10 });
+
+            assert.equal(res.statusCode, 200);
+            assert.deepEqual(res.body, { subtotal: 11, discount: 1, total: 10 });
           });
 
           test("out-of-stock items return 409 and skip totals", () => {
             const res = fakeResponse();
+
             quoteCheckout({
               body: {
                 coupon: "STUDY10",
                 items: [{ sku: "ramen", quantity: 1 }],
               },
             }, res);
-            assert.strictEqual(res.statusCode, 409);
-            assert.deepStrictEqual(res.body, { error: "out of stock", missing: ["ramen"] });
+
+            assert.equal(res.statusCode, 409);
+            assert.deepEqual(res.body, { error: "out of stock", missing: ["ramen"] });
           });
 
     open_file: "__tests__/checkoutRoute.test.js"
@@ -1167,7 +1164,7 @@ steps:
             const [lessons, setLessons] = React.useState(LESSONS);
 
             function handleCompleteLesson(id) {
-              setLessons(lessons.map(lesson =>
+              setLessons(currentLessons => currentLessons.map(lesson =>
                 lesson.id === id ? { ...lesson, done: true } : lesson
               ));
             }
@@ -1343,7 +1340,9 @@ steps:
           const completions = [];
 
           function listCompletions(userId) {
-            return completions.filter(record => record.userId === userId);
+            return completions
+              .filter(record => record.userId === userId)
+              .map(record => ({ ...record }));
           }
 
           function saveCompletion(record) {
@@ -1353,12 +1352,16 @@ steps:
               existing.day === record.day
             );
             if (!alreadySaved) {
-              completions.push(record);
+              completions.push({ ...record });
             }
-            return record;
+            return { ...record };
           }
 
-          module.exports = { listCompletions, saveCompletion };
+          function resetCompletions() {
+            completions.length = 0;
+          }
+
+          module.exports = { listCompletions, saveCompletion, resetCompletions };
 
       - path: "services/badgeService.js"
         language: "javascript"
@@ -1426,7 +1429,9 @@ steps:
       - path: "__tests__/progressRoutes.test.js"
         language: "javascript"
         content: |
-          const assert = require("assert");
+          const { beforeEach, test } = require("node:test");
+          const assert = require("node:assert/strict");
+          const { listCompletions, resetCompletions } = require("../data/progressStore");
           const { completeLessonRoute } = require("../routes/progressRoutes");
 
           function fakeResponse() {
@@ -1444,35 +1449,45 @@ steps:
             };
           }
 
-          function test(name, body) {
-            body();
-            console.log(`PASS: ${name}`);
-          }
+          beforeEach(() => {
+            resetCompletions();
+          });
 
           test("POST /progress/completions stores a completion and returns 201", () => {
             const res = fakeResponse();
+
             completeLessonRoute({ body: { userId: "u1", lessonId: "react-flow", day: 1 } }, res);
-            assert.strictEqual(res.statusCode, 201);
-            assert.deepStrictEqual(res.body, {
+
+            assert.equal(res.statusCode, 201);
+            assert.deepEqual(res.body, {
               completed: true,
               lessonId: "react-flow",
               badge: null,
             });
+            assert.deepEqual(listCompletions("u1"), [
+              { userId: "u1", lessonId: "react-flow", day: 1 },
+            ]);
           });
 
           test("third consecutive completion returns a streak badge", () => {
             completeLessonRoute({ body: { userId: "u2", lessonId: "python-plan", day: 1 } }, fakeResponse());
             completeLessonRoute({ body: { userId: "u2", lessonId: "react-flow", day: 2 } }, fakeResponse());
             const res = fakeResponse();
+
             completeLessonRoute({ body: { userId: "u2", lessonId: "node-route", day: 3 } }, res);
-            assert.strictEqual(res.body.badge, "three-day-streak");
+
+            assert.equal(res.statusCode, 201);
+            assert.equal(res.body.badge, "three-day-streak");
           });
 
-          test("missing fields return 400 before touching completion policy", () => {
+          test("missing fields return 400 without storing a completion", () => {
             const res = fakeResponse();
+
             completeLessonRoute({ body: { userId: "u3", day: 4 } }, res);
-            assert.strictEqual(res.statusCode, 400);
-            assert.deepStrictEqual(res.body, { error: "missing completion fields" });
+
+            assert.equal(res.statusCode, 400);
+            assert.deepEqual(res.body, { error: "missing completion fields" });
+            assert.deepEqual(listCompletions("u3"), []);
           });
 
     open_file: "__tests__/progressRoutes.test.js"
