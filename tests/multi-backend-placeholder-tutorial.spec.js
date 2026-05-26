@@ -187,13 +187,22 @@ test.describe.serial('Multi-backend placeholder tutorial', () => {
       return window._tutorial.loadStep(1);
     }, TIMER_STORAGE_KEY);
     await expectActiveStep(page, 1);
-    await expect(page.getByRole('timer', { name: /^Time left / })).toBeVisible();
+    const timer = page.getByRole('timer', { name: /^Time left / });
+    await expect(timer).toBeVisible();
 
     await page.getByRole('button', { name: '+5 min' }).click();
-    await expect(page.getByRole('timer', { name: /^Time left 5:/ })).toBeVisible();
+    await expect(timer).toHaveText(/^Time left 5:/);
+    const extendedText = await timer.textContent();
+    await expect.poll(async () => {
+      const text = await timer.textContent();
+      return text && text !== extendedText && /^Time left 5:\d{2}$/.test(text) ? text : '';
+    }, {
+      message: 'extended timer should keep the extra five minutes after the next countdown tick',
+      timeout: 4_000,
+    }).toMatch(/^Time left 5:/);
 
     await page.getByRole('button', { name: 'Timer off' }).click();
-    await expect(page.getByRole('timer', { name: /^Time left / })).toBeHidden();
+    await expect(timer).toBeHidden();
     const disabled = await page.evaluate((storageKey) => {
       const state = JSON.parse(localStorage.getItem(storageKey) || '{}');
       return state.steps?.['1']?.timerDisabled === true;

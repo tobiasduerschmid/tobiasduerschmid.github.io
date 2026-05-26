@@ -49,9 +49,9 @@ questions:
     explanation: "General explanation, shown for both correct and wrong outcomes."
 ```
 
-`difficulty` is also supported on flashcards (`_data/flashcards/*.yml`). It is **not** used for tutorial-step quizzes (tutorial steps already gate on `min_score`).
+`difficulty` is also supported on flashcards (`_data/flashcards/*.yml`) and may be used as authoring metadata on tutorial-step quiz questions when a knowledge check deliberately ramps from basic recognition to intermediate application to advanced or expert transfer. Tutorial quiz difficulty labels are not currently displayed by the runtime; they exist so authors and reviewers can audit the intended progression.
 
-For tutorial quizzes the same block nests under each step's `quiz:` key inside `_data/tutorials/<name>.yml`, and may add `min_score: 0.8` (gating threshold) and `shuffle: true` (default).
+For tutorial quizzes the same block nests under each step's `quiz:` key inside `_data/tutorials/<name>.yml`, and may add `min_score: 0.8` (gating threshold), `shuffle: true` (default), `shuffle_questions: false` for deliberate difficulty ramps, and `shuffle_options: true` to keep answer choices randomized.
 
 Parsons (code-ordering) questions use `lines:` and `distractors:` instead of `options:`. They do **not** support `option_feedback`. See `references/schema.md`.
 

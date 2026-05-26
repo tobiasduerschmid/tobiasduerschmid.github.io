@@ -2,13 +2,14 @@ title: "Code Comprehension Part 2: Tests & Cross-File Flow"
 description: >-
   Part 2 of the code comprehension tutorial. Return a few days after Part 1,
   then practice testing hypotheses with Node.js behavior tests and mapping
-  interactions across React and backend files.
+  interactions across React and backend files in a roughly one-hour session.
 
 learning_objectives:
   - "Use behavior tests as specification beacons before reading Node.js implementation code."
   - "Verify a comprehension hypothesis with a targeted trace through one branch, invariant, or helper call."
   - "Map how state, callbacks, request data, and return values move across files in React and Node.js examples."
   - "Locate where a domain concept is implemented and separate central files from nearby but incidental files."
+  - "Evaluate whether source files preserve the intended architecture-code responsibility map."
   - "Evaluate when to trust a top-down hypothesis and when to switch to bottom-up tracing."
 
 backend: multiple
@@ -158,8 +159,10 @@ steps:
       title: "Step 1 — Knowledge Check"
       min_score: 0.8
       shuffle: true
+      shuffle_questions: false
       questions:
         - type: single
+          difficulty: basic
           question: "What behavior hypothesis should the tests give you before reading `sessionPlanner.js`?"
           options:
             - "The planner chooses sessions that fit the time box, prefers topic matches, and slightly favors solo work when energy is low."
@@ -174,6 +177,7 @@ steps:
           explanation: "The tests give a specification-layer summary: fit the time, rank matching topics, and adjust scoring for low energy."
 
         - type: single
+          difficulty: intermediate
           question: "Which implementation region verifies the hypothesis that unavailable long sessions are excluded?"
           options:
             - "The `.filter(session => session.minutes <= request.minutes)` call in `pickSessionPlan()`"
@@ -188,6 +192,7 @@ steps:
           explanation: "The filtering predicate is the shortest verification path for the minutes invariant."
 
         - type: single
+          difficulty: intermediate
           question: "A low-energy request should favor solo sessions. What is the smallest useful trace?"
           options:
             - "Compare one solo session and one pair session through `scoreSession()` with the same request."
@@ -202,6 +207,7 @@ steps:
           explanation: "Targeted tracing means choosing the one comparison that exercises the uncertain branch."
 
         - type: multiple
+          difficulty: advanced
           question: "Which cues make the tests useful beacons rather than just grading tools?"
           options:
             - "Behavior-focused names such as `prefers a matching topic when it fits`"
@@ -217,6 +223,7 @@ steps:
           explanation: "Tests help comprehension when their names, setup, and assertions reveal intent."
 
         - type: single
+          difficulty: advanced
           question: "What behavior is not fully specified by these tests?"
           options:
             - "How ties are broken when two sessions receive the same score"
@@ -413,8 +420,10 @@ steps:
       title: "Step 2 — Knowledge Check"
       min_score: 0.8
       shuffle: true
+      shuffle_questions: false
       questions:
         - type: single
+          difficulty: basic
           question: "For `GET /sessions?topic=react`, what is the request-data path?"
           options:
             - "`req.query.topic` in `listSessions()` flows into `findSessions(topic)`, then each session becomes a summary."
@@ -429,6 +438,7 @@ steps:
           explanation: "The query value is read at the route boundary, passed to the service, and only then mapped into response summaries."
 
         - type: single
+          difficulty: intermediate
           question: "Where is the missing-session 404 response implemented?"
           options:
             - "In `sessionDetails()` after `findSessionById(id)` returns no session"
@@ -443,6 +453,7 @@ steps:
           explanation: "The route owns HTTP response shape. The service owns data lookup."
 
         - type: single
+          difficulty: intermediate
           question: "Which helper should you inspect to answer why `nextStep` appears in the details response but not the list response?"
           options:
             - "`withNextStep()` and where `sessionDetails()` calls it"
@@ -457,6 +468,7 @@ steps:
           explanation: "`listSessions()` maps through `toSummary()`, while `sessionDetails()` returns `withNextStep(session)`."
 
         - type: multiple
+          difficulty: advanced
           question: "Which files are central implementation evidence for the missing-session 404 behavior?"
           options:
             - "`routes/sessionRoutes.js`, because it turns a missing lookup into `res.status(404).json(...)`"
@@ -472,6 +484,7 @@ steps:
           explanation: "Attention control means separating specification evidence, central implementation evidence, and supporting data."
 
         - type: single
+          difficulty: expert
           question: "A bug report says the list endpoint is leaking `nextStep`. Where should the search start?"
           options:
             - "`routes/sessionRoutes.js`, then compare `toSummary()` with `withNextStep()` in the service"
@@ -632,8 +645,10 @@ steps:
       title: "Step 3 — Knowledge Check"
       min_score: 0.8
       shuffle: true
+      shuffle_questions: false
       questions:
         - type: single
+          difficulty: basic
           question: "A user types `node` in the search input. What is the correct interaction path?"
           options:
             - "`LessonSearch` calls `onQueryChange`, `App` updates `query`, `visibleLessons` filters `LESSONS`, and `LessonList` renders the result."
@@ -648,6 +663,7 @@ steps:
           explanation: "The search behavior crosses files through a callback prop and derived state in the parent."
 
         - type: single
+          difficulty: intermediate
           question: "Which file owns `selectedId`?"
           options:
             - "`App.jsx`, because it calls `React.useState(null)` and passes `setSelectedId` as `onSelectLesson`"
@@ -662,6 +678,7 @@ steps:
           explanation: "In React, state ownership is usually marked by `useState`; child components receive values and callback props."
 
         - type: single
+          difficulty: intermediate
           question: "Which evidence proves that `LessonList` is display-and-event wiring, not the owner of lesson filtering?"
           options:
             - "It receives `lessons` as a prop and maps over that prop."
@@ -676,6 +693,7 @@ steps:
           explanation: "`LessonList` renders whatever list it receives; filtering happens before the prop crosses into the component."
 
         - type: multiple
+          difficulty: advanced
           question: "Which cross-file links should appear in an accurate interaction map?"
           options:
             - "`LessonSearch` → `App` through `onQueryChange={setQuery}`"
@@ -691,6 +709,7 @@ steps:
           explanation: "Cross-file maps should include both upward callback flow and downward data flow."
 
         - type: single
+          difficulty: advanced
           question: "When should you switch from beacon reading to a small bottom-up trace in this React example?"
           options:
             - "When you need to prove that a click in `LessonList` actually changes `selectedId` in `App`"
@@ -912,8 +931,25 @@ steps:
       title: "Step 4 — Knowledge Check"
       min_score: 0.8
       shuffle: true
+      shuffle_questions: false
       questions:
         - type: single
+          difficulty: basic
+          question: "Which helper computes `subtotal: 11` for two mochi and one tea?"
+          options:
+            - "`subtotalFor(lineItems)`"
+            - "`discountFor(coupon, subtotal)`"
+            - "`checkStock(lineItems)`"
+            - "`quoteCheckout(req, res)` without any helper calls"
+          correct_index: 0
+          option_feedback:
+            1: "The discount helper subtracts from an already-computed subtotal."
+            2: "Stock checking returns availability, not price totals."
+            3: "The route coordinates the helpers; it does not contain the price multiplication."
+          explanation: "`subtotalFor()` reduces line items by looking up each item price and multiplying by quantity."
+
+        - type: single
+          difficulty: intermediate
           question: "For the out-of-stock request, what is the shortest correct trace?"
           options:
             - "`quoteCheckout()` reads `req.body.items`, calls `checkStock()`, sees `ok: false`, and returns `res.status(409).json(...)`."
@@ -928,6 +964,7 @@ steps:
           explanation: "The relevant branch is route → stock check → early 409 response. A targeted trace stops before discount and subtotal helpers."
 
         - type: single
+          difficulty: intermediate
           question: "Where is the `STUDY10` coupon applied in a successful quote?"
           options:
             - "`discountFor(req.body.coupon, subtotal)` in `routes/checkoutRoute.js`, with rules defined in `services/discountService.js`"
@@ -941,21 +978,8 @@ steps:
             3: "`fakeResponse()` captures what the route sends; it does not compute business rules."
           explanation: "The route passes the coupon and subtotal to the discount helper. The helper owns coupon rules."
 
-        - type: single
-          question: "Which helper computes `subtotal: 11` for two mochi and one tea?"
-          options:
-            - "`subtotalFor(lineItems)`"
-            - "`discountFor(coupon, subtotal)`"
-            - "`checkStock(lineItems)`"
-            - "`quoteCheckout(req, res)` without any helper calls"
-          correct_index: 0
-          option_feedback:
-            1: "The discount helper subtracts from an already-computed subtotal."
-            2: "Stock checking returns availability, not price totals."
-            3: "The route coordinates the helpers; it does not contain the price multiplication."
-          explanation: "`subtotalFor()` reduces line items by looking up each item price and multiplying by quantity."
-
         - type: multiple
+          difficulty: advanced
           question: "Which files are part of the runtime flow for a successful checkout quote?"
           options:
             - "`routes/checkoutRoute.js`"
@@ -975,6 +999,22 @@ steps:
           explanation: "A successful quote is a runtime flow: route coordination, stock and price helpers, discount rules, and catalog data."
 
         - type: single
+          difficulty: advanced
+          question: "When should a reader switch from top-down beacon reading to bottom-up tracing in this example?"
+          options:
+            - "When a hypothesis depends on a risky branch such as the early `409` return or a coupon boundary."
+            - "Immediately at the first line of every file, before reading tests."
+            - "Never; names are always enough if they are descriptive."
+            - "Only after changing the code."
+          correct_index: 0
+          option_feedback:
+            1: "Starting with exhaustive tracing wastes attention before you know the behavior question."
+            2: "Beacons guide attention, but behavior still needs verification when risk or ambiguity is present."
+            3: "Comprehension verification should happen before edits, especially around branches and boundaries."
+          explanation: "Top-down reading is efficient until the evidence gets risky, surprising, or incomplete. Then a short bottom-up trace repairs or confirms the model."
+
+        - type: single
+          difficulty: expert
           question: "A bug report says `TEA3` can make tiny orders too cheap. Which beacon could mislead a fast reader, and what evidence corrects it?"
           options:
             - "The `discountFor(coupon, subtotal)` name sounds like every coupon uses the subtotal, but the `coupon === \"TEA3\"` branch returns `3` without checking the subtotal."
@@ -988,16 +1028,536 @@ steps:
             3: "The catalog data supplies prices and stock, but coupon policy is in the discount helper."
           explanation: "Concept location starts from domain language, then false-beacon diagnosis names both the tempting inference and the exact branch that corrects it."
 
+  # =========================================================================
+  # STEP 5: React Concept Location Sprint
+  # =========================================================================
+  # Pedagogy: timed concept-location expedition — domain term to cross-file implementation map
+  - title: "React Concept Location Sprint"
+    backend: react
+    max-time: 10
+    lockout-time: 5
+    instructions: |
+      ### Why this matters
+
+      Real comprehension tasks often begin with a domain idea, not a file name: "Where is pinning implemented?" or "Where does completion change?" Concept location is the skill of turning that idea into a focused search path across files. This sprint is larger than the Part 1 React examples, but the goal is still bounded. Let's see how far you can make it.
+
+      ### 🎯 You will learn to
+
+      - Locate a domain concept across React state, props, and child events
+      - Rank files as central, supporting, or incidental evidence
+      - Verify one cross-file interaction with a targeted trace
+
+      ### Reading Goal
+
+      You have **10 minutes**. Your concept is **pinning a lesson**.
+
+      Read in this order:
+
+      1. `App.jsx` for state ownership and derived values.
+      2. `LessonCard.jsx` for the click event.
+      3. Only then inspect display-only helpers if a question needs them.
+
+      Write a central/supporting/incidental map in `reading-notes.md`.
+
+      | Category | What it means |
+      |---|---|
+      | Central | Code that owns or changes the concept |
+      | Supporting | Code that provides data or displays the concept |
+      | Incidental | Nearby code that does not participate in the concept |
+
+      Stretch target: find one weak beacon. A CSS class like `pinned-card` can confirm presentation, but it is not enough to prove where pinning state lives.
+
+    files:
+      - path: "reading-notes.md"
+        language: "markdown"
+        content: |
+          # React Concept Location Notes
+
+          Concept:
+
+          Central files:
+
+          Supporting files:
+
+          Incidental files:
+
+          Strongest beacons:
+          1.
+          2.
+          3.
+
+          Smallest trace:
+
+          Final EiPE summary:
+
+      - path: "lesson-board/styles.css"
+        language: "css"
+        content: |
+          .board-shell {
+            max-width: 62rem;
+            margin: 0 auto;
+            padding: 1.5rem;
+          }
+
+          .pinned-card {
+            border: 2px solid #2774ae;
+            padding: 1rem;
+            border-radius: 6px;
+          }
+
+      - path: "lesson-board/data.js"
+        language: "javascript"
+        content: |
+          const LESSONS = [
+            { id: 1, title: "Python plan roles", topic: "python", done: true },
+            { id: 2, title: "React callback descent", topic: "react", done: false },
+            { id: 3, title: "Node tests as beacons", topic: "node", done: false },
+            { id: 4, title: "Review risk map", topic: "review", done: true },
+          ];
+
+      - path: "lesson-board/LessonFilter.jsx"
+        language: "javascript"
+        content: |
+          function LessonFilter({ view, onViewChange }) {
+            return (
+              <label>
+                View
+                <select value={view} onChange={event => onViewChange(event.target.value)}>
+                  <option value="all">All</option>
+                  <option value="open">Open</option>
+                  <option value="done">Done</option>
+                </select>
+              </label>
+            );
+          }
+
+      - path: "lesson-board/LessonCard.jsx"
+        language: "javascript"
+        content: |
+          function LessonCard({ lesson, isPinned, onPinLesson, onCompleteLesson }) {
+            return (
+              <article className={isPinned ? "pinned-card" : ""}>
+                <h2 className="h5">{lesson.title}</h2>
+                <p>Topic: {lesson.topic}</p>
+                <p>{lesson.done ? "Done" : "Still open"}</p>
+                <button type="button" onClick={() => onPinLesson(lesson.id)}>
+                  {isPinned ? "Pinned" : "Pin"}
+                </button>
+                <button type="button" onClick={() => onCompleteLesson(lesson.id)}>
+                  Mark done
+                </button>
+              </article>
+            );
+          }
+
+      - path: "lesson-board/ProgressSummary.jsx"
+        language: "javascript"
+        content: |
+          function ProgressSummary({ lessons }) {
+            const doneCount = lessons.filter(lesson => lesson.done).length;
+            return <p>{doneCount} of {lessons.length} lessons complete.</p>;
+          }
+
+      - path: "lesson-board/App.jsx"
+        language: "javascript"
+        content: |
+          function App() {
+            const [view, setView] = React.useState("all");
+            const [pinnedId, setPinnedId] = React.useState(2);
+            const [lessons, setLessons] = React.useState(LESSONS);
+
+            function handleCompleteLesson(id) {
+              setLessons(lessons.map(lesson =>
+                lesson.id === id ? { ...lesson, done: true } : lesson
+              ));
+            }
+
+            const visibleLessons = lessons.filter(lesson => {
+              if (view === "done") {
+                return lesson.done;
+              }
+              if (view === "open") {
+                return !lesson.done;
+              }
+              return true;
+            });
+
+            const pinnedLesson = lessons.find(lesson => lesson.id === pinnedId);
+
+            return (
+              <main className="board-shell">
+                <h1>Lesson Board</h1>
+                <LessonFilter view={view} onViewChange={setView} />
+                <ProgressSummary lessons={lessons} />
+                {pinnedLesson && <p role="status">Pinned: {pinnedLesson.title}</p>}
+                <section aria-label="Visible lessons">
+                  {visibleLessons.map(lesson => (
+                    <LessonCard
+                      key={lesson.id}
+                      lesson={lesson}
+                      isPinned={lesson.id === pinnedId}
+                      onPinLesson={setPinnedId}
+                      onCompleteLesson={handleCompleteLesson}
+                    />
+                  ))}
+                </section>
+              </main>
+            );
+          }
+
+          const root = ReactDOM.createRoot(document.getElementById("root"));
+          root.render(<App />);
+
+    react_files:
+      - "lesson-board/styles.css"
+      - "lesson-board/data.js"
+      - "lesson-board/LessonFilter.jsx"
+      - "lesson-board/LessonCard.jsx"
+      - "lesson-board/ProgressSummary.jsx"
+      - "lesson-board/App.jsx"
+    open_file: "lesson-board/App.jsx"
+
+    quiz:
+      title: "Step 5 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      shuffle_questions: false
+      questions:
         - type: single
-          question: "When should a reader switch from top-down beacon reading to bottom-up tracing in this example?"
+          difficulty: basic
+          question: "Where is the pinning state owned?"
           options:
-            - "When a hypothesis depends on a risky branch such as the early `409` return or a coupon boundary."
-            - "Immediately at the first line of every file, before reading tests."
-            - "Never; names are always enough if they are descriptive."
-            - "Only after changing the code."
+            - "`App.jsx`, because it calls `React.useState(2)` for `pinnedId` and passes `setPinnedId` down as `onPinLesson`."
+            - "`LessonCard.jsx`, because it renders the Pin button."
+            - "`styles.css`, because it defines `.pinned-card`."
+            - "`data.js`, because each lesson has an `id`."
           correct_index: 0
           option_feedback:
-            1: "Starting with exhaustive tracing wastes attention before you know the behavior question."
-            2: "Beacons guide attention, but behavior still needs verification when risk or ambiguity is present."
-            3: "Comprehension verification should happen before edits, especially around branches and boundaries."
-          explanation: "Top-down reading is efficient until the evidence gets risky, surprising, or incomplete. Then a short bottom-up trace repairs or confirms the model."
+            1: "`LessonCard` triggers the change, but the state belongs to the component that calls `useState`."
+            2: "The CSS class is a presentation beacon. It does not own state."
+            3: "The IDs support pinning, but static data does not own the selected pinned lesson."
+          explanation: "State ownership is the central evidence for a React concept-location task."
+
+        - type: single
+          difficulty: intermediate
+          question: "A user clicks `Pin` on a lesson. What is the correct interaction path?"
+          options:
+            - "`LessonCard` calls `onPinLesson(lesson.id)`, which is `setPinnedId` from `App`; `App` then recomputes `pinnedLesson` and `isPinned`."
+            - "`ProgressSummary` changes `pinnedId` after counting completed lessons."
+            - "`styles.css` changes `pinnedId` when `.pinned-card` is applied."
+            - "`data.js` mutates the matching lesson to store `isPinned: true`."
+          correct_index: 0
+          option_feedback:
+            1: "`ProgressSummary` receives lessons and computes a count. It is incidental to pinning."
+            2: "CSS can reflect pinned presentation, but it cannot update React state."
+            3: "The code keeps `pinnedId` in React state rather than mutating static data."
+          explanation: "The concept crosses files through a callback prop, then returns to `App` as derived state and props."
+
+        - type: single
+          difficulty: intermediate
+          question: "Which file is incidental to the pinning concept, even though it is nearby?"
+          options:
+            - "`ProgressSummary.jsx`"
+            - "`App.jsx`"
+            - "`LessonCard.jsx`"
+            - "`data.js`"
+          correct_index: 0
+          option_feedback:
+            1: "`App` owns `pinnedId`, so it is central."
+            2: "`LessonCard` triggers the pin callback and displays the pin button, so it is central/supporting."
+            3: "`data.js` provides lesson IDs that pinning depends on, so it is supporting evidence."
+          explanation: "Concept-location skill includes knowing what to ignore. Progress counting is real behavior, but it does not implement pinning."
+
+        - type: multiple
+          difficulty: advanced
+          question: "Which beacons should appear in a central/supporting map for pinning?"
+          options:
+            - "`pinnedId`"
+            - "`onPinLesson={setPinnedId}`"
+            - "`isPinned={lesson.id === pinnedId}`"
+            - "`.pinned-card`"
+            - "`doneCount`"
+          correct_indices: [0, 1, 2, 3]
+          option_feedback:
+            0: "The state name is the central lexical beacon."
+            1: "This prop wiring is the event path from child to parent."
+            2: "This derived prop connects state to display."
+            3: "This is supporting presentation evidence, not state ownership."
+            4: "`doneCount` belongs to progress summary, not pinning."
+          explanation: "A good map distinguishes central state and callbacks from supporting presentation."
+
+        - type: single
+          difficulty: expert
+          question: "Which is the best false-beacon diagnosis for this sprint?"
+          options:
+            - "The `.pinned-card` class can make the pinned lesson visible, but it is weak evidence for where pinning is implemented; the reliable evidence is `pinnedId` state and `onPinLesson` wiring."
+            - "`pinnedId` is weak evidence because variable names never help in React."
+            - "`ProgressSummary` must own pinning because progress and pinning both appear on the screen."
+            - "`data.js` must own pinning because lesson IDs are stored there."
+          correct_index: 0
+          option_feedback:
+            1: "Names are useful beacons when they align with state and behavior."
+            2: "Screen proximity is not concept ownership. The progress component does not receive or change `pinnedId`."
+            3: "IDs support the concept, but the selected pinned id is state in `App`."
+          explanation: "Robust top-down reading uses weak cues for orientation, then verifies ownership through state and callback evidence."
+
+  # =========================================================================
+  # STEP 6: Architecture-Code Alignment Review
+  # =========================================================================
+  # Pedagogy: mini code-review packet — architecture-to-code mapping and responsibility diagnosis
+  - title: "Architecture-Code Alignment Review"
+    backend: webcontainer
+    instructions: |
+      ### Why this matters
+
+      Advanced comprehension means reading code against an intended architecture, not just finding the line that produces an output. A route, service, data store, and policy helper each have different responsibilities. When those responsibilities stay visible, the code gives future readers trustworthy architectural beacons.
+
+      ### 🎯 You will learn to
+
+      - Map a Node.js behavior from route to service to data and policy helpers
+      - Separate specification evidence from runtime implementation evidence
+      - Evaluate whether files preserve their intended responsibilities
+
+      ### Mini Review Packet
+
+      Requirement:
+
+      > When a student completes a lesson, store the completion, return the completed lesson id, and award a three-day streak badge when the student's completion days contain a three-day run.
+
+      Intended architecture:
+
+      | Layer | Responsibility |
+      |---|---|
+      | Route | Read HTTP request fields and choose HTTP status/response shape |
+      | Progress service | Coordinate completion behavior |
+      | Store | Save and list completion records |
+      | Badge service | Decide whether the records earn a badge |
+      | Email preview | Nearby formatting helper, not part of completion behavior |
+
+      Read `__tests__/progressRoutes.test.js` first, then map the requirement to code. Your final answer should name central, supporting, and incidental files.
+
+    files:
+      - path: "data/progressStore.js"
+        language: "javascript"
+        content: |
+          const completions = [];
+
+          function listCompletions(userId) {
+            return completions.filter(record => record.userId === userId);
+          }
+
+          function saveCompletion(record) {
+            const alreadySaved = completions.some(existing =>
+              existing.userId === record.userId &&
+              existing.lessonId === record.lessonId &&
+              existing.day === record.day
+            );
+            if (!alreadySaved) {
+              completions.push(record);
+            }
+            return record;
+          }
+
+          module.exports = { listCompletions, saveCompletion };
+
+      - path: "services/badgeService.js"
+        language: "javascript"
+        content: |
+          function streakBadgeFor(records) {
+            const days = [...new Set(records.map(record => record.day))].sort((a, b) => a - b);
+            let current = 0;
+            let previous = null;
+            for (const day of days) {
+              current = previous === null || day === previous + 1 ? current + 1 : 1;
+              if (current >= 3) {
+                return "three-day-streak";
+              }
+              previous = day;
+            }
+            return null;
+          }
+
+          module.exports = { streakBadgeFor };
+
+      - path: "services/progressService.js"
+        language: "javascript"
+        content: |
+          const { listCompletions, saveCompletion } = require("../data/progressStore");
+          const { streakBadgeFor } = require("./badgeService");
+
+          function completeLesson({ userId, lessonId, day }) {
+            saveCompletion({ userId, lessonId, day });
+            const records = listCompletions(userId);
+            return {
+              completed: true,
+              lessonId,
+              badge: streakBadgeFor(records),
+            };
+          }
+
+          module.exports = { completeLesson };
+
+      - path: "services/emailPreview.js"
+        language: "javascript"
+        content: |
+          function previewCompletionEmail(studentName, lessonTitle) {
+            return `${studentName} completed ${lessonTitle}.`;
+          }
+
+          module.exports = { previewCompletionEmail };
+
+      - path: "routes/progressRoutes.js"
+        language: "javascript"
+        content: |
+          const { completeLesson } = require("../services/progressService");
+
+          function completeLessonRoute(req, res) {
+            const { userId, lessonId, day } = req.body;
+            if (!userId || !lessonId || !day) {
+              return res.status(400).json({ error: "missing completion fields" });
+            }
+
+            const summary = completeLesson({ userId, lessonId, day });
+            return res.status(201).json(summary);
+          }
+
+          module.exports = { completeLessonRoute };
+
+      - path: "__tests__/progressRoutes.test.js"
+        language: "javascript"
+        content: |
+          const assert = require("assert");
+          const { completeLessonRoute } = require("../routes/progressRoutes");
+
+          function fakeResponse() {
+            return {
+              statusCode: 200,
+              body: undefined,
+              status(code) {
+                this.statusCode = code;
+                return this;
+              },
+              json(payload) {
+                this.body = payload;
+                return this;
+              },
+            };
+          }
+
+          function test(name, body) {
+            body();
+            console.log(`PASS: ${name}`);
+          }
+
+          test("POST /progress/completions stores a completion and returns 201", () => {
+            const res = fakeResponse();
+            completeLessonRoute({ body: { userId: "u1", lessonId: "react-flow", day: 1 } }, res);
+            assert.strictEqual(res.statusCode, 201);
+            assert.deepStrictEqual(res.body, {
+              completed: true,
+              lessonId: "react-flow",
+              badge: null,
+            });
+          });
+
+          test("third consecutive completion returns a streak badge", () => {
+            completeLessonRoute({ body: { userId: "u2", lessonId: "python-plan", day: 1 } }, fakeResponse());
+            completeLessonRoute({ body: { userId: "u2", lessonId: "react-flow", day: 2 } }, fakeResponse());
+            const res = fakeResponse();
+            completeLessonRoute({ body: { userId: "u2", lessonId: "node-route", day: 3 } }, res);
+            assert.strictEqual(res.body.badge, "three-day-streak");
+          });
+
+          test("missing fields return 400 before touching completion policy", () => {
+            const res = fakeResponse();
+            completeLessonRoute({ body: { userId: "u3", day: 4 } }, res);
+            assert.strictEqual(res.statusCode, 400);
+            assert.deepStrictEqual(res.body, { error: "missing completion fields" });
+          });
+
+    open_file: "__tests__/progressRoutes.test.js"
+    run_file: "__tests__/progressRoutes.test.js"
+
+    quiz:
+      title: "Step 6 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      shuffle_questions: false
+      questions:
+        - type: single
+          difficulty: basic
+          question: "Which first-pass hypothesis comes from the tests?"
+          options:
+            - "The route records lesson completions, returns HTTP status codes, and can award a three-day streak badge."
+            - "The code renders a React progress dashboard."
+            - "The email preview helper sends completion emails."
+            - "The data store sorts lessons by title."
+          correct_index: 0
+          option_feedback:
+            1: "There is no JSX or browser rendering in this packet."
+            2: "The email helper is nearby, but the tests never exercise it."
+            3: "The tests describe completions and badges, not lesson-title sorting."
+          explanation: "The tests provide the specification layer: completion storage, status shape, and streak badge behavior."
+
+        - type: single
+          difficulty: intermediate
+          question: "Where is the missing-field `400` behavior implemented?"
+          options:
+            - "`completeLessonRoute()` in `routes/progressRoutes.js`"
+            - "`completeLesson()` in `services/progressService.js`"
+            - "`saveCompletion()` in `data/progressStore.js`"
+            - "`streakBadgeFor()` in `services/badgeService.js`"
+          correct_index: 0
+          option_feedback:
+            1: "The service receives already-validated fields in this design."
+            2: "The store saves records. It does not know about HTTP status codes."
+            3: "The badge helper only decides whether completion records earn a badge."
+          explanation: "The route owns HTTP boundary behavior, including input checks and status/response shape."
+
+        - type: multiple
+          difficulty: intermediate
+          question: "Which files are central runtime evidence for awarding the streak badge?"
+          options:
+            - "`services/progressService.js`"
+            - "`services/badgeService.js`"
+            - "`data/progressStore.js`"
+            - "`services/emailPreview.js`"
+            - "`__tests__/progressRoutes.test.js`"
+          correct_indices: [0, 1, 2]
+          option_feedback:
+            0: "The progress service coordinates saving records and asking for a badge."
+            1: "The badge service owns the three-day streak policy."
+            2: "The store supplies the completion records the badge service evaluates."
+            3: "The email helper is nearby but never imported by the route or service."
+            4: "The test specifies expected behavior, but it is not runtime implementation."
+          explanation: "Central runtime files are the ones the successful completion path actually calls."
+
+        - type: single
+          difficulty: advanced
+          question: "Which responsibility map best matches the implementation?"
+          options:
+            - "Route: HTTP validation/status. Progress service: completion workflow. Store: persistence. Badge service: streak policy."
+            - "Route: streak algorithm. Progress service: CSS rendering. Store: HTTP validation. Badge service: database connection."
+            - "Route: email preview. Progress service: test runner. Store: React state. Badge service: route params."
+            - "Route: static data only. Progress service: no behavior. Store: all user-visible response decisions. Badge service: unused."
+          correct_index: 0
+          option_feedback:
+            1: "Those responsibilities do not match the imports or function bodies."
+            2: "Those concepts are either absent or assigned to the wrong files."
+            3: "The implementation clearly distributes behavior across route, service, store, and badge helper."
+          explanation: "Architecture-code alignment means the code vocabulary preserves the intended responsibility vocabulary."
+
+        - type: single
+          difficulty: expert
+          question: "Which false-beacon diagnosis is strongest?"
+          options:
+            - "`emailPreview.js` sounds related to completion, but it is incidental here because no central file imports it and no test exercises it."
+            - "`badgeService.js` is incidental because badges are just strings."
+            - "`progressStore.js` is irrelevant because tests should be the only source of truth."
+            - "`completeLessonRoute()` is unrelated because routes never affect behavior."
+          correct_index: 0
+          option_feedback:
+            1: "The badge string is user-visible policy, and the helper is called by the progress service."
+            2: "Tests specify behavior, but runtime code still implements it."
+            3: "The route reads request fields, validates them, and chooses HTTP response shape."
+          explanation: "A plausible nearby file can be a weak contextual beacon. Strong readers verify relevance through imports, calls, and tests."

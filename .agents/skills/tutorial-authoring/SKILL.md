@@ -1048,8 +1048,14 @@ steps:
       title: "Step N quiz"
       min_score: 0.8                         # Fraction to pass / advance.
       shuffle: true                          # Default true.
+      shuffle_questions: false               # Optional. Use for deliberate
+                                             # difficulty ramps while keeping
+                                             # answer-option shuffling.
+      shuffle_options: true                  # Optional. Defaults to the
+                                             # `shuffle` value.
       questions:
         - type: single | multiple | parsons
+          difficulty: basic | intermediate | advanced | expert
           question: "Markdown..."
           options: ["A", "B", "C", "D"]
           correct_index: 1                   # single

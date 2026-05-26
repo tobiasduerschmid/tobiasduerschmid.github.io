@@ -3,12 +3,13 @@ description: >-
   Part 1 of a two-part code comprehension tutorial for students who have
   completed the Python, React, and Node.js essentials tutorials. Practice
   deciding where to focus attention, reading faster with beacons, and verifying
-  only the code that matters.
+  only the code that matters in a roughly one-hour session.
 
 learning_objectives:
   - "Generate a purpose hypothesis from names, tests, public entry points, and surrounding context before tracing implementation details."
   - "Select the highest-value code region to inspect when a comprehension question has a specific target."
   - "Classify lexical, structural, framework, and test-based beacons in Python and React code."
+  - "Use variable roles to recognize common programming plans before tracing every assignment."
   - "Explain unfamiliar code with purpose, mechanism, evidence, and limits rather than long line-by-line narration."
   - "Summarize unfamiliar code at macro, function, and block levels without narrating every line."
 
@@ -165,8 +166,10 @@ steps:
       title: "Step 1 — Knowledge Check"
       min_score: 0.8
       shuffle: true
+      shuffle_questions: false
       questions:
         - type: single
+          difficulty: basic
           question: "Before tracing `playlist_summary.py`, which evidence gives the strongest first hypothesis about the module's purpose?"
           options:
             - "The exact number of dictionary keys in `TRACKS`"
@@ -181,6 +184,7 @@ steps:
           explanation: "A purpose hypothesis should start from specification-level beacons: test names, public function names, and behavior words. Here they point to summarizing a public playlist while excluding hidden tracks."
 
         - type: single
+          difficulty: intermediate
           question: "The question is: 'Are hidden tracks included in the final summary?' Which region should you inspect first?"
           options:
             - "`visible_tracks()` and the call to it inside `summarize_playlist()`"
@@ -195,6 +199,7 @@ steps:
           explanation: "`visible_tracks()` is the shortest path from the question to evidence. You only need to trace `hidden=True` through that filter and confirm `summarize_playlist()` uses the filtered list."
 
         - type: single
+          difficulty: intermediate
           question: "Which summary is strongest after reading this module?"
           options:
             - "`summarize_playlist()` makes a dictionary, calls a helper, and rounds a number."
@@ -209,6 +214,7 @@ steps:
           explanation: "A good comprehension summary climbs abstraction levels: user-visible purpose first, then the major behaviors that support it."
 
         - type: multiple
+          difficulty: advanced
           question: "Which are reliable beacons in this small Python example?"
           options:
             - "`test_hidden_tracks_do_not_appear`"
@@ -224,6 +230,7 @@ steps:
           explanation: "The strongest beacons are the ones that connect names to behavior: tests, helper names, and role-revealing variables."
 
         - type: single
+          difficulty: advanced
           question: "Which explanation best follows the Purpose / Mechanism / Evidence / Limit frame?"
           options:
             - "Purpose: the module builds a public playlist summary. Mechanism: it filters hidden tracks, totals visible duration, and labels explicit songs. Evidence: the tests and `visible_tracks()` support that reading. Limit: this does not prove how unusual data, such as negative durations, would behave."
@@ -337,8 +344,10 @@ steps:
       title: "Step 2 — Knowledge Check"
       min_score: 0.8
       shuffle: true
+      shuffle_questions: false
       questions:
         - type: single
+          difficulty: basic
           question: "What is the best purpose hypothesis for `build_event_cards()`?"
           options:
             - "It mutates `EVENTS` so cancelled events are permanently removed."
@@ -353,6 +362,7 @@ steps:
           explanation: "The helper names form a chain: upcoming events, tag matching, seats left, then card construction."
 
         - type: single
+          difficulty: intermediate
           question: "For `today=14` and `tag=\"frontend\"`, which answer gives the result and the evidence?"
           options:
             - "`React Snack Lab` appears because it is upcoming, not cancelled, and has the frontend tag."
@@ -367,6 +377,7 @@ steps:
           explanation: "`React Snack Lab` is upcoming, not cancelled, and has the requested tag."
 
         - type: single
+          difficulty: intermediate
           question: "Which detail can you safely ignore when answering whether cancelled events appear?"
           options:
             - "The `not event[\"cancelled\"]` condition"
@@ -381,6 +392,7 @@ steps:
           explanation: "Attention control includes deciding what not to read. Seat math does not determine whether cancelled events enter the result."
 
         - type: single
+          difficulty: advanced
           question: "Which small trace best verifies the hypothesis that full events are still included?"
           options:
             - "Trace `Node Night Market` through `upcoming_events()`, `matches_tag(..., \"backend\")`, and `seats_left()`."
@@ -395,6 +407,7 @@ steps:
           explanation: "`Node Night Market` is full and not cancelled. Tracing it through the relevant helpers tests exactly the hypothesis."
 
         - type: single
+          difficulty: advanced
           question: "Which note best shows useful vary-the-input reasoning?"
           options:
             - "If `today` changes to `18`, `React Snack Lab` should disappear because the date filter runs before card creation."
@@ -533,8 +546,10 @@ steps:
       title: "Step 3 — Knowledge Check"
       min_score: 0.8
       shuffle: true
+      shuffle_questions: false
       questions:
         - type: single
+          difficulty: basic
           question: "Which beacon most strongly tells you that `App` owns state that can change over time?"
           options:
             - "`React.useState(...)` calls inside `App`"
@@ -549,6 +564,7 @@ steps:
           explanation: "`useState` is a React framework beacon: it marks component-owned memory and a setter that can trigger a re-render."
 
         - type: single
+          difficulty: intermediate
           question: "The expression `snacks.filter(...).map(...)` is mainly which kind of beacon?"
           options:
             - "A structural beacon for the plan: derive a visible list, then render one element per item"
@@ -563,6 +579,7 @@ steps:
           explanation: "The structure compresses many details into a plan: choose the relevant data, then transform each item into JSX."
 
         - type: single
+          difficulty: intermediate
           question: "A reader wants to know what happens when the Vote button is clicked. Which path should they inspect?"
           options:
             - "`SnackCard`'s `onClick`, the `onVote` prop, and `handleVote` in `App`"
@@ -577,6 +594,7 @@ steps:
           explanation: "The interaction crosses a component boundary: child button → callback prop → parent state update."
 
         - type: multiple
+          difficulty: advanced
           question: "Which beacons are strong enough to support a first-pass prediction?"
           options:
             - "`visibleSnacks` suggests a filtered list of snacks."
@@ -592,6 +610,7 @@ steps:
           explanation: "A useful beacon has a tight relationship to behavior. Presentation class names are usually weaker than state, props, and list-rendering patterns."
 
         - type: single
+          difficulty: advanced
           question: "Which cue is the weakest evidence for how votes change?"
           options:
             - "`snack-grid`, because it mainly names a layout hook"
@@ -745,8 +764,10 @@ steps:
       title: "Step 4 — Knowledge Check"
       min_score: 0.8
       shuffle: true
+      shuffle_questions: false
       questions:
         - type: single
+          difficulty: basic
           question: "Which component owns the selected topic state?"
           options:
             - "`App`, because it calls `React.useState(\"all\")` and passes `topic` plus `setTopic` down"
@@ -761,6 +782,7 @@ steps:
           explanation: "`App` owns state and passes it down. The child component sends changes upward by calling the callback prop."
 
         - type: single
+          difficulty: intermediate
           question: "If the selected topic is `react`, which task appears?"
           options:
             - "`Trace prop callback`"
@@ -775,6 +797,7 @@ steps:
           explanation: "`visibleTasks` keeps tasks where `task.topic === topic`, so the React task remains."
 
         - type: single
+          difficulty: intermediate
           question: "When does the `Everything visible is done.` status appear?"
           options:
             - "Only when there is at least one visible task and every visible task has `done: true`"
@@ -789,6 +812,7 @@ steps:
           explanation: "The condition combines two checks: there must be visible tasks, and all of them must be done."
 
         - type: multiple
+          difficulty: advanced
           question: "Which statements are good evidence-based summaries of this React code?"
           options:
             - "`App` owns the topic state and derives `visibleTasks` from static task data."
@@ -804,6 +828,7 @@ steps:
           explanation: "A strong React summary names state ownership, callback direction, and derived rendering."
 
         - type: single
+          difficulty: advanced
           question: "What plan is shared by the Python event-card sprint and this React study-queue sprint?"
           options:
             - "Both filter a source collection into visible items, then shape those items for a user-facing result."
@@ -816,3 +841,391 @@ steps:
             2: "Both examples derive new values without mutating the starter collection."
             3: "Route handlers are part of backend Node examples, not these Python and React snippets."
           explanation: "Transfer improves when you name the shared code plan across languages: select relevant data, then shape it for the consumer."
+
+  # =========================================================================
+  # STEP 5: Variable Roles and Plans
+  # =========================================================================
+  # Pedagogy: worked example with fading — variable roles bridge tracing to plan recognition
+  - title: "Variable Roles and Plans"
+    backend: pyodide
+    instructions: |
+      ### Why this matters
+
+      Beacons are easier to trust when you know the role each value plays. Novices often trace variable values forever; stronger readers ask whether a variable is a **stepper**, **accumulator**, **candidate**, **flag**, or **organizer**. That role label compresses several lines into a plan you can verify selectively.
+
+      ### 🎯 You will learn to
+
+      - Classify variables by role before tracing every update
+      - Recognize aggregation and max-tracking plans from variable roles
+      - Verify one role hypothesis with a small input trace
+
+      ### Variable Roles Are Beacons
+
+      Use this table while reading `badge_recommender.py`.
+
+      | Role | What it usually does | Typical beacon |
+      |---|---|---|
+      | Stepper | Moves through a collection | `entry`, `track`, `item` inside a loop |
+      | Accumulator / gatherer | Collects totals or output | `total`, `badges`, `topic_minutes` |
+      | Candidate / best-so-far | Remembers the current winner | `best_topic`, `best_minutes` |
+      | Flag | Records whether a condition has happened | `is_ready`, `has_warning` |
+      | Organizer | Groups data by key | dictionary keyed by topic, id, or date |
+
+      ### Worked Reading Example
+
+      If the question is:
+
+      > "How does the code know which topic is strongest?"
+
+      Do not trace every entry first. Use the role beacons:
+
+      | Move | Evidence | Hypothesis |
+      |---|---|---|
+      | Orient | `strongest_topic(topic_minutes)` | This helper probably chooses one topic |
+      | Beacon-hunt | `best_topic`, `best_minutes` | This looks like a best-so-far plan |
+      | Descend | The `if minutes > best_minutes` branch | The branch updates the current winner |
+      | Verify | Trace `{"python": 35, "react": 42}` | React should replace Python as best |
+
+      ### Your Turn
+
+      Read the public function `recommend_badges()` first, then inspect the helpers. Write a role table in your notes:
+
+      - Which value organizes minutes by topic?
+      - Which values hold the current candidate?
+      - Which value gathers the final user-facing output?
+      - Which input path would you trace to verify that zero-minute entries are ignored?
+
+      You do not need to edit the code.
+
+    files:
+      - path: "badge_recommender.py"
+        language: "python"
+        content: |
+          ACTIVITY_LOG = [
+              {"topic": "python", "minutes": 18},
+              {"topic": "react", "minutes": 12},
+              {"topic": "python", "minutes": 22},
+              {"topic": "node", "minutes": 35},
+              {"topic": "react", "minutes": 0},
+              {"topic": "python", "minutes": 15},
+          ]
+
+          def summarize_minutes(entries):
+              topic_minutes = {}
+              for entry in entries:
+                  if entry["minutes"] <= 0:
+                      continue
+                  topic = entry["topic"]
+                  topic_minutes[topic] = topic_minutes.get(topic, 0) + entry["minutes"]
+              return topic_minutes
+
+          def strongest_topic(topic_minutes):
+              best_topic = None
+              best_minutes = 0
+              for topic, minutes in topic_minutes.items():
+                  if minutes > best_minutes:
+                      best_topic = topic
+                      best_minutes = minutes
+              return best_topic, best_minutes
+
+          def recommend_badges(entries, minimum_minutes=30):
+              topic_minutes = summarize_minutes(entries)
+              topic, minutes = strongest_topic(topic_minutes)
+
+              badges = []
+              for name, total in sorted(topic_minutes.items()):
+                  if total >= minimum_minutes:
+                      badges.append(f"{name}: {total} min")
+
+              if topic and minutes >= minimum_minutes * 2:
+                  badges.append(f"focus: {topic}")
+
+              return badges
+
+          if __name__ == "__main__":
+              print(recommend_badges(ACTIVITY_LOG))
+
+    open_file: "badge_recommender.py"
+    run_file: "badge_recommender.py"
+
+    quiz:
+      title: "Step 5 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      shuffle_questions: false
+      questions:
+        - type: single
+          difficulty: basic
+          question: "What role does `topic_minutes` play in `summarize_minutes()`?"
+          options:
+            - "It is an organizer and accumulator: it groups minutes by topic and updates each total."
+            - "It is a flag that records whether any topic passed the threshold."
+            - "It is a stepper that moves through the activity log one entry at a time."
+            - "It is a display string for one badge."
+          correct_index: 0
+          option_feedback:
+            1: "The threshold check happens later in `recommend_badges()`. This dictionary stores grouped totals."
+            2: "`entry` is the loop stepper. `topic_minutes` persists across loop iterations."
+            3: "Display strings are appended to `badges`; `topic_minutes` stores numeric totals."
+          explanation: "The dictionary key is the topic, and the value accumulates minutes for that topic."
+
+        - type: single
+          difficulty: intermediate
+          question: "Which variables are the strongest beacons for the best-so-far plan?"
+          options:
+            - "`best_topic` and `best_minutes`"
+            - "`entries` and `entry`"
+            - "`badges` and `name`"
+            - "`minimum_minutes` and `topic`"
+          correct_index: 0
+          option_feedback:
+            1: "Those names support the loop structure, but they do not identify the current winner."
+            2: "`badges` gathers output strings; it is not choosing the strongest topic."
+            3: "`minimum_minutes` is a threshold, and `topic` is a local item from iteration or return unpacking."
+          explanation: "A best-so-far plan usually keeps a current candidate and the score that justifies it."
+
+        - type: single
+          difficulty: intermediate
+          question: "What is the best purpose-level summary of `recommend_badges()`?"
+          options:
+            - "It turns an activity log into badge labels by aggregating minutes by topic, filtering topics below a threshold, and optionally adding a focus badge."
+            - "It prints every activity in sorted order."
+            - "It removes React entries because one React activity has zero minutes."
+            - "It finds the first topic in the log and returns only that topic."
+          correct_index: 0
+          option_feedback:
+            1: "Printing happens only under the main guard. The function returns badge labels."
+            2: "The zero-minute React entry is ignored, but other React minutes still count."
+            3: "The code aggregates all topics and then evaluates each total."
+          explanation: "The purpose summary names the whole behavior and the major plans: aggregate, threshold-filter, and best-so-far."
+
+        - type: single
+          difficulty: advanced
+          question: "Which trace best verifies that zero-minute entries are ignored?"
+          options:
+            - "Trace the `{'topic': 'react', 'minutes': 0}` entry through `summarize_minutes()` and stop at the `continue`."
+            - "Trace every entry through `strongest_topic()`."
+            - "Trace the `badges.append(...)` line for every topic."
+            - "Trace only the final `print(...)` statement."
+          correct_index: 0
+          option_feedback:
+            1: "The zero-minute behavior is decided before `strongest_topic()` runs."
+            2: "Badge appending happens after totals are already computed."
+            3: "The print statement displays the result; it does not prove why one entry was skipped."
+          explanation: "A targeted trace follows exactly the branch that can confirm or refute the role hypothesis."
+
+        - type: multiple
+          difficulty: advanced
+          question: "Which statements correctly connect variable roles to programming plans?"
+          options:
+            - "`topic_minutes` supports an aggregation plan."
+            - "`best_topic` and `best_minutes` support a max-tracking plan."
+            - "`badges` supports a gather-output plan."
+            - "`entry` proves the code is doing React state management."
+          correct_indices: [0, 1, 2]
+          option_feedback:
+            0: "The dictionary stores cumulative totals by topic."
+            1: "Those variables remember the current strongest topic and its score."
+            2: "The list grows with the final display labels."
+            3: "`entry` is a generic loop variable in Python; it does not imply React behavior."
+          explanation: "Variable roles let readers name the plan before they trace all values."
+
+  # =========================================================================
+  # STEP 6: Python Plan Transfer Sprint
+  # =========================================================================
+  # Pedagogy: timed transfer practice — interleaved plan recognition with targeted tracing
+  - title: "Python Plan Transfer Sprint"
+    backend: pyodide
+    max-time: 10
+    lockout-time: 5
+    instructions: |
+      ### Why this matters
+
+      The final basic sprint asks you to transfer the same reading routine to a new Python example with a few more moving parts. This is where fluency starts to form: you see a new surface story, but the deeper plans are familiar. Use the beacons, keep your trace narrow, and let's see how far you can make it.
+
+      ### 🎯 You will learn to
+
+      - Recognize familiar plans in a larger Python function
+      - Separate central behavior from nearby helper detail
+      - Use vary-the-input reasoning to test a comprehension hypothesis
+
+      ### Reading Goal
+
+      You have **10 minutes**. Read `habit_report.py` and answer the quiz.
+
+      Focus on these questions:
+
+      - What does `build_habit_report()` return?
+      - Which helper removes skipped or zero-minute check-ins?
+      - Which helper groups minutes by skill?
+      - Which helper computes a streak?
+      - What can you ignore if the question is only about filtering?
+
+      Use `reading-notes.md` to write a purpose hypothesis, three beacons, and one smallest useful trace. The stretch goal is the streak question.
+
+    files:
+      - path: "reading-notes.md"
+        language: "markdown"
+        content: |
+          # Python Plan Transfer Sprint Notes
+
+          Purpose hypothesis:
+
+          Top 3 beacons:
+          1.
+          2.
+          3.
+
+          What I can ignore for this question:
+
+          Smallest trace:
+
+          Final EiPE summary:
+
+      - path: "habit_report.py"
+        language: "python"
+        content: |
+          CHECKINS = [
+              {"day": 1, "skill": "python", "minutes": 25, "skipped": False},
+              {"day": 2, "skill": "python", "minutes": 20, "skipped": False},
+              {"day": 3, "skill": "react", "minutes": 15, "skipped": False},
+              {"day": 4, "skill": "python", "minutes": 0, "skipped": True},
+              {"day": 5, "skill": "node", "minutes": 30, "skipped": False},
+              {"day": 6, "skill": "python", "minutes": 18, "skipped": False},
+          ]
+
+          def useful_checkins(checkins):
+              return [
+                  checkin
+                  for checkin in checkins
+                  if not checkin["skipped"] and checkin["minutes"] > 0
+              ]
+
+          def minutes_by_skill(checkins):
+              totals = {}
+              for checkin in checkins:
+                  skill = checkin["skill"]
+                  totals[skill] = totals.get(skill, 0) + checkin["minutes"]
+              return totals
+
+          def longest_streak(checkins, skill):
+              days = sorted(
+                  checkin["day"]
+                  for checkin in checkins
+                  if checkin["skill"] == skill
+              )
+              longest = 0
+              current = 0
+              previous_day = None
+              for day in days:
+                  if previous_day is None or day == previous_day + 1:
+                      current += 1
+                  else:
+                      current = 1
+                  longest = max(longest, current)
+                  previous_day = day
+              return longest
+
+          def build_habit_report(checkins, skill="all"):
+              useful = useful_checkins(checkins)
+              if skill != "all":
+                  useful = [checkin for checkin in useful if checkin["skill"] == skill]
+
+              totals = minutes_by_skill(useful)
+              total_minutes = sum(totals.values())
+              streaks = {name: longest_streak(useful, name) for name in totals}
+
+              return {
+                  "skills": sorted(totals),
+                  "total_minutes": total_minutes,
+                  "totals": totals,
+                  "longest_streak": max(streaks.values(), default=0),
+              }
+
+          if __name__ == "__main__":
+              print(build_habit_report(CHECKINS, skill="python"))
+
+    open_file: "habit_report.py"
+    run_file: "habit_report.py"
+
+    quiz:
+      title: "Step 6 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      shuffle_questions: false
+      questions:
+        - type: single
+          difficulty: basic
+          question: "What is the strongest purpose hypothesis for `build_habit_report()`?"
+          options:
+            - "It creates a summary of useful practice check-ins, optionally filtered by skill, with totals and the longest streak."
+            - "It changes skipped check-ins into unskipped check-ins."
+            - "It prints every check-in in chronological order."
+            - "It renders a React list of habits."
+          correct_index: 0
+          option_feedback:
+            1: "The function filters data into a new list; it does not mutate the original check-ins."
+            2: "Printing happens only in the script guard. The function returns a dictionary."
+            3: "This is Python data-processing code, not React JSX."
+          explanation: "The public function name and return keys point to a report-building purpose."
+
+        - type: single
+          difficulty: intermediate
+          question: "Which helper is central for deciding whether skipped check-ins count?"
+          options:
+            - "`useful_checkins()`"
+            - "`minutes_by_skill()`"
+            - "`longest_streak()`"
+            - "`sum(totals.values())`"
+          correct_index: 0
+          option_feedback:
+            1: "This helper aggregates after the skipped and zero-minute entries are removed."
+            2: "This helper works on the already-filtered check-ins."
+            3: "The sum happens after filtering and grouping."
+          explanation: "`useful_checkins()` contains the skipped/minutes predicate, so it is the shortest path for the filtering question."
+
+        - type: single
+          difficulty: intermediate
+          question: "If `skill=\"python\"`, which check-ins can affect `total_minutes`?"
+          options:
+            - "Only useful Python check-ins: days 1, 2, and 6"
+            - "Every Python check-in, including the skipped zero-minute day"
+            - "Every useful check-in across Python, React, and Node"
+            - "Only the longest streak days"
+          correct_index: 0
+          option_feedback:
+            1: "The skipped zero-minute check-in is removed by `useful_checkins()` before skill filtering."
+            2: "The skill filter removes React and Node when `skill` is not `all`."
+            3: "Streaks are computed separately; totals come from `minutes_by_skill()`."
+          explanation: "Vary-the-input reasoning follows the filters in order: useful first, skill second, totals third."
+
+        - type: single
+          difficulty: advanced
+          question: "Which detail can you ignore if the only question is whether skipped check-ins contribute to totals?"
+          options:
+            - "The exact streak reset logic in `longest_streak()`"
+            - "The predicate inside `useful_checkins()`"
+            - "The call to `minutes_by_skill(useful)`"
+            - "The `if skill != \"all\"` branch"
+          correct_index: 0
+          option_feedback:
+            1: "That predicate directly decides whether skipped entries are removed."
+            2: "Totals are computed from the filtered list, so this call helps connect filtering to output."
+            3: "The skill branch can further narrow which useful check-ins contribute."
+          explanation: "Attention control means ignoring real code when it is not relevant to the current hypothesis."
+
+        - type: multiple
+          difficulty: advanced
+          question: "Which plan labels fit this Python example?"
+          options:
+            - "Filter invalid or irrelevant records"
+            - "Aggregate minutes by key"
+            - "Track a longest consecutive run"
+            - "Send an HTTP response"
+          correct_indices: [0, 1, 2]
+          option_feedback:
+            0: "`useful_checkins()` and the skill filter remove records before summarizing."
+            1: "`minutes_by_skill()` groups totals by skill."
+            2: "`longest_streak()` tracks a best-so-far value across sorted days."
+            3: "There is no request or response object in this Python example."
+          explanation: "Interleaved plan recognition helps transfer: the same code can contain filtering, aggregation, and best-so-far tracking."

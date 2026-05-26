@@ -9220,13 +9220,16 @@
     }
 
     function tick() {
-      var now = Date.now();
-      var remaining = entry.deadline - now;
-      if (remaining <= 0) {
-        self._lockTimedPracticeStep(index);
+      var status = self._timedPracticeStatus(index);
+      if (status.completed || status.disabled) {
+        self._hideTimedPracticeClock();
         return;
       }
-      self._renderTimedPracticeClock('Time left', remaining, 'running');
+      if (status.locked) {
+        self._renderTimedPracticeLockout(index);
+        return;
+      }
+      self._renderTimedPracticeClock('Time left', status.remainingMs || 0, 'running');
     }
     this._timedPracticeCurrentStep = index;
     tick();
@@ -10589,11 +10592,21 @@
       }
     }
 
+    // :focus-visible isolates genuine keyboard focus. Plain :focus also
+    // matches buttons that received focus from a mouse click — those buttons
+    // keep :focus after the cursor moves away, which would otherwise pin the
+    // tooltip open until the user clicked somewhere else.
+    function hasKeyboardFocus($trigger) {
+      try { return $trigger.is(':focus-visible'); }
+      catch (e) { return false; }
+    }
+
     function scheduleHide($trigger) {
       clearTimer($trigger, 'a11yTooltipHideTimer');
       var timer = window.setTimeout(function () {
+        $trigger.removeData('a11yTooltipHideTimer');
         var $tip = getTip($trigger);
-        if ($trigger.is(':hover') || $trigger.is(':focus') || ($tip.length && $tip.is(':hover'))) {
+        if ($trigger.is(':hover') || hasKeyboardFocus($trigger) || ($tip.length && $tip.is(':hover'))) {
           scheduleHide($trigger);
           return;
         }

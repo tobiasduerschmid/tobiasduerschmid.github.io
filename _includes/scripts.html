@@ -82,11 +82,21 @@
         }
       }
 
+      // :focus-visible isolates genuine keyboard focus. Plain :focus also
+      // matches buttons that received focus from a mouse click — those buttons
+      // keep :focus after the cursor moves away, which would otherwise pin the
+      // tooltip open until the user clicked somewhere else.
+      function hasKeyboardFocus($trigger) {
+        try { return $trigger.is(':focus-visible'); }
+        catch (e) { return false; }
+      }
+
       function scheduleHide($trigger) {
         clearHideTimer($trigger);
         var timer = window.setTimeout(function () {
+          $trigger.removeData('a11yTooltipHideTimer');
           var $tip = getTip($trigger);
-          if ($trigger.is(':hover') || $trigger.is(':focus') || ($tip.length && $tip.is(':hover'))) {
+          if ($trigger.is(':hover') || hasKeyboardFocus($trigger) || ($tip.length && $tip.is(':hover'))) {
             scheduleHide($trigger);
             return;
           }
@@ -172,6 +182,18 @@
                 });
               }
             });
+            // Bootstrap appends the tooltip element to <body> separately from
+            // its trigger. If a trigger is removed while its tooltip is open
+            // (e.g. a step nav re-render), the tooltip element is left behind
+            // and stays visible forever. Sweep any orphans whose
+            // aria-describedby target no longer points at a live trigger.
+            mutation.removedNodes.forEach(function (node) {
+              if (!node || node.nodeType !== 1) return;
+              cleanupOrphanedTooltipsFor(node);
+              if (node.querySelectorAll) {
+                node.querySelectorAll('[aria-describedby]').forEach(cleanupOrphanedTooltipsFor);
+              }
+            });
           }
         });
       }).observe(document.documentElement, {
@@ -180,6 +202,17 @@
         childList: true,
         subtree: true
       });
+    }
+
+    function cleanupOrphanedTooltipsFor(node) {
+      var id = node.getAttribute && node.getAttribute('aria-describedby');
+      if (!id) return;
+      var tip = document.getElementById(id);
+      if (!tip || !tip.classList || !tip.classList.contains('tooltip')) return;
+      // Only remove if no live trigger still references this tip id.
+      if (!document.querySelector('[aria-describedby="' + id + '"]')) {
+        tip.parentNode && tip.parentNode.removeChild(tip);
+      }
     }
 
     // Keep the navbar hamburger's aria-expanded in sync with the Bootstrap 3

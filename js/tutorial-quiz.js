@@ -82,6 +82,8 @@
     var escapeHtml = opts.escapeHtml || _identityEscape;
     var renderMarkdown = opts.renderMarkdown || _identityMarkdown;
     var doShuffle = quiz.shuffle !== false;
+    var doOptionShuffle = doShuffle && quiz.shuffle_options !== false && quiz.option_shuffle !== false;
+    var doQuestionShuffle = doShuffle && quiz.shuffle_questions !== false && quiz.question_shuffle !== false;
     var minPct = Math.round((quiz.min_score !== undefined ? quiz.min_score : 0.8) * 100);
     var nextStepNum = stepIndex + 2;
     var isFinalQuiz = !!opts.isFinalQuiz;
@@ -114,7 +116,7 @@
         };
       }
       var opts2 = (q.options || []).map(function (text, oi) { return { text: text, originalIndex: oi }; });
-      if (doShuffle) shuffle(opts2);
+      if (doOptionShuffle) shuffle(opts2);
       var correctOriginals = q.type === 'multiple'
         ? (q.correct_indices || []).map(String).sort() : [String(q.correct_index || 0)];
       var optionalOriginals = q.type === 'multiple'
@@ -132,7 +134,7 @@
         option_feedback: q.option_feedback || null,
       };
     });
-    if (doShuffle) shuffle(questions);
+    if (doQuestionShuffle) shuffle(questions);
 
     var html = '<div class="tvm-quiz-gate-header"><span class="tvm-quiz-gate-icon">&#128203;</span>'
       + '<div>' + (isFinalQuiz
