@@ -585,7 +585,7 @@ When testability matters or when the subsystem may have platform-specific implem
 ## Public vs. Private Subsystem Classes
 A subsystem is analogous to a class: both have public and private interfaces. The Façade is part of the **public interface** to the subsystem, but not the only part — other classes that clients legitimately need to access (e.g., `Scanner` and `Parser` in the GoF compiler example) are also public. Classes that only subsystem extenders need are **private**. Languages like C++ provide namespaces to expose only the public subsystem classes; in others, this distinction is enforced by convention (GoF, p. 178).
 
-# The Principle of Least Knowledge (Law of Demeter)
+# The Law of Demeter
 
 *Head First Design Patterns* introduces the Façade pattern alongside a related design principle:
 
@@ -618,7 +618,7 @@ public float getTemp() {
 
 **Trade-off.** Applying the principle often requires writing more "wrapper" methods (e.g., `Station.getTemperature()` that just delegates to `thermometer.getTemperature()`). This can result in increased complexity and development time, as well as decreased runtime performance. Like all principles, it should be applied with judgment.
 
-# Distinguishing Façade from Related Patterns
+# Related Patterns
 
 The Façade is often confused with Adapter and Mediator because all three involve intermediary objects. The distinctions are:
 

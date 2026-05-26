@@ -340,7 +340,7 @@ Beyond GoF, one engineering concern is worth flagging in production systems:
 
 *   **Single point of failure / performance bottleneck.** Because all communication flows through one object, a global mediator can become a reliability and performance hot spot. (This is an engineering observation, not a GoF consequence.)
 
-# Observer vs. Mediator: Distributed vs. Centralized
+# Observer vs. Mediator
 
 These two behavioral patterns are frequently confused because both deal with communication between objects. The key distinction is **where the coordination logic lives**:
 
@@ -356,7 +356,7 @@ A useful heuristic: if the objects need to react *independently* to a change (ea
 
 In practice, the two patterns are often **combined**: colleagues use Observer-style notifications to inform the mediator, and the mediator uses direct method calls to coordinate the response. This composition gives you the loose coupling of Observer with the centralized coordination of Mediator. The GoF Related Patterns section explicitly notes: "Colleagues can communicate with the mediator using the Observer pattern." GoF also describes the `ChangeManager` from the Observer chapter as a Mediator instance — the same idea seen from the other direction.
 
-# Façade vs. Mediator: External Simplification vs. Internal Coordination
+# Façade vs. Mediator
 
 Mediator is also frequently confused with [Façade](/SEBook/designpatterns/facade.html), because both put a single object in front of a group of others. The distinction is about **direction and awareness**:
 

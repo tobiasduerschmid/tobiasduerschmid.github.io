@@ -61,7 +61,7 @@ SQL is an **industry standard** (ISO/IEC 9075), and most relational systems supp
 
 ---
 
-# The Relational Model: Modeling Data as Tables
+# The Relational Model
 
 ## Entities and Relationships: ER Diagrams
 
@@ -189,7 +189,7 @@ The *same column* (`uid`) plays *both* roles in `IsEnrolled`: it is part of the 
 
 ---
 
-# Querying Data: The Four Core Operations
+# Querying Data
 
 A DBMS supports a large variety of queries. Remarkably, the overwhelming majority of practical queries can be built from just four underlying **relational algebra** operations. Each has a Greek-letter symbol that the database literature uses as shorthand; each has a direct SQL equivalent. Learn the four operations and you can read and write queries fluently.
 

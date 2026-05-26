@@ -146,7 +146,7 @@ To combat this, organizations have experimented with *Anonymous Author Code Revi
 
 
 
-# Writing Reviewable Code: The Author's Half of the Contract
+# Writing Reviewable Code
 
 So far we have examined what reviewers *do* (mostly maintainability comments, rarely deep defect hunting), what *slows them down* (working-memory limits, scarce daily attention), and the *social dynamics* that surround the activity. Each of these framings places the burden on the reviewer. But code review is a two-sided contract: a reviewer can only be as effective as the code permits. Authors who design their code to *minimize cognitive load*, *make assumptions explicit*, and *isolate change* hand their reviewer the same kind of leverage a well-written paper hands a peer reviewer.
 

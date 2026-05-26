@@ -23,7 +23,7 @@ Other common quality attributes include:
 * **Security:** the ability to protect confidentiality, integrity, availability, and accountability against specific threats.
 * **Portability:** the ease with which the system can run in a different environment, such as another operating system, cloud provider, or hardware platform.
 
-# The Architectural Foundation: "Load-Bearing Walls"
+# The Architectural Foundation
 Quality attributes are often described as the **load-bearing walls of a software system**. Just as the structural integrity of a building depends on walls that cannot be easily moved once construction is finished, early architectural decisions strongly impact the possible qualities of a system. Because quality attributes are typically **cross-cutting concerns** spread throughout the codebase, they are extremely difficult to "add in later" if they were not considered early in the design process.
 
 Detailed features are more like furniture: you can often add, remove, or rearrange them after the basic structure exists. Load-bearing qualities are different. If a system was built with synchronous in-process calls everywhere, making it highly available across multiple data centers is not a one-line patch. If a system was built around global mutable state, making it testable later requires structural redesign, not just more test files.

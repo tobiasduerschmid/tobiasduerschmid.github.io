@@ -763,7 +763,7 @@ Information hiding is preventive medicine for both causes. You cannot predict ev
 
 The second lesson from *Software Aging* is about documentation and review. If the secret a module hides is not recorded, future maintainers cannot preserve it. They may accidentally route around the boundary and restart the aging process. Parnas states the professional standard sharply: **"If it's not documented, it's not done."** Good design documentation is not ceremony after coding; it is part of the design medium itself.
 
-# The Mechanics: Modules, Secrets, and Interfaces
+# The Mechanics
 
 ## The Anatomy of a Module: Interface and Secret
 
@@ -1018,7 +1018,7 @@ A better way to remember the distinction:
 
 You need all four in the toolbox. The principle (Information Hiding) tells you *what* to do; the mechanisms (encapsulation, access modifiers, abstraction) help you *enforce* it.
 
-# Applying and Evaluating Information Hiding
+# Applying and Evaluating
 
 ## How Information Hiding Relates to Other Concepts
 

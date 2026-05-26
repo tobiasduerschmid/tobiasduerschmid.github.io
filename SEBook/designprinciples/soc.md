@@ -3,7 +3,7 @@ title: Separation of Concerns
 layout: sebook
 ---
 
-# A Motivating Story: The Monopoly Tangle
+# A Motivating Story
 
 Imagine you have been hired to build a digital version of **Monopoly**. You start cheerfully: you model players, the board, properties, dice rolls, and community-chest cards — all in one sprawling `Game` class. The UI calls into `Game`. `Game` calls back into the UI. Players are drawn directly from inside the turn logic.
 
@@ -25,7 +25,7 @@ A **concern** is any single aspect of a system's functionality or behavior that 
 
 This is the **single most important general design principle** in software engineering. Almost every other principle you will meet — modularity, information hiding, SOLID, MVC, layered architecture, microservices — is a more specific refinement of this one idea.
 
-# Where the Name Comes From
+## Where the Name Comes From
 
 The term was coined by **Edsger W. Dijkstra** in his 1974 note *["On the Role of Scientific Thought" (EWD 447)](https://www.cs.utexas.edu/~EWD/transcriptions/EWD04xx/EWD447.html)*. Dijkstra was reflecting on what makes scientific thinking effective and wrote:
 
@@ -36,7 +36,7 @@ Two things are worth noticing about this quote:
 1. **Dijkstra admits it is never perfect.** There is no magic decomposition where every concern is hermetically sealed. SoC is a *direction of travel*, not a binary state.
 2. **He frames it as a thinking tool, not a coding tool.** The reason SoC matters in code is that code has to be reasoned about — by you, by your teammates, by your future self at 2am with a bug report. Working memory is a brutal bottleneck (humans can hold only ~4 interacting elements at once). If everything depends on everything, no one can ever hold "the part that matters" in their head.
 
-# Why It Matters: Five Concrete Benefits
+# Why It Matters
 
 Separation of Concerns is not a style preference. It directly changes outcomes a team cares about.
 
@@ -48,7 +48,7 @@ Separation of Concerns is not a style preference. It directly changes outcomes a
 
 Conversely, the symptoms of poor SoC are predictable and painful: the *God Class* that grows indefinitely; the *Shotgun Surgery* where one change forces edits in ten files; the "fragile base class" where touching anything breaks something unrelated. Industry studies have found that these modularity problems are a major source of **technical debt** and future maintenance cost — the price is paid months to years after the bad decomposition, which is why students often underappreciate it the first time around *(Cai et al., 2013, CSEE&T)*.
 
-# Canonical Examples Across Scales
+# Canonical Examples
 
 SoC shows up at every level of abstraction. Spotting it in familiar places makes it concrete.
 
@@ -253,7 +253,7 @@ Modern OSes separate *kernel-space* concerns (memory management, scheduling, dev
 
 A microservice architecture separates concerns into independent deployable services, each owning its data and responsibilities *(Zhong et al., 2024, IEEE TSE)*. Refactoring microservices to better match concerns (e.g., when a single service implements two unrelated concerns) is a common and non-trivial design task — evidence that getting SoC right is still hard at the architectural level.
 
-# How SoC Relates to Other Concepts
+# Related Concepts
 
 Students often confuse SoC with its close cousins. Clarifying the differences builds a sharper mental model.
 
@@ -267,7 +267,7 @@ Students often confuse SoC with its close cousins. Clarifying the differences bu
 
 A memorable framing: **cohesion and coupling are the metrics; SoC is the principle that drives you toward good values of those metrics.**
 
-# How to Actually Achieve SoC (Mechanisms)
+# Achieving SoC
 
 Knowing the principle is not the same as knowing the moves. Here are the recurring mechanisms that enforce separation in real code:
 
@@ -279,7 +279,7 @@ Knowing the principle is not the same as knowing the moves. Here are the recurri
 6. **[MVC](/SEBook/designpatterns/mvc.html) / MVVM / MVP family.** Structural patterns that formalize common UI-domain separations.
 7. **Aspect-oriented programming (AOP).** For **crosscutting concerns** (logging, security, transactions) that naturally touch every module, AOP lets you declare them in one place and weave them across the codebase *(Marin et al., 2009)*.
 
-# When the Seam Is Hard to Find: Crosscutting Concerns
+## Crosscutting Concerns
 
 Some concerns stubbornly refuse to fit in one module. **Logging** happens in every service. **Authorization** happens on every request. **Transactions** wrap many different operations. These are called **crosscutting concerns** and they are SoC's hardest case.
 
@@ -293,7 +293,7 @@ Solutions include:
 
 Don't let the existence of crosscutting concerns convince you SoC has failed. It only means some axes cut *perpendicular* to the module axis. Good systems handle both.
 
-# Anti-Patterns: What Poor SoC Looks Like in Code
+# Anti-Patterns
 
 Learning to *see* poor SoC is half the skill. Some of the most common violations:
 
@@ -305,7 +305,7 @@ Learning to *see* poor SoC is half the skill. Some of the most common violations
 * **Feature envy.** Class A constantly reads and writes Class B's fields — it's "envious" of B because the concern really belongs to B.
 * **Scattered crosscutting.** Every method starts with 5 lines of logging and 10 lines of permission checks.
 
-# Predict-Before-You-Read: Spot the Violation
+## Predict-Before-You-Read
 
 Before reading the analysis, look at each snippet below and silently answer: *which concern is leaking into which?*
 
@@ -350,7 +350,14 @@ def render_user_profile(user_id, user_service, renderer):
 ```
 > *Analysis:* Presentation calls out to a service for data and delegates display. Data and domain live behind `user_service`; presentation details live behind `renderer`. Each can change without the other.
 
-# When NOT to Apply SoC (Trade-offs Are Real)
+## Common Misconceptions
+
+* **"Just make everything private."** Visibility modifiers are a tool, not the principle. Private fields in a God Class are still a God Class.
+* **"SoC means one file per class."** File count is not a proxy for separation. A folder of 50 tightly coupled classes is still one giant tangle.
+* **"SoC is the same as SRP."** SRP is SoC applied specifically to classes and the actors that change them. SoC is broader — it applies at every scale: functions, classes, modules, services, architectures, even disciplines (UX vs. backend teams).
+* **"SoC means no dependencies."** Concerns always interact at their boundary. The principle is about *narrow, intentional* interaction, not *no* interaction.
+
+# When NOT to Apply SoC
 
 Applied mindlessly, SoC *creates* complexity instead of managing it:
 
@@ -362,14 +369,7 @@ Applied mindlessly, SoC *creates* complexity instead of managing it:
 
 The SE maxim applies: **the right number of abstractions is the smallest number that lets the system change gracefully.** Beyond that, every extra layer is tax.
 
-# Common Misconceptions
-
-* **"Just make everything private."** Visibility modifiers are a tool, not the principle. Private fields in a God Class are still a God Class.
-* **"SoC means one file per class."** File count is not a proxy for separation. A folder of 50 tightly coupled classes is still one giant tangle.
-* **"SoC is the same as SRP."** SRP is SoC applied specifically to classes and the actors that change them. SoC is broader — it applies at every scale: functions, classes, modules, services, architectures, even disciplines (UX vs. backend teams).
-* **"SoC means no dependencies."** Concerns always interact at their boundary. The principle is about *narrow, intentional* interaction, not *no* interaction.
-
-# A Five-Step Method for Applying SoC
+# A Five-Step Method
 
 When you look at code you need to structure (or restructure), this is the working procedure:
 
@@ -390,7 +390,7 @@ When you look at code you need to structure (or restructure), this is the workin
 * Don't over-apply it; premature or artificial separation creates its own pain.
 * Related to — but distinct from — modularity, information hiding, SRP, and high cohesion / low coupling.
 
-# Further Reading
+## Further Reading
 
 * Edsger W. Dijkstra. *["On the Role of Scientific Thought" (EWD 447)](https://www.cs.utexas.edu/~EWD/transcriptions/EWD04xx/EWD447.html)*. 1974.
 * GeeksforGeeks. *[Separation of Concerns (SoC)](https://www.geeksforgeeks.org/software-engineering/separation-of-concerns-soc/)*.

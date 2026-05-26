@@ -38,7 +38,7 @@ When a programmer utilizes a top-down approach, the process unfolds through dist
 Stanley Letovsky posits that an understander builds a Mental Model consisting of three layers: the specification, the annotation, and the implementation. In a top-down approach, the developer constructs the Specification Layer first—often by reading pull request descriptions, issue trackers, or architectural documentation. When a developer understands the high-level goal but hasn't read the code yet, it creates a "dangling purpose link". This cognitive gap generates "How" questions (e.g., "How does it search the database?"), prompting a targeted dive into the implementation layer.
 
 
-# Structural Heuristics: Coding for the Top-Down Reader
+# Structural Heuristics
 
 The dichotomy between top-down and bottom-up comprehension mirrors a fundamental challenge in software design: the architecture-code gap. Architects reason intensionally (components, layers), while developers often work extensionally (specific statements). To facilitate top-down comprehension, systems must deliberately embed top-down cues into their physical layout.
 
@@ -58,7 +58,7 @@ At the code level, top-down comprehension is achieved by strictly organizing the
 Software [design patterns](/SEBook/designpatterns.html) are a shared vocabulary that acts as a cognitive shortcut. Seeing a class named `ReportVisitor` triggers the [Visitor pattern](/SEBook/designpatterns/visitor.html) schema, allowing the developer to understand the collaborative structure without reading the implementation. However, misapplying a pattern destroys top-down comprehension. If business logic is hidden inside a [Factory pattern](/SEBook/designpatterns/factory_method.html), the reader's schema fails, forcing an exhausting revert to bottom-up reading.
 
 
-#  Divergent Perspectives: The Opportunistic Switch
+# Divergent Perspectives
 
 While top-down comprehension is a hallmark of expert performance, it is not a silver bullet. A pure top-down model is highly dependent on a robust knowledge base, failing to account for novices or developers entering completely unfamiliar domains.
 

@@ -94,7 +94,7 @@ The theory of beacons is not merely academic; it fundamentally dictates how mode
 *   **Split Views:** Utilizing split-screen functionality provides a powerful top-down perspective, enabling developers to grasp and correlate beacons from multiple files simultaneously, holding the mental model together in real-time {% cite Fekete2020 %}.
 
 
-#  The Role of Beacons in Research, Education, and Code Review
+# Beacons in Practice
 
 The theory of beacons extends far beyond basic code reading. Recent meta-analyses, educational frameworks, and observational studies demonstrate that beacons are fundamental to how researchers design comprehension experiments, how novices learn to abstract, and how experts navigate complex code reviews. 
 

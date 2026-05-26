@@ -344,7 +344,7 @@ Not all adapters are created equal. The complexity of adaptation ranges widely:
 
 If an adapter becomes "too thick" (containing significant business logic), it is no longer just translating an interface—it has become a separate component that happens to look like an adapter.
 
-# Adapter is a Family, Not a Single Pattern
+# Adapter Is a Family
 
 Buschmann, Henney, and Schmidt observe in *Pattern-Oriented Software Architecture, Volume 5: On Patterns and Pattern Languages* (2007, p. 234) that "the notion that there is a single pattern called Adapter is in practice present nowhere except in the table of contents of the Gang-of-Four book." A deconstruction of GoF's pattern description reveals at least four quite distinct patterns:
 1. **Object Adapter:** Wraps an adaptee via composition; adaptation is encapsulated through forwarding via an additional level of indirection (the standard form, favored from a layered/encapsulated perspective).

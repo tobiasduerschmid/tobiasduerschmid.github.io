@@ -408,7 +408,7 @@ Use the table-driven approach when the state graph is large, regular, and behavi
 
 Use the [Null Object pattern](/SEBook/designpatterns/null_object.html) to create a "null state". This communicates the design intent of "empty behavior" explicitly rather than scattering `null` checks throughout the code.
 
-# The Core Insight: Polymorphism over Conditions
+# Polymorphism over Conditions
 
 The State pattern embodies the fundamental principle of **polymorphism over conditions**. Instead of writing:
 ```java
@@ -423,7 +423,7 @@ else if (state == "hasQuarter") { /* behavior B */ }
 
 A pedagogically effective way to internalize this insight is the "Before and After" technique: start with the conditional version of a problem, refactor it to use the State pattern, and then try to add a new state to both versions. The difference in effort makes the pattern's value clear.
 
-# State vs. Strategy: Same Structure, Different Intent
+# State vs. Strategy
 
 The State and [Strategy](/SEBook/designpatterns/strategy.html) patterns have nearly identical UML class diagrams—a context delegating to an abstract interface with multiple concrete implementations. The difference is entirely in **intent**:
 * **State:** The context object's behavior changes *implicitly* as its internal state transitions. The client typically does not choose which state object is active. Concrete States often need to know about one another so they can install the next state on the Context.
