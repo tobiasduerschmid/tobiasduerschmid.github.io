@@ -1,0 +1,12 @@
+title: "Development Practices Master Flashcards"
+description: "A comprehensive mix of the development-practices flashcards with standalone decks: comprehension, debugging, GenAI, review, code smells, refactoring, and beacons."
+active: true
+decks:
+  - dev_practice_code_comprehension
+  - dev_practice_topdown
+  - dev_practice_beacons
+  - debugging
+  - dev_practice_genai
+  - dev_practice_modern_code_review
+  - dev_practice_code_smells
+  - dev_practice_refactoring

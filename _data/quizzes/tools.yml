@@ -1,8 +1,16 @@
 title: "Tools Master Quiz"
-description: "A comprehensive mix of all tools quizzes."
+description: "A comprehensive mix of the standalone tools quizzes: shell, regular expressions, programming-language essentials, Git, Java, C, and Make."
 active: true
 decks:
   - shell
-  - git
-  - makefile
+  - shell_parson
   - regex
+  - python
+  - nodejs
+  - react
+  - git
+  - git_basic
+  - git_advanced
+  - java
+  - c
+  - makefile

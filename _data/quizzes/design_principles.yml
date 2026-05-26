@@ -1,0 +1,8 @@
+title: "Design Principles Master Quiz"
+description: "A comprehensive mix of the design-principles quizzes: Separation of Concerns, Information Hiding, SOLID, and Design with Reuse."
+active: true
+decks:
+  - design_principle_soc
+  - design_principle_information_hiding
+  - design_principle_solid
+  - design_with_reuse

@@ -1,11 +1,24 @@
 title: "Tools Master Flashcards"
-description: "A comprehensive mix of all tools flashcards."
+description: "A comprehensive mix of the standalone tools flashcards: shell, regular expressions, programming-language essentials, Git, Java, C, and Make."
 active: true
 decks:
-  - makefile_syntax
-  - git
-  - makefile_examples
+  - shell_commands_reference
   - shell
-  - makefile_examples_2
+  - shell_pipes
   - regex_basics
   - regex_examples
+  - python_syntax_explain
+  - python_syntax_generate
+  - nodejs_syntax_explain
+  - nodejs_syntax_generate
+  - react_syntax_explain
+  - react_syntax_generate
+  - git
+  - git_basic
+  - git_advanced
+  - java_syntax_explain
+  - java_syntax_generate
+  - c
+  - makefile_syntax
+  - makefile_examples
+  - makefile_examples_2

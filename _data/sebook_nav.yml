@@ -48,8 +48,10 @@ topics:
 
   - name: Design Principles
     icon: null
-    url: /SEBook/designprinciples.html
+    url: /SEBook/designprinciples/index.html
     subtopics:
+      - name: Separation of Concerns
+        url: /SEBook/designprinciples/soc.html
       - name: Information Hiding
         url: /SEBook/designprinciples/informationhiding.html
       - name: SOLID
@@ -212,6 +214,8 @@ topics:
         url: /SEBook/tools/networking.html
       - name: Data Management
         url: /SEBook/systems/data_management.html
+      - name: Security and Authentication
+        url: /SEBook/systems/security.html
   - name: SE Gym
     icon: null
     url: /se-gym/

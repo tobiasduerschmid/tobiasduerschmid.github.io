@@ -1,0 +1,8 @@
+title: "Systems Master Quiz"
+description: "A comprehensive mix of the systems quizzes: networking fundamentals and decisions, data management, and security."
+active: true
+decks:
+  - networking
+  - networking_decisions
+  - data_management
+  - security

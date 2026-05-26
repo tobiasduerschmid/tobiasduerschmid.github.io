@@ -53,7 +53,7 @@ topics:
         url: /SEBook/designpatterns/facade.html
   - name: Design Principles
     icon: null
-    url: /SEBook/designprinciples.html
+    url: /SEBook/designprinciples/index.html
     subtopics:
       - name: Information Hiding
         url: /SEBook/designprinciples/informationhiding.html

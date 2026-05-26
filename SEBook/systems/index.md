@@ -7,7 +7,15 @@ layout: sebook
 
 Real software does not run as one program on one machine. It runs across processes, machines, data centers, and continents; it stores state that must survive restarts and concurrent access; it communicates through networks that can delay, reorder, or lose messages. **Systems** is the study of the concepts every software engineer needs to reason about programs in this larger setting — not to become a distributed-systems researcher, but to make sound choices about the parts of the stack that sit below your application.
 
-This section covers two foundational topics:
+This section covers three foundational topics:
+
+# Practice Across Systems
+
+Use the master deck when you want a mixed review of networking, data management, and security vocabulary. Use the master quiz to practice choosing systems mechanisms under realistic trade-offs.
+
+{% include flashcards.html id="systems" %}
+
+{% include quiz.html id="systems" %}
 
 # Networking
 How computers communicate across networks: the layered model (application / transport / network / link), TCP vs. UDP, DNS, HTTP, TLS, and the operational decisions that follow from each. When to pick which protocol, what each layer does (and does not) guarantee, and how those guarantees shape the applications built on top.

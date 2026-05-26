@@ -1,0 +1,7 @@
+title: "Systems Master Flashcards"
+description: "A comprehensive mix of the systems flashcards: networking, data management, and security."
+active: true
+decks:
+  - networking_concepts
+  - data_management
+  - security
