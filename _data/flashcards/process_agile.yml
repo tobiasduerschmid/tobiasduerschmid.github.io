@@ -24,7 +24,7 @@ cards:
     difficulty: intermediate
     question: "Why is **late customer feedback** Waterfall's most costly failure mode?"
     answer: "Defects (a wrong requirement, a missed integration, a flawed assumption) are most expensive to fix at the end of the cycle, when most other code already depends on them. By the time the customer sees Waterfall's output, months or years of work has been built on whatever was wrong, so fixing the foundation often costs as much as the original build."
-    explanation: "Boehm's cost-of-defects research famously showed defect-fix cost rising 10x–100x as defects move from requirements → design → implementation → testing → production. Agile's short iterations are designed to catch defects within hours or days, when they're still cheap."
+    explanation: "Classic cost-of-defects data shows defect-fix cost rising 10x–100x as defects move from requirements → design → implementation → testing → production. Agile's short iterations are designed to catch defects within hours or days, when they're still cheap."
 
   - id: 5
     difficulty: intermediate

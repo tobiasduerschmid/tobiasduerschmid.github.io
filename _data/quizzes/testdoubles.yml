@@ -1,5 +1,5 @@
 title: "Test Doubles Quiz"
-description: "Apply, Analyze, and Evaluate-level questions on Meszaros's test-double taxonomy — pick the right double for a scenario, recognize Spy vs Mock by failure timing, and diagnose over-mocking that tests the mock instead of the SUT."
+description: "Apply, Analyze, and Evaluate-level questions on the test-double taxonomy — pick the right double for a scenario, recognize Spy vs Mock by failure timing, and diagnose over-mocking that tests the mock instead of the SUT."
 active: true
 questions:
   - id: 1
@@ -48,19 +48,19 @@ questions:
     question: |
       A team's controller test sets up a `Mock()` for `user_repo` with `user_repo.get.return_value = User(id=1)` and then asserts on the controller's HTTP response — nothing else. The teammate insists this is a Mock; you disagree. What is the most precise classification?
     options:
-      - "It is a **Mock** — `Mock()` is in the variable name, and the role of an object in Meszaros's taxonomy is determined by which library construct created it."
+      - "It is a **Mock** — `Mock()` is in the variable name, and the role of an object in the test-double taxonomy is determined by which library construct created it."
       - "It is acting as a **Stub** — it controls indirect input (the return of `get`) but no assertion is made on its calls, so the call-recording capability is unused."
       - "It is acting as a **Dummy** — it is passed to the controller and never used to drive logic, so it exists only to satisfy the signature."
       - "It is acting as a **Spy** — `Mock()` automatically records calls, so even without an assertion the test object is collecting interactions in the background."
     correct_index: 1
     option_feedback:
       0: |
-        The class name from the mocking library doesn't determine the role the object plays. `unittest.mock.Mock` is one library construct used to implement many of Meszaros's roles — pick the name that matches the *behavior in this test*.
+        The class name from the mocking library doesn't determine the role the object plays. `unittest.mock.Mock` is one library construct used to implement many of these roles — pick the name that matches the *behavior in this test*.
       2: |
         A Dummy is passed but never used. Here the controller *uses* the return value to do its work — the double is doing real work in the SUT's logic, so it is not a Dummy.
       3: |
         Spies *do* record calls, but a Spy is identified by the test actually inspecting those recordings. This test never asserts on `user_repo` calls, so it isn't using the recording capability at all.
-    explanation: "Meszaros's roles are about *what the double does in this test*, not which library type implements it. If only return values are configured and no calls are asserted on, the role is a Stub — regardless of whether the implementation is `Mock()`, a hand-rolled subclass, or a Fake with shortcuts. Naming the role explicitly keeps tests honest and helps reviewers spot over-mocking."
+    explanation: "These roles are about *what the double does in this test*, not which library type implements it. If only return values are configured and no calls are asserted on, the role is a Stub — regardless of whether the implementation is `Mock()`, a hand-rolled subclass, or a Fake with shortcuts. Naming the role explicitly keeps tests honest and helps reviewers spot over-mocking."
 
   - id: 4
     difficulty: advanced
@@ -117,7 +117,7 @@ questions:
         Real implementations for everything would turn this into an end-to-end test, a different artifact with different tradeoffs. The structural problem here — over-specifying the controller's collaboration sequence — would still be present with real DOCs.
       3: |
         Sharing setup would tidy the syntax but would not address the core problem: the test asserts on *how* the controller works rather than *what* the controller guarantees.
-    explanation: "This is the canonical *over-mocked test*: a test that mirrors the SUT's body line-for-line and breaks under any internal refactor. The fix is to assert on outcomes the contract actually specifies — `repo.mark_paid(42)` may be one of them, but `find_cart`, `charge`, and `emailer.send` are usually *implementation choices*, not contract obligations. The strongest tests assert on results (the cart is marked paid; the response is 200) and reserve interaction assertions for the cases where the interaction itself is the behavior."
+    explanation: "This is an *over-mocked test*: it mirrors the SUT's body line-for-line and breaks under any internal refactor. The fix is to assert on the outcomes the contract specifies — `repo.mark_paid(42)` may be one, but `find_cart`, `charge`, and `emailer.send` are usually *implementation choices*. Reserve interaction assertions for the cases where the interaction itself is the behavior."
 
   - id: 6
     difficulty: advanced
@@ -139,7 +139,7 @@ questions:
         A Fake is by definition *unsuitable* for production — it takes shortcuts (no durability, no concurrency safety, no transactional guarantees) that make it light and fast for tests. If you intend to ship it, it's an alternative *implementation*, not a Fake.
       3: |
         Omitted: query-realism is the strongest case for a Fake over a Stub. A Stub returning canned rows can mask filtering, joining, or sorting bugs that a working in-memory implementation would reveal.
-    explanation: "Fakes earn their keep when many tests share the same dependency shape and the dependency has nontrivial *behavior* the tests rely on (queries, writes, joins). A Fake stores and retrieves data like the real thing but with shortcuts (no disk, no network, no transactions) that make it fast and disposable. The cost is the upfront work to build it; the payoff is dozens of tests that are simpler, more realistic, and less coupled to canned return values."
+    explanation: "Fakes earn their keep when many tests share the same dependency shape and rely on its nontrivial *behavior* — queries, writes, joins. The cost is the upfront work to build the in-memory implementation; the payoff is dozens of tests that are simpler, more realistic, and less coupled to canned return values than a Stub-heavy alternative."
 
   - id: 7
     difficulty: advanced
@@ -250,7 +250,7 @@ questions:
       0: "Abandoning the Fake forfeits its main benefit (fast, deterministic unit tests). The structural issue is that the Fake and the real repository drifted; the fix is to *detect drift*, not to remove the Fake."
       2: "`autospec` enforces the method *signature*, not the behavioral contract. Two implementations can share the same signature and still disagree on which exception class they raise — that's the exact bug this team hit."
       3: "Unit tests catch design issues fast; abandoning them in favor of integration-only coverage trades one signal for another rather than fixing the gap. A small contract test is the proportionate defense, not a full coverage strategy swap."
-    explanation: "Every Fake is a promise that it behaves enough like the real collaborator. That promise can break silently. A **contract test** is a single shared test that both the Fake and the real implementation must satisfy — exception classes, return shapes, edge-case behavior. Run it fast against the Fake (every commit) and slower against the real repository (on a schedule, against a sandbox database). When they diverge, you find out at the contract test, not at 3 a.m. in production."
+    explanation: "Every Fake is a promise that it behaves enough like the real collaborator, and that promise can break silently. A **contract test** is a single shared test that both the Fake and the real implementation must satisfy — exception classes, return shapes, edge-case behavior. Run it fast against the Fake every commit and slower against the real repository on a schedule, so drift surfaces at the contract test rather than at 3 a.m. in production."
 
   - id: 12
     difficulty: advanced
@@ -295,4 +295,4 @@ questions:
       0: "Only one mock appears in the test — far from a mockery. The smell here is about *where the data lives*, not how many doubles were used."
       2: "The test has exactly one assertion. The smell here is about a hidden input, not unexplained outputs."
       3: "The test exercises exactly one behavior — `process_all` summarizing a batch of orders. The smell here is about visibility of inputs, not breadth of coverage."
-    explanation: "**Mystery Guest** (van Deursen et al.; Meszaros) is the smell where a test depends on data living outside the test method — a file, a shared fixture, a row in a database, a JSON blob on disk. A reader cannot tell from the test alone what `5 orders, $1240 total` is computed *from*. The fix is to inline the relevant test data into the test body (or a clearly-named local builder), so the reader can see both halves of the assertion: what went in and what came out."
+    explanation: "**Mystery Guest** is the smell where a test depends on data living outside the test method — a file, shared fixture, or database row. A reader cannot tell from the test alone what `5 orders, $1240 total` is computed *from*. The fix is to inline the relevant data (or use a clearly-named local builder) so the reader sees both halves of the assertion: what went in and what came out."

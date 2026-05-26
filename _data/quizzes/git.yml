@@ -21,7 +21,7 @@ questions:
       3: |
         Git branching is cheap because branches are lightweight refs to commits, not because a central
         server serializes all work.
-    explanation: "**Distributed VCS gives every developer a full local copy of the entire repository and its history, enabling offline work and independent development.** This defines the distributed model, giving developers offline access to the full project history and the ability to work independently."
+    explanation: "**Distributed VCS gives every developer a full local copy of the entire repository and its history.** Because the whole history lives locally, you can commit, branch, and inspect offline and work independently; a shared remote is a convention, not a requirement."
 
   - id: 2
     difficulty: basic
@@ -42,7 +42,7 @@ questions:
       3: |
         Git's local workflow is about working tree, index, and committed snapshots, not upload/download
         status.
-    explanation: "**The three local areas are the Working Directory (files on disk), the Staging Area (prepped for commit), and the Local Repository (committed history).** Files are edited in the working directory, moved to the staging area to prep for a snapshot, and finally committed to the local repository."
+    explanation: "**The three local areas are the Working Directory (files on disk), the Staging Area/index (the next commit being assembled), and the Local Repository (committed history).** `git add` moves a change from the working directory into staging; `git commit` turns staging into a new snapshot in the repository."
 
   - id: 3
     difficulty: intermediate
@@ -62,7 +62,7 @@ questions:
       2: |
         Comparing the latest commit to its parent is a history inspection task, not what `git diff HEAD`
         does to uncommitted work.
-    explanation: "**`git diff HEAD` compares the current working directory (including staged changes) against the latest commit.** Adding `HEAD` tells Git to compare the uncommitted files currently on your disk with the snapshot of the most recent commit."
+    explanation: "**`git diff HEAD` compares the working directory (including staged changes) against the snapshot of the latest commit.** Plain `git diff` stops at the index; adding `HEAD` reaches past it to show every uncommitted change, staged or not."
 
   - id: 4
     difficulty: basic
@@ -83,7 +83,7 @@ questions:
       3: |
         Squashing changes commit shape during integration, but it is not the command that overwrites an
         existing remote branch ref.
-    explanation: "**`git push -f` is dangerous on shared branches because it overwrites the remote branch history and can hide or orphan collaborators' commits.** Force-pushing makes the remote branch match your local history, which can remove teammates' commits from that branch and disrupt anyone who based work on them. Those commits may still be recoverable from another clone or reflog, but the shared branch has been rewritten."
+    explanation: "**`git push -f` forces the remote branch ref to match your local history, so any teammate commits not in your local copy are dropped from that branch.** Those commits may still be recoverable from another clone or the reflog, but anyone who based work on the old branch is now disrupted — which is why force-pushing is reserved for branches only you use."
 
   - id: 5
     difficulty: intermediate
@@ -104,7 +104,7 @@ questions:
       2: |
         Revert creates a new commit that undoes an old commit, which is the opposite of keeping
         incomplete work out of history.
-    explanation: "**`git stash` temporarily shelves uncommitted changes so you can switch contexts without making a messy commit.** `git stash` temporarily shelves your staged and unstaged changes, leaving you with a clean working directory so you can safely switch contexts."
+    explanation: "**`git stash` shelves your staged and unstaged changes onto a private stack and leaves a clean working tree, so you can switch contexts without committing half-finished work.** Plain `git stash` ignores untracked files; add `-u` to include them. Restore with `git stash pop`."
 
   - id: 6
     difficulty: intermediate
@@ -124,7 +124,7 @@ questions:
       3: |
         Detached HEAD is local repository state and says nothing about whether a remote server is
         online.
-    explanation: "**Detached HEAD means HEAD points directly to a commit hash rather than a branch — new commits in this state are not anchored to any branch and can be lost.** Checking out a specific commit hash detaches HEAD. Any new commits made in this state won't update a branch pointer and can easily be lost."
+    explanation: "**Checking out a commit by its hash points HEAD directly at that commit instead of a branch — \"detached HEAD.\"** New commits made here advance no branch pointer, so once you switch away nothing references them and they can be garbage-collected."
 
   - id: 7
     difficulty: intermediate
@@ -143,7 +143,7 @@ questions:
         `git diff` compares two states; it does not manage the iterative good/bad testing process.
       3: |
         Cherry-pick applies one known commit elsewhere; it is not for discovering which commit was bad.
-    explanation: "**`git bisect` uses binary search through commit history to efficiently pinpoint the exact commit that introduced a bug.** `git bisect` systematically halves your commit history, asking you to test if the bug is present at each step, to efficiently find the exact commit that broke the code."
+    explanation: "**`git bisect` binary-searches commit history to pinpoint the commit that introduced a bug.** You mark one known-good and one known-bad commit; Git checks out the midpoint and you test, repeatedly halving the range until one culprit commit remains — log(n) tests instead of n."
 
   - id: 8
     difficulty: intermediate
@@ -163,7 +163,7 @@ questions:
       3: |
         Squashing rewrites or combines commits; submodules preserve an external repository's independent
         history.
-    explanation: "**Git Submodules let you embed an external repository as a subdirectory, pinned to a specific commit, while keeping its history independent.** Submodules allow you to nest an independent repository inside your main project, pointing to a specific commit of that external library."
+    explanation: "**A submodule embeds an external repository as a subdirectory, pinning it to one specific commit while its history stays independent.** The outer repo stores only that pinned SHA, not a copy of the files — useful for sharing a library across projects without vendoring its code."
 
   - id: 9
     difficulty: intermediate
@@ -192,7 +192,7 @@ questions:
       4: |
         Large open-source projects benefit because contributors can work independently and exchange
         history without a single write bottleneck.
-    explanation: "**Git's distributed model enables offline work and removes the single point of failure, making it ideal for large distributed teams — but it does not prevent merge conflicts.** In distributed systems like Git, developers have a full local copy of the repository, allowing for offline work and eliminating the single point of failure found in centralized systems. This makes it ideal for large, distributed teams. However, it does not prevent merge conflicts."
+    explanation: "**A full local copy of history gives every developer offline commits and removes the central single point of failure, which is what scales open-source collaboration.** Distribution changes *where* history lives, not *whether* edits collide — two people changing the same lines still produce a merge conflict."
 
   - id: 10
     difficulty: basic
@@ -218,7 +218,7 @@ questions:
         The local repository is where committed snapshots and refs are stored.
       4: |
         Detached HEAD describes what `HEAD` points to, not a place where file contents reside.
-    explanation: "**The three local areas are Working Directory, Staging Area, and Local Repository — the remote server and Detached HEAD are not file areas.** The three primary local states in Git's architecture are the Working Directory (files on disk), the Staging Area (prepped for the next commit), and the Local Repository (the compressed history of commits). The remote server is external, and 'Detached HEAD' is a state of the HEAD pointer, not a file area."
+    explanation: "**The three local areas are Working Directory (files on disk), Staging Area (the next commit being assembled), and Local Repository (the compressed commit history).** A remote server is external infrastructure, and detached HEAD describes what `HEAD` points at — neither is a place file contents reside."
 
   - id: 11
     difficulty: intermediate
@@ -242,7 +242,7 @@ questions:
         `git push` publishes local history to a remote; it is not primarily a review command.
       4: |
         `git init` creates repository metadata; it does not review existing changes or history.
-    explanation: "**`git log`, `git diff`, and `git show` are the review/inspection commands — `git push` uploads data and `git init` creates repos.** `git log` shows the commit history, `git diff` shows differences between states or commits, and `git show` displays details about a specific Git object (like a commit). `git push` uploads data, and `git init` creates a new repository."
+    explanation: "**`git log`, `git diff`, and `git show` are the inspection commands: history, differences between states, and the details of one object respectively.** `git push` uploads local history to a remote and `git init` creates a repository — neither reviews existing changes."
 
   - id: 12
     difficulty: intermediate
@@ -264,7 +264,7 @@ questions:
         Stash stores working changes temporarily; it does not remove files from project history.
       3: |
         Applying a completed commit from another branch is cherry-pick territory, not stash.
-    explanation: "`git stash` temporarily shelves your local modifications (both staged and unstaged), leaving you with a clean working directory. This is perfect for quick context switches or pulling updates without committing messy, incomplete work. It is not used for permanent deletion or applying commits (which would be `git cherry-pick`)."
+    explanation: "**`git stash` shelves staged and unstaged modifications and leaves a clean working tree — ideal for a quick context switch or a clean pull, not for deleting files or moving commits.** It saves work temporarily; it never removes files from history, and applying a finished commit from another branch is `git cherry-pick`'s job."
 
   - id: 13
     difficulty: advanced
@@ -290,7 +290,7 @@ questions:
         `git bisect` identifies a bad commit; it does not combine branch histories.
       4: |
         `git blame` attributes lines to commits; it does not move changes between branches.
-    explanation: "**Merging, rebasing, and squash-merging are the three integration techniques — `git bisect` and `git blame` are inspection tools, not integration strategies.** Merging, rebasing, and squashing (`git merge --squash`) are all techniques used to integrate branch histories together. Note that `git merge --squash` only **stages** the combined changes — you must follow it with `git commit` to actually create the squashed commit. `git bisect` is a debugging tool for finding bugs, and `git blame` is used to see who last modified specific lines of code."
+    explanation: "**Merging, rebasing, and squash-merging are the three integration techniques — `git bisect` and `git blame` are inspection tools, not integration strategies.** One caveat: `git merge --squash` only *stages* the combined changes, so it must be followed by `git commit` to create the squashed commit."
 
   - id: 14
     difficulty: advanced
@@ -310,7 +310,7 @@ questions:
         editing.
       2: |
         Revert does not remove the bad commit; it records a later commit that cancels its changes.
-    explanation: "**`git revert` is safe on shared branches because it adds a new undo commit without rewriting history, while `reset --hard` + force-push would destroy teammates' synced work.** `git revert` is the safe choice on shared branches because it adds a new forward-moving commit that nullifies the targeted commit, without rewriting or destroying history. Using `git reset --hard` and force-pushing would overwrite the shared history, causing serious disruption for any teammate who has already synced that commit."
+    explanation: "**`git revert` is safe on shared branches because it adds a new forward commit that cancels the bad one, leaving existing history intact.** `reset --hard` plus a force-push instead overwrites the shared branch, disrupting every teammate who already synced the old history."
 
   - id: 15
     difficulty: advanced
@@ -330,7 +330,7 @@ questions:
       3: |
         `--squash` stages a combined change for a new commit; it is not the condition that lets Git
         slide a branch pointer forward.
-    explanation: "**A fast-forward merge is only possible when the base branch has received no new commits since the feature branch was created, allowing Git to slide its pointer forward linearly.** A fast-forward merge occurs when the target branch's history has not diverged — Git can simply slide its pointer forward to incorporate the changes linearly. If both branches have unique commits since they split, Git must perform a three-way merge using their common ancestor, resulting in a merge commit with two parents."
+    explanation: "**A fast-forward merge is possible only when the base branch has gained no new commits since the feature branch diverged, so Git can slide its pointer forward linearly.** If both branches have unique commits since the split, Git instead builds a three-way merge using their common ancestor, producing a merge commit with two parents."
 
   - id: 16
     difficulty: advanced
@@ -351,7 +351,7 @@ questions:
       3: |
         `HEAD` identifies the current commit or branch ref, while the staging area is stored separately
         as the index.
-    explanation: "**On a branch, `.git/HEAD` holds a symbolic reference to the branch; in detached HEAD state it holds a raw commit hash because HEAD is no longer anchored to any branch.** Normally, `.git/HEAD` is a symbolic reference like `ref: refs/heads/main` — a pointer to a branch pointer. When you enter detached HEAD state (e.g., with `git switch --detach <hash>`), HEAD is disconnected from any branch and contains the raw SHA hash of a specific commit directly. Any commits made in this state are not anchored to a branch and can be lost when switching away."
+    explanation: "**On a branch, `.git/HEAD` holds a symbolic reference like `ref: refs/heads/main` (a pointer to a branch pointer); in detached HEAD it holds a raw commit SHA directly.** Detaching (e.g. `git switch --detach <hash>`) disconnects HEAD from every branch, so commits made there advance no branch pointer and can be lost on switching away."
 
   - id: 17
     difficulty: advanced
@@ -406,7 +406,7 @@ questions:
     distractors:
       - "git reset --hard <bad-commit-hash>"
       - "git push -f"
-    explanation: "**The correct order is log → revert → push: identify the bad commit, create a safe undo commit, then share it — reset --hard and force-push rewrite shared history and destroy teammates' work.** `git log` identifies the bad commit hash. `git revert` creates a new commit that undoes the bad one — preserving history for all collaborators. `git push` shares the fix. (On a busy shared branch, run `git pull` before `git push` to pick up any new commits first — otherwise the push may be rejected as non-fast-forward.) The distractors (`reset --hard` + `push -f`) would rewrite shared history, destroying teammates' work. Always use `revert` on shared branches, never `reset --hard` + force-push."
+    explanation: "**The correct order is log → revert → push: find the bad commit, add an inverse commit that cancels it, then share the fix — keeping shared history intact.** The distractors `reset --hard` and `push -f` rewrite the shared branch and destroy teammates' work. (On a busy branch, `git pull` before `git push`, or the push may be rejected as non-fast-forward.)"
 
   - id: 20
     difficulty: intermediate
@@ -453,4 +453,4 @@ questions:
     distractors:
       - "git reset --hard HEAD~1"
       - "git commit -m 'Add forgotten file'"
-    explanation: "**The correct order is add → amend --no-edit: stage the forgotten file, then fold it into the last commit without changing its message — reset --hard destroys the commit and a new commit pollutes history.** `git add forgotten.py` stages the missing file, and `git commit --amend --no-edit` rewrites the previous commit to include it while keeping the original message. `git reset --hard HEAD~1` would *destroy* the previous commit entirely. Creating a brand-new commit (`-m 'Add forgotten file'`) is valid but pollutes history with a fixup commit — amend is cleaner when the previous commit hasn't been pushed."
+    explanation: "**The correct order is add → amend --no-edit: stage the forgotten file, then fold it into the last commit while keeping the original message.** `reset --hard HEAD~1` would destroy that commit, and a fresh `commit -m` adds a fixup commit that clutters history — amend is cleaner as long as the commit hasn't been pushed."

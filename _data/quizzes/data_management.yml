@@ -19,7 +19,7 @@ questions:
       2: |
         Durability protects a transaction after commit has been acknowledged. Here the problem is that
         only part of an uncommitted unit persisted.
-    explanation: "Atomicity guarantees a transaction is indivisible: either every step of the transaction is applied, or none of them are. A half-applied state (debit ✓, reservation ✗) is the textbook symptom of missing atomicity. Durability is about changes that were *already committed* surviving a crash — here the transaction had not committed. Isolation is about *concurrent* interference, which this scenario doesn't involve."
+    explanation: "Atomicity guarantees a transaction is indivisible: either every step is applied, or none are. A half-applied state (debit ✓, reservation ✗) after a crash is the textbook symptom of missing atomicity."
 
   - id: 2
     difficulty: intermediate
@@ -76,7 +76,7 @@ questions:
       2: |
         SQL systems can absolutely provide ACID transactions. The issue is equating that with
         distributed replica consistency.
-    explanation: "The two 'Consistency' words refer to different things. ACID-C means committed transactions don't violate declared constraints. CAP-C (linearizability) means every read reflects the latest write across all replicas. A SQL database that asynchronously replicates to read replicas still honors ACID on the primary but can absolutely serve stale reads from a replica — failing CAP-C. Separating these two ideas is one of the most important conceptual moves in this chapter."
+    explanation: "The two 'Consistency' words name different things. ACID-C means committed transactions don't violate declared constraints; CAP-C (linearizability) means every read reflects the latest write across all replicas. A SQL database that asynchronously replicates still honors ACID on the primary yet can serve stale reads from a replica — failing CAP-C while remaining fully ACID."
 
   - id: 5
     difficulty: intermediate
@@ -210,7 +210,7 @@ questions:
       2: |
         Trades can be viewed as relationships, but the key requirement is transactional integrity and
         auditability across structured records.
-    explanation: "Transactional, audited, well-structured data with cross-row invariants is the textbook RDBMS sweet spot. Multi-row ACID transactions, foreign-key integrity, SQL joins, mature constraint tooling, and audit-friendly schemas are exactly what brokerage ledgers need. Some graph databases do support ACID transactions, so the issue is not that graphs cannot be transactional; the issue is that the dominant workload here is a regulated ledger of structured records, not graph traversal. This is a case where RDBMS is the obvious, correct choice — the 'always reach for NoSQL' reflex is a real anti-pattern."
+    explanation: "Transactional, audited, well-structured data with cross-row invariants is the textbook RDBMS sweet spot: multi-row ACID transactions, foreign-key integrity, SQL joins, and audit-friendly schemas are exactly what brokerage ledgers need. The dominant workload is a regulated ledger of structured records, not graph traversal — so even though some graph databases support transactions, RDBMS is the obvious fit. Reaching for NoSQL by reflex is the real anti-pattern here."
 
   - id: 12
     difficulty: advanced
@@ -245,7 +245,7 @@ questions:
       3: |
         Durability means a committed change survives a crash. The approval row was committed and is still
         in the table after the Slack call timed out — that's durability working as intended.
-    explanation: "**No ACID property is violated, because ACID guarantees apply only *within* a transaction — and what counts as 'one transaction' is a design choice the developer makes.** This sounds like atomicity because one action succeeded and another failed, but atomicity only governs operations the developer explicitly grouped into the same transaction (a single logical unit of work). In a bank transfer, debiting account A and crediting account B *must* be one transaction because the system is incorrect unless both happen together. By contrast, recording a PR approval and posting to Slack should usually *not* be declared as one database transaction — the PR should still be marked approved even if Slack is down. The DBMS did not violate atomicity as long as the approval-insertion transaction itself committed fully and correctly."
+    explanation: "ACID guarantees apply only *within* a transaction, and what counts as 'one transaction' is a design choice the developer makes. The Slack post was never part of the database transaction, so the approval insert committed fully and no property was violated. Where to draw the boundary depends on the invariant: a bank transfer *must* group the debit and credit (the system is wrong unless both happen together), whereas recording an approval and posting to Slack should *not* be one transaction — the PR should stay approved even when Slack is down."
 
   - id: 13
     difficulty: intermediate

@@ -6,13 +6,13 @@ cards:
     difficulty: basic
     question: "What does *design with reuse* mean?"
     answer: "Building new software mostly by **composing existing modules** rather than writing everything from scratch."
-    explanation: "Reuse is the dominant style of modern software development. The vision goes back to McIlroy's 1968 NATO paper, *Mass Produced Software Components*."
+    explanation: "Reuse is the dominant style of modern software development. The vision goes back to the 1968 NATO conference paper *Mass Produced Software Components*, which imagined shopping for components from a catalog the way hardware engineers do."
 
   - id: 2
     difficulty: basic
     question: "Name the two big benefits of reuse."
     answer: "(1) **Higher productivity / faster time-to-market** — implementation and testing time shrink. (2) **Higher software quality / fewer defects** — a widely-used module has been tried and tested by many other users, so most of its bugs have already been found and fixed."
-    explanation: "Empirically established by Barros-Justo et al.'s 2018 systematic mapping study of industrial reuse benefits."
+    explanation: "Both are empirically established in studies of industrial reuse: the deeper win is quality, since a library with tens of thousands of users has had far more chances for bugs to surface than fresh code."
 
   - id: 3
     difficulty: basic
@@ -22,9 +22,9 @@ cards:
 
   - id: 4
     difficulty: advanced
-    question: "What does *Architectural Mismatch* by Garlan, Allen, and Ockerbloom (1995/2009) say about reuse?"
-    answer: "Real-world modules are **only partially compatible**. They make countless undocumented assumptions about threading, ownership, lifecycle, and error handling, so integrating them requires substantial **glue code**. The McIlroy vision of snap-together components is closer to an aspiration than a reality."
-    explanation: "The 2009 retrospective is a sobering update: fourteen years later, the same mismatches still dominate the cost of integration. This is the reality side of the *vision vs. reality* framing."
+    question: "What does Garlan's *Architectural Mismatch* say about reuse?"
+    answer: "Real-world modules are **only partially compatible**. They make countless undocumented assumptions about threading, ownership, lifecycle, and error handling, so integrating them requires substantial **glue code**. The vision of snap-together components is closer to an aspiration than a reality."
+    explanation: "A later retrospective is a sobering update: more than a decade on, the same mismatches still dominate the cost of integration. This is the reality side of the *vision vs. reality* framing."
 
   - id: 5
     difficulty: basic
@@ -78,19 +78,19 @@ cards:
     difficulty: basic
     question: "State the Hollywood Principle / Inversion of Control in one sentence."
     answer: "*'Don't call us, we'll call you.'* — Frameworks make the high-level control-flow decisions; your code provides the callbacks the framework will invoke at the appropriate times."
-    explanation: "The phrase was popularized in the Mesa programming community in 1983 and the term *Inversion of Control* was articulated by Johnson and Foote in 1988 (*Designing Reusable Classes*)."
+    explanation: "It captures what makes a framework a framework: you hand it your callbacks, and it owns the control flow that decides when to run them — the opposite of calling a library yourself."
 
   - id: 14
     difficulty: advanced
-    question: "What does *Petre (2009)* tell us about how many design alternatives to generate?"
-    answer: "Producing **more design options leads to better final designs**. In Petre's study, Team A produced 1 design, Team B produced 3, and Team C produced 5; expert reviewers ranked Team C's selected design highest. The reason is that broad search beats first-idea fixation."
-    explanation: "Tofan et al. (2013) extended this: just *prompting* less-experienced designers to consider alternatives produced measurably better designs. The discipline is to **generate broadly, evaluate narrowly**."
+    question: "What does the research on design alternatives tell us about how many to generate?"
+    answer: "Producing **more design options leads to better final designs**. In one study, Team A produced 1 design, Team B produced 3, and Team C produced 5; expert reviewers ranked Team C's selected design highest. The reason is that broad search beats first-idea fixation."
+    explanation: "Follow-up work found that just *prompting* less-experienced designers to consider alternatives produced measurably better designs. The discipline is to **generate broadly, evaluate narrowly**."
 
   - id: 15
     difficulty: advanced
-    question: "What are the four steps of the *rational decision process* (Tang et al., 2008)?"
+    question: "What are the four steps of the *rational decision process* for design?"
     answer: "(1) **Identify** your requirements — what matters? (2) **Generate** many design alternatives. (3) **Evaluate** how well each alternative meets the requirements. (4) **Consider trade-offs and make a decision.**"
-    explanation: "Tang et al. found that explicitly walking through these four steps measurably improves design quality, especially for early-career engineers. The act of writing it down externalizes reasoning that intuition alone usually skips."
+    explanation: "Explicitly walking through these four steps measurably improves design quality, especially for early-career engineers. The act of writing it down externalizes reasoning that intuition alone usually skips."
 
   - id: 16
     difficulty: advanced

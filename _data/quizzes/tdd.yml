@@ -42,12 +42,12 @@ questions:
     correct_index: 1
     option_feedback:
       0: |
-        TDD didn't fail here; the *rhythm* failed. Fucci et al. (2017) found that the benefit comes from fine granularity and uniform rhythm, not from test-first as a slogan. Abandoning TDD wouldn't fix the underlying step-size problem.
+        TDD didn't fail here; the *rhythm* failed. The benefit comes from fine granularity and uniform rhythm, not from test-first as a slogan. Abandoning TDD wouldn't fix the underlying step-size problem.
       2: |
         Mocking everything is an over-correction that often makes tests brittle and uninformative. The root issue here is the size of each step, not the kind of doubles used.
       3: |
         Coverage targets often *create* this kind of pathology — engineers add execution without strengthening oracles. The diagnosis is the rhythm of the work, not coverage of the code.
-    explanation: "The World-of-Red trap is what happens when steps are too large. Each big change introduces multiple failures whose causes can't be untangled, so debugging dominates, the feedback loop is severed, and the suite stops being a safety net. The recovery is to shrink the next test until Green is minutes away — the discipline that Beck's Three Rules and Kerievsky's small-steps method both enforce."
+    explanation: "The World-of-Red trap is what happens when steps are too large. Each big change introduces multiple failures whose causes can't be untangled, so debugging dominates, the feedback loop is severed, and the suite stops being a safety net. The recovery is to shrink the next test until Green is minutes away — the discipline that Kent Beck's Three Rules and the small-steps method both enforce."
 
   - id: 3
     difficulty: expert
@@ -87,7 +87,7 @@ questions:
         Performance optimization may sometimes be a Refactor target, but it is not the purpose of the phase. The general purpose is improving design (clarifying intent, removing duplication) for any reason that makes the code easier to change tomorrow.
       3: |
         Skipped error handling should be driven in by a new failing test (a new Red), not bolted on during Refactor. Refactor preserves behavior; adding error handling adds behavior.
-    explanation: "Refactor is the design step — the phase where TDD's design-emergence happens. The constraint is that behavior must stay observably the same (so the tests stay green), which forces the engineer to use small, safe restructurings. Romano et al. (2017) found that developers commonly skip this step; that's where most of TDD's long-term value evaporates."
+    explanation: "Refactor is the design step — the phase where TDD's design-emergence happens. The constraint is that behavior must stay observably the same (so the tests stay green), which forces the engineer to use small, safe restructurings. Developers commonly skip this step; that's where most of TDD's long-term value evaporates."
 
   - id: 5
     difficulty: expert
@@ -115,24 +115,24 @@ questions:
     question: |
       Two research findings shape modern thinking about TDD. Which of the following claims are well-supported by the studies cited in the chapter? (Select all that apply.)
     options:
-      - "Nagappan et al. (2008) found industrial case studies with large reductions in pre-release defect density for TDD teams, with an initial development-time increase."
-      - "Fucci et al. (2017) found that quality and productivity gains were primarily associated with *fine granularity and uniform rhythm*, not simply with test-first ordering."
+      - "Industrial case studies report large reductions in pre-release defect density for TDD teams, with an initial development-time increase."
+      - "Quality and productivity gains are primarily associated with *fine granularity and uniform rhythm*, not simply with test-first ordering."
       - "Empirical studies prove TDD always doubles team productivity within one quarter — the consensus number across published case studies is a 2× improvement."
-      - "Qualitative research shows developers commonly skip the Refactor step, eroding much of TDD's design value (Romano et al. 2017)."
+      - "Qualitative research shows developers commonly skip the Refactor step, eroding much of TDD's design value."
     correct_indices: [0, 1, 3]
     option_feedback:
       0: |
-        Nagappan's industrial case studies are one of the major empirical anchors for TDD's defect-reduction
+        Industrial case studies are one of the major empirical anchors for TDD's defect-reduction
         claim, paired with a reported development-time cost.
       1: |
-        Fucci's result is important because it separates the value of small, regular steps from the slogan
+        This result is important because it separates the value of small, regular steps from the slogan
         "test first." The rhythm is the mechanism learners need to notice.
       2: |
-        No empirical study claims a universal productivity doubling. Nagappan reported a defect-density reduction with an *initial cost* in development time; productivity claims that simple are sales pitches, not findings.
+        No empirical study claims a universal productivity doubling. Industrial case studies report a defect-density reduction with an *initial cost* in development time; productivity claims that simple are sales pitches, not findings.
       3: |
         The Refactor step is where much of TDD's design value appears. Skipping it turns the cycle into
         test-first coding rather than test-driven design.
-    explanation: "The three findings together form the modern position on TDD: it can sharply reduce defects (Nagappan), the mechanism is the rhythm of small steps rather than the test-first ritual (Fucci), and the design payoff depends on actually doing the Refactor step that engineers tend to skip (Romano). 'TDD doubles productivity' is a slogan; the real story is more nuanced and more useful to teach."
+    explanation: "The three findings together form the modern position on TDD: it can sharply reduce defects, the mechanism is the rhythm of small steps rather than the test-first ritual, and the design payoff depends on actually doing the Refactor step that engineers tend to skip. 'TDD doubles productivity' is a slogan; the real story is more nuanced and more useful to teach."
 
   - id: 7
     difficulty: advanced

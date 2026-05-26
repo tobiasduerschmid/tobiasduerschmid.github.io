@@ -174,7 +174,7 @@ questions:
       An e-commerce monolith has hit 200K LOC with no tests. A consultant suggests "let's just write tests now." Why is this typically the wrong response, and what's the right approach?
     options:
       - "It's the right response — start writing tests immediately for everything."
-      - "It's wrong because untested legacy code is usually *structurally hostile* to testing — tightly coupled, globally stateful, with hidden dependencies — so 'just write tests' produces brittle, low-coverage tests at high effort. The right approach is **incremental**: instrument seams (e.g., introducing interfaces at module boundaries), retrofit dependency injection, and write tests as part of every change (the Michael Feathers 'Working Effectively with Legacy Code' approach)."
+      - "It's wrong because untested legacy code is usually *structurally hostile* to testing — tightly coupled, globally stateful, with hidden dependencies — so 'just write tests' produces brittle, low-coverage tests at high effort. The right approach is **incremental**: introduce seams (interfaces at module boundaries), retrofit dependency injection, and write tests as part of every change."
       - "Tests are unnecessary for monoliths."
       - "Outsource the testing to a contractor."
     correct_index: 1
@@ -185,7 +185,7 @@ questions:
         Monoliths can and do have extensive test suites (Stripe, Shopify, GitHub all run highly-tested monoliths). The size doesn't preclude testing; the structure can.
       3: |
         Outsourcing testing for a codebase that resists testing produces low-value tests at high cost. The investment must come with the architectural changes to enable it.
-    explanation: "**Untested legacy code is usually structurally testable-hostile (tight coupling, global state, hidden dependencies). Writing tests against it produces high-effort, brittle, low-value tests.** The Feathers approach is incremental: introduce seams (interfaces at boundaries) carefully, retrofit dependency injection at each touch site, write tests for the seam before changing the code behind it. Over time the testable surface grows; trying to do it in one sprint typically fails."
+    explanation: "**Untested legacy code is usually structurally testable-hostile (tight coupling, global state, hidden dependencies). Writing tests against it produces high-effort, brittle, low-value tests.** The proven approach is incremental: introduce a seam (an interface at a boundary), retrofit dependency injection there, and write tests for the seam before changing the code behind it. The testable surface grows over time; trying to do it in one sprint typically fails."
 
   - id: 10
     difficulty: advanced

@@ -6,7 +6,7 @@ questions:
     difficulty: basic
     type: single
     question: |
-      Which sentence most accurately captures the **intent** of the Null Object pattern (Woolf, 1998)?
+      Which sentence most accurately captures the **intent** of the Null Object pattern?
     options:
       - "Provide a surrogate for another object that shares the same interface but does nothing meaningful."
       - "Wrap an existing object so that all calls to it can be intercepted, controlled, or audited."
@@ -15,12 +15,12 @@ questions:
     correct_index: 0
     option_feedback:
       1: |
-        That's the [Proxy](https://en.wikipedia.org/wiki/Proxy_pattern) pattern. Woolf calls out the confusion explicitly — a Proxy controls access to a real subject, possibly forwarding calls; a Null Object replaces the real subject and never forwards anywhere.
+        That's the [Proxy](https://en.wikipedia.org/wiki/Proxy_pattern) pattern, and the two are easy to confuse — a Proxy controls access to a real subject, possibly forwarding calls; a Null Object replaces the real subject and never forwards anywhere.
       2: |
         Throwing on `null` access (e.g., `Objects.requireNonNull`) defends *against* missing collaborators — it does not give clients a do-nothing collaborator they can call uniformly. The Null Object's whole point is to avoid the conditional or exception-handling burden at the call site.
       3: |
         That's lazy initialization (a Proxy variant). A Null Object never wakes up and starts doing real work — it permanently does nothing. If your stand-in transforms into a real collaborator on first use, you have a Proxy, not a Null Object.
-    explanation: "**Null Object provides a surrogate that shares the interface but does nothing.** Woolf's exact words: *provide a surrogate for another object that shares the same interface but does nothing*. The Null Object encapsulates the implementation decisions of how to do nothing and hides those details from collaborators."
+    explanation: "A Null Object provides a surrogate that shares the same interface as a real collaborator but does nothing. It encapsulates *how to do nothing* and hides those details from collaborators, so clients call it exactly as they would the real object."
 
   - id: 2
     difficulty: intermediate
@@ -75,7 +75,7 @@ questions:
         `@Deprecated` signals "don't use this anymore," not "don't use this yet." The annotation would mislead future readers about what the placeholder is for, and it still pays the maintenance cost of a 30-method class no one calls.
       3: |
         That's a much larger refactor than the prompt asks for and changes the type at every call site. Even worse, `Optional<Controller>` *re-introduces* the null check at every call site — exactly the burden the original team was trying to avoid by considering Null Object in the first place.
-    explanation: "**Without a present need, adding Null Object is speculative abstraction — exactly the over-engineering trap that the Applicability criteria are meant to prevent.** Woolf's Applicability is explicit: the pattern applies when *some collaborator instances should do nothing* and *the do-nothing behavior is reusable*. With no current users, neither condition holds. The cost (a 30-method class to maintain) is paid up front; the benefit (call-site simplification) is hypothetical. Wait until at least one real client needs it."
+    explanation: "The pattern's Applicability requires that *some collaborator instances should do nothing* and that the do-nothing behavior is *reusable*. With no current users, neither holds, so the cost — a 30-method class to maintain — is paid up front while the benefit is hypothetical. Wait until at least one real client needs it."
 
   - id: 4
     difficulty: intermediate
@@ -115,13 +115,13 @@ questions:
         A Proxy controls access to a real subject. `FlyNullObject` does not stand in front of any real `FlyBehavior` — it *replaces* one. Proxy and Null Object are easy to confuse but have opposite intents.
       3: |
         Adapter wraps an object to translate one interface into another. `FlyNullObject` implements `FlyBehavior` directly without translating between two interfaces — there is nothing to adapt to.
-    explanation: "**`FlyNullObject` plays the Strategy role (it is a `FlyBehavior` the duck composes with) AND the Null Object role (its `fly()` does nothing) — that's a Null Strategy compound.** This is exactly the pattern compound called out by Woolf and *Head First Design Patterns*: when one of the ConcreteStrategies in a Strategy hierarchy consistently does nothing, that ConcreteStrategy *is* a Null Object. The same role-superimposition appears as **Null State** when a do-nothing State sits in a State hierarchy."
+    explanation: "`FlyNullObject` plays both the Strategy role (a `FlyBehavior` the duck composes with) and the Null Object role (its `fly()` does nothing) — a Null Strategy compound. When one ConcreteStrategy in a Strategy hierarchy consistently does nothing, that strategy *is* a Null Object. The same role-superimposition appears as **Null State** when a do-nothing State sits in a State hierarchy."
 
   - id: 6
     difficulty: advanced
     type: single
     question: |
-      The State and Strategy patterns each have a "null variant" (Null State, Null Strategy). Why does Woolf's catalog say there is **no** Null Decorator?
+      The State and Strategy patterns each have a "null variant" (Null State, Null Strategy). Why is there **no** Null Decorator?
     options:
       - "Decorators were not part of the original GoF catalog."
       - "A Decorator must wrap a real object to forward calls to; an empty Decorator wrapping nothing has nothing to decorate."
@@ -141,7 +141,7 @@ questions:
     difficulty: advanced
     type: multiple
     question: |
-      Which of the following are **valid reasons to apply** the Null Object pattern (per Woolf, 1998)? Select all that apply.
+      Which of the following are **valid reasons to apply** the Null Object pattern? Select all that apply.
     options:
       - "An object requires a collaborator, and some legitimate instances should do nothing."
       - "You want clients to ignore the difference between a real collaborator and a do-nothing one (no scattered null checks)."
@@ -151,16 +151,16 @@ questions:
     correct_indices: [0, 1, 2, 4]
     option_feedback:
       0: |
-        This is the first Applicability bullet, and forgetting it is forgetting why the pattern exists. **Forgetting this case means missing the canonical Null Object scenario from Woolf's catalog.**
+        A real, non-optional collaboration where some instances should legitimately do nothing is the canonical Null Object scenario — the reason the pattern exists at all.
       1: |
-        This is the second-most-cited reason for the pattern: **uniform call sites**. Without it, the conditional logic comes back at the call site, defeating the pattern's main benefit.
+        Uniform call sites are the pattern's central payoff. Without this requirement the conditional logic comes back at the call site, defeating the main benefit.
       2: |
-        Reusability is what justifies the *class* over a one-off conditional. **Forgetting this case means treating Null Object as a single-use trick rather than a sharable abstraction.**
+        Reusable do-nothing behavior is what justifies a dedicated *class* over a one-off conditional. Without it, Null Object is a single-use trick rather than a sharable abstraction.
       3: |
-        That's the **hammer-and-nail trap**. `Optional<T>` and `Maybe T` already give you a type-checked alternative; introducing a Null Object on top is sometimes useful (to avoid call-site `if`s) but should be a *deliberate* choice, not a blanket policy. Many `Optional` cases — "user not found", "no record exists" — should stay `Optional` because the *absence* is meaningful information.
+        `Optional<T>` and `Maybe T` already give a type-checked alternative; layering a Null Object on top is sometimes useful but should be a *deliberate* choice, not a blanket policy. Cases like "user not found" or "no record exists" should stay `Optional`, because there the absence is meaningful information.
       4: |
-        If "do nothing" needs to span multiple collaborators, one Null Object class cannot capture all of it. **Forgetting this case means missing the constraint that distinguishes Null Object from cross-cutting concerns like aspects.**
-    explanation: "**Null Object's Applicability requires a real collaboration that needs a do-nothing variant, uniform call sites, reusable do-nothing behavior, and a single-class scope. Speculative replacement of `Optional` is not on the list.** The four valid reasons are direct quotes from Woolf's Applicability section. The `Optional`-replacement option is the modern misuse: when 'absence' carries meaning the client must handle (404, no match, opt-out), preserve that signal — don't bury it under a do-nothing surrogate."
+        A single Null Object class can only absorb do-nothing behavior that lives behind one collaborator interface. When "do nothing" must span several collaborators, the concern is cross-cutting and belongs in aspects or middleware instead.
+    explanation: "Null Object's Applicability requires a real collaboration that needs a do-nothing variant, uniform call sites, reusable do-nothing behavior, and a single-class scope. Blanket replacement of `Optional` is the modern misuse: when absence carries meaning the client must handle (404, no match, opt-out), preserve that signal rather than burying it under a do-nothing surrogate."
 
   - id: 8
     difficulty: advanced
@@ -180,7 +180,7 @@ questions:
         There's no Visitor in this scenario — no visitor is being applied to the children. `emptyIterator` is just a no-op implementation of the Iterator interface; the Visitor pattern is unrelated here.
       3: |
         Factory Method is about *who decides which subclass to create*. `Collections.emptyIterator()` is a factory call, but the *thing it returns* is what's relevant — and that thing is a Null Iterator, not a Factory Method.
-    explanation: "**`Collections.emptyIterator()` is the canonical Null Iterator: it implements `Iterator<T>` so clients can call `hasNext()` and `next()` uniformly, and `hasNext()` always returns `false`.** This is the example Gamma et al. use to introduce Null Object inside the Iterator pattern catalog entry. Clients iterate over leaves and composites with the same code; leaves never need a special case for 'no children to iterate over.'"
+    explanation: "`Collections.emptyIterator()` is the canonical Null Iterator: it implements `Iterator<T>` so clients can call `hasNext()` and `next()` uniformly, with `hasNext()` always returning `false`. The Gang of Four use it to introduce Null Object inside the Iterator catalog entry. Clients iterate over leaves and composites with the same code; leaves need no special case for 'no children to iterate over.'"
 
   - id: 9
     difficulty: advanced
@@ -215,7 +215,7 @@ questions:
     correct_index: 1
     option_feedback:
       0: |
-        Parameterized Null Objects are a documented variant — Woolf's Implementation discussion describes them as Flyweights with extrinsic state. The Singleton constraint can be relaxed when parameters genuinely differ; that is fine.
+        Parameterized Null Objects are a documented variant — essentially Flyweights with extrinsic state. The Singleton constraint can be relaxed when parameters genuinely differ; that is fine.
       2: |
         Liskov substitutability isn't broken just by accepting parameters — the Null Object still implements the AbstractObject interface. The risk lies elsewhere: in *what the parameters drive*, not in their existence.
       3: |
@@ -267,11 +267,11 @@ questions:
       0: |
         This is the most important liability — it's why naming matters (`SilentLogger`, not `DefaultLogger`) and why startup logs should announce which collaborator was wired in.
       1: |
-        Each `AbstractObject` family that needs a Null Object adds at least one class (often two: the abstract interface plus the Null implementation). **Forgetting this case understates the cost of the pattern.**
+        Each `AbstractObject` family that needs a Null Object adds at least one class — often two, the abstract interface plus the Null implementation. That up-front class cost is easy to understate.
       2: |
-        Monitoring systems may *need* to know "this operation was skipped" — a Null Object hides that distinction by definition. **Forgetting this case means deploying Null Object in audit-sensitive code without realizing the trade-off.**
+        Monitoring or auditing systems may *need* to know an operation was skipped, and a Null Object hides that distinction by definition. In audit-sensitive code this trade-off is easy to miss.
       3: |
-        Performance is not a Woolf-cited liability and depends entirely on the language and runtime. The empty method may be inlined to literally zero cost. The real costs are design-level (masking, proliferation, monitoring opacity), not runtime branch prediction.
+        Performance is not a real liability of this pattern and depends entirely on the language and runtime — the empty method may be inlined to literally zero cost. The genuine costs are design-level: masking, proliferation, monitoring opacity.
       4: |
-        Cross-cutting do-nothing concerns are the wrong fit — they're better served by aspects, decorators, or middleware. **Forgetting this case means trying to use Null Object as a general absence-handling mechanism, which it is not.**
-    explanation: "**Null Object's main liabilities are design-level (silently masking bugs, proliferating classes, hiding distinctions monitoring systems need, and being unable to absorb cross-cutting do-nothing concerns) — not runtime performance.** Woolf's Consequences enumerate exactly these. The performance argument is unsupported in the catalog and depends entirely on the runtime; the JIT often inlines empty methods to zero cost, so adopting or rejecting Null Object on performance grounds is misguided."
+        Cross-cutting do-nothing concerns are the wrong fit — they're better served by aspects, decorators, or middleware. Null Object is not a general absence-handling mechanism.
+    explanation: "Null Object's real liabilities are design-level: silently masking bugs, proliferating classes, hiding distinctions monitoring systems need, and being unable to absorb cross-cutting do-nothing concerns. Performance is not one of them — the JIT often inlines empty methods to zero cost, so adopting or rejecting the pattern on performance grounds is misguided."

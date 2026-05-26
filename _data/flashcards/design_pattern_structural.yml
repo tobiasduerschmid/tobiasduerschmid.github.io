@@ -11,7 +11,7 @@ cards:
     difficulty: intermediate
     question: "Object Adapter vs. Class Adapter?"
     answer: "Object Adapter uses **composition** (wraps the adaptee), works in any language. Class Adapter uses **inheritance** — multiple class inheritance in C++, or (in Java/C#) extending the Adaptee class while implementing the Target interface."
-    explanation: "Modern practice favors Object Adapters because they compose with any subclass of the Adaptee, can be reconfigured at runtime, and don't require either party to be open for inheritance (Effective Java Item 18: favor composition over inheritance)."
+    explanation: "Modern practice favors Object Adapters because they compose with any subclass of the Adaptee, can be reconfigured at runtime, and don't require either party to be open for inheritance — an application of favoring composition over inheritance."
   - id: 3
     difficulty: intermediate
     question: "Adapter vs. Facade vs. Decorator?"
@@ -19,9 +19,9 @@ cards:
     explanation: "Key: Adapter changes what the interface looks like; Facade reduces how much you see; Decorator enhances what the object does."
   - id: 4
     difficulty: advanced
-    question: "What does POSA5 say about 'the Adapter pattern'?"
+    question: "Why is it misleading to talk about a single 'Adapter pattern'?"
     answer: "It is actually a family of at least four patterns: Object Adapter, Class Adapter, Two-Way Adapter, and Pluggable Adapter."
-    explanation: "When someone says 'use the Adapter pattern', you must clarify which form of adaptation is needed."
+    explanation: "Each form adapts differently, so 'use the Adapter pattern' is ambiguous until the needed kind of adaptation is named."
   - id: 5
     difficulty: basic
     question: "What problem does Composite solve?"

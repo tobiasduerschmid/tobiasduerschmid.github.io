@@ -57,7 +57,7 @@ questions:
       0: |
         At-most-once delivery may silently drop the message — a paid invoice never recorded is a regulatory and reputational disaster, not just a UX bug.
       1: |
-        At-least-once delivery retries until acknowledged, which works fine *if* the consumer is idempotent — but the stem stipulates it is not, so duplicates would double-charge. In real billing systems most teams **make the consumer idempotent** (idempotency keys) and use at-least-once delivery, since exactly-once coordination is expensive and idempotent design is robust to retries from any source.
+        At-least-once retries until acknowledged, which is safe *only if* the consumer is idempotent. The stem stipulates it is not, so a retried delivery would double-charge the customer.
       3: |
         Delivery mode controls per-message delivery semantics; the broker does *not* default to exactly-once. Without configuring the stronger mode, neither the broker nor the consumer gets that protocol-level guarantee.
     explanation: "**Given the stem's constraint (non-idempotent consumer, neither loss nor duplication acceptable), exactly-once delivery is the only mode that fits the stated delivery requirement.** Treat this as 'understand the delivery guarantees' — not 'always pick exactly-once for money movement.' Exactly-once is a protocol-level delivery guarantee, not a complete business-transaction guarantee; real billing systems more commonly use idempotent consumers plus at-least-once delivery, or synchronous REST with idempotency keys."
@@ -105,7 +105,7 @@ questions:
         Deleting the bus would replace one problem with a much worse one: tightly coupled point-to-point dependencies between services. The fix is to restore *visibility* of the existing coupling, not to remove the bus.
       3: |
         Cycles arise when A depends on B and B depends on A. The smell here is *opacity* of the dependency graph, not its directionality.
-    explanation: "**Wide coupling (Garcia et al. 2009) is the pub-sub smell where every subscriber appears coupled to every publisher because the bus's type erasure hides the real dependency graph.** Typed channels — one per event class — restore the static visibility so a maintenance engineer can answer 'who breaks if I change this payload?' from the type system alone."
+    explanation: "**Wide coupling is the pub-sub smell where every subscriber appears coupled to every publisher because the bus's type erasure hides the real dependency graph.** Typed channels — one per event class — restore the static visibility so a maintenance engineer can answer 'who breaks if I change this payload?' from the type system alone."
 
   - id: 6
     difficulty: intermediate

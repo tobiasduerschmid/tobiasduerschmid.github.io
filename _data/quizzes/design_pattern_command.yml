@@ -135,21 +135,20 @@ questions:
     correct_indices: [0, 1, 2]
     option_feedback:
       0: |
-        Queueing a request requires capturing enough information to run the request later. Command is
-        the design-pattern version of that idea: package the request behind a uniform `execute()` API so
-        an invoker or worker can store, schedule, and retry it.
+        Queuing a request means capturing enough information to run it later. That is the core Command
+        idea: package the request behind a uniform `execute()` API so an invoker or worker can store,
+        schedule, and retry it.
       1: |
-        Undo/redo needs each operation captured so it can be replayed or inverted. A Command object can
-        carry both `execute()` and `undo()`, turning history into a list of Commands. Canonical
-        motivation for the pattern.
+        Undo/redo needs each operation captured so it can be replayed or inverted. A Command carrying
+        both `execute()` and `undo()` turns history into a list of Commands — a canonical motivation for
+        the pattern.
       2: |
-        A button whose action is swappable at runtime is the textbook *Invoker* role. It holds a Command
-        reference and calls `execute()`; swapping the Command swaps the behavior without subclassing the
-        button.
+        A button whose action is swappable at runtime is the textbook *Invoker* role: it holds a Command
+        reference and calls `execute()`, so swapping the Command swaps the behavior without subclassing
+        the button.
       3: |
-        This option is **not** evidence for Command. A private helper called from one stable place is
-        just a method — no second invoker, no queueing, no undo. Reify into a Command only when there's
-        a real force pulling that direction; otherwise you pay the indirection tax for nothing.
+        A private helper called from one stable place is just a method — no second invoker, no queuing,
+        no undo. Reifying it into a Command adds indirection without a force pulling that direction.
     explanation: "**Queuing, undo, and runtime action configuration are Command-shaped forces.** A private helper used in one stable place does not justify the pattern by itself."
 
   - id: 8

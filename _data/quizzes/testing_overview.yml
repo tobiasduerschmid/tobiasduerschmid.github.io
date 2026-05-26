@@ -15,12 +15,12 @@ questions:
     correct_index: 1
     option_feedback:
       0: |
-        Three unrelated regressions over two months without a regression suite is the pattern the suite exists to prevent. Treating it as coincidence underweights the well-documented cost-of-change curve.
+        Three unrelated regressions surfacing right after the suite went dark is the exact pattern the suite exists to catch, not coincidental variance. The cost-of-change curve makes late discovery the expensive outcome, not a wash against the suite's runtime.
       2: |
-        New-feature unit tests cover the new feature, not unrelated areas. The whole point of regression testing is to catch breakage *outside* the area someone is currently editing.
+        Unit tests on the new feature cover the new feature. Regression testing's job is the breakage *outside* the area being edited — module A's change silently breaking module B.
       3: |
-        Regression suites can't prove that all regressions are caught, but they catch a large fraction of cross-area breakage in practice. Saying 'wouldn't have caught them' is post-hoc rationalization for disabling the safety net.
-    explanation: "Regression testing's value is *cross-area early warning*. When a developer touches module A and breaks module B, the regression suite is what fails. Disabling it removes the warning system; finding the same bugs in QA or production costs orders of magnitude more — developer hours, incident response, user impact, lost trust. Slowness and flakiness are real problems, but the right response is to fix them, not to disable the suite."
+        Regression suites can't prove every regression is caught, but in practice they catch a large fraction of cross-area breakage. "It wouldn't have caught them" assumes the worst case to justify removing the safety net.
+    explanation: "Regression testing's value is *cross-area early warning*: when a change to module A breaks module B, the suite is what fails. Disabling it removes that warning, and finding the same bugs in QA or production costs orders of magnitude more in developer hours, incident response, and lost trust. Slowness and flakiness are real, but the fix is to repair the suite, not retire it."
 
   - id: 2
     difficulty: intermediate
@@ -41,12 +41,12 @@ questions:
     correct_index: 1
     option_feedback:
       0: |
-        Pinning the implementation is what makes Test B brittle. Renaming `_tier_lookup_table`, replacing it with a rule engine, or moving the lookup to a config service all break Test B without changing what the user sees.
+        Pinning the implementation is precisely what makes Test B brittle. Renaming `_tier_lookup_table`, swapping it for a rule engine, or moving the lookup to config all break it while the user still sees a 10% discount — a precise signal about the wrong thing.
       2: |
-        They look similar but couple very differently. Test A breaks only when premium customers stop getting their discount; Test B breaks on internal renames. That's a meaningful difference in maintenance cost.
+        They look alike but couple to different things. The black-box test breaks only when premium customers stop getting their discount; the white-box one breaks on internal renames. That gap is the whole point.
       3: |
-        Test A actually survives a wide range of refactorings — anything that preserves the rule 'premium → 10% off $100 = $10' keeps it green. Treating it as equally brittle to Test B confuses *coupling to spec* with *coupling to implementation*.
-    explanation: "Black-box tests assert at the spec boundary and let any conforming implementation pass — they survive refactoring. White-box tests pin specific internal mechanisms and break when those mechanisms change, even when behavior is preserved. The healthy ratio is many black-box tests for behavior coverage plus a smaller number of white-box tests for known implementation-specific risks (off-by-one in a private helper, defensive branch the spec doesn't enumerate)."
+        The black-box test survives any refactoring that preserves "premium → 10% off $100 = $10". Calling both equally brittle treats coupling-to-spec and coupling-to-implementation as the same risk.
+    explanation: "Black-box tests assert at the spec boundary, so any conforming implementation keeps them green — they survive refactoring. White-box tests pin internal mechanisms and break when those mechanisms change even though behavior is preserved. The healthy ratio is many black-box tests for behavior, plus a few white-box tests for known implementation-specific risks (an off-by-one in a private helper, a defensive branch the spec doesn't enumerate)."
 
   - id: 3
     difficulty: intermediate
@@ -61,12 +61,12 @@ questions:
     correct_index: 1
     option_feedback:
       0: |
-        Mocking the database removes the most interesting question — *does data actually persist?* A unit test on `save_profile` is fine for input validation or business logic, but it does not verify the persistence behavior the user actually relies on.
+        Mocking the database stubs out the very thing under test — *does the data actually persist?* A unit test on `save_profile` can check input validation or business logic, but a mock cannot confirm a real round-trip to storage.
       2: |
-        A browser-based system test would also verify this, but at higher cost (slower, flakier, harder to debug) than necessary. Integration is the appropriate level: it exercises the persistence layer realistically without the overhead of a real browser.
+        A browser test verifies this too, but at higher cost — slower, flakier, harder to debug. Integration sits at the right level: it exercises the real persistence layer without driving a browser.
       3: |
-        Persistence is a system behavior the framework is *part of*, not something the framework guarantees you don't need to verify. Configuration mistakes, transaction boundaries, and migration drift all cause real-world persistence bugs.
-    explanation: "Match the level to the behavior. Persistence is fundamentally a cross-module behavior — your code, your ORM, and the database all have to cooperate. Integration tests exercise that cooperation directly without the cost of a full browser. Reserve system/E2E tests for the end-to-end user flows that genuinely require the deployed environment (login, checkout)."
+        Persistence is a behavior the framework *participates in*, not one it lets you skip verifying. Misconfigured transactions, wrong boundaries, and migration drift all produce real persistence bugs in code that uses a well-tested ORM.
+    explanation: "Match the test level to the behavior. Persistence is inherently cross-module — application code, ORM, and database all have to cooperate — so an integration test that writes and reads back exercises that cooperation directly and cheaply. Reserve system/E2E tests for flows that genuinely need the deployed environment, like login or checkout."
 
   - id: 4
     difficulty: advanced
@@ -81,12 +81,12 @@ questions:
     correct_index: 1
     option_feedback:
       0: |
-        Realism is real, but the cost is also real — slow, flaky, hard to debug. The pyramid shape is a *budget* recommendation: lots of cheap fast tests, fewer expensive slow ones, because total feedback time and total flake rate compound.
+        Realism is genuine, but so is the cost — slow, flaky, hard to debug. The pyramid is a *budget*: many cheap fast tests, few expensive slow ones, because total feedback time and total flake rate both compound.
       2: |
-        Adding more system tests would push runtime and flake rate higher, making CI more painful. The diagnosis points the other way — push behavior coverage down to faster, cheaper levels.
+        More system tests push runtime and flake rate higher, making CI more painful. The diagnosis points the opposite way — move behavior coverage down to faster, cheaper levels.
       3: |
-        Unit tests reflect *contract* behavior, not deployment behavior — both are needed. Removing unit tests would eliminate the fastest, most diagnostic layer of the suite while leaving the slow layer intact.
-    explanation: "The ice-cream-cone anti-pattern (mostly system tests) is one of the canonical failure modes the pyramid shape exists to prevent. The deeper logic: when feedback is slow and flake rate is high, engineers stop trusting the suite and start ignoring red builds. Restoring the pyramid shape — many fast unit tests, a layer of integration tests, a handful of system tests — restores the trust and speed the suite is supposed to provide."
+        Unit tests pin *contract* behavior and integration/system tests pin deployment behavior; both are needed. Deleting the unit layer removes the fastest, most diagnostic tests while leaving the slow layer untouched.
+    explanation: "This is the ice-cream-cone (inverted pyramid): most coverage concentrated at the slowest, flakiest level. When feedback is slow and a 12% flake rate is common, engineers stop trusting red builds and start ignoring them. The fix is to restore the pyramid — push behavior down to many fast unit tests, keep a layer of integration tests, and reserve system tests for critical flows."
 
   - id: 5
     difficulty: advanced
@@ -101,17 +101,14 @@ questions:
     correct_indices: [0, 1, 2]
     option_feedback:
       0: |
-        White-box tests are useful when the implementation has real risk the public spec does not name,
-        such as defensive paths or edge-case branches.
+        This is a valid counter the answer should include: white-box tests reach risks the public spec never names, such as defensive paths and edge-case branches.
       1: |
-        Coverage is a white-box signal: it shows which code the current tests have not exercised. It does
-        not prove correctness, but it is still useful navigation.
+        Worth selecting: coverage is itself a white-box signal, showing which code the black-box suite hasn't exercised. It doesn't prove correctness, but it stays useful as navigation.
       2: |
-        Some failures live in implementation choices the black-box spec never mentions. A carefully chosen
-        white-box test can target that risk directly.
+        A valid counter to include: some failures live in implementation choices the spec is silent on (a race in a private cache), and a white-box test can target that risk directly.
       3: |
-        Property-based testing is powerful but addresses input variety at the spec boundary — it doesn't reach into private implementation paths the spec is silent on. The two techniques live at different layers and aren't substitutes for each other.
-    explanation: "Black-box and white-box are complementary lenses, not competing methodologies. Black-box tests survive refactoring and pin behavior at the spec boundary; white-box tests catch implementation-specific risks the spec doesn't enumerate. Coverage tools, mutation testing, and property-based testing all draw on white-box intuitions even in modern suites. The mature view is *both, in the right proportion* — not one or the other."
+        Property-based testing varies inputs at the spec boundary; it does not reach private paths the spec never mentions. The two operate at different layers, so one cannot make the other obsolete.
+    explanation: "Black-box and white-box are complementary lenses, not rival methodologies. Black-box tests survive refactoring and pin behavior at the spec boundary; white-box tests catch implementation-specific risks the spec doesn't enumerate. Coverage tools, mutation testing, and property-based testing all draw on white-box intuitions even in modern suites — the mature view is *both, in the right proportion*."
 
   - id: 6
     difficulty: advanced

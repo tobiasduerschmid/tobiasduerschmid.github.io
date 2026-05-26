@@ -12,13 +12,13 @@ cards:
     difficulty: basic
     question: "What is the difference between **black-box** and **white-box** testing?"
     answer: "**Black-box** — tests derived from the spec, no knowledge of internals. **White-box** — tests derived from the implementation to exercise specific paths or branches."
-    explanation: "The two are complementary, not competing. Black-box keeps tests honest to the spec and resistant to implementation drift. White-box exposes paths the spec doesn't enumerate and finds coverage gaps. A healthy suite uses both — black-box for behavior, white-box for implementation-specific risk."
+    explanation: "The two are complementary, not competing. Black-box keeps tests honest to the spec and resistant to implementation drift; white-box exposes paths the spec doesn't enumerate and finds coverage gaps. A healthy suite uses both — black-box for behavior, white-box for implementation-specific risk."
 
   - id: 3
     difficulty: intermediate
     question: "A teammate proposes deleting all white-box tests in favor of black-box tests, saying *'we should only test the spec'*. Critique this proposal."
     answer: "Too aggressive. Black-box alone misses real implementation risks — error paths, defensive branches, behaviors the spec is vague about. Favor black-box for behavior coverage, keep targeted white-box tests for known implementation risks."
-    explanation: "The intuition behind the proposal is right — black-box tests survive refactoring better and pin user-visible behavior. The mistake is treating it as exclusive. A pragmatic ratio is many black-box tests with a smaller number of white-box tests for known risk hotspots. Both styles benefit from the same care: strong oracles, deterministic execution, clear failure messages."
+    explanation: "The intuition behind the proposal is right — black-box tests survive refactoring better and pin user-visible behavior — but treating it as exclusive is the mistake. Both styles benefit from the same care anyway: strong oracles, deterministic execution, clear failure messages."
 
   - id: 4
     difficulty: basic
@@ -48,4 +48,4 @@ cards:
     difficulty: advanced
     question: "Give a three-question heuristic for deciding which pyramid level a new test belongs at."
     answer: "(1) What is the smallest unit whose failure invalidates the behavior? (2) Can it be expressed without infrastructure (DBs, network, browsers)? (3) Will many similar tests be needed?"
-    explanation: "Yes to small unit + no infra + many similar → **unit**. Real cross-module behavior with infra → **integration**. End-to-end user flow only → **system**. The default is to push every test as low as it can go without losing fidelity. Tests written at the wrong level are either too slow (system test of trivial logic) or too narrow (unit test that mocks the actual concern away)."
+    explanation: "Small unit + no infra + many similar → **unit**; real cross-module behavior with infra → **integration**; end-to-end user flow only → **system**. The default is to push every test as low as it can go without losing fidelity, because a wrong-level test is either too slow (a system test of trivial logic) or too narrow (a unit test that mocks the actual concern away)."

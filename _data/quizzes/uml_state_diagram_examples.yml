@@ -22,7 +22,7 @@ questions:
         The final state uses the bullseye symbol: a filled circle inside a hollow circle. The solid black circle marks entry, not termination.
       3: |
         A choice point is a branching pseudostate, usually shown as a diamond. The solid black circle has one initial transition into the first real state.
-    explanation: "**The solid black circle is the initial pseudostate marking the entry point — the final state uses a different bullseye symbol (◎).** A **solid black circle** (<span class=\"uml-sym\" data-diagram=\"state\" data-sym=\"[*]\"></span>) is the **initial pseudostate**. It marks where the state machine or region begins. There is normally one initial pseudostate per region, and it has one outgoing transition with no trigger. The **final state** is a different symbol: a solid circle inside a hollow circle (◎)."
+    explanation: "**The solid black circle (<span class=\"uml-sym\" data-diagram=\"state\" data-sym=\"[*]\"></span>) is the initial pseudostate marking where the machine begins.** It has one outgoing, trigger-free transition. The final state is a different symbol — a bullseye (◎), a solid circle inside a hollow one."
 
   - id: 2
     difficulty: basic
@@ -44,7 +44,7 @@ questions:
         The action after `/` is the effect executed when the transition fires. A guard appears in square brackets.
       3: |
         This combines the event and guard. In the syntax `Event [Guard] / Effect`, only the bracketed part is the guard condition.
-    explanation: "**The guard condition is `[isEnabled]` — the boolean in square brackets that must be true for the transition to fire.** The transition syntax is `Event [Guard] / Effect`. The **guard** is `[isEnabled]` — a boolean condition in square brackets that must be true for the transition to fire. `buttonPressed` is the event (trigger), and `/ playSound()` is the effect (action executed during the transition)."
+    explanation: "**In `Event [Guard] / Effect`, the guard is `[isEnabled]` — the bracketed boolean that must be true for the transition to fire.** `buttonPressed` is the event (trigger) and `/ playSound()` is the effect (action run during the transition)."
 
   - id: 3
     difficulty: intermediate
@@ -66,7 +66,7 @@ questions:
         UML does not imply an error state just because a guard is false. If no transition is enabled, the object remains in its current state.
       3: |
         A final-state transition would need to be drawn explicitly. The false guard does not redirect the object to the end of its lifecycle.
-    explanation: "**When the guard `[sysCheckOK]` is false, the transition does not fire and the system remains in Idle.** When a guard condition evaluates to **false**, the transition is **not taken** and the object stays in its current state. The event is effectively ignored. The system remains in **Idle** until the event occurs again with the guard satisfied."
+    explanation: "**A false guard blocks the transition, so the system stays in Idle.** The event is effectively ignored until it occurs again with `[sysCheckOK]` satisfied."
 
   - id: 4
     difficulty: intermediate
@@ -93,7 +93,7 @@ questions:
         The target state is shown by the arrow's destination, not by the transition label. The label describes trigger, guard, and effect.
       4: |
         Priority is not part of the basic transition-label syntax. Ambiguous overlapping guards should be fixed by making the model deterministic, not by adding an informal priority field.
-    explanation: "**A UML transition label consists of Event, Guard, and Effect — all optional; the target state is shown by the arrow, and there is no priority field.** A UML transition label has three optional parts: **Event** (trigger), **Guard** (boolean condition in `[]`), and **Effect** (action after `/`). All three are optional — you can have a transition with just a guard, just an event, or any combination. The target state is shown by the arrow's destination, not the label. There is no priority concept."
+    explanation: "**A transition label has three optional parts — Event (trigger), Guard (`[]`), and Effect (after `/`).** The target state is shown by where the arrow points, not in the label, and UML has no transition-priority field."
 
   - id: 5
     difficulty: basic
@@ -115,7 +115,7 @@ questions:
         A history pseudostate is a different symbol used with composite states to remember a prior substate. The bullseye means the lifecycle path is complete.
       3: |
         Choice branching is usually shown with a diamond. The bullseye is not a decision point.
-    explanation: "**The bullseye symbol ◎ is the final state marking the end of the object's lifecycle — different from the solid black initial pseudostate ●.** The **bullseye symbol** (<span class='uml-sym' data-diagram='state' data-sym='final'></span>) is the **final state**. It indicates that the object's lifecycle has ended. This is different from the **initial pseudostate** (solid black circle ●), which marks where the state machine begins."
+    explanation: "**The bullseye ◎ (<span class='uml-sym' data-diagram='state' data-sym='final'></span>) is the final state, marking the end of the object's lifecycle.** Do not confuse it with the initial pseudostate — a plain solid black circle ● — which marks where the machine begins."
 
   - id: 6
     difficulty: intermediate
@@ -137,7 +137,7 @@ questions:
         `doPayment` describes work being performed, not a stable condition. State names should read like situations, not commands.
       3: |
         `check_status` is an action-style name. A state would be something like `CheckingStatus` if the object can meaningfully remain in that condition.
-    explanation: "**State names should be present-participial or noun phrases describing a condition — `WaitingForInput` is correct; action verbs like `Login` or `doPayment` are not.** State names should use **present-participial phrases** (e.g., *WaitingForInput*, *Processing*) or **noun phrases** (e.g., *Active*, *Idle*). `Login` is a verb (an action, not a condition of being). `doPayment` and `check_status` are also action verbs. A state represents a *condition or situation*, not an action."
+    explanation: "**A state names a condition of being, so use a present-participial phrase (`WaitingForInput`, `Processing`) or noun phrase (`Active`, `Idle`).** `Login`, `doPayment`, and `check_status` are action verbs — they describe work being done, not a condition the object rests in."
 
   - id: 7
     difficulty: intermediate
@@ -157,7 +157,7 @@ questions:
         Physical placement of software on hardware belongs in a deployment diagram. State machines do not show server nodes or deployment topology.
       3: |
         Swim-lane workflows are typically activity diagrams. State machines are better when the current state changes how one object responds.
-    explanation: "**A state machine diagram is correct when you need to model how a single object's behavior changes based on its current condition.** State machine diagrams model the **lifecycle of a single object** — how it responds differently to events based on its current state. Sequence diagrams show **interactions between multiple objects**. Activity diagrams model **workflows/processes**. Deployment diagrams show **physical infrastructure**."
+    explanation: "**Use a state machine to model how one object's behavior changes with its current condition.** Sequence diagrams show interactions among multiple objects; activity diagrams show workflows; deployment diagrams show physical infrastructure."
 
   - id: 8
     difficulty: basic
@@ -179,7 +179,7 @@ questions:
         `deployUI()` belongs to the Idle-to-CombatMode transition. The question asks about the transition from CombatMode back to Idle.
       3: |
         `manualOverride()` labels a different transition from EmergencyPower to the final state. It is not on the CombatMode-to-Idle arrow.
-    explanation: "**The effect for CombatMode → Idle is `retractWeapons()` — the action after the `/` in the transition label `threatNeutralized / retractWeapons()`.** The transition from CombatMode to Idle is labeled `threatNeutralized / retractWeapons()`. Using the syntax `Event [Guard] / Effect`, the effect is **`retractWeapons()`** — the action executed as the transition occurs. `threatNeutralized` is the event (trigger)."
+    explanation: "**The effect is `retractWeapons()` — the action after the `/` in `threatNeutralized / retractWeapons()`.** In `Event [Guard] / Effect`, `threatNeutralized` is the event (trigger) and the effect runs as the transition occurs."
 
   - id: 9
     difficulty: intermediate
@@ -201,7 +201,7 @@ questions:
         There are four states along the delivered path only if `Cancelled` is ignored. `Cancelled` is also a regular state.
       3: |
         The initial pseudostate and final state markers are not regular states. Counting them inflates the answer.
-    explanation: "**There are 5 regular states — Created, Paid, Shipped, Delivered, and Cancelled — because the initial pseudostate and final states do not count as regular states.** There are **5 regular states**: Created, Paid, Shipped, Delivered, and Cancelled. The solid black circle (initial pseudostate) and the bullseye symbols (final states) are **pseudostates**, not regular states."
+    explanation: "**There are 5 regular states: Created, Paid, Shipped, Delivered, and Cancelled.** The solid black circle and the bullseyes are pseudostates, not regular states, so they are excluded from the count."
 
   - id: 10
     difficulty: intermediate
@@ -223,7 +223,7 @@ questions:
         `CombatMode` to `EmergencyPower` also has an event and an effect, but no bracketed guard condition.
       3: |
         The initial-to-Idle transition has only the event label `powerOn()` in this diagram. It has no guard and no effect.
-    explanation: "**The Idle → CombatMode transition is the only one with all three parts: event (`threatDetected`), guard (`[sysCheckOK]`), and effect (`/ deployUI()`).** The transition from **Idle to CombatMode** is labeled `threatDetected [sysCheckOK] / deployUI()`. It has all three parts: event (`threatDetected`), guard (`[sysCheckOK]`), and effect (`/ deployUI()`). The other transitions have an event and effect but no guard condition."
+    explanation: "**Idle → CombatMode (`threatDetected [sysCheckOK] / deployUI()`) is the only transition with all three parts — event, guard, and effect.** The others carry an event and an effect but no bracketed guard."
 
   - id: 11
     difficulty: advanced
@@ -248,7 +248,7 @@ questions:
         The object does not wait in the initial pseudostate. It immediately follows the initial transition into a regular state.
       4: |
         UML regions have their own entry point. That is why the rule is stated per state machine or per region.
-    explanation: "**The initial pseudostate marks the entry point, must have exactly one trigger-free outgoing transition, and is not a regular state the object can remain in.** The initial pseudostate (<span class=\"uml-sym\" data-diagram=\"state\" data-sym=\"[*]\"></span>) marks the **entry point** of the state machine. It must have **exactly one** outgoing transition, and that transition should have **no event trigger** (it fires automatically). The initial pseudostate is NOT a regular state — the object passes through it immediately."
+    explanation: "**The initial pseudostate (<span class=\"uml-sym\" data-diagram=\"state\" data-sym=\"[*]\"></span>) marks the entry point and has exactly one trigger-free outgoing transition.** It is not a regular state — the object passes straight through it into the first real state, one such entry point per region."
 
   - id: 12
     difficulty: advanced
@@ -270,7 +270,7 @@ questions:
         `entry/` runs after the transition enters the state, not before the transition. A transition effect runs while that specific transition is being taken.
       3: |
         Both are optional modeling elements. The distinction is when and how broadly they run, not whether one is mandatory.
-    explanation: "**An entry/ action runs on every incoming transition; a transition effect runs only for that specific transition.** An **entry/** action runs every time the state is entered, regardless of which incoming transition was taken. A **transition effect** (`/ action`) runs only when that specific transition fires. If a state has three incoming transitions, the entry/ action runs for all three, but each transition's effect only runs for its own transition."
+    explanation: "**An `entry/` action runs on every entry into the state; a transition effect runs only for its own transition.** If a state has three incoming transitions, `entry/` fires for all three, while each transition's effect fires for just that one arrow."
 
   - id: 13
     difficulty: intermediate
@@ -292,4 +292,4 @@ questions:
         State machines can have final states when the lifecycle has a meaningful end, such as an order being closed or canceled.
       3: |
         The number of states does not decide whether a final state is needed. The lifecycle semantics do.
-    explanation: "**A final state is only needed if the object's lifecycle can actually end — servers and controllers that run indefinitely do not need one.** A state machine **always** needs an initial pseudostate (the starting point), but a final state is **only needed if the object's lifecycle can end**. Many real-world objects (servers, embedded controllers) run indefinitely and never reach a final state. Objects like orders or transactions do have a clear end-of-life."
+    explanation: "**A final state is needed only if the object's lifecycle can actually end.** An initial pseudostate is always required, but indefinitely-running objects (servers, controllers) have none, while orders or transactions — which terminate — do."

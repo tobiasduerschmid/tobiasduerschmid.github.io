@@ -6,7 +6,7 @@ cards:
     difficulty: basic
     question: "State the modern definition of the Single Responsibility Principle (SRP)."
     answer: "A module should be responsible to **one, and only one, actor** — a single stakeholder or group that requests changes to it."
-    explanation: "Martin's refined framing replaces the older 'one reason to change' slogan. The word *actor* matters: it names a real person or team whose requests drive edits. Multiple actors sharing one module = conflicting edits + accidental regressions."
+    explanation: "This refined framing replaces the older 'one reason to change' slogan. The word *actor* matters: it names a real person or team whose requests drive edits. Multiple actors sharing one module = conflicting edits + accidental regressions."
 
   - id: 2
     difficulty: intermediate

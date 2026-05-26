@@ -20,7 +20,7 @@ questions:
         A five-iteration loop may or may not be a performance issue. The more general design signal is that the adapter is simulating behavior rather than just translating an interface.
       3: |
         LSP would be a concern if clients relying on the `Duck` contract were broken. The prompt points instead to adapter thickness: logic accumulating inside the wrapper.
-    explanation: "**The loop in `fly()` is behavioral adaptation beyond simple interface translation, which is a warning sign that the adapter is taking on too much responsibility.** Simple interface translation (renaming `quack()` to `gobble()`) is low-risk. But the `fly()` mapping introduces **behavioral adaptation** — the adapter contains logic (a loop) that goes beyond translating signatures. As adapters grow 'thicker' with more logic, they evolve from interface translators into separate service components. This is a warning sign that the adapter may be taking on too much responsibility."
+    explanation: "Renaming `quack()` to `gobble()` is low-risk interface translation. The `fly()` mapping adds *behavioral adaptation* — logic (a loop) beyond translating signatures. As adapters grow 'thicker' with logic, they drift from interface translators into separate service components, a sign the adapter may be taking on too much responsibility."
 
   - id: 2
     difficulty: intermediate
@@ -40,7 +40,7 @@ questions:
         A facade simplifies a complicated subsystem for clients. It is not the direct answer to two team-owned interfaces that can simply be aligned.
       3: |
         A mediator coordinates peer objects with interaction rules. A service and database layer with mismatched interfaces is not automatically a many-to-many coordination problem.
-    explanation: "**Using an Adapter when you control both interfaces is unnecessary — simply refactor one to match the other directly.** The Adapter pattern is designed for **after-the-fact** interface mismatches — typically with third-party or legacy code you **cannot modify**. If you control both interfaces, there is no mismatch to adapt around. Simply **refactor** one interface to match the other. Adding an Adapter here would introduce unnecessary indirection. If you anticipate the interfaces diverging in the future (e.g., the database layer will be replaced), **Bridge** is the upfront solution."
+    explanation: "Adapter is for *after-the-fact* mismatches, typically with third-party or legacy code you cannot modify. When you own both interfaces there is no fixed mismatch to adapt around — refactor one to match the other and skip the indirection. If you anticipate the interfaces diverging later (e.g., the database layer will be swapped), Bridge is the upfront solution."
 
   - id: 3
     difficulty: intermediate
@@ -60,7 +60,7 @@ questions:
         Because `add()` is declared on the abstract component, the call type-checks. The failure is deferred to runtime in the transparent version.
       3: |
         Some implementations could choose to ignore unsupported operations, but that hides an invalid call. The quiz's transparent composite design expects the leaf to reject it explicitly.
-    explanation: "**This is the Transparent Composite trade-off — a runtime exception is thrown because leaves inherit child-management methods that are meaningless for them.** This is the **Transparent Composite** trade-off. By putting `add()`/`remove()` on the abstract `Component`, clients get a uniform interface (any component can be treated the same), but **leaves inherit methods that are semantically meaningless**. The leaf must handle this — typically by throwing `UnsupportedOperationException`. The **Safe Composite** alternative puts these methods only on `Composite`, preventing the call at compile time but requiring clients to downcast."
+    explanation: "Putting `add()`/`remove()` on the abstract `Component` gives clients a uniform interface, but leaves inherit methods that are semantically meaningless and must handle them — typically by throwing `UnsupportedOperationException` at runtime. The *Safe Composite* alternative declares those methods only on `Composite`, catching the misuse at compile time but forcing clients to downcast."
 
   - id: 4
     difficulty: intermediate
@@ -80,7 +80,7 @@ questions:
         Adapter, Facade, and Decorator are all structural patterns in the GoF classification. The difference is their design intent.
       3: |
         The wrappers may look similar in code, but they answer different questions. Choosing the wrong intent can preserve the wrong dependency or put behavior in the wrong place.
-    explanation: "**The key distinction is intent: Adapter converts an interface, Facade simplifies a set of interfaces, and Decorator adds behavior through the same interface.** The distinction is **intent**: **Adapter** changes *what* the interface looks like (converts incompatible to compatible). **Facade** changes *how much* of the interface you see (simplifies a complex subsystem). **Decorator** changes *what the object does* through the same interface (adds behavior). Understanding intent is what separates correct pattern application from cargo-cult pattern usage."
+    explanation: "The distinction is *intent*. Adapter changes *what* the interface looks like (converts incompatible to compatible); Facade changes *how much* of the interface you see (simplifies a complex subsystem); Decorator changes *what the object does* through the same interface (adds behavior). Reading the intent is what separates correct pattern application from cargo-cult usage."
 
   - id: 5
     difficulty: advanced
@@ -100,7 +100,7 @@ questions:
         Adapters help with incompatible interfaces. They would add wrappers around subsystem calls without addressing the facade's growing responsibility.
       3: |
         Singleton controls instance count. It does not make a broad interface more cohesive or easier to maintain.
-    explanation: "**A growing Facade should be split into multiple focused Facades, each responsible for one coherent aspect of the subsystem.** A single Facade wrapping a large subsystem risks becoming a **god class**. The solution is to create **multiple focused Facades**, each responsible for a different aspect of the subsystem. `PlaybackFacade` handles movie/music playback, `SetupFacade` handles karaoke and game setup, and `CalibrationFacade` handles system tuning. Each Facade remains cohesive and manageable."
+    explanation: "A single Facade over a large subsystem risks becoming a god class. Splitting it into focused Facades — `PlaybackFacade` for movie/music playback, `SetupFacade` for karaoke and game setup, `CalibrationFacade` for tuning — keeps each one cohesive and manageable."
 
   - id: 6
     difficulty: advanced
@@ -120,4 +120,4 @@ questions:
         Facade and Mediator come from different pattern categories, but category labels do not explain the dependency consequence. The key is optional simplification layer versus required coordination channel.
       3: |
         Both can reduce direct client coupling, but they do so differently. A subsystem that does not know its facade can be used without it; mediator colleagues are designed to communicate through the mediator.
-    explanation: "**One-directional communication means the subsystem can be used and tested independently of the Facade, while Mediator colleagues cannot operate without the mediator.** Because the subsystem **does not know** about the Facade, it remains fully independent — usable and testable without the Facade present. In contrast, Mediator colleagues **depend on the Mediator interface** to communicate — they cannot function independently. This is why Facade is a *convenience layer* (optional), while Mediator is a *coordination layer* (required for the objects to interact)."
+    explanation: "Because the subsystem does not know about the Facade, it stays usable and testable without the Facade present. Mediator colleagues, by contrast, depend on the Mediator interface to communicate and cannot function independently. That is why Facade is a *convenience layer* (optional) while Mediator is a *coordination layer* (required for the objects to interact)."

@@ -12,7 +12,7 @@ cards:
     difficulty: intermediate
     question: "Why is GenAI's productivity boost (21–50%) smaller than the **compiler revolution** (10x)?"
     answer: "Compilers automated **accidental complexity** — repetitive mechanical translation from high-level intent to machine instructions. GenAI helps with parts of accidental complexity too but does not yet automate **essential complexity** — understanding requirements, choosing data structures, navigating trade-offs, integrating with real systems. Most of an engineer's work still lives in essential complexity."
-    explanation: "Brooks's accidental-vs-essential framing (No Silver Bullet, 1986) predicts exactly this ceiling: tools that automate mechanical work give big one-time gains; tools that touch judgment-heavy work give smaller, slower gains."
+    explanation: "The accidental-vs-essential distinction predicts exactly this ceiling: tools that automate mechanical work give big one-time gains; tools that touch judgment-heavy work give smaller, slower gains."
 
   - id: 3
     difficulty: basic
@@ -24,12 +24,12 @@ cards:
     difficulty: intermediate
     question: "What is the **illusion of AI productivity**, and how do you avoid being fooled by it?"
     answer: "Generation speed *feels* like productivity, but if the output is subtly wrong, debugging can dwarf the time saved. Avoid the illusion by measuring productivity *end-to-end* (features shipped per week with acceptable defect and security rates), not by characters generated per minute."
-    explanation: "The SEBook's vivid '5 minutes to type, then a day to debug' is illustrative — not a measured ratio — but the asymmetry is real. METR 2025 found developers using AI on real OSS work felt 24% faster while measured throughput was ~19% slower. Generation is visible and fast; debugging is invisible and slow."
+    explanation: "A controlled study of experienced developers on real open-source work found they *felt* roughly 24% faster with AI while measured throughput was about 19% slower. Generation is visible and fast; debugging is invisible and slow."
 
   - id: 5
     difficulty: advanced
     question: "Why do AI-generated codebases tend to have higher **security vulnerability** rates?"
-    answer: "Pearce et al. (2022) found ~40% of Copilot suggestions in *security-sensitive CWE-specific scenarios* contained vulnerabilities. The AI pattern-matches on training data that mixes secure and insecure examples. Compounding the bug rate, developers with AI assistants often write less secure code while being *more confident* it is secure — a calibration failure."
+    answer: "Roughly 40% of Copilot suggestions in *security-sensitive CWE-specific scenarios* have been found to contain vulnerabilities. The AI pattern-matches on training data that mixes secure and insecure examples. Compounding the bug rate, developers with AI assistants often write less secure code while being *more confident* it is secure — a calibration failure."
     explanation: "The 40% figure is scoped to security-sensitive prompts, not all generated code, but plausible-looking vulnerable patterns appear well beyond that benchmark. Mitigations: explicit security review of every AI block, static-analysis in the loop, extra scrutiny on SQL, deserialization, auth, and never treating AI confidence as evidence of safety."
 
   - id: 6
@@ -78,7 +78,7 @@ cards:
     difficulty: advanced
     question: "Why do AI-augmented codebases tend to show rising **code complexity** and **static-analysis warnings**?"
     answer: "AI tends to generate *additive* solutions — adding new code that solves the local problem rather than refactoring toward the existing structure or removing duplication. Without a deliberate refactor step, complexity compounds with each accepted suggestion. The fix is process-level: pair AI generation with refactor passes, enforce linters and complexity limits in CI, and reject AI-suggested duplication."
-    explanation: "GitClear's 2024 analysis reported ~41.6% rising complexity and ~30.3% more warnings in AI-augmented codebases — treat the exact numbers as one data point, not consensus, but the *direction* matches what review-heavy teams report. The underlying issue is workflow, not tool quality: teams that don't pair AI generation with refactoring accumulate debt faster than human-written code would."
+    explanation: "Industry analysis has reported roughly 42% rising complexity and 30% more warnings in AI-augmented codebases — treat the exact numbers as one data point, not consensus, but the *direction* matches what review-heavy teams report. The underlying issue is workflow, not tool quality: teams that don't pair AI generation with refactoring accumulate debt faster than human-written code would."
 
   - id: 14
     difficulty: intermediate

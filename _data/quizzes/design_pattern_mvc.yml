@@ -20,7 +20,7 @@ questions:
         Controllers can coordinate some interaction, but MVC's controller role is not the same as a Mediator owning all colleague coordination. MVC is usually taught as Observer plus Strategy plus Composite.
       3: |
         Commands may appear in some UI architectures, but this is not the classic compound structure of MVC. MVC's central split is model state, view presentation, and controller input handling.
-    explanation: "**MVC combines Observer (model→view sync), Strategy (swappable controller), and Composite (view as a component tree) to achieve clean three-way separation.** MVC combines: **Observer** — the model acts as Subject and views register as Observers, enabling automatic synchronization. **Strategy** — the view delegates input handling to a controller, which can be swapped for different behaviors. **Composite** — the view is often a tree of nested UI components (windows > panels > buttons). The **emergent property** is clean three-way separation that no individual pattern achieves alone."
+    explanation: "MVC combines **Observer** (the model is the Subject; views register and are auto-synchronized), **Strategy** (the view delegates input handling to a swappable controller), and **Composite** (the view is often a tree of nested UI components — windows > panels > buttons). The emergent property is a clean three-way separation that no individual pattern achieves alone."
 
   - id: 2
     difficulty: intermediate
@@ -40,7 +40,7 @@ questions:
         Separating the model from the UI helps with responsibilities, but it does not automatically prevent the model from accumulating too much domain behavior. A model can still need its own internal design.
       3: |
         A view may become easier to replace, but MVC's deeper value is that the domain model survives view changes. The architecture protects the core logic from UI churn.
-    explanation: "**The Model's independence is MVC's most powerful property because it allows the core domain logic to be reused, tested, and ported without modification.** The Model's independence is MVC's most powerful property. Because the Model knows nothing about Views or Controllers, the **core domain logic** can be: (1) **reused** across different applications, (2) **tested** without any UI framework, and (3) **ported** to a completely different platform by only rewriting the View and Controller. This is why MVC says 'the Model is blind to how it is displayed.'"
+    explanation: "Because the Model knows nothing about Views or Controllers, the core domain logic can be reused across applications, tested without any UI framework, and ported to a different platform by rewriting only the View and Controller. This is why MVC says the Model is blind to how it is displayed."
 
   - id: 3
     difficulty: intermediate
@@ -60,7 +60,7 @@ questions:
         Handling user input alone does not require full MVC. MVC is more justified when domain logic, presentation, and interaction are likely to evolve independently.
       3: |
         State is useful when behavior changes with an object's internal state. A simple CRUD form may need neither full MVC nor State; the issue is proportional design.
-    explanation: "**This criticism is valid — MVC's three-way division adds complexity that is not justified for a simple CRUD form with a single view.** The GoF argue that separating model, view, and controller for menus and other simple UI elements increases complexity without much flexibility gain. MVC is justified when the model is complex, has multiple views, or the UI changes frequently. For a simple CRUD form with one view, a simpler **layered architecture** or **Facade** may suffice."
+    explanation: "Separating model, view, and controller for simple UI elements increases complexity without much flexibility gain. MVC earns its keep when the model is complex, has multiple views, or the UI changes frequently; for a single-view CRUD form a simpler layered architecture or Facade may suffice."
 
   - id: 4
     difficulty: intermediate
@@ -100,7 +100,7 @@ questions:
         UI trees are common in modern frameworks, but the question asks for the core MVC principle. A component tree helps structure views; it is not the whole architectural separation.
       3: |
         Modern reactive systems often replace explicit Subject and Observer classes with hooks, signals, or data binding. The mechanism changes while the separation of state, UI, and events remains useful.
-    explanation: "**Modern frameworks still preserve MVC's core principle of separating domain state from presentation from interaction handling, even as the mechanisms evolve.** React reconciles a virtual DOM whenever component state changes; Angular and SolidJS use signals; Vue 3 uses reactive proxies. The mechanism changes (framework-managed reactivity replaces explicit Observer), but the architectural principle — separation of what the system *knows* (Model) from how it *looks* (View) from how the user *interacts* with it (Controller) — endures."
+    explanation: "React reconciles a virtual DOM on state change; Angular and SolidJS use signals; Vue 3 uses reactive proxies. The mechanism changes — framework-managed reactivity replaces explicit Observer — but the architectural principle endures: separate what the system *knows* (Model) from how it *looks* (View) from how the user *interacts* with it (Controller)."
 
   - id: 6
     difficulty: intermediate
@@ -126,7 +126,7 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      A team builds a server-side web app in Ruby on Rails. The Controller receives an HTTP request, updates the Model, then selects a template and renders HTML. The View never subscribes to model change events. Which statement best characterizes this architecture relative to Reenskaug's classic Smalltalk MVC?
+      A team builds a server-side web app in Ruby on Rails. The Controller receives an HTTP request, updates the Model, then selects a template and renders HTML. The View never subscribes to model change events. Which statement best characterizes this architecture relative to classic Smalltalk MVC?
     options:
       - "It is identical to classic MVC — the request-response cycle is just an implementation detail"
       - "It is a server-side adaptation sometimes called 'Model 2'; the View does not observe the Model, which is closer to Model-View-Adapter than to classic MVC"
@@ -140,7 +140,7 @@ questions:
         Rails uses MVC terminology and very much has a Controller layer. MVT is Django's renaming, where Django's "View" plays the controller role and the "Template" plays the view role.
       3: |
         Document-View merges *view and controller* into one component while keeping the model separate. The Rails arrangement keeps view and controller distinct but removes the Observer link between model and view.
-    explanation: "**Server-side web MVC removes the Observer link between Model and View; the Controller hands the View its data per request. This was originally called 'Model 2' and is closer to Model-View-Adapter than to classic MVC.** In Reenskaug's Smalltalk MVC the View *observes* the Model directly. In the request-response cycle of a web framework there is no persistent View to subscribe — the page is regenerated each request — so the Controller fetches data from the Model and passes it to the chosen View template. Martin Fowler has argued this is closer to **Model-View-Adapter** than classic MVC."
+    explanation: "In classic Smalltalk MVC the View *observes* the Model directly. A web request-response cycle has no persistent View to subscribe — the page is regenerated each request — so the Controller fetches data from the Model and hands it to the chosen View template. This arrangement was originally called 'Model 2', and Martin Fowler has argued it is closer to Model-View-Adapter than to classic MVC."
 
   - id: 8
     difficulty: advanced
@@ -160,4 +160,4 @@ questions:
         A swappable controller is the Strategy role in classic MVC. MVVM does not introduce that as its central new idea; data binding between View and ViewModel is what differentiates it from MVP.
       3: |
         Composite UI trees show up in both MVP and MVVM (and classic MVC). It is not the load-bearing distinction between Presenter and ViewModel.
-    explanation: "**The ViewModel exposes view-shaped data and commands through data binding, so the View updates automatically without an explicit Observer subscription written by the developer.** In MVP's Passive View, the Presenter explicitly pushes data into View setters and the View forwards events back to the Presenter — a wiring the developer writes by hand. MVVM, devised at Microsoft for WPF and now in SwiftUI, Android Jetpack, Knockout, and Vue, exposes view-shaped state and commands on the ViewModel through **data binding**. The framework propagates changes for you. Microsoft describes MVVM as a specialisation of Fowler's earlier *Presentation Model*."
+    explanation: "In MVP's Passive View the Presenter pushes data into View setters by hand and the View forwards events back. MVVM instead exposes view-shaped state and commands on the ViewModel through **data binding**, so the framework propagates changes for you with no Observer subscription written by the developer. It is described as a specialisation of Fowler's earlier *Presentation Model*."

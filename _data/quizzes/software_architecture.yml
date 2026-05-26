@@ -4,7 +4,7 @@ active: true
 questions:
   - id: 1
     difficulty: basic
-    question: "Taylor et al. champion a paradigm that defines software architecture as 'the set of principal design decisions governing a system' — emphasizing rationale rather than boxes and lines. Which paradigm is this?"
+    question: "One influential paradigm defines software architecture as 'the set of principal design decisions governing a system' — emphasizing rationale rather than boxes and lines. Which paradigm is this?"
     options:
       - "The Structural Paradigm"
       - "The Decision-Based Paradigm"
@@ -13,15 +13,12 @@ questions:
     correct_index: 1
     option_feedback:
       0: |
-        The structural view emphasizes components and connectors. The question asks for the view that
-        centers architecture on consequential decisions.
+        The structural paradigm defines architecture as elements, relations, and their properties — boxes and lines. That is the view the decision-based paradigm was proposed as an alternative to.
       2: |
-        Allocation concerns map software to hardware, teams, or files. That is narrower than defining
-        architecture as principal decisions.
+        Allocation is one structure within the structural paradigm (software mapped to hardware, teams, or files), not a paradigm that defines architecture as principal decisions.
       3: |
-        The module view is one architectural view, not the paradigm that defines architecture as
-        decisions and rationale.
-    explanation: "**The decision-based paradigm defines architecture as the set of principal design decisions, not just structural elements — championed by Taylor et al. as an alternative to the box-and-line view.** The **decision-based paradigm**, championed by Taylor et al., defines architecture as the sum of **principal design decisions** rather than just boxes and lines."
+        The module view is one structure used to document architecture, not a competing definition of what architecture *is*.
+    explanation: "The **decision-based paradigm** defines architecture as the set of **principal design decisions** governing a system — centering rationale and trade-offs rather than the boxes and lines of the structural view."
 
   - id: 2
     difficulty: advanced
@@ -42,7 +39,7 @@ questions:
       3: |
         Structure, behavior, and constraints are plausible architectural concerns, but the Perry and
         Wolf formula is elements, form, and rationale.
-    explanation: "**Perry and Wolf's 1992 formula defines architecture as Elements + Form + Rationale — not components/connectors (Bass) or modules/layers alone.** Perry and Wolf's original formula (1992) defined architecture as consisting of **Elements**, **Form**, and **Rationale**."
+    explanation: "Perry and Wolf's 1992 formula defines architecture as **Elements**, **Form**, and **Rationale**. Including rationale is what makes it distinct from later purely structural formulations like Bass's elements-and-relations."
 
   - id: 3
     difficulty: intermediate
@@ -63,7 +60,7 @@ questions:
       3: |
         The difference is not structural versus decision-based. Both are about how implementation
         choices relate to architectural intent.
-    explanation: "**Drift adds decisions not in the plan without breaking it, while erosion explicitly violates the intended architectural rules — erosion is more damaging because it creates direct contradictions.** **Drift** adds decisions that aren't in the plan but don't break it; **erosion** explicitly violates the rules and constraints of the **prescriptive architecture**."
+    explanation: "**Drift** adds decisions not in the prescriptive plan but that do not break its rules; **erosion** explicitly violates those rules and constraints. Erosion is the more damaging because the realized system now directly contradicts the architecture meant to preserve its qualities."
 
   - id: 4
     difficulty: basic
@@ -84,7 +81,7 @@ questions:
       3: |
         Conceptual architecture is an abstraction used for reasoning. Descriptive architecture is the
         realized system.
-    explanation: "**Descriptive architecture is the 'as-realized' structure found in the actual source code and artifacts — it describes what was built, not what was intended.** **Descriptive architecture** is the 'as-realized' structure found in the actual source code and artifacts."
+    explanation: "**Descriptive architecture** is the 'as-realized' structure embodied in the actual source code and build artifacts — what was built, as opposed to the prescriptive plan for what was intended."
 
   - id: 5
     difficulty: intermediate

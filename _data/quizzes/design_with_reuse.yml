@@ -22,7 +22,7 @@ questions:
         surfaced and fixed than fresh code.
       2: |
         Inheriting fixes is real — when you update, you get security and stability work for free.
-    explanation: "McIlroy's *vision* of a catalog of perfectly compatible components is exactly that — a vision. Garlan, Allen, and Ockerbloom's 1995 paper *Architectural Mismatch* documents how real modules make undocumented assumptions about threading, ownership, lifecycle, and error handling that force glue code at every seam."
+    explanation: "The *vision* of a catalog of perfectly compatible, snap-together components is exactly that — a vision. Garlan's *Architectural Mismatch* documents how real modules make undocumented assumptions about threading, ownership, lifecycle, and error handling that force glue code at every seam."
 
   - id: 2
     difficulty: intermediate
@@ -228,7 +228,7 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      In Petre's expert-design study, three teams designed the same system: Team A produced 1 detailed design, Team B produced 3 options, Team C produced 5 options. Expert reviewers ranked Team C's chosen design as the best. What is the *correct* takeaway?
+      In a classic expert-design study, three teams designed the same system: Team A produced 1 detailed design, Team B produced 3 options, Team C produced 5 options. Expert reviewers ranked Team C's chosen design as the best. What is the *correct* takeaway?
     options:
       - "Producing more designs always produces a better outcome — the right number is unbounded"
       - "Spending time generating alternatives broadens the search space, which on average produces better final designs — *especially* for less experienced designers"
@@ -244,7 +244,7 @@ questions:
         Detail is fine once alternatives have been generated.
       3: |
         The study controlled for time. The variable was the number of alternatives considered.
-    explanation: "Generate-then-evaluate. The purpose of generation is to broaden up; the purpose of evaluation is to narrow down. *Tofan et al. (2013)* extended this: just *prompting* less-experienced designers to consider alternatives produced measurably better designs. The intuition: first ideas are typically a local maximum, and exploring alternatives helps you escape it."
+    explanation: "Generate-then-evaluate. The purpose of generation is to broaden up; the purpose of evaluation is to narrow down. Just *prompting* less-experienced designers to consider alternatives produces measurably better designs. The intuition: first ideas are typically a local maximum, and exploring alternatives helps you escape it."
 
   - id: 11
     difficulty: advanced

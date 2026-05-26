@@ -20,7 +20,7 @@ questions:
         Agile is faster, not slower — that's part of what frustrates the safety-critical fit, since there's no time for the rigor formal verification needs. Speed is the wrong dimension to evaluate the mismatch on.
       3: |
         XP has the same fundamental mismatch with safety-critical space hardware — it explicitly excludes the spacecraft-software domain. Recommending XP just substitutes one Agile framework for another with the same structural unfit.
-    explanation: "**Agile is a powerful default for evolving-requirements / redeployable-software contexts, but it is not universally superior. Safety-critical, single-shot, non-redeployable systems (spacecraft, certified medical implants, aircraft control systems) need processes whose assumptions match: heavy up-front formal specification, rigorous verification, V-model or similar.** The honest engineering response is to match process to context, not to evangelize one process across all contexts."
+    explanation: "**Agile is a strong default for evolving-requirements, redeployable software, but it is not universally superior.** Safety-critical, single-shot, non-redeployable systems (spacecraft, certified medical implants, aircraft control) need processes whose assumptions match: heavy up-front specification, rigorous verification, V-model or similar. Match process to context rather than evangelizing one process everywhere."
 
   - id: 2
     difficulty: intermediate
@@ -40,7 +40,7 @@ questions:
         Agile typically does *less* up-front planning than Waterfall, not more — planning is iterative and time-boxed. Framing it as "more upfront planning, framed differently" inverts the actual practice.
       3: |
         End-of-project documentation is exactly the artifact Agile tries to de-emphasize in favor of working software as the primary measure. The framing here describes Waterfall's deliverable model, not Agile's.
-    explanation: "**The Manifesto's 'A over B' formulation values *both* sides but prioritizes A when they conflict. Working software, individual interactions, customer collaboration, and adaptability are the *first-resort* priorities; documentation, processes, contracts, and plans serve those priorities, they don't replace them.** Misreading 'over' as 'instead of' produces undisciplined teams that mistake disorganization for agility."
+    explanation: "**The Manifesto's 'A over B' formulation values *both* sides but prioritizes A when they conflict.** Working software, individual interactions, customer collaboration, and adaptability are the first-resort priorities; documentation, processes, contracts, and plans serve those priorities rather than replacing them."
 
   - id: 3
     difficulty: advanced
@@ -125,7 +125,7 @@ questions:
         Customer satisfaction is about delivering value to the end user. Leadership-as-not-the-customer is true but tangential — the violation is specifically about excluding developers from decisions about their own work.
       3: |
         Technical excellence is about ongoing quality investment. Leadership's stance on quality may or may not be involved; the specific pattern in the question is about decision-making authority.
-    explanation: "**Self-organizing teams is one of Agile's twelve principles: developers decide how to best organize their work, because they have the best context about trade-offs, dependencies, and risks. Treating them as 'coding monkeys' bypasses that judgment, demoralizes the team, and produces worse decisions.** Healthy Agile organizations push *what* decisions up (priorities, strategy) and *how* decisions down (implementation, tooling, organization).** "
+    explanation: "**Self-organizing teams is one of Agile's twelve principles: developers decide how to best organize their work, because they have the best context about trade-offs, dependencies, and risks.** Healthy Agile organizations push *what* decisions up (priorities, strategy) and *how* decisions down (implementation, tooling, organization)."
 
   - id: 7
     difficulty: intermediate
@@ -142,7 +142,7 @@ questions:
       0: |
         They are distinct frameworks with different emphases — though all rooted in Agile values. Treating them as identical loses the ability to combine them strategically (e.g., Scrum for workflow + XP for engineering practice).
       2: |
-        Scrum scales somewhat better than XP, but it's also widely used in small teams. Lean originated in manufacturing but has been thoroughly adapted to software (Lean Software Development by the Poppendiecks, 2003). The framing is too coarse.
+        Scrum scales somewhat better than XP, but it's also widely used in small teams. Lean originated in manufacturing but has been thoroughly adapted to software (Lean Software Development). The framing is too coarse.
       3: |
         The roles are reversed: XP focuses on engineering practices; Scrum focuses on project management / workflow. Lean is broader than 'just metrics' — it's a philosophy of waste elimination.
     explanation: "**The three frameworks emphasize different aspects: Scrum = workflow and roles; XP = engineering practices; Lean = waste elimination.** They are complementary, not alternatives — many teams use Scrum + XP (Scrum's ceremonies + XP's engineering practices) or Scrum + Lean (Scrum's structure + Lean's continuous improvement). Picking based on emphasis (what's the team's weakest area?) often works better than picking one in isolation."

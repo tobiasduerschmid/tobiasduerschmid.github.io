@@ -66,7 +66,7 @@ cards:
     difficulty: intermediate
     question: "You need to perform an automated find-and-replace operation on a stream of text to change the word 'apple' to 'orange'."
     answer: "`sed 's/apple/orange/g'`"
-    explanation: "The `sed` (stream editor) `s`: Stands for 'substitute'. `/`: The delimiter that separates the search and replacement terms. `apple`: The string you want to find. `orange`: The string you want to replace it with. `g`: Stands for 'global'. This tells sed to replace every instance of 'apple' on a line, rather than just the first one it finds."
+    explanation: "In `sed`'s `s/find/replace/` command, `s` means substitute and the `/` characters delimit the search and replacement terms. The trailing `g` (global) replaces every match on a line rather than just the first."
   - id: 15
     difficulty: intermediate
     question: "You want to store today's date (formatted as YYYY-MM-DD) in a variable called `TODAY` so you can use it to name a backup file dynamically."

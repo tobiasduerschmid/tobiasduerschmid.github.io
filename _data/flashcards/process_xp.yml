@@ -30,7 +30,7 @@ cards:
     difficulty: basic
     question: "Define the **Driver** and **Navigator** roles in pair programming."
     answer: "**Driver:** hands on the keyboard, focusing on local implementation — typing, syntax, immediate logic. **Navigator:** watching for bugs and thinking about high-level architecture, edge cases, and design implications. The roles rotate frequently (every 20–30 minutes is typical), keeping both developers engaged and bringing both perspectives to bear."
-    explanation: "Empirical studies (Williams; Lui & Chan; Cockburn & Williams) find pairs take *modestly more* total developer-time than two solo developers but produce *fewer defects*, with the gap widening on harder tasks. The 2x-cost framing only works if defect rate, design quality, and knowledge spread are ignored — and those are what decide long-term velocity."
+    explanation: "Empirical studies find pairs take *modestly more* total developer-time than two solo developers but produce *fewer defects*, with the gap widening on harder tasks. The 2x-cost framing only works if defect rate, design quality, and knowledge spread are ignored — and those are what decide long-term velocity."
 
   - id: 6
     difficulty: basic

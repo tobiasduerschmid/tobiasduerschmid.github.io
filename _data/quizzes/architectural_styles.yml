@@ -26,7 +26,7 @@ questions:
     difficulty: basic
     type: single
     question: |
-      Two engineers argue: one calls *Layered Architecture* an architectural **pattern**; the other calls it an architectural **style**. Per Taylor et al., what is the precise distinction?
+      Two engineers argue: one calls *Layered Architecture* an architectural **pattern**; the other calls it an architectural **style**. What is the precise distinction?
     options:
       - "Patterns and styles are interchangeable terms — both engineers are right."
       - "A **style** is an abstract structural framework (a vocabulary of element types, connectors, and topological constraints) independent of any specific design situation; it is *strategic*. A **pattern** is a specific solution to a specific recurring problem in a context (a context-problem-solution triple); it is *tactical*."
@@ -142,7 +142,7 @@ questions:
       0: |
         Overlay applies multiple styles to the *same* components concurrently (like REST). This case is different: one style outside, a different style inside — that's hierarchical composition.
       2: |
-        Internal sub-style composition is a standard, well-documented combination pattern (Taylor et al.). Calling it incoherent would invalidate compilers, web servers, and most production systems.
+        Internal sub-style composition is a standard, well-documented combination pattern. Calling it incoherent would invalidate compilers, web servers, and most production systems.
       3: |
         REST is a specific named overlay composite; this scenario is not REST. The composition pattern (hierarchy) is named separately from any specific instance.
     explanation: "**Hierarchical composition: one style governs the macro-structure, a different style governs each component's internal structure.** This is how a compiler's pipe-and-filter pipeline can have a layered lexer inside it, or how a microservice (the macro style) is internally layered. Each level is internally consistent with its own style, and the two compose without conflict because they apply at different scales."

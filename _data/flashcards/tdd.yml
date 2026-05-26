@@ -12,13 +12,13 @@ cards:
     difficulty: basic
     question: "Name the three phases of the **Red-Green-Refactor** cycle and the one rule for each."
     answer: "**Red** — write a tiny failing test (specifies intent). **Green** — write the simplest code that passes (shortcuts OK). **Refactor** — remove duplication and clarify intent while staying green."
-    explanation: "Each full cycle should take *minutes, not hours*. If you can't get back to green quickly, the step was too large — shrink the test or split the behavior. Romano et al. (2017) found that developers often skip the Refactor step, even though that is where much of TDD's design value lives — make refactor a discipline, not an optional cleanup."
+    explanation: "Each full cycle should take *minutes, not hours*; if you can't get back to green quickly, the step was too large, so shrink the test or split the behavior. Developers often skip the Refactor step — yet that is where much of TDD's design value lives, which is why it has to be a discipline rather than optional cleanup."
 
   - id: 3
     difficulty: intermediate
     question: "Translate: *'A developer spends an hour writing a clever interface, finally runs the tests, and finds twelve failures across the codebase.'* What went wrong and what's the rhythm fix?"
     answer: "Entered a **'World of Red'** — changes too large to verify in one Red→Green cycle. Feedback loop severed. Fix: **smaller steps** — one failing test, get to green, refactor, repeat every few minutes."
-    explanation: "Kerievsky's small-steps methodology is central: if a step is too large, you cannot tell which change broke which test, debugging becomes a scavenger hunt, and the safety net of continuously-green tests is gone. The discipline is to *shrink the test* until the next Green is minutes away, not hours."
+    explanation: "The small-steps methodology is central: if a step is too large, you cannot tell which change broke which test, debugging becomes a scavenger hunt, and the safety net of continuously-green tests is gone. The discipline is to *shrink the test* until the next Green is minutes away, not hours."
 
   - id: 4
     difficulty: intermediate
@@ -30,7 +30,7 @@ cards:
     difficulty: advanced
     question: "What is the **'Patterns Happy' malady**, and how does TDD prevent it?"
     answer: "After reading the GoF book, developers force complex patterns (Strategy, Decorator, Factory) into simple codebases that don't need them. TDD prevents this because patterns must *emerge* from refactoring, not be imposed upfront."
-    explanation: "Kerievsky's *Refactoring to Patterns* (2004) is the canonical response — patterns are targets you refactor *toward* when the code earns them, not templates you apply by default. The TDD discipline of 'simplest thing that could possibly work' in the Green phase actively pushes against premature pattern application."
+    explanation: "The canonical response is that patterns are targets you refactor *toward* when the code earns them, not templates you apply by default. The TDD discipline of 'simplest thing that could possibly work' in the Green phase actively pushes against premature pattern application."
 
   - id: 6
     difficulty: advanced
@@ -66,10 +66,10 @@ cards:
     difficulty: expert
     question: "What does TDD enforce **locally** about Parnas's Information Hiding, and where does it fall short **globally**?"
     answer: "**Locally**: it forces a minimal interface (the test is the first client) before any implementation — the Information Hiding ideal. **Globally**: pure incrementalism can miss *non-modularizable* decisions (platform, security, performance) that must be made at the system boundary and can't be refactored in later."
-    explanation: "Parnas (1972) defined modularity as decomposition that hides design decisions from clients. TDD operationalises that locally because the test is the first client and writes the interface. But TDD's incrementalism can blind a team to decisions whose cost only shows up at system scale. The mature engineer pairs TDD with explicit architectural conversation for choices the loop can't reach."
+    explanation: "David Parnas defined modularity as decomposition that hides design decisions from clients, which TDD operationalises locally — the test is the first client. But its incrementalism can blind a team to decisions whose cost only shows up at system scale, so the mature engineer pairs TDD with explicit architectural conversation for choices the loop can't reach."
 
   - id: 12
     difficulty: advanced
-    question: "Two empirical findings on TDD: what did Nagappan et al. (2008) and Fucci et al. (2017) each find?"
-    answer: "**Nagappan**: industrial case studies showed **large reductions in pre-release defect density** with an **initial development-time increase**. **Fucci**: quality/productivity gains tied to **fine granularity and uniform rhythm**, not to test-first ordering per se."
-    explanation: "These findings together complicate the slogan 'red-green-refactor'. The benefit comes from the *cadence* of small verified steps, not from the ritual ordering of test-before-code. A team that writes tests after the code but in equally small steps captures most of the benefit; a team that nominally writes tests first but in giant batches captures little. The point is the rhythm."
+    question: "What are two well-established empirical findings about TDD's effects?"
+    answer: "**Defect density**: industrial case studies showed **large reductions in pre-release defect density** with an **initial development-time increase**. **Cadence**: quality/productivity gains tied to **fine granularity and uniform rhythm**, not to test-first ordering per se."
+    explanation: "Together these findings complicate the slogan 'red-green-refactor': the benefit comes from the *cadence* of small verified steps, not the ritual ordering of test-before-code. A team that writes tests after the code but in equally small steps captures most of the benefit; one that nominally writes tests first but in giant batches captures little."

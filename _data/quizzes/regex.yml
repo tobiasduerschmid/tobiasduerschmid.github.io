@@ -21,7 +21,7 @@ questions:
       3: |
         Catastrophic backtracking is a performance problem in some regexes, but the deeper issue here is
         language shape: nested HTML is not regular.
-    explanation: "**RegEx fails on nested structures because it is backed by Finite State Machines, which lack the stack memory needed to track balanced nesting.** Standard regular expressions correlate to regular languages in formal language theory. They are evaluated by Finite State Machines, which do not have a 'stack' or memory mechanism to keep track of balanced, nested pairs (unlike context-free grammars used by HTML parsers)."
+    explanation: "**RegEx fails on nested structures because it is backed by Finite State Machines, which lack the stack memory needed to track balanced nesting.** Regular expressions correspond to *regular languages*; arbitrarily nested HTML is context-free, which needs a stack-based parser to count opening and closing pairs."
   
   - id: 2 
     difficulty: advanced
@@ -42,7 +42,7 @@ questions:
       3: |
         The engine does not need to cache the entire file because of `.*`. The waste is repeated trial
         and backtracking within the candidate line.
-    explanation: "**`.*` is greedy — it consumes the whole string first, then backtracks character by character, which is expensive on long lines.** Greedy quantifiers (like `*` and `+`) match as much as possible right away. `.*` consumes the whole string, realizes it missed 'error', and has to backtrack (step backwards) one character at a time to find a match, which is computationally expensive on long strings."
+    explanation: "**`.*` is greedy — it consumes the whole string first, then backtracks character by character, which is expensive on long lines.** Greedy quantifiers grab as much as possible immediately, so `.*` swallows the line, discovers it overshot 'error', and steps backward one character at a time until the rest of the pattern fits."
   
   - id: 3 
     difficulty: advanced
@@ -63,7 +63,7 @@ questions:
       3: |
         Word boundaries assert positions around word characters. They do not test for multiple required
         character categories.
-    explanation: "**Lookaheads are the right tool because they assert conditions without consuming characters, enabling multiple requirements to be chained at the same position.** Lookaheads and lookbehinds are 'zero-width assertions'. They look ahead in the string to verify a pattern exists, but they do not consume any characters. This allows you to chain multiple lookaheads at the start of a string to act like a logical 'AND' statement."
+    explanation: "**Lookaheads are the right tool because they assert conditions without consuming characters, enabling multiple requirements to be chained at the same position.** Being zero-width, several lookaheads can sit at the start of a pattern and each check the whole string independently — acting like a logical AND across unordered requirements."
   
   - id: 4
     difficulty: advanced
@@ -84,7 +84,7 @@ questions:
       3: |
         The captured month is stored in the match object. Inspecting the original regex string cannot
         recover what the input matched.
-    explanation: "**Named groups can be accessed by both name and positional index because they are a strict superset of numbered groups.** Named groups are assigned both a name and a positional index. You can retrieve the match using either `match.group('month')` or `match.group(2)`. This dual-access design means named groups are a strict superset of numbered groups — they add readability without removing any existing functionality."
+    explanation: "**Named groups can be accessed by both name and positional index because they are a strict superset of numbered groups.** Naming a group adds a readable label (`match.group('month')`) but does not remove its position — it is still capturing group 2, reachable as `match.group(2)`."
 
   - id: 5
     difficulty: intermediate
@@ -126,7 +126,7 @@ questions:
       3: |
         Case-insensitive matching affects letter case, not punctuation. Symbols are ignored here because
         they sit outside the unanchored substring match.
-    explanation: "**Without `^` and `$` anchors, the regex matches any valid substring and ignores the rest of the input.** Without positional anchors (`^` for the start, `$` for the end), a regex will search for *any* substring that satisfies the pattern. It found 'admin', considered it a successful match, and ignored the trailing invalid characters. Anchors are mandatory for strict input validation."
+    explanation: "**Without `^` and `$` anchors, the regex matches any valid substring and ignores the rest of the input.** The pattern found `admin`, counted that as a match, and never looked at the trailing `!@#`. Anchoring both ends forces the pattern to account for the entire string — mandatory for strict validation."
 
   - id: 7 
     difficulty: advanced
@@ -179,7 +179,7 @@ questions:
       3: |
         A syntax error means the pattern did not execute. False positives and false negatives describe
         outcomes of a running matcher.
-    explanation: "**A False Positive is an unwanted match (regex too loose) and a False Negative is a missed match (regex too strict).** A False Positive is an unwanted match (the regex was too loose). A False Negative is a missed match (the regex was too strict and missed valid data). These are the two primary edge cases engineers must balance when writing patterns."
+    explanation: "**A False Positive is an unwanted match (regex too loose); a False Negative is a missed match (regex too strict).** Tightening a pattern to kill false positives tends to introduce false negatives, and loosening it does the reverse — balancing the two is the core tension when writing patterns."
 
   - id: 9
     difficulty: intermediate
@@ -200,7 +200,7 @@ questions:
       3: |
         The global flag finds multiple matches, but each individual match can still be too large. The
         quantifier needs to be lazy or more specific.
-    explanation: "**Adding `?` makes the quantifier lazy so it stops at the first `>` rather than greedily consuming everything.** By default, `*` is **greedy** — it matches as many characters as possible, consuming everything from the first `<` to the last `>`. Adding `?` makes it **lazy** (`*?`), so it matches as *few* characters as possible and stops at the first `>` it encounters."
+    explanation: "**Adding `?` makes the quantifier lazy (`*?`) so it stops at the first `>` rather than greedily consuming everything.** A greedy `*` runs from the first `<` to the *last* `>`; the lazy form matches as few characters as possible, ending the match at the first `>` it reaches."
 
   - id: 10 
     difficulty: advanced
@@ -225,7 +225,7 @@ questions:
       3: |
         Chained lookaheads are a common way to express "must contain A and B" when the order is not
         fixed.
-    explanation: "**Lookaheads are zero-width, chainable, and enable logical AND — but they require PCRE and are not supported by basic POSIX tools.** Lookaheads do not consume characters, can be chained to check multiple conditions from the exact same starting position, and are the standard way to enforce logical 'AND' in regex. However, they are a feature of PCRE (Perl Compatible Regular Expressions) and are generally NOT supported by basic POSIX tools like standard `sed`."
+    explanation: "**Lookaheads are zero-width, chainable, and enable logical AND — but they require a PCRE-style engine and are not in basic POSIX tools.** Because they add nothing to the match, several can stack at one position to enforce independent 'must contain' requirements. Standard `grep`/`sed` (without `-P`) cannot be assumed to support them."
 
   - id: 11
     difficulty: advanced

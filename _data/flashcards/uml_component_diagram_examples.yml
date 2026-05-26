@@ -21,7 +21,7 @@ cards:
     question: "What is a **port** in a component diagram?"
     answer: "A named interaction point on a component's boundary, shown as a small square."
     explanation: >
-      Ports organize a component's interfaces into logical groups. **portin** (incoming, on the left edge) receives requests. **portout** (outgoing, on the right edge) sends requests. Ports make it clear which side of the component handles which communication.
+      Ports organize a component's interfaces into logical groups. **portin** (incoming, left edge) receives requests; **portout** (outgoing, right edge) sends them — making clear which side handles which communication.
 
   - id: 4
     difficulty: intermediate

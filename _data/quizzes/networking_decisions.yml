@@ -22,7 +22,7 @@ questions:
       3: |
         Timestamps can sort edits at the receiver, but a *missing* edit never arrives at all. Sorting cannot
         fix a hole — the receiver still ends up with a different file than the sender.
-    explanation: "**TCP is required because every edit must arrive in the order it was typed.** Collaborative editors send each keystroke as a small `insert` or `delete` operation; if a `delete` arrives before its preceding `insert`, or never arrives at all, the two screens drift apart. TCP's ordering and retransmission guarantees rule this out, and the handshake/ACK overhead is negligible for tiny keystroke payloads — the same reason web apps and SSH (both TCP) handle their interactive workloads cleanly."
+    explanation: "Collaborative editors send each keystroke as a small `insert` or `delete` operation, so if a `delete` arrives before its preceding `insert` — or never arrives — the two screens drift apart. TCP's ordering and retransmission rule this out, and the handshake/ACK overhead is negligible for tiny keystroke payloads, which is why interactive workloads like web apps and SSH run over TCP cleanly."
 
   - id: 2
     difficulty: intermediate
@@ -43,7 +43,7 @@ questions:
       3: |
         Live video still travels over the transport layer. Real-time media commonly uses UDP-based protocols
         (RTP, WebRTC); it does not skip the transport layer.
-    explanation: "**UDP is correct because a re-sent video frame arrives too late to be useful in an interactive camera feed.** A dropped UDP packet causes a tiny visual glitch (often imperceptible — the next frame arrives within milliseconds), but TCP's retransmission can *pause the stream* to wait for a packet describing what the visitor was doing a moment ago — exactly when the homeowner needs the present view. Low-latency interactive video products commonly use UDP-based media protocols such as RTP/WebRTC for this reason. Buffered broadcast streaming is a different trade-off and may use HTTP-based delivery."
+    explanation: "In an interactive camera feed a re-sent frame arrives too late to be useful. A dropped UDP packet is a tiny, often imperceptible glitch — the next frame lands within milliseconds — whereas TCP's retransmission can *pause the stream* to redeliver a moment that has already passed, exactly when the homeowner needs the present view. This is why low-latency interactive video commonly uses UDP-based media protocols like RTP/WebRTC; buffered broadcast streaming is a different trade-off that may use HTTP-based delivery."
 
   - id: 3
     difficulty: advanced
@@ -64,7 +64,7 @@ questions:
       3: |
         HTTP is request-response and runs over TCP — it is poorly suited to 60-Hz position broadcasts. The
         transport choice should match each data type's tolerance for loss, not default to one application protocol.
-    explanation: "**A hybrid is correct because position updates and progression events have opposite requirements.** Car positions arrive at 60 Hz with absolute coordinates — a missed snapshot is replaced within ~17 ms, so UDP is ideal. But a lost lap completion or purchase would corrupt persistent state — those need reliable, ordered delivery plus application-level transaction safeguards. This is the same hybrid pattern the SEBook describes for live online stock-trading platforms: UDP for the high-frequency snapshot stream of values that supersede each other, TCP for durable events whose bytes must arrive intact and in order."
+    explanation: "Position updates and progression events have opposite requirements. Car positions arrive at 60 Hz as absolute coordinates — a missed snapshot is replaced within ~17 ms, so UDP is ideal — but a lost lap completion or purchase would corrupt persistent state and needs reliable, ordered delivery plus application-level transaction safeguards. This is the same hybrid pattern used for live stock-trading platforms: UDP for the high-frequency stream of values that supersede each other, TCP for durable events whose bytes must arrive intact and in order."
 
   - id: 4
     difficulty: intermediate
@@ -86,7 +86,7 @@ questions:
       3: |
         File size doesn't change the requirement. A 5 MB photo and a 500 MB video both need byte-perfect
         delivery for the sync invariant to hold.
-    explanation: "**TCP is required because the storage service's core invariant is byte-for-byte fidelity.** A single flipped bit in a `.psd` or `.docx` file can corrupt it silently — the user only discovers the damage when they reopen the file later. TCP's retransmission, ordering, and checksum guarantees prevent this. The handshake/ACK overhead is negligible compared to the size of the payload, which is why every major cloud-sync product uses TCP — typically over HTTPS."
+    explanation: "The storage service's core invariant is byte-for-byte fidelity, and a single flipped bit in a `.psd` or `.docx` can corrupt it silently — discovered only when the user reopens the file later. TCP's retransmission, ordering, and checksums prevent this, and the handshake/ACK overhead is negligible next to a 200 MB payload, which is why every major cloud-sync product uses TCP, typically over HTTPS."
 
   - id: 5
     difficulty: intermediate
@@ -107,7 +107,7 @@ questions:
       3: |
         The architecture matters because the requirements include central inventory, central payment
         processing, and a tamper-resistant audit trail — features client-server provides and pure P2P does not.
-    explanation: "**Client-server is required because the platform must serialize seat reservations, process payments, and own the audit trail.** A central server is the only place where seat inventory can be locked, transactions can be recorded once, and disputes can be resolved against an authoritative record. P2P would let two buyers commit to the same seat independently and would have nowhere to enforce payment finality. This is the same pattern any multi-sided marketplace (Uber, Airbnb, eBay) uses for the same reasons."
+    explanation: "The platform must serialize seat reservations, process payments, and own the audit trail — and a central server is the only place to lock inventory, record each transaction once, and resolve disputes against an authoritative record. Pure P2P would let two buyers commit to the same seat independently with nowhere to enforce payment finality. This is the same pattern any multi-sided marketplace (Uber, Airbnb, eBay) relies on."
 
   - id: 6
     difficulty: intermediate
@@ -128,7 +128,7 @@ questions:
       3: |
         Even if raw data transfer is peer-to-peer, a single central index is still a single point of control
         and failure. The requirement here is about *control*, not just bandwidth.
-    explanation: "**Peer-to-peer is correct because decentralization is an explicit requirement, not just a preference.** Any central server (including just a central index) creates a single point of control and failure that the requirements forbid. True P2P systems use a Distributed Hash Table or similar peer-discovery mechanism so participants find each other without any central coordinator — the same idea behind BitTorrent's trackerless mode and IPFS. Each peer is both supplier and consumer, exactly the property the SEBook describes for P2P architectures."
+    explanation: "Here decentralization is an explicit requirement, not just a preference, and any central server — even a bare central index — creates the single point of control and failure the requirements forbid. True P2P systems use a Distributed Hash Table or similar peer discovery so participants find each other with no central coordinator, the idea behind BitTorrent's trackerless mode and IPFS. Each peer is both supplier and consumer, exactly the P2P property the scenario demands."
 
   - id: 7
     difficulty: intermediate
@@ -149,7 +149,7 @@ questions:
       3: |
         Voice audio still uses transport-layer protocols. Real-time voice typically rides on UDP (often via
         RTP or WebRTC); it does not skip the transport layer.
-    explanation: "**UDP is correct because in real-time voice, a re-sent packet often arrives too late to be useful.** TCP's retransmission can stall the audio waiting for a packet describing a moment the listener has already passed — producing audible jitter exactly when the speaker is mid-word. A dropped UDP packet creates a brief gap that codecs can often conceal better than a playback stall. Real-time voice products commonly use UDP-based media protocols, often via RTP or WebRTC, while still needing fallbacks on restrictive networks."
+    explanation: "In real-time voice a re-sent packet often arrives too late to be useful: TCP's retransmission can stall the audio waiting for a moment the listener has already passed, producing audible jitter mid-word. A dropped UDP packet leaves a brief gap that codecs can usually conceal better than a playback stall. Real-time voice commonly rides on UDP-based media protocols such as RTP or WebRTC, with fallbacks for restrictive networks."
 
   - id: 8
     difficulty: intermediate
@@ -170,7 +170,7 @@ questions:
       3: |
         In the scenario, the smart devices report to the company's central hub, not directly to the phone.
         The phone always reaches the server, so direct device-to-phone P2P isn't happening here.
-    explanation: "**Client-server is correct — polling is just a frequency choice within client-server.** The phone (client) initiates each request; the central hub (server) responds — the textbook definition of client-server. The 5-second interval changes only *how often* requests happen, not who initiates or where the authoritative state lives. The same shape applies to most dashboard-style apps that poll a backend for the latest data."
+    explanation: "Polling is just a frequency choice within client-server: the phone (client) initiates each request and the central hub (server) responds. The 5-second interval changes only *how often* requests happen, not who initiates them or where the authoritative state lives. The same shape underlies most dashboard-style apps that poll a backend for fresh data."
 
   - id: 9
     difficulty: advanced
@@ -200,4 +200,4 @@ questions:
       3: |
         A software update must arrive byte-for-byte intact — a single corrupted byte can break installation
         or fail the package's signature verification.
-    explanation: "**Order submissions, emails, and software downloads all require byte-perfect, ordered delivery — exactly what TCP provides.** The order system also needs application-level transaction safety, but the transport should deliver the request and confirmation bytes intact and in order. A corrupted email body or attachment would render text as gibberish or break the file the recipient is trying to open; a single corrupted byte can break a software install. The **two-way video call** is the UDP case: preserving the current conversation is more important than waiting for stale media packets."
+    explanation: "Order submissions, emails, and software downloads all need byte-perfect, ordered delivery, which is exactly what TCP provides. The order system also needs application-level transaction safety, but the transport must still deliver the request and confirmation bytes intact; a corrupted email body or attachment renders as gibberish, and a single corrupted byte can break a software install. The two-way video call is the UDP case — keeping the current conversation moving matters more than waiting for stale media packets."

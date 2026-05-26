@@ -39,9 +39,9 @@ cards:
     explanation: "State-driven transitions are preferred when states are well-defined and transitions are local. Context-driven works better when transitions depend on complex external conditions."
   - id: 8
     difficulty: intermediate
-    question: "Why is **Singleton** considered a 'pattern with a weak solution' (POSA5)?"
+    question: "Why is **Singleton** often called a 'pattern with a weak solution'?"
     answer: "It conflates two concerns: ensuring a single instance (legitimate) and providing global access (introduces hidden coupling and harms testability)."
-    explanation: "A `static getInstance()` call is a hardcoded dependency with no seam for test doubles. Modern practice uses DI containers to manage singleton lifetime while keeping constructors injectable."
+    explanation: "A `static getInstance()` call is a hardcoded dependency with no seam for test doubles. A DI container can guarantee one instance while keeping constructors injectable, so it solves the lifetime concern without the global access point."
   - id: 9
     difficulty: advanced
     question: "Name three thread-safety approaches for Singleton in Java."

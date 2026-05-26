@@ -41,7 +41,7 @@ cards:
     difficulty: advanced
     question: "What does the 'Before and After' teaching technique involve?"
     answer: "Comparing a working solution *without* a pattern to a refactored version *with* the pattern, especially when extending both with a new requirement."
-    explanation: "This technique from Astrachan et al. makes the pattern's value viscerally clear: extending the pattern-based version is dramatically easier than extending the version without the pattern."
+    explanation: "This technique makes the pattern's value viscerally clear: extending the pattern-based version is dramatically easier than extending the version without the pattern."
   - id: 9
     difficulty: advanced
     question: "What does the '74% of student submissions' finding refer to?"
@@ -51,7 +51,7 @@ cards:
     difficulty: advanced
     question: "Why do experienced engineers prefer 'do the simplest thing that could possibly work'?"
     answer: "Per **Gall's Law** (John Gall, *Systemantics*, 1975): a complex system that works is invariably found to have evolved from a simple system that worked. Start simple, then refactor toward patterns as concrete needs emerge."
-    explanation: "Rather than speculating upfront about which patterns might be needed, use the simplest working solution and refactor when code smells indicate the need. The phrase \"do the simplest thing that could possibly work\" is associated with Kent Beck and the XP / TDD tradition. This prevents over-engineering."
+    explanation: "Rather than speculating upfront about which patterns might be needed, start with the simplest working solution and refactor when code smells indicate the need — which prevents over-engineering. The phrase \"do the simplest thing that could possibly work\" comes from Kent Beck and the XP / TDD tradition."
   - id: 11
     difficulty: intermediate
     question: "What is the relationship between code smells and design patterns?"

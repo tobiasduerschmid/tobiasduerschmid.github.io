@@ -104,7 +104,7 @@ questions:
       1: |
         Maximal variability raises implementation cost for every integrator. Many give up and look for simpler alternatives. The trade-off cannot be resolved on the other axis alone either.
       3: |
-        Deferring the question means defaulting to whichever option the first developer happens to make. Once v1 ships, the interface is hard to change — exactly the changeability trap interoperability creates.
+        Deferring the question means defaulting to whichever design the first developer happens to ship. Once v1 ships, the interface is hard to change — the variability-vs-effort balance has to be struck before release, not after.
     explanation: "**Practical interoperability requires balancing two conflicting forces: implementation effort (more complex → less adopted) vs variability (more flexible → more useful). The architectural job is to find the *sweet spot* for the specific integrator profile and use-case range.** Pure simplicity and pure feature-richness both fail in real markets; design choices like sensible defaults, optional fields, and tiered APIs help reach the sweet spot."
 
   - id: 6

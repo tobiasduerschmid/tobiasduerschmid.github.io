@@ -34,10 +34,9 @@ questions:
     correct_indices: [1, 2]
     option_feedback:
       0: |
-        Confidentiality means *unauthorized reads* — attackers gaining access to data they shouldn't see.
-        A pure ransomware attack typically does not exfiltrate the data; it just makes it unreadable to the
-        rightful owner. (Modern "double-extortion" ransomware *also* exfiltrates, which would add a
-        confidentiality violation — but the encryption-in-place attack on its own does not.)
+        Confidentiality is about *unauthorized reads* — an attacker seeing data they shouldn't. Pure
+        ransomware never reads the data; it only makes it unreadable to the rightful owner, so the
+        attribute at stake is integrity and availability, not confidentiality.
       1: |
         Do not omit Integrity: overwriting the on-disk bytes with attacker-controlled ciphertext changes the
         data without authorization, which is exactly what an integrity violation is.
@@ -219,7 +218,7 @@ questions:
       3: |
         This inverts both rules. A new algorithm without scrutiny is fragile; publishing exact production
         config invites attackers to map known CVEs onto your deployment.
-    explanation: "**Public scrutiny** for new security designs (so weaknesses are found by the community before they ship to attackers) and **complementary obscurity** for deployed systems (hide your specific framework versions and config, so opportunistic exploits don't get a free aim) are not contradictory — they apply to different layers. The *foundation* (the algorithm, the protocol) must be open. The *deployment specifics* (versions, ports, paths) can reasonably stay hidden as a defense-in-depth layer on top of an already-strong foundation."
+    explanation: "The two stances apply to different layers, so they don't contradict. A new design needs **public scrutiny** so the community finds weaknesses before attackers do; a deployed system benefits from **complementary obscurity** — hiding specific framework versions and config so opportunistic exploits get no free aim. The *foundation* (algorithm, protocol) must be open; the *deployment specifics* (versions, ports, paths) can reasonably stay hidden as defense in depth on top of it."
 
   - id: 10
     difficulty: basic

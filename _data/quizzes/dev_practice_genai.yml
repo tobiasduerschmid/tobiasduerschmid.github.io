@@ -17,7 +17,7 @@ questions:
       0: |
         Compilers were vastly slower than LLMs (compilation took hours on 1960s hardware). Execution speed of the *tool* is not what produces engineering productivity. The compiler's leverage came from what it automated, not how fast it ran.
       2: |
-        The 21–50% range is the consistent finding across multiple controlled studies (METR, GitClear, others) — not a measurement artifact. Treating it as undercounted overstates current AI capability and underestimates the work that essential complexity still demands.
+        The 21–50% range is the consistent finding across multiple controlled studies — not a measurement artifact. Treating it as undercounted overstates current AI capability and underestimates the work that essential complexity still demands.
       3: |
         Compilers eliminated whole categories of repetitive translation work that previously consumed half a developer's day. GenAI's reduction is real but smaller in scope. The asymmetry is well-documented, not marketing.
     explanation: "**Compilers automated *accidental* complexity (translating high-level intent into machine instructions) — a near-pure mechanical task. GenAI helps with parts of that but leaves *essential* complexity (understanding requirements, choosing data structures, navigating trade-offs, integrating with messy real systems) largely intact.** This is why productivity gains plateau where genuine engineering judgment is needed, and why systems-thinking and requirements skills remain decisive even with AI assistance."
@@ -40,7 +40,7 @@ questions:
         Hallucination is one *cause* of bugs in AI output, but the framing of the question is about how 'fast' the generation felt vs how slow the end-to-end work was. The illusion is a measurement error, not a single defect type.
       3: |
         Premature optimization is unrelated — the issue isn't over-engineering, it's that the generated code is subtly broken and the bug-tail is long.
-    explanation: "**The illusion of AI productivity is the gap between *generation* (fast, satisfying, visible) and *end-to-end shipping* (debug, fix, verify, secure — slow and invisible). The vivid '5 minutes to type, then a day to debug' framing in the SEBook is illustrative, but the underlying asymmetry is real.** Measure productivity in features shipped per week with acceptable defect and security rates — not in characters generated per minute. Multiple studies (METR 2025, GitClear, others) report that developers *feel* more productive with AI even when measured throughput is flat or lower."
+    explanation: "**The illusion of AI productivity is the gap between *generation* (fast, satisfying, visible) and *end-to-end shipping* (debug, fix, verify, secure — slow and invisible).** Measure productivity in features shipped per week with acceptable defect and security rates, not in characters generated per minute. Controlled studies report that developers *feel* more productive with AI even when measured throughput is flat or lower."
 
   - id: 3
     difficulty: intermediate
@@ -80,7 +80,7 @@ questions:
       1: |
         The **explainability rule** prevents the team from accumulating code nobody understands. When the bug appears at 3 AM, you'll need to debug it — being able to explain it is a precondition for being able to fix it.
       2: |
-        Pearce et al. (2022) found roughly 40% of Copilot suggestions in *security-sensitive CWE-specific scenarios* contained vulnerabilities. Even outside that narrow setting, AI fluently produces plausible-but-wrong patterns it pattern-matched from training data. Defaulting to "subtly broken until proven otherwise" changes review quality immediately.
+        Roughly 40% of Copilot suggestions in *security-sensitive scenarios* have been found to contain vulnerabilities, and AI fluently produces plausible-but-wrong patterns it pattern-matched from training data. Defaulting to "subtly broken until proven otherwise" changes review quality immediately.
       3: |
         Reading more code does not produce better judgment. AI lacks domain context, system-specific constraints, and accountability — all of which experienced human teammates bring. Trusting it more is the inversion of the right calibration.
       4: |
@@ -171,7 +171,7 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      One published industry analysis (GitClear, 2024) reported codebases using AI coding assistants had a noticeable rise in **code complexity** and **static-analysis warnings** relative to pre-AI baselines. Assume the finding generalizes. What is the architectural risk?
+      Industry analysis has reported that codebases using AI coding assistants had a noticeable rise in **code complexity** and **static-analysis warnings** relative to pre-AI baselines. Assume the finding generalizes. What is the architectural risk?
     options:
       - "AI duplicates and adds code instead of refactoring — accepting AI suggestions repeatedly compounds **technical debt** because each suggestion solves the local problem without removing duplication or reshaping toward the system's existing structure."
       - "Developers are writing more code overall, so complexity grows proportionally with the codebase size."
@@ -185,7 +185,7 @@ questions:
         Mainstream static analyzers handle the same languages and constructs whether code is human- or AI-written. The "new paradigms" framing tries to attribute the gap to tool blind spots; the gap is in the code, not the analyzer.
       3: |
         Tests are typically excluded or analyzed separately. Even if included, the complexity-per-function metric doesn't credit tests as warnings; the increase is in production code structure.
-    explanation: "**AI assistants tend to produce *additive* solutions — adding code that solves the local problem rather than refactoring to fit the system's idioms or remove duplication. Without an explicit refactor step in the workflow, complexity compounds and static-analysis warnings climb.** The published metrics come from a single source and specific windows, so treat the exact percentages as one data point rather than consensus — but the *direction* (additive AI output → growing debt) is the architectural pattern to design against. Fix: pair AI generation with a deliberate refactor pass, enforce complexity limits in CI, and reject AI-suggested duplication that human review would have rejected."
+    explanation: "**AI assistants tend to produce *additive* solutions — adding code that solves the local problem rather than refactoring to fit the system's idioms or remove duplication. Without an explicit refactor step in the workflow, complexity compounds and static-analysis warnings climb.** The fix is process-level: pair AI generation with a deliberate refactor pass, enforce complexity limits in CI, and reject AI-suggested duplication that human review would have rejected."
 
   - id: 10
     difficulty: intermediate

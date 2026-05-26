@@ -6,7 +6,7 @@ cards:
     difficulty: basic
     question: "What is the *intent* of the Null Object pattern?"
     answer: "Provide a surrogate for another object that shares the same interface but does nothing. The Null Object encapsulates *how to do nothing* and hides those details from collaborators."
-    explanation: "From Bobby Woolf's 1998 PLoP3 essay — the canonical description. Also known as 'Stub' or 'Active Nothing.' The keyword is *encapsulates*: do-nothing behavior gets a named, polymorphic home instead of scattered `null` checks."
+    explanation: "Also known as 'Stub' or 'Active Nothing.' The keyword is *encapsulates*: do-nothing behavior gets a named, polymorphic home instead of scattered `null` checks."
 
   - id: 2
     difficulty: basic
@@ -22,7 +22,7 @@ cards:
 
   - id: 4
     difficulty: advanced
-    question: "When should you use Null Object? Name Woolf's Applicability criteria."
+    question: "When should you use Null Object? Name the Applicability criteria."
     answer: "(1) An object already requires a collaborator. (2) Some legitimate instances should do nothing. (3) Clients should not have to check for null. (4) The do-nothing behavior is reusable. (5) All do-nothing behavior fits in a single class."
     explanation: "All five criteria should hold. If only one or two apply, a single `if (x != null)` is usually simpler. Don't introduce Null Object until you have at least one real client that needs it (Rule of Three)."
 
@@ -36,7 +36,7 @@ cards:
     difficulty: intermediate
     question: "Why is a Null Object usually implemented as a Singleton?"
     answer: "A Null Object typically has no instance data — its state can never change because it never does anything. So multiple instances are indistinguishable, and one shared instance is enough."
-    explanation: "Woolf's Implementation discussion calls this out as variant 1. `SilentLogger.INSTANCE` (Java), a module-level constant (Python), or `static SilentLogger& instance()` (C++) are the typical idioms."
+    explanation: "The typical idioms are `SilentLogger.INSTANCE` (Java), a module-level constant (Python), or `static SilentLogger& instance()` (C++)."
 
   - id: 7
     difficulty: intermediate
@@ -48,7 +48,7 @@ cards:
     difficulty: intermediate
     question: "What is a *Null State*? Give an example."
     answer: "A ConcreteState whose operations all do nothing or return null results — the State pattern with a Null Object playing one of the state roles. Example: a `NotLoggedInState` whose `viewProfile()` does nothing because the user has no profile to show yet."
-    explanation: "From Wallingford 1996, cited by Woolf. Useful for initialization states ('not yet started'), terminal states ('shutdown complete'), or states where most operations are simply not applicable yet."
+    explanation: "Useful for initialization states ('not yet started'), terminal states ('shutdown complete'), or states where most operations are simply not applicable yet."
 
   - id: 9
     difficulty: advanced
@@ -66,7 +66,7 @@ cards:
     difficulty: advanced
     question: "How is Null Object different from a Proxy?"
     answer: "A **Proxy** stands in for a real subject and may forward calls to it (lazy initialization, remoting, access control). A **Null Object** *replaces* the real subject permanently and never forwards anywhere. A Null Object never transforms into a Real Object."
-    explanation: "Woolf calls this out explicitly in his Implementation discussion: if your stand-in might 'wake up' and start doing real work, it's a Proxy, not a Null Object. The two patterns look similar at the call site but have opposite intents."
+    explanation: "If your stand-in might 'wake up' and start doing real work, it's a Proxy, not a Null Object. The two patterns look similar at the call site but have opposite intents."
 
   - id: 12
     difficulty: advanced
@@ -84,7 +84,7 @@ cards:
     difficulty: advanced
     question: "What's a `NullIterator`, and where does it appear in real codebases?"
     answer: "An `Iterator` whose `hasNext()` always returns `false`. A leaf node in a tree returns one when asked for an iterator over its (non-existent) children, so clients iterate uniformly over leaves and composites."
-    explanation: "Real-world examples: `Collections.emptyIterator()` (Java), `iter([])` (Python), `std::ranges::empty_view` (C++). Documented as a worked example inside Gamma et al.'s Iterator pattern entry."
+    explanation: "Real-world examples: `Collections.emptyIterator()` (Java), `iter([])` (Python), `std::ranges::empty_view` (C++). The Gang of Four document it as a worked example inside the Iterator pattern entry."
 
   - id: 15
     difficulty: intermediate

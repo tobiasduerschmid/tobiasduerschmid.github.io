@@ -20,7 +20,7 @@ questions:
         An enum can make the valid types explicit, but it does not remove the modification point. Adding BBQ Chicken would still require changing the enum and the conditional creation logic.
       3: |
         Returning an interface can reduce coupling to concrete products, but it does not solve the growing `if/else` that chooses which concrete product to instantiate.
-    explanation: "**Naive non-overriding implementations that just keep growing the conditional violate the Open/Closed Principle.** A *parameterized factory method* uses conditional logic to decide which product to create. When the only way to add a new product is to edit the existing conditional, every new type forces a modification — exactly what the Open/Closed Principle forbids. GoF presents parameterized factory methods as a *polymorphic-extension variation*: subclasses can **override** the parameterized method, add new IDs, and fall through to `super` for known types. That polymorphic-override usage does *not* violate OCP. Pure Factory Method via subclass override avoids the conditional entirely."
+    explanation: "When the only way to add a product is to edit the existing conditional, every new type forces a modification — exactly what the Open/Closed Principle forbids. The Gang of Four present parameterized factory methods as a polymorphic-extension variation: subclasses can **override** the method, add new IDs, and fall through to `super` for known types, which does *not* violate OCP. Pure Factory Method via subclass override avoids the conditional entirely."
 
   - id: 2
     difficulty: intermediate
@@ -40,7 +40,7 @@ questions:
         Builder is for assembling one complex object through a sequence of steps. A theme factory is selecting compatible products across several classes, not gradually constructing one component.
       3: |
         Singleton answers "how many factory objects may exist," not "how is a consistent family of products created." A concrete factory is often *implemented* as a Singleton, but Singleton itself does not enforce that products belong to the same family.
-    explanation: "**Abstract Factory provides an interface for creating families of related or dependent objects without specifying their concrete classes — and one of its named consequences is *promotes consistency among products*.** The GoF chapter lists this directly: when products in a family are designed to work together, the pattern enforces that an application uses objects from only one family at a time, preventing incompatible combinations. Factory Method handles one product type per Creator; Builder assembles a single object step by step; Singleton constrains instance count. Only Abstract Factory is structured around a coordinated *family*."
+    explanation: "Abstract Factory creates families of related objects, and *promotes consistency among products* is one of its named consequences: when products in a family are designed to work together, the pattern enforces that an application uses objects from only one family at a time, preventing incompatible combinations. Factory Method handles one product type per Creator; Builder assembles a single object step by step; Singleton constrains instance count. Only Abstract Factory is structured around a coordinated *family*."
 
   - id: 3
     difficulty: intermediate
