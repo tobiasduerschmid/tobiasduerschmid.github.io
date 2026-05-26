@@ -1,0 +1,165 @@
+title: "Quality-Requirement Triage"
+description: "Decide whether each statement is a usable quality-attribute requirement, then identify the smell or strength that matters."
+active: true
+questions:
+  - id: 1
+    difficulty: basic
+    type: single
+    question: |
+      A team writes: "During the Friday-evening peak load of 10,000 concurrent users, 95% of product-search requests return results within 200 ms and 99% return within 500 ms." Is this a good quality-attribute requirement?
+    options:
+      - "Good: it names the request, the operating condition, and measurable latency thresholds."
+      - "Bad: it chooses a caching implementation before stating the requirement."
+      - "Bad: it is only a metric and does not name a scenario."
+    correct_index: 0
+    option_feedback:
+      1: |
+        No implementation mechanism is named. The statement leaves the design open while still making the performance goal testable.
+      2: |
+        The peak-load condition and product-search request are the scenario. The p95 and p99 latency targets are the metrics.
+    explanation: |
+      This is a good performance requirement because it combines a specific scenario with concrete success measures. A team can test it under the stated load and compare results against the p95 and p99 thresholds.
+
+  - id: 2
+    difficulty: basic
+    type: single
+    question: |
+      A team writes: "The API must respond within 200 ms." Is this a good quality-attribute requirement?
+    options:
+      - "Good: any numeric latency target is enough to make a performance requirement precise."
+      - "Bad: it gives a metric but omits the scenario, such as which API call, under what load, and with what data size."
+      - "Bad: performance requirements should avoid numbers because they constrain the architecture."
+    correct_index: 1
+    option_feedback:
+      0: |
+        A number helps, but the number needs context. A checkout request, search request, and admin report can have very different latency budgets.
+      2: |
+        Numbers are often necessary for performance requirements. The problem here is not measurement; it is measurement without context.
+    explanation: |
+      This is a metric-without-scenario smell. The statement says "200 ms" but does not say which request or operating condition the target applies to.
+
+  - id: 3
+    difficulty: basic
+    type: single
+    question: |
+      A team writes: "Use Kafka for scalability." Is this a good quality-attribute requirement?
+    options:
+      - "Good: Kafka is a proven scalability technology, so naming it makes the requirement actionable."
+      - "Bad: it is an implementation disguised as a requirement; the scalability scenario and success measure are missing."
+      - "Bad: scalability can only be measured after launch, so it should not appear in requirements."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Kafka might be a reasonable design choice, but the requirement should first say what load or growth the system must handle.
+      2: |
+        Scalability is observed at runtime, but it should be specified before design decisions are made. The missing piece is the scenario and metric.
+    explanation: |
+      This is an implementation-first smell. A better requirement would describe the traffic increase, acceptable downtime or latency, and any other success criteria before choosing a messaging system.
+
+  - id: 4
+    difficulty: basic
+    type: single
+    question: |
+      A team writes: "Adding a new depth sensor requires implementing one sensor adapter and must not require changes to components that process depth images." Is this a good quality-attribute requirement?
+    options:
+      - "Good: it names a class of change and a structural boundary that must not be crossed."
+      - "Bad: it lacks a latency target, so it cannot be a quality-attribute requirement."
+      - "Bad: it is too implementation-specific because it mentions adapters."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Design-time qualities are not always measured by latency. Extensibility can be measured by the number of places that must change or by boundaries that must stay stable.
+      2: |
+        "One sensor adapter" describes the allowed shape of the change, not a premature framework choice. The important constraint is that depth-image processors stay untouched.
+    explanation: |
+      This is a good extensibility requirement because it defines what change is expected and what ripple effect is unacceptable. Structural boundaries can be valid measures for design-time qualities.
+
+  - id: 5
+    difficulty: basic
+    type: single
+    question: |
+      A team writes: "During a payment-provider outage, checkout should keep working gracefully." Is this a good quality-attribute requirement?
+    options:
+      - "Good: it names an outage scenario, which is enough for robustness."
+      - "Bad: it names a condition but not the required behavior or metric that would count as success."
+      - "Bad: robustness requirements should describe normal operation, not failures."
+    correct_index: 1
+    option_feedback:
+      0: |
+        The outage condition is useful, but "working gracefully" is still ambiguous. The team needs to know whether to queue orders, reject payment, retry for a duration, or show a specific user message.
+      2: |
+        Robustness is about behavior under faults and unusual conditions. Failure scenarios are exactly where robustness requirements belong.
+    explanation: |
+      This is a scenario-without-success-criteria smell. A stronger version would state what checkout does during the outage, for how long, and what information is logged or shown to users.
+
+  - id: 6
+    difficulty: basic
+    type: single
+    question: |
+      A team writes: "Every request in the whole system must complete within 1 second." Is this a good quality-attribute requirement?
+    options:
+      - "Good: it gives a clear system-wide performance threshold."
+      - "Bad: it is a blanket claim; architecture work needs the specific request types and operating conditions that matter."
+      - "Bad: it is a scenario without a metric."
+    correct_index: 1
+    option_feedback:
+      0: |
+        System-wide blanket thresholds usually mix unrelated work. A search request, login request, nightly export, and admin analytics query rarely need the same latency target.
+      2: |
+        The statement does include a metric: 1 second. The problem is that the metric is applied too broadly without identifying the meaningful scenarios.
+    explanation: |
+      This is a system-wide blanket smell. Good performance requirements focus on the important interactions and the conditions under which each target applies.
+
+  - id: 7
+    difficulty: intermediate
+    type: single
+    question: |
+      A team writes: "Changing a tax rule for one state can be completed by one developer in less than one day and must not require changes to payment authorization or invoice rendering." Is this a good quality-attribute requirement?
+    options:
+      - "Good: it gives a concrete change scenario plus time and boundary measures for success."
+      - "Bad: it should say the rules engine is flexible instead of naming modules."
+      - "Bad: modifiability cannot be specified until the codebase already exists."
+    correct_index: 0
+    option_feedback:
+      1: |
+        "Flexible" would be weaker because different stakeholders interpret it differently. Naming the expected change and the untouched modules makes the architectural target clearer.
+      2: |
+        Modifiability should be planned early. The statement can guide module boundaries before the codebase exists.
+    explanation: |
+      This is a good modifiability requirement. It describes a likely future change, a development-time threshold, and the parts of the system that should remain unaffected.
+
+  - id: 8
+    difficulty: intermediate
+    type: single
+    question: |
+      A team writes: "The system should be secure, scalable, robust, and user-friendly." Is this a good quality-attribute requirement?
+    options:
+      - "Good: it lists several important quality attributes for the architects to optimize."
+      - "Bad: it is adjective-only; none of the qualities has a scenario, metric, or success criterion."
+      - "Bad: quality attributes should never mention stakeholder-facing concerns such as usability."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Listing important qualities does not make them actionable. The architects still cannot tell which threats, loads, failures, or user tasks matter.
+      2: |
+        Usability can be a real quality attribute. The problem is that "user-friendly" needs a concrete task, user group, and success criterion.
+    explanation: |
+      This is the adjective-only smell. The words name desirable qualities, but they do not yet define requirements that can drive architecture or testing.
+
+  - id: 9
+    difficulty: intermediate
+    type: single
+    question: |
+      A team writes: "When adding support for a new image format, minimize changes to existing preprocessing components." Is this a good quality-attribute requirement?
+    options:
+      - "Usable but softer: it names a change scenario and a direction for the architecture, though a high-risk project may want a sharper boundary."
+      - "Bad: every valid quality-attribute requirement must include a latency, throughput, or uptime number."
+      - "Bad: design-time qualities cannot be requirements because users do not observe them directly."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Runtime qualities often use latency, throughput, or uptime numbers, but design-time qualities can be measured by ripple effects and dependency boundaries.
+      2: |
+        Design-time qualities such as modifiability and extensibility are still real requirements. They guide code structure even when end users do not observe them directly.
+    explanation: |
+      This is softer than a pure pass/fail threshold, but it still guides architectural decisions: changes for new formats should stay away from the existing preprocessing components. If the risk is high, the team can strengthen it into a hard boundary such as "must not require changes to existing preprocessing components."

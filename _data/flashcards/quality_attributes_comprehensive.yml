@@ -1,0 +1,165 @@
+title: "Quality Attributes Comprehensive Flashcards"
+description: "Broad review of quality attributes, measurable specifications, architectural trade-offs, tactics, and design-time versus run-time qualities."
+active: true
+cards:
+  - id: 1
+    difficulty: basic
+    bloom: remember
+    question: "What is a quality attribute?"
+    answer: |
+      A **quality attribute** describes how well a system performs its functions, such as performance, availability, security, modifiability, testability, interoperability, robustness, scalability, or portability.
+    explanation: |
+      A functional requirement says what the system does. A quality attribute says how well that function must work in a specific context.
+
+  - id: 2
+    difficulty: basic
+    bloom: understand
+    question: "Why is the phrase non-functional requirement potentially misleading?"
+    answer: |
+      Because quality attributes are usually attached to a specific function or scenario. "Search" is functional behavior; "95% of searches return within 200 ms during peak load" is a performance quality attribute for that behavior.
+    explanation: |
+      The quality is not separate from functionality. It constrains the way a function must behave under particular conditions.
+
+  - id: 3
+    difficulty: basic
+    bloom: remember
+    question: "What two ingredients make a quality requirement measurable?"
+    answer: |
+      A **scenario** and a **metric**. The scenario names the relevant condition, stimulus, user, failure, or operating environment. The metric names what counts as success.
+    explanation: |
+      A scenario without a metric is vague; a metric without a scenario floats without context. Good quality requirements need both.
+
+  - id: 4
+    difficulty: basic
+    bloom: understand
+    question: "Distinguish run-time and design-time quality attributes."
+    answer: |
+      **Run-time qualities** are observed while the system executes, such as performance, availability, robustness, scalability, and some security properties. **Design-time qualities** affect development and maintenance, such as modifiability, extensibility, reusability, portability, and testability.
+    explanation: |
+      The distinction is about when the quality shows up and who feels it first, not about whether the quality matters to users or the business.
+
+  - id: 5
+    difficulty: intermediate
+    bloom: understand
+    question: "Why are quality attributes described as load-bearing walls?"
+    answer: |
+      Early architecture choices strongly constrain achievable qualities, quality concerns cut across many modules, and retrofitting them later is often expensive.
+    explanation: |
+      You can usually rearrange features later. Retrofitting high availability, testability, or security into an architecture that works against those qualities is closer to structural renovation.
+
+  - id: 6
+    difficulty: intermediate
+    bloom: apply
+    question: "Write the shape of a good performance quality requirement."
+    answer: |
+      It should name the operation, the operating condition, and measurable timing or throughput targets. Example: "During peak load of 10,000 concurrent users, 95% of product-search requests return within 200 ms and 99% within 500 ms."
+    explanation: |
+      Performance numbers are only meaningful when tied to a workload, request type, data size, and percentile or threshold.
+
+  - id: 7
+    difficulty: intermediate
+    bloom: apply
+    question: "What makes an availability requirement measurable?"
+    answer: |
+      It states the time window, what counts as successful service, and any exclusions or recovery expectations. Example: "For any rolling 30-day window, the checkout API maintains 99.95% successful responses, excluding scheduled maintenance announced 48 hours in advance."
+    explanation: |
+      Availability requirements often use uptime, successful-response rate, mean time to repair, mean time between failures, or failover time.
+
+  - id: 8
+    difficulty: intermediate
+    bloom: analyze
+    question: "Why can a structural boundary be a valid measure for a design-time quality?"
+    answer: |
+      Design-time qualities are often about ripple effects. A requirement can be measurable if it says which modules must not change, which dependencies must not be crossed, or how many components should be touched.
+    explanation: |
+      "Adding a depth sensor must not require changes to depth-image processors" is measurable even though it is not a latency or uptime number.
+
+  - id: 9
+    difficulty: intermediate
+    bloom: understand
+    question: "What are controllability and observability in testability?"
+    answer: |
+      **Controllability** is the ability to put the component into important states and provide relevant inputs. **Observability** is the ability to see outputs, side effects, faults, timing, and other behavior clearly enough to test them.
+    explanation: |
+      A system is hard to test when important states cannot be triggered or when failures happen silently.
+
+  - id: 10
+    difficulty: intermediate
+    bloom: apply
+    question: "Give a testability requirement for payment authorization."
+    answer: |
+      "A developer can run deterministic tests for approved cards, declined cards, and provider timeouts without contacting the real payment provider."
+    explanation: |
+      The requirement names important scenarios and removes an external dependency that would make tests slow, flaky, or impossible to force into rare states.
+
+  - id: 11
+    difficulty: intermediate
+    bloom: understand
+    question: "What makes interoperability more than just sending data?"
+    answer: |
+      Interoperability requires shared meaning: units, codes, required fields, timestamp semantics, identifiers, error handling, and interpretation must match across systems.
+    explanation: |
+      Two hospitals can exchange bytes and still fail interoperability if one treats a timestamp, unit, or discharge code differently.
+
+  - id: 12
+    difficulty: intermediate
+    bloom: analyze
+    question: "Name three common quality-attribute conflicts."
+    answer: |
+      Security can conflict with performance; reliability can conflict with latency; modifiability can conflict with raw performance; portability can conflict with platform-specific optimization.
+    explanation: |
+      Conflicts are normal. Architecture work makes the trade-off explicit instead of letting it appear accidentally in code.
+
+  - id: 13
+    difficulty: intermediate
+    bloom: analyze
+    question: "Name two common quality-attribute synergies."
+    answer: |
+      Performance can improve usability for interactive systems, and testability often improves changeability because modular, controllable components are easier to modify safely.
+    explanation: |
+      Synergies are valuable because one design investment pays off across more than one quality attribute.
+
+  - id: 14
+    difficulty: intermediate
+    bloom: analyze
+    question: "Why is 'Use Kafka for scalability' a specification smell?"
+    answer: |
+      It chooses an implementation before stating the scalability scenario and success measure. A better requirement says what traffic, growth, latency, downtime, or data-volume target the system must handle.
+    explanation: |
+      Kafka may be a good design choice, but it cannot be evaluated until the actual quality requirement is clear.
+
+  - id: 15
+    difficulty: advanced
+    bloom: evaluate
+    question: "How should an architect respond when stakeholders say the system should maximize all quality attributes?"
+    answer: |
+      Push for prioritization. Identify the few qualities that are load-bearing for this system, make trade-offs explicit, and document the costs accepted on lower-priority qualities.
+    explanation: |
+      "All of them" gives the team no basis for resolving conflicts. Priorities make later design decisions coherent.
+
+  - id: 16
+    difficulty: advanced
+    bloom: evaluate
+    question: "How do architectural tactics relate to quality attributes?"
+    answer: |
+      Tactics are reusable design moves that improve a specific quality scenario, such as heartbeat for availability detection, active redundancy for availability, or caching for performance.
+    explanation: |
+      The useful question is not which tactic is best in general, but which tactic improves the target quality scenario and what it costs.
+
+  - id: 17
+    difficulty: advanced
+    bloom: create
+    question: "Use this checklist to draft a quality requirement."
+    answer: |
+      Name the quality, the function or component, the scenario, the metric or structural boundary, the measurement window, and any exclusions or acceptable trade-offs.
+    explanation: |
+      This checklist keeps the requirement solution-neutral while still giving architects enough detail to design, test, and negotiate trade-offs.
+
+  - id: 18
+    difficulty: advanced
+    bloom: evaluate
+    question: "When is a softer quality goal still useful?"
+    answer: |
+      A softer goal is useful when it names a direction and a relevant scenario, such as minimizing changes to existing preprocessing components when adding a new image format. High-risk work may still need a hard threshold or forbidden boundary.
+    explanation: |
+      Not every quality target needs a pure pass/fail number. The key is that the statement must still guide architectural decisions.

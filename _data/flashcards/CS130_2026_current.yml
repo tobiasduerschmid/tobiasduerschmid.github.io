@@ -15,6 +15,7 @@ decks:
   - tdd
   - software_architecture
   - quality_attributes
+  - quality_attributes_comprehensive
   - quality_attribute_interoperability
   - quality_attribute_testability
   - architectural_tactics

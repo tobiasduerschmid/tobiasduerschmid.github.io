@@ -71,6 +71,12 @@ Watch for these failure patterns:
 * **System-wide blanket claims:** "every request must complete within 1 second" is usually wrong. Architecture work needs the specific requests that matter.
 * **Implementation disguised as requirement:** "Use Kafka for scalability" chooses a solution before stating the quality scenario it is supposed to satisfy.
 
+## Practice: Quality-Requirement Triage
+
+Use the quiz below to practice deciding whether a statement is a usable quality-attribute requirement, and when it is not, which specification smell is getting in the way.
+
+{% include quiz.html id="quality_attribute_specifications" heading_level=3 %}
+
 # Trade-offs and Synergies
 A fundamental reality of software design is that **you cannot always maximize all quality attributes simultaneously**; they frequently conflict with one another.
 
@@ -93,3 +99,11 @@ Common tactics include:
 * **Caching** for performance: a fast local copy prevents repeated expensive retrieval of the same resource.
 
 The useful question is not "which tactic is best?" but "which tactic improves the target quality scenario, and what does it cost?" Ping-echo and heartbeat both improve availability by detecting failures, but both consume network and processing resources. Caching improves performance when requests repeat, but it introduces invalidation and stale-data risks. See [Architectural Tactics](/SEBook/architectural_tactics.html) for the detailed comparison.
+
+# Review and Practice
+
+Use these flashcards and quiz questions to review the whole topic: definitions, measurable quality specifications, design-time and run-time qualities, trade-offs, synergies, tactics, and architectural prioritization.
+
+{% include flashcards.html id="quality_attributes_comprehensive" %}
+
+{% include quiz.html id="quality_attributes_comprehensive" %}

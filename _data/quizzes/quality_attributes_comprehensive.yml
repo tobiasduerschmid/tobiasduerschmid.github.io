@@ -1,0 +1,336 @@
+title: "Quality Attributes Comprehensive Quiz"
+description: "Practice identifying, specifying, prioritizing, and trading off quality attributes across realistic architecture scenarios."
+active: true
+questions:
+  - id: 1
+    difficulty: basic
+    bloom: remember
+    type: single
+    question: |
+      Which statement best distinguishes functionality from a quality attribute?
+    options:
+      - "Functionality says what the system does; a quality attribute says how well that function must work in a context."
+      - "Functionality is for users; quality attributes are only for developers."
+      - "Functionality is measurable; quality attributes are intentionally vague."
+      - "Functionality appears in requirements; quality attributes appear only after implementation."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Some quality attributes, such as performance and availability, are directly user-facing. Developer-facing qualities are only part of the set.
+      2: |
+        Quality attributes should be measurable enough to guide design and testing.
+      3: |
+        Quality attributes belong in requirements because they shape architecture early.
+    explanation: |
+      "Search by keyword" is functionality. "95% of keyword searches return within 200 ms during peak load" is a quality attribute attached to that function.
+
+  - id: 2
+    difficulty: basic
+    bloom: understand
+    type: multiple
+    question: |
+      Which statements include both a scenario and a success measure? Select all that apply.
+    options:
+      - "The app should be easy to use."
+      - "When 20,000 read requests per minute arrive, p95 read latency stays below 300 ms."
+      - "During any rolling 30-day window, the checkout API maintains at least 99.95% successful responses, excluding scheduled maintenance announced 48 hours in advance."
+      - "During a payment-provider outage, checkout handles the problem gracefully."
+      - "Adding a new depth sensor requires one sensor adapter and must not require changes to depth-image processors."
+    correct_indices: [1, 2, 4]
+    option_feedback:
+      0: |
+        "Easy to use" names a desired quality, but it does not specify a task, user group, or success criterion.
+      1: |
+        This includes a load scenario and a p95 latency threshold.
+      2: |
+        This includes the measurement window, success threshold, affected API, and maintenance exclusion.
+      3: |
+        This names a failure condition, but "gracefully" does not define what the system must do.
+      4: |
+        This uses a structural success measure: only one adapter changes and depth-image processors remain untouched.
+    explanation: |
+      Good quality requirements connect conditions to success criteria. The criteria may be runtime numbers or design-time boundaries.
+
+  - id: 3
+    difficulty: basic
+    bloom: understand
+    type: single
+    question: |
+      A requirement says: "The report API must respond within 200 ms." What is the main weakness?
+    options:
+      - "It has a metric but lacks scenario context such as load, report size, and request type."
+      - "It has a scenario but lacks any metric."
+      - "It is invalid because APIs cannot have performance requirements."
+      - "It chooses an implementation before stating the requirement."
+    correct_index: 0
+    option_feedback:
+      1: |
+        "200 ms" is a metric. The missing part is the operating context around that number.
+      2: |
+        APIs can absolutely have performance requirements when the relevant request and load are specified.
+      3: |
+        The statement does not name a technology or design mechanism.
+    explanation: |
+      A bare metric is not enough. The team needs to know which reports, data size, load level, cache state, and percentile the target applies to.
+
+  - id: 4
+    difficulty: basic
+    bloom: understand
+    type: multiple
+    question: |
+      Which attributes are primarily design-time qualities? Select all that apply.
+    options:
+      - "Modifiability"
+      - "Extensibility"
+      - "Performance"
+      - "Testability"
+      - "Availability"
+    correct_indices: [0, 1, 3]
+    option_feedback:
+      0: |
+        Modifiability affects how safely and quickly developers can change the system.
+      1: |
+        Extensibility is about adding new capability with limited ripple effects.
+      2: |
+        Performance is observed while the system runs.
+      3: |
+        Testability affects the ability to control and observe the system during tests.
+      4: |
+        Availability is observed while the system runs and failures occur.
+    explanation: |
+      Design-time qualities primarily affect evolution and maintenance. Run-time qualities are experienced during execution.
+
+  - id: 5
+    difficulty: intermediate
+    bloom: analyze
+    type: single
+    question: |
+      A team built a synchronous monolith. A year later, it cannot scale beyond 10,000 concurrent users without major rework. Which idea does this best illustrate?
+    options:
+      - "Quality attributes are load-bearing: early architecture choices constrain later scalability."
+      - "Scalability is unrelated to architecture."
+      - "Monoliths are always wrong."
+      - "Performance requirements should be postponed until the system has real users."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Scalability is deeply shaped by state management, communication patterns, data partitioning, and deployment structure.
+      2: |
+        A monolith can be a good choice in some contexts. The issue is whether the architecture fits the expected growth profile.
+      3: |
+        Real measurements are valuable, but architectural choices should still account for plausible growth before launch.
+    explanation: |
+      The lesson is not "never use a monolith." It is that load-bearing qualities need to be considered early enough that the chosen structure can support the expected future.
+
+  - id: 6
+    difficulty: intermediate
+    bloom: apply
+    type: single
+    question: |
+      A service must detect a failed worker within 10 seconds so another worker can take over. Which tactic most directly addresses failure detection?
+    options:
+      - "Heartbeat messages from workers to a watchdog."
+      - "A larger CSS bundle cache."
+      - "A stricter module naming convention."
+      - "A new product-search index."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Caching can improve performance, but it does not detect failed workers.
+      2: |
+        Naming conventions may help maintainability, but they do not provide runtime failure detection.
+      3: |
+        Search indexing can improve search performance, but it does not monitor worker liveness.
+    explanation: |
+      Heartbeat is an availability tactic: monitored components periodically report that they are alive, and the watchdog can react when the signal stops.
+
+  - id: 7
+    difficulty: intermediate
+    bloom: analyze
+    type: multiple
+    question: |
+      A team adds aggressive caching to improve read latency. Which quality effects should they discuss? Select all that apply.
+    options:
+      - "Performance may improve when repeated reads avoid expensive retrieval."
+      - "Data freshness and invalidation risk may get worse."
+      - "Availability can sometimes improve because cached content may survive a backend outage."
+      - "The system automatically becomes easier to modify."
+      - "Security questions may appear if sensitive data is cached in the wrong place."
+    correct_indices: [0, 1, 2, 4]
+    option_feedback:
+      0: |
+        Avoiding repeated expensive retrieval is the main performance benefit of caching.
+      1: |
+        Cache invalidation and stale data are the classic costs of caching.
+      2: |
+        Some caches can mask backend failures for read-only content, depending on the freshness requirements.
+      3: |
+        Caching often adds invalidation paths and distributed-state complexity, which can make modification harder.
+      4: |
+        Cached sensitive data can create confidentiality and access-control risks.
+    explanation: |
+      Tactics improve one quality scenario while introducing costs elsewhere. Caching is a performance tactic with freshness, complexity, and sometimes security trade-offs.
+
+  - id: 8
+    difficulty: intermediate
+    bloom: analyze
+    type: single
+    question: |
+      A hospital integration requirement says: "When Hospital A sends an HL7 discharge message to Hospital B, 99.9% of required fields are parsed with the same units, codes, and timestamp semantics." Which quality is primarily specified?
+    options:
+      - "Interoperability"
+      - "Portability"
+      - "Extensibility"
+      - "Performance"
+    correct_index: 0
+    option_feedback:
+      1: |
+        Portability is about moving the system to a different environment.
+      2: |
+        Extensibility is about adding new capability with limited change effort.
+      3: |
+        The statement is not about timing or throughput; it is about shared meaning across systems.
+    explanation: |
+      Interoperability requires more than exchanging bytes. The receiving system must interpret the fields with the same meaning.
+
+  - id: 9
+    difficulty: intermediate
+    bloom: analyze
+    type: multiple
+    question: |
+      Which statements are quality-requirement smells? Select all that apply.
+    options:
+      - "\"The system should be robust.\""
+      - "\"Use Kafka for scalability.\""
+      - "\"During 20,000 read requests per minute, p95 read latency remains below 300 ms.\""
+      - "\"During a network outage, the service should keep working.\""
+      - "\"Every request in every subsystem must complete within 1 second.\""
+    correct_indices: [0, 1, 3, 4]
+    option_feedback:
+      0: |
+        "Robust" is an adjective without a scenario or success criterion.
+      1: |
+        This names a solution before stating the scalability requirement.
+      2: |
+        This gives a load scenario and a latency threshold.
+      3: |
+        This names a condition but not what behavior counts as success.
+      4: |
+        Blanket system-wide timing claims usually ignore which requests matter and under what conditions.
+    explanation: |
+      Common smells include adjective-only phrasing, implementation-first statements, scenarios without metrics, metrics without scenarios, and blanket claims.
+
+  - id: 10
+    difficulty: advanced
+    bloom: evaluate
+    type: single
+    question: |
+      A product manager asks for maximum security, maximum performance, maximum portability, and minimum development cost. What is the best architectural response?
+    options:
+      - "Prioritize the few load-bearing qualities, document accepted costs, and use those priorities to guide design choices."
+      - "Accept all targets as equal and let implementation details settle the conflict later."
+      - "Optimize the easiest-to-measure quality first and ignore the rest."
+      - "Treat development cost as unrelated to architecture."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Equal priority gives the team no basis for resolving real conflicts.
+      2: |
+        Ease of measurement is not the same as importance.
+      3: |
+        Development cost is affected by architecture through complexity, tooling, team skill, and change effort.
+    explanation: |
+      Quality-attribute work is partly prioritization. The architect helps stakeholders decide what matters most for this system and what trade-offs are acceptable.
+
+  - id: 11
+    difficulty: advanced
+    bloom: evaluate
+    type: single
+    question: |
+      A robotics team has two options for adding new sensors. Design A requires changes in sensor adapters only. Design B requires changes in adapters, perception, and planning. The priority quality is extensibility. Which design better fits the quality goal?
+    options:
+      - "Design A, because the ripple effect is limited to the adapter boundary."
+      - "Design B, because touching more modules proves the architecture is flexible."
+      - "Both are equal because extensibility can only be measured by runtime latency."
+      - "Neither can be evaluated until every possible sensor is known."
+    correct_index: 0
+    option_feedback:
+      1: |
+        More modules touched usually means higher change cost and higher regression risk.
+      2: |
+        Extensibility is a design-time quality and is often measured by ripple effects.
+      3: |
+        Future details matter, but the expected change scenario is enough to compare the designs.
+    explanation: |
+      The quality goal says new sensors should be added with low ripple effect. Design A preserves a clearer dependency boundary.
+
+  - id: 12
+    difficulty: advanced
+    bloom: create
+    type: single
+    question: |
+      Which rewrite best turns "the login system should be secure" into a useful quality requirement?
+    options:
+      - "The login system should use the best security practices."
+      - "Use OAuth 2.0 and JSON Web Tokens for login."
+      - "After 5 failed login attempts for one account within 10 minutes, further attempts are rate-limited for 15 minutes and the event is recorded in the audit log within 5 seconds."
+      - "The login system should be secure, robust, and scalable."
+    correct_index: 2
+    option_feedback:
+      0: |
+        "Best practices" is too vague to test or design against.
+      1: |
+        This chooses mechanisms before stating the threat scenario and success criteria.
+      3: |
+        Adding more adjectives makes the requirement broader but not more measurable.
+    explanation: |
+      The strong rewrite names the security scenario, the threshold for triggering the response, the response duration, and the audit-log timing requirement.
+
+  - id: 13
+    difficulty: expert
+    bloom: evaluate
+    type: single
+    question: |
+      A team says: "We cannot put numbers on modifiability, so we should not include it in requirements." What is the best correction?
+    options:
+      - "Modifiability can use development-time, modules-touched, dependency-boundary, or forbidden-ripple-effect measures."
+      - "They are right; only run-time attributes can be requirements."
+      - "Modifiability should be replaced by performance because performance has clearer numbers."
+      - "A modifiability requirement should always require one-hour changes."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Design-time attributes are legitimate requirements even when users do not observe them directly.
+      2: |
+        Replacing a hard-to-measure quality with an easier one can optimize the wrong thing.
+      3: |
+        One hour may be appropriate for some contexts but absurd for others. The measure must fit the change scenario.
+    explanation: |
+      Not all quality measures are latency or uptime numbers. Design-time qualities often rely on change cost and structural boundaries.
+
+  - id: 14
+    difficulty: expert
+    bloom: create
+    type: multiple
+    question: |
+      You are drafting a quality requirement for moving a service from AWS to GCP. Which details belong in the requirement? Select all that apply.
+    options:
+      - "The target change scenario: moving from AWS to GCP."
+      - "The allowed ripple effect, such as replacing cloud-storage and secret-management adapters only."
+      - "A boundary that domain and API modules remain unchanged."
+      - "A mandate to rewrite the whole system in a new programming language."
+      - "The success criteria for when the port is complete."
+    correct_indices: [0, 1, 2, 4]
+    option_feedback:
+      0: |
+        The change scenario anchors the portability requirement.
+      1: |
+        Allowed ripple effect is a useful design-time measure.
+      2: |
+        Stable module boundaries make the portability target architectural rather than vague.
+      3: |
+        A language rewrite is an implementation choice and may be unrelated to the portability goal.
+      4: |
+        The team needs criteria for deciding whether the port succeeded.
+    explanation: |
+      A portability requirement should describe the migration scenario and success boundaries without prematurely forcing a particular rewrite strategy.
