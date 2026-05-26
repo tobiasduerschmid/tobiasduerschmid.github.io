@@ -20,7 +20,7 @@ questions:
         The client asks the machine to perform an operation such as `insertQuarter()`. It should not choose the next internal state directly.
       3: |
         A Null Object can represent harmless do-nothing behavior. It is not the mechanism choosing the next real state in this example.
-    explanation: "**This is state-driven transitions — each state knows its successors and triggers the transition itself, encapsulating its own logic at the cost of inter-state coupling.** This is **state-driven transitions**: each Concrete State knows its successor(s) and calls `context.setState()` to trigger the transition. The advantage is that each state encapsulates its own transition logic. The disadvantage is that it's harder to see the complete state machine at a glance, and state classes become coupled to each other."
+    explanation: "Because each Concrete State knows its successor(s) and calls `context.setState()` itself, this is **state-driven** transitions. The upside is that each state encapsulates its own transition logic; the downside is that the complete state machine is harder to see at a glance and the state classes become coupled to one another."
 
   - id: 2
     difficulty: intermediate
@@ -40,7 +40,7 @@ questions:
         Hiding the matrix behind a facade may protect representation details, but the behavioral branching would still exist somewhere. State is about moving state-specific behavior into separate implementations.
       3: |
         Template Method factors a fixed algorithm skeleton into a base class. The problem here is behavior changing according to a cell's current state.
-    explanation: "**This violates polymorphism over conditions — the State pattern replaces the boolean-driven if/else with `AliveState` and `DeadState` objects that each carry their own behavior.** The boolean representation forces **conditional logic** everywhere a cell's behavior differs based on its state. The State pattern replaces this with **polymorphism**: `AliveState` and `DeadState` each implement the behavior for their respective states. Adding a new state (e.g., `DyingState`) becomes a matter of adding a new class, not modifying every conditional throughout the codebase."
+    explanation: "The boolean representation forces conditional logic everywhere a cell's behavior depends on its state, violating **polymorphism over conditions**. State replaces it with `AliveState` and `DeadState` objects that each implement their own behavior, so adding a `DyingState` means adding a class rather than editing every conditional in the codebase."
 
   - id: 3
     difficulty: intermediate
@@ -60,7 +60,7 @@ questions:
         The number of concrete classes does not separate the patterns. Both can have many implementations.
       3: |
         State is not limited to GUIs; it is useful for protocols, workflows, documents, games, and other objects whose behavior depends on lifecycle state.
-    explanation: "**State involves implicit internal transitions that the client does not control; Strategy involves the client explicitly selecting which algorithm to use — same structure, different intent.** The difference is entirely in **intent and behavior**. In State, the concrete implementations **transition between each other** based on internal logic — the client doesn't choose which state is active. In Strategy, the client **explicitly selects** which algorithm to use, and there are no automatic transitions. Same structure, fundamentally different dynamics."
+    explanation: "Same structure, different dynamics. In State, the concrete implementations transition between each other based on internal logic — the client does not choose which state is active. In Strategy, the client explicitly selects the algorithm and there are no automatic transitions."
 
   - id: 4
     difficulty: advanced
@@ -80,7 +80,7 @@ questions:
         State is specifically meant to make state-dependent behavior extensible. A new state still requires design work, but it does not imply a major rewrite.
       3: |
         The approaches trade off visibility against locality. When only `Review` can transition to `Rejected`, state-driven transitions can keep the change close to the affected state.
-    explanation: "**State-driven transitions handle the new Rejected state more gracefully because only the ReviewState and the new class need to change — not the Context or all other states.** With **state-driven transitions**, you only need to: (1) create the new `RejectedState` class, and (2) modify `ReviewState` to add a transition to `RejectedState`. The `RejectedState` itself transitions back to `DraftState`. No other states need to change. With context-driven transitions, you'd modify the Context's centralized logic — potentially touching code for all states."
+    explanation: "With **state-driven** transitions the change is local: create the `RejectedState` class and add one transition to it inside `ReviewState`; `RejectedState` then transitions back to `DraftState`. No other state changes. Context-driven transitions would instead require editing the Context's centralized logic, potentially touching code for every state."
 
   - id: 5
     difficulty: advanced
@@ -100,4 +100,4 @@ questions:
         Shared stateless objects do not necessarily require synchronization during every transition. The design risk is future flexibility, not inherent transition speed.
       3: |
         A Null Object can be shared as a singleton when it is truly stateless. The compatibility of those patterns is not the issue here.
-    explanation: "**Singleton states remove the ability to add per-context data while continuing to share one state instance.** If states are Singletons, they cannot store per-context fields or a per-context reference back to their Context, because many contexts would share the same state instance. This is an example of a **Singleton State** compound — memory-efficient but inflexible. It's only safe if you are confident the states will remain purely behavioral, or you are willing to refactor away from shared instances later."
+    explanation: "Because many contexts would share one instance, a Singleton state can no longer hold per-context fields or a per-context reference back to its Context. This **Singleton State** compound is memory-efficient but inflexible — only safe when the states are sure to stay purely behavioral, or when a later refactor away from shared instances is acceptable."
