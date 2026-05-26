@@ -19,7 +19,7 @@ questions:
       2: |
         Durability protects a transaction after commit has been acknowledged. Here the problem is that
         only part of an uncommitted unit persisted.
-    explanation: "Atomicity guarantees a transaction is indivisible: either every step of the transaction is applied, or none of them are. A half-applied state (debit ✓, reservation ✗) is the textbook symptom of missing atomicity. Durability is about changes that were *already committed* surviving a crash — here the transaction had not committed. Isolation is about *concurrent* interference, which this scenario doesn't involve."
+    explanation: "Atomicity guarantees a transaction is indivisible: either every step is applied, or none are. A half-applied state (debit ✓, reservation ✗) after a crash is the textbook symptom of missing atomicity."
 
   - id: 2
     difficulty: intermediate
@@ -76,7 +76,7 @@ questions:
       2: |
         SQL systems can absolutely provide ACID transactions. The issue is equating that with
         distributed replica consistency.
-    explanation: "The two 'Consistency' words refer to different things. ACID-C means committed transactions don't violate declared constraints. CAP-C (linearizability) means every read reflects the latest write across all replicas. A SQL database that asynchronously replicates to read replicas still honors ACID on the primary but can absolutely serve stale reads from a replica — failing CAP-C. Separating these two ideas is one of the most important conceptual moves in this chapter."
+    explanation: "The two 'Consistency' words name different things. ACID-C means committed transactions don't violate declared constraints; CAP-C (linearizability) means every read reflects the latest write across all replicas. A SQL database that asynchronously replicates still honors ACID on the primary yet can serve stale reads from a replica — failing CAP-C while remaining fully ACID."
 
   - id: 5
     difficulty: intermediate

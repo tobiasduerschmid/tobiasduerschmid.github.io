@@ -21,7 +21,7 @@ questions:
       3: |
         Make is valuable because it avoids rebuilding work that is already up to date. Recompiling
         everything is the fallback Make helps prevent.
-    explanation: "**`make` rebuilds targets by comparing file modification timestamps, not hashes.** `make` looks at the file modification timestamps. If a prerequisite (like a .c file) has a newer timestamp than the target (like a .o file), `make` knows the source code has changed and recompiles the target. This enables efficient incremental builds."
+    explanation: "**`make` rebuilds targets by comparing file modification timestamps, not hashes.** If a prerequisite (like a `.c` file) is newer than the target (like its `.o` file), `make` recompiles. This timestamp comparison is what enables efficient incremental builds."
   
   - id: 2 
     difficulty: basic
@@ -61,7 +61,7 @@ questions:
       3: |
         The compiler convention is usually `CC`. `$@` is an automatic variable whose value changes for
         each rule invocation.
-    explanation: "**`$@` represents the target name of the current rule.** `$@` evaluates to the target name. It is heavily used in compilation commands (e.g., `gcc ... -o $@`) to dynamically specify the output file name."
+    explanation: "**`$@` evaluates to the target name of the current rule.** It is heavily used in compilation commands (e.g., `gcc ... -o $@`) to specify the output file name without hardcoding it."
   
   - id: 4
     difficulty: intermediate
@@ -178,7 +178,7 @@ questions:
       4: |
         `$$` is how Make emits a literal dollar sign for the shell. It is not Make's process ID
         variable.
-    explanation: "**`$@`, `$<`, and `$^` are valid Make automatic variables; `$#` and `$$` are Bash constructs, not Make.** `$@`, `$<`, and `$^` are standard automatic variables used to make Makefile rules concise and dynamic. `$#` and `$$` are Bash variables, not Make automatic variables."
+    explanation: "**`$@`, `$<`, and `$^` are valid Make automatic variables; `$#` and `$$` are Bash constructs, not Make.** The three valid ones keep rules concise and dynamic. `$#` (argument count) and `$$` (a literal dollar sign for the shell) come from Bash, not Make's automatic-variable set."
 
   - id: 9 
     difficulty: advanced
@@ -201,7 +201,7 @@ questions:
       3: |
         `MAKE_IT_FAST` has no standard meaning. A Make variable matters only if rules or included
         makefiles actually use it.
-    explanation: "**`CC`, `CFLAGS`, and `LDFLAGS` are standard Makefile conventions; `MAKE_IT_FAST` is not.** `CC`, `CFLAGS`, and `LDFLAGS` are universal conventions in Makefiles. Using them allows developers to easily swap compilers or add flags via command line arguments (e.g., `make CC=clang`) without editing the actual Makefile. `MAKE_IT_FAST` is not a standard convention."
+    explanation: "**`CC`, `CFLAGS`, and `LDFLAGS` are standard Makefile conventions; `MAKE_IT_FAST` is not.** Because tools and built-in rules recognize these names, developers can swap compilers or add flags from the command line (e.g., `make CC=clang`) without editing the Makefile. `MAKE_IT_FAST` is invented — a variable only does something if a rule actually reads it."
 
   - id: 10 
     difficulty: advanced
@@ -226,4 +226,4 @@ questions:
       3: |
         Make does not run every rule blindly. Timestamp checks are specifically how it skips up-to-date
         targets.
-    explanation: "**Makefiles are declarative and build a dependency graph top-down, executing only necessary commands bottom-up.** Makefiles are declarative, not procedural. They do not execute top-to-bottom sequentially, nor do they execute blindly. They build a dependency graph from the top-down (starting at the target), and then execute the necessary commands from the bottom-up, skipping anything that is already up to date."
+    explanation: "**Makefiles are declarative: they build a dependency graph top-down from the goal, then execute only necessary commands bottom-up.** Unlike a Bash script, they do not run top-to-bottom or rebuild blindly — prerequisites are built before the targets that need them, and anything already up to date is skipped."

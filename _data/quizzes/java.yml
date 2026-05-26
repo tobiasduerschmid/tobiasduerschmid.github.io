@@ -57,7 +57,7 @@ questions:
       3: |
         `==` does not generally compare boxed integer values. `.equals()` gives the numeric value
         comparison here.
-    explanation: "**Java only caches Integer values from -128 to 127, so 200 creates two separate heap objects — `==` returns `false` but `.equals()` returns `true`.** Java maintains an Integer cache for values −128 to 127. Outside this range, autoboxing calls `Integer.valueOf(200)` which creates a new object each time. So `x` and `y` point to different objects — `==` returns `false`. `.equals()` compares the values and returns `true`. This is why you must always use `.equals()` for wrapper types, not `==`."
+    explanation: "Java caches `Integer` objects only for values −128 to 127. Outside that range, autoboxing `200` calls `Integer.valueOf(200)`, which allocates a new object each time, so `x` and `y` are distinct objects: `==` returns `false` while `.equals()` returns `true`. Always use `.equals()` for wrapper types."
 
   - id: 3
     difficulty: intermediate
@@ -83,7 +83,7 @@ questions:
       3: |
         Java has no `-1` null sentinel for primitive `int`. The unboxing operation throws before any
         primitive value can be assigned.
-    explanation: "**Auto-unboxing calls `.intValue()` on the Integer, so assigning `null` to `int` throws NullPointerException — always check for null before unboxing.** Auto-unboxing is syntactic sugar for `.intValue()`. When `count` is `null`, calling `.intValue()` on it throws `NullPointerException`. This is a common production bug — it works fine in testing (where counts are small non-null numbers) and explodes in production when a database returns null. Always check for null before unboxing."
+    explanation: "Auto-unboxing is syntactic sugar for `.intValue()`, so assigning a `null` `Integer` to an `int` calls `.intValue()` on `null` and throws `NullPointerException`. This is a common production bug: it works in testing with small non-null values and explodes when a database returns null. Always check for null before unboxing."
 
   - id: 4
     difficulty: advanced
@@ -112,7 +112,7 @@ questions:
       3: |
         The compound operator is legal with `Integer` because Java unboxes and reboxes. That automatic
         conversion is exactly the cost being avoided.
-    explanation: "**Each `+=` on an `Integer` causes an unbox, add, and rebox — one heap allocation per iteration, creating enormous GC pressure that `int` avoids entirely.** `sum += i` expands to `sum = Integer.valueOf(sum.intValue() + i)` — two method calls and one object allocation per iteration. In a tight loop this creates enormous garbage-collector pressure. Use primitive `int` for accumulators, counters, and any variable that is never put into a generic container."
+    explanation: "On an `Integer`, `sum += i` expands to `sum = Integer.valueOf(sum.intValue() + i)` — two method calls and one heap allocation per iteration. In a million-iteration loop that is a million short-lived objects and enormous garbage-collector pressure, which primitive `int` avoids entirely. Use `int` for accumulators, counters, and any variable never placed in a generic container."
 
   - id: 5
     difficulty: advanced
@@ -125,14 +125,15 @@ questions:
     correct_index: 1
     option_feedback:
       0: |
-        This is a C++ transfer error. Java’s no-modifier access is package-private, not private.
+        `private` is the default in a C++ `class`, not in Java. Java's no-modifier access is
+        package-private — wider than `private`.
       2: |
         Java does not make unmarked members public. Public access requires the explicit `public`
         modifier.
       3: |
         Protected access includes subclasses and package access, but default Java access is
         package-private only.
-    explanation: "**Unlike C++ where the default is `private`, Java's default is package-private — any class in the same package can access the member without an explicit modifier.** This is a key false friend from C++. In a C++ `class`, the default access is `private`. In Java, the default is **package-private** — any class in the same package can read or write the member without any access modifier. This is a common source of accidental data exposure when transitioning from C++. Always be explicit with Java access modifiers."
+    explanation: "Java's default (no modifier) is package-private — any class in the same package can read or write the member. This is a false friend from C++, where the default in a `class` is `private`, and a common source of accidental data exposure on transition. Always be explicit with Java access modifiers."
 
   - id: 6
     difficulty: advanced
@@ -141,7 +142,7 @@ questions:
       ```java
       public ArrayList<Integer> getScores() { return scores; }
       ```
-      All fields are `private`. Has information hiding (Parnas 1972) been achieved?
+      All fields are `private`. Has information hiding (Parnas) been achieved?
     options:
       - "Yes — the field is `private`, so the internal representation is fully hidden"
       - "No — the return type `ArrayList<Integer>` leaks the storage decision. Switching to `int[]` or a database would break every caller of `getScores()`."
@@ -158,7 +159,7 @@ questions:
       3: |
         The `ArrayList` itself is not hidden when it appears in the method signature. Callers can now
         depend on list-specific behavior.
-    explanation: "**Information hiding is NOT achieved because the return type `ArrayList<Integer>` exposes the storage decision — switching to `int[]` or a database would break every caller.** Encapsulation (private fields) and information hiding are orthogonal. The field is encapsulated, but the method signature exposes the *secret* — the choice of `ArrayList<Integer>`. When storage changes, every caller breaks. A properly hidden design exposes behavior instead: `getAverage()`, `getLetterGrade(int score)`, `formatReport()`. Callers never see how scores are stored."
+    explanation: "Encapsulation (private fields) and information hiding are orthogonal: the field is encapsulated, but the return type `ArrayList<Integer>` leaks the *secret* — the storage choice — through the public API, so switching to `int[]` or a database breaks every caller. A properly hidden design exposes behavior instead — `getAverage()`, `getLetterGrade(int score)`, `formatReport()` — so callers never see how scores are stored."
 
   - id: 7
     difficulty: intermediate
@@ -180,7 +181,7 @@ questions:
       3: |
         Generics parameterize types; they do not by themselves define a shared method contract for
         unrelated classes.
-    explanation: "**An interface is correct here because the three classes are unrelated and share a behavioral contract only — an abstract class would be appropriate only if they also shared state or implementation.** Interfaces define contracts for unrelated classes that share behavior but no state. Abstract classes make sense when related classes share both fields and some concrete methods. `Dog`, `Car`, and `Printer` are completely unrelated — an interface is correct. This matches Java's own `java.io.Serializable`. If the three classes *also* shared a `createdAt` field and a `log()` implementation, an abstract class would be appropriate."
+    explanation: "Interfaces define a contract for unrelated classes that share behavior but no state — exactly the case for `Dog`, `Car`, and `Printer`, mirroring Java's own `java.io.Serializable`. An abstract class fits only when related classes also share fields and concrete methods; if these three shared, say, a `createdAt` field and a `log()` implementation, an abstract class would be appropriate."
 
   - id: 8
     difficulty: advanced
@@ -201,7 +202,7 @@ questions:
       3: |
         Java does not silently rewrite `ArrayList<int>` into `ArrayList<Integer>`. The source type
         argument must already be a reference type.
-    explanation: "**Java generics use type erasure and erase to `Object`, so primitives like `int` — which are not `Object` subtypes — cannot be used as type parameters; use `Integer` instead.** C++ templates generate separate code for each instantiation — `vector<int>` and `vector<string>` are distinct compiled types. Java uses type erasure: there is **one** compiled `ArrayList` class, and generic type parameters become `Object` after compilation. Since `int` is not a subtype of `Object`, it cannot be used as a type parameter. Wrap it with `Integer` (autoboxing handles the conversion automatically)."
+    explanation: "C++ templates generate separate code per instantiation, so `vector<int>` and `vector<string>` are distinct compiled types. Java instead uses type erasure: there is **one** compiled `ArrayList` class and type parameters become `Object` after compilation. Since `int` is not an `Object` subtype it cannot be a type parameter — wrap it with `Integer`, and autoboxing handles the conversion."
 
   - id: 9
     difficulty: advanced
@@ -228,7 +229,7 @@ questions:
       3: |
         `instanceof List<?>` is valid. The issue is asking about the erased element type, not checking
         an interface.
-    explanation: "**Type erasure makes `List<String>` and `List<Integer>` identical at runtime, so the compiler rejects `instanceof List<String>` as a meaningless check.** After type erasure, the JVM cannot distinguish `List<String>` from `List<Integer>` — both are just `List`. So `instanceof List<String>` would be an unsound check, and the compiler rejects it. You can write `instanceof List<?>` (unbounded wildcard) to test whether something is *any* list, but you lose the type information."
+    explanation: "After type erasure the JVM cannot distinguish `List<String>` from `List<Integer>` — both are just `List` — so `instanceof List<String>` is an unsound check the compiler rejects. You can write `instanceof List<?>` (unbounded wildcard) to test whether something is *any* list, but you lose the element-type information."
 
   - id: 10
     difficulty: intermediate
@@ -253,7 +254,7 @@ questions:
       3: |
         A `HashMap` does not preserve an ordered grade-submission history by index. It is for
         key-to-value lookup.
-    explanation: "**HashSet gives O(1) deduplication lookup, HashMap gives key-to-value mapping, and ArrayList gives ordered index access — each matches its task's requirement precisely.** `HashSet<String>` gives O(1) `contains()` and automatic deduplication. `HashMap<Integer, Double>` maps student IDs (keys) to grades (values). `ArrayList<Double>` maintains insertion order with O(1) index access. Using `ArrayList` for the submission tracker would require O(n) `contains()` checks and manual duplicate prevention."
+    explanation: "Each task matches one collection's contract: `HashSet<String>` gives O(1) `contains()` with automatic deduplication (A), `HashMap<Integer, Double>` maps IDs to grades (B), and `ArrayList<Double>` keeps insertion order with O(1) index access (C). Using `ArrayList` for the submission tracker would force O(n) `contains()` checks and manual duplicate prevention."
 
   - id: 11
     difficulty: advanced
@@ -280,7 +281,7 @@ questions:
       3: |
         `HashMap.get()` returns `null` for a missing key, not `0`. A default value requires
         `getOrDefault()` or explicit handling.
-    explanation: "**`HashMap.get()` returns `null` for missing keys, and auto-unboxing that `null` to `int` throws NullPointerException — use `getOrDefault()` or check `containsKey()` first.** `HashMap.get()` returns `null` when the key is not present. Auto-unboxing calls `.intValue()` on `null`, throwing `NullPointerException`. Fix: use `scores.getOrDefault(\"Bob\", 0)`, or check `scores.containsKey(\"Bob\")` before calling `get()`. This is one of the most common Java bugs in production code."
+    explanation: "`HashMap.get()` returns `null` for a missing key, and auto-unboxing that `null` to `int` calls `.intValue()` on `null`, throwing `NullPointerException`. Fix with `scores.getOrDefault(\"Bob\", 0)`, or check `containsKey(\"Bob\")` first. This is one of the most common Java production bugs."
 
   - id: 12
     difficulty: basic

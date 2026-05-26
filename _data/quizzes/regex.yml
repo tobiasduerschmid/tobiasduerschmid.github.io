@@ -21,7 +21,7 @@ questions:
       3: |
         Catastrophic backtracking is a performance problem in some regexes, but the deeper issue here is
         language shape: nested HTML is not regular.
-    explanation: "**RegEx fails on nested structures because it is backed by Finite State Machines, which lack the stack memory needed to track balanced nesting.** Standard regular expressions correlate to regular languages in formal language theory. They are evaluated by Finite State Machines, which do not have a 'stack' or memory mechanism to keep track of balanced, nested pairs (unlike context-free grammars used by HTML parsers)."
+    explanation: "**RegEx fails on nested structures because it is backed by Finite State Machines, which lack the stack memory needed to track balanced nesting.** Regular expressions correspond to *regular languages*; arbitrarily nested HTML is context-free, which needs a stack-based parser to count opening and closing pairs."
   
   - id: 2 
     difficulty: advanced
