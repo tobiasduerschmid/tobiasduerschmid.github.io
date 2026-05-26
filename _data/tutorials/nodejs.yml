@@ -14,7 +14,7 @@ backend: webcontainer
 debugger: true
 
 require_tests: true
-autosave_type: none
+autosave_type: files
 
 steps:
   # --------------------------------------------------------------------------

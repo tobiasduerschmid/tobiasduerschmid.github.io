@@ -9,7 +9,7 @@ backend: react
 
 instructor_mode: true
 require_tests: false
-autosave_type: none
+autosave_type: files
 
 steps:
 

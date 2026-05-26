@@ -7,7 +7,7 @@ exclude_from_index: true
 
 backend: react
 require_tests: true
-autosave_type: none
+autosave_type: files
 editor_split: true
 run_label: "Test"
 

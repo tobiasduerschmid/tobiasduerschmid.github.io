@@ -13,7 +13,7 @@ learning_objectives:
 backend: react
 
 require_tests: true
-autosave_type: none
+autosave_type: files
 
 steps:
 
