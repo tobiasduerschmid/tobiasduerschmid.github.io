@@ -136,12 +136,26 @@
         $trigger.data('a11yTooltipShowTimer', timer);
       }
 
+      // Touch devices fire `mouseenter` and `focusin` on tap but never the
+      // matching `mouseleave` / `focusout`, so a tap would pin the tooltip
+      // open until the next tap somewhere else. Skip the hover trigger on
+      // hover-less devices, and require :focus-visible (keyboard focus) for
+      // the focus trigger — tap focus does not match :focus-visible.
+      function deviceCanHover() {
+        return !!(window.matchMedia && window.matchMedia('(hover: hover)').matches);
+      }
+      function isKeyboardFocus(el) {
+        try { return !!(el && el.matches && el.matches(':focus-visible')); }
+        catch (e) { return false; }
+      }
       $triggers
         .off('.a11yTooltip')
         .on('mouseenter.a11yTooltip', function () {
+          if (!deviceCanHover()) return;
           scheduleShow(this);
         })
         .on('focusin.a11yTooltip', function () {
+          if (!isKeyboardFocus(this)) return;
           showTooltip(this);
         })
         .on('mouseleave.a11yTooltip focusout.a11yTooltip', function () {
