@@ -102,7 +102,7 @@ cards:
     difficulty: advanced
     question: "Why is **ACID-Consistency ≠ CAP-Consistency** one of the most important distinctions in data management?"
     answer: "Because the two mean different things: **ACID-C** = *declared schema constraints are never violated by a committed transaction* (a property of a single logical database). **CAP-C** = *every read returns the latest written value across replicas* (a property of a distributed system). A relational DBMS with asynchronous replication honors ACID-C on the primary yet still serves stale reads from replicas — violating CAP-C. 'Strongly consistent because we use SQL' confuses the two."
-    explanation: "This is the single most common misconception in the chapter. Whenever you see 'consistency', ask: which one?"
+    explanation: "This is the single most common confusion in the chapter. Whenever you see 'consistency', ask: which one?"
 
   - id: 20
     difficulty: advanced

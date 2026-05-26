@@ -56,7 +56,7 @@ questions:
       3: |
         SRP is not a rule that classes have one method. A class can have many methods if they all answer
         to the same actor.
-    explanation: "Three different actors (Accounting, Web, DBA) each request changes to `Invoice` for unrelated reasons. The canonical SRP refactor is to extract one class per actor around a shared data record. Visibility modifiers do not reduce the *axes of change*; inlining all three methods into one makes the tangle worse; treating SRP as 'one method per class' is the misconception the chapter explicitly debunks."
+    explanation: "Three different actors (Accounting, Web, DBA) each request changes to `Invoice` for unrelated reasons. The canonical SRP refactor is to extract one class per actor around a shared data record. Visibility modifiers do not reduce the *axes of change*; inlining all three methods into one makes the tangle worse; treating SRP as 'one method per class' is what the chapter explicitly debunks."
 
   - id: 3
     difficulty: advanced
@@ -266,7 +266,7 @@ questions:
       3: |
         The issue is not simply that the interface has four methods. It is that those methods belong to
         different client roles and should not be forced on every implementer.
-    explanation: "Though the `throw` also breaks LSP, the *root cause* is a fat interface — the textbook Interface Segregation symptom. Splitting into cohesive role interfaces means clients depend only on what they need, and simple devices need only implement `Printable`. Treating SRP as a method-count rule is the misconception the chapter debunks; DIP is about the direction of dependencies, not interface size."
+    explanation: "Though the `throw` also breaks LSP, the *root cause* is a fat interface — the textbook Interface Segregation symptom. Splitting into cohesive role interfaces means clients depend only on what they need, and simple devices need only implement `Printable`. Treating SRP as a method-count rule is what the chapter debunks; DIP is about the direction of dependencies, not interface size."
 
   - id: 11
     difficulty: advanced
