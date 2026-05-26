@@ -66,6 +66,13 @@ Here are some examples illustrating the difference between a **requirement** (wh
     * **Design Decision:** Cache the text and images of recently opened articles locally on the device using an SQLite database embedded in the mobile application.
 
 
+## Practice: Requirement or Design?
+
+Use the quiz below to practice the boundary: a requirement should describe the outcome the system must satisfy, while a design decision chooses the mechanism used to satisfy it.
+
+{% include quiz.html id="requirements_vs_design" heading_level=3 %}
+
+
 ## Why Does the Difference Matter?
 
 Blurring the lines between requirements and design is a common mistake that leads to misunderstandings. In practice, the two are often pursued cooperatively and contemporaneously, yet the distinction matters for three main reasons:

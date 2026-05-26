@@ -1,0 +1,203 @@
+title: "Requirements vs. Design Practice"
+description: "Classify each statement by deciding whether it captures the required outcome or prematurely chooses an implementation."
+active: true
+questions:
+  - id: 1
+    difficulty: basic
+    question: |
+      A library catalog team writes: "Readers must be able to search for books by keyword, title, or author name, even when they make minor typos." How should this statement be classified?
+    options:
+      - "Requirement: it states the search behavior and tolerance the user needs."
+      - "Design decision: it requires a specific search engine."
+      - "Design decision: it specifies the database index structure."
+      - "Requirement: any sentence about user-visible behavior is automatically complete."
+    correct_index: 0
+    option_feedback:
+      1: |
+        The statement leaves the search engine open. Elasticsearch, database full-text search, or another approach could satisfy the same need.
+      2: |
+        No data structure or index design is named here. The statement describes what the system should let readers do.
+      3: |
+        User-visible behavior can still be vague or incomplete, but this statement does capture a user outcome without choosing an implementation.
+    explanation: |
+      This is a requirement because it describes the outcome the system must provide: searchable catalog access that tolerates minor typos. It does not name the search engine, index, data model, or algorithm.
+
+  - id: 2
+    difficulty: basic
+    question: |
+      A team writes: "Index the book catalog in Elasticsearch and use fuzzy matching for misspelled queries." How should this statement be classified?
+    options:
+      - "Requirement: it describes the reader's need in measurable terms."
+      - "Design decision: it chooses a search technology and mechanism."
+      - "Requirement: fuzzy matching is always a stakeholder-visible feature."
+      - "Design decision: it avoids saying anything about the search feature."
+    correct_index: 1
+    option_feedback:
+      0: |
+        The reader's need is to find books despite minor typos. Naming Elasticsearch chooses one way to deliver that need.
+      2: |
+        Typo tolerance can be a requirement, but the particular fuzzy-matching mechanism is an implementation choice.
+      3: |
+        The statement is about search, but it frames search through a technology choice rather than the user outcome.
+    explanation: |
+      This is a design decision because it selects a concrete implementation technology and matching strategy. A requirement would say what search capability users need, not which engine must implement it.
+
+  - id: 3
+    difficulty: basic
+    question: |
+      An e-commerce team writes: "The application must restore a user's cart items after the browser is accidentally closed." How should this statement be classified?
+    options:
+      - "Requirement: it states the persistence outcome the shopper expects."
+      - "Design decision: it requires a specific in-memory cache."
+      - "Design decision: it defines the database schema."
+      - "Requirement: it is correct only if it names a storage technology."
+    correct_index: 0
+    option_feedback:
+      1: |
+        A cache could be one solution, but the statement does not require one. The stable need is that cart contents survive the browser closing.
+      2: |
+        The statement does not define tables, collections, or fields. It leaves storage design open.
+      3: |
+        Good requirements often avoid naming technologies. The storage choice belongs in design unless the technology itself is a genuine constraint.
+    explanation: |
+      This is a requirement because it defines observable behavior: cart items should not be lost when the browser closes. Many storage designs could satisfy that requirement.
+
+  - id: 4
+    difficulty: basic
+    question: |
+      A shopping application specification says: "Store active cart data in Redis with a 30-minute expiration time." How should this statement be classified?
+    options:
+      - "Requirement: it states that shoppers should not lose cart items."
+      - "Design decision: it chooses a storage technology and retention policy."
+      - "Requirement: Redis is the user's actual goal."
+      - "Design decision: it is unrelated to cart persistence."
+    correct_index: 1
+    option_feedback:
+      0: |
+        The shopper-facing requirement would be about preserving cart contents. This statement jumps to a particular storage mechanism.
+      2: |
+        Users normally care that their cart is preserved, not that Redis is involved. Redis is an engineering choice.
+      3: |
+        The statement is related to cart persistence, but it states the implementation rather than the user need.
+    explanation: |
+      This is a design decision because it names Redis and a specific expiration policy. Those may be good engineering choices, but they should not be confused with the requirement that cart contents remain available.
+
+  - id: 5
+    difficulty: basic
+    question: |
+      A financial dashboard team writes: "Only registered and verified users may view account balances." How should this statement be classified?
+    options:
+      - "Requirement: it states the access rule the system must enforce."
+      - "Design decision: it requires OAuth 2.0."
+      - "Design decision: it requires JSON Web Tokens."
+      - "Requirement: it is about security, so implementation details are mandatory."
+    correct_index: 0
+    option_feedback:
+      1: |
+        OAuth 2.0 could help implement the access rule, but the statement does not require that protocol.
+      2: |
+        Session tokens are one possible design. The requirement is the access restriction on account balances.
+      3: |
+        Security requirements still benefit from separating the policy from the mechanism. The requirement says what must be protected.
+    explanation: |
+      This is a requirement because it defines a system rule that must hold from the user's and business's perspective. It leaves the authentication protocol and session design open.
+
+  - id: 6
+    difficulty: basic
+    question: |
+      A dashboard implementation plan says: "Use OAuth 2.0 for third-party login and issue JSON Web Tokens for user sessions." How should this statement be classified?
+    options:
+      - "Requirement: it states who may access the dashboard."
+      - "Design decision: it chooses authentication and session mechanisms."
+      - "Requirement: naming a standard protocol makes the statement user-centered."
+      - "Design decision: it says the dashboard does not need access control."
+    correct_index: 1
+    option_feedback:
+      0: |
+        The access rule is the requirement. OAuth 2.0 and JSON Web Tokens describe how engineers plan to enforce it.
+      2: |
+        A standard protocol can be a good design choice, but standardization does not turn implementation detail into a user need.
+      3: |
+        The statement assumes access control is needed. Its classification turns on the named mechanisms.
+    explanation: |
+      This is a design decision because it chooses specific authentication and session technologies. A requirement would describe the access policy those technologies must satisfy.
+
+  - id: 7
+    difficulty: intermediate
+    question: |
+      A route-planning app team writes: "The system must display the shortest available route from the user's current location to the selected destination." How should this statement be classified?
+    options:
+      - "Requirement: it states the route result the user needs."
+      - "Design decision: it requires Dijkstra's algorithm."
+      - "Design decision: it requires a weighted graph representation."
+      - "Requirement: it is too technical because it uses the phrase shortest route."
+    correct_index: 0
+    option_feedback:
+      1: |
+        The statement requires a shortest route, not a particular shortest-path algorithm.
+      2: |
+        A weighted graph could be an implementation strategy, but the requirement does not force that representation.
+      3: |
+        "Shortest route" is a user-visible outcome, especially in a route-planning context. It can still be refined with units or tie-breaking rules.
+    explanation: |
+      This is a requirement because it states what result the app must provide. Algorithms and map representations remain part of the design space.
+
+  - id: 8
+    difficulty: intermediate
+    question: |
+      A route-planning design note says: "Represent roads as a weighted graph and run A* search with distance as the heuristic." How should this statement be classified?
+    options:
+      - "Requirement: it guarantees the route is useful to the user."
+      - "Design decision: it chooses a data representation and algorithm."
+      - "Requirement: every route-planning system must use graph search."
+      - "Design decision: it does not relate to the shortest-route feature."
+    correct_index: 1
+    option_feedback:
+      0: |
+        The design may help produce useful routes, but it is still a technical method rather than the user-facing need.
+      2: |
+        Graph search is common, but not every valid requirement should force that approach before design work begins.
+      3: |
+        It is related to the route feature, but it describes how the route will be computed.
+    explanation: |
+      This is a design decision because it commits to both an internal map model and a search algorithm. The corresponding requirement would say what route the user must receive.
+
+  - id: 9
+    difficulty: intermediate
+    question: |
+      A collaborative editor team writes: "Multiple users must be able to edit the same file at the same time and see each other's changes within 500 ms." How should this statement be classified?
+    options:
+      - "Requirement: it states collaboration behavior and a measurable response time."
+      - "Design decision: it requires Operational Transformation."
+      - "Design decision: it requires WebSockets."
+      - "Requirement: it is invalid because timing can never appear in requirements."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Operational Transformation is one conflict-resolution approach. The statement only defines the collaboration behavior and latency target.
+      2: |
+        WebSockets could be a design choice, but the requirement does not specify the transport mechanism.
+      3: |
+        Quality attribute requirements often need measurable timing targets. The key is avoiding premature implementation detail.
+    explanation: |
+      This is a requirement because it defines required behavior plus a measurable quality attribute. The team can still choose among different synchronization, conflict-resolution, and transport designs.
+
+  - id: 10
+    difficulty: intermediate
+    question: |
+      A collaborative editor design says: "Use WebSockets for persistent two-way communication and Operational Transformation to resolve concurrent edits." How should this statement be classified?
+    options:
+      - "Requirement: it states that users can collaborate in real time."
+      - "Design decision: it chooses transport and conflict-resolution mechanisms."
+      - "Requirement: WebSockets are the user-visible outcome."
+      - "Design decision: it prevents the system from supporting collaboration."
+    correct_index: 1
+    option_feedback:
+      0: |
+        Real-time collaboration is the user-facing need. WebSockets and Operational Transformation describe one technical plan for delivering it.
+      2: |
+        Users experience fast shared editing, not WebSockets directly. The protocol is implementation detail unless an external integration truly requires it.
+      3: |
+        These mechanisms may support collaboration. The issue is not that they are harmful, but that they are design choices.
+    explanation: |
+      This is a design decision because it selects a communication protocol and conflict-resolution strategy. The requirement should preserve the outcome while leaving room to evaluate alternative designs.

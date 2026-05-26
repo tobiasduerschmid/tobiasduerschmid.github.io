@@ -4,6 +4,7 @@ active: true
 decks:
   - user_stories
   - requirements
+  - requirements_vs_design
   - uml_class_diagram_examples
   - uml_component_diagram_examples
   - uml_sequence_diagram_examples
@@ -17,6 +18,7 @@ decks:
   - tdd
   - software_architecture
   - quality_attributes
+  - quality_attribute_specifications
   - quality_attribute_interoperability
   - quality_attribute_testability
   - architectural_tactics
