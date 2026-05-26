@@ -1188,6 +1188,98 @@ test.describe('UML playground visual editor', () => {
     expect(after.x).toBeCloseTo(before.x + 20, 0);
   });
 
+  test('undo after a visual nudge restores the element and keyboard focus', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+
+    const animalButton = page.getByRole('button', { name: /Element Animal/ });
+    const before = await nodeHitboxBox(page, 'Animal');
+    expect(before, 'Animal needs an editable hitbox to begin').not.toBeNull();
+
+    await animalButton.focus();
+    await expect(animalButton).toBeFocused();
+    // Each nudge re-renders the hitbox DOM and restores focus via setTimeout;
+    // wait for focus before pressing again so the second nudge actually lands.
+    await page.keyboard.press('ArrowRight');
+    await expect(animalButton).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+    await expect(animalButton).toBeFocused();
+    const nudged = await nodeHitboxBox(page, 'Animal');
+    expect(nudged.x).toBeCloseTo(before.x + 20, 0);
+
+    // Click the toolbar undo so we exercise the same code path keyboard
+    // Cmd/Ctrl+Z hits — verifies focus restoration after the render.
+    await page.locator('#uml-pg-undo').click();
+
+    const reverted = await nodeHitboxBox(page, 'Animal');
+    expect(reverted.x).toBeCloseTo(before.x, 0);
+    // Selection survives the undo so the props pane still targets Animal.
+    await expect(animalButton).toBeFocused();
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="Animal"]')).toHaveClass(/is-selected/);
+  });
+
+  test('Cmd+Z keyboard shortcut from the canvas reverts and refocuses the element', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+
+    const animalButton = page.getByRole('button', { name: /Element Animal/ });
+    const before = await nodeHitboxBox(page, 'Animal');
+
+    await animalButton.focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(animalButton).toBeFocused();
+
+    const isMac = process.platform === 'darwin';
+    await page.keyboard.press(isMac ? 'Meta+z' : 'Control+z');
+
+    const reverted = await nodeHitboxBox(page, 'Animal');
+    expect(reverted.x).toBeCloseTo(before.x, 0);
+    await expect(animalButton).toBeFocused();
+  });
+
+  test('sustained nudge beyond the coalesce window chunks into multiple undo entries', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+
+    const animalButton = page.getByRole('button', { name: /Element Animal/ });
+    const before = await nodeHitboxBox(page, 'Animal');
+    await animalButton.focus();
+
+    // Press ArrowRight every 200ms for ~4 seconds. Each press is within
+    // COALESCE_MS (600 ms) of the previous so the old behavior would collapse
+    // the whole burst into a single undo entry. The MAX_COALESCE_MS cap
+    // (3000 ms) must force a second entry before the burst ends, so the user
+    // can back out of the gesture incrementally instead of in one all-or-nothing
+    // undo.
+    const PRESS_COUNT = 20;
+    const PRESS_INTERVAL_MS = 200;
+    for (let i = 0; i < PRESS_COUNT; i += 1) {
+      await page.keyboard.press('ArrowRight');
+      await page.waitForTimeout(PRESS_INTERVAL_MS);
+    }
+
+    const peak = await nodeHitboxBox(page, 'Animal');
+    expect(peak.x).toBeGreaterThan(before.x + (PRESS_COUNT - 1) * 10 - 5);
+
+    const undoBtn = page.locator('#uml-pg-undo');
+    await expect(undoBtn).toBeEnabled();
+    await undoBtn.click();
+
+    const afterFirst = await nodeHitboxBox(page, 'Animal');
+    // First undo must NOT take us all the way back — that would mean the
+    // sustained burst collapsed into one entry.
+    expect(afterFirst.x).toBeGreaterThan(before.x + 5);
+    expect(afterFirst.x).toBeLessThan(peak.x - 5);
+
+    // Continue undoing until the button disables; we should land back at the
+    // starting x.
+    while (await undoBtn.isEnabled()) {
+      await undoBtn.click();
+    }
+    const fullyReverted = await nodeHitboxBox(page, 'Animal');
+    expect(fullyReverted.x).toBeCloseTo(before.x, 0);
+  });
+
   test('UML editor help shortcut only toggles tips while focus is inside the editor', async ({ page }) => {
     await page.addInitScript(() => localStorage.removeItem('uml-pg-help-dismissed'));
     await page.goto(UML_EDITOR_URL);

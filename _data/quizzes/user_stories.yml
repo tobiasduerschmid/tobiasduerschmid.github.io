@@ -44,7 +44,7 @@ questions:
         testable.
     explanation: "**This violates Independent because the payment story cannot be completed without the unimplemented user registration and cart management stories.** This user story violates the **Independent** criterion because it depends on the user registration and cart management stories. All other INVEST criteria are met."
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     type: multiple
     question: |
       Read the following user story and its acceptance criteria: 
@@ -84,7 +84,7 @@ questions:
         checks.
     explanation: "**This violates Negotiable (by dictating a specific tech stack) and Valuable (because the tech stack choice provides no direct business value to the user).** This violates **Negotiable** because it rigidly dictates the exact technical implementation rather than stating a problem for the developers to solve. It also violates **Valuable**, because the end-user generally derives no direct business value from the specific tech stack being used; their value comes solely from being able to view their profile."
   - id: 3
-    difficulty: intermediate
+    difficulty: basic
     type: multiple
     question: |
       Read the following user story and its acceptance criteria: 
@@ -124,7 +124,7 @@ questions:
         no value.
     explanation: "**This violates Valuable (work with no utility produces no return on investment) and Negotiable (it prescribes a specific database change rather than expressing a user need).** This heavily violates **Valuable** because doing work that has no impact, utility, or visible outcome provides no return on investment. It also violates **Negotiable** by prescribing a hyper-specific database tweak rather than a flexible user need, completely missing the spirit of a user story."
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     type: multiple
     question: |
       Read the following user story and its acceptance criteria: 

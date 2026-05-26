@@ -4,7 +4,7 @@ active: true
 cards:
 
   - id: 1
-    difficulty: intermediate
+    difficulty: basic
     question: |
       ```java
       String a = new String("hello");
@@ -23,7 +23,7 @@ cards:
       **Key insight:** Java's `==` is *always* a reference comparison for objects. Unlike Python's `==` (value comparison) and C++'s `==` (overloadable per class), Java's `==` never examines content.
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     question: |
       ```java
       Integer x = 127;
@@ -43,7 +43,7 @@ cards:
       **Why dangerous:** Tests usually use small values (IDs, counts) that fall in the cache range. `==` appears to work. In production, large IDs or counts fall outside the cache and `==` silently returns `false`. The fix is always `.equals()` for wrapper types.
 
   - id: 3
-    difficulty: intermediate
+    difficulty: basic
     question: |
       ```java
       Integer count = null;
@@ -60,7 +60,7 @@ cards:
       This is a common production bug because `Integer` fields default to `null` (not `0`), and database queries returning no row often produce `null` wrapper values.
 
   - id: 4
-    difficulty: advanced
+    difficulty: basic
     question: |
       ```java
       // Version A
@@ -116,7 +116,7 @@ cards:
       This is the core value of encapsulation: **validation cannot be bypassed** because callers have no path to the field directly.
 
   - id: 6
-    difficulty: advanced
+    difficulty: basic
     question: |
       ```java
       class GradeReport {
@@ -145,7 +145,7 @@ cards:
       After this refactoring, switching from `ArrayList` to `int[]` changes exactly one class.
 
   - id: 7
-    difficulty: intermediate
+    difficulty: basic
     question: |
       ```java
       public interface Shape {
@@ -187,7 +187,7 @@ cards:
       It also catches the case where an interface method is renamed — the override becomes a dead method silently if `@Override` is absent.
 
   - id: 8
-    difficulty: advanced
+    difficulty: basic
     question: |
       ```java
       abstract class Vehicle {
@@ -221,7 +221,7 @@ cards:
       In C++, the equivalent constraint is enforced through initializer lists: `Car(String make) : Vehicle(make) { }`.
 
   - id: 9
-    difficulty: intermediate
+    difficulty: basic
     question: |
       ```java
       Vehicle[] fleet = {
@@ -241,7 +241,7 @@ cards:
       This is Java's default behavior for all non-static, non-final methods. Unlike C++, where virtual dispatch requires the `virtual` keyword, every Java method is effectively virtual.
 
   - id: 10
-    difficulty: expert
+    difficulty: basic
     question: |
       ```java
       public class Pair<A, B> {
@@ -268,7 +268,7 @@ cards:
       If `swap` used `A` and `B` directly, a static method would need to belong to a specific `Pair<A, B>`, which is impossible. The method-level parameters `<X, Y>` make `swap` work for *any* `Pair`, not just one with a specific concrete type.
 
   - id: 11
-    difficulty: intermediate
+    difficulty: basic
     question: |
       ```java
       Map<String, Integer> scores = new HashMap<>();
@@ -294,7 +294,7 @@ cards:
       This is one of the most common Java production bugs: HashMap silently returns null, and the NPE appears at the *unboxing site*, which is often far from where the missing key was introduced.
 
   - id: 12
-    difficulty: intermediate
+    difficulty: basic
     question: |
       ```java
       public class SafeCalculator {
@@ -319,7 +319,7 @@ cards:
       The design choice says: *"Division by zero is a recoverable situation the caller should explicitly decide how to handle"* — not a programmer error. This is appropriate for library APIs where you want to force callers to think about failure modes.
 
   - id: 13
-    difficulty: advanced
+    difficulty: basic
     question: |
       ```java
       // Version A
@@ -346,7 +346,7 @@ cards:
       **Version B is correct.** The parameter should be the **narrowest interface** that expresses what the method actually needs. `average()` only needs to iterate — that's a `List` contract, not an `ArrayList` one. Using `ArrayList` couples callers to an implementation detail the method doesn't actually require.
 
   - id: 14
-    difficulty: intermediate
+    difficulty: basic
     question: |
       ```java
       Set<String> submitted = new HashSet<>();
@@ -373,7 +373,7 @@ cards:
       **Design principle:** The collection type encodes your **invariant** — what the data is allowed to contain. Choosing `HashSet` for submitted assignments is not just a performance choice; it's a semantic declaration that *"a student can only submit once."* `ArrayList` gives you no such guarantee.
 
   - id: 15
-    difficulty: advanced
+    difficulty: basic
     question: |
       ```java
       public class Course implements Enrollable {

@@ -3,7 +3,7 @@ description: "Apply XP practices to real team scenarios — choose between pair 
 active: true
 questions:
   - id: 1
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A 200-person organization building flight control software for an aircraft is considering adopting XP. What is the most accurate response?
@@ -23,7 +23,7 @@ questions:
     explanation: "**XP is purpose-built for small (4–10 person) co-located teams working in environments where requirements evolve and working software can be deployed continuously to gather feedback.** It is not a universal best-practice framework — it has explicit applicability boundaries. Safety-critical aerospace, regulated medical devices, and very large organizations are common cases where its assumptions don't hold and a different process is appropriate."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       Your team's CI build takes 47 minutes. The team lead says "We're integrating multiple times per day, so we're doing XP CI." Push back — what is XP's specific benchmark, and why does it matter?
@@ -43,7 +43,7 @@ questions:
     explanation: "**The 10-minute build is XP's operational definition of *fast feedback*. Past that, developers stop running the full build locally, batch changes, and CI loses its function as an early warning system.** The fix when the build slows: parallelize tests, split the build pipeline (fast smoke tests + slower extended suites), invest in test selection (run only tests affected by a change), or remove redundant or slow tests."
 
   - id: 3
-    difficulty: advanced
+    difficulty: basic
     type: multiple
     question: |
       A team has practiced **collective code ownership** for two years. Which of these are *real benefits* the practice typically delivers? Select all that apply.
@@ -68,7 +68,7 @@ questions:
     explanation: "**Collective code ownership raises the bus factor, enables anyone to fix anything, and speeds review — but it *requires* coding standards to remain feasible. Without unified style, every file becomes alien to its non-original-author readers and the practice collapses.** The two practices are designed to compose: standards make collective ownership feasible; collective ownership makes standards worth investing in."
 
   - id: 4
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       During iteration planning, the team estimates story X. One developer says 3 story points; another says 13. They're using Planning Poker. What should they do next?
@@ -88,7 +88,7 @@ questions:
     explanation: "**The value of Planning Poker is the *conversation* that follows divergent estimates, not the number it produces. Wildly different estimates are *information* — they reveal that team members hold different mental models of the work, and resolving that disagreement is what produces a realistic estimate.** Teams that average or vote skip the highest-value part of the process and end up under- or over-estimating in ways that bite during the iteration."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       Two developers pair-program for a week. One says "Pair programming costs us 2x the head count for the same output — it's wasteful." What is the strongest *defense* of the practice?
@@ -109,7 +109,7 @@ questions:
       **Raw character-count throughput is the wrong productivity measure for engineering work. Defect rate, knowledge spread, design quality, and onboarding speed all matter — and pair programming improves them.** Empirically, pairs take *modestly more* total developer-time than two solo developers but produce *fewer defects* (Williams; Lui & Chan; Cockburn & Williams). The honest framing isn't "pairs always beat solos" — it's that the 2x-cost framing only works if you ignore defect rate, design quality, and knowledge distribution, and those are the things that decide long-term velocity.
 
   - id: 6
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       A team rigorously practices **TDD** (Red → Green → Refactor) but their codebase has become a sprawling mess of poorly-bounded modules with leaking abstractions. A critic argues that TDD itself is the problem. What is the actual diagnosis?
@@ -129,7 +129,7 @@ questions:
     explanation: "**TDD's local feature focus is a known blind spot — it doesn't automatically organize modules around design decisions likely to change. XP addresses this with 'continuous attention to technical excellence' — deliberate architectural refactoring steps that complement the feature-by-feature TDD loop.** Teams that do TDD without architectural refactoring eventually drown in test-passing, structurally-broken code. The solution is both TDD *and* deliberate design attention, not one or the other."
 
   - id: 7
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A startup founder argues XP is too rigid for their team of 3. They want to keep TDD and CI but drop the other practices. Why might this be a *false economy*?
@@ -149,7 +149,7 @@ questions:
     explanation: "**XP practices are loosely coupled but mutually reinforcing — pair programming + collective ownership + coding standards form a triangle; small releases + TDD + CI form another. Cherry-picking a few without understanding which synergies you're forfeiting can hollow out the practice you kept.** A team of 3 can absolutely adapt XP, but the conversation should be about which synergies they need most, not 'which one practice to keep alone.'"
 
   - id: 8
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       An XP team holds a **release planning** meeting and an **iteration planning** meeting. What's the difference, and why are they separate?
@@ -169,7 +169,7 @@ questions:
     explanation: "**The two altitudes serve different decisions: release planning is about *which stories to invest in next* (business value × cost); iteration planning is about *how to deliver this iteration's stories* (task breakdown, allocation, risk). Separating them keeps each conversation focused and prevents the customer from rabbit-holing into tasks while the team rabbit-holes into priorities.**"
 
   - id: 9
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       A team starts every feature with TDD, but they consistently produce features where the test passes but the design is fragile and hard to change later. Diagnose the gap and propose a fix consistent with XP.
@@ -189,7 +189,7 @@ questions:
     explanation: "**TDD's third step (REFACTOR) is the design-pressure step. Skipping it leaves GREEN-quality code (works, but probably ugly) shipping into the codebase, where it becomes the next developer's problem. The fix is process discipline: REFACTOR is non-optional, not a 'when there's time' step.** Healthy XP teams enforce this with pair programming (the Navigator nudges the Driver to refactor) and with code review pre-merge."
 
   - id: 10
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       An XP team in iteration 3 of a 6-month engagement realizes the customer's most-requested feature is buggy and was based on a flawed assumption. The team wants to discard the work and rebuild on a different approach. Which XP value most directly supports this decision?

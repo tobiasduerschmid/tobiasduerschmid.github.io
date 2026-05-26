@@ -23,7 +23,7 @@ questions:
     explanation: "Regression testing's value is *cross-area early warning*. When a developer touches module A and breaks module B, the regression suite is what fails. Disabling it removes the warning system; finding the same bugs in QA or production costs orders of magnitude more — developer hours, incident response, user impact, lost trust. Slowness and flakiness are real problems, but the right response is to fix them, not to disable the suite."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       You are testing a new `discount(cart, customer)` function. You write two tests:
@@ -49,7 +49,7 @@ questions:
     explanation: "Black-box tests assert at the spec boundary and let any conforming implementation pass — they survive refactoring. White-box tests pin specific internal mechanisms and break when those mechanisms change, even when behavior is preserved. The healthy ratio is many black-box tests for behavior coverage plus a smaller number of white-box tests for known implementation-specific risks (off-by-one in a private helper, defensive branch the spec doesn't enumerate)."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       You are about to test the behavior: *'when a user clicks "Save" in the profile editor, their changes persist and show up on next page load.'* Which level of the testing pyramid is the natural primary home for this test?
@@ -69,7 +69,7 @@ questions:
     explanation: "Match the level to the behavior. Persistence is fundamentally a cross-module behavior — your code, your ORM, and the database all have to cooperate. Integration tests exercise that cooperation directly without the cost of a full browser. Reserve system/E2E tests for the end-to-end user flows that genuinely require the deployed environment (login, checkout)."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A team's test breakdown is: 5 unit tests, 2 integration tests, 250 system (end-to-end) tests. CI takes 90 minutes; flake rate is 12%. What test-pyramid concept is being violated, and what's the structural fix?
@@ -89,7 +89,7 @@ questions:
     explanation: "The ice-cream-cone anti-pattern (mostly system tests) is one of the canonical failure modes the pyramid shape exists to prevent. The deeper logic: when feedback is slow and flake rate is high, engineers stop trusting the suite and start ignoring red builds. Restoring the pyramid shape — many fast unit tests, a layer of integration tests, a handful of system tests — restores the trust and speed the suite is supposed to provide."
 
   - id: 5
-    difficulty: advanced
+    difficulty: basic
     type: multiple
     question: |
       A reviewer says: *'White-box testing is just an outdated form of testing — the only modern style is black-box.'* Which of the following are valid counter-arguments? (Select all that apply.)
@@ -114,7 +114,7 @@ questions:
     explanation: "Black-box and white-box are complementary lenses, not competing methodologies. Black-box tests survive refactoring and pin behavior at the spec boundary; white-box tests catch implementation-specific risks the spec doesn't enumerate. Coverage tools, mutation testing, and property-based testing all draw on white-box intuitions even in modern suites. The mature view is *both, in the right proportion* — not one or the other."
 
   - id: 6
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       A team adds 'CI must pass' as a release gate. Within a month, the gate is bypassed for 'urgent fixes' every other week. A retrospective reveals that CI takes 45 minutes and fails 1 run in 8 due to flake. Which two-part fix would *restore the gate's value*?

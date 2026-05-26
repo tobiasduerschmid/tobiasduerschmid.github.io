@@ -45,7 +45,7 @@ questions:
     explanation: "**A Tab character is strictly required; spaces cause a 'missing separator' error.** Makefile syntax strictly requires command lines (recipes) to be indented with a single Tab character. Using spaces will result in a 'missing separator' error."
   
   - id: 3 
-    difficulty: intermediate
+    difficulty: basic
     question: "What does the automatic variable `$@` represent in a Makefile rule?" 
     options: 
       - "The name of the first prerequisite." 
@@ -64,7 +64,7 @@ questions:
     explanation: "**`$@` represents the target name of the current rule.** `$@` evaluates to the target name. It is heavily used in compilation commands (e.g., `gcc ... -o $@`) to dynamically specify the output file name."
   
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     question: "Why is the `.PHONY` directive used in Makefiles (e.g., `.PHONY: clean`)?"
     options: 
       - "To suppress `make` from echoing the command to the terminal." 
@@ -105,7 +105,7 @@ questions:
     explanation: "**`make` without arguments builds the very first target defined in the Makefile.** By default, `make` begins execution with the first target it encounters in the file. By convention, developers often make the first target `all` (which depends on the main executables) so that running `make` builds the entire project."
 
   - id: 6 
-    difficulty: intermediate
+    difficulty: basic
     question: "You have a pattern rule: `%.o: %.c`. What does the `%` symbol do?" 
     options: 
       - "It is a wildcard — `%.o: %.c` matches every `.c` file to its `.o` counterpart."
@@ -126,7 +126,7 @@ questions:
     explanation: "**`%` is a wildcard that creates a generic pattern rule matching any `.c` file to its corresponding `.o` file.** The `%` symbol is a wildcard in pattern rules. `%.o: %.c` acts as a generic template, avoiding the need to write individual rules for every single source file in a project."
 
   - id: 7 
-    difficulty: advanced
+    difficulty: basic
     type: multiple 
     question: "Which of the following are primary benefits of using a Makefile instead of a standard procedural Bash script (`build.sh`)? (Select all that apply)" 
     options: 
@@ -155,7 +155,7 @@ questions:
     explanation: "**Makefiles win over shell scripts by providing incremental builds, automatic dependency ordering, and standardized commands.** Makefiles save time via incremental compilation, manage complex dependency graphs automatically (declarative vs procedural), and provide standardized commands. They do not run the compiler faster, nor do they write code for you."
 
   - id: 8 
-    difficulty: advanced
+    difficulty: basic
     type: multiple 
     question: "Which of the following are valid Automatic Variables in Make? (Select all that apply)" 
     options: 
@@ -181,7 +181,7 @@ questions:
     explanation: "**`$@`, `$<`, and `$^` are valid Make automatic variables; `$#` and `$$` are Bash constructs, not Make.** `$@`, `$<`, and `$^` are standard automatic variables used to make Makefile rules concise and dynamic. `$#` and `$$` are Bash variables, not Make automatic variables."
 
   - id: 9 
-    difficulty: intermediate
+    difficulty: basic
     type: multiple 
     question: "In standard C/C++ project Makefiles, which of the following variables are common conventions used to increase flexibility? (Select all that apply)" 
     options: 
@@ -204,7 +204,7 @@ questions:
     explanation: "**`CC`, `CFLAGS`, and `LDFLAGS` are standard Makefile conventions; `MAKE_IT_FAST` is not.** `CC`, `CFLAGS`, and `LDFLAGS` are universal conventions in Makefiles. Using them allows developers to easily swap compilers or add flags via command line arguments (e.g., `make CC=clang`) without editing the actual Makefile. `MAKE_IT_FAST` is not a standard convention."
 
   - id: 10 
-    difficulty: advanced
+    difficulty: basic
     type: multiple 
     question: "How does the evaluation logic of a Makefile differ from a standard cookbook recipe or procedural script? (Select all that apply)" 
     options: 

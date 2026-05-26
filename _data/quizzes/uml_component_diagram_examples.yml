@@ -45,7 +45,7 @@ questions:
     explanation: "**A provided interface (lollipop) means the component implements and offers this service to others; a required interface (socket) means it needs the service from elsewhere.** A **provided interface** (lollipop/ball) means the component **implements and offers** this service. Other components can connect to it. The opposite --- a **required interface** (socket) --- means the component needs this service from someone else."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: >
       What is the purpose of **ports** (small squares on component boundaries)?
@@ -109,7 +109,7 @@ questions:
     explanation: "**A dashed arrow represents a dependency — a weaker 'uses' relationship, as opposed to solid assembly connectors for primary interface connections.** A **dashed arrow** (<span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"..>\"></span>) represents a **dependency** — a weaker relationship where one component uses another (e.g., for logging, metrics). This is the same notation as class diagram dependencies. Solid arrows (<span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"-->\"></span>) represent assembly connectors for primary communication pathways."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: basic
     type: multiple
     question: >
       Which of the following are valid elements in a UML Component Diagram? (Select all that apply.)
@@ -137,7 +137,7 @@ questions:
     explanation: "**Component diagrams contain components, provided/required interfaces, ports, and assembly connectors — lifelines belong in sequence diagrams, not here.** Component diagrams contain **components**, **provided interfaces** (ball), **required interfaces** (socket), **ports** (squares), and **assembly connectors** (arrows). **Lifelines** belong in sequence diagrams, not component diagrams."
 
   - id: 7
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: >
       What does the ball-and-socket notation (assembly connector) represent?
@@ -159,7 +159,7 @@ questions:
     explanation: "**The ball-and-socket connector links a required interface to a matching provided interface, showing the dependency is satisfied through loose coupling.** The **ball-and-socket** (assembly connector) links a component's **required interface** (socket) to another component's **provided interface** (ball). This shows the dependency is satisfied and enables **loose coupling** — components depend on interfaces, not specific implementations."
 
   - id: 8
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: >
       A system has a `ShoppingCart` component that needs payment processing, and a `StripeGateway` component that provides it. If you want to later swap `StripeGateway` for `PayPalGateway`, what UML concept enables this?

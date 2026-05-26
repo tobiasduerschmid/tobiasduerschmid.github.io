@@ -3,7 +3,7 @@ description: "Recalling what you just learned is the best way to form lasting me
 active: true
 questions:
   - id: 1
-    difficulty: intermediate
+    difficulty: basic
     question: "Two days into a Sprint, analytics from a beta cohort show users are abandoning a newly shipped checkout flow. The team immediately stops the planned roadmap and reworks the flow. Which **pillar** of Scrum's empirical process does this most directly enact?"
     options:
       - "Transparency"
@@ -21,7 +21,7 @@ questions:
     explanation: "**Acting on evidence by changing course is adaptation — the third pillar of Scrum's empirical process.** The three pillars are *Transparency* (the work is visible), *Inspection* (frequent checks against the Sprint Goal), and *Adaptation* (course-correct as soon as inspection demands it). Adaptation is the pillar that turns visibility and observation into actual change."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     question: "Which description best captures how a Scrum Team should operate?"
     options:
       - "A group of specialists who wait for detailed instructions from a project manager."
@@ -75,7 +75,7 @@ questions:
     explanation: "**The Product Owner is the single person accountable for ordering the Product Backlog to maximize the value of the product.** Splitting that accountability across a committee, the Scrum Master, or the Developers tends to produce competing priorities and slows the team down."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     question: "When can a Product Backlog item officially be counted as part of the Sprint's Increment?"
     options:
       - "When the Scrum Master has signed off on it."
@@ -93,7 +93,7 @@ questions:
     explanation: "**An item belongs to the Increment only when it meets every item on the team's Definition of Done.** The Definition of Done is the team's shared checklist of quality measures — without it, *'done'* becomes negotiable and the Sprint Review loses its ability to give honest feedback on a working product."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: basic
     question: "What is the primary purpose of the Daily Scrum?"
     options:
       - "To give upper management a daily status report on each Developer's work."
@@ -129,7 +129,7 @@ questions:
     explanation: "**The Sprint Retrospective is the Scrum event where the team inspects its own process and commits to improvements** for the next Sprint. Scrum separates *product* inspection (Review) from *process* inspection (Retrospective) on purpose — combining them tends to drown out the process conversation, which is harder and more uncomfortable."
 
   - id: 8
-    difficulty: advanced
+    difficulty: basic
     question: "A large enterprise adopts SAFe (Scaled Agile Framework) to coordinate dozens of teams on one product. Critics often label SAFe *'Scrum-but-for-managers'*. What is the most substantive critique their label points at?"
     options:
       - "SAFe replaces working software with documentation as the primary measure of progress."
@@ -177,7 +177,7 @@ questions:
     explanation: "**Scrum's empirical process rests on three pillars: Transparency, Inspection, and Adaptation.** Transparency makes the work visible to everyone responsible; Inspection means checking progress against the Sprint Goal frequently; Adaptation means changing course as soon as inspection reveals the current direction is unacceptable. Remove any one and the empirical loop breaks."
 
   - id: 10
-    difficulty: intermediate
+    difficulty: basic
     question: "What is the **Sprint Review** primarily for, and how is it different from the Sprint Retrospective?"
     options:
       - "Inspecting the product Increment with stakeholders and adapting the Product Backlog based on their feedback — distinct from the Retrospective, which inspects the team's process."

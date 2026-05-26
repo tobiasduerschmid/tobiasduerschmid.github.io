@@ -131,7 +131,10 @@ To facilitate top-down thinking for yourself and your team, you must design boun
 
 ## Interactive Tutorials
 
-Build the strategy hands-on in the two-part interactive tutorial sequence. Start with [Code Comprehension Part 1: Hypotheses & Beacons](/SEBook/development_practices/code-comprehension-tutorial), which practices attention focus and beacon-based reading in Python and React. Then wait two or three days before continuing with [Code Comprehension Part 2: Tests & Cross-File Flow](/SEBook/development_practices/code-comprehension-advanced-tutorial), which uses Node.js and multi-file React examples to practice targeted hypothesis testing and interaction mapping.
+Build the strategy hands-on in this two-part interactive tutorial sequence. Do Part 1 first, then wait two or three days before continuing with Part 2 so the second tutorial becomes spaced retrieval instead of immediate repetition.
+
+* [Code Comprehension Part 1: Hypotheses & Beacons](/SEBook/development_practices/code-comprehension-tutorial) — practice attention focus, hypothesis generation, beacon-based reading, and targeted traces in Python and React.
+* [Code Comprehension Part 2: Tests & Cross-File Flow](/SEBook/development_practices/code-comprehension-advanced-tutorial) — use tests, Node.js routes, and multi-file React examples to practice deeper hypothesis testing and interaction mapping.
 
 ## Practice This
 

@@ -15,55 +15,55 @@ cards:
     explanation: "A single component may have both publish and subscribe ports — it can be a producer of some events and a consumer of others. The bus is the load-bearing connector; without it, you do not have pub-sub."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: basic
     question: "What's the difference between the **push** and **pull** notification models in pub-sub?"
     answer: "**Push:** the publisher sends the full event payload along with the notification. **Pull:** the publisher sends only a minimal 'something changed' notification; interested subscribers explicitly query the publisher for the data."
     explanation: "Push is efficient when most subscribers will use the data. Pull is efficient when few will, or when the data is large — it trades extra round trips for lower bandwidth. The choice is per-event, not per-system."
 
   - id: 4
-    difficulty: intermediate
-    question: "How does **topic-based** subscription work, and what's its main trade-off?"
-    answer: "Subscribers register on a named channel string (e.g., `market.quotes.NASDAQ`), often with wildcards (`market.quotes.*`). Routing is a cheap hash lookup, so it's fast and scales well. Trade-off: less expressive than content-based — subscribers may receive events they don't care about and must filter locally."
-    explanation: "Topic-based is the most widespread model (MQTT, Kafka, JMS topics). The cost of its simplicity is granularity: if your interests don't naturally partition into a small number of stable named channels, you'll either get over-broad routing or proliferate topics until management overhead dominates."
+    difficulty: basic
+    question: "How does **topic-based** routing work, and what's its main trade-off?"
+    answer: "Subscribers register on a named channel string (e.g., `market.quotes.NASDAQ`). Routing is simple and fast, but topic names become part of the architecture — every publisher and subscriber agrees on the strings, so the names are load-bearing connectors."
+    explanation: "Topic-based is the most widespread routing model. The cost of its simplicity is that the topic strings become first-class architectural contracts — rename one inconsistently (as the Autoware.AI ROS commit did) and the runtime message flow silently breaks."
 
   - id: 4b
-    difficulty: intermediate
-    question: "How does **content-based** subscription work, and what's its main trade-off?"
-    answer: "Subscribers register a predicate over event attributes (e.g., `region == 'EU' AND amount > 10000`). The broker evaluates each event's payload against every active predicate and delivers only matches. Trade-off: per-event predicate evaluation is far more expensive than a topic hash lookup, so broker CPU scales with subscription complexity."
-    explanation: "Content-based gives the strongest decoupling and finest-grained routing. Production systems (Siena, Rebeca) optimize with covering- and merging-based routing to reduce broker work. Use when filtering must happen on payload attributes and topic partitioning would be unnatural."
+    difficulty: basic
+    question: "How does **content-based** routing work, and what's its main trade-off?"
+    answer: "Subscribers express predicates over event contents (e.g., `company == 'TELCO' and price < 100`). The broker evaluates each event's attributes against subscriber-defined pattern rules and delivers only matches. Trade-off: matching is more expressive but costs more at the broker than a topic hash lookup."
+    explanation: "Content-based routing gives finer-grained delivery and dynamic predicates rather than predefined channels. Use it when filtering must happen on payload attributes; expect higher broker CPU than topic-based when subscriptions are numerous or predicates are expensive."
 
   - id: 4c
-    difficulty: intermediate
-    question: "How does **type-based** subscription work, and where is it typically used?"
-    answer: "Subscribers register on a programming-language class or type. Events of that type *and its subclasses* match, giving compile-time type safety. Used heavily in language-integrated middleware where the bus and the application share a runtime — Java event buses, Guava EventBus, RxJava."
-    explanation: "Type-based bridges middleware to strongly-typed programming languages, so subscribers receive correctly-typed objects without casting. It is less common across heterogeneous networks (the type system has to be shared), so it usually appears in single-language in-process or close-coupled distributed systems."
+    difficulty: advanced
+    question: "What is the **Event Channel (Gatekeeper)** variant of pub-sub, and what does it allow?"
+    answer: "A heavy proxy layer that sits between publishers and subscribers — to publishers it looks like a subscriber, to subscribers it looks like a publisher. Popularized by distributed middleware such as CORBA and enterprise service buses. It can buffer messages, filter data, and implement Quality of Service (QoS) delivery policies without burdening the application components."
+    explanation: "The Event Channel is one of four topology variants the literature describes (alongside list-based, broadcast-based, and content-based). Its appeal is that complex QoS, buffering, and filtering live in the channel instead of being scattered across every publisher and subscriber."
 
   - id: 5
-    difficulty: advanced
-    question: "Why are *typical* pub-sub buses (Kafka, RabbitMQ, MQTT) a poor fit for hard real-time systems?"
-    answer: "Their default asynchronous dispatch usually provides **no deterministic timing guarantee**, and ordering/delivery guarantees are product- and configuration-specific. Kafka preserves order within a partition; MQTT delivery depends on QoS; RabbitMQ behavior depends on exchanges, queues, acknowledgments, and durability settings. Hard real-time deadlines require explicit latency bounds, which mainstream broker defaults don't promise."
-    explanation: "Pub-sub *as a style* is not inherently disqualified — **DDS** is pub-sub purpose-built for hard real-time aerospace and defense, with an extremely rich QoS catalog (deadline, latency budget, transport priority, lifespan). It works precisely because timing, delivery, and priority are made explicit. The poor fit is for *default-configured* mainstream brokers, not for the style itself."
+    difficulty: basic
+    question: "Why is pub-sub generally a poor fit for systems with hard real-time deadlines?"
+    answer: "Pub-sub communication is asynchronous, so developers have less control over message ordering, and delivery is often not guaranteed. The event bus also adds a layer of indirection that fundamentally increases latency. The style is therefore generally inappropriate for hard real-time deadlines or strict transactional state sharing."
+    explanation: "The style trades determinism for evolvability. DDS is one purpose-built exception — pub-sub for real-time distributed systems — but the mainstream default is asynchronous best-effort delivery, which cannot meet a hard deadline without significant additional engineering."
 
   - id: 6
     difficulty: advanced
-    question: "What are MQTT's three QoS levels?"
-    answer: "**QoS 0 ('at most once'):** fire-and-forget; messages may be lost; lowest latency. **QoS 1 ('at least once'):** acknowledged and retransmitted on timeout; messages may be duplicated. **QoS 2 ('exactly once'):** PUBLISH/PUBREC/PUBREL/PUBCOMP handshake delivers the message once at that MQTT protocol boundary; highest latency."
-    explanation: "Sensor telemetry typically uses QoS 0 — losing one reading is cheap, latency matters. Events that cannot tolerate duplicate message delivery may use QoS 2, but business transactions still need idempotency or transaction safeguards. Most application events use QoS 1 paired with idempotent handlers to tolerate duplicates."
+    question: "What are the three delivery-guarantee levels pub-sub frameworks typically distinguish, and what is the headline trade-off?"
+    answer: "**At most once** — messages may be lost; lowest latency. **At least once** — messages are retried until acknowledged, so duplicates may arrive. **Exactly once** — the strongest guarantee but the most expensive to implement. Stronger guarantees reduce message loss but increase latency, coordination, and duplicate-handling complexity."
+    explanation: "These guarantees are architectural decisions, not just middleware configuration — they change the system's quality profile. High-frequency telemetry may accept occasional loss for lower latency; a billing workflow may need stronger delivery and idempotent consumers even if that costs throughput."
 
   - id: 7
-    difficulty: intermediate
+    difficulty: advanced
     question: "What three forms of decoupling does pub-sub provide?"
     answer: "**Space decoupling:** parties do not know each other's identities or locations. **Time decoupling:** parties do not need to be active simultaneously *when the middleware persists or retains matching events*; otherwise offline subscribers miss events. **Synchronization decoupling:** neither party blocks on the other; publishers don't wait for delivery, subscribers don't block while emitting."
     explanation: "Time decoupling is implemented by features such as Kafka log retention, MQTT retained messages or persistent sessions, and JMS durable subscriptions. Without one of those persistence mechanisms, a subscriber that is offline during publication has a delivery gap."
 
   - id: 8
-    difficulty: advanced
+    difficulty: basic
     question: "What is the *wide coupling smell* in pub-sub, and how do you avoid it?"
     answer: "A bus exposed as a generic `receive(Message)` method where every subscriber casts to a specific type makes every subscriber appear coupled to every publisher — the dependency graph is invisible. **Fix:** use typed channels or per-event-class topics so each subscription is statically traceable to a payload schema."
     explanation: "Named by Garcia et al. (2009). The smell is architectural, not just type-safety: even with safe casts, a maintenance engineer cannot statically determine which subscribers break when a publisher's payload changes."
 
   - id: 9
-    difficulty: intermediate
+    difficulty: basic
     question: "Name the four pub-sub topologies discussed in the literature."
     answer: "**(1) Bus / event channel** (central broker, classic pub-sub). **(2) List-based** (each publisher maintains its own subscriber list — tighter coupling, no central failure point). **(3) Broadcast-based** (publishers broadcast to the whole network; subscribers filter locally — loosest coupling, highest waste). **(4) Content-based routing** (intelligent brokers evaluate event payloads against subscriber predicates)."
     explanation: "List-based is common in in-process Observer implementations. Broadcast suits LANs with cheap bandwidth. Content-based scales for distributed systems via covering and merging optimizations (Siena, Rebeca)."
@@ -81,13 +81,13 @@ cards:
     explanation: "Kafka shines for event streaming, log aggregation, and offline analytics where replay matters. RabbitMQ shines for complex routing and task queues where messages are acknowledged and then typically removed; its acknowledgments provide at-least-once delivery, so exactly-once effects require idempotent consumers or deduplication."
 
   - id: 12
-    difficulty: intermediate
+    difficulty: basic
     question: "Why does pub-sub force architects to embrace *eventual consistency*?"
     answer: "Because typical pub-sub delivery is asynchronous: subscribers update their local state at different moments. Different parts of the system therefore hold inconsistent views for a bounded period, until all relevant subscribers have processed the event."
     explanation: "This is an eventual-consistency trade-off, not a magic property of every bus. Architectures that need strong consistency between subscribers must add explicit coordination, such as a single source of truth, distributed transactions, sagas with compensation, or carefully designed idempotent workflows."
 
   - id: 13
-    difficulty: advanced
+    difficulty: basic
     question: "What is the *illusion of obliviousness* and why does Fairbanks warn about it?"
     answer: "At runtime, components are oblivious to each other. But at design time, a developer chose to add the New-Employee publisher *specifically because* the Order-Computer subscriber needs it. Architectural diagrams that only show components attached to a bus hide this business intent."
     explanation: "Document the conceptual producer→consumer relationships in design artifacts even though the runtime topology hides them — otherwise maintenance engineers cannot trace business logic through the bus, and the architecture becomes unrefactorable."
@@ -99,13 +99,13 @@ cards:
     explanation: "Other examples: Redis Pub/Sub for cache invalidation, AWS SNS + SQS for cross-service notifications, Google Cloud Pub/Sub for serverless event glue, OS-level signals (technically a degenerate broadcast bus)."
 
   - id: 15
-    difficulty: advanced
+    difficulty: basic
     question: "When should you NOT use publish-subscribe?"
     answer: "When (a) you need global strict ordering or hard real-time delivery guarantees without investing in specialized middleware/QoS, (b) the producer requires synchronous confirmation that consumers acted on the event, (c) the system has only one consumer per event and direct call would suffice, or (d) the team lacks the operational maturity to debug asynchronous, non-deterministic flows."
     explanation: "Pub-sub solves coupling problems; it creates observability problems. If your bottleneck is rigidity of direct calls and your team has tracing/replay infrastructure, pub-sub is excellent. If your bottleneck is debuggability and you have one producer talking to one consumer, a synchronous call is simpler."
 
   - id: 16
-    difficulty: intermediate
+    difficulty: basic
     question: "Why are topic names architecturally significant in topic-based publish-subscribe?"
     answer: "Topic names are the connectors that bind publishers and subscribers. If a publisher renames a topic but a subscriber keeps listening to the old name, the code may compile and run while the runtime message flow silently breaks."
     explanation: "The lecture's Autoware.AI example used exactly this failure mode: some components changed from one topic string to another while others did not. Pub-sub decoupling makes extension easy, but it also makes tracing and contract validation load-bearing."

@@ -8,22 +8,22 @@ cards:
     answer: "Eliminates complex conditional logic that checks an object's state, replacing it with polymorphic state objects that encapsulate state-specific behavior."
     explanation: "Each state becomes its own class. Adding a new state means adding a new class rather than modifying existing if/else chains throughout the codebase."
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     question: "What principle does the State pattern embody?"
     answer: "**Polymorphism over conditions** — replacing `if/else` chains with polymorphic objects that each implement the behavior for one state."
     explanation: "Adding a new state is a pure addition (new class), not a modification. The compiler enforces that every state implements every required method."
   - id: 3
-    difficulty: advanced
+    difficulty: basic
     question: "How does State differ from Strategy?"
     answer: "State: behavior changes *implicitly* via internal transitions. Strategy: behavior is *explicitly* selected by the client. State objects transition; strategies do not."
     explanation: "Heuristic: if implementations transition between each other based on internal logic, it's State. If the client selects at configuration time, it's Strategy."
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     question: "What is a 'Null State'?"
     answer: "A state object implementing the Null Object pattern for 'do nothing' behavior, used instead of null checks."
     explanation: "Used for initialization or final states. Communicates the design intent of empty behavior explicitly rather than scattering null checks throughout the code."
   - id: 5
-    difficulty: advanced
+    difficulty: basic
     question: "Who should define state transitions?"
     answer: "**Context-driven**: all transitions visible in one place. **State-driven**: each state knows its successors, more flexible but harder to see the full machine."
     explanation: "State-driven is preferred for well-defined, local transitions. Context-driven works better when transitions depend on complex external conditions."

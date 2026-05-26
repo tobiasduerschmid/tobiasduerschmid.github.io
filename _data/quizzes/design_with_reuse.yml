@@ -47,7 +47,7 @@ questions:
     explanation: "External reuse = the producer of the code is a third party (an open-source maintainer, a vendor, an unrelated company). Internal reuse = same developer / team / organization. The distinction matters because external reuse cannot easily access the original author or unit-test suite, must treat the module as a partially-known black box, and faces supply-chain risks that internal reuse usually doesn't."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       You install a Python package today with `pip install foo`. Six months from now, a colleague clones the repo and runs the same command. Their build fails because a transitive dependency just released a major version with API-breaking changes. Which design principle does this most directly violate?
@@ -70,7 +70,7 @@ questions:
     explanation: "This is exactly the `urllib3` 2.0.0 / `requests` / `docker` situation from the chapter. A lock file (`Pipfile.lock`, `package-lock.json`, `Cargo.lock`, …) pins every direct *and* transitive dependency to specific versions, so a clone six months later resolves identically. Pinning is the defense against silent upstream drift."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       The Heartbleed bug (CVE-2014-0160) sat in OpenSSL for two years before public disclosure, and was still on tens of thousands of devices five years after a patch was available. Which two principles does this story most directly support?
@@ -92,7 +92,7 @@ questions:
     explanation: "Heartbleed has two interlocking lessons: reusing a package means inheriting its bugs (so reuse is not a one-time investment), *and* the only way to clear those bugs is to actually apply upstream patches on a real cadence. The tension with Principle 1 (pin versions) is resolved by pinning *intentionally* and updating *intentionally* — never letting either happen by accident."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       You're considering adding a 12-line npm dependency that capitalizes the first letter of each word in a string. The package has 7 GitHub stars and one maintainer with no commits in the last year. Which course of action best follows the chapter's principles?
@@ -115,7 +115,7 @@ questions:
     explanation: "This is the *left-pad* / *isArray* shape of decision. Principle 3 — strive for fewer dependencies — applies most strongly when the code is trivial *and* the source is unreliable. The implementation cost of twelve lines is far less than the long-tail cost of monitoring, auditing, and replacing an abandoned dependency."
 
   - id: 6
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       The Ariane 5 self-destruction 37 seconds into its maiden flight was caused by reusing the Inertial Reference System software from Ariane 4 without re-checking that a 16-bit integer was large enough for Ariane 5's higher horizontal velocity. The ESA inquiry's Recommendation R5 generalizes this into a single design principle. Which one?
@@ -138,7 +138,7 @@ questions:
     explanation: "Software that worked in one context might not work in another. The R5 recommendation is *Identify Violated Assumptions* — read documentation and code to surface what the module assumes about its inputs, environment, and timing, then verify those assumptions hold under the new conditions. This is the central design principle for internal reuse."
 
   - id: 7
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       Consider these two snippets:
@@ -170,7 +170,7 @@ questions:
     explanation: "A *library* is code you call (Snippet A: you call `axios.get` whenever you need it). A *framework* calls you (Snippet B: you register a handler, and Express invokes it when a matching HTTP request arrives — that's the Hollywood Principle, *Don't call us, we'll call you*). The reuse trade-off: frameworks hide more complexity but constrain your application's shape, and walking away from them later costs more."
 
   - id: 8
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       A team is choosing whether to rewrite an old internal `BatchScheduler` for use in a new low-latency streaming service. Which course of action best embodies the design principles in this chapter?
@@ -193,7 +193,7 @@ questions:
     explanation: "The five steps for internal reuse compress to: (1) make assumptions explicit, (2) check them against the new context, (3) don't assume correctness — test in the new context. Batch and streaming differ on at least latency tolerance, concurrency, and back-pressure semantics; each is an assumption to verify before reuse."
 
   - id: 9
-    difficulty: advanced
+    difficulty: basic
     type: multiple
     question: |
       Which of the following are documented **costs** of external reuse that a team should weigh before adding a dependency? Select all that apply.
@@ -225,7 +225,7 @@ questions:
     explanation: "The chapter's cost-benefit scale for external reuse names: integration effort, finding & evaluating the module, ongoing updating effort, and limits on changeability — counterbalanced by saved implementation effort, saved testing effort, and the benefit of update propagation."
 
   - id: 10
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       In Petre's expert-design study, three teams designed the same system: Team A produced 1 detailed design, Team B produced 3 options, Team C produced 5 options. Expert reviewers ranked Team C's chosen design as the best. What is the *correct* takeaway?
@@ -269,7 +269,7 @@ questions:
     explanation: "Design Docs are *unstructured text* artifacts, not financial models. Their goal is early identification of design issues, consensus, knowledge transfer, and organizational memory — captured in prose, models, and trade-offs, not in line-item dollar figures."
 
   - id: 12
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       Your team is choosing between two CSV-parsing libraries:

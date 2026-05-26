@@ -32,7 +32,7 @@ questions:
     explanation: "A test makes one executable claim about behavior: *given this situation, when this action happens, this observable result should follow.* Without an assertion that compares the actual result to an expected one, no claim is made and no evidence is produced. The fix is `assert cart.total_cents() == 10_000` for this fixture — an exact-value oracle that fails for almost every buggy implementation."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A test consistently passes locally but fails on CI about one run in five, in different places each time. You inspect the test and see:
@@ -61,7 +61,7 @@ questions:
     explanation: "Luo et al. (2014) catalogued the recurring causes of flakiness — asynchronous waiting, concurrency, time assumptions, randomness, external resources. Asynchronous waiting is by far the most common. The pattern that fixes it is the same in every framework: instead of pausing for an arbitrary duration, poll until the condition you care about becomes true, and fail with a clear timeout message if it doesn't. A red test should mean *investigate*, not *rerun*."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       Two tests cover the same behavior. Which is more likely to survive a refactoring that preserves user-visible behavior?
@@ -94,7 +94,7 @@ questions:
     explanation: "Test B asserts at a stable boundary (the cart's public `total_cents()`), so any refactoring that keeps the rule 'premium customers pay 90%' leaves the test green. Test A is coupled to the private helper; renaming, inlining, or restructuring breaks it without changing behavior. Brittle tests punish improvement and erode trust in the suite over time."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     type: multiple
     question: |
       You are writing tests for `divide(numerator, denominator) -> float`. Which input classes **must** appear in your test set to consider the behavior reasonably covered? (Select all that apply.)
@@ -119,7 +119,7 @@ questions:
     explanation: "The standard categories from black-box test design are: representative valid, boundaries (empty / one / many; min / max / just-below / just-above), invalid inputs, exceptional states, and regression examples. For `divide` the boundary at zero numerator and the invalid divide-by-zero are the high-information cases — exactly where implementation bugs cluster. Coverage tools tell you which lines ran, not whether you chose these classes well."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       You inherit this test. It is green. What is the strongest critique?
@@ -147,7 +147,7 @@ questions:
     explanation: "The better rule is *one reason to fail*, not 'one assertion per test'. A test that exercises a single coherent outcome may need several assertions; a test that exercises four different outcomes should be four tests. Splitting this into `test_checkout_succeeds_for_valid_cart`, `test_checkout_rejects_empty_cart`, `test_checkout_fails_on_declined_token`, and `test_checkout_sends_confirmation_email` gives precise failure messages and lets all four run independently."
 
   - id: 6
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       You added a new sorting algorithm. You cannot easily hand-compute the expected output for the realistic inputs you care about (millions of records with mixed keys). Which oracle approach is most likely to produce a strong test?
@@ -167,7 +167,7 @@ questions:
     explanation: "Weyuker (1982) named the oracle problem; the modern response is to combine **partial oracles** that each capture a different aspect of correctness. For sort: the output must be a permutation of the input, must be monotonically non-decreasing, and must be idempotent under re-sorting. Run these properties on hundreds of generated inputs (Claessen & Hughes 2000) and you have a strong test even without a hand-computed expected value."
 
   - id: 7
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       A team reports 92% line coverage. A regression ships in which a successful order is recorded with `status="refunded"` instead of `status="paid"`. Reviewing the test suite reveals that several tests execute the checkout path but only assert that `status is not None`. What does this episode most directly illustrate?
@@ -187,7 +187,7 @@ questions:
     explanation: "Inozemtseva and Holmes (2014) found that coverage has only low-to-moderate correlation with suite effectiveness once suite size is controlled. The healthier model: coverage is a *map* of what wasn't visited; mutation testing or seeded-fault analysis is the diagnostic for whether what *was* visited is being checked meaningfully. Mutating `'paid'` to `'refunded'` here produces a surviving mutant — a direct signal that the assertion is too weak."
 
   - id: 8
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       You are about to write the first test for a brand-new `Order.cancel()` method using TDD. Which of these is closest to the intended *Red* step?
@@ -207,7 +207,7 @@ questions:
     explanation: "Beck's *Three Rules of TDD* are explicit: you may not write production code unless it is to make a failing unit test pass, and you may not write more of a test than is sufficient to fail (where failing to compile counts as failing). The Red step is the smallest test that names the next behavior. Fucci et al. (2017) found that the productivity gain comes from *fine granularity and uniform rhythm*, not from test-first ordering as a slogan."
 
   - id: 9
-    difficulty: advanced
+    difficulty: basic
     type: multiple
     question: |
       A test method named `test_helper_caches_correctly` asserts on the size and contents of a private `_cache` dict inside a service class. Which of the following are valid concerns about this test? (Select all that apply.)

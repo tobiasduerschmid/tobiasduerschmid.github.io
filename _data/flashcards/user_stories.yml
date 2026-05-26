@@ -3,7 +3,7 @@ description: "Test your knowledge on Agile user stories and the criteria for cre
 active: true
 cards:
   - id: 1
-    difficulty: intermediate
+    difficulty: basic
     question: "What is the primary purpose of Acceptance Criteria in a user story?"
     answer: "To define the specific conditions that must be met for a user story to be considered 'Done'. They define the scope of the user story."
     explanation: "Acceptance criteria provide clear, objective boundaries for a feature. They remove ambiguity, guide the development team on exactly what needs to be built, and form the basis for testing whether the story delivers the intended value. They make user stories testable and estimable."
@@ -23,12 +23,12 @@ cards:
     answer: "A user story should be self-contained and not rely on the completion of other stories."
     explanation: "**Dependencies** make prioritization and planning difficult. If stories are tightly coupled, the team should look for ways to combine them or split them along different boundaries."
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     question: "Why must a user story be 'Negotiable'?"
     answer: "Because a user story describes requirements, not implementation details or design decisions."
     explanation: "Developers and product owners collaborate and **negotiate the implementation details** just-in-time, allowing for better, more flexible solutions."
   - id: 6
-    difficulty: intermediate
+    difficulty: basic
     question: "What makes a user story 'Estimable'?"
     answer: "The development team must have enough information to roughly gauge the effort required to complete it."
     explanation: "If a story isn't estimable, it usually means it is **too large** or **poorly understood**. The team needs more discussion or a technical spike to clarify the requirements."
@@ -48,7 +48,7 @@ cards:
     answer: "The 'Given [pre-condition] / When [action] / Then [post-condition]' format."
     explanation: "This format structures criteria as clear scenarios: **Given** a specific context or starting state, **When** a specific action is performed, **Then** a specific, measurable outcome or result occurs."
   - id: 10
-    difficulty: intermediate
+    difficulty: basic
     question: "What is the difference between the main body of the User Story and Acceptance Criteria?"
     answer: "A User Story describes the **what** and **why** of a feature from the user's perspective, while Acceptance Criteria **define the scope by listing all conditions** that must be met for the story to be considered 'Done'."
     explanation: "Think of the User Story as the **goal** and the Acceptance Criteria as the **checklist** to verify that the goal has been achieved. The story is the 'what' and 'why', while the criteria are the 'how we know it's done'."

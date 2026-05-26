@@ -40,7 +40,7 @@ questions:
         More hours are not automatically better hours. A shorter session that makes the learner retrieve, space, or discriminate can build more durable learning than a long passive review session.
     explanation: "**Productive struggle can be a sign that learning-relevant retrieval and encoding processes are being engaged.** It is incredibly common to mistake the feeling of 'easy' studying (like rereading highlighted notes) for actual learning. However, that smooth, effortless feeling usually just means the material is familiar, not that you have mastered it. When you introduce **'desirable difficulties'**—like forcing yourself to recall information without looking—the friction can support more durable and flexible memory than passive review, provided the task is still achievable."
   - id: 3
-    difficulty: intermediate
+    difficulty: basic
     question: "Why do evidence-based study techniques often feel slower, clumsier, and more frustrating to the learner?"
     options:
       - "Because they introduce short-term friction that forces deeper cognitive processing and robust encoding."
@@ -57,7 +57,7 @@ questions:
         Illusions of competence usually come from fluent passive review, such as rereading or recognizing highlighted text. Retrieval and spacing can feel worse in the moment precisely because they expose what is not yet secure.
     explanation: "**Effective strategies feel slower because the short-term friction they create is exactly what drives long-term retention.** This describes **desirable difficulties** (Bjork). Effective learning strategies introduce short-term impediments that make learning feel harder, which ultimately triggers processes that optimize long-term retention."
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     question: "You are working on a new Python project and decide to turn off your AI coding assistant (like GitHub Copilot). According to the concept of 'desirable difficulties', what is the primary benefit of this highly frustrating choice?"
     options:
       - "It forces your brain to manually recall syntax and logic, creating the mental challenge necessary to develop solid coding skills."
@@ -74,7 +74,7 @@ questions:
         Typing speed is not the core bottleneck in learning to program. The useful challenge is deciding what code should be written and recalling how to express it.
     explanation: "**Turning off AI reduces cognitive offloading, forcing more manual recall of syntax and logic.** **Cognitive offloading** is the use of external tools (like calculators, calendars, or AI) to reduce the mental effort required for a task. AI autocomplete tools can be excellent for workplace efficiency, but they can also short-circuit initial learning if they supply the next step before the learner has tried to retrieve it. By turning them off during practice, you create more opportunities to struggle through the logic, track down missing brackets, and reconstruct syntax from memory."
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     question: "A junior developer wants to master a new web framework. Which of the following approaches represents the most effective memory-strengthening technique?"
     options:
       - "Highlighting the official documentation extensively in multiple colors."
@@ -94,7 +94,7 @@ questions:
         Reading source code can be valuable once a learner has enough structure to interpret it. As a first memory-strengthening move, it is usually less targeted than producing a small working example from recall.
     explanation: "**Attempting to produce code from memory is retrieval practice, which typically supports long-term retention better than passive review.** This represents **retrieval practice**. Roediger and Karpicke's research demonstrates that actively retrieving information from memory can improve later retention more than simply restudying the same material."
   - id: 6
-    difficulty: intermediate
+    difficulty: basic
     question: "A project team must pass a rigorous cybersecurity certification in one month. How should they schedule their preparation to ensure the knowledge remains accessible long after the test is over?"
     options:
       - "Schedule a single, 20-hour weekend marathon right before the exam."
@@ -111,7 +111,7 @@ questions:
         The hardest topics may deserve extra attention, but saving them for the day before compresses practice into one massed session. Long-term access is better served by repeated shorter returns.
     explanation: "**Shorter periodic review sessions exploit spacing by returning to material after some forgetting has occurred.** This represents **distributed practice (spacing)**. Spacing creates repeated opportunities to retrieve or relearn the material over time, which supports longer-term retention better than one massed session for many learning tasks."
   - id: 7
-    difficulty: advanced
+    difficulty: basic
     question: "A data structures student is practicing graph algorithms. Instead of doing all the shortest-path problems, followed by all the minimum-spanning-tree problems, she shuffles them together. What specific cognitive capability does this heavily cultivate?"
     options:
       - "The ability to memorize exact syntax faster."
@@ -131,7 +131,7 @@ questions:
         Perceptual fluency is the feeling that something looks familiar. Interleaving works by making the learner compare problem types rather than coasting on familiarity.
     explanation: "**Shuffling problem types builds the critical skill of discriminating which strategy applies — something blocked practice cannot develop.** This represents **interleaving**. Rohrer and Taylor note that while blocked practice teaches you how to do a problem, interleaving improves your ability to discriminate between problem types and know when to apply specific solutions."
   - id: 8
-    difficulty: advanced
+    difficulty: basic
     question: "Before attending a lecture on building neural networks, a software engineering student tries to sketch out the math for backpropagation, making several fundamental logic errors. Pedagogically speaking, how should we view this attempt?"
     options:
       - "Harmful, as the student is likely to permanently encode incorrect habits."
@@ -148,7 +148,7 @@ questions:
         Compiling code is not the only learning outcome in computer science. Building a mental model before seeing the solution helps later debugging and transfer.
     explanation: "**Pre-lecture struggle can exemplify the generation effect: trying to produce an answer before seeing it can improve later memory for the correct answer.** This represents **generation**. Work on the generation effect shows that producing or attempting to produce material can improve later memory compared with simply reading it, especially when errors are followed by correction."
   - id: 9
-    difficulty: intermediate
+    difficulty: basic
     question: "A student is completely overwhelmed trying to combine Git, shell scripting, and learning a new programming language all at the same time. What should they do to optimize their cognitive architecture?"
     options:
       - "Push through the frustration to build grit and mental endurance."
@@ -188,7 +188,7 @@ questions:
         Generation is attempting to produce an answer before seeing it. The scenario is about an attribution the student makes after struggling.
     explanation: "**Attributing struggle to fixed innate ability is a fixed mindset, which rejects the possibility of improvement through effort.** This references Carol Dweck's research on growth mindset. Believing abilities are innate and unchangeable is a fixed mindset, whereas a growth mindset embraces the fact that abilities can be improved through effort."
   - id: 11
-    difficulty: intermediate
+    difficulty: basic
     type: multiple
     question: "Which of the following are considered 'desirable difficulties'? (Select all that apply)"
     options:

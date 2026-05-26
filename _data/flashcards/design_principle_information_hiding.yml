@@ -15,7 +15,7 @@ cards:
     explanation: "Parnas wrote it four years after the 1968 NATO Software Crisis conference, in response to a decade of software projects failing because step-by-step (flowchart) module decomposition couldn't absorb change."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: basic
     question: "What two example modularizations did Parnas compare in his 1972 paper, and which won?"
     answer: "He compared a **conventional flowchart-based decomposition** (one module per processing step) and an **information-hiding decomposition** (one module per design decision) using the **KWIC (Key Word In Context) index** program. The information-hiding decomposition was dramatically easier to change, understand, and develop in parallel."
     explanation: "Both decompositions worked, but in the conventional one almost every module had to change when the data structure changed. In the information-hiding version, exactly one module changed."
@@ -33,19 +33,19 @@ cards:
     explanation: "Picture an iceberg: small visible tip = interface; large submerged mass = secret. As long as the tip doesn't change, the mass underneath can be re-shaped at will."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: basic
     question: "Give five categories of design decisions that are commonly worth hiding inside a module."
     answer: "(1) **Data structures and formats** (array vs. tree vs. hash map); (2) **Storage location** (local file, SQL, NoSQL, S3, third-party API); (3) **Algorithms** (greedy vs. DP, A* vs. Dijkstra); (4) **External dependencies** — libraries, frameworks, vendors (PayPal vs. Stripe, MongoDB vs. Postgres); (5) **Hardware and platform details** (byte order, screen size, OS APIs)."
     explanation: "All five share the property that they *might change* without the system's purpose changing — a textbook signal that they belong inside one module behind a stable interface."
 
   - id: 7
-    difficulty: intermediate
+    difficulty: basic
     question: "What is the difference between a **deep** module and a **shallow** module?"
     answer: "A **deep module hides a lot of complexity behind a small interface** (e.g., the file system: open/read/write/close). A **shallow module exposes a wide interface that hides little** (e.g., a 'service' class whose methods one-to-one delegate to another class). Deep modules are the goal; shallow modules are tax."
     explanation: "From John Ousterhout, *A Philosophy of Software Design*. Heuristic: the bigger the gap between interface size and implementation size, the deeper the module."
 
   - id: 8
-    difficulty: intermediate
+    difficulty: basic
     question: "True or false: 'If I make all my fields and methods `private`, I have followed the Information Hiding principle.'"
     answer: "**False.** Visibility modifiers are one *language tool* for enforcing hiding. The principle is broader: even with all-`private` fields, you can leak the secret through your **interface** — for example, by returning a vendor-specific type like `PayPalCharge` from a public method."
     explanation: "Information Hiding decides *what* to hide; encapsulation and visibility modifiers help *enforce* the choice. You can have one without the other in either direction."
@@ -57,43 +57,43 @@ cards:
     explanation: "Coupling and cohesion are the *metrics* by which Information Hiding is evaluated. Information Hiding is the *principle*; cohesion/coupling are the measurements that show whether you applied it well."
 
   - id: 10
-    difficulty: advanced
+    difficulty: basic
     question: "Distinguish **syntactic** and **semantic** coupling. Why is the second one more dangerous?"
     answer: "**Syntactic coupling**: module A imports/calls/names types from B (the compiler can see it). **Semantic coupling**: A and B share an unspoken assumption (e.g., 'phone numbers are 10-digit strings without formatting'); changing the assumption in one silently breaks the other. Semantic coupling is more dangerous because tools can't detect it."
     explanation: "Information Hiding fights both kinds, but semantic coupling only goes away when the shared assumption itself lives in exactly one module."
 
   - id: 11
-    difficulty: intermediate
+    difficulty: basic
     question: "In the lecture's **payment-system** example, what is the secret, and where should it live?"
     answer: "The secret is **'we use PayPal'** (the choice of payment provider). It should live in **exactly one module** — a `PaymentGateway` interface with a `PayPalGateway` implementation. `OrderService`, `RefundService`, and `WalletService` should all depend on the abstraction, never on PayPal."
     explanation: "When the CFO swaps providers, the impact is bounded to writing a new gateway implementation. None of the services have to change."
 
   - id: 12
-    difficulty: advanced
+    difficulty: basic
     question: "Why is whether a network protocol is **stateful or stateless** part of the **interface**, not the secret?"
     answer: "Because clients **cannot ignore** it. Stateful protocols require clients to maintain a session, reconnect on disconnect, and carry session tokens. Statelessness allows simpler clients. Hiding this would produce mysterious bugs."
     explanation: "Rule of thumb: hide what only the module needs to know to do its job; expose what callers need to know to use it correctly."
 
   - id: 13
-    difficulty: advanced
+    difficulty: basic
     question: "What is **change impact analysis**, and how does it test whether your design follows Information Hiding?"
     answer: "Change impact analysis is the procedure of **listing plausible future changes**, **estimating their likelihood**, and **counting the modules each one would force you to edit**. A well-hidden design responds to a single change by lighting up one module; a poorly-hidden one lights up many."
     explanation: "Industry uses this both as a design exercise (before code) and as a review technique (after). It is the most direct way to falsify the claim 'this design hides X.'"
 
   - id: 14
-    difficulty: advanced
+    difficulty: basic
     question: "Name three common **anti-patterns** of poor Information Hiding."
     answer: "(1) **Vendor name in the interface** — `OrderService.checkoutWithPayPal(...)`. (2) **Returning the implementation type** — a repository returning `MySQLResultSet` instead of `List<Order>`. (3) **Exposed mutable internals** — returning a reference to an internal `List` that callers can mutate."
     explanation: "Other common ones: leaky abstractions, God classes, shallow modules, conditional types in clients (`if provider == 'paypal'` everywhere), and 'documentation as a substitute for hiding'."
 
   - id: 15
-    difficulty: advanced
+    difficulty: basic
     question: "When is applying Information Hiding a **bad** idea?"
     answer: "For **throwaway scripts**, **single-variant systems with stable scope**, **premature abstractions** in domains you don't yet understand, and **performance-critical inner loops** where indirection has measurable cost. Also: when the property is genuinely part of the contract and hiding it would produce silent failures."
     explanation: "The right number of abstractions is the smallest number that lets the system change gracefully. Beyond that, every extra layer is tax in indirection, file count, and cognitive load."
 
   - id: 16
-    difficulty: advanced
+    difficulty: basic
     question: "How does Information Hiding relate to **Separation of Concerns** (SoC)?"
     answer: "**SoC** decides *which* aspects of the system should live in separate modules. **Information Hiding** decides *how* each module protects its design decisions behind a stable interface. SoC without Information Hiding gives you separate modules that still break each other when details change."
     explanation: "They are complementary principles, not synonyms. Most modern principles (SRP, DIP, layered architecture, microservices) are specific applications of one or both."
@@ -105,25 +105,25 @@ cards:
     explanation: "The Apollo software was already considered highly complex in the 1960s. Modern systems can be orders of magnitude larger, while human working memory has not grown. The design has to reduce cognitive load."
 
   - id: 18
-    difficulty: intermediate
+    difficulty: basic
     question: "What does the formula `n * (n - 1) / 2` remind you about module design?"
     answer: "It is the number of possible pairwise relationships among `n` modules. As module count grows, possible relationships grow roughly **quadratically**, so uncontrolled dependencies quickly become unmanageable."
     explanation: "Information Hiding does not eliminate modules; it keeps the actual dependency graph much smaller than the possible one by exposing narrow, stable contracts."
 
   - id: 19
-    difficulty: intermediate
+    difficulty: basic
     question: "What are the symptoms of a **Big Ball of Mud** architecture?"
     answer: "Low maintainability, low understandability, and high fragility: small changes touch many unrelated modules, readers must know too much at once, and local edits produce surprising distant bugs."
     explanation: "A Big Ball of Mud is what happens when design decisions leak everywhere and the dependency graph grows without a disciplined modular structure."
 
   - id: 20
-    difficulty: advanced
+    difficulty: basic
     question: "State the **Single Choice principle**."
     answer: "If a system chooses among several alternatives, **only one module should know the exhaustive list** of alternatives."
     explanation: "Repeated switches over the same alternatives leak the choice list. A common fix is polymorphism plus one factory, configuration module, or dependency-injection boundary that owns the list."
 
   - id: 21
-    difficulty: advanced
+    difficulty: basic
     question: "Why can PayPal be both **visible** and **hidden**, depending on the boundary?"
     answer: "The user-facing checkout flow may need to show PayPal as a supported option, and the server must verify it securely. But backend services should not know the PayPal SDK; they should depend on a vendor-neutral `PaymentGateway`."
     explanation: "Information Hiding is boundary-relative: expose what callers need to use the system correctly; hide the implementation decisions that callers do not need."
@@ -135,13 +135,13 @@ cards:
     explanation: "The alternatives-and-trade-offs section is especially important because it preserves why a boundary exists and which future changes it was designed to absorb."
 
   - id: 23
-    difficulty: intermediate
+    difficulty: basic
     question: "What question tests whether a module deserves to exist under Information Hiding?"
     answer: "**What secret does this module own?** If you cannot name a difficult or likely-to-change design decision it hides, the module needs another clear justification or it may be shallow-module overhead."
     explanation: "A module can still be justified by ownership, testability, or a real boundary around an external dependency. But a module that hides nothing and only forwards calls adds vocabulary without reducing cognitive load."
 
   - id: 24
-    difficulty: intermediate
+    difficulty: basic
     question: "Name two operating-system design decisions that user programs should not have to know."
     answer: "Examples include **file-system layout**, **disk caching**, **CPU scheduling**, **device-driver details**, **virtual-memory paging**, and **network-stack internals**."
     explanation: "The OS exposes stable abstractions such as files, processes, memory, and sockets. If applications depended on the hidden decisions directly, changing the scheduler, storage hardware, or file system would break ordinary programs."
@@ -153,19 +153,19 @@ cards:
     explanation: "Parnas, Clements, and Weiss found that information hiding remained practical in a complex A-7E flight-software redesign only when paired with a guide organized around module secrets."
 
   - id: 26
-    difficulty: intermediate
+    difficulty: advanced
     question: "What are Parnas's two main causes of **software aging**?"
     answer: "**Lack of movement** — the environment, users, and market change while the software stands still. **Ignorant surgery** — repeated changes by maintainers who do not understand the original design gradually damage the structure."
     explanation: "Information Hiding helps with both: it identifies likely classes of change early and keeps later edits from scattering exceptions across the codebase."
 
   - id: 27
-    difficulty: intermediate
+    difficulty: basic
     question: "Why does Parnas say, **'Designing for change is designing for success'**?"
     answer: "Successful software attracts users, new requirements, platform changes, fixes, and extensions. If a product is valuable, it will change; the only products that avoid change are often the ones nobody wants to keep using."
     explanation: "The goal is not to predict every future requirement. It is to predict likely classes of change and confine each class to a small, documented part of the system."
 
   - id: 28
-    difficulty: advanced
+    difficulty: basic
     question: "What does it mean to treat an **interface as permission to assume**?"
     answer: "Every public name, type, return value, exception, ordering guarantee, flag, and data shape tells clients something they are allowed to rely on. A good interface exposes only stable, intentional assumptions and keeps volatile details private."
     explanation: "This turns leak detection into a concrete review habit: ask what each public detail permits clients to know, then remove permissions that would make future changes ripple."
@@ -177,25 +177,25 @@ cards:
     explanation: "Information Hiding is not just about hiding data. It is also about avoiding over-specified contracts."
 
   - id: 30
-    difficulty: intermediate
+    difficulty: advanced
     question: "What is the difference between a **primary secret** and a **secondary secret** in a module guide?"
     answer: "A **primary secret** is the main likely-to-change decision the module exists to hide. A **secondary secret** is an implementation decision made while realizing that primary secret."
     explanation: "For a payment gateway, the provider protocol may be the primary secret; retry policy, idempotency-key format, and provider response mapping may be secondary secrets."
 
   - id: 31
-    difficulty: advanced
+    difficulty: basic
     question: "Why can an API named `search_bm25` leak information even if its fields are private?"
     answer: "The name and return shape can expose the ranking algorithm, score scale, storage row format, tie-break details, and pagination strategy. Clients should usually depend on domain-level search results, not BM25 internals."
     explanation: "Access modifiers hide fields inside a class. Information Hiding also asks whether the public contract reveals volatile algorithm and representation decisions."
 
   - id: 32
-    difficulty: advanced
+    difficulty: basic
     question: "Why might a more modular design feel harder to understand at first?"
     answer: "It can introduce extra abstractions that readers must learn before seeing the hidden implementation. The benefit often appears during modification: the right change stays local instead of spreading through clients."
     explanation: "This is why modularity should be assessed with change-impact and modification tasks, not only by first-glance readability."
 
   - id: 33
-    difficulty: intermediate
+    difficulty: basic
     question: "How is a Parnas-style **module** different from a runtime process?"
     answer: "A module is a work-assignment and secret boundary. A process is a runtime activity. One module can contribute code to several processes, and one process can execute code from many modules."
     explanation: "Parnas, Clements, and Weiss separate module structure, uses structure, and process structure so designers do not confuse ownership of secrets with runtime execution."

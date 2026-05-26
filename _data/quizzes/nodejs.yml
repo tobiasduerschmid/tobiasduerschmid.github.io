@@ -3,7 +3,7 @@ description: "Test your deeper understanding of JavaScript's async model, type s
 active: true
 questions:
   - id: 1
-    difficulty: intermediate
+    difficulty: basic
     question: "A C++ developer argues: 'Single-threaded means Node.js can only handle one request at a time, so it's useless for servers.' What is the flaw in this reasoning?"
     options:
       - "Node.js is actually multi-threaded — each request gets its own thread"
@@ -24,7 +24,7 @@ questions:
     explanation: "**Node.js is single-threaded but its Event Loop delegates I/O to the OS, keeping the thread free to handle other requests — making it highly efficient for I/O-bound work despite having only one thread.** The key insight is that most server work is I/O-bound (waiting for databases, files, network), not CPU-bound. While the Chef (call stack) can only do one thing at a time, the Appliances (OS) handle I/O in the background. The Chef stays free to serve other requests. This model is efficient for I/O workloads but unsuitable for CPU-heavy tasks like video encoding."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     question: |
       A developer writes this code and is confused why the output is `A, C, B` instead of `A, B, C`:
       ```javascript
@@ -71,7 +71,7 @@ questions:
     explanation: "**`==` silently coerces types and hides fragile assumptions — `===` fails loudly when types diverge, catching latent bugs before they reach production.** The danger isn't that `==` fails now — it's that it hides a fragile assumption. When requirements change (e.g., user ID becomes a string UUID instead of a number), `==` comparisons silently coerce and produce wrong results with no error. `===` is defensive coding — it fails loudly when types don't match."
 
   - id: 4
-    difficulty: advanced
+    difficulty: basic
     question: |
       **Evaluate** these two approaches for fetching data from two independent APIs:
 
@@ -106,7 +106,7 @@ questions:
     explanation: "**`Promise.all` should be preferred when the two operations are independent — it takes `max(A, B)` time instead of `A + B`, cutting wall-clock time significantly.** Sequential `await` is correct when operations depend on each other (fetch user, then fetch that user's posts). For independent operations, `Promise.all` cuts wall-clock time significantly. Example: if each fetch takes 200ms, sequential = 400ms, parallel = 200ms."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     question: "A student writes `var x = 5` inside a `for` loop body. After the loop, they access `x` and are surprised it's still in scope. A C++ programmer would expect `x` to be destroyed at the closing brace. What JavaScript concept explains this?"
     options:
       - "`var` uses **function scope**, not block scope — it ignores `{}` blocks entirely and is scoped to the enclosing function. This violates C++ and Python scoping rules. `let` and `const` use block scope and behave as expected"
@@ -125,7 +125,7 @@ questions:
     explanation: "**`var` uses function scope and ignores block boundaries — unlike C++ and Python — so it remains accessible after the `for` loop closes; use `let` or `const` for block scope.** `var` hoists to the enclosing function scope and ignores block boundaries (`if`, `for`, `while`). This is one of JavaScript's most confusing legacy features. `let` and `const` (introduced in ES6) use block scope — matching the behavior you expect from C++ and Python. Always use `let`/`const`."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: basic
     question: "Why is the callback pattern fundamental to ALL of Node.js — not just a stylistic choice?"
     options:
       - "Callbacks are the only way to define functions in JavaScript"
@@ -146,7 +146,7 @@ questions:
     explanation: "**Callbacks are fundamental to Node.js because the single-threaded Event Loop has no other mechanism to notify your code when an async operation completes — every async API is built on this pattern.** Every async API in Node.js follows the pattern: 'start this operation and call this function when done.' `fs.readFile(path, callback)`, `setTimeout(callback, ms)`, `fetch(url).then(callback)` — they all accept functions. Even `async/await` is syntactic sugar over Promises, which are themselves built on callbacks. Understanding this chain is essential."
 
   - id: 7
-    difficulty: advanced
+    difficulty: basic
     question: |
       A student writes:
       ```javascript
@@ -177,7 +177,7 @@ questions:
     explanation: "**`.forEach()` ignores async callbacks — it fires them all and returns immediately, so `'All done!'` prints before any item finishes; use `for...of` with `await` or `Promise.all` instead.** `.forEach()` does not await the async callbacks it spawns — it fires them all and returns immediately. The `await` inside each callback works, but `.forEach` itself doesn't wait for them. Fix: `for (const item of items) { await processItem(item); }` (sequential) or `await Promise.all(items.map(item => processItem(item)))` (parallel)."
 
   - id: 8
-    difficulty: advanced
+    difficulty: basic
     question: |
       **Arrange** the lines to write an async function that reads a file and returns its parsed JSON content, handling errors gracefully.
     type: parsons
@@ -197,7 +197,7 @@ questions:
     explanation: "**The correct order is: async readFile → JSON.parse → return inside try/catch — `readFileSync` blocks the Event Loop and `finally { return data }` silently overrides the catch return.** The function uses `async/await` with `fs.promises.readFile` (the async version). The `try/catch` handles both file-not-found and invalid JSON errors. The distractor `readFileSync` would block the Event Loop — the cardinal sin in Node.js. The `finally { return data; }` distractor would override the return value from both try and catch, which is a subtle JavaScript bug."
 
   - id: 9
-    difficulty: intermediate
+    difficulty: basic
     question: |
       **Arrange** the lines to set up a basic Express.js route handler that reads a query parameter and sends a JSON response.
     type: parsons
@@ -215,7 +215,7 @@ questions:
     explanation: "**The correct order is: require → create app → register GET route → read query param → send JSON → listen; `app.post` uses the wrong method and `res.send` omits JSON headers.** `require('express')` imports the framework, `express()` creates the app. `app.get()` registers a GET route handler. Inside the handler, `req.query.name` reads the `?name=` query parameter, and `res.json()` sends a JSON response with correct headers. `app.listen(3000)` starts the server. The `app.post` distractor uses the wrong HTTP method. `res.send(name)` would send plain text without JSON formatting."
 
   - id: 10
-    difficulty: intermediate
+    difficulty: basic
     question: |
       **Arrange** the fragments to build a Promise chain that fetches data, parses JSON, and handles errors.
     type: parsons
@@ -231,7 +231,7 @@ questions:
     explanation: "**The correct chain is fetch → .then(res.json()) → .then(data) → .catch(err); `.finally` receives no data and `res.text` without `()` is a property reference, not a method call.** `fetch(url)` returns a Promise that resolves to a Response object. `.then(res => res.json())` parses the body as JSON (also returns a Promise). `.then(data => ...)` receives the parsed data. `.catch()` handles any error in the chain — network failure, JSON parse error, etc. The `finally` distractor takes no argument (it doesn't receive data). `res.text` without `()` is just a property reference, not a method call."
 
   - id: 11
-    difficulty: intermediate
+    difficulty: basic
     question: |
       You are building a TikTok-style feed. Match each task to the best array method:
       - Task A: Remove videos the user has already seen
@@ -255,7 +255,7 @@ questions:
     explanation: "**`.filter()` selects, `.map()` transforms, and `.reduce()` aggregates — matching unseen-video removal, component rendering, and total-time calculation respectively.** `.filter()` selects elements matching a condition (unseen videos). `.map()` transforms each element into something new (video → component). `.reduce()` combines all elements into a single value (total time). Knowing *which* method to reach for — not just how each works — is the critical skill."
 
   - id: 12
-    difficulty: advanced
+    difficulty: basic
     question: |
       A Discord bot fetches a user's message count from an API. The API returns `"42"` (a string). The bot checks `if (count == 42)` to award a badge. What are ALL the problems?
     options:
@@ -277,7 +277,7 @@ questions:
     explanation: "**`==` accidentally coerces the string `\"42\"` to match the number `42`, hiding a type mismatch that `===` would catch — use `Number(count) === 42` to make the conversion explicit.** This question interleaves async concepts (API fetch) with the `===` trap from earlier. The `==` coercion makes the check work *accidentally*, but it hides a fragile assumption. Using `===` with explicit `Number(count) === 42` makes the type conversion intentional and visible."
 
   - id: 13
-    difficulty: intermediate
+    difficulty: basic
     question: |
       **Arrange** the lines to process an array of Spotify tracks: filter explicit songs, extract just the titles, and join them into a comma-separated string.
     type: parsons
@@ -293,7 +293,7 @@ questions:
     explanation: "**The correct chain is filter (remove explicit) → map (extract title) → join (concatenate); `.reduce()` accumulates rather than selects, and `t.title()` incorrectly calls a property as a function.** `.filter()` removes explicit tracks (the `!` negates — keep non-explicit). `.map()` extracts just the title string from each object. `.join()` concatenates array elements into a single string. The `.reduce()` distractor is wrong because filtering is selection, not accumulation. `t.title()` with parentheses would call `title` as a function — it's a property, not a method."
 
   - id: 14
-    difficulty: intermediate
+    difficulty: basic
     question: "What does calling an `async` function **always** return, even if the function body just returns a plain number like `return 42`?"
     options:
       - "The plain value (`42`) — `async` is only meaningful when the function contains an `await`"
@@ -313,7 +313,7 @@ questions:
     explanation: "**Every `async` function always returns a Promise — even `return 42` wraps the value in `Promise.resolve(42)`, so you must `await` the call to get the plain value.** Every `async` function returns a Promise — always. `async function answer() { return 42; }` is equivalent to `function answer() { return Promise.resolve(42); }`. This is why `const result = someAsyncFunction()` without `await` gives you a Promise object, not the value. Forgetting this is one of the most common async bugs."
 
   - id: 15
-    difficulty: intermediate
+    difficulty: basic
     question: |
       A developer needs a `delay(ms)` utility that returns a Promise resolving after `ms` milliseconds. Which implementation is correct?
     options:
@@ -353,7 +353,7 @@ questions:
     explanation: "**`new Promise(resolve => setTimeout(resolve, ms))` is correct** — `new Promise(resolve => ...)` creates a Promise that resolves when `resolve` is called; passing `resolve` directly to `setTimeout` means 'call `resolve` after `ms` milliseconds.' The other approaches either return a timer ID immediately, await a non-Promise (resolving instantly), or never return the Promise at all."
 
   - id: 16
-    difficulty: intermediate
+    difficulty: basic
     question: |
       **Arrange** the lines to filter passing students (grade ≥ 60) and extract just their names.
     type: parsons
@@ -369,7 +369,7 @@ questions:
     explanation: "**`.filter()` must come before `.map()` — reversing them produces booleans instead of grade-bearing objects, making subsequent filtering impossible.** `.filter()` comes first — select elements, then `.map()` transforms the surviving elements. Reversing them would fail because `.map(s => s.grade >= 60)` produces booleans, not objects with a `grade` property to filter on. `.filter(s => s.name)` would keep students who have a name — which is all of them, so nothing is filtered. `.reduce` accumulates into a single value, not an array."
 
   - id: 17
-    difficulty: advanced
+    difficulty: basic
     question: |
       **Arrange** the lines of a corrected `processAll` function. The original bug: `"All done!"` printed before items finished processing because `.forEach()` ignores the `await` inside its callback.
     type: parsons
@@ -386,7 +386,7 @@ questions:
     explanation: "**`for...of` with `await` correctly pauses each iteration before the next — `forEach` ignores async callbacks and `await items` makes no sense because an array is not a Promise.** `for...of` is the idiomatic fix for sequential async iteration — `await` inside a `for...of` loop correctly pauses the loop body before moving to the next item. The distractor `items.forEach(async (item) => {` is the original bug: `.forEach()` does not await async callbacks, so all callbacks fire immediately and `\"All done!\"` prints before any of them finish. `await items` makes no sense — `items` is an array, not a Promise."
 
   - id: 18
-    difficulty: expert
+    difficulty: basic
     question: |
       A student writes this code for a multiplayer game server and wonders why player moves are "laggy":
       ```javascript
@@ -416,7 +416,7 @@ questions:
     explanation: "**`computeAIResponse` is CPU-intensive and blocks the Event Loop for 2 seconds, freezing all other requests — `async/await` cannot fix CPU-bound work; a Worker Thread is required.** This connects the Event Loop (Restaurant metaphor) to a real scenario. The Chef is stuck computing AI moves for 2 seconds — during which EVERY other player's request sits in the queue. `async/await` alone won't help because the computation is CPU-bound, not I/O-bound. Worker Threads move the heavy computation off the main thread."
 
   - id: 19
-    difficulty: advanced
+    difficulty: basic
     question: |
       **Arrange** the lines to look up a student by ID from a roster array, handle the case where the student isn't found, and return their data as JSON.
     type: parsons
@@ -474,7 +474,7 @@ questions:
     explanation: "**A declared variable with no value assigned is `undefined`, not `null` — `undefined` means 'not yet assigned' while `null` means 'intentionally empty'.** In JavaScript, `undefined` means 'declared but no value assigned.' This is different from Python (which raises `NameError` for uninitialized variables) and from `null` (which means 'intentionally empty'). `typeof undefined` is `\"undefined\"`. Confusingly, `typeof null` is `\"object\"` — a famous JS bug."
 
   - id: 22
-    difficulty: intermediate
+    difficulty: basic
     question: |
       **Arrange** the lines to safely access a nested property, provide a default, and log the result.
     type: parsons

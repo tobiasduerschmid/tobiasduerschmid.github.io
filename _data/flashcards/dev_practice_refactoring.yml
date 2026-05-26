@@ -10,7 +10,7 @@ cards:
     explanation: "The behavior-preserving constraint is what separates refactoring from feature work or bug fixing."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     bloom: understand
     question: "Why is refactoring an economic activity, not just code cleanup?"
     answer: "Refactoring reduces the future cost of change. If shortcuts are left alone, the codebase drifts toward a big ball of mud where each new change touches many unrelated files and becomes increasingly risky."
@@ -24,35 +24,35 @@ cards:
     explanation: "Smells guide investigation. A smell is a prompt to ask what design force produced it, not automatic proof that a specific refactoring is required."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     bloom: apply
     question: "Which refactoring often addresses Data Clumps or Long Parameter List?"
     answer: "**Introduce Parameter Object** groups related values into one named object, such as replacing `startDate, endDate` with a `DateRange`."
     explanation: "The new object reduces call-site mistakes and gives the related data a domain name."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     bloom: apply
     question: "Which refactoring often addresses Divergent Change?"
     answer: "**Extract Class** separates responsibilities that change for different reasons into specialized classes."
     explanation: "If one class changes for database logic one day and formatting policy the next, it probably owns multiple concerns."
 
   - id: 6
-    difficulty: advanced
+    difficulty: basic
     bloom: apply
     question: "Which refactoring often addresses repeated type-code conditionals?"
     answer: "**Replace Conditional with Polymorphism** moves each branch's behavior behind a shared interface or superclass, often producing Strategy or State objects."
     explanation: "This is strongest when the conditional represents behavior that changes by type, not when it is a simple one-off guard."
 
   - id: 7
-    difficulty: advanced
+    difficulty: basic
     bloom: evaluate
     question: "What is the safety net for refactoring?"
     answer: "A trustworthy test suite plus small, reversible steps. Run tests before the change, make one transformation, run tests again, then checkpoint."
     explanation: "Large refactorings fail when they mix many transformations before feedback. The small-step rhythm makes behavior preservation observable."
 
   - id: 8
-    difficulty: advanced
+    difficulty: basic
     bloom: evaluate
     question: "What is the human supervisor's role when AI performs refactorings?"
     answer: "The human identifies the smell, chooses the transformation, bounds the scope, runs tests after each step, and rejects changes that alter behavior or hide system-level design problems."

@@ -23,7 +23,7 @@ questions:
     explanation: "**Pub-sub is the only style here that lets a new consumer be added without touching the producer.** The publisher's dual ignorance — it doesn't know who subscribes — is what makes runtime extensibility possible. This is the headline reason to reach for pub-sub: evolvability of the consumer set."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: expert
     type: single
     question: |
       A real-time stock-trading dashboard pushes `PriceChanged` events at ~5,000 per second. Subscribers (chart, alert engine, order matcher) all need the new price every tick. The team is choosing between push and pull. Which is correct?
@@ -43,7 +43,7 @@ questions:
     explanation: "**Push wins when every interested subscriber will use the payload, especially at high event rates with small payloads.** Pull wins for large or expensive-to-produce payloads where most subscribers will discard them. A price tick going to three always-interested subscribers is the canonical push case."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: expert
     type: single
     question: |
       A team uses an MQTT broker to publish `InvoicePaid` events to a billing-fulfillment consumer. The consumer is **not idempotent**, so a duplicate `InvoicePaid` would charge the customer twice. Loss would mean a paid invoice is never recorded. Latency is acceptable. Which MQTT QoS level fits this *exact* stem?
@@ -63,7 +63,7 @@ questions:
     explanation: "**Given the stem's constraint (non-idempotent consumer, neither loss nor duplication acceptable), QoS 2's PUBLISH/PUBREC/PUBREL/PUBCOMP handshake is the only MQTT QoS level that fits the stated delivery requirement.** Treat this as 'understand the QoS levels' — not 'always pick QoS 2 for money movement.' QoS 2 is a protocol-level delivery guarantee, not a complete business-transaction guarantee; real billing systems more commonly use idempotent consumers plus QoS 1, or synchronous REST with idempotency keys."
 
   - id: 4
-    difficulty: advanced
+    difficulty: expert
     type: multiple
     question: |
       Your manager wants to use a *typical* asynchronous pub-sub bus (e.g., Kafka with default settings) for the **money-transfer engine** of a retail bank. Transfers must commit in a strictly defined order, must never be lost, and an ops team must be able to trace why any specific transfer failed within seconds. Which of these are *legitimate* warning signs that this style is the wrong fit *as proposed*? Select all that apply.
@@ -88,7 +88,7 @@ questions:
     explanation: "**Default-config asynchronous pub-sub is the wrong fit for ordered, traceable, transactional workflows.** Banks reach for synchronous request/response with strong consistency, or event sourcing with explicit causal ordering, when guarantees matter more than evolvability. With careful design — per-account partitioning for ordering, idempotency keys, strict QoS, and full distributed tracing — pub-sub *can* be made to work in finance (some banks do exactly this), but you're paying significant engineering effort to claw back what the style gives up by default. The 'too flexible to add subscribers' argument is not a real cost; the real costs are ordering, traceability, and verification."
 
   - id: 5
-    difficulty: advanced
+    difficulty: expert
     type: single
     question: |
       A microservices team's bus is implemented with a single method `bus.send(Message msg)` and every subscriber casts the message to a concrete type. After 18 months the team can no longer answer "what breaks if I change `OrderPlaced`'s `currency` field?" without a manual codebase grep. Which architectural smell does this match, and what is the right refactor?
@@ -108,7 +108,7 @@ questions:
     explanation: "**Wide coupling (Garcia et al. 2009) is the pub-sub smell where every subscriber appears coupled to every publisher because the bus's type erasure hides the real dependency graph.** Typed channels — one per event class — restore the static visibility so a maintenance engineer can answer 'who breaks if I change this payload?' from the type system alone."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A mobile chat app must continue to deliver messages to users whose phones were offline for hours. Which pub-sub feature is the team relying on?
@@ -128,7 +128,7 @@ questions:
     explanation: "**Time decoupling — implemented via durable subscriptions (JMS), retained messages (MQTT), or log retention (Kafka) — is what lets a subscriber receive events that were published while it was unreachable.** Without it, every offline minute is a delivery gap. With it, the subscriber catches up on reconnect."
 
   - id: 7
-    difficulty: advanced
+    difficulty: expert
     type: single
     question: |
       Your team adopts a content-based pub-sub broker so subscribers can register predicates like `region == 'EU' AND amount > 10000`. After three months, broker CPU is saturated at 80% and the team is debating switching to topic-based. Under what condition is this switch justified?
@@ -148,7 +148,7 @@ questions:
     explanation: "**Switch from content-based to topic-based when the subscription space naturally partitions: each distinct predicate category becomes a topic, and the broker's job becomes a hash lookup instead of per-event predicate evaluation.** If predicates are highly dynamic or numerically constrained (`amount > X` for arbitrary X), topics cannot replace them and content-based is the necessary cost."
 
   - id: 8
-    difficulty: advanced
+    difficulty: expert
     type: single
     question: |
       An architect proposes pub-sub for syncing inventory counts across a global e-commerce platform. The product manager pushes back: "we need every region to see the same count instantly so we never oversell." How should the architect respond?
@@ -168,7 +168,7 @@ questions:
     explanation: "**Typical asynchronous pub-sub favors decoupled, available event propagation over immediate globally consistent state.** The architecturally honest answer is to name the trade-off explicitly: either redesign the business process around eventual consistency (reserve-then-confirm), or pick a coordination style with strong consistency (distributed transactions, single source-of-truth with synchronous reads)."
 
   - id: 9
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       You inherit a system whose architecture diagram shows 20 microservices, each connected by a single arrow to a central "Event Bus" component. After three weeks you still cannot answer "which services break if we change the `UserDeleted` payload?" What is the root cause of your confusion, per Fairbanks?
@@ -188,7 +188,7 @@ questions:
     explanation: "**Fairbanks calls this the *illusion of obliviousness*: technically every service is just attached to the bus, but the *design intent* — which producer exists because which consumer needs it — is the load-bearing information that maintenance engineers rely on.** Document conceptual producer→consumer relationships explicitly (event catalog, service-to-event matrix, contract tests) so the design rationale survives the runtime decoupling."
 
   - id: 10
-    difficulty: advanced
+    difficulty: expert
     type: single
     question: |
       Two designs for an IoT temperature monitor are on the table. **Design A:** sensors call `monitor.report(temp)` directly via REST. **Design B:** sensors publish `TempReading` to MQTT; the monitor subscribes. The PM says "Design B is obviously more decoupled, so it's better." Which counter-argument best frames the *honest* trade-off?
@@ -208,7 +208,7 @@ questions:
     explanation: "**The pedagogically honest answer in any 'should we use pub-sub?' debate is to name the trade-off explicitly — pub-sub buys decoupling and evolvability, and pays for it with ordering, debuggability, and per-event latency.** If the system has only one consumer today, no plans for more, and runs on a reliable network with always-online endpoints, the synchronous alternative is often the right call. Decoupling is not free."
 
   - id: 11
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       In a robotics pub-sub system, one team renames the publisher topic from `line_class` to `line_topic`, but a safety component still subscribes to `line_class`. Tests compile, both components start, and the safety component silently receives no data. What architectural lesson does this illustrate?

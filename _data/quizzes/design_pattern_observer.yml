@@ -3,7 +3,7 @@ description: "Test your understanding of the Observer pattern's design decisions
 active: true
 questions:
   - id: 1
-    difficulty: advanced
+    difficulty: expert
     type: single
     question: |
       A stock market dashboard updates 50 UI widgets whenever the price feed changes (1,000 updates/second). The team uses the **Push model**, sending the full price data to every observer on every update. What is the most significant problem with this approach?
@@ -17,13 +17,13 @@ questions:
       0: |
         Push does not inherently block extension; new observers can still register. The pressure here is runtime cost from sending every observer more data than it needs.
       2: |
-        Push can reduce coupling in one sense because observers do not need to query the subject for details. The performance problem comes from broad data transfer, not necessarily tighter type coupling.
+        The SEBook describes Push as coupling observers to the subject's **data format** rather than its API, but the problem at 1,000 updates/second is the volume of unused data flowing through every notification, not type coupling.
       3: |
         Observer still supports adding observers at runtime in both push and pull variants. The issue is what each observer receives once it is registered.
-    explanation: "**The Push model causes unnecessary data transfer because every observer receives the full data set on every update, even when they only need a small subset.** In the Push model, the subject sends **all** data to **every** observer on **every** change. At 1,000 updates/second with 50 widgets, most of which may only need a small subset of the data, this creates massive unnecessary data transfer. A **hybrid model** (push the event type, let observers pull only what they need) combined with **batched notifications** would be far more appropriate here."
+    explanation: "**The Push model causes unnecessary data transfer because every observer receives the full data set on every update, even when they only need a small subset.** At 1,000 updates/second with 50 widgets, most needing only a subset of the data, this creates massive unnecessary work. The SEBook recommends the **Hybrid model** (push the event type, let observers pull only what they need) combined with **batched/deferred notifications** for exactly this scenario."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A developer registers observers with a subject but never calls `detach()` when the observers are no longer needed. The application gradually slows down over time. What is this problem called?
@@ -40,10 +40,10 @@ questions:
         Inverted dependency flow is about how registration code can hide the runtime data path. The symptom here is lifecycle leakage: the subject keeps references to observers after their useful life.
       3: |
         A god class has too many responsibilities concentrated in one class. This case is about retained subscriptions and object lifetime, not a single class owning too much logic.
-    explanation: "**This is the lapsed listener problem — observers that never detach keep themselves alive in memory because the subject holds a reference to them.** This is the **lapsed listener problem** — a memory leak caused by observers that remain registered with a subject indefinitely. The subject's reference list keeps the observer objects alive in memory, preventing garbage collection. Solutions include explicit unsubscribe, weak references, or scoped subscriptions tied to lifecycle management."
+    explanation: "**This is the lapsed listener problem — observers that never detach keep themselves alive in memory because the subject holds a reference to them.** The subject's reference list keeps the observer objects alive in memory, preventing garbage collection. The SEBook lists three solutions: **explicit unsubscribe** (disciplined but error-prone), **weak references** (language-dependent), or **scoped subscriptions** tied to lifecycle scope (common in modern UI frameworks)."
 
   - id: 3
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       The Observer pattern is widely cited as creating an "inverted dependency flow" that hurts program comprehension. What does this mean in practice?
@@ -55,15 +55,15 @@ questions:
     correct_index: 1
     option_feedback:
       0: |
-        A subject normally depends only on an observer interface, not on concrete observers. The hard-to-trace part is that registration appears in one place while later data updates arrive from the opposite direction.
+        A subject normally depends only on an observer interface, not on concrete observers — that is the whole point of loose coupling. The hard-to-trace part is that registration appears in one place while later data updates arrive from the opposite direction.
       2: |
         Creation order is not the main issue; many systems can create subjects and observers in different orders. The term points to how dependency evidence in code differs from the runtime flow of updates.
       3: |
         Pull changes how much data is sent with a notification, but the subject still triggers observers. The "inverted" part is about code navigation and registration, not push versus pull payload style.
-    explanation: "**The inverted dependency means data flows from subject to observer, but in code observers call the subject to register — making the dependency invisible at the point of use.** The inversion is about **code readability vs. conceptual flow**. Conceptually, change flows from subject to observer. But in code, observers call the subject to register, so the dependency arrow points from observer to subject. When a reader encounters an observer in the codebase, there is **no nearby sign** of what it depends on — they must trace back to the registration call to understand the data flow."
+    explanation: "**The inverted dependency means data flows from subject to observer, but in code observers call the subject to register — making the dependency invisible at the point of use.** The SEBook flags this as a comprehension hazard: when a reader encounters an observer for the first time, **there is no sign near the observer of what it depends on** — the wiring lives elsewhere, in the `attach()` call. Modern reactive frameworks try to make the dependency graph explicit at the call site for this reason."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A colleague says: "We only have one observer right now, so we don't need the Observer pattern — just call the method directly." When is this argument **most valid**?
@@ -80,13 +80,13 @@ questions:
         Push versus pull decides how notification data is delivered. It does not determine whether a subscription mechanism is justified in the first place.
       3: |
         Package placement does not decide the design force. A direct call can still be better when the relationship is stable, and Observer can still be useful across classes in the same package if the dependency is dynamic.
-    explanation: "**When there is only one observer that will never change, a direct method call is simpler and the Observer pattern adds complexity for no benefit.** A direct method call is simpler and introduces no unnecessary abstraction. The Observer pattern solves the problem of **dynamic, one-to-many** dependencies. If there is truly only one dependent that will never change, the pattern adds complexity (subscriber list, notification mechanism, interface abstractions) without addressing a real problem. This is the **Rule of Three** in action — don't apply a pattern until you've seen the need multiple times."
+    explanation: "**When there is only one observer that will never change, a direct method call is simpler and the Observer pattern adds complexity for no benefit.** Observer solves the problem of **dynamic, one-to-many** dependencies. If there is truly only one dependent that will never change, the pattern adds complexity (subscriber list, notification mechanism, interface abstractions) without addressing a real problem. The tutorial's design-judgment step makes the same call: a simple calculator with one fixed display does not need Observer."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
-      In MVC, the Model acts as the Observer's Subject. The View registers as an Observer, and the Model calls `update()` on all views when its state changes. Which notification trigger approach is being used here?
+      In MVC, the Model acts as the Observer's Subject. The View registers as an Observer, and the Model calls `update()` on all views whenever its setter methods mutate state. Which notification trigger approach is this?
     options:
       - "Client-triggered — the Controller explicitly calls notifyObservers() after updating the Model"
       - "Automatic — the Model's setter methods call notifyObservers() internally after every state change"
@@ -95,9 +95,105 @@ questions:
     correct_index: 1
     option_feedback:
       0: |
-        Client-triggered notification would make the controller responsible for remembering to notify after each model change. In the described MVC flow, the model itself calls `update()` on registered views after changing.
+        Client-triggered notification would make the controller responsible for remembering to notify after each model change. In the described flow, the model itself calls `update()` from its setter after changing.
       2: |
-        Batched notification waits and sends fewer grouped updates later. The prompt says the model notifies whenever its state changes, so notification is immediate and internal to mutation.
+        Batched notification waits and dispatches grouped updates later. The prompt says the model notifies whenever its setter runs, so notification is immediate and internal to mutation.
       3: |
         Push and pull describe the payload strategy: whether data is sent or queried. The trigger strategy is separate: who decides when observers are notified.
-    explanation: "**This is automatic notification — the Model's setter methods call `notifyObservers()` internally after every state change, without requiring the Controller to do so.** In the standard MVC implementation, the Model's data-mutation methods (like `addTask()`) internally call `notify()` after modifying state. This is **automatic notification** — the Model itself triggers the update. The alternative, **client-triggered**, would require the Controller to explicitly call `notifyObservers()` after making changes, which is more efficient for batch updates but places the burden on the caller."
+    explanation: "**This is automatic notification — the Model's setter methods call `notifyObservers()` internally after every state change, without requiring the Controller to do so.** The SEBook contrasts this with **client-triggered** (the client explicitly calls `notifyObservers()` after a batch of changes, avoiding intermediate notifications but risking forgotten calls) and **batched/deferred** (notifications collected and dispatched at a synchronization point)."
+
+  - id: 6
+    difficulty: intermediate
+    type: single
+    question: |
+      A `Subject` subclass overrides a state-changing operation inherited from `Subject`. The inherited operation calls `notify()` at its end. Inside the override, the subclass updates its own additional state *after* calling `super()`. What problem does this create?
+    options:
+      - "Observers will be notified twice instead of once"
+      - "Observers will see the subject in a half-updated state because notification fires before the subclass finishes its own update"
+      - "The subclass cannot legally override a Subject operation in this pattern"
+      - "Garbage collection will reclaim the observers before they receive update()"
+    correct_index: 1
+    option_feedback:
+      0: |
+        Nothing here doubles the notification — `notify()` runs exactly once, at the end of `super()`. The problem is *when* it runs relative to the subclass's own work.
+      2: |
+        Overriding Subject operations is allowed and common. The trap is the order in which the override does its work, not the override itself.
+      3: |
+        The observer list still holds references; nothing here changes lifetime. The problem is timing of the notification within a single update path.
+    explanation: "**The subject must be self-consistent before calling `notify()`.** When `super()` runs notify() before the subclass has finished its own state update, observers query a half-updated subject and read stale or inconsistent data. The SEBook recommends a **Template Method**: define a primitive operation for subclasses to override, and make `notify()` the last step of the template method in the abstract Subject — so the object is guaranteed self-consistent whenever subclasses extend Subject operations."
+
+  - id: 7
+    difficulty: intermediate
+    type: multiple
+    question: |
+      Which of the following are documented **consequences** of the Observer pattern (per the GoF / SEBook)? (Select all that apply)
+    options:
+      - "Abstract coupling between Subject and Observer — the Subject only knows the Observer interface, not concrete classes"
+      - "Support for broadcast communication — notifications need not specify a receiver"
+      - "Unexpected updates — a single state change can cascade through observers and their dependents"
+      - "Guaranteed notification order — observers are always notified in the order they attached"
+    correct_indices: [0, 1, 2]
+    option_feedback:
+      3: |
+        Notification order is not part of the pattern's contract. Many implementations preserve insertion order incidentally (a Python list does), but a set-, queue-, or DAG-based dispatcher would not. The tutorial's Step 5 quiz makes the same point: client code should not depend on order between observers.
+    explanation: "**Abstract coupling, broadcast communication, and unexpected (cascading) updates are all documented consequences.** The SEBook lists abstract coupling and broadcast communication among the canonical GoF benefits, and flags unexpected updates as a liability: \"a seemingly innocuous operation on the subject can cause a cascade of updates to observers and their dependent objects.\" The `update()` protocol carries no information about *what* changed, so observers may have to work hard to deduce the change — a frequent source of subtle bugs."
+
+  - id: 8
+    difficulty: advanced
+    type: single
+    question: |
+      A spreadsheet cell observes three different data-source subjects. When any source changes, the cell must recompute. What does the cell's `update()` operation need that a single-subject design would not?
+    options:
+      - "A way to tell which subject changed — typically by accepting the subject as a parameter (e.g., `update(Subject* changedSubject)`)"
+      - "A separate notify() method for each subject it observes"
+      - "Three independent observer lists, one per subject type"
+      - "It cannot be done — observers must observe exactly one subject"
+    correct_index: 0
+    option_feedback:
+      1: |
+        `notify()` lives on the subject, not the observer. Each subject already calls `update()` on every attached observer — the question is what the observer can learn from the call.
+      2: |
+        Observer lists are kept by the *subject*, not by the observing cell. The cell needs to discriminate among its incoming notifications, not maintain its own dispatch tables.
+      3: |
+        Nothing in the pattern restricts an observer to a single subject. The SEBook explicitly cites the spreadsheet-cell case as a motivating example for multi-subject observers.
+    explanation: "**The `update()` operation needs to tell the observer which subject changed — typically by passing the subject as a parameter.** This is the pull style's natural fit: `update(Subject* changedSubject)` lets the observer query the right source. A pure push style with no subject identity in the call signature cannot distinguish sources. The SEBook flags this under GoF Implementation issue #2 (observing multiple subjects)."
+
+  - id: 9
+    difficulty: intermediate
+    type: single
+    question: |
+      A subject is destroyed while several observers still hold references to it (e.g., to query its state in `update()`). What is this problem called, and what is the standard remedy?
+    options:
+      - "Lapsed listener — observers should call detach() before holding the reference"
+      - "Dangling references to deleted subjects — the subject should notify its observers as it is destroyed so they can null out their references"
+      - "Inverted dependency flow — observers should not hold references to subjects in the Pull model"
+      - "Notification storm — the observers should be batched to avoid the dangling refs"
+    correct_index: 1
+    option_feedback:
+      0: |
+        The lapsed-listener problem is the *dual* of this one: there, the subject outlives the observer's usefulness and keeps stale observers alive. Here, the subject is destroyed and observers are left with stale pointers.
+      2: |
+        Inverted dependency flow is about code-reading comprehension, not lifetime management. The Pull model's reference-back is exactly what creates the dangling pointer here, but the term names a different concept.
+      3: |
+        Notification storms describe excessive runtime traffic, not lifetime hazards. The problem here is what happens when the source of notifications is freed while listeners still point to it.
+    explanation: "**This is the dangling-reference problem.** It is the dual of the lapsed-listener problem and matters most in languages without garbage collection (e.g., C++). The SEBook's recommended remedy is for the subject to notify its observers as it is destroyed, so they can null out their references — preventing later access through a stale pointer."
+
+  - id: 10
+    difficulty: advanced
+    type: single
+    question: |
+      The dependency graph between subjects and observers in a system is intricate: some observers depend on several subjects at once, and when multiple subjects change in one logical operation, observers must be updated exactly once — not once per source. Which structural addition does the GoF recommend?
+    options:
+      - "Replace Observer with Mediator everywhere"
+      - "Introduce a separate ChangeManager that maps subjects to observers and dispatches updates on the subject's behalf"
+      - "Switch from Pull to Push so observers don't need to coordinate"
+      - "Have each observer keep a counter and ignore duplicate updates"
+    correct_index: 1
+    option_feedback:
+      0: |
+        Mediator and Observer are related (the ChangeManager *is* a Mediator), but you don't discard Observer wholesale. You introduce one Mediator-shaped object to coordinate the dispatch, and observers still use the standard `update()` contract.
+      2: |
+        Push versus pull is about the payload, not the dispatch graph. Switching to Push does not solve duplicate updates when one observer subscribes to several subjects.
+      3: |
+        Counters in every observer push coordination back into the observers — the whole point of the recommendation is to centralize update-graph logic in one place. Per-observer dedup is fragile and easy to get wrong.
+    explanation: "**Introduce a ChangeManager.** The SEBook follows GoF Implementation issue #9: when dependencies form a graph (especially a DAG), a `ChangeManager` maps subjects to observers, defines an update strategy, and dispatches updates so each observer is notified exactly once per logical change. GoF cite a `SimpleChangeManager` (notifies every observer) and a `DAGChangeManager` (handles directed acyclic dependency graphs). The ChangeManager is itself a Mediator and is typically a Singleton."

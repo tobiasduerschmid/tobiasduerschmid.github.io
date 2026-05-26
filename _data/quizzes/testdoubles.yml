@@ -23,7 +23,7 @@ questions:
     explanation: "The cleanest framing is: which direction of data flow do you need? *Indirect input* (the SUT consumes a DOC's output) → **Stub**. *Indirect output* (the SUT produces something through the DOC) → **Spy** or **Mock**. Here you need to force a specific indirect input — `Status.DECLINED` — so a Stub is the minimum-viable double."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A test uses a double for `notifier`. The SUT may call `notifier.send(...)` zero or more times depending on user input. The test wants to assert that *when the user is a premium member, the notifier received exactly one call with `channel="sms"`*. Which double fits best?
@@ -43,7 +43,7 @@ questions:
     explanation: "Spies record calls quietly during the SUT's execution and let the test do the verification afterward. That fits this scenario well because the SUT's behavior is data-dependent — the test can collect everything and then assert on the *property* it cares about (exactly one SMS call), without pre-specifying the full call sequence."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A team's controller test sets up a `Mock()` for `user_repo` with `user_repo.get.return_value = User(id=1)` and then asserts on the controller's HTTP response — nothing else. The teammate insists this is a Mock; you disagree. What is the most precise classification?
@@ -63,7 +63,7 @@ questions:
     explanation: "Meszaros's roles are about *what the double does in this test*, not which library type implements it. If only return values are configured and no calls are asserted on, the role is a Stub — regardless of whether the implementation is `Mock()`, a hand-rolled subclass, or a Fake with shortcuts. Naming the role explicitly keeps tests honest and helps reviewers spot over-mocking."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       You are deciding between a **Spy** and a **Mock** to verify a notification interaction. Which factor most strongly favors a **Spy**?
@@ -83,7 +83,7 @@ questions:
     explanation: "Spies and Mocks both observe indirect outputs but differ in *when* and *how strictly* they verify. Spies record everything and let the test method assert flexibly afterward — ideal when the SUT's call pattern is data-dependent or when you want assertions richer than literal matchers. Mocks specify the contract up front and fail at the moment of divergence — ideal when the call sequence is precise and short."
 
   - id: 5
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       A teammate writes this test for a checkout controller:
@@ -120,7 +120,7 @@ questions:
     explanation: "This is the canonical *over-mocked test*: a test that mirrors the SUT's body line-for-line and breaks under any internal refactor. The fix is to assert on outcomes the contract actually specifies — `repo.mark_paid(42)` may be one of them, but `find_cart`, `charge`, and `emailer.send` are usually *implementation choices*, not contract obligations. The strongest tests assert on results (the cart is marked paid; the response is 200) and reserve interaction assertions for the cases where the interaction itself is the behavior."
 
   - id: 6
-    difficulty: advanced
+    difficulty: basic
     type: multiple
     question: |
       You're testing a `ReportService` that reads from a `UserRepository` (heavy I/O). Which of the following are *good* reasons to write a **Fake** `InMemoryUserRepository` instead of using a Stub or Mock for each test? (Select all that apply.)
@@ -142,7 +142,7 @@ questions:
     explanation: "Fakes earn their keep when many tests share the same dependency shape and the dependency has nontrivial *behavior* the tests rely on (queries, writes, joins). A Fake stores and retrieves data like the real thing but with shortcuts (no disk, no network, no transactions) that make it fast and disposable. The cost is the upfront work to build it; the payoff is dozens of tests that are simpler, more realistic, and less coupled to canned return values."
 
   - id: 7
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       A test does this:
@@ -172,7 +172,7 @@ questions:
     explanation: "Translating between Spy-style and Mock-style assertions is a place tests quietly drift in strength. `assert_called_once_with(...)` corresponds to *exactly one call with these arguments* — the same contract the Spy expressed. The cousins (`assert_called_with`, `assert_called`) look similar but encode different contracts. When migrating, audit each translation: a test should make the *same* claim before and after, no more and no less."
 
   - id: 8
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       Your SUT takes a `Logger` parameter. The test cares about the SUT's return value; it doesn't care what is logged. What is the lightest double that lets the test work?
@@ -192,7 +192,7 @@ questions:
     explanation: "The minimum-viable-double rule: pick the simplest double that makes the test work and adds no further coupling. A Dummy is the lightest — it exists only to satisfy the signature. Escalating to a Stub, Spy, Mock, or Fake should be justified by what the test actually needs to *verify* or *control*."
 
   - id: 9
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       Module `app/report.py` does `from services.users import fetch_user`, and the function `display_name(user_id)` then calls `fetch_user(user_id)` directly. A test does:
@@ -219,7 +219,7 @@ questions:
     explanation: "After `from services.users import fetch_user`, the name `fetch_user` is bound in `app.report`'s namespace. The SUT looks it up *there* when it calls `fetch_user(user_id)`. Patching the original `services.users` binding leaves `app.report`'s local reference untouched — the real function runs, the patch never intercepts. **Rule:** patch where the SUT looks the name up, not where it was originally defined."
 
   - id: 10
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       A team imports `requests` directly in twelve different modules and uses `patch("requests.get")` (or similar) in each of their tests. The patches are fragile, the tests are slow, and a `requests` version bump recently broke 30 tests because the library's exception class names changed. Which refactor most directly addresses the structural problem?
@@ -236,7 +236,7 @@ questions:
     explanation: "**Don't mock what you don't own.** When tests depend on a third-party's API surface directly, every library upgrade can ripple through the suite. The Adapter pattern flips the dependency: the codebase depends on an interface the team controls, and the tests double that interface. The third-party is wrapped once, in one place, and the tests stay decoupled from it. (Hynek Schlawack's essay popularized this phrasing; the underlying idea is older.)"
 
   - id: 11
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       A team uses `FakeUserRepository` (in-memory dict) for fast unit tests of `UserService`. The unit tests pass on every commit. In production, a bug surfaces: the real `PostgresUserRepository` raises `IntegrityError` on duplicate emails, but `UserService` had been written assuming a `ValueError`, which the Fake was happily raising. What is the most direct defense against this class of bug *without* abandoning the Fake?
@@ -253,7 +253,7 @@ questions:
     explanation: "Every Fake is a promise that it behaves enough like the real collaborator. That promise can break silently. A **contract test** is a single shared test that both the Fake and the real implementation must satisfy — exception classes, return shapes, edge-case behavior. Run it fast against the Fake (every commit) and slower against the real repository (on a schedule, against a sandbox database). When they diverge, you find out at the contract test, not at 3 a.m. in production."
 
   - id: 12
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       Your SUT catches `ConnectionError` from a weather API and returns a fallback value. You want a unit test that drives the SUT down the error-handling branch *deterministically* — without waiting for the real network to fail. Which configuration on a `Mock()` weather client gets you there?
@@ -270,7 +270,7 @@ questions:
     explanation: "`side_effect` is `Mock`'s lever for *behavior beyond returning a canned value*. Set it to an exception class (or instance) and the mock raises on call; set it to an iterable to return different values on consecutive calls; set it to a callable to compute the return value dynamically from the arguments. Using `side_effect = ConnectionError` (the class) is the canonical way to drive the SUT into its error-handling branch in a deterministic, network-free test."
 
   - id: 13
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       A teammate's test reads:

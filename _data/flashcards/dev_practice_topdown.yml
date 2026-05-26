@@ -10,49 +10,49 @@ cards:
     explanation: "It differs from line-by-line tracing because the reader uses prior knowledge to decide where to look and what details matter."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     bloom: understand
     question: "How does schema activation help expert programmers read code faster?"
     answer: "A schema is a stored mental pattern. When a developer recognizes an e-commerce system, visitor pattern, repository layer, or sorting loop, the schema supplies expectations that reduce the amount of detail they must hold in working memory."
     explanation: "Expert reading is fast because familiar structure becomes one chunk, not because the expert literally processes every line faster."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: basic
     bloom: apply
     question: "What is a dangling purpose link in Letovsky's model?"
     answer: "It is a gap between knowing **what** a program should accomplish and not yet knowing **how** the implementation accomplishes it. The gap generates targeted 'how' questions that guide the reader into the code."
     explanation: "A good PR description intentionally creates the specification layer first, so the reader's implementation search is focused rather than random."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     bloom: apply
     question: "What is the Stepdown Rule?"
     answer: "A source file should present high-level functions first, then place lower-level helper functions below the functions that call them. The reader descends one abstraction level at a time."
     explanation: "The rule supports top-down scanning: read the public story first, drill into details only when a hypothesis needs verification."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     bloom: understand
     question: "How does the Newspaper Metaphor apply to source files?"
     answer: "Like a newspaper article, a source file should put the most important, high-level ideas first and defer low-level details. A reader should be able to skim the top and understand the main story."
     explanation: "This does not mean hiding details forever. It means organizing details so the reader can choose when to descend."
 
   - id: 6
-    difficulty: advanced
+    difficulty: basic
     bloom: analyze
     question: "Why do experts switch between top-down and bottom-up comprehension?"
     answer: "Top-down hypotheses are efficient until they fail. When a beacon is missing, an abstraction leaks, or behavior is surprising, experts temporarily switch to bottom-up tracing to repair the mental model."
     explanation: "The strongest readers are opportunistic. They do not cling to one strategy when evidence says another will be cheaper."
 
   - id: 7
-    difficulty: advanced
+    difficulty: basic
     bloom: evaluate
     question: "When can a design pattern hurt top-down comprehension?"
     answer: "A pattern hurts when the code uses the pattern name but violates the pattern's expected responsibility, or when the pattern adds layers that obscure a simple domain concept. The beacon then points to the wrong schema."
     explanation: "Patterns are vocabulary, not decoration. A misleading pattern name is worse than no pattern name because it creates a false hypothesis."
 
   - id: 8
-    difficulty: intermediate
+    difficulty: basic
     bloom: apply
     question: "Which IDE features support top-down comprehension?"
     answer: "Architecture views, call hierarchy, go-to-definition, symbol search, split views, and intelligent completion all help readers move from high-level beacons to implementation details and back."

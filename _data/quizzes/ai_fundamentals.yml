@@ -17,7 +17,7 @@ questions:
       3: "External tools do not increase biological memory capacity. They reduce what must be held or processed mentally by putting some of the work outside the mind."
     explanation: "**Cognitive offloading** is the use of external tools (like calculators, calendars, or AI) to reduce the mental effort required for a task."
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     question: "According to research, who benefits more from using AI for technical tasks?"
     options:
       - "Absolute novices with no prior experience."
@@ -45,7 +45,7 @@ questions:
       3: "Copying code without understanding can create a false sense of fluency and hide defects. Beneficial offloading should leave the learner able to explain, test, and revise the result."
     explanation: "**Beneficial offloading** involves delegating 'extraneous load' (tedious, non-core tasks) to AI so you can focus on the 'intrinsic load' (the actual concepts you need to learn)."
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     question: "What is the **'desirable difficulty'** in the context of learning?"
     options:
       - "Any difficulty that makes a student want to give up."
@@ -59,7 +59,7 @@ questions:
       3: "An unresolved stuck state is not the goal. Productive challenge helps when it leads to retrieval, discrimination, explanation, or other deeper processing."
     explanation: "**Desirable difficulties** are challenges that might slow down initial performance but result in better long-term retention and deeper understanding."
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     type: multiple
     question: "Which of the following are considered 'desirable difficulties'? (Select all that apply)"
     options:

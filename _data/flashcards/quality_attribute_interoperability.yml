@@ -9,49 +9,49 @@ cards:
     explanation: "Interoperability is a business enabler — without it, every system is an island. Cross-platform mobile apps, payment integrations, EMR transfers between hospitals, and microservice meshes all depend on it as a foundational capability."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     question: "Distinguish **syntactic** and **semantic** interoperability."
     answer: "**Syntactic interoperability:** systems can successfully exchange and parse data structures (shared formats like JSON/XML, shared transport protocols like HTTPS). **Semantic interoperability:** systems interpret the exchanged data in exactly the same way — units, encoding, time zones, business rules, validity constraints all match."
     explanation: "Syntactic interop is necessary but not sufficient. Semantic interop is where catastrophic failures hide — the JSON parses fine but one side treats `amount` as dollars while the other reads cents, charging customers 100x too much. The Mars Climate Orbiter ($327M) failed for exactly this reason (pound-force-seconds vs newton-seconds)."
 
   - id: 3
-    difficulty: advanced
+    difficulty: basic
     question: "What was the **Mars Climate Orbiter** lesson for interoperability?"
     answer: "One ground-software component computed thruster firing impulses in **pound-force-seconds (US customary units)** while the navigation software expected **newton-seconds (SI units)**. The 4.45× discrepancy accumulated across many small burns until the orbiter entered Mars's atmosphere at the wrong altitude and disintegrated. A $327M spacecraft was lost to a unit-of-measure semantic interoperability failure."
     explanation: "The data exchange itself was syntactically perfect — numbers transmitted successfully. The catastrophe was that the *meaning* of those numbers was undocumented and disagreed across systems. This is why interface specifications must define units, coordinate systems, and reference frames explicitly."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     question: "What two parts does a measurable interoperability requirement need?"
     answer: "A **scenario** (which systems collaborate, what types of data they exchange, under what conditions) and a **metric** — most commonly the **percentage of data exchanged correctly**."
     explanation: "'Systems must be interoperable' is unmeasurable. 'When transferring HL7 FHIR Patient and Observation records between Hospital A and Hospitals B/C, ≥99.5% of defined fields are received and interpreted identically' is testable."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     question: "What is the standard architectural tactic when two systems have incompatible interfaces?"
     answer: "The **Adapter** design pattern. The adapter sits between the two systems and translates — syntactic translation (data format conversion) and/or semantic translation (mapping different meanings, units, or encodings). Both systems' core logic remains untouched."
     explanation: "Centralizing translation in one component prevents the dual-format reality from spreading through every consumer. The adapter is also the single testable place where every translation rule lives, so regressions are caught at one boundary instead of throughout the codebase."
 
   - id: 6
-    difficulty: advanced
+    difficulty: basic
     question: "How do **microservices** manage interoperability between bounded contexts?"
     answer: "Each service owns its own data model for an entity (its **bounded context**) and shares only the minimum information — typically a unique identifier like a User ID — across interfaces. Each service evolves its internal model independently."
     explanation: "This is the opposite of the DRY-everything monolith approach. Sharing rich domain models across services would re-create the coupling microservices exist to break — every model change would coordinate across all consumers, defeating the architectural style."
 
   - id: 7
-    difficulty: advanced
+    difficulty: basic
     question: "Why does **interoperability conflict with changeability**?"
     answer: "Standardized interfaces are inherently difficult to evolve — a change cannot be localized to one system; it requires every participating system to update simultaneously. The wider the adoption, the more rigid the interface becomes."
     explanation: "GDS could not adapt to Southwest Airlines's no-seat-assignment model because updating the standard would have required every airline and booking system in the world to change their software. Banking standards (SWIFT), healthcare standards (HL7), and EDI move slowly for exactly this reason."
 
   - id: 8
-    difficulty: advanced
+    difficulty: basic
     question: "What is *practical interoperability*, and what trade-off does it balance?"
     answer: "Practical interoperability is the likelihood that an interface will actually be adopted in the real world. It balances two conflicting forces: **implementation effort** (the more complex an interface, the higher the adoption cost) and **variability** (the more use cases the interface supports, the more attractive it is). Successful designs find the *sweet spot* — variable enough to be useful, simple enough to be affordable to integrate."
     explanation: "A 500-page spec with 200 optional fields buys maximum variability and minimum adoption. A spec too thin to support real use cases buys easy adoption and limited value. Most successful interop standards (REST, OAuth 2.0, Webhooks, JSON Schema) hit the sweet spot via tight cores + optional extensions."
 
   - id: 9
-    difficulty: intermediate
+    difficulty: basic
     question: "How does an interface specification achieve true **semantic interoperability**?"
     answer: "By documenting a **semantic view** that explicitly defines: the purpose of each action, the units of measurement, the coordinate systems and reference frames, the side effects, the error-handling conditions, the validity constraints, and the lifecycle states. Shared dictionaries (HL7, schema.org, FIBO) and standardized terminologies make this practical."
     explanation: "A schema (`amount: number`) is syntactic; a semantic view (`amount: total order value in US dollars, includes tax, excludes shipping, must be ≥ 0.01 and ≤ 100000`) is what prevents the dollar/cent / tax-in/tax-out / refund-includes-shipping disasters that hide in well-formed JSON."
@@ -63,31 +63,31 @@ cards:
     explanation: "Other examples: IoT devices reporting telemetry to cloud platforms via MQTT, airlines sharing seat-availability through GDS, banks transferring funds via SWIFT, browsers and servers speaking HTTP/2, calendar apps syncing via CalDAV."
 
   - id: 11
-    difficulty: intermediate
+    difficulty: basic
     question: "Why is interoperability considered a **business enabler**, not just a technical concern?"
     answer: "It lets organizations *use existing services rather than reinventing the wheel*. Specialized providers (payment processors, email delivery, address validation, maps) deliver mature, reliable capabilities the in-house team cannot match without massive investment. Interoperability frees engineering effort for the few capabilities that actually differentiate the product."
     explanation: "Every payment startup that builds its own credit-card processing wastes years on a solved problem. Every product team that builds its own email-delivery infrastructure handles deliverability complaints instead of building their actual product. Interop is what lets engineering focus stay on the differentiating work."
 
   - id: 12
-    difficulty: advanced
+    difficulty: basic
     question: "Why does **forever-backward-compatibility** carry a real cost?"
     answer: "Maintaining a never-broken API ossifies the system — every release carries legacy code paths, edge-case behavior must be preserved verbatim, and architectural improvements that would require interface changes cannot be made. The cumulative support burden grows every release."
     explanation: "Major platforms publish explicit deprecation policies ('v1 supported 18 months past v2 launch') to balance stability for consumers against the team's ability to evolve. Forever-backward-compatibility looks customer-friendly but trades long-term product quality for short-term stability."
 
   - id: 13
-    difficulty: intermediate
+    difficulty: basic
     question: "Why is semantic interoperability harder to achieve than syntactic?"
     answer: "Syntactic interoperability has explicit machine-checkable specifications (JSON schemas, XSD, Protobuf). Semantic interoperability depends on implicit assumptions — units, encoding, side effects, lifecycle states — that are easy to leave undocumented and hard to verify automatically. Many semantic failures only surface when production data exposes a gap nobody thought to check."
     explanation: "A JSON schema validates that `amount` is a number; it cannot validate that both sides agree `amount` means *cents* not *dollars*. Tools that help: contract tests with worked example payloads, shared dictionaries / ontologies, semantic views in specs, and field-level unit annotations like 'amount_cents'."
 
   - id: 14
-    difficulty: advanced
+    difficulty: basic
     question: "How does cross-platform / IoT / microservices architecture amplify interoperability concerns?"
     answer: "Each style introduces many more interfaces and partners — mobile devices running multiple OS versions, IoT sensors from different vendors, microservices independently evolving — and any one mismatch breaks the chain. Interop must be designed-in from day one rather than retrofitted, and standards (REST, MQTT, gRPC, OpenAPI) become load-bearing infrastructure."
     explanation: "A monolith has one interface (its UI). A 200-service microservice platform has thousands. The number of pairwise interactions grows faster than the number of services, so interop discipline (versioning, contracts, schemas, semantic views) scales nonlinearly in importance."
 
   - id: 15
-    difficulty: advanced
+    difficulty: basic
     question: "What does it mean to be 'interoperable' but not actually useful for collaboration?"
     answer: "Two systems can pass each other's parse tests (syntactic interop), yet still fail to collaborate meaningfully because of semantic mismatches, missing features, asymmetric coverage, or business-rule incompatibilities. The *useful* qualifier in the definition matters: interop is measured by the value of the exchange, not just its technical success."
     explanation: "A hospital records system can technically import another's data via HL7, but if 30% of fields don't map and another 20% map with different semantics, the clinical value is degraded. 'It exchanges data' is not the same as 'it usefully collaborates' — which is why the metric is *percentage of data exchanged correctly*, not just *exchanges succeed*."

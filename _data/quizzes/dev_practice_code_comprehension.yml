@@ -3,7 +3,7 @@ description: "Apply code-comprehension research to realistic reading, review, ar
 active: true
 questions:
   - id: 1
-    difficulty: intermediate
+    difficulty: basic
     bloom: apply
     type: single
     question: |
@@ -45,7 +45,7 @@ questions:
     explanation: "Bottom-up comprehension is costly but appropriate when the reader lacks the context needed for top-down hypotheses. As the developer learns the domain and identifies reliable beacons, they can switch to more opportunistic strategies."
 
   - id: 3
-    difficulty: advanced
+    difficulty: basic
     bloom: analyze
     type: multiple
     question: |
@@ -71,7 +71,7 @@ questions:
     explanation: "The integrated meta-model explains why real comprehension moves among purpose, code, domain knowledge, and personal experience. It is not a file-order recipe."
 
   - id: 4
-    difficulty: advanced
+    difficulty: basic
     bloom: evaluate
     type: single
     question: |
@@ -92,7 +92,7 @@ questions:
     explanation: "The architecture-code gap appears when the design vocabulary and code vocabulary diverge. Repairing it usually requires code structure and documentation that map high-level decisions to concrete source elements."
 
   - id: 5
-    difficulty: advanced
+    difficulty: basic
     bloom: evaluate
     type: single
     question: |
@@ -113,7 +113,7 @@ questions:
     explanation: "Design patterns are top-down beacons when they are true. They become cognitive debt when they imply a schema the code does not actually satisfy."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: basic
     bloom: apply
     type: single
     question: |

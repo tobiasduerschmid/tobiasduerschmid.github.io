@@ -25,7 +25,7 @@ questions:
     explanation: "**An actor represents a role, not a specific person — one person can hold multiple roles and multiple people can share the same role.** An actor represents a **role**, not a specific person. One person can play multiple roles (e.g., a professor who is also a student), and multiple people can share the same role."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: >
       Look at this diagram. What does the `<<include>>` relationship mean here?
@@ -47,7 +47,7 @@ questions:
     explanation: "**`<<include>>` means Login always occurs as a mandatory part of Purchase Item — it is not optional.** The `<<include>>` relationship means the included behavior **always** occurs. Whenever a customer purchases an item, they always go through the login process. This is mandatory, not optional."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: >
       What is the key difference between `<<include>>` and `<<extend>>`?
@@ -69,7 +69,7 @@ questions:
     explanation: "**`<<include>>` is mandatory (always happens) while `<<extend>>` is optional or conditional — both use dashed arrows but point in opposite directions.** `<<include>>` models **mandatory** shared behavior (always happens). `<<extend>>` models **optional** or conditional behavior (sometimes happens). Both use dashed arrows, but they point in opposite directions."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: >
       In this diagram, what does the `<<extend>>` arrow mean?
@@ -141,7 +141,7 @@ questions:
     explanation: "**Use case diagrams contain actors, use cases, system boundaries, and associations — classes and lifelines belong in other diagram types.** Use case diagrams contain **actors** (stick figures), **use cases** (ovals), **system boundaries** (rectangles), and **associations** (lines). Classes belong in class diagrams, and lifelines belong in sequence diagrams."
 
   - id: 7
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: >
       How is **generalization** between use cases shown?
@@ -163,7 +163,7 @@ questions:
     explanation: "**Use case generalization uses the same solid line with hollow triangle as class generalization, pointing to the parent use case.** Use case generalization uses the same notation as class generalization: a **solid line with a hollow triangle** pointing to the general (parent) use case. A specialized use case can replace or enhance the parent's behavior."
 
   - id: 8
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: >
       A university system requires that both 'Enroll in Course' and 'Drop Course' always verify the student's identity first. How should 'Verify Identity' be related to these use cases?

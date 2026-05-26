@@ -24,7 +24,7 @@ questions:
     explanation: "Refactoring preserves observable behavior while improving internal structure. The behavior-preserving boundary is the key test."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     bloom: apply
     type: multiple
     question: |
@@ -50,7 +50,7 @@ questions:
     explanation: "Refactoring is strongest when the chosen transformation matches the design force behind the smell."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: basic
     bloom: apply
     type: single
     question: |
@@ -71,7 +71,7 @@ questions:
     explanation: "Safe refactoring is a tight feedback loop: green baseline, one behavior-preserving transformation, green verification, checkpoint."
 
   - id: 4
-    difficulty: advanced
+    difficulty: basic
     bloom: evaluate
     type: single
     question: |
@@ -92,7 +92,7 @@ questions:
     explanation: "Refactoring judgment weighs payoff, scope, and reviewability. Small local improvements often belong with the change; large structural work usually deserves its own focused review."
 
   - id: 5
-    difficulty: advanced
+    difficulty: basic
     bloom: evaluate
     type: single
     question: |
@@ -113,7 +113,7 @@ questions:
     explanation: "AI-assisted refactoring still needs human scope control. Behavior changes and refactorings should be separated so reviewers know what contract they are checking."
 
   - id: 6
-    difficulty: advanced
+    difficulty: basic
     bloom: analyze
     type: single
     question: |

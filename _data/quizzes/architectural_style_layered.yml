@@ -3,7 +3,7 @@ description: "Apply layered architecture to real engineering decisions — diagn
 active: true
 questions:
   - id: 1
-    difficulty: intermediate
+    difficulty: expert
     type: single
     question: |
       A code review surfaces this line in your team's `OrderRepository` (the Data layer): `import { CheckoutController } from '../presentation/CheckoutController'`. The repository's intent is to *notify* the controller when an order has been persisted. What is going on and what is the cleanest fix?
@@ -23,7 +23,7 @@ questions:
     explanation: "**The golden rule of layered architecture: lower layers must never use upper layers.** Even a single upward import creates a cycle that invalidates the layering and ruins portability. The standard escape for upward notification is callbacks / Observer / Pub-Sub: the upper layer registers a listener; the lower layer triggers it without holding a static reference to anything above. Control flows upward; compile-time dependency stays downward."
 
   - id: 2
-    difficulty: advanced
+    difficulty: expert
     type: single
     question: |
       You profile your strictly layered 7-layer stack and find that 30% of request latency is spent marshaling data through intermediate layers that neither inspect nor modify it. Your team is debating relaxing to allow the top layer to call the bottom layer directly for read paths. What is the principled trade-off?
@@ -43,7 +43,7 @@ questions:
     explanation: "**Relaxed layering trades portability for performance: each bypass adds a coupling the strict topology excluded.** Occasional, documented bypasses on profile-proven hot paths are pragmatic; widespread bypassing turns the architecture into a ball of mud. The cost is paid not in the current sprint but in every future change that has to consider the bypass."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A new engineer claims "our app server tier and our database tier are two layers." A senior architect disagrees. What is the precise terminology distinction?
@@ -63,7 +63,7 @@ questions:
     explanation: "**Layers are a module-viewtype concept (design-time, abstraction); tiers are a component-and-connector or allocation concept (runtime, physical or process nodes).** A single app-server tier usually hosts a Presentation, Service, Domain, and Repository *layer* — four layers in one tier. Calling them the same thing obscures both whether you control dependency direction and where things actually run."
 
   - id: 4
-    difficulty: advanced
+    difficulty: expert
     type: multiple
     question: |
       Your team is migrating from a traditional 4-layer architecture (UI / Service / Repository / Database) to **Clean Architecture**. Which of these are real *benefits* of the inversion (Domain at the center, infrastructure on the outside)? Select all that apply.
@@ -88,7 +88,7 @@ questions:
     explanation: "**Clean Architecture inverts the classical layered dependency: domain at the core, with no dependencies on infrastructure; UI, databases, and external services become outer-ring adapters that depend inward on the domain.** This buys testability in isolation and infrastructure-swap freedom — at the cost of more interfaces, more indirection, and zero performance benefit. The payoff is paid in long-term maintainability."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       Your sensor-driver layer detects a hardware fault. The UI layer (much further up the stack) needs to surface a banner to the user. The architect insists no upward dependency may appear in the import graph. How do you wire this?
@@ -108,7 +108,7 @@ questions:
     explanation: "**The Observer / callback pattern lets control flow upward (the driver invokes the listener) while compile-time dependency stays downward (the UI depends on the driver's listener interface, not vice versa).** This is the standard escape that preserves the golden rule while supporting asynchronous upward notification — used in every real layered system from OS interrupt handlers to UI event loops."
 
   - id: 6
-    difficulty: advanced
+    difficulty: expert
     type: single
     question: |
       Three months ago your team was a clean strict-layered stack. Today, code review shows: the UI imports from the Repository, two Service classes import each other, and the Domain layer instantiates a concrete database driver. Which term best describes the result?
@@ -128,7 +128,7 @@ questions:
     explanation: "**This is textbook architectural erosion: each individual violation looked locally reasonable but together they invalidate the topology the style was designed around.** The modifiability promise is gone (changing the database now ripples through Domain and Services); the portability promise is gone (UI depends on the concrete repository). The fix is not a single PR; it requires re-establishing the architectural rules and a refactor budget across multiple cycles."
 
   - id: 7
-    difficulty: intermediate
+    difficulty: expert
     type: single
     question: |
       Your strictly layered enterprise app has grown to 200K LOC across 6 layers, organized by *technical* function (UI, Controller, Service, Domain, Repository, Database). Every new business feature requires editing all 6 layers, and 4 teams now coordinate on every release. Which evolution best addresses the bottleneck?
@@ -148,7 +148,7 @@ questions:
     explanation: "**Pure technical layering scales poorly because every business feature requires touching every horizontal layer — coordination across all teams. Domain (vertical) layering organizes code by business capability so each team owns a slice end-to-end, dramatically reducing per-feature coordination.** Modern systems combine both: domain slices on the outside, each internally layered. Microservices, if they come later, naturally fall out of well-bounded domain slices."
 
   - id: 8
-    difficulty: advanced
+    difficulty: expert
     type: single
     question: |
       A new product manager asks: "why don't we just remove the layers and call whatever needs to be called? Our delivery would be twice as fast." How do you frame the trade-off the architect made when introducing layers?
@@ -168,27 +168,27 @@ questions:
     explanation: "**Layering trades short-term delivery speed (and a small performance cost) for long-term modifiability and portability.** The PM is right that removing layers would speed up *this sprint*; the architect's job is to frame the *future* sprints — every change in a flat architecture costs more, every infrastructure swap touches more code, and every team coordinates more. The honest pitch is: pay now for cheaper future changes, or pay later for the absence of structure."
 
   - id: 9
-    difficulty: intermediate
+    difficulty: expert
     type: single
     question: |
       You're designing a small CLI tool that parses CSV files, transforms records, and writes JSON output. A senior engineer suggests skipping layered architecture for this project. Why is that reasonable?
     options:
-      - "Layered architecture is forbidden by Jekyll-style static-site generators for performance reasons."
-      - "The tool is short-lived and single-purpose — layering's modifiability and portability benefits would not be exercised, so the up-front design cost would pay no dividend. A pipe-and-filter or flat structure fits the scope better."
+      - "Layered architecture only applies to operating systems and network protocols — application code uses other styles."
+      - "The tool is short-lived and single-purpose — layering's modifiability and portability benefits would not be exercised, so the up-front design cost would pay no dividend. A simpler structure fits the scope better."
       - "Layered architecture only works in object-oriented languages, and the tool is in a procedural language."
       - "CLI tools require a stateful runtime, which the layered style cannot model."
     correct_index: 1
     option_feedback:
       0: |
-        Jekyll has no opinion on application architecture. The distractor is invented. The real question is whether layering's benefits are worth the design cost for *this* tool.
+        Layering is a general module style — it shows up in operating systems and protocol stacks but also in application code (J2EE-style stacks, Domain-Repository-Service organizations). The reason to skip it here is scope, not domain.
       2: |
-        Layered architecture is language-agnostic — implemented in C, Rust, Go, Python, JavaScript, and every other production language. Many small CLI tools in OO languages are also unlayered for the same scope reason.
+        Layered architecture is language-agnostic; it constrains the *dependency graph between modules*, not the language paradigm. Many small CLI tools in OO languages are also unlayered for the same scope reason.
       3: |
         Stateless functional tools are if anything *easier* to layer than stateful ones; the claim is false on its merits. The reason to skip layering is scope, not state.
-    explanation: "**This is a *judgment call*, not a hard rule.** Architectural styles are tools — pick the one whose promised qualities you actually need. A small, single-purpose, short-lived utility doesn't benefit from layering's modifiability or portability promises, so a pipe-and-filter or flat module is often a better fit. Reasonable engineers disagree on where the threshold is; a layered CLI tool is not wrong, just usually over-engineered for the scope."
+    explanation: "**Architectural styles are prefabricated sets of constraints designed to elicit specific systemic qualities** (modifiability, portability, reusability). A small, single-purpose, short-lived utility will never exercise those qualities — nobody is going to port it to another platform or maintain it over years — so the up-front design cost pays no dividend. The right call is to pick the style whose promised qualities the system actually needs."
 
   - id: 10
-    difficulty: advanced
+    difficulty: expert
     type: single
     question: |
       A team has two systems running side by side: System A is strictly layered (every call goes through the layer immediately below). System B is relaxed (any downward call to any lower layer is allowed). They share the same lower-layer code. After two years, which system is more likely to have remained portable, and why?
@@ -208,7 +208,7 @@ questions:
     explanation: "**Strict layering minimizes the set of consumers of each layer's interface — exactly one layer above. When the lower-layer implementation changes, only one consumer adapts. Relaxed layering expands that set arbitrarily, so a change ripples wider and unpredictably.** Portability decays with the number of consumers; strict layering keeps that number small by construction."
 
   - id: 11
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A teammate points at a layered source-code diagram and says: "If the bottom layer fails, the whole app is unavailable, so this diagram tells us our availability risk." What is the best response?

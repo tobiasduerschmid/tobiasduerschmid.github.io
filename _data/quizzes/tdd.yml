@@ -30,7 +30,7 @@ questions:
     explanation: "Green's mandate is *'the simplest piece of code that turns the bar green'*. The minimal class with `status = 'open'` in the constructor satisfies the one failing test and adds no behavior not yet specified. Rule 3 keeps each step small enough that the working system is never more than a few minutes away; a richer state machine waits for the next Red→Green cycle."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A team starts a 'TDD initiative'. After three months their CI is consistently red, engineers report tests are slowing them down, and pre-release defects are higher than before. A retrospective reveals that engineers write one big test for each feature, code for an hour, then debug for an afternoon. What is the most likely root cause?
@@ -50,7 +50,7 @@ questions:
     explanation: "The World-of-Red trap is what happens when steps are too large. Each big change introduces multiple failures whose causes can't be untangled, so debugging dominates, the feedback loop is severed, and the suite stops being a safety net. The recovery is to shrink the next test until Green is minutes away — the discipline that Beck's Three Rules and Kerievsky's small-steps method both enforce."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A team is building an ACID-compliant distributed database from scratch. They plan to be 'TDD-only' from day one — no high-level design, no architecture document. What is the strongest concern?
@@ -90,7 +90,7 @@ questions:
     explanation: "Refactor is the design step — the phase where TDD's design-emergence happens. The constraint is that behavior must stay observably the same (so the tests stay green), which forces the engineer to use small, safe restructurings. Romano et al. (2017) found that developers commonly skip this step; that's where most of TDD's long-term value evaporates."
 
   - id: 5
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       A team uses TDD diligently for application code but reports that their *security* and *performance* properties keep regressing in production. What is the most accurate diagnosis?
@@ -110,7 +110,7 @@ questions:
     explanation: "TDD's binary pass/fail and unit scope make it a poor fit for properties that are statistical (performance under load) or holistic (security posture). The chapter calls these *non-functional properties* and notes they need risk-driven design and quality activities that go beyond unit tests — load tests, threat modeling, fuzzing, static analysis. Use TDD where it shines; reach for the other tool when the property is the wrong shape for a unit test."
 
   - id: 6
-    difficulty: advanced
+    difficulty: basic
     type: multiple
     question: |
       Two research findings shape modern thinking about TDD. Which of the following claims are well-supported by the studies cited in the chapter? (Select all that apply.)
@@ -135,7 +135,7 @@ questions:
     explanation: "The three findings together form the modern position on TDD: it can sharply reduce defects (Nagappan), the mechanism is the rhythm of small steps rather than the test-first ritual (Fucci), and the design payoff depends on actually doing the Refactor step that engineers tend to skip (Romano). 'TDD doubles productivity' is a slogan; the real story is more nuanced and more useful to teach."
 
   - id: 7
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A team adopts TDD for a new feature. After two weeks, they have 80 tests, the suite runs in 90 seconds, and the team reports they 'are now afraid to refactor because tests break too easily'. What is the strongest interpretation?
@@ -155,7 +155,7 @@ questions:
     explanation: "Brittle TDD suites are usually a teaching gap: engineers learn the *ritual* of test-first without the discipline of *what to assert on*. Tests should pin behavior at stable boundaries (return values, public state, persisted records, domain events) and reserve interaction assertions for cases where the interaction is the contract. Once the team learns that, the same TDD practice produces a suite that *protects* refactoring rather than punishing it."
 
   - id: 8
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       A team wants to TDD an image-recognition model. They write `assert classify(cat_image) == "cat"` and another `assert classify(dog_image) == "dog"`. The model passes both but ships with poor accuracy on noisy inputs. What is the structural problem with their TDD approach here?

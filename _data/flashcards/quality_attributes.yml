@@ -9,37 +9,37 @@ cards:
     explanation: "'Search' is functionality. 'During peak load, 95% of search requests return within 200 ms' is a performance quality attribute attached to that functionality. Two systems can implement the same functional requirement with radically different quality profiles."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     question: "What two parts does a measurable quality requirement have?"
     answer: "**A scenario** (the specific condition or environment to which the system must respond — what stimulus, what user, what load) and **a metric** (a concrete measure of goodness, either a hard threshold like 'response time < 1 s' or a soft goal like 'minimize effort')."
     explanation: "'The system must be fast' is unmeasurable — engineering cannot tell when it's done. 'Under peak Friday-evening load, 95% of search requests return in under 200 ms' is a quality requirement: it has a scenario (peak Friday load), a metric (95% / 200 ms), and is testable."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: basic
     question: "Distinguish **design-time** and **run-time** quality attributes with examples."
     answer: "**Design-time:** extensibility, changeability, reusability, testability — properties of the codebase that primarily affect developers and maintainers. **Run-time:** performance, availability, scalability, security — behaviors experienced directly by users while the system executes."
     explanation: "Both matter, but they surface differently. Run-time qualities show up in monitoring dashboards and user complaints; design-time qualities show up in PR cycle time, regression rates, and how long new hires take to ship their first feature."
 
   - id: 4
-    difficulty: advanced
+    difficulty: basic
     question: "Why are quality attributes called the *load-bearing walls* of a software system?"
     answer: "Three reasons: (a) **early architectural decisions strongly constrain** which qualities the system can later achieve; (b) quality concerns are **cross-cutting** — they touch many modules, not one; (c) they are **expensive to retrofit** — bolting on scalability or security after the fact often requires rebuilding rather than patching."
     explanation: "This is why architects insist on identifying critical quality attributes early. Once the foundation is poured, moving a load-bearing wall is more expensive than rebuilding the house. Once an architecture has shipped without designing for scalability or testability, retrofitting them often costs more than the original build."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     question: "Give three examples of quality attributes that commonly *conflict*."
     answer: "**Security ↔ Performance** (encryption, validation, audit logging cost CPU and latency). **Reliability ↔ Performance** (TCP's acknowledgments and retries cost latency compared to fire-and-forget UDP). **Modifiability ↔ Performance** (abstraction layers buy modifiability at the cost of indirection and data conversion overhead)."
     explanation: "Conflicts are why architects must prioritize: trying to maximize every attribute produces a mediocre system. Explicit prioritization lets every design decision resolve consistently against the chosen priorities."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: basic
     question: "Give three examples of quality attributes that *synergize*."
     answer: "**Performance + Usability** (faster response improves the user experience). **Testability + Changeability** (modular, decoupled code is easier to test and easier to evolve). **Modifiability + Reusability** (loose coupling enables both adapting components in place and lifting them into new contexts)."
     explanation: "Synergies are where the architect gets compound wins — one set of design decisions improves multiple qualities at once. The Single Responsibility, Dependency Inversion, and Interface Segregation principles each buy multiple quality wins simultaneously."
 
   - id: 7
-    difficulty: advanced
+    difficulty: basic
     question: "Why can't a system maximize all quality attributes simultaneously?"
     answer: "Because the architectural and implementation choices that improve some qualities (e.g., abstraction layers for modifiability, encryption for security, retries for reliability) actively cost others (indirection for performance, CPU time, latency). Trade-offs are intrinsic, not avoidable through cleverness."
     explanation: "The architect's job is to make the trade-offs *explicit* and *aligned with priorities*. Saying 'we will accept p99 latency of 200 ms in exchange for end-to-end encryption' is a real engineering decision. Saying 'we want it all' is wishful thinking that produces incoherent design."
@@ -51,31 +51,31 @@ cards:
     explanation: "Without a scenario, a metric is meaningless: 'response time < 200 ms' under what load, what cache state, what query mix? Scenarios anchor metrics to realistic operating conditions."
 
   - id: 9
-    difficulty: intermediate
+    difficulty: basic
     question: "What's the difference between a *hard threshold* and a *soft goal* in quality requirements?"
     answer: "**Hard threshold:** a concrete pass/fail measure — 'response time must be under 1 s' or 'availability must exceed 99.9%'. The requirement is either met or not. **Soft goal:** a directional optimization — 'minimize memory footprint' or 'minimize developer onboarding effort'. The requirement is always partially met and improved over time."
     explanation: "Hard thresholds are testable in CI; soft goals show up as quarterly OKRs or architectural review criteria. Most real systems mix both — hard thresholds on the few load-bearing qualities, soft goals on everything else."
 
   - id: 10
-    difficulty: advanced
+    difficulty: basic
     question: "Why must architects prioritize 2–3 quality attributes per system instead of optimizing all of them?"
     answer: "Because trade-offs are real and pervasive — every architectural decision that improves one quality often degrades another. Without explicit priorities, the team cannot resolve those conflicts coherently and the architecture drifts toward whatever quality happens to bubble up first in each decision. Prioritization is what gives the architecture a *spine*."
     explanation: "Concrete commitments like 'we will optimize for security, scalability, and changeability; we will accept lower per-request performance' let every later design decision resolve consistently. Without them, the team relitigates priorities on every PR and the architecture becomes a patchwork."
 
   - id: 11
-    difficulty: intermediate
+    difficulty: basic
     question: "Give two non-functional quality attributes that are typically *user-facing* and two that are typically *developer-facing*."
     answer: "**User-facing (run-time):** performance, availability, security (perceived as data safety), usability. **Developer-facing (design-time):** testability, changeability, extensibility, reusability. Some qualities (security, performance) cross over depending on whom they constrain."
     explanation: "User-facing qualities show up in monitoring dashboards, SLAs, customer complaints, and reviews. Developer-facing qualities show up in cycle time, regression rates, the cost of a refactor, and onboarding velocity. Both matter to the business, just on different time horizons."
 
   - id: 12
-    difficulty: advanced
+    difficulty: basic
     question: "What is the *architecture-attribute coupling*: how does the choice of architectural style influence which quality attributes are achievable?"
     answer: "Each architectural style is a *prefabricated set of constraints* that promotes specific qualities and inhibits others — pipe-and-filter promotes modifiability and reusability while inhibiting interactivity and fault tolerance; pub-sub promotes evolvability while inhibiting predictability; layered promotes portability while inhibiting performance. **Choosing a style is implicitly choosing a quality profile.**"
     explanation: "Architects pick styles to *hoist* desired qualities into the structural skeleton of the system. Choosing a style without considering its quality consequences means inheriting whatever profile the style happens to give you — often the opposite of what the requirements demanded."
 
   - id: 13
-    difficulty: intermediate
+    difficulty: basic
     question: "Why can't quality attributes be 'added later' once the system has shipped?"
     answer: "Because they are **cross-cutting** — they touch many modules, not one — and architectural choices made on day one constrain what later qualities are achievable. Retrofitting scalability into a synchronous monolith, security into a system without input validation, or testability into a tightly coupled codebase typically requires structural rework, not localized patches."
     explanation: "The classic anti-pattern: 'we'll add tests / security / observability later.' Later, the team discovers the code is structurally hostile to those concerns, and the retrofit is more expensive than the original build. This is the entire point of the load-bearing-wall metaphor."
@@ -87,31 +87,31 @@ cards:
     explanation: "There is no single canonical list; ISO 25010 (the international standard for software quality) names eight characteristics with many subcharacteristics. The point is not to memorize a list but to be able to identify which qualities matter for a specific system and design for them deliberately."
 
   - id: 15
-    difficulty: advanced
+    difficulty: basic
     question: "Why is asking 'how do I improve software quality?' the wrong question?"
     answer: "'Quality' is not a single dimension — it is a vector of often-conflicting attributes. Improving one (e.g., security) typically degrades others (e.g., performance, usability). The right question is **'which quality attributes does this system most need, and how do I trade off the rest?'** That reframing lets the team make coherent, defensible architectural decisions."
     explanation: "Generic 'improve quality' efforts often produce diffuse, low-impact work — code-style cleanups, more linters, more tests of already-tested code — while the load-bearing qualities the system actually needs (say, scalability and security) go unaddressed. Specific, prioritized quality work compounds; generic quality work dissipates."
 
   - id: 16
-    difficulty: intermediate
+    difficulty: basic
     question: "Give a good **extensibility** quality-attribute specification for adding depth sensors."
     answer: "\"Adding a new depth sensor requires implementing one sensor adapter and must not require changes to components that process depth images.\""
     explanation: "This improves on 'adding sensors should be easy' because it names the class of change (new depth sensor) and the success measure (no changes to depth-image processing components)."
 
   - id: 17
-    difficulty: intermediate
+    difficulty: basic
     question: "Give a good **testability** quality-attribute specification for payment authorization code."
     answer: "\"A developer can run deterministic tests for payment authorization outcomes, including declined cards and network timeouts, without contacting the real payment provider.\""
     explanation: "The scenario is testing authorization outcomes, including rare or external-service cases. The measure is controllability and observability without using the real provider."
 
   - id: 18
-    difficulty: intermediate
+    difficulty: basic
     question: "Why can a structural boundary be a valid quality-attribute measure?"
     answer: "Some design-time qualities are best measured by **what must not change** or **which dependencies must not be introduced**, not by runtime numbers. Example: adding a depth sensor must not require changing depth-image processors."
     explanation: "Runtime qualities often use latency, throughput, or uptime. Design-time qualities often use developer time, number of modules touched, dependency direction, or forbidden ripple effects."
 
   - id: 19
-    difficulty: advanced
+    difficulty: basic
     question: "Why is \"Use Kafka for scalability\" a poor quality requirement?"
     answer: "It chooses an implementation before stating the quality scenario. A quality requirement should say what scale must be supported, under which load, and with which metric; Kafka may be one candidate tactic or style choice afterward."
     explanation: "Implementation choices can satisfy requirements, but they should not replace them. Otherwise the team cannot evaluate whether Kafka actually solves the right scalability problem."

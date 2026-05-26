@@ -21,49 +21,49 @@ cards:
     explanation: "The five live on two axes: which direction of data flow they control (input vs output) and when verification happens (after vs during). Knowing the full taxonomy keeps you from reaching for a Mock when a Stub or Spy is closer to what you actually need."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     question: "You need to drive the SUT down its error-handling branch — the one where the payment gateway returns `Status.TIMEOUT`. Which double, and why?"
     answer: "A **Stub**. You need to control what the SUT *receives* from the gateway (indirect input) to force the path. You don't need to observe what the SUT sent."
     explanation: "Stubs shine for exercising paths that are hard to trigger with real DOCs — error responses, slow paths, rare states. They establish a control point in the SUT's input space. If you also need to verify *what message the SUT sent in response* to the timeout, you would add a Spy or Mock — but the *input control* belongs to a Stub."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     question: "Compare **Spy** and **Mock**: when does failure occur, and what style of test does each produce?"
     answer: "**Spy** records calls quietly; test asserts on the recording *after* the SUT runs (*procedural verification*). **Mock** is pre-programmed with expectations; fails *during* the SUT's execution if a call doesn't match (*expected behavior specification*)."
     explanation: "Spy-based tests put assertions in the test method, so the reader sees what is being verified next to the act step. Mock-based tests push expectations into setup; failures point at the call site but the test body shows less. Spies are friendlier when you can't predict all attributes of the interaction up front; mocks fail faster when you can specify the contract precisely."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: basic
     question: "What is a **Fake**? Canonical example? How is it different from a Stub?"
     answer: "A **Fake** is a *working* alternative implementation with shortcuts unsuitable for production (e.g. in-memory DB satisfying the real interface). A **Stub** returns canned values for specific calls; a Fake actually implements the behavior."
     explanation: "Fakes are ideal when you want realistic behavior at high speed — write a row, read it back, query by index — without standing up the real dependency. They cost more to build but pay back across many tests. Stubs are cheap and case-specific; Fakes are richer and scenario-general."
 
   - id: 7
-    difficulty: intermediate
+    difficulty: basic
     question: "A junior engineer asserts `mock.method.assert_called_once_with(...)` after every line of the SUT's body. Diagnose."
     answer: "The test has crossed from *checking behavior* to *encoding the implementation*. Any refactor that changes how the SUT calls its collaborators breaks the test — even when user-visible behavior is preserved. The test is testing the mock, not the system."
     explanation: "This is the most common Mock anti-pattern. Interaction checks are useful when the interaction *is* the contract ('exactly one receipt email after payment succeeds') and harmful when they merely freeze the current implementation's wiring. The remedy is usually to assert on the SUT's outputs or persisted state instead, reserving interaction assertions for the cases where collaboration is the behavior."
 
   - id: 8
-    difficulty: advanced
+    difficulty: basic
     question: "Your SUT calls `notifier.send(channel, body)` four times in a single workflow, in a data-dependent order. You want to assert each call had the right channel but can't predict the order. Which double fits best?"
     answer: "A **Spy**. Let the SUT run, retrieve the recorded calls, sort or group them, and assert each. A Mock with strict-order expectations would fail on the first reorder; a Spy collects everything for flexible after-the-fact assertion."
     explanation: "Procedural verification with a Spy is well suited when you cannot predict all attributes of the interactions up front or when assertions need richer logic (grouping, sorting, set comparisons). The cost is that errors are detected at assertion time, not the moment they happen — but you trade that for flexibility the Mock model lacks."
 
   - id: 9
-    difficulty: advanced
+    difficulty: basic
     question: "Pick a double for: *'My SUT loads a config via `loader.load_config()`; the test never inspects the result.'*"
     answer: "A **Dummy** suffices — the loader satisfies the signature but its returned object is never used. If the SUT *does* read fields off the config, escalate to a **Stub** returning a specific config."
     explanation: "Reaching for a Mock or Spy here would over-specify the test. Dummies are the lightest double — they exist to satisfy the type system / signature. The minimum-viable-double rule: pick the simplest double that lets the test do its job. Anything heavier is extra coupling for no benefit."
 
   - id: 10
-    difficulty: advanced
+    difficulty: basic
     question: "Sketch the **procedural verification** lifecycle of a Spy-based test in four steps."
     answer: "(1) Install the **Spy** in place of the DOC. (2) **Exercise** the SUT. (3) Retrieve recorded calls from the Spy. (4) Use ordinary assertions to compare recorded vs expected values."
     explanation: "This is the chapter's four-step lifecycle. The contrast with mocks is the *placement of the verification*: spies make it explicit in the test body (visible, flexible, late); mocks make it implicit in setup (terse, strict, early). Both are valid; each suits a different shape of test."
 
   - id: 11
-    difficulty: expert
+    difficulty: basic
     question: |
       A controller test does this:
 
@@ -81,14 +81,14 @@ cards:
     explanation: "Mock libraries blur the taxonomy — `unittest.mock.Mock` plays every role. Naming the role each instance plays is what keeps the test honest. Rule of thumb: only return values configured → Stub. Only call assertions → Spy. Both → Mock. Replacing the user-repo Stub with a Fake `InMemoryUserRepo` often pays off when many tests share the same configuration."
 
   - id: 12
-    difficulty: intermediate
+    difficulty: basic
     question: |
       Module `app/report.py` does `from services.users import fetch_user` and then calls `fetch_user(user_id)`. Which `patch()` target intercepts the call from a test of `app.report` — `"services.users.fetch_user"` or `"app.report.fetch_user"`? Why?
     answer: "`\"app.report.fetch_user\"`. After `from services.users import fetch_user`, the name `fetch_user` is bound in `app.report`'s namespace; the SUT looks it up *there*. Patching `services.users.fetch_user` leaves `app.report`'s local reference untouched."
     explanation: "**Patch where the SUT looks up the name, not where it was defined.** This is the #1 Python mocking pitfall. The same principle applies to JavaScript CommonJS (`const { y } = require('x')` creates a similar local binding) and to Java static imports — names live in the namespace of the module that introduces them."
 
   - id: 13
-    difficulty: intermediate
+    difficulty: basic
     question: |
       Your SUT catches `ConnectionError` and returns a fallback value. Sketch the `Mock()` configuration that drives the SUT down that branch deterministically. Why does setting `return_value` not work?
     answer: |
@@ -102,21 +102,21 @@ cards:
     explanation: "`side_effect` is `Mock`'s lever for behavior beyond returning a canned value: set it to an exception class to raise; set it to an iterable to return different values across consecutive calls; set it to a callable to compute the return value from the arguments. `return_value` and `side_effect` answer different test-design needs and are *not* interchangeable."
 
   - id: 14
-    difficulty: advanced
+    difficulty: basic
     question: |
       A team's tests directly mock `requests.get` in twelve different modules. A `requests` version upgrade just broke 30 of those tests. What's the structural fix — and what's the principle?
     answer: "Wrap `requests` in a thin **Adapter** class (e.g., `HttpClient`) that exposes only the methods the codebase needs. Have all twelve modules depend on `HttpClient`. Mock the Adapter, not `requests` directly. Principle: **don't mock what you don't own.**"
     explanation: "When tests depend on a third-party's API directly, every library upgrade can ripple through the suite. The Adapter pattern (named in design-patterns literature) flips the dependency direction: the codebase depends on an interface the team controls, and tests double that interface. The third-party stays invisible to the test suite."
 
   - id: 15
-    difficulty: advanced
+    difficulty: basic
     question: |
       You use a `FakeUserRepository` (in-memory dict) for fast unit tests. The unit tests pass. Production then fails because the real `PostgresUserRepository` raises `IntegrityError` on a duplicate email, while the Fake had been raising `ValueError`. How do you keep the Fake's speed *and* defend against this drift?
     answer: "Write a **shared contract test** that both `FakeUserRepository` and `PostgresUserRepository` must pass — including the duplicate-email exception class. Run it against the Fake every commit (fast) and against the real repository on a schedule, against a sandbox database (slower)."
     explanation: "Every Fake is a *promise* that it behaves enough like the real collaborator. That promise can break silently. A contract test captures the behavioral expectations once and is run against both implementations, surfacing drift the moment one side changes. The Fake stays useful; the drift becomes visible."
 
   - id: 16
-    difficulty: advanced
+    difficulty: basic
     question: |
       Diagnose the test smell:
 

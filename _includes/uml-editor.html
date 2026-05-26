@@ -2152,24 +2152,32 @@ Supported options:
     var redoStack = [];
     var UNDO_LIMIT = 100;
     var COALESCE_MS = 600;
+    // Hard cap on a coalesced burst. Without this, refreshing `top.t` on every
+    // event would let a long uninterrupted gesture (sustained nudge, slow drag)
+    // collapse into one undoable step indefinitely — users couldn't back out
+    // incrementally.
+    var MAX_COALESCE_MS = 3000;
     var suspendUndo = false;
     /**
      * Push the current textarea value onto the undo stack.
      *
-     * If `kind` matches the most recent push within COALESCE_MS, replace its
-     * top entry instead of pushing a new one — so holding ↓ to nudge or
-     * dragging a class around becomes a single undoable step.
+     * If `kind` matches the most recent push within COALESCE_MS *and* the burst
+     * started less than MAX_COALESCE_MS ago, refresh its `t` instead of pushing
+     * a new entry — so a single gesture is one undoable step, but a marathon
+     * gesture still breaks into chunks.
      */
     function snapshotForUndo(kind) {
       if (suspendUndo) return;
       var now = Date.now();
       var top = undoStack[undoStack.length - 1];
-      if (kind && top && top.kind === kind && (now - top.t) < COALESCE_MS) {
+      if (kind && top && top.kind === kind &&
+          (now - top.t) < COALESCE_MS &&
+          (now - top.firstT) < MAX_COALESCE_MS) {
         top.t = now;
         // Don't update top.value — we want the *original* pre-burst snapshot.
         return;
       }
-      undoStack.push({ value: textarea.value, kind: kind || null, t: now });
+      undoStack.push({ value: textarea.value, kind: kind || null, t: now, firstT: now });
       if (undoStack.length > UNDO_LIMIT) undoStack.shift();
       redoStack.length = 0;
       refreshUndoButtons();
@@ -2178,25 +2186,47 @@ Supported options:
       if (undoBtn) undoBtn.disabled = !undoStack.length;
       if (redoBtn) redoBtn.disabled = !redoStack.length;
     }
-    function applySnapshot(value) {
+    function focusLayoutTarget(id) {
+      if (!id) return;
+      var newSvg = output.querySelector('svg');
+      if (!newSvg) return;
+      var target = newSvg.querySelector('.uml-pg-edit-a11y-target[data-layout-id="' + cssAttrEscape(id) + '"]');
+      if (target && target.focus) target.focus();
+    }
+    function applySnapshot(value, selection) {
+      // Stage the selection so installVisualEditor restores `is-selected`
+      // styling and the props pane after the re-render. Without this, undo
+      // leaves the keyboard user stranded on <body>.
+      if (selection && selection.id) {
+        pendingSelect = { id: selection.id, kind: selection.kind || 'node' };
+      }
       suspendUndo = true;
       textarea.value = value;
       suspendUndo = false;
       renderDiagram();
       refreshUndoButtons();
+      if (selection && selection.id) {
+        // The hitbox DOM is rebuilt during renderDiagram; defer the focus so
+        // we hit the new node, not the stale one.
+        setTimeout(function () { focusLayoutTarget(selection.id); }, 0);
+      }
     }
     function undo() {
       if (!undoStack.length) return;
-      redoStack.push({ value: textarea.value, kind: null, t: Date.now() });
+      var now = Date.now();
+      var sel = selectedLayoutId ? { id: selectedLayoutId, kind: selectedLayoutKind } : null;
+      redoStack.push({ value: textarea.value, kind: null, t: now, firstT: now });
       var prev = undoStack.pop();
-      applySnapshot(prev.value);
+      applySnapshot(prev.value, sel);
       announce('Undone.', false);
     }
     function redo() {
       if (!redoStack.length) return;
-      undoStack.push({ value: textarea.value, kind: null, t: Date.now() });
+      var now = Date.now();
+      var sel = selectedLayoutId ? { id: selectedLayoutId, kind: selectedLayoutKind } : null;
+      undoStack.push({ value: textarea.value, kind: null, t: now, firstT: now });
       var next = redoStack.pop();
-      applySnapshot(next.value);
+      applySnapshot(next.value, sel);
       announce('Redone.', false);
     }
 

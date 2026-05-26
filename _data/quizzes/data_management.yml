@@ -3,7 +3,7 @@ description: "Test your ability to reason about ACID, CAP, and the RDBMS/NoSQL t
 active: true
 questions:
   - id: 1
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A flight-booking service executes a transaction that (1) debits a passenger's credit card and (2) writes a "seat reserved" row. The server crashes between the two steps. On restart, the card shows a charge but no seat is reserved. **Which ACID property did the system fail to provide?**
@@ -22,7 +22,7 @@ questions:
     explanation: "Atomicity guarantees a transaction is indivisible: either every step of the transaction is applied, or none of them are. A half-applied state (debit ✓, reservation ✗) is the textbook symptom of missing atomicity. Durability is about changes that were *already committed* surviving a crash — here the transaction had not committed. Isolation is about *concurrent* interference, which this scenario doesn't involve."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       Two customer-service agents click "apply \\$50 refund" on the same account at the same instant. Each reads the balance \\$100, subtracts 50, and writes back \\$50 — so one refund silently disappears. **Which ACID property would have prevented this lost update?**
@@ -60,7 +60,7 @@ questions:
     explanation: "ACID-Consistency is constraint preservation: any committed transaction must leave the database in a state satisfying its declared invariants (primary keys, foreign keys, CHECK constraints, uniqueness). CAP-Consistency is a completely different property about distributed replicas agreeing on the latest write. The two share a name but not a meaning — a widespread source of confusion."
 
   - id: 4
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       A teammate says: *"Our database is strongly consistent because we use SQL and SQL is ACID."* In the context of a distributed, multi-replica deployment, **what is wrong with this claim?**
@@ -79,7 +79,7 @@ questions:
     explanation: "The two 'Consistency' words refer to different things. ACID-C means committed transactions don't violate declared constraints. CAP-C (linearizability) means every read reflects the latest write across all replicas. A SQL database that asynchronously replicates to read replicas still honors ACID on the primary but can absolutely serve stale reads from a replica — failing CAP-C. Separating these two ideas is one of the most important conceptual moves in this chapter."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A DBMS acknowledges `COMMIT` to your application; half a second later the server loses power. On reboot, the change is **gone**. **Which ACID property did the system fail to provide?**
@@ -98,7 +98,7 @@ questions:
     explanation: "Durability is the guarantee that once the DBMS tells you 'committed', the change persists across any subsequent crash. Real DBMSs achieve this with a write-ahead log (WAL) flushed to stable storage before the commit acknowledgment. Atomicity is about the commit itself being all-or-nothing *at commit time*; Durability is about what happens *after* commit."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       You are designing the database for a payment system that processes credit-card transactions. The requirement is: **we must never double-charge a customer, even if that means refusing to serve requests during a network partition.** In CAP terms, you are choosing:
@@ -117,7 +117,7 @@ questions:
     explanation: "'Never double-charge' demands linearizable, correct reads — that is Consistency in CAP. Accepting downtime during a partition is accepting loss of Availability. That is the CP choice. 'CA' is not a realistic option for a distributed system: real networks partition, so any distributed system must effectively handle P, and the meaningful choice is CP vs. AP."
 
   - id: 7
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       You run the product catalog for a large retailer. A stale read of the catalog by a few seconds is fine; a 500 error costs you a sale. A network link between two data centers flaps for ten seconds. You would rather the system be:
@@ -136,7 +136,7 @@ questions:
     explanation: "The business requirement — stale reads are cheap, errors are expensive — maps directly onto Availability as the primary CAP property. An AP system keeps serving on both sides of the partition; a CP system would error out on the minority side. 'Just run on one node' avoids CAP but sacrifices the scale that a large catalog needs."
 
   - id: 8
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       ATMs are sometimes presented as an example of "having all three of C, A, and P." What is the **more accurate** characterization of how ATMs actually behave?
@@ -155,7 +155,7 @@ questions:
     explanation: "ATMs are the *motivating counterexample* for CAP, not a system that defies it. In practice, banks chose availability: a disconnected ATM keeps dispensing cash up to a cached daily limit, and the resulting transactions are reconciled with the central ledger after the partition heals. That occasionally lets a customer overdraw — but staying open is worth the reconciliation cost. This is textbook AP with eventual consistency."
 
   - id: 9
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       The popular phrasing of CAP — *"pick two out of three"* — is memorable but imprecise. **Which statement better captures what the theorem actually says?**
@@ -174,7 +174,7 @@ questions:
     explanation: "CAP is a statement about what is possible *during a partition*, not a permanent budget. Under normal operation, a well-designed system can offer both C and A. The theorem forces a decision only when the network actually partitions: serve stale data (sacrifice C) or refuse requests (sacrifice A). 'Pick two' is a slogan; the precise claim is narrower and more useful."
 
   - id: 10
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       You are building a social-media-style news feed: billions of posts, heavy write volume, lots of horizontal scaling, and a few seconds of staleness in someone's feed is acceptable. **Which data-store family is typically the best fit, and why?**
@@ -194,7 +194,7 @@ questions:
     explanation: "News-feed workloads prioritize *availability and horizontal scale* over cross-row ACID transactions, and short-term staleness is tolerable — the sweet spot of wide-column (Cassandra, HBase) and document (MongoDB) systems. Graph databases are great for relationship-centric *queries* (friends-of-friends, fraud rings) but are not typically the primary store for high-volume feeds. RDBMSs can be forced to scale but sacrifice much of their ACID advantage when sharded across nodes."
 
   - id: 11
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       You are building the ledger for a new stock brokerage: every trade must be recorded atomically, there are complex relationships between accounts, trades, and positions, and regulators will audit your transactional guarantees. **Which data-store family is the natural fit?**
@@ -213,7 +213,7 @@ questions:
     explanation: "Transactional, audited, well-structured data with cross-row invariants is the textbook RDBMS sweet spot. Multi-row ACID transactions, foreign-key integrity, SQL joins, mature constraint tooling, and audit-friendly schemas are exactly what brokerage ledgers need. Some graph databases do support ACID transactions, so the issue is not that graphs cannot be transactional; the issue is that the dominant workload here is a regulated ledger of structured records, not graph traversal. This is a case where RDBMS is the obvious, correct choice — the 'always reach for NoSQL' reflex is a real anti-pattern."
 
   - id: 12
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       A code-review web app handles pull-request approvals. When a reviewer clicks **"Approve PR"**, the system does two things:
@@ -248,7 +248,7 @@ questions:
     explanation: "**No ACID property is violated, because ACID guarantees apply only *within* a transaction — and what counts as 'one transaction' is a design choice the developer makes.** This sounds like atomicity because one action succeeded and another failed, but atomicity only governs operations the developer explicitly grouped into the same transaction (a single logical unit of work). In a bank transfer, debiting account A and crediting account B *must* be one transaction because the system is incorrect unless both happen together. By contrast, recording a PR approval and posting to Slack should usually *not* be declared as one database transaction — the PR should still be marked approved even if Slack is down. The DBMS did not violate atomicity as long as the approval-insertion transaction itself committed fully and correctly."
 
   - id: 13
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       Consider the query *"For each course, list the course ID and the number of students enrolled."* Which sequence of relational-algebra operations implements it?
@@ -266,7 +266,7 @@ questions:
     explanation: "Counting enrollments per course requires combining the two tables (**Join** on `course_id`), then aggregating (**Group-By** on `course_id` with `COUNT`). Selection alone filters rows but does not aggregate; Projection alone drops columns but does not count. The pattern — join to combine, group-by to aggregate, optional selection for filters — covers a large fraction of analytical SQL queries."
 
   - id: 14
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       You are designing an `Enrollment(student_id, course_id, quarter)` table. A student can only be enrolled *once* in a given course in a given quarter. **Which of the following is the most natural primary-key design?**
@@ -285,7 +285,7 @@ questions:
     explanation: "`student_id` alone would be unique only if each student were enrolled in exactly one course ever — not the case. What *is* unique is the combination: one row per (student, course, quarter). RDBMSs fully support **composite primary keys** for exactly this reason, and it is the idiomatic way to model a many-to-many join table. A surrogate auto-increment key is a valid secondary choice but doesn't express the natural uniqueness constraint — you'd still want a UNIQUE constraint on the triple."
 
   - id: 15
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A foreign key `Enrollment.course_id` points at `Course.course_id`. The DBMS rejects an `INSERT` into `Enrollment` where `course_id = "CS999"` because no such course exists. **What property is being enforced, and which ACID letter does this fall under?**

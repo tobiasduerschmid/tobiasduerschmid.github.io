@@ -66,7 +66,7 @@ questions:
     explanation: "**Confidentiality** is the violation here. Sensitive data was disclosed to people who had no business reading it. Integrity would mean the data on the company's servers was changed; Availability would mean it was inaccessible to the company. This is the textbook shape of a *data exfiltration* breach (the Equifax 2017 incident is the canonical example) — pure confidentiality, with no on-server damage."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A login handler runs the following query:
@@ -95,7 +95,7 @@ questions:
     explanation: "Building a SQL query by string-concatenating user input creates a **SQL injection** vulnerability: a payload like `\" or \"\"=\"` makes the password predicate trivially true, logging the attacker in without knowing the password. The fix is to use **parameterized queries / prepared statements**, where the SQL is parsed once with placeholders and the user input is bound separately as values."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A developer fixes the SQL injection bug from the previous question by switching to a **parameterized query**:
@@ -127,7 +127,7 @@ questions:
     explanation: "Parameterized queries protect against SQL injection through **structural separation**: the database receives the SQL with placeholders, parses it into a query plan, and *only then* binds the parameter values into that plan. The values never traverse the SQL parser, so they cannot grow new SQL syntax (extra clauses, comments, sub-queries). Escaping and blocklisting are weaker, error-prone alternatives; parameterization is the only fix that is robust to all the corner cases."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: basic
     type: multiple
     question: |
       A social-media site lets users post comments and renders each comment by **interpolating the comment text directly into the HTML page**. Another user later views the post in their browser. **Which CIA properties can a successful XSS payload violate in this scenario?** (Select all that apply.)
@@ -147,7 +147,7 @@ questions:
     explanation: "XSS primarily violates **Confidentiality** (cookies and tokens read and exfiltrated) and **Integrity** (the page is mutated and authenticated requests are issued in the victim's name). Availability violations are possible — a runaway script can wedge the victim's browser — but they are the least common goal of XSS in practice. The shared root cause with SQLi is *user-supplied data being treated as code by some downstream interpreter* (the database for SQLi, the browser for XSS); the fix in both cases is to keep code and data separate."
 
   - id: 7
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       Your team is shipping a comments feature on a blog. **Which defense most directly prevents XSS attacks via the comment field?**
@@ -173,7 +173,7 @@ questions:
     explanation: "The primary fix for XSS is **output encoding**: when user-supplied content is rendered into HTML, escape the metacharacters so the browser interprets them as text, not as tag boundaries. Modern templating engines (React JSX, Vue `{{ }}`, Django, Jinja2) escape by default — XSS bugs typically appear when developers explicitly *bypass* the escaping (`dangerouslySetInnerHTML`, `mark_safe`, `|safe`, `v-html`). Layered defenses (a strict Content Security Policy, `HttpOnly` cookies for session tokens) help in depth, but escaping at the rendering boundary is the foundation."
 
   - id: 8
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       A startup announces a new "proprietary, never-before-published" encryption algorithm that they claim is unbreakable because *"nobody knows how it works"*. **What is the most fundamental problem with this approach to security?**
@@ -197,7 +197,7 @@ questions:
     explanation: "This is the classic *Security through Obscurity* anti-pattern. **Open Design** says the security of a system must rest on something that stays secret even when the design is public — typically a key. AES, RSA, and TLS are all openly published; their security depends on the secrecy of *keys*, not algorithms. Public scrutiny is not a bug — it is the mechanism by which weaknesses are discovered and patched. A 'secret algorithm' has had none of that scrutiny and will fall to the first determined attacker who reverses it."
 
   - id: 9
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       Two scenarios. (1) A research team has just designed a new public-key signature scheme and wants to know whether it is secure. (2) A company is about to deploy a production system using a well-studied existing TLS library. **Which is the right disclosure stance for each?**
@@ -246,7 +246,7 @@ questions:
     explanation: "To send a message that only Bob can read, encrypt with **Bob's public key**. Anyone may have that key, so Alice can use it without prior secret sharing — but only Bob's matching *private* key (which only Bob holds) can decrypt the resulting ciphertext. This is what makes public-key cryptography solve the *key-distribution problem* that symmetric encryption suffers from: no shared secret needs to be established before private communication can begin."
 
   - id: 11
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       In practice, a digital signature scheme **hashes the document first** and then encrypts the hash with the signer's private key — rather than encrypting the entire document. **Why?**
@@ -270,7 +270,7 @@ questions:
     explanation: "Public-key operations (RSA in particular) are roughly three orders of magnitude slower per byte than a fast hash like SHA-256. Hashing first reduces any document to a 32-byte digest, so the expensive public-key operation runs over those 32 bytes regardless of the document's original size. The hash's collision-resistance is what keeps the signature meaningful — an attacker cannot construct a *different* document that produces the same hash and therefore the same signature. Signatures provide *integrity and authenticity*, not confidentiality."
 
   - id: 12
-    difficulty: intermediate
+    difficulty: basic
     type: multiple
     question: |
       A junior engineer proposes that the client send the username and password **on every request**, and the server verifies them every time. **Which problems does this design have?** (Select all that apply.)
@@ -295,7 +295,7 @@ questions:
     explanation: "Sending the password on every request is **slow** (passwords are deliberately hashed with a slow algorithm — bcrypt, Argon2 — that is fine to run on login but expensive to repeat on every API call) and **insecure** (the cleartext credential lives in memory and on the wire for the whole session, with many opportunities to leak). The standard fix is to authenticate *once*, then issue a short-lived session token (a session ID or JWT) that rides on subsequent requests in the client's place."
 
   - id: 13
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       A web app stores its session tokens in **`HttpOnly` cookies** and reads them only on the server. A teammate concludes: *"That makes the app immune to XSS — the script can't read the cookie, so we're safe."* **What is wrong with this conclusion?**
@@ -319,7 +319,7 @@ questions:
     explanation: "`HttpOnly` is a valuable defense — it prevents JavaScript from *reading* the session ID and exfiltrating it — but it does **not** prevent the script from *using* the session. A script running in the trusted origin can call `fetch('/api/...', { credentials: 'include' })` and the browser will attach the cookie automatically. So the attacker rides the session in the victim's browser without ever touching the raw token. This is sometimes called *session-riding*. Layered defenses — strict CSP, output encoding to prevent XSS in the first place, `SameSite=Strict` cookies — are needed; `HttpOnly` alone is not enough."
 
   - id: 14
-    difficulty: advanced
+    difficulty: basic
     type: multiple
     question: |
       Which of the following are **accurate trade-offs** of using a JSON Web Token (JWT) instead of a server-managed session cookie? (Select all that apply.)
@@ -377,7 +377,7 @@ questions:
     explanation: "The Email Notification service has one job: send email. It needs **only** the credential for the email-sending API and **no** database access. If it is later compromised — through a vulnerable dependency, a misconfigured handler, an injected payload — the blast radius is limited to whatever harm that one credential can do (sending unwanted email), not to the whole database. The pattern generalizes: each component holds the narrowest set of permissions that lets it do its job. AWS IAM, GCP IAM, and Kubernetes RBAC are all designed around this model."
 
   - id: 16
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       An emergency telephone in a hospital lobby is meant to dial **only 9-1-1**. To enforce this, the buttons are covered with an **aluminum foil shield** with cutouts for the digits "9" and "1". **Which security plan element is most clearly broken in this design?**

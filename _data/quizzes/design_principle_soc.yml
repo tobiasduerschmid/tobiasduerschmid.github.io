@@ -25,7 +25,7 @@ questions:
     explanation: "Dijkstra coined the phrase in EWD 447 (1974), describing it as 'the only available technique for effective ordering of one's thoughts'. He framed SoC first as a *thinking* technique, and the software-engineering usage followed. Parnas's 1972 paper is about **information hiding** — a related but distinct principle that tells you *how* to encapsulate one of those concerns."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       Look at this Python snippet. Which Separation-of-Concerns violation is it guilty of?
@@ -54,7 +54,7 @@ questions:
     explanation: "The function name sounds like one concern, but the body mixes **three**: connecting to a database, issuing a SQL query, and emitting HTML. If the database schema changes, this code breaks. If the HTML changes, this code breaks. A well-separated version would have a `user_service` for data and a `renderer` for presentation, each with its own interface."
 
   - id: 3
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       In the Monopoly example from the lecture, the **Application Layer** (game logic) exposes three kinds of interaction to the **Presentation Layer**. Which of the following is NOT one of them?
@@ -76,7 +76,7 @@ questions:
     explanation: "The whole point of the separation is that the Application Layer **doesn't know a UI exists**. Calling into the UI directly would destroy the separation — you'd no longer be able to run the same game engine in a terminal, on mobile, and in a 3D live-stream simultaneously. Instead, the Application Layer exposes getters, commands, and callbacks; the Presentation Layer does the rendering itself."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       Why is **logging** almost always considered a *crosscutting concern*?
@@ -99,7 +99,7 @@ questions:
     explanation: "A crosscutting concern is one that **does not fit** within a single module in the main decomposition of the system. Logging is the textbook example: every service, every handler, every data layer wants to log something. If you put logging calls directly inside each of these, you get **tangling** (business code mixed with logging) and **scattering** (the same pattern copy-pasted everywhere). AOP, decorators, and middleware are common mechanisms to pull logging out into one place *(Marin et al., 2009)*."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A teammate argues: *"We don't need a Presentation/Application separation. We only have one UI, and we never plan to have another. Let's just put the rules inside the buttons."*
@@ -123,7 +123,7 @@ questions:
     explanation: "SoC is a *judgment call*, not a law. For a true throwaway — a 30-line automation script, a one-off data cleanup — the cost of a full layered architecture exceeds the benefit, and 'rules inside buttons' is fine. But the argument fails as soon as the code outlives its expected lifetime, multiple people touch it, or a second UI/API surface is requested. In practice, 'we'll never need another UI' is one of the most commonly falsified predictions in software engineering."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       The iOS anti-pattern known as **Massive View Controller** (MVC where controllers balloon into 2,000-line monsters that handle networking, parsing, caching, validation, navigation, and view layout) is best described as:
@@ -146,7 +146,7 @@ questions:
     explanation: "Massive View Controller is the canonical mobile-development SoC failure *(Dobrean & Dioşan, 2019)*. MVC is supposed to *separate* Model, View, and Controller, but when developers treat 'Controller' as a dumping ground for everything not-obviously-Model-or-View, the Controller re-absorbs all the concerns MVC was designed to split apart. The fix is to extract Coordinating Controllers, view-models, and services — each handling a single concern."
 
   - id: 7
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       Which statement best captures the **difference** between Separation of Concerns and Information Hiding?
@@ -169,7 +169,7 @@ questions:
     explanation: "They are complementary, not the same. SoC is about **identifying and separating** distinct aspects (data access vs. rules vs. UI). Information Hiding is about **protecting** each separated decision: the module's interface should only expose what is unlikely to change, and its secret (storage format, algorithm, library choice) stays inside. SoC without Information Hiding gives you separate modules that still break each other when details change."
 
   - id: 8
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       You are designing a new service. Which decomposition shows the BEST Separation of Concerns?
@@ -192,7 +192,7 @@ questions:
     explanation: "Separating concerns along axes that plausibly change for different reasons (security rules, UX, business rules, analytics) — each with a narrow interface to the others — is what effective SoC looks like in practice."
 
   - id: 9
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       Why might splitting an internal helper function into its own class *reduce* rather than increase the quality of a system?
@@ -215,7 +215,7 @@ questions:
     explanation: "A split is only valuable if the separated pieces change **independently**, for different reasons, on different timelines. If they always change together, the boundary is a fiction that doubles maintenance cost with no benefit. This is the 'premature abstraction' trap — SoC is a *direction*, not a target score on a file-count metric."
 
   - id: 10
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       Which benefit of SoC most directly explains why a team of five developers can work in parallel on one system?
@@ -238,7 +238,7 @@ questions:
     explanation: "Parallel work is really a consequence of *local reasoning* plus *narrow interfaces*. When concerns are separated, Alice working on the UI doesn't need to understand Bob's database optimizer, because their code only meets at a small, well-defined contract. This is SoC's biggest practical payoff in teams — and it's why **Conway's Law** says team structure and system architecture tend to mirror each other."
 
   - id: 11
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       You spot this code in a React component:

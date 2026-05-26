@@ -3,14 +3,14 @@ description: "Test your understanding of creational patterns — when to use whi
 active: true
 questions:
   - id: 1
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
-      A `PizzaStore` uses a parameterized factory method: `createPizza(String type)` with an if/else chain to decide which pizza to create. A new pizza type ("BBQ Chicken") must be added. What is the design problem?
+      A `PizzaStore` uses a parameterized factory method: `createPizza(String type)` with an if/else chain to decide which pizza to create. A new pizza type ("BBQ Chicken") must be added by editing the existing if/else. What is the design problem with this approach?
     options:
-      - "The method is too long — it should be split into multiple methods"
+      - "The method is too long — it should be split into multiple helper methods"
       - "Adding a new pizza type requires modifying the existing factory method, violating the Open/Closed Principle"
-      - "The String parameter should be replaced with an enum"
+      - "The String parameter should be replaced with an enum so the compiler can check the types"
       - "The factory method should return an interface instead of a concrete class"
     correct_index: 1
     option_feedback:
@@ -20,84 +20,145 @@ questions:
         An enum can make the valid types explicit, but it does not remove the modification point. Adding BBQ Chicken would still require changing the enum and the conditional creation logic.
       3: |
         Returning an interface can reduce coupling to concrete products, but it does not solve the growing `if/else` that chooses which concrete product to instantiate.
-    explanation: "**This violates the Open/Closed Principle because adding a new pizza type requires modifying the existing if/else chain rather than adding a new subclass.** A **parameterized factory method** uses conditional logic to decide which product to create. Every new product type requires modifying this conditional — violating the **Open/Closed Principle**. The true Factory Method pattern solves this by using **subclass override**: each concrete creator implements `createPizza()` to return its specific product. Adding a new pizza type means adding a new subclass, not changing existing code."
+    explanation: "**Naive non-overriding implementations that just keep growing the conditional violate the Open/Closed Principle.** A *parameterized factory method* uses conditional logic to decide which product to create. When the only way to add a new product is to edit the existing conditional, every new type forces a modification — exactly what the Open/Closed Principle forbids. GoF presents parameterized factory methods as a *polymorphic-extension variation*: subclasses can **override** the parameterized method, add new IDs, and fall through to `super` for known types. That polymorphic-override usage does *not* violate OCP. Pure Factory Method via subclass override avoids the conditional entirely."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: expert
     type: single
     question: |
-      A system needs to create families of related UI components (Button, TextField, Checkbox) that must be visually consistent — all from the same theme (Material, iOS, Windows). Which pattern is most appropriate?
+      A system creates UI components (Button, TextField, Checkbox) and must guarantee that within one running application, all components come from the same theme (Material, iOS, or Windows) — never mixing a Material button with an iOS textfield. Which creational pattern is designed to enforce this consistency?
     options:
-      - "Factory Method — create one component type per subclass"
-      - "Abstract Factory — create families of related components that must work together"
-      - "Builder — construct UI components step by step"
-      - "Singleton — ensure only one theme factory exists"
+      - "Factory Method — each Creator subclass produces one product type, so consistency follows automatically"
+      - "Abstract Factory — one factory object creates a whole family of related products that are designed to work together"
+      - "Builder — assemble each component through a sequence of construction steps so the theme is applied step by step"
+      - "Singleton — restrict the theme to a single shared instance so all components reference the same theme object"
     correct_index: 1
     option_feedback:
       0: |
-        Factory Method is usually centered on one product type at a time. The requirement is stronger: several related product types must be created as a consistent family.
+        Factory Method is centered on one product type per Creator. Coordinating *multiple* product types (Button + TextField + Checkbox) so they always belong to the same family is exactly what Abstract Factory adds on top.
       2: |
-        Builder is for assembling one complex object through steps. A theme factory is selecting compatible products across several classes, not gradually constructing one component.
+        Builder is for assembling one complex object through a sequence of steps. A theme factory is selecting compatible products across several classes, not gradually constructing one component.
       3: |
-        Singleton answers "how many factory objects may exist," not "how do we create a consistent family of products." A theme might be implemented with one factory instance, but that is not the pattern solving compatibility.
-    explanation: "**Abstract Factory is correct here because it creates families of related components that must stay visually consistent within the same theme.** This is the classic **Abstract Factory** scenario: multiple product types (Button, TextField, Checkbox) that must belong to the same family (theme). Abstract Factory ensures that MaterialButton is always paired with MaterialTextField — preventing inconsistent combinations. Factory Method handles only one product type; Builder handles step-by-step construction."
+        Singleton answers "how many factory objects may exist," not "how is a consistent family of products created." A concrete factory is often *implemented* as a Singleton, but Singleton itself does not enforce that products belong to the same family.
+    explanation: "**Abstract Factory provides an interface for creating families of related or dependent objects without specifying their concrete classes — and one of its named consequences is *promotes consistency among products*.** The GoF chapter lists this directly: when products in a family are designed to work together, the pattern enforces that an application uses objects from only one family at a time, preventing incompatible combinations. Factory Method handles one product type per Creator; Builder assembles a single object step by step; Singleton constrains instance count. Only Abstract Factory is structured around a coordinated *family*."
 
   - id: 3
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
-      A common shorthand contrasts Factory Method and Abstract Factory along an inheritance-vs-composition axis. What does that contrast mean structurally?
+      The GoF compares Factory Method and Abstract Factory along an inheritance-vs-composition axis. What does that contrast mean structurally?
     options:
       - "Factory Method creates classes at runtime; Abstract Factory creates objects at runtime"
-      - "Factory Method relies on inheritance (subclass overrides a method); Abstract Factory relies on composition (client receives a factory object)"
-      - "Factory Method is simpler because it doesn't use interfaces"
-      - "Abstract Factory can only create one product type; Factory Method can create multiple"
+      - "Factory Method relies on inheritance (a subclass overrides the factory method); Abstract Factory relies on object composition (the client receives a factory object and calls it)"
+      - "Factory Method is simpler because it does not use interfaces"
+      - "Abstract Factory can only create one product type; Factory Method can create many"
     correct_index: 1
     option_feedback:
       0: |
         Neither pattern creates classes at runtime in the usual object-oriented sense. Both create objects; the difference is whether creation is varied by subclassing a creator or by passing around a factory object.
       2: |
-        Factory Method often uses an abstract creator method or product interface. Its defining feature is subclass override, not the absence of interfaces.
+        Factory Method typically uses an abstract creator method and a product interface or abstract class. Its defining feature is subclass override, not the absence of interfaces.
       3: |
-        This reverses the usual distinction. Abstract Factory groups several creation methods for a product family, while Factory Method is often presented around one factory method.
-    explanation: "**Factory Method relies on inheritance (subclass overrides a method) while Abstract Factory relies on object composition (client holds and calls a factory object).** This is a key structural distinction from the GoF. **Factory Method** uses **inheritance**: you extend a Creator class and override the factory method. **Abstract Factory** uses **object composition**: the client receives a factory object and calls its creation methods. Composition provides more runtime flexibility (factory objects can be swapped), while inheritance is simpler for single-product scenarios."
+        This reverses the distinction. Abstract Factory groups several creation methods for a whole product family, while Factory Method is centered on one product type that a subclass picks.
+    explanation: "**Factory Method extends a Creator class and overrides a method (inheritance); Abstract Factory passes a factory object to the client which calls its creation methods (object composition).** This is the structural framing in the GoF chapters and in the SEBook comparison table. Composition gives more runtime flexibility — factory objects can be swapped — while inheritance is simpler for single-product scenarios. In practice the two layer: each `createX()` slot inside an Abstract Factory is itself a Factory Method that the concrete factory subclass overrides."
 
   - id: 4
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
-      An Abstract Factory interface has 12 creation methods (one per product type). A new product type must be added. What is the consequence?
+      An Abstract Factory interface defines a separate creation method for each product type in a family. A new product type must be added to the family. What is the consequence?
     options:
-      - "Only the new concrete factory needs to be created"
-      - "The Abstract Factory interface must change, and ALL concrete factory subclasses must implement the new method"
-      - "Only the client code needs to be updated"
+      - "Only one new concrete factory needs to be created; nothing else changes"
+      - "The Abstract Factory interface must change, and every concrete factory must be modified to implement the new creation method"
+      - "Only the client code needs to be updated to call the new method"
       - "The new product can be added without changing any existing code"
     correct_index: 1
     option_feedback:
       0: |
-        Adding a new concrete factory is the easy case when a new family is added. Adding a new product type changes the shared factory interface, so every existing family has to supply that product.
+        Adding a new concrete *factory* (a new family) is the easy axis of change. Adding a new *product type* to the family changes the shared abstract factory interface, so every existing concrete factory has to supply that product.
       2: |
-        Client code may need to call the new method, but the first ripple is in the factory abstraction and all concrete factories. Otherwise the interface cannot promise that every family can create the new product.
+        Client code may need to call the new method, but the first ripple is in the abstract factory interface and in every concrete factory. Otherwise the interface cannot promise that every family can create the new product.
       3: |
-        Abstract Factory is open to new families more than to new product kinds. A new product kind changes the contract all factories implement.
-    explanation: "**Adding a new product type to Abstract Factory forces a change to the interface and every concrete factory — the rigid interface drawback.** This is the **Rigid Interface drawback** — the fundamental asymmetry of Abstract Factory. Adding new **families** (a new concrete factory + products) is a pure addition. But adding new **product types** requires changing the interface and modifying **every** concrete factory. At 12+ product types, this ripple effect becomes a serious maintenance burden."
+        Abstract Factory is open to new families, not to new product kinds. A new product kind changes the contract every concrete factory implements.
+    explanation: "**Adding a new product type forces a change to the interface and every concrete factory subclass — the *supporting new kinds of products is difficult* consequence in the GoF catalog.** This is the fundamental asymmetry of Abstract Factory: adding new *families* (a new concrete factory plus product implementations) is pure addition, but adding new *product types* requires changing the shared interface and modifying every concrete factory. The pattern makes one axis of change easy at the cost of making the other hard."
 
   - id: 5
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
-      Each method in a `PizzaIngredientFactory` — `createDough()`, `createSauce()`, `createCheese()` — is implemented differently by `NYPizzaIngredientFactory` and `ChicagoPizzaIngredientFactory`. What is the relationship between these creation methods and the Factory Method pattern?
+      Each method in a `PizzaIngredientFactory` — `createDough()`, `createSauce()`, `createCheese()` — is declared in the abstract factory interface and overridden by `NYPizzaIngredientFactory` and `ChicagoPizzaIngredientFactory`. How do these creation methods relate to the Factory Method pattern?
     options:
       - "They are unrelated — Abstract Factory and Factory Method are completely different patterns"
-      - "Each creation method IS a Factory Method — Abstract Factory is composed of multiple factory methods"
-      - "They are Builder steps, not factory methods"
-      - "They are Strategy methods for selecting ingredients"
+      - "Each creation method is itself a Factory Method; an Abstract Factory is commonly implemented as a collection of Factory Methods"
+      - "They are Builder steps that gradually assemble one ingredient object"
+      - "They are Strategy methods that select between ingredient algorithms at runtime"
     correct_index: 1
     option_feedback:
       0: |
-        The patterns solve different scales of creation, but they are related structurally. An Abstract Factory commonly exposes several creation methods, each overridden by concrete factories.
+        The patterns solve different scales of creation but are closely related structurally. The GoF explicitly notes that Abstract Factory operations are *most commonly implemented with Factory Methods*.
       2: |
-        Builder steps gradually assemble one product. These methods each create a product object from a related family, so they are creation methods rather than construction steps for one object.
+        Builder steps gradually assemble *one* product through a sequence. These methods each return a *separate* product object from a related family, so they are creation methods, not construction steps for one object.
       3: |
-        Strategy varies behavior behind a common interface. These methods vary which product object is created, not an algorithm applied to an existing object.
-    explanation: "**Each creation method in an Abstract Factory IS a Factory Method — Abstract Factory is essentially composed of multiple Factory Methods.** This is a crucial insight: **factory methods lurk inside Abstract Factories**. Each creation method in the Abstract Factory interface (e.g., `createDough()`) is declared abstract and overridden by concrete factory subclasses — which is exactly the Factory Method pattern. Abstract Factory orchestrates multiple Factory Methods to ensure family consistency."
+        Strategy varies behavior behind a common interface. These methods vary which product *object* is created, not an algorithm applied to an existing object.
+    explanation: "**Each `createX()` slot inside an Abstract Factory is itself a Factory Method: it is declared abstract in the interface and a concrete factory subclass overrides it to return a specific product.** This is the layered relationship the GoF and the SEBook both call out — *creating products with Factory Methods* is the most common Abstract Factory implementation. The Abstract Factory defines the interface; the concrete factory subclasses provide each Factory Method, which orchestrates family consistency."
+
+  - id: 6
+    difficulty: intermediate
+    type: single
+    question: |
+      In the `PizzaStore` example, `orderPizza()` runs a fixed sequence: `createPizza(type)`, then `prepare()`, `bake()`, `cut()`, `box()`. The `createPizza()` step is the one part that varies by subclass. Which design pattern describes the role of `orderPizza()` itself in this structure?
+    options:
+      - "Strategy — `orderPizza()` is an interchangeable algorithm"
+      - "Template Method — `orderPizza()` defines a fixed algorithm skeleton that delegates one varying step to a factory method"
+      - "Observer — `orderPizza()` notifies the pizza subclass when an order arrives"
+      - "Decorator — `orderPizza()` wraps the pizza with prepare/bake/cut/box behaviors"
+    correct_index: 1
+    option_feedback:
+      0: |
+        Strategy varies an entire algorithm behind a common interface, swapped via composition. `orderPizza()` is not interchangeable — it is a fixed sequence with one varying creation step inside it.
+      2: |
+      3: |
+        Decorator wraps an existing object to add or modify behavior at runtime. `orderPizza()` is invoking methods on the pizza it just created, not wrapping the pizza in a new object that overrides its behavior.
+    explanation: "**`orderPizza()` is a *Template Method*: it defines the fixed `prepare → bake → cut → box` skeleton and delegates only the varying `createPizza()` step to subclasses through a factory method.** The SEBook makes this connection explicit — *Template Method typically calls factory methods*. The Creator class owns the stable algorithm; the factory method is the single hook that subclasses override, which is why the algorithm itself does not need to know which concrete product it is operating on."
+
+  - id: 7
+    difficulty: intermediate
+    type: single
+    question: |
+      A team uses the Factory Method pattern with an abstract `Creator` class and an abstract `factoryMethod()`. A client only wants one specific product variant and does not otherwise need its own Creator. What trade-off of Factory Method does this situation illustrate?
+    options:
+      - "Boilerplate code — the abstract Creator class is unnecessary code"
+      - "Forced subclassing — the client must subclass `Creator` just to pick a particular `ConcreteProduct`, even though it has no other reason to subclass"
+      - "Tight coupling — the abstract Creator forces the client to know every concrete product class"
+      - "Single Responsibility violation — `Creator` is responsible for both creating and using products"
+    correct_index: 1
+    option_feedback:
+      0: |
+        Factory Method does add classes (one Creator subclass per product variant), but the specific drawback when a client has no independent reason to subclass is named *forced subclassing*. Boilerplate is a related but separate concern.
+      2: |
+        Factory Method actually *decouples* the Creator from concrete products — the Creator code refers only to the abstract `Product`. The trade-off here is having to subclass the Creator, not increased coupling to products.
+      3: |
+        The pattern is designed to *separate* the responsibilities of creating products from the workflow that uses them. SRP is not the trade-off being illustrated here.
+    explanation: "**This is the *forced subclassing* trade-off named by GoF: clients may have to subclass `Creator` just to instantiate a particular `ConcreteProduct`.** Subclassing is fine when the client was going to subclass anyway — otherwise it adds another point of evolution for no other reason. The SEBook lists this as one of the motivating reasons GoF discusses the *Using templates to avoid subclassing* and *Parameterized factory methods* variants in Implementation."
+
+  - id: 8
+    difficulty: intermediate
+    type: multiple
+    question: |
+      Which of the following statements about the difference between the GoF *Factory Method* pattern and the *Simple Factory* (a single non-abstract class with a parameterized creation method) are correct? Select all that apply.
+    options:
+      - "Factory Method defers instantiation to subclasses via inheritance — each `ConcreteCreator` overrides the factory method"
+      - "Simple Factory is a single non-abstract class with a parameterized method that returns one of several product types, typically via if/else or switch"
+      - "Factory Method is treated by *Head First Design Patterns* as an honorable-mention idiom rather than a full GoF design pattern"
+      - "Simple Factory and Factory Method are exactly the same pattern under different names"
+    correct_indices: [0, 1]
+    option_feedback:
+      0: |
+        This is a defining feature of the GoF Factory Method — failing to mark it as correct misses the inheritance-based mechanism that distinguishes it from Simple Factory.
+      1: |
+        This is the standard description of Simple Factory — failing to mark it as correct misses the conditional-on-a-type-parameter structure that defines the idiom.
+      2: |
+        This reverses the relationship. *Head First* gives **Simple Factory** the honorable-mention treatment as a programming idiom, while **Factory Method** is presented as a true GoF design pattern.
+      3: |
+        They differ structurally: Simple Factory switches on a type parameter inside one class; GoF Factory Method defers instantiation to subclass override. Treating them as identical erases the inheritance vs. parameterized-conditional distinction.
+    explanation: "**The GoF Factory Method uses subclass override; Simple Factory uses a parameterized conditional in a single non-abstract class.** *Head First Design Patterns* gives Simple Factory only an *honorable mention*, noting it is a programming idiom rather than a true design pattern. The GoF Factory Method differs in that it *defers instantiation to subclasses via inheritance* — each `ConcreteCreator` overrides the factory method, rather than one factory class switching on a type parameter. They share the goal of decoupling creation, but their mechanisms — and their extensibility behaviour — are different."

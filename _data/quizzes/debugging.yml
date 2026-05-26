@@ -23,7 +23,7 @@ questions:
     explanation: "**Fault** = the erroneous location in the source code (e.g., the unresolved Promise path). **Error** = the incorrect program state during execution (a pending Promise that will never settle). **Failure** = the incorrect observable behavior at the system boundary (the spinner the user sees). Keeping them distinct guides you to the right fix location — you find the failure on the screen, but you fix the fault in the code."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A user reports that your web app sometimes shows them another user's data. You cannot reproduce it locally. They send a screenshot but no other details. What should your **first** action be?
@@ -43,7 +43,7 @@ questions:
     explanation: "Step 1 of the debugging process is **reproducing the bug**, and that requires both the *problem environment* (browser, OS, network, build version) and the *problem history* (the exact click sequence). Without a reproduction you cannot verify a fix worked — and for a cross-account data leak, an unverified fix is a serious incident waiting to recur. Mature bug-report templates ask these questions precisely because reproduction is load-bearing."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: basic
     type: multiple
     question: |
       Your team has *just* manually reproduced an intermittent payment bug after two days of investigation. Before anyone touches the production code, which of the following are **worthwhile next steps**? (Select all that apply.)
@@ -61,7 +61,7 @@ questions:
     explanation: "After reproduction, three moves pay dividends: **automate** the reproduction (a fast feedback loop is what lets you iterate on fixes), **simplify** it (a 200-step reproduction usually has 5 essential steps and 195 confounders), and **preserve** it (committed test, ticket notes, anything that lets the next person continue from where you left off). The automated test also becomes the permanent regression test once the bug is fixed."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A teammate has a Python bug they've been stuck on for an hour. They walk over to your desk and say *"can you look at this?"* You read the function — about 30 lines — and notice nothing obviously wrong. Which suggestion is the **highest-leverage pedagogical move**?
@@ -81,7 +81,7 @@ questions:
     explanation: "This is **rubber-duck debugging** applied to a colleague. The curse of knowledge means the author reads what they *intended* to write — explaining the code line by line forces them to compare intent against the actual text, and the discrepancy is usually the bug. The duck (or in this case, you-as-duck) is most valuable when the explainer says aloud what a line *should* do and then notices it doesn't."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       You have a regression: a test that passed on Friday now fails on Monday. There are 87 commits between the two versions and no obvious culprit in the diff. Which tool is the **most efficient** for finding the commit that introduced the regression?
@@ -101,7 +101,7 @@ questions:
     explanation: "`git bisect` performs a binary search across commits, asking *good* or *bad* at each midpoint. With an automated test you can `git bisect run ./test.sh` and let git work through the history while you do something else. For 87 commits, you go from ~87 tests to ~7 tests. This is exactly why writing the automated reproduction test in Step 1 of debugging is so valuable — it turns regression hunting into a one-liner."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       You see this error in your terminal while setting up a new project: `ERROR 3680 (HY000): Failed to create schema directory 'tobias_dev_orders_2026_q1' (errno: 2 - No such file or directory)`. What is the **best** thing to copy into a search engine or AI assistant?
@@ -121,7 +121,7 @@ questions:
     explanation: "The pattern is *strip project-specific identifiers, keep framework-specific ones*. The schema name is unique to you; the error code, error number, and message structure are shared by every MySQL user who hit the same problem. Stripping also helps with privacy — usernames and internal hostnames don't need to leave your machine. And when you *do* run a suggested command from the results, read it before executing — prompt-injection attacks on AI-search-result pages are an emerging risk."
 
   - id: 7
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       You're chasing a bug that only triggers when a specific user's account has more than 10,000 line items. Stepping through the loop one iteration at a time in the debugger would mean clicking *Step Over* tens of thousands of times. What's the **right move**?
@@ -141,7 +141,7 @@ questions:
     explanation: "**Conditional breakpoints** trigger only when a given expression evaluates to true, in any expression the debugger can evaluate (variable comparisons, function calls, boolean combinations). Most IDEs also support **hit-count breakpoints** (*'fire only on the 10,000th time this line is hit'*) — the same idea, expressed differently. Both let you skip directly to the interesting moment without sitting through the boring ones."
 
   - id: 8
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       A teammate marks a ticket *"FIXED"* with this commit: a one-line change that makes the previously-failing reproduction pass. They did not run the rest of the test suite. **What is the most important risk** they have left exposed?
@@ -161,7 +161,7 @@ questions:
     explanation: "Skipping the test suite is the most common failure mode in step 4 of the debugging process. A fix that closes one bug while opening another is called a **regression**, and the suite exists precisely to catch them. Run the failing reproduction test (it should now pass), *and* the entire suite (no previously-green test should now be red), before calling anything fixed. Code comments and assertions matter too, but they don't replace the suite — they complement it."
 
   - id: 9
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       Look at this code:
@@ -192,7 +192,7 @@ questions:
     explanation: "**Fault tolerance does not mean 'hide every error.'** It means designing so that *known* failure modes are detected, contained, and (when possible) recovered — usually with a write to a log, a metric, an alert, or a compensating transaction. A bare `except: pass` does the opposite: it converts a failure (visible, debuggable) into a silent error that leaves the system in an inconsistent state. For money transfers specifically, the right pattern is an atomic transaction that either commits both updates or rolls both back — never half. See also the [test design](/SEBook/testing/goodtests.html) discussion on why broad exception catching also tends to hide real test failures."
 
   - id: 10
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       A junior engineer is debugging a deeply nested issue in a backend microservice. They have been at it for three hours with no progress, just rereading the same 200 lines of code. What is the **single most likely** explanation for why they are stuck?

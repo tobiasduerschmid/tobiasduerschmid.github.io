@@ -17,42 +17,42 @@ cards:
     explanation: "Duplication is especially harmful when the copied logic encodes a business rule likely to change."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: basic
     bloom: apply
     question: "What usually causes a Long Method smell?"
     answer: "A method is trying to perform too many distinct steps or mix multiple abstraction levels. Extracting well-named helpers can turn each step into a readable chunk."
     explanation: "The goal is not tiny methods for their own sake. The goal is to make each conceptual step visible and separately reviewable."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     bloom: apply
     question: "How do Large Class and Divergent Change relate?"
     answer: "A Large Class often grows by taking on multiple responsibilities. Divergent Change is the behavioral symptom: the same class is edited for unrelated reasons."
     explanation: "Both point toward separating responsibilities so each class has one primary reason to change."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     bloom: apply
     question: "How are Long Parameter List and Data Clumps related?"
     answer: "A Long Parameter List becomes especially suspicious when the same parameters travel together repeatedly. Those repeated groups are Data Clumps and often deserve a named object."
     explanation: "The named object both shortens signatures and captures a domain concept that primitives were hiding."
 
   - id: 6
-    difficulty: advanced
+    difficulty: basic
     bloom: analyze
     question: "Distinguish Divergent Change from Shotgun Surgery."
     answer: "**Divergent Change:** one module changes for many unrelated reasons. **Shotgun Surgery:** one conceptual change requires many tiny edits across scattered modules."
     explanation: "They are opposites. Divergent Change suggests responsibilities are too concentrated; Shotgun Surgery suggests a responsibility is too scattered."
 
   - id: 7
-    difficulty: advanced
+    difficulty: basic
     bloom: analyze
     question: "What is Feature Envy?"
     answer: "A method shows Feature Envy when it is more interested in another object's data or methods than in its own object's responsibilities."
     explanation: "The typical fix is Move Method or Extract Method plus Move Method, placing behavior closer to the data and invariants it uses."
 
   - id: 8
-    difficulty: advanced
+    difficulty: basic
     bloom: evaluate
     question: "Why should code smells be handled with judgment instead of automatic rules?"
     answer: "A smell may be justified by performance, framework constraints, simple one-off code, or a trade-off that keeps the design clearer. The question is whether the structure makes future change cheaper or more expensive."

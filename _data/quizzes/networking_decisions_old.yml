@@ -3,7 +3,7 @@ description: "Archived earlier version of the Networking: Making Decisions quiz.
 active: false
 questions:
   - id: 1
-    difficulty: intermediate
+    difficulty: basic
     question: "You are building a **group chat app** similar to WhatsApp. A user sends 'Meet me at the library' immediately followed by 'Actually cancel that — plans changed.' If these two messages arrive out of order, the recipient gets the opposite impression. Which transport protocol should you use?"
     options:
       - "UDP — messaging apps need to feel fast and real-time."
@@ -24,7 +24,7 @@ questions:
     explanation: "**TCP is required because out-of-order or missing messages cause real misunderstandings.** While you *could* bolt reliability onto UDP yourself with custom sequence numbers, that means re-implementing TCP, which is error-prone and wasteful. TCP's overhead is negligible for the small payloads of a text message, making it the right tool here."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     question: "You are building a **live video conferencing platform** similar to Zoom or Discord, where participants send real-time video to each other. Which transport protocol is most appropriate for the video data?"
     options:
       - "TCP — because you cannot afford to drop any video frames."
@@ -45,7 +45,7 @@ questions:
     explanation: "**UDP is correct because a late packet is worse than no packet in an interactive video call.** A single dropped frame is often barely noticeable — the decoder skips ahead to the next frame, which arrives within milliseconds. TCP's retransmission mechanism can cause visible stutter: the stream pauses to wait for a stale packet that describes video the viewer has already missed. Interactive video platforms commonly use UDP-based media protocols such as RTP/WebRTC for this reason, though restrictive networks may force fallbacks."
 
   - id: 3
-    difficulty: advanced
+    difficulty: basic
     question: "A team is designing a **real-time strategy game** similar to StarCraft II. Unit positions and health bars update 30 times per second. The game also supports build commands, technology upgrades, and a final 'game over' event that must be recorded in the match history. What protocol strategy makes the most sense?"
     options:
       - "TCP for everything — reliability is always more important in games."
@@ -87,7 +87,7 @@ questions:
     explanation: "**TCP is required because source code cannot tolerate missing or corrupted data.** A single flipped byte can make a file unparseable, cause a silent build failure, or introduce a subtle bug. TCP's guarantees (delivery, ordering, error detection) are non-negotiable here, and the overhead is trivial compared to the cost of pushing corrupted code. This is why Git uses HTTPS (TCP port 443) and SSH (TCP port 22)."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     question: "A startup is building a **food delivery app** similar to DoorDash. The app must match customer orders to nearby drivers, process credit card payments, and provide live GPS tracking of the driver. Should the core backend use a client-server or peer-to-peer architecture?"
     options:
       - "Peer-to-peer — so customers and drivers can negotiate orders directly without a middleman."
@@ -108,7 +108,7 @@ questions:
     explanation: "**Client-server is required because the platform needs a central authority for trust and accountability.** A food delivery app must match orders, process payments, verify identities, and resolve disputes — none of which are possible without a trusted coordinator. P2P would make payments and accountability nearly impossible to implement reliably."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: basic
     question: "An open-source team wants to build a **cooperative cloud backup system** where volunteers donate unused disk space to store other users' encrypted files. There should be no single company owning the infrastructure, and the system should keep working even if many nodes go offline. Which architecture fits best?"
     options:
       - "Client-server — a central index server provides the most reliable chunk tracking."
@@ -171,7 +171,7 @@ questions:
     explanation: "**Client-server is correct — polling does not change the architecture.** The nurses' station (client) initiates each polling request; the central server responds with the latest sensor data. The 2-second interval is just polling frequency, not a P2P arrangement. A different design could add server-push, but the scenario described here is ordinary client-server polling."
 
   - id: 9
-    difficulty: intermediate
+    difficulty: basic
     type: multiple
     question: "For which of the following applications would **TCP** be the better choice over UDP? (Select all that apply)"
     options:

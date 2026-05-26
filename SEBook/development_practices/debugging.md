@@ -13,7 +13,7 @@ Software defects are not a niche concern: they cost the U.S. economy roughly **$
 
 Empirical studies of professional developers find that the best debuggers are roughly **three times as efficient** as average ones on the same defects. That gap is not innate talent; it comes from a disciplined process. The rest of this chapter is that process.
 
-# The Search-the-Error-Message Pattern
+## The Search-the-Error-Message Pattern
 
 Before you launch a full debugging session, ask whether the error is *yours* at all. If you see a message coming from a framework, library, or external service that does not directly point to a fix, you are very likely the thousandth developer to encounter it — and a 30-second search will usually surface a solution.
 
@@ -29,7 +29,7 @@ Before you launch a full debugging session, ask whether the error is *yours* at 
 3. **Study results before acting.** This is where caution earns its keep. With the rise of AI agents that browse the web, *prompt injection* attacks plant malicious "fix this by running…" instructions on pages that look like normal Stack Overflow answers. Read any command before you run it; activate the shell-scripting judgment you developed in earlier chapters. A suggestion to `git push --force` to `main` or to `curl … | sudo bash` is almost never the right answer.
 4. **Only after** external sources are exhausted, ask a more experienced coworker. Their time is more expensive than yours, and they will not be pleased if the answer was one search away.
 
-# What Counts as a "Bug"? — Fault, Error, Failure
+# Fault, Error, Failure
 
 Casual conversation uses *bug* to mean any of three different things. Debugging works better when you keep them separate, because **each one is observed at a different place in the system** and points you toward a different next step.
 
@@ -289,13 +289,12 @@ Two git commands deserve a mention here because they answer questions debuggers 
 
 These are covered in depth in the [Git chapter](/SEBook/tools/git.html); the point here is that they belong in your debugging toolbox, not just your version-control workflow.
 
-# Interactive Tutorial
+# Practice
 
 Want to practice the step-through debugger, breakpoints, and a time-travel debugger on real (broken) code?
 
 * **[Python Debugging Tutorial](/SEBook/tools/python-debugging)** — work through several bugs in a sandboxed editor with a full debugger, including time-travel features.
 
-# Practice
 
 {% include flashcards.html id="debugging" %}
 

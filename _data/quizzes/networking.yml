@@ -65,7 +65,7 @@ questions:
     explanation: "**Throughput measures volume per time period (e.g., requests/sec) while latency measures the time for a single request to complete — they are related but independently optimized.** Throughput is about volume (e.g., 500 requests/second), while latency is about individual speed (e.g., a single database query takes 40ms). They are related but distinct — adding more servers increases throughput without necessarily reducing latency. Caching reduces latency and may also improve throughput."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     question: "In the TCP/IP stack, what is the purpose of the Transport Layer?"
     options:
       - "It handles the physical transmission of data over Ethernet cables and Wi-Fi."
@@ -86,7 +86,7 @@ questions:
     explanation: "**The Transport Layer provides end-to-end communication between specific applications (ports) on different hosts — distinguishing it from the Internet Layer which routes between machines.** The Transport Layer (TCP, UDP) sits between the Internet Layer and the Application Layer. It enables communication between specific *applications* on different machines — not just between machines. The Link Layer handles physical transmission, the Internet Layer handles routing between networks, and the Application Layer gives apps protocols like HTTP to talk to each other."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     question: "When data travels *down* through the TCP/IP stack before being sent, what happens at each layer?"
     options:
       - "Each layer removes a header from the message before passing it down."
@@ -190,7 +190,7 @@ questions:
     explanation: "**HTTPS adds TLS security to HTTP: confidentiality, integrity, and server authentication.** This prevents someone intercepting traffic between the client and server from reading or modifying it — critical for passwords, personal information, and financial transactions. Historically, HTTPS most often meant HTTP over TLS over TCP; modern HTTP/3 carries the same HTTP semantics over QUIC, which runs over UDP. The key idea is therefore security in transit, not caching, compression, or one fixed transport protocol."
 
   - id: 10
-    difficulty: intermediate
+    difficulty: basic
     question: |
       **Arrange** the TCP/IP layers in order from bottom (closest to hardware) to top (closest to the application).
     type: parsons
@@ -205,7 +205,7 @@ questions:
     explanation: "**The correct bottom-to-top order is Link → Internet → Transport → Application, with each layer using only the layer immediately below it.** Bottom to top: **Link** (physical hardware — Ethernet, Wi-Fi), **Internet** (IP addressing and routing between networks), **Transport** (TCP/UDP end-to-end communication between applications), **Application** (HTTP, HTTPS, DNS, SSH — the protocols your code uses directly). Each layer uses only the layer immediately below it, enabling clean separation of concerns."
 
   - id: 11
-    difficulty: intermediate
+    difficulty: basic
     type: multiple
     question: "Which of the following are guarantees provided by **TCP** but **NOT** by UDP by itself? (Select all that apply)"
     options:

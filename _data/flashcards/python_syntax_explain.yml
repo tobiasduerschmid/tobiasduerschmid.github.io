@@ -52,7 +52,7 @@ cards:
       ```
     answer: "Produces `[23, 42]` — a list comprehension with a **filter condition**. Only elements where `x > 20` are included."
   - id: 6
-    difficulty: intermediate
+    difficulty: basic
     question: |
       You are shown Python code. Explain what it does and what it returns or prints.
 
@@ -73,7 +73,7 @@ cards:
       ```
     answer: "Prints `0: apple`, `1: banana`, `2: cherry`. `enumerate()` yields `(index, value)` pairs — the Pythonic way to get both index and element without using `range(len(...))`."
   - id: 8
-    difficulty: intermediate
+    difficulty: basic
     question: |
       You are shown Python code. Explain what it does and what it returns or prints.
 
@@ -83,7 +83,7 @@ cards:
       ```
     answer: "Returns `['404', '500']` — a **list of strings** matching all non-overlapping occurrences of one or more digits (`\\d+`). The `r'...'` is a raw string that preserves backslashes for the regex engine."
   - id: 9
-    difficulty: intermediate
+    difficulty: basic
     question: |
       You are shown Python code. Explain what it does and what it returns or prints.
 
@@ -93,7 +93,7 @@ cards:
       ```
     answer: "Replaces all IPv4 addresses in `text` with `'x.x.x.x'`. `re.sub(pattern, replacement, string)` is the Python equivalent of `sed 's/old/new/g'`."
   - id: 10
-    difficulty: intermediate
+    difficulty: basic
     question: |
       You are shown Python code. Explain what it does and what it returns or prints.
 

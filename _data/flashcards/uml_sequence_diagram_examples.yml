@@ -21,7 +21,7 @@ cards:
       <div data-uml-type="sequence" data-uml-spec="participant a: Client&#10;participant b: Service&#10;a -> b: getData()&#10;activate b&#10;b --> a: result&#10;deactivate b"></div>
 
   - id: 3
-    difficulty: intermediate
+    difficulty: basic
     question: "What is the difference between an `opt` fragment and an `alt` fragment?"
     answer: "`opt` = if (no else). `alt` = if-else with multiple branches."
     explanation: >
@@ -51,14 +51,14 @@ cards:
       Activation bars are thin rectangles on lifelines. They show when an object is processing a method call. They can be nested (when object A calls B which calls C, all three have overlapping activation bars). They help visualize which objects are busy at any point in time.
 
   - id: 7
-    difficulty: intermediate
+    difficulty: basic
     question: "What is the correct naming convention for lifelines in sequence diagrams?"
     answer: "`objectName : ClassName` (e.g., `myCart : ShoppingCart` or `: ShoppingCart` for anonymous instances)."
     explanation: >
       Sequence diagrams show interactions between specific **object instances**, not classes in general. If the object name is irrelevant, you can omit it and write just `: ClassName`. This distinguishes sequence diagrams from class diagrams, which model classes in general.
 
   - id: 8
-    difficulty: advanced
+    difficulty: basic
     question: "What is the `par` combined fragment used for?"
     answer: "To model messages that execute **in parallel** (concurrently)."
     explanation: >

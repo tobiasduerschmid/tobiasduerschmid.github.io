@@ -19,7 +19,7 @@ cards:
       <div data-uml-type="state" data-uml-spec="[*] --> Active : create()&#10;Active --> [*] : destroy()"></div>
 
   - id: 3
-    difficulty: intermediate
+    difficulty: basic
     question: "What happens when a transition's **guard condition** evaluates to false?"
     answer: "The transition does **not** fire; the object remains in its current state."
     explanation: >
@@ -33,21 +33,21 @@ cards:
       States represent a *condition of being*, not an action. Avoid verb names like *Login* or *doPayment*. Good names: *LoggedIn*, *Authenticating*, *Idle*, *EmergencyPower*. The name should answer "what condition is the object in?"
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     question: "When should you use a **state machine diagram** instead of a **sequence diagram**?"
     answer: "When modeling the **lifecycle of a single object** whose behavior depends on its current state."
     explanation: >
       State machines focus on **one object** reacting differently to events based on its state. Sequence diagrams show **interactions between multiple objects** over time. Use state machines for objects with complex, state-dependent behavior (e.g., a UI component, order lifecycle, hardware controller).
 
   - id: 6
-    difficulty: advanced
+    difficulty: basic
     question: "What are the three types of **internal activities** a state can have?"
     answer: "`entry /` (runs on entering), `exit /` (runs on leaving), `do /` (runs while in the state)."
     explanation: >
       Internal activities execute at specific points: **entry/** runs every time the state is entered (regardless of which transition was taken), **exit/** runs every time the state is exited, and **do/** runs continuously while the object remains in that state. These are different from transition effects, which only execute during a specific transition.
 
   - id: 7
-    difficulty: intermediate
+    difficulty: basic
     question: "Does a state machine always need a **final state**?"
     answer: "No. A state machine always needs an **initial** pseudostate, but a final state is only needed if the object's lifecycle can end."
     explanation: >

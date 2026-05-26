@@ -3,7 +3,7 @@ description: "Reason across architectural styles — choose the right style for 
 active: true
 questions:
   - id: 1
-    difficulty: intermediate
+    difficulty: expert
     type: single
     question: |
       A team is designing a music-streaming service. Track files are processed through `decode → normalize → encode → upload`. Users browse a catalog, get personalized recommendations, and receive new-release notifications. Which architectural-style decisions fit the two parts of the system?
@@ -19,11 +19,11 @@ questions:
       1: |
         Pub-sub is great for notifications but a poor fit for track processing — there is no benefit to event-routing each `decode` output to a `normalize` subscriber; the linear data flow makes pipe-and-filter simpler and more efficient.
       3: |
-        Layering would impose unnecessary structure on both subproblems. Layered is for abstraction hierarchies in code organization, not for data flow or event distribution. Using it as a default underused tools that match each subproblem better.
+        Layered architecture organizes code by abstraction hierarchies (allowed-to-use downward); it is a module style, not a fit for streaming data transformation or asynchronous event distribution. Defaulting to layering for both subproblems leaves better-matched styles (pipe-and-filter, pub-sub) unused.
     explanation: "**Real-world systems are *heterogeneous architectures* — they combine styles because no single style suits every concern.** Pick the style whose promoted qualities match each subproblem: pipe-and-filter for transformation pipelines, pub-sub for asynchronous notification, layered for abstraction stratification, client-server for request/response APIs. The architect's job is to combine them coherently, not to force one onto everything."
 
   - id: 2
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       Two engineers argue: one calls *Layered Architecture* an architectural **pattern**; the other calls it an architectural **style**. Per Taylor et al., what is the precise distinction?
@@ -35,15 +35,15 @@ questions:
     correct_index: 1
     option_feedback:
       0: |
-        Many practitioners do conflate them, and the literature itself is not uniformly precise — but Taylor's distinction is widely accepted and pedagogically useful for separating broad structural decisions from specific recurring solutions.
+        Practitioners do conflate the terms, but they describe different abstractions: a style is a *strategic*, declarative framework of constraints; a pattern is a *tactical* solution to a recurring problem in context. Treating them as interchangeable loses the distinction between picking a macro-structure and solving a specific local design problem inside it.
       2: |
-        Both patterns and styles can apply to OO and non-OO systems. The OO Gang of Four book popularized one category of patterns, but other pattern catalogs cover procedural, functional, distributed, and concurrent systems.
+        Both patterns and styles apply to OO and non-OO systems. The Gang of Four book popularized one OO pattern catalog, but other pattern catalogs cover procedural, functional, distributed, and concurrent systems — and architectural styles are typically language-agnostic.
       3: |
-        Both styles and patterns are extensively documented in the architecture literature. The distinction is *what they describe*, not *whether they are written down*.
-    explanation: "**Styles are *strategic and declarative* (focus on constraints — 'pipes only connect to filters'); patterns are *tactical and constructive* (focus on specific solutions — 'separate business logic from data management with Repository').** A system uses an architectural style; design patterns are applied *inside* the style to solve specific local problems. The boundary is fuzzy in practice but useful as a thinking tool."
+        Both styles and patterns are extensively documented in the architecture literature. The distinction is *what they describe* (a vocabulary of constraints vs. a context-problem-solution triple), not *whether they are written down*.
+    explanation: "**Styles are *strategic and declarative* (focus on constraints — 'pipes only connect to filters'); patterns are *tactical and constructive* (focus on specific solutions — 'separate business logic from data management with Repository').** A system uses an architectural style; design patterns are applied *inside* the style to solve specific local problems. The boundary is fuzzy in practice but useful for separating macro-structural decisions from recurring tactical solutions."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: expert
     type: single
     question: |
       A team's microservice has a published spec saying "pub-sub style" but the code is full of direct service-to-service REST calls bypassing the bus. How would Fairbanks describe what they have, vs. what they intended?
@@ -63,7 +63,7 @@ questions:
     explanation: "**Fairbanks distinguishes *platonic* styles (the idealized textbook blueprint with all its constraints) from *embodied* styles (the messy realization in actual source code where constraints are sometimes bent or broken).** When the embodied departs from the platonic, the quality attributes the platonic style guaranteed are no longer in force. Recognizing this gap is what lets architects evaluate whether the deviation is acceptable engineering trade-off or accumulated technical debt."
 
   - id: 4
-    difficulty: advanced
+    difficulty: expert
     type: multiple
     question: |
       Why do mature production systems almost always use a **heterogeneous architecture** rather than a single style? Select all reasons that apply.
@@ -88,7 +88,7 @@ questions:
     explanation: "**Real systems are heterogeneous because every style trades off some qualities for others, and a single style cannot satisfy a system whose subsystems have different concerns.** Two integration modes: *hierarchy* (a filter is internally layered), or *overlay* (one set of components participates in multiple styles concurrently, like REST). Mastering architecture means fluency in combining styles deliberately."
 
   - id: 5
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       REST is famously described as an *engineered composite*. Which architectural-style constraints from Fielding's derivation are the relevant ones here, and what does each contribute?
@@ -108,7 +108,7 @@ questions:
     explanation: "**REST is a deliberately engineered composite: Client-Server provides asymmetric separation; Layered makes intermediaries (CDNs, proxies, caches) transparent and architecturally legitimate; optional Code-on-Demand lets the server extend the client with downloaded scripts (HTML+JS).** These constraints are bound together by REST's uniform-interface constraint (URIs, HTTP verbs, MIME types, hypermedia). Code-on-Demand is optional in Fielding's derivation, so an API can still be RESTful without sending executable client code."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A team can choose: a Service-Oriented Architecture (SOA) with an enterprise service bus, or a Microservices architecture. The product manager says "they're basically the same — both have services." What is the most important architectural distinction?
@@ -128,7 +128,7 @@ questions:
     explanation: "**The architecturally significant differences are protocol weight, data ownership, and domain mapping. Microservices use lightweight protocols, own their data, and map to bounded contexts; SOA uses heavier protocols, often shares data via ESBs, and aims at enterprise-wide integration.** These differences cascade into operational complexity (microservices add DevOps overhead), team structure (one team per microservice often works; SOA is more centralized), and evolution (microservices change independently; SOA standardizes interfaces across the enterprise)."
 
   - id: 7
-    difficulty: advanced
+    difficulty: expert
     type: single
     question: |
       A team designs an architecture where their main system is structured as a *pipe-and-filter* pipeline, but each filter is *internally* organized as a strict 4-layer mini-architecture. What kind of style combination is this?
@@ -148,7 +148,7 @@ questions:
     explanation: "**Hierarchical composition: one style governs the macro-structure, a different style governs each component's internal structure.** This is how a compiler's pipe-and-filter pipeline can have a layered lexer inside it, or how a microservice (the macro style) is internally layered. Each level is internally consistent with its own style, and the two compose without conflict because they apply at different scales."
 
   - id: 8
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       A consultant claims: "If we pick the right architectural style, we'll get all the quality attributes we need automatically." Why is this misleading?
@@ -168,7 +168,7 @@ questions:
     explanation: "**Every style is a fixed trade-off — promoting some qualities and inhibiting others. There is no universally 'best' style; only styles that fit a system's quality priorities better or worse.** The architect must choose a style whose promoted qualities align with the priorities *and* deliberately compensate for the inhibited qualities (e.g., pub-sub's inhibited testability is addressed with extensive tracing and contract testing). Pretending a style 'gives you everything' is the consultant version of wishful thinking."
 
   - id: 9
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       A team has been running their service on a monolithic layered architecture for years. They want microservices. They ask: "do we need to abandon all our layering?" What is the right answer?
@@ -188,7 +188,7 @@ questions:
     explanation: "**Microservices and layering are not competing — they operate at different scales. The macro-architecture defines service boundaries; layering organizes the code inside each service.** Most production microservices are internally layered or Clean/Hexagonal. The migration question is about boundary placement (where to split monolith into services), not whether to abandon layering."
 
   - id: 10
-    difficulty: advanced
+    difficulty: expert
     type: single
     question: |
       A team is integrating a third-party library that violates the layering constraints of their architecture (the library makes direct database calls from what should be the application layer). How should they reason about the architectural impact?
@@ -208,7 +208,7 @@ questions:
     explanation: "**Third-party library violations are real embodied departures from the platonic style — they erode the same quality attributes (modifiability, portability, testability) as in-house violations.** The mature response: contain the violation behind an Adapter (isolate the library's behavior at a single seam), accept the trade-off explicitly, or pick an alternative library that respects the architecture. Pretending the violation doesn't exist accelerates architectural erosion silently."
 
   - id: 11
-    difficulty: intermediate
+    difficulty: basic
     type: multiple
     question: |
       Which items are architectural styles rather than architectural tactics? Select all that apply.
@@ -233,7 +233,7 @@ questions:
     explanation: "**Styles define the gross structure and constraints; tactics are smaller quality-attribute moves.** A layered or pub-sub system can still use heartbeat, caching, redundancy, and other tactics."
 
   - id: 12
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: |
       A diagram shows source-code packages organized into UI, Service, Domain, and Repository layers. A teammate claims the diagram proves the system will stay available if the Repository layer fails. What is the best correction?

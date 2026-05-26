@@ -24,7 +24,7 @@ cards:
       Ports organize a component's interfaces into logical groups. **portin** (incoming, on the left edge) receives requests. **portout** (outgoing, on the right edge) sends requests. Ports make it clear which side of the component handles which communication.
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     question: "What is an **assembly connector** (ball-and-socket)?"
     answer: "A connector that links one component's **required** interface to another component's **provided** interface."
     explanation: >

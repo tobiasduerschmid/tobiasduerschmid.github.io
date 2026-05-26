@@ -67,7 +67,7 @@ questions:
     explanation: "**C has no references — the function takes `int*` parameters and the caller writes `&x`, `&y` at the call site.** Every signature in C therefore tells you whether a function can mutate its argument: a value parameter cannot; a pointer parameter might. C++ references hide this at the call site, which is more convenient but less explicit about who can change what."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     question: "A C function `int safe_divide(int num, int den, int* result)` returns 0 on success and -1 on division by zero. Which call site uses this contract correctly?"
     options:
       - "`int z = safe_divide(10, 2, NULL);` — the result is returned directly, and passing `NULL` discards it."
@@ -88,7 +88,7 @@ questions:
     explanation: "**The output-pointer convention requires passing the address of a result variable *and* checking the integer return code on every call.** Functions that report errors through return codes only work when callers actually check them. Forgetting the check is one of the most common bugs in C code — it leaves the program running on uninitialized memory after a silent failure."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     question: "Consider this C code:\n\n```c\nint* arr = malloc(10 * sizeof(int));\nfree(arr);\narr[0] = 42;        // Line A\nfree(arr);          // Line B\n```\n\nWhat is the most likely consequence?"
     options:
       - "Both Line A and Line B are harmless — `free` does not actually release memory until the program exits, so `arr` is still valid."
@@ -109,7 +109,7 @@ questions:
     explanation: "**Use-after-free and double-free are both undefined behavior — they can crash, corrupt other allocations, or appear to work and fail later.** A common defensive habit is to write `free(arr); arr = NULL;` after every free. Subsequent writes through a `NULL` pointer fail loudly with a segfault instead of silently corrupting whatever the allocator handed to the next caller."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: basic
     question: "What is the role of libc (the C standard library) in a typical C program?"
     options:
       - "libc is a runtime virtual machine that interprets C bytecode at execution time — analogous to the JVM for Java."
@@ -130,7 +130,7 @@ questions:
     explanation: "**libc is the portability layer between your C source and the OS — same API everywhere, different syscalls underneath.** Each operating system ships its own implementation (glibc on Linux, libSystem on macOS, MSVCRT on Windows). The linker selects the right one for your target platform at build time, which is what makes a single C source compile to working executables on three different operating systems."
 
   - id: 7
-    difficulty: intermediate
+    difficulty: basic
     question: "Dijkstra's 1968 note \"Go To Statement Considered Harmful\" effectively retired `goto` from mainstream programming, yet the C language still has it and the Linux kernel uses it heavily. Which use of `goto` is widely accepted in modern C style guides?"
     options:
       - "Using `goto` inside an inner loop to jump back to the top of an outer loop, replacing nested `break` and a flag variable."
@@ -151,7 +151,7 @@ questions:
     explanation: "**Forward `goto` to a single per-function cleanup label is the accepted idiom — every error path frees resources by jumping to one place, avoiding nested `if` pyramids or duplicated cleanup code.** This is what the Linux kernel does throughout. The pattern stays structured because every jump goes forward to one label; it never simulates loops, cross-function jumps, or unbounded control flow."
 
   - id: 8
-    difficulty: advanced
+    difficulty: basic
     question: "NASA's coding standards for flight software permit C and a restricted subset of C++ — explicitly forbidding exceptions and most polymorphism. What is the strongest pedagogical reason for that restriction?"
     options:
       - "C++ exceptions and virtual calls hide control-flow edges from automated verification tools, making it harder to prove that the program behaves correctly under every possible execution path."
@@ -172,7 +172,7 @@ questions:
     explanation: "**Polymorphism and exceptions introduce hidden control-flow edges that automated verification can't easily reason about — and you cannot debug a Mars rover.** Every line of code inside a `try` block has an implicit edge to a `catch` handler; every virtual call may dispatch to any subclass override. Tools that prove safety properties have to reason about all of those edges; banning them keeps the control-flow graph small and analyzable."
 
   - id: 9
-    difficulty: advanced
+    difficulty: basic
     question: "Almost every mainstream language can call into a C library — Python, Java, C#, Rust, Go, Ruby — but **browser JavaScript cannot directly call C functions on the user's machine**. What is the strongest reason?"
     options:
       - "JavaScript has no foreign-function interface — its language specification omits the feature entirely."
@@ -193,7 +193,7 @@ questions:
     explanation: "**Browser JavaScript is sandboxed precisely so a page cannot touch the filesystem, hardware, or memory outside the engine — and C has unrestricted access to all of those.** WebAssembly is the modern workaround: C compiled to Wasm runs in the *same* sandbox as JavaScript, with no privileged hardware access. The sandbox is not a limitation of the language but a deliberate security boundary."
 
   - id: 10
-    difficulty: advanced
+    difficulty: basic
     question: "You are shipping a CLI tool that depends on `libssl`. Compare static and dynamic linking — which statement is correct?"
     options:
       - "Static linking produces a larger but self-contained executable; dynamic linking produces a smaller executable that depends on `libssl.so` being present at run time and lets a system-wide security update fix every dynamically-linked program at once."

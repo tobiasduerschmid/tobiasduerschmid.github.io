@@ -6,24 +6,24 @@ questions:
     difficulty: basic
     type: single
     question: |
-      Which statement best distinguishes an architectural tactic from an architectural style?
+      Which statement best distinguishes an architectural **tactic** from an architectural **style**?
     options:
-      - "A tactic defines the dominant structure of the whole system; a style is a small coding trick."
+      - "A tactic shapes the dominant element and connector vocabulary of the whole system; a style is a smaller move targeted at one quality attribute."
       - "A style defines the dominant element/connector vocabulary and constraints; a tactic is a reusable move that improves a quality attribute inside a design."
       - "A tactic is always object-oriented; a style is always language-independent."
       - "A style improves performance; a tactic improves only maintainability."
     correct_index: 1
     option_feedback:
       0: |
-        The direction is reversed. Styles shape the gross structure; tactics are smaller quality-attribute moves.
+        The labels are swapped. Styles describe the gross structure (publish-subscribe, layered, pipe-and-filter), and tactics are the smaller quality-attribute moves applied inside that structure.
       2: |
-        Tactics are not tied to object-oriented programming. Heartbeat, caching, and redundancy appear in many paradigms.
+        Tactics are not tied to object-oriented programming. Heartbeat, caching, and redundancy appear in many paradigms and runtimes.
       3: |
-        Both styles and tactics can affect many qualities. There is no fixed performance-versus-maintainability split.
+        Both styles and tactics can affect many qualities. Caching is a performance tactic, dependency injection is a testability tactic — there is no fixed performance-versus-maintainability split.
     explanation: "**Styles are structural constraints at architectural scale; tactics are reusable quality-attribute moves.** A publish-subscribe system can still use heartbeat, redundancy, and caching."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: expert
     type: single
     question: |
       A watchdog sends a request every 2 seconds to each worker. Each healthy worker replies immediately. If no reply arrives before timeout, the watchdog restarts the worker. Which tactic is this?
@@ -43,32 +43,32 @@ questions:
     explanation: "**Ping-echo has the watchdog initiate the check.** The monitored component only needs to answer the ping; missing echoes trigger recovery."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: expert
     type: single
     question: |
       Each worker sends an "alive" message to a monitor every 5 seconds. If the monitor stops receiving messages from one worker, it replaces that worker. Which tactic is this, and what is one cost?
     options:
       - "Heartbeat; every monitored component needs heartbeat logic and the messages consume resources."
       - "Ping-echo; the watchdog does all the work and workers stay passive."
-      - "Caching; workers reuse stored liveness messages."
+      - "Cold spare; the monitor warms up a standby worker between liveness messages."
       - "Active redundancy; all workers must be exact replicas."
     correct_index: 0
     option_feedback:
       1: |
-        Ping-echo is watchdog-initiated. The stem says each worker initiates the periodic message.
+        Ping-echo is watchdog-initiated. The stem says each worker initiates the periodic "alive" message, so the workers are not passive responders.
       2: |
-        Liveness messages are not cached resources. Reusing an old heartbeat would be actively dangerous.
+        Cold spare describes the recovery resource (a standby kept stopped until needed), not how the monitor detects that a worker has failed.
       3: |
-        Replacement may use redundancy, but the described detection tactic is heartbeat.
+        Active redundancy is about running multiple replicas simultaneously so failover is fast. It does not describe the periodic liveness signal in the stem.
     explanation: "**Heartbeat shifts the periodic message to the monitored component.** It can use fewer messages than ping-echo, but it complicates each monitored component and still consumes network and processing resources."
 
   - id: 4
-    difficulty: advanced
+    difficulty: expert
     type: multiple
     question: |
       A team is choosing between ping-echo and heartbeat for 10,000 IoT devices on a low-bandwidth network. Which trade-offs should they consider? Select all that apply.
     options:
-      - "Ping-echo usually sends more messages because it uses a request and response."
+      - "Ping-echo usually sends more messages because every check is a request and a response."
       - "Heartbeat requires each device to implement periodic liveness messaging."
       - "Heartbeat eliminates the need for timeouts."
       - "Both tactics can reduce available bandwidth and processing capacity."
@@ -76,19 +76,19 @@ questions:
     correct_indices: [0, 1, 3]
     option_feedback:
       0: |
-        Ping-echo's request-response pattern can matter a lot at 10,000 devices.
+        Ping-echo's two-message-per-check pattern is exactly what matters at 10,000 devices on a low-bandwidth network — easy to overlook when comparing tactics on a whiteboard.
       1: |
-        Heartbeat saves the ping side of the exchange, but the device firmware now owns periodic liveness behavior.
+        Heartbeat saves the ping side of the exchange, but the device firmware now owns periodic liveness behavior — this is a real cost to weigh, not a free lunch.
       2: |
-        Heartbeat still needs timeouts. The monitor infers failure from silence only after a threshold.
+        Heartbeat still needs timeouts. The monitor infers failure from silence, but only after a threshold elapses — without one, the monitor could never declare a device dead.
       3: |
-        Monitoring is not free. Even tiny liveness messages add up at scale.
+        Monitoring is not free under either tactic. Even tiny liveness messages add up at scale and compete with real workload traffic.
       4: |
-        Both are availability tactics because both detect failed components. Both can inhibit performance as a cost.
+        Both are availability tactics — both detect failed components so recovery can run. Both also inhibit performance as a cost. There is no clean split where one is a performance tactic and the other an availability tactic.
     explanation: "**The useful comparison is who sends messages, how many messages exist, and where complexity lives.** Both tactics improve availability by detecting faults, and both charge a performance cost for monitoring."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: expert
     type: single
     question: |
       A checkout service keeps a standby payment worker stopped until the active worker fails. On failure, the standby is started and warmed up. Which redundancy tactic is this?
@@ -96,19 +96,19 @@ questions:
       - "Active redundancy."
       - "Cold spare."
       - "Ping-echo."
-      - "Content-based routing."
+      - "Caching."
     correct_index: 1
     option_feedback:
       0: |
-        Active redundancy keeps multiple replicas running at the same time. The stem says the standby is stopped until failure.
+        Active redundancy keeps multiple replicas running at the same time so another can take over quickly. The stem says the standby is stopped until failure, which is the opposite end of the redundancy trade-off.
       2: |
-        Ping-echo detects liveness. It does not describe whether a backup is already running.
+        Ping-echo is a *detection* tactic — it tells the system that the active worker has failed. The question asks about the *recovery resource* the system has waiting after detection.
       3: |
-        Content-based routing is a publish-subscribe routing variant, not a redundancy tactic.
+        Caching stores resources to avoid expensive reacquisition. It does not describe whether a backup worker is already running or kept stopped until needed.
     explanation: "**Cold spare saves steady-state resources but increases recovery time.** The system must start, warm, and synchronize the spare after detecting failure."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: expert
     type: single
     question: |
       A product catalog receives repeated requests for the same item. A cache serves 92% of repeat requests and keeps p95 latency below 100 ms. Which quality attribute does the tactic primarily improve, and what risk did it introduce?
@@ -128,7 +128,7 @@ questions:
     explanation: "**Caching primarily improves performance by avoiding expensive reacquisition.** The architectural cost is deciding when cached data is fresh enough and how invalidation works."
 
   - id: 7
-    difficulty: advanced
+    difficulty: expert
     type: single
     question: |
       A team says, "We should add caching." What is the best architectural response?
@@ -148,7 +148,7 @@ questions:
     explanation: "**Tactics should be tied to scenarios.** A cache is justified when the measured performance gain is worth the memory, invalidation, and stale-data costs."
 
   - id: 8
-    difficulty: advanced
+    difficulty: basic
     type: multiple
     question: |
       A quality scenario says: "If one perception worker crashes while the robot is operating, the system detects the crash within 2 seconds and starts a replacement worker within 5 seconds." Which architectural elements or tactics are likely relevant? Select all that apply.

@@ -6,6 +6,7 @@ const {
 } = require('./tutorial-helpers');
 
 const TUTORIAL_URL = '/SEBook/development_practices/code-comprehension-tutorial?instructor-mode=true';
+const PROGRESS_STORAGE_KEY = 'tutorial-progress-code-comprehension';
 const TIMER_STORAGE_KEY = 'tutorial-time-practice-code-comprehension';
 const BOOT_TIMEOUT = 90_000;
 
@@ -17,6 +18,33 @@ async function openTimedSprint(page) {
 }
 
 test.describe('Code comprehension tutorial timed practice', () => {
+  test('auto-save is enabled and persists the current step', async ({ page }) => {
+    await page.goto(TUTORIAL_URL);
+    await waitForTutorialReady(page, { bootTimeout: BOOT_TIMEOUT });
+
+    await expect(page.locator('#autoSaveLabel')).toBeVisible();
+    await expect(page.getByLabel('Auto-save')).toBeChecked();
+    await expect.poll(async () => {
+      return page.evaluate((storageKey) => {
+        return JSON.parse(localStorage.getItem(storageKey) || 'null')?.step;
+      }, PROGRESS_STORAGE_KEY);
+    }, {
+      message: 'autosave should persist initial tutorial progress',
+      timeout: 5_000,
+    }).toBe(0);
+
+    await page.getByRole('button', { name: /^Step 2: Python Reading Sprint/ }).click();
+    await expectActiveStep(page, 1);
+    await expect.poll(async () => {
+      return page.evaluate((storageKey) => {
+        return JSON.parse(localStorage.getItem(storageKey) || 'null')?.step;
+      }, PROGRESS_STORAGE_KEY);
+    }, {
+      message: 'autosave should persist step navigation',
+      timeout: 5_000,
+    }).toBe(1);
+  });
+
   test('Python reading sprint shows a countdown when opened', async ({ page }) => {
     await openTimedSprint(page);
 

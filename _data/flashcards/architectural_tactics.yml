@@ -9,7 +9,7 @@ cards:
     explanation: "Architectural styles shape the dominant structure of a system. Tactics are smaller moves inside that structure: heartbeat for availability, caching for performance, dependency injection for testability."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     question: "How does a tactic differ from an architectural style?"
     answer: "A **style** defines the gross structure: element types, connector types, and constraints. A **tactic** improves one quality scenario inside that structure."
     explanation: "Publish-subscribe is a style. Heartbeat is a tactic. A pub-sub robot can still use heartbeat to detect failed components."
@@ -27,19 +27,19 @@ cards:
     explanation: "Heartbeat often uses fewer messages than ping-echo, but every monitored component must implement heartbeat behavior."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: basic
     question: "Compare ping-echo and heartbeat."
     answer: "**Ping-echo:** watchdog initiates monitoring; simpler monitored components; more messages. **Heartbeat:** monitored components initiate monitoring messages; fewer messages; more logic inside each monitored component."
     explanation: "Both improve availability by detecting faults before they become visible failures. Both inhibit performance because monitoring consumes bandwidth, processing cycles, and queue capacity."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: basic
     question: "Why do timeout values matter in ping-echo and heartbeat tactics?"
     answer: "A timeout that is too short causes false failure detections and unnecessary recovery. A timeout that is too long lets real failures remain hidden."
     explanation: "Timeout selection is part of the architecture, not an implementation afterthought. It directly shapes availability, performance, and operational noise."
 
   - id: 7
-    difficulty: intermediate
+    difficulty: basic
     question: "Distinguish **active redundancy** and **cold spare**."
     answer: "**Active redundancy:** multiple replicas run at the same time so another can take over quickly. **Cold spare:** a backup exists but is inactive until failure, saving resources but increasing recovery time."
     explanation: "Active redundancy improves recovery time at higher runtime cost. Cold spares lower steady-state cost but require startup, warm-up, or synchronization during recovery."
@@ -51,13 +51,13 @@ cards:
     explanation: "Caching trades space and consistency complexity for lower latency or higher throughput."
 
   - id: 9
-    difficulty: advanced
+    difficulty: basic
     question: "What quality attributes can caching inhibit?"
     answer: "Caching can inhibit **consistency** and **modifiability** because the system must define cache invalidation, stale-data rules, ownership, and coherence across components."
     explanation: "Caching is not just a performance win. It creates a second place where data can live, so correctness now depends on keeping cached data fresh enough for the scenario."
 
   - id: 10
-    difficulty: advanced
+    difficulty: basic
     question: "What sequence should an architect follow when choosing a tactic?"
     answer: "State the quality scenario and measure, identify the blocker, choose a tactic that addresses it, name inhibited qualities, and add observability to verify the tactic works."
     explanation: "Tactics should be selected because they improve a specific scenario, not because they are popular or familiar."
