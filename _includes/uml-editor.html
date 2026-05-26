@@ -1,5 +1,12 @@
 {% comment %}
 Reusable ArchUML editor include.
+
+LIMITATION: Only ONE instance per page is supported. The editor binds to
+fixed DOM IDs (uml-pg-type, uml-pg-input, uml-pg-output, …); a second
+include on the same page would silently rebind the second init() to the
+first include's DOM. If you need two editors on one page, this include
+needs to be parameterized with an instance suffix first.
+
 Supported options:
 - types: comma-separated diagram type ids
 - default_type, default_layout
@@ -796,7 +803,13 @@ Supported options:
         if (/^@layout\b/i.test(trimmed)) { inLayout = true; continue; }
         if (/^@endlayout\b/i.test(trimmed)) { inLayout = false; continue; }
         if (inLayout) continue;
-        out.push(raw.replace(/\s+@pos\(\s*-?\d+(?:\.\d+)?\s*,\s*-?\d+(?:\.\d+)?\s*\)/i, ''));
+        // Permissive @pos strip: tolerate any content inside the parens
+        // (decimals, scientific notation, extra whitespace) so a hand-edited
+        // source can't carry stale metadata through to the renderer. The
+        // canonical writer only emits integer x/y, but a learner who types
+        // `@pos( 10 , 20 )` or pastes scientific notation should still
+        // render cleanly.
+        out.push(raw.replace(/\s+@pos\([^)]*\)/gi, ''));
       }
       return out.join('\n');
     }
@@ -2158,17 +2171,28 @@ Supported options:
     // incrementally.
     var MAX_COALESCE_MS = 3000;
     var suspendUndo = false;
+    // Last value the editor knows is "clean" — set after every successful
+    // render and after applySnapshot. The textarea input handler diffs against
+    // it to decide whether the user has typed something new, so canvas Ctrl+Z
+    // can roll back textarea edits the same way it rolls back drags.
+    var lastSnapshotValue = '';
     /**
-     * Push the current textarea value onto the undo stack.
+     * Push a value onto the undo stack.
+     *
+     * Defaults to capturing the current `textarea.value` (caller must invoke
+     * BEFORE the mutation). Pass `explicitValue` to snapshot a known pre-edit
+     * value — used by the text-edit path where the `input` event fires after
+     * the textarea has already changed, so `textarea.value` is post-edit.
      *
      * If `kind` matches the most recent push within COALESCE_MS *and* the burst
      * started less than MAX_COALESCE_MS ago, refresh its `t` instead of pushing
      * a new entry — so a single gesture is one undoable step, but a marathon
      * gesture still breaks into chunks.
      */
-    function snapshotForUndo(kind) {
+    function snapshotForUndo(kind, explicitValue) {
       if (suspendUndo) return;
       var now = Date.now();
+      var value = explicitValue !== undefined ? explicitValue : textarea.value;
       var top = undoStack[undoStack.length - 1];
       if (kind && top && top.kind === kind &&
           (now - top.t) < COALESCE_MS &&
@@ -2177,7 +2201,15 @@ Supported options:
         // Don't update top.value — we want the *original* pre-burst snapshot.
         return;
       }
-      undoStack.push({ value: textarea.value, kind: kind || null, t: now, firstT: now });
+      // Suppress consecutive duplicate snapshots. Happens when text edits
+      // arrive while the source is stuck in an error state (lastSnapshotValue
+      // hasn't advanced because no render succeeded) and MAX_COALESCE_MS
+      // forces a new entry that would otherwise re-push the same value.
+      if (top && top.value === value) {
+        top.t = now;
+        return;
+      }
+      undoStack.push({ value: value, kind: kind || null, t: now, firstT: now });
       if (undoStack.length > UNDO_LIMIT) undoStack.shift();
       redoStack.length = 0;
       refreshUndoButtons();
@@ -2202,6 +2234,10 @@ Supported options:
       }
       suspendUndo = true;
       textarea.value = value;
+      // Baseline tracks "where the editor thinks the textarea sits"; updating
+      // it here keeps the text-edit diff from re-snapshotting the value we
+      // just restored.
+      lastSnapshotValue = value;
       suspendUndo = false;
       renderDiagram();
       refreshUndoButtons();
@@ -8061,7 +8097,13 @@ Supported options:
         }
 
         // Empty canvas: begin a click-vs-pan gesture. We commit to one or the
-        // other on pointermove (>5 px → pan) or pointerup (no movement → click).
+        // other on pointermove (>5 px → pan) or pointerup (no movement →
+        // click). Marquee select (Shift+drag) is handled by a separate
+        // listener on the #uml-pg-output container so it works even when the
+        // pointerdown lands outside the SVG's reported bbox (some renderers
+        // collapse the SVG's getBoundingClientRect to 0×0 while painting
+        // content outside it).
+        if (ev.shiftKey && !activeTool) return;
         ev.preventDefault();
         var startX = ev.clientX, startY = ev.clientY;
         var startPan = { x: panOffset.x, y: panOffset.y };
@@ -8289,6 +8331,11 @@ Supported options:
           } else if (k === 'ArrowUp' || k === 'ArrowDown' || k === 'ArrowLeft' || k === 'ArrowRight') {
             if (activeTool) return;
             event.preventDefault();
+            // 10 px by default (matches the snap-to-grid step the layout
+            // engine uses), Shift = 1 px for sub-grid precision. This is the
+            // inverse of the splitter's "Shift = coarse 40 px" because the
+            // canvas already moves on a grid; users press Shift here to
+            // escape the grid, not to take bigger jumps.
             var step = event.shiftKey ? 1 : 10;
             var dx = k === 'ArrowLeft' ? -step : k === 'ArrowRight' ? step : 0;
             var dy = k === 'ArrowUp' ? -step : k === 'ArrowDown' ? step : 0;
@@ -9175,6 +9222,79 @@ Supported options:
       announce('Selected ' + keys.length + ' item' + (keys.length === 1 ? '' : 's') + '.', false);
     }
 
+    /**
+     * Duplicate every currently selected node. Each duplicate is a clone of
+     * the source declaration line with its id renamed to a fresh unique one
+     * and its position offset by (20, 20). Routes and fragments in the
+     * selection are skipped — duplicating a relation in isolation usually
+     * isn't what the user wants. The duplicates become the new selection.
+     */
+    function duplicateSelected() {
+      if (!selectionSize()) return;
+      var type = typeSelect.value;
+      var nodeEntries = Object.keys(selectedLayoutIds)
+        .filter(function (id) { return selectedLayoutIds[id] === 'node'; });
+      if (!nodeEntries.length) {
+        announce('Nothing to duplicate. Select an element first.', false);
+        return;
+      }
+      snapshotForUndo();
+      // Re-read fresh on every loop so generateUniqueId reflects newly
+      // inserted ids — otherwise duplicating two elements in one shot could
+      // collide on the same generated suffix.
+      var newIds = [];
+      nodeEntries.forEach(function (origId) {
+        var positions = readLayoutPositions(textarea.value);
+        var routes = readLayoutRoutes(textarea.value);
+        var lines = stripLayoutMetadata(textarea.value).split('\n');
+        var declIdx = -1;
+        for (var i = 0; i < lines.length; i++) {
+          if (declarationIdForLine(lines[i], type) === origId) {
+            declIdx = i;
+            break;
+          }
+        }
+        if (declIdx === -1) return; // declaration not found (pseudostate, etc.)
+        var newId = generateUniqueId(textarea.value, type, origId);
+        var escaped = origId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Replace the FIRST occurrence of the original id as a word boundary
+        // so the renamed declaration doesn't accidentally rewrite a body
+        // mention (e.g. an attribute named the same as the class).
+        var renamed = lines[declIdx].replace(new RegExp('\\b' + escaped + '\\b'), newId);
+        if (renamed === lines[declIdx]) return;
+        var insertAt = findInsertPointForDeclaration(lines);
+        lines.splice(insertAt, 0, renamed);
+        // Position: prefer explicit @pos from source; fall back to the
+        // rendered hitbox bbox for auto-laid-out elements.
+        var basePos = positions[origId];
+        if (!basePos) {
+          var svg = output.querySelector('svg');
+          var hb = svg && svg.querySelector('.uml-pg-edit-hitbox[data-layout-id="' + cssAttrEscape(origId) + '"]');
+          if (hb && hb.getBBox) {
+            var bb = hb.getBBox();
+            basePos = { x: Math.round(bb.x), y: Math.round(bb.y) };
+          }
+        }
+        if (basePos) {
+          positions[newId] = { x: basePos.x + 20, y: basePos.y + 20 };
+        }
+        textarea.value = writePositionsIntoSource(lines.join('\n'), type, positions, routes);
+        newIds.push(newId);
+      });
+      if (!newIds.length) {
+        announce('Could not locate the selected declaration to duplicate.', false);
+        return;
+      }
+      renderDiagram();
+      // Replace selection with the duplicates so the user can immediately
+      // arrow-nudge them into place.
+      setSelectedLayoutId(null);
+      newIds.forEach(function (id, idx) {
+        setSelectedLayoutId(id, 'node', { extend: idx > 0 });
+      });
+      announce('Duplicated ' + newIds.length + ' element' + (newIds.length === 1 ? '' : 's') + '.', false);
+    }
+
     function nudgeElement(id, dx, dy) {
       var svg = output.querySelector('svg');
       if (!svg) return;
@@ -9486,6 +9606,8 @@ Supported options:
     } else {
       textarea.value = starterText(currentType, layoutSelect.value);
     }
+    // Seed the text-edit baseline before the first input event can fire.
+    lastSnapshotValue = textarea.value;
     rememberCurrentSource(currentType);
     updateLayoutVisibility();
 
@@ -9496,7 +9618,11 @@ Supported options:
       cancelVisualEditorInstall();
       var text = textarea.value.trim();
       var type = typeSelect.value;
-      errorBox.style.display = 'none';
+      // is-hidden has display:none !important — toggling the class is the
+      // only reliable way to actually hide/show the error box. Setting
+      // style.display alone is ignored.
+      errorBox.classList.add('is-hidden');
+      errorBox.style.display = '';
       output.innerHTML = '';
 
       if (!text) {
@@ -9533,11 +9659,16 @@ Supported options:
           // Visual mutations all funnel through renderDiagram; autosave once
           // per render so localStorage tracks every visual change.
           scheduleAutosave();
+          // Render succeeded — this is a clean baseline. Subsequent user
+          // typing will diff against it to know when to push a text-edit
+          // undo snapshot.
+          lastSnapshotValue = textarea.value;
         } else if (supportsEmptyEditor(type) && output.querySelector('.uml-empty-msg')) {
           downloadBtn.disabled = true;
           installGenericEmptyEditor();
           rebuildSequenceModelPanel();
           scheduleAutosave();
+          lastSnapshotValue = textarea.value;
         } else {
           downloadBtn.disabled = true;
           status.textContent = 'No diagram produced.';
@@ -9546,12 +9677,28 @@ Supported options:
       } catch (e) {
         showError(e.message || String(e));
         downloadBtn.disabled = true;
+        // Intentionally do NOT update lastSnapshotValue on error. The next
+        // text edit's snapshot should still revert to the last good state.
       }
     }
 
     function showError(msg) {
-      errorBox.textContent = 'Error: ' + msg;
-      errorBox.style.display = 'block';
+      // When undo history exists, mention it inline. A bad drag or paste can
+      // leave the renderer stranded; without the hint, keyboard-only and
+      // screen-reader users have no obvious recovery — focus is on <body>
+      // (no canvas hitboxes after the failed render), so they wouldn't
+      // notice the visible toolbar Undo button.
+      var hint = '';
+      if (undoStack.length) {
+        var modKey = /Mac|iPhone|iPad/i.test(navigator.platform) ? 'Cmd' : 'Ctrl';
+        hint = ' Press ' + modKey + '+Z to revert the last edit.';
+      }
+      errorBox.textContent = 'Error: ' + msg + hint;
+      // Remove is-hidden (which carries display:none !important) AND clear
+      // any prior inline display so the alert actually surfaces. Previously
+      // showError only set style.display = 'block', which !important beat.
+      errorBox.classList.remove('is-hidden');
+      errorBox.style.display = '';
       output.innerHTML = '';
       clearEditLayer();
       status.textContent = '';
@@ -9637,13 +9784,117 @@ Supported options:
       if (event && event.isTrusted === false) {
         clearTimeout(debounceTimer);
         renderDiagram();
+      } else if (event && (event.inputType === 'historyUndo' || event.inputType === 'historyRedo')) {
+        // Browser-native textarea undo/redo just fired. Don't push our own
+        // text-edit snapshot — that would treat the native operation as new
+        // user input and queue a re-do of what the user just undid.
+        // Re-sync the baseline so the next *real* keystroke diffs against
+        // the post-native-undo value.
+        lastSnapshotValue = textarea.value;
+        scheduleRender();
       } else {
+        // Real user typing — push a text-edit snapshot of the pre-edit value
+        // so canvas Ctrl+Z can roll back typing the same way it rolls back
+        // drags. Browser-native textarea undo continues to handle in-textarea
+        // Ctrl+Z (the document-level handler at the bottom of init() skips
+        // form controls). Coalesces within COALESCE_MS / MAX_COALESCE_MS so a
+        // typing burst is one undo step.
+        if (!suspendUndo && lastSnapshotValue !== textarea.value) {
+          snapshotForUndo('text-edit', lastSnapshotValue);
+        }
         scheduleRender();
       }
       scheduleAutosave();
     });
     if (previewPane) {
       previewPane.addEventListener('pointerdown', handlePreviewSurfacePointerDown);
+    }
+
+    // Marquee select (Shift+drag) bound on the preview container so it works
+    // regardless of where in the canvas the drag begins. Bound once (outside
+    // installVisualEditor which rebinds on every render) because the preview
+    // container persists across renders.
+    if (previewPane) {
+      previewPane.addEventListener('pointerdown', function (ev) {
+        if (ev.button !== 0) return;
+        if (!ev.shiftKey || activeTool) return;
+        // Don't compete with hitbox/handle/edge listeners.
+        var t = ev.target;
+        while (t && t !== previewPane) {
+          if (t.classList && (
+              t.classList.contains('uml-pg-edit-a11y-target') ||
+              t.classList.contains('uml-pg-edit-hitbox') ||
+              t.classList.contains('uml-pg-edge-hitbox') ||
+              t.classList.contains('uml-pg-extend-handle') ||
+              t.classList.contains('uml-pg-extend-handle-group'))) {
+            return;
+          }
+          t = t.parentNode;
+        }
+        ev.preventDefault();
+        var startX = ev.clientX, startY = ev.clientY;
+        var lastX = startX, lastY = startY;
+        var moved = false;
+        var box = null;
+        var extend = ev.metaKey || ev.ctrlKey;
+        function ensureBox() {
+          if (box) return box;
+          box = document.createElement('div');
+          box.className = 'uml-pg-marquee-box';
+          document.body.appendChild(box);
+          return box;
+        }
+        function update(x, y) {
+          var b = ensureBox();
+          b.style.left = Math.min(startX, x) + 'px';
+          b.style.top = Math.min(startY, y) + 'px';
+          b.style.width = Math.abs(x - startX) + 'px';
+          b.style.height = Math.abs(y - startY) + 'px';
+        }
+        function commit() {
+          var svg = output.querySelector('svg');
+          if (!svg) return 0;
+          var rectLeft = Math.min(startX, lastX);
+          var rectTop = Math.min(startY, lastY);
+          var rectRight = Math.max(startX, lastX);
+          var rectBottom = Math.max(startY, lastY);
+          // Tiny drags don't select — protects against accidental marquees.
+          if (rectRight - rectLeft < 4 && rectBottom - rectTop < 4) return 0;
+          if (!extend) setSelectedLayoutId(null);
+          var picked = 0;
+          var hits = Array.prototype.slice.call(svg.querySelectorAll('.uml-pg-edit-a11y-target'));
+          hits.forEach(function (h) {
+            var bb = h.getBoundingClientRect();
+            if (bb.right < rectLeft || bb.left > rectRight) return;
+            if (bb.bottom < rectTop || bb.top > rectBottom) return;
+            var hid = h.getAttribute('data-layout-id');
+            if (!hid) return;
+            var hkind = h.getAttribute('data-layout-fragment-id') ? 'fragment' : 'node';
+            setSelectedLayoutId(hid, hkind, { extend: true });
+            picked += 1;
+          });
+          return picked;
+        }
+        function onMove(mv) {
+          var dx = mv.clientX - startX, dy = mv.clientY - startY;
+          if (!moved && Math.abs(dx) <= 5 && Math.abs(dy) <= 5) return;
+          moved = true;
+          lastX = mv.clientX; lastY = mv.clientY;
+          update(mv.clientX, mv.clientY);
+        }
+        function onUp() {
+          document.removeEventListener('pointermove', onMove);
+          document.removeEventListener('pointerup', onUp);
+          if (box) { box.remove(); box = null; }
+          if (!moved) return;
+          var picked = commit();
+          announce(picked === 0
+            ? 'No items in marquee.'
+            : 'Selected ' + picked + ' item' + (picked === 1 ? '' : 's') + '.', false);
+        }
+        document.addEventListener('pointermove', onMove);
+        document.addEventListener('pointerup', onUp);
+      });
     }
 
     document.addEventListener('pointermove', function (event) {
@@ -9697,19 +9948,32 @@ Supported options:
     // Persist the textarea per diagram-type, restore on load. We key by type
     // so each example has its own slot — switching types doesn't clobber.
     var autosaveTimer = null;
+    var autosaveFailed = false;
     function scheduleAutosave() {
       if (!persistenceEnabled) return;
       if (autosaveTimer) clearTimeout(autosaveTimer);
       autosaveTimer = setTimeout(function () {
         try {
           localStorage.setItem(autosaveKey(), textarea.value);
+          if (autosaveFailed) {
+            // Recovered after a previous failure — clear the warning.
+            autosaveFailed = false;
+            announce('Autosave recovered.', false);
+          }
           showSavedIndicator();
-        } catch (e) { /* quota or disabled — silent */ }
+        } catch (e) {
+          // Quota exceeded, private-mode storage disabled, or storage
+          // partitioning blocked us. Surface it — the original code swallowed
+          // this and the user could lose work without warning.
+          showSaveFailedIndicator(e);
+        }
         autosaveTimer = null;
       }, 250);
     }
     function showSavedIndicator() {
       if (!autosaveIndicator) return;
+      autosaveIndicator.classList.remove('is-error');
+      autosaveIndicator.removeAttribute('title');
       autosaveIndicator.textContent = '✓ Saved';
       autosaveIndicator.classList.add('is-saved');
       clearTimeout(showSavedIndicator._t);
@@ -9717,6 +9981,26 @@ Supported options:
         autosaveIndicator.classList.remove('is-saved');
         autosaveIndicator.textContent = '';
       }, 1400);
+    }
+    function showSaveFailedIndicator(err) {
+      if (!autosaveIndicator) return;
+      autosaveIndicator.classList.remove('is-saved');
+      autosaveIndicator.classList.add('is-error');
+      autosaveIndicator.textContent = '⚠ Autosave failed — copy your work';
+      // Keep the indicator visible (no setTimeout to clear it) until the next
+      // successful save. Tooltip for sighted users; the live region carries
+      // the same info for screen readers.
+      autosaveIndicator.setAttribute('title',
+        'localStorage is full or disabled. Use Copy ArchUML to save manually.');
+      // Only announce the first time per session so screen readers aren't
+      // hammered if every save attempt fails.
+      if (!autosaveFailed) {
+        autosaveFailed = true;
+        announce('Autosave failed — local storage is full or disabled. Copy your ArchUML source to save manually.', false);
+        if (window.console && typeof console.warn === 'function') {
+          console.warn('[uml-editor] Autosave failed:', err);
+        }
+      }
     }
     function loadAutosaved(type) {
       if (!persistenceEnabled) return null;
@@ -9924,6 +10208,13 @@ Supported options:
       if (mod && (key === 'a' || key === 'A') && inWrap && !inFormControl) {
         event.preventDefault();
         selectAll();
+        return;
+      }
+      // Duplicate the current selection in place + (20, 20). Skips relations
+      // and pseudostates whose declaration lives inside a transition.
+      if (mod && (key === 'd' || key === 'D') && inWrap && !inFormControl) {
+        event.preventDefault();
+        duplicateSelected();
         return;
       }
       // Zoom: Cmd/Ctrl + +/-/0. We accept both '+' and '=' since '+' typically
@@ -11134,10 +11425,24 @@ Supported options:
     downloadBtn.disabled = true;
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
+  function bootstrap() {
+    // Guard against two includes on one page — the editor relies on global
+    // DOM IDs and would silently double-bind. The include header documents
+    // this; log a console warning so authors discover it without filing a bug.
+    if (window.__umlEditorBooted) {
+      if (window.console && typeof console.warn === 'function') {
+        console.warn('[uml-editor] Multiple instances are not supported on the same page. Only the first will work.');
+      }
+      return;
+    }
+    window.__umlEditorBooted = true;
     init();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootstrap);
+  } else {
+    bootstrap();
   }
 })();
 </script>

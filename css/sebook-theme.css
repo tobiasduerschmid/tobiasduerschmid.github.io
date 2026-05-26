@@ -823,6 +823,15 @@ html.dark-mode-transition #sidebar * {
   scroll-margin-top: 96px;
 }
 
+/* WCAG 2.2 SC 2.4.11 (Focus Not Obscured) — the sebook layout has a sticky
+   navbar (~96px tall). When Tab moves focus to a link or button in main
+   content, the browser's automatic scrollIntoView can land it under the
+   navbar. Reserve the navbar's height so the focused element stays visible. */
+#main-content a,
+#main-content button {
+  scroll-margin-top: 96px;
+}
+
 .inline-language-panel pre:focus,
 #main-content pre[tabindex]:focus {
   outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);

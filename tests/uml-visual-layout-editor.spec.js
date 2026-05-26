@@ -1237,6 +1237,93 @@ test.describe('UML playground visual editor', () => {
     await expect(animalButton).toBeFocused();
   });
 
+  test('canvas undo reverts textarea typing the user did between visual edits', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+
+    const textarea = page.locator('#uml-pg-input');
+    const originalText = await textarea.inputValue();
+
+    // Real keystrokes (isTrusted=true) so the editor's input handler treats
+    // them as user typing and pushes a text-edit undo snapshot.
+    await textarea.click();
+    await page.keyboard.press('End');
+    await page.keyboard.type(' /* added comment */');
+    await expect(textarea).not.toHaveValue(originalText);
+
+    const undoBtn = page.locator('#uml-pg-undo');
+    await expect(undoBtn).toBeEnabled();
+    await undoBtn.click();
+
+    await expect(textarea).toHaveValue(originalText);
+  });
+
+  test('canvas undo backs out typing and dragging in reverse order across two presses', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+
+    const textarea = page.locator('#uml-pg-input');
+    const originalText = await textarea.inputValue();
+
+    // Step 1: type something in the textarea.
+    await textarea.click();
+    await page.keyboard.press('End');
+    await page.keyboard.type(' /* typed first */');
+    const afterTyping = await textarea.inputValue();
+    expect(afterTyping).not.toBe(originalText);
+
+    // Step 2: nudge a class, which routes through snapshotForUndo on the
+    // visual side.
+    const animalButton = page.getByRole('button', { name: /Element Animal/ });
+    await animalButton.focus();
+    await expect(animalButton).toBeFocused();
+    await page.keyboard.press('ArrowRight');
+    await expect(animalButton).toBeFocused();
+    const afterDrag = await textarea.inputValue();
+    expect(afterDrag).not.toBe(afterTyping);
+
+    const undoBtn = page.locator('#uml-pg-undo');
+
+    // First undo: drag rolled back, typing kept.
+    await undoBtn.click();
+    await expect(textarea).toHaveValue(afterTyping);
+
+    // Second undo: typing rolled back to the original starter.
+    await undoBtn.click();
+    await expect(textarea).toHaveValue(originalText);
+  });
+
+  test('typing burst coalesces into one undo step while paused typing splits into two', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+
+    const textarea = page.locator('#uml-pg-input');
+    const originalText = await textarea.inputValue();
+
+    await textarea.click();
+    await page.keyboard.press('End');
+    // Single uninterrupted burst — must coalesce into one entry.
+    await page.keyboard.type('AAAA');
+    const afterFirstBurst = await textarea.inputValue();
+    expect(afterFirstBurst).not.toBe(originalText);
+
+    // Pause beyond COALESCE_MS (600 ms) so the next burst is its own entry.
+    await page.waitForTimeout(800);
+    await page.keyboard.type('BBBB');
+    await expect(textarea).not.toHaveValue(afterFirstBurst);
+    const afterSecondBurst = await textarea.inputValue();
+
+    const undoBtn = page.locator('#uml-pg-undo');
+
+    // First undo reverts only the second burst.
+    await undoBtn.click();
+    await expect(textarea).toHaveValue(afterFirstBurst);
+
+    // Second undo reverts the first burst.
+    await undoBtn.click();
+    await expect(textarea).toHaveValue(originalText);
+  });
+
   test('sustained nudge beyond the coalesce window chunks into multiple undo entries', async ({ page }) => {
     await openPlayground(page);
     await selectDiagram(page, 'class');
@@ -1278,6 +1365,226 @@ test.describe('UML playground visual editor', () => {
     }
     const fullyReverted = await nodeHitboxBox(page, 'Animal');
     expect(fullyReverted.x).toBeCloseTo(before.x, 0);
+  });
+
+  test('render errors mention undo as a recovery path when undo history exists', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+
+    // Nudge once so the undo stack is non-empty — without it the hint would
+    // not appear (there is nothing to revert to).
+    const animalButton = page.getByRole('button', { name: /Element Animal/ });
+    await animalButton.focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(animalButton).toBeFocused();
+
+    // The ArchUML renderers are forgiving and rarely throw on bad input —
+    // they tend to render whatever they can. Force the throw deterministically
+    // by stubbing the class renderer; this exercises the same showError code
+    // path users hit when a real render fails.
+    await page.evaluate(() => {
+      window.__realClassRender = window.UMLClassDiagram.render;
+      window.UMLClassDiagram.render = function () {
+        throw new Error('forced render failure');
+      };
+    });
+    await setUmlSource(page, '@startuml\nclass Forced\n@enduml');
+
+    const errorBox = page.locator('#uml-pg-error');
+    await expect(errorBox).toBeVisible();
+    await expect(errorBox).toHaveText(/Press (Cmd|Ctrl)\+Z to revert the last edit/);
+
+    // Restore so we don't leak the stub into adjacent tests via the shared
+    // worker context.
+    await page.evaluate(() => {
+      window.UMLClassDiagram.render = window.__realClassRender;
+    });
+  });
+
+  test('autosave failure surfaces a visible warning and announces via live region', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+
+    // Override localStorage.setItem to fake quota-exceeded the next time the
+    // autosave timer fires. We can't reliably fill quota in CI; stubbing the
+    // throw matches the production exception path 1:1.
+    await page.evaluate(() => {
+      const original = window.localStorage.setItem.bind(window.localStorage);
+      window.__realSetItem = original;
+      window.localStorage.setItem = function (key, value) {
+        if (typeof key === 'string' && key.indexOf('uml-pg-autosave-') === 0) {
+          const err = new Error('QuotaExceededError');
+          err.name = 'QuotaExceededError';
+          throw err;
+        }
+        return original(key, value);
+      };
+    });
+
+    // Trigger an autosave by typing a real character (debounced ~250 ms).
+    await page.locator('#uml-pg-input').click();
+    await page.keyboard.press('End');
+    await page.keyboard.type(' ');
+
+    const indicator = page.locator('#uml-pg-autosave');
+    await expect(indicator).toHaveClass(/is-error/);
+    await expect(indicator).toContainText(/Autosave failed/);
+
+    // Live region (tool status) should carry the same warning for SRs.
+    await expect(page.locator('#uml-pg-tool-status')).toContainText(/Autosave failed/);
+
+    // Restoring the real setItem then triggering another save should clear
+    // the warning and reset the indicator on the next successful write.
+    await page.evaluate(() => {
+      window.localStorage.setItem = window.__realSetItem;
+    });
+    await page.keyboard.type('A');
+    await expect(indicator).not.toHaveClass(/is-error/);
+  });
+
+  test('Shift+drag on empty canvas marquee-selects multiple elements', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+    await page.waitForSelector('.uml-pg-edit-a11y-target[data-layout-id="Animal"]');
+
+    // The page is taller than the viewport — scroll the canvas into view so
+    // the mouse-coordinate drag actually lands on it. Without this the hit
+    // points end up below the fold and the listener never fires.
+    await page.locator('#uml-pg-output').scrollIntoViewIfNeeded();
+
+    // The SVG itself can report a 0×0 boundingClientRect when its viewBox
+    // content overflows its layout box; compute the marquee rect from the
+    // hitboxes themselves so we always cover visible elements.
+    const hitboxBounds = await page.evaluate(() => {
+      const hits = Array.from(document.querySelectorAll('#uml-pg-output .uml-pg-edit-a11y-target'));
+      if (!hits.length) return null;
+      let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+      hits.forEach((h) => {
+        const b = h.getBoundingClientRect();
+        if (b.left < minX) minX = b.left;
+        if (b.top < minY) minY = b.top;
+        if (b.right > maxX) maxX = b.right;
+        if (b.bottom > maxY) maxY = b.bottom;
+      });
+      return { minX, minY, maxX, maxY };
+    });
+    expect(hitboxBounds, 'hitboxes must exist').not.toBeNull();
+
+    // Drag from a corner well outside the diagram content, through it, to the
+    // opposite corner. Shift held throughout to trigger marquee mode.
+    const startX = hitboxBounds.minX - 8;
+    const startY = hitboxBounds.minY - 8;
+    const endX = hitboxBounds.maxX + 8;
+    const endY = hitboxBounds.maxY + 8;
+
+    // Debug check: confirm the start position is inside the preview pane.
+    const inside = await page.evaluate(({ x, y }) => {
+      const el = document.elementFromPoint(x, y);
+      const pp = document.getElementById('uml-pg-preview-pane');
+      return { tag: el && el.tagName, isInPreviewPane: !!(el && pp && pp.contains(el)) };
+    }, { x: startX, y: startY });
+    expect(inside.isInPreviewPane, `marquee start at (${startX},${startY}) should land inside the preview pane, got ${inside.tag}`).toBe(true);
+
+    await page.keyboard.down('Shift');
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move((startX + endX) / 2, (startY + endY) / 2, { steps: 4 });
+    await page.mouse.move(endX, endY, { steps: 6 });
+    // Marquee box should be present during the drag (before mouseup).
+    const boxCountDuringDrag = await page.locator('.uml-pg-marquee-box').count();
+    await page.mouse.up();
+    await page.keyboard.up('Shift');
+
+    expect(boxCountDuringDrag, 'marquee overlay should appear during the drag').toBe(1);
+    const selectedCount = await page.locator('.uml-pg-edit-hitbox.is-selected').count();
+    expect(selectedCount).toBeGreaterThan(1);
+    // The overlay should be cleaned up.
+    expect(await page.locator('.uml-pg-marquee-box').count()).toBe(0);
+  });
+
+  test('drag without Shift on empty canvas does not select anything (pan path)', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+    await page.waitForSelector('.uml-pg-edit-a11y-target[data-layout-id="Animal"]');
+    await page.locator('#uml-pg-output').scrollIntoViewIfNeeded();
+
+    const hitboxBounds = await page.evaluate(() => {
+      const hits = Array.from(document.querySelectorAll('#uml-pg-output .uml-pg-edit-a11y-target'));
+      if (!hits.length) return null;
+      let minX = Infinity, minY = Infinity;
+      hits.forEach((h) => {
+        const b = h.getBoundingClientRect();
+        if (b.left < minX) minX = b.left;
+        if (b.top < minY) minY = b.top;
+      });
+      return { minX, minY };
+    });
+    const startX = hitboxBounds.minX - 8;
+    const startY = hitboxBounds.minY - 8;
+
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+    await page.mouse.move(startX + 40, startY + 40, { steps: 6 });
+    await page.mouse.up();
+
+    expect(await page.locator('.uml-pg-marquee-box').count()).toBe(0);
+    expect(await page.locator('.uml-pg-edit-hitbox.is-selected').count()).toBe(0);
+  });
+
+  test('Cmd+D duplicates the selected element with an offset and new id', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+    await page.locator('#uml-pg-output').scrollIntoViewIfNeeded();
+
+    const animalButton = page.getByRole('button', { name: /Element Animal/ });
+    await animalButton.focus();
+    await expect(animalButton).toBeFocused();
+    // Focusing alone doesn't select — press Enter to add Animal to the
+    // active selection so duplicateSelected has something to act on.
+    await page.keyboard.press('Enter');
+    await expect(
+      page.locator('.uml-pg-edit-hitbox.is-selected[data-layout-id="Animal"]')
+    ).toHaveCount(1);
+
+    const before = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll('#uml-pg-output .uml-pg-edit-a11y-target'))
+        .map((h) => h.getAttribute('data-layout-id'));
+    });
+    expect(before).toContain('Animal');
+    expect(before.length).toBeGreaterThanOrEqual(4); // Animal, Dog, Cat, Trainable
+
+    const isMac = process.platform === 'darwin';
+    await page.keyboard.press(isMac ? 'Meta+d' : 'Control+d');
+
+    const after = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll('#uml-pg-output .uml-pg-edit-a11y-target'))
+        .map((h) => h.getAttribute('data-layout-id'));
+    });
+    expect(after.length).toBe(before.length + 1);
+    // The duplicate's id starts with the original base name + numeric suffix.
+    const newId = after.find((id) => !before.includes(id));
+    expect(newId).toMatch(/^Animal/);
+    expect(newId).not.toBe('Animal');
+
+    // The duplicate should be the new primary selection.
+    await expect(
+      page.locator('.uml-pg-edit-hitbox.is-selected[data-layout-id="' + newId + '"]')
+    ).toHaveCount(1);
+
+    // The original textarea source should still contain Animal AND the new id.
+    const source = await page.locator('#uml-pg-input').inputValue();
+    expect(source).toMatch(/\bclass Animal\b/);
+    expect(source).toContain(newId);
+
+    // Pressing undo restores the pre-duplicate state — duplicate is one
+    // undo step.
+    await page.locator('#uml-pg-undo').click();
+    const reverted = await page.evaluate(() => {
+      return Array.from(document.querySelectorAll('#uml-pg-output .uml-pg-edit-a11y-target'))
+        .map((h) => h.getAttribute('data-layout-id'));
+    });
+    expect(reverted.length).toBe(before.length);
+    expect(reverted).not.toContain(newId);
   });
 
   test('UML editor help shortcut only toggles tips while focus is inside the editor', async ({ page }) => {
@@ -4758,5 +5065,255 @@ player -> prison_state: teleport(player)
     await expect(page.locator('.tvm-test-item.fail .tvm-test-desc')).toContainText('Sequence method calls exist in the class diagram');
     await expectTutorHint(page, 'Read each arrow as a method call on the receiving lifeline');
     await expect(page.locator('.tvm-test-summary.all-pass')).toHaveCount(0);
+  });
+
+  // ─── Cross-type creation matrix ──────────────────────────────────────
+  //
+  // For every diagram type the editor advertises, prove the visual editor
+  // can put at least one element on the canvas starting from a completely
+  // empty source. This catches breakage in the empty-state → palette →
+  // addElementWithoutCanvas pipeline for any single type without needing a
+  // type-specific test per regression.
+  //
+  // Each entry picks the most fundamental tool for the type (class, state,
+  // entity, …) and the expected source fragment + hitbox id.
+  const DIAGRAM_CREATION_MATRIX = [
+    { type: 'class',       tool: 'class',       hitboxId: 'Class',     sourcePattern: /\bclass Class\b/ },
+    { type: 'sequence',    tool: 'participant', hitboxId: 'p',         sourcePattern: /\bparticipant p\b/ },
+    { type: 'state',       tool: 'state',       hitboxId: 'State',     sourcePattern: /\bstate State\b/ },
+    { type: 'component',   tool: 'component',   hitboxId: 'Component', sourcePattern: /\bcomponent Component\b/ },
+    { type: 'deployment',  tool: 'node',        hitboxId: 'Node',      sourcePattern: /\bnode Node\b/ },
+    { type: 'usecase',     tool: 'usecase',     hitboxId: 'UC',        sourcePattern: /usecase\s+"UC"\s+as\s+UC/ },
+    { type: 'activity',    tool: 'action',      hitboxId: 'Action',    sourcePattern: /"Action"/ },
+    { type: 'freeform',    tool: 'box',         hitboxId: 'Box',       sourcePattern: /\bbox\b[^\n]*"Box"[^\n]*\bas Box\b/ },
+    { type: 'er',          tool: 'entity',      hitboxId: 'Entity',    sourcePattern: /\bentity Entity\b/ },
+    { type: 'venn',        tool: 'set',         hitboxId: 'Set',          sourcePattern: /\bset Set\b/, skipHitbox: true },
+    // A lone gitgraph branch with no commits doesn't render a hitbox — the
+    // branch label is anchored to its head commit. We verify source only;
+    // the next test exercises branch + commit together which produces both.
+    { type: 'gitgraph',    tool: 'branch',      hitboxId: 'branch:main',  sourcePattern: /\bbranch main\b/, skipHitbox: true },
+    { type: 'folder-tree', tool: 'folder',      hitboxId: 'folder',       sourcePattern: /^folder\/$/m, skipHitbox: true },
+  ];
+
+  for (const cfg of DIAGRAM_CREATION_MATRIX) {
+    test(`${cfg.type} diagram: palette click on empty source creates the primary element`, async ({ page }) => {
+      await openPlayground(page);
+      await selectDiagram(page, cfg.type);
+
+      // Clear to absolute empty so addElementWithoutCanvas runs (the empty-
+      // state path that the empty-state UI also drives).
+      await page.locator('#uml-pg-input').fill('@startuml\n@enduml');
+      await page.locator('#uml-pg-input').dispatchEvent('input');
+
+      await page.locator(
+        `#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="${cfg.tool}"]`,
+      ).click();
+
+      // Source must contain the type-specific declaration the renderer
+      // expects — this is the contract between the visual editor and the
+      // renderer.
+      await expect(page.locator('#uml-pg-input')).toHaveValue(cfg.sourcePattern);
+
+      if (!cfg.skipHitbox) {
+        await expect(
+          page.locator(`.uml-pg-edit-hitbox[data-layout-id="${cfg.hitboxId}"]`),
+        ).toHaveCount(1);
+      }
+    });
+  }
+
+  test('gitgraph diagram: adding a commit after a branch nests the commit under the branch', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'gitgraph');
+    await page.locator('#uml-pg-input').fill('@startuml\n@enduml');
+    await page.locator('#uml-pg-input').dispatchEvent('input');
+
+    await page.locator('#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="branch"]').click();
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/\bbranch main\b/);
+
+    await page.locator('#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="commit"]').click();
+    // The commit must live *after* the branch declaration and be indented so
+    // the renderer parses it as part of the branch.
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/\bbranch main:\s*\n\s+\w+\s+"Commit message"/);
+  });
+
+  // ─── Helper for multi-element placement ─────────────────────────────
+  //
+  // The editor's palette click adds an element directly via
+  // addElementWithoutCanvas ONLY when the canvas has no SVG yet. After the
+  // first element renders, subsequent palette clicks ARM the tool and wait
+  // for a canvas click to place. This helper handles both modes so tests can
+  // chain element placements without caring which path they take.
+  async function placeElementByPalette(page, toolSpec) {
+    const hadSvg = (await page.locator('#uml-pg-output svg').count()) > 0;
+    await page.locator(`#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="${toolSpec}"]`).click();
+    if (hadSvg) {
+      const point = await previewBlankPoint(page);
+      await page.mouse.click(point.x, point.y);
+    }
+  }
+
+  test('folder-tree diagram: adding a folder then a file produces two top-level rows', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'folder-tree');
+    await page.locator('#uml-pg-input').fill('@startuml\n@enduml');
+    await page.locator('#uml-pg-input').dispatchEvent('input');
+
+    await placeElementByPalette(page, 'folder');
+    await placeElementByPalette(page, 'file');
+
+    const source = await page.locator('#uml-pg-input').inputValue();
+    expect(source).toMatch(/^folder\/$/m);
+    expect(source).toMatch(/^file(?:\.txt|\b)/m);
+  });
+
+  test('class diagram: two elements + relation tool wires association in source', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+    await page.locator('#uml-pg-input').fill('@startuml\n@enduml');
+    await page.locator('#uml-pg-input').dispatchEvent('input');
+
+    await placeElementByPalette(page, 'class');
+    await placeElementByPalette(page, 'class');
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="Class"]')).toHaveCount(1);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="Class2"]')).toHaveCount(1);
+
+    // Arm an association tool, click first class, click second. force:true
+    // bypasses the overlapping-hitbox interception (the visual hitbox
+    // covers the a11y-target rect in the same SVG layer).
+    await page.locator('#uml-pg-palette-relations .uml-pg-tool-btn[data-tool-spec="assoc"]').click();
+    await page.locator('.uml-pg-edit-a11y-target[data-layout-id="Class"]').click({ force: true });
+    await page.locator('.uml-pg-edit-a11y-target[data-layout-id="Class2"]').click({ force: true });
+
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/Class\s+-->\s+Class2/);
+  });
+
+  test('class label with unicode and spaces renders an editable hitbox', async ({ page }) => {
+    // Non-identifier labels go through the documented
+    // `class "Label" as Id` form. The contract: renderer succeeds, the
+    // visual editor surfaces a hitbox for the alias id, and the label
+    // survives in the source.
+    //
+    // Note: escaped quotes inside the label (`class "Foo \"Bar\""`) are a
+    // separate edge case the visual editor's source parser does NOT yet
+    // handle — the renderer paints the class but collectModelElements
+    // rejects the line so no hitbox is produced. That's a real bug, but
+    // out of scope for this round; this test deliberately uses unicode +
+    // spaces, the labels users actually type.
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+    await setUmlSource(page, '@startuml\nclass "Café Latté" as Cafe\n@enduml');
+
+    await expect(page.locator('#uml-pg-error')).toHaveClass(/is-hidden/);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="Cafe"]')).toHaveCount(1);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/Café\s+Latté/);
+  });
+
+  test('sequential class placements auto-generate distinct ids without collision', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+    await page.locator('#uml-pg-input').fill('@startuml\n@enduml');
+    await page.locator('#uml-pg-input').dispatchEvent('input');
+
+    // Three placements is enough to prove the increment pattern. Going
+    // higher tends to crowd the preview pane to the point where
+    // previewBlankPoint's fallback corner lands on top of an existing
+    // hitbox — that crowding behavior is itself worth its own test, not
+    // this one.
+    for (let i = 0; i < 3; i += 1) {
+      await placeElementByPalette(page, 'class');
+    }
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="Class"]')).toHaveCount(1);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="Class2"]')).toHaveCount(1);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="Class3"]')).toHaveCount(1);
+    // Source must contain all three declarations with distinct ids.
+    const source = await page.locator('#uml-pg-input').inputValue();
+    expect(source).toMatch(/\bclass Class\b/);
+    expect(source).toMatch(/\bclass Class2\b/);
+    expect(source).toMatch(/\bclass Class3\b/);
+  });
+
+  test('created class diagram is restored from autosave after a reload', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+    await page.locator('#uml-pg-input').fill('@startuml\n@enduml');
+    await page.locator('#uml-pg-input').dispatchEvent('input');
+
+    await placeElementByPalette(page, 'class');
+    await placeElementByPalette(page, 'interface');
+
+    const before = await page.locator('#uml-pg-input').inputValue();
+    expect(before).toMatch(/\bclass Class\b/);
+    expect(before).toMatch(/\binterface IFace\b/);
+
+    // Wait for the autosave debounce (250 ms) to flush before reloading.
+    await expect.poll(
+      () => page.evaluate(() => localStorage.getItem('uml-pg-autosave-class') || ''),
+      { timeout: 2_000 },
+    ).toContain('class Class');
+
+    await page.reload();
+    await expect(page.locator('#uml-pg-output svg')).toBeVisible();
+
+    const after = await page.locator('#uml-pg-input').inputValue();
+    expect(after).toContain('class Class');
+    expect(after).toContain('interface IFace');
+    // Hitboxes survive the reload because the source was restored verbatim.
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="Class"]')).toHaveCount(1);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="IFace"]')).toHaveCount(1);
+  });
+
+  test('multi-selection followed by Delete removes every selected element', async ({ page }) => {
+    // Verifies the multi-delete contract: Delete fires once on a multi-
+    // selection and removes every selected node. Uses an explicit
+    // relation-free source so the test exercises the element-only deletion
+    // path without entangling route handling — the combination of marquee
+    // + delete on the default (relation-heavy) starter exposes a real bug
+    // in deleteSelected when both an element and its incident edges are
+    // selected (tracked as a follow-up). The contract this test guards is
+    // the simpler, common case: select N elements, Delete, all gone.
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+    await setUmlSource(page, '@startuml\nclass A\nclass B\nclass C\n@enduml');
+    await page.waitForSelector('.uml-pg-edit-a11y-target[data-layout-id="A"]');
+
+    // Build the selection set explicitly. The a11y-target rects overlap
+    // hitbox rects in the same SVG layer, so plain clicks get intercepted —
+    // force the click so the editor's own pointerdown handler runs. Hold
+    // Shift to use extend semantics on the second/third clicks.
+    await page.locator('.uml-pg-edit-a11y-target[data-layout-id="A"]').click({ force: true });
+    await page.locator('.uml-pg-edit-a11y-target[data-layout-id="B"]').click({ force: true, modifiers: ['Shift'] });
+    await page.locator('.uml-pg-edit-a11y-target[data-layout-id="C"]').click({ force: true, modifiers: ['Shift'] });
+
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="A"].is-selected')).toHaveCount(1);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="B"].is-selected')).toHaveCount(1);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="C"].is-selected')).toHaveCount(1);
+
+    await page.locator('.uml-pg-edit-a11y-target[data-layout-id="C"]').focus();
+    await page.keyboard.press('Delete');
+
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="A"]')).toHaveCount(0);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="B"]')).toHaveCount(0);
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="C"]')).toHaveCount(0);
+  });
+
+  test('switching diagram type cancels an armed palette tool', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'class');
+
+    const classTool = page.locator('#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="class"]');
+    await classTool.click();
+    await expect(classTool).toHaveAttribute('aria-pressed', 'true');
+
+    // Switching diagram type must reset the active tool so the user isn't
+    // stranded mid-flow with an armed tool that no longer matches the
+    // visible palette.
+    await selectDiagram(page, 'state');
+    const classToolAfterSwitch = page.locator('#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="class"]');
+    // The class tool button no longer exists in the state palette.
+    await expect(classToolAfterSwitch).toHaveCount(0);
+    // The state palette's primary tool is freshly idle (not pressed).
+    const stateTool = page.locator('#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="state"]');
+    await expect(stateTool).toHaveAttribute('aria-pressed', 'false');
   });
 });

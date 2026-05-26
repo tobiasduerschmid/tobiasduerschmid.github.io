@@ -814,6 +814,22 @@ html.dark-mode .uml-pg-zoom-group > button:focus-visible {
   cursor: grabbing !important;
 }
 
+/* Marquee selection rectangle — drawn as a top-level overlay so the canvas
+   pan/zoom transform doesn't distort it. Shift+drag on empty canvas. */
+.uml-pg-marquee-box {
+  position: fixed;
+  z-index: 10000;
+  border: 1px dashed #2774AE;
+  background: rgba(39, 116, 174, 0.12);
+  pointer-events: none;
+  /* Pure overlay decoration — not focusable, not announced. */
+}
+
+html.dark-mode .uml-pg-marquee-box {
+  border-color: #6fb0e8;
+  background: rgba(111, 176, 232, 0.18);
+}
+
 /* Inline rename overlay */
 .uml-pg-inline-input {
   position: fixed;
@@ -983,8 +999,21 @@ html.dark-mode #uml-pg-status:not(:empty) {
   opacity: 1;
 }
 
+/* Failed save (quota / disabled storage). Sticks visible until the next
+   successful write so the user can copy their work out before it's lost.
+   Uses the project's error-color token for consistency with quiz / flashcard
+   warnings. */
+#uml-pg-autosave.is-error {
+  opacity: 1;
+  color: var(--color-error, #b81e2c);
+}
+
 html.dark-mode #uml-pg-autosave {
   color: #88e58b;
+}
+
+html.dark-mode #uml-pg-autosave.is-error {
+  color: var(--color-error, #ff8585);
 }
 
 #uml-playground-body {
