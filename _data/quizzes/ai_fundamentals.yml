@@ -29,7 +29,7 @@ questions:
       0: "Novices can get help from AI, but they often have less background knowledge for judging whether an answer is correct or appropriate. The benefit depends heavily on being able to guide and verify the output."
       1: "Skipping productive practice can make the work look easier while weakening learning. AI is most useful when it removes peripheral friction, not when it replaces the reasoning the student is trying to develop."
       3: "AI support is not equally useful in every learner's hands. People with stronger foundations are usually better able to ask precise questions, detect errors, and adapt the result."
-    explanation: "**Skilled developers benefit more from AI because it amplifies their existing ability to guide and verify outputs.** Research shows that AI acts as an amplifier; those with stronger foundational skills can better guide, verify, and utilize AI outputs, leading to a larger productivity boost."
+    explanation: "AI acts as an **amplifier** of existing skill. Developers with stronger foundations can ask more precise questions, catch errors, and adapt the output, so they get a larger productivity boost than novices do."
   - id: 3
     difficulty: intermediate
     question: "Which of these is an example of **'Beneficial Offloading'** for a CS student?"
@@ -73,4 +73,4 @@ questions:
       1: "Spacing often feels less efficient than cramming because some forgetting happens between sessions. Reconstructing the material after a delay is what makes it more durable."
       2: "Interleaving can feel messier than studying one topic at a time, but it helps learners choose between ideas instead of only repeating a known procedure."
       3: "A quiet, familiar place can help attention, but it is not one of the core desirable difficulties here. The learning benefit comes from effortful retrieval, spacing, or discrimination among related ideas."
-    explanation: "**Testing, spacing, and interleaving are the validated desirable difficulties; familiar-environment studying is not.** Testing (retrieval practice), spacing, and interleaving (mixing topics) are well-supported examples of desirable difficulties that can improve long-term learning. A quiet, familiar study environment may be useful for focus, but it is not the source of the learning effect targeted by this question."
+    explanation: "Retrieval practice (testing yourself), spacing, and interleaving are the validated **desirable difficulties** — each adds effort that strengthens long-term learning. A quiet, familiar environment may help focus, but it adds no such productive difficulty."
