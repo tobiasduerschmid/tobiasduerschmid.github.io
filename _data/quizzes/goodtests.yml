@@ -55,10 +55,10 @@ questions:
       1: |
         Forcing serial execution hides the race without removing it. A `sleep` that's sometimes long enough and sometimes not stays brittle whether or not other tests are running alongside it.
       2: |
-        Automatic retries are the canonical anti-pattern: they teach the team that red means "rerun and hope" rather than "investigate". That destroys the trust the suite is supposed to provide and lets real flakes accumulate.
+        Automatic retries hide the race instead of removing it, and they teach the team that red means "rerun and hope" rather than "investigate". That erodes the trust the suite is supposed to provide and lets real flakes accumulate.
       3: |
         A longer fixed sleep lowers the failure *rate* but doesn't eliminate it on a loaded runner — and it slows every successful run in exchange for a guess. Waiting on an observable condition is both faster on average and reliably correct.
-    explanation: "Luo et al. (2014) catalogued the recurring causes of flakiness — asynchronous waiting, concurrency, time assumptions, randomness, external resources. Asynchronous waiting is by far the most common. The pattern that fixes it is the same in every framework: instead of pausing for an arbitrary duration, poll until the condition you care about becomes true, and fail with a clear timeout message if it doesn't. A red test should mean *investigate*, not *rerun*."
+    explanation: "Luo et al. (2014) catalogued the recurring causes of flakiness — asynchronous waiting, concurrency, time assumptions, randomness, external resources — and asynchronous waiting is by far the most common. The framework-independent fix is to poll until the condition you care about becomes true and fail with a clear timeout message if it doesn't, rather than pausing for an arbitrary duration. A red test should mean *investigate*, not *rerun*."
 
   - id: 3
     difficulty: intermediate
@@ -204,7 +204,7 @@ questions:
         Sketching three methods first invites Big Upfront Design and large steps. TDD favors one tiny behavior at a time so each Red→Green→Refactor turn takes minutes, not hours.
       3: |
         Confirming a green starting point is fine practice but it isn't the *Red* step. *Red* is a new failing test that names the next behavior — production code comes *after*, in *Green*.
-    explanation: "Beck's *Three Rules of TDD* are explicit: you may not write production code unless it is to make a failing unit test pass, and you may not write more of a test than is sufficient to fail (where failing to compile counts as failing). The Red step is the smallest test that names the next behavior. Fucci et al. (2017) found that the productivity gain comes from *fine granularity and uniform rhythm*, not from test-first ordering as a slogan."
+    explanation: "Beck's *Three Rules of TDD* say you may not write production code except to make a failing unit test pass, and you may not write more of a test than is sufficient to fail (failing to compile counts). So the Red step is the smallest test that names the next behavior, written before the code. Fucci et al. (2017) found the productivity gain comes from *fine granularity and uniform rhythm*, not from test-first ordering as a slogan."
 
   - id: 9
     difficulty: advanced

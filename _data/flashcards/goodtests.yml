@@ -24,7 +24,7 @@ cards:
     difficulty: intermediate
     question: "Given a `divide(a, b)` function, list at least four classes of input you would test."
     answer: "Representative valid (`divide(10, 2)`); boundaries (`divide(0, 5)`); invalid (`divide(5, 0)`); regression examples from past bugs (`divide(MIN_INT, -1)` overflow)."
-    explanation: "Happy-path examples are necessary but not enough. The standard categories: representative valid, boundaries (empty / one / many; min / max / just-below / just-above), invalid, exceptional states (e.g. dependency unavailable), and inputs that once broke the system. Coverage tools can show what wasn't *executed*, but they can't tell you whether you chose these *behavioral classes* well."
+    explanation: "Happy-path examples are necessary but not enough. The standard categories are representative valid, boundaries (empty / one / many; min / max / just-below / just-above), invalid, exceptional states (e.g. dependency unavailable), and inputs that once broke the system. Coverage tools show what wasn't *executed*, but not whether you chose these *behavioral classes* well — that judgment is yours."
 
   - id: 5
     difficulty: advanced
@@ -36,13 +36,13 @@ cards:
     difficulty: basic
     question: "When is `assert True` (or `assertTrue(true)`) ever a legitimate assertion in a real test?"
     answer: "Essentially never. A test without a meaningful assertion is a smoke check, not a unit test — it would pass even if the behavior is broken."
-    explanation: "The deeper issue is the *oracle problem*: a test without an oracle gives no evidence about whether behavior is correct. If you genuinely have no way to check the result, use a partial oracle, a metamorphic relationship, or a property-based test — don't abandon the assertion. 'It shouldn't raise' is more honest as `act()` with no assert plus a comment, or as an explicit exception oracle."
+    explanation: "The deeper issue is the *oracle problem*: a test without an oracle gives no evidence about whether behavior is correct. If you genuinely have no way to check the result, use a partial oracle, a metamorphic relationship, or a property-based test — don't abandon the assertion. If you only mean 'it shouldn't raise', say so with an explicit exception oracle rather than `assert True`."
 
   - id: 7
     difficulty: intermediate
     question: "A teammate's test fails the day after you rename a private helper, even though all user-visible behavior is unchanged. What does that tell you about the test?"
     answer: "It is **over-coupled to the implementation** — it asserts on private machinery rather than the public contract. Refactor it to check return values, public state, or messages at architectural boundaries."
-    explanation: "Brittle tests punish improvement. They send a false 'something broke' signal whenever the design is reshaped without changing behavior, eroding trust in the suite and discouraging refactoring. Use stable boundaries — return values, public state, persisted records, domain events — and reserve interaction checks for cases where the interaction *is* the contract (e.g. 'one receipt email after payment')."
+    explanation: "Brittle tests punish improvement: they fire a false 'something broke' alarm whenever the design is reshaped without changing behavior, which erodes trust and discourages refactoring. Assert at stable boundaries — return values, public state, persisted records, domain events — and reserve interaction checks for cases where the interaction *is* the contract (e.g. 'one receipt email after payment')."
 
   - id: 8
     difficulty: advanced
