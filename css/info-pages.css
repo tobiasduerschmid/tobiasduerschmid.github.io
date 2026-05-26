@@ -215,10 +215,10 @@
   }
   html.dark-mode .storage-table th,
   html.dark-mode .storage-table td {
-    border-color: #444;
+    border-color: #4a6fa5;
   }
-  html.dark-mode .storage-table th { background: #1e1e1e; }
-  html.dark-mode .storage-table td { background: #161616; }
+  html.dark-mode .storage-table th { background: #061d31; }
+  html.dark-mode .storage-table td { background: #0b1f33; }
 
   .storage-key {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -856,10 +856,10 @@
   }
   html.dark-mode .shortcuts-table th,
   html.dark-mode .shortcuts-table td {
-    border-color: #444;
+    border-color: #4a6fa5;
   }
-  html.dark-mode .shortcuts-table th { background: #1e1e1e; color: #e0e0e0; }
-  html.dark-mode .shortcuts-table td { background: #161616; color: #d0d0d0; }
+  html.dark-mode .shortcuts-table th { background: #061d31; color: #e0e0e0; }
+  html.dark-mode .shortcuts-table td { background: #0b1f33; color: #d0d0d0; }
 
   .shortcuts-page kbd {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;

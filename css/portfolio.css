@@ -853,9 +853,16 @@ blockquote {
 html.dark-mode blockquote,
 html.dark-mode code,
 html.dark-mode pre {
-	background-color: #222222;
-	color: #e0e0e0;
-	border-color: #333;
+	background-color: #061d31;
+	color: #e5e7eb;
+	border-color: #4a6fa5;
+}
+
+html.dark-mode pre code,
+html.dark-mode .highlight code,
+html.dark-mode .highlight pre code {
+	background-color: transparent !important;
+	border-color: transparent !important;
 }
 
 
@@ -863,7 +870,7 @@ html.dark-mode pre {
 
 /* Dark Mode Syntax Highlighting Overrides - Monaco VS-Dark (Rouge) */
 html.dark-mode .highlight {
-	background-color: #1e1e1e !important;
+	background-color: #061d31 !important;
 	border-radius: 6px;
 }
 
@@ -1515,13 +1522,13 @@ table.encapsulation-diagram tbody td {
 }
 
 html.dark-mode table.encapsulation-diagram thead th {
-	background-color: #1e3a5f;
+	background-color: #061d31;
 	color: #d0e4ff;
 	border-color: #4a6fa5;
 }
 
 html.dark-mode table.encapsulation-diagram tbody td {
-	background-color: #1a1a1a;
+	background-color: #0b1f33;
 	color: #aaa;
 	border-color: #4a6fa5;
 }
