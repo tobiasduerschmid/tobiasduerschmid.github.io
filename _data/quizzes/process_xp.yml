@@ -94,7 +94,7 @@ questions:
       Two developers pair-program for a week. One says "Pair programming costs us 2x the head count for the same output — it's wasteful." What is the strongest *defense* of the practice?
     options:
       - "The two pair-developers will spend twice as long debugging anyway, so the costs even out automatically."
-      - "Raw typing throughput is the wrong productivity measure for engineering work. Pair programming typically catches more defects in the moment, spreads knowledge across the team (raising bus factor), and improves design quality (the Navigator catches structural issues the Driver misses). Williams's and Lui & Chan's studies found pairs took modestly more total time but produced measurably fewer defects than two solo developers, so the right comparison is value-shipped over a longer horizon, not lines-per-second."
+      - "Raw typing throughput is the wrong productivity measure for engineering work. Pair programming typically catches more defects in the moment, spreads knowledge across the team (raising bus factor), and improves design quality (the Navigator catches structural issues the Driver misses). Studies find pairs take modestly more total time but produce measurably fewer defects than two solo developers, so the right comparison is value shipped over a longer horizon, not lines-per-second."
       - "Pair programming is purely a morale exercise; engineering output is not the point."
       - "Pair programming only matters for senior developers; juniors should code solo to avoid slowing the team down."
     correct_index: 1
@@ -106,7 +106,7 @@ questions:
       3: |
         Junior developers often benefit *most* from pair programming because they learn through navigated practice with a senior. Excluding them forfeits one of the practice's strongest applications.
     explanation: |
-      **Raw character-count throughput is the wrong productivity measure for engineering work. Defect rate, knowledge spread, design quality, and onboarding speed all matter — and pair programming improves them.** Empirically, pairs take *modestly more* total developer-time than two solo developers but produce *fewer defects* (Williams; Lui & Chan; Cockburn & Williams). The honest framing isn't "pairs always beat solos" — it's that the 2x-cost framing only works if you ignore defect rate, design quality, and knowledge distribution, and those are the things that decide long-term velocity.
+      **Raw character-count throughput is the wrong productivity measure for engineering work. Defect rate, knowledge spread, design quality, and onboarding speed all matter — and pair programming improves them.** The honest framing isn't "pairs always beat solos"; it's that the 2x-cost objection only holds if you ignore defect rate, design quality, and knowledge distribution — and those are what decide long-term velocity.
 
   - id: 6
     difficulty: advanced

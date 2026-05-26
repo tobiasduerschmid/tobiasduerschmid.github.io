@@ -21,7 +21,7 @@ questions:
       3: |
         Caching might be one possible design, but the requirement does not name an algorithm. Treating
         the first possible solution as the requirement would narrow the design too early.
-    explanation: "**This is a quality attribute requirement because it states what the system must achieve (seamless transitions) without dictating any implementation — though 'perceivable' needs a concrete definition to be measurable.** The statement describes what the system must achieve for the user (seamless transitions) without dictating how the engineers must build it. It defines the **problem space**. To make it more specific, the definition of 'perceivable loading delays' needs to be included in the requirement."
+    explanation: "It states what the system must achieve for the user (seamless transitions) without dictating how engineers build it, so it sits in the **problem space** as a quality attribute requirement. To be testable, though, 'perceivable loading delays' needs a concrete, measurable definition."
 
   - id: 2
     difficulty: basic
@@ -42,7 +42,7 @@ questions:
       3: |
         QA is verifying the requested behavior, not taking ownership of design mechanics. Traceability
         connects tests to stakeholder intent.
-    explanation: "**Mapping every test to a stakeholder request demonstrates verifiable traceability — a core benefit of defining the problem space before building solutions.** Good requirements allow developers to write clear acceptance criteria, ensuring every test and line of code traces back to a specific requirement via **verifiable traceability**."
+    explanation: "Linking every test back to a stated need is **traceability**: it lets the team confirm each piece of implementation work serves a real requirement, and analyze impact when a requirement later changes."
 
   - id: 3
     difficulty: intermediate
@@ -63,7 +63,7 @@ questions:
       3: |
         A graph database is not inherently experimental. The issue is that the client named a technology
         before the team established that it is the right solution.
-    explanation: "**Specifying a 'graph database' is a design decision, not a user need — including it in the requirement prematurely constrains the engineering team from exploring better solutions.** Specifying a 'graph database' is a design decision. Including it in the requirement prematurely constrains the engineering team from exploring potentially better data persistence options."
+    explanation: "Naming a 'graph database' is a design decision, not a user need. Baking it into the requirement constrains the solution space before the team has confirmed it is the best way to store the connections."
 
   - id: 4
     difficulty: basic
@@ -84,7 +84,7 @@ questions:
       3: |
         End users are the source of needs and expectations, not the designers of internal mechanics. QA
         helps verify expectations but should not replace stakeholders.
-    explanation: "**Customers and product representatives define what the system must do, while software engineers decide how to build it — mixing these roles leads to over-constrained or poorly understood requirements.** Requirements (expectations) should be negotiated with the customer/product manager, while design decisions (mechanics) belong to the software engineers and architects."
+    explanation: "Customers and product representatives own the *what* (expectations), since they understand the business need; engineers and architects own the *how* (mechanics), since they understand the technology. Mixing the roles tends to produce over-constrained or poorly understood requirements."
 
   - id: 5
     difficulty: intermediate
@@ -105,7 +105,7 @@ questions:
       3: |
         Sending an email after a transaction is required system behavior. It says what must happen, not
         which messaging provider or architecture must be used.
-    explanation: "**'Embed a Redis store' is a solution-space statement because it names a specific technology — the other options describe required system behavior without dictating the implementation.** Utilizing **`Redis`** is a specific technical implementation (design decision) for data persistence, unlike the other options which simply state the required system behavior."
+    explanation: "Naming **`Redis`** picks a specific storage technology, which explores the solution space. The remaining statements describe required system behavior (readable layout, alphabetical order, an email after a transaction) without dictating how to build it."
 
   - id: 6
     difficulty: intermediate
@@ -126,7 +126,7 @@ questions:
       3: |
         Mandating the new indexing engine would turn a flexible requirement into a solution constraint.
         The migration is an implementation choice, not the user need itself.
-    explanation: "**A well-written requirement focused on the 'what' remains unchanged even when the implementation is completely replaced — it stayed valid through the migration because it never named a specific technology.** Because design decisions change frequently, a well-written requirement focused strictly on the **'what'** preserves flexibility and remains valid even if the underlying technical solution is swapped out."
+    explanation: "Because it states the **what** (typo-tolerant search) and never names a technology, the requirement stays valid even when the implementation is swapped out. Keeping design out of requirements is exactly what preserves this flexibility."
 
   - id: 7
     difficulty: advanced
@@ -151,7 +151,7 @@ questions:
       4: |
         A long user story would likely bury the measurable quality attribute. A quality attribute
         scenario captures stimulus, environment, response, and measure more directly.
-    explanation: "**A concrete, measurable performance target like this is best captured as a Quality Attribute Scenario — it makes the requirement testable rather than vague.** Quality attribute requirements (performance, security, availability) are best captured via **Quality Attribute Scenarios** to make them concrete and measurable."
+    explanation: "Quality attribute requirements (performance, security, availability) are best captured as **Quality Attribute Scenarios**, which pin down stimulus, environment, response, and a measurable target. That turns a vague goal into something testable, like the 10,000 logins within two seconds here."
 
   - id: 8
     difficulty: intermediate
