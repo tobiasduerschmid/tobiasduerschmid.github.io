@@ -17,7 +17,7 @@ cards:
   - id: 3
     difficulty: basic
     question: "What does an **ER diagram** depict, and what are its three main notational elements?"
-    answer: "An ER (Entity-Relationship) diagram depicts the *things* in the world the system must represent and how they relate. Peter Chen's (1976) notation uses **rectangles for entities** (things: `Student`, `Course`), **ovals for attributes** (what we know about them: `name`, `UID`), and **diamonds for relationships** between entities (`is enrolled`)."
+    answer: "An ER (Entity-Relationship) diagram depicts the *things* in the world the system must represent and how they relate. The standard notation uses **rectangles for entities** (things: `Student`, `Course`), **ovals for attributes** (what we know about them: `name`, `UID`), and **diamonds for relationships** between entities (`is enrolled`)."
     explanation: "ER diagrams are *design artifacts*, not databases. The next step is to translate entities and relationships into tables, primary keys, and foreign keys."
 
   - id: 4
@@ -84,7 +84,7 @@ cards:
     difficulty: intermediate
     question: "State the **CAP theorem** precisely (not the 'pick 2 out of 3' slogan)."
     answer: "**When a network partition occurs** in a distributed system, the system must sacrifice either **Consistency** or **Availability** — it cannot keep both. Networks do partition in practice, so `P` is effectively mandatory, and the real operational choice is **CP** (refuse requests during a partition to stay correct) vs. **AP** (keep serving, accept staleness)."
-    explanation: "Conjectured by Eric Brewer (2000), formally proved by Gilbert and Lynch (2002). The 'pick 2' slogan is memorable but misleading: C and A are only in tension *during* a partition."
+    explanation: "The 'pick 2' slogan is memorable but misleading: C and A are only in tension *during* a partition."
 
   - id: 17
     difficulty: intermediate

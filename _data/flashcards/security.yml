@@ -138,7 +138,7 @@ cards:
     difficulty: intermediate
     question: "State the **Principle of Least Privilege** and give one concrete application."
     answer: "**Principle of Least Privilege**: every program and every privileged user of the system should operate using the **least set of privileges necessary** to complete its job. Concrete application: split a monolithic app into small components, each with narrowly scoped permissions — the email-notification service holds *only* the email-API credential, the image-upload service holds *only* write access to the upload bucket. If one component is compromised, the blast radius is limited to what that component's credentials can do."
-    explanation: "Originally formulated by Saltzer and Schroeder (1975). Cloud IAM systems (AWS IAM, GCP IAM, Kubernetes RBAC) are designed around it. Running every service as the database owner with full network egress is one of the most common findings in real security audits — and one of the most damaging when exploited."
+    explanation: "Cloud IAM systems (AWS IAM, GCP IAM, Kubernetes RBAC) are designed around it. Running every service as the database owner with full network egress is one of the most common findings in real security audits — and one of the most damaging when exploited."
 
   - id: 24
     difficulty: intermediate

@@ -163,7 +163,7 @@ questions:
       3: |
         Squashing rewrites or combines commits; submodules preserve an external repository's independent
         history.
-    explanation: "**Git Submodules let you embed an external repository as a subdirectory, pinned to a specific commit, while keeping its history independent.** Submodules allow you to nest an independent repository inside your main project, pointing to a specific commit of that external library."
+    explanation: "**A submodule embeds an external repository as a subdirectory, pinning it to one specific commit while its history stays independent.** The outer repo stores only that pinned SHA, not a copy of the files — useful for sharing a library across projects without vendoring its code."
 
   - id: 9
     difficulty: intermediate
@@ -192,7 +192,7 @@ questions:
       4: |
         Large open-source projects benefit because contributors can work independently and exchange
         history without a single write bottleneck.
-    explanation: "**Git's distributed model enables offline work and removes the single point of failure, making it ideal for large distributed teams — but it does not prevent merge conflicts.** In distributed systems like Git, developers have a full local copy of the repository, allowing for offline work and eliminating the single point of failure found in centralized systems. This makes it ideal for large, distributed teams. However, it does not prevent merge conflicts."
+    explanation: "**A full local copy of history gives every developer offline commits and removes the central single point of failure, which is what scales open-source collaboration.** Distribution changes *where* history lives, not *whether* edits collide — two people changing the same lines still produce a merge conflict."
 
   - id: 10
     difficulty: basic

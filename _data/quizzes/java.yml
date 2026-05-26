@@ -29,7 +29,7 @@ questions:
       3: |
         `==` compares references for objects; it does not use string interning to make two explicit `new
         String(...)` objects equal. `.equals()` is the content comparison.
-    explanation: "**`new String()` bypasses the intern pool, so `==` returns `false` (different references) while `.equals()` returns `true` (same content) — never use `==` to compare strings.** `new String(\"hello\")` forces Java to create a fresh object on the heap each time, bypassing the string intern pool. So `a` and `b` are different objects — `==` compares references and returns `false`. `.equals()` compares character content and returns `true`. The lesson: never use `==` to compare strings. Always use `.equals()`."
+    explanation: "`new String(\"hello\")` forces a fresh heap object each time, bypassing the string intern pool. So `a` and `b` are different objects: `==` compares references and returns `false`, while `.equals()` compares character content and returns `true`. Never compare strings with `==` — always use `.equals()`."
 
   - id: 2
     difficulty: advanced

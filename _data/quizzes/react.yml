@@ -353,7 +353,7 @@ questions:
     distractors:
       - "    count = count + 1;"
       - "      <button onClick={handleClick()}>+</button>"
-    explanation: "**The functional update `setCount(prev => prev + 1)` guarantees the latest state value — direct mutation skips re-render and `onClick={handleClick()}` calls the handler during render, causing an infinite loop.** `setCount(prev => prev + 1)` uses the functional update form — React guarantees `prev` is the *latest* state value, preventing stale closure bugs if multiple updates are batched. The distractor `count = count + 1` mutates a local variable and triggers no re-render. The distractor `onClick={handleClick()}` calls the function during render instead of registering it as a click handler — causing an infinite update loop."
+    explanation: "The functional form `setCount(prev => prev + 1)` asks React for the latest state at update time, so batched clicks don't read a stale value. The `count = count + 1` distractor reassigns a local variable and never re-renders; the `onClick={handleClick()}` distractor calls the handler during render instead of registering it, which fires the setter every render and loops forever."
 
   - id: 17
     difficulty: advanced
@@ -376,4 +376,4 @@ questions:
     distractors:
       - "  }, []);"
       - "    .then(data => setUser(fetch(data)));"
-    explanation: "**`[userId]` in the dependency array ensures the fetch re-runs when userId changes; `user === null` guards the loading state — `[]` shows stale data and `setUser(fetch(data))` stores a Promise instead of JSON.** `useEffect` with `[userId]` re-runs the fetch whenever `userId` changes — critical for keeping the UI in sync with the prop. The `user === null` guard shows a loading state until the async response arrives. Distractor `[]` would fetch only on mount, showing stale data when `userId` changes. Distractor `setUser(fetch(data))` stores a Promise object in state instead of the resolved JSON data."
+    explanation: "The `[userId]` dependency array re-runs the fetch whenever the prop changes, and the `user === null` guard shows a loading message until the response arrives. The `[]` distractor fetches only on mount, leaving stale data when `userId` changes; the `setUser(fetch(data))` distractor stores a Promise in state instead of the already-parsed JSON."

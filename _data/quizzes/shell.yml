@@ -61,7 +61,7 @@ questions:
       3: |
         Privilege does not change Bash scoping rules. `sudo` affects permissions and identity, not
         whether loop variables remain visible after the loop.
-    explanation: "**Bash lacks block-level scoping, so variables set inside loops remain accessible throughout the entire script.** Bash does not use block-level scoping. Unless explicitly declared as `local` inside a function, variables assigned within control structures like loops or conditionals bleed into the rest of the script."
+    explanation: "**Bash lacks block-level scoping, so variables set inside loops remain accessible throughout the entire script.** Unlike C++ `{}` blocks, loops and conditionals do not create a new scope. Unless a variable is declared `local` inside a function, its value persists after the control structure ends."
   - id: 4
     difficulty: advanced
     question: "You want to use a command that requires two file inputs (like `diff`), but your data is currently coming from the live outputs of two different commands. Instead of creating temporary files on the disk, you use the `<(command)` syntax. What is this concept called and what does it achieve?"
@@ -81,7 +81,7 @@ questions:
       3: |
         `<(command)` does not evaluate arithmetic or return exit codes. It exposes the command output
         through a temporary file descriptor.
-    explanation: "**This is process substitution — it lets the OS present a command's output as a temporary file descriptor without writing to disk.** Process substitution `<()` allows the standard output of a command to be treated as a file. The operating system creates a temporary file descriptor (like `/dev/fd/63`) that the consuming command can read from as if it were a physical file."
+    explanation: "**This is process substitution — it lets the OS present a command's output as a temporary file descriptor without writing to disk.** The OS exposes the command's stdout through a file-like handle (such as `/dev/fd/63`) that the consuming command opens as if it were a real file — which is why it works with tools like `diff` that expect file arguments."
   - id: 5
     difficulty: intermediate
     question: "A script contains entirely valid Python code, but the file is named `script.sh` and has `#!/bin/bash` at the very top. When executed via `./script.sh`, the terminal throws dozens of 'command not found' and syntax errors. What is the fundamental misunderstanding here?"
