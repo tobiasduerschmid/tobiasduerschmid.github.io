@@ -193,7 +193,7 @@ questions:
     explanation: "The five steps for internal reuse compress to: (1) make assumptions explicit, (2) check them against the new context, (3) don't assume correctness — test in the new context. Batch and streaming differ on at least latency tolerance, concurrency, and back-pressure semantics; each is an assumption to verify before reuse."
 
   - id: 9
-    difficulty: advanced
+    difficulty: intermediate
     type: multiple
     question: |
       Which of the following are documented **costs** of external reuse that a team should weigh before adding a dependency? Select all that apply.
