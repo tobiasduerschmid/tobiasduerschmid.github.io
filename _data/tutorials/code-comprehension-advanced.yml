@@ -157,7 +157,7 @@ steps:
           question: "What behavior hypothesis should the tests give you before reading `sessionPlanner.js`?"
           options:
             - "The planner chooses sessions that fit the time box, prefers topic matches, and slightly favors solo work when energy is low."
-            - "The planner stores study sessions in a database and updates them after every request."
+            - "The planner stores study sessions in a database, updates them after every request, and syncs the best plan back to the user profile."
             - "The planner renders React cards for each session."
             - "The planner always returns every session sorted alphabetically."
           correct_index: 0
@@ -172,7 +172,7 @@ steps:
           question: "Which implementation region verifies the hypothesis that unavailable long sessions are excluded?"
           options:
             - "The `.filter(session => session.minutes <= request.minutes)` call in `pickSessionPlan()`"
-            - "The `request.energy === \"low\"` branch in `scoreSession()`"
+            - "The `request.energy === \"low\"` branch in `scoreSession()`, because low energy could make long sessions unavailable"
             - "The `.map(session => session.title)` call"
             - "The `module.exports` line"
           correct_index: 0
@@ -188,7 +188,7 @@ steps:
           options:
             - "Compare one solo session and one pair session through `scoreSession()` with the same request."
             - "Run every test and inspect every console line."
-            - "Trace `.slice(0, 2)` for every possible request."
+            - "Trace `.slice(0, 2)` for every possible request and compare the final two returned titles before scoring."
             - "Inspect only the `SESSIONS` array and stop."
           correct_index: 0
           option_feedback:
@@ -204,7 +204,7 @@ steps:
             - "Behavior-focused names such as `prefers a matching topic when it fits`"
             - "Assertions that name the expected title or invariant"
             - "Setup objects with realistic request fields"
-            - "The fact that the file extension is `.js`"
+            - "The fact that the file extension is `.js` and the tests import CommonJS modules"
           correct_indices: [0, 1, 2]
           option_feedback:
             0: "Behavioral test names are high-value specification beacons."
@@ -218,7 +218,7 @@ steps:
           question: "What behavior is not fully specified by these tests?"
           options:
             - "How ties are broken when two sessions receive the same score"
-            - "Whether sessions longer than the request are excluded"
+            - "Whether sessions longer than the request are excluded from results"
             - "Whether a matching topic can appear first when it fits"
             - "Whether low energy can boost solo sessions"
           correct_index: 0
@@ -437,7 +437,7 @@ steps:
           question: "Where is the missing-session 404 response implemented?"
           options:
             - "In `sessionDetails()` after `findSessionById(id)` returns no session"
-            - "In `findSessionById()` inside the service"
+            - "In `findSessionById()` inside the service after `.find(...)` misses and returns `undefined`"
             - "In the `sessions` array"
             - "In `toSummary()`"
           correct_index: 0
@@ -452,7 +452,7 @@ steps:
           question: "Which helper should you inspect to answer why `nextStep` appears in the details response but not the list response?"
           options:
             - "`withNextStep()` and where `sessionDetails()` calls it"
-            - "`findSessions()`"
+            - "`findSessions()`, because it controls the response fields for every endpoint"
             - "`fakeResponse()`"
             - "`Number(req.params.id)`"
           correct_index: 0
@@ -483,7 +483,7 @@ steps:
           question: "A bug report says the list endpoint is leaking `nextStep`. Where should the search start?"
           options:
             - "`routes/sessionRoutes.js`, then compare `toSummary()` with `withNextStep()` in the service"
-            - "`data/sessions.js`, because every field leak starts in the data file"
+            - "`data/sessions.js`, because every field leak starts in the data file and should be removed at the source"
             - "`fakeResponse()`, because it stores the response body"
             - "`Number(req.params.id)`, because IDs control every response field"
           correct_index: 0
@@ -538,17 +538,132 @@ steps:
       - path: "lesson-map/styles.css"
         language: "css"
         content: |
+          :root {
+            --page-bg: #f6f8fb;
+            --panel-bg: #ffffff;
+            --text: #172033;
+            --muted: #526070;
+            --border: #c7d2df;
+            --accent: #00598c;
+            --accent-strong: #00466d;
+            --button-text: #ffffff;
+            --status-bg: #e5f2ff;
+            --focus: #ffbf47;
+          }
+
+          html.dark-mode {
+            --page-bg: #101827;
+            --panel-bg: #1d2736;
+            --text: #f4f7fb;
+            --muted: #c8d2de;
+            --border: #516174;
+            --accent: #7cc7ff;
+            --accent-strong: #a7dcff;
+            --button-text: #08111d;
+            --status-bg: #1f3850;
+            --focus: #ffd166;
+          }
+
+          body {
+            margin: 0;
+            background: var(--page-bg);
+            color: var(--text);
+            font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          }
+
           .lesson-shell {
-            max-width: 60rem;
+            max-width: 900px;
             margin: 0 auto;
-            padding: 1.5rem;
+            padding: 24px;
+          }
+
+          .lesson-shell h1 {
+            margin-block: 0 18px;
+            font-size: 1.8em;
+          }
+
+          .search-label {
+            display: grid;
+            gap: 6px;
+            max-width: 360px;
+            font-weight: 700;
+          }
+
+          .search-label input {
+            min-height: 40px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 10px;
+            background: var(--panel-bg);
+            color: var(--text);
+            font: inherit;
+          }
+
+          .search-label input::placeholder {
+            color: var(--muted);
+            opacity: 1;
+          }
+
+          .selection-status {
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 10px 12px;
+            background: var(--status-bg);
+            color: var(--text);
+            font-weight: 700;
+          }
+
+          .lesson-list {
+            display: grid;
+            gap: 12px;
+            margin-block-start: 18px;
           }
 
           .lesson-card {
-            border: 1px solid #ccd6e0;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            background: var(--panel-bg);
+            box-shadow: 0 2px 8px rgb(23 32 51 / 0.08);
+          }
+
+          html.dark-mode .lesson-card {
+            box-shadow: 0 2px 10px rgb(0 0 0 / 0.35);
+          }
+
+          .lesson-card h2,
+          .lesson-card p {
+            margin: 0 0 8px;
+          }
+
+          .lesson-card h2 {
+            font-size: 1.2em;
+          }
+
+          .lesson-card p {
+            color: var(--muted);
+          }
+
+          .lesson-card button {
+            min-height: 40px;
+            min-width: 92px;
+            border: 2px solid var(--accent);
             border-radius: 6px;
-            padding: 1rem;
-            margin-block: 0.75rem;
+            padding: 8px 14px;
+            background: var(--accent);
+            color: var(--button-text);
+            font: inherit;
+            cursor: pointer;
+          }
+
+          .lesson-card button:hover {
+            border-color: var(--accent-strong);
+            background: var(--accent-strong);
+          }
+
+          .lesson-shell :focus-visible {
+            outline: 3px solid var(--focus);
+            outline-offset: 3px;
           }
 
       - path: "lesson-map/data.js"
@@ -565,7 +680,7 @@ steps:
         content: |
           function LessonSearch({ query, onQueryChange }) {
             return (
-              <label>
+              <label className="search-label">
                 Search lessons
                 <input
                   value={query}
@@ -581,10 +696,10 @@ steps:
         content: |
           function LessonList({ lessons, selectedId, onSelectLesson }) {
             return (
-              <section aria-label="Matching lessons">
+              <section className="lesson-list" aria-label="Matching lessons">
                 {lessons.map(lesson => (
                   <article className="lesson-card" key={lesson.id}>
-                    <h2 className="h5">{lesson.title}</h2>
+                    <h2>{lesson.title}</h2>
                     <p>{lesson.minutes} minutes</p>
                     <button type="button" onClick={() => onSelectLesson(lesson.id)}>
                       {selectedId === lesson.id ? "Selected" : "Select"}
@@ -615,7 +730,9 @@ steps:
                 <h1>Lesson Finder</h1>
                 <LessonSearch query={query} onQueryChange={setQuery} />
                 {selectedLesson && (
-                  <p role="status">Selected: {selectedLesson.title}</p>
+                  <p className="selection-status" role="status">
+                    Selected: {selectedLesson.title}
+                  </p>
                 )}
                 <LessonList
                   lessons={visibleLessons}
@@ -647,8 +764,8 @@ steps:
           difficulty: basic
           question: "A user types `node` in the search input. What is the correct interaction path?"
           options:
-            - "`LessonSearch` calls `onQueryChange`, `App` updates `query`, `visibleLessons` filters `LESSONS`, and `LessonList` renders the result."
-            - "`LessonList` directly reads the input value and filters lessons."
+            - "`LessonSearch` calls `onQueryChange`, `App` updates `query`, filters `LESSONS`, and passes results to `LessonList`."
+            - "`LessonList` directly reads the search input value from the DOM, filters lessons locally, and sends the result back to `App`."
             - "`data.js` updates `LESSONS` to remove non-Node lessons."
             - "`LessonSearch` mutates `visibleLessons` directly."
           correct_index: 0
@@ -663,7 +780,7 @@ steps:
           question: "Which file owns `selectedId`?"
           options:
             - "`App.jsx`, because it calls `React.useState(null)` and passes `setSelectedId` as `onSelectLesson`"
-            - "`LessonList.jsx`, because it renders the Select button"
+            - "`LessonList.jsx`, because it renders the Select button and must store the current selection for the rest of the page"
             - "`LessonSearch.jsx`, because it has an input"
             - "`data.js`, because each lesson has an `id`"
           correct_index: 0
@@ -680,7 +797,7 @@ steps:
             - "It receives `lessons` as a prop and maps over that prop."
             - "It contains an `<article>` element."
             - "It has a CSS class named `lesson-card`."
-            - "It displays `lesson.minutes`."
+            - "It displays `lesson.minutes` for each card and therefore must have built the filtered collection."
           correct_index: 0
           option_feedback:
             1: "The HTML structure says how content is grouped, not who filters data."
@@ -695,7 +812,7 @@ steps:
             - "`LessonSearch` → `App` through `onQueryChange={setQuery}`"
             - "`LessonList` → `App` through `onSelectLesson={setSelectedId}`"
             - "`App` → `LessonList` through the `lessons={visibleLessons}` prop"
-            - "`styles.css` → `data.js` through class names"
+            - "`styles.css` → `data.js` through class names that look like lesson categories"
           correct_indices: [0, 1, 2]
           option_feedback:
             0: "This is the search callback path from child to parent."
@@ -710,7 +827,7 @@ steps:
           options:
             - "When you need to prove that a click in `LessonList` actually changes `selectedId` in `App`"
             - "Before reading any component names or props"
-            - "Never, because React prop names are always enough"
+            - "Never, because React prop names are always enough to prove a cross-file state update without tracing"
             - "Only after editing `data.js`"
           correct_index: 0
           option_feedback:
@@ -951,7 +1068,7 @@ steps:
           options:
             - "`quoteCheckout()` reads `req.body.items`, calls `checkStock()`, sees `ok: false`, and returns `res.status(409).json(...)`."
             - "Trace `discountFor()` because coupons decide every response."
-            - "Trace `subtotalFor()` because every checkout must compute totals first."
+            - "Trace `subtotalFor()` because every checkout must compute totals first, even when stock is missing and the route might return later."
             - "Trace only the `items` array and infer the HTTP status from stock values."
           correct_index: 0
           option_feedback:
@@ -965,7 +1082,7 @@ steps:
           question: "Where is the `STUDY10` coupon applied in a successful quote?"
           options:
             - "`discountFor(req.body.coupon, subtotal)` in `routes/checkoutRoute.js`, with rules defined in `services/discountService.js`"
-            - "`checkStock()` in `services/stockService.js`"
+            - "`checkStock()` in `services/stockService.js`, because it validates every line item before totals and could apply coupon policy."
             - "`findItem()` in `services/stockService.js`"
             - "`fakeResponse()` in the test file"
           correct_index: 0
@@ -1001,7 +1118,7 @@ steps:
           options:
             - "When a hypothesis depends on a risky branch such as the early `409` return or a coupon boundary."
             - "Immediately at the first line of every file, before reading tests."
-            - "Never; names are always enough if they are descriptive."
+            - "Never; descriptive names are always enough to prove branch behavior without reading the branch at all."
             - "Only after changing the code."
           correct_index: 0
           option_feedback:
@@ -1012,11 +1129,11 @@ steps:
 
         - type: single
           difficulty: expert
-          question: "A bug report says `TEA3` can make tiny orders too cheap. Which beacon could mislead a fast reader, and what evidence corrects it?"
+          question: "A bug report says `TEA3` can make tiny orders too cheap. Which explanation best fits the evidence?"
           options:
-            - "The `discountFor(coupon, subtotal)` name sounds like every coupon uses the subtotal, but the `coupon === \"TEA3\"` branch returns `3` without checking the subtotal."
+            - "The `discountFor(coupon, subtotal)` name suggests subtotal matters, but the `TEA3` branch returns `3` without checking subtotal."
             - "The `checkStock()` name sounds like it applies coupons, and the missing array proves it."
-            - "The `receiptFormatter.js` file name proves receipts control discounts."
+            - "The `receiptFormatter.js` file name proves receipts control discounts because receipt code usually knows final totals, coupons, and user-visible prices."
             - "The `items` array proves all coupons depend only on item names."
           correct_index: 0
           option_feedback:
@@ -1090,16 +1207,137 @@ steps:
       - path: "lesson-board/styles.css"
         language: "css"
         content: |
+          :root {
+            --page-bg: #f6f8fb;
+            --panel-bg: #ffffff;
+            --text: #172033;
+            --muted: #526070;
+            --border: #c7d2df;
+            --accent: #00598c;
+            --accent-strong: #00466d;
+            --button-text: #ffffff;
+            --pin-bg: #e5f2ff;
+            --status-bg: #edf7ed;
+            --focus: #ffbf47;
+          }
+
+          html.dark-mode {
+            --page-bg: #101827;
+            --panel-bg: #1d2736;
+            --text: #f4f7fb;
+            --muted: #c8d2de;
+            --border: #516174;
+            --accent: #7cc7ff;
+            --accent-strong: #a7dcff;
+            --button-text: #08111d;
+            --pin-bg: #1f3850;
+            --status-bg: #173a29;
+            --focus: #ffd166;
+          }
+
+          body {
+            margin: 0;
+            background: var(--page-bg);
+            color: var(--text);
+            font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          }
+
           .board-shell {
-            max-width: 62rem;
+            max-width: 920px;
             margin: 0 auto;
-            padding: 1.5rem;
+            padding: 24px;
+          }
+
+          .board-shell h1 {
+            margin-block: 0 18px;
+            font-size: 1.8em;
+          }
+
+          .filter-label {
+            display: grid;
+            gap: 6px;
+            max-width: 280px;
+            font-weight: 700;
+          }
+
+          .filter-label select {
+            min-height: 40px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 10px;
+            background: var(--panel-bg);
+            color: var(--text);
+            font: inherit;
+          }
+
+          .progress-summary,
+          .pinned-status {
+            border-radius: 8px;
+            padding: 10px 12px;
+            background: var(--status-bg);
+            color: var(--text);
+            font-weight: 700;
+          }
+
+          .lesson-board-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 14px;
+            margin-block-start: 18px;
+          }
+
+          .lesson-card {
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            background: var(--panel-bg);
+            box-shadow: 0 2px 8px rgb(23 32 51 / 0.08);
+          }
+
+          html.dark-mode .lesson-card {
+            box-shadow: 0 2px 10px rgb(0 0 0 / 0.35);
           }
 
           .pinned-card {
-            border: 2px solid #2774ae;
-            padding: 1rem;
+            border: 2px solid var(--accent);
+            background: var(--pin-bg);
+          }
+
+          .lesson-card h2,
+          .lesson-card p {
+            margin: 0 0 8px;
+          }
+
+          .lesson-card h2 {
+            font-size: 1.2em;
+          }
+
+          .lesson-card p {
+            color: var(--muted);
+          }
+
+          .lesson-card button {
+            min-height: 40px;
+            min-width: 96px;
+            margin-inline-end: 8px;
+            margin-block-start: 6px;
+            border: 2px solid var(--accent);
             border-radius: 6px;
+            padding: 8px 14px;
+            background: var(--accent);
+            color: var(--button-text);
+            font: inherit;
+            cursor: pointer;
+          }
+
+          .lesson-card button:hover {
+            border-color: var(--accent-strong);
+            background: var(--accent-strong);
+          }
+
+          .board-shell :focus-visible {
+            outline: 3px solid var(--focus);
+            outline-offset: 3px;
           }
 
       - path: "lesson-board/data.js"
@@ -1117,7 +1355,7 @@ steps:
         content: |
           function LessonFilter({ view, onViewChange }) {
             return (
-              <label>
+              <label className="filter-label">
                 View
                 <select value={view} onChange={event => onViewChange(event.target.value)}>
                   <option value="all">All</option>
@@ -1133,8 +1371,8 @@ steps:
         content: |
           function LessonCard({ lesson, isPinned, onPinLesson, onCompleteLesson }) {
             return (
-              <article className={isPinned ? "pinned-card" : ""}>
-                <h2 className="h5">{lesson.title}</h2>
+              <article className={isPinned ? "lesson-card pinned-card" : "lesson-card"}>
+                <h2>{lesson.title}</h2>
                 <p>Topic: {lesson.topic}</p>
                 <p>{lesson.done ? "Done" : "Still open"}</p>
                 <button type="button" onClick={() => onPinLesson(lesson.id)}>
@@ -1152,7 +1390,11 @@ steps:
         content: |
           function ProgressSummary({ lessons }) {
             const doneCount = lessons.filter(lesson => lesson.done).length;
-            return <p>{doneCount} of {lessons.length} lessons complete.</p>;
+            return (
+              <p className="progress-summary">
+                {doneCount} of {lessons.length} lessons complete.
+              </p>
+            );
           }
 
       - path: "lesson-board/App.jsx"
@@ -1186,8 +1428,12 @@ steps:
                 <h1>Lesson Board</h1>
                 <LessonFilter view={view} onViewChange={setView} />
                 <ProgressSummary lessons={lessons} />
-                {pinnedLesson && <p role="status">Pinned: {pinnedLesson.title}</p>}
-                <section aria-label="Visible lessons">
+                {pinnedLesson && (
+                  <p className="pinned-status" role="status">
+                    Pinned: {pinnedLesson.title}
+                  </p>
+                )}
+                <section className="lesson-board-list" aria-label="Visible lessons">
                   {visibleLessons.map(lesson => (
                     <LessonCard
                       key={lesson.id}
@@ -1225,7 +1471,7 @@ steps:
           question: "Where is the pinning state owned?"
           options:
             - "`App.jsx`, because it calls `React.useState(2)` for `pinnedId` and passes `setPinnedId` down as `onPinLesson`."
-            - "`LessonCard.jsx`, because it renders the Pin button."
+            - "`LessonCard.jsx`, because it renders the Pin button and receives `onPinLesson`, so it must own pinned state too."
             - "`styles.css`, because it defines `.pinned-card`."
             - "`data.js`, because each lesson has an `id`."
           correct_index: 0
@@ -1239,8 +1485,8 @@ steps:
           difficulty: intermediate
           question: "A user clicks `Pin` on a lesson. What is the correct interaction path?"
           options:
-            - "`LessonCard` calls `onPinLesson(lesson.id)`, which is `setPinnedId` from `App`; `App` then recomputes `pinnedLesson` and `isPinned`."
-            - "`ProgressSummary` changes `pinnedId` after counting completed lessons."
+            - "`LessonCard` calls `onPinLesson(lesson.id)`, `App` sets `pinnedId`, then recomputes `pinnedLesson` and `isPinned`."
+            - "`ProgressSummary` changes `pinnedId` after counting completed lessons, deciding which lesson deserves focus, and reordering cards."
             - "`styles.css` changes `pinnedId` when `.pinned-card` is applied."
             - "`data.js` mutates the matching lesson to store `isPinned: true`."
           correct_index: 0
@@ -1255,9 +1501,9 @@ steps:
           question: "Which file is incidental to the pinning concept, even though it is nearby?"
           options:
             - "`ProgressSummary.jsx`"
-            - "`App.jsx`"
-            - "`LessonCard.jsx`"
-            - "`data.js`"
+            - "`App.jsx`, because it owns the state"
+            - "`LessonCard.jsx`, because it renders the button"
+            - "`data.js`, because it provides lesson IDs"
           correct_index: 0
           option_feedback:
             1: "`App` owns `pinnedId`, so it is central."
@@ -1273,7 +1519,7 @@ steps:
             - "`onPinLesson={setPinnedId}`"
             - "`isPinned={lesson.id === pinnedId}`"
             - "`.pinned-card`"
-            - "`doneCount`"
+            - "`doneCount` from the progress summary"
           correct_indices: [0, 1, 2, 3]
           option_feedback:
             0: "The state name is the central lexical beacon."
@@ -1285,11 +1531,11 @@ steps:
 
         - type: single
           difficulty: expert
-          question: "Which is the best false-beacon diagnosis for this sprint?"
+          question: "Which explanation best fits the pinning evidence?"
           options:
-            - "The `.pinned-card` class can make the pinned lesson visible, but it is weak evidence for where pinning is implemented; the reliable evidence is `pinnedId` state and `onPinLesson` wiring."
+            - "`.pinned-card` affects presentation, but implementation lives in `pinnedId` state and `onPinLesson` wiring."
             - "`pinnedId` is weak evidence because variable names never help in React."
-            - "`ProgressSummary` must own pinning because progress and pinning both appear on the screen."
+            - "`ProgressSummary` must own pinning because progress and pinning both appear on the screen and both mention lesson status."
             - "`data.js` must own pinning because lesson IDs are stored there."
           correct_index: 0
           option_feedback:
@@ -1505,7 +1751,7 @@ steps:
           options:
             - "The route records lesson completions, returns HTTP status codes, and can award a three-day streak badge."
             - "The code renders a React progress dashboard."
-            - "The email preview helper sends completion emails."
+            - "The email preview helper sends completion emails whenever a lesson is completed and a streak badge appears."
             - "The data store sorts lessons by title."
           correct_index: 0
           option_feedback:
@@ -1519,7 +1765,7 @@ steps:
           question: "Where is the missing-field `400` behavior implemented?"
           options:
             - "`completeLessonRoute()` in `routes/progressRoutes.js`"
-            - "`completeLesson()` in `services/progressService.js`"
+            - "`completeLesson()` in `services/progressService.js`, because services often validate route input before saving"
             - "`saveCompletion()` in `data/progressStore.js`"
             - "`streakBadgeFor()` in `services/badgeService.js`"
           correct_index: 0
@@ -1564,11 +1810,11 @@ steps:
 
         - type: single
           difficulty: expert
-          question: "Which false-beacon diagnosis is strongest?"
+          question: "Which explanation best fits the completion flow?"
           options:
-            - "`emailPreview.js` sounds related to completion, but it is incidental here because no central file imports it and no test exercises it."
+            - "`emailPreview.js` sounds related, but central files do not import it and tests do not exercise it."
             - "`badgeService.js` is incidental because badges are just strings."
-            - "`progressStore.js` is irrelevant because tests should be the only source of truth."
+            - "`progressStore.js` is irrelevant because tests should be the only source of truth and runtime persistence is just setup."
             - "`completeLessonRoute()` is unrelated because routes never affect behavior."
           correct_index: 0
           option_feedback:
@@ -1576,3 +1822,271 @@ steps:
             2: "Tests specify behavior, but runtime code still implements it."
             3: "The route reads request fields, validates them, and chooses HTTP response shape."
           explanation: "A plausible nearby file can be a weak contextual beacon. Strong readers verify relevance through imports, calls, and tests."
+
+  # =========================================================================
+  # STEP 7: Dashboard Access Sprint
+  # =========================================================================
+  # Pedagogy: capstone transfer — realistic false beacon across route/service/config files
+  - title: "Dashboard Access Sprint"
+    backend: webcontainer
+    max-time: 13
+    lockout-time: 5
+    instructions: |
+      ### Why this matters
+
+      In production code, the first clue that looks relevant is often only part of the story. It may be a file you would expect to matter: `featureFlags.js`, `betaDashboard`, imported config, dashboard route. The advanced skill is to say, "That is a plausible hypothesis," then verify whether the property is actually on the runtime path.
+
+      This sprint is a small incident review. A student named Kai cannot see the Labs tab. A fast reader may jump to the global `betaDashboard` flag because it is true. Your job is to test that hypothesis against tests, imports, and call flow. Let's see how far you can make it.
+
+      ### 🎯 You will learn to
+
+      - Separate a plausible config clue from the property actually read at runtime
+      - Use tests as specification beacons without mistaking them for implementation
+      - Trace a cross-file hypothesis through route, service, policy, and data files
+
+      ### Reading Goal
+
+      You have **13 minutes**. Read the tests first, then inspect the smallest path that explains Kai's missing Labs tab.
+
+      Focus on these questions:
+
+      - What behavior do the tests specify for invited users and non-invited users?
+      - Which file decides whether the Labs tab is added?
+      - Which `featureFlags` property is read by the route?
+      - Where is `betaDashboard: true` read, if at all, on the tab-building path?
+
+    files:
+      - path: "reading-notes.md"
+        language: "markdown"
+        content: |
+          # Dashboard Access Sprint Notes
+
+          First hypothesis:
+
+          First clue I noticed:
+
+          Test evidence:
+
+          Runtime path:
+
+          Evidence that changes or strengthens the hypothesis:
+
+          Final EiPE summary:
+
+      - path: "data/users.js"
+        language: "javascript"
+        content: |
+          const users = [
+            { id: "ava", plan: "free", verified: true, betaInvite: true },
+            { id: "kai", plan: "free", verified: true, betaInvite: false },
+            { id: "mira", plan: "pro", verified: false, betaInvite: false },
+            { id: "noor", plan: "pro", verified: true, betaInvite: false },
+          ];
+
+          function findUser(userId) {
+            const user = users.find(candidate => candidate.id === userId);
+            return user ? { ...user } : null;
+          }
+
+          module.exports = { findUser };
+
+      - path: "config/featureFlags.js"
+        language: "javascript"
+        content: |
+          const featureFlags = Object.freeze({
+            betaDashboard: true,
+            welcomeBanner: true,
+          });
+
+          module.exports = { featureFlags };
+
+      - path: "services/accessPolicy.js"
+        language: "javascript"
+        content: |
+          function canUseBetaDashboard(user) {
+            if (!user || !user.verified) {
+              return false;
+            }
+            return user.betaInvite || user.plan === "pro";
+          }
+
+          module.exports = { canUseBetaDashboard };
+
+      - path: "services/dashboardService.js"
+        language: "javascript"
+        content: |
+          const { findUser } = require("../data/users");
+          const { canUseBetaDashboard } = require("./accessPolicy");
+
+          function dashboardTabsFor(userId) {
+            const user = findUser(userId);
+            if (!user) {
+              return { status: "missing", tabs: [] };
+            }
+
+            const tabs = ["overview", "assignments"];
+            if (canUseBetaDashboard(user)) {
+              tabs.push("labs");
+            }
+
+            return { status: "ok", tabs };
+          }
+
+          module.exports = { dashboardTabsFor };
+
+      - path: "routes/dashboardRoute.js"
+        language: "javascript"
+        content: |
+          const { featureFlags } = require("../config/featureFlags");
+          const { dashboardTabsFor } = require("../services/dashboardService");
+
+          function dashboardRoute(req, res) {
+            const result = dashboardTabsFor(req.params.userId);
+            if (result.status === "missing") {
+              return res.status(404).json({ error: "user not found" });
+            }
+
+            return res.json({
+              tabs: result.tabs,
+              banner: featureFlags.welcomeBanner ? "new dashboard preview" : null,
+            });
+          }
+
+          module.exports = { dashboardRoute };
+
+      - path: "__tests__/dashboardRoute.test.js"
+        language: "javascript"
+        content: |
+          const test = require("node:test");
+          const assert = require("node:assert/strict");
+          const { dashboardRoute } = require("../routes/dashboardRoute");
+
+          function fakeResponse() {
+            return {
+              statusCode: 200,
+              body: undefined,
+              status(code) {
+                this.statusCode = code;
+                return this;
+              },
+              json(payload) {
+                this.body = payload;
+                return this;
+              },
+            };
+          }
+
+          test("invited verified student receives the Labs tab", () => {
+            const res = fakeResponse();
+
+            dashboardRoute({ params: { userId: "ava" } }, res);
+
+            assert.equal(res.statusCode, 200);
+            assert.deepEqual(res.body.tabs, ["overview", "assignments", "labs"]);
+          });
+
+          test("global beta flag does not override a missing invite", () => {
+            const res = fakeResponse();
+
+            dashboardRoute({ params: { userId: "kai" } }, res);
+
+            assert.equal(res.statusCode, 200);
+            assert.deepEqual(res.body.tabs, ["overview", "assignments"]);
+            assert.equal(res.body.banner, "new dashboard preview");
+          });
+
+          test("unknown users receive 404", () => {
+            const res = fakeResponse();
+
+            dashboardRoute({ params: { userId: "unknown" } }, res);
+
+            assert.equal(res.statusCode, 404);
+            assert.deepEqual(res.body, { error: "user not found" });
+          });
+
+    open_file: "__tests__/dashboardRoute.test.js"
+    run_file: "__tests__/dashboardRoute.test.js"
+
+    quiz:
+      title: "Step 7 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      shuffle_questions: false
+      questions:
+        - type: single
+          difficulty: basic
+          question: "Kai does not receive the `labs` tab even though `featureFlags.betaDashboard` is `true`. Which hypothesis survives the smallest trace?"
+          options:
+            - "`canUseBetaDashboard()` rejects Kai because Kai has no invite and is not on the pro plan."
+            - "`featureFlags.betaDashboard` directly enables Labs for every verified user and overrides invite or plan policy."
+            - "`welcomeBanner` disables Labs when the banner is visible."
+            - "`dashboardRoute()` returns 404 for Kai."
+          correct_index: 0
+          option_feedback:
+            1: "This is the misleading beacon: `betaDashboard: true` looks decisive, but no runtime path reads that property when adding tabs."
+            2: "`welcomeBanner` is read by the route, but it only decides the banner text in the JSON response."
+            3: "The test for Kai expects status 200, so the 404 hypothesis is contradicted immediately."
+          explanation: "The smallest trace is route → `dashboardTabsFor()` → `findUser(\"kai\")` → `canUseBetaDashboard()`. The flag file is imported, but the `betaDashboard` property is not used on the Labs-tab path."
+
+        - type: single
+          difficulty: intermediate
+          question: "Which evidence best tests whether `betaDashboard: true` controls Kai's Labs access?"
+          options:
+            - "`routes/dashboardRoute.js` imports `featureFlags`, but only reads `featureFlags.welcomeBanner`."
+            - "`config/featureFlags.js` contains the word `beta`, so it must own beta access."
+            - "`__tests__/dashboardRoute.test.js` mentions a global beta flag, so tests are the implementation."
+            - "`data/users.js` is short, so it cannot matter."
+          correct_index: 0
+          option_feedback:
+            1: "This answer follows the misleading beacon by trusting the filename and property name without checking who reads it."
+            2: "Tests specify behavior; they do not execute in production as part of the route."
+            3: "Small files can carry central evidence. Here Kai's `betaInvite` and `plan` values matter."
+          explanation: "After the trace, `betaDashboard: true` is the misleading beacon: the route reads `welcomeBanner`, while tab access is delegated to `dashboardService` and `accessPolicy`."
+
+        - type: multiple
+          difficulty: advanced
+          question: "Which files are central runtime evidence for deciding whether `labs` appears?"
+          options:
+            - "`services/dashboardService.js`"
+            - "`services/accessPolicy.js`"
+            - "`data/users.js`"
+            - "`config/featureFlags.js`"
+            - "`__tests__/dashboardRoute.test.js`"
+          correct_indices: [0, 1, 2]
+          option_feedback:
+            0: "`dashboardService.js` adds the `labs` tab when access policy allows it."
+            1: "`accessPolicy.js` owns the invite/pro-plan/verification rule."
+            2: "`data/users.js` supplies Kai's `betaInvite`, `plan`, and `verified` values."
+            3: "This is the realistic misleading beacon: the config file is imported, but its `betaDashboard` property is not read when tabs are built."
+            4: "The test is a specification beacon, but it is not runtime implementation."
+          explanation: "Central runtime evidence is the code that the route actually calls to build `tabs`."
+
+        - type: single
+          difficulty: advanced
+          question: "Which smallest trace best tests the hypothesis that the global beta flag controls Labs access?"
+          options:
+            - "`dashboardRoute()` → `dashboardTabsFor()` → `canUseBetaDashboard()`, then check whether `featureFlags.betaDashboard` appears on that path."
+            - "`featureFlags.js` only, because the property name already answers the question."
+            - "`dashboardRoute()` only, because routes always contain all business policy and imported config controls tabs there without any service call needing inspection."
+            - "`__tests__/dashboardRoute.test.js` only, because tests replace the need to read implementation."
+          correct_index: 0
+          option_feedback:
+            1: "This keeps following the misleading beacon. A property name is a hypothesis, not proof."
+            2: "The route delegates tab construction to the service, so stopping at the route misses the policy."
+            3: "Tests tell you what should happen, but the implementation trace explains where it happens."
+          explanation: "The right trace verifies both sides: where Labs is added and whether the tempting flag is part of that path."
+
+        - type: single
+          difficulty: expert
+          question: "Which final incident summary is strongest?"
+          options:
+            - "Kai misses Labs because access policy requires verification plus invite or pro plan; `betaDashboard` is not read on the tab path."
+            - "Kai misses Labs because the global beta flag is false in practice, even though the file says true and the route imports it for Kai."
+            - "Kai misses Labs because `welcomeBanner` takes priority over all other dashboard behavior."
+            - "Kai misses Labs because tests intentionally hide the tab from free users."
+          correct_index: 0
+          option_feedback:
+            1: "This answer invents a hidden override. The trace shows the flag is simply not part of the Labs access decision."
+            2: "`welcomeBanner` appears in the response, but it does not control `tabs`."
+            3: "Tests describe the expected behavior; they do not hide tabs at runtime."
+          explanation: "The explanation explicitly names the misleading beacon and the correcting evidence: access policy, user data, and absence of `betaDashboard` from the tab-building call path."

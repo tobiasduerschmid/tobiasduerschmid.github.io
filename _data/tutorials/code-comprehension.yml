@@ -15,7 +15,7 @@ learning_objectives:
 
 backend: multiple
 require_tests: false
-autosave_type: none
+autosave_type: files
 font_size: 16
 
 steps:
@@ -120,7 +120,7 @@ steps:
               title: str
               artist: str
               seconds: int
-              explicit: bool
+              favorite: bool
               hidden: bool
 
 
@@ -131,10 +131,10 @@ steps:
 
 
           TRACKS: list[Track] = [
-              {"title": "Compile Me Maybe", "artist": "Carly Rae JS", "seconds": 181, "explicit": False, "hidden": False},
-              {"title": "Null Pointer Mood", "artist": "The Exceptions", "seconds": 203, "explicit": True, "hidden": False},
-              {"title": "Draft Demo", "artist": "Lab Notebook", "seconds": 92, "explicit": False, "hidden": True},
-              {"title": "Cache Me Outside", "artist": "Miss Hit", "seconds": 228, "explicit": False, "hidden": False},
+              {"title": "Compile Me Maybe", "artist": "Carly Rae JS", "seconds": 181, "favorite": False, "hidden": False},
+              {"title": "Null Pointer Mood", "artist": "The Exceptions", "seconds": 203, "favorite": True, "hidden": False},
+              {"title": "Draft Demo", "artist": "Lab Notebook", "seconds": 92, "favorite": False, "hidden": True},
+              {"title": "Cache Me Outside", "artist": "Miss Hit", "seconds": 228, "favorite": False, "hidden": False},
           ]
 
           def visible_tracks(tracks: list[Track]) -> list[Track]:
@@ -142,8 +142,8 @@ steps:
 
           def label_track(track: Track) -> str:
               label = f"{track['title']} — {track['artist']}"
-              if track["explicit"]:
-                  label += " (explicit)"
+              if track["favorite"]:
+                  label += " (favorite)"
               return label
 
           def summarize_playlist(tracks: list[Track]) -> PlaylistSummary:
@@ -163,10 +163,7 @@ steps:
         content: |
           import math
 
-          from playlist_summary import summarize_playlist
-
-
-          TrackFixture = dict[str, object]
+          from playlist_summary import Track, summarize_playlist
 
 
           def make_track(
@@ -174,14 +171,14 @@ steps:
               seconds: int,
               *,
               artist: str = "The Testers",
-              explicit: bool = False,
+              favorite: bool = False,
               hidden: bool = False,
-          ) -> TrackFixture:
+          ) -> Track:
               return {
                   "title": title,
                   "artist": artist,
                   "seconds": seconds,
-                  "explicit": explicit,
+                  "favorite": favorite,
                   "hidden": hidden,
               }
 
@@ -202,20 +199,20 @@ steps:
               ]
 
 
-          def test_explicit_visible_track_is_labeled() -> None:
+          def test_favorite_visible_track_is_labeled() -> None:
               tracks = [
                   make_track(
                       "Null Pointer Mood",
                       203,
                       artist="The Exceptions",
-                      explicit=True,
+                      favorite=True,
                   ),
               ]
 
               summary = summarize_playlist(tracks)
 
               assert summary["labels"] == [
-                  "Null Pointer Mood — The Exceptions (explicit)",
+                  "Null Pointer Mood — The Exceptions (favorite)",
               ]
 
 
@@ -243,15 +240,15 @@ steps:
           difficulty: basic
           question: "Before tracing `playlist_summary.py`, which evidence gives the strongest first hypothesis about the module's purpose?"
           options:
-            - "The exact number of dictionary keys in `TRACKS`"
+            - "The exact number of dictionary keys in the `TRACKS` sample records"
             - "The test names plus the public function `summarize_playlist`"
             - "The fact that the file uses an `if __name__ == \"__main__\"` guard"
-            - "The presence of the string `(explicit)`"
+            - "The presence of the string `(favorite)`"
           correct_index: 1
           option_feedback:
             0: "Counting keys is low-level detail. It may matter later, but it does not name the module's responsibility."
             2: "The main guard tells you the file can run as a script. It does not explain the summary behavior."
-            3: "The explicit label is one behavior, but the tests and public function reveal the broader responsibility."
+            3: "The favorite label is one behavior, but the tests and public function reveal the broader responsibility."
           explanation: "A purpose hypothesis should start from specification-level beacons: test names, public function names, and behavior words. Here they point to summarizing a public playlist while excluding hidden tracks."
 
         - type: single
@@ -259,7 +256,7 @@ steps:
           question: "The question is: 'Are hidden tracks included in the final summary?' Which region should you inspect first?"
           options:
             - "`visible_tracks()` and the call to it inside `summarize_playlist()`"
-            - "The exact seconds value for every track in `TRACKS`"
+            - "The exact seconds value for every track in `TRACKS`, including the hidden song"
             - "The string interpolation inside `label_track()`"
             - "The final `print(...)` line under the main guard"
           correct_index: 0
@@ -273,13 +270,13 @@ steps:
           difficulty: intermediate
           question: "Which summary is strongest after reading this module?"
           options:
-            - "`summarize_playlist()` makes a dictionary, calls a helper, and rounds a number."
-            - "The module builds a public-facing playlist summary: it removes hidden tracks, totals visible duration, and labels explicit songs."
+            - "`summarize_playlist()` makes a dictionary, calls helper functions, rounds minutes, formats labels for the sample data, and therefore fully explains the module's purpose."
+            - "The module builds a public playlist summary by removing hidden tracks, totaling visible duration, and labeling favorite songs."
             - "The module has four tracks and one of them is hidden."
             - "`label_track()` uses an `if` statement and returns a string."
           correct_index: 1
           option_feedback:
-            0: "That summary lists mechanics but misses the user-visible purpose."
+            0: "That summary overclaims from mechanics while still missing the user-visible purpose."
             2: "That fact is true for the sample data, but it does not generalize to what the code does."
             3: "That describes one helper at the line/block level, not the module's overall purpose."
           explanation: "A good comprehension summary climbs abstraction levels: user-visible purpose first, then the major behaviors that support it."
@@ -291,7 +288,7 @@ steps:
             - "`test_summary_uses_only_visible_tracks`"
             - "`visible_tracks`"
             - "`public_tracks`"
-            - "The variable name `label` by itself"
+            - "The local variable name `label` by itself"
           correct_indices: [0, 1, 2]
           option_feedback:
             0: "This test name is a specification beacon: it tells you what behavior the author expects."
@@ -304,9 +301,9 @@ steps:
           difficulty: advanced
           question: "Which explanation best follows the Purpose / Mechanism / Evidence / Limit frame?"
           options:
-            - "Purpose: the module builds a public playlist summary. Mechanism: it filters hidden tracks, totals visible duration, and labels explicit songs. Evidence: the tests and `visible_tracks()` support that reading. Limit: this does not prove how unusual data, such as negative durations, would behave."
-            - "`summarize_playlist()` makes a dictionary, calls a helper, rounds a number, and returns labels."
-            - "The module has four tracks, one hidden track, and one explicit track."
+            - "Purpose: public playlist summary. Mechanism: filter hidden tracks, total visible duration, and label favorites. Evidence: tests plus `visible_tracks()`. Limit: unusual data is unverified."
+            - "`summarize_playlist()` creates a dictionary, calls `visible_tracks()`, totals seconds, rounds minutes, formats labels, and returns sample output, so tracing those mechanics is enough without naming any limit or user-facing purpose."
+            - "The module has four tracks, one hidden track, and one favorite track."
             - "The module removes hidden tracks, so no other code needs attention."
           correct_index: 0
           option_feedback:
@@ -443,7 +440,7 @@ steps:
           difficulty: basic
           question: "What is the best purpose hypothesis for `build_event_cards()`?"
           options:
-            - "It mutates `EVENTS` so cancelled events are permanently removed."
+            - "It mutates `EVENTS` so cancelled events are permanently removed before future calls can see them each time it runs."
             - "It builds display-ready event card dictionaries for upcoming, non-cancelled events matching a tag."
             - "It prints every event to the terminal in calendar order."
             - "It counts the number of registered students across all events."
@@ -461,7 +458,7 @@ steps:
             - "`React Snack Lab` appears because it is upcoming, not cancelled, and has the frontend tag."
             - "`Legacy Code Karaoke` appears because it is full."
             - "`Cancelled CSS Cafe` appears because it has the frontend tag."
-            - "`Debugging Jam` appears because it is upcoming and has open seats."
+            - "`Debugging Jam` appears because it is upcoming, has open seats, and looks like a workshop card."
           correct_index: 0
           option_feedback:
             1: "Its day is before `today=14`, so `upcoming_events()` filters it out."
@@ -489,7 +486,7 @@ steps:
           question: "Which small trace best verifies the hypothesis that full events are still included?"
           options:
             - "Trace `Node Night Market` through `upcoming_events()`, `matches_tag(..., \"backend\")`, and `seats_left()`."
-            - "Trace every event through every helper."
+            - "Trace every event through every helper, then compare all final cards before deciding whether full events survive."
             - "Trace only the final `print(...)` statement."
             - "Trace `Cancelled CSS Cafe` through `matches_tag(..., \"frontend\")` and stop there."
           correct_index: 0
@@ -504,7 +501,7 @@ steps:
           question: "Which note best shows useful vary-the-input reasoning?"
           options:
             - "If `today` changes to `18`, `React Snack Lab` should disappear because the date filter runs before card creation."
-            - "If `today` changes to `18`, every event should appear because later dates are less restrictive."
+            - "If `today` changes to `18`, every event should appear because later dates are less restrictive and full/cancelled checks should not matter."
             - "If `tag` changes to `all`, cancelled events should appear because the tag filter stops running."
             - "If `registered` changes, the cancelled-event filter should change too."
           correct_index: 0
@@ -558,16 +555,123 @@ steps:
       - path: "snacks/styles.css"
         language: "css"
         content: |
+          :root {
+            --page-bg: #f6f8fb;
+            --panel-bg: #ffffff;
+            --text: #172033;
+            --muted: #526070;
+            --border: #c7d2df;
+            --accent: #00598c;
+            --accent-strong: #00466d;
+            --button-text: #ffffff;
+            --focus: #ffbf47;
+          }
+
+          html.dark-mode {
+            --page-bg: #101827;
+            --panel-bg: #1d2736;
+            --text: #f4f7fb;
+            --muted: #c8d2de;
+            --border: #516174;
+            --accent: #7cc7ff;
+            --accent-strong: #a7dcff;
+            --button-text: #08111d;
+            --focus: #ffd166;
+          }
+
+          body {
+            margin: 0;
+            background: var(--page-bg);
+            color: var(--text);
+            font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          }
+
           .snack-shell {
-            max-width: 54rem;
+            max-width: 860px;
             margin: 0 auto;
-            padding: 1.5rem;
+            padding: 24px;
+          }
+
+          .snack-shell h1 {
+            margin-block: 0 18px;
+            font-size: 1.8em;
+          }
+
+          .snack-shell label {
+            display: grid;
+            gap: 6px;
+            max-width: 280px;
+            font-weight: 700;
+          }
+
+          .snack-shell select,
+          .snack-shell button {
+            font: inherit;
+          }
+
+          .snack-shell select {
+            min-height: 40px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 10px;
+            background: var(--panel-bg);
+            color: var(--text);
           }
 
           .snack-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
-            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-block-start: 20px;
+          }
+
+          .snack-card {
+            display: grid;
+            gap: 8px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            background: var(--panel-bg);
+            box-shadow: 0 2px 8px rgb(23 32 51 / 0.08);
+          }
+
+          html.dark-mode .snack-card {
+            box-shadow: 0 2px 10px rgb(0 0 0 / 0.35);
+          }
+
+          .snack-card h2,
+          .snack-card p {
+            margin: 0;
+          }
+
+          .snack-card h2 {
+            font-size: 1.2em;
+          }
+
+          .snack-card p {
+            color: var(--muted);
+          }
+
+          .snack-card button {
+            justify-self: start;
+            min-height: 40px;
+            min-width: 80px;
+            border: 2px solid var(--accent);
+            border-radius: 6px;
+            padding: 8px 14px;
+            background: var(--accent);
+            color: var(--button-text);
+            cursor: pointer;
+          }
+
+          .snack-card button:hover {
+            border-color: var(--accent-strong);
+            background: var(--accent-strong);
+          }
+
+          .snack-shell :focus-visible {
+            outline: 3px solid var(--focus);
+            outline-offset: 3px;
           }
 
       - path: "snacks/App.jsx"
@@ -582,8 +686,8 @@ steps:
 
           function SnackCard({ snack, onVote }) {
             return (
-              <article className="border rounded p-3">
-                <h2 className="h5">{snack.name}</h2>
+              <article className="snack-card">
+                <h2>{snack.name}</h2>
                 <p>Category: {snack.category}</p>
                 <p>Votes: {snack.votes}</p>
                 <button type="button" onClick={() => onVote(snack.id)}>
@@ -646,7 +750,7 @@ steps:
           question: "Which beacon most strongly tells you that `App` owns state that can change over time?"
           options:
             - "`React.useState(...)` calls inside `App`"
-            - "The `<h1>Snack Vote</h1>` heading"
+            - "The `<h1>Snack Vote</h1>` heading inside `App`"
             - "The CSS class name `snack-shell`"
             - "The array literal named `SNACKS`"
           correct_index: 0
@@ -661,8 +765,8 @@ steps:
           question: "The expression `snacks.filter(...).map(...)` is mainly which kind of beacon?"
           options:
             - "A structural beacon for the plan: derive a visible list, then render one element per item"
-            - "A specification beacon because it proves the tests pass"
-            - "A false beacon because array methods never help comprehension"
+            - "A specification beacon because the method chain proves every test passes without running assertions"
+            - "A useless cue because array methods never help comprehension in a React render path"
             - "A CSS beacon because it controls grid layout"
           correct_index: 0
           option_feedback:
@@ -678,7 +782,7 @@ steps:
             - "`SnackCard`'s `onClick`, the `onVote` prop, and `handleVote` in `App`"
             - "Only the CSS file"
             - "Only the `SNACKS` array"
-            - "Only the `<option>` elements in the category selector"
+            - "Only the `<option>` elements in the category selector, because filters always control button behavior"
           correct_index: 0
           option_feedback:
             1: "CSS can change appearance, but the click behavior is in JSX and state updates."
@@ -692,7 +796,7 @@ steps:
           options:
             - "`visibleSnacks` suggests a filtered list of snacks."
             - "`onVote` suggests a callback prop from parent to child."
-            - "`snack-grid` proves the app stores votes in localStorage."
+            - "`snack-grid` proves the app stores votes in localStorage for the next visit."
             - "`key={snack.id}` suggests React is rendering a list."
           correct_indices: [0, 1, 3]
           option_feedback:
@@ -774,17 +878,131 @@ steps:
       - path: "study-queue/styles.css"
         language: "css"
         content: |
+          :root {
+            --page-bg: #f7f9fc;
+            --panel-bg: #ffffff;
+            --text: #172033;
+            --muted: #526070;
+            --border: #c7d2df;
+            --accent: #00598c;
+            --accent-soft: #d9edf9;
+            --done-bg: #dff4e7;
+            --done-text: #14532d;
+            --open-bg: #fff1c2;
+            --open-text: #5c3d00;
+            --focus: #ffbf47;
+          }
+
+          html.dark-mode {
+            --page-bg: #101827;
+            --panel-bg: #1d2736;
+            --text: #f4f7fb;
+            --muted: #c8d2de;
+            --border: #516174;
+            --accent: #7cc7ff;
+            --accent-soft: #1f3850;
+            --done-bg: #173a29;
+            --done-text: #a8f0c6;
+            --open-bg: #3f3211;
+            --open-text: #ffe08a;
+            --focus: #ffd166;
+          }
+
+          body {
+            margin: 0;
+            background: var(--page-bg);
+            color: var(--text);
+            font: 16px/1.5 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+          }
+
           .queue-shell {
-            max-width: 58rem;
+            max-width: 860px;
             margin: 0 auto;
-            padding: 1.5rem;
+            padding: 24px;
+          }
+
+          .queue-shell h1 {
+            margin-block: 0 18px;
+            font-size: 1.8em;
+          }
+
+          .topic-label {
+            display: grid;
+            gap: 6px;
+            max-width: 280px;
+            font-weight: 700;
+          }
+
+          .topic-label select {
+            min-height: 40px;
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 8px 10px;
+            background: var(--panel-bg);
+            color: var(--text);
+            font: inherit;
+          }
+
+          .completion-status {
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 10px 12px;
+            background: var(--accent-soft);
+            color: var(--text);
+            font-weight: 700;
+          }
+
+          .task-list {
+            display: grid;
+            gap: 12px;
+            margin-block-start: 18px;
           }
 
           .task-card {
-            border: 1px solid #c9d3df;
-            border-radius: 6px;
-            padding: 1rem;
-            margin-block: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 16px;
+            background: var(--panel-bg);
+            box-shadow: 0 2px 8px rgb(23 32 51 / 0.08);
+          }
+
+          html.dark-mode .task-card {
+            box-shadow: 0 2px 10px rgb(0 0 0 / 0.35);
+          }
+
+          .task-card h2,
+          .task-card p {
+            margin: 0 0 8px;
+          }
+
+          .task-card h2 {
+            font-size: 1.2em;
+          }
+
+          .task-card p {
+            color: var(--muted);
+          }
+
+          .task-status {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 4px 10px;
+            font-weight: 700;
+          }
+
+          .task-status.done {
+            background: var(--done-bg);
+            color: var(--done-text);
+          }
+
+          .task-status.open {
+            background: var(--open-bg);
+            color: var(--open-text);
+          }
+
+          .queue-shell :focus-visible {
+            outline: 3px solid var(--focus);
+            outline-offset: 3px;
           }
 
       - path: "study-queue/App.jsx"
@@ -799,7 +1017,7 @@ steps:
 
           function TopicFilter({ topic, onTopicChange }) {
             return (
-              <label>
+              <label className="topic-label">
                 Topic
                 <select value={topic} onChange={event => onTopicChange(event.target.value)}>
                   <option value="all">All</option>
@@ -814,9 +1032,13 @@ steps:
           function TaskCard({ task }) {
             return (
               <article className="task-card">
-                <h2 className="h5">{task.title}</h2>
+                <h2>{task.title}</h2>
                 <p>Topic: {task.topic}</p>
-                {task.done ? <strong>Done</strong> : <span>Still practicing</span>}
+                {task.done ? (
+                  <strong className="task-status done">Done</strong>
+                ) : (
+                  <span className="task-status open">Still practicing</span>
+                )}
               </article>
             );
           }
@@ -835,8 +1057,12 @@ steps:
               <main className="queue-shell">
                 <h1>Study Queue</h1>
                 <TopicFilter topic={topic} onTopicChange={setTopic} />
-                {allVisibleDone && <p role="status">Everything visible is done.</p>}
-                <section aria-label="Visible study tasks">
+                {allVisibleDone && (
+                  <p className="completion-status" role="status">
+                    Everything visible is done.
+                  </p>
+                )}
+                <section className="task-list" aria-label="Visible study tasks">
                   {visibleTasks.map(task => (
                     <TaskCard key={task.id} task={task} />
                   ))}
@@ -864,7 +1090,7 @@ steps:
           question: "Which component owns the selected topic state?"
           options:
             - "`App`, because it calls `React.useState(\"all\")` and passes `topic` plus `setTopic` down"
-            - "`TopicFilter`, because it renders the `<select>` element"
+            - "`TopicFilter`, because it renders the `<select>` element and handles the user's change event first"
             - "`TaskCard`, because each card displays a task topic"
             - "`TASKS`, because it stores every task's topic string"
           correct_index: 0
@@ -894,7 +1120,7 @@ steps:
           question: "When does the `Everything visible is done.` status appear?"
           options:
             - "Only when there is at least one visible task and every visible task has `done: true`"
-            - "Whenever any task in `TASKS` has `done: true`"
+            - "Whenever any task in `TASKS` has `done: true`, even if hidden by the selected topic or unrelated to the view"
             - "Whenever the selected topic is `all`"
             - "Only when `TaskCard` decides to render it"
           correct_index: 0
@@ -910,7 +1136,7 @@ steps:
           options:
             - "`App` owns the topic state and derives `visibleTasks` from static task data."
             - "`TopicFilter` sends selection changes upward through `onTopicChange`."
-            - "`TaskCard` mutates each task's `done` value when it renders."
+            - "`TaskCard` mutates each task's `done` value when it renders and passes the change back to `App`."
             - "`visibleTasks.map(...)` renders one card per visible task."
           correct_indices: [0, 1, 3]
           option_feedback:
@@ -926,7 +1152,7 @@ steps:
           options:
             - "Both filter a source collection into visible items, then shape those items for a user-facing result."
             - "Both save user choices in localStorage."
-            - "Both mutate the original sample data before rendering."
+            - "Both mutate the original sample data before rendering, so later reads see the filtered result after the helper runs."
             - "Both use route handlers to return JSON."
           correct_index: 0
           option_feedback:
@@ -1067,7 +1293,7 @@ steps:
           options:
             - "It is an organizer and accumulator: it groups minutes by topic and updates each total."
             - "It is a flag that records whether any topic passed the threshold."
-            - "It is a stepper that moves through the activity log one entry at a time."
+            - "It is a stepper that moves through the activity log one entry at a time and remembers the current row."
             - "It is a display string for one badge."
           correct_index: 0
           option_feedback:
@@ -1083,7 +1309,7 @@ steps:
             - "`best_topic` and `best_minutes`"
             - "`entries` and `entry`"
             - "`badges` and `name`"
-            - "`minimum_minutes` and `topic`"
+            - "`minimum_minutes` and the current `topic`"
           correct_index: 0
           option_feedback:
             1: "Those names support the loop structure, but they do not identify the current winner."
@@ -1097,7 +1323,7 @@ steps:
           options:
             - "It turns an activity log into badge labels by aggregating minutes by topic, filtering topics below a threshold, and optionally adding a focus badge."
             - "It prints every activity in sorted order."
-            - "It removes React entries because one React activity has zero minutes."
+            - "It removes React entries because one React activity has zero minutes, treats that topic as invalid, and returns only non-React badges without checking the remaining React minutes."
             - "It finds the first topic in the log and returns only that topic."
           correct_index: 0
           option_feedback:
@@ -1111,7 +1337,7 @@ steps:
           question: "Which trace best verifies that zero-minute entries are ignored?"
           options:
             - "Trace the `{'topic': 'react', 'minutes': 0}` entry through `summarize_minutes()` and stop at the `continue`."
-            - "Trace every entry through `strongest_topic()`."
+            - "Trace every entry through `strongest_topic()` and infer skipped values from whichever topic becomes the winner."
             - "Trace the `badges.append(...)` line for every topic."
             - "Trace only the final `print(...)` statement."
           correct_index: 0
@@ -1128,7 +1354,7 @@ steps:
             - "`topic_minutes` supports an aggregation plan."
             - "`best_topic` and `best_minutes` support a max-tracking plan."
             - "`badges` supports a gather-output plan."
-            - "`entry` proves the code is doing React state management."
+            - "`entry` proves the code is doing React state management because each item looks like a component prop."
           correct_indices: [0, 1, 2]
           option_feedback:
             0: "The dictionary stores cumulative totals by topic."
@@ -1286,7 +1512,7 @@ steps:
           question: "What is the strongest purpose hypothesis for `build_habit_report()`?"
           options:
             - "It creates a summary of useful practice check-ins, optionally filtered by skill, with totals and the longest streak."
-            - "It changes skipped check-ins into unskipped check-ins."
+            - "It changes skipped check-ins into unskipped check-ins, rewrites the original list, and stores cleaned habit data for the next report."
             - "It prints every check-in in chronological order."
             - "It renders a React list of habits."
           correct_index: 0
@@ -1332,7 +1558,7 @@ steps:
           options:
             - "The exact streak reset logic in `longest_streak()`"
             - "The predicate inside `useful_checkins()`"
-            - "The call to `minutes_by_skill(useful)`"
+            - "The call to `minutes_by_skill(useful)` that computes totals from the filtered check-ins"
             - "The `if skill != \"all\"` branch"
           correct_index: 0
           option_feedback:
@@ -1348,7 +1574,7 @@ steps:
             - "Filter invalid or irrelevant records"
             - "Aggregate minutes by key"
             - "Track a longest consecutive run"
-            - "Send an HTTP response"
+            - "Send an HTTP response from a route handler"
           correct_indices: [0, 1, 2]
           option_feedback:
             0: "`useful_checkins()` and the skill filter remove records before summarizing."
@@ -1356,3 +1582,233 @@ steps:
             2: "`longest_streak()` tracks a best-so-far value across sorted days."
             3: "There is no request or response object in this Python example."
           explanation: "Interleaved plan recognition helps transfer: the same code can contain filtering, aggregation, and best-so-far tracking."
+
+  # =========================================================================
+  # STEP 7: Campus Feed Sprint
+  # =========================================================================
+  # Pedagogy: desirable difficulty — plausible false beacon, then hypothesis testing
+  - title: "Campus Feed Sprint"
+    backend: pyodide
+    max-time: 8
+    lockout-time: 5
+    instructions: |
+      ### Why this matters
+
+      Real code often contains a clue that is *true* but not enough to answer the question. That is harder than a silly distractor, because the clue really does mean something. The move is not "ignore names." The move is "turn the name into a hypothesis, then verify where it sits in the flow."
+
+      In this sprint, a pinned faculty announcement is missing from the student feed. Your job is to test what `pinned` does, where eligibility happens, and which evidence actually explains the report. Let's see how far you can make it.
+
+      ### 🎯 You will learn to
+
+      - Test a plausible first clue before trusting it
+      - Verify a hypothesis by tracing the order of filters, sorting, and formatting
+      - Explain why a true code fact can still be irrelevant to a specific question
+
+      ### Reading Goal
+
+      You have **8 minutes**. Read `campus_feed.py` and answer the quiz.
+
+      Focus on this bug report:
+
+      > "Why does `Faculty Mixer` not appear in the student feed on day 9 even though it is pinned?"
+
+      Before tracing, write your first hypothesis in `reading-notes.md`. Then test it by reading the smallest path from `build_feed()` to the helper that decides eligibility.
+
+    files:
+      - path: "reading-notes.md"
+        language: "markdown"
+        content: |
+          # Campus Feed Sprint Notes
+
+          First hypothesis:
+
+          First clue I noticed:
+
+          Evidence that supports it:
+
+          Evidence that changes or strengthens it:
+
+          Smallest trace:
+
+          Final EiPE summary:
+
+      - path: "campus_feed.py"
+        language: "python"
+        content: |
+          from typing import TypedDict
+
+
+          class Announcement(TypedDict):
+              title: str
+              audience: str
+              start_day: int
+              end_day: int
+              pinned: bool
+              archived: bool
+              channel: str
+
+
+          class FeedCard(TypedDict):
+              title: str
+              label: str
+              channel: str
+
+
+          ANNOUNCEMENTS: list[Announcement] = [
+              {
+                  "title": "Study Jam",
+                  "audience": "students",
+                  "start_day": 8,
+                  "end_day": 10,
+                  "pinned": False,
+                  "archived": False,
+                  "channel": "events",
+              },
+              {
+                  "title": "Faculty Mixer",
+                  "audience": "faculty",
+                  "start_day": 9,
+                  "end_day": 9,
+                  "pinned": True,
+                  "archived": False,
+                  "channel": "events",
+              },
+              {
+                  "title": "App Maintenance",
+                  "audience": "all",
+                  "start_day": 9,
+                  "end_day": 9,
+                  "pinned": False,
+                  "archived": False,
+                  "channel": "alerts",
+              },
+              {
+                  "title": "Old Survey",
+                  "audience": "students",
+                  "start_day": 1,
+                  "end_day": 3,
+                  "pinned": True,
+                  "archived": True,
+                  "channel": "survey",
+              },
+          ]
+
+
+          def is_active(announcement: Announcement, day: int) -> bool:
+              return (
+                  announcement["start_day"] <= day <= announcement["end_day"]
+                  and not announcement["archived"]
+              )
+
+
+          def audience_can_see(announcement: Announcement, audience: str) -> bool:
+              return announcement["audience"] in ("all", audience)
+
+
+          def pinned_label(announcement: Announcement) -> str:
+              return "Pinned" if announcement["pinned"] else "Regular"
+
+
+          def card_for(announcement: Announcement) -> FeedCard:
+              return {
+                  "title": announcement["title"],
+                  "label": pinned_label(announcement),
+                  "channel": announcement["channel"],
+              }
+
+
+          def build_feed(
+              announcements: list[Announcement],
+              audience: str,
+              day: int,
+          ) -> list[FeedCard]:
+              eligible = [
+                  announcement
+                  for announcement in announcements
+                  if is_active(announcement, day)
+                  and audience_can_see(announcement, audience)
+              ]
+              ordered = sorted(
+                  eligible,
+                  key=lambda announcement: (
+                      not announcement["pinned"],
+                      announcement["title"],
+                  ),
+              )
+              return [card_for(announcement) for announcement in ordered]
+
+
+          if __name__ == "__main__":
+              print(build_feed(ANNOUNCEMENTS, audience="students", day=9))
+
+    open_file: "campus_feed.py"
+    run_file: "campus_feed.py"
+
+    quiz:
+      title: "Step 7 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      shuffle_questions: false
+      questions:
+        - type: single
+          difficulty: basic
+          question: "For `audience=\"students\"` on day 9, why does `Faculty Mixer` not appear in the feed?"
+          options:
+            - "`audience_can_see()` rejects it because its audience is `faculty`, not `students` or `all`."
+            - "`pinned_label()` hides it because pinned announcements are formatted separately before eligibility is decided."
+            - "`is_active()` rejects it because day 9 is outside its date range."
+            - "`channel` rejects it because event announcements are never shown."
+          correct_index: 0
+          option_feedback:
+            1: "This is the misleading beacon: `pinned` is real, but `pinned_label()` runs only after an announcement is eligible. It changes the label, not visibility."
+            2: "Day 9 is inside the `Faculty Mixer` date range, so the date hypothesis does not survive tracing."
+            3: "The code never filters out the `events` channel."
+          explanation: "The smallest trace is `build_feed()` → `is_active()` → `audience_can_see()`. The pinned beacon is tempting, but it sits later in sorting and labeling."
+
+        - type: single
+          difficulty: intermediate
+          question: "Which line of reasoning best tests the pinned-announcement hypothesis?"
+          options:
+            - "Check whether `pinned` is read before or after the eligibility filters."
+            - "Assume pinned announcements must always be visible because that is what pinned usually means."
+            - "Count how many announcements are in `ANNOUNCEMENTS`."
+            - "Start from `card_for()` because it builds the final dictionaries."
+          correct_index: 0
+          option_feedback:
+            1: "This answer follows the misleading beacon without testing it. A strong reader asks where `pinned` is used in the flow before trusting the name."
+            2: "Counting records does not explain which records enter the feed."
+            3: "`card_for()` formats announcements that already survived eligibility; it is too late for the visibility question."
+          explanation: "Hypothesis testing means locating the cue in the call order. Here `pinned` is used after `eligible` is built."
+
+        - type: multiple
+          difficulty: advanced
+          question: "Which code regions are central evidence for the `Faculty Mixer` visibility question?"
+          options:
+            - "`build_feed()`"
+            - "`audience_can_see()`"
+            - "`is_active()`"
+            - "`pinned_label()`"
+            - "The `channel` field value"
+          correct_indices: [0, 1, 2]
+          option_feedback:
+            0: "`build_feed()` shows the order: eligibility first, sorting/formatting second."
+            1: "`audience_can_see()` is the helper that rejects faculty-only announcements for the student feed."
+            2: "`is_active()` must be checked because date and archive status are also eligibility filters."
+            3: "This is the misleading beacon for this question. `pinned_label()` is relevant to display text, but it cannot explain why an item never became eligible."
+            4: "The field looks domain-relevant, but no predicate reads `channel` in this example."
+          explanation: "The central evidence is the eligibility path. `pinned` and `channel` are nearby cues, but neither decides this missing-item behavior."
+
+        - type: single
+          difficulty: advanced
+          question: "Which final explanation best fits the evidence?"
+          options:
+            - "`Faculty Mixer` is pinned, but pinned status only changes ordering and labels after eligibility; the student audience filter rejects it."
+            - "`Faculty Mixer` is missing because pinned announcements are hidden by default before audience rules run."
+            - "`Faculty Mixer` is missing because event announcements are archived automatically."
+            - "`Faculty Mixer` is missing because `card_for()` deletes announcements with faculty in the title after label formatting, so the final card list skips it."
+          correct_index: 0
+          option_feedback:
+            1: "This keeps following the misleading beacon. The code uses pinned status for sort order and labels, not for hiding."
+            2: "The archive decision is explicit in the data; `Faculty Mixer` has `archived: False`."
+            3: "`card_for()` receives already-eligible announcements and never checks the title for faculty text."
+          explanation: "A strong false-beacon explanation says both parts: why the beacon was plausible and why the trace corrected it."
