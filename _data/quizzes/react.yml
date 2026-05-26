@@ -290,7 +290,7 @@ questions:
       3: |
         The functional form gives the previous value safely, but returning that same mutated object
         still violates React's immutability model.
-    explanation: "**`setUser({ ...user, name: 'Bob' })` is correct** — spreading the existing object into a *new* object creates a new reference (triggering re-render) while preserving unchanged fields like `age`. React detects state changes by reference comparison, so mutating in place and returning the same object is invisible to it."
+    explanation: "React detects state changes by comparing references, so an update has to produce a *new* object. Spreading `...user` into a fresh object gives that new reference while copying unchanged fields like `age`; mutating the existing object in place keeps the same reference and stays invisible to React."
 
   - id: 14
     difficulty: advanced
@@ -315,7 +315,7 @@ questions:
         fails to update.
       3: |
         JSX rules explain `className`, but they do not explain persistent counters or sibling data flow.
-    explanation: "**The correct mapping is: (a) props, (b) useState, (c) stable keys, (d) JSX className — each symptom points to a distinct React concept.** (a) Data passed in not rendering = **props** issue. (b) Counter stuck at 0 = **state** issue (using `let` not `useState`). (c) State jumping after delete = **keys** issue (index keys instead of stable IDs). (d) `class` without effect = **JSX** issue (`class` → `className`). This tests your ability to diagnose which concept applies to each symptom."
+    explanation: "Each symptom maps to one concept: data not updating when passed in is a **props** issue; a counter stuck at 0 means values aren't in **state** (bare `let` instead of `useState`); state attaching to the wrong row after a delete is an index-**key** issue; and a `class` attribute with no effect is **JSX** (`class` → `className`)."
 
   - id: 15
     difficulty: intermediate
@@ -330,7 +330,7 @@ questions:
     distractors:
       - "    cart.push(product);"
       - "    setCart(cart);"
-    explanation: "**`setCart(prev => [...prev, product])` creates a new array reference to trigger re-render — `cart.push` mutates in-place and `setCart(cart)` passes the same reference, both of which React ignores.** The functional update `setCart(prev => [...prev, product])` creates a **new array** with all previous items plus the new one. The distractor `cart.push(product)` mutates in-place (React won't detect the change), and `setCart(cart)` passes the same reference (React skips re-render). Both distractors represent the most common state mutation bugs from C++ instincts."
+    explanation: "The functional update `setCart(prev => [...prev, product])` builds a new array — previous items plus the new one — giving React a fresh reference to re-render on. The `cart.push(product)` distractor mutates in place, and `setCart(cart)` hands back the same reference; React detects changes by reference, so it ignores both."
 
   - id: 16
     difficulty: advanced

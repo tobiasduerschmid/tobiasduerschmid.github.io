@@ -104,7 +104,7 @@ questions:
       2: |
         Revert creates a new commit that undoes an old commit, which is the opposite of keeping
         incomplete work out of history.
-    explanation: "**`git stash` temporarily shelves uncommitted changes so you can switch contexts without making a messy commit.** `git stash` temporarily shelves your staged and unstaged changes, leaving you with a clean working directory so you can safely switch contexts."
+    explanation: "**`git stash` shelves your staged and unstaged changes onto a private stack and leaves a clean working tree, so you can switch contexts without committing half-finished work.** Plain `git stash` ignores untracked files; add `-u` to include them. Restore with `git stash pop`."
 
   - id: 6
     difficulty: intermediate
@@ -124,7 +124,7 @@ questions:
       3: |
         Detached HEAD is local repository state and says nothing about whether a remote server is
         online.
-    explanation: "**Detached HEAD means HEAD points directly to a commit hash rather than a branch — new commits in this state are not anchored to any branch and can be lost.** Checking out a specific commit hash detaches HEAD. Any new commits made in this state won't update a branch pointer and can easily be lost."
+    explanation: "**Checking out a commit by its hash points HEAD directly at that commit instead of a branch — \"detached HEAD.\"** New commits made here advance no branch pointer, so once you switch away nothing references them and they can be garbage-collected."
 
   - id: 7
     difficulty: intermediate
@@ -143,7 +143,7 @@ questions:
         `git diff` compares two states; it does not manage the iterative good/bad testing process.
       3: |
         Cherry-pick applies one known commit elsewhere; it is not for discovering which commit was bad.
-    explanation: "**`git bisect` uses binary search through commit history to efficiently pinpoint the exact commit that introduced a bug.** `git bisect` systematically halves your commit history, asking you to test if the bug is present at each step, to efficiently find the exact commit that broke the code."
+    explanation: "**`git bisect` binary-searches commit history to pinpoint the commit that introduced a bug.** You mark one known-good and one known-bad commit; Git checks out the midpoint and you test, repeatedly halving the range until one culprit commit remains — log(n) tests instead of n."
 
   - id: 8
     difficulty: intermediate

@@ -21,7 +21,7 @@ questions:
       3: |
         Pipelines can avoid temporary files and stream data between processes, but they do not prevent
         the OS from allocating memory. The core idea is composition through standard streams.
-    explanation: "**This pipeline is preferred because it follows the UNIX philosophy of combining single-purpose tools that communicate via text streams.** The UNIX design philosophy revolves around writing programs that 'do one thing and do it well', and having them work together by handling text streams. Pipelines allow complex tasks to be solved elegantly by chaining these simple tools together."
+    explanation: "**This pipeline follows the UNIX philosophy of combining single-purpose tools that communicate via text streams.** Each program 'does one thing well' and they cooperate through a shared text-stream interface, so complex tasks emerge from chaining simple tools rather than writing one large program."
   - id: 2
     difficulty: intermediate
     question: "A script runs a command that generates both useful output and a flood of permission error messages. The user runs `script.sh > output.txt`, but the errors still clutter the terminal screen while the useful data goes to the file. What underlying concept explains this behavior?"
@@ -41,7 +41,7 @@ questions:
       3: |
         Stderr can be redirected explicitly, for example with `2> errors.txt`. It stays on the terminal
         here only because the command redirected stdout alone.
-    explanation: "**Errors still appear in the terminal because stdout and stderr are separate streams, and `>` only redirects stdout.** In UNIX, processes have three default streams: stdin, stdout, and stderr. Redirection with `>` only captures stdout. To capture the errors, you would need to redirect stderr specifically (e.g., using `2>`)."
+    explanation: "**Errors still appear in the terminal because stdout and stderr are separate streams, and `>` only redirects stdout.** A process has three default streams (stdin, stdout, stderr); `>` captures only stdout, so the errors need their own redirection such as `2> errors.txt`."
   - id: 3
     difficulty: advanced
     question: "A C++ developer writes a Bash script with a `for` loop. Inside the loop, they declare a variable `temp_val`. After the loop finishes, they try to print `temp_val` expecting it to be undefined or empty, but it prints the last value assigned in the loop. Why did this happen?"

@@ -131,7 +131,7 @@ questions:
 
   - id: 7
     difficulty: advanced
-    question: "Dijkstra's 1968 note \"Go To Statement Considered Harmful\" effectively retired `goto` from mainstream programming, yet the C language still has it and the Linux kernel uses it heavily. Which use of `goto` is widely accepted in modern C style guides?"
+    question: "Dijkstra's note \"Go To Statement Considered Harmful\" effectively retired `goto` from mainstream programming, yet the C language still has it and the Linux kernel uses it heavily. Which use of `goto` is widely accepted in modern C style guides?"
     options:
       - "Using `goto` inside an inner loop to jump back to the top of an outer loop, replacing nested `break` and a flag variable."
       - "Using a single forward `goto cleanup;` per function to free resources (`fclose`, `free`, …) on every error path, with one cleanup label at the function's end."
