@@ -274,7 +274,7 @@ questions:
       3: |
         Even if the API should return a number, client code still needs explicit conversion or strict
         comparison at the boundary.
-    explanation: "**`==` accidentally coerces the string `\"42\"` to match the number `42`, hiding a type mismatch that `===` would catch — use `Number(count) === 42` to make the conversion explicit.** This question interleaves async concepts (API fetch) with the `===` trap from earlier. The `==` coercion makes the check work *accidentally*, but it hides a fragile assumption. Using `===` with explicit `Number(count) === 42` makes the type conversion intentional and visible."
+    explanation: "`==` coerces the string `\"42\"` to the number `42`, so the check passes by accident while hiding a type mismatch `===` would catch. The accidental success is exactly what lets the bug survive until a less friendly value (like a threshold of `0`) appears. `Number(count) === 42` makes the conversion explicit and the comparison strict."
 
   - id: 13
     difficulty: intermediate
@@ -290,7 +290,7 @@ questions:
     distractors:
       - "    .reduce(t => !t.explicit)"
       - "    .map(t => t.title())"
-    explanation: "**The correct chain is filter (remove explicit) → map (extract title) → join (concatenate); `.reduce()` accumulates rather than selects, and `t.title()` incorrectly calls a property as a function.** `.filter()` removes explicit tracks (the `!` negates — keep non-explicit). `.map()` extracts just the title string from each object. `.join()` concatenates array elements into a single string. The `.reduce()` distractor is wrong because filtering is selection, not accumulation. `t.title()` with parentheses would call `title` as a function — it's a property, not a method."
+    explanation: "`.filter()` drops explicit tracks (the `!` keeps non-explicit ones), `.map()` extracts each title string, and `.join()` concatenates the array into one comma-separated string. The `.reduce()` distractor accumulates rather than selects, so it's the wrong tool for filtering. `t.title()` calls `title` as a function, but it's a property, not a method."
 
   - id: 14
     difficulty: intermediate
@@ -310,7 +310,7 @@ questions:
         protocol.
       3: |
         They can return values, but callers receive those values through the returned Promise.
-    explanation: "**Every `async` function always returns a Promise — even `return 42` wraps the value in `Promise.resolve(42)`, so you must `await` the call to get the plain value.** Every `async` function returns a Promise — always. `async function answer() { return 42; }` is equivalent to `function answer() { return Promise.resolve(42); }`. This is why `const result = someAsyncFunction()` without `await` gives you a Promise object, not the value. Forgetting this is one of the most common async bugs."
+    explanation: "An `async` function always returns a Promise: `async function answer() { return 42; }` is equivalent to `function answer() { return Promise.resolve(42); }`. This is why `const result = someAsyncFunction()` without `await` gives you a Promise object, not the value — one of the most common async bugs."
 
   - id: 15
     difficulty: advanced
@@ -350,7 +350,7 @@ questions:
       3: |
         Wrapping the timer ID with `Promise.resolve` resolves immediately with the ID; it does not wait
         for the callback.
-    explanation: "**`new Promise(resolve => setTimeout(resolve, ms))` is correct** — `new Promise(resolve => ...)` creates a Promise that resolves when `resolve` is called; passing `resolve` directly to `setTimeout` means 'call `resolve` after `ms` milliseconds.' The other approaches either return a timer ID immediately, await a non-Promise (resolving instantly), or never return the Promise at all."
+    explanation: "`new Promise(resolve => ...)` creates a Promise that settles when `resolve` is called; passing `resolve` directly to `setTimeout` means 'call `resolve` after `ms` milliseconds', so the Promise resolves exactly when the timer fires. The other approaches return a timer ID immediately, await a non-Promise (resolving instantly), or never return the Promise at all."
 
   - id: 16
     difficulty: intermediate
@@ -366,7 +366,7 @@ questions:
       - "    .map(s => s.grade >= 60)"
       - "    .filter(s => s.name)"
       - "    .reduce((acc, s) => acc + s.name, '')"
-    explanation: "**`.filter()` must come before `.map()` — reversing them produces booleans instead of grade-bearing objects, making subsequent filtering impossible.** `.filter()` comes first — select elements, then `.map()` transforms the surviving elements. Reversing them would fail because `.map(s => s.grade >= 60)` produces booleans, not objects with a `grade` property to filter on. `.filter(s => s.name)` would keep students who have a name — which is all of them, so nothing is filtered. `.reduce` accumulates into a single value, not an array."
+    explanation: "`.filter()` selects the passing students first, then `.map()` transforms the survivors into names. Reversing them fails because `.map(s => s.grade >= 60)` produces booleans, leaving no `grade` property to filter on. `.filter(s => s.name)` keeps every student with a name — all of them — so nothing is filtered, and `.reduce` accumulates into a single value, not an array."
 
   - id: 17
     difficulty: advanced
@@ -383,7 +383,7 @@ questions:
     distractors:
       - "    items.forEach(async (item) => {"
       - "    await items;"
-    explanation: "**`for...of` with `await` correctly pauses each iteration before the next — `forEach` ignores async callbacks and `await items` makes no sense because an array is not a Promise.** `for...of` is the idiomatic fix for sequential async iteration — `await` inside a `for...of` loop correctly pauses the loop body before moving to the next item. The distractor `items.forEach(async (item) => {` is the original bug: `.forEach()` does not await async callbacks, so all callbacks fire immediately and `\"All done!\"` prints before any of them finish. `await items` makes no sense — `items` is an array, not a Promise."
+    explanation: "`for...of` is the idiomatic fix for sequential async iteration — `await` inside it pauses the loop body before the next item. The `items.forEach(async ...)` distractor is the original bug: `.forEach()` doesn't await async callbacks, so all of them fire immediately and `\"All done!\"` prints before any finish. `await items` makes no sense — `items` is an array, not a Promise."
 
   - id: 18
     difficulty: advanced
@@ -413,7 +413,7 @@ questions:
       3: |
         In an event-loop server, one slow CPU-bound request harms every other request waiting for a
         turn.
-    explanation: "**`computeAIResponse` is CPU-intensive and blocks the Event Loop for 2 seconds, freezing all other requests — `async/await` cannot fix CPU-bound work; a Worker Thread is required.** This connects the Event Loop (Restaurant metaphor) to a real scenario. The Chef is stuck computing AI moves for 2 seconds — during which EVERY other player's request sits in the queue. `async/await` alone won't help because the computation is CPU-bound, not I/O-bound. Worker Threads move the heavy computation off the main thread."
+    explanation: "The Chef (call stack) is stuck computing AI moves for 2 seconds, during which every other player's request sits in the queue. `async/await` can't help because the work is CPU-bound, not I/O-bound — there's nothing to delegate to the OS while waiting. A Worker Thread moves the heavy computation off the main thread so the Event Loop stays responsive."
 
   - id: 19
     difficulty: advanced
@@ -430,7 +430,7 @@ questions:
     distractors:
       - "    const student = roster.filter(s => s.id === req.params.id);"
       - "    if (student === null) { return res.json({ error: 'Not found' }); }"
-    explanation: "**`.find()` returns `undefined` (not `null`) for a missing student, so `!student` is the correct check — `.filter()` returns an array and `=== null` misses `undefined`.** `.find()` returns the first match or `undefined` (not `null`). The distractor uses `.filter()` which returns an array, not a single object. The second distractor checks `=== null` but `.find()` returns `undefined` when no match is found — checking `!student` correctly handles both `undefined` and `null`. Also note `Number(req.params.id)` converts the string param to match the numeric `id` property."
+    explanation: "`.find()` returns the first match or `undefined`, so `!student` is the right guard — it catches both `undefined` and `null`. The `.filter()` distractor returns an array, not a single object, and the `=== null` distractor misses `undefined`, which is what `.find()` actually produces. Note `Number(req.params.id)` converts the string route param to match the numeric `id` under `===`."
 
   - id: 20
     difficulty: basic
@@ -445,7 +445,7 @@ questions:
     distractors:
       - "const jsonStr = student.toJSON();"
       - "const parsed = JSON.decode(jsonStr);"
-    explanation: "**`JSON.stringify()` serializes and `JSON.parse()` deserializes — there is no `.toJSON()` method on plain objects and no `JSON.decode()` in JavaScript.** `JSON.stringify()` converts an object to a JSON string. `JSON.parse()` converts a JSON string back to an object. There is no `.toJSON()` method on plain objects and no `JSON.decode()` — these are common confusions from other languages."
+    explanation: "`JSON.stringify()` converts an object to a JSON string and `JSON.parse()` converts it back. Plain objects have no `.toJSON()` method, and there is no `JSON.decode()` — both distractors are confusions carried over from other languages."
 
   - id: 21
     difficulty: basic
@@ -471,7 +471,7 @@ questions:
         never declared.
       3: |
         JavaScript does not infer that an unassigned variable should be numeric zero.
-    explanation: "**A declared variable with no value assigned is `undefined`, not `null` — `undefined` means 'not yet assigned' while `null` means 'intentionally empty'.** In JavaScript, `undefined` means 'declared but no value assigned.' This is different from Python (which raises `NameError` for uninitialized variables) and from `null` (which means 'intentionally empty'). `typeof undefined` is `\"undefined\"`. Confusingly, `typeof null` is `\"object\"` — a famous JS bug."
+    explanation: "A declared variable with no value assigned is `undefined` ('not yet assigned'), distinct from `null` ('intentionally empty') and from Python, which raises `NameError` for an uninitialized name. `typeof undefined` is `\"undefined\"`; confusingly, `typeof null` is `\"object\"` — a famous JS bug."
 
   - id: 22
     difficulty: advanced
@@ -486,4 +486,4 @@ questions:
     distractors:
       - "const city = user.profile.address.city || 'Unknown';"
       - "const city = user?.profile?.address?.city != null ? city : 'Unknown';"
-    explanation: "**Optional chaining `?.` returns `undefined` instead of throwing when a nested property is null, and `??` correctly defaults only for `null`/`undefined` — `||` would also replace `0` and empty strings.** Optional chaining `?.` safely navigates: when `address` is `null`, `address?.city` returns `undefined` instead of throwing. `??` defaults only for `null`/`undefined`. The `||` distractor would also replace empty strings and `0` with the default. The ternary distractor references `city` before it's defined."
+    explanation: "When `address` is `null`, `address?.city` returns `undefined` instead of throwing, and `??` supplies the default only for `null`/`undefined`. The `||` distractor would also replace `0` and empty strings with the default — wrong when those are valid values. The ternary distractor references `city` before it is defined."

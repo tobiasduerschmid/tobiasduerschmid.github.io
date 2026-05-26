@@ -36,7 +36,7 @@ cards:
     difficulty: advanced
     question: "You want to integrate a feature branch into main, but instead of bringing over all 15 tiny incremental commits, you want them combined into one clean commit on the main branch."
     answer: "`git merge --squash`"
-    explanation: "Squashing combines all the patches from the feature branch into a single set of changes, allowing you to make one clean commit on the target branch and keep the history tidy with `git merge --squash`. Note: `git merge --squash` only **stages** the combined changes — you must follow it with `git commit` to materialise the squashed commit."
+    explanation: "Squashing collapses every patch from the feature branch into one set of changes, so a single clean commit lands on the target branch. It only **stages** those changes, though — you must follow it with `git commit` to materialise the squashed commit."
   - id: 8
     difficulty: advanced
     question: "You are building a massive project and want to include an entirely separate external Git repository as a subdirectory within your project, while keeping its history independent."
@@ -46,7 +46,7 @@ cards:
     difficulty: basic
     question: "You are starting a brand new project in an empty folder on your computer and want Git to start tracking changes in this directory."
     answer: "`git init`"
-    explanation: "This command initializes a new, empty Git repository in the current directory via `git init`, creating the hidden `.git` folder that manages all version control data."
+    explanation: "Initializes a new, empty Git repository in the current directory, creating the hidden `.git` folder that holds all version-control data. It is a one-time setup step per project."
   - id: 10
     difficulty: basic
     question: "You have just installed Git on a new computer and need to set up your username and email address so that your commits are properly attributed to you."
@@ -61,12 +61,12 @@ cards:
     difficulty: basic
     question: "You've lost track of what you've been doing. You want a quick overview of which files are modified, which are staged, and which are completely untracked by Git."
     answer: "`git status`"
-    explanation: "This command `git status` provides a high-level summary of the working tree and staging area statuses, making it one of the most frequently used Git commands."
+    explanation: "Summarizes the working tree and staging area — what is modified, staged, or untracked — without changing anything. It is the cheapest way to orient yourself before staging or committing."
   - id: 13
     difficulty: basic
     question: "You have staged all the files for a completed feature and are ready to permanently save this snapshot to your local repository's history with a descriptive message."
     answer: "`git commit -m 'message'`"
-    explanation: "Committing takes everything in the staging area and records it as a permanent new version in your local Git history via `git commit`."
+    explanation: "Records everything currently in the staging area as a new, immutable snapshot in your local history. Only staged changes are included — unstaged edits stay in the working directory."
   - id: 14
     difficulty: basic
     question: "You want to review the chronological history of all past commits on your current branch, including their author, date, and commit message."

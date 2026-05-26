@@ -249,8 +249,8 @@ questions:
         `ArrayList` preserves order, but membership checks are linear and duplicates need manual
         prevention. That does not fit fast lookup with no duplicates.
       2: |
-        A `HashMap` maps keys to values; it is not the natural representation for task A’s set
-        membership or task C’s ordered history.
+        A `HashMap` maps keys to values; it is not the natural representation for task A's set
+        membership or task C's ordered history.
       3: |
         A `HashMap` does not preserve an ordered grade-submission history by index. It is for
         key-to-value lookup.
@@ -302,7 +302,7 @@ questions:
       3: |
         Compiler enforcement is based on exception type hierarchy, not whether the exception was
         user-defined.
-    explanation: "**Java forces you to handle only checked exceptions (subclasses of `Exception` excluding `RuntimeException`) because they model recoverable external failures — unchecked exceptions model programming errors.** Java divides exceptions into checked (`IOException`, `SQLException` — compiler-enforced) and unchecked (`NullPointerException`, `IllegalArgumentException` — no enforcement). Checked exceptions model **recoverable external failures** where the caller must make a decision. Unchecked exceptions model **programming errors** that should not normally occur if code is correct."
+    explanation: "The compiler enforces only checked exceptions — subclasses of `Exception` excluding `RuntimeException` (`IOException`, `SQLException`). These model **recoverable external failures** the caller must decide how to handle. Unchecked exceptions (`NullPointerException`, `IllegalArgumentException`) model **programming errors** that shouldn't occur if the code is correct, so the compiler doesn't force handling."
 
   - id: 13
     difficulty: advanced
@@ -324,7 +324,7 @@ questions:
       3: |
         A superclass constructor is always invoked. If no explicit call is written, Java tries to insert
         `super()`, which can fail if no no-arg constructor exists.
-    explanation: "**`super()` must be the first statement; if omitted Java inserts `super()` automatically, but if the parent has no no-arg constructor this causes a compile error.** Java requires `super()` or `this()` to be the first statement of any constructor. If you omit `super()`, Java inserts a no-arg `super()` call automatically. If the parent class has no no-arg constructor (because it only defines parameterized constructors), the implicit call fails and you get a compile error. In C++, you'd use initializer lists: `Car(args) : Vehicle(make, year) { }`."
+    explanation: "Java requires `super(...)` or `this(...)` to be the first statement of a constructor, so the parent is fully constructed before subclass code runs. Omitting it makes Java insert a no-arg `super()`; if the parent defines only parameterized constructors, that implicit call fails and you get a compile error. C++ expresses the same ordering through initializer lists: `Car(args) : Vehicle(make, year) { }`."
 
   - id: 14
     difficulty: intermediate
@@ -351,7 +351,7 @@ questions:
       3: |
         No cast is needed to dispatch an overridden method. Dynamic dispatch is the normal Java method
         call behavior.
-    explanation: "**Java dispatches methods based on the runtime type, not the reference type — unlike C++ where you must explicitly mark methods `virtual` to get this behavior.** Java's method dispatch is **virtual by default** — unlike C++ where you must add the `virtual` keyword. The JVM looks at the actual object type (`Car`) at runtime, not the declared reference type (`Vehicle`). This is polymorphism: one line of code (`v.describe()`) calls the right implementation for each object in a heterogeneous collection. `@Override` confirms this intent at compile time."
+    explanation: "Java methods are **virtual by default** — unlike C++, which needs the `virtual` keyword — so the JVM dispatches on the actual object type (`Car`) at runtime, not the declared reference type (`Vehicle`). That is polymorphism: one line, `v.describe()`, calls the right implementation for each object in a heterogeneous collection. `@Override` confirms the intent at compile time."
 
   - id: 15
     difficulty: advanced
@@ -373,7 +373,7 @@ questions:
       - "    public static <X, Y> Pair<X, Y> swap(Pair<X, Y> p) {"
       - "    public Pair(T first, T second) { this.first = first; this.second = second; }"
       - "    public static Pair swap(Pair p) { return new Pair(p.second, p.first); }"
-    explanation: "**The static `swap` method must declare its own type parameters `<X, Y>` independent of the class's `<A, B>`, and return `Pair<Y, X>` to actually flip the types.** The class declares two type parameters `<A, B>`. The `swap` method introduces its own parameters `<X, Y>` (independent of the class's `A, B`) and returns `Pair<Y, X>` — types flipped. The distractor `Pair<X, Y>` as the return type doesn't actually swap anything. The raw `Pair` distractor loses all type safety. (Java's `private` is class-scoped, so direct access to `p.second` from inside `Pair` itself would actually compile — but the accessor `getSecond()` is preferred for consistency with the surrounding code style.)"
+    explanation: "Because `swap` is `static`, it cannot use the class's `<A, B>` and must declare its own type parameters `<X, Y>`, returning `Pair<Y, X>` to actually flip the types. The `Pair<X, Y>` return-type distractor swaps nothing; the raw `Pair` distractor loses all type safety. (Java's `private` is class-scoped, so reading `p.second` from inside `Pair` would compile, but `getSecond()` matches the surrounding style.)"
 
   - id: 16
     difficulty: intermediate
@@ -397,7 +397,7 @@ questions:
       - "public class Circle extends Shape {"
       - "public abstract class Shape {"
       - "    double getArea() { return 0; }  // default implementation"
-    explanation: "**`Circle implements Shape` (not `extends`) is required; interface methods have no body, and `@Override` confirms the implementation matches the contract.** Interfaces use `implements`, not `extends` (that's for class inheritance). Interface method declarations have no body — just a signature and semicolon. The implementing class provides all methods. `@Override` is optional but strongly recommended — the compiler verifies you're overriding a real method, catching typos. The abstract class distractor would work but be the wrong choice for a pure contract with no shared state."
+    explanation: "A class uses `implements` for an interface (`extends` is for class inheritance), interface methods are signatures with no body, and the class must provide all of them. `@Override` is optional but recommended — the compiler verifies a real method is being overridden, catching typos. The abstract-class distractor compiles but is wrong for a pure contract with no shared state."
 
   - id: 17
     difficulty: advanced
@@ -421,7 +421,7 @@ questions:
     distractors:
       - "class InsufficientFundsException extends RuntimeException {"
       - "public boolean withdraw(double amount) {"
-    explanation: "**A checked exception must extend `Exception` (not `RuntimeException`) and the method must declare `throws`, forcing callers to handle it or propagate it.** Checked exceptions extend `Exception` (NOT `RuntimeException`). The `throws` declaration in the method signature is mandatory — callers that don't catch or re-throw it won't compile. The distractor extending `RuntimeException` would make it unchecked, removing compiler enforcement. Omitting `throws` from the signature is a compile error as soon as the method body contains `throw new InsufficientFundsException(...)`."
+    explanation: "A checked exception extends `Exception` (not `RuntimeException`), and the method's `throws` declaration is mandatory — callers that neither catch nor re-throw it won't compile. The `RuntimeException` distractor would make it unchecked, removing that enforcement. Omitting `throws` is itself a compile error once the body contains `throw new InsufficientFundsException(...)`."
 
   - id: 18
     difficulty: expert
@@ -448,4 +448,4 @@ questions:
       3: |
         Returning the full `ArrayList` makes callers depend on the internal collection and gives linear
         lookup plus manual duplicate checks.
-    explanation: "**An `Enrollable` interface hides the storage decision, and `LinkedHashSet` provides O(1) lookup, deduplication, and insertion order — fulfilling all three requirements at once.** The interface (`Enrollable`) decouples the contract from the implementation — callers depend on behavior, not on how students are stored (information hiding). `LinkedHashSet<Student>` gives O(1) `contains()`, automatic deduplication, and insertion-order iteration. `ArrayList` would require O(n) duplicate checks. Exposing `getStudents()` leaks the storage decision — if you switch collections, callers break."
+    explanation: "The `Enrollable` interface decouples the contract from the implementation, so callers depend on behavior rather than on how students are stored (information hiding). `LinkedHashSet<Student>` gives O(1) `contains()`, automatic deduplication, and insertion-order iteration — all three requirements at once — where `ArrayList` would need O(n) duplicate checks and exposing `getStudents()` would leak the storage decision."
