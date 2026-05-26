@@ -99,3 +99,12 @@ Use tactics after the quality attribute scenario is specific enough to judge the
 For example, a team trying to improve availability might start with this scenario: "If one perception worker crashes while the robot is operating, the system detects the crash within 2 seconds and starts a replacement worker within 5 seconds." Ping-echo, heartbeat, or process supervision could all be candidate tactics. The right choice depends on the runtime style, the acceptable monitoring traffic, and how much logic the team wants inside each worker.
 
 Tactics do not remove trade-offs. They make trade-offs inspectable.
+
+# Architectural Tactics Quiz and Flashcards
+{: #architectural-tactics-review-and-practice }
+
+Use these flashcards and quiz questions to practice distinguishing tactics from styles, matching tactics to quality scenarios, and naming the costs of ping-echo, heartbeat, redundancy, and caching.
+
+{% include flashcards.html id="architectural_tactics" %}
+
+{% include quiz.html id="architectural_tactics" %}

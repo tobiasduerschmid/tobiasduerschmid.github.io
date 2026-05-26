@@ -100,7 +100,8 @@ Common tactics include:
 
 The useful question is not "which tactic is best?" but "which tactic improves the target quality scenario, and what does it cost?" Ping-echo and heartbeat both improve availability by detecting failures, but both consume network and processing resources. Caching improves performance when requests repeat, but it introduces invalidation and stale-data risks. See [Architectural Tactics](/SEBook/architectural_tactics.html) for the detailed comparison.
 
-# Review and Practice
+# Quality Attributes Quiz and Flashcards
+{: #quality-attributes-review-and-practice }
 
 Use these flashcards and quiz questions to review the whole topic: definitions, measurable quality specifications, design-time and run-time qualities, trade-offs, synergies, tactics, and architectural prioritization.
 

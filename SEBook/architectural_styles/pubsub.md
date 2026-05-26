@@ -118,3 +118,12 @@ Common publish-subscribe technologies include:
 * **RabbitMQ:** message-oriented middleware that supports flexible routing and queue-based delivery.
 
 The framework does not remove the architectural trade-off. It packages one version of the trade-off so that teams can use it consistently.
+
+# Publish-Subscribe Quiz and Flashcards
+{: #publish-subscribe-review-and-practice }
+
+Use these flashcards and quiz questions to check whether you can reason about publisher/subscriber ignorance, event-bus trade-offs, routing variants, delivery guarantees, topic bugs, and the observability needed to make publish-subscribe systems understandable.
+
+{% include flashcards.html id="architectural_style_pubsub" %}
+
+{% include quiz.html id="architectural_style_pubsub" %}

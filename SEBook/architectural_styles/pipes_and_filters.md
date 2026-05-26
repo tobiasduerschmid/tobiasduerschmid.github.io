@@ -70,3 +70,12 @@ Textbooks present the *Platonic* ideal of the pipe-and-filter style: filters mus
 
 **3. Tackling the Error Handling Liability**
 The literature highlights a conflict in how to manage the inherent lack of error handling in pipelines. Traditional pattern catalogs suggest passing "special marker values" down the pipeline to resynchronize filters upon failure, or relying on a single error channel (like `stderr`). However, newer architectural methodologies propose fundamentally altering the style's topology. Lattanze suggests introducing *broadcasting filters*—filters equipped with event-casting mechanisms (like observer-observable patterns) to asynchronously broadcast errors to an external monitor {% cite Lattanze2008 %}. This represents a paradigm shift from pure data-flow to a hybrid event-driven/data-flow architecture to satisfy enterprise reliability requirements.
+
+# Pipes and Filters Quiz and Flashcards
+{: #pipes-and-filters-review-and-practice }
+
+Use these flashcards and quiz questions to practice identifying true pipe-and-filter constraints, comparing execution models, and evaluating the style's effects on modifiability, throughput, latency, testability, and error handling.
+
+{% include flashcards.html id="architectural_style_pipes_filters" %}
+
+{% include quiz.html id="architectural_style_pipes_filters" %}

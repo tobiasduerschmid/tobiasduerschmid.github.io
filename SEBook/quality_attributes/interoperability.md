@@ -49,3 +49,12 @@ In a real-world setting, a design for interoperability is evaluated based on its
 2.  **Variability:** An interface that supports a wide variety of use cases and potential extensions is more likely to be adopted.
 
 Successful interoperable design requires finding the "sweet spot" where the interface provides enough variability to be useful while remaining simple enough to minimize adoption costs.
+
+# Interoperability Quiz and Flashcards
+{: #interoperability-review-and-practice }
+
+Use these flashcards and quiz questions to check whether you can distinguish syntactic from semantic interoperability, write measurable interoperability requirements, choose adapter-based design tactics, and reason about the trade-off between adoption and changeability.
+
+{% include flashcards.html id="quality_attribute_interoperability" %}
+
+{% include quiz.html id="quality_attribute_interoperability" %}

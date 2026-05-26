@@ -41,3 +41,12 @@ The approach to testability varies significantly based on the **risk profile** o
 *   **Web Applications:** Testing is often visual and challenging to automate, requiring frameworks like **Selenium or Playwright** to simulate user clicks and assert element visibility.
 *   **Spacecraft Software (NASA):** In high-stakes environments where failures are not an option, testability is critical because faults can only be detected on Earth before launch. NASA employs **rigorous formal design reviews**, restricts language constructs (e.g., **no recursion**), and only trusts software that has been "tested in space".
 *   **Startups:** For small teams, testability is a tool for **value proposition evaluation**, often using "Wizard of Oz" approaches to mock part of a system with human intervention to evaluate a concept before building it.
+
+# Testability Quiz and Flashcards
+{: #testability-review-and-practice }
+
+Use these flashcards and quiz questions to check whether you can reason about controllability, observability, test doubles, fault injection, metamorphic testing, and the design choices that make software easier or harder to test.
+
+{% include flashcards.html id="quality_attribute_testability" %}
+
+{% include quiz.html id="quality_attribute_testability" %}
