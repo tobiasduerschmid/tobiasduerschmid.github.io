@@ -11,7 +11,7 @@ cards:
     difficulty: intermediate
     question: "Why is Singleton controversial in modern practice?"
     answer: "It conflates two concerns: ensuring a single instance (legitimate) and providing global access (harmful coupling). DI containers solve the first without introducing the second."
-    explanation: "POSA5 calls it 'a well-known pattern with a weak solution.' The literature discussing Singleton's issues dwarfs the original GoF description."
+    explanation: "The global access point is the real cost: any code can reach the instance, so dependencies become invisible and the retained state breaks test isolation."
   - id: 3
     difficulty: basic
     question: "What is 'Singleitis'?"

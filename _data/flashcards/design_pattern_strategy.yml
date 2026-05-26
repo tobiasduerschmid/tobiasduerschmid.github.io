@@ -6,7 +6,7 @@ cards:
     difficulty: basic
     question: "What is the *intent* of the Strategy pattern?"
     answer: "Define a family of algorithms, encapsulate each one as an object, and make them interchangeable at runtime. Strategy lets the algorithm vary independently from the clients that use it."
-    explanation: "From the GoF book. The keyword is *interchangeable*: the Context can swap one algorithm for another without changing its own code or its clients' code."
+    explanation: "The load-bearing word is *interchangeable*: the Context can swap one algorithm for another without changing its own code or its clients' code."
   - id: 2
     difficulty: basic
     question: "What problem does Strategy solve?"
@@ -66,7 +66,7 @@ cards:
     difficulty: advanced
     question: "Why does the SimUDuck example put `fly()` and `quack()` into Strategy interfaces instead of using `Flyable` and `Quackable` interfaces directly on each duck?"
     answer: "Plain interfaces force *every duck class* to re-implement `fly()` and `quack()`, destroying code reuse. With Strategy, duck behavior is composed — `MallardDuck` and `RedHeadDuck` can share `FlyWithWings` instead of duplicating the implementation."
-    explanation: "This is the central insight of Head First Design Patterns Chapter 1: interfaces alone solve the inheritance problem but lose code reuse. Strategy solves both — different ducks can share the same FlyBehavior instance."
+    explanation: "Interfaces alone solve the inheritance problem but lose code reuse, since each class must still write its own implementation. Strategy solves both — different ducks can share the same FlyBehavior instance."
   - id: 14
     difficulty: advanced
     question: "Strategy is also known by what alternate name in the GoF catalog?"

@@ -20,7 +20,7 @@ questions:
         Splitting the conjunction does not add measurement. "Fast" alone is still unmeasurable; "reliable" alone is still unmeasurable. The problem is the absence of scenarios and metrics, not the conjunction.
       3: |
         Treating quality requirements as vague-by-default is how systems quietly fail to meet expectations. The engineering discipline is precisely *not* to accept vague quality requirements — to push back until they are measurable.
-    explanation: "**A useful quality requirement has two parts: a scenario (the specific condition or environment) and a metric (a concrete measure of goodness — a hard threshold like '< 1 s' or a soft goal like 'minimize effort').** Without both, the requirement cannot be tested, can't drive design decisions, and can't be falsified — it is engineering theater."
+    explanation: "**A useful quality requirement has two parts: a scenario (the specific condition or environment) and a metric (a concrete measure of goodness — a hard threshold like '< 1 s' or a soft goal like 'minimize effort').** Without both, the requirement cannot be tested, cannot drive design decisions, and cannot be falsified."
 
   - id: 2
     difficulty: basic
@@ -145,7 +145,7 @@ questions:
         UDP is faster than TCP at small payload sizes; that's part of the consultant's pitch. The hidden cost is reliability, not throughput.
       3: |
         UDP traverses firewalls (DNS, video calls, game traffic all use it). Some configurations may block it, but framing it as unreachable is incorrect.
-    explanation: "**Reliability and performance are classical competing quality attributes: TCP's acknowledgments and retransmissions cost latency, UDP's fire-and-forget saves latency but admits loss, duplication, or reordering.** For payments, the request and acknowledgment bytes must arrive intact and in order, and the application must add idempotency or transaction logic so retries do not create duplicate charges. For video streams or DNS lookups, the latency win may be decisive. The architect's job is to align the protocol with the system's correctness needs, not to optimize one axis in isolation."
+    explanation: "**Reliability and performance are classically competing quality attributes: TCP's acknowledgments and retransmissions cost latency, while UDP's fire-and-forget saves latency but admits loss, duplication, or reordering.** For payments, the bytes must arrive intact and in order, and the application still needs idempotency or transaction logic so retries do not create duplicate charges. For video streams or DNS lookups the latency win may be decisive — the protocol should match the system's correctness needs, not optimize one axis in isolation."
 
   - id: 8
     difficulty: intermediate

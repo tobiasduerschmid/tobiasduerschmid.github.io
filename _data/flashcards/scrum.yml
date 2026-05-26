@@ -119,7 +119,7 @@ cards:
     bloom: analyze
     question: "Why is it widely considered bad practice for one person to be **both** the Product Owner *and* the Scrum Master, even though the 2020 Scrum Guide does not formally prohibit it?"
     answer: "The roles enforce opposing pressures: the **Product Owner** pushes for *value* (more, sooner, ordered by priority) while the **Scrum Master** protects *process and team sustainability* (Definition of Done, removal of impediments, healthy retrospectives). When one person holds both, value pressure typically wins — the Definition of Done quietly slips, impediments get reframed as the team's fault, and retrospectives stop producing change."
-    explanation: "The 2020 Scrum Guide defines the accountabilities as distinct but does not formally ban one person from holding both. The argument against doing so is practitioner consensus, not Guide canon — but it has been consistent for two decades because the two accountabilities encode the real tension between *what to build* and *how to build it sustainably*. Merging removes the friction that protects long-term capacity."
+    explanation: "The argument against combining them is practitioner consensus, not Guide canon. The two accountabilities encode the real tension between *what to build* and *how to build it sustainably*; merging them removes the friction that protects long-term capacity."
 
   - id: 18
     difficulty: advanced
