@@ -30,7 +30,7 @@ cards:
     question: "How should states be **named** according to UML conventions?"
     answer: "Use **present-participial phrases** (e.g., *Processing*, *WaitingForInput*) or **noun phrases** (e.g., *Active*, *Idle*)."
     explanation: >
-      States represent a *condition of being*, not an action. Avoid verb names like *Login* or *doPayment*. Good names: *LoggedIn*, *Authenticating*, *Idle*, *EmergencyPower*. The name should answer "what condition is the object in?"
+      A state name should answer "what condition is the object in?" — so use *LoggedIn*, *Authenticating*, *Idle*, not action verbs like *Login* or *doPayment*.
 
   - id: 5
     difficulty: intermediate

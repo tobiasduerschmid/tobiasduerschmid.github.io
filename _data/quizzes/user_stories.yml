@@ -43,7 +43,7 @@ questions:
       5: |
         The valid-card and expired-card cases are observable pass/fail checks. That makes the story
         testable.
-    explanation: "**This violates Independent because the payment story cannot be completed without the unimplemented user registration and cart management stories.** This user story violates the **Independent** criterion because it depends on the user registration and cart management stories. All other INVEST criteria are met."
+    explanation: "Only **Independent** is violated: the payment story cannot ship or be reordered until the still-unfinished registration and cart-management stories exist. The other five criteria hold — the behavior is valuable, negotiable, estimable, small, and testable."
   - id: 2
     difficulty: intermediate
     type: multiple
@@ -83,7 +83,7 @@ questions:
       5: |
         The stated route and data-access behavior can be tested. The issue is not absence of pass/fail
         checks.
-    explanation: "**This violates Negotiable (by dictating a specific tech stack) and Valuable (because stack standardization is an internal engineering goal, not a user-facing benefit).** This violates **Negotiable** because it rigidly dictates the exact technical implementation rather than stating a problem for the developers to solve. It also violates **Valuable** because the story is framed around internal implementation standardization rather than an external benefit a customer, purchaser, or end user can prioritize."
+    explanation: "**Negotiable** fails because naming React, Node, and PostgreSQL dictates the implementation instead of leaving design open. **Valuable** fails because standardizing the stack is an internal engineering goal, not an external benefit a customer, purchaser, or end user could prioritize."
   - id: 3
     difficulty: intermediate
     type: multiple
@@ -123,7 +123,7 @@ questions:
       5: |
         The migration can be checked by inspecting the schema. Testability does not rescue work that has
         no value.
-    explanation: "**This violates Valuable (work with no utility produces no return on investment) and Negotiable (it prescribes a specific database change rather than expressing a user need).** This heavily violates **Valuable** because doing work that has no impact, utility, or visible outcome provides no return on investment. It also violates **Negotiable** by prescribing a hyper-specific database tweak rather than a flexible user need, completely missing the spirit of a user story."
+    explanation: "**Valuable** fails because a column that is never queried, displayed, or used produces no return on investment. **Negotiable** fails because the story prescribes a hyper-specific database tweak instead of expressing a user need the team could solve in different ways."
   - id: 4
     difficulty: intermediate
     type: multiple
@@ -165,7 +165,7 @@ questions:
       5: |
         Each listed behavior has a plausible acceptance check. The problem is scope, not the complete
         absence of tests.
-    explanation: "**This violates Small and Estimable because it is a massive Epic combining patient records, payroll, inventory, and scheduling into one backlog item.** Those are separate product areas with different users, risks, and acceptance paths, so the team cannot reasonably size or deliver the story as one slice. The listed acceptance criteria are individually checkable, so Testable is not the central failure; the central problem is that too much work has been bundled together to estimate and complete as a single story."
+    explanation: "This epic bundles patient records, payroll, inventory, and scheduling into one backlog item, so it violates **Small** and **Estimable**: those are separate product areas with different users, risks, and acceptance paths, and cannot be sized or delivered as one slice. Each listed criterion is individually checkable, so Testable is not the central failure — the bundled scope is."
   - id: 5
     difficulty: advanced
     type: multiple
@@ -205,4 +205,4 @@ questions:
       5: |
         A test needs an observable expected result. "Blazing fast" and "pleasant" need measurable
         targets, such as load time and design acceptance criteria, before they can be verified.
-    explanation: "**This violates Testable (subjective terms like 'blazing fast' and 'extremely modern' cannot be verified) and, in this scenario, Estimable (the team has no shared target for the undefined standards).** The central violation is **Testable** because 'blazing fast', 'extremely modern', and 'pleasant' are subjective without objective metrics or acceptance examples. Here that also violates **Estimable** because the team has no performance budget, design reference, or user-testing target to size against. Whether we consider it 'small' is context-dependent, so selecting Small is also acceptable."
+    explanation: "**Testable** fails because 'blazing fast', 'extremely modern', and 'pleasant' have no objective metric or acceptance example. Here that drags down **Estimable** too: with no performance budget, design reference, or user-testing target, the team has nothing concrete to size against. Whether the story is 'small' is context-dependent, so selecting Small is also acceptable."

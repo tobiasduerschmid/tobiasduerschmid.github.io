@@ -6,7 +6,7 @@ cards:
     difficulty: intermediate
     question: "What is the primary purpose of Acceptance Criteria in a user story?"
     answer: "To define the specific conditions that must be met for a user story to be considered 'Done'. They define the scope of the user story."
-    explanation: "Acceptance criteria provide clear, objective boundaries for a feature. They remove ambiguity, guide the development team on exactly what needs to be built, and form the basis for testing whether the story delivers the intended value. They make user stories testable and estimable."
+    explanation: "They give a feature clear, objective boundaries, which removes ambiguity about what to build and forms the basis for testing whether the story delivers its value. This is also what makes a story testable and estimable."
   - id: 2
     difficulty: basic
     question: "What is the standard template for writing a User Story?"

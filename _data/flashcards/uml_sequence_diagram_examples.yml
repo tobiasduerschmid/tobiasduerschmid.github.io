@@ -48,7 +48,7 @@ cards:
     question: "What does an **activation bar** (execution specification) represent on a lifeline?"
     answer: "The period during which the object is **actively performing** an action or behavior."
     explanation: >
-      Activation bars are thin rectangles on lifelines. They show when an object is processing a method call. They can be nested (when object A calls B which calls C, all three have overlapping activation bars). They help visualize which objects are busy at any point in time.
+      Thin rectangles on a lifeline showing when an object is processing a method call. They nest when A calls B which calls C — all three carry overlapping bars — so you can see which objects are busy at any point.
 
   - id: 7
     difficulty: advanced

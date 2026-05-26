@@ -29,7 +29,7 @@ questions:
       3: |
         A named function would still mutate a throwaway local; the fix is to put persistent UI data in
         state.
-    explanation: "**Mutating a local variable does not trigger a re-render because React re-runs the entire function on every render, resetting `count` to 0 — `useState` is required to persist values across renders.** React's model is fundamentally different from C++ member variables. A component function is re-invoked on every render, destroying all local variables. `useState` stores values in React's internal data structure that persists across renders. The setter function is the ONLY way to signal React that state changed."
+    explanation: "Unlike a C++ member variable, a component function is re-invoked on every render, so each `let count = 0` starts fresh and any mutation is discarded. `useState` stores the value in React's own data structure that survives across renders, and calling its setter is the only thing that signals a re-render."
 
   - id: 2
     difficulty: advanced
@@ -49,7 +49,7 @@ questions:
       3: |
         A clearer variable name does not remove the bug-prone obligation to update two related states
         together.
-    explanation: "**Storing derived data as separate state violates the minimal state principle and creates sync bugs — the filtered list should be derived from `allTasks` and a filter string, not stored independently.** React's principle: store the MINIMAL state and DERIVE everything else. The filtered list is computable from (allTasks + filter), so it should not be separate state. Two pieces of state that must be kept in sync is a recipe for bugs — the data becomes inconsistent the moment one is updated without the other."
+    explanation: "Keep state minimal and derive everything else. The filtered list is fully computable from `allTasks` plus a filter string, so storing it separately creates a second source of truth that goes stale the moment one is updated without the other."
 
   - id: 3
     difficulty: advanced
@@ -69,7 +69,7 @@ questions:
       3: |
         Index keys are allowed, but they are unsafe when list items can be inserted, deleted, or
         reordered.
-    explanation: "**Stable keys let React identify which item is which across re-renders — index keys break this because deleting an item shifts all subsequent indices, causing React to associate state with the wrong items.** React uses keys to match elements between the old and new virtual DOM trees. If keys are stable (like database IDs), React knows item #42 is the same item #42 even if its position changed. With index keys, React thinks 'the item at index 2' is always the same item — but after a deletion, a different item now sits at index 2, inheriting the wrong state."
+    explanation: "Keys match elements between the old and new virtual DOM trees. A stable ID lets React recognise item #42 as the same item even when its position changes; an index key only ever means \"the item currently at slot 2\", so after a deletion a different item inherits that slot's component state (checkbox, focus, input value)."
 
   - id: 4
     difficulty: intermediate
@@ -90,7 +90,7 @@ questions:
       3: |
         Building the static version first exposes component boundaries and data flow before
         interactivity makes the design harder to reason about.
-    explanation: "**Building static first separates the concerns of 'what the UI looks like' from 'how it changes', making it easier to identify minimal state and avoid over-engineering.** Building static first forces you to think about data flow (which component gets which props) before worrying about interactivity. This naturally reveals the component hierarchy and makes it easy to identify the minimal state: any data that (a) changes over time and (b) can't be computed from other state or props."
+    explanation: "A static, props-only pass settles the component hierarchy and data flow before interactivity is in the picture. With that structure visible, the minimal state is easy to spot — any data that both changes over time and can't be computed from other state or props."
 
   - id: 5
     difficulty: advanced
@@ -114,7 +114,7 @@ questions:
         />`.
       3: |
         `0` is not an invalid React child; it is exactly the kind of primitive React renders as text.
-    explanation: "**The number `0` IS a valid React node — unlike `false`, `null`, and `undefined` — so `{count && ...}` renders the literal `0` as text when count is zero, not nothing.** JavaScript's `&&` returns the first falsy value. `0 && <Badge />` evaluates to `0`. React renders `false`, `null`, and `undefined` as nothing, but renders `0` as the text '0'. This is a subtle and common bug. The fix: ensure the left operand is always a boolean."
+    explanation: "`&&` returns its left operand when that operand is falsy, so `0 && <Badge />` evaluates to `0` — and `0` is a valid React node that renders as the text \"0\". React skips `false`, `null`, and `undefined`, but not `0`. Make the left operand a real boolean (`count > 0 && ...`) so it short-circuits to `false`."
 
   - id: 6
     difficulty: intermediate
@@ -135,7 +135,7 @@ questions:
       3: |
         A global avoids prop passing by creating hidden shared state that React cannot track through the
         component tree.
-    explanation: "**State must be lifted to the lowest common ancestor because both siblings need `filterText` — the parent owns it and passes it down as props, with a callback for inverse data flow.** This is 'lifting state up'. `SearchBar` needs `filterText` to show the current value. `ProductTable` needs it to filter rows. Their parent owns the state and passes it down: `<SearchBar value={text} onChange={setText} />` and `<ResultsList filter={text} />`. The child calls `onChange(newValue)` to notify the parent — this is inverse data flow."
+    explanation: "This is \"lifting state up\". Both siblings depend on `filterText` — one to display it, one to filter rows — so it belongs in their lowest common ancestor, passed down as props (`value`) with a callback (`onChange`). The child calls `onChange(newValue)` to notify the parent, which re-renders both: data flows down, notifications flow up."
 
   - id: 7
     difficulty: advanced
@@ -156,7 +156,7 @@ questions:
       3: |
         React still understands class components, but composition is preferred over inheritance for
         sharing UI structure.
-    explanation: "**React prefers composition because deep inheritance hierarchies are fragile — modifying a parent class can unexpectedly break subclasses, while composition via `children` is flexible and non-breaking.** The 'fragile base class' problem: modifying a parent class can unexpectedly break subclasses. React's composition model avoids this — a `Card` component that accepts `children` can wrap ANY content without knowing what it is. This gives more flexibility than inheritance and follows the same 'prefer composition over inheritance' principle from OOP courses."
+    explanation: "Deep inheritance hits the \"fragile base class\" problem — a change to the parent can silently break every subclass. Composition sidesteps it: a `Card` that accepts `children` wraps any content without knowing what it is. This is the same \"prefer composition over inheritance\" principle from OOP, applied to UI."
 
   - id: 8
     difficulty: advanced
@@ -177,7 +177,7 @@ questions:
     distractors:
       - "    const [filtered, setFiltered] = useState(items);"
       - "    <input onChange={e => query = e.target.value} />"
-    explanation: "**The correct approach stores only the query in state and derives the filtered list — storing `filtered` as separate state creates sync bugs, and directly mutating `query` skips the re-render signal.** The component uses `useState` for the filter query only — the filtered list is DERIVED from `items` and `query` (minimal state principle). The controlled `<input>` binds `value` to state and updates via `setQuery`. The first distractor stores filtered as separate state (sync bug — violates minimal state). The second distractor mutates `query` directly without `setQuery`, which won't trigger a re-render."
+    explanation: "Only the query is state; the filtered list is derived from `items` and `query` (minimal state), and the controlled `<input>` binds `value` to state while updating through `setQuery`. The `useState(items)` distractor stores `filtered` as a second, drift-prone copy; the `query = e.target.value` distractor mutates the variable directly and so never signals a re-render."
 
   - id: 9
     difficulty: advanced
@@ -197,7 +197,7 @@ questions:
     distractors:
       - "    }, []);"
       - "    setData(fetch(url));"
-    explanation: "**The `[url]` dependency array is required so the effect re-fetches when the URL changes — `[]` causes a stale closure and `setData(fetch(url))` stores a Promise instead of the resolved data.** Custom hooks start with `use`. `useState(null)` initializes the data holder. `useEffect` runs the fetch after render — the `[url]` dependency array ensures it re-fetches when `url` changes. The `then` chain parses JSON and stores it via `setData`. The distractor `[]` would never re-fetch when `url` changes (stale closure bug). `setData(fetch(url))` would store a Promise object in state, not the resolved data."
+    explanation: "Custom hooks start with `use`. `useState(null)` holds the data, `useEffect` runs the fetch after render, and the `[url]` dependency array re-runs it whenever `url` changes. The `[]` distractor pins the effect to the first `url` (stale closure — it never re-fetches); the `setData(fetch(url))` distractor stores the Promise itself instead of the resolved JSON."
 
   - id: 10
     difficulty: advanced
@@ -212,7 +212,7 @@ questions:
     distractors:
       - "{count"
       - "||"
-    explanation: "**`count > 0` ensures the left operand is a boolean so React renders nothing when count is 0 — `{count` renders the literal `0` as text and `||` inverts the logic.** Using `count > 0` ensures the left operand is a boolean (`true`/`false`), not a number. If `count` is `0`, `count > 0` evaluates to `false`, and React renders nothing. The distractor `{count` would render the number `0` as text when count is 0 — a common React bug. `||` would render Badge when count is falsy, which is the opposite of what's intended."
+    explanation: "Making the left operand a boolean (`count > 0`) means it short-circuits to `false` when `count` is `0`, so React renders nothing. The bare `{count` operand would hand React the number `0`, which renders as text; swapping `&&` for `||` flips the logic, showing the badge precisely when `count` is falsy."
 
   - id: 11
     difficulty: advanced
@@ -238,7 +238,7 @@ questions:
         Setters can be used from handlers; the bug is invoking the setter while JSX is being evaluated.
       3: |
         The code never waits for a click because the function call has already happened during render.
-    explanation: "**`setCount(count + 1)` executes immediately during render rather than on click, triggering a state update that causes another render, creating an infinite loop — always pass a function reference, not a call.** onClick expects a *function reference*, not a function call result. `setCount(count + 1)` calls the function right away and passes its return value (`undefined`) to onClick. Since `setCount` triggers a re-render, and it fires on every render, the component loops infinitely. This is one of the most common React bugs for beginners — always pass the function, never call it: `onClick={fn}` not `onClick={fn()}`."
+    explanation: "`onClick` wants a function reference to call later, but `setCount(count + 1)` calls the setter right now, during render, and hands its return value (`undefined`) to `onClick`. Because that state update triggers another render, which calls the setter again, the component loops forever. Pass the function, don't call it: `onClick={fn}`, never `onClick={fn()}`."
 
   - id: 12
     difficulty: advanced
@@ -268,7 +268,7 @@ questions:
       3: |
         `async/await` would not change when the effect runs; `[userId]` is the needed data-flow
         correction.
-    explanation: "**`[]` means the effect runs only on mount and never re-runs — adding `[userId]` to the dependency array is required so the fetch re-runs whenever the userId prop changes.** The dependency array controls *when* an effect re-runs. `[]` = run once on mount and never again. `[userId]` = run on mount, then re-run whenever `userId` changes. Omitting `userId` from the array creates a stale closure — the callback captures the `userId` value from the first render and never updates. React's linting rule `react-hooks/exhaustive-deps` catches exactly this mistake."
+    explanation: "The dependency array controls when an effect re-runs: `[]` fires once on mount and never again, while `[userId]` also re-fires whenever `userId` changes. Leaving `userId` out leaves the callback closed over the first render's value, so it never refetches. The `react-hooks/exhaustive-deps` lint rule flags exactly this omission."
 
   - id: 13
     difficulty: intermediate

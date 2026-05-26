@@ -172,4 +172,4 @@ questions:
       3: |
         Displaying an offline-data banner is user-visible behavior. It can be required without deciding
         whether data comes from a local database, file cache, or another mechanism.
-    explanation: "**'Embeds a local database to cache data' is the 'how' because it names a specific implementation technique — the other options describe the required offline behavior without specifying the mechanism.** Embedding a local database to cache data is the design decision (the **'how'**). The other options describe the required offline capabilities (the **'what'**)."
+    explanation: "Embedding a local database to cache schedule data names a specific storage technique, so it is the **how**. The other statements describe required offline capabilities (viewing a barcode, showing the last schedule, flagging offline data) — the **what** — and leave the mechanism open."

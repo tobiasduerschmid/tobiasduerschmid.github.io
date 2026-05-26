@@ -21,7 +21,7 @@ questions:
       3: |
         Git branching is cheap because branches are lightweight refs to commits, not because a central
         server serializes all work.
-    explanation: "**Distributed VCS gives every developer a full local copy of the entire repository and its history, enabling offline work and independent development.** This defines the distributed model, giving developers offline access to the full project history and the ability to work independently."
+    explanation: "**Distributed VCS gives every developer a full local copy of the entire repository and its history.** Because the whole history lives locally, you can commit, branch, and inspect offline and work independently; a shared remote is a convention, not a requirement."
 
   - id: 2
     difficulty: basic
@@ -42,7 +42,7 @@ questions:
       3: |
         Git's local workflow is about working tree, index, and committed snapshots, not upload/download
         status.
-    explanation: "**The three local areas are the Working Directory (files on disk), the Staging Area (prepped for commit), and the Local Repository (committed history).** Files are edited in the working directory, moved to the staging area to prep for a snapshot, and finally committed to the local repository."
+    explanation: "**The three local areas are the Working Directory (files on disk), the Staging Area/index (the next commit being assembled), and the Local Repository (committed history).** `git add` moves a change from the working directory into staging; `git commit` turns staging into a new snapshot in the repository."
 
   - id: 3
     difficulty: intermediate
@@ -62,7 +62,7 @@ questions:
       2: |
         Comparing the latest commit to its parent is a history inspection task, not what `git diff HEAD`
         does to uncommitted work.
-    explanation: "**`git diff HEAD` compares the current working directory (including staged changes) against the latest commit.** Adding `HEAD` tells Git to compare the uncommitted files currently on your disk with the snapshot of the most recent commit."
+    explanation: "**`git diff HEAD` compares the working directory (including staged changes) against the snapshot of the latest commit.** Plain `git diff` stops at the index; adding `HEAD` reaches past it to show every uncommitted change, staged or not."
 
   - id: 4
     difficulty: basic
@@ -83,7 +83,7 @@ questions:
       3: |
         Squashing changes commit shape during integration, but it is not the command that overwrites an
         existing remote branch ref.
-    explanation: "**`git push -f` is dangerous on shared branches because it overwrites the remote branch history and can hide or orphan collaborators' commits.** Force-pushing makes the remote branch match your local history, which can remove teammates' commits from that branch and disrupt anyone who based work on them. Those commits may still be recoverable from another clone or reflog, but the shared branch has been rewritten."
+    explanation: "**`git push -f` forces the remote branch ref to match your local history, so any teammate commits not in your local copy are dropped from that branch.** Those commits may still be recoverable from another clone or the reflog, but anyone who based work on the old branch is now disrupted — which is why force-pushing is reserved for branches only you use."
 
   - id: 5
     difficulty: intermediate
