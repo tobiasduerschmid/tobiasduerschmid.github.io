@@ -18,7 +18,7 @@ cards:
     difficulty: intermediate
     question: "Translate: *'A developer spends an hour writing a clever interface, finally runs the tests, and finds twelve failures across the codebase.'* What went wrong and what's the rhythm fix?"
     answer: "Entered a **'World of Red'** — changes too large to verify in one Red→Green cycle. Feedback loop severed. Fix: **smaller steps** — one failing test, get to green, refactor, repeat every few minutes."
-    explanation: "Kerievsky's small-steps methodology is central: if a step is too large, you cannot tell which change broke which test, debugging becomes a scavenger hunt, and the safety net of continuously-green tests is gone. The discipline is to *shrink the test* until the next Green is minutes away, not hours."
+    explanation: "The small-steps methodology is central: if a step is too large, you cannot tell which change broke which test, debugging becomes a scavenger hunt, and the safety net of continuously-green tests is gone. The discipline is to *shrink the test* until the next Green is minutes away, not hours."
 
   - id: 4
     difficulty: intermediate

@@ -1,5 +1,5 @@
 title: "Test Doubles"
-description: "Retrieval practice for Meszaros's test-double taxonomy — SUT, DOC, indirect inputs vs outputs, the five kinds of double (Dummy, Fake, Stub, Spy, Mock), procedural vs expected-behavior verification, and how to choose. Cards span Remember through Evaluate."
+description: "Retrieval practice for the test-double taxonomy — SUT, DOC, indirect inputs vs outputs, the five kinds of double (Dummy, Fake, Stub, Spy, Mock), procedural vs expected-behavior verification, and how to choose. Cards span Remember through Evaluate."
 active: true
 cards:
   - id: 1
@@ -16,7 +16,7 @@ cards:
 
   - id: 3
     difficulty: basic
-    question: "Name all five kinds of test double in Meszaros's taxonomy and what each one is for."
+    question: "Name all five kinds of test double in the standard taxonomy and what each one is for."
     answer: "**Dummy** — fills a parameter, never used. **Fake** — working implementation with shortcuts (in-memory DB). **Stub** — returns canned values. **Spy** — records calls for after-the-fact assertion. **Mock** — pre-programmed expectations, fails *during* execution."
     explanation: "The five live on two axes: which direction of data flow they control (input vs output) and when verification happens (after vs during). Knowing the full taxonomy keeps you from reaching for a Mock when a Stub or Spy is closer to what you actually need."
 

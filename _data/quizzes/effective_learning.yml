@@ -55,7 +55,7 @@ questions:
         Working memory is sharply limited. Effective study design works with that limit by choosing challenges that require effort without overwhelming the learner.
       3: |
         Illusions of competence usually come from fluent passive review, such as rereading or recognizing highlighted text. Retrieval and spacing can feel worse in the moment precisely because they expose what is not yet secure.
-    explanation: "**Effective strategies feel slower because the short-term friction they create is exactly what drives long-term retention.** This describes **desirable difficulties** (Bjork). Effective learning strategies introduce short-term impediments that make learning feel harder, which ultimately triggers processes that optimize long-term retention."
+    explanation: "**Effective strategies feel slower because the short-term friction they create is exactly what drives long-term retention.** This describes **desirable difficulties**. Effective learning strategies introduce short-term impediments that make learning feel harder, which ultimately triggers processes that optimize long-term retention."
   - id: 4
     difficulty: intermediate
     question: "You are working on a new Python project and decide to turn off your AI coding assistant (like GitHub Copilot). According to the concept of 'desirable difficulties', what is the primary benefit of this highly frustrating choice?"
@@ -166,7 +166,7 @@ questions:
         Reading documentation front to back may feel thorough, but it is a passive and high-load response. The better move is to isolate a small skill and practice it actively.
       4: |
         Massed practice can produce short-term progress, but one long session is a poor match for building stable skill across several domains. The learner needs decomposition and later recombination.
-    explanation: "**Isolating component skills first is the correct response because working memory is limited and simultaneous complexity overwhelms the learner.** This represents managing cognitive load. Sweller's research dictates that working memory is highly limited; complex tasks must be decomposed into component skills so fluency can be achieved without overwhelming the learner."
+    explanation: "**Isolating component skills first is the correct response because working memory is limited and simultaneous complexity overwhelms the learner.** This represents managing cognitive load. Working memory is highly limited, so complex tasks must be decomposed into component skills so fluency can be achieved without overwhelming the learner."
   - id: 10
     difficulty: basic
     question: "A student struggles heavily with their first algorithms assignment and decides, 'I'm just not wired for complex math and logic.' This reaction is a classic example of:"

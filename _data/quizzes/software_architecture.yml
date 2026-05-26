@@ -4,7 +4,7 @@ active: true
 questions:
   - id: 1
     difficulty: basic
-    question: "Taylor et al. champion a paradigm that defines software architecture as 'the set of principal design decisions governing a system' — emphasizing rationale rather than boxes and lines. Which paradigm is this?"
+    question: "One influential paradigm defines software architecture as 'the set of principal design decisions governing a system' — emphasizing rationale rather than boxes and lines. Which paradigm is this?"
     options:
       - "The Structural Paradigm"
       - "The Decision-Based Paradigm"
@@ -18,7 +18,7 @@ questions:
         Allocation is one structure within the structural paradigm (software mapped to hardware, teams, or files), not a paradigm that defines architecture as principal decisions.
       3: |
         The module view is one structure used to document architecture, not a competing definition of what architecture *is*.
-    explanation: "The **decision-based paradigm**, championed by Taylor et al., defines architecture as the set of **principal design decisions** governing a system — centering rationale and trade-offs rather than the boxes and lines of the structural view."
+    explanation: "The **decision-based paradigm** defines architecture as the set of **principal design decisions** governing a system — centering rationale and trade-offs rather than the boxes and lines of the structural view."
 
   - id: 2
     difficulty: advanced

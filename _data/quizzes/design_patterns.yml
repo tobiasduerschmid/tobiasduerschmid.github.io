@@ -40,7 +40,7 @@ questions:
         Passing a test is not the same as preserving the pattern's design benefit. Observer is meant to reduce coupling, and private-field access reintroduces it.
       3: |
         Push versus pull concerns how state is supplied during notification. Either variant can still be tightly coupled if the observer bypasses the subject's public API.
-    explanation: "Reaching into the subject's private state recouples the observer to its concrete implementation, defeating the loose coupling Observer exists to provide — even though the code still produces correct output. This is exactly Cai et al.'s finding: students reproduce a pattern's gross structure but introduce dependencies that violate its intent (74% of submissions did). Correct behavior is not the same as correct design."
+    explanation: "Reaching into the subject's private state recouples the observer to its concrete implementation, defeating the loose coupling Observer exists to provide — even though the code still produces correct output. Studies of student work find exactly this: students reproduce a pattern's gross structure but introduce dependencies that violate its intent (74% of submissions in one study). Correct behavior is not the same as correct design."
 
   - id: 3
     difficulty: intermediate

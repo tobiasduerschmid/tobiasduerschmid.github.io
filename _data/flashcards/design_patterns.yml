@@ -41,7 +41,7 @@ cards:
     difficulty: advanced
     question: "What does the 'Before and After' teaching technique involve?"
     answer: "Comparing a working solution *without* a pattern to a refactored version *with* the pattern, especially when extending both with a new requirement."
-    explanation: "This technique from Astrachan et al. makes the pattern's value viscerally clear: extending the pattern-based version is dramatically easier than extending the version without the pattern."
+    explanation: "This technique makes the pattern's value viscerally clear: extending the pattern-based version is dramatically easier than extending the version without the pattern."
   - id: 9
     difficulty: advanced
     question: "What does the '74% of student submissions' finding refer to?"

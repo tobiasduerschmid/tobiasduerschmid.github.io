@@ -18,7 +18,7 @@ cards:
     difficulty: basic
     question: "Name the five oracle types from the chapter."
     answer: "**Exact value** (compare to known result); **state** (check observable state after); **interaction** (verify a collaboration when *that* is the contract); **exception** (specified failure mode); **property** (invariant across many inputs)."
-    explanation: "Use the strongest oracle you can afford. Property oracles shine when one exact value matters less than a rule that should hold over a large input space — QuickCheck (Claessen & Hughes 2000) and its descendants generate inputs automatically. Interaction oracles are appropriate sparingly — overusing them produces tests that freeze how the current implementation happens to collaborate internally."
+    explanation: "Use the strongest oracle you can afford. Property oracles shine when one exact value matters less than a rule that should hold over a large input space — QuickCheck and its descendants generate inputs automatically. Interaction oracles are appropriate sparingly — overusing them produces tests that freeze how the current implementation happens to collaborate internally."
 
   - id: 4
     difficulty: advanced
@@ -28,7 +28,7 @@ cards:
 
   - id: 5
     difficulty: intermediate
-    question: "Name three classic *test smells* from the van Deursen catalog."
+    question: "Name three classic *test smells*."
     answer: "**Excessive setup** (fixture drowns the actual behavior); **assertion roulette** (many bare assertions, no diagnostic); **mystery guest** (depends on hidden file/object); **eager test** (one test, many unrelated behaviors)."
     explanation: "Test-code smells are well catalogued, and studies find they are widespread in real projects and that their presence harms comprehension and maintenance. Test code is production code for confidence — it needs the same design care."
 

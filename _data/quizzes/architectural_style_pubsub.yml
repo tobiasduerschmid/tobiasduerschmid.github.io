@@ -105,7 +105,7 @@ questions:
         Deleting the bus would replace one problem with a much worse one: tightly coupled point-to-point dependencies between services. The fix is to restore *visibility* of the existing coupling, not to remove the bus.
       3: |
         Cycles arise when A depends on B and B depends on A. The smell here is *opacity* of the dependency graph, not its directionality.
-    explanation: "**Wide coupling (Garcia et al. 2009) is the pub-sub smell where every subscriber appears coupled to every publisher because the bus's type erasure hides the real dependency graph.** Typed channels — one per event class — restore the static visibility so a maintenance engineer can answer 'who breaks if I change this payload?' from the type system alone."
+    explanation: "**Wide coupling is the pub-sub smell where every subscriber appears coupled to every publisher because the bus's type erasure hides the real dependency graph.** Typed channels — one per event class — restore the static visibility so a maintenance engineer can answer 'who breaks if I change this payload?' from the type system alone."
 
   - id: 6
     difficulty: intermediate

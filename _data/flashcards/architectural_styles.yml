@@ -10,7 +10,7 @@ cards:
 
   - id: 2
     difficulty: basic
-    question: "Distinguish an architectural **style** from an architectural **pattern** (per Taylor et al.)."
+    question: "Distinguish an architectural **style** from an architectural **pattern**."
     answer: "A **style** is an abstract structural framework — declarative, focused on constraints — independent of any specific design situation; it is *strategic* ('highly distributed systems'). A **pattern** is a specific solution to a specific recurring problem in a given context (a context-problem-solution triple); it is *tactical* ('separating business logic from data management')."
     explanation: "Practitioners often use the terms interchangeably and the literature is not uniformly precise. Taylor's distinction is useful: pick a style for the macro-structure; apply patterns inside it to solve specific local problems."
 

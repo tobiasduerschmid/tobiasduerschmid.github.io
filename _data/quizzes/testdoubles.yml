@@ -1,5 +1,5 @@
 title: "Test Doubles Quiz"
-description: "Apply, Analyze, and Evaluate-level questions on Meszaros's test-double taxonomy — pick the right double for a scenario, recognize Spy vs Mock by failure timing, and diagnose over-mocking that tests the mock instead of the SUT."
+description: "Apply, Analyze, and Evaluate-level questions on the test-double taxonomy — pick the right double for a scenario, recognize Spy vs Mock by failure timing, and diagnose over-mocking that tests the mock instead of the SUT."
 active: true
 questions:
   - id: 1
@@ -48,19 +48,19 @@ questions:
     question: |
       A team's controller test sets up a `Mock()` for `user_repo` with `user_repo.get.return_value = User(id=1)` and then asserts on the controller's HTTP response — nothing else. The teammate insists this is a Mock; you disagree. What is the most precise classification?
     options:
-      - "It is a **Mock** — `Mock()` is in the variable name, and the role of an object in Meszaros's taxonomy is determined by which library construct created it."
+      - "It is a **Mock** — `Mock()` is in the variable name, and the role of an object in the test-double taxonomy is determined by which library construct created it."
       - "It is acting as a **Stub** — it controls indirect input (the return of `get`) but no assertion is made on its calls, so the call-recording capability is unused."
       - "It is acting as a **Dummy** — it is passed to the controller and never used to drive logic, so it exists only to satisfy the signature."
       - "It is acting as a **Spy** — `Mock()` automatically records calls, so even without an assertion the test object is collecting interactions in the background."
     correct_index: 1
     option_feedback:
       0: |
-        The class name from the mocking library doesn't determine the role the object plays. `unittest.mock.Mock` is one library construct used to implement many of Meszaros's roles — pick the name that matches the *behavior in this test*.
+        The class name from the mocking library doesn't determine the role the object plays. `unittest.mock.Mock` is one library construct used to implement many of these roles — pick the name that matches the *behavior in this test*.
       2: |
         A Dummy is passed but never used. Here the controller *uses* the return value to do its work — the double is doing real work in the SUT's logic, so it is not a Dummy.
       3: |
         Spies *do* record calls, but a Spy is identified by the test actually inspecting those recordings. This test never asserts on `user_repo` calls, so it isn't using the recording capability at all.
-    explanation: "Meszaros's roles are about *what the double does in this test*, not which library type implements it. If only return values are configured and no calls are asserted on, the role is a Stub — regardless of whether the implementation is `Mock()`, a hand-rolled subclass, or a Fake with shortcuts. Naming the role explicitly keeps tests honest and helps reviewers spot over-mocking."
+    explanation: "These roles are about *what the double does in this test*, not which library type implements it. If only return values are configured and no calls are asserted on, the role is a Stub — regardless of whether the implementation is `Mock()`, a hand-rolled subclass, or a Fake with shortcuts. Naming the role explicitly keeps tests honest and helps reviewers spot over-mocking."
 
   - id: 4
     difficulty: advanced
@@ -295,4 +295,4 @@ questions:
       0: "Only one mock appears in the test — far from a mockery. The smell here is about *where the data lives*, not how many doubles were used."
       2: "The test has exactly one assertion. The smell here is about a hidden input, not unexplained outputs."
       3: "The test exercises exactly one behavior — `process_all` summarizing a batch of orders. The smell here is about visibility of inputs, not breadth of coverage."
-    explanation: "**Mystery Guest** (van Deursen et al.; Meszaros) is the smell where a test depends on data living outside the test method — a file, shared fixture, or database row. A reader cannot tell from the test alone what `5 orders, $1240 total` is computed *from*. The fix is to inline the relevant data (or use a clearly-named local builder) so the reader sees both halves of the assertion: what went in and what came out."
+    explanation: "**Mystery Guest** is the smell where a test depends on data living outside the test method — a file, shared fixture, or database row. A reader cannot tell from the test alone what `5 orders, $1240 total` is computed *from*. The fix is to inline the relevant data (or use a clearly-named local builder) so the reader sees both halves of the assertion: what went in and what came out."
