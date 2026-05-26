@@ -97,7 +97,7 @@ The rest of this chapter walks through the same four steps in order. The progres
 3. **Determine** the root cause
 4. **Implement and verify** a fix
 
-# Step 1: Reproduce the Bug
+## Step 1: Reproduce the Bug
 
 > **Goal:** Get to a place where you can observe the bug on demand — and, eventually, where a test can do it for you.
 
@@ -119,7 +119,7 @@ To reproduce a bug, capture two things:
 
 This is *why* the bug-report templates of mature projects feel tedious — *"OS version? Browser? Steps to reproduce?"* That tedium is the developer's only path back to the user's experience.
 
-## Write an Automated Bug-Reproduction Test
+### Write an Automated Bug-Reproduction Test
 
 Once you can reproduce the bug manually, your **next step is to automate the reproduction**. A failing test is more valuable than a sticky note that says "reproduce by clicking these seven things."
 
@@ -129,13 +129,13 @@ Once you can reproduce the bug manually, your **next step is to automate the rep
 
 You are essentially turning the user's report into a permanent, runnable specification of the bug's absence.
 
-# Step 2: Locate the Faulty Code
+## Step 2: Locate the Faulty Code
 
 > **Goal:** Reduce the search space from "the whole codebase" to "this file, probably this function."
 
 In a well-designed system, the responsibility for the symptom should map cleanly to a single module. In any other system — which is most of them — you need tactics.
 
-## Logging
+### Logging
 
 Add logging statements that record what the program is actually doing. Python's `logging` module, JavaScript's `console.debug` / `pino`, Java's `slf4j`, Rust's `tracing` — every mature ecosystem has one. Use **levels** (`debug`, `info`, `warning`, `error`, `critical`) so production can run at `warning` while you crank it up to `debug` when investigating.
 
@@ -153,13 +153,13 @@ A formatted log line such as
 
 gives you a file, a line number, a level, and a human-readable message in one glance — orders of magnitude more useful than `print("here")`. For backend systems especially, **build logging in from day one**; debugging without logs is debugging with one hand tied behind your back.
 
-## Visual Diagrams
+### Visual Diagrams
 
 If your codebase is a few thousand lines, reading every file to find the bug is hopeless. A component or sequence diagram that shows *what talks to what* — even a hand-drawn one — typically cuts the search drastically. Empirical studies of robotics engineers debugging unfamiliar systems found that engineers who had a generated component diagram found the faulty component significantly faster than those who only had the source code, because the diagram lets you ask *"does this component even receive the input it needs?"* before you start reading code.
 
 This is one reason the SEBook chapters on [UML class](/SEBook/uml_class_diagram.html), [sequence](/SEBook/uml_sequence_diagram.html), [state](/SEBook/uml_state_diagram.html), and [component](/SEBook/uml_component_diagram.html) diagrams are worth the time — they pay back when something breaks.
 
-## Focus on the Most Likely Origins
+### Focus on the Most Likely Origins
 
 Bugs cluster. They are more likely to live in:
 
@@ -169,7 +169,7 @@ Bugs cluster. They are more likely to live in:
 
 Common low-level bugs your linter or type-checker can flag automatically: **uninitialized variables, unused values, unreachable code, memory leaks, null-pointer access, type inconsistencies.** Run the linter before you start hand-searching.
 
-## Assertions
+### Assertions
 
 `assert` statements catch errors *as they happen*, at the source, rather than letting them propagate silently into something inscrutable later.
 
@@ -184,7 +184,7 @@ An assertion failure points directly at the violated invariant, which is far eas
 
 Note that **assertions are not exceptions**. They are not meant to be caught and recovered from; they signal a *programmer* mistake (a violated invariant), not a *user* mistake (bad input). For graceful recovery use proper error handling; for "this should never happen" use an assertion.
 
-# Step 3: Determine the Root Cause
+## Step 3: Determine the Root Cause
 
 > **Goal:** Understand *why* the faulty code behaves the way it does — what you believed about the program that turns out to be wrong.
 
@@ -200,7 +200,7 @@ Why a duck and not a teammate? Two reasons. A teammate will interrupt and may co
 
 > **For students:** in this course, prefer rubber-duck debugging over asking an AI assistant to find the bug for you. The act of explaining the code is what builds the mental model you will need for the next, harder bug. Use AI for accelerating things you already understand; use the duck for things you don't yet.
 
-## Step-Through Debugger
+### Step-Through Debugger
 
 The second-most-valuable root-cause tool: an **interactive debugger** that lets you pause execution and inspect program state.
 
@@ -222,7 +222,7 @@ Walking the worked-example program above through the debugger would show you, im
 
 The bug isn't in `cal_circumference` at all — it's in the missing `int()` / `float()` conversion at line 10. The debugger tells you that in 30 seconds; staring at the code might take much longer.
 
-### Run Configurations
+#### Run Configurations
 
 Most IDEs let you save a **run / launch configuration** so the debugger always starts the program with the right arguments and environment. In VS Code that's a `launch.json` entry:
 
@@ -244,7 +244,7 @@ Most IDEs let you save a **run / launch configuration** so the debugger always s
 
 For backend / Node.js / multi-process systems, the configuration grows — `--inspect` flags, port forwarding, source maps. The search engines / AI tools from the [search pattern](#the-search-the-error-message-pattern) above are well-equipped to help you write that configuration.
 
-### Conditional Breakpoints
+#### Conditional Breakpoints
 
 When a bug only manifests on the 1000th iteration of a loop, stepping through 999 boring iterations is unbearable. Right-click a breakpoint and add a **condition** (`i == 1000`, or `request.user.id == 'tobias' and request.amount > 50000`). The breakpoint only fires when the condition is true. You can also attach a **hit count** so the breakpoint triggers only on the Nth pass through the line.
 
@@ -252,21 +252,21 @@ When a bug only manifests on the 1000th iteration of a loop, stepping through 99
 
 Standard debuggers go forward. A **time-travel debugger** records the execution and lets you **step backwards** — re-examine a variable's value three lines ago, hypothetically change it, and re-run forward from that point. They are not built into VS Code by default but are available as extensions for Python (`rr`, `pyrasite`), Node.js, and other runtimes. The SEBook's [Python debugging tutorial](/SEBook/tools/python-debugging) gives you a sandboxed time-travel debugger to practice with — once you have used one, you will look for them everywhere.
 
-# Step 4: Implement and Verify the Fix
+## Step 4: Implement and Verify the Fix
 
 > **Goal:** Land a fix that closes the bug *and* keeps the rest of the system green.
 
 The temptation is to call the bug "fixed" the moment the failing reproduction stops failing. Resist it. Two more steps separate a *plausible* fix from a *trustworthy* one.
 
-## Add Assertions to Catch Nearby Bugs
+### Add Assertions to Catch Nearby Bugs
 
 The conditions that produced this bug probably hold in other places too. After the fix, sprinkle assertions on the surrounding invariants — *"radius is a number"*, *"discount is between 0 and 1"*, *"queue length is non-negative"*. They serve as live documentation and they will catch the next bug in the family before it ships.
 
-## Run the Test Suite
+### Run the Test Suite
 
 Run the **regression test** you wrote in Step 1 (it should now pass) **and the rest of the suite** (none of the previously-passing tests should now fail). A fix that introduces a new bug is a [regression](/SEBook/testing.html#regression-testing) — common and embarrassing, but easy to catch if you have the discipline to re-run the suite before you call it done.
 
-## Document the Fix
+### Document the Fix
 
 In three places:
 
@@ -276,7 +276,7 @@ In three places:
 
 This last step also makes you more effective when working alongside AI coding agents — they will sometimes "helpfully" undo a non-obvious fix a few commits later if there is no comment explaining why it was non-obvious in the first place.
 
-## Keep the Test Forever
+### Keep the Test Forever
 
 The reproduction test you wrote in Step 1 stays in the suite as a permanent regression test. **Regression testing** — re-running existing tests after code changes to ensure new updates haven't broken old behavior — is the entire reason a green CI pipeline gives you any confidence at all.
 
