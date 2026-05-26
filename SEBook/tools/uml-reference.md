@@ -13,13 +13,21 @@ no_auto_uml: true
 {{ ref_md | escape_chevrons_in_pre | markdownify }}
 
 <script>
-/* Progressive lazy rendering for the reference page.
+/* Deferred-but-eager rendering for the reference page.
    The sebook layout's deferred bundle is suppressed via no_auto_uml: true.
    This script runs synchronously before any JS loads:
      1. Converts every pre>code.language-uml-* into a placeholder div
         (so auto-init finds nothing when the bundle loads)
      2. Loads the bundle after idle so content paints first
-     3. Uses IntersectionObserver to render each diagram only when visible */
+     3. Renders every diagram up-front once the bundle is in.
+
+   Up-front rendering (instead of an IntersectionObserver that fires while the
+   user scrolls) is required for WCAG 2.4.11 (Focus Not Obscured). When the
+   user Tabs to a link far down the page, the browser computes the scroll
+   target from the current layout. If diagrams are still rendering above the
+   target as the scroll happens, the target gets pushed below the viewport
+   and the focused element ends up off-screen. Rendering all diagrams once
+   the bundle loads keeps the layout stable from first interaction onward. */
 (function () {
   var TYPE_MAP = {
     'class':      'UMLClassDiagram',
@@ -32,7 +40,9 @@ no_auto_uml: true
   };
   var prefix = 'language-uml-';
 
-  /* Convert all uml code blocks to lazy placeholders */
+  /* Convert all uml code blocks to placeholders so the bundle's auto-init
+     (which runs on DOMContentLoaded) finds nothing to render — we drive the
+     render ourselves below, after deferred bundle load. */
   var lazies = [];
   var codes = document.querySelectorAll('pre > code[class*="language-uml-"]');
   for (var i = 0; i < codes.length; i++) {
@@ -66,25 +76,15 @@ no_auto_uml: true
     catch (e) { item.el.textContent = '[Render error: ' + e.message + ']'; }
   }
 
-  var obs = new IntersectionObserver(function (entries) {
-    for (var k = 0; k < entries.length; k++) {
-      if (!entries[k].isIntersecting) continue;
-      var target = entries[k].target;
-      for (var m = 0; m < lazies.length; m++) {
-        if (lazies[m].el === target) { renderItem(lazies[m]); obs.unobserve(target); break; }
-      }
-    }
-  }, { rootMargin: '400px' });
-
-  function setup() {
-    for (var n = 0; n < lazies.length; n++) obs.observe(lazies[n].el);
+  function renderAll() {
+    for (var n = 0; n < lazies.length; n++) renderItem(lazies[n]);
   }
 
   function loadBundle() {
-    if (window.UMLClassDiagram) { setup(); return; }
+    if (window.UMLClassDiagram) { renderAll(); return; }
     var s = document.createElement('script');
     s.src = '/js/ArchUML/uml-bundle.js';
-    s.onload = setup;
+    s.onload = renderAll;
     document.head.appendChild(s);
   }
 
