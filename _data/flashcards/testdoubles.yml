@@ -6,7 +6,7 @@ cards:
     difficulty: basic
     question: "Define **SUT** and **DOC**, and why the distinction matters."
     answer: "**SUT** — *System Under Test*, the unit you want to verify. **DOC** — *Depended-On Component*, something the SUT calls into. Replacing a DOC with a double is what lets the SUT be tested in isolation."
-    explanation: "The vocabulary comes from Meszaros, *xUnit Test Patterns* (2007). When you reach for a mock or stub, naming the SUT and the DOC keeps the test honest: you are checking the SUT's behavior, and you are controlling or observing the DOC's role in it. Confusion between the two is the root of many over-mocked, brittle suites."
+    explanation: "When you reach for a mock or stub, naming the SUT and the DOC keeps the test honest: you are checking the SUT's behavior, and you are controlling or observing the DOC's role in it. Confusion between the two is the root of many over-mocked, brittle suites."
 
   - id: 2
     difficulty: basic
@@ -128,5 +128,5 @@ cards:
           processor.process_all()
           assert processor.summary == "5 orders, $1240 total"
       ```
-    answer: "**Mystery Guest** (van Deursen et al.; Meszaros). The test depends on the contents of `/tmp/test_orders.csv` — an external file invisible from the test body. A reader cannot tell what `5 orders, $1240 total` is computed *from*, only that the assertion exists."
+    answer: "**Mystery Guest**. The test depends on the contents of `/tmp/test_orders.csv` — an external file invisible from the test body. A reader cannot tell what `5 orders, $1240 total` is computed *from*, only that the assertion exists."
     explanation: "Mystery Guest is one of several named test-double smells. Neighbors to keep distinct: **The Mockery** (so many mocks the test verifies orchestration, not behavior); **Counting on Spies** (asserting every internal call, freezing the implementation); **Unnecessary Stubs** (stubs for calls the SUT never makes); **Eager Test** (one test, many behaviors). Naming the smell makes it easier to spot in review."

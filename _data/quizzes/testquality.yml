@@ -20,7 +20,7 @@ questions:
         Property-based tests are valuable but address input variety, not oracle strength. They expand *what is tested*; they don't reveal whether the *existing* assertions are too weak. Mutation testing diagnoses that directly.
       3: |
         The remaining 5% may or may not contain bugs — but the more likely failure mode is in the 95%, where code runs without being meaningfully checked. Pushing coverage higher often makes that problem worse, not better.
-    explanation: "Mutation testing (DeMillo, Lipton, Sayward 1978; Just et al. 2014) creates many small faulty versions of the program and asks whether the tests catch them. Surviving mutants point directly at weak oracles, missed boundaries, and underspecified code — exactly the gaps that high coverage can hide. Use coverage as a navigational map ('what didn't I exercise yet?') and mutation/seeded-fault detection as the diagnostic for whether what *was* exercised is being meaningfully checked."
+    explanation: "Mutation testing creates many small faulty versions of the program and asks whether the tests catch them. Surviving mutants point directly at weak oracles, missed boundaries, and underspecified code — exactly the gaps that high coverage can hide. Use coverage as a navigational map ('what didn't I exercise yet?') and mutation/seeded-fault detection as the diagnostic for whether what *was* exercised is being meaningfully checked."
 
   - id: 2
     difficulty: advanced
@@ -40,7 +40,7 @@ questions:
         Reruns paper over the symptom and teach the team that a red build means "try again". They never reveal that the test is asserting a stronger property than the function actually promises.
       3: |
         Flakiness here is not unavoidable — it is a direct consequence of an overspecified oracle. Moving the test to a different suite changes nothing about the false claim being made.
-    explanation: "Luo et al. (2014) call this *over-specification* — the test asserts more than the function promises. The cure is to weaken the assertion to match the contract: compare as a set, sort both sides, or assert on individual key/value properties. Reaching for retries instead leaves the false claim in place and trains the team to treat a red build as 'rerun and hope' rather than 'investigate'."
+    explanation: "This is *over-specification* — the test asserts more than the function promises. The cure is to weaken the assertion to match the contract: compare as a set, sort both sides, or assert on individual key/value properties. Reaching for retries instead leaves the false claim in place and trains the team to treat a red build as 'rerun and hope' rather than 'investigate'."
 
   - id: 3
     difficulty: intermediate
@@ -142,7 +142,7 @@ questions:
         Properties express *general invariants* (round-trip, idempotence, permutation). They are not vague — they are stronger than examples because they hold for the whole input class, not just one chosen point.
       3: |
         Examples and properties are complementary, not substitutes. Examples document specific scenarios that matter by name (regression cases, named requirements); properties stress-test the rest of the input space. The healthiest suites use both.
-    explanation: "Claessen & Hughes's QuickCheck (2000) popularized property-based testing by letting authors state invariants and generate inputs automatically. The round-trip property `parse(format(rows)) == rows` finds quoting, escaping, and encoding bugs that example-based authors regularly miss. Keep both: examples document the specific cases you care about by name; properties cover the rest of the input space."
+    explanation: "QuickCheck popularized property-based testing by letting authors state invariants and generate inputs automatically. The round-trip property `parse(format(rows)) == rows` finds quoting, escaping, and encoding bugs that example-based authors regularly miss. Keep both: examples document the specific cases you care about by name; properties cover the rest of the input space."
 
   - id: 8
     difficulty: intermediate
@@ -172,4 +172,4 @@ questions:
         Speed is a separate axis. The structural smell — depending on a hidden file at a hardcoded path — would still be present even if the HTTP layer were replaced with an in-process call running in microseconds.
       3: |
         The hidden fixture file *is* the smell. A future maintainer reading this test cannot tell what data triggers the expected response, which makes the test hard to update, hard to port, and prone to silent breakage when the file changes.
-    explanation: "Van Deursen et al. (2001) named the *mystery guest* smell: a test that depends on external data invisible at the call site. Bavota et al. (2015) found that test smells like this measurably harm comprehension and maintenance. The fix is to make the setup visible — either build the data inline with a clearly-named helper, or use an explicit fixture function whose name describes the data (e.g. `user_with_default_settings()`)."
+    explanation: "The *mystery guest* smell is a test that depends on external data invisible at the call site. Test smells like this measurably harm comprehension and maintenance. The fix is to make the setup visible — either build the data inline with a clearly-named helper, or use an explicit fixture function whose name describes the data (e.g. `user_with_default_settings()`)."

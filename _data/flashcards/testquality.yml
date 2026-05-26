@@ -6,13 +6,13 @@ cards:
     difficulty: basic
     question: "Why is coverage a *map* rather than a *grade* of test quality?"
     answer: "Coverage tells you which lines/branches were **executed**. It does not tell you whether the test **checked the right result** — high coverage can coexist with weak assertions and missing boundaries."
-    explanation: "Inozemtseva and Holmes (2014) found that coverage has only low-to-moderate correlation with suite effectiveness once suite size is controlled. Treat coverage as a navigational tool ('what didn't I exercise yet?') not as a quality target ('we hit 90, ship it'). Once coverage becomes the goal, students and teams learn to satisfy the metric instead of the specification."
+    explanation: "Coverage has only low-to-moderate correlation with suite effectiveness once suite size is controlled. Treat coverage as a navigational tool ('what didn't I exercise yet?') not as a quality target ('we hit 90, ship it'). Once coverage becomes the goal, students and teams learn to satisfy the metric instead of the specification."
 
   - id: 2
     difficulty: basic
     question: "Define **mutation testing** in one sentence, and name the question a *surviving* mutant asks of your suite."
     answer: "Mutation testing creates many small faulty versions of the program and asks whether existing tests detect them. A **surviving mutant** asks: *Is an assertion too weak, did we forget a boundary, or is this code underspecified?*"
-    explanation: "DeMillo, Lipton, and Sayward (1978) introduced mutation-based test-data selection. Just et al. (2014) found that mutant detection correlates with real-fault detection independently of code coverage — a stronger signal than coverage alone. Treat the mutation score as a diagnostic, not a moral scoreboard."
+    explanation: "Mutation testing creates many small faulty versions of the program and checks whether the tests catch them. Mutant detection correlates with real-fault detection independently of code coverage — a stronger signal than coverage alone. Treat the mutation score as a diagnostic, not a moral scoreboard."
 
   - id: 3
     difficulty: basic
@@ -22,15 +22,15 @@ cards:
 
   - id: 4
     difficulty: advanced
-    question: "List at least four of the recurring causes of flaky tests that Luo et al. identified."
+    question: "List at least four of the recurring causes of flaky tests."
     answer: "**Asynchronous waiting** (sleeps); **concurrency** (races); **test-order dependencies** (leaked state); **time assumptions** (real clock); **randomness** (unseeded); **external resources** (network, FS, real DB)."
-    explanation: "Luo et al. (2014) analysed fixed flaky tests across large open-source projects; async waiting was by far the most common cause. Each cause has a structural fix — wait on observable conditions, isolate state, control the clock and randomness — rather than a retry. Flakiness damages the social contract: a red test should mean *investigate*, not *rerun*."
+    explanation: "Analyses of fixed flaky tests across large open-source projects show async waiting is by far the most common cause. Each cause has a structural fix — wait on observable conditions, isolate state, control the clock and randomness — rather than a retry. Flakiness damages the social contract: a red test should mean *investigate*, not *rerun*."
 
   - id: 5
     difficulty: intermediate
     question: "Name three classic *test smells* from the van Deursen catalog."
     answer: "**Excessive setup** (fixture drowns the actual behavior); **assertion roulette** (many bare assertions, no diagnostic); **mystery guest** (depends on hidden file/object); **eager test** (one test, many unrelated behaviors)."
-    explanation: "Van Deursen et al. (2001) catalogued test-code smells; Meszaros (2007) systematized them in *xUnit Test Patterns*. Bavota et al. (2015) found high diffusion of these smells in real projects and evidence that their presence harms comprehension and maintenance. Test code is production code for confidence — it needs the same design care."
+    explanation: "Test-code smells are well catalogued, and studies find they are widespread in real projects and that their presence harms comprehension and maintenance. Test code is production code for confidence — it needs the same design care."
 
   - id: 6
     difficulty: advanced
@@ -48,7 +48,7 @@ cards:
     difficulty: advanced
     question: "Mutation testing reports 95% on a service module, but a postmortem finds a real bug no test caught. What does that contradict, and what does it really tell you?"
     answer: "Not a contradiction. Mutation tests **small syntactic faults**; real bugs often live at higher-level seams — wrong spec, missed boundary, missing scenario — that no syntactic mutant exercises."
-    explanation: "Just et al. (2014) found mutation score correlates with real-fault detection but explains only part of it. Treat mutation as one signal in a dashboard: coverage (what wasn't visited), mutation/seeded-fault detection (oracle strength), flake rate (trust), bug-regression rate (real escapes), runtime by layer (fast feedback). No single metric captures test quality."
+    explanation: "Mutation score correlates with real-fault detection but explains only part of it. Treat mutation as one signal in a dashboard: coverage (what wasn't visited), mutation/seeded-fault detection (oracle strength), flake rate (trust), bug-regression rate (real escapes), runtime by layer (fast feedback). No single metric captures test quality."
 
   - id: 9
     difficulty: expert

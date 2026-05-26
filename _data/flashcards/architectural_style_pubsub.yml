@@ -60,7 +60,7 @@ cards:
     difficulty: advanced
     question: "What is the *wide coupling smell* in pub-sub, and how do you avoid it?"
     answer: "A bus exposed as a generic `receive(Message)` method where every subscriber casts to a specific type makes every subscriber appear coupled to every publisher — the dependency graph is invisible. **Fix:** use typed channels or per-event-class topics so each subscription is statically traceable to a payload schema."
-    explanation: "Named by Garcia et al. (2009). The smell is architectural, not just type-safety: even with safe casts, a maintenance engineer cannot statically determine which subscribers break when a publisher's payload changes."
+    explanation: "The smell is architectural, not just type-safety: even with safe casts, a maintenance engineer cannot statically determine which subscribers break when a publisher's payload changes."
 
   - id: 9
     difficulty: advanced

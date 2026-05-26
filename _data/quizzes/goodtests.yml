@@ -58,7 +58,7 @@ questions:
         Automatic retries hide the race instead of removing it, and they teach the team that red means "rerun and hope" rather than "investigate". That erodes the trust the suite is supposed to provide and lets real flakes accumulate.
       3: |
         A longer fixed sleep lowers the failure *rate* but doesn't eliminate it on a loaded runner — and it slows every successful run in exchange for a guess. Waiting on an observable condition is both faster on average and reliably correct.
-    explanation: "Luo et al. (2014) catalogued the recurring causes of flakiness — asynchronous waiting, concurrency, time assumptions, randomness, external resources — and asynchronous waiting is by far the most common. The framework-independent fix is to poll until the condition you care about becomes true and fail with a clear timeout message if it doesn't, rather than pausing for an arbitrary duration. A red test should mean *investigate*, not *rerun*."
+    explanation: "The recurring causes of flakiness — asynchronous waiting, concurrency, time assumptions, randomness, external resources — are well known, and asynchronous waiting is by far the most common. The framework-independent fix is to poll until the condition you care about becomes true and fail with a clear timeout message if it doesn't, rather than pausing for an arbitrary duration. A red test should mean *investigate*, not *rerun*."
 
   - id: 3
     difficulty: intermediate
@@ -164,7 +164,7 @@ questions:
         Length alone is much too weak — a buggy sort that returns the input unmodified would pass it. Length is one ingredient of a property suite, not a substitute for one.
       3: |
         Comparing an implementation to itself only checks determinism, not correctness. A wrong but deterministic sort (returns the input unchanged, sorts descending) still passes this assertion every time.
-    explanation: "Weyuker (1982) named the oracle problem; the modern response is to combine **partial oracles** that each capture a different aspect of correctness. For sort: the output must be a permutation of the input, must be monotonically non-decreasing, and must be idempotent under re-sorting. Run these properties on hundreds of generated inputs (Claessen & Hughes 2000) and you have a strong test even without a hand-computed expected value."
+    explanation: "The *oracle problem* — not knowing the exact expected output — is the core difficulty; the response is to combine **partial oracles** that each capture a different aspect of correctness. For sort: the output must be a permutation of the input, must be monotonically non-decreasing, and must be idempotent under re-sorting. Run these properties on hundreds of generated inputs and you have a strong test even without a hand-computed expected value."
 
   - id: 7
     difficulty: intermediate
@@ -184,7 +184,7 @@ questions:
         Branch coverage is stricter but suffers from the same blind spot. A branch that runs without a meaningful assertion still produces no evidence of correctness; the missing ingredient is oracle strength, not granularity.
       3: |
         End-to-end tests can help, but the underlying weakness — assertions that accept any non-null status — would carry over to E2E too. The fix is stronger oracles at whatever layer the behavior is being tested.
-    explanation: "Inozemtseva and Holmes (2014) found that coverage has only low-to-moderate correlation with suite effectiveness once suite size is controlled. The healthier model: coverage is a *map* of what wasn't visited; mutation testing or seeded-fault analysis is the diagnostic for whether what *was* visited is being checked meaningfully. Mutating `'paid'` to `'refunded'` here produces a surviving mutant — a direct signal that the assertion is too weak."
+    explanation: "Coverage has only low-to-moderate correlation with suite effectiveness once suite size is controlled. The healthier model: coverage is a *map* of what wasn't visited; mutation testing or seeded-fault analysis is the diagnostic for whether what *was* visited is being checked meaningfully. Mutating `'paid'` to `'refunded'` here produces a surviving mutant — a direct signal that the assertion is too weak."
 
   - id: 8
     difficulty: intermediate
@@ -204,7 +204,7 @@ questions:
         Sketching three methods first invites Big Upfront Design and large steps. TDD favors one tiny behavior at a time so each Red→Green→Refactor turn takes minutes, not hours.
       3: |
         Confirming a green starting point is fine practice but it isn't the *Red* step. *Red* is a new failing test that names the next behavior — production code comes *after*, in *Green*.
-    explanation: "Beck's *Three Rules of TDD* say you may not write production code except to make a failing unit test pass, and you may not write more of a test than is sufficient to fail (failing to compile counts). So the Red step is the smallest test that names the next behavior, written before the code. Fucci et al. (2017) found the productivity gain comes from *fine granularity and uniform rhythm*, not from test-first ordering as a slogan."
+    explanation: "Kent Beck's *Three Rules of TDD* say you may not write production code except to make a failing unit test pass, and you may not write more of a test than is sufficient to fail (failing to compile counts). So the Red step is the smallest test that names the next behavior, written before the code. The productivity gain comes from *fine granularity and uniform rhythm*, not from test-first ordering as a slogan."
 
   - id: 9
     difficulty: advanced
