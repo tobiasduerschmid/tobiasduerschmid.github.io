@@ -634,34 +634,6 @@ body.sebook-layout #sidebar {
   color: #ffffff !important;
 }
 
-.sebook-nav-row:has(> .sebook-nav-link.current),
-.sebook-nav-subrow:has(> .sebook-nav-sublink.current) {
-  background: #2774AE !important;
-  box-shadow: inset 5px 0 0 var(--sebook-gold);
-}
-
-.sebook-nav-row:has(> .sebook-nav-link.current):hover,
-.sebook-nav-subrow:has(> .sebook-nav-sublink.current):hover {
-  background: #1e5c8a !important;
-}
-
-.sebook-nav-row:has(> .sebook-nav-link.current) > .sebook-nav-link.current,
-.sebook-nav-subrow:has(> .sebook-nav-sublink.current) > .sebook-nav-sublink.current,
-.sebook-nav-row:has(> .sebook-nav-link.current) > .sebook-nav-link.current + .sebook-nav-toggle,
-.sebook-nav-subrow:has(> .sebook-nav-sublink.current) > .sebook-nav-sublink.current + .sebook-nav-toggle,
-.sebook-nav-row:has(> .sebook-nav-link.current) > .sebook-nav-link.current:hover,
-.sebook-nav-subrow:has(> .sebook-nav-sublink.current) > .sebook-nav-sublink.current:hover,
-.sebook-nav-row:has(> .sebook-nav-link.current) > .sebook-nav-link.current + .sebook-nav-toggle:hover,
-.sebook-nav-subrow:has(> .sebook-nav-sublink.current) > .sebook-nav-sublink.current + .sebook-nav-toggle:hover {
-  background: transparent !important;
-  color: #ffffff !important;
-}
-
-.sebook-nav-row:has(> .sebook-nav-link.current) > .sebook-nav-link.current,
-.sebook-nav-subrow:has(> .sebook-nav-sublink.current) > .sebook-nav-sublink.current {
-  border-left-color: transparent;
-}
-
 html.dark-mode body.sebook-layout #sidebar {
   background: #101b28;
   border-right-color: var(--sebook-border);

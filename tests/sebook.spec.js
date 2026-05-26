@@ -83,6 +83,80 @@ test.describe('SEBook Navigation Highlighting', () => {
   });
 });
 
+test.describe('SEBook sidebar navigation', () => {
+  test('renders the current sidebar branch without client-side correction', async ({ browser }) => {
+    const context = await browser.newContext({ javaScriptEnabled: false });
+    const page = await context.newPage();
+
+    try {
+      await page.goto('/SEBook/designpatterns/facade.html');
+
+      const sidebarNav = page.getByRole('navigation', { name: 'SE Book table of contents' });
+      const currentLink = sidebarNav.getByRole('link', { name: 'Facade' });
+      const topicToggle = sidebarNav.getByRole('button', { name: 'Toggle Design Patterns subtopics' });
+
+      await expect(currentLink).toBeVisible();
+      await expect(currentLink).toHaveAttribute('aria-current', 'page');
+      await expect(topicToggle).toHaveAttribute('aria-expanded', 'true');
+    } finally {
+      await context.close();
+    }
+  });
+
+  test('opens and closes a sidebar section with its accessible toggle', async ({ page }) => {
+    await page.goto('/SEBook/designpatterns/facade.html');
+
+    const sidebarNav = page.getByRole('navigation', { name: 'SE Book table of contents' });
+    const topicToggle = sidebarNav.getByRole('button', { name: 'Toggle Design Patterns subtopics' });
+    const currentLink = sidebarNav.getByRole('link', { name: 'Facade' });
+
+    await expect(currentLink).toHaveAttribute('aria-current', 'page');
+    await expect(topicToggle).toHaveAttribute('aria-expanded', 'true');
+
+    await topicToggle.click();
+    await expect(topicToggle).toHaveAttribute('aria-expanded', 'false');
+    await expect(currentLink).toBeHidden();
+
+    await topicToggle.click();
+    await expect(topicToggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(currentLink).toBeVisible();
+  });
+
+  test('marks one current sidebar link and distinguishes it from sibling links across depths', async ({ page }) => {
+    await page.goto('/SEBook/designpatterns/builder.html');
+
+    let sidebarNav = page.getByRole('navigation', { name: 'SE Book table of contents' });
+    let currentLinks = sidebarNav.locator('a[aria-current="page"]');
+    let currentLink = sidebarNav.getByRole('link', { name: 'Builder' });
+    let siblingLink = sidebarNav.getByRole('link', { name: 'Composite' });
+
+    await expect(currentLinks).toHaveCount(1);
+    await expect(currentLink).toHaveAttribute('aria-current', 'page');
+    await expect(siblingLink).not.toHaveAttribute('aria-current', 'page');
+
+    let currentBackground = await currentLink.evaluate((link) => getComputedStyle(link).backgroundColor);
+    let siblingBackground = await siblingLink.evaluate((link) => getComputedStyle(link).backgroundColor);
+    expect(currentBackground, 'current subtopic should use a distinct highlight background')
+      .not.toBe(siblingBackground);
+
+    await page.goto('/SEBook/quality_attributes/interoperability.html');
+
+    sidebarNav = page.getByRole('navigation', { name: 'SE Book table of contents' });
+    currentLinks = sidebarNav.locator('a[aria-current="page"]');
+    currentLink = sidebarNav.getByRole('link', { name: 'Interoperability' });
+    siblingLink = sidebarNav.getByRole('link', { name: 'Testability' });
+
+    await expect(currentLinks).toHaveCount(1);
+    await expect(currentLink).toHaveAttribute('aria-current', 'page');
+    await expect(siblingLink).not.toHaveAttribute('aria-current', 'page');
+
+    currentBackground = await currentLink.evaluate((link) => getComputedStyle(link).backgroundColor);
+    siblingBackground = await siblingLink.evaluate((link) => getComputedStyle(link).backgroundColor);
+    expect(currentBackground, 'current nested item should use a distinct highlight background')
+      .not.toBe(siblingBackground);
+  });
+});
+
 test.describe('SEBook page toggles', () => {
   test('dark mode toggle updates the document theme state', async ({ page }) => {
     await page.goto('/SEBook/designpatterns.html');

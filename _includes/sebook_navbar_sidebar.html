@@ -1,10 +1,34 @@
 <nav class="sebook-sidebar-nav" aria-label="SE Book table of contents">
   <ul class="sebook-nav-list">
+    {% assign current_nav_path = page.url | replace: '/index.html', '/' | replace: '.html', '' %}
     {% for topic in site.data.sebook_nav.topics %}
     {% assign topic_panel_id = 'sebook-nav-topic-' | append: forloop.index %}
-    <li class="sebook-nav-item {% if topic.subtopics %}has-subtopics{% endif %}">
+    {% assign topic_nav_path = topic.url | replace: '/index.html', '/' | replace: '.html', '' %}
+    {% assign topic_is_current = false %}
+    {% assign topic_is_open = false %}
+    {% if topic_nav_path == current_nav_path %}
+      {% assign topic_is_current = true %}
+      {% assign topic_is_open = true %}
+    {% endif %}
+    {% if topic.subtopics %}
+      {% for subtopic in topic.subtopics %}
+        {% assign subtopic_nav_path = subtopic.url | replace: '/index.html', '/' | replace: '.html', '' %}
+        {% if subtopic_nav_path == current_nav_path %}
+          {% assign topic_is_open = true %}
+        {% endif %}
+        {% if subtopic.items %}
+          {% for item in subtopic.items %}
+            {% assign item_nav_path = item.url | replace: '/index.html', '/' | replace: '.html', '' %}
+            {% if item_nav_path == current_nav_path %}
+              {% assign topic_is_open = true %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+      {% endfor %}
+    {% endif %}
+    <li class="sebook-nav-item{% if topic.subtopics %} has-subtopics{% endif %}{% if topic_is_open %} open{% endif %}">
       <div class="sebook-nav-row">
-        <a href="{{ topic.url }}" class="sebook-nav-link">
+        <a href="{{ topic.url }}" class="sebook-nav-link{% if topic_is_current %} current{% endif %}"{% if topic_is_current %} aria-current="page"{% endif %}>
           {% if topic.icon %}
           <span class="sebook-nav-icon" aria-hidden="true">{{ topic.icon }}</span>
           {% endif %}
@@ -12,7 +36,7 @@
         </a>
         {% if topic.subtopics %}
         <button type="button" class="sebook-nav-toggle"
-          aria-expanded="false"
+          aria-expanded="{% if topic_is_open %}true{% else %}false{% endif %}"
           aria-controls="{{ topic_panel_id }}"
           aria-label="Toggle {{ topic.name }} subtopics">
           <span aria-hidden="true">›</span>
@@ -24,14 +48,29 @@
       <ul class="sebook-nav-sublist" id="{{ topic_panel_id }}">
         {% for subtopic in topic.subtopics %}
         {% assign subtopic_panel_id = topic_panel_id | append: '-subtopic-' | append: forloop.index %}
-        <li class="sebook-nav-subitem {% if subtopic.items %}has-subitems{% endif %}">
+        {% assign subtopic_nav_path = subtopic.url | replace: '/index.html', '/' | replace: '.html', '' %}
+        {% assign subtopic_is_current = false %}
+        {% assign subtopic_is_open = false %}
+        {% if subtopic_nav_path == current_nav_path %}
+          {% assign subtopic_is_current = true %}
+          {% assign subtopic_is_open = true %}
+        {% endif %}
+        {% if subtopic.items %}
+          {% for item in subtopic.items %}
+            {% assign item_nav_path = item.url | replace: '/index.html', '/' | replace: '.html', '' %}
+            {% if item_nav_path == current_nav_path %}
+              {% assign subtopic_is_open = true %}
+            {% endif %}
+          {% endfor %}
+        {% endif %}
+        <li class="sebook-nav-subitem{% if subtopic.items %} has-subitems{% endif %}{% if subtopic_is_open %} open{% endif %}">
           <div class="sebook-nav-subrow">
-            <a href="{{ subtopic.url }}" class="sebook-nav-sublink">
+            <a href="{{ subtopic.url }}" class="sebook-nav-sublink{% if subtopic_is_current %} current{% endif %}"{% if subtopic_is_current %} aria-current="page"{% endif %}>
               <span class="sebook-nav-text">{{ subtopic.name }}</span>
             </a>
             {% if subtopic.items %}
             <button type="button" class="sebook-nav-toggle"
-              aria-expanded="false"
+              aria-expanded="{% if subtopic_is_open %}true{% else %}false{% endif %}"
               aria-controls="{{ subtopic_panel_id }}"
               aria-label="Toggle {{ subtopic.name }} subtopics">
               <span aria-hidden="true">›</span>
@@ -42,8 +81,13 @@
           {% if subtopic.items %}
           <ul class="sebook-nav-itemlist" id="{{ subtopic_panel_id }}">
             {% for item in subtopic.items %}
+            {% assign item_nav_path = item.url | replace: '/index.html', '/' | replace: '.html', '' %}
+            {% assign item_is_current = false %}
+            {% if item_nav_path == current_nav_path %}
+              {% assign item_is_current = true %}
+            {% endif %}
             <li class="sebook-nav-item-leaf">
-              <a href="{{ item.url }}" class="sebook-nav-itemlink">
+              <a href="{{ item.url }}" class="sebook-nav-itemlink{% if item_is_current %} current{% endif %}"{% if item_is_current %} aria-current="page"{% endif %}>
                 {{ item.name }}
               </a>
             </li>
@@ -58,125 +102,3 @@
     {% endfor %}
   </ul>
 </nav>
-
-<script>
-  document.addEventListener('DOMContentLoaded', function () {
-    const currentPath = window.location.pathname;
-    let foundCurrent = false;
-    let currentTopicItem = null;
-    let currentSubtopicItem = null;
-
-    // First, close all sections
-    document.querySelectorAll('.sebook-nav-item.has-subtopics').forEach(function (item) {
-      item.classList.remove('open');
-      const toggle = item.querySelector(':scope > .sebook-nav-row > .sebook-nav-toggle');
-      if (toggle) {
-        toggle.classList.remove('open');
-        toggle.setAttribute('aria-expanded', 'false');
-      }
-    });
-
-    document.querySelectorAll('.sebook-nav-subitem.has-subitems').forEach(function (item) {
-      item.classList.remove('open');
-      const toggle = item.querySelector(':scope > .sebook-nav-subrow > .sebook-nav-toggle');
-      if (toggle) {
-        toggle.classList.remove('open');
-        toggle.setAttribute('aria-expanded', 'false');
-      }
-    });
-
-    // Find and highlight the current page
-    document.querySelectorAll('.sebook-nav-link').forEach(function (link) {
-      if (link.getAttribute('href') === currentPath) {
-        link.classList.add('current');
-        link.setAttribute('aria-current', 'page');
-        currentTopicItem = link.closest('.sebook-nav-item');
-        foundCurrent = true;
-      }
-    });
-
-    if (!foundCurrent) {
-      document.querySelectorAll('.sebook-nav-sublink').forEach(function (link) {
-        if (link.getAttribute('href') === currentPath) {
-          link.classList.add('current');
-          link.setAttribute('aria-current', 'page');
-          const subitem = link.closest('.sebook-nav-subitem');
-          currentSubtopicItem = subitem;
-          currentTopicItem = subitem.closest('.sebook-nav-item');
-          foundCurrent = true;
-        }
-      });
-    }
-
-    if (!foundCurrent) {
-      document.querySelectorAll('.sebook-nav-itemlink').forEach(function (link) {
-        if (link.getAttribute('href') === currentPath) {
-          link.classList.add('current');
-          link.setAttribute('aria-current', 'page');
-          const itemLeaf = link.closest('.sebook-nav-item-leaf');
-          const subitem = itemLeaf.closest('.sebook-nav-subitem');
-          currentSubtopicItem = subitem;
-          currentTopicItem = subitem.closest('.sebook-nav-item');
-          foundCurrent = true;
-        }
-      });
-    }
-
-    // Open only the current topic and its subtopics
-    if (currentTopicItem) {
-      if (currentTopicItem.classList.contains('has-subtopics')) {
-        currentTopicItem.classList.add('open');
-        const toggle = currentTopicItem.querySelector(':scope > .sebook-nav-row > .sebook-nav-toggle');
-        if (toggle) {
-          toggle.classList.add('open');
-          toggle.setAttribute('aria-expanded', 'true');
-        }
-      }
-    }
-
-    // Open the current subtopic if it has items
-    if (currentSubtopicItem) {
-      if (currentSubtopicItem.classList.contains('has-subitems')) {
-        currentSubtopicItem.classList.add('open');
-        const toggle = currentSubtopicItem.querySelector(':scope > .sebook-nav-subrow > .sebook-nav-toggle');
-        if (toggle) {
-          toggle.classList.add('open');
-          toggle.setAttribute('aria-expanded', 'true');
-        }
-      }
-    }
-
-    function toggleSection(toggle, parent) {
-      const isOpen = parent.classList.toggle('open');
-      toggle.classList.toggle('open', isOpen);
-      toggle.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
-    }
-
-    function wireToggle(parent) {
-      const toggle = parent.querySelector(':scope > .sebook-nav-row > .sebook-nav-toggle, :scope > .sebook-nav-subrow > .sebook-nav-toggle');
-      if (!toggle) return;
-      const fire = function (e) {
-        e.stopPropagation();
-        toggleSection(toggle, parent);
-      };
-      toggle.addEventListener('click', fire);
-    }
-
-    document.querySelectorAll('.sebook-nav-item.has-subtopics').forEach(wireToggle);
-    document.querySelectorAll('.sebook-nav-subitem.has-subitems').forEach(wireToggle);
-
-    // Esc closes the nearest open expanded section (SC 1.4.13 dismissible).
-    document.querySelector('.sebook-sidebar-nav').addEventListener('keydown', function (e) {
-      if (e.key !== 'Escape') return;
-      const focused = document.activeElement;
-      if (!focused) return;
-      const openAncestor = focused.closest('.sebook-nav-item.open, .sebook-nav-subitem.open');
-      if (!openAncestor) return;
-      const toggle = openAncestor.querySelector(':scope > .sebook-nav-row > .sebook-nav-toggle, :scope > .sebook-nav-subrow > .sebook-nav-toggle');
-      if (toggle) {
-        toggleSection(toggle, openAncestor);
-        toggle.focus();
-      }
-    });
-  });
-</script>
