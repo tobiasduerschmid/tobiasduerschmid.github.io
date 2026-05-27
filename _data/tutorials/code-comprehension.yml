@@ -303,7 +303,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      Speed improves when you practice **attention control**, not when you rush. This timed round asks you to read just enough Python to answer targeted questions. The goal is not to finish perfectly; let's see how far you can make it.
+      Speed improves when you practice **attention control**, not when you rush. This timed round asks you to read just enough Python to answer targeted questions. The timer is feedback about your reading path, not a grade.
 
       ### 🎯 You will learn to
 
@@ -325,6 +325,12 @@ steps:
       the first three quiz questions. The full-event trace is a stretch target
       if you still have time.
 
+      Practice mode: on your first attempt, use the `+5 min` button if you are
+      still collecting evidence. On a replay, try finishing inside the original
+      7 minutes. Before the quiz, write one reflection line about what you
+      inspected first, what you skipped, and what evidence changed or confirmed
+      your hypothesis.
+
       Do not edit the code. This is a reading sprint, not an implementation task.
 
     files:
@@ -345,6 +351,11 @@ steps:
           Smallest trace:
 
           Final EiPE summary:
+
+          Timer reflection:
+          - First thing I inspected:
+          - Detail I deliberately skipped:
+          - Evidence that changed or confirmed my hypothesis:
 
       - path: "event_cards.py"
         language: "python"
@@ -812,7 +823,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      React code can look visually busy because JSX mixes data, structure, and event wiring. Beacon reading lets you find the small number of expressions that control the behavior you care about. This sprint is a little larger than the Python one, so use the routine and let's see how far you can make it.
+      React code can look visually busy because JSX mixes data, structure, and event wiring. Beacon reading lets you find the small number of expressions that control the behavior you care about. This sprint is a little larger than the Python one, so use the routine and treat the clock as feedback about your reading path.
 
       ### 🎯 You will learn to
 
@@ -834,6 +845,12 @@ steps:
       shares with the Python sprint: both derive a visible list, then shape
       that list for display.
 
+      Practice mode: on your first attempt, use the `+5 min` button if you are
+      still collecting evidence. On a replay, try finishing inside the original
+      8 minutes. Before the quiz, write one reflection line about what you
+      inspected first, what you skipped, and what evidence changed or confirmed
+      your hypothesis.
+
       After this step, **wait two or three days before starting the advanced tutorial**. That delay is not wasted time; it is how spacing turns today's code-reading routine into something you can retrieve later.
 
     files:
@@ -854,6 +871,11 @@ steps:
           Smallest trace:
 
           Final EiPE summary:
+
+          Timer reflection:
+          - First thing I inspected:
+          - Detail I deliberately skipped:
+          - Evidence that changed or confirmed my hypothesis:
 
       - path: "study-queue/styles.css"
         language: "css"
@@ -1594,7 +1616,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      The final basic sprint asks you to transfer the same reading routine to a new Python example with a few more moving parts. This is where fluency starts to form: you see a new surface story, but the deeper plans are familiar. Use the beacons, keep your trace narrow, and let's see how far you can make it.
+      The final basic sprint asks you to transfer the same reading routine to a new Python example with a few more moving parts. This is where fluency starts to form: you see a new surface story, but the deeper plans are familiar. Use the beacons, keep your trace narrow, and treat the timer as calibration.
 
       ### 🎯 You will learn to
 
@@ -1616,6 +1638,12 @@ steps:
 
       Use `reading-notes.md` to write a purpose hypothesis, three beacons, and one smallest useful trace. The stretch goal is the streak question.
 
+      Practice mode: on your first attempt, use the `+5 min` button if you are
+      still collecting evidence. On a replay, try finishing inside the original
+      10 minutes. Before the quiz, write one reflection line about what you
+      inspected first, what you skipped, and what evidence changed or confirmed
+      your hypothesis.
+
     files:
       - path: "reading-notes.md"
         language: "markdown"
@@ -1634,6 +1662,11 @@ steps:
           Smallest trace:
 
           Final EiPE summary:
+
+          Timer reflection:
+          - First thing I inspected:
+          - Detail I deliberately skipped:
+          - Evidence that changed or confirmed my hypothesis:
 
       - path: "habit_report.py"
         language: "python"
@@ -1831,7 +1864,7 @@ steps:
 
       Real code often contains a clue that is *true* but not enough to answer the question. That is harder than a silly distractor, because the clue really does mean something. The move is not "ignore names." The move is "turn the name into a hypothesis, then verify where it sits in the flow."
 
-      In this sprint, a pinned faculty announcement is missing from the student feed. Your job is to test what `pinned` does, where eligibility happens, and which evidence actually explains the report. Let's see how far you can make it.
+      In this sprint, a pinned faculty announcement is missing from the student feed. Your job is to test what `pinned` does, where eligibility happens, and which evidence actually explains the report. The timer is there to reveal whether your first search path was efficient, not to punish a careful repair.
 
       ### 🎯 You will learn to
 
@@ -1848,6 +1881,12 @@ steps:
       > "Why does `Faculty Mixer` not appear in the student feed on day 9 even though it is pinned?"
 
       Before tracing, write your first hypothesis in `reading-notes.md`. Then test it by reading the smallest path from `build_feed()` to the helper that decides eligibility.
+
+      Practice mode: on your first attempt, use the `+5 min` button if you are
+      still collecting evidence. On a replay, try finishing inside the original
+      8 minutes. Before the quiz, write one reflection line about what you
+      inspected first, what you skipped, and what evidence changed or confirmed
+      your hypothesis.
 
     files:
       - path: "reading-notes.md"
@@ -1866,6 +1905,11 @@ steps:
           Smallest trace:
 
           Final EiPE summary:
+
+          Timer reflection:
+          - First thing I inspected:
+          - Detail I deliberately skipped:
+          - Evidence that changed or confirmed my hypothesis:
 
       - path: "campus_feed.py"
         language: "python"
@@ -2074,14 +2118,14 @@ steps:
   # roles, EiPE frame, and false-beacon discipline.
   - title: "Reading Boss: Library Lending Audit"
     backend: pyodide
-    max-time: 10
+    max-time: 15
     lockout-time: 5
     instructions: |
       ### Why this matters
 
       Every earlier step was a **warm-up**. The files were small enough that you could have read top-to-bottom in 90 seconds and still answered the quiz. The routine was useful but not *necessary*.
 
-      This step is different on purpose. The codebase is around **300 lines across 10 files**. **You cannot read it all carefully in 10 minutes.** The routine you have been practicing is what makes the answer reachable.
+      This step is different on purpose. The codebase is around **300 lines across 10 files**. **You cannot read it all carefully during a first-attempt timer and still leave room to answer well.** The routine you have been practicing is what makes the answer reachable.
 
       This is the situation top-down reading exists for: not because tracing is bad, but because some codebases exceed what a careful linear read can fit. When that happens, hypothesis-driven reading, targeted tracing, and strategic skipping are the only honest strategies.
 
@@ -2106,19 +2150,27 @@ steps:
 
       ### Time Budget Reality Check
 
+      Your first attempt gives you **15 minutes** so the clock supports learning
+      instead of panic. Treat **10 minutes** as a replay challenge after you
+      already know what a good search path feels like.
+
       | Strategy | Roughly how long it takes |
       |---|---|
       | Read every file carefully | 25–30 minutes |
       | Skim every file | 12–15 minutes |
       | Read tests + one helper + one policy file | **5–7 minutes** ← target |
 
-      Only the third strategy fits the time box. That is exactly the point of the boss.
+      Only the third strategy leaves enough time to think, answer, and write
+      evidence. That is exactly the point of the boss.
 
       ### Constraints
 
       - Read at most **3 files** carefully.
       - Verify any beacon you decide to trust by checking imports or call sites.
       - Write your EiPE summary in `reading-notes.md` before the timer runs out.
+      - End by writing a timer reflection: what you inspected first, what you
+        deliberately skipped, and what evidence changed or confirmed your
+        hypothesis.
 
       The routine is yours to choose. Let's see how far you can make it.
 
@@ -2147,6 +2199,11 @@ steps:
           - Mechanism:
           - Evidence:
           - Limit (what I did *not* verify):
+
+          ## Timer reflection
+          - First thing I inspected:
+          - File or detail I deliberately skipped:
+          - Evidence that changed or confirmed my hypothesis:
       - path: "models.py"
         language: "python"
         content: |

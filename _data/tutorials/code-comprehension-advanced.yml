@@ -396,7 +396,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      Backend code often spreads behavior across route handlers, services, and data modules. Reading everything from top to bottom burns attention on details before you know what matters. This sprint asks you to read tests as beacons, choose a route, and trace only the path needed to answer the questions. Let's see how far you can make it.
+      Backend code often spreads behavior across route handlers, services, and data modules. Reading everything from top to bottom burns attention on details before you know what matters. This sprint asks you to read tests as beacons, choose a route, and trace only the path needed to answer the questions. Treat the timer as feedback about your reading path, not a grade.
 
       ### 🎯 You will learn to
 
@@ -421,6 +421,12 @@ steps:
       the route and service questions. Stretch target: locate where a field
       leak would begin.
 
+      Practice mode: on your first attempt, use the `+5 min` button if you are
+      still collecting evidence. On a replay, try finishing inside the original
+      10 minutes. Before the quiz, write one reflection line about what you
+      inspected first, what you skipped, and what evidence changed or confirmed
+      your hypothesis.
+
       Do not edit the code. Your job is to answer with evidence.
 
     files:
@@ -441,6 +447,11 @@ steps:
           Smallest trace:
 
           Final EiPE summary:
+
+          Timer reflection:
+          - First thing I inspected:
+          - Detail I deliberately skipped:
+          - Evidence that changed or confirmed my hypothesis:
 
       - path: "data/sessions.js"
         language: "javascript"
@@ -1034,7 +1045,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      This final sprint combines the whole routine: orient from tests, predict the design, find beacons, trace one risky branch, and map files. It is also a **concept-location** task: you start with a domain idea such as "coupon" or "out of stock" and locate the files that realize it. The code is bigger than before, but the reading job is still bounded. Let's see how far you can make it.
+      This final sprint combines the whole routine: orient from tests, predict the design, find beacons, trace one risky branch, and map files. It is also a **concept-location** task: you start with a domain idea such as "coupon" or "out of stock" and locate the files that realize it. The code is bigger than before, but the reading job is still bounded. Use the timer to calibrate your search path, not to rush.
 
       ### 🎯 You will learn to
 
@@ -1055,6 +1066,12 @@ steps:
       Use `reading-notes.md` to write a narrow interaction map. Core target:
       stock, subtotal, and coupon flow. Stretch target: diagnose the weak
       `TEA3` coupon beacon and identify the incidental receipt formatter.
+
+      Practice mode: on your first attempt, use the `+5 min` button if you are
+      still collecting evidence. On a replay, try finishing inside the original
+      15 minutes. Before the quiz, write one reflection line about what you
+      inspected first, what you skipped, and what evidence changed or confirmed
+      your hypothesis.
 
       Do not edit the code. Use a narrow interaction map.
 
@@ -1078,6 +1095,11 @@ steps:
           Central / supporting / incidental files:
 
           Final EiPE summary:
+
+          Timer reflection:
+          - First thing I inspected:
+          - Detail I deliberately skipped:
+          - Evidence that changed or confirmed my hypothesis:
 
       - path: "data/items.js"
         language: "javascript"
@@ -1355,7 +1377,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      Real comprehension tasks often begin with a domain idea, not a file name: "Where is pinning implemented?" or "Where does completion change?" Concept location is the skill of turning that idea into a focused search path across files. This sprint is larger than the Part 1 React examples, but the goal is still bounded. Let's see how far you can make it.
+      Real comprehension tasks often begin with a domain idea, not a file name: "Where is pinning implemented?" or "Where does completion change?" Concept location is the skill of turning that idea into a focused search path across files. This sprint is larger than the Part 1 React examples, but the goal is still bounded. Treat the timer as a way to notice whether your search path stayed focused.
 
       ### 🎯 You will learn to
 
@@ -1383,6 +1405,12 @@ steps:
 
       Stretch target: find one weak beacon. A CSS class like `pinned-card` can confirm presentation, but it is not enough to prove where pinning state lives.
 
+      Practice mode: on your first attempt, use the `+5 min` button if you are
+      still collecting evidence. On a replay, try finishing inside the original
+      10 minutes. Before the quiz, write one reflection line about what you
+      inspected first, what you skipped, and what evidence changed or confirmed
+      your hypothesis.
+
     files:
       - path: "reading-notes.md"
         language: "markdown"
@@ -1405,6 +1433,11 @@ steps:
           Smallest trace:
 
           Final EiPE summary:
+
+          Timer reflection:
+          - First thing I inspected:
+          - Detail I deliberately skipped:
+          - Evidence that changed or confirmed my hypothesis:
 
       - path: "lesson-board/styles.css"
         language: "css"
@@ -2068,7 +2101,7 @@ steps:
 
       In production code, the first clue that looks relevant is often only part of the story. It may be a file you would expect to matter: `featureFlags.js`, `betaDashboard`, imported config, dashboard route. The advanced skill is to say, "That is a plausible hypothesis," then verify whether the property is actually on the runtime path.
 
-      This sprint is a small incident review. A student named Kai cannot see the Labs tab. A fast reader may jump to the global `betaDashboard` flag because it is true. Your job is to test that hypothesis against tests, imports, and call flow. Let's see how far you can make it.
+      This sprint is a small incident review. A student named Kai cannot see the Labs tab. A fast reader may jump to the global `betaDashboard` flag because it is true. Your job is to test that hypothesis against tests, imports, and call flow. The timer should expose whether your first path was selective, not push you into guessing.
 
       ### 🎯 You will learn to
 
@@ -2087,6 +2120,12 @@ steps:
       - Which `featureFlags` property is read by the route?
       - Where is `betaDashboard: true` read, if at all, on the tab-building path?
 
+      Practice mode: on your first attempt, use the `+5 min` button if you are
+      still collecting evidence. On a replay, try finishing inside the original
+      13 minutes. Before the quiz, write one reflection line about what you
+      inspected first, what you skipped, and what evidence changed or confirmed
+      your hypothesis.
+
     files:
       - path: "reading-notes.md"
         language: "markdown"
@@ -2104,6 +2143,11 @@ steps:
           Evidence that changes or strengthens the hypothesis:
 
           Final EiPE summary:
+
+          Timer reflection:
+          - First thing I inspected:
+          - Detail I deliberately skipped:
+          - Evidence that changed or confirmed my hypothesis:
 
       - path: "data/users.js"
         language: "javascript"
@@ -2350,12 +2394,12 @@ steps:
   # top-down reading actually pays off.
   - title: "Cross-Domain Reading Boss: Order Inventory Incident"
     backend: webcontainer
-    max-time: 10
+    max-time: 15
     lockout-time: 5
     instructions: |
       ### Why this matters
 
-      Every earlier step in Part 2 was sized so that a careful linear read could still finish in time. This step is different on purpose. The codebase is around **330 lines across 11 files** — a route + four services + two data modules + a decoy route + tests. **You cannot read it all carefully in 10 minutes.**
+      Every earlier step in Part 2 was sized so that a careful linear read could still finish in time. This step is different on purpose. The codebase is around **330 lines across 11 files** — a route + four services + two data modules + a decoy route + tests. **You cannot read it all carefully during a first-attempt timer and still leave room to answer well.**
 
       This is the moment top-down reading was invented for. Production code is rarely the size of a tutorial snippet. Pull requests at real companies routinely exceed what any human can hold in working memory. Reviewers who try to read everything either burn out or rubber-stamp. The routine is what makes the work survivable *and* the answer correct.
 
@@ -2386,19 +2430,28 @@ steps:
 
       ### Time Budget Reality Check
 
+      Your first attempt gives you **15 minutes** so the clock supports learning
+      instead of panic. Treat **10 minutes** as a replay challenge after you
+      already know what a good search path feels like.
+
       | Strategy | Roughly how long it takes |
       |---|---|
       | Read every file carefully | 25–30 minutes |
       | Skim every file | 10–14 minutes |
       | Read tests + the order route + one service, focusing on the failure path | **6–9 minutes** ← target |
 
-      The third strategy is the only one that fits the time box. Hypothesis-driven reading is not a shortcut; it is the only honest path through this much code in 10 minutes.
+      The third strategy is the only one that leaves enough time to think,
+      answer, and write evidence. Hypothesis-driven reading is not a shortcut;
+      it is the only honest path through this much code.
 
       ### Constraints
 
       - Read at most **3 files** carefully.
       - Verify any beacon you decide to trust by checking imports or call sites.
       - Write your EiPE summary in `reading-notes.md` before the timer runs out.
+      - End by writing a timer reflection: what you inspected first, what you
+        deliberately skipped, and what evidence changed or confirmed your
+        hypothesis.
 
       The routine is yours to choose. Let's see how far you can make it.
 
@@ -2427,6 +2480,11 @@ steps:
           - Mechanism:
           - Evidence:
           - Limit (what I did *not* verify):
+
+          ## Timer reflection
+          - First thing I inspected:
+          - File or detail I deliberately skipped:
+          - Evidence that changed or confirmed my hypothesis:
       - path: "data/items.js"
         language: "javascript"
         content: |
