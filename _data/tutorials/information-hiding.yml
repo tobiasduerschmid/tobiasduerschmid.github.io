@@ -487,31 +487,51 @@ steps:
           assert top_two[0].popularity >= top_two[1].popularity, \
               "top_tracks should be ordered by popularity descending"
         hints:
-          - text: "Subgoal 4 (remove the leak). Add the four methods to Playlist, each computing from ``self._tracks`` internally. ``top_tracks(n)`` should use ``sorted(..., reverse=True)``."
+          - text: "Remove the leak by making Playlist answer domain questions itself. The client should ask for top tracks, total duration, average popularity, and length without reading the backing collection."
           - text: "Define ``Track`` with ``from dataclasses import dataclass`` and ``@dataclass(frozen=True)``. Frozen so callers cannot mutate the object reference you handed them."
             condition: "code_missing: dataclass"
-          - text: "Skeleton for top_tracks: ``return sorted(self._tracks, key=lambda t: t.popularity, reverse=True)[:n]``."
+          - text: "For `top_tracks(n)`, sort the internal tracks by popularity descending, then return only the first `n` items. Keep the sorting detail inside Playlist."
             condition: "code_missing: top_tracks"
 
       - description: "app.py uses only the domain methods (no reach-in to ``tracks`` or dict keys)"
         command: |
-          import re
+          import ast
           source = open("/tutorial/app.py").read()
+          tree = ast.parse(source)
 
-          # Forbid the leaky accesses. These are coarse, but combined with the
-          # implementation-swap test below they catch every realistic leak.
-          forbidden_patterns = [
-              (r"\.tracks\b",   "app.py still reads ``playlist.tracks`` directly."),
-              (r"\[['\"]title['\"]\]",   "app.py still indexes dict keys like ``['title']``."),
-              (r"\[['\"]artist['\"]\]",  "app.py still indexes dict keys like ``['artist']``."),
-              (r"\[['\"]duration_sec['\"]\]", "app.py still indexes dict keys like ``['duration_sec']``."),
-              (r"\[['\"]popularity['\"]\]",   "app.py still indexes dict keys like ``['popularity']``."),
+          # Forbid the leaky accesses structurally, not with regex. Comments
+          # and strings may mention the old design; executable client code may not.
+          track_reach_ins = [
+              node for node in ast.walk(tree)
+              if isinstance(node, ast.Attribute) and node.attr == "tracks"
           ]
-          offenders = [msg for pattern, msg in forbidden_patterns if re.search(pattern, source)]
-          assert not offenders, "\n".join(offenders) + (
-              "\nUse Playlist's domain methods (top_tracks, total_duration_minutes, "
-              "average_popularity, __len__) and Track's attributes (.title, .artist, etc.) instead."
+          assert not track_reach_ins, (
+              "app.py still reads ``playlist.tracks`` directly. Ask Playlist "
+              "domain questions instead."
           )
+
+          def string_subscript_key(node):
+              key = node.slice
+              if isinstance(key, ast.Constant) and isinstance(key.value, str):
+                  return key.value
+              return None
+
+          leaked_keys = {
+              string_subscript_key(node)
+              for node in ast.walk(tree)
+              if isinstance(node, ast.Subscript)
+          } & {"title", "artist", "duration_sec", "popularity"}
+          assert not leaked_keys, (
+              "app.py still indexes raw dict keys "
+              f"({sorted(leaked_keys)}). Use Playlist domain methods and "
+              "Track attributes instead."
+          )
+        hints:
+          - text: "This test now parses Python syntax. It ignores comments and strings, but rejects executable code that reaches into `playlist.tracks` or raw dict keys."
+          - text: "In client code, ask Playlist for `top_tracks`, `total_duration_minutes`, `average_popularity`, and `len(playlist)`. Those are the stable surface."
+            condition: "output_contains: playlist.tracks"
+          - text: "If the failure names dict keys, your client is still treating tracks like raw dictionaries. The values returned by `top_tracks` are Track objects, so use attributes such as `.title` and `.artist`."
+            condition: "output_contains: raw dict keys"
 
       - description: "is_party_appropriate matches the spec"
         command: |
@@ -547,9 +567,11 @@ steps:
           assert app.is_party_appropriate(p) is True, \
               "Above 90 minutes and avg popularity 60 should be party-appropriate."
         hints:
-          - text: "One-liner: ``return playlist.total_duration_minutes() > 90 and playlist.average_popularity() > 60``."
+          - text: "The party rule is a conjunction: enough total duration and enough average popularity. Use Playlist's domain methods for both values."
           - text: "Watch the empty case. ``average_popularity()`` should return 0 for empty so the AND short-circuits correctly."
             condition: "output_missing: empty"
+          - text: "If your answer differs between list-backed and dict-backed playlists, the client is still reading representation instead of asking Playlist questions."
+            condition: "output_contains: party-appropriate"
 
       - description: "Implementation-swap test: a different internal storage backend works with the same client code"
         command: |
@@ -1015,7 +1037,8 @@ steps:
                   f"PlaylistLike is missing method ``{method}``."
         hints:
           - text: "Start with ``from typing import Protocol``. Then ``class PlaylistLike(Protocol):`` and indent the five method signatures. Each one ends with `: ...` (literal ellipsis)."
-          - text: "Skeleton:\n```python\nfrom typing import Protocol\n\nclass PlaylistLike(Protocol):\n    def add(self, title: str, artist: str, duration_sec: int, popularity: int) -> None: ...\n    def top_tracks(self, n: int) -> list[Track]: ...\n    def total_duration_minutes(self) -> float: ...\n    def average_popularity(self) -> float: ...\n    def __len__(self) -> int: ...\n```"
+          - text: "A Protocol definition contains method signatures, not implementation logic. Copy the public methods' names and types from the concrete Playlist surface."
+          - text: "Mirror the public surface you already used in Step 2: `add`, `top_tracks`, `total_duration_minutes`, `average_popularity`, and `__len__`. The method bodies in a Protocol are ellipses; the signatures carry the contract."
             condition: "code_missing: Protocol"
 
       - description: "summary() accepts both Playlist and DictBackedPlaylist (structural matching, no inheritance)"
@@ -1294,6 +1317,17 @@ steps:
 
       </details>
 
+      ### Scaffold: trace the leak before you code
+
+      Do this step in four small passes. The goal is to lower the typing load so your attention stays on the design decision.
+
+      | Pass | What to decide | What to edit |
+      |---|---|---|
+      | 1. Name the leak | `sidebar.py` knows the score scale, bucket IDs, and raw row shape. Those belong to the recommender implementation. | Do not touch code yet; point at the three leaking facts in the starter files. |
+      | 2. Replace the contract | Clients need "is this a strong hit?", not "what was the raw score?" | Add `Confidence`, `SongHit`, and `Recommender` in `recommender.py`. |
+      | 3. Move the algorithm decision | Popularity buckets are one implementation's secret. | Implement `PopularityRecommender.recommend(...)` behind the Protocol. |
+      | 4. Clean the client | The sidebar should only ask for hits and read domain fields. | Refactor `support_sidebar(query, recommender)` to filter on `hit.confidence`. |
+
       ### Your task
 
       Refactor `recommender.py` so the contract exposes only what the client genuinely needs:
@@ -1437,32 +1471,80 @@ steps:
               "confidence on each SongHit must be one of 'low', 'medium', 'high'."
           assert len(page) <= 3, "recommend should respect the limit kwarg."
         hints:
-          - text: "Subgoal 4 (remove the leak): three small definitions plus one class. Start with ``from typing import Literal, Protocol`` and ``from dataclasses import dataclass``."
-          - text: "Confidence pattern: ``Confidence = Literal['low', 'medium', 'high']``. Then on each SongHit, set ``confidence`` from popularity buckets you choose (e.g. >= 80 high, >= 60 medium, else low)."
+          - text: "Use the scaffold table in the instructions: first replace the return contract (`Confidence`, `SongHit`, `Recommender`), then implement one concrete recommender behind it."
+          - text: "`Confidence` is a `Literal` type with the three domain labels. The exact internal popularity cutoffs are implementation details of `PopularityRecommender`."
             condition: "code_missing: Literal"
-          - text: "Skeleton for PopularityRecommender.recommend: build a list of SongHit from ``_strong_track_table()`` and return ``[...][:limit]``."
+          - text: "`PopularityRecommender.recommend` should translate each row from `_strong_track_table()` into a `SongHit`, sort/filter however that implementation wants, and respect the `limit` keyword."
             condition: "code_missing: SongHit"
 
       - description: "sidebar.py has no numeric thresholds, accepts a Recommender, and filters by hit.confidence"
         command: |
-          import re, importlib, sys
+          import ast, importlib, inspect, sys
           for name in ("recommender", "sidebar"):
               sys.modules.pop(name, None)
 
           src = open("/tutorial/sidebar.py").read()
-          # No raw thresholds left
-          assert not re.search(r"STRONG_THRESHOLD", src), \
-              "Remove the STRONG_THRESHOLD constant — confidence belongs in the recommender's contract."
-          assert not re.search(r">=\s*\d", src), \
-              "No numeric threshold (e.g. ``>= 12``) should remain in sidebar.py."
-          assert not re.search(r"\[['\"]title['\"]\]", src), \
-              "Stop indexing raw row dicts — use SongHit attributes (``.title``)."
+          tree = ast.parse(src)
+
+          functions = [
+              node for node in tree.body
+              if isinstance(node, ast.FunctionDef) and node.name == "support_sidebar"
+          ]
+          assert functions, "Define ``support_sidebar`` in sidebar.py."
+          support = functions[0]
+
+          # Boundary check: this client should not own score thresholds or row shapes.
+          module_names = {node.id for node in ast.walk(tree) if isinstance(node, ast.Name)}
+          assert "STRONG_THRESHOLD" not in module_names, (
+              "Remove the STRONG_THRESHOLD constant/name — confidence belongs in "
+              "the recommender's contract."
+          )
+
+          def is_numeric_constant(node):
+              return isinstance(node, ast.Constant) and isinstance(node.value, (int, float))
+
+          numeric_thresholds = [
+              node for node in ast.walk(support)
+              if isinstance(node, ast.Compare)
+              and any(isinstance(op, (ast.Lt, ast.LtE, ast.Gt, ast.GtE)) for op in node.ops)
+              and any(is_numeric_constant(expr) for expr in [node.left, *node.comparators])
+          ]
+          assert not numeric_thresholds, (
+              "support_sidebar still compares against a numeric threshold. "
+              "Filter by ``hit.confidence == 'high'`` instead."
+          )
+
+          def string_subscript_key(node):
+              key = node.slice
+              if isinstance(key, ast.Constant) and isinstance(key.value, str):
+                  return key.value
+              return None
+
+          leaked_keys = {
+              string_subscript_key(node)
+              for node in ast.walk(support)
+              if isinstance(node, ast.Subscript)
+          } & {"title", "artist", "track_id", "score", "popularity"}
+          assert not leaked_keys, (
+              "support_sidebar still indexes raw row data "
+              f"({sorted(leaked_keys)}). Use SongHit attributes such as "
+              "``hit.title`` and ``hit.confidence``."
+          )
+
+          attrs = {node.attr for node in ast.walk(support) if isinstance(node, ast.Attribute)}
+          assert "confidence" in attrs, (
+              "support_sidebar should filter by the public domain field "
+              "``hit.confidence``."
+          )
+          assert "title" in attrs, (
+              "support_sidebar should return song titles through ``hit.title``, "
+              "not through raw rows."
+          )
 
           import sidebar
           import recommender as r
 
           # support_sidebar must accept a Recommender now
-          import inspect
           sig = inspect.signature(sidebar.support_sidebar)
           params = list(sig.parameters.keys())
           assert len(params) >= 2, (
@@ -1475,6 +1557,12 @@ steps:
           assert isinstance(titles, list), "support_sidebar should return a list of titles."
           assert all(isinstance(t, str) for t in titles), \
               "Each element returned should be a song title string."
+        hints:
+          - text: "This test reads the AST of `support_sidebar`, not just text. The client function should have one dependency-injected recommender parameter and should not mention score thresholds."
+          - text: "Look for the two public fields the client is allowed to know: `hit.confidence` for filtering and `hit.title` for output."
+            condition: "code_missing: confidence"
+          - text: "If you still have `STRONG_THRESHOLD`, `score >= ...`, or `row['title']` anywhere inside `support_sidebar`, that function still knows the old recommender secret."
+            condition: "output_contains: numeric threshold"
 
       - description: "Implementation-swap test: a different (embedding-style) recommender works with the same sidebar"
         command: |
@@ -1580,7 +1668,8 @@ steps:
           )
         hints:
           - text: "The module guide is a docstring at the very top of the file. Four labels, one or two lines after each — and the lines have to be *real*, not TODOs."
-          - text: "Skeleton (replace the placeholders with your own wording):\n\n```python\n\"\"\"\nModule guide:\n  Primary secret:   how songs are scored and ranked for a query\n  Likely changes:\n    - BM25 -> embeddings\n    - hybrid ranker (popularity * recency)\n    - per-user personalization\n  Stable contract:  recommend(query, *, limit) -> list[SongHit]\n  Not promised:\n    - raw scores or score scale\n    - bucket IDs or partition keys\n    - ordering beyond 'high before medium before low'\n\"\"\"\n```"
+          - text: "Use the labels to separate responsibilities: `Primary secret` names the hidden decision, `Stable contract` names what clients may rely on, and `Not promised` names facts clients must not assume."
+          - text: "Use this shape, but fill it with your own concrete decisions:\n\n```python\n\"\"\"\nModule guide:\n  Primary secret:   <volatile ranking decision>\n  Likely changes:\n    - <one algorithm or data-source change>\n    - <one scoring or personalization change>\n  Stable contract:  <what clients may rely on>\n  Not promised:\n    - <one raw ranking detail clients must not see>\n    - <one storage/index detail clients must not see>\n\"\"\"\n```"
             condition: "code_missing: Primary secret"
 
     quiz:
@@ -1850,6 +1939,20 @@ steps:
 
       Commit. After your refactor, the same change will require **one new class** in `events.py` and **zero edits** to `tour_planner.py` — that is your verification.
 
+      ### Scaffold: write the change map first
+
+      This step is the most independent refactor so far, but you still get a planning rail. Before touching code, complete this map mentally:
+
+      | Question | Answer for this step |
+      |---|---|
+      | What is likely to change? | SQLite may become Postgres, HTTP, or a JSON fixture. |
+      | What is the secret? | Persistence technology plus schema/row mapping. |
+      | Who may know it? | Concrete directory implementations such as `SQLiteEventDirectory`. |
+      | Who must not know it? | `tour_planner.affordable_shows` and tests that only need events. |
+      | What is the stable contract? | `directory.find_in(city) -> list[Event]`. |
+
+      Then code in passes: define `Event`, define the `EventDirectory` Protocol, make the tiny in-memory implementation, make the SQLite implementation, and only then refactor `tour_planner.py`. If a pass fails, you know which layer to fix.
+
       ### Your task
 
       Refactor `events.py` so the persistence decision is hidden:
@@ -1861,7 +1964,7 @@ steps:
 
       Refactor `tour_planner.py` so `affordable_shows(directory, city, max_price_dollars=50)` takes an `EventDirectory` (not a connection). Filter inside the function using `event.ticket_price_cents` and return a `list[Event]`.
 
-      Add the module guide docstring to `events.py` using the same four labels you used in Step 3.
+      Add the module guide docstring to `events.py` using the same four labels you used in Step 4.
 
       > **You will probably break the implementation-swap test first.** The most common cause is forgetting to map raw SQL row tuples back to `Event` objects in `SQLiteEventDirectory.find_in`. If the test fails, read its diff carefully — the failure is the lesson, not the verdict.
 
@@ -1990,36 +2093,83 @@ steps:
           hits = mem.find_in("LA")
           assert hits == [e1], f"InMemoryEventDirectory.find_in('LA') should return [e1], got {hits}"
         hints:
-          - text: "You wrote three new classes plus one dataclass. Skeleton order: dataclass first (Event), then Protocol (EventDirectory), then the two implementations."
+          - text: "Follow the change map in the instructions. First create the domain object (`Event`), then the contract (`EventDirectory`), then the two concrete storage choices."
           - text: "InMemoryEventDirectory is intentionally tiny — the constructor stores the list, find_in filters by attribute access (``e.city == city``)."
             condition: "code_missing: InMemoryEventDirectory"
+          - text: "SQLiteEventDirectory is the only class that should know connection and table details. Its `find_in(city)` method should return Event objects, not raw rows."
+            condition: "code_missing: SQLiteEventDirectory"
 
       - description: "tour_planner.py takes an EventDirectory, not a sqlite3 connection"
         command: |
-          import re, importlib, sys, inspect
+          import ast, importlib, inspect, sys
           for name in ("events", "tour_planner"):
               sys.modules.pop(name, None)
 
           src = open("/tutorial/tour_planner.py").read()
-          # Strip the __main__ demo so import-time sqlite3 stays allowed there.
-          # We only check the affordable_shows function signature.
+          tree = ast.parse(src)
+          funcs = [
+              node for node in tree.body
+              if isinstance(node, ast.FunctionDef) and node.name == "affordable_shows"
+          ]
+          assert funcs, "Define ``affordable_shows`` in tour_planner.py."
+          func = funcs[0]
+
           import tour_planner
           sig = inspect.signature(tour_planner.affordable_shows)
           params = list(sig.parameters.keys())
+          assert params, "affordable_shows should accept an EventDirectory parameter."
           assert params[0] not in ("connection", "conn", "db"), (
               "After the refactor, affordable_shows should take an EventDirectory "
               "as its first parameter — not a raw connection."
           )
-          # The function body should not call find_events_in_city or reach into dicts
-          body = inspect.getsource(tour_planner.affordable_shows)
-          assert "find_events_in_city" not in body, (
+
+          names = {node.id for node in ast.walk(func) if isinstance(node, ast.Name)}
+          assert "find_events_in_city" not in names, (
               "Replace the call to the legacy ``find_events_in_city`` with "
               "``directory.find_in(city)``."
           )
-          assert "[\"ticket_price_cents\"]" not in body and "['ticket_price_cents']" not in body, (
-              "Use ``event.ticket_price_cents`` (attribute access on the Event "
-              "dataclass), not dict indexing."
+
+          has_find_in_call = any(
+              isinstance(node, ast.Call)
+              and isinstance(node.func, ast.Attribute)
+              and node.func.attr == "find_in"
+              for node in ast.walk(func)
           )
+          assert has_find_in_call, (
+              "affordable_shows should call ``directory.find_in(city)`` on the "
+              "EventDirectory parameter."
+          )
+
+          def string_subscript_key(node):
+              key = node.slice
+              if isinstance(key, ast.Constant) and isinstance(key.value, str):
+                  return key.value
+              return None
+
+          leaked_keys = {
+              string_subscript_key(node)
+              for node in ast.walk(func)
+              if isinstance(node, ast.Subscript)
+          } & {"ticket_price_cents", "title", "venue", "date_iso", "city"}
+          assert not leaked_keys, (
+              "Use ``event.ticket_price_cents`` (attribute access on the Event "
+              f"dataclass), not dict indexing ({sorted(leaked_keys)})."
+          )
+
+          attrs = {node.attr for node in ast.walk(func) if isinstance(node, ast.Attribute)}
+          assert "ticket_price_cents" in attrs, (
+              "affordable_shows should filter using ``event.ticket_price_cents``."
+          )
+          assert "sqlite3" not in names, (
+              "affordable_shows should not reference sqlite3. Storage belongs "
+              "behind EventDirectory implementations."
+          )
+        hints:
+          - text: "Keep the `__main__` demo separate from the business function. This test checks only `affordable_shows`, so the wiring demo may still import sqlite3 after the refactor."
+          - text: "The function body should be small: compute the cents limit, call `directory.find_in(city)`, then filter returned `Event` objects by attribute."
+            condition: "code_missing: find_in"
+          - text: "If the failure mentions dict indexing, search inside `affordable_shows` for square brackets. `Event` is a dataclass, so use dot access such as `event.ticket_price_cents`."
+            condition: "output_contains: dict indexing"
 
       - description: "Implementation-swap: InMemoryEventDirectory and SQLiteEventDirectory both work with the same affordable_shows"
         command: |
@@ -2068,14 +2218,14 @@ steps:
           )
         hints:
           - text: "If this fails, run tour_planner.py and inspect the two outputs. Skim the diff between in-memory results and SQL results — usually the SQL side is returning something different from Event dataclasses (raw tuples, rows-as-dicts, an empty list, etc.). What does your SQLiteEventDirectory.find_in *return*?"
-          - text: "Strategic hint (no skeleton): your SQLiteEventDirectory needs to (1) execute a parameterised query against ``self._conn`` and ``self._table``, and (2) **map each row tuple to an Event** before returning. The mapping is the step novices skip — and skipping it is what this test catches."
+          - text: "Your SQLiteEventDirectory needs to (1) execute a parameterised query against its own connection/table fields, and (2) **map each row tuple to an Event** before returning. The mapping is the step novices skip — and skipping it is what this test catches."
             condition: "output_contains: AssertionError"
-          - text: "Skeleton (last-resort hint, only after you've tried mapping rows): ``rows = self._conn.execute(f'SELECT title, venue, date_iso, city, ticket_price_cents FROM {self._table} WHERE city = ?', (city,)).fetchall(); return [Event(*r) for r in rows]``"
+          - text: "Last-resort shape: fetch rows with columns in Event's field order, then build one `Event(...)` per row. Keep the SQL string and table name inside SQLiteEventDirectory."
             condition: "output_contains: implementations"
 
       - description: "events.py has a substantive module guide and is the ONLY place that mentions sqlite3 in business logic"
         command: |
-          import re
+          import ast, re
           src_events = open("/tutorial/events.py").read()
 
           # 1. All four labels present
@@ -2121,17 +2271,32 @@ steps:
               "wastes the artifact."
           )
 
-          # 4. Storage decision is hidden inside events.py — tour_planner mentions
-          # sqlite3 only in its __main__ demo (which is the wiring layer).
-          import inspect, importlib, sys
-          for name in ("tour_planner",):
-              sys.modules.pop(name, None)
-          import tour_planner
-          func_src = inspect.getsource(tour_planner.affordable_shows)
-          assert "sqlite3" not in func_src, (
-              "affordable_shows still references sqlite3. The whole point of the refactor "
-              "is that this function never sees a connection — only the EventDirectory Protocol."
+          # 4. Storage decision is hidden inside events.py — tour_planner may
+          # mention sqlite3 in its __main__ demo, but not inside business logic.
+          src_tour = open("/tutorial/tour_planner.py").read()
+          tree = ast.parse(src_tour)
+          funcs = [
+              node for node in tree.body
+              if isinstance(node, ast.FunctionDef) and node.name == "affordable_shows"
+          ]
+          assert funcs, "tour_planner.py should define affordable_shows."
+          affordable = funcs[0]
+          sqlite_refs = [
+              node for node in ast.walk(affordable)
+              if (isinstance(node, ast.Name) and node.id == "sqlite3")
+              or (isinstance(node, ast.Attribute) and node.attr == "sqlite3")
+          ]
+          assert not sqlite_refs, (
+              "affordable_shows still references sqlite3. The whole point of "
+              "the refactor is that this function never sees a connection — "
+              "only the EventDirectory Protocol."
           )
+        hints:
+          - text: "The module guide is checked separately from the storage-boundary rule. If the first part fails, fill in the four labels with concrete storage decisions, not generic 'implementation details'."
+          - text: "The boundary check permits sqlite3 in the `__main__` wiring demo. It rejects sqlite3 only inside `affordable_shows`, because that function is business logic."
+            condition: "output_contains: sqlite3"
+          - text: "For `Not promised`, name concrete persistence details: connection objects, table names, SQL column names, row encoding, storage backend, caching, or pagination."
+            condition: "output_contains: Not promised"
 
     quiz:
       title: "Step 5 — Knowledge Check"
@@ -2532,8 +2697,10 @@ steps:
               liked = provider.like("t1")
               assert isinstance(liked, str) and liked
         hints:
-          - text: "Each provider class is small — three short methods. Each returns the same string the corresponding ``if`` branch used to print."
-          - text: "Skeleton:\n```python\nclass SpotifyProvider:\n    def play(self, track_id): return f\"Playing {track_id} on Spotify...\"\n    def share(self, track_id, friend): return f\"Shared Spotify link {track_id} with {friend}\"\n    def like(self, track_id): return f\"Liked Spotify track {track_id}\"\n```"
+          - text: "Each provider class is small: it owns the provider-specific wording/URL details for `play`, `share`, and `like`."
+          - text: "Write one provider first, run the test, then duplicate the class shape for the other two providers with their own provider-specific behavior."
+            condition: "code_missing: AppleMusicProvider"
+          - text: "Use the same method names on every concrete provider. The difference between Spotify, Apple Music, and Tidal should live inside the class bodies, not in the caller."
             condition: "code_missing: SpotifyProvider"
 
       - description: "play_track / share_track / like_track no longer branch on provider strings"
@@ -2886,7 +3053,7 @@ steps:
     open_file: "SNIPPETS.md"
 
     quiz:
-      title: "Step 7 — Sort the Leaks"
+      title: "Step 7 — Knowledge Check"
       min_score: 0.8
       shuffle_questions: false   # deliberate interleaving of leak types
       shuffle_options: true
@@ -3140,7 +3307,7 @@ steps:
     instructions: |
       ### Why this matters
 
-      Information hiding is verified by **simulating change** — Parnas's original test, and the one industry calls *change impact analysis*. A real engineer's job isn't to recite that classes should depend on abstractions. It's to read a system and predict: *if this changes, what else changes?* This step is your final exam for the tutorial: a fresh, never-seen MusicShare app with five modules, **four** plausible change requests (one of which has the correct answer "don't refactor"), and one honest-tradeoff question. Plus one short open-text artifact — a module guide for `ui.py` — to consolidate everything you've learned into the lightest-weight design doc Parnas, Clements & Weiss invented.
+      Information hiding is verified by **simulating change** — Parnas's original test, and the one industry calls *change impact analysis*. A real engineer's job isn't to recite that classes should depend on abstractions. It's to read a system and predict: *if this changes, what else changes?* This step is your final exam for the tutorial: a fresh, never-seen MusicShare app with five modules, **four** plausible change requests (one of which has the correct answer "don't refactor"), one honest-tradeoff question, and one cold-transfer case from a different domain. Plus one short open-text artifact — a module guide for `ui.py` — to consolidate everything you've learned into the lightest-weight design doc Parnas, Clements & Weiss invented.
 
       ### 🎯 You will learn to
 
@@ -3168,7 +3335,7 @@ steps:
       1. **Write a module guide for `ui.py`** in the file `MODULE_GUIDE.md`. Use the **same four labels** you learned in Steps 4–5: `Primary secret`, `Likely changes`, `Stable contract`, `Not promised`. **One stylistic note:** Steps 4–5 wrote the guide inside a `"""..."""` Python docstring at the top of a `.py` file (because there *was* a module file to attach it to). Here the artifact stands alone, so it's a `.md` file with the four labels as Markdown `##` headings instead. Same content, same Parnas/Clements/Weiss-1985 format — just rendered for Markdown instead of Python. The labels still match exactly so a future maintainer can `grep` for them across both formats.
 
          One or two lines per label is enough — the artifact's value is in the *content*, not the length. The test enforces substantive content under each label and that the `Not promised` section names at least one specific concrete decision (HTML templating, route paths, response formats, authentication, etc.).
-      2. **Answer all five quiz questions** below. Four are change-impact predictions on MusicShare (one of which has "don't refactor" as the correct answer); the fifth is the honest-tradeoff question.
+      2. **Answer all six quiz questions** below. Four are change-impact predictions on MusicShare (one of which has "don't refactor" as the correct answer); the fifth is the honest-tradeoff question; the sixth is an unscaffolded transfer case on a system you have not seen.
 
       The module guide is the *consolidation* artifact: producing a four-label document for a module you've never edited proves you can apply the discipline on cold material. That is the meaningful capstone for this tutorial.
 
@@ -3335,7 +3502,7 @@ steps:
             condition: "code_missing: html"
 
     quiz:
-      title: "Step 8 — Final Knowledge Check"
+      title: "Step 8 — Knowledge Check"
       min_score: 0.8
       shuffle: false       # questions build on each other; do not shuffle them
       questions:
@@ -3454,6 +3621,36 @@ steps:
 
             **What you've actually learned in this tutorial.** You can now (a) name a module's secret, (b) spot the contract leaks, (c) refactor a leaky module behind a Protocol or domain methods, (d) verify the secret is hidden with an implementation-swap test, (e) apply Single Choice when alternatives are exhaustive, (f) **classify** an unfamiliar leak before fixing it (Step 7), (g) **abstain** when no change is plausible, and (h) predict the change-impact radius before you start editing. That's the operational form of Parnas's principle — and it survives the move from a tutorial to a real codebase.
 
+        - type: multiple
+          difficulty: expert
+          question: |
+            **Cold transfer — no MusicShare scaffolding this time.**
+
+            CampusRide has these modules:
+
+            - `scooters.py` owns a `ScooterGateway(Protocol)` with `nearby(location)` and `reserve(scooter_id)`.
+            - `trip_planner.py` chooses a route from available scooters and campus buildings.
+            - `pricing.py` computes student discounts and surge pricing.
+            - `ui.py` renders the map and reservation button.
+            - `composition_root.py` wires today's concrete gateway into the app.
+
+            The vendor replaces its REST API with GraphQL. The domain fields returned by `ScooterGateway` stay the same.
+
+            **Which files need to be edited?** (Select all that apply.)
+          options:
+            - "`scooters.py` — add or replace the concrete gateway implementation that knows the vendor protocol."
+            - "`composition_root.py` — wire the app to the new concrete gateway."
+            - "`trip_planner.py` — route choice must change because GraphQL is a different query language."
+            - "`pricing.py` — student discounts must change because vendor transport changed."
+            - "`ui.py` — the map must render GraphQL responses directly."
+          correct_indices: [0, 1]
+          option_feedback:
+            2: "`trip_planner.py` depends on domain scooter data, not the vendor wire protocol. If it must change for REST -> GraphQL, the gateway leaked."
+            3: "Pricing policy is a separate secret. A vendor transport change should not rewrite discount rules."
+            4: "`ui.py` should render domain objects from the gateway, not raw vendor responses. Rendering GraphQL payloads directly would be the same leak you fixed in Steps 4 and 5."
+          explanation: |
+            This is the same shape as Step 5, but without the MusicShare table. The volatile decision is the vendor protocol. It belongs in `scooters.py` behind `ScooterGateway`; `composition_root.py` chooses the concrete implementation. Route planning, pricing, and UI rendering should stay on the stable domain contract.
+
     solution:
       files:
         - path: "SYSTEM.md"
@@ -3484,6 +3681,12 @@ steps:
             Information hiding helps modification, not first-read clarity. Bet on it
             where change is plausible; skip it where it isn't. The right number of
             abstractions is the smallest number that lets the system change gracefully.
+
+            ## Cold transfer: CampusRide REST -> GraphQL
+            Edits: scooters.py (new or replaced concrete gateway), composition_root.py
+            (wiring). trip_planner.py, pricing.py, and ui.py stay on the
+            ScooterGateway domain contract. If any of them need GraphQL details,
+            the vendor protocol leaked.
         - path: "MODULE_GUIDE.md"
           language: "markdown"
           content: |
