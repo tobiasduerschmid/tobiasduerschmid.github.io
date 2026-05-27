@@ -1131,7 +1131,21 @@
     'soft-full-lips': 3,
     'neutral': 1
   };
-  var MILESTONE_TIERS = ['none', 'bronze', 'silver', 'gold', 'diamond'];
+  var MILESTONE_TIERS = ['none', 'bronze', 'silver', 'gold', 'diamond', 'infinity'];
+  // Milestones remain the product-facing reward tiers; the arm renderer uses a
+  // linear 0-100 strength rig so progress can blend between authored targets.
+  var MILESTONE_MUSCLE_STRENGTH = {
+    none: 0,
+    bronze: 20,
+    silver: 40,
+    gold: 60,
+    diamond: 80,
+    infinity: 100
+  };
+  var MUSCLE_TEMPLATE_TIERS = ['none', 'bronze', 'silver', 'gold', 'diamond', 'infinity'];
+  var MUSCLE_STRENGTH_TIERS = MUSCLE_TEMPLATE_TIERS.map(function (tier) {
+    return { tier: tier, strength: MILESTONE_MUSCLE_STRENGTH[tier] };
+  });
   var MILESTONE_TOKENS = {
     none: {
       metal: '#b7793c',
@@ -1167,6 +1181,13 @@
       metalDark: '#237a9d',
       glow: '#a7f4ff',
       jewel: '#74dcff'
+    },
+    infinity: {
+      metal: '#8b5cf6',
+      metalLight: '#f5e8ff',
+      metalDark: '#4c1d95',
+      glow: '#c084fc',
+      jewel: '#7c3aed'
     }
   };
   var MASCULINE_FACE_ACCESSORIES = [
@@ -2508,10 +2529,133 @@
     return MILESTONE_TIERS.indexOf(normalized) !== -1 ? normalized : 'none';
   }
 
-  function applyMilestoneToSvg(svg, tier) {
+  function normalizeMuscleStrength(value) {
+    var strength = Number(value);
+    if (!Number.isFinite(strength)) return 0;
+    return Math.max(0, Math.min(100, Math.round(strength)));
+  }
+
+  function muscleStrengthBlend(value) {
+    var strength = normalizeMuscleStrength(value);
+    for (var i = 0; i < MUSCLE_STRENGTH_TIERS.length - 1; i++) {
+      var lower = MUSCLE_STRENGTH_TIERS[i];
+      var upper = MUSCLE_STRENGTH_TIERS[i + 1];
+      if (strength <= upper.strength) {
+        var span = upper.strength - lower.strength;
+        var weight = span ? (strength - lower.strength) / span : 0;
+        if (weight <= 0) return { lower: lower.tier, upper: lower.tier, weight: 0 };
+        if (weight >= 1) return { lower: upper.tier, upper: upper.tier, weight: 0 };
+        return {
+          lower: lower.tier,
+          upper: upper.tier,
+          weight: Math.max(0, Math.min(1, weight))
+        };
+      }
+    }
+    return { lower: 'infinity', upper: 'infinity', weight: 0 };
+  }
+
+  function formatMuscleNumber(value) {
+    return Number(value).toFixed(3).replace(/0+$/, '').replace(/\.$/, '');
+  }
+
+  function pathCommandSignature(d) {
+    var commands = String(d || '').match(/[MmLlHhVvCcSsQqTtAaZz]/g);
+    return commands ? commands.join('') : '';
+  }
+
+  function pathNumbers(d) {
+    var matches = String(d || '').match(/-?\d*\.?\d+(?:e[-+]?\d+)?/ig);
+    return matches ? matches.map(Number) : [];
+  }
+
+  function interpolatePathData(fromD, toD, weight) {
+    var fromNumbers = pathNumbers(fromD);
+    var toNumbers = pathNumbers(toD);
+    if (fromNumbers.length !== toNumbers.length || pathCommandSignature(fromD) !== pathCommandSignature(toD)) return fromD;
+    var index = 0;
+    return String(fromD).replace(/-?\d*\.?\d+(?:e[-+]?\d+)?/ig, function () {
+      var value = fromNumbers[index] + (toNumbers[index] - fromNumbers[index]) * weight;
+      index += 1;
+      return formatMuscleNumber(value);
+    });
+  }
+
+  function rememberMuscleTemplatePath(path) {
+    if (!path || path.hasAttribute('data-hero-template-d')) return;
+    path.setAttribute('data-hero-template-d', path.getAttribute('d') || '');
+    path.setAttribute('data-hero-template-stroke-width', path.getAttribute('stroke-width') || '');
+  }
+
+  function restoreMuscleTemplatePath(path) {
+    if (!path) return;
+    rememberMuscleTemplatePath(path);
+    path.setAttribute('d', path.getAttribute('data-hero-template-d') || '');
+    var strokeWidth = path.getAttribute('data-hero-template-stroke-width');
+    if (strokeWidth) path.setAttribute('stroke-width', strokeWidth);
+  }
+
+  function interpolateMuscleSilhouette(activeGroup, upperGroup, weight) {
+    if (!activeGroup || !upperGroup || weight <= 0) return;
+    var activePath = activeGroup.querySelector('path');
+    var upperPath = upperGroup.querySelector('path');
+    if (!activePath || !upperPath) return;
+    rememberMuscleTemplatePath(activePath);
+    rememberMuscleTemplatePath(upperPath);
+    var fromD = activePath.getAttribute('data-hero-template-d') || activePath.getAttribute('d') || '';
+    var toD = upperPath.getAttribute('data-hero-template-d') || upperPath.getAttribute('d') || '';
+    activePath.setAttribute('d', interpolatePathData(fromD, toD, weight));
+
+    var fromStroke = Number(activePath.getAttribute('data-hero-template-stroke-width'));
+    var toStroke = Number(upperPath.getAttribute('data-hero-template-stroke-width'));
+    if (Number.isFinite(fromStroke) && Number.isFinite(toStroke)) {
+      activePath.setAttribute('stroke-width', formatMuscleNumber(fromStroke + (toStroke - fromStroke) * weight));
+    }
+  }
+
+  function applyMuscleStrengthToSvg(svg, value) {
+    if (!svg) return;
+    var strength = normalizeMuscleStrength(value);
+    var blend = muscleStrengthBlend(strength);
+    svg.setAttribute('data-hero-muscle-strength', String(strength));
+    svg.setAttribute('data-hero-muscle-lower', blend.lower);
+    svg.setAttribute('data-hero-muscle-upper', blend.upper);
+    svg.setAttribute('data-hero-muscle-blend', formatMuscleNumber(blend.weight));
+    svg.style.setProperty('--hero-muscle-strength', formatMuscleNumber(strength / 100));
+    svg.style.setProperty('--hero-muscle-bulk', formatMuscleNumber(strength / 100));
+    svg.style.setProperty('--hero-muscle-definition', formatMuscleNumber(Math.max(0, (strength - 20) / 80)));
+    svg.style.setProperty('--hero-muscle-separation', formatMuscleNumber(Math.max(0, (strength - 55) / 45)));
+
+    var groups = svg.querySelectorAll('[data-hero-slot="muscle-strength"]');
+    var zones = {};
+    for (var g = 0; g < groups.length; g++) {
+      var group = groups[g];
+      restoreMuscleTemplatePath(group.querySelector('path'));
+      group.removeAttribute('data-hero-muscle-active');
+      group.style.opacity = '';
+      group.setAttribute('display', 'none');
+      zones[group.getAttribute('data-hero-muscle-zone')] = true;
+    }
+
+    var zoneNames = Object.keys(zones);
+    for (var z = 0; z < zoneNames.length; z++) {
+      var zone = zoneNames[z];
+      var activeGroup = svg.querySelector('[data-hero-slot="muscle-strength"][data-hero-option="' + blend.lower + '"][data-hero-muscle-zone="' + zone + '"]');
+      var upperGroup = svg.querySelector('[data-hero-slot="muscle-strength"][data-hero-option="' + blend.upper + '"][data-hero-muscle-zone="' + zone + '"]');
+      if (!activeGroup) continue;
+      activeGroup.setAttribute('display', 'inline');
+      activeGroup.setAttribute('data-hero-muscle-active', 'true');
+      interpolateMuscleSilhouette(activeGroup, upperGroup, blend.weight);
+    }
+  }
+
+  function applyMilestoneToSvg(svg, tier, muscleStrength) {
     if (!svg) return;
     var normalized = normalizeMilestoneTier(tier);
     var tokens = MILESTONE_TOKENS[normalized] || MILESTONE_TOKENS.none;
+    var strength = muscleStrength === undefined || muscleStrength === null
+      ? MILESTONE_MUSCLE_STRENGTH[normalized]
+      : muscleStrength;
     svg.setAttribute('data-hero-milestone', normalized);
     svg.style.setProperty('--hero-milestone-metal', tokens.metal);
     svg.style.setProperty('--hero-milestone-metal-light', tokens.metalLight);
@@ -2519,13 +2663,14 @@
     svg.style.setProperty('--hero-milestone-glow', tokens.glow);
     svg.style.setProperty('--hero-milestone-jewel', tokens.jewel);
     setSlot(svg, 'milestone-power', normalized);
+    applyMuscleStrengthToSvg(svg, strength);
   }
 
-  function applyMilestoneToScope(tier, scope) {
+  function applyMilestoneToScope(tier, scope, muscleStrength) {
     var root = scope || document;
     var normalized = normalizeMilestoneTier(tier);
     var svgs = root.querySelectorAll('[data-gym-hero-svg]');
-    for (var i = 0; i < svgs.length; i++) applyMilestoneToSvg(svgs[i], normalized);
+    for (var i = 0; i < svgs.length; i++) applyMilestoneToSvg(svgs[i], normalized, muscleStrength);
   }
 
   function setMultiSlot(svg, slotName, options) {
@@ -2707,7 +2852,11 @@
       defaultBuckle.style.display = hasEmblem ? 'none' : '';
     }
     applyFineTuneToSvg(svg, state.fineTune);
-    applyMilestoneToSvg(svg, svg.getAttribute('data-hero-milestone') || window.SEGymHeroMilestone || 'none');
+    applyMilestoneToSvg(
+      svg,
+      svg.getAttribute('data-hero-milestone') || window.SEGymHeroMilestone || 'none',
+      svg.getAttribute('data-hero-muscle-strength') || window.SEGymHeroMuscleStrength
+    );
     applyReducedMotionToSvg(svg);
     svg.setAttribute('data-hero-avatar-ready', 'true');
   }
@@ -3075,8 +3224,10 @@
     normalizeAvatar: normalizeAvatar,
     normalizeFineTuneState: normalizeFineTuneState,
     normalizeMilestoneTier: normalizeMilestoneTier,
+    normalizeMuscleStrength: normalizeMuscleStrength,
     getCompositedAccessories: getCompositedAccessories,
     BRUIN_DEFAULTS: BRUIN_DEFAULTS,
+    applyMuscleStrengthToSvg: applyMuscleStrengthToSvg,
     applyMilestoneToSvg: applyMilestoneToSvg,
     applyMilestoneToScope: applyMilestoneToScope,
     applyRandomAvatarsToScope: applyRandomAvatarsToScope,

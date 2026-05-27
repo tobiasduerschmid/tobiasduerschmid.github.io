@@ -1206,18 +1206,42 @@ layout: sebook
 
       function normalizeHeroMilestoneTier(value) {
         var normalized = String(value || 'none').toLowerCase().replace(/^milestone-/, '');
-        return /^(none|bronze|silver|gold|diamond)$/.test(normalized) ? normalized : 'none';
+        return /^(none|bronze|silver|gold|diamond|infinity)$/.test(normalized) ? normalized : 'none';
       }
 
-      function setHeroMilestoneTier(tier) {
+      function normalizeHeroMuscleStrength(value) {
+        var strength = Number(value);
+        if (!Number.isFinite(strength)) return 0;
+        return Math.max(0, Math.min(100, Math.round(strength)));
+      }
+
+      function interpolateMilestoneMuscleStrength(totalAnswered, bronze, silver, gold, diamond, infinity) {
+        function segment(value, fromCount, toCount, fromStrength, toStrength) {
+          if (toCount <= fromCount) return toStrength;
+          var progress = (value - fromCount) / (toCount - fromCount);
+          return fromStrength + (toStrength - fromStrength) * Math.max(0, Math.min(1, progress));
+        }
+        if (totalAnswered <= 0) return 0;
+        if (totalAnswered < bronze) return segment(totalAnswered, 0, bronze, 0, 20);
+        if (totalAnswered < silver) return segment(totalAnswered, bronze, silver, 20, 40);
+        if (totalAnswered < gold) return segment(totalAnswered, silver, gold, 40, 60);
+        if (totalAnswered < diamond) return segment(totalAnswered, gold, diamond, 60, 80);
+        if (totalAnswered < infinity) return segment(totalAnswered, diamond, infinity, 80, 100);
+        return 100;
+      }
+
+      function setHeroMilestoneTier(tier, muscleStrength) {
         var normalized = normalizeHeroMilestoneTier(tier);
+        var normalizedStrength = normalizeHeroMuscleStrength(muscleStrength);
         window.SEGymHeroMilestone = normalized;
+        window.SEGymHeroMuscleStrength = normalizedStrength;
         if (window.HeroAvatar && typeof window.HeroAvatar.applyMilestoneToScope === 'function') {
-          window.HeroAvatar.applyMilestoneToScope(normalized, document);
+          window.HeroAvatar.applyMilestoneToScope(normalized, document, normalizedStrength);
           return;
         }
         document.querySelectorAll('[data-gym-hero-svg]').forEach(function (svg) {
           svg.setAttribute('data-hero-milestone', normalized);
+          svg.setAttribute('data-hero-muscle-strength', String(normalizedStrength));
         });
       }
 
@@ -1226,6 +1250,7 @@ layout: sebook
         var milestoneBanner = document.getElementById('milestone-banner');
         milestoneBanner.className = 'milestone-banner';
         var heroMilestoneTier = 'none';
+        var heroMuscleStrength = 0;
         function showMilestoneBanner(levelClass, icon, heading, detail) {
           milestoneBanner.innerHTML =
             '<span class="milestone-icon" aria-hidden="true">' + icon + '</span>' +
@@ -1238,16 +1263,21 @@ layout: sebook
           var totalAnswered = 0;
           var keys = Object.keys(stats);
           for (var i = 0; i < keys.length; i++) { totalAnswered += stats[keys[i]].seen; }
+          var MILESTONE_INFINITY = {{ site.gym_milestone_infinity }};
           var MILESTONE_DIAMOND = {{ site.gym_milestone_diamond }};
           var MILESTONE_GOLD = {{ site.gym_milestone_gold }};
           var MILESTONE_SILVER = {{ site.gym_milestone_silver }};
           var MILESTONE_BRONZE = {{ site.gym_milestone_bronze }};
-          if (totalAnswered >= MILESTONE_DIAMOND) {
+          heroMuscleStrength = interpolateMilestoneMuscleStrength(totalAnswered, MILESTONE_BRONZE, MILESTONE_SILVER, MILESTONE_GOLD, MILESTONE_DIAMOND, MILESTONE_INFINITY);
+          if (totalAnswered >= MILESTONE_INFINITY) {
+            heroMilestoneTier = 'infinity';
+            showMilestoneBanner('milestone-infinity', '&infin;', 'Infinity milestone', 'You\'ve completed ' + MILESTONE_INFINITY + '+ exercises. Infinity-stone power unlocked!');
+          } else if (totalAnswered >= MILESTONE_DIAMOND) {
             heroMilestoneTier = 'diamond';
-            showMilestoneBanner('milestone-diamond', '&#128142;', 'Diamond milestone', 'You\'ve completed ' + MILESTONE_DIAMOND + '+ exercises. Legendary Superhero!');
+            showMilestoneBanner('milestone-diamond', '&#128142;', 'Diamond milestone', 'You\'ve completed ' + MILESTONE_DIAMOND + '+ exercises. Infinity is next!');
           } else if (totalAnswered >= MILESTONE_GOLD) {
             heroMilestoneTier = 'gold';
-            showMilestoneBanner('milestone-gold', '&#127942;', 'Gold milestone', 'You\'ve completed ' + MILESTONE_GOLD + '+ exercises. Only one more level to go!');
+            showMilestoneBanner('milestone-gold', '&#127942;', 'Gold milestone', 'You\'ve completed ' + MILESTONE_GOLD + '+ exercises. Diamond is within reach!');
           } else if (totalAnswered >= MILESTONE_SILVER) {
             heroMilestoneTier = 'silver';
             showMilestoneBanner('milestone-silver', '&#129352;', 'Silver milestone', 'You\'ve completed ' + MILESTONE_SILVER + '+ exercises. Keep pushing!');
@@ -1260,7 +1290,7 @@ layout: sebook
         } else {
           hideElement(milestoneBanner);
         }
-        setHeroMilestoneTier(heroMilestoneTier);
+        setHeroMilestoneTier(heroMilestoneTier, heroMuscleStrength);
 
         var gym = PersonalGym.getGym();
         var totalCards = 0;

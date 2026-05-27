@@ -1,11 +1,46 @@
 // @ts-check
+const fs = require('fs');
+const path = require('path');
 const { test, expect } = require('@playwright/test');
+const yaml = require('js-yaml');
 const { a11yCheckpoint } = require('./a11y-helpers');
 
 const A11Y_FEATURE = 'se-gym-hero-avatar';
 const GYM_URL = '/se-gym/';
 
 const ACTIVATE_TOGGLE_SLIDER = '#activatePersonalGymToggle + .slider';
+const MILESTONE_CONFIG = [
+  { tier: 'bronze', key: 'gym_milestone_bronze', strength: 20 },
+  { tier: 'silver', key: 'gym_milestone_silver', strength: 40 },
+  { tier: 'gold', key: 'gym_milestone_gold', strength: 60 },
+  { tier: 'diamond', key: 'gym_milestone_diamond', strength: 80 },
+  { tier: 'infinity', key: 'gym_milestone_infinity', strength: 100 },
+];
+
+function readGymMilestoneThresholds() {
+  const configPath = path.resolve(__dirname, '..', '_config.yml');
+  const config = yaml.load(fs.readFileSync(configPath, 'utf8'));
+  const thresholds = {};
+  let previous = 0;
+  for (const milestone of MILESTONE_CONFIG) {
+    const value = Number(config[milestone.key]);
+    if (!Number.isFinite(value) || value <= 0) {
+      throw new Error(`${milestone.key} in _config.yml must be a positive number.`);
+    }
+    if (value <= previous) {
+      throw new Error(`${milestone.key} in _config.yml must be greater than the previous gym milestone threshold.`);
+    }
+    thresholds[milestone.tier] = value;
+    previous = value;
+  }
+  return thresholds;
+}
+
+const GYM_MILESTONE_THRESHOLDS = readGymMilestoneThresholds();
+
+function correctSeenCount(seen) {
+  return Math.max(0, Math.min(seen, Number((seen * 0.95).toFixed(3))));
+}
 
 const CHOICE_PREVIEW_VIEWBOXES = {
   full: '238 34 324 596',
@@ -62,6 +97,15 @@ async function clearState(page) {
   });
 }
 
+async function setCookie(context, name, value) {
+  await context.addCookies([{
+    name,
+    value: encodeURIComponent(value),
+    domain: '127.0.0.1',
+    path: '/',
+  }]);
+}
+
 async function useDefaultSavedHero(page) {
   await page.addInitScript((hero) => {
     localStorage.setItem('se-gym-hero-avatar', JSON.stringify(hero));
@@ -85,7 +129,14 @@ async function installStaticChoicePreviewManifest(page, assets) {
 }
 
 async function activatePersonalGym(page) {
-  await page.locator(ACTIVATE_TOGGLE_SLIDER).click();
+  await setCookie(page.context(), 'se-gym-active', 'true');
+  if (await page.locator('#activatePersonalGymToggle').isChecked()) {
+    await page.locator('#activatePersonalGymToggle').evaluate((toggle) => {
+      toggle.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+  } else {
+    await page.locator(ACTIVATE_TOGGLE_SLIDER).click();
+  }
   await expect(page.locator('#activatePersonalGymToggle')).toBeChecked();
 }
 
@@ -1790,12 +1841,17 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       }
 
       const result = {};
-      for (const tier of ['bronze', 'silver', 'gold', 'diamond']) {
+      for (const tier of ['bronze', 'silver', 'gold', 'diamond', 'infinity']) {
         window.HeroAvatar.applyMilestoneToSvg(svg, tier);
         result[tier] = {
           attr: svg.getAttribute('data-hero-milestone'),
+          muscleStrength: svg.getAttribute('data-hero-muscle-strength'),
           visibleLayerCount: Array.from(svg.querySelectorAll(`[data-hero-slot="milestone-power"][data-hero-option="${tier}"]`))
             .filter((group) => group.getAttribute('display') === 'inline').length,
+          visibleMuscleLayerCount: Array.from(svg.querySelectorAll(`[data-hero-slot="muscle-strength"][data-hero-option="${tier}"]`))
+            .filter((group) => group.getAttribute('display') === 'inline').length,
+          visibleOtherMuscleLayerCount: Array.from(svg.querySelectorAll('[data-hero-slot="muscle-strength"]'))
+            .filter((group) => group.getAttribute('data-hero-option') !== tier && group.getAttribute('display') === 'inline').length,
           visibleShoeZoneCount: svg.querySelectorAll(`[data-hero-slot="milestone-power"][data-hero-option="${tier}"][display="inline"] [data-hero-milestone-zone="shoes"]`).length,
           metal: getComputedStyle(svg).getPropertyValue('--hero-milestone-metal').trim(),
           beltHit: hitAt(400, 426),
@@ -1808,15 +1864,51 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         attr: svg.getAttribute('data-hero-milestone'),
         visibleNonNoneLayerCount: Array.from(svg.querySelectorAll('[data-hero-slot="milestone-power"]'))
           .filter((group) => group.getAttribute('data-hero-option') !== 'none' && group.getAttribute('display') === 'inline').length,
+        visibleNonNoneMuscleLayerCount: Array.from(svg.querySelectorAll('[data-hero-slot="muscle-strength"]'))
+          .filter((group) => group.getAttribute('data-hero-option') !== 'none' && group.getAttribute('display') === 'inline').length,
       };
+      window.HeroAvatar.applyMilestoneToSvg(svg, 'silver', 50);
+      const activeLinearPath = svg.querySelector('[data-hero-slot="muscle-strength"][data-hero-option="silver"][data-hero-muscle-zone="left-upper"] path');
+      const upperLinearPath = svg.querySelector('[data-hero-slot="muscle-strength"][data-hero-option="gold"][data-hero-muscle-zone="left-upper"] path');
+      result.linear = {
+        attr: svg.getAttribute('data-hero-milestone'),
+        muscleStrength: svg.getAttribute('data-hero-muscle-strength'),
+        lower: svg.getAttribute('data-hero-muscle-lower'),
+        upper: svg.getAttribute('data-hero-muscle-upper'),
+        blend: Number(svg.getAttribute('data-hero-muscle-blend')),
+        visibleMuscleLayerCount: Array.from(svg.querySelectorAll('[data-hero-slot="muscle-strength"]'))
+          .filter((group) => group.getAttribute('display') === 'inline').length,
+        activeMuscleLayerCount: svg.querySelectorAll('[data-hero-slot="muscle-strength"][data-hero-muscle-active="true"][display="inline"]').length,
+        silverCount: Array.from(svg.querySelectorAll('[data-hero-slot="muscle-strength"][data-hero-option="silver"]'))
+          .filter((group) => group.getAttribute('display') === 'inline').length,
+        goldCount: Array.from(svg.querySelectorAll('[data-hero-slot="muscle-strength"][data-hero-option="gold"]'))
+          .filter((group) => group.getAttribute('display') === 'inline').length,
+        activeSilhouetteD: activeLinearPath && activeLinearPath.getAttribute('d'),
+        lowerTemplateD: activeLinearPath && activeLinearPath.getAttribute('data-hero-template-d'),
+        upperTemplateD: upperLinearPath && upperLinearPath.getAttribute('data-hero-template-d'),
+      };
+      result.samples = {};
+      for (const strength of [13, 25, 38, 50, 63, 75, 88, 100]) {
+        window.HeroAvatar.applyMilestoneToSvg(svg, 'none', strength);
+        const visibleMuscleGroups = Array.from(svg.querySelectorAll('[data-hero-slot="muscle-strength"]'))
+          .filter((group) => group.getAttribute('display') === 'inline');
+        result.samples[strength] = {
+          visibleMuscleLayerCount: visibleMuscleGroups.length,
+          activeMuscleLayerCount: visibleMuscleGroups.filter((group) => group.getAttribute('data-hero-muscle-active') === 'true').length,
+          visibleZoneCount: new Set(visibleMuscleGroups.map((group) => group.getAttribute('data-hero-muscle-zone'))).size,
+        };
+      }
       if (visual) visual.style.pointerEvents = previousVisualPointerEvents;
       svg.style.pointerEvents = previousSvgPointerEvents;
       return result;
     });
 
-    for (const tier of ['bronze', 'silver', 'gold', 'diamond']) {
+    for (const tier of ['bronze', 'silver', 'gold', 'diamond', 'infinity']) {
       expect(tiers[tier].attr).toBe(tier);
+      expect(tiers[tier].muscleStrength).toBe({ bronze: '20', silver: '40', gold: '60', diamond: '80', infinity: '100' }[tier]);
       expect(tiers[tier].visibleLayerCount).toBeGreaterThanOrEqual(2);
+      expect(tiers[tier].visibleMuscleLayerCount).toBe(4);
+      expect(tiers[tier].visibleOtherMuscleLayerCount).toBe(0);
       expect(tiers[tier].visibleShoeZoneCount).toBe(1);
       expect(tiers[tier].metal).toMatch(/^#[0-9a-f]{6}$/i);
       expect(tiers[tier].beltHit.slot, `${tier} milestone should not cover the belt`).not.toBe('milestone-power');
@@ -1831,30 +1923,137 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         zone: 'shoes',
       });
     }
-    expect(tiers.none).toEqual({ attr: 'none', visibleNonNoneLayerCount: 0 });
+    expect(tiers.none).toEqual({ attr: 'none', visibleNonNoneLayerCount: 0, visibleNonNoneMuscleLayerCount: 0 });
+    expect(tiers.linear).toMatchObject({
+      attr: 'silver',
+      muscleStrength: '50',
+      lower: 'silver',
+      upper: 'gold',
+      visibleMuscleLayerCount: 4,
+      activeMuscleLayerCount: 4,
+      silverCount: 4,
+      goldCount: 0,
+    });
+    expect(tiers.linear.blend).toBeCloseTo(0.5, 2);
+    expect(tiers.linear.activeSilhouetteD).not.toBe(tiers.linear.lowerTemplateD);
+    expect(tiers.linear.activeSilhouetteD).not.toBe(tiers.linear.upperTemplateD);
+    for (const strength of ['13', '25', '38', '50', '63', '75', '88', '100']) {
+      expect(tiers.samples[strength], `strength ${strength} should render one muscle layer per zone`).toEqual({
+        visibleMuscleLayerCount: 4,
+        activeMuscleLayerCount: 4,
+        visibleZoneCount: 4,
+      });
+    }
 
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
     await expect(page.locator('#hero-customizer-modal [data-hero-choice="milestone"]')).toHaveCount(0);
+    await expect(page.locator('#hero-customizer-modal #hero-cust-muscle-strength')).toHaveCount(0);
     await expect(page.getByRole('dialog', { name: 'Customize your hero' })).toBeVisible();
   });
 
   test('Exercise milestones automatically make page heroes look more powerful', async ({ page }) => {
+    const diamondSeenCount = GYM_MILESTONE_THRESHOLDS.diamond;
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
-    await page.evaluate(() => {
+    await setCookie(page.context(), 'analyze-performance', 'true');
+    await page.evaluate(({ seen, correct }) => {
       PersonalGym.setAnalyzePerformance(true);
-      PersonalGym.saveStats({ milestone: { seen: 1000, correct: 950 } });
-    });
+      PersonalGym.saveStats({ milestone: { seen, correct } });
+    }, { seen: diamondSeenCount, correct: correctSeenCount(diamondSeenCount) });
 
     await page.reload();
 
     await expect(page.locator('#milestone-banner')).toContainText('Diamond milestone');
+    await expect(page.locator('#milestone-banner')).toContainText(`${diamondSeenCount}+ exercises`);
     const heroes = page.locator('#gym-entrance [data-gym-hero-svg]');
     await expect(heroes.first()).toHaveAttribute('data-hero-milestone', 'diamond');
     await expect(heroes.nth(1)).toHaveAttribute('data-hero-milestone', 'diamond');
-    await expect(heroes.first().locator('[data-hero-slot="milestone-power"][data-hero-option="diamond"]').first())
+    await expect(heroes.first()).toHaveAttribute('data-hero-muscle-strength', '80');
+    await expect(heroes.first().locator('[data-hero-slot="muscle-strength"][data-hero-option="diamond"]').first())
       .toHaveAttribute('display', 'inline');
+  });
+
+  test('Infinity milestone is the top tier and uses the max procedural muscle outline', async ({ page }) => {
+    const infinitySeenCount = GYM_MILESTONE_THRESHOLDS.infinity;
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await setCookie(page.context(), 'analyze-performance', 'true');
+    await page.evaluate(({ seen, correct }) => {
+      PersonalGym.setAnalyzePerformance(true);
+      PersonalGym.saveStats({ milestone: { seen, correct } });
+    }, { seen: infinitySeenCount, correct: correctSeenCount(infinitySeenCount) });
+
+    await page.reload();
+
+    await expect(page.locator('#milestone-banner')).toContainText('Infinity milestone');
+    await expect(page.locator('#milestone-banner')).toContainText(`${infinitySeenCount}+ exercises`);
+    const hero = page.locator('#gym-entrance [data-gym-hero-svg]').first();
+    await expect(hero).toHaveAttribute('data-hero-milestone', 'infinity');
+    await expect(hero).toHaveAttribute('data-hero-muscle-strength', '100');
+    await expect(hero.locator('[data-hero-slot="muscle-strength"][data-hero-option="infinity"]').first())
+      .toHaveAttribute('display', 'inline');
+    const muscle = await hero.evaluate((svg) => {
+      const visibleMuscleGroups = Array.from(svg.querySelectorAll('[data-hero-slot="muscle-strength"]'))
+        .filter((group) => group.getAttribute('display') === 'inline');
+      return {
+        visibleMuscleLayerCount: visibleMuscleGroups.length,
+        activeMuscleLayerCount: visibleMuscleGroups.filter((group) => group.getAttribute('data-hero-muscle-active') === 'true').length,
+        visibleOptions: Array.from(new Set(visibleMuscleGroups.map((group) => group.getAttribute('data-hero-option')))),
+        visibleZoneCount: new Set(visibleMuscleGroups.map((group) => group.getAttribute('data-hero-muscle-zone'))).size,
+      };
+    });
+    expect(muscle).toEqual({
+      visibleMuscleLayerCount: 4,
+      activeMuscleLayerCount: 4,
+      visibleOptions: ['infinity'],
+      visibleZoneCount: 4,
+    });
+    await expect(hero.locator('[data-hero-slot="milestone-power"][data-hero-option="infinity"]').first())
+      .toHaveAttribute('display', 'inline');
+  });
+
+  test('Exercise progress linearly blends muscle strength between milestone tiers', async ({ page }) => {
+    const silverSeenCount = GYM_MILESTONE_THRESHOLDS.silver;
+    const goldSeenCount = GYM_MILESTONE_THRESHOLDS.gold;
+    const midpointSeenCount = silverSeenCount + ((goldSeenCount - silverSeenCount) / 2);
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await setCookie(page.context(), 'analyze-performance', 'true');
+    await page.evaluate(({ seen, correct }) => {
+      PersonalGym.setAnalyzePerformance(true);
+      PersonalGym.saveStats({ milestone: { seen, correct } });
+    }, { seen: midpointSeenCount, correct: correctSeenCount(midpointSeenCount) });
+
+    await page.reload();
+
+    await expect(page.locator('#milestone-banner')).toContainText('Silver milestone');
+    await expect(page.locator('#milestone-banner')).toContainText(`${silverSeenCount}+ exercises`);
+    const hero = page.locator('#gym-entrance [data-gym-hero-svg]').first();
+    await expect(hero).toHaveAttribute('data-hero-milestone', 'silver');
+    await expect(hero).toHaveAttribute('data-hero-muscle-strength', '50');
+    const muscle = await hero.evaluate((svg) => ({
+      lower: svg.getAttribute('data-hero-muscle-lower'),
+      upper: svg.getAttribute('data-hero-muscle-upper'),
+      blend: Number(svg.getAttribute('data-hero-muscle-blend')),
+      visibleMuscleLayerCount: Array.from(svg.querySelectorAll('[data-hero-slot="muscle-strength"]'))
+        .filter((group) => group.getAttribute('display') === 'inline').length,
+      activeMuscleLayerCount: svg.querySelectorAll('[data-hero-slot="muscle-strength"][data-hero-muscle-active="true"][display="inline"]').length,
+      silverCount: Array.from(svg.querySelectorAll('[data-hero-slot="muscle-strength"][data-hero-option="silver"]'))
+        .filter((group) => group.getAttribute('display') === 'inline').length,
+      goldCount: Array.from(svg.querySelectorAll('[data-hero-slot="muscle-strength"][data-hero-option="gold"]'))
+        .filter((group) => group.getAttribute('display') === 'inline').length,
+    }));
+
+    expect(muscle).toMatchObject({
+      lower: 'silver',
+      upper: 'gold',
+      visibleMuscleLayerCount: 4,
+      activeMuscleLayerCount: 4,
+      silverCount: 4,
+      goldCount: 0,
+    });
+    expect(muscle.blend).toBeCloseTo(0.5, 2);
   });
 
   test('Unsaved page heroes randomize independently on load', async ({ page }) => {

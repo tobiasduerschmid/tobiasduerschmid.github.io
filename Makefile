@@ -1,4 +1,4 @@
-.PHONY: init-submodules install build prod check test clean run run-hero-fast pdf latex all vm-setup vm-build vm-snapshot audit-a11y audit-a11y-interactive audit-a11y-tutorial audit-a11y-gym audit-a11y-quiz
+.PHONY: init-submodules install build test-build test-check prod check test clean run test-run run-hero-fast pdf latex all vm-setup vm-build vm-snapshot audit-a11y audit-a11y-interactive audit-a11y-tutorial audit-a11y-gym audit-a11y-quiz
 
 JEKYLL_PORT ?= $(shell ruby -e 'require "socket"; port = 4000; loop do; begin; TCPServer.new("127.0.0.1", port).close; puts port; break; rescue Errno::EADDRINUSE; port += 1; rescue Errno::EACCES, Errno::EPERM; puts port; break; end; end')
 
@@ -17,10 +17,19 @@ build:
 	if [ "$$JEKYLL_ENV" = "production" ]; then node scripts/build_se_gym_hero_choice_previews.js; fi
 	bundle exec jekyll build --incremental
 
+test-build:
+	bundle exec jekyll clean
+	if [ "$$JEKYLL_ENV" = "production" ]; then node scripts/build_se_gym_hero_choice_previews.js; fi
+	bundle exec jekyll build
+
 prod:
 	JEKYLL_ENV=production $(MAKE) run
 
 check: build
+	bash ./scripts/check_references.sh
+	bash ./scripts/check_quizzes.sh
+
+test-check: test-build
 	bash ./scripts/check_references.sh
 	bash ./scripts/check_quizzes.sh
 
@@ -32,6 +41,9 @@ clean:
 	rm -rf _site
 
 run: check
+	bundle exec jekyll serve --incremental --port $(JEKYLL_PORT)
+
+test-run: test-check
 	bundle exec jekyll serve --incremental --port $(JEKYLL_PORT)
 
 run-hero-fast:

@@ -9,7 +9,7 @@ module.exports = defineConfig({
 
   webServer: {
     // The command to start your local server
-    command: `make run JEKYLL_PORT=${jekyllPort}`,
+    command: `make test-run JEKYLL_PORT=${jekyllPort}`,
 
     // The URL Playwright will ping to check if the server is ready.
     // It waits for a 200 OK response before starting tests.
@@ -20,7 +20,7 @@ module.exports = defineConfig({
     reuseExistingServer: !process.env.CI,
 
     // Optional: How long to wait for the server to start before timing out (in milliseconds)
-    timeout: 120 * 1000,
+    timeout: 300 * 1000,
   },
 
   testDir: './tests',
