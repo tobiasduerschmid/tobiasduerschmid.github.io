@@ -1860,7 +1860,7 @@ steps:
           type: single
           options:
             - "List comprehensions run faster than for-loops for all input sizes"
-            - "List comprehensions are more readable and concise for simple transformations, and are a recognized Python idiom"
+            - "List comprehensions are more readable for simple transformations and are a Python idiom"
             - "For-loops are deprecated in Python 3"
             - "List comprehensions avoid creating a temporary list in memory"
           correct_index: 1
@@ -2077,7 +2077,7 @@ steps:
           type: single
           options:
             - "Python runs faster than C++ for file I/O operations"
-            - "Python's `with` statement, built-in file iteration, and list comprehensions make this 3-4 lines vs 20+ lines in C++ with error handling"
+            - "`with`, file iteration, and list comprehensions cut this to 3-4 lines vs 20+ in C++"
             - "C++ cannot open text files, only binary files"
             - "Python files never need to be closed because the OS does it automatically"
           correct_index: 1
@@ -2092,7 +2092,7 @@ steps:
           type: single
           options:
             - "Removes all spaces from the middle of the line"
-            - "Removes leading and trailing whitespace, including the newline character `\\n` at the end"
+            - "Removes leading and trailing whitespace, including the trailing `\\n`"
             - "Converts the line to lowercase"
             - "Splits the line into a list of characters"
           correct_index: 1
@@ -2149,14 +2149,15 @@ steps:
           type: single
           options:
             - "Single quotes can't be used for strings in Python"
-            - "The apostrophe in `It's` ends the string early because it matches the opening `'`. Fix: use double quotes (`\"It's a beautiful day\"`) or escape the apostrophe (`'It\\'s a beautiful day'`)"
+            - "The apostrophe ends the string early — it matches the opening `'`"
             - "Python strings must use double quotes"
             - "The string is too long for single quotes"
           correct_index: 1
           explanation: |
             Unlike C++ where `'x'` is a `char` and `"x"` is a string, Python uses `'...'` and `"..."` interchangeably
-            for strings. This flexibility lets you pick whichever quote style avoids conflicts with the string's content.
-            Here, `"It's a beautiful day"` avoids the problem entirely — no escaping needed.
+            for strings. The fix is either double quotes (`"It's a beautiful day"`) or escaping
+            the apostrophe (`'It\'s a beautiful day'`). This flexibility lets you pick whichever quote
+            style avoids conflicts with the string's content.
 
         - question: |
             **Arrange** the lines to read a file and count total words.
@@ -2402,7 +2403,7 @@ steps:
           type: single
           options:
             - "Raw strings run faster because Python skips Unicode processing"
-            - "Raw strings prevent Python from interpreting backslashes before the `re` module sees them, so `\\d` stays as two characters `\\` and `d`"
+            - "Raw strings keep backslashes literal, so `re` receives `\\d` as two characters"
             - "The `re` module only accepts raw strings and will raise a TypeError otherwise"
             - "Raw strings automatically escape special regex characters like `.` and `*`"
           correct_index: 1
@@ -2439,9 +2440,9 @@ steps:
           type: single
           options:
             - "`[line for line in lines if 'ERROR' in line]`"
-            - "`lines.filter('ERROR')`"
-            - "`[line if 'ERROR' for line in lines]`"
-            - "`lines.find('ERROR')`"
+            - "`lines.filter(lambda l: 'ERROR' in l)`"
+            - "`[line if 'ERROR' in line for line in lines]`"
+            - "`lines.findall('ERROR')`"
           correct_index: 0
           explanation: |
             A list comprehension with a filter: `[line for line in lines if 'ERROR' in line]`.
@@ -2663,10 +2664,10 @@ steps:
             Why should error messages be written to `sys.stderr` rather than printed normally?
           type: single
           options:
-            - "stderr is faster than stdout in Python"
-            - "stdout can only handle one line at a time"
-            - "Separating stdout and stderr lets users redirect normal output and errors independently"
-            - "Python automatically color-codes stderr messages in red"
+            - "stderr is faster than stdout in Python's standard library"
+            - "stdout can only handle one line at a time, while stderr can buffer"
+            - "Separating stdout and stderr lets users redirect output and errors independently"
+            - "Python automatically color-codes stderr messages in red on the terminal"
           correct_index: 2
           explanation: |
             When stdout and stderr are separate streams, users can capture output (`> out.txt`) and errors
@@ -2752,7 +2753,7 @@ steps:
           type: single
           options:
             - "Python also distinguishes `'A'` as a character and `\"Alice\"` as a string"
-            - "There is no distinction — Python has no `char` type. Single quotes (`'...'`) and double quotes (`\"...\"`) both create `str` objects and are fully interchangeable"
+            - "No distinction — Python has no `char`; `'...'` and `\"...\"` both create `str` objects"
             - "Single quotes create byte strings, double quotes create Unicode strings"
             - "Single quotes are for single characters, but Python stores them as length-1 strings"
           correct_index: 1
@@ -3061,7 +3062,7 @@ steps:
           options:
             - "The single-script approach is better — functions add unnecessary complexity for a short script"
             - "Both are equivalent — it's purely a matter of style"
-            - "The function-based approach is better — each function is testable, reusable, and has a clear responsibility. It also makes the top-level flow self-documenting"
+            - "The function-based approach is better — each function is testable, reusable, and clearly named"
             - "The function-based approach is worse — Python functions are slower than inline code"
           correct_index: 2
           explanation: |

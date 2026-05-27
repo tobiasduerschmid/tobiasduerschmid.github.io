@@ -261,22 +261,22 @@ steps:
             In a sequence diagram, what does a **single lifeline** represent?
           type: single
           options:
-            - "A class definition"
-            - "A specific object instance that is alive during the scenario"
-            - "A Python file"
-            - "A function defined in the code"
+            - "A class definition for one of the participating types"
+            - "A specific object instance alive during the scenario"
+            - "A Python source file containing one of the classes"
+            - "A free function defined somewhere in the code"
           correct_index: 1
           explanation: |
-            A lifeline represents **one object instance**, not a class. If your code does `a = Dog()` and `b = Dog()`, you get **two** lifelines (`a: Dog` and `b: Dog`) even though there is only one `Dog` class. This is the single most common misconception when switching from class diagrams to sequence diagrams.
+            A lifeline represents **one object instance**, not a class. If your code does `a = Dog()` and `b = Dog()`, you get **two** lifelines (`a: Dog` and `b: Dog`) even though there is only one `Dog` class. This is the single most common confusion when switching from class diagrams to sequence diagrams.
 
         - question: |
             What does a **solid arrow with a filled arrowhead** (→) mean?
           type: single
           options:
-            - "A comment"
+            - "A documentation comment attached to a participant"
             - "A synchronous call — the caller waits for the callee to finish"
-            - "An asynchronous call that returns immediately"
-            - "A return value"
+            - "An asynchronous call that returns to the caller immediately"
+            - "A return value flowing back to the original caller"
           correct_index: 1
           explanation: |
             A solid line with a filled arrowhead is a **synchronous message** — a normal method call where the caller blocks until the callee returns. This matches Python's default behavior: every `x.method()` call waits for `method()` to finish before the next line executes.
@@ -305,10 +305,10 @@ steps:
             In a sequence diagram, how is **time** represented?
           type: single
           options:
-            - "Left to right"
+            - "Left to right across the horizontal axis"
             - "Top to bottom — earlier events higher, later events lower"
-            - "By arrow numbers"
-            - "By colors (green = first, red = last)"
+            - "By numeric labels placed on each arrow"
+            - "By color — green is first, red is last"
           correct_index: 1
           explanation: |
             **Top to bottom.** The horizontal axis shows *who* is involved (the lifelines); the vertical axis shows *when*. This means the order of your Python statements directly controls the vertical order of the arrows.
@@ -580,10 +580,10 @@ steps:
             What does a **dashed arrow with an open arrowhead** mean in a sequence diagram?
           type: single
           options:
-            - "An asynchronous message"
+            - "An asynchronous message that the caller does not wait for"
             - "A return message — the callee handing a value back to the caller"
-            - "A deleted object"
-            - "A broken connection"
+            - "A deleted object whose lifeline has just ended"
+            - "A broken or lost connection between two participants"
           correct_index: 1
           explanation: |
             Dashed line + open arrowhead = **return message**. Solid line + filled arrowhead = synchronous call. The two visually distinct styles let you see "went in" vs. "came out" at a glance.
@@ -596,10 +596,10 @@ steps:
             ```
           type: single
           options:
-            - "Because `send` is a void method (returns None), so there is nothing meaningful to show"
-            - "Because the string argument is short"
-            - "Because Python hides all return values"
-            - "Because the arrow would be drawn in a different color"
+            - "Because `send` returns `None`, so there is nothing meaningful to show"
+            - "Because the argument is too short to be worth annotating"
+            - "Because Python implicitly hides all return values from diagrams"
+            - "Because return arrows are drawn in a separate diagram type"
           correct_index: 0
           explanation: |
             The diagram draws a return arrow only when the return type is **not** `None` **and** the return value is captured. `send` returns `None` (no `-> int` or similar annotation), so there is no "value" to show on the way back — the end of the activation box is enough.
@@ -631,10 +631,10 @@ steps:
             In Python, `self` is the first parameter of every instance method. How is `self` drawn in a sequence diagram?
           type: single
           options:
-            - "As an extra participant"
-            - "As a thick red arrow"
+            - "As an extra participant alongside the method's owner"
+            - "As a thick colored arrow drawn before the call"
             - "It is not drawn — the lifeline itself *is* the self reference"
-            - "It is shown as a dotted arrow pointing at itself"
+            - "As a dotted arrow on the lifeline pointing to itself"
           correct_index: 2
           explanation: |
             `self` is implicit in the diagram — a lifeline **is** the object, so there is no need to draw `self` separately. You will see `self` again in the next step when an object calls one of its *own* methods — that is when the lifeline points an arrow at itself.
@@ -867,10 +867,10 @@ steps:
             What does a **nested activation box** (a smaller box stacked on top of a larger one) represent?
           type: single
           options:
-            - "An object that contains another object"
+            - "An object that contains another object (composition)"
             - "A new stack frame pushed while a previous call is still executing"
-            - "A syntax error"
-            - "A parallel thread"
+            - "A syntax error in the diagram or its source"
+            - "A parallel thread running alongside the outer call"
           correct_index: 1
           explanation: |
             A nested activation is the visual of the Python **call stack**: a method calls another method before returning, so a new frame is pushed on top. When the inner method returns, the inner box ends; when the outer returns, the outer box ends.
@@ -901,10 +901,10 @@ steps:
             ```
           type: single
           options:
-            - "1 — just Main to bot"
-            - "2 — Main to bot, and bot to itself"
-            - "3 — including a creation arrow, the outer call, and the self-call"
-            - "0 — pass statements are not drawn"
+            - "1 — only Main calling bot once"
+            - "2 — Main to bot, and bot's self-call"
+            - "3 — the creation arrow, the outer call, and the self-call"
+            - "0 — `pass` produces no arrows at all"
           correct_index: 2
           explanation: |
             **Three arrows.** (1) The `<<create>>` dashed arrow when `bot = Bot()`. (2) `Main -> bot: a()` for the outer call. (3) `bot -> bot: b()` for the self-call inside `a()`. The `pass` in `b()` is an empty body, so no further arrows come from there.
@@ -1193,10 +1193,10 @@ steps:
             An **alt** fragment on a sequence diagram represents what Python construct?
           type: single
           options:
-            - "`try` / `except`"
+            - "A `try` / `except` block with an exception path"
             - "`if` / `elif` / `else` — exactly one branch runs"
-            - "A for loop"
-            - "A function definition"
+            - "A `for` loop iterating over a sequence"
+            - "A function or method definition"
           correct_index: 1
           explanation: |
             `alt` is the conditional fragment — one compartment per branch, separated by horizontal lines, with exactly one compartment executing based on its guard. It maps directly to Python's `if` / `elif` / `else`.
@@ -1217,10 +1217,10 @@ steps:
             **Review of Step 3.** The `_is_spam` call in the guard produces a tiny self-arrow before the alt box's contents. Why does a self-arrow appear there at all?
           type: single
           options:
-            - "Because the analyzer adds decorative arrows for all guards"
-            - "Because `_is_spam` is a method call on the same object — `self._is_spam(...)` is indistinguishable from any other self-call"
-            - "Because spam detection is special"
-            - "Because it is inside the alt fragment"
+            - "Because the analyzer adds decorative arrows for any guard condition"
+            - "Because `self._is_spam(...)` is a real method call, like any other self-call"
+            - "Because spam detection is a special diagram primitive"
+            - "Because every guard inside an `alt` fragment draws a self-arrow"
           correct_index: 1
           explanation: |
             The guard `self._is_spam(message)` is a real Python method call — the activation box for it is stacked on top of `handle`'s activation box, exactly like any other self-call from Step 3. Some published diagrams hide guard-evaluation calls to reduce clutter, but UML semantics say they are there.
@@ -1423,10 +1423,10 @@ steps:
             A **loop** fragment on a sequence diagram represents what Python construct?
           type: single
           options:
-            - "A recursive function call"
-            - "A try/except block"
+            - "A recursive function call wrapping itself"
+            - "A `try`/`except` block with a guarded body"
             - "`for` or `while` — the contents run zero or more times"
-            - "Object creation"
+            - "Repeated object creation in a single scenario"
           correct_index: 2
           explanation: |
             `loop` wraps messages that repeat. It maps to Python's `for` and `while`. The guard can describe the iteration (e.g., `[for each message]`).
@@ -1435,10 +1435,10 @@ steps:
             **Review of Step 4.** Your method body is `for x in items: if x.valid: bot.send(x)`. Which two fragments appear, and in what order?
           type: single
           options:
-            - "`opt` outside, `loop` inside"
-            - "`loop` outside, `opt` inside — matching the indentation of the Python code"
-            - "`alt` outside, `loop` inside"
-            - "Only `loop` — a bare `if` does not produce a fragment"
+            - "`opt` on the outside with `loop` nested inside it"
+            - "`loop` outside, `opt` inside — matching the Python indentation"
+            - "`alt` outside with `loop` nested inside it"
+            - "Only `loop` — a bare `if` produces no fragment"
           correct_index: 1
           explanation: |
             The outer construct in Python is `for`, so the outer box is `loop`. Inside, the `if` without `else` produces `opt`. Fragment nesting mirrors the nesting of your Python code — read the indentation to predict the diagram.
@@ -1461,10 +1461,10 @@ steps:
             What is the right reaction?
           type: single
           options:
-            - "Perfect — this captures the full logic"
-            - "Add more fragments to be thorough"
-            - "Refactor — this diagram is too deeply nested to read; split it into smaller, focused diagrams"
-            - "Use async arrows instead"
+            - "Perfect — this captures the full conditional logic"
+            - "Add even more fragments to cover every edge case"
+            - "Refactor — too deeply nested; split into smaller, focused diagrams"
+            - "Switch to asynchronous arrows to flatten the nesting"
           correct_index: 2
           explanation: |
             Deeply nested fragments become unreadable fast. Ambler's *UML Style* rule of thumb: if you are past two levels of nesting, split the diagram. Sequence diagrams are for communicating behavior, not for encoding every branch of your code.
@@ -1871,10 +1871,10 @@ steps:
             **Review of Step 2.** Why does the `channel.get_subscriber_count()` call produce a dashed return arrow, while the `channel.broadcast(post)` call does not?
           type: single
           options:
-            - "`broadcast` is longer"
-            - "`get_subscriber_count` has a non-`None` return type AND its value is captured; `broadcast` returns `None`, so there is nothing to show"
-            - "The analyzer only draws return arrows for *get* methods"
-            - "Return arrows are random"
+            - "`broadcast`'s method name is longer than `get_subscriber_count`"
+            - "`get_subscriber_count` returns a non-`None` value AND it is captured; `broadcast` returns `None`"
+            - "The analyzer only draws return arrows for methods named `get_*`"
+            - "Return-arrow rendering is non-deterministic between runs"
           correct_index: 1
           explanation: |
             Step 2's two rules: the return type must be non-`None` *and* the caller must capture the value. `get_subscriber_count` meets both (`-> int` + `count = ...`); `broadcast` fails the first (`-> None`).
@@ -1883,10 +1883,10 @@ steps:
             **Review of Step 3.** Why do `self._log_start(count)` and `self._log_skip(post)` appear **nested** inside the activation box for `run_digest`?
           type: single
           options:
-            - "Because they share the same method name prefix"
-            - "Because Python has not returned from `run_digest` yet when it calls them — so their activation boxes stack on top of the outer one, like stack frames"
-            - "Because they are private (underscore-prefixed)"
-            - "Because they are called from `__main__`"
+            - "Because they share the same underscored method-name prefix"
+            - "Because Python has not returned from `run_digest` yet — their frames stack on top"
+            - "Because both methods are private (underscore-prefixed) helpers"
+            - "Because `__main__` is the lifeline that ultimately calls them"
           correct_index: 1
           explanation: |
             Activation boxes are stack frames. `run_digest` has not returned when it calls `_log_start` or `_log_skip`, so new frames are pushed on top of `run_digest`'s frame. This is Step 3's call-stack intuition, unchanged.
@@ -1909,8 +1909,8 @@ steps:
           options:
             - "Add a third branch to the `alt` — three compartments in one diagram"
             - "Nest more fragments until every edge case is covered"
-            - "Leave the current diagram alone (it shows the *common* path) and draw a separate diagram for the moderation path"
-            - "Stop using sequence diagrams — code is easier"
+            - "Leave this diagram alone and draw a separate one for the moderation path"
+            - "Stop using sequence diagrams — code is always easier to read"
           correct_index: 2
           explanation: |
             Sequence diagrams are for **one scenario at a time**. If you keep adding branches, you get the unreadable nested-fragment mess Step 5's quiz warned about. Splitting into multiple small diagrams is not a failure — it is the correct application of the Single Responsibility Principle to your diagrams.

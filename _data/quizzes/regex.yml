@@ -47,12 +47,12 @@ questions:
   - id: 3 
     difficulty: advanced
     question: "You need to validate user input to ensure a password contains both a number and a special character, but you don't know what order they will appear in. What mechanism allows a RegEx engine to assert these conditions without actually 'consuming' the string character by character?" 
-    options: 
-      - "Groups `(?:...)`" 
-      - "Possessive quantifiers `*+`" 
-      - "Lookarounds (e.g., Lookaheads `(?=...)`)" 
-      - "Word boundaries `\\b`" 
-    correct_index: 2 
+    options:
+      - "Non-capturing groups `(?:...)`"
+      - "Possessive quantifiers `*+`"
+      - "Lookaheads `(?=...)`"
+      - "Word boundaries `\\b`"
+    correct_index: 2
     option_feedback:
       0: |
         A non-capturing group organizes syntax, but it still consumes the characters it matches. It does

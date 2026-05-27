@@ -38,7 +38,7 @@ questions:
     options:
       - "When precisely following all TDD steps, information hiding is always guaranteed"
       - "TDD results in larger and more complex interfaces of methods & classes"
-      - "TDD often leads to low coupling and small interfaces, but additional design efforts are necessary to ensure the larger architecture follows the information hiding principle"
+      - "TDD encourages low coupling and small interfaces, but does not guarantee architecture-level information hiding"
       - "TDD only improves information hiding if tests are generated from UML diagrams"
     correct_index: 2
     option_feedback:
@@ -83,14 +83,14 @@ questions:
     options:
       - "Verifying indirect outputs by adding assertions"
       - "Verifying the order of indirect outputs by recording all events"
-      - "Injecting indirect inputs into a system to ensure the test is covering the particular behavior that should be tested."
-      - "Validating that the right system was built by asking real users if their needs are fully met by the implemented system."
+      - "Injecting controlled indirect inputs so the test exercises a specific path"
+      - "Validating with real users that the right system was built"
     correct_index: 2
     option_feedback:
       0: "Assertions check whether the observed result matches the expected result. A stub instead supplies controlled input or behavior from a collaborator so the test can exercise a specific path."
       1: "Recording calls or event order is closer to a spy or mock. A stub's main role is to return predetermined data or behavior to the system under test."
       3: "User validation checks whether the product satisfies real needs. A test stub is a technical test double used inside automated tests."
-    explanation: "A test stub acts as a controlled replacement for a system component. It is used to supply predetermined indirect inputs (such as hardcoded responses) to the system under test, ensuring that specific behaviors or edge cases can be reliably verified without depending on external systems."
+    explanation: "A test stub acts as a controlled replacement for a system component. It supplies predetermined indirect inputs (such as hardcoded responses) to the system under test so specific behaviors or edge cases can be reliably verified without depending on external systems."
 
   - id: 7
     difficulty: basic
@@ -187,7 +187,7 @@ questions:
     question: "What is a direct implication of the CAP theorem?"
     options:
       - "MySQL is more suitable for data-intense systems than MongoDB"
-      - "When designing distributed systems, there are inherent trade-offs between important data management properties"
+      - "Distributed systems face inherent trade-offs between key data-management properties"
       - "Non-error responses always include the most recent write"
       - "ATM systems do not let users withdraw money during a network outage"
     correct_index: 1
@@ -195,7 +195,7 @@ questions:
       0: "CAP does not rank specific products for all data-intensive systems. It describes trade-offs distributed systems face when partitions occur."
       2: "A non-error response containing the most recent write is a consistency guarantee. CAP says that during a partition, a distributed system may have to trade that guarantee against availability."
       3: "ATM behavior is a design and policy choice, not a universal theorem result. Some systems preserve availability with limits or reconciliation; others reject operations to protect consistency."
-    explanation: "In distributed data stores, it is impossible to simultaneously guarantee Consistency, Availability, and Partition Tolerance. Systems must make architectural trade-offs, often sacrificing either consistency or availability during network partitions."
+    explanation: "CAP states that in distributed data stores, it is impossible to simultaneously guarantee Consistency, Availability, and Partition Tolerance. Systems must make architectural trade-offs, often sacrificing either consistency or availability during network partitions."
 
   - id: 14
     difficulty: intermediate

@@ -9,9 +9,9 @@ questions:
       Who introduced the Information Hiding principle, and in what paper?
     options:
       - "Edsger W. Dijkstra, in *On the Role of Scientific Thought* (EWD 447)"
-      - "David L. Parnas, in *On the Criteria To Be Used in Decomposing Systems into Modules*, Communications of the ACM"
-      - "Robert C. Martin, in *Clean Architecture*"
-      - "John Ousterhout, in *A Philosophy of Software Design*"
+      - "David L. Parnas, in *On the Criteria To Be Used in Decomposing Systems into Modules* (CACM 1972)"
+      - "Robert C. Martin, in *Clean Architecture* (2017)"
+      - "John Ousterhout, in *A Philosophy of Software Design* (2018)"
     correct_index: 1
     option_feedback:
       0: |
@@ -30,10 +30,10 @@ questions:
     question: |
       In Parnas's KWIC (Key Word In Context) example, what was wrong with the **conventional** decomposition (one module per processing step)?
     options:
-      - "It used too many modules and was therefore too slow"
-      - "It exposed the shared data structure to every module, so a change to that data structure forced edits to nearly every module"
-      - "It used inheritance instead of composition"
-      - "It violated the Liskov Substitution Principle"
+      - "It used too many modules, which made the program run too slowly to be practical"
+      - "Every module knew the shared data structure, so changing it forced edits everywhere"
+      - "It used inheritance hierarchies where composition would have been simpler"
+      - "It violated the Liskov Substitution Principle for the line-storage subtype"
     correct_index: 1
     option_feedback:
       0: |
@@ -65,7 +65,7 @@ questions:
       Every field is `private`. Is this an example of good Information Hiding?
     options:
       - "Yes — all fields are `private`, so the implementation is hidden"
-      - "No — the *interface* (parameter and return types) names PayPal-specific types, so the PayPal decision has leaked into the contract"
+      - "No — the public method signatures name PayPal-specific types, leaking the vendor into the contract"
       - "No — Information Hiding requires inheritance, which this class doesn't use"
       - "Yes — Java visibility modifiers always guarantee Information Hiding"
     correct_index: 1
@@ -111,7 +111,7 @@ questions:
       A teammate proposes splitting a 30-line helper function into its own class with a one-method interface, "for Information Hiding." When is this **most likely** the wrong move?
     options:
       - "When the helper is genuinely a likely-to-change decision used by several modules"
-      - "When the helper has only one caller, the implementation is trivial, and there is no plausible variation that the abstraction would protect against"
+      - "When it has one caller, the body is trivial, and there is no plausible variation to absorb"
       - "Never — extracting a class is always good Information Hiding"
       - "When the helper is over 100 lines"
     correct_index: 1
@@ -134,7 +134,7 @@ questions:
       Which of the following is *most likely* to be **part of the interface** (visible) rather than a hidden secret?
     options:
       - "Whether `find_user` looks up the user in MySQL or in MongoDB"
-      - "Whether the network protocol used by the API is **stateful or stateless**"
+      - "Whether the network protocol used by the API is stateful or stateless"
       - "Whether `sortItems` uses quicksort or mergesort"
       - "Whether passwords are hashed with bcrypt or argon2"
     correct_index: 1
@@ -156,10 +156,10 @@ questions:
     question: |
       Which statement best captures the relationship between **Information Hiding** and **Separation of Concerns (SoC)**?
     options:
-      - "They are synonyms"
-      - "SoC decides *which* aspects belong in separate modules; Information Hiding decides *how* each module protects its internal decisions behind a stable interface"
-      - "Information Hiding is a deprecated 1972 idea; SoC replaced it"
-      - "SoC applies to data; Information Hiding applies only to functions"
+      - "They are exact synonyms — different teams just prefer different vocabulary"
+      - "SoC decides *which* aspects to separate; Information Hiding decides *how* each one stays protected behind its interface"
+      - "Information Hiding is a deprecated 1972 idea; SoC replaced it in modern practice"
+      - "SoC applies to data layouts; Information Hiding applies only to function bodies"
     correct_index: 1
     option_feedback:
       0: |
@@ -180,7 +180,7 @@ questions:
       The CFO announces that PayPal will be replaced with Stripe. In a codebase that follows Information Hiding well, what is the expected scope of the change?
     options:
       - "Edit every service that processes a payment, refund, or wallet operation"
-      - "Write one new `StripeGateway` implementation of the existing `PaymentGateway` interface, plus update the dependency-injection configuration"
+      - "Write one new `StripeGateway` implementation of `PaymentGateway` and update the DI wiring"
       - "Rewrite the entire system because vendor changes always cascade"
       - "Add a `try/catch` block in every payment-related method"
     correct_index: 1
@@ -203,9 +203,9 @@ questions:
       Which is the strongest evidence that a module is **shallow**?
     options:
       - "Its public methods are mostly one-line pass-throughs that delegate to another module"
-      - "It has more than 200 lines of code"
-      - "It uses generics or templates"
-      - "It is in its own file"
+      - "It has more than 200 lines of implementation code"
+      - "It uses Java generics or C++ templates in its signatures"
+      - "It lives in its own file, separate from its callers"
     correct_index: 0
     option_feedback:
       1: |
@@ -226,7 +226,7 @@ questions:
       Two modules in your codebase both depend on the assumption "phone numbers are stored as exactly 10 digits, no separators." There is no shared constant, no shared validator — just two pieces of code that happen to assume the same thing. What is this?
     options:
       - "Healthy duplication that improves performance"
-      - "**Semantic coupling** — a hidden dependency that no compiler or static analyzer can detect"
+      - "Semantic coupling — a hidden dependency no compiler or analyzer can detect"
       - "Strict syntactic coupling, easy to detect with `grep`"
       - "An example of good Information Hiding because the assumption is implicit"
     correct_index: 1
@@ -248,10 +248,10 @@ questions:
     question: |
       You inherit a `UserRepository` whose `findByEmail` method returns `sqlite3.Row`. Why is this a problem?
     options:
-      - "Because `sqlite3.Row` is slower than `dict`"
-      - "Because it leaks the storage technology into the return type — every caller of `findByEmail` is now coupled to SQLite, and switching databases would force changes throughout the code"
-      - "Because `findByEmail` should return a list, not a single row"
-      - "Because Python doesn't allow returning custom types"
+      - "Because `sqlite3.Row` is slower than returning a plain `dict` from the lookup"
+      - "It leaks SQLite into the return type, so every caller is now coupled to the storage technology"
+      - "Because `findByEmail` should always return a list of results, not a single row"
+      - "Because Python doesn't allow repositories to return custom domain types"
     correct_index: 1
     option_feedback:
       0: |
@@ -271,10 +271,10 @@ questions:
     question: |
       In *change impact analysis*, what does it mean if a single plausible change (say, "we switch from JSON to Protobuf for our wire format") would force edits across dozens of unrelated modules?
     options:
-      - "Information Hiding has been applied very well"
-      - "The wire-format decision has *leaked* — it is not actually a secret of one module, but a shared assumption across many"
-      - "The system is too small for Information Hiding to matter"
-      - "The team is following SRP correctly"
+      - "Information Hiding has been applied very well in this part of the codebase"
+      - "The wire-format decision has leaked — it is a *de facto* shared secret across many modules"
+      - "The system is too small for Information Hiding to make a difference"
+      - "The team is following the Single Responsibility Principle correctly"
     correct_index: 1
     option_feedback:
       0: |
@@ -293,10 +293,10 @@ questions:
     question: |
       Which of the following is **not** a typical mechanism for enforcing Information Hiding?
     options:
-      - "Defining an abstract interface and writing clients against it"
-      - "The Facade pattern"
+      - "Defining an abstract interface and writing clients against the abstract contract"
+      - "The Facade pattern, hiding a subsystem behind a small unified API"
       - "A globally accessible singleton with a long list of public mutator methods"
-      - "Repository / Gateway pattern"
+      - "The Repository or Gateway pattern, hiding storage or external services"
     correct_index: 2
     option_feedback:
       0: |
@@ -316,10 +316,10 @@ questions:
     question: |
       Why does Information Hiding **reduce cognitive load** on developers reading code?
     options:
-      - "It removes all code comments, leaving less text to read"
-      - "By bounding what a reader needs to know about a module to its small interface, it lets the reader reason about one module without paging in the implementations of every other module"
-      - "It enforces shorter variable names"
-      - "It uses fewer files, so navigation is easier"
+      - "It removes all code comments, leaving less text for the reader to process"
+      - "The reader only needs the small interface, not every other module's implementation"
+      - "It enforces shorter variable names that take less mental effort to parse"
+      - "It uses fewer source files, so navigation through the codebase is easier"
     correct_index: 1
     option_feedback:
       0: |
@@ -339,10 +339,10 @@ questions:
     question: |
       A reviewer says: "Don't add an abstraction for this — we only have one database and we'll never have another." When is this argument **most reasonable**?
     options:
-      - "Always — abstractions are forbidden until proven necessary"
-      - "When the system is genuinely throwaway, single-variant, has stable scope, and the abstraction would not buy any other benefit (testability, comprehensibility) right now"
-      - "Whenever the database is SQL — only NoSQL deserves a repository"
-      - "Never — predictions of stability are usually wrong"
+      - "Always — extra abstractions are forbidden in production code until proven necessary"
+      - "When the system is throwaway, single-variant, and the abstraction would buy no testability or other benefit"
+      - "Whenever the database is SQL — only NoSQL stores deserve a repository wrapper"
+      - "Never — predictions of stability over the system's lifetime are usually wrong"
     correct_index: 1
     option_feedback:
       0: |
@@ -362,7 +362,7 @@ questions:
     question: |
       Why does unmanaged complexity grow so quickly as a system adds more modules?
     options:
-      - "Every new module creates possible relationships with the modules already present, so possible pairwise relationships grow roughly quadratically"
+      - "The number of possible pairwise relationships between modules grows roughly quadratically"
       - "Every new module must contain more lines of code than the previous module"
       - "Modern developers are less able to understand software than developers in the 1960s"
       - "Hardware improvements automatically make software design harder"
@@ -431,7 +431,7 @@ questions:
     question: |
       What is the strongest evidence that a design is turning into a **Big Ball of Mud**?
     options:
-      - "A small feature change regularly requires edits across many unrelated modules, and nobody can predict the side effects confidently"
+      - "A small feature change touches many unrelated modules, and nobody can predict side effects"
       - "The system has more than one programming language in its repository"
       - "Some modules are implemented with abstract interfaces"
       - "The codebase contains comments explaining why functions exist"
@@ -455,7 +455,7 @@ questions:
       Which design-doc content is most useful to a future maintainer who asks, "Why does this `PaymentGateway` abstraction exist?"
     options:
       - "A screenshot of the current checkout page"
-      - "The alternatives considered, the quality attributes evaluated, and the trade-offs accepted when choosing the gateway boundary"
+      - "The alternatives considered, quality attributes evaluated, and trade-offs accepted at the boundary"
       - "A statement that the team used interfaces because interfaces are always better"
       - "Only the final UML diagram, with no rejected alternatives"
     correct_index: 1
@@ -524,7 +524,7 @@ questions:
       In Parnas's A-7E flight-software work, what is the main purpose of a **module guide**?
     options:
       - "To list every public function alphabetically so callers can look up parameter types"
-      - "To organize the system around module secrets, so designers and maintainers can find which module should change for a given design decision"
+      - "To organize modules around their secrets, so a future change lands in the right module"
       - "To replace all module specifications with a single runtime process diagram"
       - "To prove that every module must be implemented as exactly one subroutine"
     correct_index: 1
@@ -548,7 +548,7 @@ questions:
     options:
       - "Because software mathematically decays the way physical materials corrode"
       - "Because memory leaks are the only meaningful source of software aging"
-      - "Because the product's environment changes, and repeated maintenance by people who do not understand the design can damage the original structure"
+      - "Its environment changes, and maintainers who don't understand the design damage the structure"
       - "Because old programs automatically become slower whenever the hardware gets faster"
     correct_index: 2
     option_feedback:

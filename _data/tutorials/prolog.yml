@@ -114,10 +114,10 @@ steps:
             In Python, `parent(tom, bob)` is a function call. In Prolog, it is:
           type: single
           options:
-            - "A function that returns `true`"
-            - "A relationship that Prolog checks against its knowledge base"
-            - "A variable assignment"
-            - "A class constructor"
+            - "A function call that returns `true` if both arguments match"
+            - "A relationship checked against the knowledge base"
+            - "A variable assignment binding `bob` into `tom`"
+            - "A class constructor producing a `parent` object"
           correct_index: 1
           explanation: |
             Prolog predicates are **relations**, not functions. `parent(tom, bob)` asks: "does the knowledge base contain this relationship?" There is no return value — Prolog either succeeds or fails.
@@ -278,10 +278,10 @@ steps:
             How does Prolog's `=` differ from Python's `=`?
           type: single
           options:
-            - "They are the same — both assign values"
-            - "Prolog's `=` is bidirectional pattern matching; Python's `=` is one-way assignment"
-            - "Prolog's `=` only works with numbers"
-            - "Prolog's `=` compares without binding"
+            - "They are the same — both assign the right side to the left"
+            - "Prolog's `=` is bidirectional pattern matching; Python's `=` is assignment"
+            - "Prolog's `=` only works with numbers and atomic values"
+            - "Prolog's `=` compares without binding, like Python's `==`"
           correct_index: 1
           explanation: |
             Python's `=` always assigns the right side to the left. Prolog's `=` finds bindings that make both sides identical — it works symmetrically. `f(X) = f(3)` and `f(3) = f(X)` both bind X to 3.
@@ -586,10 +586,10 @@ steps:
             What is the Prolog equivalent?
           type: single
           options:
-            - "`for(food(F), drink(D), print(F, D))`"
-            - "`meal(F, D) :- food(F), drink(D).` then query `meal(X, Y)`"
-            - "`loop(foods, drinks, meal)`"
-            - "You can't do this in Prolog"
+            - "`for(food(F), drink(D), print(F, D))` — Prolog's loop construct"
+            - "Define `meal(F, D) :- food(F), drink(D).` and query `meal(X, Y)`"
+            - "`loop(foods, drinks, meal)` — Prolog's built-in iteration"
+            - "You can't enumerate pairs without explicit loops in Prolog"
           correct_index: 1
           explanation: |
             In Prolog, you define the *relationship* (a meal is a food plus a drink), then *query* it. Prolog's backtracking mechanism produces all combinations automatically. No explicit loops needed.
@@ -718,10 +718,10 @@ steps:
             What does `X = 2 + 3` bind X to?
           type: single
           options:
-            - "5"
-            - "The structure `2 + 3` (unevaluated)"
-            - "Error — cannot add with `=`"
-            - "`true`"
+            - "X is bound to 5 (the arithmetic is evaluated)"
+            - "X is bound to the unevaluated structure `2 + 3`"
+            - "An error — you cannot add with `=`"
+            - "X is bound to `true` once the unification succeeds"
           correct_index: 1
           explanation: |
             The `=` operator is **unification**, not evaluation. It makes X structurally identical to `2 + 3`, which is a compound term `+(2, 3)`. To get 5, use `X is 2 + 3`.
@@ -730,10 +730,10 @@ steps:
             What happens with `X is Y + 1` when Y is unbound (not yet assigned a value)?
           type: single
           options:
-            - "X becomes `Y + 1` (symbolic)"
-            - "X becomes 1 (Y defaults to 0)"
-            - "Error — `is` requires the right side to be fully evaluated"
-            - "X becomes a variable"
+            - "X becomes the symbolic expression `Y + 1`"
+            - "X becomes 1, because unbound Y defaults to 0"
+            - "Instantiation error — `is` needs the right side fully evaluated"
+            - "X becomes an unbound variable like Y"
           correct_index: 2
           explanation: |
             The `is` operator requires the right-hand side to be a ground arithmetic expression (all variables must be bound to numbers). If Y is unbound, Prolog throws an instantiation error.
@@ -1061,10 +1061,10 @@ steps:
             How does `my_member(b, [a, b, c])` succeed?
           type: single
           options:
-            - "It checks all elements simultaneously"
-            - "First clause fails (b ≠ a), backtracks to second clause which recurses on [b, c], then first clause succeeds (b = b)"
+            - "It checks all elements in parallel and returns any match"
+            - "It recurses down the tail until the head unifies with b"
             - "It converts the list to a set and checks membership"
-            - "It loops through the list with a counter"
+            - "It loops through the list with an integer counter"
           correct_index: 1
           explanation: |
             Prolog tries the first clause: does `b` unify with the head `a`? No. So it tries the second clause, which recurses on the tail `[b, c]`. Now the first clause tries: does `b` unify with `b`? Yes! The query succeeds.
@@ -1228,10 +1228,10 @@ steps:
             To find all students with average above 80, an imperative programmer would write a loop. In Prolog, you:
           type: single
           options:
-            - "Write a for-loop over all students"
-            - "Define `above_average(Name, 80)` and query it — Prolog finds all matching students via backtracking"
-            - "Create an array and filter it"
-            - "Use a `while` loop with a counter"
+            - "Write an explicit for-loop iterating over every student"
+            - "Define `above_average(Name, 80)` and let backtracking find each one"
+            - "Build an array of all students and filter it with a predicate"
+            - "Run a `while` loop with a counter walking the student list"
           correct_index: 1
           explanation: |
             You define the *relationship* (what it means to be above average), then query with a variable for Name. Prolog's backtracking finds all students that satisfy the condition. No explicit iteration needed.
@@ -1240,10 +1240,10 @@ steps:
             What makes `above_average(Name, 80)` work for finding ALL qualifying students?
           type: single
           options:
-            - "It returns a list of all students"
-            - "Prolog backtracks through all `student/2` facts, trying each name"
-            - "It uses an internal loop"
-            - "You must call it repeatedly"
+            - "It returns a list containing every qualifying student"
+            - "Prolog backtracks through each `student/2` fact, trying each name"
+            - "It hides an internal loop that walks the database"
+            - "You must call it repeatedly until it stops succeeding"
           correct_index: 1
           explanation: |
             When `average(Name, Avg)` tries to satisfy itself, it looks up `student(Name, Scores)`. Prolog tries each `student` fact through backtracking. For each one where `Avg > 80`, it reports a solution. This is the declarative way to "search" — you describe what you want, and backtracking does the searching.

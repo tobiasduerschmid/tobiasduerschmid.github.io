@@ -297,7 +297,7 @@ steps:
           options:
             - "It would return `'0007'` because JavaScript automatically calls `toString()` on `str.length` access"
             - "It would return `'0' + 7` repeated until length 4 — the number is concatenated as a number, producing `'00007'`"
-            - "It would throw `TypeError: paddingCharacter.repeat is not a function` only when the number is short — for a number whose `.length` is `undefined`, `length - undefined` is `NaN`, the early-return check `length < 1` is false, and `paddingCharacter.repeat(NaN)` throws"
+            - "It would throw a `TypeError` (or `RangeError`) because `(7).length` is `undefined`, so `length` becomes `NaN` and `paddingCharacter.repeat(NaN)` throws"
             - "It would return `7` unchanged because numbers cannot be padded"
           correct_index: 2
           option_feedback:
@@ -305,13 +305,13 @@ steps:
             1: "Inside the function, `paddingCharacter.repeat(length)` runs with `length = NaN`, which throws long before any string concatenation."
             3: "JS doesn't short-circuit functions on type — it just produces garbage values (NaN, undefined) until an explicit type check or coercion."
           explanation: |
-            `(7).length` is `undefined`, so `length - str.length` is `NaN`. `NaN < 1` is `false`, so the early-return doesn't fire, and `paddingCharacter.repeat(NaN)` throws `RangeError: Invalid count value`. The explicit `str = String(str)` line is what makes the numeric / null / undefined tests pass.
+            `(7).length` is `undefined`, so `length - str.length` is `NaN`. `NaN < 1` is `false`, so the early-return check doesn't fire, and `paddingCharacter.repeat(NaN)` throws `RangeError: Invalid count value`. The explicit `str = String(str)` line is what makes the numeric / null / undefined tests pass.
 
         - question: |
             The test suite calls `expect(leftpad('foobar', 3)).toBe('foobar')`. What contract does this *test* encode?
           options:
             - "`leftpad` must always return a string of exactly `length` characters"
-            - "`leftpad` must never *truncate* its input — when `length` is shorter than the input, the original string is returned unchanged"
+            - "`leftpad` must never *truncate* — when `length` is shorter than the input, return it unchanged"
             - "`leftpad` must throw when `length` is shorter than the input"
             - "`leftpad` must pad with empty space when `length` is shorter than the input"
           correct_index: 1
@@ -569,7 +569,7 @@ steps:
             Six of the nine original tests still pass after the naive swap. Which observation best explains why the standard-library replacement is a *legitimate* candidate even though three tests break?
           options:
             - "Six out of nine is good enough — production never receives non-string input anyway"
-            - "The remaining failures are purely about JS-specific coercion (`String(str)`) and are trivial to restore, while the harder semantics — default pad, no-truncation, character repetition — are correctly handled by the spec-compliant built-in"
+            - "The failures are one missing coercion line; the hard semantics are already handled by the built-in"
             - "The remaining failures are bugs in the test framework, not in `padStart`"
             - "Tests are advisory; a refactor that breaks three of nine can be accepted by overriding the test runner"
           correct_index: 1
@@ -814,7 +814,7 @@ steps:
             Why does the lecture write `String(str)` instead of `new String(str)`?
           options:
             - "Stylistic preference — they produce identical values"
-            - "`new String(str)` returns a `String` wrapper *object*, not a primitive string — and `wrapperObj.padStart(...)` works, but `===` comparisons against primitives fail. The `String(...)` call (no `new`) returns a primitive"
+            - "`String(str)` returns a primitive string; `new String(str)` returns a wrapper object"
             - "`new String(str)` throws when `str` is a number"
             - "`new String(str)` is deprecated and removed in modern Node.js"
           correct_index: 1
@@ -823,13 +823,13 @@ steps:
             2: "Both forms accept any input. The difference is what they *return*, not what they accept."
             3: "It's a misfeature, not a removed feature — `new String()` still works, it just produces something almost no one wants."
           explanation: |
-            `String(value)` (no `new`) is the canonical explicit-coercion idiom — it returns a primitive string. `new String(value)` is a constructor call that wraps the primitive in a boxed `String` object; that object has all the prototype methods but fails `===` against primitives and behaves surprisingly in boolean contexts (`new String('')` is *truthy*). Almost every JavaScript style guide recommends `String(value)` for this reason.
+            `String(value)` (no `new`) is the canonical explicit-coercion idiom — it returns a primitive string. `new String(value)` is a constructor call that wraps the primitive in a boxed `String` object; the wrapper has all the prototype methods (so `wrapperObj.padStart(...)` would work), but it fails `===` against primitives and behaves surprisingly in boolean contexts (`new String('')` is *truthy*). Almost every JavaScript style guide recommends `String(value)` for this reason.
 
         - question: |
             *(Spaced review — step 1)* What does `leftpad('foobar', 3)` return under **all three** implementations the lecture walks through?
           options:
             - "An empty string"
-            - "`'foobar'` (unchanged) — the no-truncation rule is part of the contract and is preserved by every implementation"
+            - "`'foobar'` (unchanged) — the no-truncation rule is in the contract"
             - "`'foo'` — truncated to the target length"
             - "Throws an error — the input is longer than the target"
           correct_index: 1
@@ -845,7 +845,7 @@ steps:
           options:
             - "Speed — V8's C++ implementation of `padStart` is faster than allocating new strings in JS"
             - "Zero dependencies — replacing the module removes a supply-chain risk like the 2016 npm incident"
-            - "The remaining failures are a single line of glue (`String(str)`) restoring a JS-specific coercion the original module performed; the harder semantics (default pad, no-truncation, character repetition) are correctly handled out of the box"
+            - "The failures isolate one line of coercion glue; the hard contract semantics are absorbed by the built-in"
             - "Lines of code — the new version is shorter, which is always better"
           correct_index: 2
           option_feedback:
@@ -853,4 +853,4 @@ steps:
             1: "True, but a replacement that breaks behavior isn't a real replacement — supply-chain hygiene matters less if your code stops working."
             3: "Brevity is a tiebreaker, not a primary criterion. A short function that doesn't work isn't an improvement."
           explanation: |
-            The three failing tests isolate one piece of glue. The *hard* parts of the contract — defaulting the pad character, not truncating, repeating the pad to fill the gap — are absorbed by the spec-compliant built-in for free. That's what makes `padStart` a true replacement: minimal glue, maximal correctness inherited from the standard library.
+            The three failing tests isolate one piece of glue — restoring `String(str)`. The *hard* parts of the contract — defaulting the pad character, not truncating, repeating the pad to fill the gap — are absorbed by the spec-compliant built-in for free. That's what makes `padStart` a true replacement: minimal glue, maximal correctness inherited from the standard library.

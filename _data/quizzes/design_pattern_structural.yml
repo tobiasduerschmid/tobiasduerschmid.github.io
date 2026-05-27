@@ -9,7 +9,7 @@ questions:
       A `TurkeyAdapter` implements the `Duck` interface. The `fly()` method calls `turkey.fly()` five times in a loop because a duck's flight is much longer than a turkey's short hop. What design concern does this raise?
     options:
       - "The adapter should use multiple inheritance instead of composition"
-      - "The adapter contains behavioral adaptation (logic beyond simple interface translation), which may grow into a separate service"
+      - "The adapter contains behavioral adaptation beyond simple interface translation"
       - "The loop makes the adapter too slow for production use"
       - "The adapter violates the Liskov Substitution Principle"
     correct_index: 1
@@ -49,7 +49,7 @@ questions:
       In a Composite pattern for a restaurant menu system, a developer declares `add(MenuComponent)` on the abstract `MenuComponent` class (inherited by both `Menu` and `MenuItem`). A tester calls `menuItem.add(anotherItem)`. What happens, and what design trade-off does this illustrate?
     options:
       - "The call succeeds — items can contain other items in Composite"
-      - "A runtime exception is thrown — this is the Transparent Composite trade-off where leaves inherit meaningless operations"
+      - "A runtime exception — the Transparent Composite trade-off"
       - "A compile-time error prevents the call"
       - "The item silently ignores the call with no error"
     correct_index: 1

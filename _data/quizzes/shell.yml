@@ -48,7 +48,7 @@ questions:
     options:
       - "Bash automatically exports all variables to the global environment by default."
       - "The developer forgot to use the `let` keyword when declaring the variable."
-      - "Unlike C++, Bash lacks strict block-level scoping (like `{}` blocks), meaning variables set within loops or if-statements remain accessible in the script's global scope."
+      - "Bash has no block-level scoping — variables set inside loops or `if`-statements remain visible afterward."
       - "The script was executed with `sudo` privileges, which ignores standard scoping rules."
     correct_index: 2
     option_feedback:
@@ -228,7 +228,7 @@ questions:
     options:
       - "The `wc` command does not support filenames with spaces."
       - "The variable name `LOGFILE` must be lowercase in Bash."
-      - "The shell performs word splitting on the unquoted variable expansion, breaking the value into two separate arguments at the space boundary."
+      - "The unquoted `$LOGFILE` expansion is word-split on the space into two separate arguments."
       - "The `.log` extension is not recognized as a text file by `wc -l`."
     correct_index: 2
     option_feedback:

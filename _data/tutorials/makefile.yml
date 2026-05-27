@@ -394,7 +394,7 @@ steps:
           type: single
           options:
             - "It silently inserts a Tab and the build now works"
-            - "It does nothing — the regex matches 4 leading spaces, but the file has 2 — and Make still complains about `missing separator`"
+            - "Nothing changes — the regex needs 4 leading spaces but the file has 2"
             - "Sed errors out because the file doesn't match the pattern"
             - "It doubles each leading space, producing 4 spaces, then a Tab"
           correct_index: 1
@@ -1243,15 +1243,15 @@ steps:
 
         - question: "What is the correct syntax to reference a variable named `CC` inside a Makefile recipe?"
           options:
-            - "`${CC}`"
-            - "`$(CC)`"
-            - "`$CC`"
-            - "Both `$(CC)` and `${CC}` are valid"
-          correct_index: 3
+            - "Only `${CC}` is valid; `$(CC)` is the shell form"
+            - "Only `$(CC)` is valid; `${CC}` is the shell form"
+            - "Either `$(CC)` or `${CC}` works in Make"
+            - "Bare `$CC` works for any variable name"
+          correct_index: 2
           option_feedback:
-            0: "`${CC}` works fine, but it's not the *only* answer — both forms are valid in Make."
-            1: "`$(CC)` works fine, but again — both forms are valid. The question asks for what's correct."
-            2: "`$CC` is *not* valid for multi-character names — Make would parse it as `$C` followed by literal `C`. Single-character variable names (`$X`) work without parens; multi-character names must be parenthesized."
+            0: "Both forms expand the same way in Make. The parens-vs-braces distinction is a shell habit, not a Make rule."
+            1: "Both forms expand the same way in Make. The parens-vs-braces distinction is a shell habit, not a Make rule."
+            3: "`$CC` is *not* valid for multi-character names — Make would parse it as `$C` followed by literal `C`. Single-character variable names (`$X`) work without parens; multi-character names must be parenthesized."
           explanation: "As we practiced in Step 3, Make uses either parentheses `( )` or curly braces `{ }` to expand variables. Both are technically correct, though `$(CC)` is the more common convention."
 
   # --------------------------------------------------------------------------
@@ -1432,7 +1432,7 @@ steps:
         - question: "What is the primary purpose of `.PHONY`?"
           options:
             - "To make the build faster"
-            - "To tell Make that a target is a command name, not a physical file on disk"
+            - "To tell Make a target is a command name, not a file"
             - "To encrypt the Makefile for security"
             - "To allow spaces instead of Tabs in recipes"
           correct_index: 1
@@ -1471,7 +1471,7 @@ steps:
         - question: "Why is it generally a bad idea to make a real file target (like `app`) depend on a `.PHONY` target?"
           options:
             - "It will cause the Makefile to be deleted"
-            - "The real target will be re-built every single time you run make, defeating incremental builds"
+            - "The real target rebuilds every run, defeating incremental builds"
             - "Make will refuse to run if real and phony targets are mixed"
             - "It makes the resulting executable much slower"
           correct_index: 1
@@ -1493,7 +1493,7 @@ steps:
             They run `make run` and get `bash: ./app: No such file or directory`. What's wrong?
           options:
             - "Make is buggy — `cd` should work fine in recipes"
-            - "Each recipe line runs in its own fresh shell — `cd build` happens in shell A, `./app` runs in shell B starting from the original directory"
+            - "Each recipe line runs in its own fresh shell, so `cd` doesn't carry across lines"
             - "Make doesn't support shell built-ins like `cd`; only external commands"
             - "The recipe needs `.ONESHELL:` to be added at the top of the Makefile"
           correct_index: 1
@@ -1706,7 +1706,7 @@ steps:
             A teammate writes `app: clean $(OBJS)` so that `make app` always starts fresh. What goes wrong?
           options:
             - "Nothing — this is a smart way to ensure clean builds"
-            - "`app` will be re-linked on every single `make` invocation, even when nothing changed — the incremental-build benefit is gone"
+            - "`app` re-links on every `make` invocation — the incremental-build benefit is gone"
             - "Make refuses to mix phony and real prerequisites and emits an error"
             - "The build only fails on the first run; subsequent runs are fine"
           correct_index: 1
@@ -1768,15 +1768,15 @@ steps:
         - question: |
             You wrote `$(CFLAS)` (typo: missing `G`) instead of `$(CFLAGS)` somewhere in your Makefile. The build still runs but flags like `-Wall` are silently dropped. Which flag would catch this typo?
           options:
-            - "`make -n`"
-            - "`make --warn-undefined-variables`"
-            - "`make -j 1`"
-            - "There's no flag — Make accepts undefined variables silently as the empty string and never complains"
+            - "`make -n` (dry run — shows commands without running them)"
+            - "`make --warn-undefined-variables` (warns on any unset variable)"
+            - "`make -j 1` (forces serial execution)"
+            - "No flag exists — Make silently treats undefined variables as empty"
           correct_index: 1
           option_feedback:
-            0: "`-n` shows what *would* run — and `$(CFLAS)` would expand to the empty string in the printed command, but no warning. You'd have to spot the missing `-Wall` yourself."
+            0: "`-n` shows what *would* run — `$(CFLAS)` would expand to the empty string in the printed command, but no warning. You'd have to spot the missing `-Wall` yourself."
             2: "`-j 1` controls parallelism, not variable validation."
-            3: "Make *does* expand undefined variables to empty by default — that's exactly the silent-failure problem. But it has an opt-in flag (`--warn-undefined-variables`) to flip that to a warning."
+            3: "Make *does* expand undefined variables to empty by default — that's the silent-failure problem. But it has an opt-in flag (`--warn-undefined-variables`) to flip that to a warning."
           explanation: "`make --warn-undefined-variables` makes Make warn whenever you reference a variable that hasn't been defined. It's noisy by default (since Make's built-in rules reference many implicit variables), so you usually grep for warnings in *your own* code. But for hunting a stubborn typo bug, it's gold."
 
         - question: |

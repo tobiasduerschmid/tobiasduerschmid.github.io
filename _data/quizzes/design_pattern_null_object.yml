@@ -44,7 +44,7 @@ questions:
       Refactoring `logger` to use the Null Object pattern would replace the `null` field with a `SilentLogger` whose `log()` does nothing. **Which design problem does this primarily address?**
     options:
       - "Performance — eliminating the null check shaves a CPU branch off every call."
-      - "Type safety — the field's static type changes from `AuditLogger?` to `AuditLogger`, making it impossible to forget the guard at any future call site."
+      - "Call-site clarity — the field can never be null, so the guard cannot be forgotten."
       - "Concurrency — the Null Object eliminates a data race on the `logger` field."
       - "Memory — sharing one `SilentLogger` instance avoids allocating a new logger per `BankTransfer`."
     correct_index: 1
@@ -84,7 +84,7 @@ questions:
       A startup logs `"Audit logger: SilentLogger"` in production for six months before anyone notices that no audit trail has been written. The bug originated in a misconfigured DI binding that wired the test-only `SilentLogger` into the prod build. **Which Null Object liability does this story illustrate?**
     options:
       - "The Null Object's class hierarchy is too deep to debug."
-      - "The Null Object pattern silently swallows operations, which can mask real bugs when the do-nothing collaborator is wired in by mistake."
+      - "Silent do-nothing collaborators can mask real bugs when one is wired in by mistake."
       - "The Null Object cannot be implemented as a Singleton in DI containers."
       - "The Null Object pattern is incompatible with audit logging requirements."
     correct_index: 1
@@ -124,7 +124,7 @@ questions:
       The State and Strategy patterns each have a "null variant" (Null State, Null Strategy). Why is there **no** Null Decorator?
     options:
       - "Decorators were not part of the original GoF catalog."
-      - "A Decorator must wrap a real object to forward calls to; an empty Decorator wrapping nothing has nothing to decorate."
+      - "A Decorator's job is to forward to a wrappee; without one, the role disappears."
       - "Null Decorators exist but are called Adapters in the GoF catalog."
       - "Decorators are immutable, so a Null Decorator would have no observable difference from a Real Decorator."
     correct_index: 1
@@ -189,7 +189,7 @@ questions:
       Which of the following best describes how Null Object **differs from** the Special Case pattern (Fowler, *Patterns of Enterprise Application Architecture*)?
     options:
       - "Special Case and Null Object are different names for the same pattern; the choice is purely terminological."
-      - "Null Object is a special case of Special Case: the Null Object's 'special case' is specifically the do-nothing variant, while Special Case can also encode meaningful exceptional behavior (`MissingCustomer`, `UnknownPerson`)."
+      - "Null Object is a special case of Special Case — limited to the do-nothing variant."
       - "Special Case is for object-relational mapping; Null Object is only for in-memory objects."
       - "Special Case requires reflection at runtime; Null Object is statically dispatched."
     correct_index: 1
@@ -209,7 +209,7 @@ questions:
       A teammate proposes implementing `SilentLogger` as a parameterized class so the same Null Object can absorb log entries with configurable behavior — for example, `new SilentLogger("test")` vs `new SilentLogger("prod-fallback")`. **What design risk does this create?**
     options:
       - "Parameterized Null Objects always violate the Singleton constraint, so they cannot be implemented at all."
-      - "If different parameter values lead to materially different behavior, the class has stopped being a Null Object — it has become a Real Object with a 'mode' field, recreating the conditional logic the pattern was meant to remove."
+      - "If parameters drive materially different behavior, the class has become a Real Object with a 'mode' field."
       - "Parameterized Null Objects break Liskov substitutability with the AbstractObject."
       - "The Java compiler refuses to compile parameterized constructors on classes intended to do nothing."
     correct_index: 1
@@ -238,7 +238,7 @@ questions:
       What is the most likely problem they're flagging?
     options:
       - "The class is implemented in Python instead of a statically typed language."
-      - "It uses the Null Object pattern to hide the meaningful absence ('user with this id doesn't exist'), turning a 404 into a silent success — which is a real bug masquerading as defensive programming."
+      - "It hides a meaningful absence ('user not found') and turns a 404 into a silent success."
       - "Null Objects must implement an explicit interface — `__getattr__` is too dynamic."
       - "The class needs to be registered as a Singleton or it will leak memory."
     correct_index: 1

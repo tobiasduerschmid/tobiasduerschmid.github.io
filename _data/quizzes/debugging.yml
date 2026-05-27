@@ -30,7 +30,7 @@ questions:
     options:
       - "Ship a patch that re-fetches the user object on every request and assume it fixes the cross-account leak."
       - "Open a debugger on production, set a breakpoint in the session middleware, and wait for the bug to recur."
-      - "Ask the user for the problem environment and problem history — browser, OS, the exact sequence of clicks before the leak, whether they were on Wi-Fi or VPN, the timestamp — so you can try to reproduce it."
+      - "Ask the user for environment and history (browser, OS, click sequence, timestamp) so you can reproduce it."
       - "Add `print()` statements to every endpoint, deploy them, and grep the logs for anomalies overnight."
     correct_index: 2
     option_feedback:
@@ -111,7 +111,7 @@ questions:
       You see this error in your terminal while setting up a new project: `ERROR 3680 (HY000): Failed to create schema directory 'tobias_dev_orders_2026_q1' (errno: 2 - No such file or directory)`. What is the **best** thing to copy into a search engine or AI assistant?
     options:
       - "The entire line, verbatim, including the database name `tobias_dev_orders_2026_q1`."
-      - "`ERROR 3680 (HY000): Failed to create schema directory (errno: 2 - No such file or directory)` — keep the error codes, strip the project-specific schema name."
+      - "`ERROR 3680 (HY000): Failed to create schema directory (errno: 2 - No such file or directory)` — keep the codes, drop the project name."
       - "Just *'mysql error'* — anything more specific will narrow the results too much."
       - "Nothing — search engines cannot help with database errors; only the DBA can."
     correct_index: 1
@@ -131,7 +131,7 @@ questions:
       You're chasing a bug that only appears around the 10,000th line item in a specific user's account. Stepping through the loop one iteration at a time in the debugger would mean clicking *Step Over* thousands of times. What's the **right move**?
     options:
       - "Comment out the loop and re-run; the bug must be inside the loop body, so you can find it by reading the loop body carefully."
-      - "Set a **conditional breakpoint** such as `i >= 10000`, or a hit-count breakpoint, so the debugger pauses only near the bug-triggering iteration."
+      - "Set a conditional breakpoint such as `i >= 10000`, or a hit-count breakpoint, so the debugger pauses near the failing iteration."
       - "Replace the loop with a hard-coded short list of items and debug that instead; the principles of the loop body are the same."
       - "Use `print()` statements inside the loop to log every iteration; grep the output afterwards for the anomaly."
     correct_index: 1
@@ -152,7 +152,7 @@ questions:
     options:
       - "Their commit message doesn't include the ticket number, so the fix is hard to find in the git log later."
       - "They didn't write a code comment explaining why the change was necessary, so a future reader (or AI agent) may revert it without realizing what it fixed."
-      - "They may have introduced a **regression** — a fix that breaks previously-passing behavior elsewhere — and the test suite is the only mechanism that would have caught it before users do."
+      - "They may have introduced a regression — a fix that breaks other tests — and the suite is the only thing that would catch it."
       - "They should have added an `assert` statement near the fix to catch similar bugs in the future."
     correct_index: 2
     option_feedback:
@@ -182,7 +182,7 @@ questions:
       The team lead says *"This is fault-tolerant — if anything goes wrong, the user doesn't see a crash."* What's **wrong with this reasoning**?
     options:
       - "Nothing — graceful degradation is a sign of mature engineering and this is a textbook example."
-      - "The bare `except: pass` swallows every error including `AttributeError`, `TypeError`, and `KeyboardInterrupt` — it can leave the system in a half-updated state (e.g., money debited but not credited) with no signal to anyone that anything went wrong."
+      - "Bare `except: pass` swallows every error and can leave money debited but not credited, with no signal anything went wrong."
       - "The `except` block should print the error to the console so the developer can see it during testing."
       - "`account_from.balance -= amount` should use `account_from.balance = account_from.balance - amount` for clarity."
     correct_index: 1
@@ -202,7 +202,7 @@ questions:
       A junior engineer is debugging a deeply nested issue in a backend microservice. They have been at it for three hours with no progress, just rereading the same 200 lines of code. What is the **single most likely** explanation for why they are stuck?
     options:
       - "The bug requires advanced language knowledge they haven't learned yet; they need a senior engineer to take over."
-      - "They are under the **curse of knowledge** — reading the code they wrote, they keep seeing what they *intended* rather than what is actually there — and they have not done anything (rubber duck, debugger, fresh perspective) to break that loop."
+      - "*Curse of knowledge* — they keep seeing what they intended, not what the code actually does, and haven't broken the loop."
       - "The bug is unfixable without rewriting the service; they should escalate to architecture."
       - "Their IDE doesn't support the language well enough; switching IDEs would resolve the issue."
     correct_index: 1

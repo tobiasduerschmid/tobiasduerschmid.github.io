@@ -547,7 +547,7 @@ steps:
           options:
             - "Nothing — Git stores history on a remote server by default"
             - "Only the latest commit is lost; older history is preserved in the working directory"
-            - "All version history, branches, and configuration are permanently lost — the directory becomes an ordinary folder"
+            - "All local history, branches, and config are lost — only the working files remain"
             - "Git automatically regenerates `.git/` from your source files"
           correct_index: 2
           explanation: "As Step 1 established, `.git/` **is** the repository — it contains every commit, branch pointer, and config entry. Deleting it destroys all history and leaves you with an untracked folder."
@@ -772,7 +772,7 @@ steps:
         - question: "A teammate always runs `git add .` before every commit, saying 'it's simpler.' What is the most significant hidden risk of this habit?"
           options:
             - "No risk — `git add .` is exactly equivalent to staging files by name"
-            - "It can accidentally stage debug files, secrets, or half-finished work alongside your real changes — and once committed, those changes are permanently in history"
+            - "It can sweep in debug files, secrets, or half-finished work, permanently committing them"
             - "It is slower than staging by name because Git scans more files"
             - "It stages files in alphabetical order, which changes the commit hash"
           correct_index: 1
@@ -1188,7 +1188,7 @@ steps:
         - question: "You ran `git add .` and accidentally staged `app.py`, `style.css`, AND `secrets.env`. You only want `app.py` in this commit. What is the correct recovery sequence?"
           options:
             - "`git restore secrets.env` then `git restore style.css` — removes both files from staging and discards their edits"
-            - "`git restore --staged secrets.env` then `git restore --staged style.css` — unstages both files while keeping their working-directory edits intact"
+            - "`git restore --staged secrets.env` then `git restore --staged style.css` — unstages both without losing edits"
             - "`git reset --hard` — resets everything and you start the staging over cleanly"
             - "`git add app.py` again — Git deduplicates and only stages `app.py`"
           correct_index: 1
@@ -1206,7 +1206,7 @@ steps:
         - question: "A colleague says: 'I'll add `.gitignore` after I get the project working — setup files just slow me down right now.' Evaluate this approach."
           options:
             - "Fine — `.gitignore` can be added at any point with no consequences"
-            - "Risky — any secrets or generated files committed before `.gitignore` exists remain permanently in history, even after you add ignore rules later"
+            - "Risky — anything committed before `.gitignore` exists stays in history forever"
             - "Fine — Git automatically ignores `.env` and `__pycache__/` by default"
             - "Risky — but only if the team is larger than five people"
           correct_index: 1
@@ -1575,7 +1575,7 @@ steps:
         - question: "After completing the capstone, a classmate says: 'I just ran `git reset --hard` to clean everything up in one shot — same result, simpler.' Evaluate their approach compared to the targeted steps you used."
           options:
             - "Correct — `git reset --hard` is always the simplest fix for a messy working directory"
-            - "Problematic — `git reset --hard` would have discarded ALL uncommitted changes (including the `.gitignore` edits you wanted to keep) and cannot be undone"
+            - "Problematic — `git reset --hard` discards ALL uncommitted changes, including the ones you wanted to keep"
             - "Equivalent — both approaches produce the same result with no trade-offs"
             - "Correct — `git reset --hard` would have also committed `.gitignore` automatically"
           correct_index: 1
@@ -2138,7 +2138,7 @@ steps:
         - question: "When does Git perform a **fast-forward merge** instead of creating a merge commit?"
           options:
             - "When the branches have conflicting changes"
-            - "When the target branch (e.g., main) has no new commits since the feature branch was created"
+            - "When the target branch has no new commits since the feature branched off"
             - "When you pass the `--fast-forward` flag explicitly"
             - "When both branches have the same number of commits"
           correct_index: 1
@@ -2156,7 +2156,7 @@ steps:
         - question: "After merging `feature-team-up`, you run `git branch -d feature-team-up`. The command succeeds. What does the `-d` flag's success **guarantee**?"
           options:
             - "The branch has been deleted from the remote repository as well"
-            - "All commits from that branch are already reachable from the current branch — `-d` refuses to delete unmerged work"
+            - "Every commit on that branch is already reachable from the current branch"
             - "The branch contained no merge conflicts when it was created"
             - "The branch pointer file will be recreated automatically on the next `git push`"
           correct_index: 1
@@ -2178,7 +2178,7 @@ steps:
         - question: "Your team lead says: 'We should always use `git merge --no-ff` (no fast-forward) even when a fast-forward is possible, so every feature leaves a merge commit in the log.' What is the trade-off?"
           options:
             - "There is no trade-off — `--no-ff` is strictly better and should always be used"
-            - "It preserves branch history (you can see where features started/ended) but adds extra merge commits that make the log busier"
+            - "It preserves branch boundaries in the log but adds extra merge commits"
             - "It prevents merge conflicts from ever occurring"
             - "It makes merging slower because Git has to create extra objects"
           correct_index: 1
@@ -2332,7 +2332,7 @@ steps:
         - question: "What is the **root cause** of a merge conflict in Git?"
           options:
             - "One branch has more commits than the other"
-            - "Two branches modified the **same lines** of the same file"
+            - "Two branches modified the same lines of the same file"
             - "The feature branch was not created from the latest commit"
             - "The commit messages on the two branches are identical"
           correct_index: 1
@@ -2341,7 +2341,7 @@ steps:
         - question: "You're on `main` with two modified files you haven't committed yet. Your lead asks you to start work on `update-recruit` immediately. What should you do **first**, and why does the order matter?"
           options:
             - "Run `git switch -c update-recruit` immediately — uncommitted changes carry over to the new branch automatically, which is fine"
-            - "Stage and commit your current work first, then create the branch — so the new branch starts from a known, clean state and those changes aren't mixed into the feature"
+            - "Stage and commit your current work first, then create the branch from a clean state"
             - "Discard your modifications with `git restore .` to get a clean slate before branching"
             - "Order doesn't matter — Git branch creation never interacts with working-directory state"
           correct_index: 1
@@ -2350,7 +2350,7 @@ steps:
         - question: "You are setting up a merge conflict scenario. You made changes on `update-recruit` and are now on `main`. What is the correct **next step** to trigger the conflict?"
           options:
             - "Run `git merge update-recruit` immediately"
-            - "Make a **different** change to the same lines on `main`, commit it, then merge"
+            - "Make a different change to the same lines on `main`, commit, then merge"
             - "Delete the `update-recruit` branch and start over"
             - "Run `git conflict update-recruit` to preview conflicts"
           correct_index: 1
@@ -2650,7 +2650,7 @@ steps:
         - question: "After editing `hero_registry.py` to remove all conflict markers, why do you run `git add hero_registry.py` BEFORE `git commit`?"
           options:
             - "It's redundant — `git commit` automatically detects resolved conflicts"
-            - "`git add` signals to Git that the conflict is resolved AND stages the content; without it, Git still marks the file as 'unresolved'"
+            - "`git add` both stages the file and marks the conflict resolved"
             - "`git add` re-indexes the file so Git can re-parse the merge diff"
             - "Without `git add`, Git won't detect that you removed the `<<<<<<<` markers"
           correct_index: 1
@@ -2690,7 +2690,7 @@ steps:
         - question: "During a merge, `git status` shows `hero_registry.py` as 'both modified'. After you edit the file and remove all conflict markers, what does `git add hero_registry.py` signal to Git — and why is this the same command you used in Step 2?"
           options:
             - "It signals that you want to discard the incoming branch's changes"
-            - "It signals that the conflict is resolved AND stages the content — the same dual role `git add` always plays: move content to the staging area"
+            - "It marks the conflict resolved and stages the content — the same staging action as Step 2"
             - "It signals that Git should auto-merge any remaining conflicts in other files"
             - "It signals that the file should be kept in the working directory only, not committed"
           correct_index: 1
@@ -2699,7 +2699,7 @@ steps:
         - question: "Your team frequently has merge conflicts. A teammate suggests: 'Let's all work on one branch to avoid conflicts.' Evaluate this suggestion."
           options:
             - "Good idea — one branch eliminates conflicts entirely"
-            - "Bad idea — it eliminates branching benefits (isolation, parallel work) and introduces a worse problem: developers directly overwriting each other's uncommitted work"
+            - "Bad idea — it kills branch isolation and lets developers overwrite each other's work"
             - "Good idea — but only if the team has fewer than 5 people"
             - "Bad idea — Git doesn't allow multiple people to push to the same branch"
           correct_index: 1
@@ -2979,7 +2979,7 @@ steps:
         - question: "What does `git revert HEAD` do?"
           options:
             - "Deletes the latest commit and all its changes permanently"
-            - "Creates a new commit that applies the **inverse** of the latest commit"
+            - "Creates a new commit that applies the inverse of the latest commit"
             - "Moves the branch pointer back one commit, rewriting history"
             - "Opens the latest commit for editing so you can fix the mistake"
           correct_index: 1
@@ -3019,7 +3019,7 @@ steps:
         - question: "A colleague used `git reset --hard HEAD~3` on the shared `main` branch and force-pushed. Three commits are gone from the remote. What is the impact and how would you recover?"
           options:
             - "No impact — the commits are still on everyone's local machines permanently"
-            - "Severe: every teammate's local copy now conflicts with the remote; recovery requires someone who still has the commits locally to force-push them back or use `git reflog` to find the lost commits"
+            - "Severe: every teammate's local now conflicts with the remote; recover via someone's local copy or `git reflog`"
             - "Minor: Git automatically detects the discrepancy and re-pushes the missing commits"
             - "The force-push would have been rejected by Git's safety mechanisms"
           correct_index: 1
@@ -3621,7 +3621,7 @@ steps:
         - question: "Without a staging area, `git commit` would have to snapshot every modified file at once. What capability would you lose?"
           options:
             - "The ability to push to a remote repository"
-            - "The ability to create focused, logical commits from a messy working directory with many in-progress edits"
+            - "The ability to assemble focused commits from a messy working directory"
             - "The ability to see the diff of uncommitted changes"
             - "The ability to create branches"
           correct_index: 1
@@ -3657,7 +3657,7 @@ steps:
         - question: "A teammate asks: 'Can I use `git merge --abort` to cancel the whole merge after I've already fixed half the conflicts?' What do you tell them?"
           options:
             - "No — once you start resolving, you must finish; abort is disabled"
-            - "Yes — `git merge --abort` can be run at any point to cancel the merge and restore both branches to their pre-merge state"
+            - "Yes — `git merge --abort` can run at any point to restore the pre-merge state"
             - "Yes — but only if fewer than half the conflicts are resolved"
             - "No — you must commit the partial resolution first, then revert"
           correct_index: 1
@@ -3676,15 +3676,15 @@ steps:
           options:
             - "Yes — `.gitignore` retroactively scrubs the file from all past commits"
             - "Yes — Git encrypts committed secrets when `.gitignore` is added"
-            - "No — `.gitignore` only prevents **future** tracking; the secret still lives in history and requires tools like `git filter-repo` or BFG Repo Cleaner to fully remove"
+            - "No — `.gitignore` only blocks future tracking; the secret still lives in history"
             - "No — but `git rm .env` will delete it from all historical commits automatically"
           correct_index: 2
-          explanation: "`.gitignore` only affects future `git add` and `git status` behavior — it never rewrites history. A cloned repository receives the full commit history including the commit that added `.env`. This is why Step 6 emphasized creating `.gitignore` **before** your first commit."
+          explanation: "`.gitignore` only affects future `git add` and `git status` behavior — it never rewrites history. A cloned repository receives the full commit history including the commit that added `.env`. Removing it fully requires history rewriting tools like `git filter-repo` or BFG Repo Cleaner. This is why Step 6 emphasized creating `.gitignore` **before** your first commit."
 
         - question: "Why does `git switch` sometimes change the files you see in your file explorer?"
           options:
             - "Because Git is downloading them from a server"
-            - "Because Git updates your working directory to match the snapshot the branch points to"
+            - "Because Git updates the working directory to match the branch's snapshot"
             - "Because Git is deleting your old files to save space"
             - "Because you have a virus"
           correct_index: 1
@@ -3704,7 +3704,7 @@ steps:
           options:
             - "Delete the feature branch first to prevent merge conflicts"
             - "Preview what the merge will introduce (`git diff main...feature`)"
-            - "Ensure your working directory is clean — no uncommitted changes that could complicate a conflict (`git status`)"
+            - "Ensure your working directory is clean (`git status`) before merging"
             - "Run `git push` first to sync with the remote"
           correct_indices:
             - 1
@@ -3727,7 +3727,7 @@ steps:
         - question: "A teammate always commits directly to `main` without creating feature branches. Which professional best practice does this violate, and what does the team lose?"
           options:
             - "Nothing — committing to `main` is standard for solo projects and small teams"
-            - "Isolation — changes land on the shared branch immediately with no review window; broken work-in-progress blocks teammates and rollback becomes harder"
+            - "Isolation — changes land on the shared branch with no review window, blocking teammates"
             - "Only a naming convention — branches must follow the `feature-*` pattern"
             - "The commit frequency rule — all commits must happen at least daily"
           correct_index: 1
@@ -3758,7 +3758,7 @@ steps:
         - question: "You run `git push` and get `! [rejected] ... (fetch first)`. What does this mean and what should you do?"
           options:
             - "Your commit has a bug — fix the code and try again"
-            - "The remote has commits you don't have locally — run `git pull` first, resolve any conflicts, then `git push` again"
+            - "The remote has commits you don't have — `git pull`, resolve conflicts, then push"
             - "Your SSH key has expired — re-authenticate and try again"
             - "The remote branch was deleted — create it with `git push -u origin main`"
           correct_index: 1
@@ -3767,7 +3767,7 @@ steps:
         - question: "A colleague suggests using `git push --force` whenever a regular push is rejected. Why is this dangerous on a shared branch?"
           options:
             - "It's not dangerous — `--force` just retries the push more aggressively"
-            - "It overwrites the remote history with yours, deleting your colleague's commits and breaking everyone else's local copies"
+            - "It overwrites remote history, deleting commits and breaking teammates' local copies"
             - "It only works if you have admin permissions on the repository"
             - "It creates duplicate commits on the remote"
           correct_index: 1

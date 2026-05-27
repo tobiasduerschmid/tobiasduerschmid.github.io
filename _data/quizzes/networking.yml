@@ -172,7 +172,7 @@ questions:
     question: "Why was HTTPS created, and what does it add on top of HTTP?"
     options:
       - "HTTPS is faster than HTTP because it compresses data before transmission."
-      - "HTTPS uses TLS to encrypt and authenticate the connection, protecting data like passwords from being read or tampered with in transit."
+      - "HTTPS adds a TLS layer that encrypts and authenticates the connection."
       - "HTTPS replaces TCP with UDP to reduce round-trip latency for web browsing."
       - "HTTPS adds server-side caching so the browser avoids repeated database lookups."
     correct_index: 1

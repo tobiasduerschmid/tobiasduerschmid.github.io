@@ -296,7 +296,7 @@ steps:
             A student fixes their failing test, runs `pytest test_failing.py` (just that one file) and sees green. They mark the bug fixed and move on. What stage did they skip?
           type: single
           options:
-            - "Verification — they should rerun **all** tests, not only the previously failing one"
+            - "Verification — they should rerun the whole suite, not just the previously failing test"
             - "Hypothesis — they should have written down their proposed cause first"
             - "Localization — they should have identified the exact line"
             - "Nothing — running the previously-failing test is sufficient verification"
@@ -467,10 +467,10 @@ steps:
             "I want to know which iteration of a 10,000-item loop is the first one to break the invariant." Which tool answers it?
           type: single
           options:
-            - "Step Over until it breaks"
-            - "Conditional breakpoint with the invariant as the predicate"
-            - "Hover over the variable"
-            - "Call Stack"
+            - "Step Over through iterations until something breaks"
+            - "A conditional breakpoint using the invariant as the predicate"
+            - "Hover over the variable to read its current value"
+            - "The Call Stack panel showing your function chain"
           correct_index: 1
           option_feedback:
             0: "Stepping through 10,000 iterations works in principle but is prohibitive. A conditional breakpoint runs the same check at every iteration inside the debugger's engine — effectively free per iteration — and pauses only when the predicate is true."
@@ -500,7 +500,7 @@ steps:
           type: single
           options:
             - "Each call gets its own fresh empty list — the `↔` badge is reporting incorrect state"
-            - "Default argument values are evaluated **once at function-definition time**, so every call that uses the default shares one list"
+            - "Default argument values are evaluated once at definition time, so every default-using call shares one list"
             - "The interpreter caches all empty lists as the same object for memory efficiency"
             - "Python's parameter passing is by-reference, so mutations leak across calls"
           correct_index: 1
@@ -955,7 +955,7 @@ steps:
           type: single
           options:
             - "Yes — it works for this case, so it is correct"
-            - "No — it accepts paths that *exceed* the budget. `test_path_rejected_when_battery_too_small` would now fail, because a path longer than `max_steps` would no longer be rejected."
+            - "No — it accepts over-budget paths, breaking the rejection test"
             - "Yes — `>` and `>=` are interchangeable in boundary checks"
             - "No — we should have used `<` instead"
           correct_index: 1
@@ -1626,7 +1626,7 @@ steps:
           type: single
           options:
             - "Step Over forward from the start until something looks wrong"
-            - "Run to completion, anchor on the wrong final state, scrub backward until the state matches the spec"
+            - "Anchor on the wrong final state, then scrub backward to the first matching state"
             - "Set a conditional breakpoint at the start of the loop"
             - "Hover the variable in the editor"
           correct_index: 1
@@ -1641,10 +1641,10 @@ steps:
             *"What was `count` after exactly 4 events?"* — which scrubber move answers this?
           type: single
           options:
-            - "Drag the scrubber until `len(state['history'])` shows `4`"
-            - "Restart and step over 4 times"
-            - "Hover `count` in the editor"
-            - "Set a breakpoint at line 4"
+            - "Drag the scrubber until `len(state['history'])` reads `4`"
+            - "Restart the program and step over 4 times"
+            - "Hover the `count` variable in the editor"
+            - "Set a breakpoint on line 4 of the source file"
           correct_index: 0
           option_feedback:
             1: "This works but requires re-running the program from scratch. The scrubber moves through the recorded trace instantly — no rerun needed."
@@ -1657,17 +1657,17 @@ steps:
             After scrubbing backward, the arrow gutter turns gray. What does that mean?
           type: single
           options:
-            - "The program crashed"
-            - "You're inspecting a past state — not 'live' execution. Edits won't take effect from this rewound point until you scrub forward to the end again"
-            - "The debugger has lost the recording"
-            - "You've reached the start of the program"
+            - "The program crashed while running and the debugger halted execution"
+            - "You're inspecting a past (rewound) state, not live execution"
+            - "The debugger has lost or evicted parts of the recording"
+            - "You've scrubbed to the very start of the program's recorded trace"
           correct_index: 1
           option_feedback:
             0: "A crash would be reported as a traceback, not a UI state change."
             2: "The recording is intact — gray indicates *position*, not loss."
             3: "The scrubber's leftmost position is the start; gray applies whenever you're not at the rightmost (live) position."
           explanation: |
-            **Gray = rewound.** You're inspecting a recorded past state. Drag the scrubber all the way to the right to return to live execution. This visual cue prevents the confusion of "why isn't my edit running?" — the answer is always "scrub forward first, then run."
+            **Gray = rewound.** You're inspecting a recorded past state — edits won't take effect from this point until you scrub forward to the end again. This visual cue prevents the confusion of "why isn't my edit running?" — the answer is always "scrub forward first, then run."
 
 
   # ===========================================================================
@@ -2322,7 +2322,7 @@ steps:
           options:
             - "Conditional breakpoint with a complex predicate"
             - "Back-in-time scrubbing of the entire program execution"
-            - "Ordinary breakpoint at the top of the function plus a Watch expression on the parameter and any boundary expression"
+            - "Ordinary breakpoint at the top, plus a Watch on the parameter"
             - "Add a `print()` inside the recursion to trace each call"
           correct_index: 2
           option_feedback:
@@ -2337,7 +2337,7 @@ steps:
           type: single
           options:
             - "Set a conditional breakpoint on the discount-application line that pauses if the wrong line is being modified"
-            - "Run to completion, then scrub the History scrubber backward to find the first event where the discount went to the wrong line"
+            - "Run to completion, then scrub backward to the first wrong-discount event"
             - "Use `git bisect` on the cart's commit history"
             - "Step forward through every event from the start"
           correct_index: 1
@@ -2354,7 +2354,7 @@ steps:
           options:
             - "Add print statements to track every modification"
             - "Set a conditional breakpoint on every line that touches either parameter"
-            - "Inspect the `oid` badges in the Variables tab — if both names share the same `oid`, they're the same object in memory"
+            - "Inspect the `oid` badges in the Variables tab to spot a shared object"
             - "Use back-in-time scrubbing"
           correct_index: 2
           option_feedback:
@@ -2370,7 +2370,7 @@ steps:
           options:
             - "Push through — debugging always feels this way; just keep iterating"
             - "Restart the file from scratch with a fresh implementation"
-            - "Stop. Write down — in plain words — the symptom (expected vs actual) and what hypotheses you've ruled out so far. Then re-pick a technique"
+            - "Stop. Externalize the symptom and ruled-out hypotheses, then re-pick a technique"
             - "Ask a teammate to fix it for you"
           correct_index: 2
           option_feedback:
@@ -2386,7 +2386,7 @@ steps:
           options:
             - "Set a conditional breakpoint inside the function — clearly the issue is data-dependent"
             - "Drag the History scrubber backward — clearly the symptom appears late"
-            - "First, find a way to reproduce the failure locally. Without local reproduction, you can't use any debugger technique productively"
+            - "Reproduce the failure locally first — debuggers are useless without it"
             - "Email the instructor for an autograder log"
           correct_index: 2
           option_feedback:
@@ -2787,7 +2787,7 @@ steps:
           type: single
           options:
             - "Lists are immutable — calling `.append` actually creates a new list each time"
-            - "Default arguments are evaluated **once** at function-definition time, so the *same* list is reused across calls"
+            - "Default arguments are evaluated once at definition time, so the same list is reused across calls"
             - "Function calls inside a script always share their parameter memory unless `copy.deepcopy` is used"
             - "Python caches small lists; `[]` always points to the same canonical empty list"
           correct_index: 1

@@ -29,9 +29,9 @@ questions:
       A web controller has a 300-line `if/else` block dispatching action names to request handlers. Product now wants new actions loaded from configuration. Which refactoring is the best fit?
     options:
       - "Replace Conditional Dispatcher with Command"
-      - "Introduce Null Object"
+      - "Introduce Null Object for the unrecognized action"
       - "Replace State-Altering Conditionals with State"
-      - "Extract Adapter"
+      - "Extract Adapter around the legacy handler"
     correct_index: 0
     option_feedback:
       1: |
@@ -40,7 +40,7 @@ questions:
         State is a fit when one object's behavior changes because of its internal state. This controller is selecting among different requests, so reifying each request as a command is the closer match.
       3: |
         Adapter is for making an incompatible interface usable through the interface the client expects. The controller's problem is not an interface mismatch; it is dispatch logic that keeps growing.
-    explanation: "**Replace Conditional Dispatcher with Command fits because the code routes requests and now needs runtime flexibility.** Each action can become a command object stored in a map keyed by action name."
+    explanation: "**Command fits because the code routes requests and now needs runtime flexibility.** Each action can become a command object stored in a map keyed by action name."
 
   - id: 3
     difficulty: intermediate
@@ -91,7 +91,7 @@ questions:
       - "A text editor needs undo and redo for user edits"
       - "A job queue needs to serialize and retry work"
       - "A remote control needs runtime-configurable button slots"
-      - "A method has two stable branches and no need for undo, logging, queuing, or runtime configuration"
+      - "A method with two stable branches and no lifecycle pressure"
     correct_index: 3
     option_feedback:
       0: |

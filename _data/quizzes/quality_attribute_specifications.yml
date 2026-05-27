@@ -99,7 +99,7 @@ questions:
       A team writes: "Every request in the whole system must complete within 1 second." Is this a good quality-attribute requirement?
     options:
       - "Good: it gives a clear system-wide performance threshold."
-      - "Bad: it is a blanket claim; architecture work needs the specific request types and operating conditions that matter."
+      - "Bad: it is a blanket claim that hides the request types and conditions that matter."
       - "Bad: it is a scenario without a metric."
     correct_index: 1
     option_feedback:
@@ -108,7 +108,7 @@ questions:
       2: |
         The statement does include a metric: 1 second. The problem is that the metric is applied too broadly without identifying the meaningful scenarios.
     explanation: |
-      This is a system-wide blanket smell. Good performance requirements focus on the important interactions and the conditions under which each target applies.
+      This is a system-wide blanket smell. Good performance requirements name the specific request types (search, checkout, batch export) and the operating conditions under which each target applies, rather than imposing one number on everything.
 
   - id: 7
     difficulty: intermediate

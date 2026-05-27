@@ -148,31 +148,31 @@ steps:
           type: single
           options:
             - "Lists are not supported by `print()` — you must convert to a string first"
-            - "The list is one positional argument, so `sep` has nothing to separate. Python prints the list's string representation as a single unit."
+            - "The list is one positional argument, so `sep` has nothing to separate"
             - "`sep='-'` only works with string arguments, not with lists"
             - "You need `sep='-'` before the list argument for it to apply to list elements"
           correct_index: 1
           explanation: |
             `sep` is placed **between** multiple positional arguments. One argument (the list)
-            means there is no gap for `sep` to fill. Python calls `str()` on the list, producing
-            `['A', 'B', 'C']`. To print list elements with a separator, unpack the list:
-            `print(*["A", "B", "C"], sep='-')` → `A-B-C`.
+            means there is no gap for `sep` to fill, so Python calls `str()` on the list,
+            producing `['A', 'B', 'C']`. To print list elements with a separator, unpack
+            the list: `print(*["A", "B", "C"], sep='-')` → `A-B-C`.
 
         - question: |
             What does `end='\n'` do by default, and why would you change it?
           type: single
           options:
             - "`end='\\n'` prints a blank line after the output; change it to `end=''` to suppress blank lines"
-            - "`end='\\n'` appends a newline after the last value; change it (e.g. to `end='!'`) to append a different string, or use `end=''` to suppress the newline entirely"
+            - "`end='\\n'` appends a newline after the last value; override it (e.g. `end='!'`, or `end=''` to suppress)"
             - "`end='\\n'` is only used when printing to a file; for console output it has no effect"
             - "`end='\\n'` inserts a newline between arguments; `sep` appends a string at the end"
           correct_index: 1
           explanation: |
             By default, `print()` ends every call with a newline so the next output starts on a
-            new line. You can override `end` to append any string — `end='!'` adds `!` before the
-            newline, `end=''` produces no newline at all (useful when building output incrementally
-            across multiple `print()` calls). `sep` and `end` are independent: `sep` goes *between*
-            arguments, `end` comes *after* the last one.
+            new line. You can override `end` to append any string — `end='!'` adds `!` instead
+            of the newline, `end=''` produces no newline at all (useful when building output
+            incrementally across multiple `print()` calls). `sep` and `end` are independent:
+            `sep` goes *between* arguments, `end` comes *after* the last one.
 
   # --------------------------------------------------------------------------
   # STEP 2 — Sequences, List Comprehension & Unpacking
@@ -929,7 +929,7 @@ steps:
           type: single
           options:
             - "`re.finditer()` returns a list of strings like `re.findall()`, but filters out empty matches"
-            - "`re.finditer()` yields match objects so you can access each named group by name; `re.findall()` with groups returns a list of tuples of group strings, losing the name association"
+            - "`re.finditer()` yields match objects (group-by-name works); `re.findall()` with groups returns tuples"
             - "`re.finditer()` only works with named groups; `re.findall()` works with any pattern"
             - "They are identical — `re.finditer()` is just a lazy alias for `re.findall()`"
           correct_index: 1
@@ -946,14 +946,14 @@ steps:
           type: single
           options:
             - "`re.DOTALL` is slower, so explicit `\\n` is used for performance"
-            - "With `re.DOTALL`, `.+` would greedily consume newlines and potentially merge two separate Given/When/Then blocks into a single match"
+            - "Under `re.DOTALL`, `.+` would greedily merge separate Given/When/Then blocks"
             - "`re.DOTALL` prevents named groups from working correctly"
             - "Explicit `\\n` is required when the pattern has more than two named groups"
           correct_index: 1
           explanation: |
             With `re.DOTALL`, `.` matches **any** character including `\n`, making `.+` very
-            greedy. It could swallow the newlines between two separate Given/When/Then blocks,
-            merging them into one large match. Using explicit `\n` keeps the pattern precise:
+            greedy — it could swallow the newlines between two separate Given/When/Then blocks
+            and merge them into one large match. Using explicit `\n` keeps the pattern precise:
             it crosses only the exact line boundaries that separate the three clauses.
 
         - question: |

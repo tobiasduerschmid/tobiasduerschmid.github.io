@@ -115,7 +115,7 @@ questions:
     question: "A data structures student is practicing graph algorithms. Instead of doing all the shortest-path problems, followed by all the minimum-spanning-tree problems, she shuffles them together. What specific cognitive capability does this heavily cultivate?"
     options:
       - "The ability to memorize exact syntax faster."
-      - "The capacity to discern which underlying strategy applies to a novel, unclassified scenario."
+      - "Discriminating which strategy fits a novel problem."
       - "The reduction of total cognitive load during the initial learning phase."
       - "The stabilization of short-term memory traces."
       - "The creation of perceptual fluency."
@@ -153,7 +153,7 @@ questions:
     options:
       - "Push through the frustration to build grit and mental endurance."
       - "Switch to interleaved practice immediately across all domains."
-      - "Isolate and master individual component skills (like basic Git commands, simple shell scripts, or fundamental syntax) before attempting to merge them."
+      - "Isolate and master each component skill before recombining them."
       - "Reread the Git documentation from start to finish to ensure nothing was missed."
       - "Rely entirely on massed practice to finish the application in one sitting."
     correct_index: 2
@@ -166,13 +166,13 @@ questions:
         Reading documentation front to back may feel thorough, but it is a passive and high-load response. The better move is to isolate a small skill and practice it actively.
       4: |
         Massed practice can produce short-term progress, but one long session is a poor match for building stable skill across several domains. The learner needs decomposition and later recombination.
-    explanation: "**Isolating component skills first is the correct response because working memory is limited and simultaneous complexity overwhelms the learner.** This represents managing cognitive load. Working memory is highly limited, so complex tasks must be decomposed into component skills so fluency can be achieved without overwhelming the learner."
+    explanation: "**Isolating component skills first is the correct response because working memory is limited and simultaneous complexity overwhelms the learner.** Practice basic Git commands, simple shell scripts, and fundamental syntax on their own; once each is fluent, recombine them. Working memory is highly limited, so complex tasks must be decomposed into component skills so fluency can be achieved without overwhelming the learner."
   - id: 10
     difficulty: basic
     question: "A student struggles heavily with their first algorithms assignment and decides, 'I'm just not wired for complex math and logic.' This reaction is a classic example of:"
     options:
       - "A growth orientation."
-      - "A fixed mindset that rejects the malleability of intellectual ability."
+      - "A fixed mindset about intellectual ability."
       - "Successful cognitive load management."
       - "An appropriate response to undesirable difficulties."
       - "The generation effect."

@@ -52,10 +52,10 @@ questions:
     question: |
       You install a Python package today with `pip install foo`. Six months from now, a colleague clones the repo and runs the same command. Their build fails because a transitive dependency just released a major version with API-breaking changes. Which design principle does this most directly violate?
     options:
-      - "Strive for fewer dependencies"
-      - "Keep versions of your dependencies fixed (e.g., via lock files or Pipenv)"
-      - "Prefer well-maintained, popular modules"
-      - "Identify violated assumptions"
+      - "Strive for fewer transitive package dependencies"
+      - "Keep dependency versions pinned via a lock file"
+      - "Prefer well-maintained, popular modules with active maintainers"
+      - "Identify violated assumptions in reused modules"
     correct_index: 1
     option_feedback:
       0: |
@@ -99,7 +99,7 @@ questions:
     options:
       - "Add it — reuse is always better than reinventing the wheel"
       - "Add it, but pin the version exactly to today's release"
-      - "Reimplement the 12 lines yourself, since the maintenance and supply-chain risks exceed the implementation cost"
+      - "Reimplement the 12 lines yourself — supply-chain risk outweighs the implementation cost"
       - "Refuse the task — without a popular, well-maintained library, the feature cannot be built safely"
     correct_index: 2
     option_feedback:
@@ -176,7 +176,7 @@ questions:
       A team is choosing whether to rewrite an old internal `BatchScheduler` for use in a new low-latency streaming service. Which course of action best embodies the design principles in this chapter?
     options:
       - "Reuse it as-is — internal code is always safe to reuse because the team owns it"
-      - "Reuse it after explicitly identifying its implicit assumptions (e.g., latency tolerance, single-threaded execution, batch sizes) and verifying they still hold under streaming conditions; otherwise adapt or replace"
+      - "Reuse it after identifying its implicit assumptions and verifying they still hold; otherwise adapt or replace"
       - "Always rewrite — old code is by definition outdated"
       - "Adopt a popular external scheduling framework instead, since popularity is the strongest signal of fit"
     correct_index: 1
@@ -231,7 +231,7 @@ questions:
       In a classic expert-design study, three teams designed the same system: Team A produced 1 detailed design, Team B produced 3 options, Team C produced 5 options. Expert reviewers ranked Team C's chosen design as the best. What is the *correct* takeaway?
     options:
       - "Producing more designs always produces a better outcome — the right number is unbounded"
-      - "Spending time generating alternatives broadens the search space, which on average produces better final designs — *especially* for less experienced designers"
+      - "Generating alternatives broadens the search and yields better final designs — especially for less experienced designers"
       - "Detailed design is wasted effort; teams should produce sketches only"
       - "Team C's design was best because they had more time"
     correct_index: 1

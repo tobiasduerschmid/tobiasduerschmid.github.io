@@ -8,7 +8,7 @@ questions:
     question: |
       A flight-booking service executes a transaction that (1) debits a passenger's credit card and (2) writes a "seat reserved" row. The server crashes between the two steps. On restart, the card shows a charge but no seat is reserved. **Which ACID property did the system fail to provide?**
     options:
-      - "Atomicity — the transaction should be all-or-nothing; the debit without the matching reservation means only part of it was persisted."
+      - "Atomicity — the transaction should be all-or-nothing."
       - "Isolation — two concurrent bookings must not see each other's half-finished state."
       - "Durability — a committed change must survive the crash."
     correct_index: 0
@@ -29,7 +29,7 @@ questions:
     options:
       - "Durability — the change must survive restarts."
       - "Atomicity — all-or-nothing execution."
-      - "Isolation — concurrent transactions must not see each other's uncommitted state."
+      - "Isolation — concurrent transactions must not interfere."
     correct_index: 2
     option_feedback:
       0: |
@@ -66,7 +66,7 @@ questions:
       A teammate says: *"Our database is strongly consistent because we use SQL and SQL is ACID."* In the context of a distributed, multi-replica deployment, **what is wrong with this claim?**
     options:
       - "Nothing — ACID guarantees the same thing as CAP-Consistency."
-      - "ACID-Consistency is about constraint preservation on a single logical database; CAP-Consistency is about replicas always agreeing on the latest write. They share a name but not a meaning — an ACID system with async replication can still return stale reads."
+      - "ACID-C is constraint preservation; CAP-C is replicas agreeing on the latest write."
       - "SQL systems are never ACID — that is a NoSQL property."
     correct_index: 1
     option_feedback:
@@ -141,7 +141,7 @@ questions:
     question: |
       ATMs are sometimes presented as an example of "having all three of C, A, and P." What is the **more accurate** characterization of how ATMs actually behave?
     options:
-      - "They are AP with eventual consistency — during a WAN outage to the bank, an ATM continues to allow withdrawals up to a cached limit, and transactions are reconciled once the link returns (sometimes producing temporary overdrafts)."
+      - "AP with eventual consistency — the ATM dispenses up to a cached limit during a WAN outage and reconciles later."
       - "They are CP — if an ATM cannot reach the bank, it refuses every withdrawal until connectivity returns."
       - "They are CA — banks use private networks, so partitions never occur."
     correct_index: 0
@@ -200,7 +200,7 @@ questions:
       You are building the ledger for a new stock brokerage: every trade must be recorded atomically, there are complex relationships between accounts, trades, and positions, and regulators will audit your transactional guarantees. **Which data-store family is the natural fit?**
     options:
       - "A key-value NoSQL store — simple, horizontally scalable, and fast."
-      - "A relational DBMS — well-structured entities with multi-row ACID transactions and queryable joins are exactly what this workload needs."
+      - "A relational DBMS — multi-row ACID transactions and joins fit this workload."
       - "A graph database — trades are conceptually a graph of transfers."
     correct_index: 1
     option_feedback:
@@ -273,7 +273,7 @@ questions:
     options:
       - "Make `student_id` the primary key, because each student is a unique entity."
       - "Use `ROWID` or an auto-increment surrogate key; avoid composite keys since they aren't allowed."
-      - "Make the *composite* `(student_id, course_id, quarter)` the primary key, because uniqueness holds only across the combination — a given student can (and does) appear in many enrollment rows."
+      - "Use the *composite* `(student_id, course_id, quarter)` — uniqueness holds only across that combination."
     correct_index: 2
     option_feedback:
       0: |
@@ -290,7 +290,7 @@ questions:
     question: |
       A foreign key `Enrollment.course_id` points at `Course.course_id`. The DBMS rejects an `INSERT` into `Enrollment` where `course_id = "CS999"` because no such course exists. **What property is being enforced, and which ACID letter does this fall under?**
     options:
-      - "Referential integrity, enforced by the foreign-key constraint; this is ACID-**Consistency** (constraint preservation)."
+      - "Referential integrity, enforced by the foreign key — this is ACID-Consistency."
       - "Atomicity — the insert is being treated as all-or-nothing."
       - "Isolation — the insert is being held until other transactions complete."
     correct_index: 0

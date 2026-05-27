@@ -1059,7 +1059,7 @@ steps:
           type: single
           options:
             - "It is not weak — the test passes, so the oracle is doing its job"
-            - "It is weak because it would also pass for any *truthy* return — `1`, `\"yes\"`, or even `[1, 2]` would all satisfy it. Use `is True` to pin the exact Boolean"
+            - "It passes for any *truthy* return (`1`, `\"yes\"`, `[1, 2]`) — use `is True` for an exact Boolean."
             - "It is weak because pytest assertions need an explicit message string after the comma"
             - "It is weak because the input string is too short to be representative"
           correct_index: 1
@@ -1079,7 +1079,7 @@ steps:
           type: single
           options:
             - "Symmetry — every code change should ship with a matching test addition or removal"
-            - "Each passing test is a permanent guard against regressions: if a future change re-introduces the bug, the test fails before users see it"
+            - "Each passing test is a permanent regression guard — if a bug is re-introduced, it fails first."
             - "Removing tests after a feature ships keeps the suite small and fast"
             - "Tests get noisy over time and need to be deleted to keep the signal clean"
           correct_index: 1
@@ -1836,7 +1836,7 @@ steps:
           type: single
           options:
             - "No difference — `== True` and `is True` behave identically for Boolean-returning functions"
-            - "`is True` catches the case where the function returns a truthy non-Boolean (like `1` or `\"yes\"`) — `== True` accepts `1 == True`, but `1 is True` fails"
+            - "`is True` rejects truthy non-Booleans like `1`; `== True` accepts them (`1 == True`)."
             - "`is True` is faster at runtime, which matters in large test suites"
             - "`== True` is a syntax error in pytest; `is True` is the required form"
           correct_index: 1
@@ -2307,7 +2307,7 @@ steps:
           type: single
           options:
             - "Agree — passing tests prove the function works."
-            - "That's a *weak oracle*. It passes for any non-`None` value (including `0.0` or `\"banana\"`). Replace with `assert result == <expected_value>`."
+            - "*Weak oracle*: it passes for any non-`None` value. Replace with `assert result == <expected>`."
             - "Disagree because we don't have 100% line coverage yet."
             - "Disagree — the test is fine but the function name should change."
           correct_index: 1
@@ -2349,7 +2349,7 @@ steps:
           type: single
           options:
             - "The rename introduced a bug — renaming always risks changing behavior"
-            - "The three broken tests were accessing `_cache` directly — they were testing internal implementation, not observable behavior"
+            - "Those tests read `_cache` directly — they were testing implementation, not observable behavior."
             - "You should revert the rename to restore the passing tests"
             - "Private attributes must never be renamed after the first release"
           correct_index: 1

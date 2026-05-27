@@ -215,7 +215,7 @@ steps:
           type: single
           options:
             - "Call `React.update(h1, newTitle)` to tell React what changed"
-            - "Change the data (a variable or, later, state) — React re-runs the component function and patches the DOM automatically"
+            - "Change the data — React re-runs the component and patches the DOM"
             - "Use `document.querySelector` inside the component to directly update the DOM element"
             - "Manually traverse the Virtual DOM and apply diffs"
           correct_index: 1
@@ -458,7 +458,7 @@ steps:
           options:
             - "React can only diff trees that have one root; multiple roots would break the reconciliation algorithm"
             - "This is a browser limitation — the DOM only allows one child per script"
-            - "React.createElement returns a single object, so a function returning multiple top-level JSX elements would be returning multiple objects, which isn't valid in JS without an array"
+            - "JSX compiles to `React.createElement`, which returns one object — a function can't return two values"
             - "It's a style convention, not a technical requirement — React ignores extra roots"
           correct_index: 2
           explanation: |
@@ -765,7 +765,7 @@ steps:
           type: single
           options:
             - "Nothing — props can be freely reassigned inside the component"
-            - "Props are read-only (like const function parameters) — mutating them breaks React's one-way data flow and causes unpredictable behavior"
+            - "Props are read-only — mutating them breaks React's one-way data flow"
             - "You must use `this.title` to access props in function components"
             - "The destructuring syntax `{ title }` is invalid — you must write `props.title`"
           correct_index: 1
@@ -789,7 +789,7 @@ steps:
           options:
             - "They never differ — both syntaxes are always identical"
             - "They differ for strings — quotes produce a string, braces produce a symbol"
-            - "They are the same for string literals, but only `{}` works for expressions: `title={getTitle()}` is valid, `title=getTitle()` is not"
+            - "Same for string literals, but `{}` is required for any JS expression (`title={getTitle()}`)"
             - "`{}` is faster because it skips string parsing"
           correct_index: 2
           explanation: |
@@ -1134,7 +1134,7 @@ steps:
           type: single
           options:
             - "You must use `var` instead of `let` to make React track the variable"
-            - "React's reconciler only re-renders when state changes — mutating a local variable does nothing to signal React; `useState`'s setter is the trigger"
+            - "Only calling a `useState` setter triggers a re-render — React can't see plain variable mutations"
             - "Arrow functions prevent React from seeing variable assignments"
             - "React automatically batches all updates, so `count++` is delayed by 500ms"
           correct_index: 1
@@ -1170,7 +1170,7 @@ steps:
           type: single
           options:
             - "Nothing breaks — global variables persist across renders and React detects changes to them automatically"
-            - "The global variable persists, but changing it doesn't trigger a re-render — the UI stays frozen. Also, if the component is used twice, both instances share the same global, causing conflicts"
+            - "Changing it does not trigger a re-render, and all component instances would share the same value"
             - "Global variables bypass the Virtual DOM diffing process, making them significantly slower than useState"
             - "React throws a strict-mode error when it detects global variable access inside any component function"
           correct_index: 1
@@ -1431,7 +1431,7 @@ steps:
           type: single
           options:
             - "Array indices are numbers, but React requires string keys — converting indices to strings adds overhead"
-            - "If items are reordered, inserted, or removed, the index of items changes — React maps keys to component instances, so incorrect keys cause wrong state to be associated with the wrong component"
+            - "When items are reordered or removed, indices shift — React then maps state to the wrong components"
             - "Using indices is significantly slower because React must convert each numeric index to a string internally"
             - "Array indices are not globally unique across sibling lists, causing key collisions and rendering conflicts"
           correct_index: 1
@@ -2300,7 +2300,7 @@ steps:
           type: single
           options:
             - "JavaScript does not support class inheritance, so React has no choice"
-            - "Deep class hierarchies in UI code are hard to reason about — composition using the `children` prop and smaller components gives more flexibility and avoids the 'fragile base class' problem"
+            - "Composing smaller components (e.g. via `children`) is more flexible than deep UI class hierarchies"
             - "Inheritance is strictly slower than composition at runtime in JavaScript"
             - "Composition is only preferred for functional components; class components still use inheritance"
           correct_index: 1
@@ -2311,7 +2311,7 @@ steps:
           type: single
           options:
             - "A list of all child elements in the DOM tree below the component"
-            - "The ability to nest arbitrary JSX between a component's opening and closing tags, letting it act as a generic container"
+            - "Whatever JSX is nested between the component's opening and closing tags"
             - "A reference to the child component's internal state"
             - "An array of all React components currently mounted in the application"
           correct_index: 1
@@ -2334,10 +2334,10 @@ steps:
             A `<UserCard>` needs a `user` prop from a grandparent, passing through `<Profile>` which doesn't use it. What is this antipattern called?
           type: single
           options:
-            - "The God Object pattern"
+            - "The God Object pattern — one component holding too many unrelated responsibilities"
             - "Prop drilling — threading props through intermediate components that don't need them"
-            - "Composition — combining components to build a larger UI"
-            - "Lifting state up"
+            - "Composition — assembling complex UI by nesting smaller, reusable components"
+            - "Lifting state up — moving shared state to the lowest common ancestor"
           correct_index: 1
           explanation: |
             **Prop drilling** occurs when you pass props through layers of components that don't use them. Solutions: React Context API (for widely-shared state) or state management libraries. Rule of thumb: if drilling more than 2-3 levels, reconsider.
@@ -2666,7 +2666,7 @@ steps:
           type: single
           options:
             - "The code is correct — it will work as expected"
-            - "Two bugs: (1) `cart` is a local variable, not state — pushing to it won't trigger re-renders. (2) `.map()` is missing `key` props"
+            - "`cart` is a local variable (not state), so pushes don't re-render; the `.map()` is also missing keys"
             - "The only bug is that `push` is slow — should use `concat` instead"
             - "`addToCart` should be defined outside the component for performance"
           correct_index: 1
@@ -2679,7 +2679,7 @@ steps:
           type: single
           options:
             - "Nothing wrong — keeping everything in one component is simpler and avoids the overhead of passing props between components"
-            - "It violates single-responsibility: each concern (product display, cart, filters) should be its own component. A monolithic component is hard to test, hard to reuse, and hard to modify without breaking other features"
+            - "It violates single-responsibility — each concern should be its own component for testing, reuse, and maintenance"
             - "React enforces a 100-line limit per component — exceeding this causes a build-time warning in strict mode"
             - "It is slower because React's Virtual DOM diffing algorithm has O(n²) complexity for components over 500 lines"
           correct_index: 1
@@ -2695,7 +2695,7 @@ steps:
           options:
             - "In `ProductCard` — each card tracks whether it's in the cart"
             - "In `CartSummary` — the cart summary owns the cart data"
-            - "In the nearest common ancestor of both (likely `App`) — passed down as props with an `addToCart` callback"
+            - "In their nearest common ancestor (`App`), passed down via props and an `addToCart` callback"
             - "In a global variable outside all components"
           correct_index: 2
           explanation: |
@@ -2715,7 +2715,7 @@ steps:
           type: single
           options:
             - "'A, B, C' — push adds C and setItems triggers a re-render with the updated array"
-            - "'A, B' — `items.push` mutates in-place, but `setItems(items)` passes the **same reference**, so React sees no change and skips the re-render"
+            - "'A, B' — `items.push` keeps the same reference, so React's `===` check skips the re-render"
             - "'C' — setItems replaces the array contents with just the pushed item"
             - "Error — you cannot call push on a state variable"
           correct_index: 1
@@ -2752,7 +2752,7 @@ steps:
           type: single
           options:
             - "It works perfectly — directly updating the DOM is the fastest way to change text"
-            - "It works initially, but React overwrites the change on the next re-render because React owns the DOM and rebuilds it from state — the manual update is lost"
+            - "It works initially, but React overwrites the change on the next re-render — React owns the DOM"
             - "React throws an error preventing any direct DOM access inside components"
             - "The DOM update persists because React never touches elements it did not create"
           correct_index: 1
@@ -2784,7 +2784,7 @@ steps:
           type: single
           options:
             - "Only `ProfileCard` sees the change — props are copied when passed to children"
-            - "The mutation changes the original object in the parent, corrupting data for other components that share the same `user` object — props should be treated as read-only"
+            - "Props pass by reference, so the mutation corrupts the parent's object — props must be read-only"
             - "React detects the mutation and triggers a strict-mode error"
             - "The change is ignored — React freezes all prop objects automatically"
           correct_index: 1
@@ -2801,7 +2801,7 @@ steps:
           type: single
           options:
             - "Nothing — this is the correct way to attach a click handler"
-            - "`handleClick()` **calls** the function immediately during render instead of passing a reference. Use `onClick={handleClick}` or `onClick={() => handleClick()}`"
+            - "`handleClick()` invokes the function during render; pass a reference: `onClick={handleClick}`"
             - "Event handlers must be arrow functions — `handleClick` is not valid"
             - "The button text 'Go' conflicts with the `onClick` attribute"
           correct_index: 1
@@ -2818,7 +2818,7 @@ steps:
           type: single
           options:
             - "Yes — keys must be globally unique across the entire application"
-            - "No — keys only need to be unique among siblings within the same parent element. Two separate lists can reuse the same keys"
+            - "No — keys only need to be unique among siblings, so separate lists can reuse them"
             - "Yes — React uses a global key registry, so duplicates cause a warning and fallback to index-based reconciliation"
             - "No — but only if the lists render different component types"
           correct_index: 1

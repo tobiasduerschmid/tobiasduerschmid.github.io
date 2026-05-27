@@ -30,7 +30,7 @@ questions:
     options:
       - "State has a finite number of concrete classes; Strategy can have unboundedly many."
       - "State uses inheritance for the concrete classes; Strategy uses composition."
-      - "State changes its concrete implementation *implicitly* via internal transitions; Strategy's implementation is *explicitly* selected by the client."
+      - "State changes implementation *implicitly* via internal transitions; Strategy's is *explicitly* picked by the client."
       - "State is a creational pattern; Strategy is a behavioral pattern."
     correct_index: 2
     option_feedback:
@@ -94,7 +94,7 @@ questions:
       A `Compositor` interface defines `compose(natural[], stretch[], shrink[], width, breaks[])`. Three ConcreteStrategies implement it: `SimpleCompositor` (greedy), `TeXCompositor` (paragraph-optimal), and `ArrayCompositor` (fixed-width grids). The `SimpleCompositor` ignores the `stretch` and `shrink` arrays entirely. Which Strategy *consequence* does this illustrate?
     options:
       - "Strategies eliminate conditional statements."
-      - "Communication overhead between Strategy and Context — the shared interface forces Context to compute and pass data some ConcreteStrategies don't use."
+      - "Communication overhead between Strategy and Context."
       - "Increased number of objects."
       - "Clients must be aware of different Strategies."
     correct_index: 1
@@ -123,7 +123,7 @@ questions:
     options:
       - "It's faster — empty method calls are optimized away by the JIT."
       - "The `null` check would throw `NullPointerException` on the very first call."
-      - "It keeps the call site uniform (`flyBehavior.fly()`) — no null checks scattered through the Context code, and the design intent of 'this duck does not fly' is encoded in a real type instead of a missing reference."
+      - "Call sites stay uniform (`flyBehavior.fly()`) and 'this duck does not fly' becomes a named type instead of a missing reference."
       - "It satisfies Java's strict-mode requirement that all interface fields be non-null at construction time."
     correct_index: 2
     option_feedback:

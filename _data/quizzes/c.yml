@@ -113,7 +113,7 @@ questions:
     question: "What is the role of libc (the C standard library) in a typical C program?"
     options:
       - "libc is a runtime virtual machine that interprets C bytecode at execution time — analogous to the JVM for Java."
-      - "libc provides a portable API (`fopen`, `malloc`, `printf`, `strlen`, ...) that wraps the underlying operating system's syscalls, letting the same C source compile and run on Linux, macOS, and Windows."
+      - "libc wraps the OS syscalls in a portable API (`fopen`, `malloc`, `printf`, ...) so the same C source compiles on Linux, macOS, and Windows."
       - "libc is the in-browser sandbox that lets JavaScript safely invoke C functions through a foreign-function interface."
       - "libc is a build tool that converts `.c` files into `.o` object files — equivalent to `gcc -c`."
     correct_index: 1
@@ -154,7 +154,7 @@ questions:
     difficulty: expert
     question: "NASA's coding standards for flight software permit C and a restricted subset of C++ — explicitly forbidding exceptions and most polymorphism. What is the strongest pedagogical reason for that restriction?"
     options:
-      - "C++ exceptions and virtual calls hide control-flow edges from automated verification tools, making it harder to prove that the program behaves correctly under every possible execution path."
+      - "Exceptions and virtual calls hide control-flow edges from automated verification tools."
       - "C++ compilers produce slower executables than C compilers; aerospace code has tight performance budgets."
       - "C++ source files are larger than C source files and would exceed the storage capacity of flight computers."
       - "C++ is a younger language with fewer mature compilers, so NASA's tooling cannot build it reliably."
@@ -176,7 +176,7 @@ questions:
     question: "Almost every mainstream language can call into a C library — Python, Java, C#, Rust, Go, Ruby — but **browser JavaScript cannot directly call C functions on the user's machine**. What is the strongest reason?"
     options:
       - "JavaScript has no foreign-function interface — its language specification omits the feature entirely."
-      - "Browser JavaScript runs inside a security sandbox that deliberately blocks native code access; C would let untrusted page scripts read files, drive hardware, and bypass the sandbox guarantees."
+      - "Browser JavaScript runs inside a security sandbox that deliberately blocks native code; C would let untrusted scripts read files and drive hardware."
       - "C functions return data in a binary layout that JavaScript engines cannot decode."
       - "JavaScript is interpreted and C is compiled, and interpreters cannot make function calls into compiled code."
     correct_index: 1
@@ -196,7 +196,7 @@ questions:
     difficulty: advanced
     question: "You are shipping a CLI tool that depends on `libssl`. Compare static and dynamic linking — which statement is correct?"
     options:
-      - "Static linking produces a larger but self-contained executable; dynamic linking produces a smaller executable that depends on `libssl.so` being present at run time and lets a system-wide security update fix every dynamically-linked program at once."
+      - "Static linking produces a larger self-contained executable; dynamic linking produces a smaller binary that depends on `libssl.so` being present at run time."
       - "Static linking links at run time; dynamic linking links at build time. Static linking is therefore always slower at startup."
       - "Static and dynamic linking differ only in file extension (`.a` vs `.so`); the resulting executable is identical."
       - "Dynamic linking produces a single, self-contained binary; static linking always requires the user to install all referenced libraries separately."

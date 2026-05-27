@@ -9,7 +9,7 @@ questions:
       A product manager hands you the requirement: "the system must be **fast and reliable**." Why is this not a useful quality requirement, and what would make it useful?
     options:
       - "It's fine as written — engineering teams know what 'fast and reliable' means."
-      - "It is unmeasurable. A useful quality requirement names a specific **scenario** (what condition, what stimulus, what user) and a concrete **metric** (a number, threshold, or measurable target) — e.g., 'Under peak Friday-evening load, 95% of search requests return in under 200 ms with 99.9% availability over any 7-day window.'"
+      - "It is unmeasurable. A useful quality requirement names a specific scenario and a concrete metric."
       - "It conflates two requirements. Split into 'fast' and 'reliable' as separate sentences and the problem is solved."
       - "Quality requirements are always vague; engineering converts them into design decisions afterward."
     correct_index: 1
@@ -20,7 +20,7 @@ questions:
         Splitting the conjunction does not add measurement. "Fast" alone is still unmeasurable; "reliable" alone is still unmeasurable. The problem is the absence of scenarios and metrics, not the conjunction.
       3: |
         Treating quality requirements as vague-by-default is how systems quietly fail to meet expectations. The engineering discipline is precisely *not* to accept vague quality requirements — to push back until they are measurable.
-    explanation: "**A useful quality requirement has two parts: a scenario (the specific condition or environment) and a metric (a concrete measure of goodness — a hard threshold like '< 1 s' or a soft goal like 'minimize effort').** Without both, the requirement cannot be tested, cannot drive design decisions, and cannot be falsified."
+    explanation: "**A useful quality requirement has two parts: a scenario (the specific condition or environment) and a metric (a concrete measure of goodness — a hard threshold like '< 1 s' or a soft goal like 'minimize effort').** A concrete rewrite would be: 'Under peak Friday-evening load, 95% of search requests return in under 200 ms with 99.9% availability over any 7-day window.' Without both scenario and metric, the requirement cannot be tested, cannot drive design decisions, and cannot be falsified."
 
   - id: 2
     difficulty: basic
@@ -29,9 +29,9 @@ questions:
       Classify these four qualities as either *design-time* or *run-time*: **performance**, **testability**, **availability**, **changeability**.
     options:
       - "All four are run-time qualities — they are observable while the system executes."
-      - "**Run-time:** performance, availability. **Design-time:** testability, changeability. Run-time qualities are experienced by users while the system executes; design-time qualities primarily affect developers building or maintaining the system."
+      - "Run-time: performance, availability. Design-time: testability, changeability."
       - "All four are design-time qualities — they are decided during architecture."
-      - "**Run-time:** testability, changeability. **Design-time:** performance, availability."
+      - "Run-time: testability, changeability. Design-time: performance, availability."
     correct_index: 1
     option_feedback:
       0: |
@@ -49,7 +49,7 @@ questions:
       Your team adds end-to-end TLS encryption to every internal microservice call to meet a new security mandate. p99 latency rises from 80 ms to 130 ms. What general principle does this illustrate?
     options:
       - "Encryption is inherently broken at scale."
-      - "Quality attributes frequently *conflict*: improving one (security) degrades another (performance). Architects must explicitly choose which to prioritize and document the trade-off, rather than pretending both can be maximized."
+      - "Quality attributes frequently *conflict*: improving one degrades another."
       - "Quality attributes always synergize — security and performance must rise together."
       - "TLS overhead is a bug; the fix is to disable encryption on internal paths."
     correct_index: 1
@@ -70,7 +70,7 @@ questions:
     options:
       - "Early architectural decisions strongly constrain which quality attributes the system can later achieve."
       - "Quality attributes are typically cross-cutting — they touch many parts of the codebase, not one isolated module."
-      - "Quality attributes are difficult and expensive to add after the system is built, just as moving a load-bearing wall is expensive after construction."
+      - "Quality attributes are difficult and expensive to retrofit after the system is built."
       - "Quality attributes never change throughout a system's lifetime."
       - "Quality attributes are the only requirements that drive architectural decisions."
     correct_indices: [0, 1, 2]
@@ -94,7 +94,7 @@ questions:
       A Mars rover requirement reads: "the rover should be robust." A senior architect calls this a *bad* specification and rewrites it. Which rewrite is correct?
     options:
       - "The rover must be highly robust and handle all errors gracefully."
-      - "Under dust-storm conditions reducing solar input by 60% for up to 72 hours, the rover must continue scientific measurements, transmit a beacon every 6 hours, and resume full operations within 1 hour of normal solar input returning."
+      - "Under a 72 h 60%-solar dust storm: keep measuring, beacon every 6 h, recover within 1 h."
       - "The rover should never crash."
       - "The rover should be built with high-quality components."
     correct_index: 1
@@ -114,7 +114,7 @@ questions:
       A startup's MVP launches in three weeks. The team is debating whether to invest in **testability** infrastructure (dependency injection, test doubles, contract tests) before launch. What is the strongest *pro-testability* argument given the time pressure?
     options:
       - "Testability is non-negotiable — never ship without it."
-      - "Testability synergizes with changeability: the same architectural decisions that make code testable (small responsibilities, injected dependencies, no global state) also make it easy to evolve as you learn from real users — so the investment pays off through both lower bug rates and faster iteration."
+      - "Testability synergizes with changeability — the same architectural choices buy both."
       - "Testability is a runtime quality, so the team can add it after launch with no design cost."
       - "Skip testability entirely — startups don't need tests."
     correct_index: 1
@@ -133,10 +133,10 @@ questions:
     question: |
       Your bank's payment service uses TCP (acknowledged, retried delivery). A consultant suggests UDP to cut latency. The trade-off they don't mention is:
     options:
-      - "UDP is more secure than TCP."
-      - "UDP gives up TCP's reliability guarantees — packets may be lost, duplicated, or arrive out of order. For payment messaging, the transport should not expose raw loss or reordering; the application still needs idempotency/transaction logic for retries."
+      - "UDP weakens transport security relative to TCP."
+      - "UDP drops reliability — packets may be lost, duplicated, or reordered."
       - "UDP is slower than TCP at small payload sizes."
-      - "UDP cannot cross firewalls."
+      - "UDP cannot cross most corporate firewalls."
     correct_index: 1
     option_feedback:
       0: |
@@ -154,7 +154,7 @@ questions:
       Three months after launch, your team realizes the system cannot scale past 10,000 concurrent users — the bottleneck is the synchronous, monolithic request pipeline chosen on day one. What does this illustrate about quality attributes?
     options:
       - "Quality attributes can always be improved later with no architectural changes."
-      - "Scalability is a load-bearing quality attribute: an early architectural choice (synchronous monolith) has now constrained what the system can achieve, and improving it will require structural rework — not a localized patch."
+      - "Scalability is load-bearing — fixing it now requires structural rework, not a local patch."
       - "The team should have built for 1,000,000 users from day one."
       - "Scalability is a run-time quality, so it cannot be planned for in advance."
     correct_index: 1
@@ -173,7 +173,7 @@ questions:
     question: |
       An e-commerce site adds image CDN caching. Page-load drops from 3 s to 800 ms. User satisfaction (Net Promoter Score) climbs. Which quality-attribute relationship is in evidence?
     options:
-      - "Performance and usability *synergize* — for interactive systems, faster response improves the user's experience and therefore the system's usability."
+      - "Performance and usability *synergize* — faster response improves the user experience."
       - "Performance and usability *conflict* — the CDN is faster but harder to use."
       - "Performance and usability are unrelated — the NPS change must come from something else."
       - "The CDN improved security, which improved usability."
@@ -194,7 +194,7 @@ questions:
       Your team is asked to pick *which three* quality attributes to optimize for in a new system. The product manager says "let's just do all of them." How do you reframe the conversation?
     options:
       - "Agree — modern engineering can deliver all qualities simultaneously."
-      - "Pushback: quality attributes conflict, and trying to maximize all of them yields a system that is mediocre on every axis. The architect's job is to identify the 2–3 attributes that matter most for *this* system's context — and accept that others will be deliberately deprioritized — so design decisions can be made coherently."
+      - "Pushback: maximizing all of them yields a mediocre system; identify the 2–3 that matter most."
       - "Defer the question — pick whatever after the system is built."
       - "Pick the three that are easiest to measure regardless of which matter most."
     correct_index: 1
@@ -235,7 +235,7 @@ questions:
     options:
       - "Payment code should be very testable and highly modular."
       - "The payment code shall use dependency injection."
-      - "A developer can run deterministic tests for approved cards, declined cards, and provider timeouts without contacting the real payment provider."
+      - "Approve, decline, and timeout cases run deterministically without the real provider."
       - "The payment code should have at least five tests."
     correct_index: 2
     option_feedback:

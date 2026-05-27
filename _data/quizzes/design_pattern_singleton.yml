@@ -9,7 +9,7 @@ questions:
       POSA5 describes the Singleton as "a well-known pattern with a weak solution." What is the core reason for this criticism?
     options:
       - "The Singleton pattern is too simple to be useful in real applications"
-      - "It conflates singleton lifetime management with a global access point, introducing hidden coupling and harming testability"
+      - "It conflates single-instance lifetime with a global access point"
       - "Thread-safety is impossible to achieve with Singleton"
       - "The Singleton pattern violates the Single Responsibility Principle"
     correct_index: 1

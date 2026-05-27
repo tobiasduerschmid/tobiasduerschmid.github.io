@@ -363,13 +363,13 @@ steps:
           type: single
           options:
             - "Yes — the test passes, so the refactor is verified"
-            - "No — `is not None` is a weak oracle. It would pass for any non-`None` return, including `False`, `[]`, or even a wrong date string. Pin the exact expected value with `==`"
+            - "No — `is not None` is weak; pin the exact expected value with `==`"
             - "Yes — `is not None` is the recommended assertion for boolean-returning functions"
             - "It's irrelevant — once you introduce a seam, oracle strength stops mattering"
           correct_index: 1
           option_feedback:
             0: "Tests passing only tells you what their *assertions* held. `is not None` holds for any non-`None` value — including ones that violate the spec. Same Liar-test family from Testing Foundations Step 3."
-            1: "Right. `is not None` is the canonical weak oracle — it accepts any non-`None` return. Pair it with the seam refactor and the test still verifies almost nothing. Pin the exact expected value with `==` (or `is True`/`is False` for booleans)."
+            1: "Right. `is not None` accepts any non-`None` return — including `False`, `[]`, or even a wrong date string. Pair it with the seam refactor and the test still verifies almost nothing. Pin the exact expected value with `==` (or `is True`/`is False` for booleans)."
             2: "There's no special rule for boolean-returning functions. The strong oracle for booleans is `is True` / `is False` — `is not None` is *strictly weaker* (it accepts `True`, `False`, and every other non-`None` value)."
             3: "Oracle strength matters in *every* test, regardless of whether you're using a real collaborator or a double. A strong oracle paired with a stub is what makes a test simultaneously *deterministic* and *meaningful*. Doubles don't replace strong oracles; they enable them."
           explanation: |
@@ -383,7 +383,7 @@ steps:
           type: single
           options:
             - "It's a Python convention required by pytest"
-            - "It creates the *seam* the doubles will use later. Without an injectable dependency, you can't substitute a controlled version at test time"
+            - "It creates the *seam* the doubles will use later"
             - "It improves runtime performance"
             - "It's only needed when you're using `unittest.mock` — for hand-rolled stubs you can patch globals instead"
           correct_index: 1
@@ -824,13 +824,13 @@ steps:
           type: single
           options:
             - "Because `datetime.now()` is a function, and a stub must be a class"
-            - "Because the test cannot control what `datetime.now()` returns. A stub is *under the test's control* — the wall clock is not"
+            - "Because the test cannot control what `datetime.now()` returns"
             - "Because `datetime.now()` is too fast — stubs must add latency"
             - "Because Python's standard library functions can't be doubled"
           correct_index: 1
           option_feedback:
             0: "A stub doesn't have to be a class — it just has to satisfy the contract the SUT expects. The defining property is *control*, not *type*. A function or a lambda can stub a function-shaped collaborator perfectly well."
-            1: "Right. The defining property of a stub is that *the test* controls what the stub returns. The wall clock changes every microsecond and is shared across processes — the test has zero control over it. That's exactly why we replaced it with a `FrozenClock`."
+            1: "Right. The defining property of a stub is that *the test* controls what it returns — the wall clock changes every microsecond and is shared across processes. That's exactly why we replaced it with a `FrozenClock`."
             2: "Latency is irrelevant to the stub vs not-stub distinction. Stubs are typically faster than the real thing because they skip work, but the defining property is control, not speed."
             3: "Python's standard library is no harder to double than your own code — `datetime.datetime` accepts a default override, modules can be patched, etc. The reason `datetime.now()` is the *opposite* of a stub is that the test can't control what it returns; nothing about Python prohibits doubling it."
           explanation: |
@@ -848,13 +848,13 @@ steps:
           type: single
           options:
             - "Yes — the test passes, so the SUT must be returning the right title"
-            - "No — `is not None` is a weak oracle. It accepts any non-`None` return — including the wrong title, an empty string, or `False`. Pin the exact value with `==`"
+            - "No — `is not None` is weak; pin the exact value with `==`"
             - "Yes — `is not None` is the recommended assertion when stubbing dependencies"
             - "It's strong if the SUT's return type is documented as a string"
           correct_index: 1
           option_feedback:
             0: "Tests passing only tells you the *assertion* held. `is not None` holds for *any* non-`None` value, including ones that violate the spec. The Liar test from Testing Foundations Step 3 still applies — being inside a stubbed test doesn't make it stronger."
-            1: "Right. Stubbing collaborators makes the test *deterministic*; it doesn't make weak oracles strong. `is not None` accepts wrong values just as readily as right ones. Pin the exact expected title with `==`."
+            1: "Right. Stubbing collaborators makes the test *deterministic*; it doesn't make weak oracles strong. `is not None` accepts wrong values just as readily as right ones — including the wrong title, an empty string, or `False`. Pin the exact expected title with `==`."
             2: "There's no special rule for assertions in stubbed tests. Stubs control inputs; oracles check outputs. The two are independent design dimensions, exactly as Testing Foundations Step 5 spelled out."
             3: "Documentation doesn't make `is not None` precise. The function returns *one specific string* per partition — pinning that exact string with `==` is the strong oracle. `is not None` is a structural assertion (\"some object came back\"), not a behavioral one (\"the right object came back\")."
           explanation: |
@@ -868,7 +868,7 @@ steps:
           type: single
           options:
             - "When the test only needs to control one canned return value"
-            - "When the SUT calls the collaborator multiple times across a test sequence and expects different stateful answers each time (e.g., adding a quest, then fetching it back)"
+            - "When the SUT calls the collaborator multiple times and expects stateful answers"
             - "When the test needs to verify that the SUT actually called the collaborator"
             - "Whenever you're testing a service class — Stubs are only for free functions"
           correct_index: 1
@@ -1335,13 +1335,13 @@ steps:
           type: single
           options:
             - "A spy is faster than a stub because it doesn't compute return values"
-            - "A spy *records every call made to it* so the test can later inspect the recorded list. (A spy can also act as a stub by returning canned values, but the recording is what makes it a spy.)"
+            - "A spy *records every call made to it* so the test can inspect it later"
             - "A spy raises exceptions on every call to ensure error paths are exercised"
             - "A spy is a runtime debugging tool, not a test double"
           correct_index: 1
           option_feedback:
             0: "Speed isn't the distinction. Spies and stubs are both lightweight in-memory objects. The difference is *what the test inspects after the SUT runs*."
-            1: "Right. A [Test Spy](http://xunitpatterns.com/Test%20Spy.html) (Meszaros) is a stub that *also records calls*. The test asserts on the recorded calls — that's what enables verification of fire-and-forget collaborator interactions."
+            1: "Right. A [Test Spy](http://xunitpatterns.com/Test%20Spy.html) (Meszaros) is a stub that *also records calls*. The test asserts on the recorded calls — that's what enables verification of fire-and-forget collaborator interactions. (A spy can also act as a stub by returning canned values; the recording is what makes it a spy.)"
             2: "That's a specific *use* of a stub or spy (set `side_effect` to an exception, as Step 4 will show). It's not the defining property — it's just one configurable behavior."
             3: "Test spies are absolutely test doubles, not runtime tools. The terminology comes from xUnit Test Patterns (Meszaros, 2007). Don't confuse \"spy\" in the testing sense with \"spyware\" in the security sense — they happen to share a metaphor but are unrelated concepts."
           explanation: |
@@ -1359,13 +1359,13 @@ steps:
           type: single
           options:
             - "Yes — passing tests prove the SUT works"
-            - "No — this is a structurally trivial assertion (len of any list is >= 0). It would pass even if the SUT never called the spy. Liar test."
+            - "No — len of any list is always >= 0, so this passes regardless of behavior"
             - "Yes — `len(...) >= 0` is the recommended starting assertion for spy-based tests"
             - "No — but only because the assertion should use `is True`/`is False` instead"
           correct_index: 1
           option_feedback:
             0: "Tests passing only tells you what their *assertions* held. `len(any_list) >= 0` is a property of Python lists, not of the SUT — so passing this assertion proves nothing about the SUT's behavior. Same Liar-test family as `result is not None` from Testing Foundations Step 3, ported to spy assertions."
-            1: "Right. The assertion holds for an empty list, a list of correct calls, a list of wrong calls — every list. The test passes regardless of behavior, which is the textbook Liar test. The fix: pin the exact expected call list with `==`."
+            1: "Right. The assertion holds for an empty list, a list of correct calls, a list of wrong calls — every list. It would pass even if the SUT never called the spy. Textbook Liar test. The fix: pin the exact expected call list with `==`."
             2: "There's no such recommendation. Starting weak and \"strengthening later\" is how Liar tests get committed to main and forgotten. Always pin the exact expected call list from the start."
             3: "`is True`/`is False` is for boolean returns. `len(...) >= 0` would still be a Liar even if you wrote `(len(...) >= 0) is True` — the underlying expression is structurally trivial. The fix is to assert on the *recorded calls themselves*, not on `len()`."
           explanation: |
@@ -1379,20 +1379,20 @@ steps:
           type: single
           options:
             - "`assert spy.calls == [(\"u1\", 100)]`"
-            - "`assert spy.calls == [(\"u1\", 100, \"2026-04-28T12:00:00Z\", {\"meta\": \"req-id-abc\"})]`"
+            - "`assert spy.calls == [(\"u1\", 100, \"2026-04-28\", \"req-abc\")]`"
             - "`assert (\"u1\", 100) in spy.calls`"
             - "`assert spy.calls[0] == (\"u1\", 100)`"
           correct_index: 1
           option_feedback:
             0: "This pins exactly the (user_id, gold) the spec mandates. If the SUT later changes how it formats internal log strings, this test still passes — because it doesn't reference internal-state details. **Goldilocks**, not brittle."
-            1: "Right. This pins a 4-tuple including a timestamp and a request-ID metadata dict — neither of which is in the spec for `credit`. If the SUT is later refactored to drop the metadata or change the timestamp format (without changing the user/gold contract), this test breaks for the wrong reason. **Over-specified, brittle.**"
+            1: "Right. This pins a 4-tuple including a timestamp and a request-ID — neither of which is in the spec for `credit`. If the SUT is later refactored to drop the request-ID or change the timestamp format (without changing the user/gold contract), this test breaks for the wrong reason. **Over-specified, brittle.**"
             2: "`in spy.calls` is *under-specified* in the other direction (extra calls would still pass), but it isn't brittle — it tolerates harmless changes. Brittle assertions break when the underlying contract is preserved; under-specified assertions miss bugs the contract was supposed to catch. Different problem."
             3: "Indexing `[0]` is just a way to access the first call. It pins what we want (user_id, gold) and ignores everything else. Not brittle. (Slightly less idiomatic than full-list equality, but not the over-specified case.)"
           explanation: |
             Brittle = pins details outside the spec. The 4-tuple includes a
-            timestamp and a metadata dict that aren't part of the `credit`
+            timestamp and a request-ID that aren't part of the `credit`
             contract — they're internals. A pure refactor that drops the
-            metadata would break this test even though `credit(user_id, gold)`
+            request-ID would break this test even though `credit(user_id, gold)`
             is still being called correctly. (Same family as the
             internal-coupling brittleness from Testing Foundations Step 4.)
 
@@ -1401,13 +1401,13 @@ steps:
           type: single
           options:
             - "A stub is hand-rolled; a spy uses `unittest.mock`"
-            - "A stub provides canned answers to the SUT's questions; a spy records the SUT's calls so the test can inspect them later"
+            - "A stub provides canned answers; a spy records the SUT's calls"
             - "A stub is for read operations; a spy is for write operations"
             - "A stub is faster than a spy"
           correct_index: 1
           option_feedback:
             0: "Both can be hand-rolled or generated. Step 4 will show that `unittest.mock` generates either role from the same `Mock` class — the role isn't determined by the library."
-            1: "Right. Stub = canned answers (control indirect input). Spy = record-and-inspect (verify indirect output). Same SUT/collaborator structure; different question being asked of the test."
+            1: "Right. Stub = canned answers (control indirect input). Spy = record-and-inspect (verify indirect output) — the test inspects the recorded calls later. Same SUT/collaborator structure; different question being asked of the test."
             2: "Read/write isn't the distinction — many real collaborators do both, and the choice of stub or spy depends on what the *test* wants to verify, not on whether the underlying call is a read or a write."
             3: "Performance is a non-distinction. The choice between stub and spy is about *what behavior the test verifies*, not about how fast the double runs."
           explanation: |
@@ -1808,13 +1808,13 @@ steps:
           type: single
           options:
             - "Mock — because the variable name `api` and the class `Mock` are both used"
-            - "Stub — it answers `fetch_quests(...)` calls with a canned value, providing controlled indirect input to the SUT"
+            - "Stub — it answers `fetch_quests(...)` with a canned value"
             - "Spy — every call to a `Mock` is automatically recorded"
             - "Fake — it has a working in-memory implementation"
           correct_index: 1
           option_feedback:
             0: "This is the most common confusion in Python testing. The *class* is `Mock`, but the *role* is determined by how the test uses the object — not by the class name. Here, `api` is configured to return a canned value; that's a stub role."
-            1: "Right. `return_value` configures a canned answer; the SUT receives that answer as indirect input. Same role as `StubQuestApiClient` from Step 2 — just generated by Mock instead of declared as a class. (Yes, Mock *also* records calls, but here the test never asserts on them. The role is determined by the test's intent.)"
+            1: "Right. `return_value` provides a controlled indirect input to the SUT. Same role as `StubQuestApiClient` from Step 2 — just generated by Mock instead of declared as a class. (Yes, Mock *also* records calls, but here the test never asserts on them. The role is determined by the test's intent.)"
             2: "Mock objects do auto-record calls, so the *capability* is there — but role is determined by what the test *uses*. This test only configures `return_value` and asserts on the SUT's return value (state verification). No call assertions are made on `api`, so its spy capability is unused — it's playing stub."
             3: "A [Fake](http://xunitpatterns.com/Fake%20Object.html) (Meszaros) has a working but lightweight implementation — typically with internal state (an in-memory dict, for example). Mock has no internal logic; it just returns whatever you configured. So this isn't a Fake."
           explanation: |
@@ -1828,7 +1828,7 @@ steps:
           type: single
           options:
             - "Never — they're interchangeable; pick whichever reads better"
-            - "When the collaborator should *raise an exception* (so you can test the SUT's error-handling branch), or return *different values across calls*, or compute the return *dynamically* from the call's arguments"
+            - "When the collaborator should raise, vary across calls, or be computed from arguments"
             - "When you want the test to be slower (`side_effect` adds latency)"
             - "When `return_value` doesn't exist on the version of `unittest.mock` you're using"
           correct_index: 1
@@ -1852,13 +1852,13 @@ steps:
           type: single
           options:
             - "Mock corrected the typo internally and called the right assert method"
-            - "Mock auto-created `assrt_called_once_with` as a new mock method (because `Mock` creates attributes on access) — so the line just creates a new auto-mocked attribute and calls it. No actual assertion ran. The test silently passes regardless of behavior."
+            - "Mock auto-created `assrt_called_once_with` as a new child mock and called it — no assertion ran"
             - "Mock raised an `AttributeError` and pytest caught it as a passing test"
             - "Python's interpreter detected the typo and warned via stderr"
           correct_index: 1
           option_feedback:
             0: "Mock has no auto-correct mechanism. It also has no idea you intended `assert_called_once_with` — to Mock, `assrt_called_once_with` is just another attribute name to auto-create."
-            1: "Right. This is the **typo trap** — one of the most dangerous Mock pitfalls. Every attribute access on a vanilla Mock returns a new child Mock; calling `.assrt_called_once_with(...)` on that child Mock just records *another* call, returns a new Mock, and produces no assertion. Step 5 introduces `autospec=True` as one defense (it restricts attribute access to the real object's interface)."
+            1: "Right. This is the **typo trap** — one of the most dangerous Mock pitfalls. Every attribute access on a vanilla Mock returns a new child Mock; calling `.assrt_called_once_with(...)` on that child just records *another* call, returns a new Mock, and produces no assertion. The test silently passes regardless of behavior. Step 5 introduces `autospec=True` as one defense (it restricts attribute access to the real object's interface)."
             2: "There's no `AttributeError` because Mock auto-creates attributes. That's the whole problem — the failure mode is *silent*."
             3: "Python doesn't warn about typo'd method names — to the language, `assrt_called_once_with` is a perfectly valid attribute name. Static analyzers (mypy, pylint) might flag it; the runtime won't."
           explanation: |
@@ -1874,7 +1874,7 @@ steps:
           type: single
           options:
             - "Before Red — Mocks must exist before the test is written"
-            - "During Red — the failing test you write is the moment you decide *which double* to use, because the choice is part of the test design"
+            - "During Red — choosing which double to use is part of test design"
             - "During Refactor only — Mocks are exclusively a code-cleanup tool"
             - "Never — TDD forbids Mocks"
           correct_index: 1
@@ -1894,13 +1894,13 @@ steps:
           type: single
           options:
             - "It makes monkeypatch faster than `unittest.mock`"
-            - "Without auto-restore, a patched module attribute would leak into every subsequent test in the suite — silently breaking tests that don't even know they're using a patched value. Auto-restore makes the patch a *test-local* effect."
+            - "Without it, a patched attribute would leak into every subsequent test in the suite"
             - "It's a Python 3.11+ feature for memory management"
             - "It's only needed when you're patching `__builtins__`"
           correct_index: 1
           option_feedback:
             0: "Speed is irrelevant. The benefit is *correctness across a test suite*, not microseconds per test."
-            1: "Right. Test isolation is non-negotiable: a test that mutates global state and forgets to clean up corrupts every test that runs after it. monkeypatch (and `unittest.mock.patch` as a context manager / decorator) automate the cleanup, so you can't forget."
+            1: "Right. Test isolation is non-negotiable: a test that mutates global state and forgets to clean up corrupts every test that runs after it — silently breaking tests that don't even know they're using a patched value. monkeypatch (and `unittest.mock.patch` as a context manager / decorator) automate the cleanup, so you can't forget."
             2: "monkeypatch has been in pytest for many years; it's not a Python 3.11 feature. And cleanup is a *correctness* concern, not a memory-management one."
             3: "monkeypatch can patch any attribute — module functions, class methods, instance attributes, dictionary entries. It's not limited to `__builtins__`."
           explanation: |
@@ -2309,7 +2309,7 @@ steps:
           type: single
           options:
             - "Typos in `assert_*` method names like `assrt_called_once_with`"
-            - "Calling the patched function with the **wrong number or types of arguments** — autospec enforces the real function's signature, raising `TypeError` if you violate it"
+            - "Calling the patched function with the wrong number or types of arguments"
             - "Slow tests — autospec speeds up Mock construction"
             - "Forgetting to call `mock.reset_mock()` between tests"
           correct_index: 1
@@ -2329,13 +2329,13 @@ steps:
           type: single
           options:
             - "Test Double is a synonym for Mock — they refer to the same kind of object"
-            - "Test Double is the *umbrella* term (named after a stunt double in film); Dummy, Stub, Spy, Mock, and Fake are five specialized roles, each tagged for a different test-design need"
+            - "Test Double is the *umbrella*; Dummy, Stub, Spy, Mock, and Fake are five specialized roles"
             - "Test Double is just Meszaros' branding — modern Python uses 'mock' to cover all of them"
             - "Test Double is the umbrella, but it only includes Stub, Spy, and Mock — Fake and Dummy are unrelated patterns"
           correct_index: 1
           option_feedback:
             0: "Test Double is the umbrella (replaces the real thing — like a stunt double in a film); Mock Object is one specific role *within* that umbrella. Conflating them is exactly the colloquial confusion this tutorial fights."
-            1: "Right. Meszaros' [Test Double](http://xunitpatterns.com/Test%20Double.html) is the umbrella; the five named roles ([Dummy](http://xunitpatterns.com/Dummy%20Object.html), [Stub](http://xunitpatterns.com/Test%20Stub.html), [Spy](http://xunitpatterns.com/Test%20Spy.html), [Mock](http://xunitpatterns.com/Mock%20Object.html), [Fake](http://xunitpatterns.com/Fake%20Object.html)) each address a different test-design problem."
+            1: "Right. Meszaros' [Test Double](http://xunitpatterns.com/Test%20Double.html) is the umbrella (named after a stunt double in film); each named role — [Dummy](http://xunitpatterns.com/Dummy%20Object.html), [Stub](http://xunitpatterns.com/Test%20Stub.html), [Spy](http://xunitpatterns.com/Test%20Spy.html), [Mock](http://xunitpatterns.com/Mock%20Object.html), [Fake](http://xunitpatterns.com/Fake%20Object.html) — addresses a different test-design need."
             2: "Test Double pre-dates `unittest.mock`'s rise (Meszaros 2007). The umbrella isn't a brand — it's a stable, language-agnostic taxonomy used in Java/Mockito, JS/Jest, C#/Moq, Ruby/RSpec."
             3: "All five are subtypes of Test Double in Meszaros' taxonomy. [Fake](http://xunitpatterns.com/Fake%20Object.html) (in-memory implementations) and [Dummy](http://xunitpatterns.com/Dummy%20Object.html) (objects passed but never used) are explicit named patterns alongside Stub/Spy/Mock."
           explanation: |
@@ -2352,13 +2352,13 @@ steps:
             - "Stub — the collaborator returns a Mock object"
             - "Spy — the test asserts on what the SUT *did* (the recorded call), inspecting after the fact"
             - "Mock Object — the test sets a strict expectation on the call"
-            - "Either Spy or Mock Object — the boundary depends on whether the expectation is configured up-front (Mock Object) or inspected after the fact via `assert_called_*` (Spy-leaning)"
+            - "Either Spy or Mock Object — `unittest.mock` blurs the line"
           correct_index: 3
           option_feedback:
             0: "Stub provides canned input *to* the SUT. This test isn't using the Mock to feed an answer in — it's verifying a call went out. Wrong direction."
             1: "Defensible. The `assert_called_*` style is post-execution inspection of recorded calls, which is closer to a Spy. (Some authors put `assert_called_*` cleanly in the Spy camp.)"
             2: "Also defensible. The single-call expectation `assert_called_once_with(...)` IS a strict expectation on a specific interaction — Meszaros' Mock Object territory. (Some authors put `assert_called_*` in the Mock Object camp.)"
-            3: "Right. The line between Spy and Mock Object is fuzzier in `unittest.mock` than in Meszaros' original taxonomy because the same Mock class can do either. The role boundary in `unittest.mock` runs through the *Spy ↔ Mock Object axis*, not through the class. Step 4's lesson — \"the role isn't determined by the class\" — applies again here."
+            3: "Right. The boundary depends on whether the expectation is configured up-front (Mock Object) or inspected after the fact via `assert_called_*` (Spy-leaning) — fuzzier in `unittest.mock` than in Meszaros' original taxonomy because the same Mock class can do either. Step 4's lesson — \"the role isn't determined by the class\" — applies again here."
           explanation: |
             `unittest.mock` blurs the Spy/Mock-Object line that Meszaros drew
             crisply. Both are forms of *behavior verification*; they differ
@@ -2372,13 +2372,13 @@ steps:
           type: single
           options:
             - "DI is always preferred — `patch()` is only for legacy code you can't modify"
-            - "DI is the right choice when the SUT *accepts* the collaborator as a parameter you control; `patch()` is the right choice when the SUT *imports* a module-level name and you can't reshape its signature without breaking other callers"
+            - "DI when the SUT takes the collaborator as a parameter; `patch()` when it imports a module-level name"
             - "They're interchangeable — pick based on how much typing each one takes"
             - "`patch()` is always preferred — DI requires more boilerplate"
           correct_index: 1
           option_feedback:
             0: "DI isn't always available. If the SUT calls `send_push` (a module-level function imported at the top of the file), there's no parameter to inject — you'd have to reshape the SUT's signature. `patch()` exists exactly for that situation."
-            1: "Right. DI is the cleaner default: parameter-level seams are explicit, easy to reason about, and don't depend on Python's import machinery. `patch()` is the heavier tool for module-level names — useful, but it brings the where-to-patch trap (this whole step) along for the ride. Reach for DI first; fall back to `patch()` when DI isn't available."
+            1: "Right. DI is the cleaner default: parameter-level seams are explicit, easy to reason about, and don't depend on Python's import machinery. `patch()` is the heavier tool for module-level names you can't reshape without breaking other callers — it brings the where-to-patch trap (this whole step) along for the ride. Reach for DI first; fall back to `patch()` when DI isn't available."
             2: "They have different trade-offs. DI makes the seam visible in the SUT's signature; `patch()` reaches into namespaces at runtime. The choice is structural, not stylistic."
             3: "DI requires the SUT to accept the collaborator as a parameter — that's not boilerplate, it's the seam being visible. `patch()` is the workaround for cases where DI can't be used; preferring it universally is how teams end up with patch-strings scattered across their suites."
           explanation: |
@@ -2396,13 +2396,13 @@ steps:
           type: single
           options:
             - "Always use `autospec=True`"
-            - "Run a static type checker (mypy / pyright) or linter (pylint) — it'll flag the missing attribute on `Mock`. Pair that with code review."
+            - "Run a static type checker (mypy / pyright) or linter — paired with code review"
             - "Memorize the spelling of every `assert_*` method"
             - "Use `Mock(spec_set=True)` — it makes Mock immutable"
           correct_index: 1
           option_feedback:
             0: "Autospec primarily catches *call-signature drift* — wrong number/types of arguments to the patched callable. Whether it catches typos in `assert_*` methods is version-dependent and not reliable. Don't lean on autospec for this."
-            1: "Right. mypy / pyright understand Mock's typing and flag missing methods. pylint catches the typo statically. Code review catches what tooling misses. This combination is robust — autospec adds defense-in-depth but isn't sufficient on its own."
+            1: "Right. mypy / pyright understand Mock's typing and flag the missing attribute on `Mock`. pylint catches the typo statically. Code review catches what tooling misses. This combination is robust — autospec adds defense-in-depth but isn't sufficient on its own."
             2: "Memorization is fragile and doesn't help when you're tired or rushed. Static tooling is what scales — let the computer remember the right spelling."
             3: "`spec_set=True` blocks setting *new* attributes (so `m.foo = ...` would fail). It doesn't reliably block reading nonexistent attributes (so `m.assrt_called_once_with(...)` may still slip through depending on the spec). Use mypy/pyright."
           explanation: |
@@ -2884,13 +2884,13 @@ steps:
           type: single
           options:
             - "Behavior verification — the test checks how the SUT works"
-            - "**Over-mocking.** The test verifies orchestration, not behavior. A pure refactor that renames or merges any internal helper breaks the test even though behavior is unchanged"
+            - "Over-mocking — the test verifies orchestration, not behavior"
             - "Solitary unit testing — the canonical and recommended style"
             - "Liar test — the assertions don't actually run"
           correct_index: 1
           option_feedback:
             0: "This is over-mocking, not behavior verification. [Behavior verification](http://xunitpatterns.com/Behavior%20Verification.html) (Meszaros) is *one* call against an architectural-boundary collaborator — not every internal helper. Mocking internals couples the test to implementation choreography rather than to the spec."
-            1: "Right. Mocks should sit at architectural boundaries (HTTP, DB, clock, notifier) — not at every internal helper. Mocking internals creates *brittle* tests: any refactor that preserves behavior but rearranges helpers breaks the test for the wrong reason. Same lesson as Testing Foundations Step 4 (\"behavior, not implementation\"), in mock-shaped clothing."
+            1: "Right. Mocks should sit at architectural boundaries (HTTP, DB, clock, notifier) — not at every internal helper. A pure refactor that renames or merges any internal helper breaks the test even though behavior is unchanged. Same lesson as Testing Foundations Step 4 (\"behavior, not implementation\"), in mock-shaped clothing."
             2: "Solitary testing means \"isolate the SUT from external collaborators (DBs, clocks, networks).\" It does *not* mean \"mock every internal helper.\" Internal helpers belong to the SUT's own module — mocking them is over-mocking. Solitary doesn't endorse this."
             3: "Liar tests have weak oracles (`is not None`). The over-mocked test's assertions ARE running and are technically strong (`==` against a canned value). The problem is what they assert *about* — implementation details, not the spec."
           explanation: |
@@ -2929,13 +2929,13 @@ steps:
           type: single
           options:
             - "No remaining risk — a passing fake-based unit test proves the real repository works too"
-            - "The fake may drift from the real repository's save/find/update contract, so add a shared contract test or sandbox integration test against the real boundary"
+            - "The fake may drift from the real repository — add a contract or integration check"
             - "The unit test needs more mocks around the fake's internal dictionary"
             - "The fake should be deleted immediately; fakes are never appropriate for repositories"
           correct_index: 1
           option_feedback:
             0: "A fake trades reality for speed and control. Passing fake-based unit tests prove the SUT's behavior against the fake, not the real repository's schema, constraints, transactions, or adapter wiring."
-            1: "Right. Fakes are useful, but they are promises. A shared contract test or sandbox integration test keeps the fake and the real repository aligned on the behavior the SUT depends on."
+            1: "Right. Fakes are useful, but they are promises. A shared contract test or sandbox integration test against the real boundary keeps the fake and the real repository's save/find/update contract aligned."
             2: "Mocking the fake's internals would make the test more coupled without checking the real risk. The risk is fake-vs-real drift at the repository boundary, not how the fake stores state internally."
             3: "Fakes are often the cleanest choice for stateful collaborators. The professional move is not 'never fake'; it is 'fake for fast unit feedback, then cover important fake-vs-real gaps with contract or integration checks.'"
           explanation: |
@@ -2949,13 +2949,13 @@ steps:
           type: single
           options:
             - "Never use `unittest.mock` — only roll your own classes"
-            - "When you depend on a third-party library, wrap it in your own thin **Adapter** class first; then mock the Adapter, not the third-party. Your tests stay decoupled from the third-party's internals"
+            - "Wrap third-party libraries in your own Adapter; then mock the Adapter"
             - "Only mock objects you instantiated yourself in the test"
             - "Don't share mocks between test files"
           correct_index: 1
           option_feedback:
             0: "`unittest.mock` is fine — you can use it on objects you own. The rule is about *what you mock*, not which library you use."
-            1: "Right. Wrap third-party libraries in your own Adapter (Adapter pattern) so your code depends on *your* type. Then mock that type. Benefits: tests don't break when the third-party releases a new version; the mock surface is tiny and stable; you can swap the underlying library if needed. Hynek Schlawack's essay \"Don't Mock What You Don't Own\" lays this out crisply."
+            1: "Right. Wrap third-party libraries in your own thin Adapter class (Adapter pattern) so your code depends on *your* type, then mock that type. Benefits: tests don't break when the third-party releases a new version; the mock surface is tiny and stable; you can swap the underlying library if needed. Hynek Schlawack's essay \"Don't Mock What You Don't Own\" lays this out crisply."
             2: "Object-instance ownership isn't the rule. The rule is about *interface* ownership — whose contract you're depending on."
             3: "Sharing mocks across test files is its own concern (often a bad idea), but it's unrelated to the \"mock what you own\" rule."
           explanation: |
@@ -2969,7 +2969,7 @@ steps:
           type: single
           options:
             - "Refactor — you start with real collaborators and double them later"
-            - "**Red** — choosing the double is part of test design, which happens when you write the failing test"
+            - "Red — choosing the double is part of test design, which happens when you write the failing test"
             - "Green — you add doubles when the test is red and you need to make it pass"
             - "It doesn't matter which phase — doubles are an implementation detail"
           correct_index: 1
@@ -2990,13 +2990,13 @@ steps:
           type: single
           options:
             - "It shouldn't be kept — leaving broken tests in the suite is always wrong"
-            - "The Liar shape is recognizable; leaving it as a durable artifact trains the eye to spot the pattern in real codebases that are full of similar tests"
+            - "Leaving it as a durable artifact trains the eye to spot the pattern in real codebases"
             - "The Liar test technically passes, so it provides regression coverage for the SUT"
             - "Refactoring it into a strong assertion would change what the test verifies"
           correct_index: 1
           option_feedback:
             0: "In a real production suite, you'd fix or delete it. In a *teaching* file, the Liar serves as a **durable artifact** — students return to the file and re-encounter the bad pattern alongside the good ones. That recognition skill is exactly what's needed when reading a real codebase, where Liar tests are common."
-            1: "Right. Real-world codebases are full of Liar tests committed by tired engineers under deadline. The skill of *spotting* one on sight is what the Step 3 file builds. Pattern-recognition through durable bad-example artifacts is a deliberate pedagogical move — same family as showing students misspelled words alongside correct ones in language education."
+            1: "Right. Real-world codebases are full of Liar tests committed by tired engineers under deadline. The Liar shape is recognizable; the skill of *spotting* one on sight is what the Step 3 file builds. Pattern-recognition through durable bad-example artifacts is a deliberate pedagogical move — same family as showing students misspelled words alongside correct ones in language education."
             2: "A test that always passes provides *no* regression coverage — that's the entire definition of a Liar. The fact that it never goes red is the bug, not a feature."
             3: "True for *that* specific test (it would no longer be a Liar after refactor), but irrelevant to why we leave Liars in teaching files. The reason is pattern-recognition, not preservation of intent."
           explanation: |
@@ -3012,13 +3012,13 @@ steps:
           type: single
           options:
             - "It runs the patched function in a separate process for safety"
-            - "It enforces the real callable's signature on the Mock — so the moment a teammate's refactor changes the production signature, the test's calls to the mock raise `TypeError` immediately, instead of silently accepting drift"
+            - "It enforces the real callable's signature on the Mock, catching signature drift immediately"
             - "It catches typos in `assert_*` method names reliably"
             - "It's required by the Mock library — without it, patches don't apply"
           correct_index: 1
           option_feedback:
             0: "No process isolation involved. autospec is a runtime introspection of the patched object's signature."
-            1: "Right. autospec is a design guardrail — \"make the mock as strict as the real thing.\" Signature drift is the most common refactoring bug; autospec catches it the moment the test runs. The cost is a few extra characters; the benefit is a real-world bug class entirely defended."
+            1: "Right. The moment a teammate's refactor changes the production signature, the test's calls to the mock raise `TypeError` immediately instead of silently accepting drift. autospec is a design guardrail — \"make the mock as strict as the real thing.\" Signature drift is the most common refactoring bug; autospec catches it the moment the test runs. The cost is a few extra characters; the benefit is a real-world bug class entirely defended."
             2: "Half-myth. autospec primarily enforces *call signatures*, not assertion-method spelling. The reliable typo defense is mypy/pylint."
             3: "Patches work without autospec — they just don't enforce signatures. autospec is a safety strict-mode, not a requirement."
           explanation: |

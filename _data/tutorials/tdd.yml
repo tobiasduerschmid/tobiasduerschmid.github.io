@@ -756,7 +756,7 @@ steps:
           type: single
           options:
             - "Celebrate — the existing code already implements this behavior, so there is nothing to do this cycle"
-            - "Be suspicious — a test that passes without RED may be testing nothing meaningful, OR may genuinely be covered by an earlier refactor. Verify which by temporarily breaking the production code and confirming the test fails for the right reason"
+            - "Be suspicious — verify by temporarily breaking the production code and checking the test fails for the right reason"
             - "Delete the test — a test that passes immediately is redundant and only adds runtime cost"
             - "Rewrite the test until it fails, since the rule is `RED → GREEN → REFACTOR` and you cannot enter GREEN without first being RED"
           correct_index: 1
@@ -795,7 +795,7 @@ steps:
           type: single
           options:
             - "Because pytest requires every cycle to have all three phases or it will skip the test in the next run"
-            - "Because the discipline of *pausing to look* is the whole point — finding nothing actionable is fine, but skipping the look lets duplication and bad names accumulate silently across cycles"
+            - "The pause-to-look is the discipline — skip it and duplication accumulates silently"
             - "Because REFACTOR is the only phase where you can add new tests without breaking the cycle's contract"
             - "Because the GREEN code is always wrong on the first attempt and must be revised before moving on"
           correct_index: 1
@@ -814,7 +814,7 @@ steps:
           type: single
           options:
             - "They are right — TDD is a workflow ordering decision; the resulting tests and code are otherwise indistinguishable from test-after"
-            - "TDD is a *design* technique that uses tests as the medium. Writing the test first forces interface and behavior decisions before implementation, and the REFACTOR step is where the design pressure pays off — neither of which is part of plain unit testing"
+            - "TDD is a design technique — the test forces interface decisions before implementation, and REFACTOR is where the design payoff lands"
             - "TDD is primarily a refactoring technique, and the tests exist only as a regression safety net for the refactoring"
             - "TDD requires writing all tests for a feature first, then all the code at once — which is the opposite of unit testing's incremental style"
           correct_index: 1
@@ -1703,7 +1703,7 @@ steps:
             A teammate looks at your cycle-4 GREEN code and says: *"Why didn't you just add a third `if dice == [1, 1]:` branch? It would have passed the test."* What is the **most accurate** rebuttal?
           type: single
           options:
-            - "A third branch would have passed cycle 4, but the duplication would have got worse, the bonus mixed-dice case would have demanded a fourth branch, and the eventual loop refactor would still have to happen — only with more code to delete"
+            - "A third branch passes today but adds duplication you'll delete in the next cycle's loop refactor"
             - "A third branch is forbidden by pytest — only one `if` statement per function is allowed in TDD code"
             - "The teammate is right and you should rewrite — TDD always prefers the smallest change, and one new `if` is smaller than rewriting the function"
             - "It does not matter — both approaches produce the same byte code after Python compiles them"
@@ -1723,7 +1723,7 @@ steps:
           type: single
           options:
             - "It is not — `RED for the right reason` only applies to cycle 1, where there is no implementation at all"
-            - "Because the new test should fail with a *meaningful* mismatch (assertion failure on the expected events tuple) — not a typo or a missing import. That tells you the test is correctly pinning down a behavior that the current implementation cannot produce"
+            - "Because the new test must fail with a meaningful assertion mismatch — not a typo or import error"
             - "Because pytest will only run new tests after old ones have failed at least once"
             - "Because every cycle must produce both a red bar and an import error or it will be rejected by the test runner"
           correct_index: 1
@@ -2111,7 +2111,7 @@ steps:
           type: single
           options:
             - "To avoid an off-by-one error in the next cycle's parametrized tests"
-            - "Because a combo *consumes* the dice it uses. If three 1s become a Dragon Blast, those three 1s are no longer available to score as Dragon Flames. The subtraction makes the bookkeeping explicit"
+            - "A combo consumes its dice — consumed 1s shouldn't still score as Dragon Flames"
             - "Because Python's Counter requires explicit decrement after every read; otherwise it caches stale values"
             - "It is a stylistic choice — `counts[1] = 0` and `del counts[1]` would also work and produce the same behavior"
           correct_index: 1
@@ -2129,7 +2129,7 @@ steps:
             A teammate suggests "let's just add `if Counter(dice)[1] >= 3: ...` at the top of the existing per-die loop." Why is that *not* the same as the count-then-emit refactor we did?
           type: single
           options:
-            - "It would still re-walk dice in two different shapes (the loop + the Counter pass), which is a different smell — the code now has two competing models of what the input is, and future combos would multiply the inconsistency"
+            - "It would leave two competing models of the input (per-die loop + Counter), making future combos inconsistent"
             - "It would be slightly faster but would produce the same result, so functionally it is equivalent"
             - "It would not work in Python — `Counter` cannot be called inside a `for` loop body"
             - "Pytest would refuse to run it because the test runner forbids mixing iteration styles"
@@ -2755,7 +2755,7 @@ steps:
           type: single
           options:
             - "Read every test out loud before running it, to catch typos in the test names that pytest cannot detect"
-            - "Treat the *difficulty* of writing or understanding a test (or the *pain* of adding new branches that match its shape) as a diagnostic signal that the production code's structure may be the real problem"
+            - "Treat the pain of writing or extending a test as a signal that the production code's structure is wrong"
             - "Use only test names that the codebase's audit log specifically asks for, ignoring the developer's own intuition about what to call them"
             - "Run pytest with `--log-cli-level=DEBUG` and inspect the trace, since that output reveals the next refactor"
           correct_index: 1
@@ -2774,7 +2774,7 @@ steps:
           type: single
           options:
             - "It is not better — it is just stylistically different. The byte code emitted is identical and the runtime cost is the same"
-            - "Adding a new rule now means appending one row of data, with no edit to `score()`. That is the Open-Closed Principle: the function is *closed* for modification but *open* for extension via the registry"
+            - "Adding a new rule is one data row, with no edit to `score()` — the Open-Closed Principle in action"
             - "Tuples are faster than lists in Python, so the rule-object form is a performance optimisation"
             - "Python's import system caches tuples but not function bodies, so subsequent test runs are quicker"
           correct_index: 1
@@ -2814,7 +2814,7 @@ steps:
           type: single
           options:
             - "It is unexpected — refactoring should always break something. If nothing broke, the previous tests must have been weak"
-            - "It is expected because the previous tests assert on behavior (return values), not on internals (which class held the rule data). Behavior-level assertions survive structural rewrites — that is what makes them robust"
+            - "Expected — the previous tests assert on return values, not internals, so they survive structural rewrites"
             - "It is expected because pytest skips tests whose names contain numbers — and several of the previous tests do"
             - "It is unexpected because Python's import order changed, so most tests should have failed to import"
           correct_index: 1
@@ -3363,7 +3363,7 @@ steps:
           type: single
           options:
             - "pytest's collection algorithm has a known issue with bugs that span multiple cycles, so it deferred reporting"
-            - "Every previous test used at most three of a face (three 1s, three 2s, etc.). The bug only manifests when the count of a face is at least *six*. The suite had no such input, so the defect lived undisturbed"
+            - "Every prior test used at most three of a face; the bug only surfaces at count ≥ 6"
             - "The bug only manifests on Tuesdays, and the previous test runs happened on other days"
             - "Cycle 5's `if counts[1] >= 3:` is correct — there was no bug; cycle 7 changed the requirement"
           correct_index: 1
@@ -3383,7 +3383,7 @@ steps:
           type: single
           options:
             - "Always test every input combinatorially — only complete coverage of the input space catches all bugs"
-            - "Coverage by line is what matters; cycle 7's bug was in code already covered, so coverage didn't help. The lesson is to *also* think about boundary cases (`exactly N`, `2N`, `between N and 2N`, `0`) per behavior"
+            - "Line coverage isn't enough — probe boundaries (`N`, `2N`, between, `0`) per behavior"
             - "Never use floor-division and modulo in production code — they are too easy to get wrong"
             - "TDD is unreliable; this bug proves that even careful test-first development can miss things, so we should add manual QA after every cycle"
           correct_index: 1
@@ -3403,7 +3403,7 @@ steps:
           type: single
           options:
             - "Because pytest skips guardrail tests after they pass once — they are stored as cached green results"
-            - "Because for `counts[1] = 4`, the old `counts[1] -= 3` and the new `counts[1] %= 3` both leave 1 in the counter — the two implementations agree on this specific input even though they disagree on `counts[1] >= 6`"
+            - "For `counts[1] = 4`, the old `-= 3` and new `%= 3` both leave 1 — they only differ at `counts[1] >= 6`"
             - "Because the leftover test is parameterized, and pytest reruns parameterized tests with looser tolerances"
             - "Because the leftover test has been deleted by the cycle 7 refactor — the green count went down, not up"
           correct_index: 1
@@ -3423,7 +3423,7 @@ steps:
           type: single
           options:
             - "Yes — the rule-object refactor introduced complexity that produced the bug. Inline code would have been simpler and safer"
-            - "No — the *exact same bug* was present in cycle 5's inline code (`if counts[1] >= 3: ... counts[1] -= 3` would also fail for six 1s). The rule-object refactor moved the bug from one place to another but did not introduce it. The defect was a missing test, not a missing pattern"
+            - "No — the same bug existed in cycle 5's inline code; the refactor moved it, not created it"
             - "It depends on Python version — Python 3.10+ silently rewrites `if` to a multi-iteration form for combos, which is why old Python had the bug"
             - "Yes — Python's `Counter` class re-orders subtraction operations under the hood when used with dataclasses"
           correct_index: 1
@@ -3721,7 +3721,7 @@ steps:
             FizzBuzz's `multiple of 15` test most directly parallels which Dragon-Dice cycle — and why?
           type: single
           options:
-            - "Cycle 5 (Triple 1s = Dragon Blast). Both are *design-breaking tests* — the simplest code that passed earlier tests cannot be tweaked locally to satisfy the new test; the structure has to acknowledge a combined case before earlier cases."
+            - "Cycle 5 (Triple 1s) — both are *design-breaking tests*: previous code cannot be locally tweaked"
             - "Cycle 1 (Empty roll). Both are the simplest case anyone could write."
             - "Cycle 4 (Repeated singles). Both are about handling duplicates of the same input."
             - "Cycle 6 (Goblin Swarm). Both are about adding a second example that reveals an abstraction."
@@ -3737,7 +3737,7 @@ steps:
             A teammate, who has never done TDD, pushes back: *"FizzBuzz is just trivia — the real work is the algorithm. Why did you spend 12 minutes on the cycles instead of 30 seconds typing the obvious solution?"* Pick the strongest reply.
           type: single
           options:
-            - "**On a one-shot toy problem the time is comparable, but the cycles produced a regression-proof test suite and a record of every design choice.** The 'obvious' solution often hides the design-breaking moment (FizzBuzz at 15) until a refactor exposes it later — at which point there's no test to catch the slip. Erdogmus et al. (2005) found test-first students wrote *more* tests AND were *more* productive per test."
+            - "On a toy problem the time is comparable, but you walk away with a test suite that catches the design-breaking moment when it returns"
             - "TDD is faster than typing the obvious solution because pytest's parallelism speeds up small test runs."
             - "The 'obvious' solution might be wrong; TDD is more correct because tests catch all bugs."
             - "TDD is a religious commitment — the question isn't worth answering."
@@ -3753,7 +3753,7 @@ steps:
             Compare doing FizzBuzz now to what doing it *before* the Dragon Dice tutorial would have been like. What's the most likely difference?
           type: single
           options:
-            - "**You no longer fight the rhythm.** RED-as-success, the discipline of one-test-at-a-time, the patience for two examples before refactoring, the pull of TPP toward simple constants — all of these now feel natural. That's the *residual effect* Janzen & Saiedian (ICSE 2007) measured: programmers who actually practiced TDD prefer it afterward, even ones who initially resisted."
+            - "You no longer fight the rhythm — small steps, RED-as-success, and waiting for two examples now feel natural"
             - "FizzBuzz is harder now because dice scoring uses different syntax than number sequences."
             - "There is no difference. TDD is a procedure; anyone can follow the steps once they're listed."
             - "FizzBuzz is now slower because the Dragon-Dice habits (`@dataclass`, `Counter`) don't apply here."
@@ -4246,7 +4246,7 @@ steps:
           type: single
           options:
             - "A 25-line one-off file-renaming script run once and discarded"
-            - "A new payment-processing module: complex validation, multi-developer code, high cost of regression"
+            - "A new payment-processing module with complex validation and multiple authors"
             - "A Jupyter notebook exploring a new dataset"
             - "Hand-written CSS for a landing page judged visually"
           correct_index: 1
@@ -4271,7 +4271,7 @@ steps:
           type: single
           options:
             - "*Excessive Setup* — too many asserts"
-            - "*The Nitpicker* — asserts on private attributes (`_name`, `_email`), coupling the test to implementation details"
+            - "*The Nitpicker* — asserting on `_name`/`_email` couples the test to private state"
             - "*The Mockery* — the test verifies the User constructor"
             - "*Skip-the-Refactor* — the cycle's REFACTOR phase was never entered, so the test was never tightened"
           correct_index: 1
@@ -4289,7 +4289,7 @@ steps:
           type: single
           options:
             - "Coverage caught it; pytest ignored the warning"
-            - "Coverage measures which *lines ran*, not whether the line is correct *for all relevant inputs*. The concept that catches it is **boundary thinking** — probing inputs at `exactly N`, `2N`, between, etc."
+            - "Coverage shows lines *ran*, not that they're right for every input"
             - "Coverage requires the `--strict` flag we didn't enable"
             - "Coverage can't measure exception-raising code"
           correct_index: 1
@@ -4311,28 +4311,31 @@ steps:
             Apply Canon TDD step 1 — **write a test list, in the order you'd implement it**. Which list below best honours TDD discipline (simplest-first, boundary-aware, behavior-named)?
           type: single
           options:
-            - "(1) test_long_string_with_digit_and_symbol_is_valid (2) test_short_string_is_invalid (3) test_no_digit_is_invalid (4) test_no_symbol_is_invalid (5) test_length_8_with_digit_and_symbol_is_valid (6) test_length_7_with_digit_and_symbol_is_invalid (7) test_length_64_with_digit_and_symbol_is_valid (8) test_length_65_is_invalid (9) test_empty_string_is_invalid"
+            - "A simplest-first behavioral list: happy path, then each rule rejected (no digit, no symbol, too short), then length boundary pairs (7/8, 64/65), then empty-string edge."
             - "Just one parametrized test that tries 50 random strings and checks `is_valid_password` returns the right answer for each."
-            - "(1) test_returns_a_bool (2) test_handles_unicode (3) test_is_thread_safe (4) test_is_not_None (5) test_does_not_raise"
-            - "(1) test_password_validation — all the rules in one test with multiple assertions covering length, digit, symbol, and empty-string cases."
+            - "Generic property tests: `test_returns_a_bool`, `test_handles_unicode`, `test_is_thread_safe`, `test_is_not_None`, `test_does_not_raise`."
+            - "A single `test_password_validation` test that asserts every rule (length, digit, symbol, empty) in one go."
           correct_index: 0
           option_feedback:
             1: "Random testing belongs more naturally to property-based testing; Hypothesis is great for that. It does not substitute for a behaviorally named test list. With 50 random strings there is no record of which behaviors are pinned down, no boundary discipline, and no readable test names that double as documentation; the boundary `len == 8` may even be missed by chance."
             2: "None of these tests come from the password spec; they check ambient properties like `is not None` and `returns a bool`. \"Returns a bool\" is implicit in the type annotation, and `is not None` passes for almost any non-None return. The test list must come from the rules the function implements, not from generic Python-correctness checks."
             3: "One test asserting all four rules at once is exactly the Giant antipattern from the test-smell taxonomy. When it fails, it is hard to tell which rule is broken, and the failure message has to cover every assertion. The TDD discipline is one test per behavior, so the test name itself documents which rule that test pins down."
           explanation: |
-            **Why option A wins**: it follows the same shape as Dragon Dice's seven cycles —
-            simplest case first (typical valid input), then *each rule rejected* in isolation
-            (no digit, no symbol, too short), then *boundaries on the length range* (7 invalid,
-            8 valid, 64 valid, 65 invalid — the boundary-pair discipline from the Testing
-            Foundations prerequisite), then the *empty-string* edge. Each test name reads
-            like a one-line bug report.
+            A clean test list for this spec might be: (1) `test_long_string_with_digit_and_symbol_is_valid`,
+            (2) `test_short_string_is_invalid`, (3) `test_no_digit_is_invalid`, (4) `test_no_symbol_is_invalid`,
+            (5) `test_length_8_with_digit_and_symbol_is_valid`, (6) `test_length_7_with_digit_and_symbol_is_invalid`,
+            (7) `test_length_64_with_digit_and_symbol_is_valid`, (8) `test_length_65_is_invalid`,
+            (9) `test_empty_string_is_invalid`. It follows the same shape as Dragon Dice's seven cycles —
+            simplest case first (typical valid input), then *each rule rejected* in isolation,
+            then *boundaries on the length range* (7 invalid / 8 valid / 64 valid / 65 invalid — the boundary-pair
+            discipline from the Testing Foundations prerequisite), then the *empty-string* edge. Each test name
+            reads like a one-line bug report.
 
-            **Why there's no single right answer**: your *exact* ordering may differ (e.g.,
-            empty-string first as the simplest-of-all). The skill being practiced here is
-            *generating* a structured plan from a spec — the same skill you'll use on every
-            function you TDD outside this tutorial. The four candidate lists above contrast different wrong-answer patterns:
-            random-instead-of-systematic, wrong-rules, and the Giant antipattern.
+            **Why there's no single right answer**: your *exact* ordering may differ (e.g., empty-string first
+            as the simplest-of-all). The skill being practiced here is *generating* a structured plan from a
+            spec — the same skill you'll use on every function you TDD outside this tutorial. The four candidate
+            lists above contrast different wrong-answer patterns: random-instead-of-systematic, wrong-rules,
+            and the Giant antipattern.
 
             If you found yourself drafting your own list before scrolling to the options —
             even better. That's exactly Canon TDD step 1 in your hands.

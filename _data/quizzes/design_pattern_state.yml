@@ -49,7 +49,7 @@ questions:
       The State and Strategy patterns have identical UML class diagrams. What is the **key behavioral difference** between them?
     options:
       - "State uses abstract classes; Strategy uses interfaces"
-      - "State involves implicit internal transitions between implementations; Strategy involves explicit client selection with no transitions"
+      - "State transitions implementations internally; Strategy is selected by the client"
       - "Strategy supports more concrete implementations than State"
       - "State is only for GUI applications; Strategy is general-purpose"
     correct_index: 1

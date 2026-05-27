@@ -7,7 +7,7 @@ questions:
     question: "Python is **dynamically** typed AND **strongly** typed. JavaScript is dynamically typed AND **weakly** typed. What is the practical difference for a developer?"
     options:
       - "There is no practical difference — 'strong' and 'weak' typing are just academic labels"
-      - "Strong typing means Python refuses to implicitly convert between incompatible types (`\"5\" + 3` errors), while weak typing means JavaScript silently coerces (`\"5\" + 3` → `\"53\"`). Strong typing catches more bugs at runtime"
+      - "Python refuses to implicitly coerce incompatible types (`\"5\" + 3` errors); JavaScript silently coerces (`\"5\" + 3` → `\"53\"`)."
       - "Strong typing means Python is faster because the interpreter can optimize known types"
       - "Weak typing means JavaScript variables can change type, while Python variables cannot"
     correct_index: 1
@@ -48,7 +48,7 @@ questions:
     question: "A C++ programmer writes `total = sum(scores) / len(scores)` and expects integer division (like C++'s `/`). They get `85.5` instead of `85`. What happened, and how should they get integer division?"
     options:
       - "Python's `sum()` always returns a float, even for integer lists"
-      - "Python 3's `/` always performs float division. Use `//` for integer (floor) division: `sum(scores) // len(scores)`"
+      - "In Python 3, `/` is float division; use `//` for floor: `sum(scores) // len(scores)`."
       - "The `len()` function returns a float in Python 3"
       - "Python rounds up by default — use `math.floor()` to get integer results"
     correct_index: 1
@@ -69,7 +69,7 @@ questions:
     question: "A student writes a function that opens a file, but forgets to close it. Their C++ instinct says 'this will leak the file handle.' Is this concern valid in Python, and what is the recommended solution?"
     options:
       - "Not valid — Python's garbage collector will always close the file immediately"
-      - "Valid — forgetting `f.close()` can leave file handles open. The recommended solution is the `with` statement (context manager), which guarantees cleanup even if an exception occurs — analogous to RAII in C++"
+      - "Valid — use the `with` statement (context manager); it guarantees cleanup like C++ RAII."
       - "Not valid — Python files are always auto-closed when the variable goes out of scope"
       - "Valid, but there is no Python equivalent of RAII — you must always use try/finally"
     correct_index: 1
@@ -83,14 +83,14 @@ questions:
       3: |
         `with` is the standard Python abstraction for `try/finally` cleanup, and it keeps the resource
         protocol local and readable.
-    explanation: "The GC will eventually close the file, but 'eventually' may be too late — especially in long-running servers or when writing. The `with` statement is Python's RAII equivalent: `with open('file') as f:` guarantees `f.close()` runs when the block exits, even on exception. Always use `with` for files, database connections, and locks."
+    explanation: "Forgetting `f.close()` can leave file handles open: the GC will eventually close the file, but 'eventually' may be too late — especially in long-running servers or when writing. The `with` statement is Python's RAII equivalent: `with open('file') as f:` guarantees `f.close()` runs when the block exits, even on exception. Always use `with` for files, database connections, and locks."
 
   - id: 5
     difficulty: intermediate
     question: "A student uses `re.findall(r'ERROR', text)` to count errors in a log. Their teammate suggests `text.count('ERROR')` instead. When is `re.findall()` the better choice?"
     options:
       - "`re.findall()` is always better because it's faster for string searching"
-      - "`text.count()` suffices for literal string matching. `re.findall()` is better when you need **pattern matching** — e.g., extracting timestamps (`r'\\d{2}:\\d{2}:\\d{2}'`), IP addresses, or any variable-format text that a literal string can't describe"
+      - "When the target is a pattern (timestamps, IPs, variable-format text), not a fixed literal."
       - "`text.count()` only works on single characters, not multi-character strings"
       - "They are always interchangeable — use whichever you prefer"
     correct_index: 1
@@ -104,14 +104,14 @@ questions:
       3: |
         A regex pattern language can mean more than the literal characters typed, so it is not
         interchangeable with substring search.
-    explanation: "For a fixed literal like 'ERROR', `text.count('ERROR')` is simpler and faster. `re.findall()` earns its overhead only when the target is a **pattern** — 'any sequence of digits', 'an IP address', 'a timestamp in HH:MM:SS format'. Use the simplest tool that works."
+    explanation: "For a fixed literal like 'ERROR', `text.count('ERROR')` is simpler and faster. `re.findall()` earns its overhead only when the target is a **pattern** — 'any sequence of digits' (`r'\\d+'`), an IP address, a timestamp in `HH:MM:SS` format. Use the simplest tool that works."
 
   - id: 6
     difficulty: intermediate
     question: "A script needs to report both results (to stdout) and diagnostics (to stderr). A student puts everything in `print()`. Why is this problematic in a pipeline like `python script.py > results.txt`?"
     options:
       - "It is not problematic — `print()` already separates output and errors"
-      - "All output goes to stdout by default, so `> results.txt` captures both results AND error messages. Downstream tools or files will receive error text mixed with data. Use `print(..., file=sys.stderr)` for diagnostics"
+      - "`print()` writes to stdout, so error text contaminates `results.txt`; use `print(..., file=sys.stderr)`."
       - "`print()` is too slow for pipelines — use `sys.stdout.write()` instead"
       - "Pipelines only work with Bash scripts, not Python"
     correct_index: 1
@@ -125,7 +125,7 @@ questions:
       3: |
         Pipelines connect processes through standard streams, so Python programs participate just like
         Bash, C, or any other executable.
-    explanation: "UNIX separates stdout (file descriptor 1) and stderr (fd 2) for exactly this reason. `> results.txt` redirects only stdout, so diagnostics sent to `print()` contaminate the data file. Send them to `file=sys.stderr` instead — the same reason C++ separates `std::cout` from `std::cerr`."
+    explanation: "UNIX separates stdout (file descriptor 1) and stderr (fd 2) for exactly this reason. `> results.txt` redirects only stdout, so diagnostics sent to `print()` contaminate the data file. Send them to `file=sys.stderr` instead — downstream tools then receive clean machine-readable output, the same reason C++ separates `std::cout` from `std::cerr`."
 
   - id: 7
     difficulty: intermediate
@@ -136,7 +136,7 @@ questions:
       ```
       Their teammate says: "This creates a huge list in memory. Use a **generator expression** instead." What would the generator version look like, and why is it better?
     options:
-      - "Replace `[]` with `()`: `(x**2 for x in range(1000000) if x % 2 == 0)`. Generators produce values one at a time (lazy evaluation), using constant memory instead of building the entire list upfront"
+      - "Replace `[]` with `()`: `(x**2 for x in range(1000000) if x % 2 == 0)` — values produced lazily."
       - "Use `list()` around the comprehension to make it a generator"
       - "Generators don't exist in Python — the student should use `itertools.imap()` instead"
       - "There is no memory difference — Python automatically optimizes large comprehensions into generators"
@@ -151,7 +151,7 @@ questions:
       3: |
         Python does not silently turn list comprehensions into generators; brackets mean a list is
         allocated.
-    explanation: "Replacing `[...]` with `(...)` creates a generator expression. It produces values lazily, one at a time, instead of building the 500,000-element list in memory upfront. When you only need to iterate once and don't need to store the full collection, generators are dramatically more memory-efficient."
+    explanation: "Replacing `[...]` with `(...)` creates a generator expression. It produces values one at a time using constant memory, instead of building the 500,000-element list upfront. When you only need to iterate once and don't need to store the full collection, generators are dramatically more memory-efficient."
 
   - id: 8
     difficulty: advanced

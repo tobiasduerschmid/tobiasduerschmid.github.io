@@ -225,7 +225,7 @@ questions:
       A team imports `requests` directly in twelve different modules and uses `patch("requests.get")` (or similar) in each of their tests. The patches are fragile, the tests are slow, and a `requests` version bump recently broke 30 tests because the library's exception class names changed. Which refactor most directly addresses the structural problem?
     options:
       - "Replace each `patch(\"requests.get\")` with `Mock(spec=requests.get)` so the signatures are checked at test time."
-      - "Wrap `requests` in a thin **Adapter** class your code owns; have all twelve modules depend on the Adapter; double the Adapter in tests."
+      - "Wrap `requests` in a thin Adapter class your code owns; have all twelve modules depend on the Adapter; double the Adapter in tests."
       - "Pin the `requests` version in `requirements.txt` so the library's API stops changing, and keep the existing `patch(\"requests.get\")` calls."
       - "Move the `patch(\"requests.get\")` calls into a shared `conftest.py` so the patching boilerplate lives in one place."
     correct_index: 1
@@ -242,7 +242,7 @@ questions:
       A team uses `FakeUserRepository` (in-memory dict) for fast unit tests of `UserService`. The unit tests pass on every commit. In production, a bug surfaces: the real `PostgresUserRepository` raises `IntegrityError` on duplicate emails, but `UserService` had been written assuming a `ValueError`, which the Fake was happily raising. What is the most direct defense against this class of bug *without* abandoning the Fake?
     options:
       - "Delete the Fake and use the real Postgres repository in every unit test, even if tests run 50× slower as a result."
-      - "Write a shared **contract test** that both the Fake and the real repository must satisfy, and run it against both on CI."
+      - "Write a shared contract test that both the Fake and the real repository must satisfy, and run it against both on CI."
       - "Add `autospec=True` to every test that uses the Fake so the Mock library checks the signatures it's exercising."
       - "Move all `UserService` tests to integration-only — production parity becomes the only acceptable signal."
     correct_index: 1

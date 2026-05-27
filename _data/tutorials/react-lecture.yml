@@ -126,7 +126,7 @@ steps:
           options:
             - "It defines a CSS class to style the content inside the element"
             - "It escapes the `{` and `}` characters as HTML entities"
-            - "It switches from JSX mode back to JavaScript — any expression inside is evaluated and its result is inserted into the UI"
+            - "It switches from JSX back to JavaScript and inserts the expression's evaluated result"
             - "It creates a new JavaScript object stored in the DOM"
           correct_index: 2
           explanation: |
@@ -244,7 +244,7 @@ steps:
           type: single
           options:
             - "It is used as the CSS class for the element"
-            - "React uses the key to uniquely identify list items and efficiently determine which ones changed, were added, or removed during re-renders"
+            - "It uniquely identifies each list item so React can efficiently reconcile changes between renders"
             - "The key is sent to the server to cache the rendered HTML"
             - "It is required by JavaScript — arrays cannot be rendered without a key attribute"
           correct_index: 1
@@ -722,7 +722,7 @@ steps:
           type: single
           options:
             - "Declares a CSS variable named `houses` with an initial display value of 0"
-            - "Creates a state variable `houses` initialized to 0, and a setter `setHouses` — calling `setHouses(n)` updates the value and triggers a re-render"
+            - "Creates a state variable `houses` initialized to 0 and a setter that re-renders when called"
             - "Declares two constants that persist between page reloads in localStorage"
             - "Creates an HTML input element bound to a variable named `houses`"
           correct_index: 1
@@ -733,7 +733,7 @@ steps:
           type: single
           options:
             - "Nothing — `buyHouse()` and `buyHouse` are equivalent when used in event handlers"
-            - "`buyHouse()` **calls** the function immediately during render. The correct syntax is `onClick={buyHouse}` to pass the function reference for React to call on click"
+            - "`buyHouse()` invokes the function during render; the correct form is `onClick={buyHouse}` (a reference)"
             - "The `onClick` prop must receive a string — use `onClick='buyHouse'` instead"
             - "Arrow functions cannot be used as React event handlers"
           correct_index: 1
@@ -1225,7 +1225,7 @@ steps:
           type: single
           options:
             - "A backup copy of the DOM stored on the server to recover from browser crashes"
-            - "A lightweight JavaScript object tree that mirrors the real DOM; React diffs the new vs. previous version to find the minimal set of real DOM changes needed"
+            - "A JS object tree that mirrors the DOM; React diffs new vs. previous to find minimal real-DOM updates"
             - "A browser API that speeds up DOM updates by batching them"
             - "A CSS-in-JS solution that generates stylesheets without touching the DOM"
           correct_index: 1
@@ -1236,7 +1236,7 @@ steps:
           type: single
           options:
             - "SPAs use React; SSR uses only plain HTML — they are incompatible technologies"
-            - "In SPAs, all content is loaded by JavaScript on the client after a single HTML shell is delivered. In SSR, the server renders fully-formed HTML for each page request"
+            - "SPAs build the UI from a JS bundle on the client; SSR sends fully-rendered HTML per request"
             - "SPAs are faster in all scenarios; SSR is only used for legacy systems"
             - "SSR requires a database connection; SPAs work without any backend"
           correct_index: 1
@@ -1247,7 +1247,7 @@ steps:
           type: single
           options:
             - "SSR requires less server compute because the client does all rendering"
-            - "SSR pages load faster initially and are better indexed by search engines because the HTML content is pre-rendered on the server"
+            - "SSR pages load faster initially and are better indexed by search engines"
             - "SSR eliminates the need for a backend API entirely"
             - "SSR gives faster user interaction because all navigation happens client-side"
           correct_index: 1

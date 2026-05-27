@@ -147,10 +147,10 @@ steps:
 
         - question: "Why do we compile with `gcc` instead of `g++` in this tutorial?"
           options:
-            - "gcc produces faster binaries"
-            - "g++ cannot compile .c files"
-            - "gcc compiles as C — g++ would allow C++ features and hide the differences"
-            - "gcc is newer than g++"
+            - "gcc produces faster binaries than g++"
+            - "g++ cannot compile .c source files at all"
+            - "gcc enforces C-only and rejects C++ features"
+            - "gcc is a newer compiler than g++ entirely"
           correct_index: 2
           option_feedback:
             0: "Both produce comparable binaries. Speed isn't the difference; the language standard is."
@@ -161,7 +161,7 @@ steps:
         - question: "What does `int main(void)` mean in C, and how does it differ from `int main()`?"
           options:
             - "They are identical in both C and C++"
-            - "`main(void)` explicitly takes zero arguments; `main()` means unspecified arguments in C"
+            - "`main(void)` is zero args; `main()` is C's old unspecified form"
             - "`main(void)` returns void; `main()` returns int"
             - "`main()` is invalid C syntax"
           correct_index: 1
@@ -173,10 +173,10 @@ steps:
 
         - question: "A C++ program uses `std::string name = \"Alice\"; std::cout << name.length();`. Why can't this approach work in C? (Select the **most fundamental** reason.)"
           options:
-            - "C doesn't have a `length()` function"
-            - "C has no objects, methods, or operator overloading — strings are raw char arrays with no built-in operations"
-            - "C strings are immutable"
-            - "C uses `printf` instead of `cout`, but otherwise strings work the same"
+            - "C doesn't ship a built-in `length()` function for strings"
+            - "C has no objects or methods — strings are raw `char` arrays"
+            - "C strings are immutable, so methods on them can't change state"
+            - "C uses `printf` instead of `cout`, but strings work the same"
           correct_index: 1
           option_feedback:
             0: "C *does* offer `strlen()`. The deeper issue isn't a missing function — it's a missing object/method paradigm."
@@ -525,7 +525,7 @@ steps:
         - question: "Why does `scanf(\"%d\", &age)` need the `&` before `age`?"
           options:
             - "& converts age from int to string"
-            - "scanf needs the memory ADDRESS where it should store the result"
+            - "scanf needs the ADDRESS where it should store the result"
             - "& is optional — it works either way"
             - "& tells scanf to read from a file instead of stdin"
           correct_index: 1
@@ -539,7 +539,7 @@ steps:
           options:
             - "scanf truncates the input automatically"
             - "The program prints an error and stops"
-            - "Buffer overflow — scanf writes past the end of the array, corrupting memory"
+            - "Buffer overflow — scanf writes past the end of the array"
             - "The extra characters are silently discarded"
           correct_index: 2
           explanation: "scanf with `%s` has no built-in length limit. It keeps writing characters until it sees whitespace, potentially overwriting adjacent memory. This is a classic security vulnerability."
@@ -865,10 +865,10 @@ steps:
       questions:
         - question: "What does `malloc(10 * sizeof(int))` return?"
           options:
-            - "An array of 10 integers initialized to zero"
-            - "A pointer to 40 bytes of uninitialized memory (or NULL on failure)"
-            - "An integer with value 10"
-            - "A pointer to 10 bytes of memory"
+            - "A pointer to 10 integers initialized to zero (or NULL)"
+            - "A pointer to 40 bytes of uninitialized memory (or NULL)"
+            - "An `int` value equal to the requested byte count"
+            - "A pointer to exactly 10 zeroed bytes of memory"
           correct_index: 1
           option_feedback:
             0: "That's `calloc(10, sizeof(int))`. malloc *doesn't* zero-initialize — the bytes are whatever was last in that memory."
@@ -879,7 +879,7 @@ steps:
         - question: "In C, should you cast the return value of `malloc`? E.g., `int *p = (int*)malloc(...);`"
           options:
             - "Yes — C requires the cast just like C++"
-            - "No — in C, void* implicitly converts to any pointer type, and the cast can hide bugs"
+            - "No — `void*` converts implicitly, and the cast can mask bugs"
             - "Yes — otherwise you get a compile error"
             - "It doesn't matter either way"
           correct_index: 1
@@ -891,10 +891,10 @@ steps:
 
         - question: "What happens if you forget to call `free()` on malloc'd memory?"
           options:
-            - "The program crashes immediately"
-            - "Nothing — the OS reclaims it when the process exits"
-            - "Memory leak — the memory stays allocated, reducing available RAM; in long-running programs this is a serious bug"
-            - "The compiler warns you"
+            - "The program segfaults on the next allocation"
+            - "Nothing visible — the OS reclaims it on process exit"
+            - "Memory leak — RAM stays allocated until the process exits"
+            - "The compiler refuses to build without a matching `free`"
           correct_index: 2
           option_feedback:
             0: "No immediate crash — that's what makes leaks insidious. They compound silently over time."
@@ -920,7 +920,7 @@ steps:
           options:
             - "scanf stores the value in age normally"
             - "Compile error — scanf requires a pointer"
-            - "Undefined behavior — scanf interprets the uninitialized value of age as a memory address and writes to a random location"
+            - "Undefined behavior — scanf reads `age`'s garbage as an address"
             - "scanf ignores the missing & and reads into a default location"
           correct_index: 2
           option_feedback:
@@ -1191,10 +1191,10 @@ steps:
 
         - question: "After `char *s = malloc(50);`, what is the content of the 50 bytes?"
           options:
-            - "All zeros"
-            - "All null characters (\\0)"
-            - "Uninitialized — garbage values from whatever was in that memory before"
-            - "Empty string"
+            - "All zeros — `malloc` zero-fills the requested bytes"
+            - "All null characters `\\0` — `malloc` initializes for string use"
+            - "Uninitialized — whatever bytes happened to live there before"
+            - "Empty string — `s[0]` is set to `\\0` and the rest is reserved"
           correct_index: 2
           option_feedback:
             0: "Zero-initialization is `calloc`'s job (`calloc(50, 1)`). malloc just hands you memory as-is."
@@ -1477,7 +1477,7 @@ steps:
         - question: "Why do C programmers pass struct pointers to functions instead of passing structs by value?"
           options:
             - "C doesn't allow passing structs by value"
-            - "Passing by value copies the entire struct — wasteful for large structs, and the function can't modify the original"
+            - "By-value copies the struct; the callee can't modify the caller's"
             - "Pointers are faster because they use less CPU"
             - "Structs cannot be returned from functions"
           correct_index: 1
@@ -1519,7 +1519,7 @@ steps:
         - question: "Why does `character_init` use `strncpy` instead of `strcpy` for the name?"
           options:
             - "strncpy is faster than strcpy"
-            - "strncpy limits the number of characters copied, preventing buffer overflow if the name is too long"
+            - "strncpy caps the bytes copied, preventing buffer overflow"
             - "strcpy doesn't work with struct members"
             - "strncpy automatically adds a null terminator"
           correct_index: 1
@@ -1770,10 +1770,10 @@ steps:
 
         - question: "What happens if you write to `val.i` and then read `val.d` (without writing to `val.d` first)?"
           options:
-            - "You get 0.0"
-            - "You get the integer value converted to double"
-            - "Undefined behavior — you're reading bytes that were written as a different type"
-            - "The compiler prevents this"
+            - "You get 0.0 — the union zero-fills unread members"
+            - "You get the integer value silently converted to a double"
+            - "Undefined behavior — the bytes are reinterpreted as a `double`"
+            - "The compiler rejects reads from non-last-written union members"
           correct_index: 2
           option_feedback:
             0: "There's no zero-initialization on type-punned reads. The bytes you wrote as an int are still there; reading them as a double gives a meaningless float."
@@ -1799,7 +1799,7 @@ steps:
         - question: "In the `TaggedValue` struct, the string member is `char s[32]`. If you assign `strncpy(v.s, \"hello\", sizeof(v.s))`, is the string safely null-terminated?"
           options:
             - "Yes — strncpy always null-terminates"
-            - "Yes — because \"hello\" is shorter than 32 chars, strncpy will null-terminate in this case"
+            - "Yes — source shorter than 32 chars, so strncpy terminates here"
             - "No — strncpy never null-terminates, regardless of input length"
             - "It depends on the compiler"
           correct_index: 1
@@ -1822,7 +1822,7 @@ steps:
             What's the most accurate description of what this code does?
           options:
             - "It prints all three fields side-by-side, which is more informative than the tag-based version"
-            - "It compiles fine, but reads union members other than the last-written one — undefined behavior, garbage output for two of the three fields"
+            - "It compiles, but reading the other two members is undefined behavior — two fields print garbage"
             - "It refuses to compile because a union allows only one access at a time"
             - "It works correctly only when the tag is set to TYPE_INT"
           correct_index: 1
@@ -2139,7 +2139,7 @@ steps:
         - question: "Why does `qsort` use `void*` parameters in its comparison function?"
           options:
             - "void* is faster than typed pointers"
-            - "C has no templates/generics, so void* is the only way to make qsort work with any data type"
+            - "C has no generics — `void*` is how `qsort` works with any type"
             - "void* automatically detects the element type"
             - "void* prevents buffer overflows"
           correct_index: 1
@@ -2395,10 +2395,10 @@ steps:
 
         - question: "A function `void resize(int *p, int new_size)` calls `p = realloc(p, new_size * sizeof(int))` inside. After `resize(data, 100)` returns, what is `data` in the caller?"
           options:
-            - "Points to the resized memory"
-            - "Unchanged — still points to the original (possibly freed!) memory"
-            - "NULL"
-            - "Compiler error — can't reassign a parameter"
+            - "It now points to the resized memory block"
+            - "Unchanged — still pointing at possibly-freed memory"
+            - "NULL — `realloc` cleared the caller's variable"
+            - "Compile error — parameter reassignment is illegal"
           correct_index: 1
           option_feedback:
             0: "That's what you *want*, but C is strictly pass-by-value. The function reassigned its *local copy* of `p`, not the caller's `data`."
@@ -2703,7 +2703,7 @@ steps:
         - question: "Why is it important to call `fclose()` on every file you open?"
           options:
             - "It's just good style — the OS closes files automatically when the program exits"
-            - "Buffered writes may not be flushed to disk without fclose, causing data loss; also prevents file descriptor leaks"
+            - "Buffered writes may not flush without fclose, plus it prevents descriptor leaks"
             - "fclose frees the memory used by the file contents"
             - "fclose is only needed for files opened in write mode"
           correct_index: 1
@@ -3058,7 +3058,7 @@ steps:
         - question: "Why must you save `curr->next` BEFORE calling `free(curr)` in `list_free`?"
           options:
             - "free() modifies the next pointer to NULL"
-            - "After free(curr), the memory at curr is released — accessing curr->next is a use-after-free bug (undefined behavior)"
+            - "After free(curr), reading `curr->next` is a use-after-free (undefined behavior)"
             - "free() returns the next pointer automatically"
             - "It's a style convention — either order works"
           correct_index: 1
@@ -3071,7 +3071,7 @@ steps:
         - question: "In `typedef struct Node { ... struct Node *next; } Node;`, why do we need both the struct tag `Node` and the typedef name `Node`?"
           options:
             - "They serve the same purpose — either one would work"
-            - "The struct must reference itself using the struct tag (`struct Node *next`) because the typedef isn't complete until the closing `}`"
+            - "Self-references need the tag because the typedef isn't bound until the closing `}`"
             - "The typedef must match the struct tag name"
             - "The struct tag is for the compiler, the typedef is for the linker"
           correct_index: 1

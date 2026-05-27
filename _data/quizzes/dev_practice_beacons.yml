@@ -9,7 +9,7 @@ questions:
     question: |
       Researchers want to measure bottom-up comprehension, so they rename `isPrimeNumber` to `pn` and remove comments from a code sample. Why does this manipulation matter?
     options:
-      - "It removes lexical beacons, forcing participants to rely more on statement-level tracing."
+      - "It removes lexical beacons, forcing bottom-up tracing."
       - "It makes the algorithm faster."
       - "It introduces a design pattern."
       - "It proves that short names are always more readable."
@@ -30,7 +30,7 @@ questions:
     question: |
       You are reviewing a PR with new production code and tests. Which use of tests best follows the chapter's beacon argument?
     options:
-      - "Read the tests first to infer the intended behavior, then inspect whether production code satisfies that specification."
+      - "Read the tests first to infer intent, then check the production code."
       - "Skip the tests because only production code matters."
       - "Read tests only after approving the implementation."
       - "Delete tests that make the implementation harder to understand."
@@ -79,7 +79,7 @@ questions:
     options:
       - "The name is definitely right because every beacon should be as explicit as possible."
       - "The name is definitely wrong because beacon value never matters."
-      - "There is a real trade-off: the pattern name is a beacon for maintainers, but it may violate information hiding if clients should not depend on the instantiation strategy."
+      - "There is a real trade-off — the pattern name helps maintainers but leaks an implementation detail."
       - "The class should be renamed `ConfigThing` to avoid all design information."
     correct_index: 2
     option_feedback:
@@ -89,7 +89,7 @@ questions:
         Beacon value does matter. The issue is whether that value belongs in the public abstraction.
       3: |
         Hiding all design information behind vague names destroys useful cues without necessarily protecting the right secret.
-    explanation: "Good naming balances reader support against information hiding. Some beacons belong in internal documentation or package structure rather than public API names."
+    explanation: "Good naming balances reader support against information hiding: the `Singleton` suffix is a beacon for maintainers, but it forces clients to depend on the instantiation strategy. Some beacons belong in internal documentation or package structure rather than public API names."
 
   - id: 5
     difficulty: advanced
@@ -99,7 +99,7 @@ questions:
       An expert reviewer skips a generated client file after confirming it matches the API schema, then spends most of the review on a small authorization change. Which principle explains this behavior?
     options:
       - "Experts are careless when files look boring."
-      - "Experts use beacons and difficulty-based reading to allocate attention where bottom-up tracing is most needed."
+      - "Experts use beacons to allocate attention where it's most needed."
       - "Generated code should never be reviewed by anyone."
       - "Authorization changes are always larger than generated files."
     correct_index: 1
@@ -119,7 +119,7 @@ questions:
     question: |
       You are designing a review template to help reviewers use contextual beacons. Which prompt belongs in the template?
     options:
-      - "List the customer-visible behavior changed, the tests that specify it, and the files that contain the core design decision."
+      - "List the behavior change, the tests that specify it, and the core-design files."
       - "Paste every changed line into the description so reviewers do not need the diff."
       - "State that CI passed and no further explanation is needed."
       - "Ask reviewers to comment on formatting before reading intent."

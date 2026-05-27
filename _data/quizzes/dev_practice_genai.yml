@@ -9,7 +9,7 @@ questions:
       Compilers (1960s) delivered a 10x productivity gain. Current research estimates GenAI delivers 21%–50%. What is the most accurate explanation for the gap?
     options:
       - "Compilers ran faster than today's LLMs."
-      - "Compilers automated **accidental complexity** (the repetitive mechanics of coding); GenAI helps with parts of that too but does not yet automate **essential complexity** (the core logic and design decisions inherent to the problem), which is where most of a software engineer's time still goes."
+      - "Compilers automated *accidental* complexity; GenAI does not yet automate *essential* complexity, where most engineering time goes."
       - "GenAI is being measured wrong — once measured correctly it also delivers 10x."
       - "Compilers and GenAI have the same productivity effect; the difference is purely marketing."
     correct_index: 1
@@ -29,7 +29,7 @@ questions:
       A developer says "Copilot wrote the whole feature in 5 minutes — I'm so much more productive!" Two days later they're still debugging it and have shipped a security vulnerability. Which trap have they fallen into?
     options:
       - "Cognitive offloading — they let the AI think for them."
-      - "The **illusion of AI productivity**: generation speed feels like productivity, but if the output is subtly wrong, the time saved in writing can be dwarfed by the time spent debugging — a task that took 6 hours can balloon to many more once debugging starts. Real productivity is measured end-to-end (generate + understand + debug + ship), not by lines per minute."
+      - "The *illusion of AI productivity*: generation speed is not end-to-end productivity."
       - "Hallucination — the AI invented APIs that didn't exist."
       - "Premature optimization — the AI optimized too early."
     correct_index: 1
@@ -49,7 +49,7 @@ questions:
       Two computer-science students use a chatbot to learn linked lists. Student A pastes the assignment prompt and copies the answer. Student B asks the chatbot to explain why a tail pointer matters, then implements it themselves. Six months later, which is most likely to struggle on the data-structures exam, and why?
     options:
       - "Student B — they spent more time on the problem and got tired."
-      - "Student A — they engaged in **cognitive offloading**, which minimizes learning. Student B treated the AI as a **digital teaching assistant** (conceptual inquiry), which exercises continual learning — the human skill AI cannot replace."
+      - "Student A — paste-and-copy is *cognitive offloading*, which skips the effortful learning."
       - "Neither — both will perform equally."
       - "Student A — they didn't pay for the chatbot subscription."
     correct_index: 1
@@ -94,7 +94,7 @@ questions:
       Your team adopts **Test-Driven Generation**. Walk through the correct sequence.
     options:
       - "Generate the implementation, then generate tests that pass it."
-      - "Prompt the AI to **generate tests** from a problem description, **review** them as a specification, prompt the AI to **generate the implementation**, then use a **remediation loop** (feed failing stack traces back to the AI) until tests pass."
+      - "AI generates tests, human reviews them as a spec, AI generates the implementation, repeat with failures."
       - "Write tests yourself, then ask the AI to write code that defeats them."
       - "Generate everything in one prompt, then run it."
     correct_index: 1
@@ -114,7 +114,7 @@ questions:
       Two teams adopt the same AI coding assistant. Team A's codebase is a tightly coupled monolith ("spaghetti"); Team B's is a set of well-bounded microservices with clean interfaces. Both apply AI to similar tasks. Why does Team B see substantially larger productivity gains?
     options:
       - "Team B uses better prompt engineering by coincidence."
-      - "AI benefits are **amplified in loosely coupled architectures**: smaller, well-named modules fit cleanly in the AI's context window, the AI sees only the relevant interface boundary, and fewer surprising dependencies break the generated code. In tightly coupled systems the AI cannot see (or fit) enough context to reason correctly, so its output magnifies the existing dysfunction."
+      - "Loose coupling *amplifies* AI benefits — bounded modules fit the context window cleanly."
       - "Microservices use newer programming languages that AI handles better."
       - "Team A is staffed with weaker engineers."
     correct_index: 1
@@ -134,7 +134,7 @@ questions:
       An LLM confidently produces this line in a Python script: `import datafetcher_v2 as dfv2`. The library does not exist. What is this called, and why does it happen?
     options:
       - "A compiler error — the IDE will catch it."
-      - "A **hallucination**: LLMs predict the most likely next token based on statistical patterns in their training data, not by checking whether referenced APIs or libraries actually exist. They confidently produce plausible-looking but factually wrong calls — a direct consequence of being **'statistical parrots'** rather than reasoning systems."
+      - "A *hallucination*: token prediction doesn't verify that an API exists."
       - "An old version reference — the library used to exist."
       - "A network failure — the model couldn't reach pypi."
     correct_index: 1
@@ -153,7 +153,7 @@ questions:
     question: |
       Two pair-programming modes with AI: in the **Driver** mode, the human writes the code; in the **Navigator** mode, the human directs the AI to write blocks. Which role assignment is correct?
     options:
-      - "Driver = human writes code and asks AI to critique it for performance/security; Navigator = human directs AI to write blocks while ensuring they understand every line."
+      - "Driver = human writes, AI critiques; Navigator = human directs AI to write blocks."
       - "Driver = AI writes everything; Navigator = human reviews after."
       - "Driver = human types prompts; Navigator = AI handles all decisions."
       - "Driver and Navigator are just informal terms — they don't change the workflow."
@@ -173,7 +173,7 @@ questions:
     question: |
       Industry analysis has reported that codebases using AI coding assistants had a noticeable rise in **code complexity** and **static-analysis warnings** relative to pre-AI baselines. Assume the finding generalizes. What is the architectural risk?
     options:
-      - "AI duplicates and adds code instead of refactoring — accepting AI suggestions repeatedly compounds **technical debt** because each suggestion solves the local problem without removing duplication or reshaping toward the system's existing structure."
+      - "AI suggestions tend to be additive — each one solves the local problem without refactoring, so duplication and complexity compound as *technical debt*."
       - "Developers are writing more code overall, so complexity grows proportionally with the codebase size."
       - "AI introduces new programming paradigms that legacy static analyzers haven't been updated to handle."
       - "The increases reflect richer test coverage, which static analyzers misclassify as warnings."
@@ -194,7 +194,7 @@ questions:
       A senior architect predicts: "The future belongs to engineers who can **orchestrate AI agents**, not just write code." What underlying skills does that prediction imply will become more valuable, and which less?
     options:
       - "More valuable: typing speed and language-syntax memorization. Less valuable: requirements engineering and architecture."
-      - "More valuable: **requirements engineering** (translating ambiguity into structure), **systems thinking**, **architecture design**, code review, security review, prompt and context engineering. Less valuable: rote syntax memorization, repetitive boilerplate authoring. The leverage shifts from *producing* code to *specifying and verifying* it."
+      - "More valuable: requirements, architecture, systems thinking, review. Less valuable: rote syntax and boilerplate."
       - "All skills will become equally valued."
       - "No skill change is needed — AI will replace engineers entirely."
     correct_index: 1
@@ -213,10 +213,10 @@ questions:
     question: |
       An AI coding agent reads a blog post while debugging your build and then asks permission to run a shell command you do not recognize. What is the most responsible response?
     options:
-      - "Approve it because the agent found the command while researching."
-      - "Treat it as a possible **prompt injection** or unsafe tool-use suggestion: inspect what the command does, check whether it matches the local task, and refuse or rewrite it if you cannot explain it safely."
-      - "Disable all AI tool use permanently."
-      - "Run it only if the agent says it is confident."
+      - "Approve it — the agent found the command while researching the bug."
+      - "Treat it as possible *prompt injection*: inspect it and refuse if you can't explain it."
+      - "Disable all AI tool use until you can audit the entire conversation."
+      - "Run it only if the agent says it is confident in its source."
     correct_index: 1
     option_feedback:
       0: |
@@ -234,7 +234,7 @@ questions:
       Why do project-level skill files or rule files improve AI coding-agent results?
     options:
       - "They turn the LLM into a deterministic compiler."
-      - "They persist project-specific constraints, conventions, and checklists so the agent is more likely to apply them without every prompt repeating them."
+      - "They persist project conventions so prompts needn't repeat them."
       - "They remove the need for code review."
       - "They let the agent ignore the repository and rely only on the rules."
     correct_index: 1
@@ -254,7 +254,7 @@ questions:
       You want an agent to implement a stateful feature in an unfamiliar codebase. Which workflow best applies the lecture's advice?
     options:
       - "Ask for the whole feature in one prompt and review only the running UI."
-      - "Ask the agent to inspect the relevant files and propose a plan, answer any design questions, approve one small step at a time, run tests, review the diff, and refactor before moving on."
+      - "Have the agent inspect relevant files, propose a plan, then approve one small step at a time with tests and review between each."
       - "Tell the agent to use maximum thinking mode and skip tests because planning is enough."
       - "Let the agent choose the architecture because it has read more code than you."
     correct_index: 1
@@ -273,10 +273,10 @@ questions:
     question: |
       Why is "read the entire repository before coding" often a bad instruction for an AI agent?
     options:
-      - "LLMs cannot process text files."
-      - "Models have finite context windows and uneven attention; irrelevant files can bury the important constraints and make the agent more likely to hallucinate or optimize for the wrong part of the system."
-      - "It is always slower than asking no context questions."
-      - "It prevents the agent from editing files."
+      - "LLMs cannot reliably process that many text files at once."
+      - "Finite context and uneven attention let irrelevant files crowd out real constraints."
+      - "Reading too much always makes the agent slower than asking targeted questions."
+      - "It prevents the agent from later editing those same files."
     correct_index: 1
     option_feedback:
       0: |
@@ -319,7 +319,7 @@ questions:
       A team adds a hero avatar customizer. A student suggests storing the entire customized SVG in localStorage; another suggests storing the selected parameters and regenerating the SVG. What is the best engineering lesson from this disagreement?
     options:
       - "Ask the AI to pick whichever storage format is shorter."
-      - "This is a design decision the human must own: compare trade-offs such as size, future compatibility, privacy, migration, and ease of rendering before telling the agent what to implement."
+      - "Humans must own this design decision before telling the agent what to implement."
       - "The SVG is always correct because it exactly matches the current picture."
       - "The parameters are always correct because they use less space."
     correct_index: 1
@@ -339,7 +339,7 @@ questions:
       During test-driven generation, the AI writes an implementation that passes every visible example by hard-coding a dictionary from sample inputs to sample outputs. What should the human do?
     options:
       - "Accept it because all tests pass."
-      - "Reject the overfit solution, add tests that exercise the underlying property or new inputs, and refactor toward a general implementation."
+      - "Reject the overfit code and add tests that exercise the general property."
       - "Delete the tests because they made the AI cheat."
       - "Ask the AI to add more comments explaining the dictionary."
     correct_index: 1
@@ -379,7 +379,7 @@ questions:
       A reasoning model shows a polished step-by-step explanation before generating code. Why should that trace still be treated cautiously?
     options:
       - "The trace proves the model used the same logical reasoning process as a human expert."
-      - "The trace is extra generated text that can improve performance, but it is still produced by a probabilistic model and can rationalize a wrong answer."
+      - "The trace is still probabilistic text and can rationalize a wrong answer."
       - "A reasoning trace means the output is deterministic."
       - "A reasoning trace means tests are unnecessary."
     correct_index: 1
@@ -398,18 +398,18 @@ questions:
     question: |
       You want an agent to add a title-only search box to the SEBook home page. Which prompt best applies the lecture's prompt-engineering advice?
     options:
-      - "\"Add search.\""
-      - "\"Act as a senior web engineer. On the SEBook home page, add a title-only search box that filters the existing page list. Before coding, inspect the relevant data source and ask me any design questions. Then propose a small plan with tests and wait for approval.\""
-      - "\"Read the whole repo and make search awesome.\""
-      - "\"Use any library you want and make the UI look modern.\""
+      - "\"Add a search feature to the SEBook home page. Make it work well.\""
+      - "\"Add a title-only search box on the SEBook home page. Propose a small plan with tests for approval before coding.\""
+      - "\"Read the whole repo, then build whatever search experience you think is best.\""
+      - "\"Add a snappy modern search bar. Use any library you want and make it look polished.\""
     correct_index: 1
     option_feedback:
       0: |
-        The task is too ambiguous: it omits where the feature belongs, what should be searched, how results should behave, and what constraints matter.
+        "Make it work well" gives the agent no acceptance criteria and no scope. The feature it ships may not be the one you wanted.
       2: |
-        This asks for too much low-signal context and uses a vague quality word instead of acceptance criteria.
+        Dumping the whole repo into context buries the constraints that matter and lets the agent decide design questions you should own.
       3: |
-        New libraries and vague UI goals create unnecessary scope. The prompt should constrain the feature and ask for a plan before implementation.
+        "Modern" and "polished" are taste words, not criteria. New libraries also expand scope; constrain the feature instead.
     explanation: "**A strong implementation prompt gives role, task, context, acceptance criteria, constraints, and process.** It also asks the agent to surface design questions before it silently chooses behavior you did not intend."
 
   - id: 21
@@ -418,10 +418,10 @@ questions:
     question: |
       An agent adds a "schedule study" feature that looks polished, but the generated quiz links use URLs that do not exist. What should a reviewer infer? Select all that apply.
     options:
-      - "The feature needs executable tests or manual link checks that verify the generated URLs resolve."
-      - "The agent may have hallucinated a route because the prompt did not ground it in the site's actual URL structure."
+      - "The feature needs tests or manual checks that the generated URLs resolve."
+      - "The agent may have hallucinated a route because the prompt didn't ground it in the real URL structure."
       - "The UI polish proves the implementation is production-ready."
-      - "The acceptance criteria were probably too loose if they did not specify valid destinations for each generated plan item."
+      - "The acceptance criteria were too loose — they didn't require valid link destinations."
       - "This is harmless because broken links are not code bugs."
     correct_indices: [0, 1, 3]
     option_feedback:
@@ -444,7 +444,7 @@ questions:
       A team wants AI to implement a feature for a public educational site that must meet WCAG 2.2 AA. Which decision best evaluates the risk?
     options:
       - "Use AI freely because accessibility can be fixed later if a user complains."
-      - "Use AI only inside a workflow that states the WCAG constraint up front, reviews generated markup and interactions, tests keyboard/focus behavior, checks contrast, and rejects code the team cannot explain."
+      - "Use AI only inside a workflow that states the WCAG constraint up front, then verifies markup, keyboard, focus, and contrast on every generated change."
       - "Avoid AI for all accessibility-related work, including explanations and test brainstorming."
       - "Ask the AI to say whether the feature is accessible and accept the answer if it is confident."
     correct_index: 1
@@ -464,7 +464,7 @@ questions:
       You are starting a personal project to learn a library you have never used. Which AI-assisted workflow best creates durable skill rather than cognitive offloading?
     options:
       - "Ask the agent to build the whole project, run it once, and study the finished code only if something breaks."
-      - "Ask the AI to teach the library concepts, write a small first attempt yourself, ask for critique and edge cases, add tests, then let the agent help with bounded refactors you can explain."
+      - "Have the AI teach the concepts, write a small first attempt yourself, then let it help with bounded refactors you can explain."
       - "Paste every error into the AI and accept the first patch until the app works."
       - "Avoid AI entirely, even for explanations, because any assistance prevents learning."
     correct_index: 1

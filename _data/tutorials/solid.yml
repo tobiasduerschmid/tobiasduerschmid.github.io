@@ -395,7 +395,7 @@ steps:
           type: single
           options:
             - "The Python language does not support multiple output formats"
-            - "The `_format_grade()` helper was shared between grading logic and report generation, so changing it for one purpose broke the other"
+            - "The `_format_grade()` helper was shared, so changing it for one purpose broke another"
             - "The class had too few methods — if it had more methods, changes would be easier"
             - "The code was too short — longer code is always easier to modify"
           correct_index: 1
@@ -407,7 +407,7 @@ steps:
           type: single
           options:
             - "Writing code in a single file instead of splitting it across multiple files"
-            - "The degree to which one component depends on the internal details of another"
+            - "How much one component depends on another's internal details"
             - "Using inheritance instead of composition"
             - "Having too many classes in a project"
           correct_index: 1
@@ -422,10 +422,10 @@ steps:
             How many distinct **actors** (stakeholders with different reasons to request changes) does the `CourseManager` class serve?
           type: single
           options:
-            - "1 — it is one class, so it serves one actor"
-            - "2 — students and instructors"
-            - "At least 3 — enrollment/administration, grading/academics, and reporting/registrar"
-            - "5 — one per method"
+            - "1 — it is one class, so it serves a single actor"
+            - "2 — students and instructors use the system"
+            - "At least 3 — admin, academics, and registrar"
+            - "5 — one actor per method on the class"
           correct_index: 2
           option_feedback:
             0: "Actors are a property of the *requirements*, not the code — a single class can (and often does) accidentally serve many actors. That's exactly the SRP violation in this scenario: one class, many change-requesters."
@@ -438,13 +438,13 @@ steps:
             **Prediction check.** Before the task, you were asked to predict what would happen when you changed `_format_grade()`. Which option actually turned out to be true as you worked through the code?
           type: single
           options:
-            - "(A) Only `generate_report()` was affected"
-            - "(B) Only `calculate_gpa()` was affected"
-            - "(C) Both `generate_report()` and `calculate_gpa()` were affected, plus `send_grade_notification()` — three features rippled from one change to a private helper"
-            - "(D) Nothing else was affected — `_format_grade()` is private, so changes stayed local"
+            - "Only `generate_report()` was affected by the change"
+            - "Only `calculate_gpa()` was affected by the change"
+            - "Three features rippled: `generate_report`, `calculate_gpa`, `send_grade_notification`"
+            - "Nothing else was affected — a private helper change stays local to the class"
           correct_index: 2
           explanation: |
-            Answer **(C)**. `_format_grade()` is called from `get_grade_summary()`, `generate_report()`, AND `send_grade_notification()` — three outputs owned by three different audiences (academics, registrar, students). "Private" only means "not part of the public class API." It says *nothing* about internal coupling. Any ripple you have to hold in your head to be safe is coupling; coupling is what SOLID is designed to dissolve.
+            `_format_grade()` is called from `get_grade_summary()`, `generate_report()`, AND `send_grade_notification()` — three outputs owned by three different audiences (academics, registrar, students). "Private" only means "not part of the public class API." It says *nothing* about internal coupling. Any ripple you have to hold in your head to be safe is coupling; coupling is what SOLID is designed to dissolve.
 
         - question: |
             **Evaluate.** Your manager looks at the patched `CourseManager` and says: *"It works. Let's ship it and move on."* You disagree. Which of the following are the **strongest** reasons to push back **before** the next ticket arrives? Select all that apply.
@@ -848,7 +848,7 @@ steps:
           type: single
           options:
             - "A bug in the code"
-            - "An actor — a person or team that requests a modification to the system"
+            - "An actor — a person or team that requests a change"
             - "A new programming language feature"
             - "The number of methods in the class"
           correct_index: 1
@@ -860,7 +860,7 @@ steps:
           type: single
           options:
             - "Yes — any class with more than 5 methods violates SRP"
-            - "No — SRP is about the number of actors served, not the number of methods. A class with 10 methods serving one actor may be fine"
+            - "No — SRP counts actors, not methods; 10 methods for one actor is fine"
             - "Yes — SRP requires each class to have exactly one method"
             - "No — SRP only applies to classes with inheritance"
           correct_index: 1
@@ -1535,7 +1535,7 @@ steps:
           type: single
           options:
             - "Agree — duplicated code is always bad. Extract `Geometry` immediately."
-            - "Disagree — duplication **across actor boundaries** is a feature, not a bug. It lets Matching Ops and T&S change their formulas independently. A shared module re-creates the coupling SRP eliminates."
+            - "Disagree — duplication across actor boundaries lets each team change independently."
             - "Disagree — `_distance` is private, so nobody can see the duplication anyway."
             - "Agree — but only extract if both formulas are exactly identical for the next six months."
           correct_index: 1
@@ -1546,10 +1546,10 @@ steps:
             A junior engineer says: *"`SafetyAuditor` and `DriverMatcher` both use `_distance`. I'll just give `SafetyAuditor` a reference to a `DriverMatcher` instance so we can reuse the method."* What SRP issue does this create?
           type: single
           options:
-            - "None — dependency injection is always good."
-            - "It recreates the original coupling: now a Matching-Ops change to `_distance` silently changes what T&S considers 'short.' The two actors are invisibly chained together again."
-            - "It violates the Open/Closed Principle."
-            - "It violates the Liskov Substitution Principle."
+            - "None — dependency injection is always good practice here."
+            - "It recreates the original coupling — a Matching-Ops change silently changes T&S."
+            - "It violates the Open/Closed Principle by adding a new dependency."
+            - "It violates the Liskov Substitution Principle's contract rule."
           correct_index: 1
           explanation: |
             Sharing private helpers through indirection is still sharing. The whole point of actor-ownership is that changes by one team cannot surprise another team. Threading `DriverMatcher` into `SafetyAuditor` just to reuse `_distance` smuggles the old coupling back in under a new name. The right answer is: let T&S own its own distance formula, even if it's identical today.
@@ -1963,7 +1963,7 @@ steps:
           type: single
           options:
             - "The source file should be marked as read-only so no one can edit it"
-            - "Once a class is tested and working, you should not need to change its existing code to add new behavior — new behavior is added by writing new code that plugs into the existing design"
+            - "Adding new behavior shouldn't require changing existing tested code"
             - "You should never change any code after it has been deployed to production, even to fix bugs"
             - "Classes should use private variables so external code cannot modify their internal state"
           correct_index: 1
@@ -3402,7 +3402,7 @@ steps:
           type: single
           options:
             - "Because the dict has an extra 'error' key that the parent does not define"
-            - "Because the postcondition guarantees success=True and an amount — returning success=False weakens that guarantee"
+            - "Returning success=False weakens the parent's success+amount guarantee"
             - "Because GiftCardProcessor should raise an exception instead of returning a dict"
             - "Because the base class should not have a refund method at all"
           correct_index: 1
@@ -3427,7 +3427,7 @@ steps:
           type: single
           options:
             - "This is fine — Penguin honestly reports it cannot fly by raising an exception"
-            - "This violates LSP — any code expecting a Bird to fly will crash when given a Penguin"
+            - "It violates LSP — code expecting a Bird to fly crashes for a Penguin"
             - "This violates LSP only if fly() is called in a loop"
             - "This is fine — NotImplementedError is the standard way to indicate unsupported operations"
           correct_index: 1
@@ -4177,7 +4177,7 @@ steps:
           type: single
           options:
             - "It makes the code slightly faster because there is one less method in the class"
-            - "A stub that raises is still LSP-violating in spirit — the method appears to exist but doesn't honor the parent's contract. Removing it lets `isinstance()` and type checks catch misuse at the boundary."
+            - "A raising stub still lies about supporting the contract"
             - "Stubs that raise are a syntax error in Python 3"
             - "It reduces the line count of the file"
           correct_index: 1
@@ -4222,7 +4222,7 @@ steps:
           type: single
           options:
             - "Make Penguin and Eagle both extend Bird but implement `fly()` and `swim()` with print statements"
-            - "Split Bird into three classes: Bird (base), FlyingBird (adds fly), SwimmingBird (adds swim). Penguin extends SwimmingBird; Eagle extends FlyingBird."
+            - "Split into Bird (base), FlyingBird (Eagle), SwimmingBird (Penguin)"
             - "Delete the ABC and make Bird a concrete class"
             - "Rename Bird to Animal — the problem is the class name"
           correct_index: 1
@@ -5255,7 +5255,7 @@ steps:
           options:
             - "The crash is `FreeStorage`'s fault — it should have implemented `sync()` properly instead of raising `NotImplementedError`"
             - "The crash is `backup_service`'s fault — it should type-check its argument with `isinstance()` before calling `sync()`"
-            - "The crash originates in `CloudStorage` itself — the fat ABC promised every subclass could sync, but that promise cannot honestly be honored by a free tier. The wrong thing is the interface, not either party trying to use it"
+            - "The fat ABC is the bug — it promises every subclass can sync, which a free tier cannot honor"
             - "The crash is Python's fault — a statically typed language would have caught this"
           correct_index: 2
           explanation: |
@@ -5266,7 +5266,7 @@ steps:
           type: single
           options:
             - "They are the same principle with different names"
-            - "SRP is about what a class does internally (one actor, one reason to change). ISP is about what a class exposes to its clients (no client should depend on methods it does not use)"
+            - "SRP is about a class's internal cohesion; ISP is about not forcing clients to depend on unused methods"
             - "SRP applies to concrete classes and ISP applies to abstract classes"
             - "ISP is a stricter version of SRP — every ISP-compliant class automatically satisfies SRP"
           correct_index: 1
@@ -5321,7 +5321,7 @@ steps:
           type: single
           options:
             - "ISP eliminates the need for inheritance entirely"
-            - "If a class does not inherit methods it cannot fulfill, it can never break those method contracts — the violation is impossible by design"
+            - "A class that never inherits a method it cannot fulfill cannot break that method's contract"
             - "ISP requires all methods to have default implementations, so nothing can crash"
             - "ISP and LSP are unrelated principles that solve different problems"
           correct_index: 1
@@ -5333,7 +5333,7 @@ steps:
           type: single
           options:
             - "Yes — the more interfaces, the better. Each method should always be its own interface"
-            - "No — over-segregation creates an explosion of tiny interfaces that are hard to discover, compose, and maintain. Group methods by role or capability, not by count"
+            - "No — group methods by role or capability, not by count"
             - "Yes — ISP requires exactly one method per interface"
             - "No — ISP says you should never split interfaces at all"
           correct_index: 1
@@ -6267,7 +6267,7 @@ steps:
           options:
             - "They are the same thing — different names for the same concept"
             - "DIP is a mechanism for passing dependencies; DI is an architectural decision"
-            - "DIP is an architectural decision to depend on abstractions; DI is a mechanism for delivering dependencies (one way to implement DIP)"
+            - "DIP says to depend on abstractions; DI is one mechanism for delivering them"
             - "DIP only applies to databases; DI only applies to HTTP clients"
           correct_index: 2
           explanation: |
@@ -6292,7 +6292,7 @@ steps:
           type: single
           options:
             - "Yes — passing dependencies via the constructor is Dependency Inversion"
-            - "No — this is Dependency Injection, but the class still depends on the concrete PostgresDatabase. To achieve DIP, the parameter should be an abstract interface like OrderRepository"
+            - "No — this is DI; for DIP, the parameter type must be an abstract interface"
             - "Yes — as long as the constructor has a default value, it counts"
             - "No — DIP requires using a dependency injection framework like Spring"
           correct_index: 1
@@ -6316,7 +6316,7 @@ steps:
           type: single
           options:
             - "Because it has too many methods — DIP requires minimal interfaces"
-            - "Because the abstraction is shaped by the low-level module's capabilities, not the high-level module's needs — the dependency still flows the wrong direction"
+            - "The abstraction is shaped by the provider, not the dashboard — dependency still flows the wrong way"
             - "Because ABCs shouldn't have the same method names as concrete classes"
             - "Because DIP requires using Protocols, not ABCs"
           correct_index: 1
@@ -6926,10 +6926,10 @@ steps:
             **Spaced retrieval — back to Step 1.** Across all six snippets in this step, the violations had different surface symptoms (an `if/elif` chain, a raised exception, a fat ABC, a direct `new` keyword call). But the same *two* underlying failures from Step 1's vocabulary show up every time. Which two?
           type: single
           options:
-            - "Premature optimization and global state"
-            - "High coupling (between things that should be independent) and low cohesion (things that belong together are scattered)"
-            - "Missing docstrings and inconsistent naming"
-            - "Poor performance and memory leaks"
+            - "Premature optimization and global state across modules"
+            - "High coupling and low cohesion of related responsibilities"
+            - "Missing docstrings and inconsistent naming across the codebase"
+            - "Poor performance and memory leaks under sustained load"
           correct_index: 1
           explanation: |
             Every SOLID violation you've studied reduces to the **same two forces from Step 1**: things that shouldn't be connected got tangled together (coupling too high), or things that belong together got scattered across files (cohesion too low). The five principles are five specific diagnoses for one underlying disease. That's why the capstone insight matters — they're a system, not a checklist.
@@ -8116,7 +8116,7 @@ steps:
           type: single
           options:
             - "It makes the code run faster because abstract classes are optimized by Python"
-            - "It enables substituting different logger and report writer implementations (e.g., for testing, or switching to a database logger) without changing CheckoutService — DIP enables OCP"
+            - "DIP enables OCP — new logger or writer implementations slot in without changing CheckoutService"
             - "It prevents anyone from ever using FileLogger or CsvReportWriter again"
             - "It satisfies ISP by splitting the logging interface into smaller pieces"
           correct_index: 1
@@ -8448,7 +8448,7 @@ steps:
           type: single
           options:
             - "SRP — the class handles too many carriers"
-            - "OCP — adding a new carrier requires modifying existing, tested code instead of extending via a new class"
+            - "OCP — adding a new carrier requires editing tested code instead of extending"
             - "LSP — carriers cannot be substituted for each other"
             - "DIP — OrderService depends on concrete carrier strings"
           correct_index: 1
@@ -8459,8 +8459,8 @@ steps:
             **Interleaved retrieval.** A `StreamingService` ABC declares `play()`, `pause()`, and `download_offline()`. A new `LivePodcastStreamer` subclass overrides `download_offline()` to `raise NotImplementedError("Live streams cannot be downloaded")`. Which principle(s) are in play?
           type: multiple
           options:
-            - "LSP — LivePodcastStreamer cannot be substituted wherever a StreamingService is expected without risking a crash"
-            - "ISP — the ABC forces implementers to depend on a method they cannot honor; splitting into StreamingService + DownloadableStreamingService fixes it structurally"
+            - "LSP — LivePodcastStreamer cannot safely substitute for StreamingService"
+            - "ISP — the ABC forces implementers to depend on a method they cannot honor"
             - "OCP — the existing ABC is being modified by LivePodcastStreamer"
             - "SRP — LivePodcastStreamer has too many responsibilities"
           correct_indices: [0, 1]
@@ -8484,7 +8484,7 @@ steps:
           type: single
           options:
             - "Yes — passing dependencies through the constructor is Dependency Inversion"
-            - "Only partially — they've applied DI (a mechanism) but not DIP (the architectural shift). To invert the dependency, the parameter should be typed as an abstraction (`CloudStorage` or similar), not as the concrete `S3Storage`. Otherwise the class still depends on a specific low-level implementation"
+            - "Only partially — that's DI; for DIP, the parameter type must be an abstraction the high-level class owns"
             - "No — DIP can only be achieved with a dependency-injection framework"
             - "Yes, once they add a type hint it becomes DIP"
           correct_index: 1
@@ -8512,7 +8512,7 @@ steps:
           type: single
           options:
             - "They're five independent rules — you satisfy each one separately"
-            - "They form a chain where each principle removes the obstacle that would make the next one impractical: LSP lets polymorphism be safe, which lets OCP work; ISP prevents LSP violations structurally; DIP is what makes the whole chain swappable and testable"
+            - "They form a chain — LSP makes OCP safe, ISP prevents LSP violations, DIP keeps the chain swappable"
             - "They're ordered from most important (SRP) to least important (DIP)"
             - "They apply only to object-oriented languages with inheritance"
           correct_index: 1

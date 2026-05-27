@@ -187,10 +187,10 @@ steps:
           options:
             - "Enables strict variable quoting rules"
             - "Sets the script's encoding to UTF-8"
-            - "Stops the script immediately when any command returns a non-zero exit code"
+            - "Exits the script when a command fails (non-zero exit code)"
             - "Enables extended glob patterns"
           correct_index: 2
-          explanation: "By default, Bash continues executing even after a command fails. `set -e` (exit on error) exits the script when a command fails, preventing a cascade of confusing failures. We'll cover its edge cases in later steps."
+          explanation: "By default, Bash continues executing even after a command fails. `set -e` (exit on error) stops the script the moment any command returns a non-zero exit code, preventing a cascade of confusing failures. We'll cover its edge cases in later steps."
 
         - question: "Which statements about `$(...)` command substitution are true? (Select all that apply)"
           type: multiple
@@ -1870,11 +1870,11 @@ steps:
         - question: "In a Bash `case` statement, what does the `*` pattern in the last branch do?"
           options:
             - "It matches only numeric input"
-            - "It acts as a wildcard catch-all, matching any input not matched by earlier branches"
+            - "It is a wildcard catch-all default"
             - "It is a syntax error — `case` does not support wildcards"
             - "It matches the empty string only"
           correct_index: 1
-          explanation: "`*` in a `case` branch acts as a **catch-all default**, matching any value that didn't match the earlier patterns."
+          explanation: "`*` in a `case` branch acts as a **catch-all default**, matching any value that didn't match the earlier patterns — analogous to `default:` in a C-style `switch`."
 
         - question: "What is the universal meaning of **exit code 0** in Unix/Linux?"
           options:

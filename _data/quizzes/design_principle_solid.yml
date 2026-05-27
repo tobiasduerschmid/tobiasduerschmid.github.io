@@ -9,7 +9,7 @@ questions:
       Which of the following best captures the **modern** formulation of the Single Responsibility Principle (SRP)?
     options:
       - "A class should contain only one public method"
-      - "A module should be responsible to one, and only one, actor — a single stakeholder or group that requests changes"
+      - "A module should be responsible to one, and only one, actor"
       - "A class should be describable in one sentence without using the word 'and'"
       - "A class should have no more than 200 lines of code"
     correct_index: 1
@@ -67,7 +67,7 @@ questions:
     options:
       - "It is a good SRP application — more classes always means better SRP compliance"
       - "It violates SRP because no class has exactly one public method"
-      - "It is a poor SRP application: if the three pieces always change together for the same reason, there is only **one** actor, and the split is artificial abstraction"
+      - "Poor SRP — pieces that always change together still share one actor, so the split is artificial"
       - "It is neutral: SRP has nothing to say about splits that don't change the set of actors"
     correct_index: 2
     option_feedback:
@@ -89,7 +89,7 @@ questions:
       Which argument for SRP is **strongest** from a team-productivity perspective?
     options:
       - "It guarantees that every class fits on one screen"
-      - "It reduces merge conflicts by ensuring that changes requested by different stakeholders edit different files"
+      - "It reduces merge conflicts — different stakeholders' changes land in different files"
       - "It enforces the use of dependency injection frameworks"
       - "It prevents the creation of any class with more than one field"
     correct_index: 1
@@ -112,7 +112,7 @@ questions:
       According to Liskov's Design-by-Contract formulation, a subclass method must:
     options:
       - "Strengthen preconditions and strengthen postconditions relative to the parent"
-      - "Weaken preconditions (accept same-or-wider input) and strengthen postconditions (guarantee same-or-stricter output), while preserving invariants"
+      - "Weaken preconditions, strengthen postconditions, and preserve invariants"
       - "Override every non-abstract method of its parent"
       - "Throw checked exceptions for all invalid inputs the parent accepted"
     correct_index: 1
@@ -126,7 +126,7 @@ questions:
       3: |
         Throwing for inputs the parent accepted strengthens the precondition. That is exactly the kind
         of substitution break LSP forbids.
-    explanation: "The classic LSP rules: **preconditions may not be strengthened**, **postconditions may not be weakened**, **invariants must be preserved**. A subclass that demands more from its caller or promises less to its caller silently breaks code written against the parent."
+    explanation: "The classic LSP rules: **preconditions may not be strengthened** (the subclass accepts same-or-wider input), **postconditions may not be weakened** (it guarantees same-or-stricter output), and **invariants must be preserved**. A subclass that demands more from its caller or promises less to its caller silently breaks code written against the parent."
 
   - id: 6
     difficulty: intermediate
@@ -181,7 +181,7 @@ questions:
       Which LSP rule does `StringQueue` violate, and why?
     options:
       - "It weakens the precondition — `StringQueue` accepts a wider set of inputs than `Queue`"
-      - "It strengthens the precondition — `StringQueue` rejects inputs that the parent `Queue` accepts, so code written against `Queue` may suddenly fail"
+      - "It strengthens the precondition — `StringQueue` rejects inputs the parent accepts"
       - "It weakens the postcondition — the return value is less specific"
       - "It violates no rule, because Java's generics would catch this at compile time"
     correct_index: 1
@@ -204,7 +204,7 @@ questions:
       The chapter says a `Square` class can **perfectly** enforce its own geometric invariants and still violate LSP when used in place of a `Rectangle`. Which statement best explains *why*?
     options:
       - "Mathematical squares are not rectangles; the real-world taxonomy is wrong"
-      - "LSP is judged from the perspective of the **client's expectations of the parent type** — if client code relies on width and height mutating independently, any subtype that couples them breaks that expectation"
+      - "LSP is judged by what clients of the parent expect — coupling width and height breaks that contract"
       - "`Square` will throw a `NullPointerException` when `setWidth` is called"
       - "A `Square` class is always slower than a `Rectangle` class at runtime"
     correct_index: 1
@@ -228,7 +228,7 @@ questions:
       Which refactor best satisfies the Open/Closed Principle?
     options:
       - "Add a `case \"DHL\"` branch — it's just one more line"
-      - "Define a `Carrier` interface with a `cost(order)` method; make UPS, FedEx, USPS, and DHL concrete implementations; the calculator dispatches polymorphically without a switch"
+      - "Define a `Carrier` interface; each carrier implements it; calculator dispatches polymorphically"
       - "Copy the class into `ShippingCostCalculatorV2` and modify the new copy"
       - "Use reflection to invoke carrier-specific methods by string name"
     correct_index: 1
@@ -242,7 +242,7 @@ questions:
       3: |
         Reflection keeps the stringly-typed dependency and adds fragility. It does not create a stable
         abstraction for carrier behavior.
-    explanation: "OCP = **open for extension, closed for modification**. Strategy/polymorphism lets you add a new `Carrier` without touching calculator code."
+    explanation: "OCP = **open for extension, closed for modification**. Define a `Carrier` interface with a `cost(order)` method, make UPS, FedEx, USPS, and DHL concrete implementations, and let the calculator dispatch polymorphically — no `switch`, no edits when a new carrier appears."
 
   - id: 10
     difficulty: advanced
@@ -252,7 +252,7 @@ questions:
       Which SOLID principle is most directly violated, and what is the correct fix?
     options:
       - "LSP — because the home printer returns early; fix by caching the result"
-      - "ISP — clients and implementers are forced to depend on methods they don't use; fix by segregating into role-specific interfaces like `Printable`, `Scannable`, `Faxable`, `Stapleable`"
+      - "ISP — clients depend on methods they don't use; segregate into role-specific interfaces"
       - "DIP — because `Printer` is concrete; fix by making it abstract"
       - "SRP — because the interface has four methods; fix by giving it only one"
     correct_index: 1
@@ -266,7 +266,7 @@ questions:
       3: |
         The issue is not simply that the interface has four methods. It is that those methods belong to
         different client roles and should not be forced on every implementer.
-    explanation: "Though the `throw` also breaks LSP, the *root cause* is a fat interface — the textbook Interface Segregation symptom. Splitting into cohesive role interfaces means clients depend only on what they need, and simple devices need only implement `Printable`. Treating SRP as a method-count rule is what the chapter debunks; DIP is about the direction of dependencies, not interface size."
+    explanation: "Though the `throw` also breaks LSP, the *root cause* is a fat interface — the textbook Interface Segregation symptom. Splitting into cohesive role interfaces like `Printable`, `Scannable`, `Faxable`, `Stapleable` means clients depend only on what they need, and a simple home printer only implements `Printable`. Treating SRP as a method-count rule is what the chapter debunks; DIP is about the direction of dependencies, not interface size."
 
   - id: 11
     difficulty: advanced
@@ -275,7 +275,7 @@ questions:
       Which scenario shows the **correct** application of the Dependency Inversion Principle?
     options:
       - "The `OrderService` imports `MySqlOrderRepository` directly so the database can be queried efficiently"
-      - "The `OrderService` defines an `OrderRepository` interface tailored to its needs; `MySqlOrderRepository` implements this interface; in tests, an `InMemoryOrderRepository` is swapped in"
+      - "`OrderService` owns an `OrderRepository` interface; SQL and in-memory variants implement it"
       - "A Spring `@Autowired` annotation is added to every field in `OrderService`, guaranteeing DIP"
       - "`MySqlOrderRepository` defines the interface, and `OrderService` conforms to it"
     correct_index: 1
@@ -289,7 +289,7 @@ questions:
       3: |
         If infrastructure defines the interface, the abstraction often mirrors the database. The
         high-level service should define the contract it needs.
-    explanation: "DIP requires that **the high-level module owns the abstraction**. When business logic declares the interface it needs and infrastructure conforms, the dependency direction runs from concrete to abstract — exactly what DIP prescribes."
+    explanation: "DIP requires that **the high-level module owns the abstraction**. When business logic declares the interface it needs (tailored to its calls) and infrastructure conforms — production-time `MySqlOrderRepository`, in-test `InMemoryOrderRepository` — the dependency direction runs from concrete to abstract, exactly what DIP prescribes."
 
   - id: 12
     difficulty: expert
@@ -298,7 +298,7 @@ questions:
       The chapter argues SOLID principles **reinforce** each other. Which pairing below best captures a genuine dependency between two principles?
     options:
       - "SRP requires DIP: you cannot have one responsibility without dependency injection"
-      - "LSP enables OCP: if subtypes honor their parents' contracts, a router can iterate polymorphically over them without modification when a new subtype is added"
+      - "LSP enables OCP: subtypes that honor parent contracts let routers add new types without modification"
       - "ISP replaces DIP: segregated interfaces make dependency inversion unnecessary"
       - "OCP implies SRP: code closed for modification automatically has a single reason to change"
     correct_index: 1

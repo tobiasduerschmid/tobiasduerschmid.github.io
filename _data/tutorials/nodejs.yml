@@ -1677,11 +1677,11 @@ steps:
         - question: "A Twitch-like streaming API has `req.query.maxViewers` as the string `'500'`. A developer writes `if (stream.viewers < req.query.maxViewers)`. Will this comparison work correctly?"
           options:
             - "Yes — JavaScript automatically converts the string to a number for the `<` comparison"
-            - "It works for most cases due to type coercion, but it is fragile. Convert explicitly with `Number(req.query.maxViewers)` to be safe and clear."
+            - "It works via coercion, but it is fragile — convert explicitly with `Number(...)`"
             - "No — comparing a number to a string always returns `false` in JavaScript"
             - "No — this will throw a TypeError at runtime"
           correct_index: 1
-          explanation: "JavaScript's `<` operator does coerce strings to numbers for comparison, so `50 < '500'` works. But this relies on implicit coercion — the same trap from Step 2. Explicit conversion with `Number()` makes the intent clear and prevents subtle bugs when the value isn't a clean number (e.g., `'500px'` coerces to `NaN`)."
+          explanation: "JavaScript's `<` operator does coerce strings to numbers for comparison, so `50 < '500'` works. But this relies on implicit coercion — the same trap from Step 2. Explicit conversion with `Number(req.query.maxViewers)` makes the intent clear and prevents subtle bugs when the value isn't a clean number (e.g., `'500px'` coerces to `NaN`)."
 
   # --------------------------------------------------------------------------
   # STEP 7: The Express Router
@@ -1939,11 +1939,11 @@ steps:
         - question: "Why is `express.Router()` better than putting all routes in one file?"
           options:
             - "Routers execute routes faster because they have a separate Event Loop"
-            - "Routers organize related routes into modules — each file handles one domain (students, courses, professors), making the codebase maintainable"
+            - "Routers organize related routes into modules — one file per domain"
             - "Routers automatically add authentication to all routes"
             - "Routes only work inside Routers — `app.get()` is deprecated"
           correct_index: 1
-          explanation: "Routers are a code organization tool. A real app might have `studentRoutes.js`, `courseRoutes.js`, `authRoutes.js` — each handling one domain. This follows the single-responsibility principle: each module has one reason to change."
+          explanation: "Routers are a code organization tool. A real app might have `studentRoutes.js`, `courseRoutes.js`, `authRoutes.js` — each handling one domain (students, courses, professors). This follows the single-responsibility principle: each module has one reason to change."
 
         - question: "If `router.get('/:id', handler)` is mounted with `app.use('/api/books', router)`, what full URL does the route match?"
           options:
@@ -1985,7 +1985,7 @@ steps:
         - question: "Inside `router.get('/', (req, res) => { ... })`, what role does the arrow function play?"
           options:
             - "It creates the router object"
-            - "It is a callback — the function that Express calls when a matching request arrives"
+            - "A callback Express calls when a matching request arrives"
             - "It defines the URL pattern for the route"
             - "It configures the router's middleware stack"
           correct_index: 1
@@ -1994,7 +1994,7 @@ steps:
         - question: "A teammate is building a quick 3-route prototype for a hackathon demo. They put all routes in `app.js` without using `express.Router()`. Should you ask them to refactor into a Router? Why or why not?"
           options:
             - "Yes — routes must always use `express.Router()` or Express cannot process them correctly"
-            - "No — for a 3-route prototype, the organizational overhead of a Router is unnecessary. Routers pay off when the codebase grows to many routes across multiple domains"
+            - "No — at 3 routes the Router's organizational overhead doesn't pay off yet"
             - "Yes — `app.get()` is deprecated in modern Express and only `router.get()` is supported"
             - "No — Routers are slower than `app.get()` because they add an extra layer of middleware processing"
           correct_index: 1
@@ -2607,11 +2607,11 @@ steps:
         - question: "An Express Router has three async route handlers that each query a database. How many threads are used to execute these handlers?"
           options:
             - "Three — one thread per route handler for parallel execution"
-            - "One — all route handlers execute on the single-threaded Event Loop, but `await` frees the call stack between database queries"
+            - "One — all handlers share the single-threaded Event Loop; `await` frees the call stack"
             - "It depends on how many requests arrive simultaneously"
             - "Zero — async functions run outside the main thread"
           correct_index: 1
-          explanation: "Node.js is single-threaded. All route handlers — whether on the main app or on Routers — execute on the same Event Loop. The magic of `async`/`await` is that `await` suspends the handler and frees the call stack, allowing other handlers to run. This is concurrency without parallelism."
+          explanation: "Node.js is single-threaded. All route handlers — whether on the main app or on Routers — execute on the same Event Loop. The magic of `async`/`await` is that `await` suspends the handler and frees the call stack between database queries, allowing other handlers to run. This is concurrency without parallelism."
 
         - question: "In the Promise constructor `new Promise((resolve, reject) => { ... })`, what are `resolve` and `reject`?"
           options:
@@ -2967,12 +2967,12 @@ steps:
             ```
           type: single
           options:
-            - "`.reduce()` needs initial value `0`, division should use filtered length, and `==` should be `===`"
+            - "Missing reduce initial value, wrong divisor, and `==` should be `===`"
             - "`.filter()` should use `.find()` instead"
             - "The `==` operator will crash because types differ"
             - "There is no bug"
           correct_index: 0
-          explanation: "Three bugs: (1) `.reduce()` without an initial value throws on empty arrays. (2) Dividing by `grades.length` (all grades) instead of filtered length gives wrong averages. (3) `==` should be `===` for strict comparison (Step 2)."
+          explanation: "Three bugs: (1) `.reduce()` without an initial value of `0` throws on empty arrays. (2) Dividing by `grades.length` (all grades) instead of the filtered length gives wrong averages. (3) `==` should be `===` for strict comparison (Step 2)."
 
         - question: "A Spotify-like app needs to: (1) fetch a user's playlists, (2) for each playlist fetch its tracks, (3) display all track names. Which combination is most appropriate?"
           type: single
@@ -2987,19 +2987,19 @@ steps:
         # --- Comprehensive review: Steps 1–9 ---
         - question: "What two components does Node.js bundle to let JavaScript run outside the browser?"
           options:
-            - "React and Webpack"
-            - "V8 (JIT compiler) and libuv (async I/O and Event Loop)"
-            - "npm and Express"
-            - "TypeScript and Babel"
+            - "The React rendering library and the Webpack module bundler"
+            - "The V8 JIT compiler and the libuv async I/O / Event Loop library"
+            - "The npm package manager and the Express web framework"
+            - "The TypeScript type-checker and the Babel JavaScript transpiler"
           correct_index: 1
           explanation: "[Step 1] V8 compiles JavaScript to machine code. libuv provides the Event Loop and OS-level I/O access."
 
         - question: "What is the output of `console.log('' == false)` in JavaScript?"
           options:
-            - "`true` — the empty string is coerced to `false` by `==`"
-            - "`false` — strings and booleans cannot be compared"
-            - "A TypeError at runtime"
-            - "`undefined`"
+            - "`true` — `==` coerces both sides to numbers, and both become `0`"
+            - "`false` — `==` keeps the string and boolean as distinct types"
+            - "A TypeError is thrown because string and boolean are incomparable"
+            - "`undefined` because `==` does not return a value here"
           correct_index: 0
           explanation: "[Step 2] JavaScript's `==` coerces types. The empty string is 'falsy', so `'' == false` is `true`. Use `===` to avoid this."
 

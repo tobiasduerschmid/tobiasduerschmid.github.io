@@ -1311,7 +1311,7 @@ steps:
           type: single
           options:
             - "When one class imports another"
-            - "When one class stores a reference to another as an instance variable"
+            - "When one class stores another as an instance variable"
             - "When two classes are in the same file"
             - "When one class calls a method on another"
           correct_index: 1
@@ -1323,7 +1323,7 @@ steps:
           type: single
           options:
             - "Strings use more memory than objects"
-            - "The structural relationship is hidden — UML cannot show the connection"
+            - "The structural relationship is hidden from UML"
             - "Python does not allow storing strings as attributes"
             - "Strings cannot be printed"
           correct_index: 1
@@ -1337,7 +1337,7 @@ steps:
             - "Nothing — Python ignores type annotations at runtime"
             - "The code would stop working"
             - "Python would enforce the type automatically"
-            - "The UML diagram would not know the association exists, because the renderer relies on the type annotation to see the link"
+            - "The UML renderer would lose the association arrow"
           correct_index: 3
           explanation: |
             Python itself ignores type annotations at runtime — but the UML renderer reads them. Without `: Instructor`, the renderer can't tell what class the attribute refers to, and the association arrow disappears. This reconnects Step 3's "types as contracts" lesson with Step 5's "relationships as visibility": both rely on the *same* annotations.
@@ -1867,8 +1867,8 @@ steps:
           options:
             - "Next to Department, because one department has many employees"
             - "Next to Employee, because there are many employees per department"
-            - "In the middle of the line"
-            - "Above the arrow"
+            - "In the middle of the line, since it describes the whole association"
+            - "Above the arrow, away from either class endpoint"
           correct_index: 1
           explanation: |
             The multiplicity is placed **next to the class it quantifies**. There are many **employees** per department, so `1..*` goes next to `Employee`. There is one **department** per group, so `1` goes next to `Department`.
@@ -1891,7 +1891,7 @@ steps:
           options:
             - "Both filled (composition) — because both are `1..*`"
             - "Both hollow (aggregation) — because both are collections"
-            - "Filled between University and Department (the university creates its departments); hollow between Department and Professor (professors exist independently and can move)"
+            - "Filled University–Department (created by the university); hollow Department–Professor (independent)"
             - "Hollow between University and Department; filled between Department and Professor"
           correct_index: 2
           explanation: |
@@ -2149,10 +2149,10 @@ steps:
             What does italic text on a class name in UML indicate?
           type: single
           options:
-            - "The class is deprecated"
-            - "The class is abstract — it cannot be instantiated directly"
-            - "The class is private"
-            - "The class is a singleton"
+            - "The class is deprecated and should not be used"
+            - "The class is abstract and cannot be instantiated"
+            - "The class is private and only used within its module"
+            - "The class is a singleton with exactly one instance"
           correct_index: 1
           explanation: |
             Italic text in UML indicates **abstract** — the class (or method) cannot be used directly and must be implemented by a subclass. In Python, this is achieved using `ABC` and `@abstractmethod`.
@@ -2520,9 +2520,9 @@ steps:
           type: single
           options:
             - "It has too many arrows pointing to other classes"
-            - "It is one large box with many attributes and methods, surrounded by few or no other classes"
-            - "It has abstract methods"
-            - "It uses private visibility on all attributes"
+            - "It is one large box with many members and few collaborators"
+            - "It has many abstract methods waiting to be implemented"
+            - "It uses private visibility on all of its attributes"
           correct_index: 1
           explanation: |
             A God Class appears as a **single massive box** with dozens of attributes and methods, with few or no collaborating classes around it. The lack of relationships in the diagram signals that one class is doing everything — the opposite of good object-oriented design.
@@ -2532,7 +2532,7 @@ steps:
           type: single
           options:
             - "UML runs the code and finds bugs automatically"
-            - "UML shows the visual structure — bloated classes and missing relationships become obvious at a glance"
+            - "UML shows visual structure — bloated classes and missing links become obvious"
             - "UML translates the code into a different programming language"
             - "UML counts the lines of code in each class"
           correct_index: 1
@@ -2556,7 +2556,7 @@ steps:
           type: single
           options:
             - "Because Course and Instructor are in different files"
-            - "Because the Instructor exists independently — deleting the Course does not destroy the Instructor"
+            - "Because the Instructor exists independently of the Course's lifecycle"
             - "Because Instructor is abstract"
             - "Because there is no multiplicity notation"
           correct_index: 1
@@ -2591,10 +2591,10 @@ steps:
             What is the most important purpose of a UML class diagram?
           type: single
           options:
-            - "To generate code automatically"
-            - "To replace code documentation"
-            - "To communicate the structure and relationships of a system visually"
-            - "To test the code for bugs"
+            - "To generate code automatically from the diagram"
+            - "To replace inline code documentation and comments"
+            - "To communicate system structure and relationships visually"
+            - "To test the code for bugs before runtime"
           correct_index: 2
           explanation: |
             The primary purpose of UML is **communication**. A class diagram lets developers understand and discuss the architecture of a system — what classes exist, how they relate, and what contracts they define — without reading every line of code. It is a thinking and communication tool, not a replacement for code.

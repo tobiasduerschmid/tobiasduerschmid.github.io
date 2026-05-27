@@ -9,7 +9,7 @@ questions:
       Which statement best distinguishes an architectural **tactic** from an architectural **style**?
     options:
       - "A tactic shapes the dominant element and connector vocabulary of the whole system; a style is a smaller move targeted at one quality attribute."
-      - "A style defines the dominant element/connector vocabulary and constraints; a tactic is a reusable move that improves a quality attribute inside a design."
+      - "A style sets the system's structural vocabulary; a tactic is a smaller reusable move targeting one quality attribute."
       - "A tactic is always object-oriented; a style is always language-independent."
       - "A style improves performance; a tactic improves only maintainability."
     correct_index: 1
@@ -20,7 +20,7 @@ questions:
         Tactics are not tied to object-oriented programming. Heartbeat, caching, and redundancy appear in many paradigms and runtimes.
       3: |
         Both styles and tactics can affect many qualities. Caching is a performance tactic, dependency injection is a testability tactic — there is no fixed performance-versus-maintainability split.
-    explanation: "**Styles are structural constraints at architectural scale; tactics are reusable quality-attribute moves.** A publish-subscribe system can still use heartbeat, redundancy, and caching."
+    explanation: "**Styles are structural constraints at architectural scale; tactics are reusable quality-attribute moves applied inside a design.** A publish-subscribe system can still use heartbeat, redundancy, and caching."
 
   - id: 2
     difficulty: basic
@@ -134,7 +134,7 @@ questions:
       A team says, "We should add caching." What is the best architectural response?
     options:
       - "Approve it immediately, because caching is always a performance win."
-      - "Ask for the quality scenario: what repeated resource, under what load, what hit rate or latency target, and what stale-data tolerance?"
+      - "Ask for the quality scenario before deciding: hit rate, latency target, staleness tolerance."
       - "Reject it immediately, because caching always violates correctness."
       - "Convert the system to pipe-and-filter first."
     correct_index: 1
@@ -145,7 +145,7 @@ questions:
         Caching is not inherently wrong. It is wrong when the consistency cost exceeds the performance benefit for the scenario.
       3: |
         Pipe-and-filter is a style choice and is unrelated to whether a repeated resource should be cached.
-    explanation: "**Tactics should be tied to scenarios.** A cache is justified when the measured performance gain is worth the memory, invalidation, and stale-data costs."
+    explanation: "**Tactics should be tied to scenarios — what repeated resource, under what load, with what hit-rate/latency target and stale-data tolerance.** A cache is justified when the measured performance gain is worth the memory, invalidation, and stale-data costs."
 
   - id: 8
     difficulty: advanced

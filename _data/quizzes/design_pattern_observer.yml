@@ -9,7 +9,7 @@ questions:
       A stock market dashboard updates 50 UI widgets whenever the price feed changes (1,000 updates/second). The team uses the **Push model**, sending the full price data to every observer on every update. What is the most significant problem with this approach?
     options:
       - "The Push model violates the Open/Closed Principle"
-      - "Observers receive large amounts of data they may not need, causing performance bottlenecks at high update frequency"
+      - "Observers receive large amounts of data they may not need, throttling updates"
       - "The Push model creates tighter coupling than the Pull model"
       - "The Push model prevents adding new observers at runtime"
     correct_index: 1
@@ -49,7 +49,7 @@ questions:
       The Observer pattern is widely cited as creating an "inverted dependency flow" that hurts program comprehension. What does this mean in practice?
     options:
       - "Observers depend on the subject, but the subject also depends on observers — creating a circular dependency"
-      - "In code, observers call the subject to register (observer→subject), but data flows from subject to observer — making it hard to trace dependencies by reading the code"
+      - "Observers call the subject to register (observer→subject), but data later flows the opposite way (subject→observer)"
       - "The subject must be created before any observers, inverting the normal object creation order"
       - "The Pull model inverts the Push model's data flow direction"
     correct_index: 1
@@ -144,7 +144,7 @@ questions:
     question: |
       A spreadsheet cell observes three different data-source subjects. When any source changes, the cell must recompute. What does the cell's `update()` operation need that a single-subject design would not?
     options:
-      - "A way to tell which subject changed — typically by accepting the subject as a parameter (e.g., `update(Subject* changedSubject)`)"
+      - "A way to tell which subject changed — typically `update(Subject* changedSubject)`"
       - "A separate notify() method for each subject it observes"
       - "Three independent observer lists, one per subject type"
       - "It cannot be done — observers must observe exactly one subject"
@@ -185,7 +185,7 @@ questions:
       The dependency graph between subjects and observers in a system is intricate: some observers depend on several subjects at once, and when multiple subjects change in one logical operation, observers must be updated exactly once — not once per source. Which structural addition does the GoF recommend?
     options:
       - "Replace Observer with Mediator everywhere"
-      - "Introduce a separate ChangeManager that maps subjects to observers and dispatches updates on the subject's behalf"
+      - "Introduce a `ChangeManager` that maps subjects to observers and dispatches updates"
       - "Switch from Pull to Push so observers don't need to coordinate"
       - "Have each observer keep a counter and ignore duplicate updates"
     correct_index: 1

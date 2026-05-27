@@ -8,10 +8,10 @@ questions:
     question: |
       A team is designing a music-streaming service. Track files are processed through `decode → normalize → encode → upload`. Users browse a catalog, get personalized recommendations, and receive new-release notifications. Which architectural-style decisions fit the two parts of the system?
     options:
-      - "Use pipe-and-filter for everything — it scales."
-      - "Use pub-sub for everything — it decouples."
-      - "Use **pipe-and-filter** for the track-processing pipeline (linear data transformations, naturally parallelizable filters) and **publish-subscribe** for the notification system (one producer, many consumers, evolution-friendly). The full system is a *heterogeneous architecture* combining multiple styles."
-      - "Use a single layered architecture for the whole system since layering is the most general style."
+      - "Use pipe-and-filter for the whole system — it scales naturally."
+      - "Use pub-sub for the whole system — it decouples cleanly."
+      - "Pipe-and-filter for the pipeline, pub-sub for notifications — a *heterogeneous* architecture."
+      - "Use a single layered architecture — layering is the most general style."
     correct_index: 2
     option_feedback:
       0: |
@@ -29,9 +29,9 @@ questions:
       Two engineers argue: one calls *Layered Architecture* an architectural **pattern**; the other calls it an architectural **style**. What is the precise distinction?
     options:
       - "Patterns and styles are interchangeable terms — both engineers are right."
-      - "A **style** is an abstract structural framework (a vocabulary of element types, connectors, and topological constraints) independent of any specific design situation; it is *strategic*. A **pattern** is a specific solution to a specific recurring problem in a context (a context-problem-solution triple); it is *tactical*."
-      - "Patterns are object-oriented; styles are not."
-      - "Patterns are documented; styles are not."
+      - "A *style* is a strategic framework of constraints; a *pattern* is a tactical solution to a recurring problem."
+      - "Patterns are limited to object-oriented systems; styles apply more broadly."
+      - "Patterns are documented in catalogs; styles are not."
     correct_index: 1
     option_feedback:
       0: |
@@ -48,10 +48,10 @@ questions:
     question: |
       A team's microservice has a published spec saying "pub-sub style" but the code is full of direct service-to-service REST calls bypassing the bus. How would Fairbanks describe what they have, vs. what they intended?
     options:
-      - "The **platonic** style (the idealized blueprint) is pub-sub; the **embodied** style (what is actually in the source) is mostly client-server with some pub-sub. The team has departed from the platonic ideal, and the quality attributes the style guaranteed (decoupling, evolvability) are partially lost."
-      - "They have a platonic client-server architecture."
-      - "They have an embodied pub-sub architecture, since they intended pub-sub."
-      - "They have neither style — the system is style-less."
+      - "The *platonic* style is pub-sub but the *embodied* style is mostly client-server."
+      - "They have a platonic client-server architecture, which the team has drifted toward."
+      - "They have an embodied pub-sub architecture, since pub-sub is what they intended."
+      - "They have neither style — the resulting system is essentially style-less."
     correct_index: 0
     option_feedback:
       1: |
@@ -69,10 +69,10 @@ questions:
       Why do mature production systems almost always use a **heterogeneous architecture** rather than a single style? Select all reasons that apply.
     options:
       - "Every style has inhibited quality attributes; no single style satisfies all the system's quality requirements."
-      - "Different subsystems have different concerns — one part may need real-time interactivity, another batch transformation, another decoupled evolution — each fitting a different style."
+      - "Different subsystems have different concerns, each fitting a different style."
       - "Heterogeneous architectures are required by international software standards."
       - "Mixing styles makes a system harder to attack."
-      - "Architects can selectively apply each style's strengths to the subproblems where they fit best, instead of forcing one style to do everything poorly."
+      - "Architects can apply each style's strengths to the subproblems where they fit best."
     correct_indices: [0, 1, 4]
     option_feedback:
       0: |
@@ -94,7 +94,7 @@ questions:
       REST is famously described as an *engineered composite*. Which architectural-style constraints from Fielding's derivation are the relevant ones here, and what does each contribute?
     options:
       - "It combines pipe-and-filter, pub-sub, and microservices."
-      - "It combines **Client-Server** (for separation of concerns between user agent and origin server), **Layered** (to allow transparent intermediaries like proxies, caches, and CDNs between client and server), and optional **Code-on-Demand / Mobile Code** (to allow dynamic client extension via downloaded scripts), all unified by a uniform interface."
+      - "It combines Client-Server, Layered, and optional Code-on-Demand, unified by a uniform interface."
       - "It is just client-server; the other styles are coincidental."
       - "It combines pub-sub, layered, and microservices."
     correct_index: 1
@@ -113,10 +113,10 @@ questions:
     question: |
       A team can choose: a Service-Oriented Architecture (SOA) with an enterprise service bus, or a Microservices architecture. The product manager says "they're basically the same — both have services." What is the most important architectural distinction?
     options:
-      - "Microservices are older than SOA."
-      - "Microservices are mapped to **bounded contexts** of the business domain (often per business capability), are **strictly independent**, and use **lightweight protocols** (REST/HTTP); each owns its **own decentralized data store**. SOA tends to use heavier protocols (SOAP, ESBs), often shares data and orchestration centrally, and is enterprise-integration-focused. The data-ownership and protocol weight differences are the main practical consequences."
-      - "SOA uses Java; Microservices use Python."
-      - "There is no real difference — both are obsolete."
+      - "Microservices are a strictly older style than Service-Oriented Architecture."
+      - "Microservices use lightweight protocols and own their data; SOA uses heavier protocols and shared data."
+      - "SOA is implemented in Java while microservices are implemented in Python or Go."
+      - "There is no real difference — both architectural styles are now obsolete."
     correct_index: 1
     option_feedback:
       0: |
@@ -134,9 +134,9 @@ questions:
       A team designs an architecture where their main system is structured as a *pipe-and-filter* pipeline, but each filter is *internally* organized as a strict 4-layer mini-architecture. What kind of style combination is this?
     options:
       - "Overlay — two styles applied concurrently to the same components."
-      - "**Hierarchy** (internal sub-style): one style governs the macro-structure (pipe-and-filter for the data pipeline), and a different style governs the internal structure of components (layered inside each filter). Each level is internally consistent with its own style."
-      - "Incoherent — you cannot mix styles like this."
-      - "REST."
+      - "*Hierarchy*: one style governs the macro-structure, a different style governs each component's internals."
+      - "Incoherent — you cannot legitimately mix styles in this way."
+      - "REST — the canonical example of this kind of style combination."
     correct_index: 1
     option_feedback:
       0: |
@@ -153,10 +153,10 @@ questions:
     question: |
       A consultant claims: "If we pick the right architectural style, we'll get all the quality attributes we need automatically." Why is this misleading?
     options:
-      - "They're correct — style choice fully determines quality attributes."
-      - "Every style *promotes* some quality attributes and *inhibits* others — picking one style buys some qualities and gives up others. The architectural job is to align the style's quality profile with the system's priorities, *and* manage the inhibited attributes deliberately (often with hybrid designs or compensating mechanisms)."
-      - "Quality attributes are independent of style choice."
-      - "Quality attributes are an outdated concept."
+      - "They are correct — choosing the right style fully determines quality attributes."
+      - "Every style *promotes* some qualities and *inhibits* others; the architect must align and compensate."
+      - "Quality attributes are independent of the architectural style chosen."
+      - "Quality attributes are an outdated concept superseded by modern practice."
     correct_index: 1
     option_feedback:
       0: |
@@ -173,10 +173,10 @@ questions:
     question: |
       A team has been running their service on a monolithic layered architecture for years. They want microservices. They ask: "do we need to abandon all our layering?" What is the right answer?
     options:
-      - "Yes — layering and microservices are fundamentally incompatible."
-      - "No — microservices and layering operate at different scales. Each microservice can be *internally* layered (Presentation → Service → Domain → Repository). The macro-architecture changes from monolithic to microservice-based, but each service still benefits from internal layering."
-      - "Maybe — depends on the language."
-      - "Yes — microservices require pipe-and-filter."
+      - "Yes — layering and microservices are fundamentally incompatible styles."
+      - "No — they operate at different scales; each service can still be *internally* layered."
+      - "Maybe — it depends on the programming language being used."
+      - "Yes — microservices require a pipe-and-filter internal structure."
     correct_index: 1
     option_feedback:
       0: |
@@ -194,9 +194,9 @@ questions:
       A team is integrating a third-party library that violates the layering constraints of their architecture (the library makes direct database calls from what should be the application layer). How should they reason about the architectural impact?
     options:
       - "It's fine — third-party libraries don't count toward architectural rules."
-      - "The library introduces an *embodied* violation of the *platonic* layering. The architect should evaluate: (a) is the violation isolated (contained behind an adapter) or systemic (spread throughout the library's usage)? (b) what quality attributes does it erode (testability, portability)? (c) is the cost worth the library's benefit, or should they choose an alternative or wrap it?"
-      - "Stop using the library immediately — no exceptions."
-      - "Layering only applies to code the team wrote."
+      - "Treat it as an *embodied* violation: isolate behind an adapter, accept the trade-off, or pick another library."
+      - "Stop using the library immediately — there can be no architectural exceptions."
+      - "Layering only applies to code the team wrote, not to third-party dependencies."
     correct_index: 1
     option_feedback:
       0: |
@@ -239,7 +239,7 @@ questions:
       A diagram shows source-code packages organized into UI, Service, Domain, and Repository layers. A teammate claims the diagram proves the system will stay available if the Repository layer fails. What is the best correction?
     options:
       - "Correct: layered architecture directly proves availability because the upper layers can keep running."
-      - "The diagram is a module view, so it supports dependency and maintainability reasoning; availability requires runtime, deployment, failure, and recovery views."
+      - "The diagram is a module view; availability needs runtime, deployment, and recovery views."
       - "The diagram proves performance, not availability."
       - "A layered diagram is invalid unless every layer is deployed on a separate machine."
     correct_index: 1

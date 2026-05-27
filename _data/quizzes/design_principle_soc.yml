@@ -9,7 +9,7 @@ questions:
       Who coined the term "separation of concerns", and in what context was it first introduced?
     options:
       - "Robert C. Martin, when he proposed the SOLID principles"
-      - "Edsger W. Dijkstra, in his note 'On the Role of Scientific Thought' (EWD 447), about how intelligent thinking works"
+      - "Edsger W. Dijkstra, in his note 'On the Role of Scientific Thought' (EWD 447)"
       - "David Parnas, in his paper on criteria for decomposing systems into modules"
       - "The Gang of Four, in the 'Design Patterns' book"
     correct_index: 1
@@ -82,7 +82,7 @@ questions:
       Why is **logging** almost always considered a *crosscutting concern*?
     options:
       - "Because logging is slow, and it crosses the performance budget of most modules"
-      - "Because logging code naturally appears in many different modules, which causes tangling (mixed with business code) and scattering (duplicated across modules)"
+      - "Logging code appears across many modules, causing tangling and scattering"
       - "Because logging requires network access, which cuts across the application boundary"
       - "Because logs must be written in a specific format that crosses language boundaries"
     correct_index: 1
@@ -106,7 +106,7 @@ questions:
       When is this argument **most reasonable**?
     options:
       - "Always — YAGNI (You Aren't Gonna Need It) forbids layering"
-      - "For a true throwaway script or prototype that will be read once and deleted, and where the 'rules' are trivial"
+      - "For a true throwaway script or prototype with trivial rules"
       - "Whenever the business logic is simpler than 100 lines of code"
       - "Never — separation is always worth the cost"
     correct_index: 1
@@ -151,10 +151,10 @@ questions:
     question: |
       Which statement best captures the **difference** between Separation of Concerns and Information Hiding?
     options:
-      - "They are synonyms; both are slogans for 'write modular code'"
-      - "SoC decides *which* aspects should live in separate modules; Information Hiding decides *how* those modules protect their internal decisions behind stable interfaces"
-      - "Information Hiding is a 1972 principle and SoC is a 2000s principle; Information Hiding has been deprecated"
-      - "SoC applies to code, Information Hiding applies only to data"
+      - "They are synonyms — both are slogans meaning 'write modular code with small classes'"
+      - "SoC decides *which* aspects belong in separate modules; Information Hiding decides *how* to encapsulate each"
+      - "Information Hiding is a 1972 principle and SoC is a 2000s principle that has since superseded it"
+      - "SoC applies to code organization, while Information Hiding only applies to data fields"
     correct_index: 1
     option_feedback:
       0: |
@@ -197,10 +197,10 @@ questions:
     question: |
       Why might splitting an internal helper function into its own class *reduce* rather than increase the quality of a system?
     options:
-      - "Because smaller classes are always harder to optimize"
-      - "Because if the 'two concerns' always change together for the same reason, the split is artificial — now every change has to edit two files instead of one"
-      - "Because Python does not support inheritance well"
-      - "Because SRP explicitly forbids extracting classes"
+      - "Because smaller classes are always harder for the compiler to optimize"
+      - "If the two concerns always change together, the split is artificial and every change now spans two files"
+      - "Because Python does not support inheritance well across files"
+      - "Because the SRP principle explicitly forbids extracting helper classes"
     correct_index: 1
     option_feedback:
       0: |
@@ -220,10 +220,10 @@ questions:
     question: |
       Which benefit of SoC most directly explains why a team of five developers can work in parallel on one system?
     options:
-      - "Testability — they can each write unit tests"
-      - "Local reasoning combined with narrow interfaces — each developer can modify their own concern without needing to understand or fear changes in others"
-      - "Performance — separated code runs faster"
-      - "Security — developers cannot see each other's code"
+      - "Testability — each developer can write their own unit tests in isolation"
+      - "Local reasoning and narrow interfaces — developers can change their own concern without fear of others"
+      - "Performance — separated code naturally runs faster in parallel"
+      - "Security — developers cannot accidentally see each other's source code"
     correct_index: 1
     option_feedback:
       0: |
@@ -261,10 +261,10 @@ questions:
 
       What is the **most important** SoC violation here?
     options:
-      - "The business rule 'score > 80' is buried inside a UI component, tangling a domain rule into the presentation layer"
-      - "The component uses useState and useEffect, which should be separate"
-      - "The fetch call should be a POST, not a GET"
-      - "The <ul> tag should be a <div>"
+      - "A business rule (`score > 80`) is buried inside a UI component, tangling domain logic into presentation"
+      - "The component uses both `useState` and `useEffect`, which should be split into separate hooks"
+      - "The fetch call should be a `POST` instead of a `GET` for this kind of operation"
+      - "The `<ul>` tag should be a `<div>` for accessibility and semantic correctness"
     correct_index: 0
     option_feedback:
       1: |
@@ -284,10 +284,10 @@ questions:
     question: |
       Which is the best definition of a **concern** in the phrase 'Separation of Concerns'?
     options:
-      - "A bug report filed by a customer"
-      - "Any single aspect of a system that a developer might want to reason about, design, or change independently"
-      - "A feature that is behind a feature flag"
-      - "A class with private fields"
+      - "A bug report or issue filed by a customer that needs attention"
+      - "An aspect of the system a developer might want to reason about or change independently"
+      - "A feature that has been placed behind a runtime feature flag"
+      - "A class that hides its internals behind private fields and getters"
     correct_index: 1
     option_feedback:
       0: |

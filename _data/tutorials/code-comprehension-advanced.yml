@@ -156,10 +156,10 @@ steps:
           difficulty: basic
           question: "What behavior hypothesis should the tests give you before reading `sessionPlanner.js`?"
           options:
-            - "The planner chooses sessions that fit the time box, prefers topic matches, and slightly favors solo work when energy is low."
-            - "The planner stores study sessions in a database, updates them after every request, and syncs the best plan back to the user profile."
-            - "The planner renders React cards for each session."
-            - "The planner always returns every session sorted alphabetically."
+            - "Sessions that fit the time, prefer topic matches, favor solo at low energy."
+            - "Sessions stored in a database, updated each request, and synced back to the user profile."
+            - "React cards rendered for each session."
+            - "Every session returned, sorted alphabetically."
           correct_index: 0
           option_feedback:
             1: "The tests use plain functions and arrays. No database behavior appears in the setup or assertions."
@@ -171,10 +171,10 @@ steps:
           difficulty: intermediate
           question: "Which implementation region verifies the hypothesis that unavailable long sessions are excluded?"
           options:
-            - "The `.filter(session => session.minutes <= request.minutes)` call in `pickSessionPlan()`"
-            - "The `request.energy === \"low\"` branch in `scoreSession()`, because low energy could make long sessions unavailable"
-            - "The `.map(session => session.title)` call"
-            - "The `module.exports` line"
+            - "The `.filter(session.minutes <= request.minutes)` call in `pickSessionPlan()`"
+            - "The `request.energy === \"low\"` scoring branch in `scoreSession()`"
+            - "The `.map(session => session.title)` call inside `pickSessionPlan()`"
+            - "The `module.exports` line at the bottom of the file"
           correct_index: 0
           option_feedback:
             1: "That branch adjusts ranking for low energy. It does not remove long sessions."
@@ -186,10 +186,10 @@ steps:
           difficulty: intermediate
           question: "A low-energy request should favor solo sessions. What is the smallest useful trace?"
           options:
-            - "Compare one solo session and one pair session through `scoreSession()` with the same request."
-            - "Run every test and inspect every console line."
-            - "Trace `.slice(0, 2)` for every possible request and compare the final two returned titles before scoring."
-            - "Inspect only the `SESSIONS` array and stop."
+            - "Run one solo session and one pair session through `scoreSession()` and compare."
+            - "Run every test in the suite and inspect every console line."
+            - "Trace `.slice(0, 2)` for each request and compare the two returned titles."
+            - "Inspect only the static `SESSIONS` data array and stop there."
           correct_index: 0
           option_feedback:
             1: "Running tests can reveal pass/fail, but the comprehension question needs the scoring reason."
@@ -437,9 +437,9 @@ steps:
           question: "Where is the missing-session 404 response implemented?"
           options:
             - "In `sessionDetails()` after `findSessionById(id)` returns no session"
-            - "In `findSessionById()` inside the service after `.find(...)` misses and returns `undefined`"
-            - "In the `sessions` array"
-            - "In `toSummary()`"
+            - "In `findSessionById()` after `.find(...)` returns `undefined`"
+            - "In the static `sessions` data array under `data/`"
+            - "In the `toSummary()` formatter helper"
           correct_index: 0
           option_feedback:
             1: "The service returns `undefined` when `.find(...)` misses. The route decides how to turn that into HTTP."
@@ -451,10 +451,10 @@ steps:
           difficulty: intermediate
           question: "Which helper should you inspect to answer why `nextStep` appears in the details response but not the list response?"
           options:
-            - "`withNextStep()` and where `sessionDetails()` calls it"
-            - "`findSessions()`, because it controls the response fields for every endpoint"
-            - "`fakeResponse()`"
-            - "`Number(req.params.id)`"
+            - "`withNextStep()` and its call site inside `sessionDetails()`"
+            - "`findSessions()`, the list-filtering helper in the service"
+            - "`fakeResponse()`, the Express-response test double"
+            - "`Number(req.params.id)`, the ID-conversion expression in the route"
           correct_index: 0
           option_feedback:
             1: "`findSessions()` controls list filtering, not details response shape."
@@ -764,10 +764,10 @@ steps:
           difficulty: basic
           question: "A user types `node` in the search input. What is the correct interaction path?"
           options:
-            - "`LessonSearch` calls `onQueryChange`, `App` updates `query`, filters `LESSONS`, and passes results to `LessonList`."
-            - "`LessonList` directly reads the search input value from the DOM, filters lessons locally, and sends the result back to `App`."
-            - "`data.js` updates `LESSONS` to remove non-Node lessons."
-            - "`LessonSearch` mutates `visibleLessons` directly."
+            - "`LessonSearch` → `App` (state update) → filtered `lessons` → `LessonList`."
+            - "`LessonList` reads the input from the DOM, filters locally, and returns the result."
+            - "`data.js` updates `LESSONS` to drop the non-Node lessons."
+            - "`LessonSearch` mutates `visibleLessons` in `App` directly."
           correct_index: 0
           option_feedback:
             1: "`LessonList` receives the already-filtered `lessons` prop. It does not know about the input."
@@ -779,10 +779,10 @@ steps:
           difficulty: intermediate
           question: "Which file owns `selectedId`?"
           options:
-            - "`App.jsx`, because it calls `React.useState(null)` and passes `setSelectedId` as `onSelectLesson`"
-            - "`LessonList.jsx`, because it renders the Select button and must store the current selection for the rest of the page"
-            - "`LessonSearch.jsx`, because it has an input"
-            - "`data.js`, because each lesson has an `id`"
+            - "`App.jsx`, where `useState(null)` is called and `setSelectedId` flows down as a prop"
+            - "`LessonList.jsx`, which renders the Select button that triggers the selection"
+            - "`LessonSearch.jsx`, which owns the search input on the page"
+            - "`data.js`, which is the source of every lesson `id` on the page"
           correct_index: 0
           option_feedback:
             1: "`LessonList` triggers the update, but the state belongs to the component that calls `useState`."
@@ -825,10 +825,10 @@ steps:
           difficulty: advanced
           question: "When should you switch from beacon reading to a small bottom-up trace in this React example?"
           options:
-            - "When you need to prove that a click in `LessonList` actually changes `selectedId` in `App`"
-            - "Before reading any component names or props"
-            - "Never, because React prop names are always enough to prove a cross-file state update without tracing"
-            - "Only after editing `data.js`"
+            - "When you need to verify that clicking in `LessonList` actually updates `App.selectedId`"
+            - "Before reading any component names, props, or state hooks"
+            - "Never — React prop names alone are enough to prove cross-file updates"
+            - "Only after making an edit to the `data.js` lesson array"
           correct_index: 0
           option_feedback:
             1: "Starting with exhaustive tracing discards the useful top-down clues from names and props."
@@ -1081,10 +1081,10 @@ steps:
           difficulty: intermediate
           question: "Where is the `STUDY10` coupon applied in a successful quote?"
           options:
-            - "`discountFor(req.body.coupon, subtotal)` in `routes/checkoutRoute.js`, with rules defined in `services/discountService.js`"
-            - "`checkStock()` in `services/stockService.js`, because it validates every line item before totals and could apply coupon policy."
-            - "`findItem()` in `services/stockService.js`"
-            - "`fakeResponse()` in the test file"
+            - "`discountFor(coupon, subtotal)` in the route, with rules in `discountService.js`"
+            - "`checkStock()` in `stockService.js`, which validates line items before totals"
+            - "`findItem()` in `stockService.js`, which looks up catalog items"
+            - "`fakeResponse()` in the test file, which captures the response body"
           correct_index: 0
           option_feedback:
             1: "Stock checking decides whether the request can proceed. It does not apply coupons."
@@ -1470,10 +1470,10 @@ steps:
           difficulty: basic
           question: "Where is the pinning state owned?"
           options:
-            - "`App.jsx`, because it calls `React.useState(2)` for `pinnedId` and passes `setPinnedId` down as `onPinLesson`."
-            - "`LessonCard.jsx`, because it renders the Pin button and receives `onPinLesson`, so it must own pinned state too."
-            - "`styles.css`, because it defines `.pinned-card`."
-            - "`data.js`, because each lesson has an `id`."
+            - "`App.jsx`, where `useState(2)` for `pinnedId` is called and passed down as `onPinLesson`."
+            - "`LessonCard.jsx`, which renders the Pin button and receives `onPinLesson`."
+            - "`styles.css`, which defines the `.pinned-card` class used on the page."
+            - "`data.js`, which provides the `id` field for every pinnable lesson."
           correct_index: 0
           option_feedback:
             1: "`LessonCard` triggers the change, but the state belongs to the component that calls `useState`."
@@ -1749,10 +1749,10 @@ steps:
           difficulty: basic
           question: "Which first-pass hypothesis comes from the tests?"
           options:
-            - "The route records lesson completions, returns HTTP status codes, and can award a three-day streak badge."
-            - "The code renders a React progress dashboard."
-            - "The email preview helper sends completion emails whenever a lesson is completed and a streak badge appears."
-            - "The data store sorts lessons by title."
+            - "Records completions, returns status codes, can award a three-day streak badge."
+            - "Renders a React progress dashboard for the lesson catalog."
+            - "Sends a completion email whenever a lesson completes and a streak badge appears."
+            - "Sorts the lessons in the data store by their title fields."
           correct_index: 0
           option_feedback:
             1: "There is no JSX or browser rendering in this packet."

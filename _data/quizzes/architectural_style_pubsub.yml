@@ -94,7 +94,7 @@ questions:
       A microservices team's bus is implemented with a single method `bus.send(Message msg)` and every subscriber casts the message to a concrete type. After 18 months the team can no longer answer "what breaks if I change `OrderPlaced`'s `currency` field?" without a manual codebase grep. Which architectural smell does this match, and what is the right refactor?
     options:
       - "Layer bridging; refactor by re-introducing a strict layer between publishers and subscribers."
-      - "Wide coupling; refactor by replacing the generic `send`/`receive` interface with typed channels or per-event-class topics so each subscription is statically traceable."
+      - "Wide coupling; refactor by replacing the untyped `send`/`receive` with typed channels per event class."
       - "Big ball of mud; refactor by deleting the bus and reverting to direct calls."
       - "Cyclic dependency; refactor by topologically sorting the publishers."
     correct_index: 1
@@ -105,7 +105,7 @@ questions:
         Deleting the bus would replace one problem with a much worse one: tightly coupled point-to-point dependencies between services. The fix is to restore *visibility* of the existing coupling, not to remove the bus.
       3: |
         Cycles arise when A depends on B and B depends on A. The smell here is *opacity* of the dependency graph, not its directionality.
-    explanation: "**Wide coupling is the pub-sub smell where every subscriber appears coupled to every publisher because the bus's type erasure hides the real dependency graph.** Typed channels — one per event class — restore the static visibility so a maintenance engineer can answer 'who breaks if I change this payload?' from the type system alone."
+    explanation: "**Wide coupling is the pub-sub smell where every subscriber appears coupled to every publisher because the bus's type erasure hides the real dependency graph.** Typed channels — one per event class, or per-event-class topics — restore the static visibility so each subscription is statically traceable and a maintenance engineer can answer 'who breaks if I change this payload?' from the type system alone."
 
   - id: 6
     difficulty: intermediate
@@ -114,7 +114,7 @@ questions:
       A mobile chat app must continue to deliver messages to users whose phones were offline for hours. Which pub-sub feature is the team relying on?
     options:
       - "Space decoupling — subscribers don't need to know publisher addresses."
-      - "Time decoupling, implemented as durable subscriptions or retained messages — the broker buffers events for offline subscribers."
+      - "Time decoupling — the broker buffers events so offline subscribers can catch up on reconnect."
       - "Synchronization decoupling — the publisher does not block."
       - "Content-based routing — only relevant messages are delivered."
     correct_index: 1
@@ -134,7 +134,7 @@ questions:
       Your team adopts a content-based pub-sub broker so subscribers can register predicates like `region == 'EU' AND amount > 10000`. After three months, broker CPU is saturated at 80% and the team is debating switching to topic-based. Under what condition is this switch justified?
     options:
       - "Always — content-based is never appropriate at scale."
-      - "When the subscription predicates partition cleanly into a small number of stable categories that can become topics, so the broker's matching work moves from per-event predicate evaluation to a hash lookup."
+      - "When the predicates partition cleanly into a small number of stable categories that can become topics."
       - "When the team wants to add wildcard support, since content-based has no equivalent."
       - "When the team wants stronger delivery guarantees — only topic-based supports QoS."
     correct_index: 1
@@ -154,7 +154,7 @@ questions:
       An architect proposes pub-sub for syncing inventory counts across a global e-commerce platform. The product manager pushes back: "we need every region to see the same count instantly so we never oversell." How should the architect respond?
     options:
       - "Agree — pub-sub delivers events instantly to all subscribers, so all regions will see the same count."
-      - "Typical asynchronous pub-sub lets regions apply events at different times, so they will hold inconsistent counts for short windows. We have to choose: design around eventual consistency, or use a different coordination style for strong consistency."
+      - "Asynchronous pub-sub is only eventually consistent — strong global consistency needs a different coordination style."
       - "Switch to topic-based pub-sub, which guarantees consistency across topics."
       - "Use exactly-once delivery, which makes pub-sub strongly consistent."
     correct_index: 1
@@ -174,7 +174,7 @@ questions:
       You inherit a system whose architecture diagram shows 20 microservices, each connected by a single arrow to a central "Event Bus" component. After three weeks you still cannot answer "which services break if we change the `UserDeleted` payload?" What is the root cause of your confusion, per Fairbanks?
     options:
       - "The diagram is missing the QoS configuration on each connection."
-      - "The diagram captures *runtime* obliviousness faithfully, but discards the *design-time* producer→consumer relationships you actually need to understand and maintain the system."
+      - "It captures the *runtime* connectivity but hides the *design-time* producer→consumer relationships needed for change-impact analysis."
       - "The diagram should also show the deployment tiers, since pub-sub depends on them."
       - "Microservice architectures cannot be diagrammed; you need to read the code instead."
     correct_index: 1
@@ -195,7 +195,7 @@ questions:
     options:
       - "Design B is always better for IoT because MQTT is the standard."
       - "Design A is always better because synchronous calls are easier to debug."
-      - "Design B buys evolvability (new subscribers can join without touching sensors) at the cost of debuggability and ordering guarantees; if neither future subscriber nor offline tolerance is needed, Design A is simpler and equally correct."
+      - "Design B trades debuggability and ordering for evolvability and offline tolerance."
       - "The two are equivalent — there is no architectural difference."
     correct_index: 2
     option_feedback:
@@ -205,7 +205,7 @@ questions:
         Debuggability is a real Design A advantage, but framing it as "always better" ignores legitimate Design B wins (offline sensors, multiple consumers, decoupled deployment).
       3: |
         The two have markedly different consequences for evolvability, debugging, ordering, and offline tolerance. Calling them equivalent ignores the load-bearing trade-off the architect is making.
-    explanation: "**The pedagogically honest answer in any 'should we use pub-sub?' debate is to name the trade-off explicitly — pub-sub buys decoupling and evolvability, and pays for it with ordering, debuggability, and per-event latency.** If the system has only one consumer today, no plans for more, and runs on a reliable network with always-online endpoints, the synchronous alternative is often the right call. Decoupling is not free."
+    explanation: "**The pedagogically honest answer in any 'should we use pub-sub?' debate is to name the trade-off explicitly — pub-sub buys decoupling and evolvability (new subscribers can join without touching sensors, offline endpoints can catch up), and pays for it with ordering, debuggability, and per-event latency.** If the system has only one consumer today, no plans for more, and runs on a reliable network with always-online endpoints, the synchronous alternative is often the right call. Decoupling is not free."
 
   - id: 11
     difficulty: intermediate

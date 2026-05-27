@@ -194,7 +194,7 @@ steps:
             **hide the secret** in Parnas's sense?
           options:
             - "Yes — fields are private and the return is immutable, so nothing leaks."
-            - "Not necessarily — the *element type* (what shape each item has) is still part of the contract, and changing it would still break clients."
+            - "Not necessarily — the *element type* is still part of the contract."
             - "Yes — immutability is the entire point of information hiding."
             - "No — Python tuples are not really immutable; you can still mutate them with `__setitem__`."
           correct_index: 1
@@ -203,7 +203,7 @@ steps:
             2: "Immutability prevents accidental mutation. Information hiding is the *broader* discipline of choosing **which design decisions clients may depend on**. Element shape is one of those decisions."
             3: "Python tuples are immutable in the sense that matters here — `t[0] = ...` raises `TypeError`, and `tuple` has no `__setitem__`. But this isn't the issue with the design."
           explanation: |
-            Returning an immutable copy plugs the **mutation** leak, but it doesn't hide the **element type**. If `recent()` returns `tuple[dict, ...]`, clients still depend on each entry being a `dict` with specific keys. Replacing the entry with a `WatchEvent` dataclass still breaks them. Information hiding is about the volatile *decision* — in this case, the element representation — not just about preventing writes.
+            Returning an immutable copy plugs the **mutation** leak, but it doesn't hide the **element type** (what shape each item has). If `recent()` returns `tuple[dict, ...]`, clients still depend on each entry being a `dict` with specific keys — changing it would still break them. Replacing the entry with a `WatchEvent` dataclass still breaks them. Information hiding is about the volatile *decision* — in this case, the element representation — not just about preventing writes.
 
         - type: single
           question: |
@@ -212,7 +212,7 @@ steps:
           options:
             - "Marking fields and methods `private` so external code can't access them."
             - "Splitting a program into small files and functions."
-            - "Assigning each likely-to-change design decision to one module, so other modules use it through a stable interface."
+            - "Each likely-to-change decision lives in one module, behind a stable interface."
             - "Returning copies instead of references from getter methods."
           correct_index: 2
           option_feedback:
@@ -684,7 +684,7 @@ steps:
             What is the strongest single counter?
           options:
             - "The method's name uses the word `internal`, so it's a smell."
-            - "The leak's cost shows up not at the moment of writing, but when the storage representation needs to change — by then, every new client written 'in the meantime' is also coupled."
+            - "The cost shows up when the storage decision changes — every client written by then is also coupled."
             - "Returning a list is always wrong in Python; tuples are required by best practice."
             - "Information hiding requires zero exposed methods. Even `get_internal_list()` is too many."
           correct_index: 1
@@ -693,7 +693,7 @@ steps:
             2: "Lists are fine to return; the question is whether the return *type* is a leak. Often `tuple[DomainObject, ...]` is the safer shape, but not always."
             3: "Information hiding never says 'expose nothing'. It says 'expose only the stable contract'. Plenty of legitimate methods exist."
           explanation: |
-            This is the **change-localization** argument and it is the strongest reason in Parnas's framing. A leak that costs nothing today costs everything the moment the storage decision needs to change — *every* client written between now and then will also depend on the leak, multiplying the eventual edit cost. Studies of professional developers find program comprehension (the activity that becomes painful when a representation change must be traced through many files) consumes around **58% of their working time** (Xia et al., IEEE TSE 2017). Information hiding is one of the cheapest ways to keep that number from compounding.
+            This is the **change-localization** argument and it is the strongest reason in Parnas's framing. The leak costs nothing at the moment of writing — it costs everything the moment the storage representation needs to change. By then, *every* client written between now and then will also depend on the leak, multiplying the eventual edit cost. Studies of professional developers find program comprehension (the activity that becomes painful when a representation change must be traced through many files) consumes around **58% of their working time** (Xia et al., IEEE TSE 2017). Information hiding is one of the cheapest ways to keep that number from compounding.
 
         - type: single
           question: |
@@ -703,7 +703,7 @@ steps:
           options:
             - "Yes — Python respects the underscore convention strictly."
             - "Yes — once a field is `_-prefixed`, no outside code can read it."
-            - "No — the underscore is a hint; what actually hides the decision is that no public method *returns the list* or *accepts a list parameter*."
+            - "No — the hiding comes from no public method returning or accepting the list."
             - "No — only `__double_underscore` names are truly private in Python."
           correct_index: 2
           option_feedback:
@@ -1133,7 +1133,7 @@ steps:
             leak in **this step's** original `recommend()` function?
           options:
             - "The fact that `recommend` is a free function instead of a method on a class."
-            - "The exposure of the raw `score` and its scale 0..30 — a representation detail clients did not need to know, that locks the implementation to BM25-shaped scoring."
+            - "The exposure of the raw `score` and its 0..30 scale, which locks in BM25-shaped scoring."
             - "The fact that `recommend` returns more than one hit at a time."
             - "The use of tuples instead of dicts as the return type."
           correct_index: 1
@@ -1142,7 +1142,7 @@ steps:
             2: "Returning many hits is exactly what the client needs. Not a leak."
             3: "Tuples vs. dicts is a shape choice; both can be over-specified. The deeper leak is the *score scale*, which would also leak whether you wrapped it in a dict."
           explanation: |
-            Parnas's exact quote in the KWIC discussion: "we have specified more than was necessary and thereby reduced the number of possible implementations." Exposing the score and its scale is the same mistake: clients can write `score > 12.0` and now any new algorithm must produce numbers on the same scale. Confidence buckets (`"high"`, `"medium"`, `"low"`) reveal what the client needs — *is this hit strong enough to surface* — without naming the algorithm.
+            Parnas's exact quote in the KWIC discussion: "we have specified more than was necessary and thereby reduced the number of possible implementations." The raw score and its scale are a representation detail clients did not need to know. Clients can write `score > 12.0` and now any new algorithm must produce numbers on the same scale. Confidence buckets (`"high"`, `"medium"`, `"low"`) reveal what the client needs — *is this hit strong enough to surface* — without naming the algorithm.
 
         - type: multiple
           question: |
@@ -1190,7 +1190,7 @@ steps:
             Should you approve?
           options:
             - "Yes — extra methods are additive, so they can't break clients."
-            - "No — that method puts the raw score (and its scale) back in the contract, exactly the leak we just removed. Confidence labels were chosen precisely so the score wouldn't be visible."
+            - "No — that method puts the raw score back in the contract, re-leaking what we just hid."
             - "Yes, if they add a docstring saying clients shouldn't use it."
             - "Yes, if they mark it as a static method."
           correct_index: 1
@@ -1199,7 +1199,7 @@ steps:
             2: "'Please don't use this method' is documentation as a *substitute* for hiding. It always loses to the next intern who really needs that number."
             3: "Static vs. instance doesn't affect contract leakage. The method is still on the Protocol."
           explanation: |
-            A subtle anti-pattern: **adding** to the contract can re-leak a decision you previously hid. The right move is to ask the teammate *what client problem `raw_score` solves*, and address that problem at the right level — e.g., add a `is_top_match(hit)` predicate, expose a new confidence band like `"very_high"`, or expose an explanation token. **Never** re-expose the score itself.
+            A subtle anti-pattern: **adding** to the contract can re-leak a decision you previously hid. Confidence labels were chosen precisely so the raw score and its scale wouldn't be visible. The right move is to ask the teammate *what client problem `raw_score` solves*, and address that problem at the right level — e.g., add a `is_top_match(hit)` predicate, expose a new confidence band like `"very_high"`, or expose an explanation token. **Never** re-expose the score itself.
 
     solution:
       files:
@@ -1653,7 +1653,7 @@ steps:
             What is the problem?
           options:
             - "Two parameters is too many; pick one."
-            - "It re-introduces the sqlite3 coupling that the EventDirectory Protocol was supposed to remove — this client now compiles only against SQLite."
+            - "It re-introduces the sqlite3 coupling the Protocol was meant to remove."
             - "Nothing — `EventDirectory` is just an interface, you can take other parameters too."
             - "You shouldn't use `sqlite3` in Python; use SQLAlchemy."
           correct_index: 1
@@ -1662,7 +1662,7 @@ steps:
             2: "It IS a Protocol you can take other parameters alongside — but if the *other* parameter re-introduces the very coupling the Protocol was meant to remove, you have undone the abstraction."
             3: "The library choice isn't what's at stake. Even an SQLAlchemy session parameter would re-couple the same way."
           explanation: |
-            This is a real, subtle anti-pattern: "leaky abstraction by parameter creep." The Protocol promises *you don't need a connection to ask about events* — and that promise breaks the moment a function also requires a connection. The fix is to push the transactional operation *behind* the Protocol (e.g., a new `EventDirectory.archive(event)` method) so the connection is still local to the directory implementation.
+            This is a real, subtle anti-pattern: "leaky abstraction by parameter creep." With a `connection` parameter, the client now compiles only against SQLite. The Protocol promises *you don't need a connection to ask about events* — and that promise breaks the moment a function also requires a connection. The fix is to push the transactional operation *behind* the Protocol (e.g., a new `EventDirectory.archive(event)` method) so the connection is still local to the directory implementation.
 
         - type: single
           question: |
@@ -1675,17 +1675,17 @@ steps:
 
             Which design hides more, in Parnas's sense?
           options:
-            - "A — page numbers are universal."
-            - "B — cursors hide whether pagination is offset-based, keyset-based, or token-based; clients only care that there is a `next_cursor` (or none)."
-            - "Neither — they hide the same amount."
-            - "A — `EventPage` adds a useless extra class."
+            - "A — page numbers are universal and familiar."
+            - "B — cursors hide whether pagination is offset-, keyset-, or token-based."
+            - "Neither — they hide the same amount of implementation detail."
+            - "A — `EventPage` adds a useless extra class for no gain."
           correct_index: 1
           option_feedback:
             0: "Page numbers are familiar but they're an *implementation* detail. They imply numeric offset and stable ordering between calls — two assumptions that break the moment the directory is backed by an event stream or a sharded service."
             2: "They look similar but B abstracts more: any pagination strategy can return *some* opaque cursor; only offset pagination can return a *page number*."
             3: "Wrapping the result in a small dataclass costs almost nothing and lets you evolve the response shape without breaking callers. (Useless? Add `total_known: int` later and no caller breaks.)"
           explanation: |
-            This is the same lesson as the recommender's `Confidence` enum. **Naming the domain concept (`next_cursor`) instead of the algorithm detail (`page: int`) hides one more design decision.** The reader who studied Step 3 should now find this pattern instinctive — a faded transfer of the exact same idea, applied to a different domain.
+            Clients only care that there is a `next_cursor` (or none) — same lesson as the recommender's `Confidence` enum. **Naming the domain concept (`next_cursor`) instead of the algorithm detail (`page: int`) hides one more design decision.** The reader who studied Step 3 should now find this pattern instinctive — a faded transfer of the exact same idea, applied to a different domain.
 
     solution:
       files:
@@ -2080,7 +2080,7 @@ steps:
             connected those three functions?
           options:
             - "Syntactic coupling — they all imported the same module."
-            - "Semantic coupling — none of them named each other, but all three shared the same assumption about the exhaustive list of provider strings. Change the list in one place and the others silently disagreed."
+            - "Semantic coupling — all three shared an assumption about the provider list without naming each other."
             - "Inheritance coupling — they all derived from a common base."
             - "There was no coupling — three separate functions are independent."
           correct_index: 1
@@ -2089,7 +2089,7 @@ steps:
             2: "They were functions, not classes. No inheritance involved."
             3: "They were dangerously coupled — through a *shared assumption*, not through a call. That's the worst kind: invisible until something silently breaks."
           explanation: |
-            **Semantic coupling** is the SEBook chapter's term for "two modules share the same assumption without saying so." The provider-list scattered across three functions was a textbook case. The compile-time tools (`grep`, type checkers) couldn't help you find it. The polymorphism refactor *removes the shared assumption from those three modules* — they now only know `provider.play(...)`. The assumption now lives in one place: the wiring.
+            **Semantic coupling** is the SEBook chapter's term for "two modules share the same assumption without saying so." Change the list in one place and the others silently disagree. The provider-list scattered across three functions was a textbook case. The compile-time tools (`grep`, type checkers) couldn't help you find it. The polymorphism refactor *removes the shared assumption from those three modules* — they now only know `provider.play(...)`. The assumption now lives in one place: the wiring.
 
         - type: multiple
           question: |
@@ -2112,10 +2112,10 @@ steps:
             best describes the *single* common move that connects Steps 2, 3,
             4, and 5?
           options:
-            - "Add a `@dataclass(frozen=True)` to every input."
-            - "Wrap each function in a class."
-            - "Replace direct exposure of a volatile decision with an interface (domain methods, a Protocol, an injected dependency, or polymorphism) so changing the decision is local."
-            - "Add type hints to every parameter."
+            - "Add a `@dataclass(frozen=True)` to every input the SUT receives."
+            - "Wrap each free function in a class with a single `run()` method."
+            - "Replace direct exposure of a volatile decision with a stable contract that doesn't name it."
+            - "Add type hints to every parameter so the linter can find leaks."
           correct_index: 2
           option_feedback:
             0: "Frozen dataclasses are a tool you used in three of the four steps — for *domain objects*. Not for every input. Hashing the tool to the goal loses the point."
@@ -2365,7 +2365,7 @@ steps:
           options:
             - "Modularity is overrated; skip it."
             - "Apply information hiding aggressively *everywhere*, including throwaway scripts and one-off demos."
-            - "Apply hiding where future change is plausible. The payoff is in maintenance and change, not in first-read clarity. A 50-line cron job does not need a `PaymentGateway` Protocol; a payments codebase does."
+            - "Apply hiding where future change is plausible — the payoff is in maintenance, not first-read clarity."
             - "Hide everything — every method should be private, every class should have a Protocol."
           correct_index: 2
           option_feedback:
@@ -2373,7 +2373,7 @@ steps:
             1: "Aggressive hiding adds layers without payoff in places where the decision will never change. That's the trap this option warns against."
             3: "'Hide everything' is the over-applied version of the principle that the chapter's *When NOT to apply* section warns about. Indirection has a real reading cost. Pay it where change is plausible; skip it where it isn't."
           explanation: |
-            Information hiding is a **bet on future change**. It's a great bet where the design decision is plausibly volatile — vendors, storage, algorithms, regulatory rules. It's a *bad* bet on decisions that will never change (a 50-line throwaway script, an obviously stable algorithm in a hot inner loop, a single-variant system with no plausible alternatives). The SE maxim from the chapter: **the right number of abstractions is the smallest number that lets the system change gracefully.** Beyond that number, every extra layer is a tax on every reader.
+            Information hiding is a **bet on future change**. It's a great bet where the design decision is plausibly volatile — vendors, storage, algorithms, regulatory rules. It's a *bad* bet on decisions that will never change. A 50-line cron job does not need a `PaymentGateway` Protocol; a payments codebase does. The SE maxim from the chapter: **the right number of abstractions is the smallest number that lets the system change gracefully.** Beyond that number, every extra layer is a tax on every reader.
 
             **What you've actually learned in this tutorial.** You can now (a) name a module's secret, (b) spot the contract leaks, (c) refactor a leaky module behind a Protocol or domain methods, (d) verify the secret is hidden with an implementation-swap test, (e) apply Single Choice when alternatives are exhaustive, and (f) predict the change-impact radius before you start editing. That's the operational form of Parnas's principle — and it survives the move from a tutorial to a real codebase.
 

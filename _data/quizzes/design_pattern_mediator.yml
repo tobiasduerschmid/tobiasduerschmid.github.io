@@ -29,7 +29,7 @@ questions:
       What is the **core difference** between Observer and Mediator?
     options:
       - "Observer is one-to-many; Mediator is many-to-many"
-      - "Observer distributes intelligence (each observer reacts independently); Mediator centralizes intelligence (the mediator coordinates all responses)"
+      - "Observer distributes reaction logic across observers; Mediator centralizes it"
       - "Observer uses interfaces; Mediator uses abstract classes"
       - "Observer is for UI patterns; Mediator is for backend patterns"
     correct_index: 1
@@ -48,7 +48,7 @@ questions:
     question: |
       A Mediator for a complex system has grown to 2,000 lines of coordination logic. What design problem has occurred, and what is the best remedy?
     options:
-      - "The Mediator has become a god class — split it into multiple focused mediators for different subsystem aspects"
+      - "The Mediator has become a god class — split it into focused mediators per concern"
       - "The Mediator is working correctly — centralized logic is always large"
       - "Replace the Mediator with a Facade"
       - "Replace the Mediator with Observer to distribute the logic"
@@ -69,7 +69,7 @@ questions:
       A "Managed Observer" is a pattern compound that combines Observer and Mediator. What emergent property does this combination provide?
     options:
       - "It eliminates the need for an Observer interface"
-      - "It provides both loose coupling (Observer-style notification) and centralized coordination (Mediator-style rules)"
+      - "It combines Observer's loose coupling with Mediator's centralized rules"
       - "It makes the Mediator unnecessary"
       - "It allows observers to communicate with each other directly"
     correct_index: 1
@@ -109,7 +109,7 @@ questions:
       The Mediator pattern converts N-to-N dependencies into N-to-1 dependencies. Why doesn't this always reduce overall system complexity?
     options:
       - "Because N-to-1 is always more complex than N-to-N"
-      - "Because the complexity is displaced into the Mediator rather than eliminated — the same coordination logic exists, just centralized"
+      - "Because the same coordination logic is displaced into the Mediator, not eliminated"
       - "Because the Mediator introduces new dependencies between colleagues"
       - "Because N-to-1 creates more coupling than N-to-N"
     correct_index: 1

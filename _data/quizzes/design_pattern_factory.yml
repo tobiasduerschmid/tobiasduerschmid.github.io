@@ -49,7 +49,7 @@ questions:
       The GoF compares Factory Method and Abstract Factory along an inheritance-vs-composition axis. What does that contrast mean structurally?
     options:
       - "Factory Method creates classes at runtime; Abstract Factory creates objects at runtime"
-      - "Factory Method relies on inheritance (a subclass overrides the factory method); Abstract Factory relies on object composition (the client receives a factory object and calls it)"
+      - "Factory Method uses inheritance (a subclass overrides the method); Abstract Factory uses composition (a factory object is passed in)"
       - "Factory Method is simpler because it does not use interfaces"
       - "Abstract Factory can only create one product type; Factory Method can create many"
     correct_index: 1
@@ -69,7 +69,7 @@ questions:
       An Abstract Factory interface defines a separate creation method for each product type in a family. A new product type must be added to the family. What is the consequence?
     options:
       - "Only one new concrete factory needs to be created; nothing else changes"
-      - "The Abstract Factory interface must change, and every concrete factory must be modified to implement the new creation method"
+      - "The interface must change, and every concrete factory must implement the new method"
       - "Only the client code needs to be updated to call the new method"
       - "The new product can be added without changing any existing code"
     correct_index: 1

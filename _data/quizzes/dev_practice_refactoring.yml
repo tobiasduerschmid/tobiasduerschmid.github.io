@@ -9,7 +9,7 @@ questions:
     question: |
       Which change is a true refactoring?
     options:
-      - "Rename a private helper and update all internal call sites, with all public behavior and tests unchanged."
+      - "Rename a private helper and update its call sites; public behavior is unchanged."
       - "Change a validation function so it now rejects inputs that used to be accepted."
       - "Add a new checkout feature requested by the product owner."
       - "Delete a flaky test so the build is green."
@@ -78,7 +78,7 @@ questions:
       During a feature crunch, a developer notices a misleading local variable name in the function they are already editing. They also want to reorganize the whole package. What is the best refactoring judgment?
     options:
       - "Do both immediately; any cleanup is always worth bundling into the feature."
-      - "Make the tiny local rename if it clarifies the current change and is covered by tests, but split the package reorganization into a separate refactoring task or stacked PR."
+      - "Do the tiny local rename now; split the package reorganization into its own task or stacked PR."
       - "Do no cleanup during feature work; refactoring is only allowed in dedicated refactoring sprints."
       - "Reorganize the package first because large refactorings are safer under deadline pressure."
     correct_index: 1
@@ -89,7 +89,7 @@ questions:
         Refusing all small cleanup allows broken windows to spread. The key is scope control, not a blanket ban.
       3: |
         Deadline pressure is exactly when large structural changes are riskiest. Keep the current change reviewable.
-    explanation: "Refactoring judgment weighs payoff, scope, and reviewability. Small local improvements often belong with the change; large structural work usually deserves its own focused review."
+    explanation: "Refactoring judgment weighs payoff, scope, and reviewability. Tiny local improvements covered by existing tests belong with the change; large structural work deserves its own focused review so reviewers can separate behavior preservation from feature work."
 
   - id: 5
     difficulty: advanced
@@ -99,7 +99,7 @@ questions:
       An AI agent proposes to "refactor" a module by extracting helpers, changing error messages, and altering the order in which side effects occur. What should the human supervisor do?
     options:
       - "Accept because AI is good at catalog refactorings."
-      - "Reject or split the work: behavior changes and side-effect reordering must be reviewed as feature or bug-fix changes, while true refactorings should be small and test-verified."
+      - "Split the work: review behavior changes separately from refactorings."
       - "Ask the AI to hide the behavior changes behind new names."
       - "Run a formatter; formatting is enough to prove behavior preservation."
     correct_index: 1
@@ -110,7 +110,7 @@ questions:
         Hiding behavior changes behind names makes review harder and violates the central contract of refactoring.
       3: |
         Formatting proves only surface consistency. It says nothing about observable behavior or side-effect order.
-    explanation: "AI-assisted refactoring still needs human scope control. Behavior changes and refactorings should be separated so reviewers know what contract they are checking."
+    explanation: "AI-assisted refactoring still needs human scope control. Refactorings should be small and test-verified; behavior changes and side-effect reordering must be reviewed as feature or bug-fix work so reviewers know what contract they are checking."
 
   - id: 6
     difficulty: intermediate
@@ -119,7 +119,7 @@ questions:
     question: |
       A checkout module has a `switch` on `paymentType` repeated in five places: fees, validation, receipt text, fraud rules, and retry policy. Which refactoring direction best fits the smell?
     options:
-      - "Replace Conditional with Polymorphism or Strategy objects so each payment type owns its behavior behind a common interface."
+      - "Replace Conditional with Polymorphism so each payment type owns its behavior."
       - "Add comments above every `switch` explaining the branches."
       - "Move all five switches into a larger `CheckoutUtils` class."
       - "Inline every helper so all payment behavior is visible in one method."
@@ -131,4 +131,4 @@ questions:
         Consolidating into a utility class may reduce search effort but can create a new god object and preserve the type-code smell.
       3: |
         Inlining worsens working-memory load and makes future payment-type changes harder.
-    explanation: "Repeated conditionals over the same type code are a classic sign that behavior wants to move behind polymorphism or a strategy boundary."
+    explanation: "Repeated conditionals over the same type code are a classic sign that behavior wants to move behind polymorphism or a Strategy boundary, so each subtype owns its variation behind a common interface and adding a new payment type touches one class instead of five `switch` statements."

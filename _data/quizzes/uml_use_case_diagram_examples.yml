@@ -149,7 +149,7 @@ questions:
       <div data-uml-type="usecase" data-uml-spec="@startuml&#10;actor User&#10;usecase &quot;Pay Online&quot; as UC1&#10;usecase &quot;Pay by Credit Card&quot; as UC2&#10;usecase &quot;Pay by PayPal&quot; as UC3&#10;rectangle &quot;Payment System&quot; {&#10;  UC1&#10;  UC2&#10;  UC3&#10;}&#10;User -- UC1&#10;UC2 --|> UC1&#10;UC3 --|> UC1&#10;@enduml"></div>
     options:
       - "A dashed arrow labeled `<<generalize>>`."
-      - "A solid line with a hollow triangle arrowhead pointing to the parent use case."
+      - "A solid line with a hollow triangle pointing to the parent."
       - "A dotted line with no arrowhead."
       - "A solid line with a filled diamond."
     correct_index: 1

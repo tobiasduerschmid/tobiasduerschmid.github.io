@@ -47,7 +47,7 @@ questions:
     options:
       - "Drift is intentional, while erosion is accidental."
       - "Drift occurs in the prescriptive architecture, while erosion occurs in the descriptive."
-      - "Drift involves new decisions that don't violate rules; erosion involves direct violations of the intended architecture."
+      - "Drift adds decisions that don't violate the intended architecture; erosion directly violates it."
       - "Drift is structural, whereas erosion is decision-based."
     correct_index: 2
     option_feedback:
@@ -131,7 +131,7 @@ questions:
       Which statement best describes an **architectural driver**?
     options:
       - "Any requirement written by a stakeholder."
-      - "A requirement whose change would plausibly change the architecture, usually because it is important and difficult."
+      - "A requirement whose change would plausibly change the architecture."
       - "Any implementation detail chosen by a developer."
       - "A diagram that shows component names and connectors."
     correct_index: 1
@@ -142,7 +142,7 @@ questions:
         Some implementation details are architectural, but most are local. Driver status comes from impact on architectural choice, not from being a code detail.
       3: |
         A diagram can document architecture, but it is not itself the input requirement that drives the design.
-    explanation: "**Architecturally significant requirements are the inputs that force architecture decisions.** If changing the requirement would change the design strategy, style, deployment, or major boundaries, it is probably a driver."
+    explanation: "**Architecturally significant requirements are the inputs that force architecture decisions** — usually the requirements that are important and difficult. If changing the requirement would change the design strategy, style, deployment, or major boundaries, it is probably a driver."
 
   - id: 8
     difficulty: intermediate
@@ -150,7 +150,7 @@ questions:
     question: |
       A shared C++ library appears once in the source tree. At build time, it is compiled into both the client executable and the server executable. Which view explains this cleanly?
     options:
-      - "The module view shows one code module; the component-and-connector view shows two runtime components that both contain that compiled code."
+      - "Module view: one code module. Component-and-connector view: two runtime components linked to that module."
       - "The component-and-connector view shows one component, because there is one source directory."
       - "The data view shows two tables, because executables are data."
       - "The behavioral view replaces both views because it contains the call order."
@@ -162,7 +162,7 @@ questions:
         Data views describe entities, tables, records, schemas, and their relationships. They do not explain how source code maps into executables.
       3: |
         Behavioral views describe interactions over time. They do not replace structural views that answer where code lives and what executes.
-    explanation: "**Module and runtime views are related but not isomorphic.** A module is a design-time code unit; a component is an independently deployable runtime unit. One module can be compiled into multiple components."
+    explanation: "**Module and runtime views are related but not isomorphic.** A module is a design-time code unit; a component is an independently deployable runtime unit. One module can be compiled into multiple components — here, the same shared library code lives in both the client and server executables."
 
   - id: 9
     difficulty: advanced

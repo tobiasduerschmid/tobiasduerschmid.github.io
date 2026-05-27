@@ -8,10 +8,10 @@ questions:
     question: |
       A team is building software for a Mars rover that must launch in 2 years, run autonomously for at least 5 more, and cannot receive software updates after the launch window closes. The product manager insists on Agile. What is the right pushback?
     options:
-      - "Agile is universally superior — proceed."
-      - "Agile's *iterative customer feedback* and *small frequent releases* require the customer to be reachable and the software to be redeployable. Neither holds here — the rover cannot be patched after launch, and 'the customer' is the harsh Martian environment, not a person giving feedback every two weeks. A formal up-front-heavy process (V-model, formal methods) is appropriate."
-      - "Agile is too slow for hardware projects."
-      - "Switch to XP instead — XP scales better to space missions."
+      - "Agile is universally superior — proceed with Scrum and two-week sprints."
+      - "Agile's feedback loop doesn't fit a non-redeployable system; use a V-model instead."
+      - "Agile is too slow for hardware projects; double the iteration length."
+      - "Switch to XP instead — its engineering rigor scales better to space missions."
     correct_index: 1
     option_feedback:
       0: |
@@ -29,7 +29,7 @@ questions:
       A consultant says "Agile means no documentation and no planning." How would you respond, citing the Agile Manifesto?
     options:
       - "Agile replaces documentation with verbal communication and replaces planning with reaction — the consultant is essentially right."
-      - "The Manifesto says 'working software *over* comprehensive documentation' and 'responding to change *over* following a plan' — 'over' means *more critical than*, not *instead of*. Agile teams still document and plan; they just don't let those activities dominate when working software and adaptability are at stake."
+      - "The Manifesto's 'A *over* B' means *more critical than*, not *instead of* — Agile teams still document and plan."
       - "Agile rejects documentation but requires *more* up-front planning than Waterfall, just framed differently."
       - "Agile rejects planning but requires extensive end-of-project documentation as a deliverable artifact."
     correct_index: 1
@@ -49,7 +49,7 @@ questions:
       A team practices what they call Agile: they hold daily standups, run two-week sprints, and have a Scrum Master. But they also produce a 150-page requirements document up front, refuse to change any requirement once a sprint starts, and demo to the customer only at the end of the engagement. Diagnose what's actually going on.
     options:
       - "By-the-book Agile — the ceremonies are exactly what Scrum prescribes, so the team is following the framework correctly."
-      - "**Cargo-cult Agile** — adopting the visible *rituals* (standups, sprints, Scrum Master) while ignoring the underlying *values* (responsiveness, customer collaboration, working software early). The ceremonies become theater."
+      - "Cargo-cult Agile — adopting the visible *rituals* while ignoring the underlying *values*; the ceremonies become theater."
       - "Disciplined Scrum-XP hybrid — the upfront doc gives the team a stable target while the ceremonies handle execution; this is how mature teams scale."
       - "A *Wagile* mix that captures the best of both worlds — Waterfall's deliverables and Agile's rhythms — and is often the right choice for fixed-scope contracts."
     correct_index: 1
@@ -69,8 +69,8 @@ questions:
       Which of these are **core failures of Waterfall** that Agile was designed to address? Select all that apply.
     options:
       - "Customer sees working software only at the very end — often months or years after requirements were captured."
-      - "Big-upfront-design assumes requirements are stable and predictable, which they typically aren't in complex domains."
-      - "Late-discovery problems (a wrong requirement, a missed integration, a flawed assumption) are most expensive to fix at the end of the cycle, when most code already depends on them."
+      - "Big-upfront-design assumes stable requirements, which complex domains rarely have."
+      - "Late-discovery defects are most expensive to fix once much code depends on them."
       - "Waterfall produces code that is too modular and easy to change."
       - "Waterfall is too fast to deliver — Agile slows things down."
     correct_indices: [0, 1, 2]
@@ -93,10 +93,10 @@ questions:
     question: |
       An Agile team is asked to estimate when they will be 'done' with a feature. They reply: "We're delivering a working increment every 2 weeks; you can stop us whenever the product is good enough." What Agile principle does this illustrate?
     options:
-      - "Agile teams cannot estimate."
-      - "**Iterative and incremental development**: each iteration produces a working increment of the product, with customer-controlled stopping. 'Done' is not a fixed milestone — it's a customer judgment about when the product delivers enough value to ship. This inverts Waterfall's 'finish the plan then ship' model."
-      - "Agile rejects deadlines."
-      - "The team is being lazy."
+      - "Agile teams cannot meaningfully estimate ship dates."
+      - "Iterative and incremental delivery, with the customer deciding when 'good enough' is reached."
+      - "Agile rejects deadlines as incompatible with iterative work."
+      - "The team is avoiding the question — Agile still requires a fixed completion milestone."
     correct_index: 1
     option_feedback:
       0: |
@@ -104,7 +104,7 @@ questions:
       2: |
         Agile is compatible with deadlines — the team commits to a date and adjusts scope to fit. The technique of fixing-time-and-scope-and-quality and letting all three negotiate is itself an Agile pattern (the iron triangle).
       3: |
-        The team is being responsive: they're shifting decision authority to the customer, who controls when 'good enough' is reached. This is exactly the customer-collaboration value at work, not laziness.
+        The team is being responsive: they're shifting decision authority to the customer, who controls when 'good enough' is reached. This is exactly the customer-collaboration value at work, not avoidance.
     explanation: "**Iterative + incremental development means each iteration produces a usable working increment, and the customer decides when to stop. 'Done' is a value judgment, not a fixed milestone.** This is the fundamental inversion of Waterfall's 'finish the plan' frame — in Agile, the plan adapts to the customer's evolving sense of what 'good enough' means, and the team builds whatever increment best serves that next decision."
 
   - id: 6
@@ -114,7 +114,7 @@ questions:
       An organization's leadership says: "Our developers are coding monkeys — we'll tell them what to build." A senior engineer says this violates a core Agile principle. Which one?
     options:
       - "Simplicity — leadership should write less detailed specs."
-      - "**Self-organizing teams** — Agile empowers developers to decide how to best organize their own work, leveraging their on-the-ground knowledge of trade-offs, dependencies, and risks. Treating them as order-takers wastes their judgment, lowers morale, and produces worse decisions because the people with the most context are excluded from making them."
+      - "Self-organizing teams — developers decide how to organize their own work."
       - "Customer satisfaction — leadership is not a customer."
       - "Technical excellence — leadership doesn't care about technical excellence."
     correct_index: 1
@@ -134,7 +134,7 @@ questions:
       Compare **Scrum**, **XP**, and **Lean Software Development** at the highest level. Which framing is most accurate?
     options:
       - "They're the same — just different names for Agile."
-      - "**Scrum:** the most popular Agile framework, organized around roles (Scrum Master, Product Owner, Developers) and ceremonies (sprints, standups, reviews, retrospectives) — focuses on process/workflow. **XP:** Agile framework focused on **technical excellence** through extreme versions of good engineering practices (TDD, pair programming, CI, collective ownership). **Lean:** derived from Toyota manufacturing principles, focused on **eliminating waste** in the value stream. Many teams combine them (e.g., Scrum + XP)."
+      - "Scrum centers on workflow/roles, XP on engineering practices, Lean on eliminating waste."
       - "Scrum is for big teams; XP is for small teams; Lean is for manufacturing."
       - "Scrum is engineering practices; XP is project management; Lean is metrics."
     correct_index: 1
@@ -154,7 +154,7 @@ questions:
       A startup CEO says: "We're Agile, so we don't need any plans — we just react to customer feedback every two weeks." What's the right correction?
     options:
       - "They're right — Agile prohibits plans."
-      - "Agile values 'responding to change *over* following a plan' — not 'no plan.' Teams still plan (release plans, iteration plans, road maps), but treat plans as **hypotheses to be revised** based on what each iteration reveals, rather than commitments to be followed regardless of evidence. A team that doesn't plan at all isn't Agile — it's adrift."
+      - "Agile teams plan, but treat plans as hypotheses to revise."
       - "They should write a Waterfall plan but call it Agile."
       - "Startups don't need any process at all."
     correct_index: 1
@@ -174,7 +174,7 @@ questions:
       A team's product owner wants to demo working software to the customer every iteration but the engineering manager pushes back: "Two-week iterations are too short to produce anything demonstrable." Which Agile principle does the engineering manager's view violate, and what's the right architectural response?
     options:
       - "Customer satisfaction — engineering should not have a say in delivery cadence."
-      - "**Customer satisfaction through early and continuous delivery of valuable software** — if 2-week iterations cannot produce demonstrable increments, the right response is *architectural* (break the work into thinner vertical slices, invest in deployment automation, decouple the modules so changes can ship independently), not to lengthen the iteration. The architectural friction is the symptom; iteration length is not the disease."
+      - "Early and continuous delivery — fix it with thinner vertical slices and better automation, not longer iterations."
       - "Self-organizing teams — engineering should decide alone."
       - "Working software — engineering is correct that software should be polished before demoing."
     correct_index: 1
@@ -194,7 +194,7 @@ questions:
       A team is in iteration 7 of 12. Halfway through the iteration, the customer comes back with a high-priority requirement change that affects work already in progress. How should the team respond per Agile values?
     options:
       - "Refuse — sprints are sacrosanct, deliver what was committed."
-      - "Have a conversation with the customer about the trade-off — accepting the change means moving other committed work to a later iteration; weigh the business value of the change against the work that gets pushed; make the decision *together*. The Agile value of 'responding to change' doesn't mean automatically accepting every change; it means treating change as expected and negotiable."
+      - "Talk through the trade-off with the customer and decide *together* what to displace."
       - "Drop everything and switch — the customer is always right."
       - "Wait until iteration 8 to discuss — the current sprint must complete as planned."
     correct_index: 1

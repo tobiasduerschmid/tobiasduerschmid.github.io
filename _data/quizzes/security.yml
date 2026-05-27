@@ -76,7 +76,7 @@ questions:
 
       where `<typed username>` and `<typed password>` are concatenated into the SQL string. **What is the most direct vulnerability in this code?**
     options:
-      - "**SQL injection** — the user controls the contents of the SQL string, so a crafted input can change the query's structure and bypass the password check."
+      - "SQL injection — user input becomes part of the SQL string and can change the query's structure."
       - "Cross-site scripting (XSS) — the password may be rendered into a webpage."
       - "Denial of service — the query may be slow if the database is large."
       - "Phishing — an attacker may steal the user's password."
@@ -106,7 +106,7 @@ questions:
       with `name` and `pass` passed as separate arguments to the database driver. **What is the *primary* reason this prevents SQL injection?**
     options:
       - "The database driver removes dangerous characters like quotes and semicolons from the input strings before sending them."
-      - "The database parses the SQL **once** with the placeholders in place, then binds the parameter values into the already-parsed query — so the values can never become new SQL syntax."
+      - "The SQL is parsed once with placeholders, then values are bound in — so values can never become new SQL syntax."
       - "Parameterized queries are encrypted in transit, so attackers cannot see what the query looks like."
       - "The database checks each parameter against a list of known SQL keywords and rejects suspicious values."
     correct_index: 1
@@ -153,7 +153,7 @@ questions:
     options:
       - "Limit each comment to 280 characters so payloads are too short to do real damage."
       - "Reject any comment whose text contains the word `script`, case-insensitively."
-      - "Render the comment by **escaping HTML metacharacters** (`<`, `>`, `\"`, `&`) at output time, so the browser sees them as literal text rather than as tag boundaries."
+      - "Escape HTML metacharacters (`<`, `>`, `\"`, `&`) at output time so the browser reads them as text."
       - "Store the comment in a separate database table from the rest of the site, so a SQL injection can't reach it."
     correct_index: 2
     option_feedback:
@@ -178,7 +178,7 @@ questions:
       A startup announces a new "proprietary, never-before-published" encryption algorithm that they claim is unbreakable because *"nobody knows how it works"*. **What is the most fundamental problem with this approach to security?**
     options:
       - "The algorithm is probably slow because it has not been optimized."
-      - "It violates the **Open Design** principle: a system whose security depends on the *design itself* being secret will collapse as soon as anyone reverses it. Real security must rest on key secrecy, with the algorithm itself open to public scrutiny."
+      - "It violates Open Design — security must rest on key secrecy, not on the algorithm being hidden."
       - "The algorithm cannot be patented, so the startup will lose competitive advantage."
       - "Custom algorithms are illegal under most national export-control laws."
     correct_index: 1
@@ -203,7 +203,7 @@ questions:
     options:
       - "Both should hide all details — secrecy is always the safest default."
       - "Both should publish all details — transparency is always the safest default."
-      - "The research team should publish the algorithm so the security community can scrutinize it; the production company should keep its specific framework versions and configuration details non-public to slow down opportunistic attackers."
+      - "Publish the algorithm for scrutiny; keep production framework versions and config non-public."
       - "The research team should keep its algorithm secret to maintain competitive advantage; the production company should publish its full configuration so that white-hat researchers can audit it."
     correct_index: 2
     option_feedback:
@@ -251,7 +251,7 @@ questions:
       In practice, a digital signature scheme **hashes the document first** and then encrypts the hash with the signer's private key — rather than encrypting the entire document. **Why?**
     options:
       - "Because hashing is a stronger form of encryption than RSA and provides extra confidentiality."
-      - "Because public-key operations are slow per byte; hashing first reduces every document — regardless of size — to a small fixed-length digest, so the slow public-key operation runs over a few dozen bytes instead of the whole document."
+      - "Public-key operations are slow per byte; hashing first reduces any document to a small fixed-length digest."
       - "Because encrypting the whole document would make it impossible to read; the hash exists so the receiver can still see the original text."
       - "Because hashes are reversible, and reversibility is required for a valid signature."
     correct_index: 1
@@ -274,8 +274,8 @@ questions:
     question: |
       A junior engineer proposes that the client send the username and password **on every request**, and the server verifies them every time. **Which problems does this design have?** (Select all that apply.)
     options:
-      - "**Slow.** Verifying a password (with a deliberately slow hash like bcrypt or Argon2) on every request adds tens of milliseconds of CPU per call."
-      - "**Insecure.** The client must keep the cleartext password in memory for the lifetime of the session, raising the blast radius of any client-side compromise. Every additional request is also another opportunity for the password to leak in a log file, debug trace, or proxy header."
+      - "**Slow.** Hashing the password (bcrypt/Argon2) on every request adds CPU cost per call."
+      - "**Insecure.** The cleartext password lives in client memory for the session, with many chances to leak."
       - "**Verbose.** SQL queries become longer because they include an extra `AND password = ...` clause."
       - "**Not authenticated enough.** The password should also be sent in the URL query string for redundancy."
     correct_indices: [0, 1]
@@ -285,13 +285,13 @@ questions:
         whole point of session IDs and JWTs is to amortize the password check.
       1: |
         Don't omit this one — keeping the cleartext password live in memory and sending it on every
-        request multiplies the chances of it being exposed.
+        request multiplies the chances of it being exposed. Each additional request is another opportunity to leak the password into a log file, debug trace, or proxy header.
       2: |
         Query length is irrelevant. The problems are performance and security exposure, not SQL aesthetics.
       3: |
         Putting passwords in URL query strings is a well-known anti-pattern — URLs are logged on servers,
         proxies, browser history, and referer headers. This option is the opposite of helpful.
-    explanation: "Sending the password on every request is **slow** (passwords are deliberately hashed with a slow algorithm — bcrypt, Argon2 — that is fine to run on login but expensive to repeat on every API call) and **insecure** (the cleartext credential lives in memory and on the wire for the whole session, with many opportunities to leak). The standard fix is to authenticate *once*, then issue a short-lived session token (a session ID or JWT) that rides on subsequent requests in the client's place."
+    explanation: "Sending the password on every request is **slow** (passwords are deliberately hashed with a slow algorithm — bcrypt, Argon2 — that is fine to run on login but expensive to repeat on every API call: tens of milliseconds of CPU per call) and **insecure** (the cleartext credential lives in memory and on the wire for the whole session, with many opportunities to leak). The standard fix is to authenticate *once*, then issue a short-lived session token (a session ID or JWT) that rides on subsequent requests in the client's place."
 
   - id: 13
     difficulty: advanced
@@ -300,7 +300,7 @@ questions:
       A web app stores its session tokens in **`HttpOnly` cookies** and reads them only on the server. A teammate concludes: *"That makes the app immune to XSS — the script can't read the cookie, so we're safe."* **What is wrong with this conclusion?**
     options:
       - "Nothing — `HttpOnly` cookies fully neutralize XSS attacks."
-      - "`HttpOnly` only stops *theft* of the session ID. A script running on the trusted page can still issue authenticated `fetch` requests through the browser — the browser will dutifully attach the cookie, so the attacker rides the session even though they never read it. (And the script can still read other secrets in the DOM, deface the page, etc.)"
+      - "`HttpOnly` blocks *theft* of the cookie, not *use*: a script can still issue authenticated `fetch` requests and the browser attaches the cookie."
       - "`HttpOnly` cookies are a deprecated standard and modern browsers no longer honor them."
       - "`HttpOnly` is only effective on Chromium browsers; other browsers ignore the flag."
     correct_index: 1
@@ -315,7 +315,7 @@ questions:
       3: |
         `HttpOnly` is supported by every major browser. The error is in confusing *theft* of the token
         with *use* of the session.
-    explanation: "`HttpOnly` is a valuable defense — it prevents JavaScript from *reading* the session ID and exfiltrating it — but it does **not** prevent the script from *using* the session. A script running in the trusted origin can call `fetch('/api/...', { credentials: 'include' })` and the browser will attach the cookie automatically. So the attacker rides the session in the victim's browser without ever touching the raw token. This is sometimes called *session-riding*. Layered defenses — strict CSP, output encoding to prevent XSS in the first place, `SameSite=Strict` cookies — are needed; `HttpOnly` alone is not enough."
+    explanation: "`HttpOnly` is a valuable defense — it prevents JavaScript from *reading* the session ID and exfiltrating it — but it does **not** prevent the script from *using* the session. A script running in the trusted origin can call `fetch('/api/...', { credentials: 'include' })` and the browser will attach the cookie automatically. So the attacker rides the session in the victim's browser without ever touching the raw token (sometimes called *session-riding*), and the script can still read other secrets in the DOM, deface the page, etc. Layered defenses — strict CSP, output encoding to prevent XSS in the first place, `SameSite=Strict` cookies — are needed; `HttpOnly` alone is not enough."
 
   - id: 14
     difficulty: advanced
@@ -323,9 +323,9 @@ questions:
     question: |
       Which of the following are **accurate trade-offs** of using a JSON Web Token (JWT) instead of a server-managed session cookie? (Select all that apply.)
     options:
-      - "JWTs are **stateless on the server** — there is no session store to consult, which makes horizontal scaling across many backend instances easier."
-      - "JWTs are **harder to revoke before expiry** — because the server keeps no record of valid tokens, a stolen JWT remains usable until its `exp` time. Standard mitigations are short expiries plus a separate refresh-token mechanism."
-      - "JWTs stored in `localStorage` are **directly readable by any script in the page** — XSS can exfiltrate the token. Storing the JWT in an `HttpOnly` + `SameSite` cookie reduces this risk back toward session-cookie levels."
+      - "JWTs are **stateless on the server** — no session store to consult, so horizontal scaling is easier."
+      - "JWTs are **harder to revoke before expiry** — a stolen JWT stays valid until its `exp` time."
+      - "JWTs in `localStorage` are **readable by any script** — XSS can exfiltrate the token."
       - "JWTs are **mathematically unforgeable even without a key** — anyone can verify them but no one can construct a valid one."
       - "JWTs **eliminate** the need for HTTPS, because the signature already protects against tampering."
     correct_indices: [0, 1, 2]
@@ -347,7 +347,7 @@ questions:
         TLS protects the *transport* — confidentiality of the request body, the URL, and the bearer token
         itself in flight. A JWT signature does not cover any of that. Always use HTTPS regardless of
         token format.
-    explanation: "JWTs trade a server-side session store for a *signed*, client-side token. The headline benefit is statelessness (no shared session store between backends — easier horizontal scaling). The headline costs are difficulty of revocation (no centralized 'log out' before `exp`) and the storage problem (`localStorage` is XSS-readable). Two things JWTs do **not** do: they don't eliminate the need for HTTPS, and they don't prevent forgery without key secrecy — anyone holding the signing key can mint a valid token."
+    explanation: "JWTs trade a server-side session store for a *signed*, client-side token. The headline benefit is statelessness (no shared session store between backends — easier horizontal scaling). The headline costs are difficulty of revocation (no centralized 'log out' before `exp` — standard mitigations are short expiries plus a separate refresh-token mechanism) and the storage problem (`localStorage` is XSS-readable; storing the JWT in an `HttpOnly` + `SameSite` cookie reduces this risk back toward session-cookie levels). Two things JWTs do **not** do: they don't eliminate the need for HTTPS, and they don't prevent forgery without key secrecy — anyone holding the signing key can mint a valid token."
 
   - id: 15
     difficulty: intermediate
@@ -356,7 +356,7 @@ questions:
       You are designing a small e-commerce backend with four components: a **Product Display** service, an **Email Notification** service, an **Image Upload** service, and a **System Backup** service. Following the **Principle of Least Privilege**, which permission set is most appropriate for the **Email Notification** service?
     options:
       - "Full read/write access to every database table, plus access to the email-sending API — so it can pull whatever data it needs for the email body."
-      - "**Send-only access to a specific email-sending API and no database access**; the data the email needs should be passed in the request, not fetched directly."
+      - "Send-only access to the email-sending API and no database access; data is passed in the request."
       - "Read-only access to every database table, plus access to the email-sending API."
       - "Root access to the underlying host, since email queues sometimes need OS-level tuning."
     correct_index: 1

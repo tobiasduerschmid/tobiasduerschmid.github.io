@@ -193,7 +193,7 @@ questions:
       <div data-uml-type="sequence" data-uml-spec="@startuml&#10;participant ui: UI&#10;participant os: OrderService&#10;participant db: Database&#10;ui -> os: placeOrder(items)&#10;activate os&#10;os -> db: saveOrder(items)&#10;activate db&#10;db --> os: orderId&#10;deactivate db&#10;os --> ui: confirmation(orderId)&#10;deactivate os&#10;@enduml"></div>
     options:
       - "The object is waiting for input and doing nothing."
-      - "The object is actively performing an action or executing a method."
+      - "The object is actively executing a method."
       - "The object has been destroyed."
       - "The object is in a suspended state."
     correct_index: 1
@@ -263,7 +263,7 @@ questions:
     question: >
       A sequence diagram and a class diagram are drawn for the same system. An arrow in the sequence diagram shows `order -> inventory: checkStock(itemId)`. What must be true in the class diagram?
     options:
-      - "There must be an `Inventory` class with a method `checkStock(itemId)` (or its superclass must define it)."
+      - "`Inventory` (or a superclass) must declare `checkStock(itemId)`."
       - "There must be a dependency arrow from Order to Inventory."
       - "Inventory must be an interface that Order realizes."
       - "Order must have an attribute of type Inventory."

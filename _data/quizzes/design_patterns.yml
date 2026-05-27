@@ -230,10 +230,10 @@ questions:
     question: |
       A developer writes a `TurkeyAdapter` that implements the `Duck` interface. The `quack()` method calls `turkey.gobble()`, and the `fly()` method calls `turkey.fly()` in a loop five times (a `Duck.fly()` flies a long distance, but a `Turkey.fly()` only goes a short burst). Which aspect of this adapter introduces the most design risk?
     options:
-      - "The quack()-to-gobble() mapping, because it changes the method name"
-      - "The looped fly() simulation, because it involves behavioral adaptation beyond simple interface translation"
-      - "The fact that the adapter wraps the turkey via composition"
-      - "The adapter should use multiple inheritance instead"
+      - "The `quack()`-to-`gobble()` mapping, because it changes the method name across types"
+      - "The looped `fly()` simulation — behavioral adaptation beyond simple interface translation"
+      - "The fact that the adapter wraps the turkey via composition rather than inheritance"
+      - "The adapter should use multiple inheritance instead of composition"
     correct_index: 1
     option_feedback:
       0: |

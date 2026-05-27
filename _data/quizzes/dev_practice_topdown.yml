@@ -10,7 +10,7 @@ questions:
       A reviewer opens a complex PR and immediately starts reading the diff line by line. Ten minutes later they still do not know why the change exists. What should they do instead?
     options:
       - "Keep tracing; understanding always emerges after enough lines."
-      - "Return to the specification layer: read the PR description, issue, tests, and design notes, then form a hypothesis about the intended change before revisiting the diff."
+      - "Read the PR description, issue, and tests to form a hypothesis about intent before revisiting the diff."
       - "Ask the author to rewrite every function before review."
       - "Review only files with familiar names and ignore the rest."
     correct_index: 1
@@ -30,7 +30,7 @@ questions:
     question: |
       Which source-file organization best supports the Stepdown Rule and Newspaper Metaphor?
     options:
-      - "Public orchestration function at the top, followed by helper functions in the order the orchestration calls them, with low-level utilities near the bottom."
+      - "Public orchestration function at the top, helpers in call order below, low-level utilities at the bottom."
       - "All helper functions first, public API last, so the reader sees every detail before the summary."
       - "Alphabetical ordering of functions, regardless of call relationships."
       - "Random ordering, because modern IDE search makes physical layout irrelevant."
@@ -78,7 +78,7 @@ questions:
       A developer expects a payment service to contain a `refund` path, but no naming, tests, or call hierarchy confirms that hypothesis. What is the most expert next move?
     options:
       - "Assume the refund path exists because the domain schema says it should."
-      - "Switch temporarily to bottom-up or tool-supported tracing: search call sites, inspect tests, and follow data flow until the hypothesis is confirmed, revised, or rejected."
+      - "Switch to bottom-up tracing: search call sites, inspect tests, and follow data flow."
       - "Rename unrelated methods until one of them becomes a refund beacon."
       - "Stop reviewing because top-down comprehension failed."
     correct_index: 1
@@ -89,7 +89,7 @@ questions:
         Renaming without understanding risks creating false beacons. The reader must first discover the real behavior.
       3: |
         Failed hypotheses are normal. The expert move is to repair the mental model with targeted evidence.
-    explanation: "Top-down comprehension is opportunistic. Experts switch strategies when evidence does not support the current model."
+    explanation: "Top-down comprehension is opportunistic. When beacons fail, experts switch to bottom-up or tool-supported tracing until the hypothesis is confirmed, revised, or rejected."
 
   - id: 5
     difficulty: advanced
@@ -99,7 +99,7 @@ questions:
       A class named `PaymentFactory` quietly applies fraud policy, discounts, and audit logging before returning an object. Why is this harmful to top-down comprehension?
     options:
       - "Factory names are never useful beacons."
-      - "The name activates a creation-only schema, but the implementation hides business behavior behind that schema. The beacon is misleading, so readers form the wrong hypothesis."
+      - "The beacon misleads — `Factory` implies creation but business behavior hides behind it."
       - "The class should be renamed `PaymentSingleton` because Singleton names are more recognizable."
       - "The problem is only that the file should be shorter."
     correct_index: 1
@@ -120,7 +120,7 @@ questions:
       You are mentoring students who trace every line of every program, even when the structure is familiar. Which practice best helps them grow toward expert comprehension?
     options:
       - "Ban tracing entirely so they are forced to guess."
-      - "Teach programming plans and beacons, then ask students to predict the high-level purpose of a code block before tracing only the lines needed to verify or correct the prediction."
+      - "Teach beacons, then have students predict purpose first and trace only the lines needed to verify it."
       - "Give them only obfuscated code so they cannot rely on names."
       - "Make them memorize design-pattern definitions without reading code."
     correct_index: 1

@@ -15,7 +15,7 @@ questions:
       What is the bug, using the React rendering model?
     options:
       - "`count++` is invalid JavaScript syntax inside an arrow function"
-      - "React re-executes the component function on every render. `let count = 0` resets `count` each time, and mutating a local variable doesn't signal React to re-render. The fix: `const [count, setCount] = React.useState(0)` with `setCount(count + 1)`"
+      - "Each render resets `let count = 0`; persistent state needs `useState`."
       - "Arrow functions cannot access variables from the outer scope"
       - "The `onClick` handler needs to be a named function, not an anonymous arrow function"
     correct_index: 1
@@ -36,7 +36,7 @@ questions:
     question: "A student stores the full filtered list in state alongside the unfiltered list: `const [allTasks, setAllTasks] = useState(tasks)` and `const [filteredTasks, setFilteredTasks] = useState(tasks)`. What design problem does this create?"
     options:
       - "This is correct — having both lists in state makes the component faster"
-      - "This violates the 'minimal state' principle. Storing derived data creates sync bugs — if tasks change, you must remember to update BOTH states. Instead, store only the filter string in state and derive the filtered list: `const filtered = tasks.filter(t => ...)`"
+      - "Storing derived data violates *minimal state* — the filter string is the only real state."
       - "This is correct — React requires all displayed data to be in state"
       - "The only problem is naming — `filteredTasks` should be called `visibleTasks`"
     correct_index: 1
@@ -56,7 +56,7 @@ questions:
     question: "Why does React require a stable `key` prop on list items, and why is using the array index as a key dangerous for dynamic lists?"
     options:
       - "Keys are needed for CSS styling — React uses them to apply animations"
-      - "Keys let React's reconciler identify which items are stable across re-renders. With index keys, deleting the middle item shifts all subsequent indices — React maps keys to component instances, so it associates the wrong state (e.g., checked checkboxes) with the wrong items"
+      - "Keys let React's reconciler match items across renders; index keys mis-attach state after a deletion."
       - "Keys are optional — React works fine without them, just slower"
       - "Array indices are not valid as React keys — React requires string keys only"
     correct_index: 1
@@ -76,7 +76,7 @@ questions:
     question: "In 'Thinking in React', why should you build a **static version** (props only, no state) BEFORE adding any state?"
     options:
       - "Because React cannot compile components that use both props and state"
-      - "A static version establishes the component hierarchy and data flow without the complexity of interactivity. This separates two concerns: (1) what the UI looks like and (2) how it changes. Starting with state leads to over-engineering and makes it harder to identify minimal state"
+      - "A static version settles the component hierarchy and data flow before interactivity is in the picture."
       - "State is slow — building without state first ensures optimal performance"
       - "It is just a convention — there is no technical reason to build static first"
     correct_index: 1
@@ -100,10 +100,10 @@ questions:
       {count && <Badge count={count} />}
       ```
     options:
-      - "Nothing — `0` is falsy, so the short-circuit prevents rendering"
-      - "The number `0` appears as text in the UI. Unlike `false`, `null`, and `undefined`, the number `0` IS a valid React node. Fix: `{count > 0 && <Badge count={count} />}`"
-      - "`<Badge count={0} />` renders normally"
-      - "A React error about invalid node type"
+      - "Nothing renders — `0` is falsy, so the short-circuit prevents output entirely"
+      - "The text `0` appears because `0` is a valid React node and `&&` returns it"
+      - "`<Badge count={0} />` renders normally because React unwraps the `0` operand"
+      - "React throws an invalid-node-type error because `0` cannot be a JSX child"
     correct_index: 1
     option_feedback:
       0: |
@@ -122,7 +122,7 @@ questions:
     options:
       - "In `SearchBar` — it owns the input, so it should own the state"
       - "In `ProductTable` — it needs the filter to display results"
-      - "In their common ancestor — both components need `filterText` (one for display, one for filtering). State should live in the lowest common ancestor that needs it, passed down as props with a callback for updates"
+      - "In their lowest common ancestor — both siblings need `filterText`, passed down with a callback."
       - "In a global variable — both can access it without prop passing"
     correct_index: 2
     option_feedback:
@@ -142,10 +142,10 @@ questions:
     question: |
       A student proposes using class inheritance for React components: `class AdminCard extends UserCard`. Why does React prefer composition instead?
     options:
-      - "JavaScript does not support class inheritance"
-      - "Deep inheritance hierarchies are fragile — changing `UserCard` can break `AdminCard`. Composition using `children` and small components is more flexible: `<Card><AdminBadge /><UserInfo /></Card>` can be rearranged without touching Card's implementation"
-      - "Inheritance is slower at runtime in React's virtual DOM"
-      - "React does not support class components at all"
+      - "JavaScript does not support class inheritance, so `extends UserCard` is invalid"
+      - "Deep inheritance is fragile — composition with `children` decouples `Card` from contents"
+      - "Inheritance is slower at runtime because React's virtual DOM cannot diff subclasses"
+      - "React class components were removed in React 18, so inheritance is no longer supported"
     correct_index: 1
     option_feedback:
       0: |
@@ -227,7 +227,7 @@ questions:
     options:
       - "The button renders and increments `count` once per click — this is correct"
       - "A React error is thrown because `setCount` cannot be used as a prop value"
-      - "`setCount(count + 1)` executes immediately during render (not on click). This updates state, which triggers another render, which calls `setCount` again — an infinite loop. Fix: `onClick={() => setCount(count + 1)}` or extract `handleClick` as a named function"
+      - "`setCount(count + 1)` runs during render, retriggering itself — infinite loop. Use `onClick={() => setCount(count + 1)}`."
       - "The component renders fine but clicking does nothing because the handler returns `undefined`"
     correct_index: 2
     option_feedback:
@@ -254,7 +254,7 @@ questions:
       The parent changes `userId` from `1` to `2`, but the screen still shows user `1`. **Diagnose** the bug.
     options:
       - "`fetch` is asynchronous and cannot be used inside `useEffect`"
-      - "The dependency array `[]` means the effect runs only once — on mount. Because `userId` is not listed, React never re-runs the effect when it changes. Fix: `[userId]`"
+      - "The `[]` dependency array runs the effect once on mount; use `[userId]` to refetch on prop change."
       - "`useEffect` cannot read props — `userId` is undefined inside the callback"
       - "The `.then()` chain should be replaced with `async/await`"
     correct_index: 1

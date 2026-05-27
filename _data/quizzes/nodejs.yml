@@ -7,7 +7,7 @@ questions:
     question: "A C++ developer argues: 'Single-threaded means Node.js can only handle one request at a time, so it's useless for servers.' What is the flaw in this reasoning?"
     options:
       - "Node.js is actually multi-threaded — each request gets its own thread"
-      - "Node.js IS single-threaded, but its Event Loop delegates I/O operations to the OS (via libuv) and processes callbacks when results arrive. This lets it handle thousands of concurrent I/O-bound connections with one thread — unlike C++ where each connection typically needs its own thread"
+      - "Node delegates I/O to the OS (via libuv) while one thread handles many concurrent connections."
       - "Single-threaded is slower, but Node.js compensates with a faster garbage collector"
       - "The flaw is that Node.js compiles to C++ before running, so it actually uses threads internally"
     correct_index: 1
@@ -35,7 +35,7 @@ questions:
       Explain the output using the Event Loop model.
     options:
       - "`setTimeout` has a minimum delay of 1ms, so B is slightly delayed"
-      - "The `setTimeout` callback enters the **Task Queue** immediately, but the Event Loop only dequeues it when the **Call Stack is empty**. `A` and `C` are synchronous and execute first. Only after both complete does the Event Loop hand the `B` callback to the Chef"
+      - "The timer callback waits in the Task Queue until the Call Stack empties — `A` and `C` run first."
       - "`console.log` is asynchronous in Node.js, so the order is random"
       - "Arrow functions execute after regular functions by design"
     correct_index: 1
@@ -56,7 +56,7 @@ questions:
     question: "A teammate's code uses `==` for all comparisons and it 'works fine in tests.' You suggest changing to `===` in code review. They push back: 'If it works, why change it?' What is the strongest argument for `===`?"
     options:
       - "`===` is measurably faster at runtime"
-      - "`==` works when both operands happen to be the same type (common in tests), but silently masks bugs when types diverge — e.g., if a form field returns a string `'0'` instead of the number `0`, `==` would equate them. Using `===` consistently prevents this entire class of latent bugs"
+      - "`==` silently coerces across types, masking bugs the moment types diverge (e.g. `'0' == 0`)."
       - "`==` is deprecated and will be removed in future JavaScript versions"
       - "There is no strong argument — `==` and `===` are interchangeable when types match"
     correct_index: 1
@@ -89,7 +89,7 @@ questions:
       When should you prefer B over A?
     options:
       - "Always — parallel is always better than sequential"
-      - "When the two operations are **independent** (neither needs the other's result). B takes `max(A, B)` time; A takes `A + B` time. If `fetchPosts()` depends on `fetchUsers()`'s result, you must use A"
+      - "When the two operations are independent; B takes `max(A, B)`, A takes `A + B`."
       - "Only when the server supports HTTP/2 multiplexing"
       - "Never — `Promise.all` is harder to debug and should be avoided"
     correct_index: 1
@@ -109,7 +109,7 @@ questions:
     difficulty: intermediate
     question: "A student writes `var x = 5` inside a `for` loop body. After the loop, they access `x` and are surprised it's still in scope. A C++ programmer would expect `x` to be destroyed at the closing brace. What JavaScript concept explains this?"
     options:
-      - "`var` uses **function scope**, not block scope — it ignores `{}` blocks entirely and is scoped to the enclosing function. This violates C++ and Python scoping rules. `let` and `const` use block scope and behave as expected"
+      - "`var` is function-scoped — it ignores `{}` blocks. Use `let`/`const` for block scope."
       - "`var` creates a global variable that persists for the entire program"
       - "JavaScript does not have any form of block scoping"
       - "`for` loops in JavaScript are macros that expand inline, so there is no inner scope"
@@ -129,7 +129,7 @@ questions:
     question: "Why is the callback pattern fundamental to ALL of Node.js — not just a stylistic choice?"
     options:
       - "Callbacks are the only way to define functions in JavaScript"
-      - "Node.js's single-threaded Event Loop communicates results of async operations (file reads, network requests, timers) by **calling a function you provided**. Without callbacks, there is no mechanism for the Event Loop to notify your code that an operation completed"
+      - "They are how the single-threaded Event Loop notifies your code that an async operation completed."
       - "Callbacks are required by the V8 engine's garbage collector"
       - "Callbacks are only used in legacy Node.js — modern versions use a different mechanism"
     correct_index: 1
@@ -159,7 +159,7 @@ questions:
       ```
       They expect "All done!" to print after all items are processed. What is the bug?
     options:
-      - "`.forEach()` doesn't support async callbacks — the `await` inside is ignored, and `\"All done!\"` prints immediately while items are still being processed. Use `for...of` or `Promise.all(items.map(...))` instead"
+      - "`.forEach()` ignores the returned promises — use `for...of` or `Promise.all(items.map(...))`."
       - "The `async` keyword is not needed inside `.forEach()`"
       - "`processItem` must return a string, not a Promise"
       - "There is no bug — `.forEach()` correctly awaits each callback"
@@ -260,7 +260,7 @@ questions:
       A Discord bot fetches a user's message count from an API. The API returns `"42"` (a string). The bot checks `if (count == 42)` to award a badge. What are ALL the problems?
     options:
       - "Only one problem: `==` should be `===`"
-      - "Two problems: (1) `==` coerces the string to a number, hiding a type mismatch — use `===`. (2) The comparison will silently 'work' with `==` but break if the badge threshold changes to `0` (since `'' == 0` is `true`)"
+      - "`==` coerces the string and hides the type mismatch; the bug surfaces once the threshold changes."
       - "No problems — `==` correctly handles string-to-number comparison"
       - "The only problem is that the API should return a number, not a string"
     correct_index: 1
@@ -297,7 +297,7 @@ questions:
     question: "What does calling an `async` function **always** return, even if the function body just returns a plain number like `return 42`?"
     options:
       - "The plain value (`42`) — `async` is only meaningful when the function contains an `await`"
-      - "A **Promise** — every `async` function wraps its return value in `Promise.resolve()`. To get `42` out, you must `await` the call or use `.then()`"
+      - "A Promise — every `async` function wraps its return in `Promise.resolve()`."
       - "An `AsyncIterator` object that must be consumed with `for await...of`"
       - "`undefined` — async functions cannot return values directly"
     correct_index: 1
@@ -399,7 +399,7 @@ questions:
       What is wrong, and what would you suggest?
     options:
       - "The `app.post` callback should use `async/await` to make `computeAIResponse` non-blocking"
-      - "`computeAIResponse` is synchronous and CPU-intensive — it blocks the Chef for ~2 seconds, freezing ALL other players. Offload to a Worker Thread or compute asynchronously"
+      - "CPU work on the event loop blocks every other player; offload to a Worker Thread."
       - "The problem is that `res.json()` is slow — use `res.send()` instead for faster responses"
       - "Nothing is wrong — 2 seconds is an acceptable response time for game servers"
     correct_index: 1
@@ -458,7 +458,7 @@ questions:
       ```
     options:
       - "`x` is `null` and `typeof x` is `\"null\"`"
-      - "`x` is `undefined` and `typeof x` is `\"undefined\"` — a declared variable with no value assigned is `undefined`, not `null`"
+      - "`x` is `undefined`, `typeof x` is `\"undefined\"` — unassigned, not null."
       - "The code throws a `ReferenceError` because `x` has no value"
       - "`x` is `0` — JavaScript auto-initializes numeric variables to zero"
     correct_index: 1

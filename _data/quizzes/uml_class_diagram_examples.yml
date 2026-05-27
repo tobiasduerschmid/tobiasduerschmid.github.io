@@ -228,10 +228,10 @@ questions:
       }
       ```
     options:
-      - "Student has an association to Roster, with `roster` as a package-visibility (~) attribute."
-      - "Student has a dependency on Roster (dashed arrow)."
-      - "Student has a composition with Roster (filled diamond)."
-      - "Student inherits from Roster (hollow triangle)."
+      - "Student has an association to Roster with package-visibility (`~`) `roster`."
+      - "Student has a dependency on Roster, shown with a dashed arrow."
+      - "Student has a composition with Roster, shown with a filled diamond."
+      - "Student inherits from Roster, shown with a hollow triangle."
     correct_index: 0
     option_feedback:
       1: |

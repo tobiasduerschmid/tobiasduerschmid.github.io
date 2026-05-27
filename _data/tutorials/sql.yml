@@ -316,7 +316,7 @@ steps:
           type: single
           options:
             - "Alice's — `SELECT *` automatically adapts to schema changes"
-            - "Bob's — explicit columns isolate his code from accidental data leaks (PII like `ssn`) and from breaking when downstream code expects exactly 5 columns"
+            - "Bob's — explicit columns isolate his code from accidental PII leaks and column-count breakage"
             - "Tie — both forms are equivalent; SQL's optimizer flattens any difference"
             - "Alice's — fewer characters means smaller network payloads and faster execution"
           correct_index: 1
@@ -2099,10 +2099,10 @@ steps:
             Which one runs correctly?
           type: single
           options:
-            - "A — `WHERE` cannot reference an aggregate; that condition belongs in HAVING"
-            - "B — `WHERE` runs first, so it filters faster than HAVING"
-            - "Both run; SQLite is permissive about this"
-            - "Neither — both need a JOIN"
+            - "A — `WHERE` cannot use aggregates; that filter belongs in `HAVING`"
+            - "B — `WHERE` runs first, so it filters faster than HAVING does"
+            - "Both run — SQLite is permissive about this kind of query"
+            - "Neither — both queries are missing a required JOIN clause"
           correct_index: 0
           option_feedback:
             1: "WHERE *does* run before grouping — and that's exactly why it can't reference COUNT(*). The count doesn't exist yet at WHERE time."
@@ -2115,10 +2115,10 @@ steps:
             *[Review from Step 3]* In your capstone query, you wrote `WHERE year >= 2`. If a future student has `year` set to NULL, are they included in the result?
           type: single
           options:
-            - "Yes — NULL is treated as 0"
+            - "Yes — SQL treats NULL as the integer value 0 for comparisons"
             - "No — `NULL >= 2` is UNKNOWN, and WHERE discards UNKNOWN rows"
-            - "Yes — WHERE includes NULL by default"
-            - "It depends on the database engine"
+            - "Yes — WHERE keeps NULL rows by default unless told otherwise"
+            - "It depends on the database engine's NULL-handling configuration"
           correct_index: 1
           option_feedback:
             0: "SQL treats NULL as *unknown*, not zero. Spreadsheet intuition (blank → 0) doesn't carry over."

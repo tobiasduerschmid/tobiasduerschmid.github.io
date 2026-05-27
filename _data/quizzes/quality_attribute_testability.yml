@@ -8,10 +8,10 @@ questions:
     question: |
       Your team is testing a `BookingService` that calls a real Global Distribution System (GDS) for flight availability. Running the full test suite costs $50/run in GDS API fees and occasionally books actual flights when tests crash. What testability properties are you struggling with, and what is the right tool?
     options:
-      - "Performance — switch to a faster machine."
-      - "**Controllability** (you can't easily put GDS into the state your test needs) and **observability** (you can't observe what your code sent to GDS without inspecting the real network). Replace the GDS dependency with a **test stub** (returns pre-coded GDS responses) or a **test spy** (records what the BookingService sent), removing the real GDS from the loop."
-      - "Security — your tests are leaking credentials."
-      - "Code coverage — write more tests."
+      - "Performance — the GDS calls are slow, so switch to a faster machine."
+      - "Controllability and observability — replace the GDS dependency with a stub or spy."
+      - "Security — the tests are leaking credentials, so add an audit step."
+      - "Code coverage — the existing tests miss paths, so write more of them."
     correct_index: 1
     option_feedback:
       0: |
@@ -53,10 +53,10 @@ questions:
     question: |
       A team needs to test that their `OrderProcessor` correctly notifies the warehouse system when an order is placed, *without* actually contacting the warehouse. Which test double type is the right fit?
     options:
-      - "**Stub** — provides pre-coded responses to calls the system under test makes."
-      - "**Spy** or **Mock** — records or verifies the calls the system under test makes (verifying outgoing messages = indirect outputs)."
-      - "**Fake** — a working in-memory implementation of the warehouse."
-      - "**Dummy** — a placeholder object that is never actually called."
+      - "Stub — provides pre-coded responses to calls the system under test makes."
+      - "Spy or Mock — records or verifies the calls the system under test made."
+      - "Fake — a working in-memory implementation of the warehouse."
+      - "Dummy — a placeholder object that is never actually called."
     correct_index: 1
     option_feedback:
       0: |
@@ -74,7 +74,7 @@ questions:
       Netflix famously runs **Chaos Monkey**, which randomly terminates production services to test resilience. Map this to the testability framework: what challenge does it create, and what challenge does it solve?
     options:
       - "Chaos Monkey solves both controllability and observability automatically."
-      - "Chaos Monkey solves a **controllability** problem (it is hard to reliably bring a real distributed system into a 'this service just died' state during testing) by injecting the failure deliberately. The remaining challenge is **observability**: instrument the system to see how the rest of the system reacts."
+      - "It solves controllability by injecting failures; observability still has to be instrumented separately."
       - "Chaos Monkey is purely a performance test; it has no relationship to testability."
       - "Chaos Monkey is the same as a unit test, just at a larger scale."
     correct_index: 1
@@ -94,7 +94,7 @@ questions:
       Your team wants to verify that the search engine returns identical results for the same query made twice in a row — even though they don't know which results are 'correct' (the *oracle problem*). Which testing technique fits?
     options:
       - "Unit testing — test each subcomponent in isolation."
-      - "**Metamorphic testing** — sample the input space and check that essential *invariants* hold (e.g., 'the same query twice yields the same results'). You don't need to know the correct output, only the relationship the system must preserve."
+      - "Metamorphic testing — check that invariants between inputs and outputs hold."
       - "Monkey testing — randomly click in the UI."
       - "TDD — write the test first, then implement."
     correct_index: 1
@@ -114,7 +114,7 @@ questions:
       The team adopts TDD: write a failing test, write the minimum code to pass, refactor, repeat. A junior developer says: "TDD guarantees 100% coverage." Why is this overstated?
     options:
       - "TDD is just a buzzword and provides no real benefit."
-      - "TDD strongly encourages production code to be driven by failing tests, but the test list itself may be incomplete — entire edge cases, error paths, or unintended behaviors can still slip through. TDD strongly *promotes* testability and coverage, but coverage depends on the author's imagination and discipline, not the methodology alone."
+      - "TDD only covers the cases the author thought to test — edge cases can still slip through."
       - "TDD only works for object-oriented code."
       - "TDD requires writing tests *after* the code, not before."
     correct_index: 1
@@ -134,7 +134,7 @@ questions:
       NASA's spacecraft software bans recursion as a language construct. How does this design constraint connect to testability?
     options:
       - "Recursion is too slow for embedded systems."
-      - "Recursion makes stack-depth bounds harder to verify statically, which makes worst-case stack usage harder to test. Banning recursion preserves controllability of memory bounds in a context where running out of stack in space would be unrecoverable."
+      - "Worst-case stack depth becomes hard to verify, breaking testability of memory bounds."
       - "Recursion is forbidden by NASA's coding style guide for readability reasons."
       - "Recursion is incompatible with the C programming language."
     correct_index: 1
@@ -154,9 +154,9 @@ questions:
       A team has 30 tests pass and 1 test fail. The failing test is for a function that depends on a shared module-level cache that other tests warm up first. The failure only happens when this test runs alone. What testability principle was violated?
     options:
       - "The test is just flaky — re-run it until it passes."
-      - "The cache is shared global state — its presence violates **test isolation**, an essential testability property. Each test should be controllable into its required state without depending on other tests, so refactor the cache to be injectable or to reset between tests."
-      - "30 tests is too many — combine them into fewer."
-      - "The test is for a feature that doesn't matter."
+      - "Shared global state violates test isolation — inject or reset the cache."
+      - "There are too many tests — combine them into a single integration suite."
+      - "The test exercises a feature that doesn't matter — delete it."
     correct_index: 1
     option_feedback:
       0: |
@@ -173,10 +173,10 @@ questions:
     question: |
       An e-commerce monolith has hit 200K LOC with no tests. A consultant suggests "let's just write tests now." Why is this typically the wrong response, and what's the right approach?
     options:
-      - "It's the right response — start writing tests immediately for everything."
-      - "It's wrong because untested legacy code is usually *structurally hostile* to testing — tightly coupled, globally stateful, with hidden dependencies — so 'just write tests' produces brittle, low-coverage tests at high effort. The right approach is **incremental**: introduce seams (interfaces at module boundaries), retrofit dependency injection, and write tests as part of every change."
-      - "Tests are unnecessary for monoliths."
-      - "Outsource the testing to a contractor."
+      - "Right approach — write a comprehensive suite for all 200K LOC up front."
+      - "Wrong — introduce seams and inject dependencies as each module is touched."
+      - "Tests are unnecessary because the system is a monolith and runs as one unit."
+      - "Outsource the work to a contractor who can write the missing tests."
     correct_index: 1
     option_feedback:
       0: |
@@ -193,10 +193,10 @@ questions:
     question: |
       A startup uses 'Wizard of Oz' testing — a human secretly fulfills the operation a real system would eventually automate, while users interact with what appears to be a working product. What testability concept does this illustrate?
     options:
-      - "Production deployment automation."
-      - "Testability as a tool for *value-proposition evaluation*: the team is testing whether the *concept* works — whether users want and pay for the operation — before building the engineering. The human substitution lets them observe (controllability + observability) user behavior under realistic conditions without the engineering cost."
-      - "Test doubles applied to humans."
-      - "A violation of testing ethics."
+      - "Production deployment automation that tests rollout safety."
+      - "Testability at the product level — a human stand-in lets the team observe real users."
+      - "Test doubles applied to humans the way mocks substitute for code."
+      - "A violation of testing ethics that creates legal liability."
     correct_index: 1
     option_feedback:
       0: |

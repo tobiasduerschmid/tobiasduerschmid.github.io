@@ -9,7 +9,7 @@ questions:
       A code review surfaces this line in your team's `OrderRepository` (the Data layer): `import { CheckoutController } from '../presentation/CheckoutController'`. The repository's intent is to *notify* the controller when an order has been persisted. What is going on and what is the cleanest fix?
     options:
       - "No violation — repositories and controllers in the same project may freely reference each other."
-      - "Upward dependency violates the **golden rule**; fix by inverting it with a callback or event the controller registers on the repository."
+      - "Upward dependency violates the golden rule; fix by inverting it with a callback or event the controller registers on the repository."
       - "Layer-bridging smell — fix by routing the dependency through a Domain-layer adapter so the call is adjacent."
       - "Tiering violation — fix by deploying repository and controller to separate processes so the import becomes a network call."
     correct_index: 1
@@ -29,7 +29,7 @@ questions:
       You profile your strictly layered 7-layer stack and find that 30% of request latency is spent marshaling data through intermediate layers that neither inspect nor modify it. Your team is debating relaxing to allow the top layer to call the bottom layer directly for read paths. What is the principled trade-off?
     options:
       - "It's a free win — relaxed layering preserves all the modifiability benefits while removing the indirection."
-      - "Each bypass increases coupling between non-adjacent layers and erodes portability — the more bypasses, the closer the architecture moves toward a ball of mud. The optimization is worth it only when latency genuinely matters on the bypass path and the team accepts the long-term coupling cost."
+      - "Each bypass adds coupling between non-adjacent layers and erodes portability; deliberate relaxation is only worth a documented hot-path cost."
       - "It's never acceptable — strict layering must be preserved under all circumstances."
       - "Move the affected functionality to its own microservice instead."
     correct_index: 1
@@ -49,7 +49,7 @@ questions:
       A new engineer claims "our app server tier and our database tier are two layers." A senior architect disagrees. What is the precise terminology distinction?
     options:
       - "There is no real distinction — *layers* and *tiers* are interchangeable terms."
-      - "*Layers* describe **design-time** abstraction strata in the code (module style); *tiers* describe **runtime** deployment to separate processes or machines (component-and-connector or allocation style). One tier usually hosts multiple layers."
+      - "*Layers* are design-time abstraction strata; *tiers* are runtime deployment to separate processes or machines."
       - "*Tiers* are layers with persistent storage; *layers* are stateless."
       - "*Layers* require strict ordering; *tiers* do not."
     correct_index: 1
@@ -95,7 +95,7 @@ questions:
     options:
       - "Add a one-time exception and import the UI banner module from the driver layer."
       - "Move the UI banner code into the driver layer so the call is local."
-      - "Define a `FaultListener` interface in or below the driver layer; the UI implements `FaultListener` and registers an instance with the driver at startup. The driver calls the listener without knowing what implements it."
+      - "Define a `FaultListener` interface below the driver layer; the UI registers an implementation that the driver invokes."
       - "Poll: have the UI layer query the driver every 100 ms to check for faults."
     correct_index: 2
     option_feedback:
@@ -134,7 +134,7 @@ questions:
       Your strictly layered enterprise app has grown to 200K LOC across 6 layers, organized by *technical* function (UI, Controller, Service, Domain, Repository, Database). Every new business feature requires editing all 6 layers, and 4 teams now coordinate on every release. Which evolution best addresses the bottleneck?
     options:
       - "Switch to a single-layer architecture so changes only touch one place."
-      - "Add *domain* (vertical) layering on top of the existing technical layering — group code by business capability (Customer Management, Inventory, Billing) so each team owns a vertical slice and the technical layers become internal to each slice."
+      - "Add *domain* (vertical) layering — group code by business capability so each team owns an end-to-end slice."
       - "Eliminate the Service layer; it is redundant with Controller and Domain."
       - "Migrate to microservices immediately — there is no other solution."
     correct_index: 1
@@ -154,7 +154,7 @@ questions:
       A new product manager asks: "why don't we just remove the layers and call whatever needs to be called? Our delivery would be twice as fast." How do you frame the trade-off the architect made when introducing layers?
     options:
       - "Agree — layering is over-engineering and slows down delivery."
-      - "Layers exist to preserve modifiability and portability over the system's lifetime; removing them speeds up *short-term* delivery but accelerates long-term coupling, making every later change more expensive and risky."
+      - "Layers buy modifiability and portability over the system's lifetime — removing them speeds up this sprint but slows every future change."
       - "Layers exist only for testing — if we have integration tests, we can drop them."
       - "Layers exist for performance reasons; removing them would actually slow the system down."
     correct_index: 1
@@ -174,7 +174,7 @@ questions:
       You're designing a small CLI tool that parses CSV files, transforms records, and writes JSON output. A senior engineer suggests skipping layered architecture for this project. Why is that reasonable?
     options:
       - "Layered architecture only applies to operating systems and network protocols — application code uses other styles."
-      - "The tool is short-lived and single-purpose — layering's modifiability and portability benefits would not be exercised, so the up-front design cost would pay no dividend. A simpler structure fits the scope better."
+      - "The tool is short-lived and single-purpose — layering's modifiability and portability benefits would not be exercised, so the design cost pays no dividend."
       - "Layered architecture only works in object-oriented languages, and the tool is in a procedural language."
       - "CLI tools require a stateful runtime, which the layered style cannot model."
     correct_index: 1
@@ -194,7 +194,7 @@ questions:
       A team has two systems running side by side: System A is strictly layered (every call goes through the layer immediately below). System B is relaxed (any downward call to any lower layer is allowed). They share the same lower-layer code. After two years, which system is more likely to have remained portable, and why?
     options:
       - "**System B** — relaxed layering's looser rules make refactoring easier and preserve portability better than strict layering's rigidity."
-      - "**System A** — strict layering keeps each lower-layer interface's consumer count to one, so an implementation change touches only the immediate consumer; System B's many bypasses spread the coupling across non-adjacent layers."
+      - "**System A** — strict layering keeps each lower-layer interface's consumer count to one, so implementation changes touch only the immediate consumer."
       - "**Both equally portable** — the strict vs relaxed distinction has no effect on long-term portability."
       - "**Neither** — every real system becomes a ball of mud over two years regardless of style, so the comparison is moot."
     correct_index: 1
@@ -214,7 +214,7 @@ questions:
       A teammate points at a layered source-code diagram and says: "If the bottom layer fails, the whole app is unavailable, so this diagram tells us our availability risk." What is the best response?
     options:
       - "Agree: layers are runtime components, so availability is directly visible in the layered diagram."
-      - "Disagree: a layered diagram is a module view. It can support dependency and portability claims, but availability needs runtime components, deployment, fault detection, and recovery information."
+      - "Disagree: a layered diagram is a module view — availability needs runtime, deployment, and fault-recovery information."
       - "Agree only if the system uses strict layering rather than relaxed layering."
       - "Disagree because lower layers can never affect upper-layer behavior."
     correct_index: 1

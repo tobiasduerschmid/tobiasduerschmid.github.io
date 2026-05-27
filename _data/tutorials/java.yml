@@ -241,10 +241,10 @@ steps:
           explanation: "The JVM needs to call `main` as the program entry point. Since no object exists yet when the program starts, `main` must be `static` — callable on the class itself, not on an instance."
         - question: "What does `int[] grades = {88, 95, 72};` create in Java?"
           options:
-            - "An array of 3 int primitives on the stack/heap (like C++ `int[]`)"
-            - "An ArrayList of Integer objects"
-            - "A Python-style list that can grow dynamically"
-            - "A pointer to an uninitialized array"
+            - "An array of 3 int primitives, like a C++ `int[]`"
+            - "An ArrayList of boxed Integer objects, like Python list-of-int"
+            - "A Python-style list that can grow as you append elements"
+            - "A pointer to an uninitialized array, defaulted to nulls"
           correct_index: 0
           explanation: "Java arrays are fixed-size, typed containers — similar to C++ arrays. Unlike Python lists, they cannot grow after creation. For a resizable collection, use `ArrayList<Integer>`."
         - question: "In Java, `scores.length` has no parentheses but `name.length()` does. Why?"
@@ -738,10 +738,10 @@ steps:
           explanation: "Auto-unboxing calls `.intValue()` on the Integer object. If the object is null, this throws NullPointerException. This is a common production bug."
         - question: "Why is `Integer sum = 0;` in a loop slower than `int sum = 0;`?"
           options:
-            - "Integer uses more memory because it's 64-bit"
-            - "Each `sum += i` unboxes, adds, then creates a new Integer object — every iteration"
-            - "Integer arithmetic uses BigDecimal internally"
-            - "There is no performance difference"
+            - "Integer uses more memory because each instance is 64-bit"
+            - "Each `sum += i` unboxes, adds, and re-boxes a new Integer"
+            - "Integer arithmetic falls back on BigDecimal internally"
+            - "There is no measurable performance difference"
           correct_index: 1
           explanation: "Auto-boxing/unboxing creates temporary wrapper objects on every iteration. With `int`, the operation is pure arithmetic on the stack — no object allocation."
         - question: "You need to check if two `Integer` variables hold the same value. Which approach is always correct?"
@@ -988,18 +988,18 @@ steps:
       questions:
         - question: "What is the main benefit of making fields `private` with getter/setter methods, compared to `public` fields?"
           options:
-            - "You can add validation logic (e.g., prevent negative balance) without changing calling code"
-            - "Private fields use less memory"
-            - "It makes the code run faster"
-            - "Java requires all fields to be private"
+            - "You can add validation without changing calling code"
+            - "Private fields use less memory than public fields"
+            - "It makes the compiled bytecode run faster"
+            - "Java requires all instance fields to be private"
           correct_index: 0
           explanation: "Encapsulation's power is controlling access: you can validate inputs, compute derived values, or change internal representation — all without breaking code that uses your class. If `balance` were public, any code could set it to -999."
         - question: "Why does the test use `a.getOwner().equals(\"Test\")` instead of `a.getOwner() == \"Test\"`?"
           options:
-            - "Because `==` on String objects checks reference identity, not value equality"
-            - "Because `.equals()` is faster than `==`"
+            - "Because `==` on Strings checks identity, not value"
+            - "Because `.equals()` is faster than `==` on Strings"
             - "Because `==` only works on primitives in Java"
-            - "They're equivalent — either would work"
+            - "They're equivalent — either approach would work"
           correct_index: 0
           explanation: "As we learned in Step 2, `==` on objects checks if they're the same object in memory. `getOwner()` returns a String object, so we must use `.equals()` to compare its value."
         - question: "In Java, what is the default access level if you omit an access modifier on a field?"
@@ -1300,7 +1300,7 @@ steps:
       questions:
         - question: "A GradeReport class has private fields and a `getScores()` method returning `ArrayList<Integer>`. The grading thresholds (A ≥ 90, B ≥ 80...) are in the calling code. How many design decisions are leaked?"
           options:
-            - "Two — the data representation (ArrayList<Integer>) and the grading policy (thresholds)"
+            - "Two — the data representation and the grading policy"
             - "Zero — the fields are private, so everything is hidden"
             - "One — only the data representation is leaked"
             - "Three — data, policy, and the student's name"
@@ -1316,7 +1316,7 @@ steps:
           explanation: "The public interface is precisely what should be VISIBLE — it's the stable contract other modules depend on. Everything behind that interface (algorithms, data formats, business rules, external dependencies) should be hidden, because those decisions are likely to change."
         - question: "You refactored a system so that changing the grading scale requires editing only one class. What design principle have you applied?"
           options:
-            - "Information Hiding — the grading policy is the module's 'secret', hidden behind a stable interface"
+            - "Information Hiding — the grading policy is the module's secret"
             - "Encapsulation — you made the threshold fields private"
             - "Inheritance — you created a GradingPolicy superclass"
             - "Polymorphism — you used dynamic dispatch for grading"
@@ -1635,10 +1635,10 @@ steps:
           explanation: "The compiler enforces the contract. Adding a method to an interface breaks all implementing classes until they provide an implementation. This is the power of `implements` — compile-time safety that Python's duck typing can't provide."
         - question: "Why declare `Shape c = new Circle(5.0)` instead of `Circle c = new Circle(5.0)`?"
           options:
-            - "Programming to the interface — you can later swap Circle for any Shape implementation without changing the variable type"
-            - "Shape uses less memory than Circle"
-            - "There's no difference — they're equivalent"
-            - "Circle is not a valid type in Java"
+            - "Programming to the interface — you can later swap in any Shape implementation"
+            - "Because Shape uses less memory than Circle at runtime"
+            - "There is no difference — both declarations behave identically"
+            - "Because Circle is not a valid type for local variable declarations"
           correct_index: 0
           explanation: "Declaring with the interface type signals intent: 'I only need Shape behavior here.' This enables flexibility — you could change `new Circle(5.0)` to `new Triangle(3, 4, 5)` without modifying any code that uses `c`."
 
@@ -1963,10 +1963,10 @@ steps:
           explanation: "As we learned in Step 2, `==` on objects checks reference identity, not value equality. Always use `.equals()` for value comparison."
         - question: "In Java, which keyword makes a method virtual (overridable by subclasses)?"
           options:
-            - "No keyword needed — all Java methods are virtual by default"
-            - "The `virtual` keyword (like C++)"
-            - "The `override` keyword"
-            - "The `dynamic` keyword"
+            - "No keyword needed — Java methods are virtual by default"
+            - "The `virtual` keyword, borrowed from C++ method dispatch"
+            - "The `override` keyword at the method declaration site"
+            - "The `dynamic` keyword on either the class or the method"
           correct_index: 0
           explanation: "Unlike C++, where you must mark methods `virtual`, Java methods are virtual by default. Only `final` methods cannot be overridden. `@Override` is an annotation that asks the compiler to verify you're actually overriding a parent method."
         - question: "When should you use an abstract class instead of an interface?"
@@ -2281,10 +2281,10 @@ steps:
           explanation: "After type erasure, `T` becomes `Object` at runtime — Java doesn't know which constructor to call. `new T()` is illegal. All other options work because the compiler inserts the right casts."
         - question: "Why can't you write `ArrayList<int>` in Java?"
           options:
-            - "Because `int` is not an object — generics require wrapper types like `Integer`"
-            - "Because ArrayList is only for strings"
+            - "Because `int` is a primitive — generics need wrapper types like `Integer`"
+            - "Because ArrayList is only meant for String elements"
             - "Because int arrays are faster and should always be used instead"
-            - "Because Java doesn't support generic types"
+            - "Because Java does not support parameterized collection types"
           correct_index: 0
           explanation: "Java generics use type erasure, erasing to `Object` at runtime. Primitives like `int` are not objects and can't be cast to `Object`. Use the wrapper class `Integer` instead."
 
@@ -2910,10 +2910,10 @@ steps:
       questions:
         - question: "Which type of exception does the Java compiler force you to handle?"
           options:
-            - "RuntimeException and its subclasses"
-            - "Exception subclasses that are NOT RuntimeException (checked exceptions)"
-            - "All exceptions"
-            - "Only NullPointerException"
+            - "Subclasses of RuntimeException (unchecked exceptions)"
+            - "Subclasses of Exception that aren't RuntimeException (checked)"
+            - "Every Throwable, including Error and RuntimeException"
+            - "Only NullPointerException and ArrayIndexOutOfBoundsException"
           correct_index: 1
           explanation: "Checked exceptions (subclasses of Exception but NOT RuntimeException) must be caught or declared with `throws`. Unchecked exceptions (RuntimeException and its subclasses) have no compiler enforcement."
         - question: "What keyword does a Java class use to declare that it fulfills an interface contract?"
@@ -2926,10 +2926,10 @@ steps:
           explanation: "`implements` declares that a class fulfills an interface contract. `extends` is for class inheritance. A class can implement multiple interfaces but can only extend one class."
         - question: "Why can't you write `ArrayList<int>` in Java?"
           options:
-            - "Because int is too small for ArrayList"
-            - "Because Java generics use type erasure, which only works with objects — use `ArrayList<Integer>` instead"
-            - "Because ArrayList only accepts strings"
-            - "Because you should use int[] arrays instead"
+            - "Because the `int` type is too small to live in an ArrayList slot"
+            - "Because type erasure leaves generic slots as `Object`, which can't hold primitives"
+            - "Because ArrayList is restricted to String element types"
+            - "Because you should always use `int[]` arrays instead of ArrayList"
           correct_index: 1
           explanation: "Java generics are erased at compile time — they become raw types operating on `Object`. Primitives like `int` are not objects, so they can't participate in generics. The wrapper class `Integer` is used instead."
         - question: "Match each scenario to the correct Java construct: (A) Multiple unrelated classes need a `serialize()` method. (B) Dog and Cat share `name`, `age` fields and `eat()` behavior. (C) You need a type-safe list that works for any element type."

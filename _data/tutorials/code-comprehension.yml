@@ -270,8 +270,8 @@ steps:
           difficulty: intermediate
           question: "Which summary is strongest after reading this module?"
           options:
-            - "`summarize_playlist()` makes a dictionary, calls helper functions, rounds minutes, formats labels for the sample data, and therefore fully explains the module's purpose."
-            - "The module builds a public playlist summary by removing hidden tracks, totaling visible duration, and labeling favorite songs."
+            - "`summarize_playlist()` makes a dictionary, calls helpers, rounds minutes, and formats labels for the sample data."
+            - "The module builds a public playlist summary by hiding tracks, totaling duration, and labeling favorites."
             - "The module has four tracks and one of them is hidden."
             - "`label_track()` uses an `if` statement and returns a string."
           correct_index: 1
@@ -301,8 +301,8 @@ steps:
           difficulty: advanced
           question: "Which explanation best follows the Purpose / Mechanism / Evidence / Limit frame?"
           options:
-            - "Purpose: public playlist summary. Mechanism: filter hidden tracks, total visible duration, and label favorites. Evidence: tests plus `visible_tracks()`. Limit: unusual data is unverified."
-            - "`summarize_playlist()` creates a dictionary, calls `visible_tracks()`, totals seconds, rounds minutes, formats labels, and returns sample output, so tracing those mechanics is enough without naming any limit or user-facing purpose."
+            - "Purpose: playlist summary. Mechanism: filter, total, label. Evidence: tests. Limit: unusual data unverified."
+            - "`summarize_playlist()` creates a dictionary, calls `visible_tracks()`, totals seconds, and formats labels for the sample output."
             - "The module has four tracks, one hidden track, and one favorite track."
             - "The module removes hidden tracks, so no other code needs attention."
           correct_index: 0
@@ -780,9 +780,9 @@ steps:
           question: "A reader wants to know what happens when the Vote button is clicked. Which path should they inspect?"
           options:
             - "`SnackCard`'s `onClick`, the `onVote` prop, and `handleVote` in `App`"
-            - "Only the CSS file"
-            - "Only the `SNACKS` array"
-            - "Only the `<option>` elements in the category selector, because filters always control button behavior"
+            - "The CSS file, because click handlers are styled via class selectors"
+            - "The `SNACKS` starter array, because the click reads its initial values"
+            - "The category selector's `<option>` elements, because filters control button behavior"
           correct_index: 0
           option_feedback:
             1: "CSS can change appearance, but the click behavior is in JSX and state updates."
@@ -1119,8 +1119,8 @@ steps:
           difficulty: intermediate
           question: "When does the `Everything visible is done.` status appear?"
           options:
-            - "Only when there is at least one visible task and every visible task has `done: true`"
-            - "Whenever any task in `TASKS` has `done: true`, even if hidden by the selected topic or unrelated to the view"
+            - "When there is at least one visible task and all visible tasks are `done`"
+            - "When any task in `TASKS` is `done`, even hidden ones"
             - "Whenever the selected topic is `all`"
             - "Only when `TaskCard` decides to render it"
           correct_index: 0
@@ -1150,9 +1150,9 @@ steps:
           difficulty: advanced
           question: "What plan is shared by the Python event-card sprint and this React study-queue sprint?"
           options:
-            - "Both filter a source collection into visible items, then shape those items for a user-facing result."
+            - "Both filter a source collection, then shape items for the user."
             - "Both save user choices in localStorage."
-            - "Both mutate the original sample data before rendering, so later reads see the filtered result after the helper runs."
+            - "Both mutate the original sample data before rendering it."
             - "Both use route handlers to return JSON."
           correct_index: 0
           option_feedback:
@@ -1321,9 +1321,9 @@ steps:
           difficulty: intermediate
           question: "What is the best purpose-level summary of `recommend_badges()`?"
           options:
-            - "It turns an activity log into badge labels by aggregating minutes by topic, filtering topics below a threshold, and optionally adding a focus badge."
+            - "It turns an activity log into badge labels by aggregating minutes per topic and thresholding."
             - "It prints every activity in sorted order."
-            - "It removes React entries because one React activity has zero minutes, treats that topic as invalid, and returns only non-React badges without checking the remaining React minutes."
+            - "It drops React entries because one React activity has zero minutes, treating the topic as invalid."
             - "It finds the first topic in the log and returns only that topic."
           correct_index: 0
           option_feedback:
@@ -1336,8 +1336,8 @@ steps:
           difficulty: advanced
           question: "Which trace best verifies that zero-minute entries are ignored?"
           options:
-            - "Trace the `{'topic': 'react', 'minutes': 0}` entry through `summarize_minutes()` and stop at the `continue`."
-            - "Trace every entry through `strongest_topic()` and infer skipped values from whichever topic becomes the winner."
+            - "Trace the React zero-minute entry into `summarize_minutes()` and stop at `continue`."
+            - "Trace every entry through `strongest_topic()` and infer skipped values from the winner."
             - "Trace the `badges.append(...)` line for every topic."
             - "Trace only the final `print(...)` statement."
           correct_index: 0
@@ -1511,8 +1511,8 @@ steps:
           difficulty: basic
           question: "What is the strongest purpose hypothesis for `build_habit_report()`?"
           options:
-            - "It creates a summary of useful practice check-ins, optionally filtered by skill, with totals and the longest streak."
-            - "It changes skipped check-ins into unskipped check-ins, rewrites the original list, and stores cleaned habit data for the next report."
+            - "It builds a summary of useful check-ins with totals and the longest streak."
+            - "It unskips and rewrites the original check-in list before producing the report."
             - "It prints every check-in in chronological order."
             - "It renders a React list of habits."
           correct_index: 0

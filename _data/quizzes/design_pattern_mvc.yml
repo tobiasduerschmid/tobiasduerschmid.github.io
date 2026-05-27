@@ -28,10 +28,10 @@ questions:
     question: |
       In MVC, the Model is completely independent of the View and Controller. Why is this considered the most important architectural property of MVC?
     options:
-      - "It makes the Model smaller and simpler"
-      - "It allows the core domain logic to be reused, tested, and ported to different platforms without modification"
-      - "It prevents the Model from becoming a god class"
-      - "It makes the View easier to implement"
+      - "It keeps the Model smaller and simpler than the View and Controller"
+      - "Core domain logic can be reused, tested, and ported without modification"
+      - "It prevents the Model from becoming an unmaintainable god class over time"
+      - "It makes the View easier to implement on new platforms and devices"
     correct_index: 1
     option_feedback:
       0: |
@@ -88,10 +88,10 @@ questions:
     question: |
       Modern frameworks like React effectively replace MVC's Observer mechanism with reactive state management (hooks, signals). Which core MVC principle do these frameworks still preserve?
     options:
-      - "The Strategy pattern for swappable controllers"
-      - "Separation of state, presentation, and event handling — even when the underlying mechanism changes"
-      - "The Composite pattern for UI tree structure"
-      - "The use of explicit Subject and Observer base classes"
+      - "The Strategy pattern that lets controllers be swapped at runtime"
+      - "Separation of state, presentation, and event handling, even when the mechanism changes"
+      - "The Composite pattern used to assemble a nested UI tree of components"
+      - "The explicit Subject and Observer base classes from classic Smalltalk MVC"
     correct_index: 1
     option_feedback:
       0: |
@@ -149,7 +149,7 @@ questions:
       An Android team rewrites a screen using MVVM. Compared to MVP's Passive View variant, what does the ViewModel add that the Presenter does not?
     options:
       - "A way to make the View completely passive and forward all events to the mediator"
-      - "View-shaped state and commands exposed through data binding, so the View updates automatically without the developer wiring an Observer subscription"
+      - "View-shaped state exposed through data binding, so the View updates without an Observer subscription"
       - "A swappable input-handling Strategy so the controller can be replaced at runtime"
       - "A Composite structure for nested UI components"
     correct_index: 1

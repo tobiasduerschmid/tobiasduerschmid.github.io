@@ -32,10 +32,10 @@ questions:
       Which statements include both a scenario and a success measure? Select all that apply.
     options:
       - "The app should be easy to use."
-      - "When 20,000 read requests per minute arrive, p95 read latency stays below 300 ms."
-      - "During any rolling 30-day window, the checkout API maintains at least 99.95% successful responses, excluding scheduled maintenance announced 48 hours in advance."
+      - "At 20,000 read requests per minute, p95 read latency stays below 300 ms."
+      - "Over any rolling 30-day window, checkout API success rate stays above 99.95%."
       - "During a payment-provider outage, checkout handles the problem gracefully."
-      - "Adding a new depth sensor requires one sensor adapter and must not require changes to depth-image processors."
+      - "Adding a depth sensor requires one new adapter and zero changes to processors."
     correct_indices: [1, 2, 4]
     option_feedback:
       0: |
@@ -107,7 +107,7 @@ questions:
     question: |
       A team built a synchronous monolith. A year later, it cannot scale beyond 10,000 concurrent users without major rework. Which idea does this best illustrate?
     options:
-      - "Quality attributes are load-bearing: early architecture choices constrain later scalability."
+      - "Early architecture choices constrain later scalability."
       - "Scalability is unrelated to architecture."
       - "Monoliths are always wrong."
       - "Performance requirements should be postponed until the system has real users."
@@ -273,7 +273,7 @@ questions:
     options:
       - "The login system should use the best security practices."
       - "Use OAuth 2.0 and JSON Web Tokens for login."
-      - "After 5 failed login attempts for one account within 10 minutes, further attempts are rate-limited for 15 minutes and the event is recorded in the audit log within 5 seconds."
+      - "After 5 failed attempts in 10 minutes, rate-limit the account for 15 minutes."
       - "The login system should be secure, robust, and scalable."
     correct_index: 2
     option_feedback:
@@ -284,7 +284,7 @@ questions:
       3: |
         Adding more adjectives makes the requirement broader but not more measurable.
     explanation: |
-      The strong rewrite names the security scenario, the threshold for triggering the response, the response duration, and the audit-log timing requirement.
+      The strong rewrite names the security scenario (repeated failed logins), the threshold that triggers a response (5 attempts in 10 minutes), and the measurable response (a 15-minute rate-limit on that account).
 
   - id: 13
     difficulty: advanced

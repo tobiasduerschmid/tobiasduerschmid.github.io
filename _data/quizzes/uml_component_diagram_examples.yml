@@ -53,7 +53,7 @@ questions:
       <div data-uml-type="component" data-uml-spec="@startuml&#10;component NotificationService {&#10;  portin &quot;requests&quot; as ns_in&#10;  portout &quot;email&quot; as ns_email&#10;  portout &quot;sms&quot; as ns_sms&#10;}&#10;@enduml"></div>
     options:
       - "They represent individual methods on the component."
-      - "They are named interaction points that organize the component's interfaces into logical groups."
+      - "Named interaction points that group the component's interfaces."
       - "They indicate that the component is abstract and cannot be deployed."
       - "They show the number of instances of the component."
     correct_index: 1
@@ -144,10 +144,10 @@ questions:
 
       <div data-uml-type="component" data-uml-spec="@startuml&#10;component ShoppingCart {&#10;  require &quot;IPayment&quot; as r1&#10;}&#10;component StripeGateway {&#10;  provide &quot;IPayment&quot; as p1&#10;}&#10;r1 --> p1&#10;@enduml"></div>
     options:
-      - "A component inherits from another component."
-      - "A required interface on one component is connected to a matching provided interface on another component."
-      - "Two components share the same database."
-      - "A component is deployed on a specific server."
+      - "One component inherits behavior from the other."
+      - "One component's required interface meets another's matching provided interface."
+      - "Two components share the same database backing store."
+      - "A component is deployed to a particular server node."
     correct_index: 1
     option_feedback:
       0: |

@@ -43,7 +43,7 @@ questions:
       ```
     options:
       - "true, true — autoboxing reuses the same object"
-      - "false, true — Java caches Integer objects only for -128 to 127; 200 creates two separate heap objects, so == compares references"
+      - "false, true — boxed `200` is two heap objects; `==` is reference equality"
       - "Compile error — == cannot be applied to Integer"
       - "true, false — == compares values for boxed integers"
     correct_index: 1
@@ -98,7 +98,7 @@ questions:
       You suggest changing `Integer sum` to `int sum`. What is the precise reason?
     options:
       - "There is no meaningful difference — the JIT compiler optimizes the boxing away"
-      - "Each `sum += i` unboxes sum to int, adds i, then boxes the result back into a new Integer object — one million heap allocations. `int sum` keeps everything on the stack with pure arithmetic."
+      - "`sum += i` boxes the result into a new `Integer` each iteration — a million heap allocations."
       - "Integer is 64-bit but int is 32-bit, so int is faster for addition"
       - "Integer does not support the `+=` compound operator"
     correct_index: 1
@@ -145,7 +145,7 @@ questions:
       All fields are `private`. Has information hiding (Parnas) been achieved?
     options:
       - "Yes — the field is `private`, so the internal representation is fully hidden"
-      - "No — the return type `ArrayList<Integer>` leaks the storage decision. Switching to `int[]` or a database would break every caller of `getScores()`."
+      - "No — the return type `ArrayList<Integer>` leaks the storage decision through the public API."
       - "Yes — information hiding and encapsulation are the same concept"
       - "Partially — the ArrayList is hidden, but the Integer type is exposed"
     correct_index: 1
@@ -188,7 +188,7 @@ questions:
     question: "Why is `ArrayList<int>` illegal in Java, while `vector<int>` is valid in C++?"
     options:
       - "ArrayList only supports String and Object types"
-      - "Java generics use type erasure — they erase to Object at runtime. The primitive `int` is not an Object and cannot be cast to one. Use `ArrayList<Integer>` instead."
+      - "Type erasure requires type parameters to be reference types — use `ArrayList<Integer>` instead"
       - "You need to import `java.util.primitives` to use int with generics"
       - "ArrayList<int> is valid — it is equivalent to ArrayList<Integer>"
     correct_index: 1
@@ -215,7 +215,7 @@ questions:
       ```
     options:
       - "instanceof requires an interface, not a class"
-      - "Generic types are erased at runtime — `List<String>` and `List<Integer>` are both just `List`. The compiler rejects the check because it can never be meaningful."
+      - "Type erasure makes `List<String>` and `List<Integer>` indistinguishable at runtime"
       - "You need a cast before using instanceof on a generic type"
       - "instanceof doesn't work on interface types like List"
     correct_index: 1
@@ -288,7 +288,7 @@ questions:
     question: "Which exceptions does the Java compiler force you to explicitly catch or declare with `throws`?"
     options:
       - "All exceptions — Java always enforces handling"
-      - "Checked exceptions — subclasses of `Exception` that are NOT `RuntimeException` (e.g., `IOException`, `SQLException`)"
+      - "Checked exceptions — `Exception` subclasses outside `RuntimeException`"
       - "Unchecked exceptions — `RuntimeException` and its subclasses (e.g., `NullPointerException`)"
       - "Only exceptions you define yourself"
     correct_index: 1
@@ -310,7 +310,7 @@ questions:
       In a Java constructor, where must `super(args)` appear, and what happens if you omit it?
     options:
       - "Anywhere in the constructor — Java inserts it last if omitted"
-      - "It must be the FIRST statement. If omitted, Java inserts `super()` (the no-arg parent constructor). If the parent has no no-arg constructor, omitting it is a compile error."
+      - "It must be the FIRST statement; if omitted, Java tries to insert `super()` and errors if the parent has no no-arg constructor."
       - "After field initializations (`this.field = value`) so the parent doesn't overwrite them"
       - "`super()` is optional and only needed if you want to pass arguments to the parent"
     correct_index: 1
@@ -337,7 +337,7 @@ questions:
       `Vehicle` is abstract with abstract `describe()`. `Car` overrides it. Which `describe()` runs?
     options:
       - "`Vehicle.describe()` — the reference type is `Vehicle`, so the compiler uses Vehicle's version"
-      - "`Car.describe()` — Java uses dynamic dispatch: the actual runtime type determines which method runs, regardless of the reference type"
+      - "`Car.describe()` — Java's dynamic dispatch uses the runtime type, not the reference type"
       - "Compile error — you cannot call an abstract method through a reference"
       - "A `ClassCastException` at runtime — the abstract method cannot be invoked"
     correct_index: 1
@@ -434,7 +434,7 @@ questions:
       Which two decisions together best achieve these goals?
     options:
       - "Use a `List<Student>` internally; expose it via `getStudents()` so callers can call `.contains()`"
-      - "Define an `Enrollable` interface with `enroll()`, `drop()`, `isEnrolled()` — use `LinkedHashSet<Student>` internally for O(1) lookup with no duplicates and insertion order preserved"
+      - "Define an `Enrollable` interface (`enroll`/`drop`/`isEnrolled`) backed by an internal `LinkedHashSet<Student>`"
       - "Use `HashMap<String, Student>` internally; make all fields `public` since that simplifies the API"
       - "Use `ArrayList<Student>` internally and expose a `getStudents()` getter returning the full list"
     correct_index: 1
