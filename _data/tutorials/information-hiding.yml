@@ -841,7 +841,7 @@ steps:
       - **Distinguish** Python's existing duck typing (runtime, invisible) from a typed `Protocol` (declared, type-checkable)
       - **Recognize** that the same construct hides an algorithm in Step 4, a storage backend in Step 5, and an exhaustive set of alternatives in Step 6
 
-      ### Two-minute primer
+      ### Five-minute primer
 
       A `Protocol` is a class that declares method signatures **as a contract**. Any class with matching methods satisfies it automatically — no `class Foo(Bar):` required.
 
@@ -899,6 +899,8 @@ steps:
       3. **Do not** add `(PlaylistLike)` to either `Playlist` or `DictBackedPlaylist`. The whole point is that they satisfy it without saying so.
 
       The test will call `summary(Playlist())` and `summary(DictBackedPlaylist())`. Both should produce identical-shape strings — proving the same client function accepts two completely different backings, via the *declared* Protocol rather than runtime luck.
+
+      > **Look back at Step 2's swap test.** It built `DictBackedPlaylist` inside the test and passed it to your refactored client. That worked because of *invisible* duck typing — Python found the methods at call time. `PlaylistLike` is the **same fact, now declared.** Nothing about Step 2's runtime behavior changes; what changes is that a future reader can see the contract without running the code.
 
       ### 🪞 Before clicking Next
 
@@ -1091,7 +1093,7 @@ steps:
             allows implementations to keep?
           options:
             - "How many tracks are in the playlist."
-            - "How tracks are stored internally (list vs. dict vs. anything else)."
+            - "How tracks are stored — list vs. dict vs. anything else."
             - "Whether Python uses duck typing or static typing."
             - "The fact that `PlaylistLike` is a Protocol."
           correct_index: 1
@@ -1110,8 +1112,8 @@ steps:
             and `def value(self) -> int: ...`?
           options:
             - "`class Tally: def increment(self): self.n += 1\n    def value(self): return self.n`"
-            - "`class Total(CounterLike): def increment(self): ...` — only `increment`, no `value`"
-            - "`class HiddenCount: def __init__(self): self._n = 0\n    def increment(self): self._n += 1\n    def value(self): return self._n`"
+            - "`class Total(CounterLike): def increment(self): ...` (no `value` defined)"
+            - "`class HiddenCount: def increment(self): self._n += 1\n    def value(self): return self._n`"
             - "`class Logger: def log(self, msg): print(msg)`"
           correct_indices: [0, 2]
           option_feedback:
@@ -1130,7 +1132,7 @@ steps:
             Protocol hides the implementation." Is that true?
           options:
             - "Yes — Protocols hide everything that isn't declared in them."
-            - "No — `transactions` is reachable from anywhere `CryptoWallet` is used directly; the Protocol just doesn't *require* exposure."
+            - "No — `transactions` is still reachable on the concrete class."
             - "Yes — Python's annotations enforce that only Protocol methods are visible."
             - "No — Protocols only work for read-only objects."
           correct_index: 1
@@ -1673,7 +1675,7 @@ steps:
             Both satisfy the `Recommender` Protocol. Why does that work?
           options:
             - "Python silently rewrites both classes at import time to inherit from `Recommender`."
-            - "Structural subtyping (PEP 544) means any class with matching methods qualifies — declaration order and import location are irrelevant."
+            - "Structural subtyping — any class with matching methods qualifies."
             - "Only the second class works; the first one was defined before `Recommender`, so it can't satisfy it."
             - "It works because both classes happen to have `recommend` in their name."
           correct_index: 1
@@ -2221,16 +2223,16 @@ steps:
             specifically, and not just `@dataclass`?
           options:
             - "Frozen dataclasses are faster at construction."
-            - "Frozen prevents callers from mutating an `Event` they received from `find_in()`, which would silently change another caller's view if the directory shared instances."
+            - "Callers can't mutate an `Event` they received from `find_in()`."
             - "Frozen is required for dataclasses to work with `Protocol`."
             - "Frozen automatically makes all fields private."
           correct_index: 1
           option_feedback:
-            0: "Frozen dataclasses are actually slightly *slower* (because Python uses `object.__setattr__` for initialization). Performance isn't the reason to choose them."
+            0: "Performance is not the reason — at the per-instance scale you'd notice, cost is dominated by allocation, not field assignment. The reason to choose frozen is *semantic* (mutation safety)."
             2: "Frozen and Protocol are independent features. A non-frozen dataclass still satisfies a Protocol if the methods match."
             3: "Frozen has nothing to do with field privacy. All dataclass fields are public regardless of frozenness."
           explanation: |
-            This is Step 2's lesson, retrieved through the Step 5 lens. Step 2's `Track` was frozen so `top_tracks(3)` could safely return references to internal tracks without callers mutating them. Step 5's `Event` is frozen for the same reason: an in-memory directory may cache `Event` instances, and a caller who mutates one would corrupt that cache without warning. **Frozen dataclasses are the cheapest way to make a domain object both typed and safe to hand out** — the same one-line move you used in Step 2 generalizes here.
+            Step 2's lesson, retrieved through the Step 5 lens. Step 2's `Track` was frozen so `top_tracks(3)` could safely return references to internal tracks without callers mutating them. Step 5's `Event` is frozen for the same reason: an in-memory directory may cache `Event` instances, and a caller who mutates one would corrupt that cache without warning. **Frozen dataclasses are the cheapest way to make a domain object both typed and safe to hand out** — the same one-line move you used in Step 2 generalizes here.
 
     solution:
       files:
@@ -2376,7 +2378,9 @@ steps:
     instructions: |
       ### 🧠 Before you read — retrieve from memory
 
-      You've now done three refactors that each followed the same five-step routine. **Before scrolling further, cover the screen and write the five labels of that routine from memory.** (A scrap of paper, a comment in your editor, or your head — any form is fine. Just don't peek.)
+      You're about to do refactor #4. Before another worked example layers on top of the routine you've practiced three times already, your brain needs a chance to **produce** it cold — that's what makes the next refactor cheaper than the last one, instead of just longer to read.
+
+      You've now done three refactors that each followed the same five-step routine. **Cover the screen and write the five labels of that routine from memory.** (A scrap of paper, a comment in your editor, or your head — any form is fine. Just don't peek.)
 
       <details><summary>Reveal (after you've written your version)</summary>
 
@@ -2686,7 +2690,7 @@ steps:
             What's the cleanest objection?
           options:
             - "Private fields would make the code uncompilable in Python."
-            - "Making the provider field private hides the *attribute*, but the same `if provider == \"spotify\"` ladder would still appear in `play`/`share`/`like` methods — the leak is the *list of branches*, not the variable's visibility."
+            - "No — the `if`/`elif` ladder would still appear in every method."
             - "Single Choice requires every variable to be public."
             - "Private fields are inherently slower at runtime."
           correct_index: 1
@@ -2695,7 +2699,7 @@ steps:
             2: "Single Choice says nothing about field visibility — it's about *where* the list of alternatives lives."
             3: "Speed is irrelevant to the question."
           explanation: |
-            This is Step 1's lesson, retrieved through Step 6's lens. **Visibility modifiers are not the unit of information hiding.** Hiding the `provider: str` field as `self._provider` would still leave a `match self._provider:` block — the *shape* of the leak doesn't change. The Single Choice violation lives in the **branching ladder**, not the variable name. The fix is structural (polymorphism on a Protocol), not lexical (more underscores). Same lesson as Step 1's `WatchHistory._history`: the underscore did not hide the design decision.
+            This is Step 1's lesson, retrieved through Step 6's lens. **Visibility modifiers are not the unit of information hiding.** Hiding the `provider: str` field as `self._provider` would still leave the same `if self._provider == "spotify": ... elif ...` ladder in every method — the *shape* of the leak doesn't change. The Single Choice violation lives in the **branching ladder**, not the variable name. The fix is structural (polymorphism on a Protocol), not lexical (more underscores). Same lesson as Step 1's `WatchHistory._history`: the underscore did not hide the design decision.
 
         - type: single
           difficulty: advanced
@@ -2905,7 +2909,7 @@ steps:
 
             What kind of leak — if any — does `all()` introduce?
           options:
-            - "Representation leak — clients see and can mutate the internal `list[dict]`, and depend on its element shape."
+            - "Representation leak — clients can mutate the internal list and depend on its keys."
             - "Over-specification leak — the contract reveals a scoring/ordering detail."
             - "Persistence leak — a storage technology is exposed in the contract."
             - "Exhaustive-alternatives leak — an `if x ==` ladder appears in multiple places."
@@ -2933,7 +2937,7 @@ steps:
             What kind of leak — if any?
           options:
             - "Representation leak — `list` and `dict` show internal storage."
-            - "Over-specification leak — the contract names the ranking algorithm and its numeric scale, restricting future implementations."
+            - "Over-specification leak — the contract names the score scale and algorithm."
             - "Persistence leak — a database schema is exposed."
             - "Exhaustive-alternatives leak — a list of providers is repeated."
             - "Not a leak — the contract is precise, which is good."
@@ -2967,7 +2971,7 @@ steps:
           options:
             - "Representation leak — `list[dict]` exposes element shape."
             - "Over-specification leak — `event_id: int` ties clients to integer IDs."
-            - "Persistence leak — the signature names `sqlite3.Connection` and a SQL table, so every client compiles against SQLite."
+            - "Persistence leak — the signature names `sqlite3.Connection` and a SQL table."
             - "Exhaustive-alternatives leak — multiple event types are switched on."
             - "Not a leak — type hints make this safe."
           correct_index: 2
@@ -3011,7 +3015,7 @@ steps:
             - "Representation leak — `str` exposes the channel identifier."
             - "Over-specification leak — channel choice reveals delivery strategy."
             - "Persistence leak — `queue_notification` mentions a queue."
-            - "Exhaustive-alternatives leak — the same channel list is repeated across two functions; adding a fourth channel means two synchronized edits."
+            - "Exhaustive-alternatives leak — the channel list is repeated in two functions."
             - "Not a leak — clear `if/elif` is good practice."
           correct_index: 3
           option_feedback:
@@ -3045,7 +3049,7 @@ steps:
             A teammate proposes: *"Put the file glob behind a `DraftSource(Protocol)` so we could swap to S3 later."* Should you?
           options:
             - "Yes — every filesystem operation should be hidden behind a Protocol."
-            - "No — a 10-line cron script with no second use case doesn't benefit from indirection; the layer taxes every future reader for an S3 migration that may never happen."
+            - "No — a 10-line cron script with no second caller doesn't earn the indirection."
             - "Yes — Step 5 said to always hide persistence."
             - "No — but only because Python's `pathlib` is already an abstraction."
           correct_index: 1
@@ -3054,7 +3058,7 @@ steps:
             2: "Step 5 said to hide persistence *when the future change is plausible* — production catalogs with multiple readers, yes; a 10-line cron job with no second caller, no. **Always-hide** is the over-application failure mode this step calibrates against."
             3: "`pathlib.Path` is a thin wrapper around filesystem syscalls; it doesn't hide *which* filesystem you're touching. The reason to skip the abstraction is the script's small scope, not pathlib's design."
           explanation: |
-            **The honest answer**: not every leak should be hidden. Information hiding pays in maintenance, and a 10-line cron script with no plausible second caller has no maintenance to amortize against. If this script grew (multiple draft sources, multiple deletion policies, multiple environments), *then* the abstraction would earn its place. Until then, the indirection is pure cognitive tax on every reader. **The skill is choosing when to apply, not just how** — Step 8 puts a number on this with the "blast radius" exercise.
+            **The honest answer**: not every leak should be hidden. Information hiding pays in maintenance, and a 10-line cron script with no plausible second caller has no maintenance to amortize against. The layer taxes every future reader for an S3 migration that may never happen. If this script grew (multiple draft sources, multiple deletion policies, multiple environments), *then* the abstraction would earn its place. Until then, the indirection is pure cognitive tax. **The skill is choosing when to apply, not just how** — Step 8 puts a number on this with the "blast radius" exercise.
 
         - type: multiple
           difficulty: advanced
@@ -3161,7 +3165,9 @@ steps:
 
       ### Your tasks
 
-      1. **Write a module guide for `ui.py`** in the file `MODULE_GUIDE.md`. Use the same four labels you learned in Steps 4–5 (`Primary secret`, `Likely changes`, `Stable contract`, `Not promised`). One or two lines per label is enough — the artifact's value is in the *content*, not the length. The test enforces substantive content under each label and that the `Not promised` section names at least one specific concrete decision (HTML templating, route paths, response formats, authentication, etc.).
+      1. **Write a module guide for `ui.py`** in the file `MODULE_GUIDE.md`. Use the **same four labels** you learned in Steps 4–5: `Primary secret`, `Likely changes`, `Stable contract`, `Not promised`. **One stylistic note:** Steps 4–5 wrote the guide inside a `"""..."""` Python docstring at the top of a `.py` file (because there *was* a module file to attach it to). Here the artifact stands alone, so it's a `.md` file with the four labels as Markdown `##` headings instead. Same content, same Parnas/Clements/Weiss-1985 format — just rendered for Markdown instead of Python. The labels still match exactly so a future maintainer can `grep` for them across both formats.
+
+         One or two lines per label is enough — the artifact's value is in the *content*, not the length. The test enforces substantive content under each label and that the `Not promised` section names at least one specific concrete decision (HTML templating, route paths, response formats, authentication, etc.).
       2. **Answer all five quiz questions** below. Four are change-impact predictions on MusicShare (one of which has "don't refactor" as the correct answer); the fifth is the honest-tradeoff question.
 
       The module guide is the *consolidation* artifact: producing a four-label document for a module you've never edited proves you can apply the discipline on cold material. That is the meaningful capstone for this tutorial.
@@ -3257,27 +3263,70 @@ steps:
               )
 
           # 3. The Not-promised section must name at least one concrete UI-layer
-          # decision (HTML, JSON, route, template, status, header, cookie,
-          # session, auth, etc.).
+          # decision OR reject generic placeholder phrasings.
           not_promised_idx = src.index("Not promised")
           not_promised_body = src[not_promised_idx:]
-          ui_terms = [
-              "html", "json", "template", "templating", "jinja", "url",
-              "route", "path", "endpoint", "status", "header", "cookie",
-              "session", "auth", "form", "redirect", "csrf", "http", "rest",
-              "websocket", "render",
-          ]
           body_lower = not_promised_body.lower()
+
+          # Generous keyword list — anything concrete about web UI, output
+          # formatting, transport, or auth counts.
+          ui_terms = [
+              # Output formats
+              "html", "json", "xml", "yaml", "csv", "plaintext",
+              # Templating / rendering
+              "template", "templating", "jinja", "render", "rendering", "view",
+              # Routing
+              "url", "route", "routing", "path", "endpoint", "uri",
+              # HTTP / transport
+              "http", "https", "status", "header", "method", "verb",
+              "mime", "content-type", "encoding",
+              # Auth
+              "auth", "session", "cookie", "token", "jwt", "oauth", "csrf",
+              "credential", "credentials",
+              # Forms / input
+              "form", "input", "validation",
+              # API styles
+              "rest", "graphql", "websocket", "rpc", "ajax",
+              # Wire / response shape
+              "schema", "response", "request", "payload", "body", "envelope",
+              # Misc concrete decisions
+              "redirect", "tls", "ssl", "rate-limit", "rate-limiting",
+              "css", "javascript", "static", "asset",
+              "api", "version", "versioning",
+          ]
           found = [t for t in ui_terms if t in body_lower]
-          assert found, (
-              "The ``Not promised`` section should name at least one concrete "
-              "UI-layer decision that is NOT part of ui.py's contract — "
-              "examples: HTML vs JSON output, the templating engine, exact URL "
-              "paths, response status codes, authentication scheme. "
-              "Generic 'implementation details' does not count. The point of "
-              "this artifact is to record SPECIFIC future maintainers should "
-              "not depend on."
-          )
+
+          # Fallback: if no keyword matched, reject only if the section is
+          # *generically* phrased ("implementation details" and friends).
+          # Anything else with substantive content + at least two distinct
+          # nouns gets the benefit of the doubt.
+          if not found:
+              generic_phrases = [
+                  "implementation detail", "internal", "internals",
+                  "private stuff", "private things", "private detail",
+                  "implementation specific", "magic",
+              ]
+              generic_only = any(p in body_lower for p in generic_phrases)
+              # Count distinct alphabetic words >= 5 chars, excluding labels.
+              import re as _re
+              words = [
+                  w for w in _re.findall(r"[a-zA-Z]{5,}", not_promised_body)
+                  if w.lower() not in {"promise", "promised", "should", "would",
+                                        "could", "module", "guide", "primary",
+                                        "secret", "stable", "contract", "likely",
+                                        "changes", "section"}
+              ]
+              distinct = len({w.lower() for w in words})
+              assert not generic_only and distinct >= 4, (
+                  "The ``Not promised`` section should name at least one concrete "
+                  "UI-layer decision that is NOT part of ui.py's contract — "
+                  "examples: HTML vs JSON output, the templating engine, exact URL "
+                  "paths, response status codes, authentication scheme, response "
+                  "schema, CSS or asset paths. "
+                  "Generic 'implementation details' does not count. The point of "
+                  "this artifact is to record SPECIFIC things future maintainers "
+                  "must not depend on."
+              )
         hints:
           - text: "Start with the secret. ui.py's row in the system table says its secret is 'how requests are routed / rendered to HTML'. That's your Primary secret, in your own words."
           - text: "Likely changes are things ui.py absorbs locally. Examples: switching from server-rendered HTML to JSON for an SPA frontend, changing the templating engine, adding a new endpoint, swapping auth schemes."
@@ -3366,7 +3415,7 @@ steps:
             instead of `sqlite3` directly?"* What is the right call?
           options:
             - "Yes — every SQLite usage in the codebase should go through `EventDirectory`."
-            - "No — a 25-line cron script with no second use case doesn't earn the indirection; the abstraction taxes every future reader for change that may never come."
+            - "No — a 25-line cron script with no second caller doesn't earn the indirection."
             - "Yes — Step 5 said to always hide persistence behind a Protocol."
             - "No — `nightly_health_check.py` should use a completely different ORM to be safe."
           correct_index: 1

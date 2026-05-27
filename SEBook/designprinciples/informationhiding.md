@@ -1052,6 +1052,8 @@ Knowing what to hide is one skill; knowing the *moves* to actually hide it is an
 
 You will rarely use only one of these. A good design typically composes several: an `OrderService` depends on a `PaymentGateway` interface (mechanism 1 + 2); the concrete `PayPalGateway` is a facade (3) over the messy PayPal SDK; the SDK is itself adapted (4) so swapping it out is bounded; the whole thing lives in a `payments/` package whose exports are restricted (6 + 7).
 
+A subtle but important note about mechanism 1: in dynamically-typed languages like Python or JavaScript, the *runtime* will accept any object with the right methods — that is duck typing, and it gives you substitutability without requiring an explicit base class. But duck typing leaves the contract *invisible in the source*. A `class PaymentGateway(Protocol)` (Python) or a TypeScript `interface` is the same fact, **declared**: future readers can see what the contract is without running the code, and a type checker can enforce it. The hiding is the same either way; what changes is who can audit it. *Naming the contract* and *writing a good contract* are independent skills, and many leaks survive both — see the score-scale and `bucket_id` example in *Interfaces Are Permission to Assume*.
+
 ## Single Choice Principle: Hide the Exhaustive List
 
 The **Single Choice principle** is a focused version of Information Hiding for designs with a fixed set of alternatives. It says:
@@ -1120,6 +1122,20 @@ When you are designing (or reviewing) a module, run this checklist:
 3. **Inspect the interface for leaks.** Read every public method signature, return value, event, exception, status code, ordering guarantee, flag, and test helper. Does any name or type reveal a vendor, database, library, file format, score scale, table name, storage row, algorithm, lifecycle rule, timing assumption, or low-level data structure? If yes, the secret has leaked into the contract.
 4. **Simulate a likely change.** Pick a realistic future change and trace what would need to be edited. If the answer is more than this module, redesign.
 5. **Check for shallowness and payoff.** Is the implementation behind the interface non-trivial? A thin adapter can be worthwhile if it centralizes a volatile vendor, storage engine, or exhaustive choice list. But if the module is a pass-through with no plausible variation to protect, merge it back into its caller — you have added an interface without buying hiding.
+
+## Classify the Leak Before You Fix It
+
+The five-step method tells you *how* to hide a decision once you have one in your sights. In real code, the harder skill is **deciding which kind of leak you are looking at** — because each kind has a different fix, and one of the possible classifications is "no leak — leave it alone." The categories that recur across most production codebases:
+
+| Leak kind | Surface form | Routine that fixes it |
+|---|---|---|
+| **Representation** | A getter or property returns an internal mutable collection or raw row type; clients depend on its shape or iterate it. | Replace the exposed type with a domain object (frozen dataclass / `record` / ADT) and expose domain operations. |
+| **Over-specification** | The contract names an algorithm, a numeric scale, an internal identifier, or an ordering that clients do not actually need. | Re-express the return values in domain terms (e.g. a `Confidence` enum instead of a BM25 score) and let the algorithm vary behind it. |
+| **Persistence** | A function signature names a database connection, ORM session, or filesystem path; every caller compiles against that storage technology. | Hide the storage behind a domain-shaped Repository / Gateway; inject it. |
+| **Exhaustive alternatives** | The same `if x == "spotify" elif "apple_music" ...` ladder appears in multiple files; adding a fifth alternative requires synchronized edits. | Polymorphism on a Protocol; one wiring module knows the exhaustive list. |
+| **Not a leak (don't refactor)** | A small script with no second caller, a deliberately stable single-variant decision, or a contract whose visible detail is actually domain-meaningful. | Leave it. The abstraction would tax every reader for a future change that may never come. |
+
+Mis-classifying is more common than mis-fixing. The most frequent error is treating a *representation* leak as a *persistence* leak (and wrapping the wrong thing in a Repository), followed closely by treating a *not-a-leak* as one of the others (and adding indirection nobody pays for). When reviewing code, name the kind of leak before you propose a fix — half the time the naming itself reveals the right move.
 
 ## When NOT to Apply Information Hiding (Trade-offs Are Real)
 
