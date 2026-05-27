@@ -20,6 +20,7 @@ autosave_type: files
 
 setup_commands:
   - "import pyodide_js; await pyodide_js.loadPackage('pytest')"
+  - "import pyodide_js; await pyodide_js.loadPackage('hypothesis')"
   - "import sys; sys.path.insert(0, '/tutorial')"
   - |
     import pytest as _pytest, sys as _sys
@@ -33,7 +34,7 @@ setup_commands:
                     'means',
                     'sequences',
                     'accounts',
-                    'contract_strength',
+                    'savings',
                 ):
                     del _sysmod.modules[m]
             return _orig(*a, **kw)
@@ -42,84 +43,187 @@ setup_commands:
 
 steps:
 
-  # Pedagogy: PRIMM — contrast defensive checks with caller/callee responsibility.
+  # Pedagogy: contrasting cases (Variation Theory) — Defensive Programming and
+  # Design by Contract are made visible by placing two versions of the same
+  # function side by side, then introducing contract notation as responsibility
+  # allocation rather than "another way to check inputs."
   - title: "Contract Mindset"
     instructions: |
       ### Why this matters
 
-      Defensive programming asks "how do I reject bad input clearly?" Design by Contract adds a sharper question: "whose job was this?" A precondition failure belongs to the caller; a postcondition failure belongs to the supplier implementation.
+      Defensive Programming asks "how do I reject bad input clearly?" Design by Contract asks a sharper question first: **"whose job was this?"** That single shift in framing changes how the code is structured — sometimes radically.
+
+      Bertrand Meyer, who coined Design by Contract in the 1980s, argued explicitly *against* defensive programming. He called blanket input-checking a methodology that "can only … cause … a decrease in reliability" because redundant checks across a large system compound into "a monster of useless complexity." His **Non-Redundancy Principle**: *under no circumstances shall the body of a routine ever test for its precondition*. The caller's job is to satisfy preconditions; the supplier's job is to satisfy postconditions, *assuming the preconditions held*.
+
+      That's a strong claim — and the opposite of the DP tutorial you just finished. This step makes the contrast visible by putting two versions of the same function side by side, then introduces the pragmatic Python middle ground we'll use for the rest of the tutorial.
 
       ### 🎯 You will learn to
 
-      - Distinguish preconditions from postconditions.
-      - Assign blame to the caller or supplier when a contract fails.
-      - Read `require` and `ensure` as different kinds of contract checks.
+      - Analyze the same function as a Defensive Programming artifact vs. a Design by Contract artifact.
+      - Distinguish caller obligations (preconditions) from supplier guarantees (postconditions).
+      - Apply the Non-Redundancy Principle to decide where a check belongs.
 
-      ### Read the contract
+      ### Two implementations, same behavior on valid inputs
 
-      This tutorial uses two tiny helpers:
+      Open `discounts.py`. It contains two versions of `discounted_price(price, discount)`. Their visible behavior on valid inputs is *identical*. Their framing of responsibility is *very* different.
+
+      #### Version A
 
       ```python
-      def require(condition: bool, message: str) -> None:
+      def discounted_price_A(price, discount):
+          if not isinstance(price, (int, float)):
+              raise TypeError("price must be a number")
+          if not isinstance(discount, (int, float)):
+              raise TypeError("discount must be a number")
+          if price < 0:
+              raise ValueError("price must be non-negative")
+          if not (0 <= discount <= 1):
+              raise ValueError("discount must be between 0 and 1")
+          return price * (1 - discount)
+      ```
+
+      #### Version B
+
+      ```python
+      def discounted_price_B(price, discount):
+          """Return price after applying a fractional discount.
+
+          Preconditions (caller's obligation):
+              - price >= 0
+              - 0 <= discount <= 1
+
+          Postcondition (supplier's guarantee, given preconditions hold):
+              - result == price * (1 - discount)
+              - 0 <= result <= price
+          """
+          return price * (1 - discount)
+      ```
+
+      ### ✏️ Predict before you read on
+
+      Commit to a letter, *then* open the reveal.
+
+      - (a) A is Defensive Programming; B is Design by Contract.
+      - (b) B is Defensive Programming; A is Design by Contract.
+      - (c) They are equivalent — labels are decoration.
+      - (d) Both are Defensive — DbC requires a different language like Eiffel.
+
+      <details>
+      <summary>Reveal</summary>
+
+      **(a) is correct.** Version A is **Defensive Programming**: every assumption is checked at the boundary of the routine, before any useful work happens. Version B is **Design by Contract** in the pure Meyer sense: the contract is *documented*; the body *assumes* the precondition; there are no defensive checks in the body.
+
+      The other letters map to specific misconceptions worth naming:
+
+      - **(b)** confuses "more code = more rigorous." DbC's claim is the opposite: contracts let you write *less* code by allocating responsibility.
+      - **(c)** treats this as a style preference. It isn't. Labels matter because they change *who is responsible when something fails*. A failure in Version A is the function's fault for letting bad input through. A failure in Version B is the *caller's* fault for violating the documented precondition.
+      - **(d)** DbC is a methodology, not a language. Eiffel makes it ergonomic; Python can do it with discipline and small helpers.
+
+      </details>
+
+      ### What each style optimizes for
+
+      | Aspect | Defensive Programming (A) | Design by Contract (B) |
+      |---|---|---|
+      | Trust assumption | Caller may be hostile or buggy | Caller is a partner who reads the contract |
+      | Where checks live | Inside the routine body | Outside, in the caller's context — or not at all |
+      | Scales well to | Public APIs, untrusted boundaries | Large libraries with many internal callers |
+      | Fails badly when | Internal callers pay validation cost on every call | Public APIs accept untrusted input |
+      | Performance cost | Permanent | Optional — Eiffel disables monitoring in release builds |
+
+      The conclusion both Meyer and modern practice agree on: **use DbC for internal module boundaries; use DP at the system boundary** (user input, network, files, databases). They are complementary, not competing. The mistake is doing both for the same condition — that's the redundancy Meyer warned about.
+
+      ### A pragmatic Python middle ground
+
+      Python doesn't have a built-in contract language. For this tutorial we use two tiny helpers that make the contract *visible* and *runtime-checked* — useful for learning and for debugging, optional in production:
+
+      ```python
+      def require(condition: bool, message: str, *, kind: str = "value") -> None:
+          """Caller obligation. kind='type' raises TypeError; default raises ValueError."""
           if not condition:
-              raise ValueError(message)
+              raise (TypeError if kind == "type" else ValueError)(message)
 
       def ensure(condition: bool, message: str) -> None:
+          """Supplier guarantee. Failure is a supplier bug → AssertionError."""
           if not condition:
               raise AssertionError(message)
       ```
 
-      `require` is for preconditions: facts the caller must make true before the function runs.
-      `ensure` is for postconditions: facts the supplier implementation must make true before returning.
+      Two intentional design choices worth naming:
 
-      Open `discounts.py` and study the intended contract:
+      - **`require` accepts a `kind="type"` flag.** This keeps us consistent with the DP tutorial's TypeError/ValueError discipline. *In pure DbC, every precondition violation is the same thing — a caller bug — and the exception class is a Python-pragmatic refinement, not a core concept.* We use `kind="type"` only when distinguishing the diagnostic adds clarity.
+      - **`ensure` raises `AssertionError`** instead of `ValueError`. A postcondition failure is *the supplier's* bug, not the caller's. Distinct exception classes make blame visible in tracebacks. We don't use Python's built-in `assert` because `python -O` strips it — but conceptually it's the same thing. In Eiffel, contract monitoring is a compile flag that turns checks on or off *without altering the specification itself*.
+
+      Version C below is the working version we'll build on for the rest of the tutorial — DbC framing, runtime monitoring, no inline type defense:
 
       ```python
       def discounted_price(price: float, discount: float) -> float:
-          ...
+          require(price >= 0, "price must be non-negative")
+          require(0 <= discount <= 1, "discount must be between 0 and 1")
+          result = price * (1 - discount)
+          ensure(0 <= result <= price, "result must stay between 0 and original price")
+          return result
       ```
 
-      Preconditions:
-
-      - `price >= 0`
-      - `0 <= discount <= 1`
-
-      Postconditions:
-
-      - result equals `price * (1 - discount)`
-      - `0 <= result <= price`
-
-      You do not need to implement it in this step. The goal is to classify failures by responsibility.
+      Notice what's *not* there: type checks. In pure DbC you would document `price: REAL` and let the type system or the caller's contract handle wrong types. We will sometimes add `require(isinstance(...), ..., kind="type")` later when it sharpens diagnostics — but every time we do, we're paying the same redundancy cost Meyer warned about. It's a trade-off, not a default.
 
     files:
       - path: "discounts.py"
         language: "python"
         content: |
-          def require(condition: bool, message: str) -> None:
+          # ============================================================
+          # Two methodologies, one function.
+          # Read both versions, then study Version C — the DbC framing
+          # we will build on for the rest of the tutorial.
+          # ============================================================
+
+          # ---- Version A: Defensive Programming ----
+          def discounted_price_A(price, discount):
+              if not isinstance(price, (int, float)):
+                  raise TypeError("price must be a number")
+              if not isinstance(discount, (int, float)):
+                  raise TypeError("discount must be a number")
+              if price < 0:
+                  raise ValueError("price must be non-negative")
+              if not (0 <= discount <= 1):
+                  raise ValueError("discount must be between 0 and 1")
+              return price * (1 - discount)
+
+
+          # ---- Version B: Design by Contract (pure Meyer) ----
+          def discounted_price_B(price, discount):
+              """Return price after applying a fractional discount.
+
+              Preconditions (caller's obligation):
+                  - price >= 0
+                  - 0 <= discount <= 1
+
+              Postcondition (supplier's guarantee, given preconditions hold):
+                  - result == price * (1 - discount)
+                  - 0 <= result <= price
+              """
+              return price * (1 - discount)
+
+
+          # ---- Contract helpers (used from Version C onward) ----
+          def require(condition: bool, message: str, *, kind: str = "value") -> None:
+              """Caller obligation. kind='type' raises TypeError; default raises ValueError."""
               if not condition:
-                  raise ValueError(message)
+                  raise (TypeError if kind == "type" else ValueError)(message)
 
 
           def ensure(condition: bool, message: str) -> None:
+              """Supplier guarantee. Failure is the supplier's bug → AssertionError."""
               if not condition:
                   raise AssertionError(message)
 
 
+          # ---- Version C: DbC with runtime monitoring (our working version) ----
           def discounted_price(price: float, discount: float) -> float:
-              """Return price after applying a fractional discount.
-
-              Preconditions:
-                - price >= 0
-                - 0 <= discount <= 1
-
-              Postconditions:
-                - result == price * (1 - discount)
-                - 0 <= result <= price
-              """
+              """Return price after applying a fractional discount."""
               require(price >= 0, "price must be non-negative")
               require(0 <= discount <= 1, "discount must be between 0 and 1")
               result = price * (1 - discount)
-              ensure(result == price * (1 - discount), "discount formula must hold")
               ensure(0 <= result <= price, "result must stay between 0 and original price")
               return result
 
@@ -134,57 +238,78 @@ steps:
         - type: single
           difficulty: basic
           question: |
-            `discounted_price(-10, 0.2)` fails because `price >= 0` is false. Who violated the contract?
+            Which statement best captures Meyer's Non-Redundancy Principle?
           options:
-            - "The caller, because a precondition was false before the function ran."
-            - "The supplier, because every exception from inside a function belongs to the function."
-            - "Both sides, because negative prices and discounts interact."
-            - "Neither side, because Python allows negative numbers."
+            - "A routine's body should never test for its own precondition; the caller is responsible."
+            - "Every routine should validate every input at the top of its body."
+            - "Preconditions and postconditions should always be checked, even in production."
+            - "Defensive programming and Design by Contract are equivalent in practice."
           correct_index: 0
           option_feedback:
-            1: "Contract blame depends on which part failed. A false precondition means the caller made a call the supplier did not promise to handle."
-            2: "Only the price precondition failed. The discount value is inside the allowed range."
-            3: "Python can represent negative numbers, but the function's contract rejects them for this domain."
-          explanation: "Preconditions are caller responsibilities. When the caller passes a negative price, the function is allowed to refuse the call."
+            1: "This is the *defensive programming* prescription Meyer was arguing against. Non-Redundancy says the opposite."
+            2: "Meyer specifically allowed turning monitoring off in production (it's a compile flag in Eiffel). The principle is about *who is responsible*, not whether checks run."
+            3: "They use related vocabulary (preconditions, postconditions) but reach opposite conclusions about where checks should live."
+          explanation: "Non-Redundancy: a consistency condition belongs to *one* of the two parties — caller or supplier — never both. Checking on both sides is wasted complexity that scales badly."
 
         - type: single
           difficulty: intermediate
           question: |
-            Suppose `discounted_price(100, 0.25)` returns `10`. Who violated the contract?
+            `discounted_price_A(-10, 0.2)` raises `ValueError`. `discounted_price_B(-10, 0.2)` returns `-12.0` — a negative price. Which framing is each version using?
           options:
-            - "The caller, because 25 percent is a large discount."
-            - "The supplier, because the preconditions were true but the postcondition formula failed."
-            - "Neither side, because the result is still non-negative."
-            - "Both sides, because price and discount were both involved in the calculation."
-          correct_index: 1
+            - "A is Defensive (catches the bad input itself); B is DbC (relies on the caller to satisfy the precondition)."
+            - "A is DbC (precise exception); B is Defensive (silent acceptance)."
+            - "Both are Defensive — both are written in Python."
+            - "Both are DbC — both have meaningful behavior."
+          correct_index: 0
           option_feedback:
-            0: "A discount of `0.25` is inside the required range. The caller met the preconditions."
-            2: "The range postcondition is only one guarantee. The exact formula is also part of the contract."
-            3: "The caller provided valid inputs. The wrong result is the supplier implementation's failure."
-          explanation: "When the caller satisfies the preconditions, the supplier must satisfy every postcondition. Returning `10` violates the formula."
+            1: "Raising a precise exception is a DP move, not a DbC one. DbC's claim is that the *caller* should have prevented this call in the first place."
+            2: "The framing is about *where the check lives*, not the language. Python supports both styles equally."
+            3: "B has a docstring contract; A does not. The presence of inline checks (A) vs. a documented precondition (B) is the distinguishing mark."
+          explanation: "A actively defends against bad input. B trusts the caller to satisfy the precondition — and exhibits 'arbitrary behavior' when the caller breaks it. Meyer's view: that's not a bug in B; it's a bug in the *caller*."
 
         - type: single
           difficulty: intermediate
           question: |
-            What is the main design difference between `require` and `ensure` in this tutorial?
+            In Version C, `require` raises `ValueError` (or `TypeError` with `kind="type"`) and `ensure` raises `AssertionError`. Why two different exception classes?
           options:
-            - "`require` checks caller obligations; `ensure` checks supplier guarantees."
-            - "`require` is for strings; `ensure` is for numbers."
-            - "`require` should be used after computation; `ensure` should be used before computation."
-            - "`require` catches exceptions; `ensure` prevents exceptions."
+            - "To make traceback blame visible: `ValueError`/`TypeError` ⇒ caller bug; `AssertionError` ⇒ supplier bug."
+            - "Because `AssertionError` is faster to raise."
+            - "Because `ValueError` is reserved for caller bugs by the Python language."
+            - "It's stylistic with no semantic meaning."
           correct_index: 0
           option_feedback:
-            1: "The helpers are not organized by data type. They are organized by responsibility."
-            2: "Preconditions are checked before computation. Postconditions are checked after the supplier has produced a result."
-            3: "Both helpers raise exceptions when a condition is false. They do not catch exceptions."
-          explanation: "`require` and `ensure` name contract responsibility: preconditions belong to callers, postconditions belong to suppliers."
+            1: "Exception cost is dominated by traceback construction, not the class. The choice is pedagogical, not performance."
+            2: "Python does not enforce this — `ValueError` is just an exception class. The convention here is *ours*, encoding the contract responsibility split."
+            3: "It's stylistic in the sense Python doesn't force it, but it's *load-bearing* for the contract framing: blame should be visible at the point of failure."
+          explanation: "The two exception classes encode the DbC responsibility split in Python's exception system. A `ValueError` in a stack trace says 'caller did wrong'; an `AssertionError` says 'this routine failed to deliver on its promise.'"
 
-  # Pedagogy: worked example with fading — implement preconditions before the computation.
+        - type: single
+          difficulty: basic
+          question: |
+            `discounted_price(100, 0.25)` returns `10` — clearly wrong; should be `75`. The caller satisfied both preconditions. Who violated the contract?
+          options:
+            - "The supplier — preconditions held, so the result must satisfy every postcondition."
+            - "The caller — 25 percent is a large discount."
+            - "Neither — the result is non-negative, which is one of the postconditions."
+            - "Both — discount math is shared responsibility."
+          correct_index: 0
+          option_feedback:
+            1: "0.25 is inside the documented range [0, 1]. The caller met the precondition."
+            2: "A weak postcondition that *any* result satisfies (like 'non-negative') is not the full contract. The formula and the upper bound are *both* postconditions."
+            3: "When the caller met every precondition, the supplier owes every postcondition. Shared blame would defeat the responsibility allocation."
+          explanation: "Preconditions held ⇒ supplier owes every postcondition. The implementation produced `10`, violating both the formula and the upper-bound postcondition — that's a supplier bug, and `ensure` raises `AssertionError` to make it visible."
+
+  # Pedagogy: worked example with fading — implement preconditions before the
+  # computation. Bridging callout retrieves the DP framing for comparison.
   - title: "Good Preconditions"
     instructions: |
       ### Why this matters
 
-      A good precondition rejects calls that the function cannot honestly handle before the algorithm starts. That keeps the body simple and makes failures point to the caller's contract violation.
+      A good precondition rejects calls that the function cannot honestly handle *before* the algorithm starts. That keeps the body simple and makes failures point to the caller's contract violation, not to obscure runtime errors deep inside the math.
+
+      ### 🔗 Bridging from Defensive Programming
+
+      > In DP Step 2 (`repeat`) you used `TypeError` for wrong-kind inputs and `ValueError` for wrong-value inputs. In Design by Contract, **both are just "the caller violated a precondition"** — the responsibility label is the core concept, not the exception class. We keep `kind="type"` on `require` as a Python-pragmatic refinement (it sharpens diagnostics), but Meyer's argument is that *who* matters more than *what*.
 
       ### 🎯 You will learn to
 
@@ -216,12 +341,14 @@ steps:
           from collections.abc import Sequence
 
 
-          def require(condition: bool, message: str) -> None:
+          def require(condition: bool, message: str, *, kind: str = "value") -> None:
+              """Caller obligation. kind='type' raises TypeError; default raises ValueError."""
               if not condition:
-                  raise ValueError(message)
+                  raise (TypeError if kind == "type" else ValueError)(message)
 
 
           def ensure(condition: bool, message: str) -> None:
+              """Supplier guarantee. Failure raises AssertionError."""
               if not condition:
                   raise AssertionError(message)
 
@@ -251,7 +378,8 @@ steps:
 
 
           def test_nonnumeric_value_violates_precondition():
-              with pytest.raises(ValueError):
+              # Type predicate violated → TypeError (require with kind="type").
+              with pytest.raises(TypeError):
                   mean_nonempty([1, "2", 3])
 
 
@@ -276,15 +404,17 @@ steps:
           assert code == 0, output
 
           from means import mean_nonempty
-          with pytest.raises(ValueError):
+          with pytest.raises(TypeError):
               mean_nonempty([True, 2, 3])
         hints:
           - title: "Validate before `sum`"
             text: "The starter computes immediately. Move precondition checks above `sum(xs) / len(xs)`."
           - title: "Check each element"
             text: "Loop through `xs`. Each element must be an `int` or `float`, must not be `bool`, and must pass `math.isfinite(...)`."
+          - title: "Type predicates use kind=\"type\""
+            text: "When the precondition checks the *kind* of value (`isinstance`, not-a-bool), pass `kind=\"type\"` to `require`. Numeric-domain checks like `math.isfinite` are value checks, so they stay default."
           - title: "Ensure the formula"
-            text: "After computing `result`, use `ensure(result == sum(xs) / len(xs), ...)` or `pytest.approx` only in tests. The function itself can compare the exact expression for these small inputs."
+            text: "After computing `result`, use `ensure(result == sum(xs) / len(xs), ...)`. The function itself can compare the exact expression for these small inputs."
 
     solution:
       files:
@@ -295,12 +425,14 @@ steps:
             from collections.abc import Sequence
 
 
-            def require(condition: bool, message: str) -> None:
+            def require(condition: bool, message: str, *, kind: str = "value") -> None:
+                """Caller obligation. kind='type' raises TypeError; default raises ValueError."""
                 if not condition:
-                    raise ValueError(message)
+                    raise (TypeError if kind == "type" else ValueError)(message)
 
 
             def ensure(condition: bool, message: str) -> None:
+                """Supplier guarantee. Failure raises AssertionError."""
                 if not condition:
                     raise AssertionError(message)
 
@@ -312,6 +444,7 @@ steps:
                     require(
                         isinstance(value, (int, float)) and not isinstance(value, bool),
                         "all values must be real numbers",
+                        kind="type",
                     )
                     require(math.isfinite(value), "all values must be finite")
 
@@ -319,14 +452,19 @@ steps:
                 ensure(result == sum(xs) / len(xs), "result must equal the arithmetic mean")
                 return result
       explanation: |
-        The computation is only reached after the caller has supplied a non-empty sequence of finite numbers. That is the contract split: caller prepares valid inputs, supplier computes the promised result.
+        The computation is only reached after the caller has supplied a non-empty sequence of finite numbers — the contract split: caller prepares valid inputs, supplier computes the promised result. Type predicates use `kind="type"` so wrong-kind inputs raise `TypeError`; numeric-domain checks (`math.isfinite`, length) stay default and raise `ValueError`. In pure DbC both would be the same — "caller violated precondition" — but the Python-pragmatic split keeps stack traces diagnostic.
 
-  # Pedagogy: worked example with fading — introduce old-state reasoning for a sequence transformation.
+  # Pedagogy: worked example with fading — introduce old-state reasoning for a
+  # sequence transformation. Bridging callout connects to DP's invariant work.
   - title: "Strong Postconditions"
     instructions: |
       ### Why this matters
 
       Weak postconditions let broken code pass. For a sequence operation, "returns a list" is not enough; the contract should say exactly what changed and what stayed untouched.
+
+      ### 🔗 Bridging from Defensive Programming
+
+      > In DP Step 4 (`ClosedInterval.__post_init__`) you enforced an invariant *at construction*: a one-time check at the start of the object's life. Postconditions are a related but different idea — instead of "what must always be true of this object," they say "what must be true *after this call returns*, given the inputs and the prior state." The `old_xs` snapshot is the new tool that lets a postcondition reference the input *as it was at entry*, even after the function has done work.
 
       ### 🎯 You will learn to
 
@@ -359,12 +497,14 @@ steps:
           from collections.abc import Sequence
 
 
-          def require(condition: bool, message: str) -> None:
+          def require(condition: bool, message: str, *, kind: str = "value") -> None:
+              """Caller obligation. kind='type' raises TypeError; default raises ValueError."""
               if not condition:
-                  raise ValueError(message)
+                  raise (TypeError if kind == "type" else ValueError)(message)
 
 
           def ensure(condition: bool, message: str) -> None:
+              """Supplier guarantee. Failure raises AssertionError."""
               if not condition:
                   raise AssertionError(message)
 
@@ -439,12 +579,14 @@ steps:
             from collections.abc import Sequence
 
 
-            def require(condition: bool, message: str) -> None:
+            def require(condition: bool, message: str, *, kind: str = "value") -> None:
+                """Caller obligation. kind='type' raises TypeError; default raises ValueError."""
                 if not condition:
-                    raise ValueError(message)
+                    raise (TypeError if kind == "type" else ValueError)(message)
 
 
             def ensure(condition: bool, message: str) -> None:
+                """Supplier guarantee. Failure raises AssertionError."""
                 if not condition:
                     raise AssertionError(message)
 
@@ -460,12 +602,18 @@ steps:
       explanation: |
         The old-state snapshot lets the postcondition say exactly what changed. Without `old_xs`, a postcondition can easily become a weak check against whatever the current state happens to be.
 
-  # Pedagogy: guided practice — maintain a class invariant through state-changing methods.
+  # Pedagogy: guided practice — maintain a class invariant through state-changing
+  # methods. Bridging callout extends DP's construction-time check to all
+  # stable times in the object's lifetime.
   - title: "Class Invariants"
     instructions: |
       ### Why this matters
 
       An invariant is a fact that should be true after construction and after every public method call. Once an object promises an invariant, every method can rely on it instead of re-validating the whole object from scratch.
+
+      ### 🔗 Bridging from Defensive Programming
+
+      > In DP Step 4 (`ClosedInterval.__post_init__`) you protected the object by validating *at construction* — one stable time, at the start of the object's life. DbC's invariant idea extends this: there are *many* stable times — after construction, and **before and after every public method call**. The invariant must hold at every one of them. Meyer's diagram (an object lifecycle as `S1 → S2 → S3 → …` with `INV` true at each `S_i`) makes this visible. The constructor check is the first guardrail in a longer chain.
 
       ### 🎯 You will learn to
 
@@ -492,12 +640,14 @@ steps:
       - path: "accounts.py"
         language: "python"
         content: |
-          def require(condition: bool, message: str) -> None:
+          def require(condition: bool, message: str, *, kind: str = "value") -> None:
+              """Caller obligation. kind='type' raises TypeError; default raises ValueError."""
               if not condition:
-                  raise ValueError(message)
+                  raise (TypeError if kind == "type" else ValueError)(message)
 
 
           def ensure(condition: bool, message: str) -> None:
+              """Supplier guarantee. Failure raises AssertionError."""
               if not condition:
                   raise AssertionError(message)
 
@@ -575,15 +725,24 @@ steps:
 
           from accounts import BankAccount
           account = BankAccount("Maya", 5)
-          for bad_amount in [0, -1, True, 1.5]:
+          # Wrong-kind inputs (bool, float, str) violate type predicates → TypeError.
+          for bad in [True, 1.5, "5"]:
+              with pytest.raises(TypeError):
+                  account.deposit(bad)
+              with pytest.raises(TypeError):
+                  account.withdraw(bad)
+          # Wrong-value inputs (zero, negative) violate domain predicates → ValueError.
+          for bad in [0, -1]:
               with pytest.raises(ValueError):
-                  account.deposit(bad_amount)
+                  account.deposit(bad)
               with pytest.raises(ValueError):
-                  account.withdraw(bad_amount)
+                  account.withdraw(bad)
           assert account.balance == 5
         hints:
           - title: "Validate constructor arguments"
             text: "Use `require` in `__init__` for caller-supplied owner and starting balance, then call `_check_invariant()` after assigning fields."
+          - title: "Split type and value preconditions"
+            text: "An `isinstance` predicate is a *type* check (pass `kind=\"type\"` so violations raise `TypeError`). A domain-range predicate like `balance >= 0` is a *value* check (default — raises `ValueError`)."
           - title: "Record the old balance"
             text: "For `deposit` and `withdraw`, save `old_balance` before mutation so an `ensure` check can compare the exact change."
           - title: "Check after every public mutation"
@@ -594,24 +753,41 @@ steps:
         - path: "accounts.py"
           language: "python"
           content: |
-            def require(condition: bool, message: str) -> None:
+            def require(condition: bool, message: str, *, kind: str = "value") -> None:
+                """Caller obligation. kind='type' raises TypeError; default raises ValueError."""
                 if not condition:
-                    raise ValueError(message)
+                    raise (TypeError if kind == "type" else ValueError)(message)
 
 
             def ensure(condition: bool, message: str) -> None:
+                """Supplier guarantee. Failure raises AssertionError."""
                 if not condition:
                     raise AssertionError(message)
 
 
-            def _is_positive_int(value: object) -> bool:
-                return isinstance(value, int) and not isinstance(value, bool) and value > 0
+            def _ensure_positive_int(value: object, name: str = "amount") -> None:
+                """Combined precondition: a strictly positive integer (not bool).
+
+                Splits the type predicate (TypeError) from the value predicate (ValueError)
+                so callers see precise diagnostics. In pure DbC both would be 'caller bug'.
+                """
+                require(
+                    isinstance(value, int) and not isinstance(value, bool),
+                    f"{name} must be an integer",
+                    kind="type",
+                )
+                require(value > 0, f"{name} must be positive")
 
 
             class BankAccount:
                 def __init__(self, owner: str, balance: int = 0) -> None:
-                    require(isinstance(owner, str) and owner.strip() != "", "owner must be a non-empty string")
-                    require(isinstance(balance, int) and not isinstance(balance, bool), "balance must be an integer")
+                    require(isinstance(owner, str), "owner must be a string", kind="type")
+                    require(owner.strip() != "", "owner must be non-empty")
+                    require(
+                        isinstance(balance, int) and not isinstance(balance, bool),
+                        "balance must be an integer",
+                        kind="type",
+                    )
                     require(balance >= 0, "balance must be non-negative")
                     self.owner = owner
                     self.balance = balance
@@ -623,28 +799,34 @@ steps:
                     ensure(self.balance >= 0, "balance invariant failed")
 
                 def deposit(self, amount: int) -> None:
-                    require(_is_positive_int(amount), "amount must be a positive integer")
+                    _ensure_positive_int(amount)
                     old_balance = self.balance
                     self.balance += amount
                     self._check_invariant()
                     ensure(self.balance == old_balance + amount, "deposit must increase balance exactly")
 
                 def withdraw(self, amount: int) -> None:
-                    require(_is_positive_int(amount), "amount must be a positive integer")
+                    _ensure_positive_int(amount)
                     require(amount <= self.balance, "insufficient funds")
                     old_balance = self.balance
                     self.balance -= amount
                     self._check_invariant()
                     ensure(self.balance == old_balance - amount, "withdraw must decrease balance exactly")
       explanation: |
-        The constructor uses preconditions for caller-provided values, then `_check_invariant` records the object promise. Each mutating method checks its own preconditions, changes state once, and verifies the invariant plus the exact balance change.
+        The constructor uses preconditions for caller-provided values, splitting type predicates (`kind="type"` → `TypeError`) from value predicates (default → `ValueError`). `_check_invariant` then records the object's *stable-time* promise: it must hold right after construction, and before and after every public method call. Each mutating method checks its own preconditions, changes state once, and verifies both the invariant *and* the exact balance change via `ensure`.
 
-  # Pedagogy: integration practice — coordinate two objects while preserving local invariants and global total.
+  # Pedagogy: integration practice — coordinate two objects while preserving
+  # local invariants and a global total. Bridging callout retrieves the DP
+  # capstone framing for comparison.
   - title: "Multi-Object Contracts"
     instructions: |
       ### Why this matters
 
       Contracts become more useful when an operation coordinates multiple objects. The preconditions say when the operation is allowed; the postconditions say what changed across the whole collaboration.
+
+      ### 🔗 Bridging from Defensive Programming
+
+      > In DP Step 6 (the port-range parser) you combined input validation, postcondition reasoning, and exact exception types in a single function. `transfer` does the same combination, but now across *two* objects: preconditions guard caller mistakes, postconditions specify the exact change, and each object's invariant must still hold afterward. The mechanics are familiar; the framing is **responsibility allocation across multiple parties** — Meyer's metaphor is a contract between a client and *two* suppliers cooperating.
 
       ### 🎯 You will learn to
 
@@ -678,24 +860,37 @@ steps:
       - path: "accounts.py"
         language: "python"
         content: |
-          def require(condition: bool, message: str) -> None:
+          def require(condition: bool, message: str, *, kind: str = "value") -> None:
+              """Caller obligation. kind='type' raises TypeError; default raises ValueError."""
               if not condition:
-                  raise ValueError(message)
+                  raise (TypeError if kind == "type" else ValueError)(message)
 
 
           def ensure(condition: bool, message: str) -> None:
+              """Supplier guarantee. Failure raises AssertionError."""
               if not condition:
                   raise AssertionError(message)
 
 
-          def _is_positive_int(value: object) -> bool:
-              return isinstance(value, int) and not isinstance(value, bool) and value > 0
+          def _ensure_positive_int(value: object, name: str = "amount") -> None:
+              """Combined precondition: a strictly positive integer (not bool)."""
+              require(
+                  isinstance(value, int) and not isinstance(value, bool),
+                  f"{name} must be an integer",
+                  kind="type",
+              )
+              require(value > 0, f"{name} must be positive")
 
 
           class BankAccount:
               def __init__(self, owner: str, balance: int = 0) -> None:
-                  require(isinstance(owner, str) and owner.strip() != "", "owner must be a non-empty string")
-                  require(isinstance(balance, int) and not isinstance(balance, bool), "balance must be an integer")
+                  require(isinstance(owner, str), "owner must be a string", kind="type")
+                  require(owner.strip() != "", "owner must be non-empty")
+                  require(
+                      isinstance(balance, int) and not isinstance(balance, bool),
+                      "balance must be an integer",
+                      kind="type",
+                  )
                   require(balance >= 0, "balance must be non-negative")
                   self.owner = owner
                   self.balance = balance
@@ -707,14 +902,14 @@ steps:
                   ensure(self.balance >= 0, "balance invariant failed")
 
               def deposit(self, amount: int) -> None:
-                  require(_is_positive_int(amount), "amount must be a positive integer")
+                  _ensure_positive_int(amount)
                   old_balance = self.balance
                   self.balance += amount
                   self._check_invariant()
                   ensure(self.balance == old_balance + amount, "deposit must increase balance exactly")
 
               def withdraw(self, amount: int) -> None:
-                  require(_is_positive_int(amount), "amount must be a positive integer")
+                  _ensure_positive_int(amount)
                   require(amount <= self.balance, "insufficient funds")
                   old_balance = self.balance
                   self.balance -= amount
@@ -783,13 +978,20 @@ steps:
           from accounts import BankAccount, transfer
           src = BankAccount("Ari", 50)
           dst = BankAccount("Sam", 10)
-          for bad_amount in [0, -5, True, 2.5]:
+          # Wrong-kind amounts → TypeError
+          for bad in [True, 2.5, "5"]:
+              with pytest.raises(TypeError):
+                  transfer(src, dst, bad)
+          # Wrong-value amounts → ValueError
+          for bad in [0, -5]:
               with pytest.raises(ValueError):
-                  transfer(src, dst, bad_amount)
+                  transfer(src, dst, bad)
           assert (src.balance, dst.balance) == (50, 10)
         hints:
-          - title: "Check identity and amount first"
-            text: "Use `src is not dst` for distinct accounts, and reuse the positive-integer rule from the account methods."
+          - title: "Check identity, type, then value"
+            text: "Use `src is not dst` for distinct accounts. Then reuse `_ensure_positive_int(amount)` to get the type-then-value split for free."
+          - title: "Type-check src and dst"
+            text: "`require(isinstance(src, BankAccount), ..., kind=\"type\")` catches a None or wrong-class argument at the boundary. In pure Eiffel DbC the type system would do this; in Python, this `isinstance` is the lightweight equivalent."
           - title: "Snapshot both balances"
             text: "Before calling `withdraw` or `deposit`, save `old_src_balance`, `old_dst_balance`, and their sum."
           - title: "Assert all three postconditions"
@@ -800,24 +1002,37 @@ steps:
         - path: "accounts.py"
           language: "python"
           content: |
-            def require(condition: bool, message: str) -> None:
+            def require(condition: bool, message: str, *, kind: str = "value") -> None:
+                """Caller obligation. kind='type' raises TypeError; default raises ValueError."""
                 if not condition:
-                    raise ValueError(message)
+                    raise (TypeError if kind == "type" else ValueError)(message)
 
 
             def ensure(condition: bool, message: str) -> None:
+                """Supplier guarantee. Failure raises AssertionError."""
                 if not condition:
                     raise AssertionError(message)
 
 
-            def _is_positive_int(value: object) -> bool:
-                return isinstance(value, int) and not isinstance(value, bool) and value > 0
+            def _ensure_positive_int(value: object, name: str = "amount") -> None:
+                """Combined precondition: a strictly positive integer (not bool)."""
+                require(
+                    isinstance(value, int) and not isinstance(value, bool),
+                    f"{name} must be an integer",
+                    kind="type",
+                )
+                require(value > 0, f"{name} must be positive")
 
 
             class BankAccount:
                 def __init__(self, owner: str, balance: int = 0) -> None:
-                    require(isinstance(owner, str) and owner.strip() != "", "owner must be a non-empty string")
-                    require(isinstance(balance, int) and not isinstance(balance, bool), "balance must be an integer")
+                    require(isinstance(owner, str), "owner must be a string", kind="type")
+                    require(owner.strip() != "", "owner must be non-empty")
+                    require(
+                        isinstance(balance, int) and not isinstance(balance, bool),
+                        "balance must be an integer",
+                        kind="type",
+                    )
                     require(balance >= 0, "balance must be non-negative")
                     self.owner = owner
                     self.balance = balance
@@ -829,14 +1044,14 @@ steps:
                     ensure(self.balance >= 0, "balance invariant failed")
 
                 def deposit(self, amount: int) -> None:
-                    require(_is_positive_int(amount), "amount must be a positive integer")
+                    _ensure_positive_int(amount)
                     old_balance = self.balance
                     self.balance += amount
                     self._check_invariant()
                     ensure(self.balance == old_balance + amount, "deposit must increase balance exactly")
 
                 def withdraw(self, amount: int) -> None:
-                    require(_is_positive_int(amount), "amount must be a positive integer")
+                    _ensure_positive_int(amount)
                     require(amount <= self.balance, "insufficient funds")
                     old_balance = self.balance
                     self.balance -= amount
@@ -846,10 +1061,10 @@ steps:
 
             def transfer(src: BankAccount, dst: BankAccount, amount: int) -> None:
                 """Move amount from src to dst."""
-                require(isinstance(src, BankAccount), "src must be a BankAccount")
-                require(isinstance(dst, BankAccount), "dst must be a BankAccount")
+                require(isinstance(src, BankAccount), "src must be a BankAccount", kind="type")
+                require(isinstance(dst, BankAccount), "dst must be a BankAccount", kind="type")
                 require(src is not dst, "source and destination must be distinct accounts")
-                require(_is_positive_int(amount), "amount must be a positive integer")
+                _ensure_positive_int(amount)
                 require(src.balance >= amount, "source has insufficient funds")
 
                 old_src_balance = src.balance
@@ -865,58 +1080,372 @@ steps:
                 ensure(dst.balance == old_dst_balance + amount, "destination must be credited exactly once")
                 ensure(src.balance + dst.balance == old_total, "total money must be preserved")
       explanation: |
-        The transfer contract coordinates two local objects and one global property. Preconditions reject invalid operations before mutation; postconditions verify the exact debit, exact credit, and preserved total.
+        The transfer contract coordinates two local objects and one global property. Preconditions reject invalid operations before mutation (type predicates raise `TypeError`; value predicates raise `ValueError`); postconditions verify the exact debit, exact credit, and preserved total. The `isinstance(src, BankAccount)` guards are *language-level pragmatism*, not core DbC — in Eiffel the type system would handle this at compile time.
 
-  # Pedagogy: conceptual transfer — evaluate contract strength and substitution without new syntax.
-  - title: "Contract Strength and Substitution"
+    quiz:
+      title: "Step 5 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: |
+            Suppose `transfer` is exposed as a public REST endpoint receiving JSON like `{"src": "acct-1", "dst": "acct-2", "amount": "40"}`. Which Defensive Programming techniques from the DP tutorial re-enter the picture, and *where*?
+          options:
+            - "All of: parse and validate JSON shape at the boundary, raise TypeError for non-strings, raise ValueError for malformed amounts, look up BankAccount instances from validated IDs, *then* call `transfer` with already-validated arguments."
+            - "None — `transfer`'s preconditions already cover it, so DbC is sufficient end-to-end."
+            - "Only the postcondition check matters; type validation is the framework's job."
+            - "Wrap the call in `except Exception:` so the endpoint can return generic 400s."
+          correct_index: 0
+          option_feedback:
+            1: "DbC works between *trusting* parties. JSON over HTTP arrives from an *untrusting* boundary — every field could be anything. Preconditions presume the input is already a `BankAccount` and an `int`; that presumption is what the boundary layer must establish."
+            2: "Type validation belongs at the trust boundary, not deferred. If `amount` arrives as the string `\"40\"`, no postcondition can save the day — the function will fail or silently produce garbage before any `ensure` runs."
+            3: "Broad exception catching is the DP anti-pattern from DP Step 5 (`load_json_config`). It hides the cause — exactly the opposite of what DbC's blame allocation is trying to make visible."
+          explanation: "At the *system boundary* (network, files, user input), DP is the right tool — validate aggressively, raise precise exceptions, translate failures into domain errors. *Inside* the system, between trusted modules, DbC takes over. Meyer endorses this exact split: filter modules at the boundary, contract-based modules in the interior."
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            Your `transfer` solution uses `require(isinstance(src, BankAccount), ..., kind="type")`. In pure Meyer DbC, this would be considered redundant. Why do we keep it in Python?
+          options:
+            - "In statically-typed DbC (Eiffel), the type system enforces it at compile time. Python is dynamic, so this `isinstance` is the lightweight equivalent — a *language pragmatism*, not a DbC concept."
+            - "Because `isinstance` is faster than the alternatives."
+            - "Because `transfer` should validate every argument as defensively as possible."
+            - "Because `BankAccount` instances might be corrupted between calls."
+          correct_index: 0
+          option_feedback:
+            1: "Performance isn't the issue. Contract responsibility doesn't change based on speed; the question is whether the type system can already enforce the precondition."
+            2: "DbC does *not* recommend defensive maximalism. It recommends precise responsibility allocation. We add this check only because Python can't enforce it for us at compile time."
+            3: "Object integrity is what *invariants* protect — and `_check_invariant` already does that work. The `isinstance` guard is about the *variable* `src` (could be `None`, a string, etc.), not the BankAccount instance."
+          explanation: "Pure DbC assumes static types. Python doesn't have static type enforcement at runtime, so we add a small `isinstance` guard as a language-level necessity. It's a DP-style check, but we're using it specifically to compensate for what static typing would otherwise provide for free."
+
+  # Pedagogy: constructive engagement on substitutability — students implement a
+  # subclass and verify Liskov substitutability with parametrized fixtures and
+  # property-based testing. Brings DP-style retrieval (clamp's silent-repair
+  # lesson generalizes to silent-contract-narrowing in subclasses).
+  - title: "Substitution: Subclass Contracts"
     instructions: |
       ### Why this matters
 
-      Contracts matter most when code is reused through an interface or subclass. A replacement must be usable anywhere the original was expected, which means it cannot demand more from callers or promise less to them.
+      Contracts matter most when code is reused through an interface or subclass. The **Liskov Substitution Principle** says a subclass must be usable *anywhere the base class was expected* — which means it must accept everything the base accepted, and guarantee everything the base guaranteed. Violating substitutability silently breaks every caller written against the base.
+
+      The rules sound simple but trap students every time: most learners' intuition is "a subclass is *more specific*, so it can demand more." The opposite is true. This step makes the rules executable — you'll implement a subclass, and a test harness will run *every* base-class test against your subclass to verify substitutability holds. Then property-based testing will explore the substitution space with hundreds of generated operation sequences.
+
+      ### 🔗 Bridging from Defensive Programming
+
+      > In DP Step 3 (`clamp`) you saw why silent repair is dangerous: swapping reversed bounds hid the caller's mistake. The Liskov rule is the inheritance-time version of the same idea — a subclass that *demands more* (stronger precondition) or *promises less* (weaker postcondition) silently breaks every caller written against the base. Same harm, different layer. Substitutability protects callers from invisible contract changes the way `clamp`'s explicit rejection protected callers from invisible argument swaps.
 
       ### 🎯 You will learn to
 
-      - Compare preconditions as weaker or stronger.
-      - Compare postconditions as weaker or stronger.
-      - Evaluate whether an override-style contract change preserves substitutability.
+      - Apply the weaker-precondition / stronger-postcondition rule to subclass contracts.
+      - Create a subclass that legally strengthens a postcondition.
+      - Evaluate substitutability with both example-based and property-based tests.
 
       ### The rule
 
-      A subtype or replacement may:
+      A safe replacement **may**:
 
-      - weaken preconditions, accepting everything the original accepted and maybe more
-      - strengthen postconditions, guaranteeing everything the original guaranteed and maybe more
+      - **Weaken preconditions** — accept everything the base accepted, and maybe more.
+      - **Strengthen postconditions** — guarantee everything the base guaranteed, and maybe more.
 
-      It may not:
+      It **may not**:
 
-      - strengthen preconditions, because old callers may now be rejected
-      - weaken postconditions, because old callers may no longer get what they relied on
+      - **Strengthen preconditions** — old callers might now be rejected.
+      - **Weaken postconditions** — old callers might no longer get what they relied on.
 
-      Read `contract_strength.py`, then answer the knowledge check.
+      Mnemonic: a subclass can be *more accepting on the way in* and *more generous on the way out* — never the reverse.
+
+      ### Your task
+
+      Implement `SavingsAccount(BankAccount)` with a **strengthened postcondition**: every successful deposit and withdraw is recorded in a `transactions` list. The list contains tuples of `(kind, amount, balance_after)`, where `kind` is `"deposit"` or `"withdraw"`.
+
+      Concretely, `SavingsAccount` must:
+
+      - Inherit from `BankAccount`.
+      - Maintain a `transactions` attribute (a `list[tuple[str, int, int]]`).
+      - Override `deposit` and `withdraw` to record the transaction *after* the base operation succeeds.
+      - **Not** strengthen any precondition — every call that worked on a `BankAccount` must still work on a `SavingsAccount`.
+      - **Not** weaken any postcondition — balance changes must still be exactly as the base specified.
+
+      This is a *legal* contract change: postconditions strengthen (the new `transactions` guarantee), preconditions stay equal, and the existing balance invariant is preserved.
+
+      ### How substitutability is tested
+
+      Two layers, both visible in `test_savings.py`:
+
+      1. **Parametrized fixture (`AccountCls`)**: every base-class test runs against both `BankAccount` *and* `SavingsAccount`. If the subclass narrowed the contract in any way, at least one base test fails on it.
+      2. **Hypothesis property test**: generates random valid sequences of deposit/withdraw operations and asserts the two classes agree on final balance across the whole sequence. This catches contract narrowing that example tests miss.
+
+      Property-based testing is *evidence, not proof* — it samples many inputs, not all. But for substitutability it's an excellent fit because the property ("base and subclass agree") is straightforward to state and surprisingly hard to game.
 
     files:
-      - path: "contract_strength.py"
+      - path: "accounts.py"
         language: "python"
         content: |
-          """Reference notes for the contract-strength quiz.
+          def require(condition: bool, message: str, *, kind: str = "value") -> None:
+              """Caller obligation. kind='type' raises TypeError; default raises ValueError."""
+              if not condition:
+                  raise (TypeError if kind == "type" else ValueError)(message)
 
-          Base contract for withdraw(amount):
-            Preconditions:
-              - amount is a positive integer
-              - amount <= balance
-            Postconditions:
-              - balance decreases by exactly amount
-              - balance remains non-negative
 
-          Legal replacements may accept MORE calls than the base contract.
-          Legal replacements may promise MORE facts than the base contract.
+          def ensure(condition: bool, message: str) -> None:
+              """Supplier guarantee. Failure raises AssertionError."""
+              if not condition:
+                  raise AssertionError(message)
 
-          Illegal replacements reject calls the base accepted, or return a weaker result
-          than callers of the base contract were promised.
-          """
 
-    open_file: "contract_strength.py"
-    run_file: "contract_strength.py"
+          def _ensure_positive_int(value: object, name: str = "amount") -> None:
+              """Combined precondition: a strictly positive integer (not bool)."""
+              require(
+                  isinstance(value, int) and not isinstance(value, bool),
+                  f"{name} must be an integer",
+                  kind="type",
+              )
+              require(value > 0, f"{name} must be positive")
+
+
+          class BankAccount:
+              def __init__(self, owner: str, balance: int = 0) -> None:
+                  require(isinstance(owner, str), "owner must be a string", kind="type")
+                  require(owner.strip() != "", "owner must be non-empty")
+                  require(
+                      isinstance(balance, int) and not isinstance(balance, bool),
+                      "balance must be an integer",
+                      kind="type",
+                  )
+                  require(balance >= 0, "balance must be non-negative")
+                  self.owner = owner
+                  self.balance = balance
+                  self._check_invariant()
+
+              def _check_invariant(self) -> None:
+                  ensure(isinstance(self.owner, str) and self.owner.strip() != "", "owner invariant failed")
+                  ensure(isinstance(self.balance, int) and not isinstance(self.balance, bool), "balance type invariant failed")
+                  ensure(self.balance >= 0, "balance invariant failed")
+
+              def deposit(self, amount: int) -> None:
+                  _ensure_positive_int(amount)
+                  old_balance = self.balance
+                  self.balance += amount
+                  self._check_invariant()
+                  ensure(self.balance == old_balance + amount, "deposit must increase balance exactly")
+
+              def withdraw(self, amount: int) -> None:
+                  _ensure_positive_int(amount)
+                  require(amount <= self.balance, "insufficient funds")
+                  old_balance = self.balance
+                  self.balance -= amount
+                  self._check_invariant()
+                  ensure(self.balance == old_balance - amount, "withdraw must decrease balance exactly")
+
+      - path: "savings.py"
+        language: "python"
+        content: |
+          from accounts import BankAccount, ensure
+
+
+          class SavingsAccount(BankAccount):
+              """A BankAccount that additionally records every transaction.
+
+              Contract strengthening:
+                - Same preconditions as BankAccount.deposit / withdraw (do not narrow).
+                - Same balance-change postconditions as BankAccount (do not weaken).
+                - ADDITIONAL postcondition: after a successful deposit/withdraw,
+                  the last element of self.transactions describes that operation.
+              """
+
+              def __init__(self, owner: str, balance: int = 0) -> None:
+                  # Initialize subclass state BEFORE super().__init__ so that any
+                  # invariant check that touches transactions sees a valid list.
+                  self.transactions: list[tuple[str, int, int]] = []
+                  # TODO: delegate to BankAccount.__init__.
+
+              def deposit(self, amount: int) -> None:
+                  # TODO: call the base deposit, then record ("deposit", amount, self.balance).
+                  pass
+
+              def withdraw(self, amount: int) -> None:
+                  # TODO: call the base withdraw, then record ("withdraw", amount, self.balance).
+                  pass
+
+      - path: "test_savings.py"
+        language: "python"
+        content: |
+          import pytest
+          from accounts import BankAccount
+          from savings import SavingsAccount
+
+
+          # =====================================================================
+          # Substitutability layer 1 — every BankAccount test runs against both
+          # BankAccount and SavingsAccount via a parametrized fixture.
+          # =====================================================================
+
+          @pytest.fixture(params=[BankAccount, SavingsAccount])
+          def AccountCls(request):
+              return request.param
+
+
+          def test_valid_construction(AccountCls):
+              account = AccountCls("Maya", 25)
+              assert account.owner == "Maya"
+              assert account.balance == 25
+
+
+          def test_construction_rejects_invalid_invariants(AccountCls):
+              with pytest.raises(ValueError):
+                  AccountCls("", 0)
+              with pytest.raises(ValueError):
+                  AccountCls("Maya", -1)
+
+
+          def test_deposit_changes_balance_exactly(AccountCls):
+              account = AccountCls("Maya", 25)
+              account.deposit(10)
+              assert account.balance == 35
+
+
+          def test_withdraw_changes_balance_exactly(AccountCls):
+              account = AccountCls("Maya", 25)
+              account.withdraw(10)
+              assert account.balance == 15
+
+
+          def test_overdraft_rejected(AccountCls):
+              account = AccountCls("Maya", 25)
+              with pytest.raises(ValueError):
+                  account.withdraw(26)
+              assert account.balance == 25
+
+
+          def test_subclass_does_not_narrow_amount(AccountCls):
+              # A single-cent deposit is valid for BankAccount; SavingsAccount must accept it too.
+              account = AccountCls("Maya", 0)
+              account.deposit(1)
+              assert account.balance == 1
+
+
+          # =====================================================================
+          # Strengthened postcondition — unique to SavingsAccount.
+          # =====================================================================
+
+          def test_savings_records_each_transaction():
+              account = SavingsAccount("Maya", 100)
+              account.deposit(20)
+              account.withdraw(50)
+              assert account.transactions == [
+                  ("deposit", 20, 120),
+                  ("withdraw", 50, 70),
+              ]
+
+
+          def test_savings_does_not_record_failed_operations():
+              account = SavingsAccount("Maya", 10)
+              with pytest.raises(ValueError):
+                  account.withdraw(99)
+              # The failed withdraw must not appear in the ledger.
+              assert account.transactions == []
+
+
+          # =====================================================================
+          # Substitutability layer 2 — Hypothesis explores hundreds of valid
+          # operation sequences and asserts the two classes agree on balance.
+          # =====================================================================
+
+          from hypothesis import given, settings, strategies as st
+
+
+          operation = st.tuples(
+              st.sampled_from(["deposit", "withdraw"]),
+              st.integers(min_value=1, max_value=1_000),
+          )
+
+
+          @settings(max_examples=100, deadline=None)
+          @given(start=st.integers(min_value=0, max_value=10_000),
+                 ops=st.lists(operation, max_size=20))
+          def test_savings_substitutes_for_bank_account(start, ops):
+              base = BankAccount("base", start)
+              sub = SavingsAccount("sub", start)
+
+              for kind, amount in ops:
+                  try:
+                      getattr(base, kind)(amount)
+                  except ValueError:
+                      # If base rejects, subclass MUST reject too (no narrowing).
+                      with pytest.raises(ValueError):
+                          getattr(sub, kind)(amount)
+                      continue
+                  # Base accepted — subclass must also accept and reach the same balance.
+                  getattr(sub, kind)(amount)
+                  assert base.balance == sub.balance
+
+    open_file: "savings.py"
+    run_file: "test_savings.py"
+
+    tests:
+      - description: "SavingsAccount substitutes for BankAccount and records every successful transaction"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout
+          sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_savings.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old
+          output = buf.getvalue()
+          print(output)
+          assert code == 0, output
+
+          # Hidden: a stronger precondition (e.g., minimum amount) would break here.
+          from savings import SavingsAccount
+          s = SavingsAccount("Maya", 0)
+          s.deposit(1)
+          assert s.balance == 1
+          assert s.transactions == [("deposit", 1, 1)]
+        hints:
+          - title: "Initialize transactions before super().__init__"
+            text: "Set `self.transactions = []` *before* calling `super().__init__(owner, balance)`. If `_check_invariant` (which the base constructor calls) ever touches `self.transactions` in a subclass override, the list must already exist."
+          - title: "Delegate, then record"
+            text: "Inside `deposit` and `withdraw`, call `super().deposit(amount)` / `super().withdraw(amount)` first. The base method runs all preconditions and updates `self.balance`. If it raises, your `transactions.append` never runs — exactly what `test_savings_does_not_record_failed_operations` requires."
+          - title: "Use self.balance for balance_after"
+            text: "After `super().deposit(amount)` returns, `self.balance` is already the updated value. Append `(\"deposit\", amount, self.balance)`."
+          - title: "Don't add new preconditions"
+            text: "Resist the urge to add an `_ensure_positive_int(amount)` call in your override — that's already done by `super().deposit`. Re-checking would be the redundancy Meyer warned about, *and* if you accidentally made the check stricter you'd break substitutability."
+
+    solution:
+      files:
+        - path: "savings.py"
+          language: "python"
+          content: |
+            from accounts import BankAccount, ensure
+
+
+            class SavingsAccount(BankAccount):
+                """A BankAccount that additionally records every transaction.
+
+                Contract strengthening:
+                  - Same preconditions as BankAccount.deposit / withdraw (do not narrow).
+                  - Same balance-change postconditions as BankAccount (do not weaken).
+                  - ADDITIONAL postcondition: after a successful deposit/withdraw,
+                    the last element of self.transactions describes that operation.
+                """
+
+                def __init__(self, owner: str, balance: int = 0) -> None:
+                    self.transactions: list[tuple[str, int, int]] = []
+                    super().__init__(owner, balance)
+
+                def deposit(self, amount: int) -> None:
+                    super().deposit(amount)
+                    self.transactions.append(("deposit", amount, self.balance))
+                    ensure(self.transactions[-1] == ("deposit", amount, self.balance),
+                           "transactions ledger must reflect the deposit")
+
+                def withdraw(self, amount: int) -> None:
+                    super().withdraw(amount)
+                    self.transactions.append(("withdraw", amount, self.balance))
+                    ensure(self.transactions[-1] == ("withdraw", amount, self.balance),
+                           "transactions ledger must reflect the withdrawal")
+      explanation: |
+        The subclass legally strengthens the postcondition (adds the transactions guarantee) without touching preconditions. By delegating to `super()` first, the base precondition checks fire — failed operations raise before `transactions.append` runs, so the ledger stays clean. The parametrized fixture confirms the subclass passes every base-class behavioral test; the Hypothesis property confirms substitutability across hundreds of random valid operation sequences. Together they make Liskov substitutability *executable* rather than aspirational.
 
     quiz:
       title: "Step 6 — Knowledge Check"
@@ -926,63 +1455,63 @@ steps:
         - type: single
           difficulty: intermediate
           question: |
-            A base `withdraw(amount)` accepts any positive integer amount up to the current balance. A replacement accepts only amounts of at least 100. What changed?
+            A teammate proposes `PremiumSavingsAccount.withdraw` that requires `amount >= 100`. The base `withdraw` accepted any positive integer. Which Liskov rule did the proposal violate, and what's the visible harm?
           options:
-            - "The precondition became stronger, so the replacement is not safely substitutable."
-            - "The precondition became weaker, so the replacement is safely substitutable."
-            - "The postcondition became stronger, so the replacement is safely substitutable."
-            - "The postcondition became weaker, so the replacement is not safely substitutable."
+            - "It strengthened a precondition — every caller that withdrew small amounts (e.g., a $20 ATM fee) now fails when handed a PremiumSavingsAccount."
+            - "It weakened a precondition — callers gain valid calls, which is always safe."
+            - "It strengthened a postcondition — that's always safe and substitutable."
+            - "Nothing — subclasses may always demand more, since they are 'more specific.'"
           correct_index: 0
           option_feedback:
-            1: "Accepting fewer calls is a stronger precondition. Old callers that withdrew 20 could now fail."
-            2: "The scenario changes what calls are accepted, not what is promised after a successful call."
-            3: "The scenario is about the allowed inputs. Postconditions describe results after the call succeeds."
-          explanation: "A replacement cannot demand more from callers than the base contract demanded. Strengthening preconditions breaks substitutability."
+            1: "Rejecting *more* calls is a *stronger* precondition, not a weaker one. The set of accepted inputs shrinks."
+            2: "The scenario changes which calls are *allowed*, not what's guaranteed *after* success — that's a precondition change, not a postcondition change."
+            3: "This is the canonical Liskov misconception. 'More specific' in vocabulary does *not* mean 'demands more' in contract terms — quite the opposite. Behavioral subtyping requires *weaker-or-equal* preconditions."
+          explanation: "Strengthened preconditions break substitutability. Any caller that withdrew $20 from a `BankAccount` will fail when handed a `PremiumSavingsAccount` — the subclass has narrowed the contract."
 
         - type: single
           difficulty: intermediate
           question: |
-            A base `withdraw(amount)` returns a receipt with `amount` and `new_balance`. A replacement returns those fields plus a stable `receipt_id`. What changed?
+            Your `SavingsAccount` adds a `transactions` list — a field that `BankAccount` doesn't have. Why does this still preserve substitutability?
           options:
-            - "The postcondition became stronger, so the replacement can be substitutable."
-            - "The postcondition became weaker, so the replacement cannot be substitutable."
-            - "The precondition became stronger, so callers lose valid calls."
-            - "The precondition became weaker, so callers gain valid calls."
+            - "Adding a guarantee (every successful operation is recorded) strengthens the postcondition; the base guarantees are still intact, and the new guarantee gives callers *more*."
+            - "It violates substitutability — adding fields is forbidden."
+            - "It only works because Python allows attribute access without declaration."
+            - "It violates substitutability — only base-class fields may be touched."
           correct_index: 0
           option_feedback:
-            1: "The original promised fields are still present. Adding a guaranteed field gives callers more, not less."
-            2: "The accepted inputs did not change in this scenario."
-            3: "The accepted inputs did not change. The scenario describes the returned receipt."
-          explanation: "Guaranteeing the base receipt fields plus a stable ID strengthens the postcondition, as long as all original guarantees remain true."
+            1: "Subclasses adding new state is standard OO and explicitly allowed by Liskov's rule — *provided* the new state does not weaken any existing guarantee."
+            2: "Subclasses routinely add fields. The question is whether they preserve the *visible-from-base* contract."
+            3: "Adding state is allowed in statically-typed languages too. The substitutability question is about contract, not language ergonomics."
+          explanation: "A subclass may add fields, methods, and stronger postconditions. As long as every guarantee of the base still holds, the subclass remains substitutable. Our parametrized fixture verifies the base guarantees; the new ledger guarantee strengthens, doesn't weaken."
 
         - type: single
           difficulty: intermediate
           question: |
-            A base `transfer(src, dst, amount)` rejects self-transfer. A replacement allows self-transfer as a no-op while preserving total money. What happened to the precondition?
+            The Hypothesis property test runs ~100 random operation sequences and checks that `BankAccount` and `SavingsAccount` agree on final balance. What does this *prove*, and what does it *not*?
           options:
-            - "It became weaker: the accepted-call set got larger."
-            - "It became stronger because self-transfer is a special case."
-            - "It became weaker because the replacement promises less after returning."
-            - "It became stronger because total money is preserved."
+            - "Strong evidence of substitutability on the observed property (balance after operations) across the explored input space — not a proof across all inputs or all unobserved properties."
+            - "Proof of substitutability for all possible inputs, since Hypothesis explores all inputs."
+            - "Nothing — property-based tests are no better than example tests."
+            - "Proof that the implementations are byte-for-byte identical."
           correct_index: 0
           option_feedback:
-            1: "Special cases can still weaken a precondition when they expand the set of accepted inputs."
-            2: "Accepting self-transfer changes what calls are allowed. It does not by itself reduce postcondition guarantees."
-            3: "Total preservation is a postcondition, not a precondition."
-          explanation: "A weaker precondition accepts everything the base accepted and possibly more. Allowing self-transfer expands the accepted set."
+            1: "Hypothesis explores *many* inputs intelligently, not *all* of them. It is a sampling tool with smart shrinking, not a proof tool. CrossHair or formal verification would be needed for full proof."
+            2: "Property tests are dramatically better than examples at finding edge cases (Hypothesis is excellent at counter-example shrinking), but they sample, not exhaust."
+            3: "Two different classes can have identical *observable* behavior on the tested slice while differing internally — that's fine. Substitutability is about observable behavior, not implementation."
+          explanation: "Property tests are evidence, not proof. They cover far more inputs than examples and excel at finding contract violations, but for *full* substitutability across every possible input and observable property you'd need formal verification. The pragmatic combination — parametrized examples + property tests + mutation testing — is the strongest practical evidence available."
 
         - type: single
           difficulty: intermediate
           question: |
-            A caller satisfies every precondition of `transfer`, but after the call the source balance decreases twice. Who violated the contract?
+            Suppose someone implements `transfer(savings_src, savings_dst, amount)` where `savings_src.balance` decreases twice after the call. The caller satisfied every documented precondition. Who violated the contract, and what role do `SavingsAccount`'s extra guarantees play?
           options:
-            - "The supplier implementation: a postcondition failed."
-            - "The caller, because transfer is a risky operation."
-            - "Both sides, because two accounts were involved."
-            - "Neither side, because total money might still be preserved."
+            - "The supplier — the postcondition specified exactly one debit. The `transactions` ledger now also shows the bug as two recorded withdrawals, making the violation easier to detect."
+            - "The caller — they should have re-checked the balance afterward."
+            - "Both — multi-object operations have shared responsibility."
+            - "Neither — total money may still be preserved across the two accounts."
           correct_index: 0
           option_feedback:
-            1: "Risk is not a contract category. If the caller met the preconditions, the supplier owns the promised result."
-            2: "Multiple objects do not change the blame rule. Check which part of the contract failed."
-            3: "Total preservation is not enough. The exact source debit is also part of the postcondition."
-          explanation: "Valid preconditions shift responsibility to the supplier. A double debit violates the postcondition that source is debited exactly once."
+            1: "Callers are not required to re-verify postconditions. That's *what postconditions are for* — guarantees the caller can rely on without re-checking."
+            2: "Shared blame defeats the responsibility allocation. Either the preconditions held (supplier owes) or they didn't (caller owes)."
+            3: "Total preservation is one postcondition; the 'exactly one debit' postcondition is another — and it failed."
+          explanation: "Valid preconditions shift responsibility to the supplier. A double debit violates the postcondition that source is debited by exactly `amount`, once. The `transactions` ledger SavingsAccount adds is also a debugging asset here — it materializes the violation as two recorded withdrawals, where a plain `BankAccount` would only show the wrong final balance."
