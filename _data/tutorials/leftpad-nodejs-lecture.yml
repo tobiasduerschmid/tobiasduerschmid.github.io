@@ -296,8 +296,8 @@ steps:
             The original `leftpad` starts with `str = String(str)`. If you removed that line and called `leftpad(7, 4, '0')`, what would happen?
           options:
             - "It would return `'0007'` because JavaScript automatically calls `toString()` on `str.length` access"
-            - "It would return `'0' + 7` repeated until length 4 — the number is concatenated as a number, producing `'00007'`"
-            - "It would throw a `TypeError` (or `RangeError`) because `(7).length` is `undefined`, so `length` becomes `NaN` and `paddingCharacter.repeat(NaN)` throws"
+            - "It would return `'00007'` — the number is repeatedly concatenated with `'0'`"
+            - "It would throw at runtime because `(7).length` is `undefined`, making `paddingCharacter.repeat(NaN)` fail"
             - "It would return `7` unchanged because numbers cannot be padded"
           correct_index: 2
           option_feedback:
@@ -305,13 +305,13 @@ steps:
             1: "Inside the function, `paddingCharacter.repeat(length)` runs with `length = NaN`, which throws long before any string concatenation."
             3: "JS doesn't short-circuit functions on type — it just produces garbage values (NaN, undefined) until an explicit type check or coercion."
           explanation: |
-            `(7).length` is `undefined`, so `length - str.length` is `NaN`. `NaN < 1` is `false`, so the early-return check doesn't fire, and `paddingCharacter.repeat(NaN)` throws `RangeError: Invalid count value`. The explicit `str = String(str)` line is what makes the numeric / null / undefined tests pass.
+            `(7).length` is `undefined`, so `length - str.length` is `NaN`. `NaN < 1` is `false`, so the early-return check doesn't fire, and `paddingCharacter.repeat(NaN)` throws `RangeError: Invalid count value`. The thrown error is specifically a `RangeError` from `repeat(NaN)`. The explicit `str = String(str)` line is what makes the numeric / null / undefined tests pass.
 
         - question: |
             The test suite calls `expect(leftpad('foobar', 3)).toBe('foobar')`. What contract does this *test* encode?
           options:
             - "`leftpad` must always return a string of exactly `length` characters"
-            - "`leftpad` must never *truncate* — when `length` is shorter than the input, return it unchanged"
+            - "`leftpad` must never *truncate*: a too-short `length` returns the input unchanged"
             - "`leftpad` must throw when `length` is shorter than the input"
             - "`leftpad` must pad with empty space when `length` is shorter than the input"
           correct_index: 1
@@ -814,7 +814,7 @@ steps:
             Why does the lecture write `String(str)` instead of `new String(str)`?
           options:
             - "Stylistic preference — they produce identical values"
-            - "`String(str)` returns a primitive string; `new String(str)` returns a wrapper object"
+            - "`String(str)` returns a primitive; `new String(str)` returns an object"
             - "`new String(str)` throws when `str` is a number"
             - "`new String(str)` is deprecated and removed in modern Node.js"
           correct_index: 1

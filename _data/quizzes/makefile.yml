@@ -67,10 +67,10 @@ questions:
     difficulty: intermediate
     question: "Why is the `.PHONY` directive used in Makefiles (e.g., `.PHONY: clean`)?"
     options: 
-      - "To suppress `make` from echoing the command to the terminal." 
-      - "To declare that the target is an action/command and not a physical file to be created." 
-      - "To tell the compiler to ignore syntax errors during the build step." 
-      - "To automatically generate a list of object files from source files." 
+      - "To suppress `make` from echoing the command to the terminal."
+      - "To declare that the target is a named action, not a real file."
+      - "To tell the compiler to ignore syntax errors during the build step."
+      - "To automatically generate a list of object files from source files."
     correct_index: 1 
     option_feedback:
       0: |

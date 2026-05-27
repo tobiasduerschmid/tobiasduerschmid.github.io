@@ -175,7 +175,7 @@ questions:
       You are designing a new service. Which decomposition shows the BEST Separation of Concerns?
     options:
       - "Module A: 'handles everything about users including login, profile, orders, and reports'"
-      - "Module A: 'user authentication'; Module B: 'user profile'; Module C: 'order processing'; Module D: 'reporting' — each with narrow interfaces between them"
+      - "Modules for `authentication`, `profile`, `order processing`, and `reporting` — each with narrow interfaces"
       - "One module per file, where each file contains exactly one function, no matter how trivial"
       - "Split by file type: all `.py` files in one module, all `.js` files in another, all `.sql` in a third"
     correct_index: 1
@@ -198,7 +198,7 @@ questions:
       Why might splitting an internal helper function into its own class *reduce* rather than increase the quality of a system?
     options:
       - "Because smaller classes are always harder for the compiler to optimize"
-      - "If the two concerns always change together, the split is artificial and every change now spans two files"
+      - "If the two pieces always change together, the split is artificial and adds cost"
       - "Because Python does not support inheritance well across files"
       - "Because the SRP principle explicitly forbids extracting helper classes"
     correct_index: 1
@@ -221,7 +221,7 @@ questions:
       Which benefit of SoC most directly explains why a team of five developers can work in parallel on one system?
     options:
       - "Testability — each developer can write their own unit tests in isolation"
-      - "Local reasoning and narrow interfaces — developers can change their own concern without fear of others"
+      - "Local reasoning and narrow interfaces — each concern can change in isolation"
       - "Performance — separated code naturally runs faster in parallel"
       - "Security — developers cannot accidentally see each other's source code"
     correct_index: 1
@@ -285,7 +285,7 @@ questions:
       Which is the best definition of a **concern** in the phrase 'Separation of Concerns'?
     options:
       - "A bug report or issue filed by a customer that needs attention"
-      - "An aspect of the system a developer might want to reason about or change independently"
+      - "An aspect of the system one might reason about or change independently"
       - "A feature that has been placed behind a runtime feature flag"
       - "A class that hides its internals behind private fields and getters"
     correct_index: 1

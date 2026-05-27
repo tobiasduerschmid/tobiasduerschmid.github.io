@@ -306,7 +306,7 @@ steps:
           type: single
           options:
             - "Left to right across the horizontal axis"
-            - "Top to bottom — earlier events higher, later events lower"
+            - "Top to bottom — earlier events higher"
             - "By numeric labels placed on each arrow"
             - "By color — green is first, red is last"
           correct_index: 1
@@ -880,7 +880,7 @@ steps:
           type: single
           options:
             - "`bot.send(\"hi\")`  — called from outside the class"
-            - "`self.send(message)`  — called from inside a method on the same bot"
+            - "`self.send(message)`  — called inside a method"
             - "`send(message)`  — a call with no receiver"
             - "`bot = DiscordBot()`  — a constructor"
           correct_index: 1
@@ -903,7 +903,7 @@ steps:
           options:
             - "1 — only Main calling bot once"
             - "2 — Main to bot, and bot's self-call"
-            - "3 — the creation arrow, the outer call, and the self-call"
+            - "3 — creation, outer call, and self-call"
             - "0 — `pass` produces no arrows at all"
           correct_index: 2
           explanation: |
@@ -1474,7 +1474,7 @@ steps:
           type: single
           options:
             - "One giant diagram covering every possible execution path"
-            - "Multiple small diagrams, each showing a specific scenario (happy path, error path, rare corner case)"
+            - "Multiple small diagrams, each showing one scenario"
             - "A single diagram with many nested alt fragments for every condition"
             - "Skip the diagram — the code is enough"
           correct_index: 1
@@ -1872,7 +1872,7 @@ steps:
           type: single
           options:
             - "`broadcast`'s method name is longer than `get_subscriber_count`"
-            - "`get_subscriber_count` returns a non-`None` value AND it is captured; `broadcast` returns `None`"
+            - "Only `get_subscriber_count` returns a captured non-`None` value"
             - "The analyzer only draws return arrows for methods named `get_*`"
             - "Return-arrow rendering is non-deterministic between runs"
           correct_index: 1
@@ -1884,7 +1884,7 @@ steps:
           type: single
           options:
             - "Because they share the same underscored method-name prefix"
-            - "Because Python has not returned from `run_digest` yet — their frames stack on top"
+            - "Because `run_digest` has not returned yet — their frames stack on top"
             - "Because both methods are private (underscore-prefixed) helpers"
             - "Because `__main__` is the lifeline that ultimately calls them"
           correct_index: 1

@@ -154,19 +154,19 @@ steps:
       questions:
         - question: "In Git's three-state model, what is the purpose of the **Staging Area**?"
           options:
-            - "Where Git permanently stores committed snapshots"
-            - "Where you review and select exactly which changes will go into the next commit"
-            - "Where you write and save your source code files"
-            - "A remote server where you back up your work"
+            - "Where Git permanently stores committed snapshots of your work"
+            - "Where you select which changes go into the next commit"
+            - "Where you write and save your source code files locally"
+            - "A remote server where you back up your work history"
           correct_index: 1
           explanation: "The Staging Area (post editor) is Git's way of letting you precisely control what goes into each commit. You can stage some changes but not others, creating clean, focused snapshots."
 
         - question: "What does `git init` create inside your project directory?"
           options:
-            - "A new branch called `main` on GitHub"
-            - "A hidden `.git` directory that stores all version history"
-            - "A remote repository on a server"
-            - "A commit containing all existing files"
+            - "A new branch called `main` hosted on a remote like GitHub"
+            - "A hidden `.git` directory that stores version history"
+            - "A remote repository on a server you connect to"
+            - "An initial commit containing every existing file"
           correct_index: 1
           explanation: "`git init` creates a hidden `.git/` directory containing the full version history database, configuration, and branch pointers. This is the entire repository — no network access required."
 
@@ -349,9 +349,9 @@ steps:
         - question: "You run `git add hero_registry.py` in a freshly created directory and get: `fatal: not a git repository (or any of the parent directories): .git`. What is the root cause, and what is the fix?"
           options:
             - "The file `hero_registry.py` doesn't exist yet — create it first, then re-run `git add`"
-            - "The `.git` directory is missing — the folder was never initialized as a repository; run `git init` first"
+            - "The folder was never initialized — run `git init` to create `.git`"
             - "The file is in a subdirectory — navigate to the project root before staging"
-            - "`git add` requires network access — check your connection"
+            - "`git add` requires network access — check your internet connection"
           correct_index: 1
           explanation: "The error `not a git repository` means Git cannot find a `.git` directory in the current folder or any parent. As Step 1 showed, `git init` creates that directory. Without it, no Git commands work — `git add`, `git commit`, and `git log` all require an initialized repository."
 
@@ -564,8 +564,8 @@ steps:
         - question: "After committing `hero_registry.py`, you add a new function and run `git diff` — you see your new lines marked with `+`. You then run `git add hero_registry.py`. What will `git diff` (no arguments) show now?"
           options:
             - "The same output as before — `git diff` always shows all uncommitted changes"
-            - "Nothing — the working directory and staging area now match, so there is no difference to show"
-            - "An error, because you can only run `git diff` before staging"
+            - "Nothing — the working directory and staging area now match"
+            - "An error, because you can only run `git diff` before staging the change"
             - "The difference between the staged version and the last commit"
           correct_index: 1
           explanation: "`git diff` compares the **working directory** to the **staging area**. Once you stage your changes with `git add`, both areas match — so `git diff` reports nothing. The changes still exist in the staging area waiting to be committed; they're just no longer *different* from the working directory."
@@ -772,7 +772,7 @@ steps:
         - question: "A teammate always runs `git add .` before every commit, saying 'it's simpler.' What is the most significant hidden risk of this habit?"
           options:
             - "No risk — `git add .` is exactly equivalent to staging files by name"
-            - "It can sweep in debug files, secrets, or half-finished work, permanently committing them"
+            - "It can sweep in debug files, secrets, or half-finished work"
             - "It is slower than staging by name because Git scans more files"
             - "It stages files in alphabetical order, which changes the commit hash"
           correct_index: 1
@@ -781,8 +781,8 @@ steps:
         - question: "What is the key advantage of Git's staging area over a simple 'save everything' commit model?"
           options:
             - "It makes commits faster because fewer files are processed"
-            - "It lets you select exactly which changes belong together in one logical commit"
-            - "It automatically writes commit messages for you"
+            - "It lets you assemble related changes into one focused commit"
+            - "It automatically writes meaningful commit messages for you"
             - "It prevents you from committing files with syntax errors"
           correct_index: 1
           explanation: "The staging area gives you **fine-grained control**: you can make many edits in your working directory, then assemble them into clean, focused commits that each represent one logical change. This keeps history readable and makes it easier to find bugs later."
@@ -943,7 +943,7 @@ steps:
         - question: "You edited `main.py`, `test_main.py`, and `debug.log` in one sitting. Your next commit should contain only the test file. Which Git feature makes this possible without reverting the other edits?"
           options:
             - "The working directory — Git automatically excludes non-source files"
-            - "The staging area — you `git add` only `test_main.py`, leaving the others untouched in the working directory"
+            - "The staging area — `git add` only `test_main.py`, leave the rest"
             - "Commit messages — you list the files you want in the message"
             - "The branch pointer — each branch tracks different files"
           correct_index: 1
@@ -963,7 +963,7 @@ steps:
           options:
             - "It discards ALL uncommitted changes in the working directory and staging area"
             - "It is safe to use on a shared branch because it creates a new revert commit"
-            - "It is the 'nuclear option' because any uncommitted work is permanently lost with no way to recover"
+            - "It is the 'nuclear option' — uncommitted work is permanently lost"
             - "It only affects the staging area, leaving the working directory untouched"
           correct_indices:
             - 0
@@ -1197,9 +1197,9 @@ steps:
         - question: "Is a Git commit better described as a 'backup diff' or a 'permanent snapshot'?"
           options:
             - "A backup diff — it only stores what changed since the last version"
-            - "A permanent snapshot — Git stores a complete picture of your project at that moment"
+            - "A permanent snapshot — a complete picture of the project at that moment"
             - "A floating patch — it can be applied to any branch automatically"
-            - "A temporary log — it is deleted after 30 days"
+            - "A temporary log — it is automatically deleted after 30 days"
           correct_index: 1
           explanation: "Git stores **snapshots**, not just deltas. If a file hasn't changed, Git simply links to the version it already has. This makes operations like branching and switching extremely fast."
 
@@ -1352,7 +1352,7 @@ steps:
         - question: "You run `git show` on your **first commit** and see every line of every file listed as an addition (`+`). Which explanation is correct?"
           options:
             - "Git stores deltas but displays full content for the first commit as a special case"
-            - "Every commit is a full snapshot; the first commit has no parent to compare against, so all content appears as 'added'"
+            - "Every commit is a snapshot; the first one has no parent to diff against"
             - "`git show` always displays files in full — it ignores the diff format entirely"
             - "Git stored a delta here, but reconstructs full content for display"
           correct_index: 1
@@ -1374,7 +1374,7 @@ steps:
         - question: "You staged `config.py` and `app.py`. You then realize `config.py` contains a half-finished change that shouldn't be in this commit. You want to keep your edits to `config.py` in the working directory. What do you run?"
           options:
             - "`git restore config.py` — discards the edits and unstages"
-            - "`git restore --staged config.py` — moves config.py off the staging area while keeping your edits"
+            - "`git restore --staged config.py` — unstages, keeps edits"
             - "`git reset --hard` — resets both files to the last commit"
             - "`git commit --exclude config.py` — commits only app.py"
           correct_index: 1
@@ -1575,7 +1575,7 @@ steps:
         - question: "After completing the capstone, a classmate says: 'I just ran `git reset --hard` to clean everything up in one shot — same result, simpler.' Evaluate their approach compared to the targeted steps you used."
           options:
             - "Correct — `git reset --hard` is always the simplest fix for a messy working directory"
-            - "Problematic — `git reset --hard` discards ALL uncommitted changes, including the ones you wanted to keep"
+            - "Problematic — `git reset --hard` discards ALL uncommitted changes, even ones you wanted"
             - "Equivalent — both approaches produce the same result with no trade-offs"
             - "Correct — `git reset --hard` would have also committed `.gitignore` automatically"
           correct_index: 1
@@ -1584,7 +1584,7 @@ steps:
         - question: "You added `scratch.py` to `.gitignore` and committed it. The file still shows up when you run `ls`. Why?"
           options:
             - "`.gitignore` patterns must be reloaded by restarting Git"
-            - "`.gitignore` prevents tracking — it does not delete files from your filesystem"
+            - "`.gitignore` prevents tracking — it does not delete from disk"
             - "`scratch.py` is too large for Git to ignore"
             - "You must run `git clean -f` after every `.gitignore` update"
           correct_index: 1
@@ -1842,7 +1842,7 @@ steps:
         - question: "You're on `feature-x` and have **staged** (but not committed) a change to `app.py`. You run `git switch main`. What happens to your staged change?"
           options:
             - "Git commits the staged change to `feature-x` automatically before switching"
-            - "The staged change carries over into `main`'s workspace if it doesn't conflict with files that differ between branches"
+            - "The staged change carries over to `main` unless it conflicts with a file that differs"
             - "Git always refuses to switch branches when there are staged changes"
             - "All staged changes are permanently discarded when switching branches"
           correct_index: 1
@@ -1860,7 +1860,7 @@ steps:
         - question: "Your teammate says: 'Branches are just copies of the project, so creating too many wastes disk space.' Is this correct? Why or why not?"
           options:
             - "Correct — each branch duplicates the entire project directory"
-            - "Incorrect — a branch is a lightweight pointer to a commit, not a copy; creating one uses ~41 bytes"
+            - "Incorrect — a branch is just a ~41-byte pointer to a commit, not a copy"
             - "Partially correct — branches copy only modified files, so they use some disk space"
             - "Correct — Git uses compression, but each branch still requires a full snapshot copy"
           correct_index: 1
@@ -2137,9 +2137,9 @@ steps:
 
         - question: "When does Git perform a **fast-forward merge** instead of creating a merge commit?"
           options:
-            - "When the branches have conflicting changes"
-            - "When the target branch has no new commits since the feature branched off"
-            - "When you pass the `--fast-forward` flag explicitly"
+            - "When the branches have conflicting changes on the same lines"
+            - "When the target branch has no new commits since the split"
+            - "When you pass the `--fast-forward` flag explicitly to merge"
             - "When both branches have the same number of commits"
           correct_index: 1
           explanation: "A fast-forward merge is possible only when the target branch hasn't diverged — it's directly 'behind' the feature branch in history. Git simply slides the pointer forward. No merge commit is created and the history stays linear."
@@ -2147,8 +2147,8 @@ steps:
         - question: "In a **three-way merge**, what are the three 'points' Git compares?"
           options:
             - "The working directory, the staging area, and the last commit"
-            - "The current branch tip, the incoming branch tip, and their common ancestor commit"
-            - "HEAD, HEAD~1, and HEAD~2"
+            - "The two branch tips and the commit where they diverged"
+            - "HEAD, HEAD~1, and HEAD~2 along the current branch history"
             - "The local branch, the remote branch, and the global config"
           correct_index: 1
           explanation: "Git finds the **common ancestor** (the commit where the two branches diverged), then compares both branch tips against it. This three-point comparison lets Git automatically combine non-overlapping changes and flag conflicts only where the same lines were changed."
@@ -2350,7 +2350,7 @@ steps:
         - question: "You are setting up a merge conflict scenario. You made changes on `update-recruit` and are now on `main`. What is the correct **next step** to trigger the conflict?"
           options:
             - "Run `git merge update-recruit` immediately"
-            - "Make a different change to the same lines on `main`, commit, then merge"
+            - "Edit the same lines on `main`, commit, then merge"
             - "Delete the `update-recruit` branch and start over"
             - "Run `git conflict update-recruit` to preview conflicts"
           correct_index: 1
@@ -2988,7 +2988,7 @@ steps:
         - question: "Before running `git revert HEAD --no-edit` you have 4 commits in your log. After the command finishes, how many commits are in the log, and what does the new entry look like?"
           options:
             - "Still 4 — `git revert` replaces the bad commit in-place with the corrected version"
-            - "5 — a new 'Revert \"...\"' commit is appended at the top; the original bad commit remains in history"
+            - "5 — a new 'Revert \"...\"' commit is appended; the original stays in history"
             - "3 — Git removes the bad commit and its parent to keep history clean"
             - "4 — the bad commit is updated with the reverted content but keeps its original hash"
           correct_index: 1
@@ -2997,7 +2997,7 @@ steps:
         - question: "Why is `git revert` safer than `git reset --hard` when working on a shared branch?"
           options:
             - "`git revert` is faster because it only changes one file"
-            - "`git revert` preserves history and doesn't cause problems for teammates who already pulled"
+            - "`git revert` preserves history, so teammates who pulled stay in sync"
             - "`git revert` automatically notifies other developers via email"
             - "`git reset --hard` requires admin permissions on shared branches"
           correct_index: 1
@@ -3019,7 +3019,7 @@ steps:
         - question: "A colleague used `git reset --hard HEAD~3` on the shared `main` branch and force-pushed. Three commits are gone from the remote. What is the impact and how would you recover?"
           options:
             - "No impact — the commits are still on everyone's local machines permanently"
-            - "Severe: every teammate's local now conflicts with the remote; recover via someone's local copy or `git reflog`"
+            - "Severe: every teammate's local diverges; recover via a local copy or `git reflog`"
             - "Minor: Git automatically detects the discrepancy and re-pushes the missing commits"
             - "The force-push would have been rejected by Git's safety mechanisms"
           correct_index: 1
@@ -3275,19 +3275,19 @@ steps:
       questions:
         - question: "What does `git clone` do?"
           options:
-            - "Creates an empty repository on the remote server"
-            - "Downloads a full copy of a remote repository including its entire commit history"
+            - "Creates a brand-new empty repository on the remote server"
+            - "Downloads a remote repository with its full commit history"
             - "Copies only the latest version of the files without any history"
-            - "Creates a symbolic link to the remote repository"
+            - "Creates a symbolic link from your machine to the remote repo"
           correct_index: 1
           explanation: "`git clone` creates a complete, independent copy of the repository — including every commit, branch, and tag. You get the full history, not just the latest snapshot."
 
         - question: "What is the difference between `git push` and `git pull`?"
           options:
-            - "`push` uploads your local commits to the remote; `pull` downloads and merges remote commits into your local branch"
+            - "`push` uploads local commits to the remote; `pull` fetches and merges remote ones"
             - "`push` creates a new branch on the remote; `pull` deletes a branch from the remote"
             - "`push` sends files to your teammates directly; `pull` requests their files"
-            - "They are synonyms — both sync your repository with the remote"
+            - "They are synonyms — both just sync your repository with the remote"
           correct_index: 0
           explanation: "`git push` sends your local commits upstream. `git pull` fetches new commits from the remote and merges them into your local branch. Together, they keep your local and remote repositories in sync."
 
@@ -3303,7 +3303,7 @@ steps:
         - question: "Your team has a choice: everyone pushes directly to `main`, or everyone works on feature branches and merges via pull requests. What are the trade-offs?"
           options:
             - "Direct push is always better — pull requests add unnecessary overhead"
-            - "Feature branches add overhead but provide isolation, code review opportunities, and protect `main` from broken code"
+            - "Branches add overhead but give isolation, review, and protect `main`"
             - "Pull requests are only needed for open-source projects, not internal teams"
             - "There is no difference — both approaches produce identical results"
           correct_index: 1
@@ -3593,7 +3593,7 @@ steps:
 
         - question: "A colleague shares a project folder via USB — it has source files but no `.git` directory. `git status` reports 'not a git repository'. What is the single command needed before you can start tracking changes?"
           options:
-            - "`git init` — creates the hidden `.git` directory that turns the folder into a repository"
+            - "`git init` — creates the hidden `.git` directory inside the folder"
             - "`git config --global` — registers the folder with Git's global settings"
             - "`git clone` — downloads the repository history from a remote"
             - "`git add .` — starts tracking all files immediately without initialising"
@@ -3612,7 +3612,7 @@ steps:
         - question: "You ran `git add .` and accidentally staged `secrets.env` alongside your real changes. You need to unstage **only** that file while keeping everything else staged and your edits intact. What do you run?"
           options:
             - "`git restore secrets.env` — unstages and discards the file's edits"
-            - "`git restore --staged secrets.env` — moves only that file off the staging area, preserving edits"
+            - "`git restore --staged secrets.env` — unstages that file, preserves edits"
             - "`git reset --hard` — resets all staged and unstaged changes"
             - "`git rm secrets.env` — deletes the file from the repository"
           correct_index: 1
@@ -3620,10 +3620,10 @@ steps:
 
         - question: "Without a staging area, `git commit` would have to snapshot every modified file at once. What capability would you lose?"
           options:
-            - "The ability to push to a remote repository"
-            - "The ability to assemble focused commits from a messy working directory"
-            - "The ability to see the diff of uncommitted changes"
-            - "The ability to create branches"
+            - "The ability to push to a remote repository on the network"
+            - "Assembling focused commits from a messy working directory"
+            - "The ability to see the diff of any uncommitted changes"
+            - "The ability to create branches off the current commit"
           correct_index: 1
           explanation: "The staging area is the mechanism that decouples 'what you're working on' from 'what you're ready to commit'. Without it, every commit would be an all-or-nothing snapshot, making it impossible to create clean, single-purpose history entries from a working directory in flux."
 
@@ -3683,10 +3683,10 @@ steps:
 
         - question: "Why does `git switch` sometimes change the files you see in your file explorer?"
           options:
-            - "Because Git is downloading them from a server"
-            - "Because Git updates the working directory to match the branch's snapshot"
-            - "Because Git is deleting your old files to save space"
-            - "Because you have a virus"
+            - "Because Git is downloading the files from a server"
+            - "Git updates the working directory to match the branch's snapshot"
+            - "Because Git is deleting your old files to save disk space"
+            - "Because you have a virus that is altering files"
           correct_index: 1
           explanation: "Git's 'Time Machine' capability replaces your files with the versions from the target snapshot."
 

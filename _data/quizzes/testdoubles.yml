@@ -69,7 +69,7 @@ questions:
       You are deciding between a **Spy** and a **Mock** to verify a notification interaction. Which factor most strongly favors a **Spy**?
     options:
       - "The test should fail at the exact line in the SUT where the wrong call was made — pinpoint failure location is the most useful diagnostic signal."
-      - "You cannot predict all attributes of the SUT's interactions ahead of time, and you want richer assertions (grouping, sorting, set comparisons) on the recorded calls."
+      - "You cannot predict all attributes of the calls ahead of time and want richer assertions (grouping, sorting, set comparisons) on what was recorded."
       - "The SUT calls the DOC many times and the call sequence is fixed and short — every call has known parameters that can be matched in order."
       - "You want the test body to stay terse and push verification expectations into the setup section where they can be shared across cases."
     correct_index: 1

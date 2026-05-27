@@ -1119,7 +1119,7 @@ steps:
           difficulty: intermediate
           question: "When does the `Everything visible is done.` status appear?"
           options:
-            - "When there is at least one visible task and all visible tasks are `done`"
+            - "When visible tasks exist and all of them are `done`"
             - "When any task in `TASKS` is `done`, even hidden ones"
             - "Whenever the selected topic is `all`"
             - "Only when `TaskCard` decides to render it"
@@ -1128,7 +1128,7 @@ steps:
             1: "The code uses `visibleTasks.every(...)`, so hidden tasks do not control the banner."
             2: "The `all` topic includes unfinished tasks in the sample data, so the banner does not appear there."
             3: "`TaskCard` renders individual task status. The overall banner is in `App`."
-          explanation: "The condition combines two checks: there must be visible tasks, and all of them must be done."
+          explanation: "The condition combines two checks: at least one visible task must exist, and every one of them must be `done`. Both gates are required."
 
         - type: multiple
           difficulty: advanced

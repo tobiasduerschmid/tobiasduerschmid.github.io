@@ -202,7 +202,7 @@ steps:
           options:
             - "Aliases don't work in zsh, only bash"
             - "Aliases can't pass arguments, so it can't compile other projects"
-            - "Aliases still recompile every file every time — they have no memory of what changed"
+            - "Aliases recompile everything every time — they don't track what changed"
             - "Aliases are slower than Makefiles by about 2× per invocation"
           correct_index: 2
           option_feedback:
@@ -620,7 +620,7 @@ steps:
           options:
             - "Make automatically fixes syntax errors"
             - "Make recompiles every file in parallel by default"
-            - "Make only rebuilds the files that actually changed (incremental builds)"
+            - "Make rebuilds only files that actually changed"
             - "Make compresses the binary to save disk space"
           correct_index: 2
           option_feedback:
@@ -1177,7 +1177,7 @@ steps:
         - question: "How does Make decide whether to rebuild a target file?"
           options:
             - "It always rebuilds everything to be safe"
-            - "It compares timestamps: if any prerequisite is newer than the target, it rebuilds"
+            - "It rebuilds if any prerequisite is newer than the target"
             - "It checksums file contents to detect actual changes"
             - "It asks the user which files changed since last time"
           correct_index: 1
@@ -1446,7 +1446,7 @@ steps:
           options:
             - "Make will delete the directory and replace it with a file"
             - "Make will encounter a fatal error and stop"
-            - "Make will assume the target is up-to-date (since the directory exists) and will NOT run the recipe"
+            - "Make assumes the target is up-to-date and skips the recipe"
             - "Make will always execute the recipe because directories are always considered 'new'"
           correct_index: 2
           option_feedback:
@@ -1457,7 +1457,7 @@ steps:
 
         - question: "How can you use Phony targets to bundle multiple independent builds together?"
           options:
-            - "By creating a phony target (like `all`) and listing the other targets as its prerequisites"
+            - "Create a phony `all` target whose prerequisites are the other targets"
             - "By listing the phony target inside every other rule's recipe"
             - "By using the `bundle:` keyword instead of `.PHONY:`"
             - "Make cannot group multiple targets into one command"
@@ -1741,7 +1741,7 @@ steps:
             Your project uses the final Makefile. You edit `math.h` (a header included by `main.c` and `math.c`) but don't touch any `.c` file. You run `make`. What happens?
           options:
             - "Make rebuilds `main.o` and `math.o` because they include `math.h`"
-            - "Make says `'app' is up to date` and skips everything — even though the header changed"
+            - "Make reports `'app' is up to date` and skips everything"
             - "Make rebuilds the entire project to be safe"
             - "Make refuses to build and warns about an untracked dependency"
           correct_index: 1
@@ -1756,7 +1756,7 @@ steps:
           options:
             - "Make has a known race condition with `-j` greater than 4"
             - "`--shuffle` is broken in newer versions of Make and produces nondeterministic results"
-            - "Your dependency graph is incomplete — a prerequisite isn't declared, so under random order Make sometimes tries to link before all `.o` files exist"
+            - "A missing prerequisite — random order sometimes links before all `.o` files exist"
             - "Parallel builds aren't supposed to work for C projects; only Rust/Go support them safely"
           correct_index: 2
           option_feedback:

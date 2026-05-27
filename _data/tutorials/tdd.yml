@@ -738,9 +738,9 @@ steps:
           type: single
           options:
             - "GREEN → RED → REFACTOR — write code, then prove it works with a test, then clean up"
-            - "RED → GREEN → REFACTOR — write a failing test, write the smallest code to pass it, then improve the design with the safety net in place"
-            - "RED → REFACTOR → GREEN — write a failing test, design the right structure first, then make the test pass"
-            - "REFACTOR → RED → GREEN — clean up old code first, then write a test for the new behavior, then implement it"
+            - "RED → GREEN → REFACTOR — failing test, then minimum code, then clean up the design"
+            - "RED → REFACTOR → GREEN — failing test, design the structure, then make it pass"
+            - "REFACTOR → RED → GREEN — clean up first, then write a test, then implement the behavior"
           correct_index: 1
           option_feedback:
             0: "This is **test-after development**, not TDD. Writing code first means you've already committed to a design before the test gets a chance to challenge it — the test becomes a rubber stamp. RED-first forces the design to emerge under the pressure of \"how do I want to call this?\""
@@ -776,7 +776,7 @@ steps:
           type: single
           options:
             - "Write the generic loop — it will be needed eventually, and writing it now saves work in the next cycle"
-            - "Write the hardcoded version — TDD's GREEN rule is the smallest code that passes the *current* failing test, even if you know more cycles are coming"
+            - "Write the hardcoded version — GREEN asks only for what passes the *current* failing test"
             - "Skip GREEN entirely and design the loop as part of REFACTOR — the cycle is flexible about which phase contains the new logic"
             - "It does not matter — both choices satisfy the test, and the difference is purely stylistic"
           correct_index: 1
@@ -1671,7 +1671,7 @@ steps:
           type: single
           options:
             - "It is not better — refactoring as soon as you see duplication is always the right move; this tutorial just artificially delayed it"
-            - "Waiting until a test demands the change ensures the refactor is justified by behavior, not by aesthetic preference. It also gives you more data points to design the right shape, instead of guessing"
+            - "Waiting ensures the refactor is justified by behavior, and you have more data points to design the right shape"
             - "Python performance is better when you delay extracting loops, because the interpreter optimises hardcoded branches differently from iterative ones"
             - "It is purely a style choice — the resulting code in either order is identical, so the order of operations does not matter"
           correct_index: 1
@@ -1685,7 +1685,7 @@ steps:
           type: single
           options:
             - "Nothing — passing tests do not provide any information beyond what manual inspection of the new code would have"
-            - "It mechanically verified that the new structure preserves the behavior of the empty roll, single 1, single 5, and `[1, 1]` cases — replacing fear-driven manual reasoning with a one-second check"
+            - "It verified that the new structure preserves behavior on all four cases in one second"
             - "It rewrote your code to be more efficient — the suite optimises the implementation as a side effect of being run"
             - "It logged the change so a future code reviewer can audit it — the suite acts as a versioned history of refactor decisions"
           correct_index: 1
@@ -2073,7 +2073,7 @@ steps:
           type: single
           options:
             - "Cycle 5's assertion is longer than previous assertions, so the implementation has to grow proportionally to satisfy it"
-            - "The per-die loop processes each die in isolation. There is no way for the loop to know, when it sees the first 1, that two more 1s exist later. Counting *requires* a structural shift — not a new branch"
+            - "A per-die loop sees one die at a time. Detecting three 1s needs a face-count view — a structural shift, not a new branch"
             - "It uses pytest.raises, which forces the implementation to add exception handling"
             - "It tests three dice instead of one or two, and pytest internally requires a different runner for tests that exceed two arguments"
           correct_index: 1
@@ -2092,7 +2092,7 @@ steps:
           type: single
           options:
             - "That they were unnecessary — passing on a totally different implementation means they were not pinning down anything specific"
-            - "That they were testing observable behavior (return values), not implementation details (which loop was used). Behavior-level tests survive a structural rewrite; implementation-level tests would have broken"
+            - "That they tested observable behavior, not implementation — behavior tests survive a structural rewrite"
             - "That pytest silently re-imports the previous implementation if the new one breaks them, so the green bar in this case is misleading"
             - "That the previous tests were duplicates of each other and could be deleted to simplify the suite"
           correct_index: 1
@@ -2792,7 +2792,7 @@ steps:
             A teammate says: *"You should have done the rule-object refactor in cycle 5, when you first introduced combos. Why wait?"* What is the **most defensible** answer?
           type: single
           options:
-            - "Refactoring earlier would have been wrong — the rule-object shape only became visible after cycle 6's test added a *second* combo, and refactoring with one example is guessing at the right shape"
+            - "The rule-object shape only became visible at cycle 6 with two combos — refactoring with one is a guess"
             - "Cycle 5 was technically possible but pytest had not yet released support for dataclasses, so the refactor would have failed at import time"
             - "It is a stylistic preference — both orderings produce identical code in the end and one is not measurably better than the other"
             - "Earlier refactoring is always better; the tutorial's order is artificial and you should always do the biggest refactor as soon as you can"
@@ -3737,7 +3737,7 @@ steps:
             A teammate, who has never done TDD, pushes back: *"FizzBuzz is just trivia — the real work is the algorithm. Why did you spend 12 minutes on the cycles instead of 30 seconds typing the obvious solution?"* Pick the strongest reply.
           type: single
           options:
-            - "On a toy problem the time is comparable, but you walk away with a test suite that catches the design-breaking moment when it returns"
+            - "On a toy problem the time is similar, but you keep a test suite that catches the design-breaking moment later"
             - "TDD is faster than typing the obvious solution because pytest's parallelism speeds up small test runs."
             - "The 'obvious' solution might be wrong; TDD is more correct because tests catch all bugs."
             - "TDD is a religious commitment — the question isn't worth answering."
@@ -4228,7 +4228,7 @@ steps:
           type: single
           options:
             - "A way to achieve 100% line coverage without writing extra tests later"
-            - "A *design discipline* where tests drive the structure of production code; the test suite is a valuable byproduct"
+            - "A *design discipline* where tests drive the structure of production code"
             - "A workflow optimisation that ships features faster than test-after development"
             - "A coverage technique ensuring every line is exercised before release"
           correct_index: 1
@@ -4246,7 +4246,7 @@ steps:
           type: single
           options:
             - "A 25-line one-off file-renaming script run once and discarded"
-            - "A new payment-processing module with complex validation and multiple authors"
+            - "A payment-processing module with complex validation and multiple authors"
             - "A Jupyter notebook exploring a new dataset"
             - "Hand-written CSS for a landing page judged visually"
           correct_index: 1
@@ -4311,7 +4311,7 @@ steps:
             Apply Canon TDD step 1 — **write a test list, in the order you'd implement it**. Which list below best honours TDD discipline (simplest-first, boundary-aware, behavior-named)?
           type: single
           options:
-            - "A simplest-first behavioral list: happy path, then each rule rejected (no digit, no symbol, too short), then length boundary pairs (7/8, 64/65), then empty-string edge."
+            - "Simplest-first: happy path, each rule rejected, length boundary pairs, empty-string edge."
             - "Just one parametrized test that tries 50 random strings and checks `is_valid_password` returns the right answer for each."
             - "Generic property tests: `test_returns_a_bool`, `test_handles_unicode`, `test_is_thread_safe`, `test_is_not_None`, `test_does_not_raise`."
             - "A single `test_password_validation` test that asserts every rule (length, digit, symbol, empty) in one go."

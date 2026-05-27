@@ -9,7 +9,7 @@ questions:
     question: |
       Which statement best distinguishes functionality from a quality attribute?
     options:
-      - "Functionality says what the system does; a quality attribute says how well that function must work in a context."
+      - "Functionality is what the system does; a quality attribute is how well it does it."
       - "Functionality is for users; quality attributes are only for developers."
       - "Functionality is measurable; quality attributes are intentionally vague."
       - "Functionality appears in requirements; quality attributes appear only after implementation."
@@ -58,7 +58,7 @@ questions:
     question: |
       A requirement says: "The report API must respond within 200 ms." What is the main weakness?
     options:
-      - "It has a metric but lacks scenario context such as load, report size, and request type."
+      - "It has a metric but no scenario context: load, report size, request type."
       - "It has a scenario but lacks any metric."
       - "It is invalid because APIs cannot have performance requirements."
       - "It chooses an implementation before stating the requirement."
@@ -227,7 +227,7 @@ questions:
     question: |
       A product manager asks for maximum security, maximum performance, maximum portability, and minimum development cost. What is the best architectural response?
     options:
-      - "Prioritize the few load-bearing qualities, document accepted costs, and use those priorities to guide design choices."
+      - "Prioritize a few load-bearing qualities, document accepted costs, and design accordingly."
       - "Accept all targets as equal and let implementation details settle the conflict later."
       - "Optimize the easiest-to-measure quality first and ignore the rest."
       - "Treat development cost as unrelated to architecture."
@@ -273,7 +273,7 @@ questions:
     options:
       - "The login system should use the best security practices."
       - "Use OAuth 2.0 and JSON Web Tokens for login."
-      - "After 5 failed attempts in 10 minutes, rate-limit the account for 15 minutes."
+      - "After 5 failed attempts in 10 min, lock the account for 15 min."
       - "The login system should be secure, robust, and scalable."
     correct_index: 2
     option_feedback:
@@ -284,7 +284,7 @@ questions:
       3: |
         Adding more adjectives makes the requirement broader but not more measurable.
     explanation: |
-      The strong rewrite names the security scenario (repeated failed logins), the threshold that triggers a response (5 attempts in 10 minutes), and the measurable response (a 15-minute rate-limit on that account).
+      The strong rewrite names the security scenario (repeated failed logins), the threshold that triggers a response (5 attempts in 10 minutes), and the measurable response (a 15-minute account lock).
 
   - id: 13
     difficulty: advanced
@@ -293,7 +293,7 @@ questions:
     question: |
       A team says: "We cannot put numbers on modifiability, so we should not include it in requirements." What is the best correction?
     options:
-      - "Modifiability can use development-time, modules-touched, dependency-boundary, or forbidden-ripple-effect measures."
+      - "Modifiability has measures: change effort, modules touched, dependency limits."
       - "They are right; only run-time attributes can be requirements."
       - "Modifiability should be replaced by performance because performance has clearer numbers."
       - "A modifiability requirement should always require one-hour changes."

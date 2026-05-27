@@ -74,7 +74,7 @@ questions:
       Netflix famously runs **Chaos Monkey**, which randomly terminates production services to test resilience. Map this to the testability framework: what challenge does it create, and what challenge does it solve?
     options:
       - "Chaos Monkey solves both controllability and observability automatically."
-      - "It solves controllability by injecting failures; observability still has to be instrumented separately."
+      - "It solves controllability; observability must be instrumented separately."
       - "Chaos Monkey is purely a performance test; it has no relationship to testability."
       - "Chaos Monkey is the same as a unit test, just at a larger scale."
     correct_index: 1
@@ -94,7 +94,7 @@ questions:
       Your team wants to verify that the search engine returns identical results for the same query made twice in a row — even though they don't know which results are 'correct' (the *oracle problem*). Which testing technique fits?
     options:
       - "Unit testing — test each subcomponent in isolation."
-      - "Metamorphic testing — check that invariants between inputs and outputs hold."
+      - "Metamorphic testing — check input/output invariants."
       - "Monkey testing — randomly click in the UI."
       - "TDD — write the test first, then implement."
     correct_index: 1
@@ -114,7 +114,7 @@ questions:
       The team adopts TDD: write a failing test, write the minimum code to pass, refactor, repeat. A junior developer says: "TDD guarantees 100% coverage." Why is this overstated?
     options:
       - "TDD is just a buzzword and provides no real benefit."
-      - "TDD only covers the cases the author thought to test — edge cases can still slip through."
+      - "TDD covers only the cases the author thought to test."
       - "TDD only works for object-oriented code."
       - "TDD requires writing tests *after* the code, not before."
     correct_index: 1
@@ -194,7 +194,7 @@ questions:
       A startup uses 'Wizard of Oz' testing — a human secretly fulfills the operation a real system would eventually automate, while users interact with what appears to be a working product. What testability concept does this illustrate?
     options:
       - "Production deployment automation that tests rollout safety."
-      - "Testability at the product level — a human stand-in lets the team observe real users."
+      - "Product-level testability: a human stand-in lets the team observe users."
       - "Test doubles applied to humans the way mocks substitute for code."
       - "A violation of testing ethics that creates legal liability."
     correct_index: 1

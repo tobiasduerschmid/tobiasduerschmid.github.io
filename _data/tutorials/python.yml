@@ -143,7 +143,7 @@ steps:
           type: single
           options:
             - "Python requires a main() function but it is inferred automatically"
-            - "Python scripts execute top-to-bottom without a main() entry point; semicolons are replaced by newlines and indentation"
+            - "Python scripts run top-to-bottom — no main(), no semicolons"
             - "Python is actually compiled, it just hides the main() function internally"
             - "The programmer is correct — Python requires semicolons in production code"
           correct_index: 1
@@ -177,7 +177,7 @@ steps:
           options:
             - "Renaming 10 files using a simple glob pattern"
             - "Starting and stopping system services"
-            - "Parsing a 50-column CSV, computing statistics, and writing a report"
+            - "Parsing a 50-column CSV and writing a report"
             - "Chaining three Unix commands with a pipe"
           correct_index: 2
           explanation: |
@@ -194,7 +194,7 @@ steps:
           options:
             - "Python is always slower than C++, so C++ is the only correct choice for any project with performance requirements"
             - "Python is fine for real-time processing — modern hardware makes the speed difference between Python and C++ negligible"
-            - "C++ is better for the real-time core due to speed, but Python is ideal for prototyping and non-latency-critical parts like config and visualization"
+            - "C++ for the real-time core; Python for prototyping, config, and visualization"
             - "They should use Bash — piping data between Unix tools is faster than either Python or C++ for data processing"
           correct_index: 2
           option_feedback:
@@ -435,7 +435,7 @@ steps:
           type: single
           options:
             - "They are correct — dynamically typed languages should convert between types automatically, so this is a Python bug"
-            - "Dynamic typing means types are checked at runtime, not that types don't exist. Python is *strongly* typed and refuses to implicitly convert `str` + `int`"
+            - "Dynamic ≠ weak: Python checks types at runtime but still refuses to coerce `str` + `int`"
             - "The error happens because `x` was already declared as a string elsewhere, and Python does not allow reassignment to a different type"
             - "Python only allows concatenation through the explicit `concat()` function, not the `+` operator which is reserved for numbers"
           correct_index: 1
@@ -649,7 +649,7 @@ steps:
           options:
             - "The first teammate is right — braces are always superior because you can collapse blocks and see structure without relying on whitespace"
             - "The second teammate is right — indentation-as-syntax is strictly better because it eliminates an entire category of bugs with zero tradeoffs"
-            - "Both have valid points: indentation eliminates formatting inconsistency and reduces visual clutter, but it can cause subtle bugs when copy-pasting code or mixing editors with different tab settings"
+            - "Both: indentation enforces consistency but causes bugs when copy-pasting or mixing tab settings"
             - "Neither is right — the choice of block syntax has no practical effect on code quality"
           correct_index: 2
           explanation: |
@@ -879,7 +879,7 @@ steps:
           type: single
           options:
             - "Python functions cannot perform multiplication — the `*` operator only works for string repetition"
-            - "The function is missing `return`. In C++, the last expression may be implicitly returned; in Python, no `return` means `None`"
+            - "The function is missing `return`. In Python, no `return` means `None`"
             - "`double` is a reserved word in Python (like C++'s `double` type), so it shadows the function definition"
             - "The function needs a type annotation like `def double(x: int) -> int:` before Python will return a value"
           correct_index: 1
@@ -910,7 +910,7 @@ steps:
           type: single
           options:
             - "Move the test prints into a `main()` function — Python automatically detects and skips `main()` during import"
-            - "Wrap the test prints in `if __name__ == '__main__':` — this block only runs when the file is executed directly, not when imported"
+            - "Wrap them in `if __name__ == '__main__':` — runs only when executed directly"
             - "Use `#pragma once` at the top of the file to prevent double execution, similar to C++ header guards"
             - "Add `import guard` at the top — this is Python's built-in mechanism to prevent code from running during import"
           correct_index: 1
@@ -1206,7 +1206,7 @@ steps:
           type: single
           options:
             - "Python raises `TypeError: argument 'a' must be int, not str` because of the type annotation"
-            - "Python returns the string `'12'` — the annotation is ignored at runtime, and `'1' + '2'` is valid string concatenation"
+            - "Python returns the string `'12'` — annotations are ignored at runtime"
             - "Python raises `SyntaxError` — type annotations only work with literal types like `int(1)`"
             - "Python silently coerces the strings to integers and returns `3`"
           correct_index: 1
@@ -1860,7 +1860,7 @@ steps:
           type: single
           options:
             - "List comprehensions run faster than for-loops for all input sizes"
-            - "List comprehensions are more readable for simple transformations and are a Python idiom"
+            - "More readable for simple transformations — a recognized Python idiom"
             - "For-loops are deprecated in Python 3"
             - "List comprehensions avoid creating a temporary list in memory"
           correct_index: 1
@@ -1880,7 +1880,7 @@ steps:
             ```
           type: single
           options:
-            - "`['ALICE', 'CHARLIE']` — yes: `[name.upper() for name in [...] if len(name) > 3]`"
+            - "`['ALICE', 'CHARLIE']` — yes: `[n.upper() for n in names if len(n) > 3]`"
             - "`['Alice', 'Charlie']` — no: comprehensions can't call methods"
             - "`['ALICE', 'BOB', 'CHARLIE']` — the `if` is ignored"
             - "`['alice', 'charlie']` — `upper()` converts to lowercase"
@@ -2092,7 +2092,7 @@ steps:
           type: single
           options:
             - "Removes all spaces from the middle of the line"
-            - "Removes leading and trailing whitespace, including the trailing `\\n`"
+            - "Removes leading and trailing whitespace (including `\\n`)"
             - "Converts the line to lowercase"
             - "Splits the line into a list of characters"
           correct_index: 1
@@ -2109,7 +2109,7 @@ steps:
           options:
             - "Both are identical in behavior and memory usage — Python handles buffering automatically regardless of which method you use"
             - "`f.read()` is better because reading the entire file into one string is faster than processing line by line due to fewer I/O calls"
-            - "`for line in f:` is better — it processes one line at a time, using constant memory regardless of file size, while `f.read()` would load 2 GB into RAM"
+            - "`for line in f:` is better — constant memory regardless of file size; `f.read()` loads all 2 GB"
             - "Neither works — Python can't handle files over 1 GB"
           correct_index: 2
           explanation: |
@@ -2130,7 +2130,7 @@ steps:
           type: single
           options:
             - "Nothing — the code is correct"
-            - "The `for` line needs to be indented inside the `with` block"
+            - "The `for` line must be indented inside `with`"
             - "You need to call `f.close()` after the loop"
             - "`open()` requires a mode argument like `'r'`"
           correct_index: 1
@@ -2149,7 +2149,7 @@ steps:
           type: single
           options:
             - "Single quotes can't be used for strings in Python"
-            - "The apostrophe ends the string early — it matches the opening `'`"
+            - "The apostrophe ends the string — it matches the opening `'`"
             - "Python strings must use double quotes"
             - "The string is too long for single quotes"
           correct_index: 1
@@ -2385,7 +2385,7 @@ steps:
           type: single
           options:
             - "`re.findall()` — it returns all matches, so you can check `len() > 0`"
-            - "`re.search()` — it returns a match object (truthy) or `None` (falsy) for a single check"
+            - "`re.search()` — returns a truthy match object or falsy `None`"
             - "`re.sub()` — it can test for a match while replacing"
             - "`re.compile()` — it tests patterns without needing a string"
           correct_index: 1
@@ -2698,7 +2698,7 @@ steps:
           type: single
           options:
             - "Both are correct and equivalent"
-            - "Only A is correct — errors must go to stderr so they don't contaminate stdout (which may be piped)"
+            - "Only A — errors must go to stderr so piped stdout stays clean"
             - "Only B is correct — `file=sys.stderr` is not valid Python syntax"
             - "Neither is correct — you should use `raise SystemExit(1)` instead"
           correct_index: 1
@@ -2735,7 +2735,7 @@ steps:
             What happens if you forget the `with` keyword and write `f = open("data.txt")` instead?
           type: single
           options:
-            - "The file opens but you must manually call `f.close()` — if an exception occurs before `close()`, the file stays open"
+            - "The file opens, but you must call `f.close()` manually or it leaks"
             - "Python raises a SyntaxError — `open()` can only be used with `with`"
             - "The file opens in read-only mode instead of read-write"
             - "Nothing different — `with` is just syntactic sugar with no functional effect"
@@ -3044,7 +3044,7 @@ steps:
           type: single
           options:
             - "The regex patterns are wrong — `ERROR.*` only matches the literal characters E-R-R-O-R, not the full line"
-            - "Two bugs: no `sys.argv` check (crashes with IndexError if no filename given), and `len(ips)` counts total IPs including duplicates (should use `set(ips)`)"
+            - "Two bugs: no `sys.argv` check (IndexError if no arg), and `len(ips)` counts duplicates"
             - "The file is never properly closed because `with` blocks do not support the `.read()` method on the file handle"
             - "There is no bug — the `with` statement, regex patterns, and f-string formatting are all correct as written"
           correct_index: 1
@@ -3079,7 +3079,7 @@ steps:
           type: single
           options:
             - "`for i in range(len(lines)): print(f'{i+1}: {lines[i]}')` — use range to generate index numbers"
-            - "`for n, line in enumerate(lines, 1): print(f'{n}: {line}')` — enumerate gives index and value together, and `start=1` avoids the +1"
+            - "`for n, line in enumerate(lines, 1): print(f'{n}: {line}')` — yields (index, value) pairs"
             - "`i = 0; for line in lines: i += 1; print(f'{i}: {line}')` — manually track the counter like in C++"
             - "`for line in lines: print(f'{lines.index(line)+1}: {line}')` — use index() to find the position"
           correct_index: 1
@@ -3492,7 +3492,7 @@ steps:
           options:
             - "It silently succeeds — `frozen=True` only affects equality, not assignment"
             - "It raises `AttributeError` — the field is read-only because it has no setter"
-            - "It raises `FrozenInstanceError` — frozen dataclasses override `__setattr__` to forbid mutation"
+            - "`FrozenInstanceError` — frozen dataclasses block `__setattr__`"
             - "It raises `TypeError` — `99` is not declared `int` in this context"
           correct_index: 2
           option_feedback:
@@ -3581,7 +3581,7 @@ steps:
           type: single
           options:
             - "Runtime: `TypeError` — Python rejects floats where ints are annotated."
-            - "Runtime: `Point(3.5, 4.5)` is constructed (`p.x == 3.5`). `mypy`: would flag — `float` is not `int`."
+            - "Runtime: constructs with `p.x == 3.5`. `mypy`: flags `float` ≠ `int`."
             - "Runtime: `Point(3, 4)` (Python silently truncates floats). `mypy`: ok."
             - "Runtime: depends on whether `frozen=True` is set."
           correct_index: 1

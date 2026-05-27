@@ -76,7 +76,7 @@ questions:
       The Heartbleed bug (CVE-2014-0160) sat in OpenSSL for two years before public disclosure, and was still on tens of thousands of devices five years after a patch was available. Which two principles does this story most directly support?
     options:
       - "(1) Strive for fewer dependencies, and (2) Identify violated assumptions"
-      - "(1) Reusable packages can introduce security vulnerabilities you did not write, and (2) Update dependencies regularly to receive patches"
+      - "(1) Reuse inherits the package's bugs, and (2) Update dependencies regularly"
       - "(1) Keep versions of your dependencies fixed, and (2) Prefer popular modules"
       - "(1) Solve simpler problems first, and (2) Document decisions in a Design Doc"
     correct_index: 1
@@ -121,7 +121,7 @@ questions:
       The Ariane 5 self-destruction 37 seconds into its maiden flight was caused by reusing the Inertial Reference System software from Ariane 4 without re-checking that a 16-bit integer was large enough for Ariane 5's higher horizontal velocity. The ESA inquiry's Recommendation R5 generalizes this into a single design principle. Which one?
     options:
       - "Always rewrite safety-critical software from scratch for each new vehicle"
-      - "Identify implicit assumptions in the reused code and check them against the new operating conditions"
+      - "Identify the reused code's implicit assumptions and re-check them in the new context"
       - "Pin the version of all reused libraries to avoid silent upstream drift"
       - "Use a framework rather than a library, so the framework can enforce safe assumptions"
     correct_index: 1
@@ -154,7 +154,7 @@ questions:
       Which statement about Snippet A vs. Snippet B is **correct**?
     options:
       - "Both follow the Hollywood Principle (Inversion of Control), because both pass data over HTTP"
-      - "Snippet A is a *library* call: your code decides when to invoke it. Snippet B uses a *framework*: the framework decides when to call your callback"
+      - "Snippet A is a *library* — your code calls it. Snippet B is a *framework* — it calls your callback"
       - "Snippet B is a library call because it uses an arrow function; Snippet A is a framework because it uses await"
       - "Snippet B violates the Hollywood Principle — frameworks should never call user-supplied callbacks"
     correct_index: 1
@@ -231,7 +231,7 @@ questions:
       In a classic expert-design study, three teams designed the same system: Team A produced 1 detailed design, Team B produced 3 options, Team C produced 5 options. Expert reviewers ranked Team C's chosen design as the best. What is the *correct* takeaway?
     options:
       - "Producing more designs always produces a better outcome — the right number is unbounded"
-      - "Generating alternatives broadens the search and yields better final designs — especially for less experienced designers"
+      - "Generating alternatives broadens the search and improves the final design"
       - "Detailed design is wasted effort; teams should produce sketches only"
       - "Team C's design was best because they had more time"
     correct_index: 1

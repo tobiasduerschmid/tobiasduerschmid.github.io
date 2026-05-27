@@ -233,7 +233,7 @@ steps:
       questions:
         - question: "Why does Java's `main` method signature include `static`?"
           options:
-            - "So the JVM can call it without creating an instance of the class"
+            - "So the JVM can call it without creating an instance"
             - "To make the method run faster"
             - "Because all Java methods must be static"
             - "To prevent the method from being overridden"
@@ -249,7 +249,7 @@ steps:
           explanation: "Java arrays are fixed-size, typed containers — similar to C++ arrays. Unlike Python lists, they cannot grow after creation. For a resizable collection, use `ArrayList<Integer>`."
         - question: "In Java, `scores.length` has no parentheses but `name.length()` does. Why?"
           options:
-            - "`length` on arrays is a field; `length()` on Strings is a method"
+            - "Array `length` is a field; String `length()` is a method"
             - "They're interchangeable — both work either way"
             - "Arrays don't have methods in Java"
             - "`length()` is deprecated in favor of `length`"
@@ -451,7 +451,7 @@ steps:
         - question: "What does `==` do when applied to two `String` objects in Java?"
           options:
             - "Compares their character content (value equality)"
-            - "Checks if they are the exact same object in memory (reference equality)"
+            - "Checks whether both point to the same object (identity)"
             - "Calls the .equals() method automatically"
             - "Compares their hash codes"
           correct_index: 1
@@ -1005,7 +1005,7 @@ steps:
         - question: "In Java, what is the default access level if you omit an access modifier on a field?"
           options:
             - "private — only accessible within the class"
-            - "package-private — accessible to any class in the same package"
+            - "package-private — any class in the same package"
             - "public — accessible from anywhere"
             - "protected — accessible to subclasses"
           correct_index: 1
@@ -1619,7 +1619,7 @@ steps:
       questions:
         - question: "In `ShapeDemo`, the method `printShape(Shape s)` works with both Circle and Rectangle. What makes this possible?"
           options:
-            - "Both Circle and Rectangle implement the Shape interface, so they fulfill the same contract"
+            - "Both Circle and Rectangle implement Shape's contract"
             - "Java automatically converts Circle to Rectangle"
             - "printShape uses reflection to discover methods at runtime"
             - "Shape is an abstract class that Circle and Rectangle extend"
@@ -1972,7 +1972,7 @@ steps:
         - question: "When should you use an abstract class instead of an interface?"
           options:
             - "When you need to define a contract with no implementation"
-            - "When classes need to share both state (fields) and some default behavior"
+            - "When classes need to share both state and default behavior"
             - "When you want to allow multiple inheritance"
             - "Always — abstract classes are superior to interfaces"
           correct_index: 1
@@ -2620,7 +2620,7 @@ steps:
         - question: "What's wrong with: `Map<String, Integer> m = new HashMap<>(); int val = m.get(\"missing\");`?"
           options:
             - "Nothing — val will be 0 (the default for int)"
-            - "NullPointerException — get() returns null for missing keys, and unboxing null crashes"
+            - "NullPointerException — get() returns null, and unboxing null crashes"
             - "Compile error — HashMap doesn't have a get() method"
             - "ClassCastException — String keys can't return Integer values"
           correct_index: 1
@@ -2927,7 +2927,7 @@ steps:
         - question: "Why can't you write `ArrayList<int>` in Java?"
           options:
             - "Because the `int` type is too small to live in an ArrayList slot"
-            - "Because type erasure leaves generic slots as `Object`, which can't hold primitives"
+            - "Erasure leaves generic slots as `Object`, which can't hold primitives"
             - "Because ArrayList is restricted to String element types"
             - "Because you should always use `int[]` arrays instead of ArrayList"
           correct_index: 1

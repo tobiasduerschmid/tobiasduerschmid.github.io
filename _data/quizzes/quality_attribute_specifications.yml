@@ -8,7 +8,7 @@ questions:
     question: |
       A team writes: "During the Friday-evening peak load of 10,000 concurrent users, 95% of product-search requests return results within 200 ms and 99% return within 500 ms." Is this a good quality-attribute requirement?
     options:
-      - "Good: it names the request, the operating condition, and measurable latency thresholds."
+      - "Good: it names the request, the load condition, and measurable latency targets."
       - "Bad: it chooses a caching implementation before stating the requirement."
       - "Bad: it is only a metric and does not name a scenario."
     correct_index: 0
@@ -27,7 +27,7 @@ questions:
       A team writes: "The API must respond within 200 ms." Is this a good quality-attribute requirement?
     options:
       - "Good: any numeric latency target is enough to make a performance requirement precise."
-      - "Bad: it gives a metric but omits the scenario, such as which API call, under what load, and with what data size."
+      - "Bad: it gives a metric but omits the scenario — which call, under what load, what data."
       - "Bad: performance requirements should avoid numbers because they constrain the architecture."
     correct_index: 1
     option_feedback:
@@ -45,7 +45,7 @@ questions:
       A team writes: "Use Kafka for scalability." Is this a good quality-attribute requirement?
     options:
       - "Good: Kafka is a proven scalability technology, so naming it makes the requirement actionable."
-      - "Bad: it is an implementation disguised as a requirement; the scalability scenario and success measure are missing."
+      - "Bad: it is an implementation disguised as a requirement; no scenario or success measure."
       - "Bad: scalability can only be measured after launch, so it should not appear in requirements."
     correct_index: 1
     option_feedback:
@@ -81,7 +81,7 @@ questions:
       A team writes: "During a payment-provider outage, checkout should keep working gracefully." Is this a good quality-attribute requirement?
     options:
       - "Good: it names an outage scenario, which is enough for robustness."
-      - "Bad: it names a condition but not the required behavior or metric that would count as success."
+      - "Bad: it names a condition but not the required behavior or success metric."
       - "Bad: robustness requirements should describe normal operation, not failures."
     correct_index: 1
     option_feedback:
@@ -99,7 +99,7 @@ questions:
       A team writes: "Every request in the whole system must complete within 1 second." Is this a good quality-attribute requirement?
     options:
       - "Good: it gives a clear system-wide performance threshold."
-      - "Bad: it is a blanket claim that hides the request types and conditions that matter."
+      - "Bad: a blanket threshold hides the request types that matter."
       - "Bad: it is a scenario without a metric."
     correct_index: 1
     option_feedback:
@@ -152,7 +152,7 @@ questions:
     question: |
       A team writes: "When adding support for a new image format, minimize changes to existing preprocessing components." Is this a good quality-attribute requirement?
     options:
-      - "Usable but softer: it names a change scenario and a direction for the architecture, though a high-risk project may want a sharper boundary."
+      - "Usable but softer: it names a change scenario and a direction, though a high-risk project wants a sharper bound."
       - "Bad: every valid quality-attribute requirement must include a latency, throughput, or uptime number."
       - "Bad: design-time qualities cannot be requirements because users do not observe them directly."
     correct_index: 0

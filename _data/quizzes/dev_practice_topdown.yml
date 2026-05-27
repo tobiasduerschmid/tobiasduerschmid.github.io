@@ -10,8 +10,8 @@ questions:
       A reviewer opens a complex PR and immediately starts reading the diff line by line. Ten minutes later they still do not know why the change exists. What should they do instead?
     options:
       - "Keep tracing; understanding always emerges after enough lines."
-      - "Read the PR description, issue, and tests to form a hypothesis about intent before revisiting the diff."
-      - "Ask the author to rewrite every function before review."
+      - "Read the PR description, issue, and tests to form a hypothesis first."
+      - "Ask the author to rewrite every function before review begins."
       - "Review only files with familiar names and ignore the rest."
     correct_index: 1
     option_feedback:
@@ -120,7 +120,7 @@ questions:
       You are mentoring students who trace every line of every program, even when the structure is familiar. Which practice best helps them grow toward expert comprehension?
     options:
       - "Ban tracing entirely so they are forced to guess."
-      - "Teach beacons, then have students predict purpose first and trace only the lines needed to verify it."
+      - "Teach beacons, then have them predict purpose first and trace only to verify."
       - "Give them only obfuscated code so they cannot rely on names."
       - "Make them memorize design-pattern definitions without reading code."
     correct_index: 1

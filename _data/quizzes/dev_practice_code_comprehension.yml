@@ -9,8 +9,8 @@ questions:
     question: |
       A function implements a simple discount rule, but the code uses five levels of nested conditionals, inconsistent variable names, and several helper calls whose names do not reveal their purpose. Which kind of cognitive load is the team mostly creating, and what should they do?
     options:
-      - "Intrinsic load — the domain itself is inherently hard, so the team should accept the difficulty."
-      - "Extraneous load — the code presentation is making a simple rule harder than necessary, so the team should flatten control flow, improve names, and expose the rule's intent."
+      - "Intrinsic load — the domain itself is inherently hard, so accept the difficulty."
+      - "Extraneous load — the code presentation makes a simple rule harder than necessary."
       - "Germane load — the effort is productive because struggling through confusing code builds durable schemas."
       - "Saturation load — the code has crossed a threshold where no improvement is possible."
     correct_index: 1
@@ -21,7 +21,7 @@ questions:
         Germane load builds useful mental models. Confusing names and tangled control flow usually consume working memory without improving the reader's schema.
       3: |
         Saturation describes how perceived complexity can stop scaling linearly, not a reason to abandon improvement. The team still controls several obvious sources of avoidable load.
-    explanation: "The useful engineering move is to preserve the rule while reducing **extraneous load**. Code comprehension improves when the reader's scarce working memory is spent on the domain, not on deciphering avoidable presentation noise."
+    explanation: "The useful engineering move is to preserve the rule while reducing **extraneous load** — flatten control flow, improve names, expose intent. Comprehension improves when the reader's scarce working memory is spent on the domain, not on deciphering avoidable presentation noise."
 
   - id: 2
     difficulty: intermediate
@@ -31,7 +31,7 @@ questions:
       A developer joins a legacy project with no domain knowledge and no reliable naming conventions. They must fix a localized bug in a small parsing function. Which comprehension strategy is most likely at first?
     options:
       - "Top-down only — they can rely on domain schemas even without domain knowledge."
-      - "Bottom-up — they will probably trace statements, group lines into chunks, and build understanding from the code outward."
+      - "Bottom-up — trace statements, group lines into chunks, build understanding from the code outward."
       - "Architecture recovery — they should run a clustering algorithm before reading the function."
       - "Design-pattern recognition — all comprehension begins by identifying GoF patterns."
     correct_index: 1
@@ -77,7 +77,7 @@ questions:
     question: |
       A system's architecture document describes a clean separation between `presentation`, `domain`, and `data_access`, but the codebase contains a single `UserManager` class that validates forms, builds SQL, and formats UI strings. What is the strongest diagnosis?
     options:
-      - "An architecture-code gap: the intended design and the actual code structure have diverged, so the fix must make intent visible in packages, names, and interfaces."
+      - "An architecture-code gap: the intended design and actual code structure have diverged."
       - "The team has too much architecture; deleting the document will make the code easier to understand."
       - "The code is probably fine because a single class is easier to search."
       - "The only problem is cyclomatic complexity; reducing branch count will restore the architecture."
@@ -89,7 +89,7 @@ questions:
         Searchability is not the same as comprehensibility. A single class that mixes responsibilities may be easy to find and still hard to change safely.
       3: |
         Branch count might be one local symptom, but the stem describes responsibility drift across architectural boundaries.
-    explanation: "The architecture-code gap appears when the intensional architecture (design vocabulary) and extensional code (actual structure) diverge. Repairing it usually requires code structure and task-specific documentation that map high-level decisions to concrete source elements."
+    explanation: "The architecture-code gap appears when the intensional architecture (design vocabulary) and extensional code (actual structure) diverge. Repairing it means making intent visible in packages, names, and interfaces, plus task-specific documentation that maps decisions to source elements."
 
   - id: 5
     difficulty: advanced
@@ -120,7 +120,7 @@ questions:
       You are assigned a 350-line pull request in an unfamiliar area. Which review sequence best applies the chapter's comprehension advice?
     options:
       - "Start at the first changed line and read every file in the order the review tool presents it."
-      - "Read the PR description, issue, and tests first; form a design hypothesis, then drill into the implementation paths that matter."
+      - "Read PR description, issue, and tests first; form a hypothesis, then drill into key paths."
       - "Approve once CI passes because unfamiliar code cannot be reviewed effectively."
       - "Search for the longest file first because textual size is the only reliable measure of difficulty."
     correct_index: 1

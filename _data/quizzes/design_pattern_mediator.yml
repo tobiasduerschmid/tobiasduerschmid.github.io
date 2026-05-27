@@ -29,7 +29,7 @@ questions:
       What is the **core difference** between Observer and Mediator?
     options:
       - "Observer is one-to-many; Mediator is many-to-many"
-      - "Observer distributes reaction logic across observers; Mediator centralizes it"
+      - "Observer distributes reaction logic; Mediator centralizes it"
       - "Observer uses interfaces; Mediator uses abstract classes"
       - "Observer is for UI patterns; Mediator is for backend patterns"
     correct_index: 1
@@ -109,7 +109,7 @@ questions:
       The Mediator pattern converts N-to-N dependencies into N-to-1 dependencies. Why doesn't this always reduce overall system complexity?
     options:
       - "Because N-to-1 is always more complex than N-to-N"
-      - "Because the same coordination logic is displaced into the Mediator, not eliminated"
+      - "Because the coordination logic is displaced into the Mediator, not eliminated"
       - "Because the Mediator introduces new dependencies between colleagues"
       - "Because N-to-1 creates more coupling than N-to-N"
     correct_index: 1

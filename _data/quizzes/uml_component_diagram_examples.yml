@@ -10,7 +10,7 @@ questions:
     options:
       - "Lower — component diagrams show more implementation detail than class diagrams."
       - "The same — both show classes and their relationships."
-      - "Higher — component diagrams show deployable modules and their interfaces, not individual classes."
+      - "Higher — they show deployable modules and their interfaces, not classes."
       - "Component diagrams are only used for hardware, not software."
     correct_index: 2
     option_feedback:
@@ -74,7 +74,7 @@ questions:
     options:
       - "When you need to show the inheritance hierarchy of classes."
       - "When you need to show attribute types and method signatures."
-      - "When you need to show the high-level deployable modules of a system and how they communicate."
+      - "When you need to show deployable modules and how they communicate."
       - "When you need to model the lifecycle states of a single object."
     correct_index: 2
     option_feedback:
@@ -145,7 +145,7 @@ questions:
       <div data-uml-type="component" data-uml-spec="@startuml&#10;component ShoppingCart {&#10;  require &quot;IPayment&quot; as r1&#10;}&#10;component StripeGateway {&#10;  provide &quot;IPayment&quot; as p1&#10;}&#10;r1 --> p1&#10;@enduml"></div>
     options:
       - "One component inherits behavior from the other."
-      - "One component's required interface meets another's matching provided interface."
+      - "A required interface meets a matching provided interface."
       - "Two components share the same database backing store."
       - "A component is deployed to a particular server node."
     correct_index: 1
@@ -167,7 +167,7 @@ questions:
       <div data-uml-type="component" data-uml-spec="@startuml&#10;component ShoppingCart {&#10;  require &quot;IPayment&quot; as r1&#10;}&#10;component StripeGateway {&#10;  provide &quot;IPayment&quot; as p1&#10;}&#10;component PayPalGateway {&#10;  provide &quot;IPayment&quot; as p2&#10;}&#10;r1 --> p1&#10;@enduml"></div>
     options:
       - "Generalization — PayPalGateway inherits from StripeGateway."
-      - "Provided/required interfaces — any component providing `IPayment` can substitute for StripeGateway."
+      - "Provided/required interfaces — any `IPayment` provider can substitute."
       - "Dependency — add a dashed arrow from ShoppingCart to PayPalGateway."
       - "Composition — embed PayPalGateway inside ShoppingCart."
     correct_index: 1

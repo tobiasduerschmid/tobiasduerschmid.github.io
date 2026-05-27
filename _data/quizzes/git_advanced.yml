@@ -67,7 +67,7 @@ questions:
     question: "What is the primary purpose of Git Submodules?"
     options:
       - "To break a single, massive file into smaller, trackable pieces to improve performance."
-      - "To include an external Git repository as a subdirectory of your project while maintaining its independent history."
+      - "To embed an external Git repository as a subdirectory with its own independent history."
       - "To securely store passwords, API keys, and private credentials outside of the main repository."
       - "To automatically squash a long sequence of commits into a single bugfix."
     correct_index: 1
@@ -136,7 +136,7 @@ questions:
     options:
       - "On a branch, it contains an exact commit hash; in detached HEAD, it contains a symbolic reference to a branch."
       - "Both states contain the same exact commit hash, but the detached HEAD state also includes a warning string."
-      - "On a branch, it contains a symbolic reference (e.g., `ref: refs/heads/main`); in detached HEAD, it contains a raw commit hash."
+      - "On a branch: a symbolic ref (e.g., `ref: refs/heads/main`); in detached HEAD: a raw commit hash."
       - "Both states contain `ref: refs/heads/main`, but detached HEAD additionally points to the staging area index."
     correct_index: 2
     option_feedback:

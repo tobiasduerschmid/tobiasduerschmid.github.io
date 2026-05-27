@@ -344,7 +344,7 @@ steps:
           type: single
           options:
             - "Any input passed via keyword argument instead of positional"
-            - "A value the SUT receives from a collaborator (rather than from the caller's arguments)"
+            - "A value the SUT gets from a collaborator instead of its arguments"
             - "An argument that's transformed before being used (e.g., `str.lower()`)"
             - "A global variable defined in another module"
           correct_index: 1
@@ -804,7 +804,7 @@ steps:
           type: single
           options:
             - "A real implementation that's been simplified for performance"
-            - "An object that *answers questions with canned values* — feeding controlled indirect inputs to the SUT"
+            - "An object that returns canned values for the SUT's indirect inputs"
             - "An object that records every method call so the test can verify them later"
             - "An object that throws exceptions on every call to detect missing error handling"
           correct_index: 1
@@ -1379,20 +1379,20 @@ steps:
           type: single
           options:
             - "`assert spy.calls == [(\"u1\", 100)]`"
-            - "`assert spy.calls == [(\"u1\", 100, \"2026-04-28\", \"req-abc\")]`"
+            - "`assert spy.calls == [(\"u1\", 100, \"2026-04-28\")]`"
             - "`assert (\"u1\", 100) in spy.calls`"
             - "`assert spy.calls[0] == (\"u1\", 100)`"
           correct_index: 1
           option_feedback:
             0: "This pins exactly the (user_id, gold) the spec mandates. If the SUT later changes how it formats internal log strings, this test still passes — because it doesn't reference internal-state details. **Goldilocks**, not brittle."
-            1: "Right. This pins a 4-tuple including a timestamp and a request-ID — neither of which is in the spec for `credit`. If the SUT is later refactored to drop the request-ID or change the timestamp format (without changing the user/gold contract), this test breaks for the wrong reason. **Over-specified, brittle.**"
+            1: "Right. This pins a 3-tuple including a timestamp — which isn't in the spec for `credit`. If the SUT is later refactored to change the timestamp format (without changing the user/gold contract), this test breaks for the wrong reason. **Over-specified, brittle.**"
             2: "`in spy.calls` is *under-specified* in the other direction (extra calls would still pass), but it isn't brittle — it tolerates harmless changes. Brittle assertions break when the underlying contract is preserved; under-specified assertions miss bugs the contract was supposed to catch. Different problem."
             3: "Indexing `[0]` is just a way to access the first call. It pins what we want (user_id, gold) and ignores everything else. Not brittle. (Slightly less idiomatic than full-list equality, but not the over-specified case.)"
           explanation: |
-            Brittle = pins details outside the spec. The 4-tuple includes a
-            timestamp and a request-ID that aren't part of the `credit`
-            contract — they're internals. A pure refactor that drops the
-            request-ID would break this test even though `credit(user_id, gold)`
+            Brittle = pins details outside the spec. The 3-tuple includes a
+            timestamp that isn't part of the `credit` contract — it's an
+            internal. A pure refactor that changed the timestamp format
+            would break this test even though `credit(user_id, gold)`
             is still being called correctly. (Same family as the
             internal-coupling brittleness from Testing Foundations Step 4.)
 
@@ -1852,7 +1852,7 @@ steps:
           type: single
           options:
             - "Mock corrected the typo internally and called the right assert method"
-            - "Mock auto-created `assrt_called_once_with` as a new child mock and called it — no assertion ran"
+            - "Mock auto-created a child mock and called *it* — no assertion ran"
             - "Mock raised an `AttributeError` and pytest caught it as a passing test"
             - "Python's interpreter detected the typo and warned via stderr"
           correct_index: 1
@@ -1894,7 +1894,7 @@ steps:
           type: single
           options:
             - "It makes monkeypatch faster than `unittest.mock`"
-            - "Without it, a patched attribute would leak into every subsequent test in the suite"
+            - "Without it, a patched value would leak into later tests"
             - "It's a Python 3.11+ feature for memory management"
             - "It's only needed when you're patching `__builtins__`"
           correct_index: 1
@@ -2372,7 +2372,7 @@ steps:
           type: single
           options:
             - "DI is always preferred — `patch()` is only for legacy code you can't modify"
-            - "DI when the SUT takes the collaborator as a parameter; `patch()` when it imports a module-level name"
+            - "DI when the collaborator is a parameter; `patch()` for module-level imports"
             - "They're interchangeable — pick based on how much typing each one takes"
             - "`patch()` is always preferred — DI requires more boilerplate"
           correct_index: 1
@@ -2396,7 +2396,7 @@ steps:
           type: single
           options:
             - "Always use `autospec=True`"
-            - "Run a static type checker (mypy / pyright) or linter — paired with code review"
+            - "Run a static type checker (mypy / pyright) or linter"
             - "Memorize the spelling of every `assert_*` method"
             - "Use `Mock(spec_set=True)` — it makes Mock immutable"
           correct_index: 1
@@ -2969,7 +2969,7 @@ steps:
           type: single
           options:
             - "Refactor — you start with real collaborators and double them later"
-            - "Red — choosing the double is part of test design, which happens when you write the failing test"
+            - "Red — double choice is test design, decided as you write the test"
             - "Green — you add doubles when the test is red and you need to make it pass"
             - "It doesn't matter which phase — doubles are an implementation detail"
           correct_index: 1
@@ -3012,7 +3012,7 @@ steps:
           type: single
           options:
             - "It runs the patched function in a separate process for safety"
-            - "It enforces the real callable's signature on the Mock, catching signature drift immediately"
+            - "It enforces the real callable's signature on the Mock, catching drift"
             - "It catches typos in `assert_*` method names reliably"
             - "It's required by the Mock library — without it, patches don't apply"
           correct_index: 1

@@ -161,7 +161,7 @@ steps:
         - question: "What does `int main(void)` mean in C, and how does it differ from `int main()`?"
           options:
             - "They are identical in both C and C++"
-            - "`main(void)` is zero args; `main()` is C's old unspecified form"
+            - "`(void)` is zero args; `()` is C's old unspecified form"
             - "`main(void)` returns void; `main()` returns int"
             - "`main()` is invalid C syntax"
           correct_index: 1
@@ -879,7 +879,7 @@ steps:
         - question: "In C, should you cast the return value of `malloc`? E.g., `int *p = (int*)malloc(...);`"
           options:
             - "Yes — C requires the cast just like C++"
-            - "No — `void*` converts implicitly, and the cast can mask bugs"
+            - "No — `void*` converts implicitly; cast can mask bugs"
             - "Yes — otherwise you get a compile error"
             - "It doesn't matter either way"
           correct_index: 1
@@ -1477,7 +1477,7 @@ steps:
         - question: "Why do C programmers pass struct pointers to functions instead of passing structs by value?"
           options:
             - "C doesn't allow passing structs by value"
-            - "By-value copies the struct; the callee can't modify the caller's"
+            - "By-value copies the struct; the callee can't modify it"
             - "Pointers are faster because they use less CPU"
             - "Structs cannot be returned from functions"
           correct_index: 1
@@ -1534,7 +1534,7 @@ steps:
           options:
             - "p.translate(1, 1) — C supports method-call syntax on structs since C99"
             - "translate(p, 1, 1) — pass the struct by value, modify the copy"
-            - "point_translate(&p, 1, 1) — module-prefixed function taking a `Point *` first argument"
+            - "point_translate(&p, 1, 1) — module-prefixed fn with `Point *` first arg"
             - "p->translate(1, 1) — use the arrow operator to dispatch"
           correct_index: 2
           option_feedback:
@@ -2139,7 +2139,7 @@ steps:
         - question: "Why does `qsort` use `void*` parameters in its comparison function?"
           options:
             - "void* is faster than typed pointers"
-            - "C has no generics — `void*` is how `qsort` works with any type"
+            - "C has no generics — `void*` is `qsort`'s any-type slot"
             - "void* automatically detects the element type"
             - "void* prevents buffer overflows"
           correct_index: 1
@@ -2383,7 +2383,7 @@ steps:
         - question: "What happens to an array when you pass it to a function in C?"
           options:
             - "The entire array is copied onto the stack (pass-by-value)"
-            - "The array decays into a pointer to its first element — size information is lost"
+            - "The array decays into a pointer to its first element"
             - "The function receives a reference to the array (like C++)"
             - "The compiler inlines the array into the function"
           correct_index: 1
@@ -2733,7 +2733,7 @@ steps:
         - question: "How is `fprintf(fp, \"%s\\n\", word)` related to `printf(\"%s\\n\", word)`?"
           options:
             - "They are completely different functions with different syntax"
-            - "fprintf writes to a file (FILE*); printf writes to stdout. Otherwise identical format strings."
+            - "fprintf writes to a file; printf writes to stdout — same format strings"
             - "fprintf is safer because it does bounds checking"
             - "printf is a macro that calls fprintf(stdout, ...) internally"
           correct_index: 1
@@ -3058,7 +3058,7 @@ steps:
         - question: "Why must you save `curr->next` BEFORE calling `free(curr)` in `list_free`?"
           options:
             - "free() modifies the next pointer to NULL"
-            - "After free(curr), reading `curr->next` is a use-after-free (undefined behavior)"
+            - "Reading `curr->next` after free(curr) is undefined behavior"
             - "free() returns the next pointer automatically"
             - "It's a style convention — either order works"
           correct_index: 1
@@ -3071,7 +3071,7 @@ steps:
         - question: "In `typedef struct Node { ... struct Node *next; } Node;`, why do we need both the struct tag `Node` and the typedef name `Node`?"
           options:
             - "They serve the same purpose — either one would work"
-            - "Self-references need the tag because the typedef isn't bound until the closing `}`"
+            - "Self-references need the tag; the typedef isn't bound until `}`"
             - "The typedef must match the struct tag name"
             - "The struct tag is for the compiler, the typedef is for the linker"
           correct_index: 1

@@ -49,7 +49,7 @@ questions:
       The State and Strategy patterns have identical UML class diagrams. What is the **key behavioral difference** between them?
     options:
       - "State uses abstract classes; Strategy uses interfaces"
-      - "State transitions implementations internally; Strategy is selected by the client"
+      - "State transitions internally; Strategy is chosen by the client"
       - "Strategy supports more concrete implementations than State"
       - "State is only for GUI applications; Strategy is general-purpose"
     correct_index: 1
@@ -89,7 +89,7 @@ questions:
       State objects in a `GumballMachine` carry no instance data — they only contain behavior methods. A developer proposes making all state objects Singletons to save memory. What is the **key risk** of this approach?
     options:
       - "Singletons are always an anti-pattern and should never be used"
-      - "It removes the ability to add per-context data while continuing to share one state instance"
+      - "Shared state objects cannot hold any per-context data later"
       - "It makes state transitions slower due to synchronization overhead"
       - "The Null Object pattern cannot be combined with Singleton"
     correct_index: 1

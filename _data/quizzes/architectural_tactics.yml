@@ -48,7 +48,7 @@ questions:
     question: |
       Each worker sends an "alive" message to a monitor every 5 seconds. If the monitor stops receiving messages from one worker, it replaces that worker. Which tactic is this, and what is one cost?
     options:
-      - "Heartbeat; every monitored component needs heartbeat logic and the messages consume resources."
+      - "Heartbeat; each worker must implement liveness logic and the messages cost resources."
       - "Ping-echo; the watchdog does all the work and workers stay passive."
       - "Cold spare; the monitor warms up a standby worker between liveness messages."
       - "Active redundancy; all workers must be exact replicas."
@@ -134,7 +134,7 @@ questions:
       A team says, "We should add caching." What is the best architectural response?
     options:
       - "Approve it immediately, because caching is always a performance win."
-      - "Ask for the quality scenario before deciding: hit rate, latency target, staleness tolerance."
+      - "Ask for the scenario first: hit rate, latency target, staleness tolerance."
       - "Reject it immediately, because caching always violates correctness."
       - "Convert the system to pipe-and-filter first."
     correct_index: 1

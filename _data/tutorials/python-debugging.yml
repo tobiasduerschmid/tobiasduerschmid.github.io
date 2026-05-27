@@ -500,7 +500,7 @@ steps:
           type: single
           options:
             - "Each call gets its own fresh empty list — the `↔` badge is reporting incorrect state"
-            - "Default argument values are evaluated once at definition time, so every default-using call shares one list"
+            - "The default `[]` is evaluated once at definition, so calls share one list"
             - "The interpreter caches all empty lists as the same object for memory efficiency"
             - "Python's parameter passing is by-reference, so mutations leak across calls"
           correct_index: 1
@@ -1481,7 +1481,7 @@ steps:
           type: single
           options:
             - "Set a normal breakpoint inside the loop and click Continue 30 times"
-            - "Set a conditional breakpoint with a predicate that's true ONLY for the suspicious iteration"
+            - "Use a conditional breakpoint that fires only on the bad iteration"
             - "Add `print(...)` to every line of the function and read the output"
             - "Comment out lines until the loop produces the right answer"
           correct_index: 1
@@ -1626,7 +1626,7 @@ steps:
           type: single
           options:
             - "Step Over forward from the start until something looks wrong"
-            - "Anchor on the wrong final state, then scrub backward to the first matching state"
+            - "Anchor on the wrong final state, then scrub backward to the divergence"
             - "Set a conditional breakpoint at the start of the loop"
             - "Hover the variable in the editor"
           correct_index: 1
@@ -2158,9 +2158,9 @@ steps:
             Which of these is the **correct** fix to enforce FIFO admission policy?
           type: single
           options:
-            - "Sort `course.waitlist` alphabetically before calling `pop()`"
-            - "Special-case Jules Kim and Mina Patel in `allocate_next`"
-            - "Change `course.waitlist.pop()` to `course.waitlist.pop(0)` in `allocate_next`"
+            - "Sort `course.waitlist` alphabetically before each `pop()` call"
+            - "Special-case Jules Kim and Mina Patel inside `allocate_next`"
+            - "Change `pop()` to `pop(0)` in `allocate_next`"
             - "Reorder `sample_events()` so Jules Kim joins last"
           correct_index: 2
           option_feedback:
@@ -2176,7 +2176,7 @@ steps:
           options:
             - "Step from event 1, watching state after each event, until something looks wrong"
             - "Set a breakpoint on the failing test's assertion and inspect the final state"
-            - "Run to completion, then drag the History scrubber backward to find the first event where state diverged from the spec"
+            - "Run to completion, then scrub backward to find the first diverging event"
             - "Add `print(state)` after every event and read the output"
           correct_index: 2
           option_feedback:
@@ -2305,7 +2305,7 @@ steps:
           type: single
           options:
             - "Set a normal breakpoint inside the loop and step through, watching the running total"
-            - "Set a conditional breakpoint that pauses only when the running total exceeds the maximum plausible value (or whatever invariant is broken)"
+            - "Use a conditional breakpoint that pauses when the running invariant is broken"
             - "Add print statements after every line in the function and read the 50,000 lines of output"
             - "Run with `pdb.set_trace()` before the loop and step through it manually"
           correct_index: 1
@@ -2400,10 +2400,10 @@ steps:
             A test that previously passed now fails after a change you just made. The previous test still passes. What does this tell you?
           type: single
           options:
-            - "You introduced a regression. The bug is in the change you just made; revert and re-apply more carefully"
-            - "The test was wrong all along; update its expected value"
+            - "Regression — revert your change and re-apply it more carefully"
+            - "The test was wrong all along; update its expected value to match"
             - "You should add `time.sleep(1)` to make the test more deterministic"
-            - "You should ignore this — you're focused on the previously-failing test"
+            - "Ignore it — you're focused on a different previously-failing test"
           correct_index: 0
           option_feedback:
             1: "If the test previously passed and the only change is yours, the test isn't suddenly wrong — the test caught a real regression. Updating the expected value is a workaround that hides the regression."
@@ -2704,7 +2704,7 @@ steps:
           type: single
           options:
             - "Case 1 (Maze Pathfinder, boundary bug in `_dfs`)"
-            - "Case 2 (Ledger Reconciliation, hidden-whitespace in CSV import)"
+            - "Case 2 (Ledger Reconciliation, hidden whitespace)"
             - "Case 3 (Course Waitlist, FIFO vs LIFO ordering)"
             - "None of them — this is a totally new bug family"
           correct_index: 1

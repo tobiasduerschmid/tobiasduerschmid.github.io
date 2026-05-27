@@ -49,7 +49,7 @@ questions:
       A team builds a pipeline `parser | sort | aggregate | format`. They benchmark and find that despite each filter running in its own thread, the downstream stages cannot start work until `sort` finishes — the system runs in lockstep, not in parallel. What architectural property of `sort` causes this?
     options:
       - "`sort` is bound by thread-context-switching overhead, which dominates the runtime at this scale."
-      - "`sort` must consume its entire input before it can produce the first output element (the smallest element could appear anywhere in the input), so its outputs cannot stream incrementally."
+      - "`sort` must consume all input before producing any output, so it cannot stream incrementally."
       - "`sort` allocates a single shared buffer that all downstream filters must read from before they can proceed."
       - "`sort` does not implement the threading interface required by the framework, so it runs single-threaded."
     correct_index: 1
@@ -68,7 +68,7 @@ questions:
     question: |
       Which quality attributes does pipe-and-filter **promote**? Select all that apply.
     options:
-      - "Modifiability and reconfigurability — filters can be added, removed, or recombined without changing existing filters."
+      - "Modifiability — filters can be added, removed, or recombined without touching others."
       - "Reusability — a well-designed single-purpose filter can be lifted into many different pipelines."
       - "Interactivity — pipelines excel at rich, cyclic user-feedback loops."
       - "Concurrency — independent filters can execute in parallel, naturally synchronized by pipe buffering."
@@ -95,7 +95,7 @@ questions:
     options:
       - "Push — the data source initiates and pushes through passive filters; simplest to implement."
       - "Pull — the sink initiates and pulls from passive filters; gives the consumer maximum control."
-      - "Active — every filter runs in its own thread, pulling from its input pipe and pushing to its output pipe in a continuous loop; saturates multiple cores."
+      - "Active — each filter runs in its own thread in a continuous loop; saturates multiple cores."
       - "Any of the three — execution model has no impact on throughput."
     correct_index: 2
     option_feedback:
@@ -114,7 +114,7 @@ questions:
       A team builds a transformation pipeline where every filter accepts and produces a complex XML document. Profiling shows 70% of CPU time is spent in XML parse and serialize. What design choice are they paying for, and what could they do?
     options:
       - "Threading overhead — switch to a single-threaded push pipeline to eliminate it."
-      - "The common-data-format tax — fuse filters or use a compact binary format to amortize parse/serialize."
+      - "The common-data-format tax — fuse filters or switch to a compact binary format."
       - "Layer bridging — restructure to a strict pipeline with no intermediate stages."
       - "Wide coupling — switch from XML to JSON, which is more loosely coupled."
     correct_index: 1
@@ -134,7 +134,7 @@ questions:
       Your batch ETL pipeline runs hourly. Filter 7 (out of 12) crashes mid-stream after 40 minutes of processing. The traditional pipe-and-filter style offers no built-in recovery. Which fix preserves the style's benefits best?
     options:
       - "Convert the pipeline into a single monolithic program so all state lives in one process and can be recovered."
-      - "Introduce a broadcasting filter (Lattanze) that asynchronously broadcasts errors via an Observer/event mechanism to an external monitor — a hybrid event-driven/data-flow architecture."
+      - "Add a broadcasting filter (Lattanze) that signals errors via Observer/event to an external monitor."
       - "Remove filter 7 and inline its logic into filter 6 to eliminate the crash point."
       - "Use special marker values in the pipe to mark error boundaries and let filters re-synchronize themselves."
     correct_index: 1
@@ -154,7 +154,7 @@ questions:
       A startup is building a real-time collaborative whiteboard. Users see each other's strokes instantly. A senior engineer suggests pipe-and-filter for the rendering pipeline. Push back — why is this a poor style fit?
     options:
       - "Pipe-and-filter is too slow to render strokes in real time."
-      - "Pipe-and-filter is transformational; whiteboards need cyclic event flows, not a linear pipeline."
+      - "Pipe-and-filter is transformational; whiteboards need cyclic event flows."
       - "Pipe-and-filter cannot run in a browser."
       - "Pipe-and-filter requires CPU-bound filters, but rendering is GPU-bound."
     correct_index: 1
@@ -194,7 +194,7 @@ questions:
       Your team uses Apache Spark for batch analytics: `read | filter | join | aggregate | write`. A junior dev says "Spark is publish-subscribe because data flows through stages." Correct them.
     options:
       - "They're right — distributed batch processing is always pub-sub."
-      - "Spark batch is pipe-and-filter: data flows through independent stages, with no event bus or subscribers."
+      - "Spark batch is pipe-and-filter: independent stages, no event bus."
       - "Spark is layered architecture because the stages are stacked."
       - "Spark is client-server because workers request tasks from the driver."
     correct_index: 1
@@ -214,7 +214,7 @@ questions:
       A student says, "A pipe is a collection of filters that run together." What is the correct clarification?
     options:
       - "Correct: a pipe is the whole pipeline from source to sink."
-      - "A pipe is the connector carrying an ordered data stream between two filters."
+      - "A pipe is the connector carrying an ordered stream between filters."
       - "A pipe is any filter that has no input."
       - "A pipe is a publish-subscribe topic with a different name."
     correct_index: 1

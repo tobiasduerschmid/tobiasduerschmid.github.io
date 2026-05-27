@@ -27,10 +27,10 @@ questions:
     difficulty: advanced
     question: "A developer writes a regex to parse a log file: `^.*error.*$`. They notice that while it works, it runs much slower than expected on very long log lines. What underlying behavior of the `.*` token is causing this inefficiency?" 
     options: 
-      - "The engine evaluates the string character-by-character from the end of the line backwards." 
-      - "The `.*` is greedy; it first swallows the entire line, then forces the engine to backtrack character by character until it finds 'error'." 
-      - "The `.*` is lazy; it pauses execution at every single character to check for the word 'error'." 
-      - "The `.*` command forces the regex engine to cache the entire file into memory before evaluating the line." 
+      - "The engine evaluates the string character-by-character from the end of the line backwards."
+      - "`.*` is greedy: it swallows the whole line, then backtracks character by character to find 'error'."
+      - "The `.*` is lazy; it pauses execution at every single character to check for the word 'error'."
+      - "The `.*` command forces the regex engine to cache the entire file into memory before evaluating the line."
     correct_index: 1 
     option_feedback:
       0: |
@@ -71,7 +71,7 @@ questions:
     options:
       - "Only by its positional index (e.g., group 2), because named groups are just syntactic sugar that the engine discards."
       - "Only by its name (e.g., `match.group('month')`), because named groups replace positional indexing."
-      - "By either its name (e.g., `match.group('month')`) or its positional index (e.g., `match.group(2)`), because named groups also receive a numeric index."
+      - "By name (`match.group('month')`) or position (`match.group(2)`) — named groups also keep a numeric index."
       - "By referencing the original regex string at runtime, since named groups are not stored in the match object."
     correct_index: 2
     option_feedback:
@@ -92,7 +92,7 @@ questions:
     options:
       - "Use a lookahead instead of parentheses."
       - "Remove the parentheses and apply the `?` to the whole pattern."
-      - "Use a named group `(?<areaCode>...)` so you can access it via `match.groups.areaCode`."
+      - "Use a named group `(?<areaCode>...)` to access it via `match.groups.areaCode`."
       - "Escape the parentheses `\\( \\)` to tell the engine to ignore them."
     correct_index: 2
     option_feedback:
@@ -111,10 +111,10 @@ questions:
     difficulty: intermediate
     question: "You write a regex to ensure a username is strictly alphanumeric: `[a-zA-Z0-9]+`. However, a user successfully submits the username `admin!@#`. Why did this happen?" 
     options: 
-      - "You used a character class `[]` instead of a group `()`." 
-      - "The `+` quantifier allows special characters if they follow valid characters." 
-      - "You failed to use start `^` and end `$` anchors, allowing the regex to simply match the 'admin' portion and ignore the rest." 
-      - "The RegEx engine defaults to a case-insensitive match, which alters how symbols are processed." 
+      - "You used a character class `[]` instead of a group `()`."
+      - "The `+` quantifier allows special characters if they follow valid characters."
+      - "No `^` and `$` anchors — the regex matches the `admin` portion and ignores the rest."
+      - "The RegEx engine defaults to a case-insensitive match, which alters how symbols are processed."
     correct_index: 2 
     option_feedback:
       0: |

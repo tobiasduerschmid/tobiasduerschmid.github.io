@@ -8,7 +8,7 @@ questions:
     options:
       - "Both clients and servers can initiate connections to each other."
       - "The server proactively pushes updates to clients without being asked."
-      - "In the basic request-response model, the client initiates contact and the server listens/responds."
+      - "In a basic request-response, the client initiates contact and the server responds."
       - "Only one client can be connected to a server at any given time."
     correct_index: 2
     option_feedback:
@@ -48,7 +48,7 @@ questions:
     question: "What is the difference between throughput and latency?"
     options:
       - "They are the same thing — both measure how fast a system responds."
-      - "Throughput measures the volume of requests processed per time period; latency measures the time for a single request to complete."
+      - "Throughput is volume per unit time; latency is how long one request takes to complete."
       - "Latency measures how many servers are active; throughput measures how many clients are connected."
       - "Throughput is only relevant for UDP connections; latency is only relevant for TCP connections."
     correct_index: 1
@@ -131,7 +131,7 @@ questions:
     question: "HTTP is described as a 'stateless' protocol. What does this mean?"
     options:
       - "The server discards all data from memory after each request."
-      - "Each request is independent — the server retains no memory of previous requests from the same client."
+      - "Each request is independent — the server keeps no memory of prior requests."
       - "HTTP connections are never encrypted."
       - "HTTP can only transfer plain text, not binary content like images."
     correct_index: 1

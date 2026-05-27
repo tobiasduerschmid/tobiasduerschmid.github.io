@@ -35,7 +35,7 @@ questions:
       Explain the output using the Event Loop model.
     options:
       - "`setTimeout` has a minimum delay of 1ms, so B is slightly delayed"
-      - "The timer callback waits in the Task Queue until the Call Stack empties — `A` and `C` run first."
+      - "The timer callback waits in the Task Queue until the Call Stack empties."
       - "`console.log` is asynchronous in Node.js, so the order is random"
       - "Arrow functions execute after regular functions by design"
     correct_index: 1
@@ -89,7 +89,7 @@ questions:
       When should you prefer B over A?
     options:
       - "Always — parallel is always better than sequential"
-      - "When the two operations are independent; B takes `max(A, B)`, A takes `A + B`."
+      - "When the two operations are independent of each other."
       - "Only when the server supports HTTP/2 multiplexing"
       - "Never — `Promise.all` is harder to debug and should be avoided"
     correct_index: 1
@@ -159,7 +159,7 @@ questions:
       ```
       They expect "All done!" to print after all items are processed. What is the bug?
     options:
-      - "`.forEach()` ignores the returned promises — use `for...of` or `Promise.all(items.map(...))`."
+      - "`.forEach()` ignores the returned promises and returns immediately."
       - "The `async` keyword is not needed inside `.forEach()`"
       - "`processItem` must return a string, not a Promise"
       - "There is no bug — `.forEach()` correctly awaits each callback"
@@ -260,7 +260,7 @@ questions:
       A Discord bot fetches a user's message count from an API. The API returns `"42"` (a string). The bot checks `if (count == 42)` to award a badge. What are ALL the problems?
     options:
       - "Only one problem: `==` should be `===`"
-      - "`==` coerces the string and hides the type mismatch; the bug surfaces once the threshold changes."
+      - "`==` coerces the string and hides a type mismatch that breaks at other thresholds."
       - "No problems — `==` correctly handles string-to-number comparison"
       - "The only problem is that the API should return a number, not a string"
     correct_index: 1

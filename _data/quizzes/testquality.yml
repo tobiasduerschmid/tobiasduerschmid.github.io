@@ -29,7 +29,7 @@ questions:
       You inherit a test that fails on CI roughly 1 run in 10, with the message `AssertionError: expected [3, 1, 2], got [1, 2, 3]`. The system under test is a function that returns the keys of a `dict` built from a `set`. What's going on, and what's the right fix?
     options:
       - "The function is buggy — Python `dict` ordering is deterministic in 3.7+, so any non-deterministic key order indicates the implementation is wrong."
-      - "The test's oracle is wrong — it asserts a specific ordering that the function doesn't promise. Fix the assertion to compare as a *set* (or sort both sides) so it tests the actual contract."
+      - "The test's oracle is wrong — it asserts an ordering the function doesn't promise. Compare as a *set* (or sort both sides) so it tests the actual contract."
       - "Add `@pytest.mark.flaky(reruns=3)` so the rerun masks the failure — order-sensitive tests are inherently flaky and reruns are the standard mitigation."
       - "Move the test to the integration suite — flakiness from data-structure ordering is unavoidable for unit tests touching dictionaries, and integration is more tolerant."
     correct_index: 1
@@ -89,7 +89,7 @@ questions:
       A team's CI dashboard shows: coverage steady at 88%, mutation score steady at 75%, flake rate climbing from 1% to 6% over a quarter, and a 25% increase in escaped bugs. Which interpretations are best supported? (Select all that apply.)
     options:
       - "Trust in the suite is eroding — the climbing flake rate predicts engineers will start ignoring red builds and that behavior amplifies the escaped-bug trend."
-      - "Test quality is regressing in a way coverage alone wouldn't detect — the static mutation score plus rising escapes is consistent with new tests that execute code without strengthening oracles."
+      - "Test quality is regressing in a way coverage alone misses — flat mutation score plus rising escapes fits new tests that execute code without strengthening oracles."
       - "The escaped-bug increase proves the production code is getting buggier; the test signals are noise and the right response is to staff up production code review."
       - "Coverage should be pushed to 95%+ to catch the escaping bugs — the dashboard's most actionable signal is the coverage line, not the others."
     correct_indices: [0, 1]

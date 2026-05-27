@@ -9,7 +9,7 @@ questions:
       A mobile app sends a JSON payment request to a payment gateway. The gateway parses it without errors, returns a 200 OK, but the customer is charged $1 instead of $100. The app sent `{"amount": 100, "currency": "USD"}`; the gateway expected `amount` to be in **cents**. Which kind of interoperability failure is this?
     options:
       - "Syntactic interoperability failure — the JSON did not parse correctly."
-      - "Semantic interoperability failure — both sides agreed on the structure but disagreed on the meaning of `amount`."
+      - "Semantic interoperability failure — both sides disagreed on the meaning of `amount`."
       - "Transport-layer failure — the network corrupted the request data in flight."
       - "Authentication failure — the gateway treated the call as a different user."
     correct_index: 1
@@ -29,7 +29,7 @@ questions:
       A health-system architect must integrate three hospitals' patient-record systems. They write the requirement: "The systems should be interoperable." Why is this insufficient, and what's a properly specified requirement?
     options:
       - "It is fine as written — every engineer knows what 'interoperable' means in context."
-      - "It needs a scenario and a metric — e.g., \"≥99.5% of HL7 FHIR R4 fields are received and interpreted identically.\""
+      - "It needs a scenario and a measurable threshold (e.g., '≥99.5% of HL7 FHIR R4 fields')."
       - "Add a deadline — e.g., 'systems should be interoperable by Q3 of next year.'"
       - "Specify a technology — e.g., 'systems should be interoperable via REST or GraphQL.'"
     correct_index: 1
@@ -134,7 +134,7 @@ questions:
       Your team is integrating with a partner's API. The partner's spec says: "Returns a list of `Order` objects." Your team's QA finds three real interop failures *despite* the JSON parsing successfully every time. Which interop failure mode is most likely the root cause?
     options:
       - "Network packet loss randomly corrupting data between the two systems."
-      - "Semantic ambiguity — both sides agree on `Order` as a name but not on tax inclusion, lifecycle, or what counts."
+      - "Semantic ambiguity — `Order` carries different assumptions on each side."
       - "TLS handshake failure preventing the request from completing successfully."
       - "The partner's server is implemented in a different programming language than yours."
     correct_index: 1
@@ -154,7 +154,7 @@ questions:
       An e-commerce platform allows the user to *use existing services* — third-party payment processing, email delivery, address validation. The CTO calls this "interoperability strategy". What is the underlying business motivation?
     options:
       - "Reduce vendor lock-in by spreading dependencies across many providers."
-      - "Leverage specialized, mature services instead of building non-differentiating capabilities in-house."
+      - "Leverage specialized providers instead of building non-differentiating capabilities."
       - "Make the system harder for competitors to clone."
       - "Comply with PCI-DSS by outsourcing all sensitive operations to third parties."
     correct_index: 1
@@ -174,7 +174,7 @@ questions:
       A medical records platform wants to demonstrate strong interoperability with hospital systems. They publish a 500-page specification with 200 optional fields and 40 custom data types. Adoption stalls — only 3 hospitals integrate in the first year. Which interop principle did they violate?
     options:
       - "Interoperability requires maximum variability — they should add more optional fields."
-      - "Implementation effort is a primary driver of adoption — too complex an interface, and integrators skip it."
+      - "Implementation effort drives adoption — too complex, and integrators skip it."
       - "Hospitals do not need interoperability — they prefer isolated systems."
       - "Interoperability standards must always be 500+ pages to be taken seriously."
     correct_index: 1

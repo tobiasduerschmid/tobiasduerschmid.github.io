@@ -46,7 +46,7 @@ questions:
     question: |
       A banking DBMS has the schema-level constraint `CHECK (balance >= 0)`. A transfer transaction tries to commit a state in which an account's balance would be \\$-200. The DBMS rolls it back. **Which ACID property is the DBMS enforcing?**
     options:
-      - "Consistency (ACID-C) — committed transactions must not violate declared constraints."
+      - "Consistency (ACID-C) — committed transactions preserve declared constraints."
       - "Consistency (CAP-C) — every read returns the latest written value."
       - "Availability — every request must receive a response."
     correct_index: 0
@@ -66,7 +66,7 @@ questions:
       A teammate says: *"Our database is strongly consistent because we use SQL and SQL is ACID."* In the context of a distributed, multi-replica deployment, **what is wrong with this claim?**
     options:
       - "Nothing — ACID guarantees the same thing as CAP-Consistency."
-      - "ACID-C is constraint preservation; CAP-C is replicas agreeing on the latest write."
+      - "ACID-C is constraint preservation; CAP-C is replica freshness."
       - "SQL systems are never ACID — that is a NoSQL property."
     correct_index: 1
     option_feedback:
@@ -86,7 +86,7 @@ questions:
     options:
       - "Atomicity — the commit should be all-or-nothing."
       - "Isolation — the commit should be serializable against other transactions."
-      - "Durability — an acknowledged commit must survive subsequent crashes, typically via a write-ahead log."
+      - "Durability — an acknowledged commit must survive later crashes."
     correct_index: 2
     option_feedback:
       0: |
@@ -104,7 +104,7 @@ questions:
       You are designing the database for a payment system that processes credit-card transactions. The requirement is: **we must never double-charge a customer, even if that means refusing to serve requests during a network partition.** In CAP terms, you are choosing:
     options:
       - "AP — keep serving, accept occasional stale reads."
-      - "CP — sacrifice availability during a partition to guarantee correctness."
+      - "CP — sacrifice partition-time availability for correctness."
       - "CA — have both, and let partition tolerance go."
     correct_index: 1
     option_feedback:
@@ -161,7 +161,7 @@ questions:
       The popular phrasing of CAP — *"pick two out of three"* — is memorable but imprecise. **Which statement better captures what the theorem actually says?**
     options:
       - "A distributed database can never have all three simultaneously, even when the network is healthy."
-      - "During a network partition, the system must sacrifice either Consistency or Availability. When the network is healthy, it can provide both."
+      - "During a partition, the system must sacrifice Consistency or Availability; healthy networks can offer both."
       - "Every distributed system must pick exactly two of C, A, and P to support and permanently drop the third."
     correct_index: 1
     option_feedback:
@@ -181,7 +181,7 @@ questions:
     options:
       - "Relational (ACID RDBMS) — the ACID guarantees are essential for any user-facing system."
       - "Graph — because social data is naturally graph-shaped, graph databases are always the best choice."
-      - "Wide-column or document NoSQL — flexible schemas, horizontal scale, and eventual consistency match the write volume and tolerance for staleness."
+      - "Wide-column or document NoSQL — flexible schemas, horizontal scale, eventual consistency."
     correct_index: 2
     option_feedback:
       0: |
@@ -229,7 +229,7 @@ questions:
       - "Consistency"
       - "Isolation"
       - "Durability"
-      - "No ACID property is violated"
+      - "No ACID violation"
     correct_index: 4
     option_feedback:
       0: |
@@ -254,7 +254,7 @@ questions:
       Consider the query *"For each course, list the course ID and the number of students enrolled."* Which sequence of relational-algebra operations implements it?
     options:
       - "**Selection** on `Enrollment`, then **Projection** of `course_id` and `student_id`."
-      - "**Join** `Course` with `Enrollment` on `course_id`, then **Group-By** `course_id` with aggregate `COUNT(student_id)`."
+      - "**Join** `Course` and `Enrollment` on `course_id`, then **Group-By** `course_id` with `COUNT(student_id)`."
       - "**Projection** of `course_id` on `Course`, then **Selection** for rows where a student is enrolled."
     correct_index: 1
     option_feedback:

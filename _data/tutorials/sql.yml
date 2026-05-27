@@ -316,7 +316,7 @@ steps:
           type: single
           options:
             - "Alice's — `SELECT *` automatically adapts to schema changes"
-            - "Bob's — explicit columns isolate his code from accidental PII leaks and column-count breakage"
+            - "Bob's — explicit columns avoid leaking new PII and column-count breakage"
             - "Tie — both forms are equivalent; SQL's optimizer flattens any difference"
             - "Alice's — fewer characters means smaller network payloads and faster execution"
           correct_index: 1
@@ -1488,7 +1488,7 @@ steps:
           options:
             - "`CREATE TABLE books (title TEXT, author TEXT, year INTEGER, pages INTEGER)`"
             - "`CREATE TABLE books (id INTEGER PRIMARY KEY, title TEXT NOT NULL, author TEXT NOT NULL, year INTEGER, pages INTEGER)`"
-            - "`CREATE TABLE books (id INTEGER, title TEXT, author TEXT, year TEXT, pages TEXT)`"
+            - "`CREATE TABLE books (id INTEGER PRIMARY KEY, title TEXT NOT NULL, author TEXT NOT NULL, year TEXT, pages TEXT)`"
             - "`CREATE TABLE books (book_data TEXT)`"
           correct_index: 1
           option_feedback:
@@ -1820,7 +1820,7 @@ steps:
             *[Review from Step 4]* What is the difference between `COUNT(*)` and `COUNT(email)`?
           type: single
           options:
-            - "`COUNT(*)` counts all rows; `COUNT(email)` counts only rows where `email` is not NULL"
+            - "`COUNT(*)` counts all rows; `COUNT(email)` skips NULL emails"
             - "`COUNT(*)` is slower; `COUNT(email)` is optimized"
             - "They are equivalent — both count all rows"
             - "`COUNT(*)` counts columns; `COUNT(email)` counts rows"

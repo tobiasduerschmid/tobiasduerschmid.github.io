@@ -9,7 +9,7 @@ questions:
       Who introduced the Information Hiding principle, and in what paper?
     options:
       - "Edsger W. Dijkstra, in *On the Role of Scientific Thought* (EWD 447)"
-      - "David L. Parnas, in *On the Criteria To Be Used in Decomposing Systems into Modules* (CACM 1972)"
+      - "David L. Parnas, in *On the Criteria To Be Used in Decomposing Systems* (1972)"
       - "Robert C. Martin, in *Clean Architecture* (2017)"
       - "John Ousterhout, in *A Philosophy of Software Design* (2018)"
     correct_index: 1
@@ -65,7 +65,7 @@ questions:
       Every field is `private`. Is this an example of good Information Hiding?
     options:
       - "Yes — all fields are `private`, so the implementation is hidden"
-      - "No — the public method signatures name PayPal-specific types, leaking the vendor into the contract"
+      - "No — the public signatures name PayPal-specific types, leaking the vendor"
       - "No — Information Hiding requires inheritance, which this class doesn't use"
       - "Yes — Java visibility modifiers always guarantee Information Hiding"
     correct_index: 1
@@ -157,7 +157,7 @@ questions:
       Which statement best captures the relationship between **Information Hiding** and **Separation of Concerns (SoC)**?
     options:
       - "They are exact synonyms — different teams just prefer different vocabulary"
-      - "SoC decides *which* aspects to separate; Information Hiding decides *how* each one stays protected behind its interface"
+      - "SoC picks *which* aspects to separate; Information Hiding decides *how* each one is protected"
       - "Information Hiding is a deprecated 1972 idea; SoC replaced it in modern practice"
       - "SoC applies to data layouts; Information Hiding applies only to function bodies"
     correct_index: 1
@@ -180,7 +180,7 @@ questions:
       The CFO announces that PayPal will be replaced with Stripe. In a codebase that follows Information Hiding well, what is the expected scope of the change?
     options:
       - "Edit every service that processes a payment, refund, or wallet operation"
-      - "Write one new `StripeGateway` implementation of `PaymentGateway` and update the DI wiring"
+      - "Add a new `StripeGateway` implementation of `PaymentGateway` and update DI wiring"
       - "Rewrite the entire system because vendor changes always cascade"
       - "Add a `try/catch` block in every payment-related method"
     correct_index: 1
@@ -202,7 +202,7 @@ questions:
     question: |
       Which is the strongest evidence that a module is **shallow**?
     options:
-      - "Its public methods are mostly one-line pass-throughs that delegate to another module"
+      - "Its public methods are mostly one-line pass-throughs to another module"
       - "It has more than 200 lines of implementation code"
       - "It uses Java generics or C++ templates in its signatures"
       - "It lives in its own file, separate from its callers"
@@ -249,7 +249,7 @@ questions:
       You inherit a `UserRepository` whose `findByEmail` method returns `sqlite3.Row`. Why is this a problem?
     options:
       - "Because `sqlite3.Row` is slower than returning a plain `dict` from the lookup"
-      - "It leaks SQLite into the return type, so every caller is now coupled to the storage technology"
+      - "It leaks SQLite into the return type, so every caller is coupled to storage"
       - "Because `findByEmail` should always return a list of results, not a single row"
       - "Because Python doesn't allow repositories to return custom domain types"
     correct_index: 1
@@ -272,7 +272,7 @@ questions:
       In *change impact analysis*, what does it mean if a single plausible change (say, "we switch from JSON to Protobuf for our wire format") would force edits across dozens of unrelated modules?
     options:
       - "Information Hiding has been applied very well in this part of the codebase"
-      - "The wire-format decision has leaked — it is a *de facto* shared secret across many modules"
+      - "The wire-format decision leaked — it is a *de facto* shared secret across modules"
       - "The system is too small for Information Hiding to make a difference"
       - "The team is following the Single Responsibility Principle correctly"
     correct_index: 1
@@ -340,7 +340,7 @@ questions:
       A reviewer says: "Don't add an abstraction for this — we only have one database and we'll never have another." When is this argument **most reasonable**?
     options:
       - "Always — extra abstractions are forbidden in production code until proven necessary"
-      - "When the system is throwaway, single-variant, and the abstraction would buy no testability or other benefit"
+      - "When the system is throwaway, single-variant, and the abstraction buys no testability"
       - "Whenever the database is SQL — only NoSQL stores deserve a repository wrapper"
       - "Never — predictions of stability over the system's lifetime are usually wrong"
     correct_index: 1
@@ -386,7 +386,7 @@ questions:
       In a client/server checkout system, which statement best handles the PayPal decision?
     options:
       - "PayPal should be hidden from every boundary, including the user interface; the client can simply report that payment succeeded"
-      - "Supported payment methods may be visible in the client/server contract, but backend services should still hide the provider SDK behind a vendor-neutral `PaymentGateway`"
+      - "Supported methods may show in the client/server contract, but backend services still hide the SDK behind a vendor-neutral `PaymentGateway`"
       - "Every backend service should call the PayPal SDK directly so the implementation is easier to trace"
       - "All payment logic should run in the browser because that keeps the server independent"
     correct_index: 1
@@ -431,7 +431,7 @@ questions:
     question: |
       What is the strongest evidence that a design is turning into a **Big Ball of Mud**?
     options:
-      - "A small feature change touches many unrelated modules, and nobody can predict side effects"
+      - "Small changes touch many unrelated modules with unpredictable side effects"
       - "The system has more than one programming language in its repository"
       - "Some modules are implemented with abstract interfaces"
       - "The codebase contains comments explaining why functions exist"
@@ -455,7 +455,7 @@ questions:
       Which design-doc content is most useful to a future maintainer who asks, "Why does this `PaymentGateway` abstraction exist?"
     options:
       - "A screenshot of the current checkout page"
-      - "The alternatives considered, quality attributes evaluated, and trade-offs accepted at the boundary"
+      - "Alternatives considered, qualities evaluated, and trade-offs accepted at the boundary"
       - "A statement that the team used interfaces because interfaces are always better"
       - "Only the final UML diagram, with no rejected alternatives"
     correct_index: 1
@@ -477,7 +477,7 @@ questions:
     question: |
       You are reviewing a proposed `EmailHelper` module. Nobody can name a design decision it owns, and every method is a one-line pass-through to a library call. What is the best Information Hiding critique?
     options:
-      - "The module may not justify its existence; a separate module should hide a meaningful secret or provide another clear boundary value"
+      - "The module may not justify itself; a separate module should hide a meaningful secret"
       - "The module is automatically good because all library calls are now in a separate file"
       - "The module is automatically bad because helper modules can never hide information"
       - "The module should expose the library's full API so callers have maximum flexibility"
@@ -500,7 +500,7 @@ questions:
     question: |
       Which operating-system example best illustrates Information Hiding?
     options:
-      - "Applications call stable file and process APIs while the OS hides file-system layout, disk caching, scheduling, and device-driver details"
+      - "Apps call stable file and process APIs while the OS hides layout, caching, and drivers"
       - "Applications directly choose the disk block layout so they can optimize every file write"
       - "Every application bundles its own CPU scheduler so the OS can stay simple"
       - "The OS exposes every hardware interrupt to every program because hidden details are always bad"
@@ -576,7 +576,7 @@ questions:
       The caller uses the row fields, compares the BM25 score to `0.75`, and uses the integer as a posting-list tie breaker. Which redesign best follows Information Hiding?
     options:
       - "Keep the API, but document the BM25 score range more carefully"
-      - "Expose `search(query) -> SearchPage`, where each `SearchHit` contains domain fields such as title, excerpt, confidence, and an opaque cursor"
+      - "Expose `search(query) -> SearchPage`, where each `SearchHit` carries domain fields and an opaque cursor"
       - "Return the SQL string used to produce the result so advanced clients can tune it"
       - "Return the embedding vector as well, so clients can switch between keyword and vector search themselves"
     correct_index: 1
@@ -620,7 +620,7 @@ questions:
     question: |
       In a module-guide card for `PaymentGateway`, which entry best distinguishes **primary** and **secondary** secrets?
     options:
-      - "Primary secret: provider authorization protocol and response mapping. Secondary secrets: retry rules, idempotency-key format, and credential handling."
+      - "Primary: provider authorization protocol. Secondary: retry rules and idempotency keys."
       - "Primary secret: the class name. Secondary secrets: the method names."
       - "Primary secret: users do not see the provider SDK. Secondary secret: the checkout page displays a provider logo."
       - "Primary secret: all code in the `payments/` folder. Secondary secret: all tests for that folder."
@@ -644,7 +644,7 @@ questions:
       Which statement correctly separates Parnas's **module structure**, **uses structure**, and **process structure**?
     options:
       - "They are three names for the same diagram, so choosing one is mostly a notation preference"
-      - "Module structure is about work assignments and hidden secrets; uses structure is about execution dependencies; process structure is about runtime activities"
+      - "Module = work assignments and secrets; uses = execution dependencies; process = runtime activities"
       - "Module structure only applies to object-oriented classes; process structure only applies to operating systems"
       - "A module must always compile to exactly one process, otherwise Information Hiding has failed"
     correct_index: 1
@@ -667,7 +667,7 @@ questions:
       A student says, "The monolithic version is easier to understand because all the code is on one page. The modular version has more names to learn." What is the best response?
     options:
       - "The student is wrong because modular code is always easier to understand immediately"
-      - "The student may be noticing a real first-read cost; evaluate the design by a plausible modification or change-impact task"
+      - "There is a real first-read cost; judge the design by a plausible change-impact task"
       - "The monolithic version is always better because fewer files means fewer dependencies"
       - "The modular version is automatically better because any extra abstraction improves design"
     correct_index: 1

@@ -446,7 +446,7 @@ steps:
           type: single
           options:
             - "React invented its own HTML attribute names to distinguish itself from plain HTML"
-            - "`class` is a reserved keyword in JavaScript, so JSX (which is valid JS) uses `className` to avoid a syntax conflict"
+            - "`class` is a reserved word in JavaScript, so JSX uses `className` to avoid the conflict"
             - "React's virtual DOM uses a different internal representation where `class` has a different meaning"
             - "`className` is faster for the browser to process than `class`"
           correct_index: 1
@@ -789,7 +789,7 @@ steps:
           options:
             - "They never differ — both syntaxes are always identical"
             - "They differ for strings — quotes produce a string, braces produce a symbol"
-            - "Same for string literals, but `{}` is required for any JS expression (`title={getTitle()}`)"
+            - "Same for string literals, but `{}` is required for any JS expression"
             - "`{}` is faster because it skips string parsing"
           correct_index: 2
           explanation: |
@@ -1134,7 +1134,7 @@ steps:
           type: single
           options:
             - "You must use `var` instead of `let` to make React track the variable"
-            - "Only calling a `useState` setter triggers a re-render — React can't see plain variable mutations"
+            - "Only a `useState` setter triggers a re-render — React can't see plain mutations"
             - "Arrow functions prevent React from seeing variable assignments"
             - "React automatically batches all updates, so `count++` is delayed by 500ms"
           correct_index: 1
@@ -1145,7 +1145,7 @@ steps:
           type: single
           options:
             - "useState cannot store `null` as an initial value — only strings, numbers, and booleans are supported"
-            - "Hooks must be called at the top level of a component — calling useState conditionally breaks React's internal order-tracking and causes crashes"
+            - "Hooks must be called at the top level; conditional useState breaks React's order-tracking"
             - "You cannot use `const` with array destructuring in React — `let` is required for state variables"
             - "There is nothing wrong — React handles conditional hook calls automatically using internal tracking"
           correct_index: 1
@@ -1157,7 +1157,7 @@ steps:
           options:
             - "`items.push(newItem)` — then React detects the array was mutated"
             - "`setItems(items.push(newItem))` — push returns the new length, passing it to setItems"
-            - "`setItems([...items, newItem])` — create a new array with the spread operator and pass it to the setter"
+            - "`setItems([...items, newItem])` — spread into a new array and pass it"
             - "`items[items.length] = newItem; setItems(items)` — modify in place then re-set"
           correct_index: 2
           explanation: |
@@ -1816,7 +1816,7 @@ steps:
           type: single
           options:
             - "React treats all numbers as truthy in boolean contexts, including zero, so `0 &&` always renders the right side"
-            - "Unlike `false`, `null`, and `undefined`, the number `0` IS a valid React node — React renders it as text. Use `{count > 0 && <Badge />}` instead"
+            - "`0` IS a valid React node — React renders it as text. Use `{count > 0 && <Badge />}`"
             - "The `&&` operator does not work with numbers in JavaScript — it is designed only for boolean operands"
             - "This is a known React bug in the reconciler that incorrectly renders falsy values, expected to be fixed in React 19"
           correct_index: 1
@@ -1836,7 +1836,7 @@ steps:
           type: single
           options:
             - "A is better — pre-filtering into a separate state variable avoids recomputing the filter on every render"
-            - "B is better — derived data should be computed from minimal state, not stored separately. A duplicates data, creating sync bugs when the source changes"
+            - "B is better — derive from minimal state; A duplicates data and creates sync bugs"
             - "Both are equivalent in behavior and performance — choose whichever approach matches your team's coding style"
             - "Neither is correct — filtered data should be managed through React Context to avoid prop drilling"
           correct_index: 1
@@ -1866,7 +1866,7 @@ steps:
           type: single
           options:
             - "Missing `key` props on the product list items"
-            - "Using a plain variable (`let cart = []`) instead of `useState` for the cart"
+            - "Using `let cart = []` instead of `useState` for the cart"
             - "The filter logic uses `.filter()` instead of `.map()`"
             - "The JSX uses `class` instead of `className`"
           correct_index: 1
@@ -1891,7 +1891,7 @@ steps:
           type: single
           options:
             - "3 — each call adds one item to the existing cart"
-            - "2 — React batches both calls; both see the same stale `cart` (length 1) and both set it to length 2"
+            - "2 — both calls see the same stale `cart` and both set it to length 2"
             - "1 — React ignores the second setter call because the value is identical"
             - "Error — you cannot call the same setter twice in one handler"
           correct_index: 1
@@ -1913,7 +1913,7 @@ steps:
           type: single
           options:
             - "A — direct DOM update is the most straightforward way to change displayed text"
-            - "B — declarative state with useState: React re-renders when the setter is called, keeping UI and data in sync"
+            - "B — useState: React re-renders on setter calls, keeping UI in sync"
             - "C — a plain variable is simpler than useState and works the same way"
             - "All three work — they are different syntaxes for the same result"
           correct_index: 1
@@ -2323,7 +2323,7 @@ steps:
           type: single
           options:
             - "`filterText` lives in `SearchBar` — `ProductTable` reads it via a React ref"
-            - "`filterText` lives in the common ancestor — passed as a prop to both; `SearchBar` calls an `onFilterChange` callback prop"
+            - "`filterText` lives in the common ancestor — passed as a prop to both"
             - "`filterText` is stored in `localStorage` so both components can access it"
             - "`filterText` lives in `ProductTable` — `SearchBar` directly mutates it"
           correct_index: 1
@@ -2349,7 +2349,7 @@ steps:
           type: single
           options:
             - "Item A's text stays with item A — React tracks components by their content"
-            - "Item A's text moves to item C — because React maps state to keys, and item A's key (0) now points to item C after reordering"
+            - "Item A's text moves to item C — React maps state to keys, and key 0 now points to C"
             - "All text inputs are cleared — React destroys and recreates the entire list on reorder"
             - "Nothing changes — React ignores key props for stateful inputs and uses the DOM position"
           correct_index: 1
@@ -2666,7 +2666,7 @@ steps:
           type: single
           options:
             - "The code is correct — it will work as expected"
-            - "`cart` is a local variable (not state), so pushes don't re-render; the `.map()` is also missing keys"
+            - "`cart` isn't state, so pushes don't re-render; `.map()` is also missing keys"
             - "The only bug is that `push` is slow — should use `concat` instead"
             - "`addToCart` should be defined outside the component for performance"
           correct_index: 1
@@ -2695,7 +2695,7 @@ steps:
           options:
             - "In `ProductCard` — each card tracks whether it's in the cart"
             - "In `CartSummary` — the cart summary owns the cart data"
-            - "In their nearest common ancestor (`App`), passed down via props and an `addToCart` callback"
+            - "In their common ancestor (`App`), passed down via props and a callback"
             - "In a global variable outside all components"
           correct_index: 2
           explanation: |
@@ -2768,7 +2768,7 @@ steps:
           type: single
           options:
             - "The arrow function syntax is incorrect — use a regular function instead"
-            - "JSX uses camelCase for event handlers: `onClick`, not `onclick`. Lowercase `onclick` is silently ignored by React"
+            - "JSX uses camelCase: `onClick`, not `onclick` — lowercase is silently ignored"
             - "You need to call `.bind(this)` on the handler for it to work in JSX"
             - "The `setCount` function cannot be called inside an arrow function"
           correct_index: 1
@@ -2784,7 +2784,7 @@ steps:
           type: single
           options:
             - "Only `ProfileCard` sees the change — props are copied when passed to children"
-            - "Props pass by reference, so the mutation corrupts the parent's object — props must be read-only"
+            - "Props pass by reference; the mutation corrupts the parent — props are read-only"
             - "React detects the mutation and triggers a strict-mode error"
             - "The change is ignored — React freezes all prop objects automatically"
           correct_index: 1
@@ -2801,7 +2801,7 @@ steps:
           type: single
           options:
             - "Nothing — this is the correct way to attach a click handler"
-            - "`handleClick()` invokes the function during render; pass a reference: `onClick={handleClick}`"
+            - "`handleClick()` calls it during render; pass a reference: `{handleClick}`"
             - "Event handlers must be arrow functions — `handleClick` is not valid"
             - "The button text 'Go' conflicts with the `onClick` attribute"
           correct_index: 1
@@ -2834,7 +2834,7 @@ steps:
           type: single
           options:
             - "Create a `Dialog` base class and extend it: `WarningDialog extends Dialog` and `InfoDialog extends Dialog`"
-            - "Create a single `Dialog` component that accepts `children` and a `variant` prop — compose specific dialogs by nesting different content inside `<Dialog>`"
+            - "One `Dialog` component with `children` and a `variant` prop; compose by nesting content"
             - "Copy-paste the shared layout code into both components — duplication is simpler than abstraction"
             - "Use a global `dialogType` state variable that switches the rendered content with an if-else chain"
           correct_index: 1
@@ -2850,7 +2850,7 @@ steps:
           type: single
           options:
             - "Three state variables: `songs` (array), `filteredSongs` (array), `selectedGenre` (string)"
-            - "Two state variables: `songs` (array) and `selectedGenre` (string) — `filteredSongs` is derived by filtering `songs` on each render"
+            - "Two state variables: `songs` and `selectedGenre` — derive `filteredSongs` on each render"
             - "One state variable: `appState` (object containing songs, filteredSongs, and selectedGenre)"
             - "Four state variables: `songs`, `selectedGenre`, `songCount`, and `genreList`"
           correct_index: 1

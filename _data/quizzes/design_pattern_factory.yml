@@ -9,7 +9,7 @@ questions:
       A `PizzaStore` uses a parameterized factory method: `createPizza(String type)` with an if/else chain to decide which pizza to create. A new pizza type ("BBQ Chicken") must be added by editing the existing if/else. What is the design problem with this approach?
     options:
       - "The method is too long — it should be split into multiple helper methods"
-      - "Adding a new pizza type requires modifying the existing factory method, violating the Open/Closed Principle"
+      - "Adding a new type forces edits to the existing method, violating Open/Closed"
       - "The String parameter should be replaced with an enum so the compiler can check the types"
       - "The factory method should return an interface instead of a concrete class"
     correct_index: 1
@@ -49,7 +49,7 @@ questions:
       The GoF compares Factory Method and Abstract Factory along an inheritance-vs-composition axis. What does that contrast mean structurally?
     options:
       - "Factory Method creates classes at runtime; Abstract Factory creates objects at runtime"
-      - "Factory Method uses inheritance (a subclass overrides the method); Abstract Factory uses composition (a factory object is passed in)"
+      - "Factory Method: a subclass overrides the method; Abstract Factory: a factory object is passed in"
       - "Factory Method is simpler because it does not use interfaces"
       - "Abstract Factory can only create one product type; Factory Method can create many"
     correct_index: 1
@@ -89,7 +89,7 @@ questions:
       Each method in a `PizzaIngredientFactory` — `createDough()`, `createSauce()`, `createCheese()` — is declared in the abstract factory interface and overridden by `NYPizzaIngredientFactory` and `ChicagoPizzaIngredientFactory`. How do these creation methods relate to the Factory Method pattern?
     options:
       - "They are unrelated — Abstract Factory and Factory Method are completely different patterns"
-      - "Each creation method is itself a Factory Method; an Abstract Factory is commonly implemented as a collection of Factory Methods"
+      - "Each one is itself a Factory Method; Abstract Factory is often built from them"
       - "They are Builder steps that gradually assemble one ingredient object"
       - "They are Strategy methods that select between ingredient algorithms at runtime"
     correct_index: 1
@@ -109,7 +109,7 @@ questions:
       In the `PizzaStore` example, `orderPizza()` runs a fixed sequence: `createPizza(type)`, then `prepare()`, `bake()`, `cut()`, `box()`. The `createPizza()` step is the one part that varies by subclass. Which design pattern describes the role of `orderPizza()` itself in this structure?
     options:
       - "Strategy — `orderPizza()` is an interchangeable algorithm"
-      - "Template Method — `orderPizza()` defines a fixed algorithm skeleton that delegates one varying step to a factory method"
+      - "Template Method — a fixed algorithm skeleton that delegates one step to a factory method"
       - "Observer — `orderPizza()` notifies the pizza subclass when an order arrives"
       - "Decorator — `orderPizza()` wraps the pizza with prepare/bake/cut/box behaviors"
     correct_index: 1
@@ -129,7 +129,7 @@ questions:
       A team uses the Factory Method pattern with an abstract `Creator` class and an abstract `factoryMethod()`. A client only wants one specific product variant and does not otherwise need its own Creator. What trade-off of Factory Method does this situation illustrate?
     options:
       - "Boilerplate code — the abstract Creator class is unnecessary code"
-      - "Forced subclassing — the client must subclass `Creator` just to pick a particular `ConcreteProduct`, even though it has no other reason to subclass"
+      - "Forced subclassing — the client must subclass `Creator` just to pick a `ConcreteProduct`"
       - "Tight coupling — the abstract Creator forces the client to know every concrete product class"
       - "Single Responsibility violation — `Creator` is responsible for both creating and using products"
     correct_index: 1
@@ -148,8 +148,8 @@ questions:
     question: |
       Which of the following statements about the difference between the GoF *Factory Method* pattern and the *Simple Factory* (a single non-abstract class with a parameterized creation method) are correct? Select all that apply.
     options:
-      - "Factory Method defers instantiation to subclasses via inheritance — each `ConcreteCreator` overrides the factory method"
-      - "Simple Factory is a single non-abstract class with a parameterized method that returns one of several product types, typically via if/else or switch"
+      - "Factory Method defers instantiation via inheritance — a `ConcreteCreator` overrides it"
+      - "Simple Factory is one non-abstract class whose parameterized method switches on the type"
       - "Factory Method is treated by *Head First Design Patterns* as an honorable-mention idiom rather than a full GoF design pattern"
       - "Simple Factory and Factory Method are exactly the same pattern under different names"
     correct_indices: [0, 1]

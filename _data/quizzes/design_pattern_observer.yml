@@ -9,7 +9,7 @@ questions:
       A stock market dashboard updates 50 UI widgets whenever the price feed changes (1,000 updates/second). The team uses the **Push model**, sending the full price data to every observer on every update. What is the most significant problem with this approach?
     options:
       - "The Push model violates the Open/Closed Principle"
-      - "Observers receive large amounts of data they may not need, throttling updates"
+      - "Observers receive much data they don't need, throttling updates"
       - "The Push model creates tighter coupling than the Pull model"
       - "The Push model prevents adding new observers at runtime"
     correct_index: 1
@@ -109,7 +109,7 @@ questions:
       A `Subject` subclass overrides a state-changing operation inherited from `Subject`. The inherited operation calls `notify()` at its end. Inside the override, the subclass updates its own additional state *after* calling `super()`. What problem does this create?
     options:
       - "Observers will be notified twice instead of once"
-      - "Observers will see the subject in a half-updated state because notification fires before the subclass finishes its own update"
+      - "Observers see a half-updated subject because notify() fires before the override finishes"
       - "The subclass cannot legally override a Subject operation in this pattern"
       - "Garbage collection will reclaim the observers before they receive update()"
     correct_index: 1
@@ -144,7 +144,7 @@ questions:
     question: |
       A spreadsheet cell observes three different data-source subjects. When any source changes, the cell must recompute. What does the cell's `update()` operation need that a single-subject design would not?
     options:
-      - "A way to tell which subject changed — typically `update(Subject* changedSubject)`"
+      - "A way to identify which subject changed, e.g. `update(Subject*)`"
       - "A separate notify() method for each subject it observes"
       - "Three independent observer lists, one per subject type"
       - "It cannot be done — observers must observe exactly one subject"
@@ -165,7 +165,7 @@ questions:
       A subject is destroyed while several observers still hold references to it (e.g., to query its state in `update()`). What is this problem called, and what is the standard remedy?
     options:
       - "Lapsed listener — observers should call detach() before holding the reference"
-      - "Dangling references to deleted subjects — the subject should notify its observers as it is destroyed so they can null out their references"
+      - "Dangling references to deleted subjects — the dying subject must notify observers to clear them"
       - "Inverted dependency flow — observers should not hold references to subjects in the Pull model"
       - "Notification storm — the observers should be batched to avoid the dangling refs"
     correct_index: 1
@@ -185,7 +185,7 @@ questions:
       The dependency graph between subjects and observers in a system is intricate: some observers depend on several subjects at once, and when multiple subjects change in one logical operation, observers must be updated exactly once — not once per source. Which structural addition does the GoF recommend?
     options:
       - "Replace Observer with Mediator everywhere"
-      - "Introduce a `ChangeManager` that maps subjects to observers and dispatches updates"
+      - "Introduce a `ChangeManager` that maps subjects to observers and dispatches"
       - "Switch from Pull to Push so observers don't need to coordinate"
       - "Have each observer keep a counter and ignore duplicate updates"
     correct_index: 1

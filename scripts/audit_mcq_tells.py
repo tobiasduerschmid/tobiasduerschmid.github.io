@@ -1,15 +1,21 @@
 #!/usr/bin/env python3
 """Audit MCQ "tells" in SEBook + tutorial quiz YAML.
 
-Two test-wiseness patterns let a student pick the right answer without knowing
-the material. This script flags both:
+Three test-wiseness patterns let a student pick the right answer without knowing
+the material. This script flags all three:
 
-  1. LENGTH TELL — the correct option's visible length is >= LENGTH_RATIO_THRESHOLD
-     times the *median* of the wrong options, AND the absolute gap is >=
-     LENGTH_ABS_GAP_MIN characters. The absolute gap filter avoids noise on
-     very short options where ratios swing wildly.
+  1. LENGTH TELL (ratio) — the correct option's visible length is >=
+     LENGTH_RATIO_THRESHOLD times the *median* of the wrong options, AND the
+     absolute gap is >= LENGTH_ABS_GAP_MIN characters. Catches lopsided cases
+     where the correct option towers over the wrong options on average.
 
-  2. BOLD TELL — at least one correct option contains **bold** markdown and
+  2. LONGEST TELL — the correct option is strictly the longest of all options,
+     AND exceeds the *second-longest* option by at least LONGEST_GAP_MIN
+     characters. Catches cases where median ratio is borderline (e.g. 1.5x)
+     but the correct option is still unambiguously the longest — which is
+     what a student notices at a glance.
+
+  3. BOLD TELL — at least one correct option contains **bold** markdown and
      *no* wrong option contains bold. (Italic and inline code are also tells
      in principle, but bold is the one we keep accidentally using as visual
      emphasis on the "right" answer, so we flag it specifically.)
@@ -45,6 +51,7 @@ BOLD_RE = re.compile(r"\*\*(?!\s)([^*]+?)\*\*")
 
 LENGTH_RATIO_THRESHOLD = 1.8
 LENGTH_ABS_GAP_MIN = 20
+LONGEST_GAP_MIN = 15  # correct must exceed second-longest by this many chars
 MIN_WRONG_OPTIONS = 2
 
 
@@ -118,6 +125,7 @@ def analyze_question(q: dict):
     correct_lens = [visible_length(o) for o in correct_opts]
     wrong_lens = [visible_length(o) for o in wrong_opts]
     max_correct = max(correct_lens)
+    max_wrong = max(wrong_lens)
     median_wrong = statistics.median(wrong_lens)
 
     length_tell = False
@@ -127,11 +135,23 @@ def analyze_question(q: dict):
         if length_ratio >= LENGTH_RATIO_THRESHOLD and (max_correct - median_wrong) >= LENGTH_ABS_GAP_MIN:
             length_tell = True
 
+    # "Longest tell": correct is strictly the longest, and the gap to second-longest
+    # (across both correct and wrong options) is visible at a glance.
+    longest_tell = False
+    longest_gap = None
+    if max_correct > max_wrong:
+        all_lens_sorted = sorted(correct_lens + wrong_lens, reverse=True)
+        # second-longest across the full option set
+        second_longest = all_lens_sorted[1] if len(all_lens_sorted) > 1 else 0
+        longest_gap = max_correct - second_longest
+        if longest_gap >= LONGEST_GAP_MIN:
+            longest_tell = True
+
     correct_has_bold = any(has_bold(o) for o in correct_opts)
     wrong_has_bold = any(has_bold(o) for o in wrong_opts)
     bold_tell = correct_has_bold and not wrong_has_bold
 
-    if not (length_tell or bold_tell):
+    if not (length_tell or longest_tell or bold_tell):
         return None
 
     return {
@@ -139,9 +159,12 @@ def analyze_question(q: dict):
         "n_options": len(options),
         "n_correct": len(correct_opts),
         "max_correct_len": max_correct,
+        "max_wrong_len": max_wrong,
         "median_wrong_len": int(median_wrong),
         "length_ratio": round(length_ratio, 2) if length_ratio else None,
+        "longest_gap": longest_gap if longest_tell else None,
         "length_tell": length_tell,
+        "longest_tell": longest_tell,
         "bold_tell": bold_tell,
         "question_preview": (q.get("question") or "")[:80].replace("\n", " "),
     }
@@ -199,14 +222,14 @@ def main() -> int:
             writer.writerow(r)
 
     files_with_tells = {r["file"] for r in rows}
-    length_only = sum(1 for r in rows if r["length_tell"] and not r["bold_tell"])
-    bold_only = sum(1 for r in rows if r["bold_tell"] and not r["length_tell"])
-    both = sum(1 for r in rows if r["length_tell"] and r["bold_tell"])
+    n_length = sum(1 for r in rows if r["length_tell"])
+    n_longest = sum(1 for r in rows if r["longest_tell"])
+    n_bold = sum(1 for r in rows if r["bold_tell"])
     print(
         f"\n# audit_mcq_tells: scanned {scanned} files, "
         f"{len(files_with_tells)} flagged, "
         f"{len(rows)} questions "
-        f"(length-only={length_only}, bold-only={bold_only}, both={both})",
+        f"(length-ratio={n_length}, longest={n_longest}, bold={n_bold}; questions may match more than one)",
         file=sys.stderr,
     )
     return 0

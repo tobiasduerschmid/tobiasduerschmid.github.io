@@ -76,10 +76,10 @@ questions:
 
       <div data-uml-type="sequence" data-uml-spec="participant app: App&#10;participant server: Server&#10;app -> server: connect()&#10;activate server&#10;deactivate server&#10;loop [1, 5]&#10;  app -> server: ping()&#10;  activate server&#10;  server --> app: ack()&#10;  deactivate server&#10;end"></div>
     options:
-      - "Exactly 5 times."
-      - "Between 1 and 5 times (inclusive)."
-      - "Zero or more times."
-      - "Exactly once."
+      - "Exactly 5 times — taking the upper bound."
+      - "Between 1 and 5 times."
+      - "Zero or more times — reading `[1, 5]` as a hint."
+      - "Exactly once — taking the lower bound."
     correct_index: 1
     option_feedback:
       0: |
@@ -127,7 +127,7 @@ questions:
       <div data-uml-type="sequence" data-uml-spec="participant c: Checkout&#10;participant p: Pricing Engine&#10;c -> p: calculateTotal()&#10;activate p&#10;opt [hasPromoCode == true]&#10;  p -> p: applyDiscount()&#10;  activate p&#10;  p --> p: discountApplied()&#10;  deactivate p&#10;end&#10;p --> c: finalTotal()&#10;deactivate p"></div>
     options:
       - "The discount is always applied after calculating the total."
-      - "The discount is applied only if `hasPromoCode` is true; otherwise the messages inside are skipped entirely."
+      - "The discount is applied only if `hasPromoCode` is true; otherwise the messages are skipped."
       - "The system chooses between applying the discount or returning the final total."
       - "The discount is applied repeatedly until the promo code expires."
     correct_index: 1

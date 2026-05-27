@@ -29,7 +29,7 @@ questions:
       A student implements the Observer pattern. Their code works correctly: when the Subject changes, the Observer updates. However, the Observer's `update()` method directly accesses `subject.internalData` (a private field accessed via reflection) rather than using `subject.getState()`. What is the primary design problem?
     options:
       - "The code has a bug because reflection is not allowed in Java"
-      - "The Observer violates the pattern's intent by introducing a tight coupling that defeats modularity"
+      - "Reaching into private state defeats the loose coupling Observer exists for"
       - "There is no problem — the code works correctly"
       - "The Observer should use the Push model instead of the Pull model"
     correct_index: 1
@@ -50,7 +50,7 @@ questions:
     options:
       - "Observer — the document should notify other objects of state changes"
       - "Strategy — the client should choose the behavior at runtime"
-      - "State — the behavior should change implicitly as the document's internal state transitions"
+      - "State — behavior changes implicitly as the document transitions"
       - "Factory Method — creation of documents should be deferred to subclasses"
     correct_index: 2
     option_feedback:
@@ -69,7 +69,7 @@ questions:
       A system uses the Singleton pattern for a database connection pool. A new requirement arrives: the system must support multi-tenant deployments where each tenant has its own database. What happens to the Singleton?
     options:
       - "Add a parameter to `getInstance(tenantId)` — simple fix"
-      - "The Singleton's core assumption (exactly one instance) is invalidated, requiring a fundamental redesign"
+      - "The 'exactly one instance' assumption no longer holds, so the design needs to change"
       - "Create a Singleton for each tenant — the pattern still works"
       - "Use the Adapter pattern to wrap the existing Singleton for each tenant"
     correct_index: 1
@@ -89,7 +89,7 @@ questions:
       You need to create objects from a family of related types (Dough, Sauce, Cheese) that must always be used together consistently (e.g., NY-style ingredients vs. Chicago-style). Which creational pattern is most appropriate?
     options:
       - "Factory Method — create one product type with subclass override"
-      - "Abstract Factory — create families of related products that must work together"
+      - "Abstract Factory — create families of related products"
       - "Builder — construct a complex product step by step"
       - "Singleton — ensure only one ingredient factory exists"
     correct_index: 1
@@ -129,7 +129,7 @@ questions:
       In the Composite pattern, a `Menu` can contain both `MenuItem` objects (leaves) and other `Menu` objects (composites). A developer declares `add(MenuComponent)` and `remove(MenuComponent)` on the abstract `MenuComponent` class. What design trade-off does this represent?
     options:
       - "The Safe Composite approach — only composites expose child management"
-      - "The Transparent Composite approach — uniform interface at the cost of meaningless methods on leaves"
+      - "The Transparent Composite approach — uniformity at the cost of meaningless leaves"
       - "A violation of the pattern — these methods should only be on Composite"
       - "The Observer approach — leaves subscribe to composites"
     correct_index: 1
@@ -211,7 +211,7 @@ questions:
       The State and Strategy patterns have identical UML class diagrams. What is the key difference between them?
     options:
       - "State uses interfaces; Strategy uses abstract classes"
-      - "State involves implicit internal transitions between implementations; Strategy involves explicit client selection"
+      - "State transitions internally; Strategy is picked by the client"
       - "State is a behavioral pattern; Strategy is a structural pattern"
       - "There is no meaningful difference — they are the same pattern with different names"
     correct_index: 1

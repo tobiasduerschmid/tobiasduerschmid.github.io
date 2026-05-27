@@ -187,7 +187,7 @@ steps:
           options:
             - "Enables strict variable quoting rules"
             - "Sets the script's encoding to UTF-8"
-            - "Exits the script when a command fails (non-zero exit code)"
+            - "Exits the script when any command returns non-zero"
             - "Enables extended glob patterns"
           correct_index: 2
           explanation: "By default, Bash continues executing even after a command fails. `set -e` (exit on error) stops the script the moment any command returns a non-zero exit code, preventing a cascade of confusing failures. We'll cover its edge cases in later steps."
@@ -413,7 +413,7 @@ steps:
           options:
             - "Bash creates all three directories automatically"
             - "Bash creates only `projects/` and stops"
-            - "The command fails because the parent directories don't exist — you need `mkdir -p`"
+            - "The command fails because the parents don't exist — use `mkdir -p`"
             - "Bash prompts you to confirm before creating multiple directories"
           correct_index: 2
           explanation: "Without `-p`, `mkdir` requires all parent directories to already exist. If they don't, it fails. The `-p` (parents) flag creates the entire chain of directories at once."
@@ -430,7 +430,7 @@ steps:
         - question: "What is the difference between `cp file.txt dir/` and `mv file.txt dir/`?"
           options:
             - "There is no difference — both move the file"
-            - "`cp` creates a duplicate (original stays); `mv` relocates the file (original is gone)"
+            - "`cp` duplicates (original stays); `mv` relocates (original is gone)"
             - "`cp` works on files only; `mv` works on directories only"
             - "`cp` preserves permissions; `mv` resets them to default"
           correct_index: 1
@@ -439,7 +439,7 @@ steps:
         - question: "After running `chmod +x morning.sh && ./morning.sh`, you move the script: `mv morning.sh scripts/morning.sh`. Can you still run it with `./morning.sh`?"
           options:
             - "Yes — `chmod +x` is permanent and follows the file"
-            - "No — the file is no longer at `./morning.sh`; you'd need `./scripts/morning.sh`"
+            - "No — the file isn't at `./morning.sh` anymore; use `./scripts/morning.sh`"
             - "Yes — the shell caches the file location after the first run"
             - "No — `mv` strips the execute permission"
           correct_index: 1
@@ -758,7 +758,7 @@ steps:
         - question: "You run `./script.sh > output.txt` but error messages still appear on your terminal. Why?"
           options:
             - "The `>` operator is broken and does not capture all output"
-            - "`>` only redirects stdout; error messages go to stderr, a separate stream that still goes to the terminal"
+            - "`>` only redirects stdout; errors go to stderr, a separate stream"
             - "Error messages always bypass file redirection for security reasons"
             - "You need to use `>>` instead of `>` to capture error output"
           correct_index: 1
@@ -767,7 +767,7 @@ steps:
         - question: "The pipeline `cut -d' ' -f2 server_log.txt | sort | uniq -c | sort -rn` chains four small tools. Which principle does this best illustrate?"
           options:
             - "The DRY (Don't Repeat Yourself) principle — avoid duplicating code"
-            - "The Unix Philosophy — write programs that do one thing well, work together, and use text streams as a universal interface"
+            - "The Unix Philosophy — one tool, one job, composed through text streams"
             - "The Principle of Least Privilege — each tool runs with minimal permissions"
             - "The Single Responsibility Principle — each class should have only one reason to change"
           correct_index: 1
@@ -951,7 +951,7 @@ steps:
         - question: "A variable `dir` contains the value `my documents`. What happens when you run `ls $dir` (unquoted)?"
           options:
             - "Bash lists the directory named `my documents` correctly"
-            - "Bash word-splits on the space, running `ls my documents` — two separate arguments"
+            - "Bash word-splits on the space, running `ls my documents` (two arguments)"
             - "Bash produces a syntax error and stops"
             - "Bash automatically quotes the variable to handle the space"
           correct_index: 1
@@ -1356,7 +1356,7 @@ steps:
         - question: "You write `for f in *.log; do wc -l $f; done`. One of the log files is named `error log.txt` (with a space). What happens when the loop processes it?"
           options:
             - "`wc` correctly counts the lines in `error log.txt`"
-            - "The shell word-splits `$f` on the space, passing `error` and `log.txt` as two separate arguments"
+            - "Word-splitting on the space passes `error` and `log.txt` as two arguments"
             - "Bash automatically handles spaces in filenames when iterating with `for`"
             - "The loop silently skips any filenames that contain spaces"
           correct_index: 1
@@ -1365,7 +1365,7 @@ steps:
         - question: "In a `for f in *.sh` loop, when does the shell substitute `*.sh`?"
           options:
             - "Inside the loop body, each time `$f` is referenced"
-            - "Before the loop runs — the shell expands `*.sh` to a list of matching filenames first"
+            - "Before the loop runs — expanded to a filename list first"
             - "After the loop completes, to validate the filenames used"
             - "Only when running with `bash -e` safety flag enabled"
           correct_index: 1
@@ -1383,7 +1383,7 @@ steps:
         - question: "Inside a loop, you use `wc -l $f`. If a file is named `data 2024.txt`, how does Bash interpret the unquoted `$f`?"
           options:
             - "It correctly processes the single file `data 2024.txt`"
-            - "It word-splits the name into two separate arguments: `data` and `2024.txt`"
+            - "It word-splits the name into two arguments: `data` and `2024.txt`"
             - "It produces a syntax error because of the space"
             - "It automatically adds quotes to handle the space"
           correct_index: 1
@@ -1392,7 +1392,7 @@ steps:
         - question: "Your loop creates a directory for each `.sh` file: `mkdir results/$f`. But `results/` doesn't exist yet. What happens?"
           options:
             - "Bash creates `results/` automatically when a subdirectory is needed"
-            - "`mkdir` fails because the parent directory `results/` doesn't exist — you need `mkdir -p`"
+            - "`mkdir` fails because parent `results/` doesn't exist — use `mkdir -p`"
             - "`mkdir` creates `results/` first, then the subdirectory"
             - "The loop skips the file and continues to the next iteration"
           correct_index: 1
@@ -1538,7 +1538,7 @@ steps:
         - question: "Why use `\"$@\"` (quoted) instead of `$@` (unquoted) when looping over arguments?"
           options:
             - "Quoting `$@` makes the loop run faster"
-            - "Unquoted `$@` word-splits arguments containing spaces, potentially breaking them into separate words"
+            - "Unquoted `$@` word-splits arguments containing spaces"
             - "Quoted `$@` includes the script name as the first element"
             - "There is no practical difference between `\"$@\"` and `$@`"
           correct_index: 1
@@ -1681,7 +1681,7 @@ steps:
         - question: "A function `process_all` is called as `process_all file1.txt \"my report.txt\"`. Inside, it runs `for f in $@; do`. How many iterations does the loop perform?"
           options:
             - "2 — the two properly-separated arguments"
-            - "3 — word-splitting on the space inside `my report.txt` creates a third element"
+            - "3 — word-splitting on the space inside `my report.txt` adds one"
             - "1 — the entire argument list is treated as one string"
             - "0 — `$@` is empty inside functions; use `$*` instead"
           correct_index: 1
@@ -1690,7 +1690,7 @@ steps:
         - question: "What problem does the `local` keyword solve inside a Bash function?"
           options:
             - "It makes the function run faster by caching its variables"
-            - "It prevents a function's internal variables from leaking into and overwriting global script variables"
+            - "It keeps a function's variables from leaking out and overwriting globals"
             - "It allows the function to accept more than 9 arguments"
             - "It makes the function available to child processes (subshells)"
           correct_index: 1
@@ -1699,7 +1699,7 @@ steps:
         - question: "A function `count_words` should return a number to the caller. Which is the correct Bash pattern?"
           options:
             - "Use `return 42` and capture it with `result=$(count_words)`"
-            - "Use `echo 42` inside the function and capture with `result=$(count_words)`"
+            - "Use `echo 42` and capture with `result=$(count_words)`"
             - "Use `return 42` and read it from `$?` with `result=$?`"
             - "Assign directly to a global variable inside the function"
           correct_index: 1
@@ -2114,7 +2114,7 @@ steps:
           options:
             - "The script immediately terminates with a non-zero exit code because the target directory does not exist"
             - "Bash pauses execution and prompts the user in standard input to manually resolve the missing directory"
-            - "The script continues executing in the current directory, potentially pulling code and deleting cache files in the wrong location"
+            - "The script keeps running in the current directory, possibly pulling and deleting in the wrong place"
             - "Bash's implicit error handling skips the next command (`git pull`) but resumes execution at `rm -rf`"
           correct_index: 2
           explanation: "Without `set -e`, Bash continues executing every line regardless of failures. The `cd` fails silently, and the script proceeds in whatever directory it was already in — potentially running `git pull` and `rm -rf` in the wrong location. This is exactly why `set -e` is a critical safety net."
@@ -2142,7 +2142,7 @@ steps:
             When running the script, it crashes with the error: `line 2: DIR: command not found`. Why does Bash produce this specific error?
           options:
             - "Bash requires the `let` or `set` keyword to assign string variables"
-            - "Bash evaluates the spaces around the `=` sign and attempts to execute a program named `DIR` with `=` and `\"/tmp/build\"` as its arguments"
+            - "The spaces around `=` make Bash run `DIR` as a command with `=` and `\"/tmp/build\"` as arguments"
             - "`/tmp/build` is a directory, not an executable, so Bash cannot assign it to a command substitution"
             - "Variables in Bash must be entirely lowercase to avoid clashing with reserved environment commands"
           correct_index: 1
@@ -2225,7 +2225,7 @@ steps:
           options:
             - "Print \"FAILURE\" to `stdout` so the pipeline can parse the string"
             - "Output the error message to `stderr` using `>&2`"
-            - "Use the command `exit 1` (or any non-zero integer) at the end of the failure block"
+            - "Use `exit 1` (or any non-zero integer) at the end of the failure block"
             - "Return a boolean `false` using the `return` keyword"
           correct_index: 2
           explanation: "Exit codes are the standard Unix mechanism for communicating success or failure to the calling environment (CI/CD, other scripts, `make`, etc.). `exit 1` signals failure; `exit 0` signals success. Printing to stdout/stderr is for human-readable messages — the pipeline does not parse those. `return` only works inside functions, not to terminate a script."

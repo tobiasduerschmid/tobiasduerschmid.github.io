@@ -189,7 +189,7 @@ steps:
     - question: What is a Git branch, physically speaking?
       options:
       - A full copy of all project files stored separately
-      - A 41-byte text file in `.git/refs/heads/` containing one commit SHA
+      - A tiny file in `.git/refs/heads/` holding one commit SHA
       - A separate network connection to a remote server
       - A compressed archive of your working directory
       correct_index: 1
@@ -215,7 +215,7 @@ steps:
     - question: Why can `HEAD` point to a branch name rather than a commit SHA?
       options:
       - Branch names are shorter and easier to type
-      - Symbolic refs let `git commit` update the branch ref without rewriting HEAD
+      - A commit then updates the branch ref without touching HEAD
       - Git requires it for compatibility with GitHub
       - It prevents you from committing on the wrong branch
       correct_index: 1
@@ -376,7 +376,7 @@ steps:
     - question: You made three commits in detached HEAD state, then ran `git switch main` without creating a branch. A teammate asks if the commits are lost. What do you tell them?
       options:
       - Yes, they are permanently gone — detached HEAD commits are deleted by `git switch`
-      - They are orphaned but still in `.git/objects/`; `git reflog` finds the SHA so `git branch rescue <sha>` recovers them
+      - Orphaned but still in `.git/objects/`; `git reflog` finds the SHA and `git branch` anchors it.
       - Git automatically migrated them to the `main` branch when we switched
       - They are stored in a hidden recovery folder we can copy from
       correct_index: 1
@@ -387,7 +387,7 @@ steps:
       explanation: Orphaned commits remain in `.git/objects/` until `git gc` prunes them. `git reflog` shows every position HEAD has been at, including the orphaned one. `git branch rescue <sha>` rescues the work.
     - question: In one sentence, why can `git reflog` show commits that `git log --all` cannot?
       options:
-      - '`log --all` walks only ref-reachable commits; `reflog` records every HEAD position.'
+      - '`log --all` walks ref-reachable commits; `reflog` records HEAD positions.'
       - '`git reflog` is a newer, more powerful version of `git log`'
       - '`git log --all` is broken by default'
       - '`git reflog` reads from the remote server; `git log` only from local'
@@ -631,7 +631,7 @@ steps:
     - question: Why does `git branch feature` complete in milliseconds even on a 10-GB repo?
       options:
       - Git compresses the whole working directory in parallel
-      - It writes one 41-byte file in `.git/refs/heads/` — no files are copied
+      - It writes one tiny file in `.git/refs/heads/`, no copying.
       - Branches are stored on the remote server, not locally
       - Git skips adding the branch until you commit to it
       correct_index: 1
@@ -941,7 +941,7 @@ steps:
       options:
       - '`git restore app.py` — discards the edits'
       - '`git commit -m ''WIP''` — commits the half-finished changes'
-      - '`git stash` — saves modifications to a temporary holding area and cleans the tree'
+      - '`git stash` — parks edits aside and cleans the tree'
       - '`git reset --hard` — resets everything so you can restart later'
       correct_index: 2
       option_feedback:
@@ -989,7 +989,7 @@ steps:
       options:
       - WIP is strictly better — stashes can be accidentally dropped
       - Equivalent — personal preference only
-      - Both work, with different trade-offs around shared history and disciplined cleanup
+      - Both work; trade-offs differ around history hygiene.
       - WIP is wrong — Git rejects commits with that message
       correct_index: 2
       option_feedback:
@@ -1000,7 +1000,7 @@ steps:
     - question: 'You stashed on `main`, then switched to a commit with `git switch --detach HEAD~2` to inspect old code. What is the safe way to recover the stash?'
       options:
       - Run `git stash pop` here — stash works in any HEAD state
-      - Return to a named branch first (`git switch main`), then `git stash pop`
+      - Switch back to a named branch first, then `git stash pop`.
       - The stash is lost — it was tied to `main`
       - Run `git stash apply detached` to redirect it
       correct_index: 1
@@ -1286,7 +1286,7 @@ steps:
     - question: During a cherry-pick, Git reports a conflict. Which sequence correctly completes it?
       options:
       - Delete the conflicted file and run `git cherry-pick --continue`
-      - Resolve conflicts in the file, `git add` the file, then `git cherry-pick --continue`
+      - Resolve conflicts, `git add` the file, then `git cherry-pick --continue`
       - Run `git cherry-pick --force` to override the conflict
       - Run `git commit --amend` to finalize the cherry-pick
       correct_index: 1
@@ -1298,7 +1298,7 @@ steps:
     - question: 'After a cherry-pick, the new commit has a different SHA from the source. Why?'
       options:
       - Cherry-pick mutates the patch content
-      - Different parent → different inputs to the commit's SHA hash
+      - Different parent → different SHA inputs.
       - Git randomly regenerates SHAs for safety
       - The new commit has no parent at all
       correct_index: 1
@@ -1322,7 +1322,7 @@ steps:
     - question: 'Mid-cherry-pick, a conflict pauses Git. You realize you need to check something on another branch first. Which sequence safely preserves your conflict-resolution progress so far?'
       options:
       - '`git stash` — stashes work across branches, including mid-cherry-pick state'
-      - '`git cherry-pick --abort` first to restore a clean state, then switch; re-do the cherry-pick when you return'
+      - '`git cherry-pick --abort`, switch, do the other task, then re-run the pick.'
       - Just `git switch other-branch` — Git will remember the cherry-pick
       - '`git commit -m ''WIP conflict'' --allow-empty` to save the mid-state'
       correct_index: 1
@@ -1539,7 +1539,7 @@ steps:
     - question: What does `git blame calculator.py` show?
       options:
       - A list of bugs that were found in `calculator.py`
-      - Per-line attribution — SHA, author, and timestamp of the last commit to touch each line
+      - Per-line attribution to the last commit that touched each line
       - The remote collaborators who have access to the file
       - The diff of the most recent commit that touched the file
       correct_index: 1
@@ -1956,7 +1956,7 @@ steps:
       explanation: 'Bisect uses the exit code as its oracle. Also critical: the test must actually run at every historical commit — if the test file was added mid-range, older commits will fail to even find the test, confusing bisect. Use `git bisect run -- bash -c ''cp /tmp/test.py . && python3 test.py''` to work around this.'
     - question: 'In the middle of a manual bisect, Git leaves HEAD at a historical commit while you decide good/bad. What HEAD state are you in, and why is that OK?'
       options:
-      - Detached HEAD — and it is safe because bisect manages it; `git bisect reset` restores you to the starting branch afterwards
+      - Detached HEAD — bisect manages it, and `git bisect reset` restores you.
       - Attached to a new branch called `bisect/working` that Git creates automatically
       - Detached HEAD — and any `git commit` you make here will corrupt history
       - Attached to `main` — bisect only moves the working tree, not HEAD
@@ -2171,7 +2171,7 @@ steps:
     - question: What does `git rebase main` do when run on `feature-sqrt`?
       options:
       - Moves `main` to point at the tip of `feature-sqrt`
-      - Replays `feature-sqrt`'s unique commits on top of `main` as new commits
+      - Replays `feature-sqrt`'s unique commits on top of `main`
       - Merges `main` into `feature-sqrt` with a merge commit
       - Deletes `main` and renames `feature-sqrt` to `main`
       correct_index: 1
@@ -2626,7 +2626,7 @@ steps:
       explanation: '`reword` keeps the commit content identical but opens the editor to change the message. `pick` is no-op, `squash` melds into the previous commit, `drop` deletes it.'
     - question: What is the difference between `squash` and `fixup`?
       options:
-      - '`squash` opens the editor to combine messages; `fixup` silently drops it'
+      - '`squash` keeps both messages; `fixup` drops one'
       - '`squash` rewrites hash; `fixup` preserves it'
       - '`fixup` can only be used on merge commits'
       - They are identical
@@ -2651,7 +2651,7 @@ steps:
     - question: 'After an interactive rebase, the rewritten commits have new SHAs even if their patches are identical. Why?'
       options:
       - Interactive rebase randomly generates SHAs
-      - The parent changed, and parent is part of the SHA hash inputs
+      - The parent changed, which is part of the hash input.
       - Interactive rebase encrypts commits
       - Git renames the commits for clarity
       correct_index: 1
@@ -2687,7 +2687,7 @@ steps:
     - question: 'In Task 3b you ''rescued'' a dropped commit. In terms of the object database, what did `git branch secret-backup <sha>` actually do?'
       options:
       - It copied the dropped commit from `.git/trash` back into `.git/objects`
-      - It wrote one ref file in `.git/refs/heads/`, making the existing commit reachable again
+      - It wrote one ref file under `.git/refs/heads/`, re-anchoring the commit.
       - It recreated the commit from the reflog's textual record
       - It undid the rebase
       correct_index: 1
@@ -2879,7 +2879,7 @@ steps:
       options:
       - plain `merge` → 1 new commit on main; `rebase + merge` → 3 new commits on main; `--squash + commit` → 3 new commits on main
       - plain `merge` → 1 merge commit (3 parents); `rebase + merge` → 3 new commits; `--squash + commit` → 1 new commit
-      - plain `merge` → 1 merge commit with 2 parents; `rebase + merge` → 3 replayed commits on main (linear, ff); `--squash + commit` → 1 new commit on main
+      - plain `merge` → 1 two-parent merge commit; `rebase + merge` → 3 linear commits; `--squash + commit` → 1 new commit.
       - All three approaches produce identical history
       correct_index: 2
       option_feedback:
@@ -2914,7 +2914,7 @@ steps:
     - question: 'A regression is reported on `main` three months after a feature was **squash-merged** in. `git bisect` on `main` narrows the culprit to the squash commit. What is your next move?'
       options:
       - Declare the feature author guilty and revert the whole squash commit
-      - Bisect again on the (still-existing) feature branch — its internal commits give the precision main lost
+      - Bisect on the feature branch; its internal commits restore the lost precision.
       - Bisect is unreliable after squash — read every line of the squash commit's diff
       - Re-run bisect with `--squash-aware`
       correct_index: 1
@@ -3154,7 +3154,7 @@ steps:
     - question: 'Rebase-drop and revert both "undo" a commit. Which is correct about their effect on SHAs?'
       options:
       - Both create new SHAs for all later commits
-      - '`rebase-drop` rewrites every later SHA; `revert` only appends one commit'
+      - '`rebase-drop` rewrites later SHAs; `revert` appends.'
       - Both are non-destructive
       - Revert rewrites SHAs; rebase-drop doesn't
       correct_index: 1
@@ -3430,7 +3430,7 @@ steps:
       explanation: The outer repo stores only a pinned SHA (gitlink, mode 160000) and a `.gitmodules` entry — not file copies. The submodule is a genuine nested repo.
     - question: 'Why is it internally consistent that a submodule is ''just a pinned commit SHA''?'
       options:
-      - A commit SHA already identifies a whole-project snapshot, so pinning it is enough
+      - One commit SHA already identifies a whole-project snapshot.
       - Because submodules cannot have their own branches
       - Because submodules are always read-only
       - Because Git stores submodules separately in a proprietary database
@@ -3610,7 +3610,7 @@ steps:
       options:
       - Zero — `git submodule update` commits for you
       - One — only the outer-repo SHA bump
-      - Two — one inside (if you authored the change), then the outer SHA bump
+      - Two — inside (if you authored) plus the outer SHA bump.
       - Three — submodule, `.gitmodules`, and outer tree
       correct_index: 2
       option_feedback:
@@ -3621,7 +3621,7 @@ steps:
     - question: '`git status` in the outer repo shows `modified: vendor/math-utils (new commits)`. What does it mean?'
       options:
       - The `.gitmodules` file has been edited
-      - The submodule's checked-out HEAD differs from the pinned SHA
+      - The submodule's HEAD differs from the pinned SHA.
       - The submodule is broken
       - Git is about to garbage-collect the submodule
       correct_index: 1
@@ -3633,7 +3633,7 @@ steps:
     - question: 'Why doesn''t `git pull` automatically update submodule working directories — what Git principle is respected by this design?'
       options:
       - Pull is inherently broken for submodules and skips them
-      - Outer/inner repo separation — outer ops don't silently move the inner HEAD
+      - Outer/inner repo separation — outer ops don't touch the inner HEAD.
       - Pull is always read-only and writes nothing to disk
       - It would violate the SHA-1 collision resistance guarantee
       correct_index: 1
@@ -3657,7 +3657,7 @@ steps:
     - question: 'A teammate says: ''After every `git pull` I always run `git submodule update --init --recursive`, even on repos without submodules. Paranoia, or sensible?'''
       options:
       - Waste of time — it does nothing on non-submodule repos
-      - Sensible — it's a no-op on non-submodule repos and catches drift on submodule ones
+      - Sensible — a no-op without submodules, drift-catcher with them.
       - Harmful — it can corrupt repositories that don't use submodules
       - Only useful on teams larger than 10 contributors
       correct_index: 1
@@ -3953,7 +3953,7 @@ steps:
     - question: 'Why is it consistent that the outer repo records ONLY a pinned SHA for each submodule — not the submodule''s files?'
       options:
       - Because file content inside a submodule is always confidential
-      - A commit SHA already determines the snapshot, so duplicating files is redundant
+      - The SHA already pins the snapshot; copying files would be redundant.
       - Because submodules are always read-only by design
       - Because Git uses a separate database for submodule content
       correct_index: 1
@@ -3965,7 +3965,7 @@ steps:
     - question: 'You edited `vendor/math-utils/utils.py` and saved. Your teammate pulls your branch and sees a clean `git status`. Why didn''t your edit get to them?'
       options:
       - Git hid the change because it was inside a submodule
-      - You never committed the change inside the submodule and bumped the outer pin
+      - You never committed it inside the submodule and bumped the pin.
       - Your teammate's installed Git version is out of date
       - Submodules never sync changes between collaborators
       correct_index: 1
@@ -3976,7 +3976,7 @@ steps:
       explanation: 'An edit to a submodule file affects only your working tree until you perform the two-step commit: (1) commit inside the submodule and push its new commit to the submodule''s remote, (2) `git add <path>` + commit in the outer repo to bump the pinned SHA. Skip either step and the change never reaches teammates.'
     - question: 'You edit a file inside a submodule, run `git add && git commit` inside the submodule, then `git push`. Git errors with something like `fatal: You are not currently on a branch`. What Step-1 concept explains this?'
       options:
-      - Detached HEAD — submodules check out at the pinned SHA, with no branch for push
+      - Detached HEAD — checkout at the pinned SHA, no branch for push.
       - Merge conflicts left over from a previous submodule operation
       - A missing upstream tracking branch on the submodule's remote
       - Submodules are read-only by default and reject pushes
@@ -3989,7 +3989,7 @@ steps:
     - question: 'You ran `git rebase main` inside a submodule and rewrote three of its commits. The outer repo''s `git status` says `modified: vendor/math-utils (new commits)`. Is anything wrong with this?'
       options:
       - No issue — rebase inside a submodule is business as usual
-      - The outer repo still pins the pre-rebase SHAs; teammates may not be able to fetch them
+      - The outer pin still points at unfindable pre-rebase SHAs.
       - Git prevents rebase inside submodules to protect the outer pin
       - Rebase deletes the submodule from the outer repo's tree
       correct_index: 1
@@ -4416,7 +4416,7 @@ steps:
       options:
       - Revert the whole squash commit from `main` and re-investigate later
       - Read every line of the 800-line squash diff until you find the bug
-      - '`git bisect` on the still-existing `feature-stats` branch for the granularity main lost'
+      - '`git bisect` on the still-existing `feature-stats` branch for granularity.'
       - Give up — squash merge permanently discards internal commits
       correct_index: 2
       option_feedback:

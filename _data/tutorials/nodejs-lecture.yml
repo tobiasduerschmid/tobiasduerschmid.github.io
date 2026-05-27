@@ -317,7 +317,7 @@ steps:
             A student writes a small CLI tool that reads a configuration file once at startup and then exits. They use `fs.readFileSync`. A teammate says this is always wrong and should always be `fs.readFile`. Who is right?
           options:
             - "The teammate — `readFileSync` must never appear in any Node.js code, CLI or server"
-            - "The student — blocking I/O is perfectly acceptable in a CLI script because there is no event loop or concurrent requests to starve"
+            - "The student — blocking I/O is fine in a one-shot CLI script, where nothing is waiting on the event loop"
             - "The teammate — `readFileSync` will always be slower than `readFile` due to OS scheduling overhead"
             - "The student — but only if the config file is under 4 KB; larger files must use `readFile`"
           correct_index: 1
@@ -392,7 +392,7 @@ steps:
             The current server responds with `Hello, World!` to **every** request regardless of URL or method. What change would you make inside the `http.createServer` callback to return a different response for `GET /status` versus all other paths?
           options:
             - "Call `http.createServer()` a second time with a different callback for `/status`"
-            - "Inspect `req.url` inside the callback and branch with `if`/`else` to send different responses per path"
+            - "Inspect `req.url` inside the callback and branch with `if`/`else` per path"
             - "Call `server.listen()` on a different port for each URL you want to handle"
             - "Set `res.url` to `/status` before calling `res.end()` so the correct handler is invoked"
           correct_index: 1
@@ -403,7 +403,7 @@ steps:
             You are starting a new project: a REST API with 12 endpoints, JSON request bodies, and authentication middleware. Should you use the built-in `http` module or Express?
           options:
             - "The built-in `http` module — third-party packages introduce security risks and should always be avoided in production"
-            - "Express — it provides routing, middleware, and body parsing out of the box, eliminating hundreds of lines of manual boilerplate for a multi-endpoint API"
+            - "Express — it provides routing, middleware, and body parsing out of the box, eliminating manual boilerplate"
             - "The built-in `http` module — it is always faster than Express because there is no abstraction-layer overhead"
             - "Express — but only because the built-in `http` module does not support POST requests or JSON bodies"
           correct_index: 1
@@ -521,7 +521,7 @@ steps:
             What happens if you move the `app.all('*', ...)` catch-all handler to the **top** of the file, before all other route definitions?
           options:
             - "Nothing changes — Express evaluates all routes in parallel and picks the most specific match"
-            - "Every request returns `404 - Page not found` because the catch-all matches first and Express stops checking further routes"
+            - "Every request returns `404 - Page not found` because the catch-all matches first and stops the chain"
             - "Express throws a configuration error at startup because `app.all('*', ...)` must always be declared last"
             - "The specific `app.get` and `app.post` routes still win because they have higher priority than `app.all`"
           correct_index: 1

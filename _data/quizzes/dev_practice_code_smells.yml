@@ -72,7 +72,7 @@ questions:
     question: |
       Multiple functions accept `street`, `city`, `state`, `zip`, and `country` in that order. Bugs often happen when two adjacent strings are swapped. What is the best smell diagnosis and refactoring response?
     options:
-      - "Data Clumps / Long Parameter List -> Introduce an `Address` object."
+      - "Data Clumps -> Introduce an `Address` object."
       - "Feature Envy -> Move all functions into the caller."
       - "Duplicated Code -> Delete every repeated parameter."
       - "Large Class -> Merge the functions into one class."
@@ -117,7 +117,7 @@ questions:
       A linter flags a tiny method as a smell because it has only one line. The method name is a domain phrase used throughout the team's conversations, and it hides a volatile calculation behind a stable interface. What should the team do?
     options:
       - "Delete it automatically; one-line methods are always Lazy Class or needless indirection."
-      - "Keep it if the name creates a useful abstraction boundary and protects callers from a calculation likely to change."
+      - "Keep it: the name forms a useful abstraction boundary over a volatile calculation."
       - "Inline it everywhere because fewer methods always means lower cognitive load."
       - "Rename it to a shorter abbreviation so the one-line method looks less important."
     correct_index: 1

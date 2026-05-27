@@ -25,7 +25,7 @@ questions:
     question: "Which description best captures how a Scrum Team should operate?"
     options:
       - "A group of specialists who wait for detailed instructions from a project manager."
-      - "A cross-functional, self-managing team that holds all the skills needed to deliver a usable Increment and decides internally how to do the work."
+      - "A cross-functional, self-managing team that ships a usable Increment each Sprint."
       - "A temporary task force assembled only for the duration of a single feature, then disbanded."
       - "A pair of senior engineers who design the work and direct junior engineers to implement it."
     correct_index: 1
@@ -97,7 +97,7 @@ questions:
     question: "What is the primary purpose of the Daily Scrum?"
     options:
       - "To give upper management a daily status report on each Developer's work."
-      - "For the Developers to inspect progress toward the Sprint Goal and adapt the plan for the next day."
+      - "For the Developers to inspect Sprint Goal progress and adapt tomorrow's plan."
       - "To demonstrate newly completed features to external stakeholders."
       - "To refine and estimate future Product Backlog items."
     correct_index: 1
@@ -133,7 +133,7 @@ questions:
     question: "A large enterprise adopts SAFe (Scaled Agile Framework) to coordinate dozens of teams on one product. Critics often label SAFe *'Scrum-but-for-managers'*. What is the most substantive critique their label points at?"
     options:
       - "SAFe replaces working software with documentation as the primary measure of progress."
-      - "SAFe reduces individual team autonomy through extensive cross-team planning and synchronization requirements."
+      - "SAFe trades team autonomy for heavy cross-team planning and synchronization."
       - "SAFe forbids retrospectives at the team level, leaving teams unable to improve."
       - "SAFe requires every Developer to take on managerial responsibilities."
     correct_index: 1
@@ -180,7 +180,7 @@ questions:
     difficulty: intermediate
     question: "What is the **Sprint Review** primarily for, and how is it different from the Sprint Retrospective?"
     options:
-      - "Inspecting the product Increment with stakeholders and adapting the Product Backlog based on their feedback — distinct from the Retrospective, which inspects the team's process."
+      - "Inspecting the Increment with stakeholders and adapting the Product Backlog — distinct from the Retrospective, which inspects the team's process."
       - "Inspecting the team's internal collaboration and committing to a process improvement — the same purpose as the Retrospective, with stakeholders present."
       - "Demonstrating slides about what the team plans to build next Sprint — distinct from the Retrospective, which reviews completed work."
       - "Approving Developers' time-off and managing personnel issues — distinct from the Retrospective, which is purely about engineering practices."

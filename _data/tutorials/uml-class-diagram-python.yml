@@ -1891,7 +1891,7 @@ steps:
           options:
             - "Both filled (composition) — because both are `1..*`"
             - "Both hollow (aggregation) — because both are collections"
-            - "Filled University–Department (created by the university); hollow Department–Professor (independent)"
+            - "Filled University–Department; hollow Department–Professor"
             - "Hollow between University and Department; filled between Department and Professor"
           correct_index: 2
           explanation: |
@@ -2532,7 +2532,7 @@ steps:
           type: single
           options:
             - "UML runs the code and finds bugs automatically"
-            - "UML shows visual structure — bloated classes and missing links become obvious"
+            - "Visual structure makes bloated classes and missing links obvious"
             - "UML translates the code into a different programming language"
             - "UML counts the lines of code in each class"
           correct_index: 1
@@ -2556,7 +2556,7 @@ steps:
           type: single
           options:
             - "Because Course and Instructor are in different files"
-            - "Because the Instructor exists independently of the Course's lifecycle"
+            - "Because the Instructor's lifecycle is independent of Course"
             - "Because Instructor is abstract"
             - "Because there is no multiplicity notation"
           correct_index: 1

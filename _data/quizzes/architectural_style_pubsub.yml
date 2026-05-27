@@ -114,7 +114,7 @@ questions:
       A mobile chat app must continue to deliver messages to users whose phones were offline for hours. Which pub-sub feature is the team relying on?
     options:
       - "Space decoupling — subscribers don't need to know publisher addresses."
-      - "Time decoupling — the broker buffers events so offline subscribers can catch up on reconnect."
+      - "Time decoupling — the broker buffers events for offline subscribers."
       - "Synchronization decoupling — the publisher does not block."
       - "Content-based routing — only relevant messages are delivered."
     correct_index: 1
@@ -134,7 +134,7 @@ questions:
       Your team adopts a content-based pub-sub broker so subscribers can register predicates like `region == 'EU' AND amount > 10000`. After three months, broker CPU is saturated at 80% and the team is debating switching to topic-based. Under what condition is this switch justified?
     options:
       - "Always — content-based is never appropriate at scale."
-      - "When the predicates partition cleanly into a small number of stable categories that can become topics."
+      - "When the predicates partition cleanly into a few stable categories that map to topics."
       - "When the team wants to add wildcard support, since content-based has no equivalent."
       - "When the team wants stronger delivery guarantees — only topic-based supports QoS."
     correct_index: 1
@@ -153,8 +153,8 @@ questions:
     question: |
       An architect proposes pub-sub for syncing inventory counts across a global e-commerce platform. The product manager pushes back: "we need every region to see the same count instantly so we never oversell." How should the architect respond?
     options:
-      - "Agree — pub-sub delivers events instantly to all subscribers, so all regions will see the same count."
-      - "Asynchronous pub-sub is only eventually consistent — strong global consistency needs a different coordination style."
+      - "Agree — pub-sub delivers events instantly, so all regions see the same count."
+      - "Asynchronous pub-sub is only eventually consistent; this need is different."
       - "Switch to topic-based pub-sub, which guarantees consistency across topics."
       - "Use exactly-once delivery, which makes pub-sub strongly consistent."
     correct_index: 1
@@ -174,7 +174,7 @@ questions:
       You inherit a system whose architecture diagram shows 20 microservices, each connected by a single arrow to a central "Event Bus" component. After three weeks you still cannot answer "which services break if we change the `UserDeleted` payload?" What is the root cause of your confusion, per Fairbanks?
     options:
       - "The diagram is missing the QoS configuration on each connection."
-      - "It captures the *runtime* connectivity but hides the *design-time* producer→consumer relationships needed for change-impact analysis."
+      - "It shows runtime connectivity but hides the design-time producer→consumer links."
       - "The diagram should also show the deployment tiers, since pub-sub depends on them."
       - "Microservice architectures cannot be diagrammed; you need to read the code instead."
     correct_index: 1
@@ -215,7 +215,7 @@ questions:
     options:
       - "Topic names are implementation details and should never appear in architecture documentation."
       - "Publish-subscribe removes all coupling, so the missing data must be a hardware fault."
-      - "Topic names are runtime connectors; pub-sub needs topic inventories, schemas, contract tests, or tracing to catch broken message-flow contracts."
+      - "Topic names are runtime connectors; pub-sub needs schemas or contract tests to catch breaks."
       - "The system should be converted to layered architecture because layered systems cannot have string mismatches."
     correct_index: 2
     option_feedback:

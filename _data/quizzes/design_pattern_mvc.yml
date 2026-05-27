@@ -8,7 +8,7 @@ questions:
     question: |
       MVC is called a "compound pattern." Which three design patterns does it combine, and what role does each play?
     options:
-      - "Observer (model→view notification), Strategy (view delegates to controller), Composite (view is a tree of UI components)"
+      - "Observer (model→view notify), Strategy (view delegates to controller), Composite (nested UI tree)"
       - "Singleton (one model), Factory Method (create views), Adapter (controller adapts input)"
       - "State (model states), Mediator (controller mediates), Facade (view simplifies display)"
       - "Iterator (traverse model data), Command (controller commands), Decorator (view decorates output)"
@@ -49,7 +49,7 @@ questions:
       A team uses MVC for a simple CRUD form with one view and no plans for additional views. A colleague suggests the architecture is over-engineered. Is this criticism valid?
     options:
       - "No — MVC should always be used for any application with a user interface"
-      - "Yes — for simple UIs, MVC's three-component division adds complexity without proportionate benefit"
+      - "Yes — for simple UIs, MVC's three components cost more than they return"
       - "No — MVC is necessary for any application that handles user input"
       - "Yes — but only because CRUD forms should use the State pattern instead"
     correct_index: 1
@@ -69,7 +69,7 @@ questions:
       The Model in MVC automatically notifies all registered Views whenever its state changes. A developer adds 50 Views to the same Model. Performance degrades. What Observer-specific problem has MVC inherited?
     options:
       - "The lapsed listener problem — observers that should have detached stay subscribed and leak memory"
-      - "The notification storm problem — every model change broadcasts to every view, many of which don't need to update"
+      - "Notification storm — every model change broadcasts to every view, even ones that don't need it"
       - "The inverted dependency problem — registration points one way in code while data flows the other"
       - "The god class problem — one class accumulates too many responsibilities"
     correct_index: 1
@@ -129,7 +129,7 @@ questions:
       A team builds a server-side web app in Ruby on Rails. The Controller receives an HTTP request, updates the Model, then selects a template and renders HTML. The View never subscribes to model change events. Which statement best characterizes this architecture relative to classic Smalltalk MVC?
     options:
       - "It is identical to classic MVC — the request-response cycle is just an implementation detail"
-      - "It is a server-side adaptation sometimes called 'Model 2'; the View does not observe the Model, which is closer to Model-View-Adapter than to classic MVC"
+      - "It is a server-side adaptation ('Model 2'); without view→model observation it is closer to Model-View-Adapter"
       - "It is not MVC at all because it lacks a Controller — Rails uses MVT (Model-View-Template) instead"
       - "It is the Document-View variant from POSA1, used by MFC and ET++"
     correct_index: 1
@@ -149,7 +149,7 @@ questions:
       An Android team rewrites a screen using MVVM. Compared to MVP's Passive View variant, what does the ViewModel add that the Presenter does not?
     options:
       - "A way to make the View completely passive and forward all events to the mediator"
-      - "View-shaped state exposed through data binding, so the View updates without an Observer subscription"
+      - "View-shaped state exposed through data binding, removing the manual Observer wiring"
       - "A swappable input-handling Strategy so the controller can be replaced at runtime"
       - "A Composite structure for nested UI components"
     correct_index: 1

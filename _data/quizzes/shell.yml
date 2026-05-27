@@ -7,7 +7,7 @@ questions:
     question: "A developer needs to parse a massive log file, extract IP addresses, sort them, and count unique occurrences. Instead of writing a 500-line Python script, they use `grep | cut | sort | uniq -c`. Why is this approach fundamentally preferred in the UNIX environment?"
     options:
       - "Because shell scripts execute faster than compiled C or C++ programs."
-      - "It adheres to the UNIX philosophy of combining small, single-purpose programs that communicate via universal text streams."
+      - "It follows the UNIX philosophy: chain small single-purpose tools through text streams."
       - "Because `cut` and `sort` are built-in OS functions that completely bypass the system's kernel."
       - "It prevents the operating system from allocating memory to background processes."
     correct_index: 1
@@ -27,7 +27,7 @@ questions:
     question: "A script runs a command that generates both useful output and a flood of permission error messages. The user runs `script.sh > output.txt`, but the errors still clutter the terminal screen while the useful data goes to the file. What underlying concept explains this behavior?"
     options:
       - "The terminal always mirrors file output for security reasons."
-      - "Standard Output (stdout) and Standard Error (stderr) are entirely separate data streams; the `>` operator only redirected stdout."
+      - "Stdout and stderr are separate streams; `>` only redirects stdout."
       - "The script is missing the `#!/bin/bash` shebang, causing it to execute in a fallback compatibility mode."
       - "Standard Error cannot be redirected in UNIX systems and must always be printed to the screen to alert the user."
     correct_index: 1
@@ -48,7 +48,7 @@ questions:
     options:
       - "Bash automatically exports all variables to the global environment by default."
       - "The developer forgot to use the `let` keyword when declaring the variable."
-      - "Bash has no block-level scoping — variables set inside loops or `if`-statements remain visible afterward."
+      - "Bash has no block-level scoping; loop and `if` variables leak afterward."
       - "The script was executed with `sudo` privileges, which ignores standard scoping rules."
     correct_index: 2
     option_feedback:
@@ -67,7 +67,7 @@ questions:
     question: "You want to use a command that requires two file inputs (like `diff`), but your data is currently coming from the live outputs of two different commands. Instead of creating temporary files on the disk, you use the `<(command)` syntax. What is this concept called and what does it achieve?"
     options:
       - "Piping; it concatenates the outputs of both commands into a single, unified text stream."
-      - "Process substitution; it runs the commands and treats their outputs as if they were temporary files for the primary command to read."
+      - "Process substitution; each command's output is exposed as a file-like input."
       - "I/O Redirection; it overwrites the standard input of the `diff` command with standard error."
       - "Arithmetic expansion; it mathematically evaluates the commands and returns their integer exit codes."
     correct_index: 1
@@ -87,7 +87,7 @@ questions:
     question: "A script contains entirely valid Python code, but the file is named `script.sh` and has `#!/bin/bash` at the very top. When executed via `./script.sh`, the terminal throws dozens of 'command not found' and syntax errors. What is the fundamental misunderstanding here?"
     options:
       - "The file extension '.sh' forces the operating system to compile it as a C program."
-      - "The shebang (`#!`) dictates which interpreter the OS uses to execute the file, completely overriding the file's extension or the actual code syntax."
+      - "The shebang (`#!`) picks the interpreter; the file extension is irrelevant."
       - "Python scripts cannot be made executable via `chmod +x` and must always be run using the 'python' keyword."
       - "The script requires the `set -e` flag to switch the shell into a dynamic Python compatibility mode."
     correct_index: 1
@@ -108,7 +108,7 @@ questions:
     options:
       - "Escape characters (`\\`) to neutralize the literal numbers."
       - "The `*` wildcard to capture the whole string."
-      - "Anchors (`^` and `$`) to strictly bind the match to the start and end of the string."
+      - "Anchors `^` and `$` to bind the match to both string boundaries."
       - "Named groups to extract the exact digits into memory."
     correct_index: 2
     option_feedback:
@@ -228,7 +228,7 @@ questions:
     options:
       - "The `wc` command does not support filenames with spaces."
       - "The variable name `LOGFILE` must be lowercase in Bash."
-      - "The unquoted `$LOGFILE` expansion is word-split on the space into two separate arguments."
+      - "Unquoted `$LOGFILE` word-splits on the space into two arguments."
       - "The `.log` extension is not recognized as a text file by `wc -l`."
     correct_index: 2
     option_feedback:

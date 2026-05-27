@@ -8,7 +8,7 @@ questions:
     options:
       - "To expose only the executable logic while hiding personally-identifiable user data for security purposes."
       - "To maximize execution speed by placing all related components into a single file"
-      - "To define an interface that reveals what a module does while isolating other modules from the impact of changes to implementation details"
+      - "To define an interface that reveals what a module does and isolates callers from changes to its internals"
       - "Ensure that module decomposition follows the chronological steps outlined in a processing flowchart."
     correct_index: 2
     option_feedback:
@@ -38,7 +38,7 @@ questions:
     options:
       - "When precisely following all TDD steps, information hiding is always guaranteed"
       - "TDD results in larger and more complex interfaces of methods & classes"
-      - "TDD encourages low coupling and small interfaces, but does not guarantee architecture-level information hiding"
+      - "TDD nudges toward small interfaces but doesn't guarantee architectural hiding"
       - "TDD only improves information hiding if tests are generated from UML diagrams"
     correct_index: 2
     option_feedback:
@@ -53,7 +53,7 @@ questions:
     options:
       - "Single Responsibility Principle, because each tool focuses on one task"
       - "Interface Segregation Principle, because they are three separate streams instead of one"
-      - "Information Hiding because programs cannot make assumptions about which input or output device is providing the data."
+      - "Information Hiding, because programs need not know which device produced the data."
       - "Separation of Concerns, because stderr is separated from stdout."
     correct_index: 2
     option_feedback:
@@ -113,7 +113,7 @@ questions:
     options:
       - "The system must delay the choice until runtime (e.g., using the Strategy design pattern)"
       - "The choice will be made by the user based on the most important user story."
-      - "One and only one module in the system should know the exhaustive list of alternatives that are supported"
+      - "One module should know the full list of supported alternatives"
       - "All modules must be designed to have a single purpose or function."
     correct_index: 2
     option_feedback:
@@ -187,7 +187,7 @@ questions:
     question: "What is a direct implication of the CAP theorem?"
     options:
       - "MySQL is more suitable for data-intense systems than MongoDB"
-      - "Distributed systems face inherent trade-offs between key data-management properties"
+      - "Distributed systems face inherent trade-offs between key properties"
       - "Non-error responses always include the most recent write"
       - "ATM systems do not let users withdraw money during a network outage"
     correct_index: 1

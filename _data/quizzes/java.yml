@@ -43,7 +43,7 @@ questions:
       ```
     options:
       - "true, true — autoboxing reuses the same object"
-      - "false, true — boxed `200` is two heap objects; `==` is reference equality"
+      - "false, true — boxed `200` is two heap objects"
       - "Compile error — == cannot be applied to Integer"
       - "true, false — == compares values for boxed integers"
     correct_index: 1
@@ -69,7 +69,7 @@ questions:
       ```
     options:
       - "n is assigned 0 — the default value for int"
-      - "NullPointerException — auto-unboxing calls .intValue() on null, which throws"
+      - "NullPointerException — auto-unboxing calls `.intValue()` on null"
       - "Compile error — you cannot assign Integer to int"
       - "n is assigned -1 — Java uses -1 as a null sentinel for int"
     correct_index: 1
@@ -98,7 +98,7 @@ questions:
       You suggest changing `Integer sum` to `int sum`. What is the precise reason?
     options:
       - "There is no meaningful difference — the JIT compiler optimizes the boxing away"
-      - "`sum += i` boxes the result into a new `Integer` each iteration — a million heap allocations."
+      - "`sum += i` boxes into a new `Integer` each iteration — a million heap allocations."
       - "Integer is 64-bit but int is 32-bit, so int is faster for addition"
       - "Integer does not support the `+=` compound operator"
     correct_index: 1
@@ -145,7 +145,7 @@ questions:
       All fields are `private`. Has information hiding (Parnas) been achieved?
     options:
       - "Yes — the field is `private`, so the internal representation is fully hidden"
-      - "No — the return type `ArrayList<Integer>` leaks the storage decision through the public API."
+      - "No — the return type `ArrayList<Integer>` leaks the storage decision."
       - "Yes — information hiding and encapsulation are the same concept"
       - "Partially — the ArrayList is hidden, but the Integer type is exposed"
     correct_index: 1
@@ -167,7 +167,7 @@ questions:
       `Dog`, `Car`, and `Printer` each need a `serialize()` method. They share no fields or common behavior. Which Java construct is the right fit?
     options:
       - "An abstract class `Serializable` that all three extend — abstract classes define shared contracts"
-      - "An interface `Serializable` that all three implement — unrelated classes share a contract, not state or implementation"
+      - "An interface `Serializable` that all three implement — unrelated classes share a contract, not state"
       - "A concrete base class `Serializable` with a default serialize() body that each class can override"
       - "Generics — `class Serializable<T>` allows serialize() to be parameterized"
     correct_index: 1
@@ -188,7 +188,7 @@ questions:
     question: "Why is `ArrayList<int>` illegal in Java, while `vector<int>` is valid in C++?"
     options:
       - "ArrayList only supports String and Object types"
-      - "Type erasure requires type parameters to be reference types — use `ArrayList<Integer>` instead"
+      - "Type erasure requires type parameters to be reference types"
       - "You need to import `java.util.primitives` to use int with generics"
       - "ArrayList<int> is valid — it is equivalent to ArrayList<Integer>"
     correct_index: 1
@@ -215,7 +215,7 @@ questions:
       ```
     options:
       - "instanceof requires an interface, not a class"
-      - "Type erasure makes `List<String>` and `List<Integer>` indistinguishable at runtime"
+      - "Type erasure makes `List<String>` and `List<Integer>` indistinguishable"
       - "You need a cast before using instanceof on a generic type"
       - "instanceof doesn't work on interface types like List"
     correct_index: 1
@@ -267,7 +267,7 @@ questions:
       ```
     options:
       - "HashMap does not support String keys"
-      - "NullPointerException — `get()` returns `null` for missing keys, and unboxing `null` to `int` throws"
+      - "NullPointerException — `get()` returns `null` and unboxing `null` to `int` throws"
       - "Compile error — `get()` returns `Object`, which cannot be assigned to `int`"
       - "Nothing — the default value `0` is returned for missing keys"
     correct_index: 1
@@ -310,7 +310,7 @@ questions:
       In a Java constructor, where must `super(args)` appear, and what happens if you omit it?
     options:
       - "Anywhere in the constructor — Java inserts it last if omitted"
-      - "It must be the FIRST statement; if omitted, Java tries to insert `super()` and errors if the parent has no no-arg constructor."
+      - "First statement; Java implicitly inserts `super()` if omitted, failing without a no-arg parent."
       - "After field initializations (`this.field = value`) so the parent doesn't overwrite them"
       - "`super()` is optional and only needed if you want to pass arguments to the parent"
     correct_index: 1

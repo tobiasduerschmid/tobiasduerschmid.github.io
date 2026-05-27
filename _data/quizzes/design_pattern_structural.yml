@@ -29,7 +29,7 @@ questions:
       A colleague says: "We should use an Adapter between our service and the database layer." Your team wrote both the service and the database layer. What is the best response?
     options:
       - "Good idea — Adapters always improve decoupling"
-      - "Unnecessary — since you control both interfaces, refactor one to match the other directly"
+      - "Unnecessary — you own both sides, so refactor one to match the other"
       - "Use a Facade instead — it simplifies complex subsystems"
       - "Use a Mediator instead — it coordinates between components"
     correct_index: 1
@@ -89,7 +89,7 @@ questions:
       A `HomeTheaterFacade` exposes `watchMovie()`, `endMovie()`, `listenToMusic()`, `stopMusic()`, `playGame()`, `setupKaraoke()`, and `calibrateSystem()`. The class is growing difficult to maintain. What is the best architectural response?
     options:
       - "Replace the Facade with a Mediator pattern"
-      - "Split into multiple focused Facades: PlaybackFacade, SetupFacade, CalibrationFacade"
+      - "Split it into multiple narrower Facades organized by responsibility"
       - "Add an Adapter between the Facade and each subsystem"
       - "Convert to a Singleton so there is only one Facade instance"
     correct_index: 1
@@ -109,7 +109,7 @@ questions:
       The Facade's communication is **one-directional**: the Facade calls subsystem classes, but the subsystem does not know about the Facade. The Mediator's communication is **bidirectional**. Why does this distinction matter architecturally?
     options:
       - "One-directional communication is always faster than bidirectional"
-      - "The subsystem can run independently of the Facade; Mediator colleagues require the mediator to interact"
+      - "The subsystem stays usable without the Facade; Mediator colleagues need their mediator"
       - "Facades only work with structural patterns; Mediators only with behavioral patterns"
       - "There is no practical difference — both achieve decoupling"
     correct_index: 1

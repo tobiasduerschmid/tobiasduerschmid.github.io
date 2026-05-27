@@ -848,7 +848,7 @@ steps:
           type: single
           options:
             - "A bug in the code"
-            - "An actor — a person or team that requests a change"
+            - "An actor — a person or team requesting change"
             - "A new programming language feature"
             - "The number of methods in the class"
           correct_index: 1
@@ -1547,7 +1547,7 @@ steps:
           type: single
           options:
             - "None — dependency injection is always good practice here."
-            - "It recreates the original coupling — a Matching-Ops change silently changes T&S."
+            - "It re-creates the coupling: a Matching-Ops change silently changes T&S."
             - "It violates the Open/Closed Principle by adding a new dependency."
             - "It violates the Liskov Substitution Principle's contract rule."
           correct_index: 1
@@ -1977,7 +1977,7 @@ steps:
           type: single
           options:
             - "Performance degradation — the longer elif chain makes the method slower"
-            - "Unintended side effects — modifying shared code to add a feature can silently break existing behavior that is not covered by tests"
+            - "Unintended side effects — editing shared code can silently break untested branches"
             - "Memory leaks — each new elif branch allocates objects that are never freed"
             - "Type safety violations — Python cannot check that each branch returns the same type"
           correct_index: 1
@@ -2667,7 +2667,7 @@ steps:
           type: single
           options:
             - "No — each class handles both formatting and export coordination, which are two responsibilities"
-            - "Yes — each class changes only when the serialization rules for its specific format change (e.g., CsvFormat changes only if CSV formatting rules change)"
+            - "Yes — each class changes only when its own format's serialization rules change"
             - "No — all three classes share the same abstract base class, so a change to ExportFormat forces all of them to change"
             - "Yes — but only because they are small classes; SRP does not apply to classes with fewer than 50 lines"
           correct_index: 1
@@ -2680,7 +2680,7 @@ steps:
           options:
             - "They must modify `ReportExporter.export()` to add a new elif branch for 'markdown'"
             - "They must modify `ExportFormat` to add a `to_markdown()` method alongside `format_report()`"
-            - "They only need to create a new `MarkdownFormat` class extending `ExportFormat` and register it with the exporter — no existing code changes"
+            - "Add a new `MarkdownFormat(ExportFormat)` and register it — no existing code changes"
             - "They must modify all three existing format classes to ensure compatibility with the new format"
           correct_index: 2
           explanation: |
@@ -3393,7 +3393,7 @@ steps:
             - "Be allowed to throw a new exception type that the parent's contract didn't declare, as long as it's documented in the subclass's docstring"
           correct_indices: [0, 1]
           explanation: |
-            LSP is about **behavioral compatibility**. A subclass can't reject inputs the parent accepts (no strengthening preconditions — option 3 is the *opposite* of what LSP requires; the smile-vs-frown picture says preconditions get *weaker* in subtypes, not stronger) and can't surprise callers with exceptions the parent never declared (option 4 is the classic Refused-Bequest dressed up as documentation). Both options 3 and 4 are misconceptions students arrive with from intuition — "specific subtypes should be stricter" and "documenting an exception makes it OK." Neither survives contact with the contract: callers wrote against the parent's promises, not the subclass's footnotes.
+            LSP is about **behavioral compatibility**. A subclass can't reject inputs the parent accepts (no strengthening preconditions — the "restrict inputs" option is the *opposite* of what LSP requires; the smile-vs-frown picture says preconditions get *weaker* in subtypes, not stronger) and can't surprise callers with exceptions the parent never declared (the "new exception in docstring" option is the classic Refused-Bequest dressed up as documentation). Both are misconceptions students arrive with from intuition — "specific subtypes should be stricter" and "documenting an exception makes it OK." Neither survives contact with the contract: callers wrote against the parent's promises, not the subclass's footnotes.
 
         - question: |
             A `PaymentProcessor` base class defines `refund(txn_id)` with the postcondition "returns `{"success": True, "amount": <float>}`." A `GiftCardProcessor` subclass returns `{"success": False, "error": "non-refundable"}` instead. A teammate argues: *"It still returns a dict with the right keys, so it follows the contract."*
@@ -6278,7 +6278,7 @@ steps:
           type: single
           options:
             - "The OpenWeatherMap module — it's the one providing the data"
-            - "The dashboard module — the abstraction describes what the high-level module needs"
+            - "The dashboard module — the abstraction reflects what the consumer needs"
             - "A separate 'abstractions' module that neither owns"
             - "It doesn't matter who owns it as long as it exists"
           correct_index: 1
@@ -6316,7 +6316,7 @@ steps:
           type: single
           options:
             - "Because it has too many methods — DIP requires minimal interfaces"
-            - "The abstraction is shaped by the provider, not the dashboard — dependency still flows the wrong way"
+            - "The abstraction is shaped by the provider, not the consumer — wrong direction"
             - "Because ABCs shouldn't have the same method names as concrete classes"
             - "Because DIP requires using Protocols, not ABCs"
           correct_index: 1
@@ -6848,7 +6848,7 @@ steps:
           type: single
           options:
             - "Open/Closed Principle — you cannot add new log formats without modifying the class"
-            - "Single Responsibility Principle — formatting policy and persistence policy are two separate reasons to change"
+            - "Single Responsibility Principle — formatting and persistence are separate reasons to change"
             - "Liskov Substitution Principle — Logger cannot be substituted for its parent"
             - "Interface Segregation Principle — the interface is too wide"
           correct_index: 1
@@ -6873,7 +6873,7 @@ steps:
           options:
             - "Interface Segregation Principle — PremiumUser should not inherit free_trial_signup()"
             - "Open/Closed Principle — PremiumUser modifies the behavior instead of extending it"
-            - "Liskov Substitution Principle — PremiumUser cannot be used wherever User is expected because it raises an unexpected exception"
+            - "Liskov Substitution Principle — PremiumUser raises where callers expect a return value"
             - "Single Responsibility Principle — PremiumUser has more than one reason to change"
           correct_index: 2
           explanation: |
@@ -6895,7 +6895,7 @@ steps:
             **Snippet 5 — ReportGenerator:** This class directly instantiates `PdfRenderer()` and `SqlConnection()` in its constructor. Which principle does it violate?
           type: single
           options:
-            - "Dependency Inversion Principle — the high-level ReportGenerator depends on concrete low-level classes instead of abstractions"
+            - "Dependency Inversion Principle — the high-level class depends on concrete low-level classes"
             - "Single Responsibility Principle — it generates reports and also manages database connections"
             - "Liskov Substitution Principle — PdfRenderer cannot be substituted for another renderer"
             - "Open/Closed Principle — you cannot add new report types without modifying this class"
@@ -8079,7 +8079,7 @@ steps:
           options:
             - "It violates the Open/Closed Principle because you cannot add new operations"
             - "It violates the Interface Segregation Principle because the interfaces are too small"
-            - "It applies SOLID to a problem that does not have enough complexity to justify it — the abstractions add indirection without any benefit"
+            - "It applies SOLID to a problem too simple to justify the indirection"
             - "It violates the Single Responsibility Principle because MathEngine does four things"
           correct_index: 2
           explanation: |
@@ -8105,7 +8105,7 @@ steps:
           options:
             - "SRP — each class has one reason to change, so CheckoutService does not need to know about formats"
             - "ISP — the Book interface is minimal, so new types implement only what they need"
-            - "LSP enables OCP — because every Book subtype fulfills the same checkout contract (LSP), CheckoutService can handle new types without modification (OCP)"
+            - "LSP enables OCP — uniform Book contract lets CheckoutService skip type checks"
             - "DIP — CheckoutService depends on an abstraction, so it does not know about concrete types"
           correct_index: 2
           explanation: |
@@ -8116,7 +8116,7 @@ steps:
           type: single
           options:
             - "It makes the code run faster because abstract classes are optimized by Python"
-            - "DIP enables OCP — new logger or writer implementations slot in without changing CheckoutService"
+            - "DIP enables OCP — new implementations slot in without changing CheckoutService"
             - "It prevents anyone from ever using FileLogger or CsvReportWriter again"
             - "It satisfies ISP by splitting the logging interface into smaller pieces"
           correct_index: 1
@@ -8448,7 +8448,7 @@ steps:
           type: single
           options:
             - "SRP — the class handles too many carriers"
-            - "OCP — adding a new carrier requires editing tested code instead of extending"
+            - "OCP — adding a carrier means editing tested code, not extending"
             - "LSP — carriers cannot be substituted for each other"
             - "DIP — OrderService depends on concrete carrier strings"
           correct_index: 1
@@ -8484,7 +8484,7 @@ steps:
           type: single
           options:
             - "Yes — passing dependencies through the constructor is Dependency Inversion"
-            - "Only partially — that's DI; for DIP, the parameter type must be an abstraction the high-level class owns"
+            - "Only partially — that's DI; DIP needs the parameter to be an abstraction"
             - "No — DIP can only be achieved with a dependency-injection framework"
             - "Yes, once they add a type hint it becomes DIP"
           correct_index: 1
@@ -8512,7 +8512,7 @@ steps:
           type: single
           options:
             - "They're five independent rules — you satisfy each one separately"
-            - "They form a chain — LSP makes OCP safe, ISP prevents LSP violations, DIP keeps the chain swappable"
+            - "They form a chain: LSP enables OCP, ISP protects LSP, DIP keeps it swappable"
             - "They're ordered from most important (SRP) to least important (DIP)"
             - "They apply only to object-oriented languages with inheritance"
           correct_index: 1

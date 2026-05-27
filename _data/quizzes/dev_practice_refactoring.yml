@@ -57,7 +57,7 @@ questions:
       A team wants to refactor a tangled billing module. What is the safest sequence?
     options:
       - "Rewrite the module in one branch, then run tests at the end."
-      - "Run the current tests, make one small transformation, run the tests again, commit or checkpoint, then repeat."
+      - "Green tests, one small transformation, green tests, checkpoint, repeat."
       - "Disable tests that fail during the refactor because they probably depend on internals."
       - "Start by extracting every class that looks large, then decide what behavior changed."
     correct_index: 1
@@ -68,7 +68,7 @@ questions:
         Some tests may be implementation-coupled, but disabling failures before understanding them removes the behavior-preservation signal.
       3: |
         Mechanical extraction without a responsibility model can create shallow classes and new coupling.
-    explanation: "Safe refactoring is a tight feedback loop: green baseline, one behavior-preserving transformation, green verification, checkpoint."
+    explanation: "Safe refactoring is a tight feedback loop: a green baseline, one behavior-preserving transformation, green verification, then a checkpoint before the next step."
 
   - id: 4
     difficulty: advanced

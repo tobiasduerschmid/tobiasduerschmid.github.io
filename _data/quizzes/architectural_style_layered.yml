@@ -29,7 +29,7 @@ questions:
       You profile your strictly layered 7-layer stack and find that 30% of request latency is spent marshaling data through intermediate layers that neither inspect nor modify it. Your team is debating relaxing to allow the top layer to call the bottom layer directly for read paths. What is the principled trade-off?
     options:
       - "It's a free win — relaxed layering preserves all the modifiability benefits while removing the indirection."
-      - "Each bypass adds coupling between non-adjacent layers and erodes portability; deliberate relaxation is only worth a documented hot-path cost."
+      - "Each bypass couples non-adjacent layers and erodes portability; relax only on documented hot paths."
       - "It's never acceptable — strict layering must be preserved under all circumstances."
       - "Move the affected functionality to its own microservice instead."
     correct_index: 1
@@ -49,7 +49,7 @@ questions:
       A new engineer claims "our app server tier and our database tier are two layers." A senior architect disagrees. What is the precise terminology distinction?
     options:
       - "There is no real distinction — *layers* and *tiers* are interchangeable terms."
-      - "*Layers* are design-time abstraction strata; *tiers* are runtime deployment to separate processes or machines."
+      - "*Layers* are design-time abstraction strata; *tiers* are runtime deployment units."
       - "*Tiers* are layers with persistent storage; *layers* are stateless."
       - "*Layers* require strict ordering; *tiers* do not."
     correct_index: 1
@@ -68,10 +68,10 @@ questions:
     question: |
       Your team is migrating from a traditional 4-layer architecture (UI / Service / Repository / Database) to **Clean Architecture**. Which of these are real *benefits* of the inversion (Domain at the center, infrastructure on the outside)? Select all that apply.
     options:
-      - "Business logic can be unit-tested without spinning up a database or HTTP stack."
-      - "Swapping the database from PostgreSQL to DynamoDB requires no change to domain code."
+      - "Business logic can be unit-tested without a database or HTTP stack."
+      - "Swapping PostgreSQL for DynamoDB requires no change to domain code."
       - "The system runs faster because there are fewer layer boundaries."
-      - "A new UI framework (web, mobile, CLI) can be added as a new outer adapter without touching the domain."
+      - "A new UI (web, mobile, CLI) plugs in as an outer adapter without domain edits."
       - "Cyclic dependencies are now mathematically impossible to introduce."
     correct_indices: [0, 1, 3]
     option_feedback:
@@ -95,7 +95,7 @@ questions:
     options:
       - "Add a one-time exception and import the UI banner module from the driver layer."
       - "Move the UI banner code into the driver layer so the call is local."
-      - "Define a `FaultListener` interface below the driver layer; the UI registers an implementation that the driver invokes."
+      - "Define a `FaultListener` interface in the driver layer; the UI registers an implementation."
       - "Poll: have the UI layer query the driver every 100 ms to check for faults."
     correct_index: 2
     option_feedback:
@@ -114,7 +114,7 @@ questions:
       Three months ago your team was a clean strict-layered stack. Today, code review shows: the UI imports from the Repository, two Service classes import each other, and the Domain layer instantiates a concrete database driver. Which term best describes the result?
     options:
       - "**Relaxed layering** — a deliberate optimization that retains the style's modifiability and portability guarantees."
-      - "**Architectural erosion toward a 'big ball of mud'** — multiple silent rule violations have invalidated the topology and lost the style's promised qualities."
+      - "**Architectural erosion toward a 'big ball of mud'** — silent rule violations have invalidated the topology."
       - "**Hexagonal architecture** — domain calling outward to infrastructure is its defining inversion."
       - "**Clean Architecture** — Service-to-Service references are a hallmark of Clean's reduced ceremony."
     correct_index: 1
@@ -134,7 +134,7 @@ questions:
       Your strictly layered enterprise app has grown to 200K LOC across 6 layers, organized by *technical* function (UI, Controller, Service, Domain, Repository, Database). Every new business feature requires editing all 6 layers, and 4 teams now coordinate on every release. Which evolution best addresses the bottleneck?
     options:
       - "Switch to a single-layer architecture so changes only touch one place."
-      - "Add *domain* (vertical) layering — group code by business capability so each team owns an end-to-end slice."
+      - "Add *domain* (vertical) layering — each team owns an end-to-end business slice."
       - "Eliminate the Service layer; it is redundant with Controller and Domain."
       - "Migrate to microservices immediately — there is no other solution."
     correct_index: 1
@@ -154,7 +154,7 @@ questions:
       A new product manager asks: "why don't we just remove the layers and call whatever needs to be called? Our delivery would be twice as fast." How do you frame the trade-off the architect made when introducing layers?
     options:
       - "Agree — layering is over-engineering and slows down delivery."
-      - "Layers buy modifiability and portability over the system's lifetime — removing them speeds up this sprint but slows every future change."
+      - "Layers buy long-term modifiability and portability — dropping them helps this sprint only."
       - "Layers exist only for testing — if we have integration tests, we can drop them."
       - "Layers exist for performance reasons; removing them would actually slow the system down."
     correct_index: 1
@@ -174,7 +174,7 @@ questions:
       You're designing a small CLI tool that parses CSV files, transforms records, and writes JSON output. A senior engineer suggests skipping layered architecture for this project. Why is that reasonable?
     options:
       - "Layered architecture only applies to operating systems and network protocols — application code uses other styles."
-      - "The tool is short-lived and single-purpose — layering's modifiability and portability benefits would not be exercised, so the design cost pays no dividend."
+      - "The tool is short-lived and single-purpose — layering's modifiability and portability benefits would never be exercised."
       - "Layered architecture only works in object-oriented languages, and the tool is in a procedural language."
       - "CLI tools require a stateful runtime, which the layered style cannot model."
     correct_index: 1
@@ -214,7 +214,7 @@ questions:
       A teammate points at a layered source-code diagram and says: "If the bottom layer fails, the whole app is unavailable, so this diagram tells us our availability risk." What is the best response?
     options:
       - "Agree: layers are runtime components, so availability is directly visible in the layered diagram."
-      - "Disagree: a layered diagram is a module view — availability needs runtime, deployment, and fault-recovery information."
+      - "Disagree: a layered diagram is a module view — availability needs runtime and deployment information."
       - "Agree only if the system uses strict layering rather than relaxed layering."
       - "Disagree because lower layers can never affect upper-layer behavior."
     correct_index: 1

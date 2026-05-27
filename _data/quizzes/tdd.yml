@@ -36,7 +36,7 @@ questions:
       A team starts a 'TDD initiative'. After three months their CI is consistently red, engineers report tests are slowing them down, and pre-release defects are higher than before. A retrospective reveals that engineers write one big test for each feature, code for an hour, then debug for an afternoon. What is the most likely root cause?
     options:
       - "TDD doesn't work for this team — the productivity and defect-rate signals say they should switch to test-after for this codebase."
-      - "The team is in a 'World of Red' because steps are too large — TDD's benefit depends on a fast Red→Green→Refactor rhythm, not on test-first ordering."
+      - "Steps are too large — TDD's benefit depends on a fast Red→Green→Refactor rhythm, not on test-first ordering."
       - "The team needs to mock all external dependencies — defects come from real I/O bleeding into unit tests and slowing the feedback loop."
       - "The team needs to enforce 100% line coverage on every PR — defects are escaping because uncovered code paths are shipping unverified."
     correct_index: 1
@@ -141,7 +141,7 @@ questions:
       A team adopts TDD for a new feature. After two weeks, they have 80 tests, the suite runs in 90 seconds, and the team reports they 'are now afraid to refactor because tests break too easily'. What is the strongest interpretation?
     options:
       - "TDD doesn't work for this team — fear of refactoring is a sign the practice is mismatched to the codebase and they should drop it before more debt accumulates."
-      - "The tests are likely too coupled to implementation details — private collaborators, call sequences, specific data structures — so refactoring breaks assertions while behavior is preserved."
+      - "The tests are too coupled to implementation details — private collaborators, call sequences, data structures — so refactoring breaks assertions while behavior is preserved."
       - "The suite is too fast — slower, more comprehensive tests would be more robust to refactoring because they exercise broader scope per test."
       - "80 tests is too few for confident refactoring — adding more tests of the same kind would build a wider safety net and reduce the fear of touching code."
     correct_index: 1
@@ -161,7 +161,7 @@ questions:
       A team wants to TDD an image-recognition model. They write `assert classify(cat_image) == "cat"` and another `assert classify(dog_image) == "dog"`. The model passes both but ships with poor accuracy on noisy inputs. What is the structural problem with their TDD approach here?
     options:
       - "The team should add more test cases — `cat_image_2`, `cat_image_3`, etc. — until the binary pass/fail count of examples is high enough that overall accuracy is implicitly tested."
-      - "ML systems are *non-binary* — quality is a confidence distribution, not pass/fail — so binary unit-test oracles can't capture the goal. Use a statistical evaluation harness with held-out test sets."
+      - "ML quality is a distribution, not pass/fail — binary unit-test oracles can't capture the goal. Use a statistical evaluation harness with held-out test sets."
       - "The team should use a Mock instead of a real model so the test runs faster and more examples can be added per CI cycle to drive quality up."
       - "The team needs a different ML framework that supports TDD natively — modern frameworks can express binary oracles on aggregate metrics if you configure them correctly."
     correct_index: 1

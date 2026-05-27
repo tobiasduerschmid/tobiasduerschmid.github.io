@@ -88,7 +88,7 @@ questions:
     question: "According to the literature, what happens when a system's descriptive and prescriptive architectures diverge completely?"
     options:
       - "The system becomes more flexible."
-      - "It loses conceptual integrity, accumulates technical debt, and becomes unmaintainable."
+      - "It loses conceptual integrity and accrues debt until unmaintainable."
       - "The descriptive architecture becomes the new prescription."
       - "The system's performance improves through ad-hoc optimizations."
     correct_index: 1
@@ -111,7 +111,7 @@ questions:
       A team says: "The system shall use the same PostgreSQL cluster the customer already uses for all analytics projects." How should an architect classify this statement?
     options:
       - "A high-level functional requirement, because it says what users can do."
-      - "A constraint, because it is a business or technical decision already made that reduces the design space."
+      - "A constraint — a pre-made decision that narrows the design space."
       - "A quality attribute, because databases always determine performance."
       - "A descriptive architecture, because it describes what the code currently does."
     correct_index: 1
@@ -131,7 +131,7 @@ questions:
       Which statement best describes an **architectural driver**?
     options:
       - "Any requirement written by a stakeholder."
-      - "A requirement whose change would plausibly change the architecture."
+      - "A requirement whose change would reshape the architecture."
       - "Any implementation detail chosen by a developer."
       - "A diagram that shows component names and connectors."
     correct_index: 1
@@ -196,7 +196,7 @@ questions:
       Attribute-Driven Design (ADD) is best summarized as:
     options:
       - "Draw all architecture diagrams first, then infer the quality attributes afterward."
-      - "Iteratively select a quality attribute, refine part of the system, sketch candidate decisions, analyze trade-offs, and repeat."
+      - "Pick a quality attribute, sketch design candidates, analyze trade-offs, repeat."
       - "Choose the most popular framework and let its architectural style decide the rest."
       - "Implement the lowest-level modules first so upper layers have something concrete to call."
     correct_index: 1

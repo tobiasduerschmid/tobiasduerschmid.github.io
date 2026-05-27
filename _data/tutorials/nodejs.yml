@@ -219,7 +219,7 @@ steps:
 
         - question: "A Python student writes this JavaScript and gets a syntax error. What is wrong?\n```javascript\nif score >= 60:\n    console.log(\"Pass\")\nelse:\n    console.log(\"Fail\")\n```"
           options:
-            - "JavaScript requires parentheses around the condition `(score >= 60)` and braces `{}` around blocks — not colons and indentation"
+            - "Conditions need parentheses and blocks need braces — not colons and indentation"
             - "JavaScript does not support `if`/`else` — use a ternary operator instead"
             - "The only problem is the missing semicolons after each `console.log()` call"
             - "`console.log` needs to be replaced with `print()` in JavaScript"
@@ -495,7 +495,7 @@ steps:
         - question: "Your teammate's Discord bot code has `if (userRole == 'admin')` and it works in all their tests. Should you flag this in code review? Why or why not?"
           options:
             - "No — both sides are strings so `==` and `===` behave identically, and there is no risk to flag"
-            - "Yes — using `==` hides a habit of relying on coercion, and a future change to a numeric role ID would silently introduce a bug"
+            - "Yes — `==` hides reliance on coercion; if `userRole` later becomes a number, the check silently breaks."
             - "Yes — `==` is measurably slower than `===` at runtime due to the type coercion step, which impacts performance"
             - "No — `==` and `===` are identical for same-type operands, and linters will only flag cross-type comparisons"
           correct_index: 1
@@ -1957,7 +1957,7 @@ steps:
         - question: "A student forgets `module.exports = router` in `studentRoutes.js` but writes correct routes. When they send `GET /api/students`, they get `Cannot GET /api/students`. Why?"
           options:
             - "The routes are syntactically invalid without the export statement at the bottom"
-            - "Without `module.exports`, `require()` returns an empty object — `app.use()` mounts nothing, so no routes match"
+            - "Without `module.exports`, `require()` returns `{}` and `app.use()` mounts nothing."
             - "Express requires a special `registerRouter()` call instead of `module.exports`"
             - "The missing export causes a runtime crash in `app.js` before the server starts"
           correct_index: 1
@@ -1966,7 +1966,7 @@ steps:
         - question: "In a route handler, how do you access a query parameter `?sort=name` vs. a URL parameter `/students/42`?"
           options:
             - "Both use `req.params` — query and URL parameters are stored in the same object"
-            - "Query parameters use `req.query.sort`; URL parameters use `req.params.id` — they are separate objects"
+            - "Query parameters use `req.query.sort`; URL parameters use `req.params.id`"
             - "Query parameters use `req.body.sort`; URL parameters use `req.params.id`"
             - "Both use `req.query` — Express merges all parameter types into one object"
           correct_index: 1
@@ -2563,7 +2563,7 @@ steps:
         - question: "What does `await` actually do inside an `async` function?"
           options:
             - "It blocks the entire Node.js process until the Promise resolves, like a synchronous call in C++"
-            - "It suspends only this async function and frees the call stack, letting the Event Loop process other work until the Promise resolves"
+            - "It suspends this async function and frees the call stack so the Event Loop runs other work."
             - "It creates a new thread to wait for the Promise, similar to `std::thread` in C++"
             - "It converts the Promise into a synchronous value by canceling the async operation"
           correct_index: 1
@@ -2573,7 +2573,7 @@ steps:
           options:
             - "Option A — sequential awaits are optimized by V8 to run in parallel"
             - "Both are the same — await does not affect execution time"
-            - "Option B — `Promise.all` starts both operations concurrently, so total time is ~100ms instead of ~200ms"
+            - "Option B — `Promise.all` runs both concurrently, so total time is ~100ms, not ~200ms."
             - "Option A — `Promise.all` adds overhead that makes it slower for only two Promises"
           correct_index: 2
           explanation: "Option A awaits fetchA first (100ms), then starts fetchB (another 100ms) — total ~200ms. Option B starts both immediately and waits for the slower one — total ~100ms."
@@ -2607,7 +2607,7 @@ steps:
         - question: "An Express Router has three async route handlers that each query a database. How many threads are used to execute these handlers?"
           options:
             - "Three — one thread per route handler for parallel execution"
-            - "One — all handlers share the single-threaded Event Loop; `await` frees the call stack"
+            - "One — all handlers share the single-threaded Event Loop."
             - "It depends on how many requests arrive simultaneously"
             - "Zero — async functions run outside the main thread"
           correct_index: 1
@@ -2951,7 +2951,7 @@ steps:
           type: single
           options:
             - "`Promise.all` spawns a separate thread for each Promise"
-            - "`Promise.all` starts both Promises immediately; total time is the max of the two"
+            - "It starts both Promises immediately; total time is the max of the two."
             - "`Promise.all` bypasses the Event Loop and runs both synchronously"
             - "It is not faster — `Promise.all` is syntactic sugar"
           correct_index: 1
@@ -2967,7 +2967,7 @@ steps:
             ```
           type: single
           options:
-            - "Missing reduce initial value, wrong divisor, and `==` should be `===`"
+            - "Missing reduce initial, wrong divisor, and loose `==`"
             - "`.filter()` should use `.find()` instead"
             - "The `==` operator will crash because types differ"
             - "There is no bug"
@@ -3041,10 +3041,10 @@ steps:
 
         - question: "**Analyze** the output order:\n```javascript\nfs.readFile('data.json', 'utf8', (err, data) => console.log('A'));\nconsole.log('B');\nsetTimeout(() => console.log('C'), 0);\nconsole.log('D');\n```"
           options:
-            - "A, B, C, D"
-            - "B, D, A, C (or B, D, C, A)"
-            - "B, A, D, C"
-            - "A, B, D, C"
+            - "A, then B, then C, then D in source order"
+            - "B and D first, then A and C in some order"
+            - "B first, then A, then D, then C"
+            - "A first, then B, then D, then C"
           correct_index: 1
           explanation: "[Step 8] `B` and `D` are synchronous — they run first. `A` and `C` are async callbacks that fire only after the call stack empties."
 

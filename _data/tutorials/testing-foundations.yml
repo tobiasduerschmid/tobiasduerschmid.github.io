@@ -292,7 +292,7 @@ steps:
           type: single
           options:
             - "Tests are only useful if you already suspect a bug — otherwise they're wasted effort"
-            - "Passing tests confirm that tested behaviors work as specified, but cannot rule out bugs in untested behaviors or inputs"
+            - "Passing tests confirm the tested behaviors, but cannot rule out bugs in untested inputs"
             - "If all tests pass, the code is safe to deploy without further review"
             - "Tests guarantee correctness once you reach 100% line coverage"
           correct_index: 1
@@ -312,7 +312,7 @@ steps:
           type: single
           options:
             - "Tests should be run automatically on every commit, like a security camera scanning each code change"
-            - "Each passing test stays in place to catch regressions — you can refactor and add features fearlessly because the net catches breakage"
+            - "Each passing test stays in place to catch regressions, so you can refactor fearlessly"
             - "You should aim for 100% test coverage as a safety baseline before each release"
             - "Tests should be written in a strict mechanical order: unit tests first, then integration, then end-to-end"
           correct_index: 1
@@ -684,7 +684,7 @@ steps:
           type: single
           options:
             - "Yes — 12 tests is plenty of coverage, and they all exercise the function with realistic inputs"
-            - "No — every test is in the middle of the same partition. Boundaries (2, 3, 12, 13) and invalid inputs are untested, so off-by-one bugs would slip through"
+            - "No — every test is in the middle of one partition. Boundaries and invalid inputs are untested"
             - "Yes — as long as the tests pass, the function is guaranteed correct for all inputs in the tested range"
             - "No — 12 tests is too few for any real function; you need at least 50 tests to be confident"
           correct_index: 1
@@ -703,7 +703,7 @@ steps:
           type: single
           options:
             - "A set of inputs that the function processes in parallel on multi-core hardware"
-            - "A set of inputs that should all produce the same *kind* of behavior, so one representative usually suffices for the middle of the set"
+            - "A set of inputs that all produce the same *kind* of behavior"
             - "A set of inputs that are mathematically equal (e.g., `1.0` and `1`)"
             - "A sub-range of inputs created by dividing the domain into equal-sized chunks"
           correct_index: 1
@@ -722,7 +722,7 @@ steps:
           type: single
           options:
             - "A type error — `days` should be a float but is being compared as an integer"
-            - "A boundary bug — it fails only at one exact value (100) on the edge between two partitions"
+            - "A boundary bug — it fails only at one exact value on a partition edge"
             - "A logic error — the wrong branch of the `if` statement is being taken"
             - "A regression — the function worked correctly before someone introduced the bug"
           correct_index: 1
@@ -1021,7 +1021,7 @@ steps:
           type: single
           options:
             - "A — checking presence is more flexible because it doesn't break on output changes"
-            - "B — it pins every spec-mandated field. A passes for any dict with a `name` key, including completely wrong contents"
+            - "B — it pins every spec-mandated field. A passes for any dict with a `name` key"
             - "Both are equally strong — both succeed for the correct call"
             - "Neither — strong oracles always need multiple `assert` statements, not a single `==`"
           correct_index: 1
@@ -1687,7 +1687,7 @@ steps:
           type: single
           options:
             - "Test A — directly reading the storage is the most reliable way to verify the value was saved"
-            - "Test B — it verifies behavior through the public API; Test A breaks if the storage key or structure changes internally"
+            - "Test B — it goes through the public API; Test A breaks if the storage key changes"
             - "Both are equally robust since both assertions check the same underlying fact"
             - "Neither — storing a name should be tested by checking the return value of the constructor itself"
           correct_index: 1
@@ -1708,7 +1708,7 @@ steps:
           type: single
           options:
             - "The refactoring introduced a bug — changing the algorithm likely changed the output in a subtle way"
-            - "The broken tests are testing implementation details rather than behavior. They should be rewritten to assert on outputs"
+            - "The broken tests check implementation details, not behavior. Rewrite them to assert on outputs"
             - "You should revert the refactoring since passing tests must never be broken, even temporarily"
             - "The tests are too strict — you should lower the assertion precision or add tolerance margins"
           correct_index: 1
@@ -1727,7 +1727,7 @@ steps:
           type: single
           options:
             - "Nothing — large setups are fine as long as the assertion verifies the right thing in the end"
-            - "The Arrange section is too big — this is the *Excessive Setup* smell, signaling that the production code has too many dependencies. Refactor the design"
+            - "The Arrange is too big — *Excessive Setup* signals the production code has too many dependencies"
             - "You should move the setup into a helper function so the test file looks shorter; the underlying design is fine"
             - "You should add more assertions to make the heavy setup feel justified — one assert is not enough for 40 lines of arrangement"
           correct_index: 1
@@ -1746,7 +1746,7 @@ steps:
           type: single
           options:
             - "Suite A is stronger — 100% coverage objectively beats 80%, regardless of assertion quality"
-            - "Suite B is stronger — coverage measures only which lines *ran*, not whether their behavior was verified. A weak oracle with full coverage catches no bugs"
+            - "Suite B is stronger — coverage measures which lines *ran*, not what was verified"
             - "Both are equally strong — both execute the function, which is all that matters for catching bugs"
             - "Neither is strong — industry standard is ≥95% coverage AND mutation testing, so anything less is unacceptable"
           correct_index: 1
@@ -1809,7 +1809,7 @@ steps:
           type: single
           options:
             - "`amount = 50` and `amount = 200` — one value on each side, well away from the boundary"
-            - "`amount = 99` and `amount = 100` — one just below and one at the boundary, catching `>` vs `>=` off-by-one errors"
+            - "`amount = 99` and `amount = 100` — straddle the boundary, catching `>` vs `>=` off-by-ones"
             - "`amount = 0` and `amount = 1000000` — extreme values at the edges of the representable range"
             - "`amount = 1` and `amount = 2` — two adjacent low values to check precision at the small end"
           correct_index: 1
@@ -2306,9 +2306,9 @@ steps:
             A teammate adds `assert result is not None` for `calculate_total()` and says, "Great — the function works." What's the right response?
           type: single
           options:
-            - "Agree — passing tests prove the function works."
-            - "*Weak oracle*: it passes for any non-`None` value. Replace with `assert result == <expected>`."
-            - "Disagree because we don't have 100% line coverage yet."
+            - "Agree — the function passes its test, so the function works as intended."
+            - "*Weak oracle*: replace `is not None` with `== <expected>`."
+            - "Disagree because we don't have 100% line coverage yet for this function."
             - "Disagree — the test is fine but the function name should change."
           correct_index: 1
           option_feedback:
@@ -2327,9 +2327,9 @@ steps:
           type: single
           options:
             - "Open `parse_username`'s source code and write assertions that confirm each code path runs"
-            - "Write `assert parse_username('alice') is not None` — if the function runs without crashing, it works"
-            - "Identify the partitions and boundaries: the valid range [3, 20] has two boundary pairs; pick inputs at each boundary and one representative per partition"
-            - "Start with a single test using a random username and see if it passes"
+            - "Write `assert parse_username('alice') is not None` — if it runs without crashing, the function works"
+            - "Identify partitions and boundaries from the spec; pick boundary inputs and one per partition"
+            - "Start with a single test using a random username and check if it passes"
           correct_index: 2
           option_feedback:
             0: "Starting from the implementation makes your tests confirm what the code *does*, not what it *should* do — the same post-hoc trap from Step 1. Start from the spec: identify the partitions, then find the boundaries."
@@ -2349,9 +2349,9 @@ steps:
           type: single
           options:
             - "The rename introduced a bug — renaming always risks changing behavior"
-            - "Those tests read `_cache` directly — they were testing implementation, not observable behavior."
-            - "You should revert the rename to restore the passing tests"
-            - "Private attributes must never be renamed after the first release"
+            - "Those tests read `_cache` directly — they test implementation, not behavior"
+            - "You should revert the rename to restore the previously passing tests"
+            - "Private attributes must never be renamed once a release has shipped"
           correct_index: 1
           option_feedback:
             0: "The question specifies 'without changing any public method behavior' — behavior is unchanged by definition. Failures after a pure rename signal the tests themselves are the problem, not the rename."

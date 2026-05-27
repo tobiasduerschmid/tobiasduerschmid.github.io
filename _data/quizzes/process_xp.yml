@@ -9,7 +9,7 @@ questions:
       A 200-person organization building flight control software for an aircraft is considering adopting XP. What is the most accurate response?
     options:
       - "XP is the best fit — TDD and pair programming guarantee aerospace-grade quality."
-      - "Poor fit: XP targets small (4–10 person) teams and assumes continuous delivery — neither holds in safety-critical aerospace."
+      - "Poor fit: XP targets small (4–10 person) teams and assumes continuous delivery."
       - "XP works for any team size as long as everyone pair-programs through the larger structure."
       - "XP would work if they replaced TDD with formal code reviews to meet certification standards."
     correct_index: 1
@@ -29,7 +29,7 @@ questions:
       Your team's CI build takes 47 minutes. The team lead says "We're integrating multiple times per day, so we're doing XP CI." Push back — what is XP's specific benchmark, and why does it matter?
     options:
       - "47 minutes is fine — XP only requires integration multiple times per day."
-      - "XP's benchmark is a 10-minute build; past that, developers stop running it locally and CI's feedback loop breaks down."
+      - "XP targets a 10-minute build; past that, devs stop running it and feedback breaks."
       - "Build time is irrelevant; only test count matters."
       - "47 minutes is too short — XP recommends 60-minute builds for thoroughness."
     correct_index: 1
@@ -135,7 +135,7 @@ questions:
       A startup founder argues XP is too rigid for their team of 3. They want to keep TDD and CI but drop the other practices. Why might this be a *false economy*?
     options:
       - "XP is a fixed package — dropping any practice means you are no longer doing XP."
-      - "XP practices are loosely coupled but synergistic — cherry-picking forfeits the reinforcements that make the kept practices work."
+      - "XP practices reinforce one another — cherry-picking forfeits the synergies."
       - "TDD alone delivers the productivity gains; the other practices are nice-to-haves with minor effects."
       - "Startups of three should drop XP entirely and use Scrum's lighter ceremony instead."
     correct_index: 1
@@ -155,7 +155,7 @@ questions:
       An XP team holds a **release planning** meeting and an **iteration planning** meeting. What's the difference, and why are they separate?
     options:
       - "They are the same meeting under two different names — they cover the same agenda twice."
-      - "Release planning sets the road map by value vs cost; iteration planning breaks chosen stories into 1–4 week tasks."
+      - "Release planning sets the road map by value vs cost; iteration planning breaks stories into tasks."
       - "Release planning belongs to waterfall projects; iteration planning is the XP-specific ceremony."
       - "Iteration planning is just the daily standup formalized at the start of each iteration."
     correct_index: 1
@@ -195,7 +195,7 @@ questions:
       An XP team in iteration 3 of a 6-month engagement realizes the customer's most-requested feature is buggy and was based on a flawed assumption. The team wants to discard the work and rebuild on a different approach. Which XP value most directly supports this decision?
     options:
       - "Comprehensive documentation — write down the lessons learned."
-      - "Responding to change over following a plan — iterations exist to surface flawed assumptions cheaply."
+      - "Responding to change over following a plan — iterations exist to surface flawed assumptions."
       - "Sticking to the original plan — XP requires you to finish what you committed to."
       - "Sticking to contractual obligations — what was promised must be delivered."
     correct_index: 1

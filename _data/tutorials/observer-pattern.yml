@@ -344,7 +344,7 @@ steps:
           type: single
           options:
             - "When classes are defined in the same file"
-            - "When one class directly depends on the identity of another class"
+            - "When one class depends on another by name and type"
             - "When you use too many classes in your program"
             - "When your code has too many comments"
           correct_index: 1
@@ -356,7 +356,7 @@ steps:
           type: single
           options:
             - "Just delete the ForecastDisplay class — nothing else"
-            - "Delete the class AND remove two lines from WeatherStation (__init__ and new_measurement)"
+            - "Delete the class and remove two lines from WeatherStation"
             - "You cannot remove it without rewriting the whole program"
             - "Just set forecast = None in __init__"
           correct_index: 1
@@ -368,7 +368,7 @@ steps:
           type: single
           options:
             - "Python can only handle up to 10 objects at once"
-            - "The station would need 50 hard-coded references and cannot add or remove them at runtime"
+            - "The station hard-codes all 50 displays and cannot toggle them at runtime"
             - "Each display would need its own weather station instance"
             - "The current design would actually work fine for 50 displays"
           correct_index: 1
@@ -1034,7 +1034,7 @@ steps:
             In the code you wrote, observers get data by calling `subject.temperature` inside their `update()` method. This is called the **Pull model**. What is the alternative?
           type: single
           options:
-            - "The **Push model**, where the subject sends the data directly as arguments to update()"
+            - "The **Push model**, where the subject sends data as arguments to update()"
             - "The **Poll model**, where observers check for changes on a timer"
             - "The **Callback model**, where observers return data to the subject"
             - "There is no alternative — Pull is the only way"
@@ -1059,7 +1059,7 @@ steps:
           type: single
           options:
             - "TemperatureSensor creates Subject objects"
-            - "TemperatureSensor inherits from Subject (is-a relationship)"
+            - "TemperatureSensor is-a Subject (inheritance)"
             - "TemperatureSensor contains a Subject"
             - "TemperatureSensor calls methods on Subject"
           correct_index: 1
@@ -1720,7 +1720,7 @@ steps:
           type: single
           options:
             - "They are right — always prefer the simpler approach"
-            - "Direct calls work for small, stable systems but break down with runtime add/remove."
+            - "Fine for small, stable systems; break down on runtime add/remove."
             - "The GoF book says to always use Observer, so we must follow it"
             - "Abstract classes make the code faster"
           correct_index: 1
@@ -1732,7 +1732,7 @@ steps:
           type: single
           options:
             - "Subject creates 0 or more Observer objects"
-            - "Subject *aggregates* 0 or more Observers without owning their lifecycle"
+            - "Subject *aggregates* 0 or more Observers (no ownership)"
             - "Subject inherits from 0 or more Observer classes"
             - "Subject deletes 0 or more Observer objects"
           correct_index: 1
@@ -2012,7 +2012,7 @@ steps:
           options:
             - "Push is always better because it is more efficient"
             - "Pull is always better because it is more flexible"
-            - "Pull lets observers choose what data to read but couples them to the subject API"
+            - "Pull is flexible but couples observers to the subject's API"
             - "There is no practical difference between Push and Pull"
           correct_index: 2
           explanation: |
@@ -2043,7 +2043,7 @@ steps:
             - "Yes — observers are always notified in attachment order"
             - "No — the Observer pattern does NOT guarantee notification order"
             - "Yes — Python lists are always ordered, so it is guaranteed"
-            - "Implementation-dependent — our list version preserves order, but the pattern doesn't"
+            - "Implementation-dependent — our list keeps order, the pattern doesn't"
           correct_index: 3
           explanation: |
             Our implementation uses a Python list, which preserves insertion order. But the **Observer pattern itself** does not guarantee order — different implementations might use sets, priority queues, or async dispatch. Your code should **never depend on notification order** between observers, because a future refactoring could change it.
@@ -2120,7 +2120,7 @@ steps:
           type: single
           options:
             - "Single Responsibility Principle — the station does too many things"
-            - "Open/Closed Principle — the station should be open for extension but closed for modification"
+            - "Open/Closed Principle — open for extension, closed for modification"
             - "Liskov Substitution Principle — displays cannot substitute for each other"
             - "Interface Segregation Principle — the station interface is too large"
           correct_index: 1
@@ -2180,7 +2180,7 @@ steps:
           type: single
           options:
             - "Good idea — Observer makes the logging more flexible"
-            - "Overkill — with one fixed receiver, a direct method call is simpler."
+            - "Overkill — one fixed receiver; a direct call is simpler."
             - "Observer is required any time events are involved"
             - "Use Observer now to future-proof the system"
           correct_index: 1
@@ -2210,7 +2210,7 @@ steps:
           type: single
           options:
             - "Push is strictly better — it eliminates coupling between observer and subject"
-            - "Push decouples observers from the subject's API but couples them to its notification signature."
+            - "Push frees observers from the subject API but binds them to its notify signature."
             - "There is no difference — both models produce identical architectures"
             - "Pull is strictly better — it is always more efficient"
           correct_index: 1
@@ -2225,7 +2225,7 @@ steps:
           type: single
           options:
             - "The display was detached without you realizing"
-            - "`new_measurement()` calls `self.notify()` before updating state, so observers read the old values."
+            - "`new_measurement()` calls `self.notify()` before updating state"
             - "Python's garbage collector destroyed the display object"
             - "The Observer pattern does not support multiple state fields"
           correct_index: 1

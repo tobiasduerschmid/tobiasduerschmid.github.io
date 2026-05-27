@@ -68,7 +68,7 @@ questions:
     question: |
       Which of these are **core failures of Waterfall** that Agile was designed to address? Select all that apply.
     options:
-      - "Customer sees working software only at the very end — often months or years after requirements were captured."
+      - "Customer sees working software only at the very end, long after requirements were captured."
       - "Big-upfront-design assumes stable requirements, which complex domains rarely have."
       - "Late-discovery defects are most expensive to fix once much code depends on them."
       - "Waterfall produces code that is too modular and easy to change."
@@ -174,7 +174,7 @@ questions:
       A team's product owner wants to demo working software to the customer every iteration but the engineering manager pushes back: "Two-week iterations are too short to produce anything demonstrable." Which Agile principle does the engineering manager's view violate, and what's the right architectural response?
     options:
       - "Customer satisfaction — engineering should not have a say in delivery cadence."
-      - "Early and continuous delivery — fix it with thinner vertical slices and better automation, not longer iterations."
+      - "Early and continuous delivery — fix it with thinner slices, not longer iterations."
       - "Self-organizing teams — engineering should decide alone."
       - "Working software — engineering is correct that software should be polished before demoing."
     correct_index: 1

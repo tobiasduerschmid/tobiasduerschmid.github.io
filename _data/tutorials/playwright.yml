@@ -827,7 +827,7 @@ steps:
           type: single
           options:
             - "It lists the test cases the test should cover"
-            - "It lists UI/code changes the test should *survive* without breaking"
+            - "It lists code/UI changes the test should *survive*"
             - "It records the date the test was written"
             - "It tracks who the assigned reviewer is"
           correct_index: 1
@@ -1277,7 +1277,7 @@ steps:
           type: single
           options:
             - "They should always be in separate tests for clarity"
-            - "If trimming makes them hit the same code path, they're one partition — one test is enough"
+            - "If trimming sends them through the same code path, one test covers both"
             - "Whitespace cases are too edge-case for e2e and should be skipped"
             - "Always merge edge cases into the happy-path test to save time"
           correct_index: 1
@@ -2403,7 +2403,7 @@ steps:
           type: single
           options:
             - "It's correctly strict — it pins everything the spec promises"
-            - "It's over-specified — it pins wording the spec doesn't promise, so rephrasing breaks the test"
+            - "It's over-specified — it pins wording the spec doesn't promise"
             - "It's under-specified — it should also pin the URL and page title"
             - "It's wrong because it uses `toHaveText` instead of `toBeVisible`"
           correct_index: 1
@@ -2437,7 +2437,7 @@ steps:
           type: single
           options:
             - "The team's solution is correct — keeping CSS class names stable is essential for tests to work"
-            - "The team patched the symptom (test failure) instead of the cause (test was coupled to implementation, not behavior)"
+            - "They patched the symptom; the cause is a test coupled to implementation, not behavior"
             - "The test is correct; the team should add the old CSS class as an alias"
             - "Reverting the CSS rename was the right call — never let a refactor break tests"
           correct_index: 1
@@ -3319,7 +3319,7 @@ steps:
           type: single
           options:
             - "`page.getByRole('button', { name: /submit/i }).click()` + `await expect(page.getByText('Order placed')).toBeVisible()` — survives the wording until next quarter."
-            - "`page.getByTestId('submit-order-action').click()` + `await expect(page.getByRole('status')).toContainText(/order placed|placed your order/i)` — pins the action via test ID, pins the outcome via the regex."
+            - "`page.getByTestId('submit-order-action').click()` + `await expect(page.getByRole('status')).toContainText(/order placed|placed your order/i)`"
             - "`page.locator('.btn-primary.submit').click()` + `await expect(page.locator('.confirmation')).toBeVisible()` — most specific to today's UI."
             - "`page.getByText('Submit').click()` + `await expect(page.getByText('Order placed')).toBeVisible()` — text on both sides."
           correct_index: 1
@@ -3370,7 +3370,7 @@ steps:
           type: single
           options:
             - "The two passing tests — they prove the feature works end-to-end"
-            - "The Spec Card you filled in before writing the tests — a method that scales to every feature"
+            - "The Spec Card you filled in — a method that scales to every feature"
             - "The locator queries — the tactical knowledge you can reuse in any test"
             - "The assertion patterns — the templates you can copy into the next test"
           correct_index: 1

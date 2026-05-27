@@ -114,7 +114,7 @@ steps:
           type: single
           options:
             - "A raw HTML string inserted into the page via `innerHTML`"
-            - "`React.createElement('h1', null, 'Hello, ', name, '!')` — a plain JavaScript object describing the UI node"
+            - "`React.createElement('h1', null, 'Hello, ', name, '!')` — a plain JS object"
             - "A direct `document.createElement('h1')` call that creates a real DOM node immediately"
             - "A WebAssembly instruction that the browser renders natively"
           correct_index: 1
@@ -126,7 +126,7 @@ steps:
           options:
             - "It defines a CSS class to style the content inside the element"
             - "It escapes the `{` and `}` characters as HTML entities"
-            - "It switches from JSX back to JavaScript and inserts the expression's evaluated result"
+            - "It switches to JavaScript and inserts the evaluated expression"
             - "It creates a new JavaScript object stored in the DOM"
           correct_index: 2
           explanation: |
@@ -136,7 +136,7 @@ steps:
           type: single
           options:
             - "You write step-by-step instructions telling the browser exactly how to update each DOM element"
-            - "You describe what the UI should look like for a given state, and React figures out the minimal DOM updates needed"
+            - "You describe the UI for each state; React figures out the minimal DOM updates"
             - "React generates HTML on the server and sends it to the client before any JavaScript runs"
             - "You declare global variables that React automatically synchronizes with the DOM"
           correct_index: 1
@@ -244,7 +244,7 @@ steps:
           type: single
           options:
             - "It is used as the CSS class for the element"
-            - "It uniquely identifies each list item so React can efficiently reconcile changes between renders"
+            - "It uniquely identifies each list item so React can reconcile changes efficiently"
             - "The key is sent to the server to cache the rendered HTML"
             - "It is required by JavaScript — arrays cannot be rendered without a key attribute"
           correct_index: 1
@@ -275,7 +275,7 @@ steps:
           type: single
           options:
             - "A single concatenated string of all property names"
-            - "An array of JSX elements (Virtual DOM objects) that React renders as children"
+            - "An array of JSX elements that React renders as children"
             - "A new real DOM `<ul>` element containing all list items"
             - "A JavaScript generator that yields one list item at a time"
           correct_index: 1
@@ -441,7 +441,7 @@ steps:
           type: single
           options:
             - "Internal variables that the component manages itself and can change over time"
-            - "Read-only inputs passed from a parent component to a child — analogous to function arguments"
+            - "Read-only inputs passed from parent to child, like function arguments"
             - "CSS properties attached to a component's root element"
             - "Reserved keywords that React uses to configure component behavior internally"
           correct_index: 1
@@ -452,7 +452,7 @@ steps:
           type: single
           options:
             - "JavaScript class syntax requires capital letters — components follow the same convention"
-            - "React uses capitalization to distinguish custom components from native HTML elements: lowercase → HTML tag, uppercase → React component"
+            - "Capitalization distinguishes custom components from native HTML tags"
             - "Browser security policies prevent JavaScript from creating elements with lowercase names"
             - "It is purely a style convention with no functional effect on rendering"
           correct_index: 1
@@ -468,7 +468,7 @@ steps:
           type: single
           options:
             - "It declares three new state variables"
-            - "It destructures the props object — instead of `props.name`, `props.price`, `props.colorGroup`, you access them directly"
+            - "It destructures the props object so you can use `name` directly instead of `props.name`"
             - "It restricts the component to only accept exactly three props and throws an error for any others"
             - "It defines default values of `undefined` for each prop when they are not passed"
           correct_index: 1
@@ -487,7 +487,7 @@ steps:
           type: single
           options:
             - "Nothing — props can be freely modified inside the component that receives them"
-            - "Props are read-only. Mutating them breaks React's unidirectional data-flow model and causes unpredictable bugs"
+            - "Props are read-only; mutating them breaks unidirectional data flow"
             - "The component must use `this.props.price` instead of `props.price`"
             - "You cannot use arithmetic operators inside a React component"
           correct_index: 1
@@ -722,7 +722,7 @@ steps:
           type: single
           options:
             - "Declares a CSS variable named `houses` with an initial display value of 0"
-            - "Creates a state variable `houses` initialized to 0 and a setter that re-renders when called"
+            - "Creates state `houses = 0` and a setter that re-renders when called"
             - "Declares two constants that persist between page reloads in localStorage"
             - "Creates an HTML input element bound to a variable named `houses`"
           correct_index: 1
@@ -733,7 +733,7 @@ steps:
           type: single
           options:
             - "Nothing — `buyHouse()` and `buyHouse` are equivalent when used in event handlers"
-            - "`buyHouse()` invokes the function during render; the correct form is `onClick={buyHouse}` (a reference)"
+            - "`buyHouse()` calls the function during render; use `onClick={buyHouse}`"
             - "The `onClick` prop must receive a string — use `onClick='buyHouse'` instead"
             - "Arrow functions cannot be used as React event handlers"
           correct_index: 1
@@ -770,7 +770,7 @@ steps:
           type: single
           options:
             - "Yes — `houses` changes when `buyHouse` is called, so the display will update"
-            - "No — modifying a plain `let` variable does not trigger a re-render. The display will always show 0 houses"
+            - "No — modifying a plain `let` does not trigger a re-render; the display stays at 0"
             - "No — `let` cannot be used inside a React component; only `const` is allowed"
             - "Yes — React automatically watches all variables inside component functions for changes"
           correct_index: 1
@@ -1225,7 +1225,7 @@ steps:
           type: single
           options:
             - "A backup copy of the DOM stored on the server to recover from browser crashes"
-            - "A JS object tree that mirrors the DOM; React diffs new vs. previous to find minimal real-DOM updates"
+            - "A JS object tree React diffs against the previous one for minimal DOM updates"
             - "A browser API that speeds up DOM updates by batching them"
             - "A CSS-in-JS solution that generates stylesheets without touching the DOM"
           correct_index: 1
@@ -1271,7 +1271,7 @@ steps:
           type: single
           options:
             - "It makes the code run faster because the browser can load files in parallel"
-            - "The game logic can be unit-tested without rendering any UI, and UI changes don't require touching game rules"
+            - "Game logic can be unit-tested without UI, and UI edits don't touch game rules"
             - "React requires all components to be in separate files — it will not compile otherwise"
             - "It reduces the total number of lines of code by eliminating duplication"
           correct_index: 1

@@ -28,10 +28,10 @@ questions:
     question: |
       Two threads simultaneously call `getInstance()` on a classic lazy Singleton. Both find `uniqueInstance == null` and both create a new instance. Which thread-safety approach eliminates this race condition with the **simplest** implementation and **no per-call synchronization overhead** — at the cost of not being lazy?
     options:
-      - "Synchronize the entire `getInstance()` method"
-      - "Use eager instantiation (create the instance when the class is loaded)"
+      - "Synchronize the entire `getInstance()` method on every call"
+      - "Use eager instantiation when the class loads"
       - "Use double-checked locking with `volatile`"
-      - "Use a global lock on all Singleton access"
+      - "Use a global lock around all Singleton access"
     correct_index: 1
     option_feedback:
       0: |
@@ -49,7 +49,7 @@ questions:
       A system uses Singleton for a database connection pool. A new requirement: the system must support multi-tenant deployments with one pool per tenant. What is the fundamental problem?
     options:
       - "The Singleton needs to be made thread-safe for multi-tenant access"
-      - "The Singleton's core assumption ('exactly one instance') is invalidated — it needs multiple instances"
+      - "The 'exactly one instance' assumption no longer holds"
       - "The database driver does not support connection pooling"
       - "The Singleton constructor needs to accept a tenant ID parameter"
     correct_index: 1
@@ -60,7 +60,7 @@ questions:
         The prompt gives no evidence that the driver cannot pool connections. The design problem is that the class hardcoded a one-instance assumption that the new requirement contradicts.
       3: |
         Adding a tenant ID to the constructor does not help if `getInstance()` still returns one shared object. The design needs multiple managed instances, usually keyed by tenant or supplied by DI scope.
-    explanation: "Multi-tenancy reveals that the 'exactly one' assumption was a convenience, not a hard requirement. Many 'singletons' later need per-tenant, per-thread, or per-test instances. DI with a per-tenant singleton scope manages one pool per tenant without hardcoding the cardinality into the class."
+    explanation: "Multi-tenancy reveals that the 'exactly one' assumption was a convenience, not a hard requirement — the class now needs multiple instances. Many 'singletons' later need per-tenant, per-thread, or per-test instances. DI with a per-tenant singleton scope manages one pool per tenant without hardcoding the cardinality into the class."
 
   - id: 4
     type: single
@@ -69,9 +69,9 @@ questions:
       A developer argues: "Our `Logger` class uses the Singleton pattern, and it's fine — we never need to test it." What is wrong with this reasoning?
     options:
       - "Loggers should always use the Factory Method pattern instead"
-      - "Every caller's `Logger.getInstance()` is a hidden dependency that cannot be swapped for a test double"
+      - "Every caller hides a dependency that can't be swapped for a test double"
       - "Singleton Loggers have thread-safety issues across concurrent threads"
-      - "Loggers should use the Observer pattern instead"
+      - "Loggers should use the Observer pattern instead, not Singleton"
     correct_index: 1
     option_feedback:
       0: |
@@ -80,7 +80,7 @@ questions:
         A logger can be implemented thread-safely. The testing problem remains even with a correct thread-safe logger because callers are hardwired to `Logger.getInstance()`.
       3: |
         Observer can distribute events to listeners, but it is not the direct fix for hidden logger dependencies. The key testability move is making the dependency injectable or otherwise replaceable.
-    explanation: "The testability problem is not about testing the Logger itself — it is about testing everything that depends on it. Any class that calls `Logger.getInstance()` has a hidden, hardcoded dependency that cannot be swapped for a test double through its constructor or method parameters, which is invisible in the constructor signature. That makes verifying or suppressing log output harder than with an explicit dependency."
+    explanation: "The testability problem is not about testing the Logger itself — it is about testing everything that depends on it. Any class that calls `Logger.getInstance()` has a hidden, hardcoded dependency that cannot be swapped for a test double through its constructor or method parameters. That makes verifying or suppressing log output harder than with an explicit dependency."
 
   - id: 5
     type: multiple

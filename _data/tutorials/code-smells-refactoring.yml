@@ -2088,7 +2088,7 @@ steps:
           type: single
           options:
             - "The bug would have been caught immediately"
-            - "The bug would have been propagated into the helper — one buggy place instead of three"
+            - "The bug would have moved into the helper — one buggy place instead of three"
             - "The refactoring would have failed because the duplicates differ"
             - "The tests would have caught it because of the extraction"
           correct_index: 1
@@ -3173,7 +3173,7 @@ steps:
           type: single
           options:
             - "Player — the method already lives there"
-            - "Track — methods that compute properties of a track usually belong on Track"
+            - "Track — methods that compute a track's properties belong on Track"
             - "User — playback decisions ultimately serve a user"
             - "It depends on the body; you can't predict from the name"
           correct_index: 1
@@ -3205,7 +3205,7 @@ steps:
           type: single
           options:
             - "Because it makes the file shorter"
-            - "Because the if/else around a comparison adds no information beyond the comparison itself"
+            - "Because the if/else around the comparison adds no information."
             - "Because Python's bytecode runs faster on `return cond`"
             - "Because the original form is a syntax error in newer Python versions"
           correct_index: 1
@@ -3222,7 +3222,7 @@ steps:
           options:
             - "Yes — moving data to the method is symmetric to moving the method to the data"
             - "Yes — but only if Track has no other methods that use those fields"
-            - "No — Track has many other methods that use duration_sec and current_position; moving the data scatters them"
+            - "No — other Track methods rely on those fields; moving the data scatters them."
             - "No — Python's class system doesn't allow moving fields between classes"
           correct_index: 2
           option_feedback:
@@ -3237,7 +3237,7 @@ steps:
           type: single
           options:
             - "Yes — it uses no Catalog state, so it should be moved to Track"
-            - "No — factories that synthesize new objects belong on the class that exposes the API"
+            - "No — factories that synthesize new objects belong with the exposing API."
             - "Yes — and the fix is to delete the method since it does nothing"
             - "Only if the method takes any parameters"
           correct_index: 1
@@ -3253,7 +3253,7 @@ steps:
           type: single
           options:
             - "Feature Envy on both sides — apply Move Method twice"
-            - "Inappropriate Intimacy — Move Method just relocates the problem; the fix is structural"
+            - "Inappropriate Intimacy — Move Method just relocates it; the fix is structural"
             - "Neither — mutual writes between domain objects are normal in OO design"
             - "Long Parameter List — introduce a `PlaybackContext` parameter object"
           correct_index: 1
@@ -3285,7 +3285,7 @@ steps:
           type: single
           options:
             - "Extract immediately — duplication is always a smell"
-            - "Wait for the third occurrence — it reveals what's truly common across copies"
+            - "Wait for the third occurrence — it reveals what's truly common."
             - "Refuse to extract until tests are added for both copies"
             - "Extract only if the two functions live in the same file"
           correct_index: 1
@@ -4620,7 +4620,7 @@ steps:
           type: single
           options:
             - "Yes — type-conditionals are always a smell"
-            - "No — for a small closed set of types with no shared state, a `match` statement is simpler"
+            - "No — for a small closed type set with no shared state, `match` is simpler."
             - "Yes — Python's match statement is just syntactic sugar for polymorphism"
             - "Only if the conditional is more than 5 branches long"
           correct_index: 1
@@ -4635,7 +4635,7 @@ steps:
             What does `@abstractmethod` actually *enforce*?
           type: single
           options:
-            - "Subclasses MUST override it; trying to instantiate a subclass that doesn't raises TypeError"
+            - "Subclasses must override it; otherwise instantiation raises TypeError."
             - "The method body must be empty"
             - "Subclasses cannot call super() on an abstract method"
             - "The method can only be called via the abstract base class"
@@ -4763,7 +4763,7 @@ steps:
             **Retrieval.** Which of these scenarios would you **defer** refactoring for?
           type: multiple
           options:
-            - "Code in a file that hasn't been touched in two years and isn't on your roadmap"
+            - "Code in a file untouched for two years that isn't on the roadmap"
             - "Code you're about to add a feature to next sprint"
             - "Code with frequent bug fixes in the last six months"
             - "Code with no tests"
@@ -4783,7 +4783,7 @@ steps:
           type: single
           options:
             - "It produces too much code churn"
-            - "It leads to speculative generality — abstractions for extensions that never come"
+            - "It causes speculative generality — abstractions for absent extensions"
             - "It's too lenient — the rule should be stricter"
             - "Smells are subjective; you can't always agree what's a smell"
           correct_index: 1
@@ -4846,7 +4846,7 @@ steps:
           options:
             - "Yes — it's the same loop with cleaner syntax"
             - "Yes — the type checker would catch any difference"
-            - "No — the original strides by 2; the replacement sums every element"
+            - "No — the original strides by 2; the rewrite sums all elements"
             - "Only if `values` is a list, not a tuple"
           correct_index: 2
           option_feedback:
@@ -5543,10 +5543,10 @@ steps:
             **Interleaved warmup retrieval.** Snippet D (`is_hi_res` with `if track.bitrate >= 1411: return True else: return False`) most resembles which smell?
           type: single
           options:
-            - "Long Method"
+            - "Long Method (Step 2)"
             - "Boolean-return anti-pattern (Step 3)"
             - "Feature Envy (Step 6)"
-            - "Long Parameter List"
+            - "Long Parameter List (Step 5)"
           correct_index: 1
           option_feedback:
             0: "Three lines isn't long."
@@ -5577,7 +5577,7 @@ steps:
           options:
             - "Yes — duplicated code is always a smell"
             - "Yes — the Open/Closed Principle requires polymorphism here"
-            - "Probably not — each processor likely has different SDK/error/config concerns"
+            - "Probably not — each processor has different SDK/error/config concerns"
             - "Yes — this is exactly the case Step 8 trained for"
           correct_index: 2
           option_feedback:
@@ -5608,7 +5608,7 @@ steps:
           type: single
           options:
             - "The memo is required for the assessment in this tutorial"
-            - "The memo captures the *reasoning* behind the change, which the diff alone cannot show"
+            - "The memo captures the *reasoning* behind the change — diffs cannot."
             - "Without the memo, the tool refuses to apply the refactoring"
             - "Memos are a CS convention; every PR must include one"
           correct_index: 1

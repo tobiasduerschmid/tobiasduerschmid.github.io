@@ -7,7 +7,7 @@ questions:
     question: "After reading a chapter on algorithms three times, a student feels incredibly confident about the upcoming exam. However, they end up failing. According to learning science, what psychological trap did this student likely fall into?"
     options:
       - "Working memory depletion from excessive studying."
-      - "Mistaking perceptual familiarity with the text for true conceptual mastery."
+      - "Mistaking text familiarity for true conceptual mastery."
       - "Failing to utilize blocked practice techniques."
       - "Experiencing the negative effects of a growth mindset."
       - "Applying too many desirable difficulties at once."
@@ -60,7 +60,7 @@ questions:
     difficulty: intermediate
     question: "You are working on a new Python project and decide to turn off your AI coding assistant (like GitHub Copilot). According to the concept of 'desirable difficulties', what is the primary benefit of this highly frustrating choice?"
     options:
-      - "It forces your brain to manually recall syntax and logic, creating the mental challenge necessary to develop solid coding skills."
+      - "It forces you to manually recall syntax and logic — the effortful retrieval needed for durable skill."
       - "It ensures your program will run faster, since AI tools often introduce unnecessary and bloated code."
       - "It prevents you from accidentally plagiarizing open-source code and failing the class."
       - "It helps you type faster, which is the most important skill for a computer science student."
@@ -136,7 +136,7 @@ questions:
     options:
       - "Harmful, as the student is likely to permanently encode incorrect habits."
       - "Inefficient, because that time could have been spent reading the textbook's summary."
-      - "Highly beneficial, as the initial struggle primes the brain to better encode the correct mechanism later."
+      - "Highly beneficial, as the initial struggle primes the brain to encode the correct mechanism later."
       - "Irrelevant, as only the final compiling code matters in computer science."
     correct_index: 2
     option_feedback:

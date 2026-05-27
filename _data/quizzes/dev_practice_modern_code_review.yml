@@ -9,7 +9,7 @@ questions:
     question: |
       Which statement best distinguishes formal inspections from Modern Code Review?
     options:
-      - "Formal inspections are synchronous and role-heavy; MCR is asynchronous, tool-based, and diff-centered."
+      - "Formal inspections are synchronous and role-heavy; MCR is asynchronous and diff-centered."
       - "Formal inspections are faster because everyone is in the same room."
       - "Modern Code Review requires printed code and a Reader role."
       - "Formal inspections and Modern Code Review differ only in programming language."
@@ -51,7 +51,7 @@ questions:
     question: |
       A teammate submits a 1,200-line feature PR touching database migrations, backend rules, and UI. They say one large PR is easier because reviewers see the whole feature at once. What should you recommend?
     options:
-      - "Use stacked PRs or logical slices so each review fits the human attention budget."
+      - "Use stacked PRs or logical slices that each fit a reviewer's attention budget."
       - "Add six reviewers so the total attention multiplies."
       - "Merge it quickly because large PRs are inevitable."
       - "Ask reviewers to skim at maximum speed to stay under 60 minutes."
@@ -125,7 +125,7 @@ questions:
       In `apply_discount`, a check rejects a user-entered discount of 150% and returns a validation error. Elsewhere, `assert subtotal >= 0` documents an invariant after pricing. Which statement is most accurate?
     options:
       - "Both should be assertions because they are both checks."
-      - "User input should be a guard clause; the impossible negative subtotal can be an assertion."
+      - "User input belongs in a guard clause; the negative subtotal is an assertion."
       - "Both should be guard clauses because assertions are never useful."
       - "Neither belongs in code because comments are enough."
     correct_index: 1
@@ -167,7 +167,7 @@ questions:
       An AI agent opens a 2,000-line PR that passes unit tests. The reviewer feels pressure to approve because the code looks polished and CI is green. What is the safest review posture?
     options:
       - "Approve because polished AI code plus green CI is enough evidence."
-      - "Treat it as rubber-stamp risk: require smaller slices, verify outcomes, and audit tests for real coverage."
+      - "Treat it as rubber-stamp risk: smaller slices, verify outcomes, audit test coverage."
       - "Reject all AI-generated code regardless of evidence."
       - "Ask the AI to add more comments so the reviewer does not need to run the code."
     correct_index: 1

@@ -93,7 +93,7 @@ questions:
     question: "A startup is launching an **online concert ticketing platform**. Fans browse upcoming shows, **pay** with a credit card, and receive a unique QR-code ticket. The platform must prevent **two fans buying the same seat**, and it must keep an **immutable record** of every sale for tax and refunds. Should the backend be **client-server** or **peer-to-peer**?"
     options:
       - "Peer-to-peer — fans and venues can negotiate seats directly, avoiding platform fees."
-      - "Client-server — a central server is needed to coordinate seat inventory, payments, and the audit trail."
+      - "Client-server — only a central server can serialize seat inventory and own the audit trail."
       - "Peer-to-peer — eliminates the cost of running backend infrastructure."
       - "It doesn't matter — both architectures work equally well for marketplaces."
     correct_index: 1

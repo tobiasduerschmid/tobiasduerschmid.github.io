@@ -825,7 +825,7 @@ steps:
           difficulty: advanced
           question: "When should you switch from beacon reading to a small bottom-up trace in this React example?"
           options:
-            - "When you need to verify that clicking in `LessonList` actually updates `App.selectedId`"
+            - "When you need to verify a click in `LessonList` actually updates `App.selectedId`"
             - "Before reading any component names, props, or state hooks"
             - "Never — React prop names alone are enough to prove cross-file updates"
             - "Only after making an edit to the `data.js` lesson array"
@@ -1470,7 +1470,7 @@ steps:
           difficulty: basic
           question: "Where is the pinning state owned?"
           options:
-            - "`App.jsx`, where `useState(2)` for `pinnedId` is called and passed down as `onPinLesson`."
+            - "`App.jsx`, where `useState(2)` for `pinnedId` is called and passed down."
             - "`LessonCard.jsx`, which renders the Pin button and receives `onPinLesson`."
             - "`styles.css`, which defines the `.pinned-card` class used on the page."
             - "`data.js`, which provides the `id` field for every pinnable lesson."

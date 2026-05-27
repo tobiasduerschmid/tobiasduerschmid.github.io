@@ -254,9 +254,9 @@ steps:
             What happens when Prolog processes `X = 3, X = 4`?
           type: single
           options:
-            - "X becomes 4 (reassignment, like Python)"
-            - "X becomes [3, 4] (list of values)"
-            - "It fails — X is already bound to 3, and 3 cannot unify with 4"
+            - "X becomes 4 (reassignment, like Python's `X = 4` rebind)"
+            - "X becomes [3, 4] — Prolog collects them into a list"
+            - "It fails — X is already bound to 3"
             - "Error — variables cannot be used twice"
           correct_index: 2
           explanation: |
@@ -279,7 +279,7 @@ steps:
           type: single
           options:
             - "They are the same — both assign the right side to the left"
-            - "Prolog's `=` is bidirectional pattern matching; Python's `=` is assignment"
+            - "Prolog's `=` is bidirectional pattern matching; Python's is assignment"
             - "Prolog's `=` only works with numbers and atomic values"
             - "Prolog's `=` compares without binding, like Python's `==`"
           correct_index: 1
@@ -421,20 +421,20 @@ steps:
           options:
             - "Returns `true` because tom and ann are in the database"
             - "Fails because there is no fact `grandparent(tom, ann)`"
-            - "Succeeds by finding Y = bob such that parent(tom, bob) AND parent(bob, ann)"
+            - "Succeeds by finding Y = bob that links both parent facts"
             - "Returns the string 'grandparent'"
           correct_index: 2
           explanation: |
-            Even though there is no *fact* `grandparent(tom, ann)`, Prolog uses the *rule* to derive it. It finds Y = bob that satisfies both conditions. Rules allow Prolog to answer questions that aren't explicitly stated.
+            Even though there is no *fact* `grandparent(tom, ann)`, Prolog uses the *rule* to derive it. It finds Y = bob that satisfies both `parent(tom, bob)` and `parent(bob, ann)`. Rules allow Prolog to answer questions that aren't explicitly stated.
 
         - question: |
             If we define `sibling(X, Y) :- parent(P, X), parent(P, Y).` (without `X \= Y`), what happens when we query `sibling(ann, ann)`?
           type: single
           options:
-            - "Fails — a person cannot be their own sibling"
-            - "Succeeds — bob is a parent of ann AND ann, so both conditions are met"
-            - "Error — you can't use the same variable twice"
-            - "Returns `false`"
+            - "Fails — a person cannot logically be their own sibling"
+            - "Succeeds — bob is a parent of ann for both arguments"
+            - "Error — you can't use the same variable twice in a query"
+            - "Returns `false` with no explanation"
           correct_index: 1
           explanation: |
             Without the `X \= Y` check, ann would be her own sibling (bob is a parent of ann AND ann). This is logically correct but semantically wrong — we need the inequality constraint to exclude self-siblings.
@@ -732,8 +732,8 @@ steps:
           options:
             - "X becomes the symbolic expression `Y + 1`"
             - "X becomes 1, because unbound Y defaults to 0"
-            - "Instantiation error — `is` needs the right side fully evaluated"
-            - "X becomes an unbound variable like Y"
+            - "Instantiation error: Y must be bound first"
+            - "X becomes an unbound variable, the same as Y"
           correct_index: 2
           explanation: |
             The `is` operator requires the right-hand side to be a ground arithmetic expression (all variables must be bound to numbers). If Y is unbound, Prolog throws an instantiation error.
@@ -1073,10 +1073,10 @@ steps:
             What does `my_append(X, Y, [1, 2, 3])` do?
           type: single
           options:
-            - "Error — X and Y must be given"
-            - "Returns X = [1,2,3], Y = []"
-            - "Returns ALL ways to split [1,2,3] into two parts"
-            - "Returns X = [1], Y = [2, 3]"
+            - "Error — X and Y must be given as input values"
+            - "Returns the single split X = [1,2,3], Y = []"
+            - "Returns ALL ways to split [1,2,3]"
+            - "Returns the single split X = [1], Y = [2, 3]"
           correct_index: 2
           explanation: |
             Because `my_append` is a *relation* (not a function), Prolog can find ALL combinations: X=[], Y=[1,2,3]; X=[1], Y=[2,3]; X=[1,2], Y=[3]; X=[1,2,3], Y=[]. This is the power of multi-directional predicates!

@@ -9,7 +9,7 @@ questions:
       A team is designing an e-commerce checkout system. Customers can pay by credit card, PayPal, gift card, or bank transfer. The CTO wants to add support for cryptocurrency next quarter without modifying any existing checkout code. Which design best fits?
     options:
       - "A `Checkout` class with an `if/else` chain on a `paymentType` string parameter, with one new branch per payment method."
-      - "A `PaymentMethod` interface with concrete classes `CreditCardPayment`, `PayPalPayment`, etc.; `Checkout` holds a `PaymentMethod` reference and delegates `pay()` to it."
+      - "A `PaymentMethod` interface with concrete classes `CreditCardPayment`, `PayPalPayment`, etc.; `Checkout` holds one and delegates `pay()` to it."
       - "An abstract `Checkout` class with subclasses `CreditCardCheckout`, `PayPalCheckout`, `GiftCardCheckout`, each overriding the `pay()` method."
       - "A `Checkout` class with one method per payment type (`payByCreditCard`, `payByPayPal`, ...) and the client picks which to call."
     correct_index: 1
@@ -30,7 +30,7 @@ questions:
     options:
       - "State has a finite number of concrete classes; Strategy can have unboundedly many."
       - "State uses inheritance for the concrete classes; Strategy uses composition."
-      - "State changes implementation *implicitly* via internal transitions; Strategy's is *explicitly* picked by the client."
+      - "State transitions implementations *internally*; Strategy is picked *explicitly* by the client."
       - "State is a creational pattern; Strategy is a behavioral pattern."
     correct_index: 2
     option_feedback:
@@ -123,7 +123,7 @@ questions:
     options:
       - "It's faster — empty method calls are optimized away by the JIT."
       - "The `null` check would throw `NullPointerException` on the very first call."
-      - "Call sites stay uniform (`flyBehavior.fly()`) and 'this duck does not fly' becomes a named type instead of a missing reference."
+      - "Call sites stay uniform — 'does not fly' is a named type, not a missing reference."
       - "It satisfies Java's strict-mode requirement that all interface fields be non-null at construction time."
     correct_index: 2
     option_feedback:

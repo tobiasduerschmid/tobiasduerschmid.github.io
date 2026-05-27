@@ -9,7 +9,7 @@ questions:
       A user reports: *"I clicked 'Submit' and the page froze with a spinning wheel that never stopped."* You open the code and find that a callback in `handlePayment()` never resolves its `Promise` when the payment gateway returns a 5xx response. How would you classify each of these in the fault / error / failure vocabulary?
     options:
       - "The frozen spinner is the **fault**; the unresolved Promise is the **error**; the unhandled 5xx is the **failure**."
-      - "The unresolved Promise in `handlePayment()` is the **fault**; the program state with a pending Promise is the **error**; the frozen UI the user sees is the **failure**."
+      - "The unresolved Promise path is the **fault**; the pending Promise state is the **error**; the frozen UI is the **failure**."
       - "The 5xx response is the **fault**; the user's click is the **error**; the frozen page is the **failure**."
       - "All three are interchangeable terms for the same defect; the user only cares about the visible symptom."
     correct_index: 1
@@ -110,8 +110,8 @@ questions:
     question: |
       You see this error in your terminal while setting up a new project: `ERROR 3680 (HY000): Failed to create schema directory 'tobias_dev_orders_2026_q1' (errno: 2 - No such file or directory)`. What is the **best** thing to copy into a search engine or AI assistant?
     options:
-      - "The entire line, verbatim, including the database name `tobias_dev_orders_2026_q1`."
-      - "`ERROR 3680 (HY000): Failed to create schema directory (errno: 2 - No such file or directory)` — keep the codes, drop the project name."
+      - "The entire line, verbatim, including the database name `tobias_dev_orders_2026_q1`, so the result match is maximally specific."
+      - "`ERROR 3680 (HY000): Failed to create schema directory (errno: 2 - No such file or directory)` — keep codes, drop the project name."
       - "Just *'mysql error'* — anything more specific will narrow the results too much."
       - "Nothing — search engines cannot help with database errors; only the DBA can."
     correct_index: 1

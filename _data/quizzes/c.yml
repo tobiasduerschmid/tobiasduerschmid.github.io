@@ -8,7 +8,7 @@ questions:
     question: "In C, what is the difference between `'a'` and `\"a\"`?"
     options:
       - "They are identical — both create a `char` value, and C uses single and double quotes interchangeably like Python."
-      - "`'a'` is a single `char` with the ASCII value 97. `\"a\"` is a `char` array of two bytes — the character `a` followed by the null terminator `'\\0'`."
+      - "`'a'` is a single `char` (ASCII 97); `\"a\"` is a two-byte `char` array — `a` plus the null terminator."
       - "`'a'` is a `char`. `\"a\"` is a Unicode string object — C's only built-in string type."
       - "`'a'` is a one-character pointer. `\"a\"` is a `char` array of one byte; both end with no terminator."
     correct_index: 1
@@ -29,7 +29,7 @@ questions:
     question: "C does not support function overloading. If you want both `int` and `float` versions of a `print` function, what does the standard C convention look like?"
     options:
       - "Write `void print(int)` and `void print(float)` — C resolves overloads using the same name-mangling C++ uses, just less visibly."
-      - "Write two functions with distinct names, e.g. `printInt(int)` and `printFloat(float)`. C requires every function in a translation unit to have a unique name."
+      - "Write two functions with distinct names — `printInt(int)` and `printFloat(float)`."
       - "Write one `print(void*)` that takes any pointer; the function inspects the bytes at runtime to determine the type."
       - "Use macros — `#define print(x) _Generic((x), int: printInt, float: printFloat)(x)` is required for every C call site."
     correct_index: 1
@@ -50,7 +50,7 @@ questions:
     question: "A C++ programmer wants to translate this swap function to C:\n\n```cpp\nvoid swap(int& a, int& b) {\n    int t = a; a = b; b = t;\n}\n// call site:\nswap(x, y);\n```\n\nWhat is the correct C version, including the call site?"
     options:
       - "`void swap(int a, int b) { ... }` and call site `swap(x, y);` — C passes everything by reference automatically."
-      - "`void swap(int* a, int* b) { int t = *a; *a = *b; *b = t; }` and call site `swap(&x, &y);` — C has no references, so both the signature and the call site must use pointers explicitly."
+      - "`void swap(int* a, int* b) { int t = *a; *a = *b; *b = t; }` and call site `swap(&x, &y);`."
       - "`void swap(int& a, int& b) { ... }` and call site `swap(x, y);` — C added references in C99."
       - "`void swap(int** a, int** b) { ... }` and call site `swap(&&x, &&y);` — C requires double indirection because the values must be modifiable."
     correct_index: 1
@@ -72,7 +72,7 @@ questions:
     options:
       - "`int z = safe_divide(10, 2, NULL);` — the result is returned directly, and passing `NULL` discards it."
       - "`int z; safe_divide(10, 2, &z); printf(\"%d\", z);` — pass `&z` and ignore the return value because divide-by-zero is rare."
-      - "`int z; if (safe_divide(10, 2, &z) != 0) { /* handle error */ } else { printf(\"%d\", z); }` — pass `&z` to receive the result, and check the return value before using `z`."
+      - "`int z; if (safe_divide(10, 2, &z) != 0) { /* handle error */ } else { printf(\"%d\", z); }`."
       - "`int z = safe_divide(10, 2, &z);` — capture the result by storing the return value into the same variable whose address you also pass in."
     correct_index: 2
     option_feedback:
@@ -113,7 +113,7 @@ questions:
     question: "What is the role of libc (the C standard library) in a typical C program?"
     options:
       - "libc is a runtime virtual machine that interprets C bytecode at execution time — analogous to the JVM for Java."
-      - "libc wraps the OS syscalls in a portable API (`fopen`, `malloc`, `printf`, ...) so the same C source compiles on Linux, macOS, and Windows."
+      - "libc wraps OS syscalls in a portable API (`fopen`, `malloc`, `printf`, ...) shared across platforms."
       - "libc is the in-browser sandbox that lets JavaScript safely invoke C functions through a foreign-function interface."
       - "libc is a build tool that converts `.c` files into `.o` object files — equivalent to `gcc -c`."
     correct_index: 1
@@ -134,7 +134,7 @@ questions:
     question: "Dijkstra's note \"Go To Statement Considered Harmful\" effectively retired `goto` from mainstream programming, yet the C language still has it and the Linux kernel uses it heavily. Which use of `goto` is widely accepted in modern C style guides?"
     options:
       - "Using `goto` inside an inner loop to jump back to the top of an outer loop, replacing nested `break` and a flag variable."
-      - "Using a single forward `goto cleanup;` per function to free resources (`fclose`, `free`, …) on every error path, with one cleanup label at the function's end."
+      - "Using one forward `goto cleanup;` per function for error paths, with a cleanup label at the end."
       - "Using `goto` to jump from one function into a labeled position inside a different function, as a lightweight tail call."
       - "Using `goto` backward to implement a `while` loop, since C lacks structured looping primitives."
     correct_index: 1
@@ -176,7 +176,7 @@ questions:
     question: "Almost every mainstream language can call into a C library — Python, Java, C#, Rust, Go, Ruby — but **browser JavaScript cannot directly call C functions on the user's machine**. What is the strongest reason?"
     options:
       - "JavaScript has no foreign-function interface — its language specification omits the feature entirely."
-      - "Browser JavaScript runs inside a security sandbox that deliberately blocks native code; C would let untrusted scripts read files and drive hardware."
+      - "The browser sandbox blocks native code; C would give pages unrestricted access to files and hardware."
       - "C functions return data in a binary layout that JavaScript engines cannot decode."
       - "JavaScript is interpreted and C is compiled, and interpreters cannot make function calls into compiled code."
     correct_index: 1

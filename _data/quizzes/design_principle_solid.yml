@@ -41,7 +41,7 @@ questions:
 
       What is the BEST refactor, given SRP?
     options:
-      - "Split methods into three separate classes (`TaxCalculator`, `InvoiceRenderer`, `InvoiceRepository`) that operate on a shared `InvoiceData` structure"
+      - "Extract `TaxCalculator`, `InvoiceRenderer`, and `InvoiceRepository` over a shared `InvoiceData`"
       - "Mark `calculateTax` and `saveToDatabase` as `private` so only `renderHtml` is public"
       - "Inline all three methods into a single `process()` method to reduce the surface area"
       - "Keep the class as-is; SRP is only about classes with a single method"
@@ -89,7 +89,7 @@ questions:
       Which argument for SRP is **strongest** from a team-productivity perspective?
     options:
       - "It guarantees that every class fits on one screen"
-      - "It reduces merge conflicts — different stakeholders' changes land in different files"
+      - "It reduces merge conflicts — stakeholders edit different files"
       - "It enforces the use of dependency injection frameworks"
       - "It prevents the creation of any class with more than one field"
     correct_index: 1
@@ -147,7 +147,7 @@ questions:
     options:
       - "Catch and swallow the exception inside `release()` so the loop continues"
       - "Add an `isOstrich()` check in `release()` and skip those objects"
-      - "Extract a `FlyingBird` interface; only flying species implement it, and `release()` is typed to `List<FlyingBird>`"
+      - "Extract a `FlyingBird` interface; type `release()` to `List<FlyingBird>`"
       - "Make `Bird.fly()` abstract and have `Ostrich.fly()` return `null`"
     correct_index: 2
     option_feedback:
@@ -204,7 +204,7 @@ questions:
       The chapter says a `Square` class can **perfectly** enforce its own geometric invariants and still violate LSP when used in place of a `Rectangle`. Which statement best explains *why*?
     options:
       - "Mathematical squares are not rectangles; the real-world taxonomy is wrong"
-      - "LSP is judged by what clients of the parent expect — coupling width and height breaks that contract"
+      - "Clients of the parent expect width and height to vary independently"
       - "`Square` will throw a `NullPointerException` when `setWidth` is called"
       - "A `Square` class is always slower than a `Rectangle` class at runtime"
     correct_index: 1
@@ -228,7 +228,7 @@ questions:
       Which refactor best satisfies the Open/Closed Principle?
     options:
       - "Add a `case \"DHL\"` branch — it's just one more line"
-      - "Define a `Carrier` interface; each carrier implements it; calculator dispatches polymorphically"
+      - "Define a `Carrier` interface; dispatch polymorphically over implementations"
       - "Copy the class into `ShippingCostCalculatorV2` and modify the new copy"
       - "Use reflection to invoke carrier-specific methods by string name"
     correct_index: 1
@@ -252,7 +252,7 @@ questions:
       Which SOLID principle is most directly violated, and what is the correct fix?
     options:
       - "LSP — because the home printer returns early; fix by caching the result"
-      - "ISP — clients depend on methods they don't use; segregate into role-specific interfaces"
+      - "ISP — clients depend on unused methods; split into role-specific interfaces"
       - "DIP — because `Printer` is concrete; fix by making it abstract"
       - "SRP — because the interface has four methods; fix by giving it only one"
     correct_index: 1

@@ -49,7 +49,7 @@ questions:
     question: "A client requests a new social media dashboard and specifies, 'The platform must use a graph database to map user connections.' Why might a software architect push back on this specific phrasing?"
     options:
       - "It fails to articulate any functional value for the end-user."
-      - "It artificially narrows the available technical solutions before development even starts."
+      - "It narrows the solution space before the team has chosen a design."
       - "It makes it impossible to write automated acceptance tests."
       - "It requires the use of unproven, experimental technologies."
     correct_index: 1
@@ -92,7 +92,7 @@ questions:
     options:
       - "The interface must remain readable on both 4K monitors and 6-inch mobile displays."
       - "The university catalog must return results ordered alphabetically by course name."
-      - "The application will utilize an in-memory Redis store to temporarily hold the user's unpurchased items."
+      - "The application will use an in-memory Redis store to hold unpurchased cart items."
       - "Consumers must receive an email notification immediately after a successful transaction."
     correct_index: 2
     option_feedback:

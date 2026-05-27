@@ -94,7 +94,7 @@ questions:
       A Mars rover requirement reads: "the rover should be robust." A senior architect calls this a *bad* specification and rewrites it. Which rewrite is correct?
     options:
       - "The rover must be highly robust and handle all errors gracefully."
-      - "Under a 72 h 60%-solar dust storm: keep measuring, beacon every 6 h, recover within 1 h."
+      - "In a 72 h 60%-solar dust storm: keep measuring, beacon every 6 h."
       - "The rover should never crash."
       - "The rover should be built with high-quality components."
     correct_index: 1
@@ -134,7 +134,7 @@ questions:
       Your bank's payment service uses TCP (acknowledged, retried delivery). A consultant suggests UDP to cut latency. The trade-off they don't mention is:
     options:
       - "UDP weakens transport security relative to TCP."
-      - "UDP drops reliability — packets may be lost, duplicated, or reordered."
+      - "UDP drops reliability — packets may be lost or reordered."
       - "UDP is slower than TCP at small payload sizes."
       - "UDP cannot cross most corporate firewalls."
     correct_index: 1
@@ -194,7 +194,7 @@ questions:
       Your team is asked to pick *which three* quality attributes to optimize for in a new system. The product manager says "let's just do all of them." How do you reframe the conversation?
     options:
       - "Agree — modern engineering can deliver all qualities simultaneously."
-      - "Pushback: maximizing all of them yields a mediocre system; identify the 2–3 that matter most."
+      - "Pushback: chasing all of them yields mediocrity; pick the 2–3 that matter most."
       - "Defer the question — pick whatever after the system is built."
       - "Pick the three that are easiest to measure regardless of which matter most."
     correct_index: 1
@@ -235,7 +235,7 @@ questions:
     options:
       - "Payment code should be very testable and highly modular."
       - "The payment code shall use dependency injection."
-      - "Approve, decline, and timeout cases run deterministically without the real provider."
+      - "Approve, decline, and timeout cases run without the real provider."
       - "The payment code should have at least five tests."
     correct_index: 2
     option_feedback:

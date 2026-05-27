@@ -160,7 +160,7 @@ steps:
           options:
             - "Yes — the leading underscore is Python's convention for private, so external code cannot access `_history`."
             - "Yes — the public method `recent()` is the only way clients see the data, so it is encapsulated."
-            - "No — `recent()` returns a reference to the same list `_history` points to, so external code can mutate it and depend on it being a list."
+            - "No — `recent()` hands back the actual list, so callers can mutate it and depend on its type."
             - "No — leading underscores have no enforcement in Python at all; everything is public anyway."
           correct_index: 2
           option_feedback:
@@ -177,7 +177,7 @@ steps:
           options:
             - "Adding a new dict key, like a rating, alongside title and year."
             - "Renaming the private attribute `_history` to `_titles_watched`."
-            - "Switching internal storage from `list[dict]` to `dict[str, Episode]` for O(1) lookup by title."
+            - "Switching internal storage from `list[dict]` to `dict[str, Episode]`."
             - "Adding a brand-new public method like `clear()`."
           correct_index: 2
           option_feedback:
@@ -650,7 +650,7 @@ steps:
           options:
             - "The fact that `_tracks` is named with an underscore."
             - "The order in which tracks were added."
-            - "How tracks are stored internally and how queries like 'top N by popularity' are computed."
+            - "How tracks are stored and how queries like 'top N by popularity' are computed."
             - "The exact value of the popularity threshold for party-readiness (60)."
           correct_index: 2
           option_feedback:
@@ -1190,7 +1190,7 @@ steps:
             Should you approve?
           options:
             - "Yes — extra methods are additive, so they can't break clients."
-            - "No — that method puts the raw score back in the contract, re-leaking what we just hid."
+            - "No — it puts the raw score back in the contract, re-leaking the decision."
             - "Yes, if they add a docstring saying clients shouldn't use it."
             - "Yes, if they mark it as a static method."
           correct_index: 1
@@ -2063,7 +2063,7 @@ steps:
           options:
             - "Inside `play_track`, `share_track`, and `like_track` — they each list which providers they support."
             - "Inside the `StreamingProvider` Protocol — it lists all valid implementers."
-            - "In one place: the wiring code that *constructs* the provider object and hands it to the client functions (the composition root)."
+            - "In the wiring code (composition root) that constructs the provider and hands it to the client functions."
             - "Nowhere — Python's duck typing means no module knows."
           correct_index: 2
           option_feedback:
@@ -2080,7 +2080,7 @@ steps:
             connected those three functions?
           options:
             - "Syntactic coupling — they all imported the same module."
-            - "Semantic coupling — all three shared an assumption about the provider list without naming each other."
+            - "Semantic coupling — all three shared an assumption about the provider list."
             - "Inheritance coupling — they all derived from a common base."
             - "There was no coupling — three separate functions are independent."
           correct_index: 1
@@ -2114,7 +2114,7 @@ steps:
           options:
             - "Add a `@dataclass(frozen=True)` to every input the SUT receives."
             - "Wrap each free function in a class with a single `run()` method."
-            - "Replace direct exposure of a volatile decision with a stable contract that doesn't name it."
+            - "Replace direct exposure of a volatile decision with a stable contract."
             - "Add type hints to every parameter so the linter can find leaks."
           correct_index: 2
           option_feedback:
@@ -2327,7 +2327,7 @@ steps:
             **Which files need to be edited?** (Select all that apply.)
           options:
             - "`events.py` — add an `HttpEventDirectory` class implementing the `EventDirectory` Protocol."
-            - "`composition_root.py` — swap `SQLiteEventDirectory(...)` for `HttpEventDirectory(...)` when constructing the directory."
+            - "`composition_root.py` — swap in `HttpEventDirectory(...)` when constructing the directory."
             - "`ui.py` — change the `/concerts/<city>` handler to make HTTP requests instead of database queries."
             - "Every test that builds an in-memory event directory — they all need to add an HTTP mock."
           correct_indices: [0, 1]
@@ -2345,7 +2345,7 @@ steps:
 
             **Which files need to be edited?** (Select all that apply.)
           options:
-            - "`playlist.py` — add a `humanized_duration` property to `Track`, OR a `Duration.humanize(seconds)` helper that lives near the data."
+            - "`playlist.py` — add a `humanized_duration` property to `Track`, or a helper next to the data."
             - "`ui.py` — call the new property/helper where tracks render."
             - "`recommender.py` — `Recommender` returns song data, so it should carry the new humanized duration too."
             - "`streaming.py` — `StreamingProvider.play()` should report the duration as part of its confirmation message."

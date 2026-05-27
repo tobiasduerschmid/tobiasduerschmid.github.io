@@ -56,7 +56,7 @@ questions:
     question: "Why does React require a stable `key` prop on list items, and why is using the array index as a key dangerous for dynamic lists?"
     options:
       - "Keys are needed for CSS styling — React uses them to apply animations"
-      - "Keys let React's reconciler match items across renders; index keys mis-attach state after a deletion."
+      - "Keys let React match items across renders; index keys mis-attach state after a deletion."
       - "Keys are optional — React works fine without them, just slower"
       - "Array indices are not valid as React keys — React requires string keys only"
     correct_index: 1
@@ -76,7 +76,7 @@ questions:
     question: "In 'Thinking in React', why should you build a **static version** (props only, no state) BEFORE adding any state?"
     options:
       - "Because React cannot compile components that use both props and state"
-      - "A static version settles the component hierarchy and data flow before interactivity is in the picture."
+      - "A static pass settles the component hierarchy and data flow before interactivity arrives."
       - "State is slow — building without state first ensures optimal performance"
       - "It is just a convention — there is no technical reason to build static first"
     correct_index: 1
@@ -122,7 +122,7 @@ questions:
     options:
       - "In `SearchBar` — it owns the input, so it should own the state"
       - "In `ProductTable` — it needs the filter to display results"
-      - "In their lowest common ancestor — both siblings need `filterText`, passed down with a callback."
+      - "In their lowest common ancestor — both siblings need it via props."
       - "In a global variable — both can access it without prop passing"
     correct_index: 2
     option_feedback:
@@ -227,7 +227,7 @@ questions:
     options:
       - "The button renders and increments `count` once per click — this is correct"
       - "A React error is thrown because `setCount` cannot be used as a prop value"
-      - "`setCount(count + 1)` runs during render, retriggering itself — infinite loop. Use `onClick={() => setCount(count + 1)}`."
+      - "`setCount(count + 1)` runs during render, retriggering itself — infinite loop."
       - "The component renders fine but clicking does nothing because the handler returns `undefined`"
     correct_index: 2
     option_feedback:
@@ -254,7 +254,7 @@ questions:
       The parent changes `userId` from `1` to `2`, but the screen still shows user `1`. **Diagnose** the bug.
     options:
       - "`fetch` is asynchronous and cannot be used inside `useEffect`"
-      - "The `[]` dependency array runs the effect once on mount; use `[userId]` to refetch on prop change."
+      - "The `[]` dependency array fires once on mount; use `[userId]` to refetch on changes."
       - "`useEffect` cannot read props — `userId` is undefined inside the callback"
       - "The `.then()` chain should be replaced with `async/await`"
     correct_index: 1
@@ -302,7 +302,7 @@ questions:
       **(d)** A `<div class="header">` renders but has no CSS styling
     options:
       - "(a) state, (b) props, (c) keys, (d) JSX rules"
-      - "(a) props, (b) state (useState), (c) stable keys, (d) JSX rules (className)"
+      - "(a) props, (b) state, (c) stable keys, (d) JSX rules"
       - "(a) keys, (b) JSX rules, (c) state, (d) props"
       - "(a) JSX rules, (b) keys, (c) props, (d) state"
     correct_index: 1

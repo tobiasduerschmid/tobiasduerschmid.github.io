@@ -64,7 +64,7 @@ questions:
       A teammate proposes adding a `NoController` Null Object to a `Controller` interface that has 30 methods. Currently no view in the codebase actually needs a `NoController`. How should you respond?
     options:
       - "Add it now — having the Null Object available makes future read-only views easier to write."
-      - "Push back — the pattern's Applicability says 'some collaborator instances should do nothing'; without that, you are speculating on a need that may never appear."
+      - "Push back — no current collaborator actually needs do-nothing behavior, so the 30-method class is speculative."
       - "Add it as a `@Deprecated` placeholder so future code can opt in."
       - "Replace the entire `Controller` interface with `Optional<Controller>` and remove the Null Object plan."
     correct_index: 1
@@ -169,7 +169,7 @@ questions:
       A `LinkedTreeNode` returns `Collections.emptyIterator()` when asked for an iterator over its (non-existent) children. Which pattern compound is at play?
     options:
       - "Null Object + Composite (the empty iterator is a Null Object playing the Composite role)."
-      - "Null Object + Iterator (`emptyIterator` is a Null Iterator — a do-nothing implementation of the Iterator interface)."
+      - "Null Object + Iterator (`emptyIterator` is a Null Iterator — a do-nothing `Iterator` impl)."
       - "Null Object + Singleton + Visitor (the empty iterator visits no children)."
       - "Null Object + Factory Method (a factory returning a null result)."
     correct_index: 1

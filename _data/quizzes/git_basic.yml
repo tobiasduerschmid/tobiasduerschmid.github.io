@@ -171,7 +171,7 @@ questions:
       - "`git revert` automatically resolves any merge conflicts introduced by the bad commit."
       - "`git revert` moves the faulty files back to the staging area so you can manually edit and fix them."
       - "`git revert` deletes the bad commit from the remote server without affecting local copies."
-      - "`git revert` creates a new commit with the exact inverse changes, preserving the shared history for all collaborators."
+      - "`git revert` adds a new inverse commit, leaving the shared history intact."
     correct_index: 3
     option_feedback:
       0: |

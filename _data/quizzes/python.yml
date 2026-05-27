@@ -7,7 +7,7 @@ questions:
     question: "Python is **dynamically** typed AND **strongly** typed. JavaScript is dynamically typed AND **weakly** typed. What is the practical difference for a developer?"
     options:
       - "There is no practical difference — 'strong' and 'weak' typing are just academic labels"
-      - "Python refuses to implicitly coerce incompatible types (`\"5\" + 3` errors); JavaScript silently coerces (`\"5\" + 3` → `\"53\"`)."
+      - "Python errors on `\"5\" + 3`; JavaScript silently coerces it to `\"53\"`."
       - "Strong typing means Python is faster because the interpreter can optimize known types"
       - "Weak typing means JavaScript variables can change type, while Python variables cannot"
     correct_index: 1
@@ -90,7 +90,7 @@ questions:
     question: "A student uses `re.findall(r'ERROR', text)` to count errors in a log. Their teammate suggests `text.count('ERROR')` instead. When is `re.findall()` the better choice?"
     options:
       - "`re.findall()` is always better because it's faster for string searching"
-      - "When the target is a pattern (timestamps, IPs, variable-format text), not a fixed literal."
+      - "When the target is a pattern (timestamps, IPs, variable text), not a fixed literal."
       - "`text.count()` only works on single characters, not multi-character strings"
       - "They are always interchangeable — use whichever you prefer"
     correct_index: 1
@@ -111,7 +111,7 @@ questions:
     question: "A script needs to report both results (to stdout) and diagnostics (to stderr). A student puts everything in `print()`. Why is this problematic in a pipeline like `python script.py > results.txt`?"
     options:
       - "It is not problematic — `print()` already separates output and errors"
-      - "`print()` writes to stdout, so error text contaminates `results.txt`; use `print(..., file=sys.stderr)`."
+      - "`print()` writes to stdout, contaminating `results.txt`; use `file=sys.stderr`."
       - "`print()` is too slow for pipelines — use `sys.stdout.write()` instead"
       - "Pipelines only work with Bash scripts, not Python"
     correct_index: 1
@@ -164,7 +164,7 @@ questions:
       ```
     options:
       - "No bug — the default empty list is created fresh on each call"
-      - "Bug: `items=[]` is evaluated once when the function is defined, so subsequent calls mutate the same shared list."
+      - "Bug: `items=[]` evaluates once at def time, so calls share one mutated list."
       - "Bug: `append()` doesn't work on lists — you should use `items + [item]`"
       - "Bug: default arguments must be `None` in Python — `[]` causes a SyntaxError"
     correct_index: 1
