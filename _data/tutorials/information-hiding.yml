@@ -1,5 +1,5 @@
 title: "Information Hiding in Python: Hide the Decision, Not Just the Field"
-description: "Refactor leaky Python modules so a plausible future change touches one file, not twenty. You will spot leaked design decisions in code that technically uses private fields, hide a storage representation behind domain operations, hide an algorithm choice behind a Protocol, swap implementations to prove the secret is really hidden, and apply Single Choice so adding a new streaming provider is one new class — not five if/else edits."
+description: "Refactor leaky Python modules so a plausible future change touches one file, not twenty. You will spot leaked design decisions in code that technically uses private fields, hide a storage representation behind domain operations, hide an algorithm choice behind a Protocol, swap implementations to prove the secret is really hidden, and apply Single Choice so adding a new streaming provider is one new class — not five if/else edits. **Expect to be stuck once or twice — Parnas's principle takes most engineers a couple of passes to internalize, and the gap between 'I followed it' and 'I can do it from scratch' is exactly where the learning is.**"
 
 # Authoring-time Bloom-verb objectives. Not yet rendered to students.
 # These flow from David Parnas, "On the Criteria To Be Used in Decomposing
@@ -189,24 +189,6 @@ steps:
 
         - type: single
           question: |
-            A different class has private fields and returns `tuple(self._items)`
-            (an immutable copy) from its only public getter. Is this enough to
-            **hide the secret** in Parnas's sense?
-          options:
-            - "Yes — fields are private and the return is immutable, so nothing leaks."
-            - "Not necessarily — the *element type* is still part of the contract."
-            - "Yes — immutability is the entire point of information hiding."
-            - "No — Python tuples are not really immutable; you can still mutate them with `__setitem__`."
-          correct_index: 1
-          option_feedback:
-            0: "A real improvement, but only for *mutation* leaks. Clients can still write code that depends on the *shape* of each element. Changing the element type still ripples."
-            2: "Immutability prevents accidental mutation. Information hiding is the *broader* discipline of choosing **which design decisions clients may depend on**. Element shape is one of those decisions."
-            3: "Python tuples are immutable in the sense that matters here — `t[0] = ...` raises `TypeError`, and `tuple` has no `__setitem__`. But this isn't the issue with the design."
-          explanation: |
-            Returning an immutable copy plugs the **mutation** leak, but it doesn't hide the **element type** (what shape each item has). If `recent()` returns `tuple[dict, ...]`, clients still depend on each entry being a `dict` with specific keys — changing it would still break them. Replacing the entry with a `WatchEvent` dataclass still breaks them. Information hiding is about the volatile *decision* — in this case, the element representation — not just about preventing writes.
-
-        - type: single
-          question: |
             Which is the most accurate **one-line definition** of information
             hiding in Parnas's sense?
           options:
@@ -382,11 +364,13 @@ steps:
 
       ### 🪞 Before clicking Next
 
-      Once all four tests pass, complete this sentence — out loud, to a rubber duck, or in your head — *before* taking the quiz. (The first quiz question reuses this structure.)
+      Once all four tests pass, take 15 seconds and answer **in your own words** — out loud, to a rubber duck, or in your head:
 
-      > "The decision *how tracks are stored* used to live in **___**. After the refactor it lives in **___**. So a switch from `list` to `dict` now changes **___** file(s) instead of **___**."
+      > **In ≤25 words, what did this refactor actually buy you?** Constraint: don't use the words "private", "list", or "encapsulate" — those are mechanisms, and the answer is about a *decision*.
 
-      The "generation effect" (Chi et al., 1994) says producing the sentence yourself, even silently, strengthens what you just learned more than re-reading does. It takes 15 seconds.
+      Forcing yourself to say it without those words is the point. If your sentence keeps reaching for them, you are still describing the implementation, not the design choice. The first quiz question rewards you for finding the decision-level wording.
+
+      The "generation effect" (Chi et al., 1994) says producing the sentence yourself strengthens learning more than re-reading does. The forbidden-word constraint comes from Variation Theory (Marton): forcing different language for the same concept is what makes the schema transferable.
 
     files:
       - path: "playlist.py"
@@ -660,6 +644,26 @@ steps:
           explanation: |
             A module's **secret** is the volatile design decision it owns. `Playlist` owns *how tracks are stored* and *how they are queried*. The four public methods are the **stable contract**; the storage choice (list, dict, B-tree, eventually a database) is the **hidden decision** that can change without forcing changes elsewhere. The swap test you just passed is the operational proof.
 
+        - type: single
+          difficulty: advanced
+          question: |
+            Suppose a teammate proposes a smaller fix for the Step 1 `WatchHistory`
+            leak: keep storage as `list[dict]`, but have `recent()` return
+            `tuple(self._history)` (an immutable copy). They argue: "Now nobody
+            can mutate it — the secret is hidden." Are they right, in Parnas's sense?
+          options:
+            - "Yes — fields are private and the return is immutable, so nothing leaks."
+            - "Not necessarily — the *element type* is still part of the contract."
+            - "Yes — immutability is the entire point of information hiding."
+            - "No — Python tuples are not really immutable; you can still mutate them with `__setitem__`."
+          correct_index: 1
+          option_feedback:
+            0: "A real improvement, but only for *mutation* leaks. Clients can still write code that depends on the *shape* of each element. Changing the element type still ripples."
+            2: "Immutability prevents accidental mutation. Information hiding is the *broader* discipline of choosing **which design decisions clients may depend on**. Element shape is one of those decisions."
+            3: "Python tuples are immutable in the sense that matters here — `t[0] = ...` raises `TypeError`, and `tuple` has no `__setitem__`. But this isn't the issue with the design."
+          explanation: |
+            Returning an immutable copy plugs the **mutation** leak, but it doesn't hide the **element type**. If `recent()` returns `tuple[dict, ...]`, clients still depend on each entry being a `dict` with specific keys — changing it to a `WatchedShow` dataclass still breaks them. That is exactly why your `Playlist` refactor did **two** things, not one: a frozen `Track` dataclass *and* a public surface of domain methods. Together they hide both the mutation channel and the element shape. Information hiding is about which **decisions** are visible, not just which **writes** are prevented.
+
         - type: multiple
           question: |
             **(Select all that apply.)** Which of these future changes can your refactored `Playlist` absorb **without** forcing any change in `app.py`?
@@ -807,30 +811,446 @@ steps:
         **One trap to remember.** A `@dataclass(frozen=True)` on `Track` was deliberate. If `Track` were mutable, `top_tracks(3)` could be modified by callers — re-leaking the data. Frozen dataclasses are the cheapest way to make a domain object both *typed* and *safe to hand out*. (`tuple(self._tracks)` would also work but loses the named fields.)
 
   # =========================================================================
-  # STEP 3 — "An Interface That Tells You Too Much"
+  # STEP 3 — "A Protocol on Familiar Code"
   # =========================================================================
   # Pedagogy:
-  #   Faded worked example (Renkl 2014) — scaffolding is reduced; students
-  #     define the Protocol and dataclass themselves given the contract.
+  #   Pre-loaded mechanics on familiar code (Cognitive Load Theory —
+  #     Sweller & Chandler's element-interactivity work) — separate the
+  #     introduction of typing.Protocol mechanics from the design lessons
+  #     that come next. Reusing the Step 2 Playlist keeps the *domain*
+  #     constant so only the *new construct* taxes working memory.
+  #   PRIMM — Predict (will both classes satisfy a Protocol that nobody
+  #     declared they inherit from?) → Run → Modify (annotate summary()
+  #     with PlaylistLike) → Make (define the Protocol).
+  #   Spaced retrieval — Step 2's "what is the secret?" returns,
+  #     reframed: the Protocol *names* the contract Step 2 left implicit.
+  #   Bloom — Apply (write the Protocol), Understand (structural vs
+  #     nominal subtyping), Analyze (which classes satisfy it).
+  # =========================================================================
+  - title: "A Protocol on Familiar Code"
+    instructions: |
+      ### Why this matters
+
+      Step 2's swap test worked because Python's duck typing checks methods at *call time*. That's powerful but invisible — nothing in your code *says* "Playlist and DictBackedPlaylist are interchangeable." This step introduces the one Python construct that makes that contract visible: `typing.Protocol`. **No new design principle here** — just a new way to *declare* what your Step 2 refactor already accomplished.
+
+      > **Why now, before the next refactor?** Steps 4–7 all use `Protocol`. Pre-loading the syntax on familiar code (your Playlist) means each later step adds only **one** new design idea at a time, not two or three. That keeps cognitive load on the lesson, not the language.
+
+      ### 🎯 You will learn to
+
+      - **Apply** `typing.Protocol` to name a contract that multiple classes satisfy structurally — no explicit inheritance needed
+      - **Distinguish** Python's existing duck typing (runtime, invisible) from a typed `Protocol` (declared, type-checkable)
+      - **Recognize** that the same construct hides an algorithm in Step 4, a storage backend in Step 5, and an exhaustive set of alternatives in Step 6
+
+      ### Two-minute primer
+
+      A `Protocol` is a class that declares method signatures **as a contract**. Any class with matching methods satisfies it automatically — no `class Foo(Bar):` required.
+
+      ```python
+      from typing import Protocol
+
+      class Counter(Protocol):
+          def increment(self) -> None: ...
+          def value(self) -> int: ...
+
+      class TallyCounter:           # No explicit base class!
+          def __init__(self) -> None:
+              self._n = 0
+          def increment(self) -> None:
+              self._n += 1
+          def value(self) -> int:
+              return self._n
+
+      def report(c: Counter) -> str:   # Accepts any Counter-shaped class
+          return f"count is {c.value()}"
+
+      report(TallyCounter())   # OK — TallyCounter is structurally a Counter
+      ```
+
+      The `...` after each method's signature is literally Python's ellipsis literal — it tells readers (and `mypy`) "this method is declared, not implemented here." The Protocol class itself is never instantiated; concrete classes are.
+
+      ### ✏️ Predict before you run
+
+      `protocol_demo.py` has your Step 2 `Playlist` *and* a small `DictBackedPlaylist`. If we add `class PlaylistLike(Protocol)` with the five methods, will a type checker accept both classes as `PlaylistLike`?
+
+      - (a) Only `Playlist` — `DictBackedPlaylist` doesn't inherit from `PlaylistLike`.
+      - (b) Both — structural matching cares about method shape, not inheritance.
+      - (c) Neither — `Playlist` doesn't declare `: PlaylistLike` either.
+      - (d) Only `DictBackedPlaylist` — it was added later, so it knows about the Protocol.
+
+      Commit, then continue.
+
+      <details><summary>Reveal (after you've committed)</summary>
+
+      Answer **(b)**. Protocols use *structural* subtyping (PEP 544). Any class with the matching methods satisfies the Protocol — no explicit base class, no order-of-definition concerns, no decorator needed. This is what makes `Protocol` the right Python tool for "swap-this-for-that" designs. The Step 2 swap test was the *runtime* proof; `PlaylistLike` is the *declared* contract.
+
+      </details>
+
+      ### Your task
+
+      Open `protocol_demo.py`. The `Playlist` class from Step 2 is there, plus a tiny `DictBackedPlaylist` (the swap class from your Step 2 test, made permanent so it has a name).
+
+      1. Add `from typing import Protocol` and define `class PlaylistLike(Protocol)` at the top, with these five methods, each ending in `...`:
+         - `add(self, title: str, artist: str, duration_sec: int, popularity: int) -> None`
+         - `top_tracks(self, n: int) -> list[Track]`
+         - `total_duration_minutes(self) -> float`
+         - `average_popularity(self) -> float`
+         - `__len__(self) -> int`
+      2. Change `summary(playlist: object)` to `summary(playlist: PlaylistLike)`. **Do not touch the body** — only the annotation.
+      3. **Do not** add `(PlaylistLike)` to either `Playlist` or `DictBackedPlaylist`. The whole point is that they satisfy it without saying so.
+
+      The test will call `summary(Playlist())` and `summary(DictBackedPlaylist())`. Both should produce identical-shape strings — proving the same client function accepts two completely different backings, via the *declared* Protocol rather than runtime luck.
+
+      ### 🪞 Before clicking Next
+
+      In ten seconds, finish this aloud:
+
+      > **Without using the word "duck":** what does `PlaylistLike` make *visible* about my code that wasn't visible in Step 2?
+
+      The word "duck" is forbidden because "duck typing" is the *Python jargon* for what's happening — but the *design* point is that the contract is now **named**. The new affordance is reader-visible substitutability. Variation Theory says forcing different language is what makes the concept transferable to the next refactor.
+
+    files:
+      - path: "protocol_demo.py"
+        language: "python"
+        content: |
+          """Step 3 — pre-load Protocol on familiar code.
+
+          Playlist and DictBackedPlaylist are both here. Define
+          ``PlaylistLike(Protocol)`` so a single ``summary(p: PlaylistLike)``
+          function accepts both — by structural matching, no inheritance.
+          """
+
+          from dataclasses import dataclass
+          # TODO: from typing import Protocol
+
+
+          @dataclass(frozen=True)
+          class Track:
+              title: str
+              artist: str
+              duration_sec: int
+              popularity: int
+
+
+          # TODO 1: Define ``class PlaylistLike(Protocol)`` here with the five
+          # methods from the instructions. End each declaration with ``...``.
+
+
+          class Playlist:
+              def __init__(self) -> None:
+                  self._tracks: list[Track] = []
+              def add(self, title, artist, duration_sec, popularity):
+                  self._tracks.append(Track(title, artist, duration_sec, popularity))
+              def top_tracks(self, n):
+                  return sorted(self._tracks, key=lambda t: t.popularity, reverse=True)[:n]
+              def total_duration_minutes(self):
+                  return sum(t.duration_sec for t in self._tracks) / 60
+              def average_popularity(self):
+                  return (sum(t.popularity for t in self._tracks) / len(self._tracks)) if self._tracks else 0
+              def __len__(self):
+                  return len(self._tracks)
+
+
+          class DictBackedPlaylist:
+              """Same operations, dict-backed storage. Structural twin of Playlist."""
+              def __init__(self) -> None:
+                  self._by_title: dict = {}
+              def add(self, title, artist, duration_sec, popularity):
+                  self._by_title[title] = Track(title, artist, duration_sec, popularity)
+              def top_tracks(self, n):
+                  return sorted(self._by_title.values(), key=lambda t: t.popularity, reverse=True)[:n]
+              def total_duration_minutes(self):
+                  return sum(t.duration_sec for t in self._by_title.values()) / 60
+              def average_popularity(self):
+                  vs = list(self._by_title.values())
+                  return (sum(t.popularity for t in vs) / len(vs)) if vs else 0
+              def __len__(self):
+                  return len(self._by_title)
+
+
+          # TODO 2: change the parameter annotation here from ``object`` to ``PlaylistLike``.
+          def summary(playlist: object) -> str:
+              lines = [f"{len(playlist)} tracks, {playlist.total_duration_minutes():.1f} min"]
+              for t in playlist.top_tracks(3):
+                  lines.append(f"  - {t.title}")
+              return "\n".join(lines)
+
+
+          if __name__ == "__main__":
+              for cls in (Playlist, DictBackedPlaylist):
+                  p = cls()
+                  p.add("Bad Guy", "Billie Eilish", 194, 95)
+                  p.add("Levitating", "Dua Lipa", 203, 88)
+                  p.add("Blinding Lights", "The Weeknd", 200, 92)
+                  print(cls.__name__)
+                  print(summary(p))
+                  print()
+
+    open_file: "protocol_demo.py"
+    run_file: "protocol_demo.py"
+
+    tests:
+      - description: "PlaylistLike is defined as a typing.Protocol with the five required methods"
+        command: |
+          import importlib, sys
+          sys.modules.pop("protocol_demo", None)
+          import protocol_demo as p
+
+          assert hasattr(p, "PlaylistLike"), \
+              "Define ``class PlaylistLike(Protocol)`` at the top of the file."
+
+          # Verify it really inherits from typing.Protocol (Protocol classes
+          # carry a private ``_is_protocol = True`` attribute).
+          from typing import Protocol as _Protocol  # noqa: F401
+          is_protocol = getattr(p.PlaylistLike, "_is_protocol", False)
+          assert is_protocol, (
+              "``PlaylistLike`` should inherit from ``typing.Protocol``. "
+              "Make sure you wrote ``class PlaylistLike(Protocol):`` exactly."
+          )
+
+          for method in ("add", "top_tracks", "total_duration_minutes",
+                         "average_popularity", "__len__"):
+              assert hasattr(p.PlaylistLike, method), \
+                  f"PlaylistLike is missing method ``{method}``."
+        hints:
+          - text: "Start with ``from typing import Protocol``. Then ``class PlaylistLike(Protocol):`` and indent the five method signatures. Each one ends with `: ...` (literal ellipsis)."
+          - text: "Skeleton:\n```python\nfrom typing import Protocol\n\nclass PlaylistLike(Protocol):\n    def add(self, title: str, artist: str, duration_sec: int, popularity: int) -> None: ...\n    def top_tracks(self, n: int) -> list[Track]: ...\n    def total_duration_minutes(self) -> float: ...\n    def average_popularity(self) -> float: ...\n    def __len__(self) -> int: ...\n```"
+            condition: "code_missing: Protocol"
+
+      - description: "summary() accepts both Playlist and DictBackedPlaylist (structural matching, no inheritance)"
+        command: |
+          import importlib, sys, inspect
+          sys.modules.pop("protocol_demo", None)
+          import protocol_demo as p
+
+          # Neither concrete class should have explicit inheritance from PlaylistLike.
+          for cls in (p.Playlist, p.DictBackedPlaylist):
+              bases = [b.__name__ for b in cls.__bases__]
+              assert "PlaylistLike" not in bases, (
+                  f"{cls.__name__} should NOT inherit from PlaylistLike — "
+                  "the whole point of Step 3 is that structural matching makes "
+                  "inheritance unnecessary. Remove ``(PlaylistLike)`` from its bases."
+              )
+
+          # Both should still work with summary().
+          for cls in (p.Playlist, p.DictBackedPlaylist):
+              obj = cls()
+              obj.add("Bad Guy", "Billie Eilish", 194, 95)
+              obj.add("Levitating", "Dua Lipa", 203, 88)
+              obj.add("Blinding Lights", "The Weeknd", 200, 92)
+              result = p.summary(obj)
+              assert isinstance(result, str) and len(result) > 0, \
+                  f"summary({cls.__name__}()) should return a non-empty string."
+              assert "Bad Guy" in result, (
+                  f"summary({cls.__name__}()) should include the highest-popularity "
+                  "title in its top picks."
+              )
+
+      - description: "summary()'s parameter is annotated PlaylistLike (the contract is now declared, not just implied)"
+        command: |
+          import inspect, sys
+          sys.modules.pop("protocol_demo", None)
+          import protocol_demo as p
+          sig = inspect.signature(p.summary)
+          ann = sig.parameters["playlist"].annotation
+          assert ann is p.PlaylistLike, (
+              "summary()'s ``playlist`` parameter should be annotated PlaylistLike, "
+              f"not {ann!r}. The annotation is what makes the contract *visible* — "
+              "without it, you're back to invisible duck typing."
+          )
+
+    quiz:
+      title: "Step 3 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+
+        - type: single
+          difficulty: basic
+          question: |
+            Why does `summary(DictBackedPlaylist())` work even though
+            `DictBackedPlaylist` does **not** have `(PlaylistLike)` in its
+            class definition?
+          options:
+            - "Python silently injects `PlaylistLike` as a base class at runtime."
+            - "`Protocol` uses structural matching — any class with the required methods qualifies."
+            - "`DictBackedPlaylist` inherits from `Playlist`, and `Playlist` is a `PlaylistLike`."
+            - "Python ignores type annotations entirely at runtime, so the annotation is decorative."
+          correct_index: 1
+          option_feedback:
+            0: "Python doesn't inject anything — inheritance has to be declared explicitly. Structural matching is a separate mechanism added by PEP 544."
+            2: "Look at the file — there is no inheritance between them. Each class defines its own methods independently. Their being interchangeable does *not* come from a shared base class."
+            3: "Half-right that Python ignores annotations at runtime — but mypy and Pyright don't. And the Protocol mechanism is specifically designed for static checkers to enforce structural rules. 'Annotations are decorative' isn't the *reason* the swap works — the structural rule is."
+          explanation: |
+            Protocols (PEP 544) introduced **structural subtyping** to Python's type system. A class satisfies a Protocol if it has the right methods and signatures — there is no `(PlaylistLike)` required in its declaration. This is exactly the right tool for Step 2's swap test: the swap class didn't *need* to know the Protocol existed when it was written. Now you can declare the contract visibly.
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            **Spaced retrieval — Step 2.** Now that `PlaylistLike` is declared,
+            what — in Parnas's sense — is the **secret** that `PlaylistLike`
+            allows implementations to keep?
+          options:
+            - "How many tracks are in the playlist."
+            - "How tracks are stored internally (list vs. dict vs. anything else)."
+            - "Whether Python uses duck typing or static typing."
+            - "The fact that `PlaylistLike` is a Protocol."
+          correct_index: 1
+          option_feedback:
+            0: "That count is part of the *contract* — `__len__` exposes it. The secret is what the contract *doesn't* say."
+            2: "That is a language-implementation detail, not a design decision the module owns."
+            3: "Being a Protocol is the *mechanism*. The secret is what the Protocol allows the implementer to keep private."
+          explanation: |
+            Same secret as Step 2 — **how tracks are stored** — but now you have a *named* artifact for it. The Protocol declares the five public operations as the stable surface; the storage choice (list, dict, or anything else) sits behind it. Naming the contract makes the secret official: any future engineer can read `PlaylistLike` and know exactly what is promised, and equally importantly, what isn't.
+
+        - type: multiple
+          difficulty: intermediate
+          question: |
+            **(Select all that apply.)** Which of these classes would satisfy
+            `class CounterLike(Protocol)` with `def increment(self) -> None: ...`
+            and `def value(self) -> int: ...`?
+          options:
+            - "`class Tally: def increment(self): self.n += 1\n    def value(self): return self.n`"
+            - "`class Total(CounterLike): def increment(self): ...` — only `increment`, no `value`"
+            - "`class HiddenCount: def __init__(self): self._n = 0\n    def increment(self): self._n += 1\n    def value(self): return self._n`"
+            - "`class Logger: def log(self, msg): print(msg)`"
+          correct_indices: [0, 2]
+          option_feedback:
+            1: "Inheriting from `CounterLike` doesn't help — *structural* matching means the methods must actually exist on the class. Missing `value` ⇒ doesn't satisfy. Inheritance without conformance is the worst of both worlds."
+            3: "Different methods entirely. The Protocol asks for `increment` and `value`; this class has neither."
+          explanation: |
+            Two of these satisfy the Protocol — both define matching `increment` and `value` methods. The inheritance line in the missing-`value` class is irrelevant; what matters is the *shape* of the class. Subtle point: structural matching is a *promise from you*, enforceable by static checkers — vanilla Python won't catch a missing method until you actually call it. That is why your Step 2 swap test still matters: it's the runtime proof, complementary to the declared Protocol.
+
+        - type: single
+          difficulty: basic
+          question: |
+            **Spaced retrieval — Step 1.** A teammate writes
+            `class Wallet(Protocol)` with one method `def balance(self) -> int: ...`
+            and a concrete `class CryptoWallet` that has matching methods plus a
+            **public** `transactions: list[dict]` attribute. They say "the
+            Protocol hides the implementation." Is that true?
+          options:
+            - "Yes — Protocols hide everything that isn't declared in them."
+            - "No — `transactions` is reachable from anywhere `CryptoWallet` is used directly; the Protocol just doesn't *require* exposure."
+            - "Yes — Python's annotations enforce that only Protocol methods are visible."
+            - "No — Protocols only work for read-only objects."
+          correct_index: 1
+          option_feedback:
+            0: "A Protocol *describes* a stable surface; it doesn't *prevent* a concrete class from having a wider public API. Step 1's lesson holds: hiding is about what the implementation chooses not to expose, not what the Protocol declares."
+            2: "Python's annotations are advisory at runtime. They guide type checkers; they don't restrict attribute access."
+            3: "There is no such restriction. Protocols can declare mutating methods too."
+          explanation: |
+            This is **Step 1's lesson, retrieved through the Step 3 lens.** A Protocol is a *floor*, not a *ceiling*: the concrete class must have at least the declared methods, but it can also have more. The implementer is the one who controls what *additional* surface to expose. A public `transactions` attribute on `CryptoWallet` is reachable by anyone with a `CryptoWallet` reference — exactly the way `WatchHistory._history` leaked through `recent()` in Step 1. The Protocol is a contract for *clients-as-Wallet*; it isn't a wall around the concrete class.
+
+    solution:
+      files:
+        - path: "protocol_demo.py"
+          language: "python"
+          content: |
+            """Step 3 — pre-load Protocol on familiar code."""
+
+            from dataclasses import dataclass
+            from typing import Protocol
+
+
+            @dataclass(frozen=True)
+            class Track:
+                title: str
+                artist: str
+                duration_sec: int
+                popularity: int
+
+
+            class PlaylistLike(Protocol):
+                def add(self, title: str, artist: str, duration_sec: int, popularity: int) -> None: ...
+                def top_tracks(self, n: int) -> list[Track]: ...
+                def total_duration_minutes(self) -> float: ...
+                def average_popularity(self) -> float: ...
+                def __len__(self) -> int: ...
+
+
+            class Playlist:
+                def __init__(self) -> None:
+                    self._tracks: list[Track] = []
+                def add(self, title, artist, duration_sec, popularity):
+                    self._tracks.append(Track(title, artist, duration_sec, popularity))
+                def top_tracks(self, n):
+                    return sorted(self._tracks, key=lambda t: t.popularity, reverse=True)[:n]
+                def total_duration_minutes(self):
+                    return sum(t.duration_sec for t in self._tracks) / 60
+                def average_popularity(self):
+                    return (sum(t.popularity for t in self._tracks) / len(self._tracks)) if self._tracks else 0
+                def __len__(self):
+                    return len(self._tracks)
+
+
+            class DictBackedPlaylist:
+                def __init__(self) -> None:
+                    self._by_title: dict = {}
+                def add(self, title, artist, duration_sec, popularity):
+                    self._by_title[title] = Track(title, artist, duration_sec, popularity)
+                def top_tracks(self, n):
+                    return sorted(self._by_title.values(), key=lambda t: t.popularity, reverse=True)[:n]
+                def total_duration_minutes(self):
+                    return sum(t.duration_sec for t in self._by_title.values()) / 60
+                def average_popularity(self):
+                    vs = list(self._by_title.values())
+                    return (sum(t.popularity for t in vs) / len(vs)) if vs else 0
+                def __len__(self):
+                    return len(self._by_title)
+
+
+            def summary(playlist: PlaylistLike) -> str:
+                lines = [f"{len(playlist)} tracks, {playlist.total_duration_minutes():.1f} min"]
+                for t in playlist.top_tracks(3):
+                    lines.append(f"  - {t.title}")
+                return "\n".join(lines)
+
+
+            if __name__ == "__main__":
+                for cls in (Playlist, DictBackedPlaylist):
+                    p = cls()
+                    p.add("Bad Guy", "Billie Eilish", 194, 95)
+                    p.add("Levitating", "Dua Lipa", 203, 88)
+                    p.add("Blinding Lights", "The Weeknd", 200, 92)
+                    print(cls.__name__)
+                    print(summary(p))
+                    print()
+      explanation: |
+        **What you just bought.** You named a contract that Step 2 left implicit. Before this step, "the same client works with two storage backends" was a runtime fact you proved with a test. Now it is a **declared Protocol** — readable in the file, checkable by `mypy`, and *exactly* the construct you'll layer design judgment on top of in the next steps.
+
+        **One subtle point.** Notice that `PlaylistLike` has zero opinion on *what is hidden behind it*. It just says "things that look like this." That is the right shape for an information-hiding contract: a Protocol is a place to put the **secret-free part** of a module's public surface. The secret lives in the implementations — exactly where it belongs.
+
+        **Looking ahead.** Steps 4–7 each layer **one** new design decision on top of the Protocol mechanics you now own.
+        - **Step 4** hides a scoring *algorithm* (the score-scale leak).
+        - **Step 5** hides a *storage* technology.
+        - **Step 6** hides an *exhaustive list* of providers.
+        - **Step 7** asks you to *classify* leaks across all four refactors and decide when **not** to apply the principle.
+
+  # =========================================================================
+  # STEP 4 — "An Interface That Tells You Too Much"
+  # =========================================================================
+  # Pedagogy:
+  #   Faded worked example (Renkl 2014) — Protocol mechanics are already
+  #     owned (Step 3); this step focuses purely on the design lesson.
   #   Parnas's own "over-specified circular-shift" example (1972) — an
   #     interface can be precise and STILL reveal too much, restricting
   #     future implementations.
   #   Module-guide mini-doc activity (Parnas, Clements & Weiss 1985) — the
   #     student writes a four-line guide naming the secret, likely changes,
   #     stable contract, and what is NOT promised.
-  #   Spaced retrieval — Step 2's "what is the secret?" pattern returns,
-  #     applied to a different kind of leak.
-  #   Bloom — Analyze (which detail is over-specified?), Create (write
-  #     the Protocol + dataclass + module guide), Evaluate (compare
-  #     two interfaces for leak severity).
+  #   Spaced retrieval — Step 2's "what is the secret?" returns, applied to
+  #     a different kind of leak; Step 3's Protocol mechanics are reused.
+  #   Bloom — Analyze (which detail is over-specified?), Create (write the
+  #     Protocol + dataclass + module guide), Evaluate (compare two
+  #     interfaces for leak severity).
   # =========================================================================
   - title: "An Interface That Tells You Too Much"
     instructions: |
       ### Why this matters
 
-      Step 2 fixed a *mutation* leak. This step fixes a subtler one — a contract that *looks* clean but **over-specifies** how it computes its answer. Parnas warned about this in 1972 with his KWIC example: an interface that says more than the client needs to know **restricts future implementations**. A music recommender that returns raw BM25 scores is the modern version. Switch the algorithm from BM25 to embeddings and every numeric threshold in the client breaks.
+      Step 2 fixed a *mutation* leak. Step 3 gave you the **declared contract** — `Protocol` — for Step 2's swap test. This step fixes a subtler problem: a contract that *looks* clean but **over-specifies** how it computes its answer. Parnas warned about this in 1972 with his KWIC example: an interface that says more than the client needs to know **restricts future implementations**. A music recommender that returns raw BM25 scores is the modern version. Switch the algorithm from BM25 to embeddings and every numeric threshold in the client breaks.
 
-      > **Heads up — this step adds two new Python features at once.** That's deliberate: `typing.Protocol` and `typing.Literal` are the cleanest way to express "any class with this shape works." If either feels foggy, walk to the primer below, then come back. Confusion on the first read is normal — Parnas's principle takes most engineers a couple of passes to internalize.
+      > **One new piece of syntax this step:** `typing.Literal`. `Protocol` you already own from Step 3 — reuse it freely. The new content of this step is **design judgment**, not mechanics.
 
       ### 🎯 You will learn to
 
@@ -838,18 +1258,7 @@ steps:
       - **Create** a `typing.Protocol` plus a small `dataclass` so two different ranking strategies satisfy the same contract
       - **Apply** the Parnas/Clements/Weiss **module-guide** mini-doc format: secret, likely changes, stable contract, *what is not promised*
 
-      ### Two-minute primer on `Protocol` and `Literal`
-
-      You used Python's "duck typing" implicitly in Step 2 — the swap test defined `DictBackedPlaylist` and the client just worked, because Python checks methods at call time, not declaration time. `typing.Protocol` is how you make that duck typing **explicit and type-checkable**:
-
-      ```python
-      from typing import Protocol
-
-      class Recommender(Protocol):
-          def recommend(self, query: str, *, limit: int = 5) -> list[SongHit]: ...
-      ```
-
-      Any class that has a `recommend(query, *, limit) -> list[SongHit]` method **automatically** satisfies `Recommender`. No `class Foo(Recommender):` needed; structural matching only. That's the contract you'll write below.
+      ### One-minute primer on `typing.Literal`
 
       `typing.Literal` lets a type be one of a fixed set of values:
 
@@ -911,9 +1320,9 @@ steps:
 
       Once all four tests pass, take 20 seconds and answer in your head:
 
-      > "If a future engineer reads `sidebar.py`, can they tell which ranking algorithm runs underneath? Why or why not?"
+      > **Without using the words "score" or "BM25":** if a future engineer reads `sidebar.py`, can they tell which ranking algorithm runs underneath? Why or why not?
 
-      The right answer ("no — sidebar only sees `hit.confidence`") is what you just bought with this refactor. Saying it out loud once makes the next refactor easier.
+      The right answer ("no — sidebar only sees `hit.confidence`, which is a *domain* label, not an *algorithm* artifact") is what you just bought with this refactor. The forbidden words force you to talk about the concept, not just point at the leak.
 
     files:
       - path: "recommender.py"
@@ -1105,22 +1514,75 @@ steps:
               f"index, or order — not at ``hit.confidence``."
           )
 
-      - description: "recommender.py has a Parnas-style module guide (Primary secret, Likely changes, Stable contract, Not promised)"
+      - description: "recommender.py has a Parnas-style module guide with NON-EMPTY content under each label, and the Not-promised section names a real leak this step removed"
         command: |
+          import re
           src = open("/tutorial/recommender.py").read()
-          required = ["Primary secret", "Likely changes", "Stable contract", "Not promised"]
-          missing = [tag for tag in required if tag not in src]
+
+          # 1. All four labels present.
+          required_labels = ["Primary secret", "Likely changes", "Stable contract", "Not promised"]
+          missing = [tag for tag in required_labels if tag not in src]
           assert not missing, (
-              f"recommender.py's docstring is missing module-guide tag(s): {missing}. "
+              f"recommender.py's docstring is missing module-guide label(s): {missing}. "
               "Use the four labels exactly so a maintainer can find them by greping."
           )
+
+          # 2. Each label must be followed by SUBSTANTIVE content (not just whitespace,
+          # not just the word TODO, not just the label itself). At least 10 non-label
+          # characters before the next label or the end of the docstring.
+          # Order the labels as they appear in the source so we can slice between them.
+          positions = sorted(
+              ((src.index(label), label) for label in required_labels),
+              key=lambda t: t[0],
+          )
+          for i, (start, label) in enumerate(positions):
+              # Content starts right after "<label>:" — find the colon.
+              colon_idx = src.find(":", start)
+              assert colon_idx != -1, f"``{label}`` should be followed by ``:`` then content."
+              # End of this label's content = start of next label (or end of file/docstring).
+              if i + 1 < len(positions):
+                  end = positions[i + 1][0]
+              else:
+                  # Grab to the closing triple-quote of the leading docstring.
+                  match = re.search(r'"""', src[colon_idx:])
+                  end = colon_idx + (match.start() if match else len(src) - colon_idx)
+              body = src[colon_idx + 1:end].strip()
+              # Strip leading/trailing dashes/bullets/whitespace
+              meaningful = re.sub(r"[\s\-•*]+", "", body)
+              assert len(meaningful) >= 10, (
+                  f"``{label}`` has empty or placeholder content. "
+                  f"Write at least one substantive line under each label — "
+                  f"the point of the module guide is to record the *reasoning*, "
+                  f"not just the headings."
+              )
+              assert "TODO" not in body.upper() or len(meaningful) > 25, (
+                  f"``{label}`` still says TODO. Write the real content — this "
+                  "module guide is the artifact a future maintainer reads first."
+              )
+
+          # 3. The "Not promised" section must specifically call out at least one of
+          # the leaks this step removed: raw score, score scale, bucket id, or ranking
+          # algorithm. (This rewards naming the actual leak, not generic disclaimers.)
+          not_promised_idx = src.index("Not promised")
+          # End at the closing docstring quotes, if any.
+          tail = src[not_promised_idx:]
+          end_match = re.search(r'"""', tail)
+          not_promised_body = tail[: end_match.start() if end_match else len(tail)]
+          leak_terms = ["score", "scale", "bucket", "algorithm", "bm25", "embedding", "tie-break", "ordering"]
+          found = [t for t in leak_terms if t.lower() in not_promised_body.lower()]
+          assert found, (
+              "The ``Not promised`` section should name at least one of the leaks this "
+              "step removed (raw scores, score scale, bucket IDs, the ranking algorithm, "
+              "etc.). A module guide that only says ``Not promised: implementation details`` "
+              "is generic — the value is in naming what you specifically chose to hide."
+          )
         hints:
-          - text: "The module guide is a docstring at the very top of the file. Four labels, one or two lines after each."
-          - text: "Skeleton:\n\n```python\n\"\"\"\nModule guide:\n  Primary secret:   how songs are scored and ranked for a query\n  Likely changes:\n    - BM25 -> embeddings\n    - hybrid ranker (popularity * recency)\n    - per-user personalization\n  Stable contract:  recommend(query, *, limit) -> list[SongHit]\n  Not promised:\n    - raw scores or score scale\n    - bucket IDs or partition keys\n    - ordering beyond 'high before medium before low'\n\"\"\"\n```"
+          - text: "The module guide is a docstring at the very top of the file. Four labels, one or two lines after each — and the lines have to be *real*, not TODOs."
+          - text: "Skeleton (replace the placeholders with your own wording):\n\n```python\n\"\"\"\nModule guide:\n  Primary secret:   how songs are scored and ranked for a query\n  Likely changes:\n    - BM25 -> embeddings\n    - hybrid ranker (popularity * recency)\n    - per-user personalization\n  Stable contract:  recommend(query, *, limit) -> list[SongHit]\n  Not promised:\n    - raw scores or score scale\n    - bucket IDs or partition keys\n    - ordering beyond 'high before medium before low'\n\"\"\"\n```"
             condition: "code_missing: Primary secret"
 
     quiz:
-      title: "Step 3 — Knowledge Check"
+      title: "Step 4 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1200,6 +1662,27 @@ steps:
             3: "Static vs. instance doesn't affect contract leakage. The method is still on the Protocol."
           explanation: |
             A subtle anti-pattern: **adding** to the contract can re-leak a decision you previously hid. Confidence labels were chosen precisely so the raw score and its scale wouldn't be visible. The right move is to ask the teammate *what client problem `raw_score` solves*, and address that problem at the right level — e.g., add a `is_top_match(hit)` predicate, expose a new confidence band like `"very_high"`, or expose an explanation token. **Never** re-expose the score itself.
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            **Spaced retrieval — Step 3 (Protocol mechanics).** Your
+            `PopularityRecommender` was defined *before* `Recommender(Protocol)`
+            appeared in the same file. A second class, `EmbeddingRecommender`,
+            is defined in a *test* file — not even imported by `recommender.py`.
+            Both satisfy the `Recommender` Protocol. Why does that work?
+          options:
+            - "Python silently rewrites both classes at import time to inherit from `Recommender`."
+            - "Structural subtyping (PEP 544) means any class with matching methods qualifies — declaration order and import location are irrelevant."
+            - "Only the second class works; the first one was defined before `Recommender`, so it can't satisfy it."
+            - "It works because both classes happen to have `recommend` in their name."
+          correct_index: 1
+          option_feedback:
+            0: "Python doesn't rewrite anything. There is no runtime injection of base classes."
+            2: "Definition order doesn't matter for structural matching. A class satisfies a Protocol when its *shape* matches — when it was defined relative to the Protocol is irrelevant."
+            3: "Method names matter — `recommend` matching is part of the structural match — but it's the *signature* and *existence* that count, not the class name."
+          explanation: |
+            Step 3's central lesson, retrieved through this step's lens. Protocols use **structural** subtyping, so neither order of definition nor explicit inheritance is needed. The Step 3 swap test (PlaylistLike) and this step's swap test (Recommender + EmbeddingRecommender) are the same mechanism applied to two different domains. **That is what makes the Protocol the right tool for "swap-this-for-that" designs:** new implementations can be added later, anywhere, with no edit to the Protocol or its existing implementers.
 
     solution:
       files:
@@ -1321,7 +1804,7 @@ steps:
         future decisions you have not yet made.
 
   # =========================================================================
-  # STEP 4 — "Where Did You Put the Database?"
+  # STEP 5 — "Where Did You Put the Database?"
   # =========================================================================
   # Pedagogy:
   #   Transfer challenge with most-independent design (Renkl's fading curve
@@ -1384,7 +1867,9 @@ steps:
 
       Once all four tests pass, answer this in your head before the quiz:
 
-      > "After the refactor, `affordable_shows` calls *one method* on its parameter. Name that method and explain why that single call is enough to absorb every plausible storage migration (SQLite → Postgres → HTTP → file)."
+      > **Without using the words "SQL" or "database":** after the refactor, `affordable_shows` calls *one method* on its parameter. Name that method and explain why that single call is enough to absorb every plausible storage migration (SQLite → Postgres → HTTP → file).
+
+      The forbidden words force you to describe the *contract*, not the *current implementation*. If you find yourself reaching for "SQL", that is your brain telling you the contract still has a database shape in it — which would mean the abstraction is not really hiding storage.
 
     files:
       - path: "events.py"
@@ -1580,21 +2065,62 @@ steps:
               f"on storage-specific behavior."
           )
         hints:
-          - text: "If this fails, run tour_planner.py and inspect the two outputs. The most common cause is forgetting to map SQL row tuples back to Event dataclasses in SQLiteEventDirectory."
-          - text: "SQLiteEventDirectory.find_in skeleton: ``rows = self._conn.execute('SELECT ... FROM ' + self._table + ' WHERE city = ?', (city,)).fetchall(); return [Event(*r) for r in rows]``"
-            condition: "code_missing: SQLiteEventDirectory"
+          - text: "If this fails, run tour_planner.py and inspect the two outputs. Skim the diff between in-memory results and SQL results — usually the SQL side is returning something different from Event dataclasses (raw tuples, rows-as-dicts, an empty list, etc.). What does your SQLiteEventDirectory.find_in *return*?"
+          - text: "Strategic hint (no skeleton): your SQLiteEventDirectory needs to (1) execute a parameterised query against ``self._conn`` and ``self._table``, and (2) **map each row tuple to an Event** before returning. The mapping is the step novices skip — and skipping it is what this test catches."
+            condition: "output_contains: AssertionError"
+          - text: "Skeleton (last-resort hint, only after you've tried mapping rows): ``rows = self._conn.execute(f'SELECT title, venue, date_iso, city, ticket_price_cents FROM {self._table} WHERE city = ?', (city,)).fetchall(); return [Event(*r) for r in rows]``"
+            condition: "output_contains: implementations"
 
-      - description: "events.py has a module guide and is the ONLY place that mentions sqlite3"
+      - description: "events.py has a substantive module guide and is the ONLY place that mentions sqlite3 in business logic"
         command: |
+          import re
           src_events = open("/tutorial/events.py").read()
-          src_planner = open("/tutorial/tour_planner.py").read()
 
-          for tag in ("Primary secret", "Likely changes", "Stable contract", "Not promised"):
-              assert tag in src_events, f"events.py is missing module-guide tag: {tag}"
+          # 1. All four labels present
+          required_labels = ["Primary secret", "Likely changes", "Stable contract", "Not promised"]
+          missing = [tag for tag in required_labels if tag not in src_events]
+          assert not missing, f"events.py is missing module-guide label(s): {missing}"
 
-          # Storage decision is now hidden inside events.py — tour_planner mentions
+          # 2. Each label has non-empty, non-TODO content
+          positions = sorted(
+              ((src_events.index(label), label) for label in required_labels),
+              key=lambda t: t[0],
+          )
+          for i, (start, label) in enumerate(positions):
+              colon_idx = src_events.find(":", start)
+              if i + 1 < len(positions):
+                  end = positions[i + 1][0]
+              else:
+                  m = re.search(r'"""', src_events[colon_idx:])
+                  end = colon_idx + (m.start() if m else len(src_events) - colon_idx)
+              body = src_events[colon_idx + 1:end].strip()
+              meaningful = re.sub(r"[\s\-•*]+", "", body)
+              assert len(meaningful) >= 10, (
+                  f"``{label}`` has empty or placeholder content. Write at least "
+                  "one substantive line — the module guide is the artifact a "
+                  "future SRE reads when migrating storage."
+              )
+              assert "TODO" not in body.upper() or len(meaningful) > 25, (
+                  f"``{label}`` still says TODO."
+              )
+
+          # 3. The Not promised section must name at least one persistence-level leak
+          # this step removed (SQL, schema, connection, etc.).
+          not_promised_idx = src_events.index("Not promised")
+          tail = src_events[not_promised_idx:]
+          end_match = re.search(r'"""', tail)
+          not_promised_body = tail[: end_match.start() if end_match else len(tail)]
+          leak_terms = ["sql", "schema", "connection", "table", "column", "storage", "database", "backend"]
+          found = [t for t in leak_terms if t.lower() in not_promised_body.lower()]
+          assert found, (
+              "The ``Not promised`` section should name at least one persistence-level "
+              "leak this step removed (SQL, schema, connection objects, table names, "
+              "storage backend, ...). A generic 'Not promised: implementation details' "
+              "wastes the artifact."
+          )
+
+          # 4. Storage decision is hidden inside events.py — tour_planner mentions
           # sqlite3 only in its __main__ demo (which is the wiring layer).
-          # Allow sqlite3 in tour_planner's __main__ but not in affordable_shows itself.
           import inspect, importlib, sys
           for name in ("tour_planner",):
               sys.modules.pop(name, None)
@@ -1606,7 +2132,7 @@ steps:
           )
 
     quiz:
-      title: "Step 4 — Knowledge Check"
+      title: "Step 5 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1666,7 +2192,7 @@ steps:
 
         - type: single
           question: |
-            **Spaced retrieval — Step 3.** Your `EventDirectory.find_in(city)` returns
+            **Spaced retrieval — Step 4 (overspecification).** Your `EventDirectory.find_in(city)` returns
             `list[Event]`. The team is asked to add pagination. Two design proposals:
 
             - **A:** `find_in(self, city: str, *, page: int, page_size: int) -> list[Event]`
@@ -1685,7 +2211,26 @@ steps:
             2: "They look similar but B abstracts more: any pagination strategy can return *some* opaque cursor; only offset pagination can return a *page number*."
             3: "Wrapping the result in a small dataclass costs almost nothing and lets you evolve the response shape without breaking callers. (Useless? Add `total_known: int` later and no caller breaks.)"
           explanation: |
-            Clients only care that there is a `next_cursor` (or none) — same lesson as the recommender's `Confidence` enum. **Naming the domain concept (`next_cursor`) instead of the algorithm detail (`page: int`) hides one more design decision.** The reader who studied Step 3 should now find this pattern instinctive — a faded transfer of the exact same idea, applied to a different domain.
+            Clients only care that there is a `next_cursor` (or none) — same lesson as the recommender's `Confidence` enum. **Naming the domain concept (`next_cursor`) instead of the algorithm detail (`page: int`) hides one more design decision.** The reader who studied Step 4 should now find this pattern instinctive — a faded transfer of the exact same idea, applied to a different domain.
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            **Spaced retrieval — Step 2 (representation).** Your `Event`
+            dataclass is declared `@dataclass(frozen=True)`. Why **frozen**,
+            specifically, and not just `@dataclass`?
+          options:
+            - "Frozen dataclasses are faster at construction."
+            - "Frozen prevents callers from mutating an `Event` they received from `find_in()`, which would silently change another caller's view if the directory shared instances."
+            - "Frozen is required for dataclasses to work with `Protocol`."
+            - "Frozen automatically makes all fields private."
+          correct_index: 1
+          option_feedback:
+            0: "Frozen dataclasses are actually slightly *slower* (because Python uses `object.__setattr__` for initialization). Performance isn't the reason to choose them."
+            2: "Frozen and Protocol are independent features. A non-frozen dataclass still satisfies a Protocol if the methods match."
+            3: "Frozen has nothing to do with field privacy. All dataclass fields are public regardless of frozenness."
+          explanation: |
+            This is Step 2's lesson, retrieved through the Step 5 lens. Step 2's `Track` was frozen so `top_tracks(3)` could safely return references to internal tracks without callers mutating them. Step 5's `Event` is frozen for the same reason: an in-memory directory may cache `Event` instances, and a caller who mutates one would corrupt that cache without warning. **Frozen dataclasses are the cheapest way to make a domain object both typed and safe to hand out** — the same one-line move you used in Step 2 generalizes here.
 
     solution:
       files:
@@ -1813,7 +2358,7 @@ steps:
         actually has to live somewhere.
 
   # =========================================================================
-  # STEP 5 — "Single Choice: Stop Repeating the Provider List"
+  # STEP 6 — "Single Choice: Stop Repeating the Provider List"
   # =========================================================================
   # Pedagogy:
   #   Application of the Single Choice principle (Meyer / Parnas) — direct
@@ -1829,6 +2374,30 @@ steps:
   # =========================================================================
   - title: "Single Choice: Stop Repeating the Provider List"
     instructions: |
+      ### 🧠 Before you read — retrieve from memory
+
+      You've now done three refactors that each followed the same five-step routine. **Before scrolling further, cover the screen and write the five labels of that routine from memory.** (A scrap of paper, a comment in your editor, or your head — any form is fine. Just don't peek.)
+
+      <details><summary>Reveal (after you've written your version)</summary>
+
+      The canonical labels — same five every time, from Parnas's design-for-change discipline:
+
+      ```text
+      1. Name the change.            What is about to change, and why is it likely?
+      2. Name the secret.            Which design decision should one module own?
+      3. Minimum client assumptions. What does the client *actually* need to know?
+      4. Remove the leak.            Replace exposed representation with domain operations,
+                                     a Protocol, dependency injection — whatever names the
+                                     contract without naming the decision.
+      5. Verify with a swap.         Same client, different implementation, same output.
+      ```
+
+      If yours matched word-for-word, your schema is solidifying — that's exactly what spaced retrieval is supposed to do. If you got 4 out of 5 (most students do by this point), notice *which* you missed: the one most often dropped is **#3** (minimum client assumptions), because it's the only step that asks you to reason about the *client* rather than the module being refactored.
+
+      Karpicke & Roediger (2008) found that recalling material without cues produces 50% stronger retention than re-reading the same material. The 30 seconds you just spent writing the routine from memory is the cheapest learning move in this tutorial.
+
+      </details>
+
       ### Why this matters
 
       Open any production codebase and search for `if provider ==`. You'll find the same alphabetical list of providers in four files. Add a fifth provider and you edit all four — and inevitably miss one, shipping a "feature works on Spotify but silently breaks on Tidal" bug. The SEBook chapter calls this the **Single Choice principle**: when a system supports several alternatives, **only one module should know the exhaustive list**. This step makes Single Choice operational. The killer test: you'll add a fourth provider — *invisible to your refactored code* — and three client functions will work with it unchanged.
@@ -1868,9 +2437,9 @@ steps:
 
       Once all three tests pass, do this self-check before the quiz:
 
-      > "Search this tutorial mentally across all four refactors. In each one, you replaced *direct exposure* of a design decision with **what kind of thing**? The four answers are different in form but all an instance of the same *move*."
+      > **Without using the word "Protocol":** search this tutorial mentally across all four refactors (Steps 2, 4, 5, and 6). In each one, you replaced *direct exposure* of a design decision with **what kind of thing**? The four answers are different in form but all instances of the same *move*.
 
-      The four are: (Step 2) domain operations, (Step 3) a `Protocol` + dataclass, (Step 4) dependency injection of a `Protocol`, (Step 5) polymorphism on a `Protocol`. Each one is a different way to make a contract not name the volatile decision. The quiz's last question asks this in MCQ form.
+      The four are: (Step 2) domain operations on a class, (Step 4) a typed shape + dataclass, (Step 5) dependency injection of a typed shape, (Step 6) polymorphism on a typed shape. Each one is a different way to make a contract not name the volatile decision. (The forbidden word forces you to name what each refactor was *for*, not the Python construct it used.) The quiz's last question asks this in MCQ form.
 
     files:
       - path: "streaming.py"
@@ -2049,7 +2618,7 @@ steps:
                       f"{ProviderCls.__name__}.{label} via the client function returned {value!r}"
 
     quiz:
-      title: "Step 5 — Knowledge Check"
+      title: "Step 6 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2107,10 +2676,33 @@ steps:
             Three of these are absorbed by the refactor; the fourth (renaming `like` to `favorite`) is a contract change and ripples. **A/B-testing two implementations of the same provider at once** is the test (2) — and it's only possible because the wiring layer hands out provider *instances*, not provider *strings*. That kind of flexibility is one of the quietest big wins of polymorphism-behind-a-Protocol.
 
         - type: single
+          difficulty: intermediate
+          question: |
+            **Spaced retrieval — Step 1 (private isn't enough).** A teammate
+            asks: *"Could we have solved the original provider-coupling problem
+            just by making `provider` a private field on a single shared
+            module, instead of three top-level functions?"*
+
+            What's the cleanest objection?
+          options:
+            - "Private fields would make the code uncompilable in Python."
+            - "Making the provider field private hides the *attribute*, but the same `if provider == \"spotify\"` ladder would still appear in `play`/`share`/`like` methods — the leak is the *list of branches*, not the variable's visibility."
+            - "Single Choice requires every variable to be public."
+            - "Private fields are inherently slower at runtime."
+          correct_index: 1
+          option_feedback:
+            0: "Python compiles fine with private (or even pseudo-private) attributes."
+            2: "Single Choice says nothing about field visibility — it's about *where* the list of alternatives lives."
+            3: "Speed is irrelevant to the question."
+          explanation: |
+            This is Step 1's lesson, retrieved through Step 6's lens. **Visibility modifiers are not the unit of information hiding.** Hiding the `provider: str` field as `self._provider` would still leave a `match self._provider:` block — the *shape* of the leak doesn't change. The Single Choice violation lives in the **branching ladder**, not the variable name. The fix is structural (polymorphism on a Protocol), not lexical (more underscores). Same lesson as Step 1's `WatchHistory._history`: the underscore did not hide the design decision.
+
+        - type: single
+          difficulty: advanced
           question: |
             **Spaced retrieval across the tutorial.** Which of the following
-            best describes the *single* common move that connects Steps 2, 3,
-            4, and 5?
+            best describes the *single* common move that connects Steps 2, 4,
+            5, and 6?
           options:
             - "Add a `@dataclass(frozen=True)` to every input the SUT receives."
             - "Wrap each free function in a class with a single `run()` method."
@@ -2118,11 +2710,11 @@ steps:
             - "Add type hints to every parameter so the linter can find leaks."
           correct_index: 2
           option_feedback:
-            0: "Frozen dataclasses are a tool you used in three of the four steps — for *domain objects*. Not for every input. Hashing the tool to the goal loses the point."
+            0: "Frozen dataclasses are a tool you used in three of the four refactors — for *domain objects*. Not for every input. Hashing the tool to the goal loses the point."
             1: "Wrapping things in classes was the visible artifact. The *principle* was always 'hide the volatile decision', not 'wrap in class'."
             3: "Type hints helped the linter and the reader. They didn't hide anything by themselves."
           explanation: |
-            Every step did the same operation at a different level: **identify the design decision that is likely to change, then replace its direct exposure with a stable contract that does not name it**. Storage (Step 2). Algorithm + score scale (Step 3). Persistence technology (Step 4). Exhaustive list of providers (Step 5). The *form* changes per step (domain methods, Protocol + dataclass, dependency injection, polymorphism), but the *principle* is one move repeated. **That's the entire skill this tutorial trains.**
+            Every refactor step did the same operation at a different level: **identify the design decision that is likely to change, then replace its direct exposure with a stable contract that does not name it**. Storage (Step 2). Algorithm + score scale (Step 4). Persistence technology (Step 5). Exhaustive list of providers (Step 6). The *form* changes per step (domain methods, then `Protocol` + dataclass, then dependency injection, then polymorphism), but the *principle* is one move repeated. **That's the entire skill this tutorial trains.** Step 3 gave you the Python construct that all of them used; Step 7 will ask you to recognize the *type* of leak before you fix it.
 
     solution:
       files:
@@ -2226,7 +2818,307 @@ steps:
         project), you have a routine — not just a name.
 
   # =========================================================================
-  # STEP 6 — "Predict the Blast Radius"
+  # STEP 7 — "Sort the Leaks" (interleaved discrimination)
+  # =========================================================================
+  # Pedagogy:
+  #   Interleaved discrimination practice (Rohrer & Taylor 2007; Dunlosky
+  #     et al. 2013) — the four leak types learned in Steps 2-6 were taught
+  #     in *blocked* sequence. This step *mixes* them so the student must
+  #     classify before fixing. Interleaving is what builds the "which
+  #     technique applies here?" skill — the practitioner-level skill the
+  #     tutorial is aiming at.
+  #   Honest-tradeoff embedded (Tempero, Blincoe, Lottridge 2023) — at
+  #     least one snippet's correct answer is "not a leak", calibrating
+  #     against the "always abstract" failure mode that blocked instruction
+  #     tends to produce.
+  #   Variation Theory (Marton) — the same principle expressed across
+  #     different surface forms forces the student to attend to the *deep*
+  #     structure (the design decision being exposed) rather than surface
+  #     cues (the Python construct or domain vocabulary).
+  #   Spaced retrieval across Steps 1-6: every prior step's anti-pattern
+  #     appears in at least one snippet.
+  #   Bloom — Analyze (identify the leak type), Evaluate (when to abstain),
+  #     Apply (cite the routine step that addresses each leak).
+  # =========================================================================
+  - title: "Sort the Leaks"
+    instructions: |
+      ### Why this matters
+
+      Steps 2-6 each taught **one** kind of leak in isolation — that's *blocked* practice, and it's the right shape for building each schema. But real codebases mix leak types, and the skill an engineer actually needs is **classification first, fix second**: read a snippet, identify which kind of leak it is (or whether it's a leak at all), and *then* pick the right routine.
+
+      This step is **pure judgment** — no code to write, no files to refactor. Six short snippets. For each one, you decide what kind of leak (if any) is present and which step's routine fixes it.
+
+      ### 🎯 You will learn to
+
+      - **Discriminate** between the four leak types you've practiced — by attending to deep structure, not surface cues
+      - **Recognize** when a snippet is *not* a leak, and resist the "always abstract" instinct
+      - **Match** each leak to the step that taught its fix (representation = Step 2, overspecification = Step 4, persistence = Step 5, exhaustive-alternatives = Step 6)
+
+      ### How to read each snippet
+
+      Every snippet has a specific design decision visible (or appropriately hidden). The deep-structure cue you're looking for: **what would have to change in clients if the implementation chose differently?** If nothing would, it's not a leak. If many clients would, name the type and pick the routine.
+
+      The same five-step routine you retrieved at the start of Step 6 applies to every fix. **This step trains the *which routine* judgment that comes *before* applying it.**
+
+      > Research base: Rohrer & Taylor (2007) and Dunlosky et al. (2013) find that *interleaved* practice produces worse performance during practice but dramatically better transfer afterward — because mixing examples forces attention to the structural feature rather than the surface feature. The next two questions might feel harder than Steps 2-6 did. That's the point.
+
+    files:
+      - path: "SNIPPETS.md"
+        language: "markdown"
+        content: |
+          # Step 7 — Sort the Leaks
+
+          Six short snippets are in the quiz on the right. Each shows a small
+          Python module. For each one, decide:
+
+          1. Is there a leak?
+          2. If yes, which *kind* — representation (Step 2), over-specification
+             (Step 4), persistence (Step 5), or exhaustive-alternatives (Step 6)?
+          3. If no, why is the abstraction unnecessary here?
+
+          You will not edit code in this step. The skill being trained is
+          classification — the move that comes *before* picking a fix.
+
+    open_file: "SNIPPETS.md"
+
+    quiz:
+      title: "Step 7 — Sort the Leaks"
+      min_score: 0.8
+      shuffle_questions: false   # deliberate interleaving of leak types
+      shuffle_options: true
+      questions:
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            **Snippet 1.**
+
+            ```python
+            class ConcertCalendar:
+                def __init__(self):
+                    self._dates: list[dict] = []
+                def add(self, date_iso: str, venue: str):
+                    self._dates.append({"date": date_iso, "venue": venue})
+                def all(self) -> list[dict]:
+                    return self._dates
+            ```
+
+            What kind of leak — if any — does `all()` introduce?
+          options:
+            - "Representation leak — clients see and can mutate the internal `list[dict]`, and depend on its element shape."
+            - "Over-specification leak — the contract reveals a scoring/ordering detail."
+            - "Persistence leak — a storage technology is exposed in the contract."
+            - "Exhaustive-alternatives leak — an `if x ==` ladder appears in multiple places."
+            - "Not a leak — this contract is fine."
+          correct_index: 0
+          option_feedback:
+            1: "There's no algorithmic ordering being revealed — no scores, no scale. The leak is *shape*, not *algorithm*."
+            2: "No storage technology mentioned. The `list` is in-memory and an implementation detail. The leak is *shape*, not *persistence*."
+            3: "No exhaustive list of alternatives appears."
+            4: "Returning the internal `list[dict]` by reference is the **exact** anti-pattern Step 2 refuted (and Step 1's `WatchHistory.recent()` before it). Clients can mutate it and depend on dict keys. That's a leak."
+          explanation: |
+            Same shape as Step 2's `Playlist` before refactoring, and Step 1's `WatchHistory.recent()` before its fix. Leaked decisions: "storage is a list", "items are dicts with these keys", "iteration order is insertion order", "clients can mutate it." The fix is the **representation refactor** (Step 2 routine): a frozen dataclass + domain methods, with `all()` returning a domain-typed sequence.
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            **Snippet 2.**
+
+            ```python
+            def rank_articles(query: str) -> list[tuple[int, float, dict]]:
+                """Returns (shard_id, tfidf_score, raw_row) tuples."""
+                ...
+            ```
+
+            What kind of leak — if any?
+          options:
+            - "Representation leak — `list` and `dict` show internal storage."
+            - "Over-specification leak — the contract names the ranking algorithm and its numeric scale, restricting future implementations."
+            - "Persistence leak — a database schema is exposed."
+            - "Exhaustive-alternatives leak — a list of providers is repeated."
+            - "Not a leak — the contract is precise, which is good."
+          correct_index: 1
+          option_feedback:
+            0: "Yes the return type uses `list` and `dict` — but the *deeper* problem is what those values *mean*: `tfidf_score` and its scale lock the contract to one algorithm. The shape is a symptom; the algorithm leak is the root."
+            2: "No database object is in the signature."
+            3: "No ladder of alternatives appears."
+            4: "Precision and over-specification are different things. The contract *specifies more than the client needs* — the score scale and `shard_id` are implementation choices, not domain concepts. Step 4's exact lesson."
+          explanation: |
+            This is Step 4's leak: a read-only API that *looks* clean but exposes the ranking algorithm (`tfidf_score`) and its numeric scale. A future swap to embeddings (scores in 0..1) would silently break every client's threshold. The Step 4 routine: hide it behind a `Confidence` enum or similar domain-level label, then expose `list[ArticleHit]` instead of the raw tuple.
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            **Snippet 3.**
+
+            ```python
+            def list_attendees(
+                conn: sqlite3.Connection,
+                table: str,
+                event_id: int,
+            ) -> list[dict]:
+                return conn.execute(
+                    f"SELECT name, email FROM {table} WHERE event_id = ?",
+                    (event_id,),
+                ).fetchall()
+            ```
+
+            What kind of leak — if any?
+          options:
+            - "Representation leak — `list[dict]` exposes element shape."
+            - "Over-specification leak — `event_id: int` ties clients to integer IDs."
+            - "Persistence leak — the signature names `sqlite3.Connection` and a SQL table, so every client compiles against SQLite."
+            - "Exhaustive-alternatives leak — multiple event types are switched on."
+            - "Not a leak — type hints make this safe."
+          correct_index: 2
+          option_feedback:
+            0: "`list[dict]` is a secondary issue — fixing it without fixing the `Connection` parameter still leaves you tied to SQLite. The deeper leak is which storage technology is *named in the signature*."
+            1: "Integer IDs are usually a fine domain primitive. They're not the leak here."
+            3: "No alternatives ladder; this is a single function."
+            4: "Type hints describe shape; a `sqlite3.Connection` parameter *is* the leak the type hint names. Step 5's lesson exactly — annotations don't hide what they name."
+          explanation: |
+            Step 5's canonical leak. `sqlite3.Connection` and a SQL table name in the public signature mean every caller compiles against SQLite — and the SRE migrating to Postgres or an HTTP service has to chase the type through every file. Step 5 routine: hide it behind an `AttendeeDirectory(Protocol)` with `find_for_event(event_id) -> list[Attendee]`.
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            **Snippet 4.**
+
+            ```python
+            def send_notification(channel: str, recipient: str, body: str) -> None:
+                if channel == "email":
+                    send_email(recipient, body)
+                elif channel == "sms":
+                    send_sms(recipient, body)
+                elif channel == "push":
+                    send_push(recipient, body)
+                else:
+                    raise ValueError(channel)
+
+            def queue_notification(channel: str, recipient: str, body: str) -> str:
+                if channel == "email":
+                    return f"queued email job to {recipient}"
+                elif channel == "sms":
+                    return f"queued sms job to {recipient}"
+                elif channel == "push":
+                    return f"queued push job to {recipient}"
+                else:
+                    raise ValueError(channel)
+            ```
+
+            What kind of leak — if any?
+          options:
+            - "Representation leak — `str` exposes the channel identifier."
+            - "Over-specification leak — channel choice reveals delivery strategy."
+            - "Persistence leak — `queue_notification` mentions a queue."
+            - "Exhaustive-alternatives leak — the same channel list is repeated across two functions; adding a fourth channel means two synchronized edits."
+            - "Not a leak — clear `if/elif` is good practice."
+          correct_index: 3
+          option_feedback:
+            0: "Strings as IDs are fine; that's not the leak. The leak is *repetition* of the same allowed-strings list."
+            1: "The channels (email/sms/push) **are** the domain concepts at this layer — a UI must show which ones exist. The leak is that **the list is repeated**, not that it's visible."
+            2: "The word 'queue' is a domain concept here, not a storage technology."
+            4: "Repeating the same `if x ==` ladder in multiple functions is the **exact** Single Choice violation Step 6 refuted. Adding a fourth channel requires editing both functions; missing either ships a half-broken feature."
+          explanation: |
+            Step 6's leak. The exhaustive list (email/sms/push) appears in two functions; nothing forces them to stay in sync. Step 6 routine: polymorphism behind a `NotificationChannel(Protocol)` with `send` and `queue` methods. **One** module — the wiring/composition root — owns the list of supported channels.
+
+        - type: single
+          difficulty: advanced
+          question: |
+            **Snippet 5 — the honest one.**
+
+            ```python
+            # cleanup_old_drafts.py
+            # Run weekly via cron. Deletes draft files older than 30 days.
+
+            import time
+            from pathlib import Path
+
+            DRAFT_DIR = Path("/var/app/drafts")
+            CUTOFF_SECONDS = 30 * 24 * 3600
+
+            for path in DRAFT_DIR.glob("*.draft"):
+                if time.time() - path.stat().st_mtime > CUTOFF_SECONDS:
+                    path.unlink()
+            ```
+
+            A teammate proposes: *"Put the file glob behind a `DraftSource(Protocol)` so we could swap to S3 later."* Should you?
+          options:
+            - "Yes — every filesystem operation should be hidden behind a Protocol."
+            - "No — a 10-line cron script with no second use case doesn't benefit from indirection; the layer taxes every future reader for an S3 migration that may never happen."
+            - "Yes — Step 5 said to always hide persistence."
+            - "No — but only because Python's `pathlib` is already an abstraction."
+          correct_index: 1
+          option_feedback:
+            0: "Information hiding is a *bet* on future change. A 10-line script with no other callers is the wrong place to bet. The chapter's 'When NOT to apply' section exists for exactly this reason."
+            2: "Step 5 said to hide persistence *when the future change is plausible* — production catalogs with multiple readers, yes; a 10-line cron job with no second caller, no. **Always-hide** is the over-application failure mode this step calibrates against."
+            3: "`pathlib.Path` is a thin wrapper around filesystem syscalls; it doesn't hide *which* filesystem you're touching. The reason to skip the abstraction is the script's small scope, not pathlib's design."
+          explanation: |
+            **The honest answer**: not every leak should be hidden. Information hiding pays in maintenance, and a 10-line cron script with no plausible second caller has no maintenance to amortize against. If this script grew (multiple draft sources, multiple deletion policies, multiple environments), *then* the abstraction would earn its place. Until then, the indirection is pure cognitive tax on every reader. **The skill is choosing when to apply, not just how** — Step 8 puts a number on this with the "blast radius" exercise.
+
+        - type: multiple
+          difficulty: advanced
+          question: |
+            **Snippet 6 — interleaved final.**
+
+            ```python
+            # tournament.py
+            class TournamentBracket:
+                def __init__(self):
+                    self._matches: list[dict] = []
+                def add_match(self, team_a: str, team_b: str, court: str):
+                    self._matches.append({"a": team_a, "b": team_b, "court": court})
+
+                def assign_court(self, match_index: int, court_provider: str) -> str:
+                    if court_provider == "stadium":
+                        return f"Stadium court for match {match_index}"
+                    elif court_provider == "outdoor":
+                        return f"Outdoor court for match {match_index}"
+                    elif court_provider == "indoor":
+                        return f"Indoor court for match {match_index}"
+                    raise ValueError(court_provider)
+
+                def matches(self) -> list[dict]:
+                    return self._matches
+            ```
+
+            **(Select all that apply.)** Which leak types are present?
+          options:
+            - "Representation leak — `matches()` returns the internal `list[dict]` by reference."
+            - "Over-specification leak — `assign_court` reveals a score scale."
+            - "Persistence leak — a database is exposed."
+            - "Exhaustive-alternatives leak — `assign_court` enumerates the court-provider list inline."
+          correct_indices: [0, 3]
+          option_feedback:
+            1: "No score or numeric scale is exposed. The leaks are *shape* and *exhaustive-list* — not algorithmic."
+            2: "No storage technology appears."
+          explanation: |
+            **Two leaks at once** — the realistic case. `matches()` is Step 2's representation leak; `assign_court` is Step 6's Single Choice violation. The fix needs *both* routines: a frozen `Match` dataclass with domain methods *and* a `CourtProvider(Protocol)` injected at construction. **Real codebases mix leak types.** Classification matters as much as the fix because each leak type has a different routine attached to it.
+
+    solution:
+      files:
+        - path: "SNIPPETS.md"
+          language: "markdown"
+          content: |
+            # Step 7 — answer key
+
+            | Snippet | Leak type                       | Routine to apply |
+            |---------|---------------------------------|-------------------|
+            | 1       | Representation                  | Step 2 — frozen dataclass + domain methods |
+            | 2       | Over-specification              | Step 4 — Protocol + domain-level labels |
+            | 3       | Persistence                     | Step 5 — Protocol over storage, dependency injection |
+            | 4       | Exhaustive alternatives         | Step 6 — polymorphism behind a Protocol |
+            | 5       | **Not a leak** — scope too small | Don't refactor; revisit if growth makes it plausible |
+            | 6       | Representation **and** Exhaustive alternatives | Steps 2 + 6, combined |
+      explanation: |
+        **What you just trained.** Each of Steps 2-6 taught *one* kind of leak in isolation — blocked practice, useful for building each schema. This step **mixed** them — interleaved practice, useful for building **discrimination**. Research (Rohrer & Taylor 2007; Dunlosky et al. 2013) finds that interleaved practice feels harder during practice but produces dramatically better transfer afterward, because it forces attention to the *structural feature* (the design decision being exposed) rather than the *surface feature* (the language construct or domain vocabulary).
+
+        **The honest one (Snippet 5).** The correct answer was "don't refactor". If the entire takeaway of this tutorial were "always hide", you'd over-apply the principle and produce abstractions nobody pays for. The principle is a **bet on future change**. Bet where change is plausible; abstain where it isn't. The next step — change-impact prediction on a whole system — uses this same calibration.
+
+        **The two-leak one (Snippet 6).** Real codebases stack leaks. The fix is to apply *both* routines, in either order. The fact that you can name which routine applies to which leak is the operational form of the skill the tutorial trains.
+
+  # =========================================================================
+  # STEP 8 — "Predict the Blast Radius"
   # =========================================================================
   # Pedagogy:
   #   Change Impact Analysis as the capstone activity (industry-standard
@@ -2244,13 +3136,14 @@ steps:
     instructions: |
       ### Why this matters
 
-      Information hiding is verified by **simulating change** — Parnas's original test, and the one industry calls *change impact analysis*. A real engineer's job isn't to recite that classes should depend on abstractions. It's to read a system and predict: *if this changes, what else changes?* This step is your final exam for the tutorial: a fresh, never-seen MusicShare app with five modules, three plausible change requests, and one honest tradeoff. No coding. Pure judgment.
+      Information hiding is verified by **simulating change** — Parnas's original test, and the one industry calls *change impact analysis*. A real engineer's job isn't to recite that classes should depend on abstractions. It's to read a system and predict: *if this changes, what else changes?* This step is your final exam for the tutorial: a fresh, never-seen MusicShare app with five modules, **four** plausible change requests (one of which has the correct answer "don't refactor"), and one honest-tradeoff question. Plus one short open-text artifact — a module guide for `ui.py` — to consolidate everything you've learned into the lightest-weight design doc Parnas, Clements & Weiss invented.
 
       ### 🎯 You will learn to
 
       - **Predict** the change-impact radius of a plausible future change in a small system before attempting the change
       - **Evaluate** when a layer of information hiding pays for itself — and when it adds cognitive overhead without proportional benefit
       - **Apply** the five-step routine on a system you've never seen before
+      - **Produce** a Parnas/Clements/Weiss module guide for an unfamiliar module under time pressure
 
       ### The MusicShare app
 
@@ -2266,7 +3159,12 @@ steps:
 
       Plus the wiring layer (`composition_root.py`) that picks today's concrete `Recommender`, `StreamingProvider`, and `EventDirectory` instances.
 
-      Work through the four quiz questions below. The first three exercise change-impact reasoning on this system; the fourth tests an honest tradeoff (worth re-reading the *When NOT to apply* section of the chapter before answering).
+      ### Your tasks
+
+      1. **Write a module guide for `ui.py`** in the file `MODULE_GUIDE.md`. Use the same four labels you learned in Steps 4–5 (`Primary secret`, `Likely changes`, `Stable contract`, `Not promised`). One or two lines per label is enough — the artifact's value is in the *content*, not the length. The test enforces substantive content under each label and that the `Not promised` section names at least one specific concrete decision (HTML templating, route paths, response formats, authentication, etc.).
+      2. **Answer all five quiz questions** below. Four are change-impact predictions on MusicShare (one of which has "don't refactor" as the correct answer); the fifth is the honest-tradeoff question.
+
+      The module guide is the *consolidation* artifact: producing a four-label document for a module you've never edited proves you can apply the discipline on cold material. That is the meaningful capstone for this tutorial.
 
     files:
       - path: "SYSTEM.md"
@@ -2289,17 +3187,112 @@ steps:
           - composition_root.py — picks today's concrete implementations and hands them to ui.py.
 
           The quiz on the right asks you to predict, for several plausible future
-          changes, WHICH modules need to be edited. There is no code to write.
+          changes, WHICH modules need to be edited. No code to refactor — just
+          your judgment, plus one short module guide.
 
-    open_file: "SYSTEM.md"
+      - path: "MODULE_GUIDE.md"
+        language: "markdown"
+        content: |
+          # Module guide — ui.py
+
+          Write the Parnas/Clements/Weiss module guide for `ui.py`. Use the four
+          labels exactly as below; replace the `<...>` placeholders with one or
+          two lines of your own reasoning.
+
+          ## Primary secret
+
+          <One sentence: what design decision does ui.py own and hide?>
+
+          ## Likely changes
+
+          <Bullet two or three plausible future changes this module absorbs locally.>
+
+          ## Stable contract
+
+          <One or two sentences: what do callers of ui.py rely on?>
+
+          ## Not promised
+
+          <Bullet at least two concrete decisions that are NOT part of ui.py's
+          contract — things a future maintainer must NOT depend on. Be specific:
+          name HTML/JSON, templating engine, exact response shapes, URL paths,
+          authentication scheme, etc. A generic "implementation details" line
+          does not count and the test will reject it.>
+
+    open_file: "MODULE_GUIDE.md"
+
+    tests:
+      - description: "MODULE_GUIDE.md has substantive content under all four labels, with the Not-promised section naming a concrete UI-layer decision"
+        command: |
+          import re
+          src = open("/tutorial/MODULE_GUIDE.md").read()
+
+          # 1. All four section headings (## Primary secret, ## Likely changes, ## Stable contract, ## Not promised).
+          required_headers = ["Primary secret", "Likely changes", "Stable contract", "Not promised"]
+          missing = [h for h in required_headers if h not in src]
+          assert not missing, (
+              f"MODULE_GUIDE.md is missing section heading(s): {missing}. "
+              "Keep the four labels exactly as in the starter template."
+          )
+
+          # 2. Each section has substantive content (not just placeholders or TODOs).
+          positions = sorted(
+              ((src.index(h), h) for h in required_headers),
+              key=lambda t: t[0],
+          )
+          for i, (start, header) in enumerate(positions):
+              end = positions[i + 1][0] if i + 1 < len(positions) else len(src)
+              body = src[start + len(header):end]
+              # Strip headings (## or #), bullets, and whitespace.
+              meaningful = re.sub(r"[\s\-•*#]+", "", body)
+              # Reject placeholder text like "<One sentence: ...>"
+              meaningful = re.sub(r"<[^>]*>", "", meaningful)
+              assert len(meaningful) >= 20, (
+                  f"``{header}`` has empty or placeholder content. Write at least "
+                  "one substantive line of your own — the angle-bracket placeholders "
+                  "in the template don't count as real content."
+              )
+              assert "TODO" not in body.upper(), (
+                  f"``{header}`` still says TODO. Write the real content."
+              )
+
+          # 3. The Not-promised section must name at least one concrete UI-layer
+          # decision (HTML, JSON, route, template, status, header, cookie,
+          # session, auth, etc.).
+          not_promised_idx = src.index("Not promised")
+          not_promised_body = src[not_promised_idx:]
+          ui_terms = [
+              "html", "json", "template", "templating", "jinja", "url",
+              "route", "path", "endpoint", "status", "header", "cookie",
+              "session", "auth", "form", "redirect", "csrf", "http", "rest",
+              "websocket", "render",
+          ]
+          body_lower = not_promised_body.lower()
+          found = [t for t in ui_terms if t in body_lower]
+          assert found, (
+              "The ``Not promised`` section should name at least one concrete "
+              "UI-layer decision that is NOT part of ui.py's contract — "
+              "examples: HTML vs JSON output, the templating engine, exact URL "
+              "paths, response status codes, authentication scheme. "
+              "Generic 'implementation details' does not count. The point of "
+              "this artifact is to record SPECIFIC future maintainers should "
+              "not depend on."
+          )
+        hints:
+          - text: "Start with the secret. ui.py's row in the system table says its secret is 'how requests are routed / rendered to HTML'. That's your Primary secret, in your own words."
+          - text: "Likely changes are things ui.py absorbs locally. Examples: switching from server-rendered HTML to JSON for an SPA frontend, changing the templating engine, adding a new endpoint, swapping auth schemes."
+            condition: "code_missing: Likely changes"
+          - text: "For Not promised, be concrete: e.g. 'exact HTML structure', 'response status codes beyond 200/404', 'cookie-based auth specifically', 'URL path format (/concerts/<city>)'. Name the things a future maintainer must not depend on."
+            condition: "code_missing: html"
 
     quiz:
-      title: "Step 6 — Final Knowledge Check"
+      title: "Step 8 — Final Knowledge Check"
       min_score: 0.8
       shuffle: false       # questions build on each other; do not shuffle them
       questions:
 
         - type: multiple
+          difficulty: intermediate
           question: |
             **Change 1:** Add **YouTube Music** as a fourth streaming service.
             Users should be able to play, share, and like tracks on it just
@@ -2313,12 +3306,13 @@ steps:
             - "`playlist.py` — playlists need to track which provider each track came from."
           correct_indices: [0, 1]
           option_feedback:
-            2: "If `ui.py` needed a branch for each provider, you'd be back in the same Single Choice violation Step 5 was about. The whole point of polymorphism behind the `StreamingProvider` Protocol is that `ui.py` calls `provider.play(...)` without caring which provider it is."
+            2: "If `ui.py` needed a branch for each provider, you'd be back in the same Single Choice violation Step 6 was about. The whole point of polymorphism behind the `StreamingProvider` Protocol is that `ui.py` calls `provider.play(...)` without caring which provider it is."
             3: "Tempting because YouTube Music tracks feel different, but the `Track` dataclass already has all the fields it needs. Provider is a concern of `streaming.py`, not `playlist.py`."
           explanation: |
-            This is the Single Choice payoff. **One new class** in `streaming.py` and **one new entry** in the wiring registry. Zero edits to `ui.py`, zero edits to `playlist.py`. Compare with the pre-refactor design from Step 5, which would have required edits in three functions — and miss any single one, and your "Add YouTube Music" feature ships half-broken.
+            This is the Single Choice payoff. **One new class** in `streaming.py` and **one new entry** in the wiring registry. Zero edits to `ui.py`, zero edits to `playlist.py`. Compare with the pre-refactor design from Step 6, which would have required edits in three functions — and miss any single one, and your "Add YouTube Music" feature ships half-broken.
 
         - type: multiple
+          difficulty: intermediate
           question: |
             **Change 2:** The SRE team migrates the production concert
             catalog from **SQLite to a remote HTTP service** (an internal
@@ -2333,11 +3327,12 @@ steps:
           correct_indices: [0, 1]
           option_feedback:
             2: "`ui.py` only knows the `EventDirectory` Protocol — it calls `directory.find_in(city)`. The storage technology is hidden from it, by design."
-            3: "Tests that build `InMemoryEventDirectory` are *unaffected*. That's exactly why you wrote that in-memory class in Step 4 — fast, hermetic tests that don't care which production backend the app uses today."
+            3: "Tests that build `InMemoryEventDirectory` are *unaffected*. That's exactly why you wrote that in-memory class in Step 5 — fast, hermetic tests that don't care which production backend the app uses today."
           explanation: |
             The canonical Parnas case, made concrete. **One new class** in `events.py`. **One line** in the wiring. The 200 tests that build `InMemoryEventDirectory` still pass without changes — that's the testability benefit. The `ui.py` handlers compile against the Protocol and don't know HTTP from SQL — that's the comprehensibility benefit. The SRE migration ships in a week, not a quarter — that's the change-locality benefit.
 
         - type: multiple
+          difficulty: advanced
           question: |
             **Change 3:** Product wants the UI to show "about 3 minutes" instead
             of "194 seconds" everywhere a track duration appears. A new
@@ -2357,6 +3352,39 @@ steps:
             This is the **honest** change in the set — a real, multi-file edit. Adding a new piece of presentation logic *does* mean changes in `playlist.py` (where `Track` is defined) and `ui.py` (where it renders). That's normal and fine. Information hiding **does not** promise every change is local — it promises that *change-prone decisions* stay local. Adding a new field is a *new feature*, not a *change-prone decision* leaking. The takeaway: don't over-claim what hiding buys you. Sometimes a two-file edit is the right answer.
 
         - type: single
+          difficulty: advanced
+          question: |
+            **Change 4 — the "don't refactor" calibration.**
+
+            A new teammate proposes: *"I want to write a one-off script,
+            `nightly_health_check.py`, that connects directly to SQLite and
+            prints a count of events per city to a log file. It runs once a
+            night via cron, doesn't share code with anything else, and the
+            whole thing is ~25 lines."*
+
+            They ask: *"Should I make it use the `EventDirectory` Protocol
+            instead of `sqlite3` directly?"* What is the right call?
+          options:
+            - "Yes — every SQLite usage in the codebase should go through `EventDirectory`."
+            - "No — a 25-line cron script with no second use case doesn't earn the indirection; the abstraction taxes every future reader for change that may never come."
+            - "Yes — Step 5 said to always hide persistence behind a Protocol."
+            - "No — `nightly_health_check.py` should use a completely different ORM to be safe."
+          correct_index: 1
+          option_feedback:
+            0: "Information hiding is a *bet* on future change. The bet's cost is the layer of indirection every reader pays. For a 25-line one-off script, that cost is paid forever with no payoff. Step 7's Snippet 5 was exactly this lesson."
+            2: "Step 5 said to hide persistence *when the change is plausible* — production catalogs with many readers, yes; one-off scripts, no. Always-hide is the over-application failure mode you trained against in Step 7."
+            3: "Switching ORMs adds *more* coupling, not less, and doesn't address the question. The honest answer is: this script doesn't need an abstraction layer at all."
+          explanation: |
+            **The honest answer**: not every direct dependency should be hidden. Information hiding is a maintenance investment that pays back when (a) there are multiple callers, and (b) the hidden decision is plausibly volatile. A 25-line cron script has neither property. Forcing it through `EventDirectory` would mean:
+
+            1. The future reader of the cron script has to chase a Protocol they don't need.
+            2. If `EventDirectory` ever grows new methods, this script breaks even though its needs are unchanged.
+            3. The Protocol stops being "things that look like a directory" and starts being "things that satisfy the union of every consumer's needs."
+
+            The Step 7 calibration (Snippet 5) and the chapter's *When NOT to apply* section are exactly about this. **The right number of abstractions is the smallest number that lets the system change gracefully.** Below that number, you're under-engineered; above it, you tax every reader. Both extremes are bugs.
+
+        - type: single
+          difficulty: advanced
           question: |
             **The honest tradeoff.** Tempero, Blincoe, and Lottridge (2023)
             found that more modular code helped students complete modification
@@ -2370,12 +3398,12 @@ steps:
           correct_index: 2
           option_feedback:
             0: "The study showed modularity *helps* modification — the very task most engineers spend most of their time on. Skipping it is the wrong call."
-            1: "Aggressive hiding adds layers without payoff in places where the decision will never change. That's the trap this option warns against."
+            1: "Aggressive hiding adds layers without payoff in places where the decision will never change. That's the trap this option warns against, and the exact lesson of Step 7's Snippet 5 and Change 4 above."
             3: "'Hide everything' is the over-applied version of the principle that the chapter's *When NOT to apply* section warns about. Indirection has a real reading cost. Pay it where change is plausible; skip it where it isn't."
           explanation: |
             Information hiding is a **bet on future change**. It's a great bet where the design decision is plausibly volatile — vendors, storage, algorithms, regulatory rules. It's a *bad* bet on decisions that will never change. A 50-line cron job does not need a `PaymentGateway` Protocol; a payments codebase does. The SE maxim from the chapter: **the right number of abstractions is the smallest number that lets the system change gracefully.** Beyond that number, every extra layer is a tax on every reader.
 
-            **What you've actually learned in this tutorial.** You can now (a) name a module's secret, (b) spot the contract leaks, (c) refactor a leaky module behind a Protocol or domain methods, (d) verify the secret is hidden with an implementation-swap test, (e) apply Single Choice when alternatives are exhaustive, and (f) predict the change-impact radius before you start editing. That's the operational form of Parnas's principle — and it survives the move from a tutorial to a real codebase.
+            **What you've actually learned in this tutorial.** You can now (a) name a module's secret, (b) spot the contract leaks, (c) refactor a leaky module behind a Protocol or domain methods, (d) verify the secret is hidden with an implementation-swap test, (e) apply Single Choice when alternatives are exhaustive, (f) **classify** an unfamiliar leak before fixing it (Step 7), (g) **abstain** when no change is plausible, and (h) predict the change-impact radius before you start editing. That's the operational form of Parnas's principle — and it survives the move from a tutorial to a real codebase.
 
     solution:
       files:
@@ -2386,27 +3414,76 @@ steps:
 
             ## Change 1: Add YouTube Music
             Edits: streaming.py (new YouTubeMusicProvider), composition_root.py (registry entry).
-            That's it. ui.py and playlist.py untouched. Single Choice payoff.
+            That's it. ui.py and playlist.py untouched. Single Choice payoff (Step 6).
 
             ## Change 2: Migrate events to a remote HTTP service
             Edits: events.py (new HttpEventDirectory), composition_root.py (swap wiring).
             ui.py untouched. The 200 tests that use InMemoryEventDirectory still pass.
+            Canonical Parnas storage case (Step 5).
 
             ## Change 3: "Humanize" track durations in the UI
             Edits: playlist.py (humanize helper on Track), ui.py (call it at render).
-            Honest: this IS a multi-file change. A new feature is not a hidden decision changing.
+            Honest: this IS a multi-file change. A new FEATURE is not a hidden DECISION changing.
+
+            ## Change 4: nightly_health_check.py one-off cron script
+            Edits: NONE — let it use sqlite3 directly. A 25-line script with no
+            second caller doesn't pay for an abstraction layer. Step 7's Snippet 5
+            and the chapter's "When NOT to apply" section both warn against
+            over-application.
 
             ## The tradeoff
             Information hiding helps modification, not first-read clarity. Bet on it
-            where change is plausible; skip it where it isn't.
+            where change is plausible; skip it where it isn't. The right number of
+            abstractions is the smallest number that lets the system change gracefully.
+        - path: "MODULE_GUIDE.md"
+          language: "markdown"
+          content: |
+            # Module guide — ui.py (sample answer)
+
+            ## Primary secret
+
+            How HTTP requests map to domain operations on the four Protocols
+            (Recommender, StreamingProvider, Playlist, EventDirectory), and
+            how their return values get rendered to clients.
+
+            ## Likely changes
+
+            - Switch server-rendered HTML to JSON for an SPA frontend.
+            - Swap the templating engine (Jinja → htpy → none-at-all-just-strings).
+            - Add new routes (/playlists, /recommendations/<id>, etc.).
+            - Change the auth scheme (session cookies → JWT, etc.).
+
+            ## Stable contract
+
+            Each HTTP route accepts validated input and returns a response that
+            the browser can render. Domain operations are reached only through
+            the four injected Protocols.
+
+            ## Not promised
+
+            - Exact HTML structure or CSS class names.
+            - The templating engine (Jinja, Mako, htpy, plain strings — all valid).
+            - URL path format (`/concerts/<city>` could become `/cities/<city>/concerts`).
+            - Response status codes beyond 200/4xx categories.
+            - Cookie-based auth specifically — could become Bearer tokens, OAuth, etc.
+            - The order or shape of the underlying Protocol calls inside a handler.
       explanation: |
-        **Your training is complete.** Six steps ago you proved that `private`
+        **Your training is complete.** Eight steps ago you proved that `private`
         is not a secret. You then ran the five-step routine on representation
-        (Playlist), over-specification (Recommender), persistence (EventDirectory),
-        and exhaustive alternatives (StreamingProvider) — and finally on a
-        whole system. The same routine, repeated four times across very
-        different domains, is the operational form of David Parnas's 1972
-        criterion.
+        (Playlist, Step 2), declared the contract via Protocol (Step 3),
+        attacked over-specification (Recommender, Step 4), hid persistence
+        (EventDirectory, Step 5), and applied Single Choice (StreamingProvider,
+        Step 6). Step 7 trained the *which kind of leak is this?* discrimination
+        across all four — including the "don't refactor" calibration. This step
+        applied everything to an unfamiliar whole system.
+
+        **The same routine, repeated four times across very different domains,
+        is the operational form of David Parnas's 1972 criterion.** And the
+        module guide you just wrote for `ui.py` is the artifact Parnas, Clements,
+        & Weiss (1985) called the **lightest-weight design doc that records
+        why**. Four labels, a few lines each, and you have something a future
+        maintainer can read in 30 seconds to decide whether their change
+        belongs in this module.
 
         **What to take with you.** When you next find yourself reading or
         writing Python code, run this five-line audit on any module:
@@ -2422,7 +3499,9 @@ steps:
         If the answer to (1) is *nothing*, the module is shallow — merge it
         upward. If (2) reveals a leak, narrow the contract. If (3) is no, the
         secret has not been hidden. If (4) is *many*, redesign. If (5) is no,
-        do not abstract — your reader pays for the layer every time, future
-        change or not.
+        **do not abstract** — your reader pays for the layer every time, future
+        change or not. The last item is what Step 7's Snippet 5 and this step's
+        Change 4 trained: knowing when *not* to apply the principle is part of
+        applying it well.
 
         Now go fix some real code.
