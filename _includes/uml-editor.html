@@ -3517,7 +3517,11 @@ Supported options:
           return;
         }
         if (activeTool && activeTool.spec === spec && activeTool.kind === kind) {
-          setActiveTool(null);
+          if (kind === 'element') {
+            setActiveTool(kind, spec);
+          } else {
+            setActiveTool(null);
+          }
         } else {
           setActiveTool(kind, spec);
         }
@@ -7929,7 +7933,9 @@ Supported options:
               setSelectedLayoutId(route.id, 'route');
             } else if (k === 'Delete' || k === 'Backspace') {
               event.preventDefault();
-              setSelectedLayoutId(route.id, 'route');
+              if (selectedLayoutIds[route.id] !== 'route') {
+                setSelectedLayoutId(route.id, 'route');
+              }
               deleteSelected();
             } else if (k === 'Escape') {
               event.preventDefault();
@@ -8342,7 +8348,9 @@ Supported options:
             nudgeElement(item.id, dx, dy);
           } else if (k === 'Delete' || k === 'Backspace') {
             event.preventDefault();
-            setSelectedLayoutId(item.id, 'node');
+            if (selectedLayoutIds[item.id] !== 'node') {
+              setSelectedLayoutId(item.id, 'node');
+            }
             deleteSelected();
           } else if (k === 'F2') {
             event.preventDefault();
@@ -8413,7 +8421,9 @@ Supported options:
               selectFragment(false);
             } else if (k === 'Delete' || k === 'Backspace') {
               event.preventDefault();
-              selectFragment(false);
+              if (selectedLayoutIds[frag.id] !== 'fragment') {
+                selectFragment(false);
+              }
               deleteSelected();
             } else if (k === 'Escape') {
               event.preventDefault();
