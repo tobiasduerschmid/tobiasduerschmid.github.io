@@ -174,6 +174,22 @@ steps:
             3: "The empty string is malformed because it has no number and no percent sign."
           explanation: "`\"0%\"` sits exactly on the lower boundary and is included by the contract. Boundary values are worth testing precisely because one wrong comparison can reject them."
 
+        - type: single
+          difficulty: intermediate
+          question: |
+            Four programmers each propose a different implementation strategy for `parse_percentage`. Which strategy is the most defensive — and why?
+          options:
+            - "Reject non-strings with `TypeError`, reject malformed/out-of-range strings with `ValueError`, return the value only after every check passes."
+            - "Coerce anything that looks numeric: `float(str(text).rstrip('%')) / 100.0`. Always return a number."
+            - "Wrap the body in `try: ... except Exception: return 0.0` so the caller never sees an exception."
+            - "Return `None` for any input that doesn't parse cleanly; let the caller check the result."
+          correct_index: 0
+          option_feedback:
+            1: "Coercion silently widens the contract. `parse_percentage(None)` would become `parse_percentage(\"None\")` and then fail somewhere deeper, far from the actual mistake."
+            2: "Broad exception swallowing hides the *kind* of failure (empty string vs malformed number vs out-of-range) behind one indistinguishable return value. The caller has no way to repair the input."
+            3: "Sentinel returns force every caller to add a check, and they confuse 'unparseable' with 'legitimately 0.0%'. Explicit exceptions are easier for callers to handle correctly."
+          explanation: "Defensive programming is about *making the failure tell the caller what to fix*. Distinct exception classes do that — they make the kind of mistake (wrong type vs wrong shape vs wrong value) visible at the point of failure. The other three strategies all silently broaden, swallow, or flatten the failure signal."
+
   # Pedagogy: worked example with fading — students implement precise exception branches from tests.
   - title: "Precise Exceptions"
     instructions: |
@@ -266,8 +282,10 @@ steps:
             text: "Ask two questions before multiplying: are the arguments the right kinds of objects, and is the count acceptable?"
           - title: "Check bool deliberately"
             text: "In Python, `bool` is a subclass of `int`. If the contract says an integer count, reject `True` and `False` explicitly before accepting `int`."
+            condition: "code_missing: bool"
           - title: "Raise before multiplying"
             text: "The validation should happen before `text * times`; otherwise Python may raise its own less focused exception before your contract checks run."
+            condition: "code_missing: raise"
 
     solution:
       files:
@@ -285,6 +303,59 @@ steps:
                 return text * times
       explanation: |
         The implementation checks the type part of the contract first, then the value constraint. That keeps the exception type aligned with the caller's mistake.
+
+    quiz:
+      title: "Step 2 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          difficulty: basic
+          question: |
+            `repeat("ha", "3")` raises `TypeError` rather than `ValueError`. Why is `TypeError` the right choice here?
+          options:
+            - "Because `\"3\"` is the wrong *kind* of object — the contract wanted an integer, not a string."
+            - "Because the string `\"3\"` can't be converted to an integer."
+            - "Because `TypeError` is always preferred over `ValueError` for safety."
+            - "Because Python forces `TypeError` whenever string × string is attempted."
+          correct_index: 0
+          option_feedback:
+            1: "`\"3\"` *can* be converted with `int(\"3\")` — but the contract doesn't ask the function to do that coercion. The kind mismatch is the violation."
+            2: "There's no general rule that `TypeError` is safer. The split has semantic meaning: kind vs value. Both belong in defensive code at the right places."
+            3: "Python would raise `TypeError` on `\"ha\" * \"3\"` *eventually*, but with a confusing message about strings. Catching the kind mismatch first gives the caller a clear diagnostic."
+          explanation: "`TypeError` signals 'wrong kind of object'; `ValueError` signals 'right kind, unacceptable value'. The two carry distinct information for the caller — and choosing the right one is part of the defensive contract."
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            `repeat("ha", True)` raises `TypeError` even though `True` is an `int` in Python. What is this defending against?
+          options:
+            - "The bool-as-int trap: `isinstance(True, int)` returns `True`, so a check that accepts integers would silently accept booleans — almost never what the caller meant."
+            - "A bug in CPython where booleans corrupt string multiplication."
+            - "The risk that `True` evaluates to `0` in arithmetic contexts."
+            - "Nothing — the test is overly strict and should be removed."
+          correct_index: 0
+          option_feedback:
+            1: "There's no such bug. `\"ha\" * True` is well-defined Python — it returns `\"ha\"`. The defense is against *caller confusion*, not language brokenness."
+            2: "`True` evaluates to `1` in arithmetic, not `0`. And that's exactly the trap: `repeat(\"ha\", True)` would silently return `\"ha\"` instead of raising — likely hiding a caller bug."
+            3: "The test is enforcing a contract distinction the language doesn't enforce for you. That's the whole point of defensive programming."
+          explanation: "Python's `bool` is a subclass of `int`, so `isinstance(True, int)` is `True`. The defensive check `isinstance(x, bool) or not isinstance(x, int)` catches `True`/`False` before accepting them as counts — because passing a boolean to a function that wants a count is almost certainly a caller mistake."
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            A reviewer suggests collapsing all three checks in `repeat` into one line: `if not (isinstance(text, str) and isinstance(times, int) and times >= 0): raise ValueError("invalid input")`. What does this change cost you?
+          options:
+            - "It collapses three distinct failure messages into one undifferentiated 'invalid input', and it raises `ValueError` even when the failure was a *type* problem."
+            - "Nothing — it's cleaner and behaves identically."
+            - "It makes the function slower because of short-circuit evaluation."
+            - "It breaks `pytest.raises` because the test framework can't parse compound conditions."
+          correct_index: 0
+          option_feedback:
+            1: "Behavior is *not* identical — the failure message and the exception class both lose information. The caller can no longer tell whether they passed a string instead of an int, or a negative count."
+            2: "Short-circuit evaluation makes it marginally *faster*, not slower. Performance isn't the issue here."
+            3: "`pytest.raises` works fine. The cost is pedagogical/diagnostic, not technical."
+          explanation: "Defensive programming is about *information at the failure site*. Collapsing checks erases the distinction between 'wrong kind' and 'wrong value' — the very signal the caller needs to fix their code."
 
   # Pedagogy: mistake-based familiarization — reject a plausible "helpful" repair.
   - title: "Rejecting Quiet Repairs"
@@ -374,8 +445,10 @@ steps:
         hints:
           - title: "Find the quiet repair"
             text: "The starter code has one branch that changes caller input before continuing. That is the behavior to replace."
+            condition: "code_contains: lower, upper = upper, lower"
           - title: "Reject the invalid relationship"
             text: "The relationship `lower <= upper` is part of the contract. Check it before doing any clamping."
+            condition: "code_missing: raise ValueError"
           - title: "Leave ordinary clamping alone"
             text: "After the bounds are known to be ordered, the lower-bound and upper-bound cases can stay almost exactly as they are."
 
@@ -395,6 +468,59 @@ steps:
                 return value
       explanation: |
         The function still helps valid callers by clamping values, but it refuses to reinterpret a reversed range. That keeps the failure close to the caller's mistake.
+
+    quiz:
+      title: "Step 3 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: |
+            Why is silently swapping reversed bounds in `clamp(7, 9, 3)` worse than raising `ValueError`?
+          options:
+            - "It hides a caller bug. The next time the caller passes `(value, max, min)` instead of `(value, min, max)`, the function appears to work — but the caller's mental model is broken, and the next bug will be harder to find."
+            - "It violates Python's style guide."
+            - "It costs measurable performance because of the tuple unpacking."
+            - "It changes the return type from `float` to `tuple[float, float]`."
+          correct_index: 0
+          option_feedback:
+            1: "PEP 8 doesn't mention this. The harm is semantic, not stylistic — and far more serious than a lint warning."
+            2: "Performance is irrelevant at this scale. The cost is *correctness*: a broken caller passes tests and ships."
+            3: "The return type doesn't change. The harm is in the caller's invisible-to-tests confusion about argument order."
+          explanation: "Defensive programming is partly about *preserving the visibility of bugs*. Silent repair shifts a bug from 'detected immediately' to 'detected weeks later in production', which is the worst possible move."
+
+        - type: single
+          difficulty: advanced
+          question: |
+            **Postel's Law** ("be liberal in what you accept, conservative in what you send") is a famous internet design principle. A web framework's URL router silently strips trailing slashes from URLs before matching. Is this the *same anti-pattern* as `clamp`'s silent swap?
+          options:
+            - "No — the trailing-slash strip is at a *trust boundary* (untrusted user input from HTTP) where normalization is intentional and is usually logged. `clamp` is an *internal contract* between trusted code where silent repair hides programmer mistakes."
+            - "Yes — any silent transformation of input is always bad."
+            - "No — Postel's Law was deprecated by RFC 8546, so neither pattern is acceptable."
+            - "Yes — but only because URLs and numeric ranges are fundamentally different domains."
+          correct_index: 0
+          option_feedback:
+            1: "This is the canonical Postel's Law misconception. There's a meaningful distinction between *boundary tolerance* (normalize HTTP input, web forms, file encodings) and *interior strictness* (function arguments between trusted modules)."
+            2: "RFC 8546 (2019) does push back on Postel's Law, but the practical rule that emerged isn't 'never normalize' — it's 'normalize at the boundary, be strict in the interior.' Modern HTTP frameworks still strip trailing slashes."
+            3: "The domain isn't the point. The point is *who* is on the other side of the call: an untrusted HTTP client (normalize) or another part of your own program (fail loud)."
+          explanation: "Defensive programming has a *location* dimension: at the system boundary (HTTP input, file parsing, command-line args), liberal acceptance with documented normalization is often correct. *Inside* trusted code, silent repair hides bugs and should be rejected — exactly what `clamp` enforces."
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            A teammate proposes that `clamp(value, lower, upper)` *also* coerce non-numeric inputs: `clamp(\"5\", 0, 10)` would try `float(\"5\")` and continue. Is this a good defensive addition?
+          options:
+            - "No — it silently widens the contract. The next caller who passes a string by mistake will see `clamp` 'work', and the actual bug (wrong variable being passed) goes undetected."
+            - "Yes — being more accepting makes the function more robust."
+            - "Yes — `float(\"5\")` is a cheap conversion, so the cost is negligible."
+            - "No — but only because `float(\"5e1\")` would also succeed, which is unexpected."
+          correct_index: 0
+          option_feedback:
+            1: "This is the *exact same anti-pattern* as the silent bound-swap, just dressed up as 'helpfulness'. Robustness ≠ accepting any input — it means responding to bad input in a way that *helps* the caller fix their code."
+            2: "Conversion cost isn't the issue. The issue is the contract: `clamp` is documented to accept floats, and silently expanding to strings means the documentation lies."
+            3: "`float(\"5e1\")` succeeding is a curiosity, not the main problem. The main problem is that the contract no longer matches the docstring."
+          explanation: "The pattern in this step generalizes: any time a function silently expands the set of inputs it accepts, it's hiding caller bugs. The right move is to reject early with a precise exception, not to coerce."
 
   # Pedagogy: worked example with fading — preserve an invariant in a small value object.
   - title: "State Integrity"
@@ -498,10 +624,13 @@ steps:
         hints:
           - title: "Put the invariant at the boundary"
             text: "The boundary for object state is construction. `__post_init__` runs right after the dataclass fills `start` and `end`."
+            condition: "code_missing: raise"
           - title: "Test inclusion with two comparisons"
             text: "A value is inside a closed interval when it is greater than or equal to `start` and less than or equal to `end`."
+            condition: "code_contains: return False"
           - title: "Reject bool before int"
             text: "As with the repeat-count example, `bool` is an `int` subclass in Python. Check for `bool` explicitly before accepting integers."
+            condition: "code_missing: bool"
 
     solution:
       files:
@@ -531,6 +660,59 @@ steps:
       explanation: |
         The object rejects invalid state once, at construction, and each method can rely on the invariant after that. Method-specific validation is still needed for new caller input.
 
+    quiz:
+      title: "Step 4 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: |
+            Why does `ClosedInterval` validate `start <= end` in `__post_init__` rather than inside `contains`?
+          options:
+            - "Because validating once at construction means every method can trust the invariant afterward; re-checking in every method would be redundant and would scale badly with more methods."
+            - "Because Python doesn't allow validation inside dataclass methods."
+            - "Because `__post_init__` runs slightly faster than method calls."
+            - "Because dataclasses can't have method bodies that raise."
+          correct_index: 0
+          option_feedback:
+            1: "Dataclasses can validate anywhere; nothing in Python forces the check into `__post_init__`. The reason is pedagogical: the invariant only needs to be established once."
+            2: "Performance isn't relevant at this scale. The reason is structural: avoiding redundant checks across many methods."
+            3: "Dataclasses can absolutely raise inside methods. The reason for the constructor check is about *where* the invariant is established."
+          explanation: "Construction is the *one stable time* when invalid state is possible. After `__post_init__`, the invariant is established — and because the class is `frozen=True`, it can't be broken later. Every method can rely on `start <= end` without re-checking."
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            The `contains(value)` method *still* validates that `value` is a non-bool integer, even though the interval itself is already a valid object. Why?
+          options:
+            - "Because `value` is a *new* caller input — it's not part of the interval's invariant. Method arguments need their own validation; the object's invariant only protects the object's own state."
+            - "Because Python's type hints aren't checked at runtime, so validation must run twice."
+            - "Because `contains` could be called before `__post_init__` finishes."
+            - "Because `frozen=True` doesn't protect against attribute changes via reflection."
+          correct_index: 0
+          option_feedback:
+            1: "Type hints not being runtime-checked is true, but unrelated. The distinction is between *object invariants* (state of `self`) and *method preconditions* (incoming arguments)."
+            2: "`__post_init__` runs as part of `__init__`, before the constructor returns. `contains` can't be called before that finishes."
+            3: "`frozen=True` is bypassable, yes — but that's not why `contains` validates `value`. `value` is a fresh argument from the caller and has no relationship to the existing invariant."
+          explanation: "Invariants protect *object state*. Preconditions protect *method arguments*. They're two distinct concerns: the invariant is about what `self` looks like; the precondition is about what the caller just handed you."
+
+        - type: single
+          difficulty: basic
+          question: |
+            `ClosedInterval(True, 5)` raises `TypeError` even though `True` is technically an `int`. This is the same trap as Step 2's `repeat(\"ha\", True)`. What is being defended against in *both* cases?
+          options:
+            - "The `bool`-as-`int` subclass trap: passing a boolean where the contract documents an integer is almost certainly a caller mistake — likely a confused conditional or a return value from `==` used in the wrong place."
+            - "A CPython implementation bug in `isinstance`."
+            - "An ambiguity in `True * 5` vs `5 * True`."
+            - "The risk that booleans take up more memory than integers."
+          correct_index: 0
+          option_feedback:
+            1: "There's no such bug. `isinstance(True, int)` returns `True` *by design* — that's exactly the trap."
+            2: "Both operations are well-defined and return `5`. The harm is *semantic*, not arithmetic."
+            3: "`bool` and `int` use the same memory representation. Memory isn't the concern."
+          explanation: "Both `repeat` and `ClosedInterval` defend the same way: explicitly check `isinstance(x, bool)` *before* accepting `isinstance(x, int)`. The pattern is worth memorizing — almost every Python function that wants 'an integer (and not a bool)' uses it."
+
   # Pedagogy: negative example and repair — translate external failures without hiding causes.
   - title: "Visible Error Causes"
     instructions: |
@@ -554,6 +736,10 @@ steps:
       - Valid JSON that is not an object raises `ConfigError` without pretending it is a usable config.
 
       Do not catch `Exception` or `BaseException`. Catch the failures you can translate.
+
+      ### 🔍 How the hidden check works
+
+      A pytest assertion that simply *looks at behavior* could miss a sneaky `except Exception:` that happens to translate to the right exception in the test cases. To guard against that, the hidden check parses your code's **Abstract Syntax Tree** (AST) and explicitly rejects any `except` handler whose type is `Exception` or `BaseException`. This is the same technique used in real-world code review tools (Bandit, Ruff's `BLE001`) — and it's worth knowing as a defensive-programming technique in its own right: when you can't trust behavior alone, parse the structure.
 
     files:
       - path: "config_loader.py"
@@ -637,12 +823,15 @@ steps:
           with pytest.raises(ConfigError):
               load_json_config(list_path)
         hints:
-          - title: "Keep the original exception"
-            text: "When translating a file or JSON failure, bind it as `exc` and use `raise ConfigError(...) from exc`."
           - title: "Catch only what you can explain"
-            text: "File read failures are `OSError` family failures. JSON syntax failures are `json.JSONDecodeError`."
+            text: "File read failures are `OSError` family failures. JSON syntax failures are `json.JSONDecodeError`. Catch each one separately, not the broad `Exception`."
+            condition: "code_contains: except Exception"
+          - title: "Keep the original exception"
+            text: "When translating a file or JSON failure, bind it as `exc` and use `raise ConfigError(...) from exc`. The `from exc` chains the cause into `__cause__` so debuggers can still see the underlying failure."
+            condition: "code_missing: from exc"
           - title: "Validate the loaded shape"
             text: "After `json.load` or `json.loads`, check that the result is a `dict`. A JSON list is valid JSON, but it is not a config object for this function."
+            condition: "code_missing: isinstance(data, dict)"
 
     solution:
       files:
@@ -676,6 +865,59 @@ steps:
                 return data
       explanation: |
         The loader now catches only the failures it can translate. `raise ... from exc` keeps the low-level exception in `__cause__`, so debugging tools still show the real source of the failure.
+
+    quiz:
+      title: "Step 5 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: |
+            The original buggy `load_json_config` did `except Exception: return {}`. What is the worst long-term harm of this pattern in production?
+          options:
+            - "Every caller now thinks 'empty config' and 'unreadable file' look identical, so failure modes that should be fatal (missing config) get silently treated as benign (no overrides). The bug surfaces as wrong behavior, far from the cause."
+            - "It catches `KeyboardInterrupt`, which can crash the interpreter."
+            - "It returns the wrong type — `dict` instead of `list`."
+            - "It causes a memory leak because the exception traceback is never freed."
+          correct_index: 0
+          option_feedback:
+            1: "`Exception` does *not* catch `KeyboardInterrupt` (that's `BaseException` and not a subclass of `Exception`). The real harm is information loss, not interpreter safety."
+            2: "The return type is correct (`dict`). The harm is *semantic* — the dict is empty because of a *failure*, indistinguishable from an empty dict that legitimately had no entries."
+            3: "Python's garbage collector handles exception tracebacks fine. The harm is informational: the cause is gone."
+          explanation: "Broad-except + sentinel return is the canonical 'silent corruption' anti-pattern. Failures that should *stop the program* become failures that *change its behavior in subtle ways* — far harder to debug than a clean crash."
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            What does `raise ConfigError(...) from exc` give callers that `raise ConfigError(...)` alone does not?
+          options:
+            - "It preserves the original `OSError` or `JSONDecodeError` in `ConfigError.__cause__`, so the full chain shows up in tracebacks and tools like `pytest` and Sentry can drill into the *real* root cause."
+            - "It makes the exception faster to raise."
+            - "It changes the exception class to a subclass of the original."
+            - "It allows the exception to be caught by `except OSError:` blocks."
+          correct_index: 0
+          option_feedback:
+            1: "Both forms have the same raise cost. The difference is informational — what shows up in the traceback."
+            2: "The class is still `ConfigError`. `from exc` only sets the `__cause__` attribute; it doesn't change the class hierarchy."
+            3: "`ConfigError` is its own class. `from exc` doesn't make it polymorphic with `OSError`. The chain is purely diagnostic."
+          explanation: "`raise X from Y` sets `X.__cause__ = Y`, which Python prints as 'The above exception was the direct cause of the following exception...' in tracebacks. The caller catches `ConfigError` (the right abstraction), but a debugger can still see the underlying file I/O or JSON parse failure that actually caused it."
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            The solution checks `if not isinstance(data, dict): raise ConfigError(...)`. Why is this validation step necessary even after `json.load` succeeded?
+          options:
+            - "Because valid JSON can be a list, number, string, boolean, or null at the top level — not just an object. The function's contract specifically promises a `dict` config, and `json.load` returning a JSON array is a contract violation, not a parse error."
+            - "Because `json.load` can return `None` if the file is empty."
+            - "Because `isinstance(data, dict)` defends against the bool-subclass-of-int trap."
+            - "Because Python's `json` module is unreliable on Windows."
+          correct_index: 0
+          option_feedback:
+            1: "An empty JSON file would be a `JSONDecodeError`, not `None`. The issue isn't empty files — it's *valid JSON of the wrong shape*."
+            2: "The bool trap is about integer arguments, not JSON parsing. This check is about top-level JSON shape."
+            3: "The `json` module is cross-platform stable. The issue is the JSON spec itself: any JSON value (array, number, string, boolean, null, object) is a valid top-level value."
+          explanation: "JSON has six top-level value types; only one is a `dict` (a JSON 'object'). `[1, 2, 3]` is valid JSON. So is `\"hello\"`. `json.load` succeeds for all of them, then hands you something that's *not* the dict your function promised. That gap between 'parses cleanly' and 'matches the contract' is exactly where shape validation lives."
 
   # Pedagogy: capstone — independent integration of partitions, precise exceptions, and postconditions.
   - title: "Port Range Parser"
@@ -713,6 +955,18 @@ steps:
       - reversed range such as `"9000-8000"`: raise `ValueError`
 
       Postcondition for every successful call: the result is a pair of integers where `0 <= start <= end <= 65535`.
+
+      ---
+
+      ### 🎓 After this capstone — *should* you always program defensively?
+
+      Across this tutorial you've built a complete defensive vocabulary: classify inputs into partitions, raise the right exception class, reject silent repair, protect object invariants, translate boundary failures into domain errors, and combine all of it into a parser whose contract is verifiable from the outside.
+
+      That's the right toolkit at a **system boundary** — anywhere your code receives data from a user, a network call, a file, a database, or another team's API. The further you go from that boundary, between trusted modules you wrote yourself, the more the same checks start to feel like noise that compounds across a large codebase.
+
+      Bertrand Meyer (who coined the term in the 1980s) argued *against* applying defensive programming uniformly. His alternative — **Design by Contract** — asks a sharper question: instead of "how do I reject bad input?", *whose job was this?* That single shift changes what code looks like in the interior of a system.
+
+      **Next:** the [Design by Contract in Python](/SEBook/development_practices/design-by-contract-tutorial) tutorial picks up where this one ends. It uses the same Python and the same techniques you just practiced, but reframes them around responsibility allocation — and gives you a criterion for deciding where defensive programming earns its keep and where it costs more than it gives.
 
     files:
       - path: "ports.py"
@@ -810,10 +1064,13 @@ steps:
         hints:
           - title: "Normalize the whole string first"
             text: "Reject non-strings, then call `.strip()` on the spec. Empty strings are malformed."
+            condition: "code_missing: isinstance(spec, str)"
           - title: "Parse one form at a time"
             text: "The single-port form has no hyphen. The range form has exactly one hyphen and two numeric parts."
+            condition: "code_missing: -"
           - title: "Check the postcondition before returning"
-            text: "After parsing integers, validate both ports are in range and `start <= end`. Then return `(start, end)`."
+            text: "After parsing integers, validate both ports are in range (`0..65535`) and `start <= end`. Then return `(start, end)`."
+            condition: "code_missing: 65535"
 
     quiz:
       title: "Step 6 — Knowledge Check"
@@ -867,6 +1124,38 @@ steps:
             2: "`\"65536\"` has the right type and shape but is outside the valid port range, so it is a value problem."
             3: "`\"9000-8000\"` has the right type and numeric parts, but the endpoint relationship is invalid, so it is a value problem."
           explanation: "`TypeError` is for the wrong kind of argument. The malformed, out-of-range, and reversed examples are all strings, so they are `ValueError` cases."
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            **Retrieval from Step 3**: a teammate proposes that `parse_port_range(\"9000-8000\")` should silently swap to `(8000, 9000)` because \"the user obviously meant the lower port first.\" What principle from `clamp` (Step 3) applies here?
+          options:
+            - "Silent repair hides caller bugs. The next time someone writes `parse_port_range(f\"{max_port}-{min_port}\")` because they confused the variable order, the function appears to work — and the actual bug surfaces somewhere far away, much later."
+            - "Silent repair is fine because the result is mathematically equivalent."
+            - "Silent repair is fine here because port ranges are commutative."
+            - "Silent repair is acceptable as long as the function logs a warning."
+          correct_index: 0
+          option_feedback:
+            1: "Mathematical equivalence isn't the question. The question is *whether the caller knows they passed the arguments wrong*. Silent repair means they don't."
+            2: "Port ranges are *not* commutative — `\"9000-8000\"` is malformed by the contract, regardless of whether the resulting set of ports would be the same."
+            3: "Logging is a partial mitigation, but at the *internal* contract boundary, raising is still the right move. (Logging-and-continuing is sometimes acceptable at the *system* boundary — see Step 3's Postel's Law question.)"
+          explanation: "This is the same pattern as `clamp`'s reversed-bounds swap. The harm is preserving the *visibility of the bug* — silent repair shifts caller errors from 'detected immediately' to 'detected weeks later in production.'"
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            **Retrieval from Step 5**: imagine `parse_port_range` was extended to read its input from a config file — `port_range = json.load(...)\\[\"ports\"\\]`. Which defensive pattern from `load_json_config` (Step 5) should re-enter the picture?
+          options:
+            - "Catch only the *specific* failures you can translate (`OSError`, `json.JSONDecodeError`), use `raise ConfigError(...) from exc` to preserve the cause, then validate the loaded *shape* before handing it to the parser."
+            - "Wrap the whole flow in `except Exception: return None` so the program never crashes."
+            - "Skip JSON validation — `parse_port_range` will validate anyway."
+            - "Disable the AST check from Step 5, since this is a different file."
+          correct_index: 0
+          option_feedback:
+            1: "Broad except + sentinel return is the exact anti-pattern Step 5 trained you to avoid. It would convert 'missing config file' and 'malformed JSON' and 'wrong shape' into one indistinguishable `None`."
+            2: "*Defense in depth*: validating shape at the JSON boundary catches problems earlier and with better diagnostics than letting them surface inside `parse_port_range`. A JSON list arriving where a string was expected gives a much more confusing error from the parser than from an explicit type check at the boundary."
+            3: "The AST check is a tool for the tutorial autograder, not a runtime constraint. The defensive pattern (no broad except) applies to *every* place you read external data, not just `load_json_config`."
+          explanation: "Defensive programming has *layers*: boundary validation (Step 5's shape check), targeted exception translation (Step 5's `from exc`), and interior contract enforcement (Step 6's port parser). Each layer covers what the others can't. Skipping any one of them lets a class of bug through."
 
     solution:
       files:
