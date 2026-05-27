@@ -1,0 +1,906 @@
+title: "Defensive Programming in Python"
+description: "A 75-90 minute Python tutorial for students who already know functions, classes, exceptions, and basic pytest. You will practice rejecting bad input clearly, preserving valid state, and keeping failure information visible instead of quietly hiding caller bugs."
+
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+learning_objectives:
+  - "Classify inputs into valid edge cases, malformed values, out-of-range values, and wrong-type values before writing validation code."
+  - "Apply precise Python exception types so caller mistakes fail with actionable signals."
+  - "Evaluate when defensive code should reject input instead of silently repairing it."
+  - "Enforce object invariants at construction time and preserve them through public methods."
+  - "Translate external failures into domain-specific exceptions without hiding the original cause."
+  - "Create a small parser whose validation, exception behavior, and postconditions are all covered by tests."
+
+backend: pyodide
+pytest: true
+linter: true
+editor_split: true
+output_height: "25%"
+require_tests: true
+autosave_type: files
+
+setup_commands:
+  - "import pyodide_js; await pyodide_js.loadPackage('pytest')"
+  - "import sys; sys.path.insert(0, '/tutorial')"
+  - |
+    import pytest as _pytest, sys as _sys
+    def _make_pytest_patch():
+        _orig = _pytest.main
+        _sysmod = _sys
+        def _patched(*a, **kw):
+            for m in list(_sysmod.modules):
+                if m.startswith('test_') or m in (
+                    'percentages',
+                    'repeat_text',
+                    'ranges',
+                    'intervals',
+                    'config_loader',
+                    'ports',
+                ):
+                    del _sysmod.modules[m]
+            return _orig(*a, **kw)
+        return _patched
+    _pytest.main = _make_pytest_patch()
+
+steps:
+
+  # Pedagogy: PRIMM — classify examples and non-examples before implementing.
+  - title: "Behavior From Examples"
+    instructions: |
+      ### Why this matters
+
+      Defensive programming starts before the first `if`: you decide which inputs belong to the function's contract and which ones are caller mistakes. Good examples and non-examples keep validation focused instead of turning it into guesswork.
+
+      ### 🎯 You will learn to
+
+      - Analyze valid and invalid examples as partitions of the input space.
+      - Convert examples into a small contract before writing code.
+      - Distinguish wrong type, malformed value, out-of-range value, and valid edge case.
+
+      ### Predict the contract
+
+      Study this intended function:
+
+      ```python
+      def parse_percentage(text: str) -> float:
+          ...
+      ```
+
+      It should accept these strings:
+
+      - `"0%"` returns `0.0`
+      - `"25%"` returns `25.0`
+      - `"100%"` returns `100.0`
+      - `" 7% "` returns `7.0`
+
+      It should reject these values:
+
+      - `""`, because there is no percentage text
+      - `"25"`, because the percent sign is missing
+      - `"-1%"`, because the value is below the valid range
+      - `"101%"`, because the value is above the valid range
+      - `"abc%"`, because the numeric part is not a number
+      - `25`, because the value has the wrong type
+
+      Before you continue, write one sentence that describes the contract. A strong version says something like: "The caller must pass a string that, after surrounding whitespace is ignored, is a numeric percentage with a percent sign and a value from 0 through 100."
+
+      ### Why no code yet?
+
+      This first step is a classification checkpoint. If you cannot sort an input into the right failure category, the implementation usually becomes either too permissive (`"25"` becomes accepted) or too vague (`ValueError` for everything, including wrong types).
+
+    files:
+      - path: "percentages.py"
+        language: "python"
+        content: |
+          def parse_percentage(text: str) -> float:
+              """Return the numeric value in a percentage string.
+
+              Contract draft:
+                - caller passes a string
+                - surrounding whitespace is ignored
+                - the cleaned value ends with "%"
+                - the number before "%" is in the inclusive range 0..100
+              """
+              raise NotImplementedError("You will implement validation in later steps.")
+
+    open_file: "percentages.py"
+    run_file: "percentages.py"
+
+    quiz:
+      title: "Step 1 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          difficulty: basic
+          question: |
+            `parse_percentage(25)` is invalid for which reason?
+          options:
+            - "Wrong type: the function contract asks for a string."
+            - "Malformed value: the percent sign is missing."
+            - "Out of range: 25 is too large."
+            - "Valid edge case: 25 means 25 percent."
+          correct_index: 0
+          option_feedback:
+            1: "Malformed-value checks happen after the caller has supplied the right kind of value. Here the caller supplied an `int`, not a `str`."
+            2: "The value 25 would be in range if it came from a valid percentage string. The first problem is the type."
+            3: "Accepting a bare number would silently expand the contract. This function is specifically parsing percentage strings."
+          explanation: "The caller violated the type part of the contract. Defensive code should report that as a type problem, not try to reinterpret the integer."
+
+        - type: single
+          difficulty: basic
+          question: |
+            `parse_percentage("25")` is invalid for which reason?
+          options:
+            - "Wrong type: the input is not a string."
+            - "Malformed value: the required percent sign is missing."
+            - "Out of range: 25 is outside 0 through 100."
+            - "Valid edge case: 25 is exactly on a boundary."
+          correct_index: 1
+          option_feedback:
+            0: "`\"25\"` is a string, so the type part of the contract is satisfied. The shape of the string is the problem."
+            2: "The numeric value 25 is inside the allowed range. Range checks happen after the string has the required form."
+            3: "The boundary values are 0 and 100. This input also lacks the percent sign the parser promises to require."
+          explanation: "The value has the right type but the wrong shape. A parser that accepts both `\"25\"` and `\"25%\"` is no longer enforcing the stated contract."
+
+        - type: single
+          difficulty: basic
+          question: |
+            `parse_percentage("101%")` is invalid for which reason?
+          options:
+            - "Wrong type: strings cannot represent percentages."
+            - "Malformed value: `101` is not numeric."
+            - "Out of range: the numeric value is above 100."
+            - "Valid edge case: the percent sign is present."
+          correct_index: 2
+          option_feedback:
+            0: "Strings are exactly what this parser accepts. The type is not the issue."
+            1: "`101` can be parsed as a number. The problem appears after parsing, when the value is compared with the allowed range."
+            3: "Having a percent sign is necessary, but not sufficient. The numeric value still has to be between 0 and 100 inclusive."
+          explanation: "This is a range violation: the input has the right type and shape, but the parsed numeric value is outside the contract."
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            Which input is a valid edge case for this contract?
+          options:
+            - "`\"0%\"`"
+            - "`\"-1%\"`"
+            - "`\"abc%\"`"
+            - "`\"\"`"
+          correct_index: 0
+          option_feedback:
+            1: "A value just below the lower boundary is useful to test, but it belongs in the rejected partition."
+            2: "The percent sign is present, but the numeric part cannot be parsed as a number."
+            3: "The empty string is malformed because it has no number and no percent sign."
+          explanation: "`\"0%\"` sits exactly on the lower boundary and is included by the contract. Boundary values are worth testing precisely because one wrong comparison can reject them."
+
+  # Pedagogy: worked example with fading — students implement precise exception branches from tests.
+  - title: "Precise Exceptions"
+    instructions: |
+      ### Why this matters
+
+      Defensive code is more useful when the failure tells the caller what kind of mistake they made. Python already has a useful split: `TypeError` for the wrong kind of value, `ValueError` for the right kind of value with an unacceptable value.
+
+      ### 🎯 You will learn to
+
+      - Apply `TypeError` and `ValueError` to different validation failures.
+      - Use `pytest.raises` to verify the exact exception type.
+      - Reject `bool` where an integer count is required.
+
+      ### Your task
+
+      Open `repeat_text.py`. Implement:
+
+      ```python
+      def repeat(text: str, times: int) -> str:
+          ...
+      ```
+
+      Contract:
+
+      - `text` must be a `str`; otherwise raise `TypeError`.
+      - `times` must be an `int`, but not `bool`; otherwise raise `TypeError`.
+      - `times` must be non-negative; otherwise raise `ValueError`.
+      - Valid inputs return `text * times`.
+
+      The tests check exact exception classes. A subclass or a broad `Exception` is not enough because the exception choice is the learning target here.
+
+    files:
+      - path: "repeat_text.py"
+        language: "python"
+        content: |
+          def repeat(text: str, times: int) -> str:
+              """Return text repeated times times."""
+              return text * times
+
+      - path: "test_repeat_text.py"
+        language: "python"
+        content: |
+          import pytest
+          from repeat_text import repeat
+
+
+          def test_repeats_text_for_valid_count():
+              assert repeat("ha", 3) == "hahaha"
+              assert repeat("ha", 0) == ""
+
+
+          def test_wrong_text_type_is_type_error():
+              with pytest.raises(TypeError) as excinfo:
+                  repeat(123, 2)
+              assert excinfo.type is TypeError
+
+
+          def test_wrong_times_type_is_type_error():
+              with pytest.raises(TypeError) as excinfo:
+                  repeat("ha", "3")
+              assert excinfo.type is TypeError
+
+
+          def test_negative_times_is_value_error():
+              with pytest.raises(ValueError) as excinfo:
+                  repeat("ha", -1)
+              assert excinfo.type is ValueError
+
+    open_file: "repeat_text.py"
+    run_file: "test_repeat_text.py"
+
+    tests:
+      - description: "Valid repetition works and invalid calls raise precise exception types"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout
+          sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_repeat_text.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old
+          output = buf.getvalue()
+          print(output)
+          assert code == 0, output
+
+          from repeat_text import repeat
+          with pytest.raises(TypeError) as excinfo:
+              repeat("ha", True)
+          assert excinfo.type is TypeError, "Treat bool as the wrong kind of value for an integer repeat count."
+        hints:
+          - title: "Separate kind from value"
+            text: "Ask two questions before multiplying: are the arguments the right kinds of objects, and is the count acceptable?"
+          - title: "Check bool deliberately"
+            text: "In Python, `bool` is a subclass of `int`. If the contract says an integer count, reject `True` and `False` explicitly before accepting `int`."
+          - title: "Raise before multiplying"
+            text: "The validation should happen before `text * times`; otherwise Python may raise its own less focused exception before your contract checks run."
+
+    solution:
+      files:
+        - path: "repeat_text.py"
+          language: "python"
+          content: |
+            def repeat(text: str, times: int) -> str:
+                """Return text repeated times times."""
+                if not isinstance(text, str):
+                    raise TypeError("text must be a string")
+                if isinstance(times, bool) or not isinstance(times, int):
+                    raise TypeError("times must be an integer")
+                if times < 0:
+                    raise ValueError("times must be non-negative")
+                return text * times
+      explanation: |
+        The implementation checks the type part of the contract first, then the value constraint. That keeps the exception type aligned with the caller's mistake.
+
+  # Pedagogy: mistake-based familiarization — reject a plausible "helpful" repair.
+  - title: "Rejecting Quiet Repairs"
+    instructions: |
+      ### Why this matters
+
+      Defensive programming is not the same as making every bad call work somehow. Quietly repairing a caller bug can move the failure far away from the cause, which makes the next bug harder to debug.
+
+      ### 🎯 You will learn to
+
+      - Evaluate when an automatic repair hides a caller mistake.
+      - Reject invalid relationships between arguments.
+      - Preserve the contract of a small numeric helper.
+
+      ### Your task
+
+      `clamp(value, lower, upper)` should return `value` limited to the inclusive range `[lower, upper]`.
+
+      Valid examples:
+
+      ```python
+      clamp(5, 0, 10)    # 5
+      clamp(-2, 0, 10)   # 0
+      clamp(12, 0, 10)   # 10
+      ```
+
+      The starter code tries to be helpful by swapping the bounds when `lower > upper`. Delete that behavior. The contract should reject reversed bounds with `ValueError`; callers need to know they passed the arguments in the wrong order.
+
+    files:
+      - path: "ranges.py"
+        language: "python"
+        content: |
+          def clamp(value: float, lower: float, upper: float) -> float:
+              """Return value limited to the inclusive interval [lower, upper]."""
+              if lower > upper:
+                  # This hides the caller's bug. Replace it with a clear failure.
+                  lower, upper = upper, lower
+              if value < lower:
+                  return lower
+              if value > upper:
+                  return upper
+              return value
+
+      - path: "test_ranges.py"
+        language: "python"
+        content: |
+          import pytest
+          from ranges import clamp
+
+
+          def test_value_inside_range_is_unchanged():
+              assert clamp(5, 0, 10) == 5
+
+
+          def test_value_below_range_returns_lower_bound():
+              assert clamp(-2, 0, 10) == 0
+
+
+          def test_value_above_range_returns_upper_bound():
+              assert clamp(12, 0, 10) == 10
+
+
+          def test_reversed_bounds_are_rejected():
+              with pytest.raises(ValueError) as excinfo:
+                  clamp(5, 10, 0)
+              assert excinfo.type is ValueError
+
+    open_file: "ranges.py"
+    run_file: "test_ranges.py"
+
+    tests:
+      - description: "Clamp preserves valid behavior and rejects reversed bounds"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout
+          sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_ranges.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old
+          output = buf.getvalue()
+          print(output)
+          assert code == 0, output
+
+          from ranges import clamp
+          with pytest.raises(ValueError) as excinfo:
+              clamp(7, 9, 3)
+          assert excinfo.type is ValueError, "Do not silently swap reversed bounds; reject the bad call."
+        hints:
+          - title: "Find the quiet repair"
+            text: "The starter code has one branch that changes caller input before continuing. That is the behavior to replace."
+          - title: "Reject the invalid relationship"
+            text: "The relationship `lower <= upper` is part of the contract. Check it before doing any clamping."
+          - title: "Leave ordinary clamping alone"
+            text: "After the bounds are known to be ordered, the lower-bound and upper-bound cases can stay almost exactly as they are."
+
+    solution:
+      files:
+        - path: "ranges.py"
+          language: "python"
+          content: |
+            def clamp(value: float, lower: float, upper: float) -> float:
+                """Return value limited to the inclusive interval [lower, upper]."""
+                if lower > upper:
+                    raise ValueError("lower must be less than or equal to upper")
+                if value < lower:
+                    return lower
+                if value > upper:
+                    return upper
+                return value
+      explanation: |
+        The function still helps valid callers by clamping values, but it refuses to reinterpret a reversed range. That keeps the failure close to the caller's mistake.
+
+  # Pedagogy: worked example with fading — preserve an invariant in a small value object.
+  - title: "State Integrity"
+    instructions: |
+      ### Why this matters
+
+      Defensive programming is not only about function inputs. Objects also need valid state, and the easiest time to protect that state is at construction.
+
+      ### 🎯 You will learn to
+
+      - Enforce a class invariant in `__post_init__`.
+      - Validate construction-time state before methods rely on it.
+      - Reject method inputs that do not belong to the public contract.
+
+      ### Your task
+
+      Open `intervals.py`. The class represents a closed interval, meaning both endpoints are included. Its invariant is:
+
+      ```python
+      start <= end
+      ```
+
+      Implement two pieces:
+
+      - `__post_init__` rejects invalid construction with `ValueError`.
+      - `contains(value)` returns whether an integer value is inside the interval, and raises `TypeError` for non-integers or `bool`.
+
+      The class is `frozen=True`, so valid instances cannot be edited after construction. That makes the construction check especially important.
+
+    files:
+      - path: "intervals.py"
+        language: "python"
+        content: |
+          from dataclasses import dataclass
+
+
+          @dataclass(frozen=True, slots=True)
+          class ClosedInterval:
+              start: int
+              end: int
+
+              def __post_init__(self) -> None:
+                  # Enforce the invariant here.
+                  pass
+
+              def contains(self, value: int) -> bool:
+                  # Return True when value is between start and end inclusive.
+                  return False
+
+      - path: "test_intervals.py"
+        language: "python"
+        content: |
+          import pytest
+          from intervals import ClosedInterval
+
+
+          def test_valid_interval_contains_endpoints_and_middle():
+              interval = ClosedInterval(3, 7)
+              assert interval.contains(3) is True
+              assert interval.contains(5) is True
+              assert interval.contains(7) is True
+
+
+          def test_valid_interval_rejects_outside_values():
+              interval = ClosedInterval(3, 7)
+              assert interval.contains(2) is False
+              assert interval.contains(8) is False
+
+
+          def test_reversed_interval_cannot_be_constructed():
+              with pytest.raises(ValueError) as excinfo:
+                  ClosedInterval(7, 3)
+              assert excinfo.type is ValueError
+
+
+          def test_contains_rejects_non_integer_values():
+              interval = ClosedInterval(3, 7)
+              with pytest.raises(TypeError) as excinfo:
+                  interval.contains("5")
+              assert excinfo.type is TypeError
+
+    open_file: "intervals.py"
+    run_file: "test_intervals.py"
+
+    tests:
+      - description: "ClosedInterval enforces construction and contains-input invariants"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout
+          sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_intervals.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old
+          output = buf.getvalue()
+          print(output)
+          assert code == 0, output
+
+          from intervals import ClosedInterval
+          with pytest.raises(TypeError) as excinfo:
+              ClosedInterval(1, 3).contains(True)
+          assert excinfo.type is TypeError, "Treat bool as outside the integer-value contract."
+        hints:
+          - title: "Put the invariant at the boundary"
+            text: "The boundary for object state is construction. `__post_init__` runs right after the dataclass fills `start` and `end`."
+          - title: "Test inclusion with two comparisons"
+            text: "A value is inside a closed interval when it is greater than or equal to `start` and less than or equal to `end`."
+          - title: "Reject bool before int"
+            text: "As with the repeat-count example, `bool` is an `int` subclass in Python. Check for `bool` explicitly before accepting integers."
+
+    solution:
+      files:
+        - path: "intervals.py"
+          language: "python"
+          content: |
+            from dataclasses import dataclass
+
+
+            @dataclass(frozen=True, slots=True)
+            class ClosedInterval:
+                start: int
+                end: int
+
+                def __post_init__(self) -> None:
+                    if not isinstance(self.start, int) or isinstance(self.start, bool):
+                        raise TypeError("start must be an integer")
+                    if not isinstance(self.end, int) or isinstance(self.end, bool):
+                        raise TypeError("end must be an integer")
+                    if self.start > self.end:
+                        raise ValueError("start must be less than or equal to end")
+
+                def contains(self, value: int) -> bool:
+                    if not isinstance(value, int) or isinstance(value, bool):
+                        raise TypeError("value must be an integer")
+                    return self.start <= value <= self.end
+      explanation: |
+        The object rejects invalid state once, at construction, and each method can rely on the invariant after that. Method-specific validation is still needed for new caller input.
+
+  # Pedagogy: negative example and repair — translate external failures without hiding causes.
+  - title: "Visible Error Causes"
+    instructions: |
+      ### Why this matters
+
+      `except Exception: return {}` looks friendly until production starts using the empty default after a missing file or broken JSON document. Defensive code should translate low-level failures into domain language while preserving the original cause for debugging.
+
+      ### 🎯 You will learn to
+
+      - Replace broad exception swallowing with targeted exception handling.
+      - Raise a domain-specific exception with `raise ... from exc`.
+      - Preserve useful failure information without leaking low-level details into callers.
+
+      ### Your task
+
+      Open `config_loader.py`. Replace the broad fallback with a clear contract:
+
+      - `load_json_config(path)` returns a JSON object as a `dict`.
+      - Missing or unreadable files raise `ConfigError(...) from exc`.
+      - Invalid JSON raises `ConfigError(...) from exc`.
+      - Valid JSON that is not an object raises `ConfigError` without pretending it is a usable config.
+
+      Do not catch `Exception` or `BaseException`. Catch the failures you can translate.
+
+    files:
+      - path: "config_loader.py"
+        language: "python"
+        content: |
+          import json
+          from pathlib import Path
+          from typing import Any
+
+
+          class ConfigError(RuntimeError):
+              """Raised when an application config file cannot be loaded."""
+
+
+          def load_json_config(path: Path) -> dict[str, Any]:
+              """Load a JSON config object from path."""
+              try:
+                  with Path(path).open(encoding="utf-8") as config_file:
+                      return json.load(config_file)
+              except Exception:
+                  return {}
+
+      - path: "test_config_loader.py"
+        language: "python"
+        content: |
+          import json
+          import pytest
+          from pathlib import Path
+          from config_loader import ConfigError, load_json_config
+
+
+          def test_valid_config_file_returns_dict():
+              path = Path("/tutorial/app-config.json")
+              path.write_text(json.dumps({"debug": True, "port": 8080}), encoding="utf-8")
+              assert load_json_config(path) == {"debug": True, "port": 8080}
+
+
+          def test_missing_file_raises_config_error_with_cause():
+              path = Path("/tutorial/does-not-exist.json")
+              with pytest.raises(ConfigError) as excinfo:
+                  load_json_config(path)
+              assert isinstance(excinfo.value.__cause__, OSError)
+
+
+          def test_invalid_json_raises_config_error_with_cause():
+              path = Path("/tutorial/broken-config.json")
+              path.write_text("{not valid json", encoding="utf-8")
+              with pytest.raises(ConfigError) as excinfo:
+                  load_json_config(path)
+              assert isinstance(excinfo.value.__cause__, json.JSONDecodeError)
+
+    open_file: "config_loader.py"
+    run_file: "test_config_loader.py"
+
+    tests:
+      - description: "Config loading translates targeted failures and preserves their causes"
+        command: |
+          import ast, pytest, io, sys
+          source = open('/tutorial/config_loader.py').read()
+          tree = ast.parse(source)
+          for node in ast.walk(tree):
+              if isinstance(node, ast.ExceptHandler):
+                  handler = node.type
+                  catches_broad_exception = (
+                      isinstance(handler, ast.Name) and handler.id in ("Exception", "BaseException")
+                  )
+                  assert not catches_broad_exception, "Catch targeted file and JSON failures, not broad Exception/BaseException."
+
+          old = sys.stdout
+          sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_config_loader.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old
+          output = buf.getvalue()
+          print(output)
+          assert code == 0, output
+
+          from pathlib import Path
+          from config_loader import ConfigError, load_json_config
+          list_path = Path("/tutorial/list-config.json")
+          list_path.write_text("[1, 2, 3]", encoding="utf-8")
+          with pytest.raises(ConfigError):
+              load_json_config(list_path)
+        hints:
+          - title: "Keep the original exception"
+            text: "When translating a file or JSON failure, bind it as `exc` and use `raise ConfigError(...) from exc`."
+          - title: "Catch only what you can explain"
+            text: "File read failures are `OSError` family failures. JSON syntax failures are `json.JSONDecodeError`."
+          - title: "Validate the loaded shape"
+            text: "After `json.load` or `json.loads`, check that the result is a `dict`. A JSON list is valid JSON, but it is not a config object for this function."
+
+    solution:
+      files:
+        - path: "config_loader.py"
+          language: "python"
+          content: |
+            import json
+            from pathlib import Path
+            from typing import Any
+
+
+            class ConfigError(RuntimeError):
+                """Raised when an application config file cannot be loaded."""
+
+
+            def load_json_config(path: Path) -> dict[str, Any]:
+                """Load a JSON config object from path."""
+                config_path = Path(path)
+                try:
+                    text = config_path.read_text(encoding="utf-8")
+                except OSError as exc:
+                    raise ConfigError(f"could not read config file: {config_path}") from exc
+
+                try:
+                    data = json.loads(text)
+                except json.JSONDecodeError as exc:
+                    raise ConfigError(f"invalid JSON config file: {config_path}") from exc
+
+                if not isinstance(data, dict):
+                    raise ConfigError("config file must contain a JSON object")
+                return data
+      explanation: |
+        The loader now catches only the failures it can translate. `raise ... from exc` keeps the low-level exception in `__cause__`, so debugging tools still show the real source of the failure.
+
+  # Pedagogy: capstone — independent integration of partitions, precise exceptions, and postconditions.
+  - title: "Port Range Parser"
+    instructions: |
+      ### Why this matters
+
+      Real defensive programming combines the pieces: classify input, reject invalid forms, choose precise exceptions, and guarantee that valid results obey a postcondition. A small parser is enough to practice the full loop without adding domain clutter.
+
+      ### 🎯 You will learn to
+
+      - Create a parser that rejects wrong types, malformed strings, out-of-range values, and reversed ranges.
+      - Apply postcondition reasoning to returned tuples.
+      - Test boundary values around a finite numeric domain.
+
+      ### Your task
+
+      Implement:
+
+      ```python
+      def parse_port_range(spec: str) -> tuple[int, int]:
+          ...
+      ```
+
+      Accepted forms:
+
+      - `"8080"` returns `(8080, 8080)`.
+      - `"8000-8080"` returns `(8000, 8080)`.
+      - Surrounding whitespace around the whole spec is okay.
+
+      Rejected forms:
+
+      - wrong type: raise `TypeError`
+      - malformed string: raise `ValueError`
+      - port outside `0..65535`: raise `ValueError`
+      - reversed range such as `"9000-8000"`: raise `ValueError`
+
+      Postcondition for every successful call: the result is a pair of integers where `0 <= start <= end <= 65535`.
+
+    files:
+      - path: "ports.py"
+        language: "python"
+        content: |
+          def parse_port_range(spec: str) -> tuple[int, int]:
+              """Parse a single port or inclusive port range."""
+              raise NotImplementedError("parse the port range")
+
+      - path: "test_ports.py"
+        language: "python"
+        content: |
+          import pytest
+          from ports import parse_port_range
+
+
+          def assert_valid_port_range(result):
+              assert isinstance(result, tuple)
+              assert len(result) == 2
+              start, end = result
+              assert isinstance(start, int)
+              assert isinstance(end, int)
+              assert 0 <= start <= end <= 65535
+
+
+          def test_single_port_becomes_one_point_range():
+              result = parse_port_range("8080")
+              assert result == (8080, 8080)
+              assert_valid_port_range(result)
+
+
+          def test_range_preserves_start_and_end():
+              result = parse_port_range("8000-8080")
+              assert result == (8000, 8080)
+              assert_valid_port_range(result)
+
+
+          def test_boundary_ports_are_valid():
+              assert parse_port_range("0") == (0, 0)
+              assert parse_port_range("65535") == (65535, 65535)
+              assert parse_port_range("0-65535") == (0, 65535)
+
+
+          def test_wrong_type_is_type_error():
+              with pytest.raises(TypeError) as excinfo:
+                  parse_port_range(8080)
+              assert excinfo.type is TypeError
+
+
+          def test_malformed_specs_are_value_error():
+              for spec in ["", "abc", "80/http", "80-", "-90", "80-90-100"]:
+                  with pytest.raises(ValueError):
+                      parse_port_range(spec)
+
+
+          def test_out_of_range_ports_are_value_error():
+              for spec in ["-1", "65536", "80-70000"]:
+                  with pytest.raises(ValueError):
+                      parse_port_range(spec)
+
+
+          def test_reversed_range_is_value_error():
+              with pytest.raises(ValueError):
+                  parse_port_range("9000-8000")
+
+    open_file: "ports.py"
+    run_file: "test_ports.py"
+
+    tests:
+      - description: "Port parser covers valid forms, invalid partitions, exact exception types, and postconditions"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout
+          sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_ports.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old
+          output = buf.getvalue()
+          print(output)
+          assert code == 0, output
+
+          from ports import parse_port_range
+
+          for spec in [" 443 ", " 8000-8080 "]:
+              start, end = parse_port_range(spec)
+              assert isinstance(start, int) and isinstance(end, int)
+              assert 0 <= start <= end <= 65535
+
+          for spec in ["80 - 90", "http-https", "22-"]:
+              with pytest.raises(ValueError):
+                  parse_port_range(spec)
+
+          with pytest.raises(TypeError) as excinfo:
+              parse_port_range(None)
+          assert excinfo.type is TypeError
+        hints:
+          - title: "Normalize the whole string first"
+            text: "Reject non-strings, then call `.strip()` on the spec. Empty strings are malformed."
+          - title: "Parse one form at a time"
+            text: "The single-port form has no hyphen. The range form has exactly one hyphen and two numeric parts."
+          - title: "Check the postcondition before returning"
+            text: "After parsing integers, validate both ports are in range and `start <= end`. Then return `(start, end)`."
+
+    quiz:
+      title: "Step 6 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: |
+            A student implementation turns `"9000-8000"` into `(8000, 9000)` so the returned tuple is ordered. What is the main problem?
+          options:
+            - "It hides a caller bug by silently repairing a reversed range."
+            - "It should return a list instead of a tuple."
+            - "It should raise `TypeError` because the values are strings."
+            - "It fails only because 9000 is outside the valid port range."
+          correct_index: 0
+          option_feedback:
+            1: "The contract promises a tuple, and the tuple shape is not the failure. The issue is accepting an invalid relationship between the two endpoints."
+            2: "The function receives a string specification by design. Wrong type would be something like `None` or an integer argument."
+            3: "Both 8000 and 9000 are valid port numbers. The invalid part is their order in a range."
+          explanation: "Reversed ranges are caller mistakes. Silently swapping them repeats the quiet-repair problem from `clamp`."
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            Which assertion best captures the postcondition of a successful `parse_port_range` call?
+          options:
+            - "`result is not None` and both tuple slots can be indexed"
+            - "`result` is a 2-item tuple and `0 <= start <= end <= 65535`"
+            - "`str(result).startswith('(')` and the string contains a comma"
+            - "`result[0] < result[1]` so endpoints are strictly ordered"
+          correct_index: 1
+          option_feedback:
+            0: "A non-`None` result could still be malformed, reversed, or out of range. That oracle is too weak."
+            2: "String formatting is not the contract. A list or invalid tuple could still produce a parenthesized-looking string."
+            3: "A single port such as `\"8080\"` should return `(8080, 8080)`, where equality is valid."
+          explanation: "The postcondition includes tuple shape, integer endpoints, range limits, and ordering with equality allowed."
+
+        - type: single
+          difficulty: basic
+          question: |
+            Which failure should be a `TypeError` rather than a `ValueError`?
+          options:
+            - "`parse_port_range(None)`"
+            - "`parse_port_range(\"abc\")`"
+            - "`parse_port_range(\"65536\")`"
+            - "`parse_port_range(\"9000-8000\")`"
+          correct_index: 0
+          option_feedback:
+            1: "`\"abc\"` has the right type but cannot be parsed as the required string form, so it is a value problem."
+            2: "`\"65536\"` has the right type and shape but is outside the valid port range, so it is a value problem."
+            3: "`\"9000-8000\"` has the right type and numeric parts, but the endpoint relationship is invalid, so it is a value problem."
+          explanation: "`TypeError` is for the wrong kind of argument. The malformed, out-of-range, and reversed examples are all strings, so they are `ValueError` cases."
+
+    solution:
+      files:
+        - path: "ports.py"
+          language: "python"
+          content: |
+            def parse_port_range(spec: str) -> tuple[int, int]:
+                """Parse a single port or inclusive port range."""
+                if not isinstance(spec, str):
+                    raise TypeError("spec must be a string")
+
+                cleaned = spec.strip()
+                if not cleaned:
+                    raise ValueError("port range cannot be empty")
+
+                if "-" in cleaned:
+                    parts = cleaned.split("-")
+                    if len(parts) != 2 or not parts[0] or not parts[1]:
+                        raise ValueError("range must be start-end")
+                    if any(part.strip() != part for part in parts):
+                        raise ValueError("range cannot contain embedded whitespace")
+                    start_text, end_text = parts
+                else:
+                    start_text = end_text = cleaned
+
+                if not start_text.isdecimal() or not end_text.isdecimal():
+                    raise ValueError("ports must be decimal integers")
+
+                start = int(start_text)
+                end = int(end_text)
+                if not (0 <= start <= 65535 and 0 <= end <= 65535):
+                    raise ValueError("ports must be in the range 0..65535")
+                if start > end:
+                    raise ValueError("start port must be less than or equal to end port")
+                return (start, end)
+      explanation: |
+        The parser checks type first, then string shape, then numeric range, then the relationship between endpoints. The return happens only after the postcondition is true.

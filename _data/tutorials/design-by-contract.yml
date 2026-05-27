@@ -1,0 +1,988 @@
+title: "Design by Contract in Python"
+description: "A 75-90 minute Python tutorial for students who have completed Defensive Programming in Python or already know Python functions, classes, exceptions, and basic pytest. You will practice contracts as responsibility allocation: caller preconditions, supplier postconditions, old-state reasoning, invariants, and legal contract strengthening."
+
+# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+learning_objectives:
+  - "Classify contract failures as caller precondition violations or supplier postcondition violations."
+  - "Apply explicit `require` and `ensure` checks to small Python functions."
+  - "Write preconditions that reject invalid inputs before computation begins."
+  - "Use old-state snapshots to specify exact postconditions for sequence-transforming functions."
+  - "Maintain class invariants across construction and state-changing methods."
+  - "Evaluate contract changes for substitutability by comparing precondition and postcondition strength."
+
+backend: pyodide
+pytest: true
+linter: true
+editor_split: true
+output_height: "25%"
+require_tests: true
+autosave_type: files
+
+setup_commands:
+  - "import pyodide_js; await pyodide_js.loadPackage('pytest')"
+  - "import sys; sys.path.insert(0, '/tutorial')"
+  - |
+    import pytest as _pytest, sys as _sys
+    def _make_pytest_patch():
+        _orig = _pytest.main
+        _sysmod = _sys
+        def _patched(*a, **kw):
+            for m in list(_sysmod.modules):
+                if m.startswith('test_') or m in (
+                    'discounts',
+                    'means',
+                    'sequences',
+                    'accounts',
+                    'contract_strength',
+                ):
+                    del _sysmod.modules[m]
+            return _orig(*a, **kw)
+        return _patched
+    _pytest.main = _make_pytest_patch()
+
+steps:
+
+  # Pedagogy: PRIMM — contrast defensive checks with caller/callee responsibility.
+  - title: "Contract Mindset"
+    instructions: |
+      ### Why this matters
+
+      Defensive programming asks "how do I reject bad input clearly?" Design by Contract adds a sharper question: "whose job was this?" A precondition failure belongs to the caller; a postcondition failure belongs to the supplier implementation.
+
+      ### 🎯 You will learn to
+
+      - Distinguish preconditions from postconditions.
+      - Assign blame to the caller or supplier when a contract fails.
+      - Read `require` and `ensure` as different kinds of contract checks.
+
+      ### Read the contract
+
+      This tutorial uses two tiny helpers:
+
+      ```python
+      def require(condition: bool, message: str) -> None:
+          if not condition:
+              raise ValueError(message)
+
+      def ensure(condition: bool, message: str) -> None:
+          if not condition:
+              raise AssertionError(message)
+      ```
+
+      `require` is for preconditions: facts the caller must make true before the function runs.
+      `ensure` is for postconditions: facts the supplier implementation must make true before returning.
+
+      Open `discounts.py` and study the intended contract:
+
+      ```python
+      def discounted_price(price: float, discount: float) -> float:
+          ...
+      ```
+
+      Preconditions:
+
+      - `price >= 0`
+      - `0 <= discount <= 1`
+
+      Postconditions:
+
+      - result equals `price * (1 - discount)`
+      - `0 <= result <= price`
+
+      You do not need to implement it in this step. The goal is to classify failures by responsibility.
+
+    files:
+      - path: "discounts.py"
+        language: "python"
+        content: |
+          def require(condition: bool, message: str) -> None:
+              if not condition:
+                  raise ValueError(message)
+
+
+          def ensure(condition: bool, message: str) -> None:
+              if not condition:
+                  raise AssertionError(message)
+
+
+          def discounted_price(price: float, discount: float) -> float:
+              """Return price after applying a fractional discount.
+
+              Preconditions:
+                - price >= 0
+                - 0 <= discount <= 1
+
+              Postconditions:
+                - result == price * (1 - discount)
+                - 0 <= result <= price
+              """
+              require(price >= 0, "price must be non-negative")
+              require(0 <= discount <= 1, "discount must be between 0 and 1")
+              result = price * (1 - discount)
+              ensure(result == price * (1 - discount), "discount formula must hold")
+              ensure(0 <= result <= price, "result must stay between 0 and original price")
+              return result
+
+    open_file: "discounts.py"
+    run_file: "discounts.py"
+
+    quiz:
+      title: "Step 1 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          difficulty: basic
+          question: |
+            `discounted_price(-10, 0.2)` fails because `price >= 0` is false. Who violated the contract?
+          options:
+            - "The caller, because a precondition was false before the function ran."
+            - "The supplier, because every exception from inside a function belongs to the function."
+            - "Both sides, because negative prices and discounts interact."
+            - "Neither side, because Python allows negative numbers."
+          correct_index: 0
+          option_feedback:
+            1: "Contract blame depends on which part failed. A false precondition means the caller made a call the supplier did not promise to handle."
+            2: "Only the price precondition failed. The discount value is inside the allowed range."
+            3: "Python can represent negative numbers, but the function's contract rejects them for this domain."
+          explanation: "Preconditions are caller responsibilities. When the caller passes a negative price, the function is allowed to refuse the call."
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            Suppose `discounted_price(100, 0.25)` returns `10`. Who violated the contract?
+          options:
+            - "The caller, because 25 percent is a large discount."
+            - "The supplier, because the preconditions were true but the postcondition formula failed."
+            - "Neither side, because the result is still non-negative."
+            - "Both sides, because price and discount were both involved in the calculation."
+          correct_index: 1
+          option_feedback:
+            0: "A discount of `0.25` is inside the required range. The caller met the preconditions."
+            2: "The range postcondition is only one guarantee. The exact formula is also part of the contract."
+            3: "The caller provided valid inputs. The wrong result is the supplier implementation's failure."
+          explanation: "When the caller satisfies the preconditions, the supplier must satisfy every postcondition. Returning `10` violates the formula."
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            What is the main design difference between `require` and `ensure` in this tutorial?
+          options:
+            - "`require` checks caller obligations; `ensure` checks supplier guarantees."
+            - "`require` is for strings; `ensure` is for numbers."
+            - "`require` should be used after computation; `ensure` should be used before computation."
+            - "`require` catches exceptions; `ensure` prevents exceptions."
+          correct_index: 0
+          option_feedback:
+            1: "The helpers are not organized by data type. They are organized by responsibility."
+            2: "Preconditions are checked before computation. Postconditions are checked after the supplier has produced a result."
+            3: "Both helpers raise exceptions when a condition is false. They do not catch exceptions."
+          explanation: "`require` and `ensure` name contract responsibility: preconditions belong to callers, postconditions belong to suppliers."
+
+  # Pedagogy: worked example with fading — implement preconditions before the computation.
+  - title: "Good Preconditions"
+    instructions: |
+      ### Why this matters
+
+      A good precondition rejects calls that the function cannot honestly handle before the algorithm starts. That keeps the body simple and makes failures point to the caller's contract violation.
+
+      ### 🎯 You will learn to
+
+      - Apply `require` to reject invalid inputs before computation.
+      - Validate emptiness, numeric type, `NaN`, and infinity as separate precondition concerns.
+      - Keep the actual mean calculation small after preconditions pass.
+
+      ### Your task
+
+      Implement `mean_nonempty(xs)`.
+
+      Preconditions:
+
+      - `xs` is non-empty.
+      - Every element is a real number, but not `bool`.
+      - Every element is finite: not `NaN`, not positive infinity, and not negative infinity.
+
+      Postcondition:
+
+      - The result equals `sum(xs) / len(xs)` for the validated values.
+
+      Use `require(...)` for precondition checks and `ensure(...)` for the postcondition.
+
+    files:
+      - path: "means.py"
+        language: "python"
+        content: |
+          import math
+          from collections.abc import Sequence
+
+
+          def require(condition: bool, message: str) -> None:
+              if not condition:
+                  raise ValueError(message)
+
+
+          def ensure(condition: bool, message: str) -> None:
+              if not condition:
+                  raise AssertionError(message)
+
+
+          def mean_nonempty(xs: Sequence[float]) -> float:
+              """Return the arithmetic mean of a non-empty finite numeric sequence."""
+              # Add preconditions before computing.
+              result = sum(xs) / len(xs)
+              return result
+
+      - path: "test_means.py"
+        language: "python"
+        content: |
+          import math
+          import pytest
+          from means import mean_nonempty
+
+
+          def test_valid_values_return_mean():
+              assert mean_nonempty([2, 4, 6]) == pytest.approx(4)
+              assert mean_nonempty([1.5, 2.5]) == pytest.approx(2.0)
+
+
+          def test_empty_sequence_violates_precondition():
+              with pytest.raises(ValueError):
+                  mean_nonempty([])
+
+
+          def test_nonnumeric_value_violates_precondition():
+              with pytest.raises(ValueError):
+                  mean_nonempty([1, "2", 3])
+
+
+          def test_nan_and_infinity_violate_precondition():
+              for value in [math.nan, math.inf, -math.inf]:
+                  with pytest.raises(ValueError):
+                      mean_nonempty([1, value])
+
+    open_file: "means.py"
+    run_file: "test_means.py"
+
+    tests:
+      - description: "Mean preconditions reject empty, nonnumeric, NaN, and infinity before computation"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout
+          sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_means.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old
+          output = buf.getvalue()
+          print(output)
+          assert code == 0, output
+
+          from means import mean_nonempty
+          with pytest.raises(ValueError):
+              mean_nonempty([True, 2, 3])
+        hints:
+          - title: "Validate before `sum`"
+            text: "The starter computes immediately. Move precondition checks above `sum(xs) / len(xs)`."
+          - title: "Check each element"
+            text: "Loop through `xs`. Each element must be an `int` or `float`, must not be `bool`, and must pass `math.isfinite(...)`."
+          - title: "Ensure the formula"
+            text: "After computing `result`, use `ensure(result == sum(xs) / len(xs), ...)` or `pytest.approx` only in tests. The function itself can compare the exact expression for these small inputs."
+
+    solution:
+      files:
+        - path: "means.py"
+          language: "python"
+          content: |
+            import math
+            from collections.abc import Sequence
+
+
+            def require(condition: bool, message: str) -> None:
+                if not condition:
+                    raise ValueError(message)
+
+
+            def ensure(condition: bool, message: str) -> None:
+                if not condition:
+                    raise AssertionError(message)
+
+
+            def mean_nonempty(xs: Sequence[float]) -> float:
+                """Return the arithmetic mean of a non-empty finite numeric sequence."""
+                require(len(xs) > 0, "xs must be non-empty")
+                for value in xs:
+                    require(
+                        isinstance(value, (int, float)) and not isinstance(value, bool),
+                        "all values must be real numbers",
+                    )
+                    require(math.isfinite(value), "all values must be finite")
+
+                result = sum(xs) / len(xs)
+                ensure(result == sum(xs) / len(xs), "result must equal the arithmetic mean")
+                return result
+      explanation: |
+        The computation is only reached after the caller has supplied a non-empty sequence of finite numbers. That is the contract split: caller prepares valid inputs, supplier computes the promised result.
+
+  # Pedagogy: worked example with fading — introduce old-state reasoning for a sequence transformation.
+  - title: "Strong Postconditions"
+    instructions: |
+      ### Why this matters
+
+      Weak postconditions let broken code pass. For a sequence operation, "returns a list" is not enough; the contract should say exactly what changed and what stayed untouched.
+
+      ### 🎯 You will learn to
+
+      - Use an old-state snapshot to compare before and after behavior.
+      - Specify a sequence transformation without mutating the input.
+      - Apply `ensure` to check a strong postcondition.
+
+      ### Your task
+
+      Implement:
+
+      ```python
+      def remove_at(xs: Sequence[int], index: int) -> list[int]:
+          ...
+      ```
+
+      Contract:
+
+      - Precondition: `0 <= index < len(xs)`.
+      - The function returns a new list.
+      - The input sequence is not mutated.
+      - The returned list is exactly the old sequence with the element at `index` removed.
+
+      Create `old_xs = list(xs)` before making the result. Use `ensure(...)` to check the returned list against `old_xs[:index] + old_xs[index + 1:]`.
+
+    files:
+      - path: "sequences.py"
+        language: "python"
+        content: |
+          from collections.abc import Sequence
+
+
+          def require(condition: bool, message: str) -> None:
+              if not condition:
+                  raise ValueError(message)
+
+
+          def ensure(condition: bool, message: str) -> None:
+              if not condition:
+                  raise AssertionError(message)
+
+
+          def remove_at(xs: Sequence[int], index: int) -> list[int]:
+              """Return a new list with the item at index removed."""
+              require(0 <= index < len(xs), "index must be in range")
+              # Snapshot old state before building the result.
+              old_xs = ...
+              result = list(xs)
+              result.pop(index)
+              return result
+
+      - path: "test_sequences.py"
+        language: "python"
+        content: |
+          import pytest
+          from sequences import remove_at
+
+
+          def test_removes_first_middle_and_last_items():
+              assert remove_at([10, 20, 30], 0) == [20, 30]
+              assert remove_at([10, 20, 30], 1) == [10, 30]
+              assert remove_at([10, 20, 30], 2) == [10, 20]
+
+
+          def test_invalid_index_violates_precondition():
+              with pytest.raises(ValueError):
+                  remove_at([10, 20, 30], -1)
+              with pytest.raises(ValueError):
+                  remove_at([10, 20, 30], 3)
+
+
+          def test_input_list_is_not_mutated():
+              xs = [10, 20, 30]
+              result = remove_at(xs, 1)
+              assert result == [10, 30]
+              assert xs == [10, 20, 30]
+              assert result is not xs
+
+    open_file: "sequences.py"
+    run_file: "test_sequences.py"
+
+    tests:
+      - description: "remove_at uses old-state reasoning, preserves the input, and removes exactly one element"
+        command: |
+          import ast, pytest, io, sys
+          source = open('/tutorial/sequences.py').read()
+          assert "old_xs" in source and "old_xs = ..." not in source, "Create a real old_xs snapshot before changing or building the result."
+          assert "ensure(" in source, "Use ensure(...) to state the postcondition, not only visible pytest tests."
+
+          old = sys.stdout
+          sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_sequences.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old
+          output = buf.getvalue()
+          print(output)
+          assert code == 0, output
+        hints:
+          - title: "Copy the input first"
+            text: "`old_xs = list(xs)` gives the postcondition a stable value to compare against, even if `xs` is a mutable list."
+          - title: "Build the expected result from slices"
+            text: "The exact postcondition is `old_xs[:index] + old_xs[index + 1:]`."
+          - title: "Return a new list"
+            text: "Do not call `pop` on `xs` itself. Build or copy into `result`, then compare `result` with the old-state expression."
+
+    solution:
+      files:
+        - path: "sequences.py"
+          language: "python"
+          content: |
+            from collections.abc import Sequence
+
+
+            def require(condition: bool, message: str) -> None:
+                if not condition:
+                    raise ValueError(message)
+
+
+            def ensure(condition: bool, message: str) -> None:
+                if not condition:
+                    raise AssertionError(message)
+
+
+            def remove_at(xs: Sequence[int], index: int) -> list[int]:
+                """Return a new list with the item at index removed."""
+                require(0 <= index < len(xs), "index must be in range")
+                old_xs = list(xs)
+                result = old_xs[:index] + old_xs[index + 1:]
+                ensure(list(xs) == old_xs, "input sequence must not be mutated")
+                ensure(result == old_xs[:index] + old_xs[index + 1:], "result must remove exactly one item")
+                return result
+      explanation: |
+        The old-state snapshot lets the postcondition say exactly what changed. Without `old_xs`, a postcondition can easily become a weak check against whatever the current state happens to be.
+
+  # Pedagogy: guided practice — maintain a class invariant through state-changing methods.
+  - title: "Class Invariants"
+    instructions: |
+      ### Why this matters
+
+      An invariant is a fact that should be true after construction and after every public method call. Once an object promises an invariant, every method can rely on it instead of re-validating the whole object from scratch.
+
+      ### 🎯 You will learn to
+
+      - Define a `_check_invariant` method for object state.
+      - Use preconditions for invalid caller requests.
+      - Use postconditions and invariant checks after mutation.
+
+      ### Your task
+
+      Implement `BankAccount`.
+
+      Invariant:
+
+      - `owner` is a non-empty string after stripping whitespace.
+      - `balance` is a non-negative integer.
+
+      Method contracts:
+
+      - `deposit(amount)` requires a positive integer amount and increases balance by exactly that amount.
+      - `withdraw(amount)` requires a positive integer amount and sufficient funds, then decreases balance by exactly that amount.
+      - Both methods preserve the invariant.
+
+    files:
+      - path: "accounts.py"
+        language: "python"
+        content: |
+          def require(condition: bool, message: str) -> None:
+              if not condition:
+                  raise ValueError(message)
+
+
+          def ensure(condition: bool, message: str) -> None:
+              if not condition:
+                  raise AssertionError(message)
+
+
+          class BankAccount:
+              def __init__(self, owner: str, balance: int = 0) -> None:
+                  self.owner = owner
+                  self.balance = balance
+                  # Check the invariant after construction.
+
+              def _check_invariant(self) -> None:
+                  # owner must be a non-empty string; balance must be a non-negative int.
+                  pass
+
+              def deposit(self, amount: int) -> None:
+                  # Increase balance by exactly amount.
+                  pass
+
+              def withdraw(self, amount: int) -> None:
+                  # Decrease balance by exactly amount without overdrawing.
+                  pass
+
+      - path: "test_accounts.py"
+        language: "python"
+        content: |
+          import pytest
+          from accounts import BankAccount
+
+
+          def test_valid_construction_sets_owner_and_balance():
+              account = BankAccount("Maya", 25)
+              assert account.owner == "Maya"
+              assert account.balance == 25
+
+
+          def test_construction_requires_valid_invariant_values():
+              with pytest.raises(ValueError):
+                  BankAccount("", 0)
+              with pytest.raises(ValueError):
+                  BankAccount("Maya", -1)
+
+
+          def test_deposit_increases_balance_exactly():
+              account = BankAccount("Maya", 25)
+              account.deposit(10)
+              assert account.balance == 35
+
+
+          def test_withdraw_decreases_balance_exactly():
+              account = BankAccount("Maya", 25)
+              account.withdraw(10)
+              assert account.balance == 15
+
+
+          def test_overdraft_is_rejected():
+              account = BankAccount("Maya", 25)
+              with pytest.raises(ValueError):
+                  account.withdraw(26)
+              assert account.balance == 25
+
+    open_file: "accounts.py"
+    run_file: "test_accounts.py"
+
+    tests:
+      - description: "BankAccount preserves owner and balance invariants through construction, deposit, and withdraw"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout
+          sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_accounts.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old
+          output = buf.getvalue()
+          print(output)
+          assert code == 0, output
+
+          from accounts import BankAccount
+          account = BankAccount("Maya", 5)
+          for bad_amount in [0, -1, True, 1.5]:
+              with pytest.raises(ValueError):
+                  account.deposit(bad_amount)
+              with pytest.raises(ValueError):
+                  account.withdraw(bad_amount)
+          assert account.balance == 5
+        hints:
+          - title: "Validate constructor arguments"
+            text: "Use `require` in `__init__` for caller-supplied owner and starting balance, then call `_check_invariant()` after assigning fields."
+          - title: "Record the old balance"
+            text: "For `deposit` and `withdraw`, save `old_balance` before mutation so an `ensure` check can compare the exact change."
+          - title: "Check after every public mutation"
+            text: "After updating `balance`, call `_check_invariant()` and then use `ensure` to check the exact postcondition."
+
+    solution:
+      files:
+        - path: "accounts.py"
+          language: "python"
+          content: |
+            def require(condition: bool, message: str) -> None:
+                if not condition:
+                    raise ValueError(message)
+
+
+            def ensure(condition: bool, message: str) -> None:
+                if not condition:
+                    raise AssertionError(message)
+
+
+            def _is_positive_int(value: object) -> bool:
+                return isinstance(value, int) and not isinstance(value, bool) and value > 0
+
+
+            class BankAccount:
+                def __init__(self, owner: str, balance: int = 0) -> None:
+                    require(isinstance(owner, str) and owner.strip() != "", "owner must be a non-empty string")
+                    require(isinstance(balance, int) and not isinstance(balance, bool), "balance must be an integer")
+                    require(balance >= 0, "balance must be non-negative")
+                    self.owner = owner
+                    self.balance = balance
+                    self._check_invariant()
+
+                def _check_invariant(self) -> None:
+                    ensure(isinstance(self.owner, str) and self.owner.strip() != "", "owner invariant failed")
+                    ensure(isinstance(self.balance, int) and not isinstance(self.balance, bool), "balance type invariant failed")
+                    ensure(self.balance >= 0, "balance invariant failed")
+
+                def deposit(self, amount: int) -> None:
+                    require(_is_positive_int(amount), "amount must be a positive integer")
+                    old_balance = self.balance
+                    self.balance += amount
+                    self._check_invariant()
+                    ensure(self.balance == old_balance + amount, "deposit must increase balance exactly")
+
+                def withdraw(self, amount: int) -> None:
+                    require(_is_positive_int(amount), "amount must be a positive integer")
+                    require(amount <= self.balance, "insufficient funds")
+                    old_balance = self.balance
+                    self.balance -= amount
+                    self._check_invariant()
+                    ensure(self.balance == old_balance - amount, "withdraw must decrease balance exactly")
+      explanation: |
+        The constructor uses preconditions for caller-provided values, then `_check_invariant` records the object promise. Each mutating method checks its own preconditions, changes state once, and verifies the invariant plus the exact balance change.
+
+  # Pedagogy: integration practice — coordinate two objects while preserving local invariants and global total.
+  - title: "Multi-Object Contracts"
+    instructions: |
+      ### Why this matters
+
+      Contracts become more useful when an operation coordinates multiple objects. The preconditions say when the operation is allowed; the postconditions say what changed across the whole collaboration.
+
+      ### 🎯 You will learn to
+
+      - Write preconditions that involve more than one object.
+      - Use old-state snapshots for two-object postconditions.
+      - Preserve local invariants and a global total in one operation.
+
+      ### Your task
+
+      Implement:
+
+      ```python
+      def transfer(src: BankAccount, dst: BankAccount, amount: int) -> None:
+          ...
+      ```
+
+      Preconditions:
+
+      - `src` and `dst` are distinct `BankAccount` objects.
+      - `amount` is a positive integer.
+      - `src.balance >= amount`.
+
+      Postconditions:
+
+      - source balance decreases by exactly `amount`
+      - destination balance increases by exactly `amount`
+      - total money across the two accounts is preserved
+      - both account invariants still hold
+
+    files:
+      - path: "accounts.py"
+        language: "python"
+        content: |
+          def require(condition: bool, message: str) -> None:
+              if not condition:
+                  raise ValueError(message)
+
+
+          def ensure(condition: bool, message: str) -> None:
+              if not condition:
+                  raise AssertionError(message)
+
+
+          def _is_positive_int(value: object) -> bool:
+              return isinstance(value, int) and not isinstance(value, bool) and value > 0
+
+
+          class BankAccount:
+              def __init__(self, owner: str, balance: int = 0) -> None:
+                  require(isinstance(owner, str) and owner.strip() != "", "owner must be a non-empty string")
+                  require(isinstance(balance, int) and not isinstance(balance, bool), "balance must be an integer")
+                  require(balance >= 0, "balance must be non-negative")
+                  self.owner = owner
+                  self.balance = balance
+                  self._check_invariant()
+
+              def _check_invariant(self) -> None:
+                  ensure(isinstance(self.owner, str) and self.owner.strip() != "", "owner invariant failed")
+                  ensure(isinstance(self.balance, int) and not isinstance(self.balance, bool), "balance type invariant failed")
+                  ensure(self.balance >= 0, "balance invariant failed")
+
+              def deposit(self, amount: int) -> None:
+                  require(_is_positive_int(amount), "amount must be a positive integer")
+                  old_balance = self.balance
+                  self.balance += amount
+                  self._check_invariant()
+                  ensure(self.balance == old_balance + amount, "deposit must increase balance exactly")
+
+              def withdraw(self, amount: int) -> None:
+                  require(_is_positive_int(amount), "amount must be a positive integer")
+                  require(amount <= self.balance, "insufficient funds")
+                  old_balance = self.balance
+                  self.balance -= amount
+                  self._check_invariant()
+                  ensure(self.balance == old_balance - amount, "withdraw must decrease balance exactly")
+
+
+          def transfer(src: BankAccount, dst: BankAccount, amount: int) -> None:
+              """Move amount from src to dst."""
+              # Add preconditions, old-state snapshots, the transfer, and postconditions.
+              pass
+
+      - path: "test_transfer.py"
+        language: "python"
+        content: |
+          import pytest
+          from accounts import BankAccount, transfer
+
+
+          def test_valid_transfer_moves_money_exactly():
+              src = BankAccount("Maya", 100)
+              dst = BankAccount("Noor", 25)
+              transfer(src, dst, 40)
+              assert src.balance == 60
+              assert dst.balance == 65
+
+
+          def test_transfer_preserves_total_money():
+              src = BankAccount("Maya", 100)
+              dst = BankAccount("Noor", 25)
+              before = src.balance + dst.balance
+              transfer(src, dst, 40)
+              assert src.balance + dst.balance == before
+
+
+          def test_self_transfer_is_rejected():
+              src = BankAccount("Maya", 100)
+              with pytest.raises(ValueError):
+                  transfer(src, src, 10)
+              assert src.balance == 100
+
+
+          def test_overspend_is_rejected_without_mutation():
+              src = BankAccount("Maya", 30)
+              dst = BankAccount("Noor", 25)
+              with pytest.raises(ValueError):
+                  transfer(src, dst, 40)
+              assert src.balance == 30
+              assert dst.balance == 25
+
+    open_file: "accounts.py"
+    run_file: "test_transfer.py"
+
+    tests:
+      - description: "transfer enforces multi-object preconditions and preserves balances and invariants"
+        command: |
+          import pytest, io, sys
+          old = sys.stdout
+          sys.stdout = buf = io.StringIO()
+          code = pytest.main(['/tutorial/test_transfer.py', '-v', '--tb=short', '--no-header'])
+          sys.stdout = old
+          output = buf.getvalue()
+          print(output)
+          assert code == 0, output
+
+          from accounts import BankAccount, transfer
+          src = BankAccount("Ari", 50)
+          dst = BankAccount("Sam", 10)
+          for bad_amount in [0, -5, True, 2.5]:
+              with pytest.raises(ValueError):
+                  transfer(src, dst, bad_amount)
+          assert (src.balance, dst.balance) == (50, 10)
+        hints:
+          - title: "Check identity and amount first"
+            text: "Use `src is not dst` for distinct accounts, and reuse the positive-integer rule from the account methods."
+          - title: "Snapshot both balances"
+            text: "Before calling `withdraw` or `deposit`, save `old_src_balance`, `old_dst_balance`, and their sum."
+          - title: "Assert all three postconditions"
+            text: "After the operation, use `ensure` for source debit, destination credit, and total preservation. Then call both `_check_invariant()` methods."
+
+    solution:
+      files:
+        - path: "accounts.py"
+          language: "python"
+          content: |
+            def require(condition: bool, message: str) -> None:
+                if not condition:
+                    raise ValueError(message)
+
+
+            def ensure(condition: bool, message: str) -> None:
+                if not condition:
+                    raise AssertionError(message)
+
+
+            def _is_positive_int(value: object) -> bool:
+                return isinstance(value, int) and not isinstance(value, bool) and value > 0
+
+
+            class BankAccount:
+                def __init__(self, owner: str, balance: int = 0) -> None:
+                    require(isinstance(owner, str) and owner.strip() != "", "owner must be a non-empty string")
+                    require(isinstance(balance, int) and not isinstance(balance, bool), "balance must be an integer")
+                    require(balance >= 0, "balance must be non-negative")
+                    self.owner = owner
+                    self.balance = balance
+                    self._check_invariant()
+
+                def _check_invariant(self) -> None:
+                    ensure(isinstance(self.owner, str) and self.owner.strip() != "", "owner invariant failed")
+                    ensure(isinstance(self.balance, int) and not isinstance(self.balance, bool), "balance type invariant failed")
+                    ensure(self.balance >= 0, "balance invariant failed")
+
+                def deposit(self, amount: int) -> None:
+                    require(_is_positive_int(amount), "amount must be a positive integer")
+                    old_balance = self.balance
+                    self.balance += amount
+                    self._check_invariant()
+                    ensure(self.balance == old_balance + amount, "deposit must increase balance exactly")
+
+                def withdraw(self, amount: int) -> None:
+                    require(_is_positive_int(amount), "amount must be a positive integer")
+                    require(amount <= self.balance, "insufficient funds")
+                    old_balance = self.balance
+                    self.balance -= amount
+                    self._check_invariant()
+                    ensure(self.balance == old_balance - amount, "withdraw must decrease balance exactly")
+
+
+            def transfer(src: BankAccount, dst: BankAccount, amount: int) -> None:
+                """Move amount from src to dst."""
+                require(isinstance(src, BankAccount), "src must be a BankAccount")
+                require(isinstance(dst, BankAccount), "dst must be a BankAccount")
+                require(src is not dst, "source and destination must be distinct accounts")
+                require(_is_positive_int(amount), "amount must be a positive integer")
+                require(src.balance >= amount, "source has insufficient funds")
+
+                old_src_balance = src.balance
+                old_dst_balance = dst.balance
+                old_total = old_src_balance + old_dst_balance
+
+                src.withdraw(amount)
+                dst.deposit(amount)
+
+                src._check_invariant()
+                dst._check_invariant()
+                ensure(src.balance == old_src_balance - amount, "source must be debited exactly once")
+                ensure(dst.balance == old_dst_balance + amount, "destination must be credited exactly once")
+                ensure(src.balance + dst.balance == old_total, "total money must be preserved")
+      explanation: |
+        The transfer contract coordinates two local objects and one global property. Preconditions reject invalid operations before mutation; postconditions verify the exact debit, exact credit, and preserved total.
+
+  # Pedagogy: conceptual transfer — evaluate contract strength and substitution without new syntax.
+  - title: "Contract Strength and Substitution"
+    instructions: |
+      ### Why this matters
+
+      Contracts matter most when code is reused through an interface or subclass. A replacement must be usable anywhere the original was expected, which means it cannot demand more from callers or promise less to them.
+
+      ### 🎯 You will learn to
+
+      - Compare preconditions as weaker or stronger.
+      - Compare postconditions as weaker or stronger.
+      - Evaluate whether an override-style contract change preserves substitutability.
+
+      ### The rule
+
+      A subtype or replacement may:
+
+      - weaken preconditions, accepting everything the original accepted and maybe more
+      - strengthen postconditions, guaranteeing everything the original guaranteed and maybe more
+
+      It may not:
+
+      - strengthen preconditions, because old callers may now be rejected
+      - weaken postconditions, because old callers may no longer get what they relied on
+
+      Read `contract_strength.py`, then answer the knowledge check.
+
+    files:
+      - path: "contract_strength.py"
+        language: "python"
+        content: |
+          """Reference notes for the contract-strength quiz.
+
+          Base contract for withdraw(amount):
+            Preconditions:
+              - amount is a positive integer
+              - amount <= balance
+            Postconditions:
+              - balance decreases by exactly amount
+              - balance remains non-negative
+
+          Legal replacements may accept MORE calls than the base contract.
+          Legal replacements may promise MORE facts than the base contract.
+
+          Illegal replacements reject calls the base accepted, or return a weaker result
+          than callers of the base contract were promised.
+          """
+
+    open_file: "contract_strength.py"
+    run_file: "contract_strength.py"
+
+    quiz:
+      title: "Step 6 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: |
+            A base `withdraw(amount)` accepts any positive integer amount up to the current balance. A replacement accepts only amounts of at least 100. What changed?
+          options:
+            - "The precondition became stronger, so the replacement is not safely substitutable."
+            - "The precondition became weaker, so the replacement is safely substitutable."
+            - "The postcondition became stronger, so the replacement is safely substitutable."
+            - "The postcondition became weaker, so the replacement is not safely substitutable."
+          correct_index: 0
+          option_feedback:
+            1: "Accepting fewer calls is a stronger precondition. Old callers that withdrew 20 could now fail."
+            2: "The scenario changes what calls are accepted, not what is promised after a successful call."
+            3: "The scenario is about the allowed inputs. Postconditions describe results after the call succeeds."
+          explanation: "A replacement cannot demand more from callers than the base contract demanded. Strengthening preconditions breaks substitutability."
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            A base `withdraw(amount)` returns a receipt with `amount` and `new_balance`. A replacement returns those fields plus a stable `receipt_id`. What changed?
+          options:
+            - "The postcondition became stronger, so the replacement can be substitutable."
+            - "The postcondition became weaker, so the replacement cannot be substitutable."
+            - "The precondition became stronger, so callers lose valid calls."
+            - "The precondition became weaker, so callers gain valid calls."
+          correct_index: 0
+          option_feedback:
+            1: "The original promised fields are still present. Adding a guaranteed field gives callers more, not less."
+            2: "The accepted inputs did not change in this scenario."
+            3: "The accepted inputs did not change. The scenario describes the returned receipt."
+          explanation: "Guaranteeing the base receipt fields plus a stable ID strengthens the postcondition, as long as all original guarantees remain true."
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            A base `transfer(src, dst, amount)` rejects self-transfer. A replacement allows self-transfer as a no-op while preserving total money. What happened to the precondition?
+          options:
+            - "It became weaker: the accepted-call set got larger."
+            - "It became stronger because self-transfer is a special case."
+            - "It became weaker because the replacement promises less after returning."
+            - "It became stronger because total money is preserved."
+          correct_index: 0
+          option_feedback:
+            1: "Special cases can still weaken a precondition when they expand the set of accepted inputs."
+            2: "Accepting self-transfer changes what calls are allowed. It does not by itself reduce postcondition guarantees."
+            3: "Total preservation is a postcondition, not a precondition."
+          explanation: "A weaker precondition accepts everything the base accepted and possibly more. Allowing self-transfer expands the accepted set."
+
+        - type: single
+          difficulty: intermediate
+          question: |
+            A caller satisfies every precondition of `transfer`, but after the call the source balance decreases twice. Who violated the contract?
+          options:
+            - "The supplier implementation: a postcondition failed."
+            - "The caller, because transfer is a risky operation."
+            - "Both sides, because two accounts were involved."
+            - "Neither side, because total money might still be preserved."
+          correct_index: 0
+          option_feedback:
+            1: "Risk is not a contract category. If the caller met the preconditions, the supplier owns the promised result."
+            2: "Multiple objects do not change the blame rule. Check which part of the contract failed."
+            3: "Total preservation is not enough. The exact source debit is also part of the postcondition."
+          explanation: "Valid preconditions shift responsibility to the supplier. A double debit violates the postcondition that source is debited exactly once."

@@ -1366,9 +1366,9 @@
             '<span class="tvm-editor-pane-label-text">Code</span>' +
             '<button class="tvm-editor-pane-popout-btn" data-pane="left" data-original-title="Open this pane in separate window">⧉<span class="sr-only">Open code pane in separate window</span></button>' +
           '</div>' +
-          '<div class="tvm-editor-tabs"></div>' +
+          '<div class="tvm-editor-tabs" role="group" aria-label="Code file tabs"></div>' +
           '</div>'
-        : '<div class="tvm-editor-tabs"></div>') +
+        : '<div class="tvm-editor-tabs" role="group" aria-label="File tabs"></div>') +
       '<div class="tvm-editor-container"></div>' +
       '</div>' +
       (this.editorSplitSupported
@@ -1379,7 +1379,7 @@
             '<span class="tvm-editor-pane-label-text">Tests</span>' +
             '<button class="tvm-editor-pane-popout-btn" data-pane="right" data-original-title="Open this pane in separate window">⧉<span class="sr-only">Open tests pane in separate window</span></button>' +
           '</div>' +
-          '<div class="tvm-editor-tabs tvm-editor-tabs-right"></div>' +
+          '<div class="tvm-editor-tabs tvm-editor-tabs-right" role="group" aria-label="Test file tabs"></div>' +
           '</div>' +
           '<div class="tvm-editor-container tvm-editor-container-right"></div>' +
           '</div>'
@@ -5902,6 +5902,17 @@
         self.editorTabsEl.appendChild(makeTab(filename, filename === self.activeFileName));
       }
     });
+
+    function labelTabGroup(el, fallbackLabel) {
+      if (!el) return;
+      var labels = Array.prototype.slice.call(el.querySelectorAll('.tvm-tab-label'))
+        .map(function (btn) { return btn.textContent.trim(); })
+        .filter(Boolean);
+      el.setAttribute('aria-label', labels.length ? fallbackLabel + ': ' + labels.join(', ') : fallbackLabel);
+    }
+
+    labelTabGroup(this.editorTabsEl, splitMode ? 'Code file tabs' : 'File tabs');
+    labelTabGroup(this.editorTabsElRight, 'Test file tabs');
 
     // Update editor-panel CSS classes for pane-detached state and surface a
     // "(detached) ↩" indicator inside the pane label so the user can click to

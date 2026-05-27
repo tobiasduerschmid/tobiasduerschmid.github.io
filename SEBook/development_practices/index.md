@@ -23,6 +23,10 @@ Use the master deck when you want a mixed review of code-reading, debugging, rev
 
 [Debugging](/SEBook/development_practices/debugging.html) covers reproducing a fault, localizing the root cause, using debuggers and assertions, verifying the fix, and preserving the regression test. The [Python Debugging Tutorial](/SEBook/tools/python-debugging) gives hands-on practice with breakpoints and time-travel debugging.
 
+# Defensive Programming and Design by Contract
+
+[Defensive Programming in Python](/SEBook/development_practices/defensive-programming-tutorial) teaches boundary validation, precise exceptions, invariant preservation, and failure reporting. [Design by Contract in Python](/SEBook/development_practices/design-by-contract-tutorial) follows it with caller/callee responsibility, preconditions, postconditions, old-state reasoning, invariants, and contract strength.
+
 # Generative AI
 
 [Generative AI in Software Engineering](/SEBook/development_practices/genAI.html) explains how AI coding tools change productivity, verification, skill formation, supervision, and team workflows without replacing engineering judgment.
