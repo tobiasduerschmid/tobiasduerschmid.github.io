@@ -3,12 +3,15 @@ description: >-
   Part 1 of a two-part code comprehension tutorial for students who have
   completed the Python, React, and Node.js essentials tutorials. Practice
   deciding where to focus attention, reading faster with beacons, and verifying
-  only the code that matters in a roughly one-hour session.
+  only the code that matters in a roughly one-hour session. Later quizzes
+  interleave material from earlier steps — don't be surprised if a question
+  in Step 6 asks about something you first met in Step 3.
 
 learning_objectives:
   - "Generate a purpose hypothesis from names, tests, public entry points, and surrounding context before tracing implementation details."
   - "Select the highest-value code region to inspect when a comprehension question has a specific target."
   - "Classify lexical, structural, framework, and test-based beacons in Python and React code."
+  - "Recognize when a familiar code pattern has a subtle modification, and recover from a wrong prediction with a targeted trace."
   - "Use variable roles to recognize common programming plans before tracing every assignment."
   - "Explain unfamiliar code with purpose, mechanism, evidence, and limits rather than long line-by-line narration."
   - "Summarize unfamiliar code at macro, function, and block levels without narrating every line."
@@ -60,19 +63,6 @@ steps:
       | A test contradicts your first hypothesis | Revise the hypothesis before reading more |
       | Syntax is unfamiliar | Understand that small expression first, then return to the purpose |
 
-      ### Explain in Plain English
-
-      A strong answer is not the longest answer. Use this short EiPE-style frame:
-
-      | Part | What to say |
-      |---|---|
-      | Purpose | What the code is for |
-      | Mechanism | The main plan it uses |
-      | Evidence | The names, tests, or branches that prove it |
-      | Limit | What input, edge case, or behavior you have not verified yet |
-
-      Line-by-line narration can be useful while tracing, but it is not the final product. Your final explanation should be relational: how the pieces work together to serve the purpose.
-
       In this step, the Python files show a tiny playlist summarizer. Do **not** start by tracing every expression. Start from the tests and the public function name.
 
       ### Worked Reading Example
@@ -90,16 +80,6 @@ steps:
       | Beacon-hunt | `visible_tracks`, `hidden`, `summarize_playlist` | These names are evidence about responsibility |
       | Descend | Read `visible_tracks()` and where `summarize_playlist()` calls it | That is the shortest path to the answer |
       | Verify | Trace one hidden track through `visible_tracks()` | One path is enough to confirm the hypothesis |
-
-      ### Variable Roles
-
-      Names become stronger beacons when you can say the role each value plays.
-
-      | Variable | Role |
-      |---|---|
-      | `public_tracks` | Filtered collection used by the rest of the summary |
-      | `total_seconds` | Accumulator result used to compute minutes |
-      | `label` | One display string for one visible track |
 
       ### Your Turn
 
@@ -299,18 +279,18 @@ steps:
 
         - type: single
           difficulty: advanced
-          question: "Which explanation best follows the Purpose / Mechanism / Evidence / Limit frame?"
+          question: "Which is the strongest *explanation* of `summarize_playlist()` to share with a teammate?"
           options:
-            - "Purpose: playlist summary. Mechanism: filter, total, label. Evidence: tests. Limit: unusual data unverified."
-            - "`summarize_playlist()` creates a dictionary, calls `visible_tracks()`, totals seconds, and formats labels for the sample output."
-            - "The module has four tracks, one hidden track, and one favorite track."
-            - "The module removes hidden tracks, so no other code needs attention."
+            - "Names the user-visible purpose, the main plan (filter / total / label), the evidence (the tests), and one thing the reader hasn't verified."
+            - "Lists every line of mechanics — `summarize_playlist()` creates a dictionary, calls `visible_tracks()`, totals seconds, formats labels for the sample output."
+            - "Recites the sample data — four tracks, one hidden, one favorite."
+            - "Overgeneralizes — 'removes hidden tracks, so no other code needs attention.'"
           correct_index: 0
           option_feedback:
-            1: "This lists mechanics, but it does not say the purpose, evidence, or a limit on the claim."
-            2: "This summarizes the sample data rather than the behavior of the module."
-            3: "This overgeneralizes. Good comprehension also names what has not been verified yet."
-          explanation: "EiPE explanations combine purpose, mechanism, evidence, and a boundary on the claim, so the reader avoids both line narration and overconfidence."
+            1: "Pure mechanics lists *what* the code does but not *what for*. Readers can read the code themselves — your job in a summary is the layer above."
+            2: "Summarizing the sample data describes a single execution, not the code's behavior."
+            3: "Overclaiming hides what you haven't verified. Future readers can't tell where your knowledge ends."
+          explanation: "Notice the shape of the strong answer: **Purpose** (what for), **Mechanism** (the plan), **Evidence** (what supports the claim), **Limit** (what you didn't verify). That's the **EiPE frame** — you'll see it in every `reading-notes.md` from Step 2 onward. The Limit line is the one beginners skip and experienced reviewers always include."
 
   # =========================================================================
   # STEP 2: Python Reading Sprint
@@ -1163,7 +1143,7 @@ steps:
 
         - type: single
           difficulty: intermediate
-          question: "Spaced retrieval from Step 1 — You opened `App.jsx` and read the components. What is the *next* routine move before you commit to an answer about the completion banner?"
+          question: "You opened `App.jsx` and read the components. What is the *next* routine move before you commit to an answer about the completion banner?"
           options:
             - "Verify — trace one small input through the relevant conditional to confirm or refute the hypothesis."
             - "Refactor — clean up the JSX so the banner condition becomes more readable."
@@ -1177,7 +1157,217 @@ steps:
           explanation: "The routine: Orient → Predict → Beacon-hunt → Descend selectively → **Verify** → Summarize. Verify follows beacon-hunting; the goal is one focused trace through the branch your hypothesis depends on, not a rewrite."
 
   # =========================================================================
-  # STEP 5: Variable Roles and Plans
+  # STEP 5: Hypothesis Repair
+  # =========================================================================
+  # Pedagogy: productive failure (Kapur 2008) + generation effect. The student
+  # is required to commit to a prediction *before* reading the code body, then
+  # the quiz forces them to discover that the familiar surface (max-tracking)
+  # hides a subtle deviation (>= instead of >, so ties go to last-wins). The
+  # recovery move — slow down on one chosen input, find the specific operator
+  # that breaks the hypothesis — is exactly the integrated meta-model's
+  # bottom-up *repair* step. This is the engineered "your hypothesis is wrong"
+  # moment that earlier steps cannot create because they pre-warn the trap.
+  - title: "Hypothesis Repair — When the Familiar Plan Isn't Quite Right"
+    backend: pyodide
+    instructions: |
+      ### Why this matters
+
+      Fast pattern recognition has a failure mode. The moment you see `for X in collection: if condition: best = X`, your brain shouts "max-tracking plan!" and you stop reading the details. Most of the time you're right. But sometimes the surface looks familiar and the substance is subtly different — and rushing past the difference is where wrong answers live.
+
+      This step is engineered for one thing: to make you commit to a prediction, then discover that your prediction was *almost* right. The recovery move — slowing down on one chosen input, finding the specific detail that breaks the obvious hypothesis — is what experienced readers do when their first hypothesis fails. We'll practice it on a real example.
+
+      ### 🎯 You will learn to
+
+      - Notice when a familiar plan has been subtly modified
+      - Recover from a wrong prediction with a targeted trace, not a full re-read
+      - Use one carefully chosen input to expose a gap your hypothesis missed
+
+      ### The Setup
+
+      `top_student.py` contains a function `top_student_per_topic(scores)`. The docstring says:
+
+      > "Returns a mapping of topic → top student for that topic. Input is a list of `(student, topic, score)` tuples."
+
+      In `prediction-notes.md`, **before reading the function body**, write your prediction for this input:
+
+      ```python
+      scores = [
+          ("Ana", "python", 90),
+          ("Ben", "python", 90),   # ← Ana and Ben tie at 90
+          ("Ana", "react", 80),
+      ]
+      ```
+
+      What does `top_student_per_topic(scores)` return? Write a specific dictionary literal in your notes, not a vague description. *Then* take the quiz.
+
+      The point isn't getting the prediction right. The point is *making* a prediction before you read the code — so when you find out whether you were right, the surprise has somewhere to land.
+
+    files:
+      - path: "prediction-notes.md"
+        language: "markdown"
+        content: |
+          # Hypothesis Repair Notes
+
+          ## My prediction (before reading `top_student.py`)
+
+          For the tied-scores input shown in the instructions, I predict the function returns:
+
+          ```
+          ```
+
+          ## The plan I think this is
+
+          ## My recovery (after the quiz forces me to look)
+
+          The specific line / operator that didn't match my prediction:
+
+          The actual behavior is:
+
+          ## One-line lesson for next time
+
+      - path: "top_student.py"
+        language: "python"
+        content: |
+          def top_student_per_topic(scores):
+              """Return a mapping of topic → top student for that topic.
+
+              Input: list of (student, topic, score) tuples.
+              """
+              leaders = {}
+              for student, topic, score in scores:
+                  if topic not in leaders or score >= leaders[topic][1]:
+                      leaders[topic] = (student, score)
+              return {topic: name for topic, (name, _) in leaders.items()}
+
+      - path: "test_top_student.py"
+        language: "python"
+        content: |
+          from top_student import top_student_per_topic
+
+
+          def test_single_topic_clear_winner() -> None:
+              scores = [("Ana", "python", 90), ("Ben", "python", 70)]
+              assert top_student_per_topic(scores) == {"python": "Ana"}
+
+
+          def test_multiple_topics_no_ties() -> None:
+              scores = [
+                  ("Ana", "python", 90),
+                  ("Ben", "react", 85),
+                  ("Cam", "node", 75),
+              ]
+              assert top_student_per_topic(scores) == {
+                  "python": "Ana",
+                  "react": "Ben",
+                  "node": "Cam",
+              }
+
+
+          def test_ties_resolved_by_appearance_order() -> None:
+              scores = [
+                  ("Ana", "python", 90),
+                  ("Ben", "python", 90),
+                  ("Ana", "react", 80),
+              ]
+              # Which of Ana or Ben survives the tie?
+              result = top_student_per_topic(scores)
+              assert "python" in result
+              assert result["python"] in ("Ana", "Ben")
+
+
+          if __name__ == "__main__":
+              test_single_topic_clear_winner()
+              test_multiple_topics_no_ties()
+              test_ties_resolved_by_appearance_order()
+              print("all tests passed")
+
+    open_file: "prediction-notes.md"
+    run_file: "test_top_student.py"
+
+    quiz:
+      title: "Step 5 — Hypothesis Repair"
+      min_score: 0.8
+      shuffle: true
+      shuffle_questions: false
+      questions:
+        - type: single
+          difficulty: basic
+          question: "For the tied-scores input — `[('Ana','python',90), ('Ben','python',90), ('Ana','react',80)]` — what does `top_student_per_topic(scores)` return?"
+          options:
+            - "`{'python': 'Ben', 'react': 'Ana'}` — Ben wins the tie because the conditional uses `>=`, so the second 90 replaces the first."
+            - "`{'python': 'Ana', 'react': 'Ana'}` — Ana wins because she appears first, and max-tracking plans use first-wins on ties."
+            - "`{'python': ['Ana', 'Ben'], 'react': 'Ana'}` — both Ana and Ben are returned because they tied."
+            - "`{'python': 'Ana, Ben', 'react': 'Ana'}` — names combined into a single string."
+          correct_index: 0
+          option_feedback:
+            1: "This is the *standard* max-tracking plan, but the function uses `>=`, not `>`. Ties replace the current leader instead of preserving it."
+            2: "The function returns `dict[str, str]`, not `dict[str, list[str]]`. The line `leaders[topic] = (student, score)` only holds one student at a time."
+            3: "Nothing in the code concatenates names."
+          explanation: "The familiar surface said 'max-tracking,' so most readers commit to first-wins. The one detail that breaks the hypothesis is the operator: `score >= leaders[topic][1]` means a tying score *replaces* the current leader, so the LAST student with the maximum wins, not the first. This is exactly the moment to slow down and trace one tie carefully."
+
+        - type: single
+          difficulty: intermediate
+          question: "Which specific expression makes Ben win the tie over Ana?"
+          options:
+            - "`if topic not in leaders or score >= leaders[topic][1]:` — the `>=` (not `>`) allows the second occurrence with the same score to overwrite the first."
+            - "`leaders[topic] = (student, score)` — assignment alone causes replacement."
+            - "`return {topic: name for topic, (name, _) in leaders.items()}` — the dict comprehension shuffles the order."
+            - "`for student, topic, score in scores:` — unpacking changes who appears first."
+          correct_index: 0
+          option_feedback:
+            1: "Assignment causes replacement, but only if the *guard* allows it. The guard is the operator."
+            2: "Dict comprehensions preserve insertion order in modern Python; they don't shuffle."
+            3: "Tuple unpacking is mechanical. It doesn't reorder."
+          explanation: "When Ana's row runs, `'python' not in leaders` is True and Ana is installed. When Ben's row runs, `'python' in leaders` is True, so the second clause must decide — and `90 >= 90` is True. Ben overwrites Ana. Changing `>=` to `>` would preserve Ana."
+
+        - type: single
+          difficulty: intermediate
+          question: "What was the *recovery move* that exposed the gap between the familiar plan and this implementation?"
+          options:
+            - "Trace one carefully chosen input (a tie) through the conditional, paying attention to operators."
+            - "Re-read the entire function from the top down, three times."
+            - "Run the test suite and inspect every passing test."
+            - "Search the codebase for other uses of `top_student_per_topic`."
+          correct_index: 0
+          option_feedback:
+            1: "Re-reading without a specific question won't reveal the operator distinction. The point is *targeted* attention."
+            2: "The included tests don't pin down tie behavior (one asserts only that 'python' maps to Ana *or* Ben). Running them won't tell you what happens with ties."
+            3: "External usages don't explain internal semantics."
+          explanation: "When a hypothesis fails, the recovery isn't 'read everything again.' It's 'choose the input that should expose the difference between the hypothesized behavior and the actual behavior, and trace exactly that one input through the conditional.' This is the bottom-up *repair* move from the integrated meta-model."
+
+        - type: multiple
+          difficulty: advanced
+          question: "Which observations about the existing tests are accurate?"
+          options:
+            - "`test_ties_resolved_by_appearance_order()` is named for a specific tie semantics but asserts only that the result is one of `Ana` *or* `Ben` — leaving the tie behavior unpinned."
+            - "The two non-tie tests would still pass even if the operator were changed from `>=` to `>`."
+            - "Running the tests would tell you definitively whether ties resolve to first-wins or last-wins."
+            - "The test suite covers the tie boundary case tightly."
+          correct_indices: [0, 1]
+          option_feedback:
+            0: "Yes — the test *name* says 'appearance order' but the assertion only checks that the key exists with one of two values. The test is underspecified."
+            1: "Yes — the no-tie tests don't exercise the `>=`/`>` distinction at all."
+            2: "Running them gives only one outcome; you can't compare against the alternative without changing the code."
+            3: "The name suggests tightness, but the assertion is loose. The test passes for both `>=` and `>`."
+          explanation: "A useful secondary lesson: tests can *appear* to pin a behavior while actually leaving it under-specified. The name `test_ties_resolved_by_appearance_order` is itself a specification beacon — but the assertion doesn't honor the name. A reviewer who skims test *names* without reading their *assertions* gets the wrong picture."
+
+        - type: single
+          difficulty: advanced
+          question: "Which single-character change to the function would make the standard 'max-tracking first-wins' plan true?"
+          options:
+            - "Change `>=` to `>` in the conditional."
+            - "Change `(student, score)` to `(score, student)` in the tuple."
+            - "Change `not in` to `in` in the guard."
+            - "Change `.items()` to `.keys()` in the comprehension."
+          correct_index: 0
+          option_feedback:
+            1: "Tuple order would change *how* tuples compare — but the code compares `leaders[topic][1]` (the score), not the full tuple. Reordering does nothing here."
+            2: "Inverting the guard would assign only when the topic is already present — breaking the function entirely on first occurrence."
+            3: "Switching to `.keys()` would break the unpacking inside the comprehension."
+          explanation: "The operator is the single point of difference between this code and the standard first-wins max-tracking plan. The brain's pattern-matching said 'this is max-tracking'; the code's behavior said 'this is last-wins max-tracking.' One character separates the two interpretations. That gap is exactly the kind of detail false-beacon discipline applies to plans, not just to names."
+
+  # =========================================================================
+  # STEP 6: Variable Roles and Plans
   # =========================================================================
   # Pedagogy: worked example with fading — variable roles bridge tracing to plan recognition
   - title: "Variable Roles and Plans"
@@ -1297,7 +1487,7 @@ steps:
     run_file: "badge_recommender.py"
 
     quiz:
-      title: "Step 5 — Knowledge Check"
+      title: "Step 6 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       shuffle_questions: false
@@ -1380,7 +1570,7 @@ steps:
 
         - type: single
           difficulty: intermediate
-          question: "Spaced retrieval from Step 3 — The expression `topic_minutes[topic] = topic_minutes.get(topic, 0) + entry[\"minutes\"]` is mainly which kind of beacon?"
+          question: "The expression `topic_minutes[topic] = topic_minutes.get(topic, 0) + entry[\"minutes\"]` is mainly which kind of beacon?"
           options:
             - "Structural — a recognizable accumulator/aggregator shape that triggers a stored programming plan."
             - "Framework — a React- or Node-specific API call."
@@ -1394,7 +1584,7 @@ steps:
           explanation: "Beacon classes (Step 3): lexical (names), structural (code shapes), framework (library/API), specification (tests). The `dict.get(key, default) + value` pattern is the textbook *aggregation plan* — a structural beacon."
 
   # =========================================================================
-  # STEP 6: Python Plan Transfer Sprint
+  # STEP 7: Python Plan Transfer Sprint
   # =========================================================================
   # Pedagogy: timed transfer practice — interleaved plan recognition with targeted tracing
   - title: "Python Plan Transfer Sprint"
@@ -1532,7 +1722,7 @@ steps:
     run_file: "habit_report.py"
 
     quiz:
-      title: "Step 6 — Knowledge Check"
+      title: "Step 7 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       shuffle_questions: false
@@ -1615,7 +1805,7 @@ steps:
 
         - type: single
           difficulty: intermediate
-          question: "Spaced retrieval from Step 5 — In `longest_streak()`, what role does `previous_day` play?"
+          question: "In `longest_streak()`, what role does `previous_day` play?"
           options:
             - "Most-recent holder — it remembers the last value seen so the next iteration can compare to it."
             - "Accumulator — it sums the total streak length across the loop."
@@ -1629,7 +1819,7 @@ steps:
           explanation: "Variable roles (Step 5) compress code into plans. `previous_day` is a *most-recent holder*: keep the last value so you can ask 'is this consecutive?' on the next iteration. Recognizing the role makes the streak plan obvious without tracing every increment."
 
   # =========================================================================
-  # STEP 7: Campus Feed Sprint
+  # STEP 8: Campus Feed Sprint
   # =========================================================================
   # Pedagogy: desirable difficulty — plausible false beacon, then hypothesis testing
   - title: "Campus Feed Sprint"
@@ -1790,7 +1980,7 @@ steps:
     run_file: "campus_feed.py"
 
     quiz:
-      title: "Step 7 — Knowledge Check"
+      title: "Step 8 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       shuffle_questions: false
@@ -1860,7 +2050,7 @@ steps:
 
         - type: single
           difficulty: intermediate
-          question: "Spaced retrieval from Step 1 — Your final explanation should follow the EiPE frame. What does the trailing **L** stand for?"
+          question: "Your final explanation should follow the EiPE frame. What does the trailing **L** stand for?"
           options:
             - "Limit — what you have *not* verified yet (input ranges, edge cases, related branches)."
             - "Loop — the iteration shape used by the function."
@@ -1874,7 +2064,7 @@ steps:
           explanation: "EiPE = Purpose / Mechanism / Evidence / **Limit**. The Limit line is what separates honest comprehension from overclaiming. After a false-beacon trace especially, naming what you did not verify keeps the next reader honest."
 
   # =========================================================================
-  # STEP 8: Reading Boss
+  # STEP 9: Reading Boss
   # =========================================================================
   # Pedagogy: capstone at scale — code too big to read exhaustively in the
   # time given, which forces the full Orient → Predict → Beacon-hunt →
@@ -1884,14 +2074,14 @@ steps:
   # roles, EiPE frame, and false-beacon discipline.
   - title: "Reading Boss: Library Lending Audit"
     backend: pyodide
-    max-time: 7
+    max-time: 10
     lockout-time: 5
     instructions: |
       ### Why this matters
 
       Every earlier step was a **warm-up**. The files were small enough that you could have read top-to-bottom in 90 seconds and still answered the quiz. The routine was useful but not *necessary*.
 
-      This step is different on purpose. The codebase is around **300 lines across 10 files**. **You cannot read it all carefully in 7 minutes.** The routine you have been practicing is what makes the answer reachable.
+      This step is different on purpose. The codebase is around **300 lines across 10 files**. **You cannot read it all carefully in 10 minutes.** The routine you have been practicing is what makes the answer reachable.
 
       This is the situation top-down reading exists for: not because tracing is bad, but because some codebases exceed what a careful linear read can fit. When that happens, hypothesis-driven reading, targeted tracing, and strategic skipping are the only honest strategies.
 
@@ -1924,18 +2114,13 @@ steps:
 
       Only the third strategy fits the time box. That is exactly the point of the boss.
 
-      ### Suggested Path
+      ### Constraints
 
-      1. **Orient:** open `test_lending.py` first. The tests describe the intended behavior.
-      2. **Predict:** before reading any other file, write down where you *expect* the fine check to live (which file? which helper name?).
-      3. **Beacon-hunt:** use file names as architectural beacons. Which file *should* own policy? Which file *only calculates* fines but does not enforce them?
-      4. **Descend selectively:** read only the files you predicted, plus any one helper they import.
-      5. **Verify:** trace Maya through one branch of the eligibility helper.
-      6. **Summarize:** explain the bug with the EiPE frame.
+      - Read at most **3 files** carefully.
+      - Verify any beacon you decide to trust by checking imports or call sites.
+      - Write your EiPE summary in `reading-notes.md` before the timer runs out.
 
-      Use `reading-notes.md` to record your reading path, your hypothesis, and which files you deliberately skipped. Let's see how far you can make it.
-
-      One trap worth naming: a file with "fine" in its name is **not** the same as the file that decides whether fines block borrowing. One *calculates*; the other *enforces*. The handbook is about enforcement.
+      The routine is yours to choose. Let's see how far you can make it.
 
     files:
       - path: "reading-notes.md"
@@ -2099,7 +2284,7 @@ steps:
           from models import Patron
 
 
-          MAX_FINE_BEFORE_BLOCK = 20.0  # NOTE: handbook says $10 — code disagrees
+          MAX_FINE_BEFORE_BLOCK = 20.0
           MAX_ACTIVE_LOANS = {"student": 3, "faculty": 8, "alumni": 2}
 
 
@@ -2251,25 +2436,25 @@ steps:
     run_file: "test_lending.py"
 
     quiz:
-      title: "Step 8 — Reading Boss Audit"
+      title: "Step 9 — Reading Boss Audit"
       min_score: 0.8
       shuffle: true
       shuffle_questions: false
       questions:
         - type: single
           difficulty: basic
-          question: "What is the smallest correct reading path for this incident, given a 7-minute budget?"
+          question: "Given the time budget, which reading **strategy** best fits this incident?"
           options:
-            - "Read `test_lending.py`, then `policy_service.py`, then check Maya's record in `patrons_data.py`."
-            - "Read every file from `models.py` to `test_lending.py` in alphabetical order."
-            - "Read only `fines_service.py` because the bug report mentions fines."
-            - "Read every helper in `lending_service.py` line by line before looking at policy."
+            - "Tests-first selective descent: start from the spec layer, follow the contract clue to the helper it implicates, verify with one targeted branch trace."
+            - "Alphabetical file traversal until something looks relevant."
+            - "Keyword chase: read the file whose name matches the bug report's main noun and stop there."
+            - "Bottom-up orchestrator trace: read every helper in the lending workflow line by line before forming any hypothesis."
           correct_index: 0
           option_feedback:
-            1: "Alphabetical reading burns the time budget on incidental files like `reports_service.py` and `audit_service.py`."
-            2: "`fines_service.py` calculates fines but does not enforce borrowing policy. It is the realistic false beacon for this question."
-            3: "The lending service orchestrates; the policy decision is delegated to `policy_service.py`. Reading every line of the orchestrator is bottom-up under time pressure."
-          explanation: "The routine for code that exceeds your reading budget: tests for the spec, the policy file for the decision, the data file to verify the specific patron. Three files instead of ten."
+            1: "Alphabetical reading burns the time budget on whichever files happen to come first, regardless of relevance."
+            2: "Keyword chase is the classic false-beacon trap. A name match is a *hypothesis*, not evidence."
+            3: "Linear bottom-up tracing is exactly the strategy the routine was designed to avoid when time is short."
+          explanation: "The routine for code that exceeds your reading budget: contract from the tests → the helper the contract implicates → one branch to confirm. Three artifacts instead of ten."
 
         - type: single
           difficulty: intermediate
@@ -2323,7 +2508,7 @@ steps:
 
         - type: single
           difficulty: advanced
-          question: "Spaced retrieval — In `lending_service.lend_book()`, what role does the local `decision` variable play?"
+          question: "In `lending_service.lend_book()`, what role does the local `decision` variable play?"
           options:
             - "Holder / candidate: it stores the policy result so the caller can branch on it."
             - "Accumulator: it sums permission scores across multiple policy checks."

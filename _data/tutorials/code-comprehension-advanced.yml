@@ -3,6 +3,8 @@ description: >-
   Part 2 of the code comprehension tutorial. Return a few days after Part 1,
   then practice testing hypotheses with Node.js behavior tests and mapping
   interactions across React and backend files in a roughly one-hour session.
+  Later quizzes interleave material from Part 1 and earlier Part 2 steps —
+  don't be surprised if a Part 2 question asks about Part 1 vocabulary.
 
 learning_objectives:
   - "Retrieve the Part 1 reading routine and key beacon vocabulary from memory before re-exposure to the material."
@@ -46,27 +48,16 @@ steps:
       - path: "recall-notes.md"
         language: "markdown"
         content: |
-          # Part 1 Recall (from memory, no peeking)
+          # Part 1 Recall — open writing
 
-          ## The six-step reading routine
-          1.
-          2.
-          3.
-          4.
-          5.
-          6.
+          Take 2–3 minutes. Without looking at your Part 1 notes or scrolling
+          back, write down whatever you remember about how to read unfamiliar
+          code quickly. Routine, vocabulary, traps you noticed, examples that
+          stuck. Sentences, bullet points, sketches — whatever comes out.
 
-          ## The four beacon types I learned
-
-          ## One switch trigger — when do I stop scanning and start tracing?
-
-          ## The EiPE explanation frame stands for
-          - E:
-          - i:
-          - P:
-          - E:
-
-          ## One variable role I can name and a typical beacon that signals it
+          Whatever you can't recall is exactly what the next quiz will probe.
+          The retrieval *attempt* is what builds memory, not the structured
+          checklist. Don't pre-organize.
 
     open_file: "recall-notes.md"
 
@@ -381,7 +372,7 @@ steps:
 
         - type: single
           difficulty: intermediate
-          question: "Spaced retrieval from Part 1 — You read `sessionPlanner.test.js` and have a contract-shaped hypothesis. What is the next routine move *before* reading every line of `sessionPlanner.js`?"
+          question: "You read `sessionPlanner.test.js` and have a contract-shaped hypothesis. What is the next routine move *before* reading every line of `sessionPlanner.js`?"
           options:
             - "Beacon-hunt + descend selectively — find the function names that match the contract and inspect only those."
             - "Trace every line of `sessionPlanner.js` to build a complete program model first."
@@ -661,7 +652,7 @@ steps:
 
         - type: single
           difficulty: intermediate
-          question: "Spaced retrieval from Part 1, Step 5 — In `routes/sessionRoutes.js::listSessions()`, what role does the local `summaries` value play?"
+          question: "In `routes/sessionRoutes.js::listSessions()`, what role does the local `summaries` value play?"
           options:
             - "Gatherer / shaped output — it holds the transformed list ready to be returned in the response."
             - "Stepper — it iterates one session at a time."
@@ -1019,7 +1010,7 @@ steps:
 
         - type: single
           difficulty: advanced
-          question: "Spaced retrieval from Part 1, Step 7 — A reader claims that `lesson.tag.includes(normalizedQuery)` alone is *the* central evidence for what the search box does. What is the false-beacon-aware response?"
+          question: "A reader claims that `lesson.tag.includes(normalizedQuery)` alone is *the* central evidence for what the search box does. What is the false-beacon-aware response?"
           options:
             - "It is *part of* the central evidence, but the filter combines title and tag matching with `||`; trusting one branch over the other is a partial-evidence trap. Verify against the full predicate."
             - "Always trust the first expression you read; subsequent ones are noise."
@@ -1340,7 +1331,7 @@ steps:
 
         - type: single
           difficulty: intermediate
-          question: "Spaced retrieval from earlier in Part 2 — You suspect a coupon bug. Which routine move comes first?"
+          question: "You suspect a coupon bug. Which routine move comes first?"
           options:
             - "Read `__tests__/checkoutRoute.test.js` to learn what the contract says about coupons before reading any discount logic."
             - "Re-write the discount logic from scratch in a new file."
@@ -1757,7 +1748,7 @@ steps:
 
         - type: single
           difficulty: intermediate
-          question: "Spaced retrieval from Part 1, Step 5 — In `App.jsx`, what role does the derived value `pinnedLesson` play?"
+          question: "In `App.jsx`, what role does the derived value `pinnedLesson` play?"
           options:
             - "Holder / candidate — it stores the single lesson currently pinned (or `undefined`) so render code can branch on its presence."
             - "Accumulator — it sums or appends pinned lessons across renders."
@@ -2051,7 +2042,7 @@ steps:
 
         - type: single
           difficulty: advanced
-          question: "Spaced retrieval — When the intended architecture and the actual code disagree, which artifact is the most reliable tiebreaker?"
+          question: "When the intended architecture and the actual code disagree, which artifact is the most reliable tiebreaker?"
           options:
             - "The tests, because they encode the *intended* behavior in executable form."
             - "The most recent commit message, because the most recent change must be correct."
@@ -2334,7 +2325,7 @@ steps:
 
         - type: single
           difficulty: advanced
-          question: "Spaced retrieval — In Part 1's Campus Feed sprint, the `pinned` field looked decisive but turned out irrelevant to *that* question. Which verification move generalizes from there to the `betaDashboard` flag here?"
+          question: "In Part 1's Campus Feed sprint, the `pinned` field looked decisive but turned out irrelevant to *that* question. Which verification move generalizes from there to the `betaDashboard` flag here?"
           options:
             - "Check *where* the cue sits in the runtime flow — what file imports it, and which path actually reads it."
             - "Always trust frozen config objects because immutability proves correctness."
@@ -2359,12 +2350,12 @@ steps:
   # top-down reading actually pays off.
   - title: "Cross-Domain Reading Boss: Order Inventory Incident"
     backend: webcontainer
-    max-time: 7
+    max-time: 10
     lockout-time: 5
     instructions: |
       ### Why this matters
 
-      Every earlier step in Part 2 was sized so that a careful linear read could still finish in time. This step is different on purpose. The codebase is around **330 lines across 11 files** — a route + four services + two data modules + a decoy route + tests. **You cannot read it all carefully in 7 minutes.**
+      Every earlier step in Part 2 was sized so that a careful linear read could still finish in time. This step is different on purpose. The codebase is around **330 lines across 11 files** — a route + four services + two data modules + a decoy route + tests. **You cannot read it all carefully in 10 minutes.**
 
       This is the moment top-down reading was invented for. Production code is rarely the size of a tutorial snippet. Pull requests at real companies routinely exceed what any human can hold in working memory. Reviewers who try to read everything either burn out or rubber-stamp. The routine is what makes the work survivable *and* the answer correct.
 
@@ -2377,19 +2368,21 @@ steps:
 
       ### The Incident
 
-      A bug report from the warehouse:
+      An alert from the warehouse this morning:
 
-      > **Riley** placed an order for the last Mango Mochi this morning. The API returned `201 Created` and the order shows up in their history. Five minutes later, **Sam** placed an order for the same Mango Mochi. **Sam also got `201 Created`.** When the warehouse pulled the order list this afternoon, both orders were marked for fulfillment — but there is only one Mango Mochi in stock.
+      > Customer **Devi** placed an order for **10 packs of Late-Night Ramen**. The API returned `402 Payment Required` and Devi never received an order confirmation. But when the warehouse pulled inventory at noon, ramen stock had dropped from **12 to 2**.
 
-      The customer-success team escalated. The intended behavior, per the engineering doc, is:
+      Customer-success traced the call: Devi's request was well-formed, her available credit was below the calculated total, and the route correctly refused payment with `402`. So where did the 10 ramen units go?
 
-      > "Successful orders must reserve inventory before the response is sent. If the requested quantity is not available, the order must be rejected with `409 Conflict`."
+      The intended behavior, per the engineering doc, is:
+
+      > "Inventory reservation must be released on every failure path. A failed order must leave inventory exactly as it was before the request."
 
       Your audit job:
 
-      1. **Where** is inventory supposed to be reserved during an order?
-      2. **Why** did both Riley's and Sam's orders succeed when the stock is one?
-      3. **Which file** is central evidence vs. which files are nearby decoys?
+      1. **Where** is inventory reservation invoked during an order, and when?
+      2. **Why** did stock drop by 10 even though no order was created?
+      3. **Which file** owns the missing behavior, and what specifically is missing?
 
       ### Time Budget Reality Check
 
@@ -2397,22 +2390,17 @@ steps:
       |---|---|
       | Read every file carefully | 25–30 minutes |
       | Skim every file | 10–14 minutes |
-      | Read tests + the order route + one service | **5–7 minutes** ← target |
+      | Read tests + the order route + one service, focusing on the failure path | **6–9 minutes** ← target |
 
-      The third strategy is the only one that fits the time box. Hypothesis-driven reading is not a shortcut; it is the only honest path through this much code in 7 minutes.
+      The third strategy is the only one that fits the time box. Hypothesis-driven reading is not a shortcut; it is the only honest path through this much code in 10 minutes.
 
-      ### Suggested Path
+      ### Constraints
 
-      1. **Orient:** open `__tests__/orderRoute.test.js`. Tests are the spec layer; they tell you what the order route is *supposed* to do.
-      2. **Predict:** before reading any other file, write down which file you expect to own inventory reservation, and which file you expect to *call* that helper during an order.
-      3. **Beacon-hunt:** use file names as architectural beacons. The presence of a service does not prove it is on the runtime path; verify with `require(...)` imports.
-      4. **Descend selectively:** read `routes/orderRoute.js` and `services/inventoryService.js`. Compare what the route *does* against what the inventory service *offers*.
-      5. **Verify:** find every file that imports `inventoryService`. The ones that do are central evidence; the ones that don't are negative evidence.
-      6. **Summarize:** explain the bug with the EiPE frame, naming the misleading beacons explicitly.
+      - Read at most **3 files** carefully.
+      - Verify any beacon you decide to trust by checking imports or call sites.
+      - Write your EiPE summary in `reading-notes.md` before the timer runs out.
 
-      Use `reading-notes.md` to record your reading path. Let's see how far you can make it.
-
-      One trap worth naming up front: a service file's *existence* is not proof it is on the runtime path. A function defined in `inventoryService.js` that no production code calls is dead policy. The verification move is `grep -r "inventoryService"` or, in your head, "who imports this?"
+      The routine is yours to choose. Let's see how far you can make it.
 
     files:
       - path: "reading-notes.md"
@@ -2637,6 +2625,7 @@ steps:
           const { orders } = require("../data/orders");
           const { totalFor } = require("../services/pricingService");
           const { chargeCustomer } = require("../services/paymentService");
+          const { reserve, release } = require("../services/inventoryService");
           const { sendOrderConfirmation } = require("../services/notificationService");
 
 
@@ -2645,11 +2634,32 @@ steps:
           }
 
 
+          function reserveAllLines(lineItems) {
+            const reservations = [];
+            for (const line of lineItems) {
+              const result = reserve(line.sku, line.quantity);
+              if (!result.ok) {
+                for (const prior of reservations) {
+                  release(prior.sku, prior.quantity);
+                }
+                return { ok: false, reason: result.reason, sku: line.sku };
+              }
+              reservations.push({ sku: line.sku, quantity: line.quantity });
+            }
+            return { ok: true, reservations };
+          }
+
+
           function createOrderRoute(req, res) {
             const { customerId, lineItems } = req.body || {};
             const customer = customers.find(entry => entry.id === customerId);
             if (!customer) {
               return res.status(404).json({ error: "unknown customer" });
+            }
+
+            const reservation = reserveAllLines(lineItems);
+            if (!reservation.ok) {
+              return res.status(409).json({ error: reservation.reason, sku: reservation.sku });
             }
 
             const pricing = totalFor(customer, lineItems);
@@ -2719,7 +2729,7 @@ steps:
           test("insufficient credit returns 402", () => {
             const res = fakeResponse();
             createOrderRoute(
-              { body: { customerId: "devi", lineItems: [{ sku: "ramen", quantity: 100 }] } },
+              { body: { customerId: "devi", lineItems: [{ sku: "ramen", quantity: 10 }] } },
               res,
             );
             assert.equal(res.statusCode, 402);
@@ -2736,110 +2746,110 @@ steps:
       questions:
         - type: single
           difficulty: basic
-          question: "What is the smallest correct reading path given a 7-minute budget?"
+          question: "Given the time budget, which reading **strategy** best fits this incident?"
           options:
-            - "Read `__tests__/orderRoute.test.js`, then `routes/orderRoute.js`, then `services/inventoryService.js`, then check who imports the inventory service."
-            - "Read every file alphabetically from `data/customers.js` to `services/pricingService.js`."
-            - "Read only `services/notificationService.js` because it sends the confirmation."
-            - "Read `services/pricingService.js` carefully because pricing is the heart of any order."
+            - "Tests-first selective descent: read the spec layer, open the route handler, then trace the *failure-path* branch (not just the happy path) through any service it imports."
+            - "Alphabetical file traversal until something looks relevant."
+            - "Keyword chase: search the codebase for the noun in the bug report and read every match."
+            - "Trust that a 402 response means the system handled the error correctly, and move on."
           correct_index: 0
           option_feedback:
-            1: "Alphabetical reading wastes time on incidental files like `cartRoute.js` and `notificationService.js`."
-            2: "`notificationService` only sends emails. It is the realistic false beacon for a confirmation-shaped bug."
-            3: "Pricing is on the runtime path but it never touches stock. It is supporting evidence, not central."
-          explanation: "Tests pin the spec. The order route is the runtime entry point. The inventory service is the helper the route is supposed to call. The 'who imports' check is what makes the missing-call obvious in 30 seconds."
+            1: "Alphabetical reading wastes time on whatever files come first, regardless of relevance."
+            2: "Keyword chase is the classic false-beacon trap. A name match is a hypothesis, not evidence."
+            3: "A correct status code is *necessary* but not *sufficient*. The bug is exactly that the status code is right while the side-effects are wrong."
+          explanation: "When the bug report is about a *side effect* on a *failure path*, the routine focuses on those two things: which side-effects this handler is supposed to manage, and what its failure branches do with them. Status codes alone never answer that."
 
         - type: single
           difficulty: intermediate
-          question: "Why did both Riley's and Sam's orders succeed for the last Mango Mochi?"
+          question: "Why did Devi's 402-failed request leak 10 units of ramen stock?"
           options:
-            - "`routes/orderRoute.js` never calls `inventoryService.reserve()`. The reserve helper exists, but only `cartService` calls it. The order route processes payment and creates the order without ever decrementing stock."
-            - "`inventoryService.js` is missing entirely from the codebase."
-            - "`inventoryService.reserve()` always returns `{ ok: true }` regardless of stock."
-            - "`paymentService.chargeCustomer()` overrides the inventory check after a successful charge."
+            - "`routes/orderRoute.js` reserves inventory *before* charging payment, but the payment-failure branch returns `402` without releasing the reservations it just made."
+            - "`routes/orderRoute.js` never calls `inventoryService.reserve()` at all, so the 10 units must have leaked from somewhere else."
+            - "`paymentService.chargeCustomer()` decrements stock as a side effect of charging."
+            - "`services/notificationService.js` decrements stock when it sends the failed-order email."
           correct_index: 0
           option_feedback:
-            1: "The file exists and exports `reserve`. The bug is in *who calls it*, not in whether it exists."
-            2: "Read the `reserve` body: it checks `item.stock < quantity` and returns `{ok: false, reason: 'insufficient stock'}` when stock is low. The helper is correct."
-            3: "Payment has no inventory branch. Two services with overlapping but unconnected responsibilities is the situation, not a payment override."
-          explanation: "A function existing is not the same as a function being on the runtime path. `inventoryService.reserve` is defined and even called from `cartService`, but the order route imports `pricing`, `payment`, and `notification` — never `inventory`. This is concept-location at its sharpest."
+            1: "Read the route again: `reserveAllLines(lineItems)` runs before `chargeCustomer(...)`. The bug is in *which failure path remembers to undo* the reservation, not in whether reservation happens."
+            2: "Payment touches the customer's credit, not inventory. The two services don't overlap responsibilities."
+            3: "The notification service appends to a `sentEmails` array. It never touches the `items` array."
+          explanation: "Classic missing-compensation bug. The route correctly rolls back partial reservations *within* the reservation loop (good!) but forgets to release reservations on the payment-failure path. The right helper (`release`) exists, is even imported into the route, and the author used it once — they just didn't use it everywhere they should have."
 
         - type: multiple
           difficulty: intermediate
           question: "Classify each file. Which are CENTRAL evidence for this incident?"
           options:
-            - "`routes/orderRoute.js` — the runtime entry point that should call reservation."
-            - "`services/inventoryService.js` — the helper that owns reservation."
-            - "`__tests__/orderRoute.test.js` — pins the contract."
+            - "`routes/orderRoute.js` — owns the failure-path branch where the missing `release` call should be."
+            - "`services/inventoryService.js` — exports `release`, the helper that should be called on every failure path."
+            - "`__tests__/orderRoute.test.js` — specifies the contract for the 402 case but never verifies the post-call stock state."
             - "`services/notificationService.js` — sends confirmation emails."
             - "`routes/cartRoute.js` — handles a different endpoint."
             - "`services/pricingService.js` — computes totals."
           correct_indices: [0, 1, 2]
           option_feedback:
-            0: "The bug lives in this file (by *omission*). Central."
-            1: "Owns the helper that should be called. Central."
-            2: "Specifies expected behavior. Central."
-            3: "Sends emails; never touches stock. Incidental — and the realistic false beacon for a 'both customers got a confirmation' framing."
-            4: "Different endpoint; even though it does call `reserve`, it is not the file with the missing call."
-            5: "Pricing is on the runtime path but never touches stock. Supporting at best."
-          explanation: "Central = the file where the bug lives, plus the spec, plus the helper that *should* run. Notification is a realistic decoy because the report mentions confirmations."
+            0: "The bug is *what this branch fails to do*. Central."
+            1: "Owns the compensation helper. Central."
+            2: "Tests pin behavior, but they also have a *gap* here — they assert status code, not stock state. Central evidence both for what should happen and for what slipped through."
+            3: "Notification only writes to its own array. Incidental."
+            4: "Cart route uses inventory correctly elsewhere, but it is not on the order path. Incidental."
+            5: "Pricing computes totals but never touches stock. Supporting at best."
+          explanation: "For a missing-compensation bug, the central evidence is: (a) the failure branch that forgot to compensate, (b) the helper it should have called, and (c) the test that should have caught it but didn't."
 
         - type: single
           difficulty: advanced
-          question: "Why don't the existing tests in `__tests__/orderRoute.test.js` catch this bug?"
+          question: "Why don't the existing tests in `__tests__/orderRoute.test.js` catch Devi's bug?"
           options:
-            - "They check the response shape (`201`, `id`, `status`) but never assert the post-state of `items[i].stock`."
+            - "The 402 test checks `res.statusCode === 402` but never asserts the post-call state of `items.find(item => item.sku === 'ramen').stock`."
             - "They use `node:test` instead of a more rigorous framework."
             - "They run in parallel and race on the shared `items` array."
             - "They use a `fakeResponse()` that swallows error codes."
           correct_index: 0
           option_feedback:
-            1: "`node:test` is the standard Node test runner and is sufficient for assertion checking. Framework choice is not the gap."
-            2: "Order matters but parallelism is not the issue. The gap is what the assertions check at all."
+            1: "`node:test` is the standard Node test runner. Framework choice is not the gap."
+            2: "Parallelism is not the issue. The gap is what the assertions check at all."
             3: "`fakeResponse` faithfully captures both `statusCode` and `body`."
-          explanation: "Tests-as-spec is powerful but bounded. These tests check that the route returns the right *shape* for the response, never that inventory was decremented. A regression test that read `items.find(...).stock` before and after the call would have caught this immediately. This is the same lesson as Step 8 of Part 1: tests pin what they assert, not everything you might want."
+          explanation: "Tests-as-spec is powerful but bounded. The 402 test verifies status code, never side-effects. A regression test that read `ramen.stock` before and after the call (or asserted it was unchanged on a failed request) would have caught this immediately. The same lesson as Step 9 of Part 1's boss: tests pin what they assert, not everything you might want."
 
         - type: single
           difficulty: advanced
-          question: "Spaced retrieval — In `routes/orderRoute.js::createOrderRoute()`, what role does the local `pricing` variable play?"
+          question: "In `reserveAllLines()`, what role does the local `reservations` array play?"
           options:
-            - "Holder / candidate: it stores the result of a pricing computation so later code can branch on `pricing.total`."
-            - "Accumulator: it sums totals from many orders across multiple requests."
-            - "Stepper: it iterates through each line item one at a time."
-            - "Organizer: it groups customers by membership tier."
+            - "Gatherer / running record: it accumulates successful reservations across the loop so earlier ones can be released if a later reservation fails."
+            - "Stepper: it advances through `lineItems` one at a time."
+            - "Flag: it records whether reservation succeeded."
+            - "Candidate / best-so-far: it tracks the largest single reservation."
           correct_index: 0
           option_feedback:
-            1: "Only one `totalFor` call happens per request. No accumulation across requests."
-            2: "Iteration over line items happens inside `subtotalFor`, not inside the route's body."
-            3: "There is no map/dictionary keyed by tier in this route."
-          explanation: "Variable roles (Step 5 of Part 1), revisited at scale. Recognizing `pricing` as a single-value holder lets you skim past three lines of object access in the response builder."
+            1: "The stepper is the loop variable `line`."
+            2: "`reservations` is an array, not a boolean."
+            3: "There is no comparison or ranking; every successful reservation is appended."
+          explanation: "Recognizing `reservations` as a *running record for rollback* is exactly what makes the bug visible: this pattern works inside the loop (partial reservations get released), but the same compensation logic is missing on the *payment* failure path, where there's no analogous variable carrying state across the failure."
 
         - type: single
           difficulty: advanced
-          question: "Spaced retrieval — Which beacon type is the `__tests__/` directory name, the file name `orderRoute.test.js`, and the `node:test` import?"
+          question: "Seeing `reserve` and `release` exported as a pair from `inventoryService.js` is which kind of beacon for an order-route reviewer?"
           options:
-            - "Specification beacons — they describe expected behavior before the implementation is read."
-            - "Lexical beacons only — names alone, with no behavioral meaning."
-            - "Structural beacons — they encode a programming plan."
-            - "Aesthetic beacons — they signal that the codebase looks professional."
+            - "Structural — a recognizable compensation/transaction pattern. Every `reserve` should pair with a `release` on every failure path."
+            - "Lexical only — just two function names with no behavioral implication."
+            - "Specification — they are executable contracts."
+            - "Aesthetic — they signal a clean codebase."
           correct_index: 0
           option_feedback:
-            1: "Lexical beacons are about identifier meaning. Test files go further: they encode contracts in executable form."
-            2: "Plans are inside the test bodies; the file name and directory point to the spec layer."
+            1: "Names matter, but the *pair* carries more meaning than either name alone. The pairing is the structural signal."
+            2: "Exports are not contracts — they are available functions. Whether they are *used correctly* is the open question."
             3: "Aesthetic signals do not determine behavior."
-          explanation: "Specification beacons (Step 3 of Part 1, reinforced in Step 1 of Part 2) are the strongest professional beacon family. The `__tests__/` directory, the `.test.js` suffix, and the `node:test` import are all telling you 'this file is the contract.'"
+          explanation: "When you see `acquire`/`release`, `lock`/`unlock`, `reserve`/`release`, `open`/`close`, that pairing IS the beacon: it tells the reader 'this resource is acquired and must be released on every exit path.' The bug is the absence of `release` on one of those exit paths."
 
         - type: single
           difficulty: expert
           question: "Which final EiPE explanation best fits the evidence?"
           options:
-            - "Purpose: every successful order must reserve inventory per the engineering doc. Mechanism: `inventoryService.reserve` is defined and works; `cartService` calls it, but `orderRoute.js` does not. Evidence: `orderRoute.js` imports `pricing`, `payment`, and `notification` but never `inventoryService`. Limit: I did not verify whether `release` is called on failed payments — there may be a second bug."
-            - "Purpose: send order confirmation emails. Mechanism: `notificationService.sendOrderConfirmation` is called from the order route. Evidence: both Riley and Sam received emails. Limit: none."
-            - "Purpose: charge customer credit cards. Mechanism: `paymentService.chargeCustomer` decrements credit. Evidence: both customers had their credit decremented. Limit: payment is the source of truth."
-            - "Purpose: assign membership discounts. Mechanism: `pricingService.memberDiscount` reduces totals for members. Evidence: Sam paid less than full price. Limit: standard customers pay full price."
+            - "Purpose: maintain inventory integrity across all order failure paths, per the engineering doc. Mechanism: the route reserves before charging and correctly releases on the *reservation*-failure branch, but the *payment*-failure branch returns `402` without calling `release`. Evidence: `release` is imported into the route and used inside `reserveAllLines`, but is absent from the `if (!payment.ok)` block. Limit: I did not verify whether other failure paths (e.g., a future notification-failure branch) would also leak."
+            - "Purpose: send notification emails. Mechanism: `notificationService.sendOrderConfirmation` is called on success. Evidence: Devi did not receive a confirmation. Limit: none."
+            - "Purpose: charge customer credit cards. Mechanism: `paymentService.chargeCustomer` decrements credit and stock together. Evidence: Devi's credit is unchanged, so payment must have failed cleanly. Limit: payment is the source of truth."
+            - "Purpose: enforce member-tier pricing. Mechanism: `pricingService.memberDiscount` applies a 10% discount. Evidence: Devi is a member. Limit: discounts are orthogonal to the bug."
           correct_index: 0
           option_feedback:
-            1: "Notification is the decoy. Confirmation emails being sent is what makes the bug *invisible* to customers, but it does not explain the inventory failure."
-            2: "Payment is on the runtime path but never touches stock. The credit deduction is correct; the inventory deduction is missing."
-            3: "Discounts are entirely orthogonal to the bug."
-          explanation: "A strong final summary names the exact import gap, distinguishes 'function exists' from 'function is on the runtime path,' and is honest about a likely *second* bug (compensation on failed payments). EiPE without the Limit line is overconfident; with it, it is the kind of incident summary that earns trust."
+            1: "Notification is incidental — the missing email is a *symptom* (no order was created), not the cause."
+            2: "Payment touches credit, not stock. The bug is exactly that two side-effects need to be coordinated and one isn't."
+            3: "Pricing affects the total, which affects whether payment fails — but pricing is not the source of the stock leak."
+          explanation: "A strong final summary names the exact missing call (`release` in the payment-failure branch), distinguishes the *reservation*-failure branch (which does compensate) from the *payment*-failure branch (which doesn't), and is honest about whether the audit covered every failure path. EiPE without the Limit line is overconfident; with it, this is the kind of incident summary that earns reviewer trust."
