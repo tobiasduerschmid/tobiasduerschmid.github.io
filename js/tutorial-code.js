@@ -5831,7 +5831,10 @@
         var reattachOnly = document.createElement('button');
         reattachOnly.type = 'button';
         reattachOnly.className = 'tvm-tab-reattach';
-        reattachOnly.textContent = '\u21a9';
+        var reattachIcon = document.createElement('span');
+        reattachIcon.setAttribute('aria-hidden', 'true');
+        reattachIcon.textContent = '\u21a9';
+        reattachOnly.appendChild(reattachIcon);
         reattachOnly.setAttribute('data-original-title', 'Bring file back to this window');
         reattachOnly.removeAttribute('title');
         reattachOnly.setAttribute('aria-label', 'Bring ' + filename + ' back to this window');
@@ -5845,7 +5848,10 @@
         var pop = document.createElement('button');
         pop.type = 'button';
         pop.className = 'tvm-tab-popout';
-        pop.textContent = '\u29c9';
+        var popIcon = document.createElement('span');
+        popIcon.setAttribute('aria-hidden', 'true');
+        popIcon.textContent = '\u29c9';
+        pop.appendChild(popIcon);
         pop.setAttribute('data-original-title', 'Open file in separate window');
         pop.removeAttribute('title');
         pop.setAttribute('aria-label', 'Open ' + filename + ' in a separate window');
