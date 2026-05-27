@@ -5,12 +5,14 @@ description: >-
   interactions across React and backend files in a roughly one-hour session.
 
 learning_objectives:
+  - "Retrieve the Part 1 reading routine and key beacon vocabulary from memory before re-exposure to the material."
   - "Use behavior tests as specification beacons before reading Node.js implementation code."
   - "Verify a comprehension hypothesis with a targeted trace through one branch, invariant, or helper call."
   - "Map how state, callbacks, request data, and return values move across files in React and Node.js examples."
   - "Locate where a domain concept is implemented and separate central files from nearby but incidental files."
   - "Evaluate whether source files preserve the intended architecture-code responsibility map."
   - "Evaluate when to trust a top-down hypothesis and when to switch to bottom-up tracing."
+  - "Apply the full reading routine to a multi-file codebase too large to read line-by-line in the time given."
 
 backend: multiple
 require_tests: false
@@ -19,7 +21,156 @@ font_size: 16
 
 steps:
   # =========================================================================
-  # STEP 1: Tests as Specification Beacons
+  # STEP 1: Retrieval Warm-Up
+  # =========================================================================
+  # Pedagogy: spaced retrieval BEFORE re-exposure. Tests Part 1 schemas
+  # (routine, beacon types, switch triggers, EiPE frame, variable roles)
+  # without showing the answers first. Karpicke & Roediger (Science 2008):
+  # the *act* of retrieval is what builds memory; the instruction to
+  # retrieve does nothing on its own. This step puts the retrieval before
+  # the routine is re-displayed.
+  - title: "Retrieval Warm-Up"
+    backend: pyodide
+    instructions: |
+      ### Welcome back to Part 2
+
+      Before opening any code, let's see what stuck from Part 1. The next quiz is a quick **retrieval check** — try to answer from memory before peeking at your Part 1 notes or scrolling back.
+
+      Why this comes first: research on spaced retrieval is unambiguous (Karpicke & Roediger, *Science* 2008). The *act* of retrieving is what builds durable memory. Re-reading the routine here would *feel* like consolidation but actually do nothing. So the routine is intentionally NOT re-displayed before the quiz — and the quiz is the first thing you do this session.
+
+      If you can't recall something, that's fine. **Answer your best guess.** The retrieval *attempt* is what matters. After the quiz, the rest of Part 2 will rebuild the vocabulary on demand.
+
+      Use `recall-notes.md` to write down what you remember on your own first, then take the quiz.
+
+    files:
+      - path: "recall-notes.md"
+        language: "markdown"
+        content: |
+          # Part 1 Recall (from memory, no peeking)
+
+          ## The six-step reading routine
+          1.
+          2.
+          3.
+          4.
+          5.
+          6.
+
+          ## The four beacon types I learned
+
+          ## One switch trigger — when do I stop scanning and start tracing?
+
+          ## The EiPE explanation frame stands for
+          - E:
+          - i:
+          - P:
+          - E:
+
+          ## One variable role I can name and a typical beacon that signals it
+
+    open_file: "recall-notes.md"
+
+    quiz:
+      title: "Step 1 — Retrieval Check"
+      min_score: 0.8
+      shuffle: true
+      shuffle_questions: false
+      questions:
+        - type: single
+          difficulty: basic
+          question: "What is the **second** step of the Part 1 reading routine — the move that follows Orient?"
+          options:
+            - "Predict — name the responsibilities and behaviors you expect to find before reading."
+            - "Trace — execute the code in your head line by line."
+            - "Refactor — rewrite confusing parts before continuing."
+            - "Test — run the test suite before any other action."
+          correct_index: 0
+          option_feedback:
+            1: "Tracing is a *verification* move (step 5), used after a hypothesis exists."
+            2: "Refactoring changes the code; comprehension is reading-only."
+            3: "Running tests is one verification path, but the routine step that follows Orient is the prediction itself."
+          explanation: "The full routine: Orient → **Predict** → Beacon-hunt → Descend selectively → Verify → Summarize. Predict turns orientation into a hypothesis you can test, before any code is read in detail."
+
+        - type: single
+          difficulty: intermediate
+          question: "Name one **switch trigger** — a signal that you should stop scanning and start tracing line by line."
+          options:
+            - "A beacon is vague (`data`, `item`, `result`), a branch handles risky behavior (errors, money, hiding), or a test contradicts your hypothesis."
+            - "The code uses snake_case instead of camelCase."
+            - "The function body is more than 5 lines long."
+            - "There is at least one comment in the file."
+          correct_index: 0
+          option_feedback:
+            1: "Naming convention does not signal risk — it signals language."
+            2: "Length alone is a poor switch trigger. A 20-line function with strong beacons can be skimmed; a 5-line function with money math may deserve a careful trace."
+            3: "Comments are a weak signal. They can support hypotheses but do not by themselves force a switch to tracing."
+          explanation: "The three reliable switch triggers from Step 1 of Part 1: vague beacon, risky branch, or a contradiction between code and a test. Strong readers keep scanning until one of those fires."
+
+        - type: multiple
+          difficulty: intermediate
+          question: "Which are **beacon types** you classified in Step 3 of Part 1?"
+          options:
+            - "Lexical — names like `visibleSnacks`, `isPriNum`, `summarize_playlist`."
+            - "Structural — recognizable code shapes like `.filter(...).map(...)`, accumulator loops, guard clauses."
+            - "Framework — React `useState`, props, `key`, Node `module.exports`."
+            - "Specification — tests, assertions, user stories, contracts."
+            - "Aesthetic — code that 'looks clean' or follows project style."
+          correct_indices: [0, 1, 2, 3]
+          option_feedback:
+            0: "Identifiers carry domain meaning and were the first beacon family introduced."
+            1: "Familiar code shapes activate stored programming-plan schemas."
+            2: "Framework conventions like `useState` and the `on*` callback prefix encode behavior."
+            3: "Tests and assertions describe behavior before the implementation is read."
+            4: "Style is not a behavior beacon. Pretty code can still be wrong; ugly code can still be correct."
+          explanation: "Four beacon types: lexical, structural, framework, specification. Aesthetic *cleanliness* is a comfort signal, not a behavior signal."
+
+        - type: single
+          difficulty: basic
+          question: "What does the EiPE explanation frame stand for?"
+          options:
+            - "Purpose / Mechanism / Evidence / Limit"
+            - "Purpose / Method / Equation / Length"
+            - "Process / Mechanism / Evaluation / Logic"
+            - "Purpose / Methodology / Effect / Layout"
+          correct_index: 0
+          option_feedback:
+            1: "Code comprehension is not algebra. 'Length' is not part of the frame."
+            2: "Two of these are vague near-synonyms; the frame is sharper."
+            3: "'Effect' overlaps with mechanism; 'Layout' has no role in EiPE."
+          explanation: "**Explain in Plain English (EiPE)**: Purpose (what the code is for), Mechanism (the plan it uses), Evidence (the names/tests/branches that prove it), Limit (what you have *not* verified). The Limit line is what separates honest readers from overconfident ones."
+
+        - type: single
+          difficulty: intermediate
+          question: "A variable named `best_so_far` updates only when a new candidate scores higher. Which role from Step 5 of Part 1 does it play?"
+          options:
+            - "Candidate / best-so-far — remembers the current winner across iterations."
+            - "Stepper — advances through a collection one element at a time."
+            - "Accumulator — collects a running total of all items seen."
+            - "Flag — records whether a single condition has occurred."
+          correct_index: 0
+          option_feedback:
+            1: "A stepper is the loop variable (`item`, `entry`), not the running winner."
+            2: "An accumulator sums or appends every value; the candidate updates only when the new value beats the old."
+            3: "A flag is a boolean state marker, not a numeric or object winner."
+          explanation: "Variable roles compress several lines into one mental chunk. `best_so_far` paired with a `> best_score` guard is the textbook **best-so-far / max-tracking plan**. Recognizing the role lets you skip line-by-line tracing of the loop body."
+
+        - type: single
+          difficulty: advanced
+          question: "Step 7 of Part 1 introduced **false-beacon discipline**. Which statement best captures that idea?"
+          options:
+            - "A cue can be *true* about the code but still irrelevant to your specific question; test where the cue sits in the runtime flow before trusting it."
+            - "Always assume names are lying; read every line from scratch every time."
+            - "If a name is misleading, the code is buggy and should be rewritten before comprehension is possible."
+            - "False beacons only appear in deliberately bad code; production code can be trusted at face value."
+          correct_index: 0
+          option_feedback:
+            1: "Universal skepticism throws away the benefit of beacons entirely. The discipline is selective, not paranoid."
+            2: "Reading and rewriting are different jobs. Comprehension comes first."
+            3: "Production code is full of true-but-irrelevant cues: legacy fields, stale comments, helpers no longer on the runtime path."
+          explanation: "False-beacon discipline is the *Faculty Mixer / `pinned`* lesson: the field really exists, but it is not what decides visibility for this question. The test is always *where* the cue sits in the runtime flow."
+
+  # =========================================================================
+  # STEP 2: Tests as Specification Beacons
   # =========================================================================
   # Pedagogy: spaced retrieval + worked example — tests first, implementation second
   - title: "Tests as Specification Beacons"
@@ -147,7 +298,7 @@ steps:
     run_file: "sessionPlanner.test.js"
 
     quiz:
-      title: "Step 1 — Knowledge Check"
+      title: "Step 2 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       shuffle_questions: false
@@ -228,8 +379,23 @@ steps:
             3: "The low-energy test directly compares a solo and pair score."
           explanation: "Tests are powerful specification beacons, but they are not complete specifications. Strong readers also notice what a test suite leaves open."
 
+        - type: single
+          difficulty: intermediate
+          question: "Spaced retrieval from Part 1 — You read `sessionPlanner.test.js` and have a contract-shaped hypothesis. What is the next routine move *before* reading every line of `sessionPlanner.js`?"
+          options:
+            - "Beacon-hunt + descend selectively — find the function names that match the contract and inspect only those."
+            - "Trace every line of `sessionPlanner.js` to build a complete program model first."
+            - "Re-read the tests three more times until the implementation is obvious by elimination."
+            - "Write a new test before reading any implementation code."
+          correct_index: 0
+          option_feedback:
+            1: "Linear tracing burns the time budget. The routine prefers selective descent into the helpers that match each contract clause."
+            2: "Re-reading the same tests does not add information."
+            3: "Writing tests is a separate workflow; comprehension is reading-only here."
+          explanation: "Routine recap (Part 1, Step 1): tests give you the spec layer (Orient + Predict). The next move is beacon-hunting in the implementation, then descending selectively into the helpers that match each contract clause. Never trace before the hypothesis exists."
+
   # =========================================================================
-  # STEP 2: Node Hypothesis Sprint
+  # STEP 3: Node Hypothesis Sprint
   # =========================================================================
   # Pedagogy: timed practice — tests-as-specification with targeted backend tracing
   - title: "Node Hypothesis Sprint"
@@ -412,7 +578,7 @@ steps:
     run_file: "__tests__/sessionRoutes.test.js"
 
     quiz:
-      title: "Step 2 — Knowledge Check"
+      title: "Step 3 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       shuffle_questions: false
@@ -493,8 +659,23 @@ steps:
             3: "ID conversion belongs to the details route, not the list response shape."
           explanation: "Concept location starts from the user-visible concept, then follows the route boundary to the helper that shapes the response."
 
+        - type: single
+          difficulty: intermediate
+          question: "Spaced retrieval from Part 1, Step 5 — In `routes/sessionRoutes.js::listSessions()`, what role does the local `summaries` value play?"
+          options:
+            - "Gatherer / shaped output — it holds the transformed list ready to be returned in the response."
+            - "Stepper — it iterates one session at a time."
+            - "Flag — it records whether any sessions were found."
+            - "Candidate / best-so-far — it tracks the highest-priority session."
+          correct_index: 0
+          option_feedback:
+            1: "The stepper is the implicit `session` parameter inside the `.map(toSummary)` callback."
+            2: "`summaries` is a list, not a boolean."
+            3: "There is no ranking or comparison here; the transform is uniform across all matching sessions."
+          explanation: "Variable roles (Part 1, Step 5) carry over to JavaScript. `.filter(...).map(...)` chains produce a *gatherer* — the value that holds the shaped collection until it is returned. Recognizing the role lets you skim the `.map` callback once you know what's coming out."
+
   # =========================================================================
-  # STEP 3: Cross-File Interaction Maps
+  # STEP 4: Cross-File Interaction Maps
   # =========================================================================
   # Pedagogy: worked example with fading — map event flow across React files
   - title: "Cross-File Interaction Maps"
@@ -755,7 +936,7 @@ steps:
     open_file: "lesson-map/App.jsx"
 
     quiz:
-      title: "Step 3 — Knowledge Check"
+      title: "Step 4 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       shuffle_questions: false
@@ -836,8 +1017,23 @@ steps:
             3: "The goal is comprehension before editing, not after accidental changes."
           explanation: "A callback crossing a file boundary is a good switch point: predict from the prop name, then trace one event path."
 
+        - type: single
+          difficulty: advanced
+          question: "Spaced retrieval from Part 1, Step 7 — A reader claims that `lesson.tag.includes(normalizedQuery)` alone is *the* central evidence for what the search box does. What is the false-beacon-aware response?"
+          options:
+            - "It is *part of* the central evidence, but the filter combines title and tag matching with `||`; trusting one branch over the other is a partial-evidence trap. Verify against the full predicate."
+            - "Always trust the first expression you read; subsequent ones are noise."
+            - "Tag-matching always dominates title-matching in React filters by convention."
+            - "Search inputs only check tags, not titles, by React convention."
+          correct_index: 0
+          option_feedback:
+            1: "First-found is not a comprehension strategy."
+            2: "There is no such React convention. The code shows `||` over title and tag."
+            3: "There is no such convention."
+          explanation: "False-beacon discipline (Part 1, Step 7): a *true* expression can still be *partial* evidence. The full predicate uses `||` over two matchers; reasoning from one branch without the other is a hypothesis you have not yet verified."
+
   # =========================================================================
-  # STEP 4: Backend Interaction Sprint
+  # STEP 5: Backend Interaction Sprint
   # =========================================================================
   # Pedagogy: timed transfer practice — larger Node example with cross-file flow
   - title: "Backend Interaction Sprint"
@@ -1042,7 +1238,7 @@ steps:
     run_file: "__tests__/checkoutRoute.test.js"
 
     quiz:
-      title: "Step 4 — Knowledge Check"
+      title: "Step 5 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       shuffle_questions: false
@@ -1142,8 +1338,23 @@ steps:
             3: "The catalog data supplies prices and stock, but coupon policy is in the discount helper."
           explanation: "Concept location starts from domain language, then false-beacon diagnosis names both the tempting inference and the exact branch that corrects it."
 
+        - type: single
+          difficulty: intermediate
+          question: "Spaced retrieval from earlier in Part 2 — You suspect a coupon bug. Which routine move comes first?"
+          options:
+            - "Read `__tests__/checkoutRoute.test.js` to learn what the contract says about coupons before reading any discount logic."
+            - "Re-write the discount logic from scratch in a new file."
+            - "Read every other service file first to rule them out by exhaustion."
+            - "Run the entire test suite before forming any hypothesis."
+          correct_index: 0
+          option_feedback:
+            1: "Comprehension is reading, not writing."
+            2: "Exhaustion is the strategy that fails the time budget."
+            3: "Running tests can reveal pass/fail, but the *hypothesis* must come first — otherwise you don't know what a failure means."
+          explanation: "Tests-as-specification (Step 2 of Part 2): when a behavior question arises, the contract is in the tests. Reading them first turns 'what does this code do?' into the sharper 'does this code match the contract?'"
+
   # =========================================================================
-  # STEP 5: React Concept Location Sprint
+  # STEP 6: React Concept Location Sprint
   # =========================================================================
   # Pedagogy: timed concept-location expedition — domain term to cross-file implementation map
   - title: "React Concept Location Sprint"
@@ -1461,7 +1672,7 @@ steps:
     open_file: "lesson-board/App.jsx"
 
     quiz:
-      title: "Step 5 — Knowledge Check"
+      title: "Step 6 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       shuffle_questions: false
@@ -1544,8 +1755,23 @@ steps:
             3: "IDs support the concept, but the selected pinned id is state in `App`."
           explanation: "Robust top-down reading uses weak cues for orientation, then verifies ownership through state and callback evidence."
 
+        - type: single
+          difficulty: intermediate
+          question: "Spaced retrieval from Part 1, Step 5 — In `App.jsx`, what role does the derived value `pinnedLesson` play?"
+          options:
+            - "Holder / candidate — it stores the single lesson currently pinned (or `undefined`) so render code can branch on its presence."
+            - "Accumulator — it sums or appends pinned lessons across renders."
+            - "Stepper — it advances through lessons one at a time."
+            - "Flag — it is a boolean indicating whether any lesson is pinned."
+          correct_index: 0
+          option_feedback:
+            1: "Only one lesson is pinned at a time; no accumulation."
+            2: "Iteration happens inside `LESSONS.find(...)`, but `pinnedLesson` is the result, not the loop variable."
+            3: "It is a lesson object (or `undefined`), not a boolean."
+          explanation: "Variable roles (Part 1, Step 5): derived single-value holders are extremely common in React. Recognizing `pinnedLesson` as a *candidate-shaped value* lets you skim past the surrounding `&&` rendering condition with confidence."
+
   # =========================================================================
-  # STEP 6: Architecture-Code Alignment Review
+  # STEP 7: Architecture-Code Alignment Review
   # =========================================================================
   # Pedagogy: mini code-review packet — architecture-to-code mapping and responsibility diagnosis
   - title: "Architecture-Code Alignment Review"
@@ -1740,7 +1966,7 @@ steps:
     run_file: "__tests__/progressRoutes.test.js"
 
     quiz:
-      title: "Step 6 — Knowledge Check"
+      title: "Step 7 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       shuffle_questions: false
@@ -1823,8 +2049,23 @@ steps:
             3: "The route reads request fields, validates them, and chooses HTTP response shape."
           explanation: "A plausible nearby file can be a weak contextual beacon. Strong readers verify relevance through imports, calls, and tests."
 
+        - type: single
+          difficulty: advanced
+          question: "Spaced retrieval — When the intended architecture and the actual code disagree, which artifact is the most reliable tiebreaker?"
+          options:
+            - "The tests, because they encode the *intended* behavior in executable form."
+            - "The most recent commit message, because the most recent change must be correct."
+            - "The longest file, because lines of code track responsibility."
+            - "The README, because documentation always describes the live system."
+          correct_index: 0
+          option_feedback:
+            1: "Commit messages describe intent at one moment; intent drifts."
+            2: "Length is not a signal for responsibility ownership."
+            3: "READMEs are often the *first* artifact to go stale."
+          explanation: "Tests-as-specification (Step 2 of Part 2): tests are the only executable contract. They run as part of CI and break loudly when behavior drifts. Comments, READMEs, and commit messages cannot do that."
+
   # =========================================================================
-  # STEP 7: Dashboard Access Sprint
+  # STEP 8: Dashboard Access Sprint
   # =========================================================================
   # Pedagogy: capstone transfer — realistic false beacon across route/service/config files
   - title: "Dashboard Access Sprint"
@@ -2008,7 +2249,7 @@ steps:
     run_file: "__tests__/dashboardRoute.test.js"
 
     quiz:
-      title: "Step 7 — Knowledge Check"
+      title: "Step 8 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       shuffle_questions: false
@@ -2090,3 +2331,515 @@ steps:
             2: "`welcomeBanner` appears in the response, but it does not control `tabs`."
             3: "Tests describe the expected behavior; they do not hide tabs at runtime."
           explanation: "The explanation explicitly names the misleading beacon and the correcting evidence: access policy, user data, and absence of `betaDashboard` from the tab-building call path."
+
+        - type: single
+          difficulty: advanced
+          question: "Spaced retrieval — In Part 1's Campus Feed sprint, the `pinned` field looked decisive but turned out irrelevant to *that* question. Which verification move generalizes from there to the `betaDashboard` flag here?"
+          options:
+            - "Check *where* the cue sits in the runtime flow — what file imports it, and which path actually reads it."
+            - "Always trust frozen config objects because immutability proves correctness."
+            - "Assume any name containing `Dashboard` implies dashboard tab control."
+            - "Skip every flag-shaped value because flags are unreliable."
+          correct_index: 0
+          option_feedback:
+            1: "Immutability is unrelated to runtime relevance."
+            2: "Name overlap is the false-beacon trap, not the fix."
+            3: "Universal skepticism throws away beacons' benefit; selective verification keeps it."
+          explanation: "False-beacon discipline (Part 1, Step 7) is the same move here: a *true* value can be irrelevant if it is not on the runtime path. The fix is the same — `grep -r` (or 'who imports this?') turns 'beacon I noticed' into 'beacon I verified.'"
+
+  # =========================================================================
+  # STEP 9: Cross-Domain Reading Boss
+  # =========================================================================
+  # Pedagogy: capstone at scale — Node multi-file codebase too big to read
+  # exhaustively in the time given. Forces the full routine + false-beacon
+  # discipline + concept location. Spaced retrieval of every major skill
+  # from both tutorials: routine, beacon classification, variable roles,
+  # tests-as-spec, cross-file flow, central/supporting/incidental, EiPE.
+  # Variation Theory: contrasts with earlier small examples to show when
+  # top-down reading actually pays off.
+  - title: "Cross-Domain Reading Boss: Order Inventory Incident"
+    backend: webcontainer
+    max-time: 7
+    lockout-time: 5
+    instructions: |
+      ### Why this matters
+
+      Every earlier step in Part 2 was sized so that a careful linear read could still finish in time. This step is different on purpose. The codebase is around **330 lines across 11 files** — a route + four services + two data modules + a decoy route + tests. **You cannot read it all carefully in 7 minutes.**
+
+      This is the moment top-down reading was invented for. Production code is rarely the size of a tutorial snippet. Pull requests at real companies routinely exceed what any human can hold in working memory. Reviewers who try to read everything either burn out or rubber-stamp. The routine is what makes the work survivable *and* the answer correct.
+
+      ### 🎯 You will learn to
+
+      - Apply the full routine to a Node.js codebase too large to read line-by-line
+      - Use tests + names + imports to locate a missing call across many files
+      - Distinguish a function that *exists* from a function that is *on the runtime path*
+      - Combine every prior skill: routine, beacons, variable roles, tests-as-spec, cross-file flow, false-beacon discipline, EiPE
+
+      ### The Incident
+
+      A bug report from the warehouse:
+
+      > **Riley** placed an order for the last Mango Mochi this morning. The API returned `201 Created` and the order shows up in their history. Five minutes later, **Sam** placed an order for the same Mango Mochi. **Sam also got `201 Created`.** When the warehouse pulled the order list this afternoon, both orders were marked for fulfillment — but there is only one Mango Mochi in stock.
+
+      The customer-success team escalated. The intended behavior, per the engineering doc, is:
+
+      > "Successful orders must reserve inventory before the response is sent. If the requested quantity is not available, the order must be rejected with `409 Conflict`."
+
+      Your audit job:
+
+      1. **Where** is inventory supposed to be reserved during an order?
+      2. **Why** did both Riley's and Sam's orders succeed when the stock is one?
+      3. **Which file** is central evidence vs. which files are nearby decoys?
+
+      ### Time Budget Reality Check
+
+      | Strategy | Roughly how long it takes |
+      |---|---|
+      | Read every file carefully | 25–30 minutes |
+      | Skim every file | 10–14 minutes |
+      | Read tests + the order route + one service | **5–7 minutes** ← target |
+
+      The third strategy is the only one that fits the time box. Hypothesis-driven reading is not a shortcut; it is the only honest path through this much code in 7 minutes.
+
+      ### Suggested Path
+
+      1. **Orient:** open `__tests__/orderRoute.test.js`. Tests are the spec layer; they tell you what the order route is *supposed* to do.
+      2. **Predict:** before reading any other file, write down which file you expect to own inventory reservation, and which file you expect to *call* that helper during an order.
+      3. **Beacon-hunt:** use file names as architectural beacons. The presence of a service does not prove it is on the runtime path; verify with `require(...)` imports.
+      4. **Descend selectively:** read `routes/orderRoute.js` and `services/inventoryService.js`. Compare what the route *does* against what the inventory service *offers*.
+      5. **Verify:** find every file that imports `inventoryService`. The ones that do are central evidence; the ones that don't are negative evidence.
+      6. **Summarize:** explain the bug with the EiPE frame, naming the misleading beacons explicitly.
+
+      Use `reading-notes.md` to record your reading path. Let's see how far you can make it.
+
+      One trap worth naming up front: a service file's *existence* is not proof it is on the runtime path. A function defined in `inventoryService.js` that no production code calls is dead policy. The verification move is `grep -r "inventoryService"` or, in your head, "who imports this?"
+
+    files:
+      - path: "reading-notes.md"
+        language: "markdown"
+        content: |
+          # Order Inventory Audit Notes
+
+          ## Routine
+          Orient → Predict → Beacon-hunt → Descend selectively → Verify → Summarize
+
+          ## First hypothesis: which file should own reservation? Which file should call it?
+
+          ## Files I read carefully (3 or fewer expected)
+          1.
+          2.
+          3.
+
+          ## Files I deliberately skipped (and why)
+
+          ## Imports check — which files actually `require("../services/inventoryService")`?
+
+          ## Final EiPE summary
+          - Purpose:
+          - Mechanism:
+          - Evidence:
+          - Limit (what I did *not* verify):
+      - path: "data/items.js"
+        language: "javascript"
+        content: |
+          const items = [
+            { sku: "mochi", name: "Mango Mochi", price: 4, stock: 1 },
+            { sku: "ramen", name: "Late-Night Ramen", price: 7, stock: 12 },
+            { sku: "tea", name: "Jasmine Tea", price: 3, stock: 30 },
+            { sku: "pretzel", name: "Choco Pretzels", price: 5, stock: 8 },
+          ];
+
+          module.exports = { items };
+      - path: "data/customers.js"
+        language: "javascript"
+        content: |
+          const customers = [
+            { id: "riley", name: "Riley Park", tier: "standard", credit: 100 },
+            { id: "sam", name: "Sam Okafor", tier: "member", credit: 200 },
+            { id: "devi", name: "Devi Rao", tier: "member", credit: 50 },
+          ];
+
+          module.exports = { customers };
+      - path: "data/orders.js"
+        language: "javascript"
+        content: |
+          const orders = [];
+
+          module.exports = { orders };
+      - path: "services/cartService.js"
+        language: "javascript"
+        content: |
+          const { items } = require("../data/items");
+          const { reserve, release } = require("./inventoryService");
+
+          const carts = new Map();
+
+          function getCart(customerId) {
+            if (!carts.has(customerId)) {
+              carts.set(customerId, []);
+            }
+            return carts.get(customerId);
+          }
+
+          function addToCart(customerId, sku, quantity) {
+            const item = items.find(entry => entry.sku === sku);
+            if (!item) {
+              return { ok: false, reason: "unknown sku" };
+            }
+            const reservation = reserve(sku, quantity);
+            if (!reservation.ok) {
+              return reservation;
+            }
+            const cart = getCart(customerId);
+            cart.push({ sku, quantity });
+            return { ok: true, cart };
+          }
+
+          function clearCart(customerId) {
+            const cart = getCart(customerId);
+            for (const line of cart) {
+              release(line.sku, line.quantity);
+            }
+            carts.set(customerId, []);
+          }
+
+          module.exports = { getCart, addToCart, clearCart };
+      - path: "services/pricingService.js"
+        language: "javascript"
+        content: |
+          const { items } = require("../data/items");
+
+          const MEMBER_DISCOUNT_RATE = 0.10;
+
+          function lineSubtotal(line) {
+            const item = items.find(entry => entry.sku === line.sku);
+            if (!item) {
+              return 0;
+            }
+            return item.price * line.quantity;
+          }
+
+          function subtotalFor(lineItems) {
+            return lineItems.reduce((sum, line) => sum + lineSubtotal(line), 0);
+          }
+
+          function memberDiscount(subtotal) {
+            return Math.round(subtotal * MEMBER_DISCOUNT_RATE);
+          }
+
+          function totalFor(customer, lineItems) {
+            const subtotal = subtotalFor(lineItems);
+            const discount = customer.tier === "member" ? memberDiscount(subtotal) : 0;
+            return { subtotal, discount, total: subtotal - discount };
+          }
+
+          module.exports = { subtotalFor, memberDiscount, totalFor };
+      - path: "services/inventoryService.js"
+        language: "javascript"
+        content: |
+          const { items } = require("../data/items");
+
+
+          function availableFor(sku) {
+            const item = items.find(entry => entry.sku === sku);
+            return item ? item.stock : 0;
+          }
+
+
+          function reserve(sku, quantity) {
+            const item = items.find(entry => entry.sku === sku);
+            if (!item) {
+              return { ok: false, reason: "unknown sku" };
+            }
+            if (item.stock < quantity) {
+              return { ok: false, reason: "insufficient stock", available: item.stock };
+            }
+            item.stock -= quantity;
+            return { ok: true, reserved: quantity, remaining: item.stock };
+          }
+
+
+          function release(sku, quantity) {
+            const item = items.find(entry => entry.sku === sku);
+            if (item) {
+              item.stock += quantity;
+            }
+          }
+
+
+          module.exports = { availableFor, reserve, release };
+      - path: "services/paymentService.js"
+        language: "javascript"
+        content: |
+          const { customers } = require("../data/customers");
+
+
+          function chargeCustomer(customerId, amount) {
+            const customer = customers.find(entry => entry.id === customerId);
+            if (!customer) {
+              return { ok: false, reason: "unknown customer" };
+            }
+            if (customer.credit < amount) {
+              return { ok: false, reason: "insufficient credit" };
+            }
+            customer.credit -= amount;
+            return { ok: true, charged: amount, remainingCredit: customer.credit };
+          }
+
+
+          module.exports = { chargeCustomer };
+      - path: "services/notificationService.js"
+        language: "javascript"
+        content: |
+          const sentEmails = [];
+
+
+          function sendOrderConfirmation(customerId, order) {
+            const body = `Order ${order.id} confirmed for ${customerId}.`;
+            sentEmails.push({ to: customerId, body });
+            return { sent: true };
+          }
+
+
+          function sentEmailsFor(customerId) {
+            return sentEmails.filter(email => email.to === customerId);
+          }
+
+
+          module.exports = { sendOrderConfirmation, sentEmailsFor };
+      - path: "routes/cartRoute.js"
+        language: "javascript"
+        content: |
+          const { addToCart, clearCart } = require("../services/cartService");
+
+
+          function addItemRoute(req, res) {
+            const { customerId, sku, quantity } = req.body || {};
+            const result = addToCart(customerId, sku, quantity);
+            if (!result.ok) {
+              return res.status(409).json({ error: result.reason });
+            }
+            return res.status(201).json({ cart: result.cart });
+          }
+
+
+          function clearCartRoute(req, res) {
+            clearCart(req.params.customerId);
+            return res.status(204).json(null);
+          }
+
+
+          module.exports = { addItemRoute, clearCartRoute };
+      - path: "routes/orderRoute.js"
+        language: "javascript"
+        content: |
+          const { customers } = require("../data/customers");
+          const { orders } = require("../data/orders");
+          const { totalFor } = require("../services/pricingService");
+          const { chargeCustomer } = require("../services/paymentService");
+          const { sendOrderConfirmation } = require("../services/notificationService");
+
+
+          function nextOrderId() {
+            return `o${orders.length + 1}`;
+          }
+
+
+          function createOrderRoute(req, res) {
+            const { customerId, lineItems } = req.body || {};
+            const customer = customers.find(entry => entry.id === customerId);
+            if (!customer) {
+              return res.status(404).json({ error: "unknown customer" });
+            }
+
+            const pricing = totalFor(customer, lineItems);
+            const payment = chargeCustomer(customerId, pricing.total);
+            if (!payment.ok) {
+              return res.status(402).json({ error: payment.reason });
+            }
+
+            const order = {
+              id: nextOrderId(),
+              customerId,
+              lineItems,
+              subtotal: pricing.subtotal,
+              discount: pricing.discount,
+              total: pricing.total,
+              status: "confirmed",
+            };
+            orders.push(order);
+            sendOrderConfirmation(customerId, order);
+
+            return res.status(201).json(order);
+          }
+
+
+          module.exports = { createOrderRoute };
+      - path: "__tests__/orderRoute.test.js"
+        language: "javascript"
+        content: |
+          const test = require("node:test");
+          const assert = require("node:assert/strict");
+          const { createOrderRoute } = require("../routes/orderRoute");
+          const { items } = require("../data/items");
+
+
+          function fakeResponse() {
+            return {
+              statusCode: 200,
+              body: undefined,
+              status(code) { this.statusCode = code; return this; },
+              json(payload) { this.body = payload; return this; },
+            };
+          }
+
+
+          test("known customer with valid items receives 201 and an order id", () => {
+            const res = fakeResponse();
+            createOrderRoute(
+              { body: { customerId: "riley", lineItems: [{ sku: "tea", quantity: 1 }] } },
+              res,
+            );
+            assert.equal(res.statusCode, 201);
+            assert.ok(res.body.id.startsWith("o"));
+            assert.equal(res.body.status, "confirmed");
+          });
+
+
+          test("unknown customer returns 404", () => {
+            const res = fakeResponse();
+            createOrderRoute(
+              { body: { customerId: "ghost", lineItems: [{ sku: "tea", quantity: 1 }] } },
+              res,
+            );
+            assert.equal(res.statusCode, 404);
+          });
+
+
+          test("insufficient credit returns 402", () => {
+            const res = fakeResponse();
+            createOrderRoute(
+              { body: { customerId: "devi", lineItems: [{ sku: "ramen", quantity: 100 }] } },
+              res,
+            );
+            assert.equal(res.statusCode, 402);
+          });
+
+    open_file: "__tests__/orderRoute.test.js"
+    run_file: "__tests__/orderRoute.test.js"
+
+    quiz:
+      title: "Step 9 — Cross-Domain Reading Boss"
+      min_score: 0.8
+      shuffle: true
+      shuffle_questions: false
+      questions:
+        - type: single
+          difficulty: basic
+          question: "What is the smallest correct reading path given a 7-minute budget?"
+          options:
+            - "Read `__tests__/orderRoute.test.js`, then `routes/orderRoute.js`, then `services/inventoryService.js`, then check who imports the inventory service."
+            - "Read every file alphabetically from `data/customers.js` to `services/pricingService.js`."
+            - "Read only `services/notificationService.js` because it sends the confirmation."
+            - "Read `services/pricingService.js` carefully because pricing is the heart of any order."
+          correct_index: 0
+          option_feedback:
+            1: "Alphabetical reading wastes time on incidental files like `cartRoute.js` and `notificationService.js`."
+            2: "`notificationService` only sends emails. It is the realistic false beacon for a confirmation-shaped bug."
+            3: "Pricing is on the runtime path but it never touches stock. It is supporting evidence, not central."
+          explanation: "Tests pin the spec. The order route is the runtime entry point. The inventory service is the helper the route is supposed to call. The 'who imports' check is what makes the missing-call obvious in 30 seconds."
+
+        - type: single
+          difficulty: intermediate
+          question: "Why did both Riley's and Sam's orders succeed for the last Mango Mochi?"
+          options:
+            - "`routes/orderRoute.js` never calls `inventoryService.reserve()`. The reserve helper exists, but only `cartService` calls it. The order route processes payment and creates the order without ever decrementing stock."
+            - "`inventoryService.js` is missing entirely from the codebase."
+            - "`inventoryService.reserve()` always returns `{ ok: true }` regardless of stock."
+            - "`paymentService.chargeCustomer()` overrides the inventory check after a successful charge."
+          correct_index: 0
+          option_feedback:
+            1: "The file exists and exports `reserve`. The bug is in *who calls it*, not in whether it exists."
+            2: "Read the `reserve` body: it checks `item.stock < quantity` and returns `{ok: false, reason: 'insufficient stock'}` when stock is low. The helper is correct."
+            3: "Payment has no inventory branch. Two services with overlapping but unconnected responsibilities is the situation, not a payment override."
+          explanation: "A function existing is not the same as a function being on the runtime path. `inventoryService.reserve` is defined and even called from `cartService`, but the order route imports `pricing`, `payment`, and `notification` — never `inventory`. This is concept-location at its sharpest."
+
+        - type: multiple
+          difficulty: intermediate
+          question: "Classify each file. Which are CENTRAL evidence for this incident?"
+          options:
+            - "`routes/orderRoute.js` — the runtime entry point that should call reservation."
+            - "`services/inventoryService.js` — the helper that owns reservation."
+            - "`__tests__/orderRoute.test.js` — pins the contract."
+            - "`services/notificationService.js` — sends confirmation emails."
+            - "`routes/cartRoute.js` — handles a different endpoint."
+            - "`services/pricingService.js` — computes totals."
+          correct_indices: [0, 1, 2]
+          option_feedback:
+            0: "The bug lives in this file (by *omission*). Central."
+            1: "Owns the helper that should be called. Central."
+            2: "Specifies expected behavior. Central."
+            3: "Sends emails; never touches stock. Incidental — and the realistic false beacon for a 'both customers got a confirmation' framing."
+            4: "Different endpoint; even though it does call `reserve`, it is not the file with the missing call."
+            5: "Pricing is on the runtime path but never touches stock. Supporting at best."
+          explanation: "Central = the file where the bug lives, plus the spec, plus the helper that *should* run. Notification is a realistic decoy because the report mentions confirmations."
+
+        - type: single
+          difficulty: advanced
+          question: "Why don't the existing tests in `__tests__/orderRoute.test.js` catch this bug?"
+          options:
+            - "They check the response shape (`201`, `id`, `status`) but never assert the post-state of `items[i].stock`."
+            - "They use `node:test` instead of a more rigorous framework."
+            - "They run in parallel and race on the shared `items` array."
+            - "They use a `fakeResponse()` that swallows error codes."
+          correct_index: 0
+          option_feedback:
+            1: "`node:test` is the standard Node test runner and is sufficient for assertion checking. Framework choice is not the gap."
+            2: "Order matters but parallelism is not the issue. The gap is what the assertions check at all."
+            3: "`fakeResponse` faithfully captures both `statusCode` and `body`."
+          explanation: "Tests-as-spec is powerful but bounded. These tests check that the route returns the right *shape* for the response, never that inventory was decremented. A regression test that read `items.find(...).stock` before and after the call would have caught this immediately. This is the same lesson as Step 8 of Part 1: tests pin what they assert, not everything you might want."
+
+        - type: single
+          difficulty: advanced
+          question: "Spaced retrieval — In `routes/orderRoute.js::createOrderRoute()`, what role does the local `pricing` variable play?"
+          options:
+            - "Holder / candidate: it stores the result of a pricing computation so later code can branch on `pricing.total`."
+            - "Accumulator: it sums totals from many orders across multiple requests."
+            - "Stepper: it iterates through each line item one at a time."
+            - "Organizer: it groups customers by membership tier."
+          correct_index: 0
+          option_feedback:
+            1: "Only one `totalFor` call happens per request. No accumulation across requests."
+            2: "Iteration over line items happens inside `subtotalFor`, not inside the route's body."
+            3: "There is no map/dictionary keyed by tier in this route."
+          explanation: "Variable roles (Step 5 of Part 1), revisited at scale. Recognizing `pricing` as a single-value holder lets you skim past three lines of object access in the response builder."
+
+        - type: single
+          difficulty: advanced
+          question: "Spaced retrieval — Which beacon type is the `__tests__/` directory name, the file name `orderRoute.test.js`, and the `node:test` import?"
+          options:
+            - "Specification beacons — they describe expected behavior before the implementation is read."
+            - "Lexical beacons only — names alone, with no behavioral meaning."
+            - "Structural beacons — they encode a programming plan."
+            - "Aesthetic beacons — they signal that the codebase looks professional."
+          correct_index: 0
+          option_feedback:
+            1: "Lexical beacons are about identifier meaning. Test files go further: they encode contracts in executable form."
+            2: "Plans are inside the test bodies; the file name and directory point to the spec layer."
+            3: "Aesthetic signals do not determine behavior."
+          explanation: "Specification beacons (Step 3 of Part 1, reinforced in Step 1 of Part 2) are the strongest professional beacon family. The `__tests__/` directory, the `.test.js` suffix, and the `node:test` import are all telling you 'this file is the contract.'"
+
+        - type: single
+          difficulty: expert
+          question: "Which final EiPE explanation best fits the evidence?"
+          options:
+            - "Purpose: every successful order must reserve inventory per the engineering doc. Mechanism: `inventoryService.reserve` is defined and works; `cartService` calls it, but `orderRoute.js` does not. Evidence: `orderRoute.js` imports `pricing`, `payment`, and `notification` but never `inventoryService`. Limit: I did not verify whether `release` is called on failed payments — there may be a second bug."
+            - "Purpose: send order confirmation emails. Mechanism: `notificationService.sendOrderConfirmation` is called from the order route. Evidence: both Riley and Sam received emails. Limit: none."
+            - "Purpose: charge customer credit cards. Mechanism: `paymentService.chargeCustomer` decrements credit. Evidence: both customers had their credit decremented. Limit: payment is the source of truth."
+            - "Purpose: assign membership discounts. Mechanism: `pricingService.memberDiscount` reduces totals for members. Evidence: Sam paid less than full price. Limit: standard customers pay full price."
+          correct_index: 0
+          option_feedback:
+            1: "Notification is the decoy. Confirmation emails being sent is what makes the bug *invisible* to customers, but it does not explain the inventory failure."
+            2: "Payment is on the runtime path but never touches stock. The credit deduction is correct; the inventory deduction is missing."
+            3: "Discounts are entirely orthogonal to the bug."
+          explanation: "A strong final summary names the exact import gap, distinguishes 'function exists' from 'function is on the runtime path,' and is honest about a likely *second* bug (compensation on failed payments). EiPE without the Limit line is overconfident; with it, it is the kind of incident summary that earns trust."

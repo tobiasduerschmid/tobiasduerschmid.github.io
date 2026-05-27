@@ -1161,6 +1161,21 @@ steps:
             3: "Route handlers are part of backend Node examples, not these Python and React snippets."
           explanation: "Transfer improves when you name the shared code plan across languages: select relevant data, then shape it for the consumer."
 
+        - type: single
+          difficulty: intermediate
+          question: "Spaced retrieval from Step 1 — You opened `App.jsx` and read the components. What is the *next* routine move before you commit to an answer about the completion banner?"
+          options:
+            - "Verify — trace one small input through the relevant conditional to confirm or refute the hypothesis."
+            - "Refactor — clean up the JSX so the banner condition becomes more readable."
+            - "Test — write a brand-new test for the banner before answering."
+            - "Print — log every state value to the console."
+          correct_index: 0
+          option_feedback:
+            1: "Refactoring changes the code; comprehension is reading-only."
+            2: "Writing new tests is a separate workflow; the routine's verify step is *targeted*, not *additive*."
+            3: "Print-everything debugging is bottom-up exhaustive tracing — the opposite of what the routine prescribes."
+          explanation: "The routine: Orient → Predict → Beacon-hunt → Descend selectively → **Verify** → Summarize. Verify follows beacon-hunting; the goal is one focused trace through the branch your hypothesis depends on, not a rewrite."
+
   # =========================================================================
   # STEP 5: Variable Roles and Plans
   # =========================================================================
@@ -1362,6 +1377,21 @@ steps:
             2: "The list grows with the final display labels."
             3: "`entry` is a generic loop variable in Python; it does not imply React behavior."
           explanation: "Variable roles let readers name the plan before they trace all values."
+
+        - type: single
+          difficulty: intermediate
+          question: "Spaced retrieval from Step 3 — The expression `topic_minutes[topic] = topic_minutes.get(topic, 0) + entry[\"minutes\"]` is mainly which kind of beacon?"
+          options:
+            - "Structural — a recognizable accumulator/aggregator shape that triggers a stored programming plan."
+            - "Framework — a React- or Node-specific API call."
+            - "Specification — a test assertion that pins down behavior."
+            - "Aesthetic — code that signals professional style."
+          correct_index: 0
+          option_feedback:
+            1: "No React or Node imports here; this is plain Python."
+            2: "Assertions live in test files, not in production aggregation code."
+            3: "Aesthetic is not a behavior beacon."
+          explanation: "Beacon classes (Step 3): lexical (names), structural (code shapes), framework (library/API), specification (tests). The `dict.get(key, default) + value` pattern is the textbook *aggregation plan* — a structural beacon."
 
   # =========================================================================
   # STEP 6: Python Plan Transfer Sprint
@@ -1582,6 +1612,21 @@ steps:
             2: "`longest_streak()` tracks a best-so-far value across sorted days."
             3: "There is no request or response object in this Python example."
           explanation: "Interleaved plan recognition helps transfer: the same code can contain filtering, aggregation, and best-so-far tracking."
+
+        - type: single
+          difficulty: intermediate
+          question: "Spaced retrieval from Step 5 — In `longest_streak()`, what role does `previous_day` play?"
+          options:
+            - "Most-recent holder — it remembers the last value seen so the next iteration can compare to it."
+            - "Accumulator — it sums the total streak length across the loop."
+            - "Stepper — it advances through `days` one element at a time."
+            - "Flag — it is a boolean recording whether a streak has happened."
+          correct_index: 0
+          option_feedback:
+            1: "The accumulator is `current` (current run length); `previous_day` is what gets compared *to*."
+            2: "The stepper is `day` — the loop variable from `for day in days`."
+            3: "It is `int | None`, not a boolean."
+          explanation: "Variable roles (Step 5) compress code into plans. `previous_day` is a *most-recent holder*: keep the last value so you can ask 'is this consecutive?' on the next iteration. Recognizing the role makes the streak plan obvious without tracing every increment."
 
   # =========================================================================
   # STEP 7: Campus Feed Sprint
@@ -1812,3 +1857,511 @@ steps:
             2: "The archive decision is explicit in the data; `Faculty Mixer` has `archived: False`."
             3: "`card_for()` receives already-eligible announcements and never checks the title for faculty text."
           explanation: "A strong false-beacon explanation says both parts: why the beacon was plausible and why the trace corrected it."
+
+        - type: single
+          difficulty: intermediate
+          question: "Spaced retrieval from Step 1 — Your final explanation should follow the EiPE frame. What does the trailing **L** stand for?"
+          options:
+            - "Limit — what you have *not* verified yet (input ranges, edge cases, related branches)."
+            - "Loop — the iteration shape used by the function."
+            - "Logging — what the function writes to stdout."
+            - "Layout — how the code is visually formatted."
+          correct_index: 0
+          option_feedback:
+            1: "Iteration shape is part of mechanism, not the boundary of the claim."
+            2: "Logging is rarely on the comprehension path here."
+            3: "Visual formatting is a presentation concern, not an explanation frame."
+          explanation: "EiPE = Purpose / Mechanism / Evidence / **Limit**. The Limit line is what separates honest comprehension from overclaiming. After a false-beacon trace especially, naming what you did not verify keeps the next reader honest."
+
+  # =========================================================================
+  # STEP 8: Reading Boss
+  # =========================================================================
+  # Pedagogy: capstone at scale — code too big to read exhaustively in the
+  # time given, which forces the full Orient → Predict → Beacon-hunt →
+  # Descend → Verify → Summarize routine. Variation Theory: the contrast
+  # with the earlier small examples teaches when the routine actually pays
+  # off. Spaced retrieval of every Part 1 skill: routine, beacons, variable
+  # roles, EiPE frame, and false-beacon discipline.
+  - title: "Reading Boss: Library Lending Audit"
+    backend: pyodide
+    max-time: 7
+    lockout-time: 5
+    instructions: |
+      ### Why this matters
+
+      Every earlier step was a **warm-up**. The files were small enough that you could have read top-to-bottom in 90 seconds and still answered the quiz. The routine was useful but not *necessary*.
+
+      This step is different on purpose. The codebase is around **300 lines across 10 files**. **You cannot read it all carefully in 7 minutes.** The routine you have been practicing is what makes the answer reachable.
+
+      This is the situation top-down reading exists for: not because tracing is bad, but because some codebases exceed what a careful linear read can fit. When that happens, hypothesis-driven reading, targeted tracing, and strategic skipping are the only honest strategies.
+
+      ### 🎯 You will learn to
+
+      - Apply the full reading routine to code too large to read exhaustively
+      - Locate a concept (the borrow-eligibility decision) across many plausible files
+      - Identify which files are central, supporting, or incidental — without reading every line
+      - Combine every Part 1 skill: hypothesis, beacons, variable roles, false-beacon discipline, EiPE
+
+      ### The Incident
+
+      A library patron named **Maya Chen** filed a complaint. Her record shows a **$15 unpaid fine**, yet the system let her borrow a new book today. The **patron handbook** (the spec) says:
+
+      > "Patrons with unpaid fines exceeding $10 must clear their balance before borrowing."
+
+      But Maya borrowed at $15. The librarians want answers:
+
+      1. **Where** is the borrow-eligibility decision implemented?
+      2. **Why** did Maya's loan succeed even though her fine exceeds the documented limit?
+      3. **Which files** are central evidence vs. incidental nearby code?
+
+      ### Time Budget Reality Check
+
+      | Strategy | Roughly how long it takes |
+      |---|---|
+      | Read every file carefully | 25–30 minutes |
+      | Skim every file | 12–15 minutes |
+      | Read tests + one helper + one policy file | **5–7 minutes** ← target |
+
+      Only the third strategy fits the time box. That is exactly the point of the boss.
+
+      ### Suggested Path
+
+      1. **Orient:** open `test_lending.py` first. The tests describe the intended behavior.
+      2. **Predict:** before reading any other file, write down where you *expect* the fine check to live (which file? which helper name?).
+      3. **Beacon-hunt:** use file names as architectural beacons. Which file *should* own policy? Which file *only calculates* fines but does not enforce them?
+      4. **Descend selectively:** read only the files you predicted, plus any one helper they import.
+      5. **Verify:** trace Maya through one branch of the eligibility helper.
+      6. **Summarize:** explain the bug with the EiPE frame.
+
+      Use `reading-notes.md` to record your reading path, your hypothesis, and which files you deliberately skipped. Let's see how far you can make it.
+
+      One trap worth naming: a file with "fine" in its name is **not** the same as the file that decides whether fines block borrowing. One *calculates*; the other *enforces*. The handbook is about enforcement.
+
+    files:
+      - path: "reading-notes.md"
+        language: "markdown"
+        content: |
+          # Library Lending Audit Notes
+
+          ## Routine
+          Orient → Predict → Beacon-hunt → Descend selectively → Verify → Summarize
+
+          ## First hypothesis (where is the fine-check implemented?)
+
+          ## Files I read carefully (3 or fewer expected)
+          1.
+          2.
+          3.
+
+          ## Files I deliberately skipped (and why)
+
+          ## Smallest trace that explains Maya's case
+
+          ## Final EiPE summary
+          - Purpose:
+          - Mechanism:
+          - Evidence:
+          - Limit (what I did *not* verify):
+      - path: "models.py"
+        language: "python"
+        content: |
+          from typing import TypedDict
+
+
+          class Book(TypedDict):
+              isbn: str
+              title: str
+              category: str
+              available: bool
+
+
+          class Patron(TypedDict):
+              patron_id: str
+              name: str
+              plan: str
+              unpaid_fine: float
+              active: bool
+
+
+          class Loan(TypedDict):
+              loan_id: str
+              patron_id: str
+              isbn: str
+              day_out: int
+              day_due: int
+              returned: bool
+      - path: "books_data.py"
+        language: "python"
+        content: |
+          from models import Book
+
+
+          BOOKS: list[Book] = [
+              {"isbn": "978-001", "title": "Designing Data-Intensive Applications", "category": "technical", "available": True},
+              {"isbn": "978-002", "title": "The Pragmatic Programmer", "category": "technical", "available": True},
+              {"isbn": "978-003", "title": "Clean Code", "category": "technical", "available": False},
+              {"isbn": "978-004", "title": "Code Reading", "category": "technical", "available": True},
+              {"isbn": "978-005", "title": "Refactoring", "category": "technical", "available": True},
+              {"isbn": "978-006", "title": "Working Effectively with Legacy Code", "category": "technical", "available": True},
+              {"isbn": "978-007", "title": "Soul of a New Machine", "category": "narrative", "available": True},
+          ]
+      - path: "patrons_data.py"
+        language: "python"
+        content: |
+          from models import Patron
+
+
+          PATRONS: list[Patron] = [
+              {"patron_id": "p100", "name": "Maya Chen", "plan": "student", "unpaid_fine": 15.0, "active": True},
+              {"patron_id": "p101", "name": "Jordan Kim", "plan": "faculty", "unpaid_fine": 0.0, "active": True},
+              {"patron_id": "p102", "name": "Alex Park", "plan": "alumni", "unpaid_fine": 25.0, "active": True},
+              {"patron_id": "p103", "name": "Sam Reyes", "plan": "student", "unpaid_fine": 0.0, "active": False},
+              {"patron_id": "p104", "name": "Robin Tan", "plan": "faculty", "unpaid_fine": 5.0, "active": True},
+              {"patron_id": "p105", "name": "Devi Rao", "plan": "alumni", "unpaid_fine": 0.0, "active": True},
+          ]
+      - path: "loans_data.py"
+        language: "python"
+        content: |
+          from models import Loan
+
+
+          LOANS: list[Loan] = [
+              {"loan_id": "l001", "patron_id": "p100", "isbn": "978-002", "day_out": 5, "day_due": 19, "returned": False},
+              {"loan_id": "l002", "patron_id": "p101", "isbn": "978-003", "day_out": 1, "day_due": 15, "returned": True},
+              {"loan_id": "l003", "patron_id": "p102", "isbn": "978-004", "day_out": 8, "day_due": 22, "returned": False},
+              {"loan_id": "l004", "patron_id": "p104", "isbn": "978-001", "day_out": 12, "day_due": 26, "returned": False},
+              {"loan_id": "l005", "patron_id": "p105", "isbn": "978-006", "day_out": 14, "day_due": 28, "returned": False},
+          ]
+      - path: "lending_service.py"
+        language: "python"
+        content: |
+          """Orchestrates the lending workflow: lookup, policy check, loan creation."""
+
+          from books_data import BOOKS
+          from patrons_data import PATRONS
+          from loans_data import LOANS
+          from models import Book, Patron, Loan
+          from policy_service import can_borrow
+
+
+          def find_book(isbn: str) -> Book | None:
+              return next((book for book in BOOKS if book["isbn"] == isbn), None)
+
+
+          def find_patron(patron_id: str) -> Patron | None:
+              return next((patron for patron in PATRONS if patron["patron_id"] == patron_id), None)
+
+
+          def next_loan_id() -> str:
+              return f"l{len(LOANS) + 1:03d}"
+
+
+          def lend_book(patron_id: str, isbn: str, today: int) -> dict:
+              patron = find_patron(patron_id)
+              if patron is None:
+                  return {"status": "error", "reason": "patron not found"}
+
+              book = find_book(isbn)
+              if book is None or not book["available"]:
+                  return {"status": "error", "reason": "book unavailable"}
+
+              decision = can_borrow(patron)
+              if not decision["allowed"]:
+                  return {"status": "denied", "reason": decision["reason"]}
+
+              new_loan: Loan = {
+                  "loan_id": next_loan_id(),
+                  "patron_id": patron_id,
+                  "isbn": isbn,
+                  "day_out": today,
+                  "day_due": today + 14,
+                  "returned": False,
+              }
+              LOANS.append(new_loan)
+              book["available"] = False
+              return {"status": "ok", "loan": new_loan}
+
+
+          def return_book(loan_id: str) -> dict:
+              loan = next((entry for entry in LOANS if entry["loan_id"] == loan_id), None)
+              if loan is None or loan["returned"]:
+                  return {"status": "error", "reason": "loan not active"}
+              loan["returned"] = True
+              book = find_book(loan["isbn"])
+              if book is not None:
+                  book["available"] = True
+              return {"status": "ok", "loan_id": loan_id}
+      - path: "policy_service.py"
+        language: "python"
+        content: |
+          """Encodes loan policy. The borrow-eligibility decision lives here."""
+
+          from models import Patron
+
+
+          MAX_FINE_BEFORE_BLOCK = 20.0  # NOTE: handbook says $10 — code disagrees
+          MAX_ACTIVE_LOANS = {"student": 3, "faculty": 8, "alumni": 2}
+
+
+          def can_borrow(patron: Patron) -> dict:
+              if not patron["active"]:
+                  return {"allowed": False, "reason": "patron account inactive"}
+
+              if patron["unpaid_fine"] > MAX_FINE_BEFORE_BLOCK:
+                  return {"allowed": False, "reason": "unpaid fine exceeds limit"}
+
+              return {"allowed": True, "reason": ""}
+
+
+          def borrow_limit(patron: Patron) -> int:
+              return MAX_ACTIVE_LOANS.get(patron["plan"], 1)
+      - path: "fines_service.py"
+        language: "python"
+        content: |
+          """Calculates fines for overdue loans. Does NOT enforce borrow policy."""
+
+          from loans_data import LOANS
+          from patrons_data import PATRONS
+
+
+          DAILY_FINE = 0.50
+          GRACE_DAYS = 2
+
+
+          def overdue_days(loan: dict, today: int) -> int:
+              if loan["returned"]:
+                  return 0
+              return max(today - loan["day_due"] - GRACE_DAYS, 0)
+
+
+          def fine_for_loan(loan: dict, today: int) -> float:
+              return overdue_days(loan, today) * DAILY_FINE
+
+
+          def total_fines_due_today(patron_id: str, today: int) -> float:
+              patron_loans = [loan for loan in LOANS if loan["patron_id"] == patron_id]
+              return sum(fine_for_loan(loan, today) for loan in patron_loans)
+
+
+          def add_fine_to_patron(patron_id: str, amount: float) -> None:
+              patron = next((p for p in PATRONS if p["patron_id"] == patron_id), None)
+              if patron is not None:
+                  patron["unpaid_fine"] += amount
+
+
+          def clear_fine_for_patron(patron_id: str) -> None:
+              patron = next((p for p in PATRONS if p["patron_id"] == patron_id), None)
+              if patron is not None:
+                  patron["unpaid_fine"] = 0.0
+      - path: "reports_service.py"
+        language: "python"
+        content: |
+          """Librarian dashboard reports. Not part of the lending decision path."""
+
+          from books_data import BOOKS
+          from loans_data import LOANS
+          from patrons_data import PATRONS
+
+
+          def patrons_with_unpaid_fines() -> list[dict]:
+              return [
+                  {"name": patron["name"], "fine": patron["unpaid_fine"]}
+                  for patron in PATRONS
+                  if patron["unpaid_fine"] > 0
+              ]
+
+
+          def available_book_count() -> int:
+              return sum(1 for book in BOOKS if book["available"])
+
+
+          def overdue_loan_summary(today: int) -> dict:
+              overdue = [
+                  loan for loan in LOANS
+                  if not loan["returned"] and loan["day_due"] < today
+              ]
+              return {"count": len(overdue), "loan_ids": [loan["loan_id"] for loan in overdue]}
+
+
+          def loans_by_plan() -> dict:
+              counts: dict[str, int] = {}
+              for loan in LOANS:
+                  patron = next((p for p in PATRONS if p["patron_id"] == loan["patron_id"]), None)
+                  if patron is None:
+                      continue
+                  counts[patron["plan"]] = counts.get(patron["plan"], 0) + 1
+              return counts
+      - path: "audit_service.py"
+        language: "python"
+        content: |
+          """Audit log helpers. Used by librarian admin tools, not by borrowing."""
+
+          from loans_data import LOANS
+
+
+          def loan_history_for_patron(patron_id: str) -> list[dict]:
+              return [dict(loan) for loan in LOANS if loan["patron_id"] == patron_id]
+
+
+          def open_loan_ids() -> list[str]:
+              return [loan["loan_id"] for loan in LOANS if not loan["returned"]]
+
+
+          def returned_loan_ids() -> list[str]:
+              return [loan["loan_id"] for loan in LOANS if loan["returned"]]
+
+
+          def loan_count() -> int:
+              return len(LOANS)
+      - path: "test_lending.py"
+        language: "python"
+        content: |
+          """Behavior tests. Read these first to learn the spec."""
+
+          from policy_service import can_borrow
+
+
+          def test_inactive_patron_blocked() -> None:
+              patron = {"patron_id": "p999", "name": "X", "plan": "student", "unpaid_fine": 0.0, "active": False}
+              decision = can_borrow(patron)
+              assert decision["allowed"] is False
+              assert "inactive" in decision["reason"]
+
+
+          def test_patron_with_large_fine_blocked() -> None:
+              patron = {"patron_id": "p999", "name": "X", "plan": "student", "unpaid_fine": 25.0, "active": True}
+              decision = can_borrow(patron)
+              assert decision["allowed"] is False
+              assert "fine" in decision["reason"]
+
+
+          def test_patron_with_no_fine_allowed() -> None:
+              patron = {"patron_id": "p999", "name": "X", "plan": "student", "unpaid_fine": 0.0, "active": True}
+              decision = can_borrow(patron)
+              assert decision["allowed"] is True
+
+
+          if __name__ == "__main__":
+              test_inactive_patron_blocked()
+              test_patron_with_large_fine_blocked()
+              test_patron_with_no_fine_allowed()
+              print("all tests passed")
+
+    open_file: "test_lending.py"
+    run_file: "test_lending.py"
+
+    quiz:
+      title: "Step 8 — Reading Boss Audit"
+      min_score: 0.8
+      shuffle: true
+      shuffle_questions: false
+      questions:
+        - type: single
+          difficulty: basic
+          question: "What is the smallest correct reading path for this incident, given a 7-minute budget?"
+          options:
+            - "Read `test_lending.py`, then `policy_service.py`, then check Maya's record in `patrons_data.py`."
+            - "Read every file from `models.py` to `test_lending.py` in alphabetical order."
+            - "Read only `fines_service.py` because the bug report mentions fines."
+            - "Read every helper in `lending_service.py` line by line before looking at policy."
+          correct_index: 0
+          option_feedback:
+            1: "Alphabetical reading burns the time budget on incidental files like `reports_service.py` and `audit_service.py`."
+            2: "`fines_service.py` calculates fines but does not enforce borrowing policy. It is the realistic false beacon for this question."
+            3: "The lending service orchestrates; the policy decision is delegated to `policy_service.py`. Reading every line of the orchestrator is bottom-up under time pressure."
+          explanation: "The routine for code that exceeds your reading budget: tests for the spec, the policy file for the decision, the data file to verify the specific patron. Three files instead of ten."
+
+        - type: single
+          difficulty: intermediate
+          question: "Where is the borrow-eligibility decision actually implemented?"
+          options:
+            - "`policy_service.py::can_borrow()`"
+            - "`fines_service.py::total_fines_due_today()`"
+            - "`lending_service.py::find_patron()`"
+            - "`reports_service.py::patrons_with_unpaid_fines()`"
+          correct_index: 0
+          option_feedback:
+            1: "This helper sums overdue fines from loans; it does not decide whether borrowing is allowed."
+            2: "This is a lookup helper. It returns a patron record but does not gate borrowing."
+            3: "This is a dashboard report. It produces display data, not enforcement."
+          explanation: "The file name `policy_service.py` is itself an architectural beacon. The decision lives in `can_borrow()`, called from the lending orchestrator."
+
+        - type: single
+          difficulty: intermediate
+          question: "Why did Maya's loan succeed even though her $15 fine exceeds the handbook's $10 limit?"
+          options:
+            - "`MAX_FINE_BEFORE_BLOCK` is set to `20.0` in `policy_service.py`, so $15 passes the check."
+            - "`fines_service.py` clears Maya's fine to zero before the policy check runs."
+            - "Student patrons are exempt from fine checks in `policy_service.py`."
+            - "`reports_service.py` overrides the policy because it lists Maya as a regular patron."
+          correct_index: 0
+          option_feedback:
+            1: "`clear_fine_for_patron` exists in fines_service, but it is never called from the lending path."
+            2: "No plan-based exemption appears in `can_borrow()`. The only branches are `active` and `unpaid_fine > MAX_FINE_BEFORE_BLOCK`."
+            3: "Reports do not run on the lending path. The bug is a constant value mismatch, not a runtime override."
+          explanation: "The code says $20, the handbook says $10. $15 sits in the gap. A classic spec-vs-implementation drift — and a reminder that comments and constants are weaker beacons than tests for actual behavior."
+
+        - type: multiple
+          difficulty: advanced
+          question: "Classify the files you encountered. Which are CENTRAL evidence for this incident?"
+          options:
+            - "`policy_service.py` — owns the eligibility decision."
+            - "`test_lending.py` — pins down the spec."
+            - "`patrons_data.py` — supplies Maya's record."
+            - "`fines_service.py` — calculates fine amounts."
+            - "`reports_service.py` — generates librarian dashboards."
+            - "`audit_service.py` — exposes loan history."
+          correct_indices: [0, 1, 2]
+          option_feedback:
+            0: "Owning the decision makes it central, not just supporting."
+            1: "Spec evidence is central for any 'where is the rule' question."
+            2: "Maya's data is central evidence for *this* patron's case."
+            3: "Calculating ≠ enforcing. This is the realistic false beacon for the question."
+            4: "Reports never run on the lending path. Incidental."
+            5: "Audit helpers run on admin tooling, not on borrowing. Incidental."
+          explanation: "Central = owns the decision or pins the spec. Supporting = supplies necessary data. Incidental = nearby but never on the runtime path. Concept location in a real codebase is mostly about *what to skip*."
+
+        - type: single
+          difficulty: advanced
+          question: "Spaced retrieval — In `lending_service.lend_book()`, what role does the local `decision` variable play?"
+          options:
+            - "Holder / candidate: it stores the policy result so the caller can branch on it."
+            - "Accumulator: it sums permission scores across multiple policy checks."
+            - "Stepper: it iterates through patrons one at a time."
+            - "Flag: it records whether the loan has been returned."
+          correct_index: 0
+          option_feedback:
+            1: "Only one policy call happens; there is no accumulation."
+            2: "No iteration over patrons happens in `lend_book()`."
+            3: "Loan returns happen in a different helper, and `decision` lives only inside `lend_book()`."
+          explanation: "Variable roles, revisited from Step 5: a single-value holder of an intermediate result. Recognizing the role compresses three lines into one mental chunk."
+
+        - type: single
+          difficulty: advanced
+          question: "Why are the existing tests in `test_lending.py` insufficient to catch this bug?"
+          options:
+            - "They probe $0 (allowed) and $25 (blocked), but nothing in the $10–$20 range where the bug actually lives."
+            - "They use the wrong `assert` syntax and silently pass."
+            - "They check the wrong helper (`find_patron` instead of `can_borrow`)."
+            - "They depend on `fines_service.py` which has its own bug."
+          correct_index: 0
+          option_feedback:
+            1: "The assertions are standard Python; they would fail loudly on wrong output."
+            2: "The tests do call `can_borrow()`."
+            3: "Tests do not import the fines service."
+          explanation: "Boundary tests are the natural place to catch threshold drift. The current tests probe well below and well above the contested boundary but never inside it. A regression test at `unpaid_fine = 11.0` would have caught this immediately."
+
+        - type: single
+          difficulty: expert
+          question: "Which final EiPE-style explanation best fits the evidence?"
+          options:
+            - "Purpose: enforce a $10 fine ceiling per the handbook. Mechanism: `policy_service.can_borrow()` checks `unpaid_fine > MAX_FINE_BEFORE_BLOCK`. Evidence: Maya at $15 passes because the constant is set to $20. Limit: I did not verify whether `borrow_limit` or active-loan count has a similar drift."
+            - "Purpose: track overdue books. Mechanism: `fines_service` calculates fines daily. Evidence: Maya has overdue items. Limit: none."
+            - "Purpose: report on library activity. Mechanism: `reports_service` lists patrons. Evidence: Maya is in the report. Limit: reports are unreliable."
+            - "Purpose: prevent inactive accounts from borrowing. Mechanism: `can_borrow` checks `active`. Evidence: Maya is active. Limit: none."
+          correct_index: 0
+          option_feedback:
+            1: "That summary describes the fines service correctly but never explains the *enforcement* bug. It mistakes calculation for enforcement — the realistic false beacon."
+            2: "Reports do not affect lending. This is the incidental file masquerading as a central one."
+            3: "Activity is necessary but not sufficient. The fine check is what fails."
+          explanation: "A strong final summary names the spec drift, points at the exact constant, and is honest about what was not verified. EiPE is not bragging — the Limit line is where good reviewers earn trust."
