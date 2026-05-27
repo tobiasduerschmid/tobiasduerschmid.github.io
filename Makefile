@@ -44,7 +44,7 @@ run: check
 	bundle exec jekyll serve --incremental --port $(JEKYLL_PORT)
 
 test-run: test-check
-	bundle exec jekyll serve --incremental --port $(JEKYLL_PORT)
+	bundle exec jekyll serve --skip-initial-build --port $(JEKYLL_PORT)
 
 run-hero-fast:
 	bundle exec jekyll serve --incremental --port $(JEKYLL_PORT)

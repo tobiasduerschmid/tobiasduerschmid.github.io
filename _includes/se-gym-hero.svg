@@ -45,8 +45,8 @@
     <linearGradient id="steel-dark-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b6470"/><stop offset=".5" stop-color="#aab3be"/><stop offset="1" stop-color="#2a323d"/></linearGradient>
     <radialGradient id="plate-face-{{ hero_variant }}" cx=".38" cy=".3" r=".95"><stop offset="0" stop-color="#58bff4"/><stop offset=".52" stop-color="#1f82ce"/><stop offset="1" stop-color="#00345f"/></radialGradient>
     <radialGradient id="plate-face-dark-{{ hero_variant }}" cx=".4" cy=".32" r=".95"><stop offset="0" stop-color="#237fc2"/><stop offset=".55" stop-color="#0e4a87"/><stop offset="1" stop-color="#001428"/></radialGradient>
-    <radialGradient id="plate-glow-{{ hero_variant }}" cx=".5" cy=".48" r=".62"><stop offset="0" stop-color="#7fdcff" stop-opacity=".28"/><stop offset=".72" stop-color="#3aa7ff" stop-opacity=".16"/><stop offset="1" stop-color="#3aa7ff" stop-opacity="0"/></radialGradient>
-    <radialGradient id="hero-stage-glow-{{ hero_variant }}" cx=".5" cy=".18" r=".78"><stop offset="0" stop-color="#edf7ff" stop-opacity=".2"/><stop offset=".42" stop-color="#82bde8" stop-opacity=".12"/><stop offset="1" stop-color="#081325" stop-opacity="0"/></radialGradient>
+    <radialGradient id="plate-glow-{{ hero_variant }}" cx=".5" cy=".48" r=".62"><stop offset="0" stop-color="#7fdcff" stop-opacity=".18"/><stop offset=".72" stop-color="#3aa7ff" stop-opacity=".09"/><stop offset="1" stop-color="#3aa7ff" stop-opacity="0"/></radialGradient>
+    <radialGradient id="hero-stage-glow-{{ hero_variant }}" cx=".5" cy=".18" r=".78"><stop offset="0" stop-color="#edf7ff" stop-opacity=".16"/><stop offset=".42" stop-color="#82bde8" stop-opacity=".08"/><stop offset="1" stop-color="#081325" stop-opacity="0"/></radialGradient>
     <radialGradient id="brain-glow-{{ hero_variant }}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFE470" stop-opacity=".55"/><stop offset=".55" stop-color="#FFD100" stop-opacity=".18"/><stop offset="1" stop-color="#FFD100" stop-opacity="0"/></radialGradient>
     <linearGradient id="hair-grad-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="var(--hero-hair-light, #4a3220)"/>
@@ -185,7 +185,7 @@
       .se-gym-hero-svg-{{ hero_variant }} [data-hero-head-assembly] [data-hero-option="messenger-bag"],
       .se-gym-hero-svg-{{ hero_variant }} [data-hero-head-assembly] [data-hero-option="circuit-pin"],
       .se-gym-hero-svg-{{ hero_variant }} [data-hero-head-assembly] [data-hero-option="code-patch"],
-      .se-gym-hero-svg-{{ hero_variant }} [data-hero-head-assembly] [data-hero-option="utility-belt"]{transform:scale(.8928571429);transform-box:view-box;transform-origin:400px 252px;}
+      .se-gym-hero-svg-{{ hero_variant }} [data-hero-head-assembly] [data-hero-option="utility-belt"]{transform:scale(.8620689655);transform-box:view-box;transform-origin:400px 252px;}
 
       .se-gym-hero-svg-{{ hero_variant }} [data-hero-motion="eye-blink"],
       .se-gym-hero-svg-{{ hero_variant }} [data-hero-motion="lower-face-breath-position"]{transform-box:view-box;}
@@ -1437,7 +1437,7 @@
     <!-- Tiny sleeve seams suggest fabric without adding visible shoulder pads. -->
     <path d="M 312 270 C 324 264, 338 264, 350 270" stroke="var(--hero-suit-dark, #04375d)" stroke-width="2.10" fill="none" stroke-linecap="round" opacity=".18"/>
     <path d="M 488 270 C 476 264, 462 264, 450 270" stroke="var(--hero-suit-dark, #04375d)" stroke-width="2.10" fill="none" stroke-linecap="round" opacity=".18"/>
-    <g data-hero-head-assembly transform="translate(400 236) scale(1.12) translate(-400 -236)">
+    <g data-hero-head-assembly transform="translate(400 236) scale(1.16) translate(-400 -236)">
       <g data-hero-slot="ear-shape" data-hero-option="oval">
         <g data-hero-face-detail="ear-left">
           <ellipse cx="352" cy="190" rx="7" ry="10" fill="url(#skin-{{ hero_variant }})" stroke="var(--hero-face-line, #7a4a2a)" stroke-width="1.50"/>
@@ -3945,8 +3945,8 @@
       </g>
       <g data-hero-slot="accessory" data-hero-option="none"></g>
       <g data-hero-slot="accessory" data-hero-option="headband" display="none">
-        <rect x="348" y="158" width="104" height="14" rx="3" fill="#d34a4a"/>
-        <rect x="348" y="160" width="104" height="3" fill="#ff8a8a" opacity=".7"/>
+        <rect x="344" y="158" width="112" height="20" rx="3" fill="#d34a4a"/>
+        <rect x="344" y="160" width="112" height="3" fill="#ff8a8a" opacity=".7"/>
       </g>
       <g data-hero-slot="accessory" data-hero-option="earrings" display="none">
         <circle cx="354" cy="200" r="3.5" fill="#FFD100"/>
@@ -4083,8 +4083,8 @@
         <circle cx="400" cy="170" r="1.2" fill="#FFD100" opacity=".9"/>
       </g>
       <g data-hero-slot="accessory" data-hero-option="beanie" display="none">
-        <path d="M 350 154 C 350 130, 370 116, 400 116 C 430 116, 450 130, 450 154 L 450 168 L 350 168 Z" fill="#4a8060"/>
-        <rect x="350" y="164" width="100" height="8" fill="#365e48"/>
+        <path d="M 344 154 C 344 130, 368 116, 400 116 C 432 116, 456 130, 456 154 L 456 180 L 344 180 Z" fill="#4a8060"/>
+        <rect x="344" y="164" width="112" height="16" fill="#365e48"/>
         <circle cx="400" cy="112" r="5" fill="#fffaf0"/>
       </g>
       <g data-hero-slot="accessory" data-hero-option="baseball-cap" display="none">
@@ -4961,7 +4961,7 @@
       <rect x="474" y="92" width="34" height="18" rx="6" fill="url(#gold-{{ hero_variant }})" stroke="#5a3f00" stroke-width="2.40"/>
       <rect x="474" y="94" width="34" height="3.5" fill="#fff6c0" opacity=".8"/>
     </g>
-    <g data-hero-barbell transform="translate(400 85) scale(.86) translate(-400 -85)">
+    <g data-hero-barbell transform="translate(400 85) scale(.78) translate(-400 -85)">
       <rect x="110" y="74" width="580" height="24" rx="4" fill="url(#steel-{{ hero_variant }})" stroke="#25303d" stroke-width="1.5"/>
       <rect x="110" y="76" width="580" height="3" rx="1.5" fill="#ffffff" opacity=".55"/>
       <rect x="110" y="94" width="580" height="2" rx="1" fill="#000000" opacity=".25"/>
@@ -4983,10 +4983,10 @@
         <circle r="60" fill="url(#plate-glow-{{ hero_variant }})"/>
         <circle r="57" fill="#001428" opacity=".44"/>
         <circle r="54" fill="url(#gold-radial-{{ hero_variant }})"/>
-        <circle r="49" fill="none" stroke="#fff6c0" stroke-width="1.65" opacity=".48"/>
+        <circle r="49" fill="none" stroke="#fff6c0" stroke-width="1.65" opacity=".34"/>
         <circle r="46" fill="url(#plate-face-dark-{{ hero_variant }})"/>
         <circle r="46" fill="none" stroke="#001428" stroke-width="2.7"/>
-        <path d="M -32 -32 Q -4 -43 28 -32" stroke="#ffffff" stroke-width="3.3" fill="none" opacity=".28" stroke-linecap="round"/>
+        <path d="M -32 -32 Q -4 -43 28 -32" stroke="#ffffff" stroke-width="3.3" fill="none" opacity=".2" stroke-linecap="round"/>
         <ellipse cx="0" cy="-32" rx="5" ry="7" fill="#001428" opacity=".68"/>
         <ellipse cx="32" cy="0" rx="7" ry="5" fill="#001428" opacity=".68"/>
         <ellipse cx="0" cy="32" rx="5" ry="7" fill="#001428" opacity=".68"/>
@@ -4998,7 +4998,7 @@
         <circle r="86" fill="#001428" opacity=".5"/>
         <circle r="82" fill="url(#gold-radial-{{ hero_variant }})"/>
         <circle r="82" fill="none" stroke="#5a3f00" stroke-width="2"/>
-        <circle r="74" fill="none" stroke="#fff6c0" stroke-width="1.4" opacity=".75"/>
+        <circle r="74" fill="none" stroke="#fff6c0" stroke-width="1.4" opacity=".58"/>
         <circle r="69" fill="none" stroke="#5a3f00" stroke-width="1.2" opacity=".5"/>
         <circle r="66" fill="url(#plate-face-{{ hero_variant }})"/>
         <circle r="66" fill="none" stroke="#001428" stroke-width="2.5"/>
@@ -5007,8 +5007,8 @@
         <ellipse cx="50" cy="0" rx="8" ry="5" fill="#001428" opacity=".55"/>
         <ellipse cx="0" cy="50" rx="5" ry="8" fill="#001428" opacity=".55"/>
         <ellipse cx="-50" cy="0" rx="8" ry="5" fill="#001428" opacity=".55"/>
-        <path d="M -50 -52 Q -10 -66 38 -50" stroke="#ffffff" stroke-width="3.5" fill="none" opacity=".4" stroke-linecap="round"/>
-        <path d="M -42 -44 Q -5 -55 32 -44" stroke="#ffffff" stroke-width="1.5" fill="none" opacity=".25" stroke-linecap="round"/>
+        <path d="M -50 -52 Q -10 -66 38 -50" stroke="#ffffff" stroke-width="3.5" fill="none" opacity=".26" stroke-linecap="round"/>
+        <path d="M -42 -44 Q -5 -55 32 -44" stroke="#ffffff" stroke-width="1.5" fill="none" opacity=".16" stroke-linecap="round"/>
         <g data-hero-topic-rotator="left" color="#ffffff">
           <g data-hero-topic-image="code" opacity="1">
             <use href="#hero-topic-icon-code-{{ hero_variant }}"/>
@@ -5042,10 +5042,10 @@
         <circle r="60" fill="url(#plate-glow-{{ hero_variant }})"/>
         <circle r="57" fill="#001428" opacity=".44"/>
         <circle r="54" fill="url(#gold-radial-{{ hero_variant }})"/>
-        <circle r="49" fill="none" stroke="#fff6c0" stroke-width="1.65" opacity=".48"/>
+        <circle r="49" fill="none" stroke="#fff6c0" stroke-width="1.65" opacity=".34"/>
         <circle r="46" fill="url(#plate-face-dark-{{ hero_variant }})"/>
         <circle r="46" fill="none" stroke="#001428" stroke-width="2.7"/>
-        <path d="M -32 -32 Q -4 -43 28 -32" stroke="#ffffff" stroke-width="3.3" fill="none" opacity=".28" stroke-linecap="round"/>
+        <path d="M -32 -32 Q -4 -43 28 -32" stroke="#ffffff" stroke-width="3.3" fill="none" opacity=".2" stroke-linecap="round"/>
         <ellipse cx="0" cy="-32" rx="5" ry="7" fill="#001428" opacity=".68"/>
         <ellipse cx="32" cy="0" rx="7" ry="5" fill="#001428" opacity=".68"/>
         <ellipse cx="0" cy="32" rx="5" ry="7" fill="#001428" opacity=".68"/>
@@ -5057,7 +5057,7 @@
         <circle r="86" fill="#001428" opacity=".5"/>
         <circle r="82" fill="url(#gold-radial-{{ hero_variant }})"/>
         <circle r="82" fill="none" stroke="#5a3f00" stroke-width="2"/>
-        <circle r="74" fill="none" stroke="#fff6c0" stroke-width="1.4" opacity=".75"/>
+        <circle r="74" fill="none" stroke="#fff6c0" stroke-width="1.4" opacity=".58"/>
         <circle r="69" fill="none" stroke="#5a3f00" stroke-width="1.2" opacity=".5"/>
         <circle r="66" fill="url(#plate-face-{{ hero_variant }})"/>
         <circle r="66" fill="none" stroke="#001428" stroke-width="2.5"/>
@@ -5066,8 +5066,8 @@
         <ellipse cx="50" cy="0" rx="8" ry="5" fill="#001428" opacity=".55"/>
         <ellipse cx="0" cy="50" rx="5" ry="8" fill="#001428" opacity=".55"/>
         <ellipse cx="-50" cy="0" rx="8" ry="5" fill="#001428" opacity=".55"/>
-        <path d="M -50 -52 Q -10 -66 38 -50" stroke="#ffffff" stroke-width="3.5" fill="none" opacity=".4" stroke-linecap="round"/>
-        <path d="M -42 -44 Q -5 -55 32 -44" stroke="#ffffff" stroke-width="1.5" fill="none" opacity=".25" stroke-linecap="round"/>
+        <path d="M -50 -52 Q -10 -66 38 -50" stroke="#ffffff" stroke-width="3.5" fill="none" opacity=".26" stroke-linecap="round"/>
+        <path d="M -42 -44 Q -5 -55 32 -44" stroke="#ffffff" stroke-width="1.5" fill="none" opacity=".16" stroke-linecap="round"/>
         <g data-hero-topic-rotator="right" color="#ffffff">
           <g data-hero-topic-image="code" opacity="1">
             <use href="#hero-topic-icon-code-{{ hero_variant }}"/>

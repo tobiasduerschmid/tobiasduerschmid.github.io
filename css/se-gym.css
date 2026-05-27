@@ -167,15 +167,15 @@
     .se-gym-hero-svg [data-hero-slot="head-shape"],
     .se-gym-hero-svg [data-hero-slot="face-clear"] {
       filter:
-        drop-shadow(0 0 0.8px var(--hero-skin-highlight, rgba(255, 226, 185, 0.35)))
-        drop-shadow(0 1px 1px var(--hero-feature-shadow, rgba(0, 47, 82, 0.18)));
+        drop-shadow(0 0 0.45px var(--hero-skin-highlight, rgba(255, 226, 185, 0.28)))
+        drop-shadow(0 0.75px 0.75px var(--hero-feature-shadow, rgba(0, 47, 82, 0.14)));
     }
     .se-gym-hero-svg [data-hero-slot="hair"],
     .se-gym-hero-svg [data-hero-slot="hairline"],
     .se-gym-hero-svg [data-hero-slot="hair-root"] {
       filter:
-        drop-shadow(0 0 1.2px var(--hero-hair-rim, rgba(255, 226, 185, 0.4)))
-        drop-shadow(0 1px 1px var(--hero-hair-shadow, rgba(0, 47, 82, 0.22)));
+        drop-shadow(0 0 0.65px var(--hero-hair-rim, rgba(255, 226, 185, 0.32)))
+        drop-shadow(0 0.75px 0.75px var(--hero-hair-shadow, rgba(0, 47, 82, 0.16)));
     }
     .se-gym-hero-svg [data-hero-slot="eyebrow"],
     .se-gym-hero-svg [data-hero-slot="eye-shape"],
@@ -185,8 +185,8 @@
     .se-gym-hero-svg [data-hero-slot="facial-hair"],
     .se-gym-hero-svg [data-hero-slot="accessory"] {
       filter:
-        drop-shadow(0 0 0.45px var(--hero-feature-rim, rgba(255, 226, 185, 0.45)))
-        drop-shadow(0 0.8px 0.8px var(--hero-feature-shadow, rgba(0, 0, 0, 0.2)));
+        drop-shadow(0 0 0.3px var(--hero-feature-rim, rgba(255, 226, 185, 0.36)))
+        drop-shadow(0 0.55px 0.55px var(--hero-feature-shadow, rgba(0, 0, 0, 0.16)));
     }
     .se-gym-hero-svg [data-hero-slot="head-shape"] path[fill*="--hero-face-line"],
     .se-gym-hero-svg [data-hero-slot="head-features"] path[stroke*="--hero-face-line"] {
