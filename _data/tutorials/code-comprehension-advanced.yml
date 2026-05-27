@@ -163,7 +163,9 @@ steps:
   # =========================================================================
   # STEP 2: Tests as Specification Beacons
   # =========================================================================
-  # Pedagogy: spaced retrieval + worked example — tests first, implementation second
+  # Pedagogy: spaced retrieval + worked example — tests first, implementation second.
+  # Variation Theory: same test shape with different implementation responsibility,
+  # so learners separate "what the test looks like" from "what mechanism it points to."
   - title: "Tests as Specification Beacons"
     backend: webcontainer
     instructions: |
@@ -206,6 +208,20 @@ steps:
       | "low energy gives solo sessions a boost" | A branch involving `energy` and `mode` |
 
       This keeps your attention on the behavior the tests actually promise. You can always trace more later, but first you should know what you are trying to prove.
+
+      ### Contrast Set
+
+      The tests have similar surface shapes, but they point to different
+      implementation responsibilities:
+
+      | Test clue | Similar surface shape | Different mechanism to inspect |
+      |---|---|---|
+      | "returns the only session that fits" | Calls `pickSessionPlan()` and checks returned titles | Minutes filter |
+      | "places a matching topic first" | Calls `pickSessionPlan()` and checks returned titles | Scoring plus sort order |
+      | "solo sessions a low-energy bonus" | Uses the same request fields | `scoreSession()` branch |
+
+      Same test shape, different implementation responsibility. Do not read
+      every public-function test as pointing to the same line of code.
 
       In this step, read `sessionPlanner.test.js` before `sessionPlanner.js`. Your first hypothesis should be about behavior, not implementation:
 
@@ -384,6 +400,21 @@ steps:
             2: "Re-reading the same tests does not add information."
             3: "Writing tests is a separate workflow; comprehension is reading-only here."
           explanation: "Routine recap (Part 1, Step 1): tests give you the spec layer (Orient + Predict). The next move is beacon-hunting in the implementation, then descending selectively into the helpers that match each contract clause. Never trace before the hypothesis exists."
+
+        - type: single
+          difficulty: advanced
+          question: "Two tests both call `pickSessionPlan()` and assert returned titles. What contrast should guide your implementation reading?"
+          options:
+            - "Similar test shape can point to different mechanisms: minutes filtering versus topic ranking."
+            - "Similar test shape always means both tests are verified by the same implementation line."
+            - "The test with more words in its name must point to the more important helper."
+            - "Once tests call the same public function, helper boundaries stop mattering."
+          correct_index: 0
+          option_feedback:
+            1: "Both tests use the same public entry point, but one is about filtering and the other is about ranking."
+            2: "Name length is not a behavior beacon."
+            3: "The public function coordinates helpers; the contrast tells you which helper to inspect for each contract clue."
+          explanation: "Variation Theory: hold the test surface mostly constant, then vary the contract clue. The mechanism that matters is the feature that changes."
 
   # =========================================================================
   # STEP 3: Node Hypothesis Sprint
@@ -1037,7 +1068,9 @@ steps:
   # =========================================================================
   # STEP 5: Backend Interaction Sprint
   # =========================================================================
-  # Pedagogy: timed transfer practice — larger Node example with cross-file flow
+  # Pedagogy: timed transfer practice — larger Node example with cross-file flow.
+  # Variation Theory: same route-test shape with different runtime responsibility
+  # paths, so learners map contract clues to mechanisms instead of file-hopping.
   - title: "Backend Interaction Sprint"
     backend: webcontainer
     max-time: 15
@@ -1067,6 +1100,18 @@ steps:
       stock, subtotal, and coupon flow. Stretch target: diagnose the weak
       `TEA3` coupon beacon and identify the incidental receipt formatter.
 
+      ### Contrast Set
+
+      Compare the two route tests before opening production code:
+
+      | Test clue | Same surface shape | Different responsibility path |
+      |---|---|---|
+      | Successful quote applies `STUDY10` | Calls `quoteCheckout()` and asserts status/body | Route → stock check → subtotal → discount |
+      | Out-of-stock items return `409` | Calls `quoteCheckout()` and asserts status/body | Route → stock check → early response |
+
+      Same route-test shape, different implementation responsibility. The
+      contrast tells you which helpers to read and which helpers to skip.
+
       Practice mode: on your first attempt, use the `+5 min` button if you are
       still collecting evidence. On a replay, try finishing inside the original
       15 minutes. Before the quiz, write one reflection line about what you
@@ -1093,6 +1138,11 @@ steps:
           Smallest trace:
 
           Central / supporting / incidental files:
+
+          Contrast set:
+          - Same test shape:
+          - Different runtime paths:
+          - Helper I can skip for the error path:
 
           Final EiPE summary:
 
@@ -2091,7 +2141,9 @@ steps:
   # =========================================================================
   # STEP 8: Dashboard Access Sprint
   # =========================================================================
-  # Pedagogy: capstone transfer — realistic false beacon across route/service/config files
+  # Pedagogy: capstone transfer — realistic false beacon across route/service/config files.
+  # Variation Theory: same flag-shaped surface cue with different runtime
+  # purposes, so learners verify which property is actually on the path.
   - title: "Dashboard Access Sprint"
     backend: webcontainer
     max-time: 13
@@ -2120,6 +2172,20 @@ steps:
       - Which `featureFlags` property is read by the route?
       - Where is `betaDashboard: true` read, if at all, on the tab-building path?
 
+      ### Contrast Set
+
+      Compare these similar-looking cues before trusting either one:
+
+      | Cue | Same surface shape | Different runtime purpose |
+      |---|---|---|
+      | `featureFlags.welcomeBanner` | Flag-shaped config value | Read by the route to choose banner text |
+      | `featureFlags.betaDashboard` | Flag-shaped config value | Present in config, but not read on the Labs-tab path |
+      | `user.betaInvite` | Boolean access-looking value | Read by policy and can affect Labs access |
+
+      Same surface cue, different purpose. The critical feature is not "looks
+      like a flag"; it is whether the value is read on the runtime path that
+      answers the question.
+
       Practice mode: on your first attempt, use the `+5 min` button if you are
       still collecting evidence. On a replay, try finishing inside the original
       13 minutes. Before the quiz, write one reflection line about what you
@@ -2139,6 +2205,11 @@ steps:
           Test evidence:
 
           Runtime path:
+
+          Contrast set:
+          - Same surface cue:
+          - Runtime purpose that differs:
+          - Critical feature that explains the difference:
 
           Evidence that changes or strengthens the hypothesis:
 

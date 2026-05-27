@@ -1608,7 +1608,9 @@ steps:
   # =========================================================================
   # STEP 7: Python Plan Transfer Sprint
   # =========================================================================
-  # Pedagogy: timed transfer practice — interleaved plan recognition with targeted tracing
+  # Pedagogy: timed transfer practice — interleaved plan recognition with targeted tracing.
+  # Variation Theory: same purpose at the aggregation-plan level, different
+  # implementation structure, so learners separate the plan from surface syntax.
   - title: "Python Plan Transfer Sprint"
     backend: pyodide
     max-time: 10
@@ -1636,6 +1638,21 @@ steps:
       - Which helper computes a streak?
       - What can you ignore if the question is only about filtering?
 
+      ### Contrast Set
+
+      Use this step to practice **same purpose, different structure**. The
+      code has more than one way to express "collapse many values into a
+      summary":
+
+      | Code shape | Purpose-level plan | Surface structure |
+      |---|---|---|
+      | `minutes_by_skill()` | Aggregate useful minutes into summary data | Explicit loop + dictionary accumulator |
+      | `total_minutes = sum(totals.values())` | Aggregate useful minutes into summary data | Built-in reduction over values |
+
+      The critical feature is the aggregation plan. The incidental feature is
+      whether the aggregation is written as a loop, a dictionary update, or a
+      built-in call.
+
       Use `reading-notes.md` to write a purpose hypothesis, three beacons, and one smallest useful trace. The stretch goal is the streak question.
 
       Practice mode: on your first attempt, use the `+5 min` button if you are
@@ -1660,6 +1677,11 @@ steps:
           What I can ignore for this question:
 
           Smallest trace:
+
+          Contrast set:
+          - Same purpose:
+          - Different structures:
+          - Critical feature I should transfer:
 
           Final EiPE summary:
 
@@ -1806,6 +1828,21 @@ steps:
           explanation: "Vary-the-input reasoning follows the filters in order: useful first, skill second, totals third."
 
         - type: single
+          difficulty: intermediate
+          question: "Which pair best shows the same aggregation purpose through different structures?"
+          options:
+            - "`minutes_by_skill()` and `sum(totals.values())`: both collapse useful minutes into summary data."
+            - "`useful_checkins()` and the script `print(...)`: both decide which records are skipped."
+            - "`longest_streak()` and the type declarations: both format the final output labels."
+            - "`CHECKINS` and `HabitReport`: both compute the current longest run."
+          correct_index: 0
+          option_feedback:
+            1: "`useful_checkins()` decides eligibility, while `print(...)` only displays the returned report."
+            2: "`longest_streak()` computes a run; type declarations describe shapes for readers and tools."
+            3: "`CHECKINS` is sample data and `HabitReport` is a shape annotation. Neither computes the streak."
+          explanation: "A clean contrast holds the purpose-level plan steady: many values become summary data. The surface structure can vary between a loop, dictionary update, or built-in reduction."
+
+        - type: single
           difficulty: advanced
           question: "Which detail can you ignore if the only question is whether skipped check-ins contribute to totals?"
           options:
@@ -1854,7 +1891,9 @@ steps:
   # =========================================================================
   # STEP 8: Campus Feed Sprint
   # =========================================================================
-  # Pedagogy: desirable difficulty — plausible false beacon, then hypothesis testing
+  # Pedagogy: desirable difficulty — plausible false beacon, then hypothesis testing.
+  # Variation Theory: same surface cue with different runtime relevance, so
+  # learners separate a name/value beacon from its position in the flow.
   - title: "Campus Feed Sprint"
     backend: pyodide
     max-time: 8
@@ -1880,6 +1919,20 @@ steps:
 
       > "Why does `Faculty Mixer` not appear in the student feed on day 9 even though it is pinned?"
 
+      ### Contrast Set
+
+      Before tracing, compare three announcements as a matched set:
+
+      | Announcement | Surface cue | Visibility result for students on day 9 |
+      |---|---|---|
+      | `Faculty Mixer` | `pinned: true` | Hidden because audience is `faculty` |
+      | `Old Survey` | `pinned: true` | Hidden because it is archived and inactive |
+      | `Study Jam` | `pinned: false` | Visible because it passes eligibility |
+
+      Same surface cue, different purpose: `pinned` changes ordering and labels
+      *after* eligibility. It does not grant visibility. The critical feature is
+      the cue's position in the pipeline, not whether the value looks important.
+
       Before tracing, write your first hypothesis in `reading-notes.md`. Then test it by reading the smallest path from `build_feed()` to the helper that decides eligibility.
 
       Practice mode: on your first attempt, use the `+5 min` button if you are
@@ -1903,6 +1956,11 @@ steps:
           Evidence that changes or strengthens it:
 
           Smallest trace:
+
+          Contrast set:
+          - Same surface cue:
+          - Different outcomes:
+          - Critical feature that explains the difference:
 
           Final EiPE summary:
 
@@ -2058,6 +2116,21 @@ steps:
             2: "Counting records does not explain which records enter the feed."
             3: "`card_for()` formats announcements that already survived eligibility; it is too late for the visibility question."
           explanation: "Hypothesis testing means locating the cue in the call order. Here `pinned` is used after `eligible` is built."
+
+        - type: single
+          difficulty: intermediate
+          question: "What does the announcement contrast set reveal about `pinned`?"
+          options:
+            - "`pinned` changes order and labels after eligibility, not visibility."
+            - "`pinned` always overrides audience, date, and archive filters."
+            - "`pinned` is ignored everywhere because `Faculty Mixer` is hidden."
+            - "`pinned` only matters for announcements on the `alerts` channel."
+          correct_index: 0
+          option_feedback:
+            1: "The hidden pinned examples show that eligibility still runs first."
+            2: "`Study Jam` is not pinned but still appears, while pinned announcements can be hidden for other reasons."
+            3: "The code does not special-case the alerts channel for pinned behavior."
+          explanation: "The contrast separates the surface cue from the critical feature: where the cue sits in the pipeline."
 
         - type: multiple
           difficulty: advanced
