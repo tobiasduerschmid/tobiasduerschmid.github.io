@@ -530,16 +530,55 @@
       }.bind(this));
     }, this);
     var self = this;
-    return chain.then(function () {
-      // After the last test, Playwright's auto-scroll for fill()/click() may
-      // have left the iframe scrolled mid-content. Snap back to the top so the
-      // preview shows the app from y=0 instead of a clipped, half-empty view.
-      // Chrome's scrollIntoView inside a flex-sized iframe is what makes this
-      // visible; Firefox happens to leave the scroll at 0.
+    function resetScrollState() {
       try {
+        var doc = self.previewFrame && self.previewFrame.contentDocument;
         var win = self.previewFrame && self.previewFrame.contentWindow;
-        if (win && typeof win.scrollTo === 'function') win.scrollTo(0, 0);
+        // Blur any focused element: fill()/click() called .focus(), and when
+        // the iframe gets resized by the test results panel appearing, Chrome
+        // auto-scrolls the iframe to keep the focused element visible —
+        // which would undo the scrollTo(0, 0) below.
+        if (doc && doc.activeElement && doc.activeElement.blur) doc.activeElement.blur();
+        // Reset iframe contentWindow scroll. Force instant behavior: if the
+        // iframe's html has scroll-behavior: smooth, a plain scrollTo animates
+        // and Chrome's focus / scroll-anchoring auto-scroll wins the race
+        // before the animation finishes.
+        var html = doc && doc.documentElement;
+        var prevBehavior = html && html.style.scrollBehavior;
+        if (html) html.style.scrollBehavior = 'auto';
+        if (win && typeof win.scrollTo === 'function') {
+          try { win.scrollTo({ top: 0, left: 0, behavior: 'instant' }); }
+          catch (inner) { win.scrollTo(0, 0); }
+        }
+        if (html) html.style.scrollBehavior = prevBehavior || '';
       } catch (e) { /* cross-origin or detached frame — ignore */ }
+      // Reset host-page scroll ancestors: Element.scrollIntoView() inside the
+      // iframe historically propagated up to the tutorial container in Chrome.
+      // The agent script is now scoped, but reset ancestors as defense in
+      // depth in case cached bundles, React effects, or future actions still
+      // nudge the host.
+      try {
+        var node = self.previewFrame && self.previewFrame.parentNode;
+        while (node && node.nodeType === 1) {
+          if (node.scrollTop) node.scrollTop = 0;
+          if (node.scrollLeft) node.scrollLeft = 0;
+          node = node.parentNode;
+        }
+      } catch (e) { /* ignore */ }
+    }
+    return chain.then(function () {
+      // Reset once synchronously, then again after the next paint. The test
+      // results panel becomes visible immediately after this promise resolves,
+      // shrinking the iframe — and Chrome may re-anchor scroll across that
+      // resize, undoing a synchronous-only reset.
+      resetScrollState();
+      if (typeof requestAnimationFrame === 'function') {
+        requestAnimationFrame(function () {
+          requestAnimationFrame(resetScrollState);
+        });
+      } else {
+        setTimeout(resetScrollState, 0);
+      }
       return { tests: tests, results: results };
     });
   };
@@ -733,10 +772,36 @@
         fire(el, 'input');
         fire(el, 'change');
       }
+      function scrollIntoViewWithinIframe(el) {
+        // Element.scrollIntoView() walks all ancestor scroll containers,
+        // including the host page's tutorial scroll container in Chrome —
+        // which would shift the entire tutorial layout when an action targets
+        // an element inside the iframe. Scroll only the iframe's own window
+        // so the host layout stays put.
+        if (!el || !el.getBoundingClientRect || !window.scrollTo) return;
+        var rect = el.getBoundingClientRect();
+        var vw = window.innerWidth || (document.documentElement && document.documentElement.clientWidth) || 0;
+        var vh = window.innerHeight || (document.documentElement && document.documentElement.clientHeight) || 0;
+        if (!vw || !vh) return;
+        // Match the previous { block: 'center', inline: 'center' } intent:
+        // place the element at the center of the iframe viewport.
+        var targetY = window.scrollY + rect.top + rect.height / 2 - vh / 2;
+        var targetX = window.scrollX + rect.left + rect.width / 2 - vw / 2;
+        try {
+          window.scrollTo({
+            top: Math.max(0, targetY),
+            left: Math.max(0, targetX),
+            behavior: 'instant'
+          });
+        } catch (e) {
+          // Some browsers reject the options dict; fall back to the legacy signature.
+          window.scrollTo(Math.max(0, targetX), Math.max(0, targetY));
+        }
+      }
       function handleAction(payload) {
         var el = strictOne(payload.locator);
         var action = payload.action;
-        if (el.scrollIntoView) el.scrollIntoView({ block: 'center', inline: 'center' });
+        scrollIntoViewWithinIframe(el);
         if (action === 'click') {
           fire(el, 'mouseover'); fire(el, 'mousemove'); fire(el, 'mousedown'); fire(el, 'mouseup'); fire(el, 'click');
         } else if (action === 'fill') {
