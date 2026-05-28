@@ -529,7 +529,17 @@
         });
       }.bind(this));
     }, this);
+    var self = this;
     return chain.then(function () {
+      // After the last test, Playwright's auto-scroll for fill()/click() may
+      // have left the iframe scrolled mid-content. Snap back to the top so the
+      // preview shows the app from y=0 instead of a clipped, half-empty view.
+      // Chrome's scrollIntoView inside a flex-sized iframe is what makes this
+      // visible; Firefox happens to leave the scroll at 0.
+      try {
+        var win = self.previewFrame && self.previewFrame.contentWindow;
+        if (win && typeof win.scrollTo === 'function') win.scrollTo(0, 0);
+      } catch (e) { /* cross-origin or detached frame — ignore */ }
       return { tests: tests, results: results };
     });
   };
