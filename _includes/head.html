@@ -241,8 +241,11 @@
   <link rel="stylesheet" href="{{ "/css/sebook-flashcards.css" | prepend: site.baseurl }}?v={{ asset_version }}">
   <link rel="stylesheet" href="{{ "/css/spec-card.css" | prepend: site.baseurl }}?v={{ asset_version }}">
   <link rel="stylesheet" href="{{ "/css/tutorial-uml-editor.css" | prepend: site.baseurl }}?v={{ asset_version }}">
-  {% if page.url == '/se-gym/' or page.layout == 'sebook-combined' %}
+  {% if page.url == '/se-gym/' or page.url == '/se-gym-stats/' or page.layout == 'sebook-combined' %}
   <link rel="stylesheet" href="{{ "/css/se-gym.css" | prepend: site.baseurl }}?v={{ asset_version }}">
+  {% if page.url == '/se-gym-stats/' %}
+  <link rel="stylesheet" href="{{ "/css/se-gym-stats.css" | prepend: site.baseurl }}?v={{ asset_version }}">
+  {% endif %}
   {% endif %}
   <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
   <link rel="stylesheet" href="{{ "/css/print-light.css" | prepend: site.baseurl }}?v={{ asset_version }}">

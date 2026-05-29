@@ -99,6 +99,11 @@ layout: sebook
               <span class="slider round"></span>
             </label>
           </div>
+          <div class="controls-row u-section-gap-top" id="stats-link-row">
+            <a class="gym-btn secondary" href="{{ '/se-gym-stats/' | relative_url }}" id="stats-page-link">
+              <i class="fa-solid fa-chart-column" aria-hidden="true"></i> View performance statistics
+            </a>
+          </div>
           <div class="controls-row toggle-row timed-practice-toggle-row">
             <span class="toggle-copy">
               <span class="toggle-icon" aria-hidden="true"><i class="fa-solid fa-clock"></i></span>
@@ -220,6 +225,73 @@ layout: sebook
 
 
       <div id="gym-entrance-sections">
+
+        <!-- Transient status for actions that cannot start a workout (e.g. an empty difficulty filter) -->
+        <p id="gym-action-status" class="gym-action-status" role="status" aria-live="assertive"></p>
+
+        <!-- Workout of the Day (always available; balances due reviews, weak spots, and a little new material) -->
+        <div id="wod-section" class="gym-wod-card">
+          <div class="gym-section-header wod-section-header">
+            <h2><i class="fa-solid fa-bolt section-heading-icon" aria-hidden="true"></i> Workout of the Day</h2>
+            <button id="start-daily-workout-btn" class="gym-btn primary"><i class="fa-solid fa-play" aria-hidden="true"></i> Start Today's Workout</button>
+          </div>
+          <p class="gym-wod-desc">A balanced session built for you: your due reviews, the questions you keep missing, and a little new material.</p>
+          <p id="wod-status" class="gym-wod-status" role="status" aria-live="polite"></p>
+        </div>
+
+        <!-- Training Log: streak, self-set weekly goal, and consistency heatmap (always available) -->
+        <div id="training-log-section" class="gym-training-log">
+          <div class="gym-section-header">
+            <h2><i class="fa-solid fa-fire-flame-curved section-heading-icon" aria-hidden="true"></i> Training Log</h2>
+            <p id="gym-streak" class="gym-streak"></p>
+          </div>
+
+          <div class="gym-weekly-goal">
+            <label for="weekly-goal-input" class="gym-weekly-goal-label">Weekly goal (sessions):</label>
+            <input type="number" id="weekly-goal-input" min="0" max="99" step="1" inputmode="numeric" class="gym-weekly-goal-input" aria-describedby="weekly-goal-progress">
+            <span id="weekly-goal-progress" class="gym-weekly-goal-progress" role="status" aria-live="polite"></span>
+            <div class="gym-weekly-goal-bar" aria-hidden="true"><span id="weekly-goal-fill" class="gym-weekly-goal-fill"></span></div>
+          </div>
+
+          <div id="gym-heatmap" class="gym-heatmap" role="img" aria-label="Practice activity heatmap"></div>
+          <p class="gym-heatmap-legend" aria-hidden="true">
+            <span>Less</span>
+            <span class="gym-heatmap-cell gym-heat-0"></span>
+            <span class="gym-heatmap-cell gym-heat-1"></span>
+            <span class="gym-heatmap-cell gym-heat-2"></span>
+            <span class="gym-heatmap-cell gym-heat-3"></span>
+            <span>More</span>
+          </p>
+          <p id="gym-heatmap-summary" class="gym-heatmap-summary"></p>
+        </div>
+
+        <!-- Challenge a Friend: import a shared challenge file (you create one from the results screen) -->
+        <div id="challenge-section" class="gym-challenge">
+          <div class="gym-section-header">
+            <h2><i class="fa-solid fa-share-nodes section-heading-icon" aria-hidden="true"></i> Challenge a Friend</h2>
+          </div>
+          <p class="gym-section-desc">Finish any workout and press <strong>Challenge a Friend</strong> on the results screen to save a challenge file. Send it to a friend — they open it here to take the exact same questions and try to beat your score. No accounts, and nothing leaves your device.</p>
+          <div class="gym-challenge-actions">
+            <button id="challenge-upload-btn" class="gym-btn secondary"><i class="fa-solid fa-upload" aria-hidden="true"></i> Take a Challenge</button>
+            <input type="file" id="challenge-upload-input" accept="application/json,.json" aria-label="Open an SE Gym challenge file" class="is-hidden">
+            <span id="challenge-status" class="gym-challenge-status" role="status" aria-live="polite"></span>
+          </div>
+        </div>
+
+        <!-- Due for Review (spaced repetition; shown when performance tracking is on and cards are due) -->
+        <div id="due-section" class="is-hidden">
+          <div class="gym-section-header due-section-header">
+            <h2 class="due-heading"><i class="fa-solid fa-clock-rotate-left section-heading-icon" aria-hidden="true"></i> Due for Review <span id="due-count" class="due-count"></span></h2>
+            <button id="start-review-btn" class="gym-btn primary">Start Review</button>
+          </div>
+          <p class="gym-section-desc">Cards that spaced repetition has scheduled for today. Reviewing them right as you are about to forget is the most efficient way to make them stick.</p>
+        </div>
+
+        <!-- Shown only when performance tracking is off: unlocks the three sections above -->
+        <div id="srs-locked-prompt" class="gym-locked-prompt is-hidden">
+          <p class="gym-locked-text"><i class="fa-solid fa-lock" aria-hidden="true"></i> Turn on performance tracking to unlock spaced-repetition reviews and stats insights. Your stats stay in this browser.</p>
+          <button id="enable-tracking-btn" class="gym-btn secondary">Enable performance tracking</button>
+        </div>
 
         <!-- Difficult Questions Gym (shown only when analyze is on and there are difficult questions) -->
         <div id="difficult-gym-section" class="is-hidden">
@@ -656,6 +728,7 @@ layout: sebook
             <button id="workout-restart-btn" class="gym-btn primary"><i class="fa-solid fa-rotate-right" aria-hidden="true"></i> Restart Workout</button>
             <button id="workout-review-btn" class="gym-btn secondary is-hidden"><i class="fa-solid fa-magnifying-glass" aria-hidden="true"></i> Review Incorrect</button>
             <button id="workout-back-btn" class="gym-btn secondary"><i class="fa-solid fa-arrow-left" aria-hidden="true"></i> Back to Gym Entrance</button>
+            <button id="workout-challenge-btn" class="gym-btn secondary"><i class="fa-solid fa-share-nodes" aria-hidden="true"></i> Challenge a Friend</button>
           </div>
           <p id="workout-result-shortcut-hint" class="workout-result-shortcut-hint hidden"></p>
         </div>
@@ -664,89 +737,7 @@ layout: sebook
 
   </div>
 
-  <!-- ==================== EMBEDDED CARD DATA ==================== -->
-  <script>
-    var ALL_CARD_DATA = {
-      quizzes: {
-        {% for quiz_entry in site.data.quizzes %} {% assign qid = quiz_entry[0] %} {% assign qdata = quiz_entry[1] %} {% if qdata.questions %}
-    {{ qid | jsonify }}: {
-      title: {{ qdata.title | jsonify }},
-      description: {{ qdata.description | default: "" | jsonify }},
-      questions: [
-        {% for q in qdata.questions %} {
-      id: {{ q.id | jsonify }},
-      question: {{ q.question | markdownify | jsonify }},
-      type: {{ q.type | default: "single" | jsonify }},
-      options: [{% for opt in q.options %} {{ opt | markdownify | jsonify }}, {% endfor %}],
-    correct_index: {{ q.correct_index | jsonify }},
-    correct_indices: {{ q.correct_indices | jsonify }},
-    optional_indices: {{ q.optional_indices | jsonify }},
-    option_feedback: { {% if q.option_feedback %}{% for fb in q.option_feedback %}{{ fb[0] | append: '' | jsonify }}: {{ fb[1] | markdownify | jsonify }},{% endfor %}{% endif %} },
-    explanation: {{ q.explanation | default: "" | markdownify | jsonify }},
-    lines: {{ q.lines | jsonify | default: "null" }},
-    distractors: {{ q.distractors | jsonify | default: "null" }},
-    display: {{ q.display | default: "block" | jsonify }},
-    difficulty: {{ q.difficulty | downcase | jsonify }}
-            }, {% endfor %}
-          ]
-        },
-    {% elsif qdata.decks %}
-    {{ qid | jsonify }}: {
-      title: {{ qdata.title | jsonify }},
-      description: {{ qdata.description | default: "" | jsonify }},
-      isMaster: true,
-        questions: [
-          {% for gym_id in qdata.decks %} {% assign ref_data = site.data.quizzes[gym_id] %} {% if ref_data and ref_data.questions %} {% for q in ref_data.questions %} {
-      id: {{ q.id | jsonify }},
-      question: {{ q.question | markdownify | jsonify }},
-      type: {{ q.type | default: "single" | jsonify }},
-      options: [{% for opt in q.options %} {{ opt | markdownify | jsonify }}, {% endfor %}],
-    correct_index: {{ q.correct_index | jsonify }},
-    correct_indices: {{ q.correct_indices | jsonify }},
-    optional_indices: {{ q.optional_indices | jsonify }},
-    option_feedback: { {% if q.option_feedback %}{% for fb in q.option_feedback %}{{ fb[0] | append: '' | jsonify }}: {{ fb[1] | markdownify | jsonify }},{% endfor %}{% endif %} },
-    explanation: {{ q.explanation | default: "" | markdownify | jsonify }},
-    lines: {{ q.lines | jsonify | default: "null" }},
-    distractors: {{ q.distractors | jsonify | default: "null" }},
-    display: {{ q.display | default: "block" | jsonify }},
-    difficulty: {{ q.difficulty | downcase | jsonify }}
-            }, {% endfor %} {% endif %} {% endfor %}
-          ]
-        },
-    {% endif %} {% endfor %}
-      },
-    flashcards: {
-      {% for fc_entry in site.data.flashcards %} {% assign fcid = fc_entry[0] %} {% assign fcdata = fc_entry[1] %} {% if fcdata.cards %}
-      {{ fcid | jsonify }}: {
-        title: {{ fcdata.title | jsonify }},
-        description: {{ fcdata.description | default: "" | jsonify }},
-        cards: [
-          {% for card in fcdata.cards %} {
-        question: {{ card.question | markdownify | jsonify }},
-        answer: {{ card.answer | markdownify | jsonify }},
-        explanation: {{ card.explanation | default: "" | markdownify | jsonify }},
-        difficulty: {{ card.difficulty | downcase | jsonify }}
-      }, {% endfor %}
-          ]
-    },
-    {% elsif fcdata.decks %}
-    {{ fcid | jsonify }}: {
-      title: {{ fcdata.title | jsonify }},
-      description: {{ fcdata.description | default: "" | jsonify }},
-      isMaster: true,
-        cards: [
-          {% for gym_id in fcdata.decks %} {% assign ref_data = site.data.flashcards[gym_id] %} {% if ref_data and ref_data.cards %} {% for card in ref_data.cards %} {
-      question: {{ card.question | markdownify | jsonify }},
-      answer: {{ card.answer | markdownify | jsonify }},
-      explanation: {{ card.explanation | default: "" | markdownify | jsonify }},
-      difficulty: {{ card.difficulty | downcase | jsonify }}
-    }, {% endfor %} {% endif %} {% endfor %}
-          ]
-        },
-    {% endif %} {% endfor %}
-      }
-    };
-  </script>
+  {% include se-gym-card-data.html %}
 
   <!-- ==================== STYLES ==================== -->
 {% comment %}
@@ -837,6 +828,20 @@ layout: sebook
       var difficultSection = document.getElementById('difficult-gym-section');
       var difficultCountEl = document.getElementById('difficult-count');
       var difficultAddBtn = document.getElementById('difficult-add-btn');
+      var dueSection = document.getElementById('due-section');
+      var dueCountEl = document.getElementById('due-count');
+      var srsLockedPrompt = document.getElementById('srs-locked-prompt');
+      var wodStatusEl = document.getElementById('wod-status');
+      var trainingLogSection = document.getElementById('training-log-section');
+      var streakEl = document.getElementById('gym-streak');
+      var weeklyGoalInput = document.getElementById('weekly-goal-input');
+      var weeklyGoalProgressEl = document.getElementById('weekly-goal-progress');
+      var weeklyGoalFillEl = document.getElementById('weekly-goal-fill');
+      var heatmapEl = document.getElementById('gym-heatmap');
+      var heatmapSummaryEl = document.getElementById('gym-heatmap-summary');
+      var actionStatusEl = document.getElementById('gym-action-status');
+      var actionStatusTimer = null;
+      var challengeStatusEl = document.getElementById('challenge-status');
       var timedPracticeToggle = document.getElementById('timedPracticeToggle');
       var timedPracticePanel = document.getElementById('timed-practice-panel');
       var timedPracticeModeInputs = document.querySelectorAll('input[name="timedPracticeMode"]');
@@ -854,6 +859,16 @@ layout: sebook
       var moreConfettiToggle = document.getElementById('moreConfettiToggle');
       var difficultyFilterCheckboxes = document.querySelectorAll('.difficulty-filter-checkbox');
 
+      function prefersReducedMotion() {
+        return (typeof window.__prefersReducedMotion === 'function')
+          ? window.__prefersReducedMotion()
+          : !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      }
+
+      function motionSafeScrollBehavior() {
+        return prefersReducedMotion() ? 'auto' : 'smooth';
+      }
+
       // Workout state
       var workoutCards = [];
       var workoutCurrentStep = 0;
@@ -867,7 +882,24 @@ layout: sebook
       var workoutTimerExpired = false;
       var workoutTimerExtensionSeconds = 0;
       var workoutEndedByTimer = false;
+      var workoutIsDaily = false; // true when the current workout was started by "Workout of the Day"
+      var challengeTarget = null; // { score, total, name } when the current workout is an imported challenge
       var lastTimedPracticeDrawCount = 0;
+
+      // Must be initialized BEFORE getRequestedWorkoutEntries() is called below,
+      // because that function reads requestedQuestionKeys.length.
+      var requestedQuestionKeys = (function() {
+        var params = new URLSearchParams(window.location.search);
+        var vals = params.getAll('questions');
+        return vals.reduce(function(acc, v) {
+          String(v).split(',').forEach(function(part) {
+            var k = decodeURIComponent(part.trim());
+            if (k) acc.push(k);
+          });
+          return acc;
+        }, []);
+      })();
+
       var requestedWorkoutEntries = getRequestedWorkoutEntries();
 
       function showElement(el) {
@@ -935,6 +967,9 @@ layout: sebook
         var entries = [];
         appendRequestedWorkoutEntries(params, 'quiz', 'quiz', ALL_CARD_DATA.quizzes, entries, seen);
         appendRequestedWorkoutEntries(params, 'flashcards', 'flashcard', ALL_CARD_DATA.flashcards, entries, seen);
+        if (requestedQuestionKeys.length) {
+          entries.push({ type: 'selection' });
+        }
         return entries;
       }
 
@@ -943,6 +978,8 @@ layout: sebook
         var url = new URL(window.location.href);
         url.searchParams.delete('quiz');
         url.searchParams.delete('flashcards');
+        url.searchParams.delete('questions');
+        requestedQuestionKeys = [];
         var cleanPath = url.pathname + url.search + url.hash;
         window.history.replaceState(window.history.state, document.title, cleanPath);
         requestedWorkoutEntries = [];
@@ -1117,7 +1154,7 @@ layout: sebook
             if (typeof svg.setCurrentTime === 'function') {
               svg.setCurrentTime(0);
             }
-            if (typeof svg.unpauseAnimations === 'function' && !(typeof prefersReducedMotion === 'function' && prefersReducedMotion())) {
+            if (typeof svg.unpauseAnimations === 'function' && !prefersReducedMotion()) {
               svg.unpauseAnimations();
             }
           }
@@ -1358,6 +1395,12 @@ layout: sebook
           }
         }
 
+        // ---- Due for Review and the tracking-gate prompt ----
+        updateSrsSections();
+
+        // ---- Training Log: streak, weekly goal, consistency heatmap ----
+        updateTrainingLog();
+
         // Build "Your Gym" section
         var selectedHtml = '';
         var seenQuestions = {};
@@ -1435,54 +1478,21 @@ layout: sebook
       function getDifficultCards() {
         var stats = PersonalGym.getStats();
         var cards = [];
-        var seenHashes = {}; // Deduplicate across sets (same question may appear in base + meta gym)
         var DIFFICULTY_THRESHOLD = 0.4; // 40% failure rate
 
-        // Scan all quiz questions
-        var quizIds = Object.keys(ALL_CARD_DATA.quizzes);
-        for (var qi = 0; qi < quizIds.length; qi++) {
-          var qid = quizIds[qi];
-          var quizData = ALL_CARD_DATA.quizzes[qid];
-          for (var i = 0; i < quizData.questions.length; i++) {
-            var q = quizData.questions[i];
-            var h = q.id ? (qid + ':' + q.id) : PersonalGym.hashQuestion(q.question);
-            if (seenHashes[h]) continue;
-            var s = stats[h];
-            if (s && s.seen > 0 && (s.seen - s.correct) / s.seen > DIFFICULTY_THRESHOLD) {
-              seenHashes[h] = true;
-              cards.push({
-                cardType: 'quiz',
-                source: quizData.title,
-                deckId: qid,
-                data: q,
-                stats: s
-              });
-            }
+        forEachAvailableCard(function (card) {
+          var s = stats[card.key];
+          if (s && s.seen > 0 && (s.seen - s.correct) / s.seen > DIFFICULTY_THRESHOLD) {
+            cards.push({
+              cardType: card.cardType,
+              source: card.source,
+              deckId: card.deckId,
+              data: card.data,
+              key: card.key,
+              stats: s
+            });
           }
-        }
-
-        // Scan all flashcard cards
-        var fcIds = Object.keys(ALL_CARD_DATA.flashcards);
-        for (var fi = 0; fi < fcIds.length; fi++) {
-          var fcid = fcIds[fi];
-          var fcData = ALL_CARD_DATA.flashcards[fcid];
-          for (var j = 0; j < fcData.cards.length; j++) {
-            var c = fcData.cards[j];
-            var h2 = c.id ? (fcid + ':' + c.id) : PersonalGym.hashQuestion(c.question);
-            if (seenHashes[h2]) continue;
-            var s2 = stats[h2];
-            if (s2 && s2.seen > 0 && (s2.seen - s2.correct) / s2.seen > DIFFICULTY_THRESHOLD) {
-              seenHashes[h2] = true;
-              cards.push({
-                cardType: 'flashcard',
-                source: fcData.title,
-                deckId: fcid,
-                data: c,
-                stats: s2
-              });
-            }
-          }
-        }
+        });
 
         // Sort by failure rate (highest first)
         cards.sort(function (a, b) {
@@ -1492,6 +1502,271 @@ layout: sebook
         });
 
         return cards;
+      }
+
+      // ==================== SRS / Workout of the Day ====================
+      // Workout of the Day target size and bucket caps (fractions of target).
+      var DAILY_TARGET = 15;
+      var WOD_DUE_CAP = 0.6;
+      var WOD_DIFFICULT_CAP = 0.8;
+
+      function cardStatsKey(cardType, deckId, data) {
+        return PersonalGym.cardStatsKey(cardType, deckId, data);
+      }
+
+      function cardStatsKeyVariants(cardType, deckId, data) {
+        return PersonalGym.cardStatsKeyVariants(cardType, deckId, data);
+      }
+
+      function migrateStatsKeys() {
+        PersonalGym.migrateStatsKeys(ALL_CARD_DATA);
+      }
+
+      // Visit every unique card across all quizzes and flashcard sets. Base
+      // decks are visited before masters so an aggregate card resolves to the
+      // source topic's canonical key.
+      function forEachAvailableCard(cb) {
+        PersonalGym.forEachAvailableCard(ALL_CARD_DATA, cb);
+      }
+
+      // Cards whose spaced-repetition due time has arrived, most overdue first.
+      function getDueCards() {
+        var stats = PersonalGym.getStats();
+        var nowMs = Date.now();
+        var cards = [];
+        forEachAvailableCard(function (c) {
+          var s = stats[c.key];
+          if (s && typeof s.due === 'number' && s.due <= nowMs) {
+            cards.push({ cardType: c.cardType, source: c.source, deckId: c.deckId, data: c.data, key: c.key, stats: s });
+          }
+        });
+        cards.sort(function (a, b) { return a.stats.due - b.stats.due; });
+        return cards;
+      }
+
+      // Build a balanced Workout of the Day: due reviews, then weak spots, then
+      // a little new material, deduped by key and capped at the target size.
+      function buildDailyWorkout() {
+        var active = PersonalGym.getActiveDifficulties();
+        function passesDiff(data) { return cardPassesDifficultyFilter(data, active); }
+        var target = Math.min(getMaxCardsValue(), DAILY_TARGET);
+        var stats = PersonalGym.getStats();
+        var picked = [], used = {};
+        function add(list, cap) {
+          for (var i = 0; i < list.length && picked.length < cap && picked.length < target; i++) {
+            var c = list[i];
+            if (!passesDiff(c.data)) continue;
+          var key = c.key || cardStatsKey(c.cardType, c.deckId, c.data);
+            if (used[key]) continue;
+            used[key] = true;
+            picked.push({ cardType: c.cardType, source: c.source, deckId: c.deckId, data: c.data });
+          }
+        }
+        add(getDueCards(), Math.ceil(target * WOD_DUE_CAP));
+        add(getDifficultCards(), Math.ceil(target * WOD_DIFFICULT_CAP));
+        var unseen = [];
+        forEachAvailableCard(function (c) {
+          if (c.isMaster) return; // draw new material from base topics only
+          if (!stats[c.key]) unseen.push(c);
+        });
+        shuffleArray(unseen);
+        add(unseen, target);
+        shuffleArray(picked);
+        return picked;
+      }
+
+      // Shared workout-start sequence for every entry point (normal, hard,
+      // review, daily, direct links). Returns false if there are no cards.
+      function beginWorkout(cards) {
+        workoutIsDaily = false;
+        if (!cards || cards.length === 0) return false;
+        workoutCards = cards;
+        workoutCurrentStep = 0;
+        workoutScore = 0;
+        workoutIncorrectIndices = [];
+        workoutIsReview = false;
+        workoutReviewQueue = [];
+        workoutReviewStep = 0;
+        workoutEndedByTimer = false;
+        resetDifficultyStats();
+        hideElement(libraryView);
+        showElement(workoutView);
+        workoutView.classList.remove('workout-results-active');
+        syncWorkoutHeroVisibility();
+        restartWorkoutHeroAnimations();
+        setWorkoutMode(true);
+        hideElement(workoutResults);
+        workoutCardArea.innerHTML = '';
+        workoutTotalEl.textContent = workoutCards.length;
+        startWorkoutTimer(workoutCards.length);
+        showWorkoutCard(0);
+        scrollToTop();
+        return true;
+      }
+
+      // Update Due-for-Review, the WOD completion badge, and the tracking-gate
+      // prompt. SRS reviews require performance tracking.
+      function updateSrsSections() {
+        if (wodStatusEl) {
+          var doneToday = PersonalGym.getDailyLast() === PersonalGym.todayStr();
+          wodStatusEl.textContent = doneToday ? '✓ Completed today' : '';
+          wodStatusEl.classList.toggle('is-complete', doneToday);
+        }
+        if (!PersonalGym.isAnalyzePerformance()) {
+          hideElement(dueSection);
+          showElement(srsLockedPrompt);
+          return;
+        }
+        hideElement(srsLockedPrompt);
+        var active = PersonalGym.getActiveDifficulties();
+        var dueCards = getDueCards().filter(function (dc) { return cardPassesDifficultyFilter(dc.data, active); });
+        if (dueCards.length > 0) {
+          dueCountEl.textContent = '(' + dueCards.length + (dueCards.length === 1 ? ' card)' : ' cards)');
+          showElement(dueSection);
+        } else {
+          hideElement(dueSection);
+        }
+      }
+
+      // Brief, accessible status for actions that cannot start a workout.
+      function announceGymStatus(msg) {
+        if (!actionStatusEl) return;
+        actionStatusEl.textContent = msg;
+        actionStatusEl.classList.add('is-visible');
+        if (actionStatusTimer) clearTimeout(actionStatusTimer);
+        actionStatusTimer = setTimeout(function () {
+          actionStatusEl.textContent = '';
+          actionStatusEl.classList.remove('is-visible');
+        }, 6000);
+      }
+
+      // ---- Training Log: streak, weekly goal, consistency heatmap ----
+      function renderHeatmap() {
+        if (!heatmapEl) return;
+        var activity = PersonalGym.getActivity();
+        var WEEKS = 17;
+        var todayDow = (new Date().getDay() + 6) % 7; // 0 = Monday
+        var practicedDays = 0, totalSessions = 0;
+        var html = '<div class="gym-heatmap-grid">';
+        for (var col = 0; col < WEEKS; col++) {
+          html += '<div class="gym-heatmap-col">';
+          for (var row = 0; row < 7; row++) {
+            // Last column is the current week; (col=last, row=todayDow) is today.
+            var daysAgo = (WEEKS - 1 - col) * 7 + (todayDow - row);
+            if (daysAgo < 0) {
+              html += '<span class="gym-heatmap-cell gym-heat-empty" aria-hidden="true"></span>';
+              continue;
+            }
+            var dateStr = PersonalGym.dateStrDaysAgo(daysAgo);
+            var e = activity[dateStr];
+            var s = e ? (e.s || 0) : 0;
+            var c = e ? (e.c || 0) : 0;
+            if (s > 0) { practicedDays++; totalSessions += s; }
+            var level = s === 0 ? 0 : s === 1 ? 1 : s === 2 ? 2 : 3;
+            var title = dateStr + ': ' + s + ' session' + (s === 1 ? '' : 's') + (c ? (', ' + c + ' cards') : '');
+            html += '<span class="gym-heatmap-cell gym-heat-' + level + '" title="' + title + '" aria-hidden="true"></span>';
+          }
+          html += '</div>';
+        }
+        html += '</div>';
+        heatmapEl.innerHTML = html;
+        heatmapEl.setAttribute('aria-label',
+          'Practice activity over the last ' + WEEKS + ' weeks: practiced on ' + practicedDays +
+          ' day' + (practicedDays === 1 ? '' : 's') + ', ' + totalSessions + ' session' +
+          (totalSessions === 1 ? '' : 's') + ' total.');
+        if (heatmapSummaryEl) {
+          heatmapSummaryEl.textContent = 'Practiced ' + practicedDays + ' day' +
+            (practicedDays === 1 ? '' : 's') + ' in the last ' + WEEKS + ' weeks (' +
+            totalSessions + ' session' + (totalSessions === 1 ? '' : 's') + ').';
+        }
+      }
+
+      function updateTrainingLog() {
+        if (!trainingLogSection) return;
+        var streak = PersonalGym.computeStreak();
+        if (streakEl) {
+          streakEl.textContent = streak > 0 ? ('🔥 ' + streak + '-day streak') : 'No active streak — train today to start one.';
+          streakEl.classList.toggle('has-streak', streak > 0);
+        }
+        var goal = PersonalGym.getWeeklyGoal();
+        var done = PersonalGym.getWeekSessions();
+        // Don't clobber the field while the user is typing in it.
+        if (weeklyGoalInput && document.activeElement !== weeklyGoalInput) weeklyGoalInput.value = goal;
+        if (weeklyGoalProgressEl) {
+          if (goal > 0) {
+            var met = done >= goal;
+            weeklyGoalProgressEl.textContent = met
+              ? ('Goal met — ' + done + ' / ' + goal + ' sessions this week ✓')
+              : (done + ' / ' + goal + ' sessions this week');
+            weeklyGoalProgressEl.classList.toggle('is-met', met);
+          } else {
+            weeklyGoalProgressEl.textContent = done + ' session' + (done === 1 ? '' : 's') + ' this week (no goal set)';
+            weeklyGoalProgressEl.classList.remove('is-met');
+          }
+        }
+        if (weeklyGoalFillEl) {
+          var pct = goal > 0 ? Math.min(100, Math.round((done / goal) * 100)) : 0;
+          weeklyGoalFillEl.style.setProperty('--goal-pct', pct + '%');
+        }
+        renderHeatmap();
+      }
+
+      // ---- Challenge a friend: export the finished set + score, import to play it ----
+      function exportChallenge() {
+        if (!workoutCards || !workoutCards.length) return;
+        var keys = workoutCards.map(function (c) { return cardStatsKey(c.cardType, c.deckId, c.data); });
+        var payload = { type: 'se-gym-challenge', v: 1, score: workoutScore, total: workoutCards.length, keys: keys };
+        var blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'se-gym-challenge.json';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function () { URL.revokeObjectURL(url); }, 0);
+      }
+
+      // Resolve challenge card keys back to workout cards, preserving order.
+      function buildCardsFromKeys(keys) {
+        var want = {};
+        keys.forEach(function (k) { want[k] = true; });
+        var byKey = {};
+        forEachAvailableCard(function (c) {
+          cardStatsKeyVariants(c.cardType, c.deckId, c.data).forEach(function (key) {
+            if (want[key] && !byKey[key]) byKey[key] = { cardType: c.cardType, source: c.source, deckId: c.deckId, data: c.data };
+          });
+        });
+        var cards = [];
+        keys.forEach(function (k) { if (byKey[k]) cards.push(byKey[k]); });
+        return cards;
+      }
+
+      function importChallenge(file) {
+        if (!file) return;
+        var reader = new FileReader();
+        reader.onload = function (ev) {
+          var data;
+          try { data = JSON.parse(ev.target.result); } catch (e) { data = null; }
+          if (!data || data.type !== 'se-gym-challenge' || !Array.isArray(data.keys)) {
+            if (challengeStatusEl) challengeStatusEl.textContent = 'That file is not a valid SE Gym challenge.';
+            return;
+          }
+          var cards = buildCardsFromKeys(data.keys);
+          if (!cards.length) {
+            if (challengeStatusEl) challengeStatusEl.textContent = 'None of the challenge’s questions are available on this site.';
+            return;
+          }
+          challengeTarget = {
+            score: Math.max(0, parseInt(data.score, 10) || 0),
+            total: Math.max(cards.length, parseInt(data.total, 10) || cards.length),
+            name: typeof data.name === 'string' ? data.name.slice(0, 40) : ''
+          };
+          if (challengeStatusEl) challengeStatusEl.textContent = '';
+          saveTimedPracticeSettingsFromInputs();
+          beginWorkout(cards);
+        };
+        reader.readAsText(file);
       }
 
       // Bind add/remove buttons in available sections
@@ -1653,6 +1928,60 @@ layout: sebook
         scrollToTop();
       });
 
+      // ---- Workout of the Day / Due Review / Topic-Mastery practice / enable tracking ----
+      var startDailyWorkoutBtn = document.getElementById('start-daily-workout-btn');
+      if (startDailyWorkoutBtn) {
+        startDailyWorkoutBtn.addEventListener('click', function () {
+          saveTimedPracticeSettingsFromInputs();
+          // beginWorkout() resets workoutIsDaily, so flag this workout AFTER it starts.
+          if (beginWorkout(buildDailyWorkout())) workoutIsDaily = true;
+          else announceGymStatus('No cards available for today’s workout. Add a quiz or flashcard set, or widen your difficulty filter.');
+        });
+      }
+
+      var startReviewBtn = document.getElementById('start-review-btn');
+      if (startReviewBtn) {
+        startReviewBtn.addEventListener('click', function () {
+          saveTimedPracticeSettingsFromInputs();
+          var active = PersonalGym.getActiveDifficulties();
+          var due = getDueCards().filter(function (dc) {
+            return cardPassesDifficultyFilter(dc.data, active);
+          }).map(function (dc) {
+            return { cardType: dc.cardType, source: dc.source, deckId: dc.deckId, data: dc.data };
+          });
+          if (!beginWorkout(due)) announceGymStatus('No due cards match your current difficulty filter. Adjust the filter and try again.');
+        });
+      }
+
+      var enableTrackingBtn = document.getElementById('enable-tracking-btn');
+      if (enableTrackingBtn) {
+        enableTrackingBtn.addEventListener('click', function () {
+          PersonalGym.setAnalyzePerformance(true);
+          if (analyzeToggle) analyzeToggle.checked = true;
+          refreshLibrary();
+        });
+      }
+
+      if (weeklyGoalInput) {
+        weeklyGoalInput.addEventListener('change', function () {
+          PersonalGym.setWeeklyGoal(this.value);
+          updateTrainingLog();
+        });
+      }
+
+      var workoutChallengeBtn = document.getElementById('workout-challenge-btn');
+      if (workoutChallengeBtn) workoutChallengeBtn.addEventListener('click', exportChallenge);
+
+      var challengeUploadBtn = document.getElementById('challenge-upload-btn');
+      var challengeUploadInput = document.getElementById('challenge-upload-input');
+      if (challengeUploadBtn && challengeUploadInput) {
+        challengeUploadBtn.addEventListener('click', function () { challengeUploadInput.click(); });
+        challengeUploadInput.addEventListener('change', function () {
+          if (this.files && this.files[0]) importChallenge(this.files[0]);
+          this.value = ''; // allow re-importing the same file
+        });
+      }
+
       // ---- Empty Gym Button ----
       document.getElementById('empty-gym-btn').addEventListener('click', function () {
         confirmGymAction(
@@ -1810,6 +2139,7 @@ layout: sebook
         var cards = [];
         var seenQuestions = {};
         var active = PersonalGym.getActiveDifficulties();
+        var hasSelection = false;
 
         function isAllowedDifficulty(data) {
           return cardPassesDifficultyFilter(data, active);
@@ -1829,6 +2159,15 @@ layout: sebook
                   deckId: dc.deckId,
                   data: dc.data
                 });
+              }
+            });
+          } else if (entry.type === 'selection') {
+            hasSelection = true;
+            buildCardsFromKeys(requestedQuestionKeys).forEach(function(found) {
+              if (found && !seenQuestions[found.data.question]) {
+                seenQuestions[found.data.question] = true;
+                found.source += ' (Selected)';
+                cards.push(found);
               }
             });
           } else if (entry.type === 'quiz') {
@@ -1867,7 +2206,7 @@ layout: sebook
         shuffleArray(cards);
 
         var maxCards = getMaxCardsValue();
-        if (cards.length > maxCards) {
+        if (!hasSelection && cards.length > maxCards) {
           cards = cards.slice(0, maxCards);
         }
 
@@ -1879,31 +2218,7 @@ layout: sebook
         var requireActive = !(options && options.requireActive === false);
         if (requireActive && !PersonalGym.isPersonalGymActive()) return;
         saveTimedPracticeSettingsFromInputs();
-        workoutCards = buildWorkoutCards(sourceGym);
-        if (workoutCards.length === 0) return;
-
-        workoutCurrentStep = 0;
-        workoutScore = 0;
-        workoutIncorrectIndices = [];
-        workoutIsReview = false;
-        workoutReviewQueue = [];
-        workoutReviewStep = 0;
-        workoutEndedByTimer = false;
-        resetDifficultyStats();
-
-        hideElement(libraryView);
-        showElement(workoutView);
-        workoutView.classList.remove('workout-results-active');
-        syncWorkoutHeroVisibility();
-        restartWorkoutHeroAnimations();
-        setWorkoutMode(true);
-        hideElement(workoutResults);
-        workoutCardArea.innerHTML = '';
-
-        workoutTotalEl.textContent = workoutCards.length;
-        startWorkoutTimer(workoutCards.length);
-        showWorkoutCard(0);
-        scrollToTop();
+        beginWorkout(buildWorkoutCards(sourceGym));
       }
 
       function showWorkoutCard(index) {
@@ -2041,7 +2356,7 @@ layout: sebook
         var navHeight = navbar ? navbar.offsetHeight : 50;
         var app = document.getElementById('se-gym-app');
         var y = app.getBoundingClientRect().top + window.pageYOffset - navHeight - 10;
-        window.scrollTo({ top: y, behavior: 'smooth' });
+        window.scrollTo({ top: y, behavior: motionSafeScrollBehavior() });
       }
 
       function setWorkoutMode(isWorkout) {
@@ -2207,7 +2522,7 @@ layout: sebook
                 workoutIncorrectIndices.push(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
               }
               recordDifficultyResult(card, isCorrect);
-              PersonalGym.recordResult(card.deckId + ':' + (q.id || PersonalGym.hashQuestion(q.question)), isCorrect);
+              PersonalGym.recordResult(cardStatsKey(card.cardType, card.deckId, q), isCorrect);
               var shortcutHint = div.querySelector('.quiz-shortcuts-hint');
               if (shortcutHint) shortcutHint.classList.add('hidden');
               correctAnswersEl.style.display = 'flex';
@@ -2215,7 +2530,7 @@ layout: sebook
               revealDifficulty(div);
               focusNextButton(div);
               if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
-              explanationEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              explanationEl.scrollIntoView({ behavior: motionSafeScrollBehavior(), block: 'nearest' });
             });
           });
         } else {
@@ -2262,7 +2577,7 @@ layout: sebook
               workoutIncorrectIndices.push(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
             }
             recordDifficultyResult(card, isMultiCorrect);
-            PersonalGym.recordResult(card.deckId + ':' + (q.id || PersonalGym.hashQuestion(q.question)), isMultiCorrect);
+            PersonalGym.recordResult(cardStatsKey(card.cardType, card.deckId, q), isMultiCorrect);
             var shortcutHint = div.querySelector('.quiz-shortcuts-hint');
             if (shortcutHint) shortcutHint.classList.add('hidden');
             correctAnswersEl.style.display = 'flex';
@@ -2270,7 +2585,7 @@ layout: sebook
             revealDifficulty(div);
             focusNextButton(div);
             if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
-            explanationEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            explanationEl.scrollIntoView({ behavior: motionSafeScrollBehavior(), block: 'nearest' });
           });
         }
 
@@ -2449,7 +2764,7 @@ layout: sebook
           }
 
           recordDifficultyResult(card, isCorrect);
-          PersonalGym.recordResult(card.deckId + ':' + (q.id || PersonalGym.hashQuestion(q.question)), isCorrect);
+          PersonalGym.recordResult(cardStatsKey(card.cardType, card.deckId, q), isCorrect);
           var ca = div.querySelector('.quiz-correct-answers');
           var exp = div.querySelector('.quiz-explanation');
           if (ca) ca.style.display = 'flex';
@@ -2458,7 +2773,7 @@ layout: sebook
             revealDifficulty(div);
             focusNextButton(div);
             if (window.UMLShared) setTimeout(() => window.UMLShared.renderAll(), 50);
-            exp.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+            exp.scrollIntoView({ behavior: motionSafeScrollBehavior(), block: 'nearest' });
           }
         });
 
@@ -2572,14 +2887,14 @@ layout: sebook
           workoutScore++;
           if (typeof window.spawnConfettiIfMore === 'function') window.spawnConfettiIfMore(correctBtn);
           recordDifficultyResult(card, true);
-          PersonalGym.recordResult(card.deckId + ':' + (c.id || PersonalGym.hashQuestion(c.question)), true);
+          PersonalGym.recordResult(cardStatsKey(card.cardType, card.deckId, c), true);
           nextWorkoutCard();
         });
 
         incorrectBtn.addEventListener('click', function () {
           workoutIncorrectIndices.push(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
           recordDifficultyResult(card, false);
-          PersonalGym.recordResult(card.deckId + ':' + (c.id || PersonalGym.hashQuestion(c.question)), false);
+          PersonalGym.recordResult(cardStatsKey(card.cardType, card.deckId, c), false);
           nextWorkoutCard();
         });
         div.addEventListener('keydown', function (e) {
@@ -2627,10 +2942,7 @@ layout: sebook
 
       function spawnGymEmojis(anchor) {
         if (!anchor || !anchor.getBoundingClientRect) return;
-        var prm = (typeof window.__prefersReducedMotion === 'function')
-          ? window.__prefersReducedMotion()
-          : !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-        if (prm) return;
+        if (prefersReducedMotion()) return;
 
         var rect = anchor.getBoundingClientRect();
         var host = document.createElement('div');
@@ -2685,6 +2997,19 @@ layout: sebook
         renderWorkoutBreakdown();
         scrollToTop();
 
+        // Log this finished session for the training streak, heatmap, and weekly goal.
+        PersonalGym.recordActivity(workoutCards.length);
+
+        // Record a completed Workout of the Day so the entrance badge updates.
+        if (workoutIsDaily) {
+          PersonalGym.setDailyLast(PersonalGym.todayStr());
+          workoutIsDaily = false;
+          if (wodStatusEl) {
+            wodStatusEl.textContent = '✓ Completed today';
+            wodStatusEl.classList.add('is-complete');
+          }
+        }
+
         if (workoutEndedByTimer) {
           workoutSummaryEl.textContent = 'Time is up. Review your score below, then restart or return to the gym entrance.';
           if (workoutIncorrectIndices.length > 0) showElement(workoutReviewBtn);
@@ -2698,6 +3023,18 @@ layout: sebook
           showElement(workoutReviewBtn);
           if (typeof window.spawnConfetti === 'function') window.spawnConfetti(workoutResults);
         }
+
+        // Imported-challenge result overrides the default summary, then clears.
+        if (challengeTarget) {
+          var you = workoutScore;
+          var them = challengeTarget.score;
+          var who = challengeTarget.name || 'Your challenger';
+          var verdict = you > them ? 'You win! 🏆' : (you === them ? 'It’s a tie!' : 'So close — train and rematch!');
+          workoutSummaryEl.textContent = 'Challenge complete — ' + verdict + ' You scored ' + you + ' / ' +
+            workoutCards.length + '; ' + who + ' scored ' + them + ' / ' + challengeTarget.total + '.';
+          challengeTarget = null;
+        }
+
         if (workoutResultShortcutHint) {
           workoutResultShortcutHint.innerHTML = 'Shortcut: <kbd>' + enterKeyLabel() + '</kbd> restarts the workout.';
           workoutResultShortcutHint.classList.remove('hidden');
@@ -3071,6 +3408,7 @@ layout: sebook
       importModal.querySelector('.confirm-modal-backdrop').addEventListener('click', closeImportModal);
 
       // Initialize
+      migrateStatsKeys();
       setWorkoutMode(false);
       refreshLibrary();
       startRequestedWorkout();

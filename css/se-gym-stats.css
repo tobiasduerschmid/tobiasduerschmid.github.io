@@ -1,0 +1,792 @@
+/*
+ * se-gym-stats.css
+ *
+ * Styles for the /se-gym-stats/ analytics dashboard page.
+ *
+ * IMPORTANT: This site sets html { font-size: 62.5% } so 1rem = 10px.
+ * Never use rem for readable text — use em or inherit instead.
+ *
+ * Every component has both a default (light) rule and an html.dark-mode
+ * override. Use design tokens from css/design-tokens.css throughout.
+ *
+ * Loaded alongside css/se-gym.css on the stats page, so .gym-btn,
+ * .gym-item-badge, .quiz-badge, .flashcard-badge, .is-hidden, and
+ * workout-breakdown level colors are all available.
+ */
+
+/* ==================== Stats Page Layout ==================== */
+
+#stats-app {
+  max-width: min(100%, 1200px);
+  margin: 0 auto;
+  padding: 0 var(--sp-lg, 16px) var(--sp-2xl, 32px);
+  font-family: 'Inter', 'Helvetica Neue', sans-serif;
+  box-sizing: border-box;
+}
+
+#stats-app *,
+#stats-app *::before,
+#stats-app *::after {
+  box-sizing: border-box;
+}
+
+/* ==================== Disabled / Empty State Panel ==================== */
+
+.stats-disabled-panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sp-lg, 16px);
+  padding: var(--sp-3xl, 48px) var(--sp-xl, 24px);
+  text-align: center;
+  background: var(--color-surface-2, #f8f9fa);
+  border: 1px solid var(--color-divider, #e1e4e8);
+  border-radius: var(--radius-lg, 12px);
+  margin-bottom: var(--sp-2xl, 32px);
+}
+
+.stats-disabled-panel p {
+  margin: 0;
+  color: var(--color-text-muted, #595959);
+  font-size: 1.05em;
+  max-width: 480px;
+}
+
+.stats-disabled-panel .fa-solid {
+  font-size: 1.6em;
+  color: var(--color-primary, #2774AE);
+  display: block;
+  margin-bottom: var(--sp-sm, 8px);
+}
+
+html.dark-mode .stats-disabled-panel {
+  background: var(--color-surface-2, #252525);
+  border-color: var(--color-divider, #444444);
+}
+
+/* ==================== Section Wrappers ==================== */
+
+.stats-section {
+  margin-bottom: var(--sp-3xl, 48px);
+  padding-bottom: var(--sp-2xl, 32px);
+  border-bottom: 1px solid var(--color-divider, #e1e4e8);
+}
+
+.stats-section:last-child {
+  border-bottom: none;
+}
+
+.stats-section h2 {
+  color: var(--color-primary, #2774AE);
+  font-weight: 700;
+  margin-top: var(--sp-2xl, 32px);
+  margin-bottom: var(--sp-lg, 16px);
+  border-bottom: 2px solid var(--color-divider, #e1e4e8);
+  padding-bottom: var(--sp-sm, 8px);
+  font-size: 1.4em;
+}
+
+.stats-section h3 {
+  font-size: 1.1em;
+  font-weight: 600;
+  color: var(--color-text, #111111);
+  margin-top: var(--sp-xl, 24px);
+  margin-bottom: var(--sp-md, 12px);
+}
+
+html.dark-mode .stats-section {
+  border-bottom-color: var(--color-divider, #444444);
+}
+
+html.dark-mode .stats-section h2 {
+  color: var(--color-primary, #8BB8E8);
+  border-bottom-color: var(--color-divider, #444444);
+}
+
+html.dark-mode .stats-section h3 {
+  color: var(--color-text, #e6edf3);
+}
+
+/* ==================== Overview Tiles ==================== */
+
+.stats-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sp-md, 12px);
+  margin-bottom: var(--sp-xl, 24px);
+}
+
+.stats-tile {
+  flex: 1 1 140px;
+  min-width: 120px;
+  padding: var(--sp-lg, 16px) var(--sp-xl, 24px);
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #d8dde2);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.08));
+  text-align: center;
+}
+
+.stats-tile-value {
+  font-size: 2.2em;
+  font-weight: 700;
+  color: var(--color-primary, #2774AE);
+  line-height: 1.1;
+  margin-bottom: var(--sp-xs, 4px);
+}
+
+.stats-tile-label {
+  font-size: 0.9em;
+  color: var(--color-text-muted, #595959);
+}
+
+html.dark-mode .stats-tile {
+  background: var(--color-surface, #1e1e1e);
+  border-color: var(--color-border, #333333);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.4));
+}
+
+html.dark-mode .stats-tile-value {
+  color: var(--color-primary, #8BB8E8);
+}
+
+html.dark-mode .stats-tile-label {
+  color: var(--color-text-muted, #b0b0b0);
+}
+
+/* ==================== Hero Donut ==================== */
+
+.stats-donut-wrap {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin-top: var(--sp-xl, 24px);
+}
+
+.stats-donut {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: conic-gradient(
+    var(--ring-correct, #1f7a3d) calc(var(--pct, 0) * 1%),
+    var(--ring-rest, #e5e7eb) 0
+  );
+}
+
+.stats-donut-hole {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: var(--color-surface, #ffffff);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stats-donut-pct {
+  font-size: 1.3em;
+  font-weight: 700;
+  color: var(--color-text, #111111);
+}
+
+html.dark-mode .stats-donut {
+  background: conic-gradient(
+    var(--ring-correct, #4fa34f) calc(var(--pct, 0) * 1%),
+    var(--ring-rest, #3a3f47) 0
+  );
+}
+
+html.dark-mode .stats-donut-hole {
+  background: var(--color-surface, #1e1e1e);
+}
+
+html.dark-mode .stats-donut-pct {
+  color: var(--color-text, #e6edf3);
+}
+
+/* ==================== Difficulty Table ==================== */
+
+.stats-diff-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--sp-md, 12px);
+}
+
+.stats-diff-table th,
+.stats-diff-table td {
+  padding: var(--sp-sm, 8px) var(--sp-md, 12px);
+  text-align: left;
+  vertical-align: middle;
+  border-bottom: 1px solid var(--color-divider, #e1e4e8);
+}
+
+.stats-diff-table th {
+  font-size: 0.9em;
+  font-weight: 600;
+  color: var(--color-text-muted, #595959);
+  background: var(--color-surface-2, #f8f9fa);
+}
+
+.stats-diff-table td {
+  color: var(--color-text, #111111);
+}
+
+.stats-diff-table tr:last-child td {
+  border-bottom: none;
+}
+
+.stats-diff-bar-track {
+  height: 14px;
+  min-width: 100px;
+  background: var(--color-surface-2, #f0f2f4);
+  border-radius: var(--radius-pill, 999px);
+  overflow: hidden;
+}
+
+.stats-diff-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-pill, 999px);
+  transition: width 0.4s ease;
+  min-width: 0;
+}
+
+html.dark-mode .stats-diff-table th {
+  color: var(--color-text-muted, #b0b0b0);
+  background: var(--color-surface-2, #252525);
+}
+
+html.dark-mode .stats-diff-table th,
+html.dark-mode .stats-diff-table td {
+  border-bottom-color: var(--color-divider, #444444);
+}
+
+html.dark-mode .stats-diff-table td {
+  color: var(--color-text, #e6edf3);
+}
+
+html.dark-mode .stats-diff-bar-track {
+  background: var(--color-surface-3, #1a1a1a);
+}
+
+/* ==================== Difficulty Badge Chips ==================== */
+/*
+ * These classes are used on the stats page to display difficulty level
+ * chips. Light-mode colors verified ≥ 4.5:1 against white background.
+ */
+
+.difficulty-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill, 999px);
+  font-size: 0.85em;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.difficulty-badge.level-basic {
+  background: rgba(31, 122, 61, 0.12);
+  color: #1a6633;
+  border: 1px solid rgba(31, 122, 61, 0.3);
+}
+
+.difficulty-badge.level-intermediate {
+  background: rgba(39, 116, 174, 0.12);
+  color: #1a5c8a;
+  border: 1px solid rgba(39, 116, 174, 0.3);
+}
+
+.difficulty-badge.level-advanced {
+  background: rgba(184, 91, 0, 0.12);
+  color: #8a3e00;
+  border: 1px solid rgba(184, 91, 0, 0.3);
+}
+
+.difficulty-badge.level-expert {
+  background: rgba(184, 30, 44, 0.12);
+  color: #8a0011;
+  border: 1px solid rgba(184, 30, 44, 0.3);
+}
+
+.difficulty-badge.level-untagged {
+  background: rgba(85, 85, 85, 0.10);
+  color: #444444;
+  border: 1px solid rgba(85, 85, 85, 0.25);
+}
+
+html.dark-mode .difficulty-badge.level-basic {
+  background: rgba(79, 163, 79, 0.15);
+  color: #6dd46d;
+  border-color: rgba(79, 163, 79, 0.35);
+}
+
+html.dark-mode .difficulty-badge.level-intermediate {
+  background: rgba(95, 168, 211, 0.15);
+  color: #7fc4e8;
+  border-color: rgba(95, 168, 211, 0.35);
+}
+
+html.dark-mode .difficulty-badge.level-advanced {
+  background: rgba(224, 163, 90, 0.15);
+  color: #e8b870;
+  border-color: rgba(224, 163, 90, 0.35);
+}
+
+html.dark-mode .difficulty-badge.level-expert {
+  background: rgba(255, 133, 133, 0.15);
+  color: #ff9898;
+  border-color: rgba(255, 133, 133, 0.35);
+}
+
+html.dark-mode .difficulty-badge.level-untagged {
+  background: rgba(176, 176, 176, 0.12);
+  color: #c0c0c0;
+  border-color: rgba(176, 176, 176, 0.28);
+}
+
+/* ==================== Question Lists ==================== */
+
+.stats-questions-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2xl, 32px);
+}
+
+.stats-q-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-sm, 8px);
+}
+
+.stats-q-row {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 60px;
+  gap: var(--sp-md, 12px);
+  align-items: start;
+  padding: var(--sp-sm, 8px) var(--sp-md, 12px);
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #d8dde2);
+  border-radius: var(--radius-md, 8px);
+}
+
+.stats-q-row:hover {
+  border-color: var(--color-primary, #2774AE);
+}
+
+.stats-q-check {
+  margin-top: 3px;
+  width: 16px;
+  height: 16px;
+  min-width: 16px;
+  cursor: pointer;
+  accent-color: var(--color-primary, #2774AE);
+}
+
+.stats-q-label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-xs, 4px);
+  cursor: pointer;
+  min-width: 0;
+}
+
+.stats-q-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-size: 0.95em;
+  color: var(--color-text, #111111);
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.stats-q-meta {
+  display: flex;
+  gap: var(--sp-xs, 4px);
+  align-items: center;
+  flex-wrap: wrap;
+  margin-top: var(--sp-xs, 4px);
+}
+
+.stats-q-fraction {
+  font-size: 0.9em;
+  color: var(--color-text-muted, #595959);
+  white-space: nowrap;
+}
+
+.stats-acc-bar-track {
+  width: 60px;
+  height: 8px;
+  background: var(--color-surface-2, #f0f2f4);
+  border-radius: var(--radius-pill, 999px);
+  overflow: hidden;
+  margin-top: 6px;
+  align-self: start;
+  flex-shrink: 0;
+}
+
+.stats-acc-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-pill, 999px);
+  transition: width 0.4s ease;
+}
+
+.stats-select-hint {
+  font-size: 0.9em;
+  color: var(--color-text-muted, #595959);
+  margin-top: var(--sp-md, 12px);
+}
+
+/* Live feedback for quick-add / practice-weak actions. min-height reserves
+   space so the layout does not jump when a message appears or clears. */
+.stats-action-status {
+  min-height: 1.5em;
+  margin: var(--sp-md, 12px) 0 0;
+  font-size: 1em;
+  font-weight: 600;
+  color: var(--color-text, #111111);
+}
+
+html.dark-mode .stats-action-status {
+  color: var(--color-text, #e6edf3);
+}
+
+html.dark-mode .stats-q-row {
+  background: var(--color-surface, #1e1e1e);
+  border-color: var(--color-border, #333333);
+}
+
+html.dark-mode .stats-q-row:hover {
+  border-color: var(--color-primary, #8BB8E8);
+}
+
+html.dark-mode .stats-q-text {
+  color: var(--color-text, #e6edf3);
+}
+
+html.dark-mode .stats-q-fraction {
+  color: var(--color-text-muted, #b0b0b0);
+}
+
+html.dark-mode .stats-acc-bar-track {
+  background: var(--color-surface-3, #1a1a1a);
+}
+
+html.dark-mode .stats-select-hint {
+  color: var(--color-text-muted, #b0b0b0);
+}
+
+/* ==================== Topic Mastery ==================== */
+
+.stats-topic-mastery {
+  margin-bottom: var(--sp-2xl, 32px);
+}
+
+.mastery-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-sm, 8px);
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.mastery-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sp-md, 12px);
+  border: 1px solid #afc1d1;
+  border-radius: var(--radius-md, 8px);
+  padding: var(--sp-sm, 8px) var(--sp-md, 12px);
+  background: var(--gym-paper, #f7fbff);
+}
+
+.mastery-info {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.mastery-title {
+  display: block;
+  color: var(--color-text, #111111);
+}
+
+.mastery-meta {
+  display: block;
+  font-size: 0.9em;
+  margin: var(--sp-xs, 4px) 0 var(--sp-sm, 8px);
+  color: var(--color-text-muted, #595959);
+}
+
+.mastery-state {
+  font-weight: 700;
+}
+
+.mastery-bar {
+  height: 10px;
+  border-radius: var(--radius-pill, 999px);
+  background: #e1e4e8;
+  overflow: hidden;
+}
+
+.mastery-bar-fill {
+  display: block;
+  height: 100%;
+  width: var(--mastery-pct, 0%);
+  background: var(--color-primary, #2774AE);
+  transition: width 0.3s ease;
+}
+
+/* State label contrasts on the near-white #f7fbff row (all PASS >= 4.5:1). */
+.mastery-state-learning .mastery-state { color: #8a5a00; }
+.mastery-state-learning .mastery-bar-fill { background: #d98a00; }
+.mastery-state-proficient .mastery-state { color: #1357a0; }
+.mastery-state-proficient .mastery-bar-fill { background: #1F6EBD; }
+.mastery-state-mastered .mastery-state { color: #1d7a3d; }
+.mastery-state-mastered .mastery-bar-fill { background: #1d9a4d; }
+
+.mastery-practice-btn {
+  flex: 0 0 auto;
+}
+
+html.dark-mode .mastery-row {
+  border-color: #46566a;
+  background: var(--gym-paper, #172534);
+  color: var(--color-text, #e6edf3);
+}
+
+html.dark-mode .mastery-title {
+  color: var(--color-text, #e6edf3);
+}
+
+html.dark-mode .mastery-meta {
+  color: var(--color-text-muted, #b0b0b0);
+}
+
+html.dark-mode .mastery-bar {
+  background: #2c3a47;
+}
+
+/* State labels on the dark #172534 row (all light-on-dark, PASS >= 4.5:1). */
+html.dark-mode .mastery-state-learning .mastery-state { color: #f0c040; }
+html.dark-mode .mastery-state-learning .mastery-bar-fill { background: #f0b429; }
+html.dark-mode .mastery-state-proficient .mastery-state { color: #7FB6F0; }
+html.dark-mode .mastery-state-proficient .mastery-bar-fill { background: #2A82C5; }
+html.dark-mode .mastery-state-mastered .mastery-state { color: #5fd08a; }
+html.dark-mode .mastery-state-mastered .mastery-bar-fill { background: #34b36a; }
+
+/* ==================== Deck Cards ==================== */
+
+.stats-deck-columns {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--sp-2xl, 32px);
+}
+
+.stats-deck-grid {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-md, 12px);
+}
+
+.stats-deck-card {
+  padding: var(--sp-lg, 16px);
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #d8dde2);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.08));
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-sm, 8px);
+}
+
+.stats-deck-header {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-sm, 8px);
+}
+
+.stats-deck-medal {
+  font-size: 1.4em;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.stats-deck-effort-icon {
+  flex-shrink: 0;
+  min-width: 1.4em;
+  color: #8a5a00;
+  font-size: 1.2em;
+  line-height: 1;
+  text-align: center;
+}
+
+.stats-deck-title {
+  font-weight: 600;
+  font-size: 1em;
+  color: var(--color-text, #111111);
+  word-break: break-word;
+}
+
+.stats-deck-stats {
+  font-size: 0.9em;
+  color: var(--color-text-muted, #595959);
+}
+
+.stats-deck-practice {
+  align-self: flex-start;
+  margin-top: var(--sp-xs, 4px);
+}
+
+html.dark-mode .stats-deck-card {
+  background: var(--color-surface, #1e1e1e);
+  border-color: var(--color-border, #333333);
+  box-shadow: var(--shadow-sm, 0 1px 2px rgba(0,0,0,0.4));
+}
+
+html.dark-mode .stats-deck-title {
+  color: var(--color-text, #e6edf3);
+}
+
+html.dark-mode .stats-deck-effort-icon {
+  color: #f0c040;
+}
+
+html.dark-mode .stats-deck-stats {
+  color: var(--color-text-muted, #b0b0b0);
+}
+
+/* ==================== Selection Basket ==================== */
+
+.stats-basket-bar {
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--sp-md, 12px);
+  justify-content: space-between;
+  padding: var(--sp-md, 12px) var(--sp-lg, 16px);
+  background: var(--color-surface, #ffffff);
+  border: 1px solid var(--color-border, #d8dde2);
+  border-radius: var(--radius-lg, 12px);
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(0,0,0,0.10));
+  margin-top: var(--sp-lg, 16px);
+}
+
+.stats-basket-count {
+  font-weight: 600;
+  color: var(--color-text, #111111);
+}
+
+.stats-basket-actions {
+  display: flex;
+  gap: var(--sp-sm, 8px);
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: var(--sp-md, 12px);
+}
+
+html.dark-mode .stats-basket-bar {
+  background: var(--color-surface, #1e1e1e);
+  border-color: var(--color-border, #333333);
+  box-shadow: var(--shadow-md, 0 4px 12px rgba(0,0,0,0.5));
+}
+
+html.dark-mode .stats-basket-count {
+  color: var(--color-text, #e6edf3);
+}
+
+/* Disabled state for the start workout link-as-button */
+a.gym-btn[aria-disabled="true"] {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ==================== Focus Rings ==================== */
+/*
+ * WCAG 2.4.7 / 2.4.11 — visible focus for all interactive elements.
+ * The project default is a 3px outline + 2px offset in --focus-color.
+ */
+
+.stats-q-check:focus-visible,
+.stats-q-check:focus {
+  outline: var(--focus-width, 3px) solid var(--focus-color, #2774AE);
+  outline-offset: var(--focus-offset, 2px);
+}
+
+/* ==================== Responsive ==================== */
+
+@media (max-width: 700px) {
+  .stats-questions-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-deck-columns {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .stats-tiles {
+    flex-direction: column;
+  }
+
+  .stats-tile {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .stats-q-row {
+    grid-template-columns: 24px minmax(0, 1fr);
+  }
+
+  .stats-acc-bar-track {
+    display: none;
+  }
+
+  .stats-diff-table th:last-child,
+  .stats-diff-table td:last-child {
+    display: none;
+  }
+
+  .mastery-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .mastery-practice-btn {
+    align-self: flex-start;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mastery-bar-fill {
+    transition: none;
+  }
+}
+
+/* ==================== Print ==================== */
+
+@media print {
+  .stats-basket-bar {
+    display: none;
+  }
+
+  .stats-section {
+    break-inside: avoid;
+  }
+}

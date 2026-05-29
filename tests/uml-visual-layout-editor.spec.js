@@ -5317,3 +5317,164 @@ player -> prison_state: teleport(player)
     await expect(stateTool).toHaveAttribute('aria-pressed', 'false');
   });
 });
+
+test.describe('"+" extend handle creation parity', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.keys(localStorage)
+        .filter((k) => /uml-pg-autosave/.test(k))
+        .forEach((k) => localStorage.removeItem(k));
+    });
+  });
+
+  // Drive the first "+" extend handle by dispatching PointerEvents directly on
+  // the circle, then on document (where the move/up listeners live). Direct
+  // dispatch is necessary because (a) the handle sits under an a11y/hitbox layer
+  // that would swallow a coordinate-based page.mouse press, and (b) we stub
+  // setPointerCapture so the handler's capture call doesn't throw on a synthetic
+  // pointer — which would otherwise abort before extendDragState is set. The
+  // .uml-pg-extend-line check confirms the drag actually armed.
+  async function extendDragFirstHandleTo(page, target) {
+    const handle = page.locator('.uml-pg-extend-handle').first();
+    await expect(handle).toBeVisible();
+    await handle.scrollIntoViewIfNeeded();
+    const box = await handle.boundingBox();
+    if (!box) throw new Error('extend handle should have a bounding box');
+    const armed = await page.evaluate(({ sx, sy, tx, ty }) => {
+      if (!window.__umlPcStub) {
+        Element.prototype.setPointerCapture = function () {};
+        Element.prototype.releasePointerCapture = function () {};
+        window.__umlPcStub = true;
+      }
+      const circle = document.querySelector('.uml-pg-extend-handle');
+      if (!circle) return false;
+      const mk = (type, x, y) => new PointerEvent(type, {
+        bubbles: true, cancelable: true, clientX: x, clientY: y, pointerId: 1, isPrimary: true, button: 0,
+      });
+      circle.dispatchEvent(mk('pointerdown', sx, sy));
+      const didArm = !!document.querySelector('.uml-pg-extend-line');
+      document.dispatchEvent(mk('pointermove', tx, ty));
+      document.dispatchEvent(mk('pointerup', tx, ty));
+      return didArm;
+    }, { sx: box.x + box.width / 2, sy: box.y + box.height / 2, tx: target.x, ty: target.y });
+    if (!armed) throw new Error('extend drag did not arm (no .uml-pg-extend-line after pointerdown on the handle)');
+  }
+
+  // A canvas point inside the SVG but clear of every element/edge hitbox, so a
+  // "+" drop there is treated as "empty canvas".
+  async function emptyCanvasPoint(page) {
+    return await page.locator('#uml-pg-output svg').evaluate((svg) => {
+      const r = svg.getBoundingClientRect();
+      const blocked = Array.from(document.querySelectorAll('.uml-pg-edit-hitbox, .uml-pg-edge-hitbox'))
+        .map((el) => el.getBoundingClientRect())
+        .filter((b) => b.width > 0 && b.height > 0);
+      const candidates = [
+        { x: r.right - 28, y: r.top + 28 },
+        { x: r.right - 28, y: r.bottom - 28 },
+        { x: r.left + r.width / 2, y: r.bottom - 28 },
+        { x: r.right - 28, y: r.top + r.height / 2 },
+      ];
+      const free = candidates.find((pt) =>
+        pt.x > r.left + 4 && pt.x < r.right - 4 && pt.y > r.top + 4 && pt.y < r.bottom - 4 &&
+        !blocked.some((b) => pt.x >= b.left && pt.x <= b.right && pt.y >= b.top && pt.y <= b.bottom));
+      return free || { x: r.right - 12, y: r.top + 12 };
+    });
+  }
+
+  async function hitboxCenter(locator) {
+    const b = await locator.boundingBox();
+    return { x: b.x + b.width / 2, y: b.y + b.height / 2 };
+  }
+
+  test('gitgraph: "+" drag to empty canvas creates a commit via the branch-safe path', async ({ page }) => {
+    await page.goto(PLAYGROUND_URL);
+    await selectDiagram(page, 'gitgraph');
+    await setUmlSource(page, '@startuml\nbranch main:\n  A "Initial commit"\n@enduml');
+    await expect(page.locator('.uml-pg-edit-hitbox').first()).toBeVisible();
+    const before = await page.locator('#uml-pg-input').inputValue();
+
+    await extendDragFirstHandleTo(page, await emptyCanvasPoint(page));
+
+    const chooser = page.locator('.uml-pg-relation-chooser');
+    await expect(chooser).toBeVisible();
+    // Picking "Commit" exercises Fix B: gitCommit now routes through
+    // placeElementAt -> addGitgraphCommitRow instead of addElementToSource.
+    await chooser.getByRole('menuitem', { name: /commit/i }).first().click();
+    await expect(chooser).not.toBeVisible();
+    await expect(page.locator('#uml-pg-error')).toHaveClass(/is-hidden/);
+    await expect
+      .poll(async () => (await page.locator('#uml-pg-input').inputValue()).length)
+      .toBeGreaterThan(before.length);
+  });
+
+  test('activity: "+" drag to empty canvas adds an action through placeElementAt', async ({ page }) => {
+    await page.goto(PLAYGROUND_URL);
+    await selectDiagram(page, 'activity');
+    await setUmlSource(page, '@startuml\n(*) --> "Start"\n@enduml');
+    await expect(page.locator('.uml-pg-edit-hitbox').first()).toBeVisible();
+    const before = await page.locator('#uml-pg-input').inputValue();
+
+    await extendDragFirstHandleTo(page, await emptyCanvasPoint(page));
+
+    const chooser = page.locator('.uml-pg-relation-chooser');
+    await expect(chooser).toBeVisible();
+    await chooser.getByRole('menuitem', { name: /action/i }).first().click();
+    await expect(chooser).not.toBeVisible();
+    await expect(page.locator('#uml-pg-error')).toHaveClass(/is-hidden/);
+    await expect
+      .poll(async () => (await page.locator('#uml-pg-input').inputValue()).length)
+      .toBeGreaterThan(before.length);
+  });
+
+  test('class: "+" element chooser includes Note (notes creatable via "+")', async ({ page }) => {
+    await page.goto(PLAYGROUND_URL);
+    await selectDiagram(page, 'class');
+    await setUmlSource(page, '@startuml\nclass Foo\n@enduml');
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="Foo"]')).toBeVisible();
+
+    await extendDragFirstHandleTo(page, await emptyCanvasPoint(page));
+
+    const chooser = page.locator('.uml-pg-relation-chooser');
+    await expect(chooser).toBeVisible();
+    // Fix A: Note is no longer filtered out of the "+" element chooser.
+    await expect(chooser.getByRole('menuitem', { name: /note/i })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(chooser).not.toBeVisible();
+  });
+
+  test('venn: "+" dropped on another set opens the element chooser (no silent dead-end)', async ({ page }) => {
+    await page.goto(PLAYGROUND_URL);
+    await selectDiagram(page, 'venn');
+    await setUmlSource(page, '@startuml\nset A\nset B\n@enduml');
+    await expect(page.locator('.uml-pg-edit-hitbox').nth(1)).toBeVisible();
+
+    // Fix C: a drop onto an existing element in a relation-less type used to be
+    // a silent no-op; it now opens the element chooser.
+    await extendDragFirstHandleTo(page, await hitboxCenter(page.locator('.uml-pg-edit-hitbox').nth(1)));
+
+    await expect(page.locator('.uml-pg-relation-chooser')).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page.locator('.uml-pg-relation-chooser')).not.toBeVisible();
+  });
+
+  test('state: a self-transition can be created (state self-relations allowed)', async ({ page }) => {
+    await page.goto(PLAYGROUND_URL);
+    await selectDiagram(page, 'state');
+    await setUmlSource(page, '@startuml\nstate Idle\n@enduml');
+    const idle = page.locator('.uml-pg-edit-hitbox[data-layout-id="Idle"]');
+    await expect(idle).toBeVisible();
+
+    // Fix D: connecting a state to itself used to be blocked with "Self-relations
+    // not supported"; a state self-transition is valid UML and must be allowed.
+    // Arm the transition tool, then pick the same node as both source and target.
+    // force:true because the element's a11y button overlaps the hitbox rect that
+    // actually carries the connect-mode click handler.
+    await page.locator('#uml-pg-palette-relations .uml-pg-tool-btn[data-tool-spec="transition"]').click();
+    await expect(page.locator('#uml-pg-tool-status')).toContainText(/source/i);
+    await idle.click({ force: true });
+    await idle.click({ force: true });
+
+    await expect(page.locator('#uml-pg-error')).toHaveClass(/is-hidden/);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/Idle\s*-+>\s*Idle/);
+  });
+});

@@ -8,6 +8,7 @@ const { a11yCheckpoint } = require('./a11y-helpers');
 const A11Y_FEATURE = 'se-gym';
 
 const GYM_URL = '/se-gym/';
+const STATS_URL = '/se-gym-stats/';
 // A page with both a quiz and flashcard include
 const GIT_PAGE_URL = '/SEBook/tools/git.html';
 
@@ -99,6 +100,43 @@ async function useSavedHumanHeroAvatar(page) {
   await page.addInitScript((hero) => {
     localStorage.setItem('se-gym-hero-avatar', JSON.stringify(hero));
   }, DEFAULT_HUMAN_HERO_AVATAR);
+}
+
+async function recordScrollCalls(page) {
+  await page.addInitScript(() => {
+    window.__seGymScrollCalls = [];
+    const originalScrollTo = window.scrollTo.bind(window);
+    window.scrollTo = (...args) => {
+      const options = args.length === 1 && args[0] && typeof args[0] === 'object'
+        ? args[0]
+        : {};
+      window.__seGymScrollCalls.push({
+        method: 'scrollTo',
+        behavior: options.behavior || null,
+      });
+      return originalScrollTo(...args);
+    };
+
+    const originalScrollIntoView = Element.prototype.scrollIntoView;
+    Element.prototype.scrollIntoView = function scrollIntoViewWithRecording(options) {
+      window.__seGymScrollCalls.push({
+        method: 'scrollIntoView',
+        behavior: options && typeof options === 'object' ? options.behavior || null : null,
+      });
+      return originalScrollIntoView.call(this, options);
+    };
+  });
+}
+
+/**
+ * Helper: seed the `se-gym-stats` localStorage object before the page loads.
+ * Canonical stats are keyed by `cardType:deckId:cardId`; older `deckId:cardId`
+ * and hash-keyed records are migrated on SE Gym load.
+ */
+async function seedStats(page, stats) {
+  await page.addInitScript((s) => {
+    localStorage.setItem('se-gym-stats', JSON.stringify(s));
+  }, stats);
 }
 
 async function expectNoHorizontalScroll(page, stateName) {
@@ -822,6 +860,31 @@ test.describe('Personal Gym - Workout', () => {
     await a11yCheckpoint(page, 'gym workout — quiz card with explanation revealed', { feature: A11Y_FEATURE, darkMode: true });
   });
 
+  test('reduced motion override disables smooth workout scrolling', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'scrum' }]));
+    await recordScrollCalls(page);
+    await page.goto(`${GYM_URL}?reduce-motion=1`);
+
+    await page.locator('#max-cards').fill('1');
+    await page.locator('#start-workout-btn').click();
+
+    const quizCard = page.locator('.workout-quiz-card');
+    await expect(quizCard).toBeVisible();
+    const type = await quizCard.getAttribute('data-type');
+    if (type === 'multiple') {
+      await answerWorkoutMultipleChoice(quizCard);
+    } else {
+      await quizCard.locator('.quiz-option').first().click();
+    }
+    await expect(quizCard.locator('.quiz-explanation')).toBeVisible();
+
+    const scrollCalls = await page.evaluate(() => window.__seGymScrollCalls || []);
+    expect(scrollCalls.some((call) => call.method === 'scrollTo'), 'starting a workout should scroll to the workout area').toBe(true);
+    expect(scrollCalls.some((call) => call.method === 'scrollIntoView'), 'revealing an explanation should scroll it into view').toBe(true);
+    expect(scrollCalls.map((call) => call.behavior), 'reduced motion should never request smooth scrolling').not.toContain('smooth');
+  });
+
   test('quiz card answer shortcuts select visible options', async ({ page, context }) => {
     await setCookie(context, 'se-gym-active', 'true');
     await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'scrum' }]));
@@ -1508,9 +1571,10 @@ test.describe('Personal Gym - Performance Tracking', () => {
     await page.evaluate(() => {
       // Get any quiz question from ALL_CARD_DATA
       var quizIds = Object.keys(ALL_CARD_DATA.quizzes);
-      var firstQuiz = ALL_CARD_DATA.quizzes[quizIds[0]];
+      var quizId = quizIds.find(function (id) { return !ALL_CARD_DATA.quizzes[id].isMaster; });
+      var firstQuiz = ALL_CARD_DATA.quizzes[quizId];
       var question = firstQuiz.questions[0];
-      var key = quizIds[0] + ':' + question.id;
+      var key = 'quiz:' + quizId + ':' + question.id;
       // 10 seen, 3 correct = 70% failure rate
       var stats = {};
       stats[key] = { seen: 10, correct: 3 };
@@ -1533,10 +1597,10 @@ test.describe('Personal Gym - Performance Tracking', () => {
     await page.evaluate(() => {
       const quizId = 'design_pattern_singleton';
       const stats = {};
-      // Two difficult Singleton questions: one advanced and one intermediate.
+      // Two difficult Singleton questions: one intermediate and one advanced.
       // Filtering out advanced should leave exactly the intermediate card.
-      stats[`${quizId}:1`] = { seen: 10, correct: 1 };
-      stats[`${quizId}:3`] = { seen: 10, correct: 1 };
+      stats[`quiz:${quizId}:1`] = { seen: 10, correct: 1 };
+      stats[`quiz:${quizId}:2`] = { seen: 10, correct: 1 };
       PersonalGym.saveStats(stats);
     });
     await page.reload();
@@ -1564,9 +1628,10 @@ test.describe('Personal Gym - Performance Tracking', () => {
     // Inject difficult stats
     await page.evaluate(() => {
       var quizIds = Object.keys(ALL_CARD_DATA.quizzes);
-      var firstQuiz = ALL_CARD_DATA.quizzes[quizIds[0]];
+      var quizId = quizIds.find(function (id) { return !ALL_CARD_DATA.quizzes[id].isMaster; });
+      var firstQuiz = ALL_CARD_DATA.quizzes[quizId];
       var question = firstQuiz.questions[0];
-      var key = quizIds[0] + ':' + question.id;
+      var key = 'quiz:' + quizId + ':' + question.id;
       var stats = {};
       stats[key] = { seen: 10, correct: 2 };
       PersonalGym.saveStats(stats);
@@ -1664,9 +1729,10 @@ test.describe('Personal Gym - Performance Tracking', () => {
     // Inject stats: 10 seen, 7 correct = 30% failure rate (below 40% threshold)
     await page.evaluate(() => {
       var quizIds = Object.keys(ALL_CARD_DATA.quizzes);
-      var firstQuiz = ALL_CARD_DATA.quizzes[quizIds[0]];
+      var quizId = quizIds.find(function (id) { return !ALL_CARD_DATA.quizzes[id].isMaster; });
+      var firstQuiz = ALL_CARD_DATA.quizzes[quizId];
       var question = firstQuiz.questions[0];
-      var key = quizIds[0] + ':' + question.id;
+      var key = 'quiz:' + quizId + ':' + question.id;
       var stats = {};
       stats[key] = { seen: 10, correct: 7 };
       PersonalGym.saveStats(stats);
@@ -1685,9 +1751,10 @@ test.describe('Personal Gym - Performance Tracking', () => {
     // Inject stats with high failure rate for one question
     const count = await page.evaluate(() => {
       var quizIds = Object.keys(ALL_CARD_DATA.quizzes);
-      var firstQuiz = ALL_CARD_DATA.quizzes[quizIds[0]];
+      var quizId = quizIds.find(function (id) { return !ALL_CARD_DATA.quizzes[id].isMaster; });
+      var firstQuiz = ALL_CARD_DATA.quizzes[quizId];
       var question = firstQuiz.questions[0];
-      var key = quizIds[0] + ':' + question.id;
+      var key = 'quiz:' + quizId + ':' + question.id;
       var stats = {};
       stats[key] = { seen: 10, correct: 1 };
       PersonalGym.saveStats(stats);
@@ -1703,4 +1770,186 @@ test.describe('Personal Gym - Performance Tracking', () => {
     await expect(page.locator('#difficult-gym-section')).toBeVisible();
     await expect(page.locator('#difficult-count')).toContainText('1');
   });
+});
+
+test.describe('SE Gym - Spaced repetition, Workout of the Day, Topic Mastery', () => {
+
+  test('SRS scheduleNext grows the interval on success and resets on a lapse', async ({ page }) => {
+    await page.goto(GYM_URL);
+    const r = await page.evaluate(() => {
+      const now = Date.now();
+      const first = window.PersonalGym.scheduleNext(null, true, now);
+      const second = window.PersonalGym.scheduleNext(first, true, now);
+      const lapse = window.PersonalGym.scheduleNext(second, false, now);
+      return { now, first, second, lapse };
+    });
+    // First correct answer schedules the card ~1 day out
+    expect(r.first.intervalDays).toBe(1);
+    expect(r.first.due).toBeGreaterThan(r.now);
+    // A second correct answer pushes the interval further into the future
+    expect(r.second.intervalDays).toBeGreaterThan(r.first.intervalDays);
+    expect(r.second.due).toBeGreaterThan(r.first.due);
+    // A wrong answer resets reps/interval and makes the card due immediately
+    expect(r.lapse.reps).toBe(0);
+    expect(r.lapse.intervalDays).toBe(0);
+    expect(r.lapse.due).toBeLessThanOrEqual(r.now);
+  });
+
+  test('Due for Review surfaces past-due cards (not future ones) and Start Review launches them', async ({ page, context }) => {
+    const NOW = Date.now();
+    const DAY = 24 * 60 * 60 * 1000;
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'analyze-performance', 'true');
+    await seedStats(page, {
+      'quiz:git:1': { seen: 3, correct: 1, reps: 0, ef: 2.0, intervalDays: 0, lapses: 1, due: NOW - DAY, last: NOW - DAY },
+      'quiz:git:2': { seen: 2, correct: 2, reps: 2, ef: 2.6, intervalDays: 7, lapses: 0, due: NOW + 7 * DAY, last: NOW },
+    });
+    await page.goto(GYM_URL);
+    await expect(page.locator('#due-section')).toBeVisible();
+    // Only quiz:git:1 is past due; quiz:git:2 is scheduled for the future
+    await expect(page.locator('#due-count')).toContainText('1 card');
+    await page.locator('#start-review-btn').click();
+    await expect(page.locator('#gym-workout')).toBeVisible();
+    await expect(page.locator('.workout-quiz-card')).toBeVisible();
+  });
+
+  test('flashcard stats migrate from question hashes to stable card IDs', async ({ page, context }) => {
+    const NOW = Date.now();
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'analyze-performance', 'true');
+    await page.goto(GYM_URL);
+
+    const keys = await page.evaluate(() => {
+      const card = ALL_CARD_DATA.flashcards.shell_pipes.cards[0];
+      return {
+        legacyKey: 'shell_pipes:' + PersonalGym.hashQuestion(card.question),
+        stableKey: 'flashcard:shell_pipes:' + card.id,
+      };
+    });
+    await page.evaluate(({ legacyKey, now }) => {
+      const stats = {};
+      stats[legacyKey] = { seen: 2, correct: 1, reps: 0, intervalDays: 0, due: now - 1000, last: now - 1000 };
+      localStorage.setItem('se-gym-stats', JSON.stringify(stats));
+    }, { legacyKey: keys.legacyKey, now: NOW });
+
+    await page.reload();
+
+    const migrated = await page.evaluate(() => PersonalGym.getStats());
+    expect(migrated[keys.stableKey], 'hash-keyed flashcard stats should migrate to the stable YAML id key').toMatchObject({
+      seen: 2,
+      correct: 1,
+    });
+    expect(migrated[keys.legacyKey], 'the legacy hash key should be removed after migration').toBeUndefined();
+    await expect(page.locator('#due-section')).toBeVisible();
+    await expect(page.locator('#due-count')).toContainText('1 card');
+  });
+
+  test('master flashcard workouts record stats against the source deck for topic mastery', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'analyze-performance', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'flashcard', id: 'tools' }]));
+    await page.goto(GYM_URL);
+
+    await page.locator('#max-cards').fill('1');
+    await page.locator('#start-workout-btn').click();
+    await expect(page.locator('.workout-flashcard')).toBeVisible();
+
+    const expected = await page.evaluate(() => {
+      function textFromHtml(html) {
+        const node = document.createElement('div');
+        node.innerHTML = html;
+        return node.textContent.replace(/\s+/g, ' ').trim();
+      }
+      const visibleQuestion = document.querySelector('.workout-flashcard .flashcard-question').textContent.replace(/\s+/g, ' ').trim();
+      const card = ALL_CARD_DATA.flashcards.tools.cards.find((candidate) => textFromHtml(candidate.question) === visibleQuestion);
+      const sourceDeck = ALL_CARD_DATA.flashcards[card.sourceDeckId];
+      const idPart = card.id != null ? card.id : PersonalGym.hashQuestion(card.question);
+      return {
+        sourceKey: 'flashcard:' + card.sourceDeckId + ':' + idPart,
+        aggregateKey: 'flashcard:tools:' + idPart,
+        sourceTitle: sourceDeck.title,
+      };
+    });
+
+    await page.getByRole('button', { name: 'Show Answer' }).click();
+    await page.getByRole('button', { name: 'I got it right' }).click();
+    await expect(page.locator('#workout-results')).toBeVisible();
+
+    const stats = await page.evaluate(() => PersonalGym.getStats());
+    expect(stats[expected.sourceKey], 'master deck practice should store the result under the source deck key').toMatchObject({
+      seen: 1,
+      correct: 1,
+    });
+    expect(stats[expected.aggregateKey], 'master deck practice should not create an aggregate deck stats key').toBeUndefined();
+
+    await page.getByRole('button', { name: 'Back to Gym Entrance' }).click();
+    await expect(page.locator('.mastery-row').filter({ hasText: expected.sourceTitle })).toBeVisible();
+    await expect(page.locator('.mastery-row').filter({ hasText: 'Tools Master Flashcards' })).toHaveCount(0);
+  });
+
+  test('Workout of the Day records completion and shows the badge on the next visit', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    // Finish the workout deterministically (regardless of card type) via a
+    // 1-second per-card timeout rather than answering a random card.
+    await setCookie(context, 'se-gym-timed-practice', 'true');
+    await setCookie(context, 'se-gym-timer-mode', 'per-question');
+    await setCookie(context, 'se-gym-timer-seconds-per-question', '1');
+    await page.goto(GYM_URL);
+    await page.locator('#max-cards').fill('1');
+    await page.locator('#start-daily-workout-btn').click();
+    await expect(page.locator('#workout-results')).toBeVisible({ timeout: 5000 });
+    const [dailyLast, today] = await page.evaluate(() => [
+      localStorage.getItem('se-gym-daily-last'),
+      window.PersonalGym.todayStr(),
+    ]);
+    expect(dailyLast).toBe(today);
+    // The "Completed today" badge appears when we return to the entrance
+    await page.reload();
+    await expect(page.locator('#wod-status')).toBeVisible();
+    await expect(page.locator('#wod-status')).toContainText('Completed today');
+  });
+
+  test('Topic Mastery lists practiced decks with mastered counts and a working Practice button', async ({ page, context }) => {
+    const NOW = Date.now();
+    const DAY = 24 * 60 * 60 * 1000;
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'analyze-performance', 'true');
+    await seedStats(page, {
+      // intervalDays >= 21 and reps >= 1 → "mastered"
+      'quiz:git:1': { seen: 4, correct: 4, reps: 4, ef: 2.6, intervalDays: 30, lapses: 0, due: NOW + 30 * DAY, last: NOW },
+      // intervalDays >= 7 → "proficient"
+      'quiz:git:2': { seen: 3, correct: 3, reps: 3, ef: 2.5, intervalDays: 10, lapses: 0, due: NOW + 10 * DAY, last: NOW },
+    });
+    await page.goto(GYM_URL);
+    await expect(page.locator('#mastery-section')).toBeVisible();
+    await a11yCheckpoint(page, 'gym entrance — topic mastery visible', { feature: A11Y_FEATURE, darkMode: true });
+    const gitRow = page.locator('.mastery-row').filter({ hasText: /git/i }).first();
+    await expect(gitRow).toBeVisible();
+    // Exactly one git quiz card (quiz:git:1) qualifies as mastered
+    await expect(gitRow).toContainText('1 /');
+    await expect(gitRow.locator('.mastery-state')).toBeVisible();
+    await expect(gitRow.locator('.mastery-bar')).toHaveAttribute('role', 'progressbar');
+    await gitRow.locator('.mastery-practice-btn').click();
+    await expect(page.locator('#gym-workout')).toBeVisible();
+  });
+
+  test('SRS panels are gated behind performance tracking and unlock when it is enabled', async ({ page, context }) => {
+    const NOW = Date.now();
+    const DAY = 24 * 60 * 60 * 1000;
+    await setCookie(context, 'se-gym-active', 'true');
+    // analyze-performance intentionally left off
+    await seedStats(page, {
+      'quiz:git:1': { seen: 3, correct: 1, reps: 0, ef: 2.0, intervalDays: 0, lapses: 1, due: NOW - DAY, last: NOW - DAY },
+    });
+    await page.goto(GYM_URL);
+    await expect(page.locator('#srs-locked-prompt')).toBeVisible();
+    await expect(page.locator('#due-section')).toBeHidden();
+    await expect(page.locator('#mastery-section')).toBeHidden();
+    await page.locator('#enable-tracking-btn').click();
+    await expect(page.locator('#srs-locked-prompt')).toBeHidden();
+    // The seeded past-due card and practiced deck now surface
+    await expect(page.locator('#due-section')).toBeVisible();
+    await expect(page.locator('#mastery-section')).toBeVisible();
+  });
+
 });

@@ -402,8 +402,11 @@ info_nav_title: "My Settings"
             <p class="setting-description">
               Lets the SE Gym keep a private tally of how often you see each
               quiz or flashcard question and how often you get it right. The
-              gym then surfaces a "Difficult Questions" workout for the
-              ones you keep missing. The data never leaves this browser.
+              gym uses this to surface a "Difficult Questions" workout, to
+              schedule spaced-repetition reviews (your "Due for Review" queue
+              and "Workout of the Day"), and to track per-topic mastery. Stored
+              in <code>se-gym-stats</code> in localStorage; the data never
+              leaves this browser.
             </p>
           </div>
           <div class="setting-control">
@@ -496,6 +499,21 @@ info_nav_title: "My Settings"
                 </label>
               </div>
             </fieldset>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
+            <p class="setting-name">Weekly training goal</p>
+            <p class="setting-description">
+              How many SE Gym sessions you aim to finish each week. Set it in the
+              <strong>Training Log</strong> on the
+              <a href="{{ '/se-gym/' | relative_url }}">SE Gym</a> page; your weekly
+              progress, streak, and consistency heatmap update as you train.
+              Stored in the <code>se-gym-weekly-goal</code> cookie (default 3);
+              your day-by-day history is kept in <code>se-gym-activity</code> in
+              localStorage.
+            </p>
           </div>
         </div>
       </div>

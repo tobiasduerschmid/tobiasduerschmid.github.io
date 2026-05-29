@@ -1034,7 +1034,13 @@ Supported options:
     }
 
     function insertPos(line, pos) {
-      var suffix = ' @pos(' + Math.round(pos.x) + ', ' + Math.round(pos.y || 0) + ')';
+      // Coordinates written here flow into the diagram source and then into
+      // localStorage via autosave. A non-finite value (e.g. NaN from an
+      // interrupted drag) would serialize as the literal "@pos(NaN, …)" and
+      // corrupt the saved draft on reload, so clamp non-finite values to 0.
+      var px = isFinite(pos.x) ? Math.round(pos.x) : 0;
+      var py = isFinite(pos.y) ? Math.round(pos.y) : 0;
+      var suffix = ' @pos(' + px + ', ' + py + ')';
       var brace = line.match(/(\s*\{.*)$/);
       if (brace) return line.slice(0, -brace[1].length) + suffix + brace[1];
       return line + suffix;
@@ -5000,7 +5006,6 @@ Supported options:
       var type = typeSelect.value;
       var els = elementSchemasFor(type).filter(function (spec) {
         if (type === 'sequence') return !spec.sequenceControl && !spec.sequenceNote;
-        if (diagramSupportsAnchoredNotes(type) && spec.isNote) return false;
         return true;
       });
       if (!els.length) { onPick(null); return; }
@@ -5018,9 +5023,7 @@ Supported options:
         btn.setAttribute('role', 'menuitem');
         var glyph = document.createElement('span');
         glyph.setAttribute('aria-hidden', 'true');
-        glyph.style.color = '#2774AE';
-        glyph.style.fontWeight = '700';
-        glyph.style.minWidth = '1.4em';
+        glyph.className = 'uml-pg-chooser-glyph';
         glyph.textContent = spec.glyph || '▢';
         btn.appendChild(glyph);
         btn.appendChild(document.createTextNode(spec.label));
@@ -5067,9 +5070,7 @@ Supported options:
         btn.setAttribute('role', 'menuitem');
         var glyph = document.createElement('span');
         glyph.setAttribute('aria-hidden', 'true');
-        glyph.style.color = '#2774AE';
-        glyph.style.fontWeight = '700';
-        glyph.style.minWidth = '1.4em';
+        glyph.className = 'uml-pg-chooser-glyph';
         glyph.textContent = spec.glyph || '→';
         btn.appendChild(glyph);
         btn.appendChild(document.createTextNode(spec.label));
@@ -5110,7 +5111,7 @@ Supported options:
       var spec = selectedRelationToolSpec();
       if (!spec) return false;
       opts = opts || {};
-      if (sourceId === targetId && typeSelect.value !== 'sequence') {
+      if (sourceId === targetId && typeSelect.value !== 'sequence' && typeSelect.value !== 'state') {
         announce('Self-relations not supported here.', false);
         return true;
       }
@@ -5564,21 +5565,27 @@ Supported options:
           // gesture stays in flow.
           showElementChooser(clientX, clientY, sourceId, function (spec) {
             if (!spec) return;
-            snapshotForUndo();
             var type = typeSelect.value;
             var newId = generateUniqueId(textarea.value, type, spec.base);
             var place = editorCanvasPoint(svg, clientX, clientY);
-            // Special pseudo / structural elements: route through placeElementAt
-            // so they get the right surrounding source manipulation (state pseudo,
-            // activity decision blocks, etc.).
-            if (spec.pseudo || spec.activityPseudo || spec.activityDecision || spec.activityFork || spec.activityLane || spec.sequenceFragment || spec.isComposite) {
+            // Route all elements that need custom source manipulation through
+            // placeElementAt. It handles: gitgraph row insertion (branch-safety
+            // guard), folder-tree line appending, activity action-chaining,
+            // deployment-node nesting, component port host-snapping, note anchoring
+            // (arms the attach tool), and structural stubs (pseudo-states,
+            // fragments, composite states). placeElementAt also calls
+            // snapshotForUndo internally, so we skip the outer call here to
+            // avoid a duplicate no-op undo step.
+            if (spec.pseudo || spec.activityPseudo || spec.activityDecision || spec.activityFork ||
+                spec.activityLane || spec.sequenceFragment || spec.isComposite ||
+                spec.gitBranch || spec.gitCommit || spec.folderTreeKind || spec.activityAction ||
+                spec.isNote || spec.isPort || spec.isInterface ||
+                (type === 'deployment' && (spec.id === 'component' || spec.id === 'artifact'))) {
               placeElementAt(spec, place);
-              // For these, we don't auto-connect — they have their own connect semantics.
               return;
             }
+            snapshotForUndo();
             var opts = { id: newId, label: defaultElementLabelForPlacement(type, spec, newId), position: place };
-            if (spec.isNote) opts.label = 'New note text';
-            if (spec.isPort) opts.label = spec.portKind === 'portin' ? 'in' : 'out';
             textarea.value = addElementToSource(textarea.value, type, spec, opts);
             renderDiagram();
             setTimeout(function () {
@@ -5588,8 +5595,18 @@ Supported options:
           });
           return;
         }
+        // For diagram types with no relation schemas (venn, gitgraph, folder-tree)
+        // there is no connect semantics — redirect a drop-onto-element to the
+        // element chooser so "+" remains a useful creation affordance.
+        if (!relationSchemasFor(typeSelect.value).length) {
+          showElementChooser(clientX, clientY, sourceId, function (spec) {
+            if (!spec) return;
+            placeElementAt(spec, editorCanvasPoint(svg, clientX, clientY));
+          });
+          return;
+        }
         var targetId = hit.id;
-        if (targetId === sourceId && typeSelect.value !== 'sequence') {
+        if (targetId === sourceId && typeSelect.value !== 'sequence' && typeSelect.value !== 'state') {
           announce('Self-relations not supported here.', false);
           return;
         }
@@ -5673,7 +5690,7 @@ Supported options:
       }
       var sourceId = pendingRelation.sourceId;
       var targetId = item.id;
-      if (sourceId === targetId && typeSelect.value !== 'sequence') {
+      if (sourceId === targetId && typeSelect.value !== 'sequence' && typeSelect.value !== 'state') {
         announce('Pick a different target — self-loops are not supported here. Press Esc to cancel.', true);
         return true;
       }
@@ -10076,18 +10093,24 @@ Supported options:
     function bindSplitter(splitter, paneEl, kind) {
       if (!splitter || !paneEl) return;
       var dragging = null;
+      // #uml-playground-body ships alongside the splitters, but this include
+      // can be embedded in customized markup — fall back to the pane's parent
+      // so a missing wrapper degrades to a working drag instead of a TypeError.
+      function playgroundBodyWidth() {
+        var bodyEl = document.getElementById('uml-playground-body') || paneEl.parentNode;
+        return bodyEl ? bodyEl.getBoundingClientRect().width : 0;
+      }
       function onPointerDown(ev) {
         if (ev.button !== 0) return;
         ev.preventDefault();
         splitter.setPointerCapture(ev.pointerId);
         splitter.classList.add('is-dragging');
-        var bodyRect = document.getElementById('uml-playground-body').getBoundingClientRect();
         var paneRect = paneEl.getBoundingClientRect();
         dragging = {
           startX: ev.clientX,
           startY: ev.clientY,
           startWidth: paneRect.width,
-          bodyWidth: bodyRect.width,
+          bodyWidth: playgroundBodyWidth(),
           horizontal: window.matchMedia('(max-width: 700px)').matches
         };
       }
@@ -10124,7 +10147,7 @@ Supported options:
         else return;
         ev.preventDefault();
         var rect = paneEl.getBoundingClientRect();
-        applyPaneSize(paneEl, kind, rect.width + delta, document.getElementById('uml-playground-body').getBoundingClientRect().width);
+        applyPaneSize(paneEl, kind, rect.width + delta, playgroundBodyWidth());
         if (persistenceEnabled) {
           try {
             localStorage.setItem('uml-pg-' + kind + '-size', String(Math.round(paneEl.getBoundingClientRect().width)));
@@ -11422,12 +11445,20 @@ Supported options:
       return !!(globalName && window[globalName] && window.UMLShared);
     }
 
+    // Poll for the renderer globals, but bound the wait: if the ArchUML bundle
+    // fails to load (404, parse error, blocked script) the globals never appear,
+    // and an uncapped 100ms loop would spin forever. ~10s is far longer than a
+    // local bundle needs, so giving up after that means it is genuinely missing.
+    var rendererWaitAttempts = 0;
+    var MAX_RENDERER_WAIT_ATTEMPTS = 100;
     function tryRender() {
       var ready = supportedTypes.every(rendererReady);
       if (ready) {
         renderDiagram();
-      } else {
+      } else if (rendererWaitAttempts++ < MAX_RENDERER_WAIT_ATTEMPTS) {
         setTimeout(tryRender, 100);
+      } else {
+        showError('The diagram renderer did not finish loading. Reload the page to try again.');
       }
     }
     tryRender();

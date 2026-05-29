@@ -1132,6 +1132,33 @@
     'neutral': 1
   };
   var MILESTONE_TIERS = ['none', 'bronze', 'silver', 'gold', 'diamond', 'infinity'];
+  // "Earn your gear": showpiece accessories unlock as the learner climbs SE Gym
+  // milestone tiers. Items not listed here are always available. The current tier
+  // comes from window.SEGymHeroMilestone, which se-gym.html sets in refreshLibrary()
+  // from total exercise attempts. Ranks via MILESTONE_TIERS.
+  var GATED_ACCESSORIES = {
+    'utility-belt': 'bronze',
+    'hero-cape-clasp': 'silver',
+    'halo': 'gold',
+    'crown': 'diamond'
+  };
+  var MILESTONE_TIER_LABELS = {
+    none: 'None', bronze: 'Bronze', silver: 'Silver', gold: 'Gold', diamond: 'Diamond', infinity: 'Infinity'
+  };
+  function tierRank(tier) {
+    var i = MILESTONE_TIERS.indexOf(tier);
+    return i < 0 ? 0 : i;
+  }
+  function currentMilestoneTier() {
+    var t = (typeof window !== 'undefined' && window.SEGymHeroMilestone) ? String(window.SEGymHeroMilestone) : 'none';
+    return MILESTONE_TIERS.indexOf(t) === -1 ? 'none' : t;
+  }
+  // Locked when the user's current tier ranks below the accessory's required tier.
+  function accessoryLocked(accessoryValue, tier) {
+    var req = GATED_ACCESSORIES[accessoryValue];
+    if (!req) return false;
+    return tierRank(tier || currentMilestoneTier()) < tierRank(req);
+  }
   // Milestones remain the product-facing reward tiers; the arm renderer uses a
   // linear 0-100 strength rig so progress can blend between authored targets.
   var MILESTONE_MUSCLE_STRENGTH = {
@@ -2870,10 +2897,20 @@
     ? window.matchMedia('(prefers-reduced-motion: reduce)')
     : null;
   var reducedMotionTrackedSvgs = [];
+
+  function prefersReducedMotion() {
+    try {
+      if (typeof window !== 'undefined' && typeof window.__prefersReducedMotion === 'function') {
+        return !!window.__prefersReducedMotion();
+      }
+    } catch (e) {}
+    return !!(reducedMotionMql && reducedMotionMql.matches);
+  }
+
   function applyReducedMotionToSvg(svg) {
     if (!svg || typeof svg.pauseAnimations !== 'function') return;
     if (reducedMotionTrackedSvgs.indexOf(svg) === -1) reducedMotionTrackedSvgs.push(svg);
-    if (reducedMotionMql && reducedMotionMql.matches) {
+    if (prefersReducedMotion()) {
       try {
         if (typeof svg.setCurrentTime === 'function') svg.setCurrentTime(0);
         svg.pauseAnimations();
@@ -3844,6 +3881,42 @@
         }
       }
       container._heroChoicePopulated = true;
+      applyAccessoryLocks();
+    }
+
+    // Lock showpiece accessories the learner hasn't earned yet (see GATED_ACCESSORIES).
+    // Disables + unchecks the checkbox and adds a "🔒 <Tier>" note; re-enables when
+    // the current milestone tier reaches the requirement. Safe to call repeatedly.
+    function applyAccessoryLocks() {
+      var container = modal && modal.querySelector ? modal.querySelector('[data-hero-choice="accessory"]') : null;
+      if (!container) return;
+      var tier = currentMilestoneTier();
+      var labels = container.querySelectorAll('.hero-cust-accessory-choice');
+      for (var i = 0; i < labels.length; i++) {
+        var label = labels[i];
+        var value = label.getAttribute('data-choice-value');
+        var input = label.querySelector('input[type="checkbox"]');
+        var lockNote = label.querySelector('.hero-cust-accessory-lock');
+        var baseLabel = label.querySelector('.hero-cust-accessory-label');
+        var name = baseLabel ? baseLabel.textContent : value;
+        if (accessoryLocked(value, tier)) {
+          var tierLabel = MILESTONE_TIER_LABELS[GATED_ACCESSORIES[value]] || GATED_ACCESSORIES[value];
+          label.classList.add('is-locked');
+          if (input) { input.disabled = true; input.checked = false; }
+          if (!lockNote) {
+            lockNote = document.createElement('span');
+            lockNote.className = 'hero-cust-accessory-lock';
+            label.appendChild(lockNote);
+          }
+          lockNote.textContent = '🔒 ' + tierLabel;
+          label.setAttribute('title', name + ' — reach the ' + tierLabel + ' milestone to unlock.');
+        } else {
+          label.classList.remove('is-locked');
+          if (input) input.disabled = false;
+          if (lockNote && lockNote.parentNode) lockNote.parentNode.removeChild(lockNote);
+          label.removeAttribute('title');
+        }
+      }
     }
 
     function cloneAvatarState(state) {
@@ -5167,7 +5240,10 @@
         if (modal.contains(svg)) continue;
         try {
           if (paused && typeof svg.pauseAnimations === 'function') svg.pauseAnimations();
-          else if (!paused && typeof svg.unpauseAnimations === 'function') svg.unpauseAnimations();
+          else if (!paused && prefersReducedMotion()) {
+            if (typeof svg.setCurrentTime === 'function') svg.setCurrentTime(0);
+            if (typeof svg.pauseAnimations === 'function') svg.pauseAnimations();
+          } else if (!paused && typeof svg.unpauseAnimations === 'function') svg.unpauseAnimations();
         } catch (e) {
           // Some embedded SVG contexts may not expose SMIL controls.
         }
@@ -5178,6 +5254,7 @@
       previousFocus = document.activeElement;
       var initial = loadAvatar() || randomAvatar();
       writeForm(initial);
+      applyAccessoryLocks(); // refresh locked state for the current tier; unchecks any now-locked items
       resetHistory(normalizedFormState());
       setStatus('');
       modal.hidden = false;

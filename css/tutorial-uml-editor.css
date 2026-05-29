@@ -1611,6 +1611,17 @@ html.dark-mode .uml-pg-frag-drop-indicator {
   outline-offset: 1px;
 }
 
+/* Accent glyph (element/relation symbol) shown before each menu-item label.
+   Blue accent in light mode; the dark override below flips to the same
+   lighter blue the chooser uses for its hover border, so the glyph stays
+   legible against the dark button surface. min-width keeps the labels
+   aligned in a column regardless of glyph width. */
+.uml-pg-relation-chooser button .uml-pg-chooser-glyph {
+  color: #2774AE;
+  font-weight: 700;
+  min-width: 1.4em;
+}
+
 html.dark-mode .uml-pg-relation-chooser {
   background: #18242f;
   border-color: #5a7392;
@@ -1635,6 +1646,10 @@ html.dark-mode .uml-pg-relation-chooser button:focus-visible {
 
 html.dark-mode .uml-pg-relation-chooser button:focus-visible {
   outline-color: #FFD100;
+}
+
+html.dark-mode .uml-pg-relation-chooser button .uml-pg-chooser-glyph {
+  color: #7cc4ff;
 }
 
 .uml-pg-edge-hitbox {

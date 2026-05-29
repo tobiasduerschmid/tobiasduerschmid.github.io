@@ -1,0 +1,89 @@
+  <!-- ==================== EMBEDDED CARD DATA ==================== -->
+  <script>
+    var ALL_CARD_DATA = {
+      quizzes: {
+        {% for quiz_entry in site.data.quizzes %} {% assign qid = quiz_entry[0] %} {% assign qdata = quiz_entry[1] %} {% if qdata.questions %}
+    {{ qid | jsonify }}: {
+      title: {{ qdata.title | jsonify }},
+      description: {{ qdata.description | default: "" | jsonify }},
+      questions: [
+        {% for q in qdata.questions %} {
+      id: {{ q.id | jsonify }},
+      sourceDeckId: {{ qid | jsonify }},
+      question: {{ q.question | markdownify | jsonify }},
+      type: {{ q.type | default: "single" | jsonify }},
+      options: [{% for opt in q.options %} {{ opt | markdownify | jsonify }}, {% endfor %}],
+    correct_index: {{ q.correct_index | jsonify }},
+    correct_indices: {{ q.correct_indices | jsonify }},
+    optional_indices: {{ q.optional_indices | jsonify }},
+    option_feedback: { {% if q.option_feedback %}{% for fb in q.option_feedback %}{{ fb[0] | append: '' | jsonify }}: {{ fb[1] | markdownify | jsonify }},{% endfor %}{% endif %} },
+    explanation: {{ q.explanation | default: "" | markdownify | jsonify }},
+    lines: {{ q.lines | jsonify | default: "null" }},
+    distractors: {{ q.distractors | jsonify | default: "null" }},
+    display: {{ q.display | default: "block" | jsonify }},
+    difficulty: {{ q.difficulty | downcase | jsonify }}
+            }, {% endfor %}
+          ]
+        },
+    {% elsif qdata.decks %}
+    {{ qid | jsonify }}: {
+      title: {{ qdata.title | jsonify }},
+      description: {{ qdata.description | default: "" | jsonify }},
+      isMaster: true,
+        questions: [
+          {% for gym_id in qdata.decks %} {% assign ref_data = site.data.quizzes[gym_id] %} {% if ref_data and ref_data.questions %} {% for q in ref_data.questions %} {
+      id: {{ q.id | jsonify }},
+      sourceDeckId: {{ gym_id | jsonify }},
+      question: {{ q.question | markdownify | jsonify }},
+      type: {{ q.type | default: "single" | jsonify }},
+      options: [{% for opt in q.options %} {{ opt | markdownify | jsonify }}, {% endfor %}],
+    correct_index: {{ q.correct_index | jsonify }},
+    correct_indices: {{ q.correct_indices | jsonify }},
+    optional_indices: {{ q.optional_indices | jsonify }},
+    option_feedback: { {% if q.option_feedback %}{% for fb in q.option_feedback %}{{ fb[0] | append: '' | jsonify }}: {{ fb[1] | markdownify | jsonify }},{% endfor %}{% endif %} },
+    explanation: {{ q.explanation | default: "" | markdownify | jsonify }},
+    lines: {{ q.lines | jsonify | default: "null" }},
+    distractors: {{ q.distractors | jsonify | default: "null" }},
+    display: {{ q.display | default: "block" | jsonify }},
+    difficulty: {{ q.difficulty | downcase | jsonify }}
+            }, {% endfor %} {% endif %} {% endfor %}
+          ]
+        },
+    {% endif %} {% endfor %}
+      },
+    flashcards: {
+      {% for fc_entry in site.data.flashcards %} {% assign fcid = fc_entry[0] %} {% assign fcdata = fc_entry[1] %} {% if fcdata.cards %}
+      {{ fcid | jsonify }}: {
+        title: {{ fcdata.title | jsonify }},
+        description: {{ fcdata.description | default: "" | jsonify }},
+        cards: [
+          {% for card in fcdata.cards %} {
+        id: {{ card.id | jsonify }},
+        sourceDeckId: {{ fcid | jsonify }},
+        question: {{ card.question | markdownify | jsonify }},
+        answer: {{ card.answer | markdownify | jsonify }},
+        explanation: {{ card.explanation | default: "" | markdownify | jsonify }},
+        difficulty: {{ card.difficulty | downcase | jsonify }}
+      }, {% endfor %}
+          ]
+    },
+    {% elsif fcdata.decks %}
+    {{ fcid | jsonify }}: {
+      title: {{ fcdata.title | jsonify }},
+      description: {{ fcdata.description | default: "" | jsonify }},
+      isMaster: true,
+        cards: [
+          {% for gym_id in fcdata.decks %} {% assign ref_data = site.data.flashcards[gym_id] %} {% if ref_data and ref_data.cards %} {% for card in ref_data.cards %} {
+      id: {{ card.id | jsonify }},
+      sourceDeckId: {{ gym_id | jsonify }},
+      question: {{ card.question | markdownify | jsonify }},
+      answer: {{ card.answer | markdownify | jsonify }},
+      explanation: {{ card.explanation | default: "" | markdownify | jsonify }},
+      difficulty: {{ card.difficulty | downcase | jsonify }}
+    }, {% endfor %} {% endif %} {% endfor %}
+          ]
+        },
+    {% endif %} {% endfor %}
+      }
+    };
+  </script>

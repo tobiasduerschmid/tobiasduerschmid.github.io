@@ -438,6 +438,11 @@
     this.currentStep = index;
     var step = this.steps[index] || {};
     if (this.instructionsEl) {
+      // step.instructionsHTML / step.instructions is trusted authored tutorial
+      // content (same trust level as the page itself), so it is intentionally
+      // injected as HTML. Do NOT "harden" this by escaping it — that would
+      // break authored markup. Only untrusted values (title, type labels) are
+      // run through escapeHtml.
       this.instructionsEl.innerHTML = '<h2>' + escapeHtml(step.title || 'Step') + '</h2>' +
         '<div class="tvm-step-instructions">' + (step.instructionsHTML || step.instructions || '') + '</div>';
       if (window.UMLShared && UMLShared.renderAll) UMLShared.renderAll();
@@ -734,9 +739,17 @@
       var failures = [];
       var hints = [];
       (test.assertions || []).forEach(function (assertion) {
-        var result = evaluateAssertion(model, assertion, context);
-        if (!result.pass) {
-          failures.push(result.message);
+        var result;
+        try {
+          result = evaluateAssertion(model, assertion, context);
+        } catch (err) {
+          // A malformed authored assertion must not abort the whole run and
+          // strand the learner on a step they can never pass — treat the
+          // error as a failed check with a diagnostic message instead.
+          result = { pass: false, message: 'This check could not be evaluated (' + (err && err.message ? err.message : err) + ').' };
+        }
+        if (!result || !result.pass) {
+          failures.push((result && result.message) || 'Check failed.');
           toArray(result.hints || result.hint).forEach(function (hint) {
             if (!hint) return;
             var record = {

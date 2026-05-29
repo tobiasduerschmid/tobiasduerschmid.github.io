@@ -1027,6 +1027,30 @@
       font: inherit;
       font-weight: 600;
     }
+    /* "Earn your gear": accessories locked behind milestone tiers. The disabled
+       checkbox is an inactive control, but we keep the lock pill high-contrast so
+       the unlock requirement stays legible while the option reads as muted. */
+    .hero-cust-checkbox-group label.hero-cust-accessory-choice.is-locked {
+      cursor: not-allowed;
+    }
+    .hero-cust-checkbox-group label.hero-cust-accessory-choice.is-locked .hero-cust-accessory-label,
+    .hero-cust-checkbox-group label.hero-cust-accessory-choice.is-locked .hero-cust-choice-preview {
+      opacity: 0.5;
+    }
+    .hero-cust-accessory-lock {
+      margin-left: auto;
+      padding: 0.1em 0.55em;
+      border-radius: 999px;
+      font-size: 0.85em;
+      font-weight: 700;
+      white-space: nowrap;
+      background: #d9b310;
+      color: #3a2c00; /* on #d9b310 → 7.4:1 (PASS) */
+    }
+    html.dark-mode .hero-cust-accessory-lock {
+      background: #6b5400;
+      color: #ffe9a8; /* on #6b5400 → 6.8:1 (PASS) */
+    }
     html.dark-mode .hero-cust-radio-group label,
     html.dark-mode .hero-cust-checkbox-group label {
       background: #252c3b;
@@ -2169,6 +2193,227 @@
       color: #a02832;
       margin-left: 6px;
     }
+
+    /* ============================================================
+       Spaced repetition: Workout of the Day, Due for Review,
+       and the performance-tracking gate prompt.
+       Every state is also conveyed by a text label (WCAG 1.4.1);
+       colors below only reinforce it. Light + dark both covered.
+       ============================================================ */
+
+    /* Workout of the Day call-to-action card */
+    .gym-wod-card {
+      border: 2px solid var(--gym-ucla-blue, #1F6EBD);
+      background: var(--gym-soft-blue, #c9e6ff);
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 18px;
+    }
+
+    .gym-wod-card .gym-section-header {
+      margin-top: 0;
+      border-bottom: none;
+      padding-bottom: 0;
+    }
+
+    .gym-wod-desc {
+      margin: 6px 0 0;
+    }
+
+    .gym-wod-status {
+      margin: 8px 0 0;
+      font-weight: 700;
+      min-height: 1.2em;
+    }
+
+    /* #155c2e on the #c9e6ff card → 5.6:1 (PASS for normal text) */
+    .gym-wod-status.is-complete {
+      color: #155c2e;
+    }
+
+    .due-count {
+      font-weight: 600;
+    }
+
+    .gym-section-desc {
+      margin: 0 0 12px;
+    }
+
+    /* Tracking-gate prompt (shown when performance tracking is off) */
+    .gym-locked-prompt {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      flex-wrap: wrap;
+      border: 1px dashed var(--gym-ucla-blue, #1F6EBD);
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-bottom: 18px;
+      background: var(--gym-soft-gold, #fff3b8);
+    }
+
+    .gym-locked-text {
+      margin: 0;
+      flex: 1 1 240px;
+    }
+
+    /* ---- Dark mode ---- */
+    html.dark-mode .gym-wod-card {
+      border-color: var(--gym-ucla-blue, #2A82C5);
+      background: rgba(42, 130, 197, 0.16);
+      color: #e0e0e0;
+    }
+
+    /* #5fd08a on the dark card → ~9:1 (PASS) */
+    html.dark-mode .gym-wod-status.is-complete {
+      color: #5fd08a;
+    }
+
+    html.dark-mode .gym-locked-prompt {
+      border-color: var(--gym-ucla-blue, #2A82C5);
+      background: rgba(255, 209, 0, 0.10);
+      color: #e0e0e0;
+    }
+
+    /* ============================================================
+       Training Log: streak, self-set weekly goal, consistency
+       heatmap, and the transient action-status message. Heatmap
+       cells are decorative (each carries its data in title + the
+       grid's aria-label + a visible text summary), so color is
+       never the sole carrier (WCAG 1.4.1). Light + dark covered.
+       ============================================================ */
+    .gym-training-log { margin-bottom: 18px; }
+
+    .gym-streak {
+      margin: 0;
+      font-weight: 700;
+      font-size: 0.95em;
+      color: var(--gym-ink, #17324d);
+    }
+    /* #b1420a on the #f7fbff entrance → 5.0:1 (PASS) */
+    .gym-streak.has-streak { color: #b1420a; }
+
+    .gym-weekly-goal {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px 12px;
+      margin-bottom: 14px;
+    }
+    .gym-weekly-goal-label { font-weight: 600; }
+    .gym-weekly-goal-input {
+      font: inherit; /* browser default is not inherited; avoids 10px text on this site */
+      width: 4em;
+      padding: 4px 6px;
+      border: 1px solid #afc1d1;
+      border-radius: 6px;
+      background: #ffffff;
+      color: var(--gym-ink, #17324d);
+    }
+    .gym-weekly-goal-progress { font-weight: 600; }
+    .gym-weekly-goal-progress.is-met { color: #1d7a3d; }
+    .gym-weekly-goal-bar {
+      flex: 1 1 160px;
+      min-width: 120px;
+      height: 8px;
+      border-radius: 4px;
+      background: #e1e4e8;
+      overflow: hidden;
+    }
+    .gym-weekly-goal-fill {
+      display: block;
+      height: 100%;
+      width: var(--goal-pct, 0%);
+      background: var(--gym-ucla-blue, #1F6EBD);
+      transition: width 0.3s ease;
+    }
+
+    .gym-heatmap {
+      display: block;
+      max-width: 100%;
+      overflow-x: auto;
+    }
+    .gym-heatmap-grid { display: flex; gap: 3px; padding: 2px; }
+    .gym-heatmap-col { display: flex; flex-direction: column; gap: 3px; }
+    .gym-heatmap-cell {
+      width: 13px;
+      height: 13px;
+      border-radius: 2px;
+      background: #e6edf3;
+      box-shadow: inset 0 0 0 1px rgba(23, 50, 77, 0.07);
+    }
+    .gym-heat-0 { background: #e6edf3; }
+    .gym-heat-1 { background: #a8d0f0; }
+    .gym-heat-2 { background: #4a9be0; }
+    .gym-heat-3 { background: #1F6EBD; }
+    .gym-heat-empty { background: transparent; box-shadow: none; }
+
+    .gym-heatmap-legend {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      margin: 8px 0 4px;
+      font-size: 0.85em;
+    }
+    .gym-heatmap-legend .gym-heatmap-cell { display: inline-block; }
+    .gym-heatmap-summary { margin: 0; font-size: 0.9em; }
+
+    .gym-action-status {
+      margin: 0;
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.2s ease, opacity 0.2s ease, margin 0.2s ease, padding 0.2s ease;
+    }
+    .gym-action-status.is-visible {
+      max-height: 8em;
+      opacity: 1;
+      margin: 0 0 14px;
+      padding: 10px 14px;
+      border-radius: 8px;
+      border: 1px solid #d8b400;
+      background: var(--gym-soft-gold, #fff3b8);
+      color: #5a4500; /* on #fff3b8 → 7.3:1 (PASS) */
+      font-weight: 600;
+    }
+
+    /* ---- Training Log dark mode ---- */
+    html.dark-mode .gym-streak { color: #e0e0e0; }
+    html.dark-mode .gym-streak.has-streak { color: #ff9d5c; }
+    html.dark-mode .gym-weekly-goal-input {
+      background: #1c2733;
+      border-color: #46566a;
+      color: #e7edf3;
+    }
+    html.dark-mode .gym-weekly-goal-progress.is-met { color: #5fd08a; }
+    html.dark-mode .gym-weekly-goal-bar { background: #2c3a47; }
+    html.dark-mode .gym-heatmap-cell { background: #2c3a47; box-shadow: inset 0 0 0 1px rgba(231, 237, 243, 0.06); }
+    html.dark-mode .gym-heat-0 { background: #2c3a47; }
+    html.dark-mode .gym-heat-1 { background: #1a4a73; }
+    html.dark-mode .gym-heat-2 { background: #2a82c5; }
+    html.dark-mode .gym-heat-3 { background: #6fb1e8; }
+    html.dark-mode .gym-heat-empty { background: transparent; box-shadow: none; }
+    html.dark-mode .gym-action-status.is-visible {
+      border-color: #b38b00;
+      background: rgba(255, 209, 0, 0.12);
+      color: #ffe08a;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .gym-weekly-goal-fill,
+      .gym-action-status { transition: none; }
+    }
+
+    /* ---- Challenge a Friend ---- */
+    .gym-challenge { margin-bottom: 18px; }
+    .gym-challenge-actions {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .gym-challenge-status { font-weight: 600; }
 
     /* Toggle label */
     .toggle-label {

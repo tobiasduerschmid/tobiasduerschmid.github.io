@@ -190,6 +190,12 @@ info_nav_title: "Browser storage"
         <td class="status-cell"></td>
         <td class="action-cell"></td>
       </tr>
+      <tr data-storage="cookie" data-key="se-gym-weekly-goal">
+        <td class="storage-key">se-gym-weekly-goal</td>
+        <td>Your self-set weekly training goal (number of sessions per week) shown in the Training Log. Default is 3 when unset; 0 means no goal.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
     </tbody>
   </table>
   <button class="cookies-btn danger" data-clear-category="gym-cookies" type="button">
@@ -262,7 +268,19 @@ info_nav_title: "Browser storage"
     <tbody>
       <tr data-storage="localStorage" data-key="se-gym-stats">
         <td class="storage-key">se-gym-stats</td>
-        <td>Per-question seen/correct counters used to surface your most-difficult questions. Only written when <em>Track Performance</em> is enabled.</td>
+        <td>Per-question seen/correct counters plus spaced-repetition scheduling (when each card is next due) and per-topic progress. Powers your most-difficult questions, the "Due for Review" queue, and your Topic Mastery levels. Only written when <em>Track Performance</em> is enabled.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+      <tr data-storage="localStorage" data-key="se-gym-daily-last">
+        <td class="storage-key">se-gym-daily-last</td>
+        <td>The date (YYYY-MM-DD) of your last completed Workout of the Day, used to show the "Completed today" badge. Cleared when you delete your performance statistics.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+      <tr data-storage="localStorage" data-key="se-gym-activity">
+        <td class="storage-key">se-gym-activity</td>
+        <td>Your training history: for each day you practiced, the number of finished sessions and cards. Powers the training streak, the consistency heatmap, and weekly-goal progress. Written whenever you finish a workout.</td>
         <td class="status-cell"></td>
         <td class="action-cell"></td>
       </tr>

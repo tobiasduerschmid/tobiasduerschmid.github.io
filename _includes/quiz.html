@@ -433,7 +433,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
 
       // Track performance
       if (window.PersonalGym && PersonalGym.isAnalyzePerformance()) {
-        var perfKey = container.dataset.quizId + ':' + (card.dataset.questionId || PersonalGym.hashQuestion(card.querySelector('.question-text').innerHTML));
+        var perfKey = 'quiz:' + container.dataset.quizId + ':' + (card.dataset.questionId || PersonalGym.hashQuestion(card.querySelector('.question-text').innerHTML));
         PersonalGym.recordResult(perfKey, isCorrect);
       }
 
@@ -490,7 +490,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
 
       // Track performance
       if (window.PersonalGym && PersonalGym.isAnalyzePerformance()) {
-        var perfKey = container.dataset.quizId + ':' + (card.dataset.questionId || PersonalGym.hashQuestion(card.querySelector('.question-text').innerHTML));
+        var perfKey = 'quiz:' + container.dataset.quizId + ':' + (card.dataset.questionId || PersonalGym.hashQuestion(card.querySelector('.question-text').innerHTML));
         PersonalGym.recordResult(perfKey, isAnswerCorrect);
       }
 
@@ -801,7 +801,7 @@ Data source: _data/quizzes/{{ include.id }}.yml
 
         // Track performance
         if (window.PersonalGym && PersonalGym.isAnalyzePerformance()) {
-          var perfKey = container.dataset.quizId + ':' + (card.dataset.questionId || PersonalGym.hashQuestion(card.querySelector('.question-text').innerHTML));
+          var perfKey = 'quiz:' + container.dataset.quizId + ':' + (card.dataset.questionId || PersonalGym.hashQuestion(card.querySelector('.question-text').innerHTML));
           PersonalGym.recordResult(perfKey, isCorrect);
         }
 

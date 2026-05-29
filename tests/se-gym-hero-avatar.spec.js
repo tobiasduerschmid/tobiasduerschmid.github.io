@@ -187,6 +187,26 @@ function heroCustomizerAction(page, name, placement = 'top') {
   });
 }
 
+async function readHeroAnimationState(page) {
+  return page.evaluate(() => {
+    const pageSvgs = Array.from(document.querySelectorAll(
+      '#gym-entrance [data-gym-hero-svg], #gym-workout [data-gym-hero-svg]'
+    ));
+    const modalSvg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+    const cssAnimated = Array.from(document.querySelectorAll(
+      '#gym-entrance [data-gym-hero-svg], #gym-entrance [data-gym-hero-svg] *, #gym-workout [data-gym-hero-svg], #gym-workout [data-gym-hero-svg] *'
+    )).filter((node) => getComputedStyle(node).animationName !== 'none');
+
+    return {
+      pageCount: pageSvgs.length,
+      pagePaused: pageSvgs.map((svg) => svg.animationsPaused()),
+      modalPaused: modalSvg ? modalSvg.animationsPaused() : null,
+      cssAnimatedCount: cssAnimated.length,
+      cssPaused: cssAnimated.every((node) => getComputedStyle(node).animationPlayState === 'paused'),
+    };
+  });
+}
+
 function fineTuneOutput(page, target, axis) {
   return page.locator(`#hero-cust-tune-${target}-${axis}`);
 }
@@ -374,37 +394,45 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
 
-    const readAnimationState = async () => page.evaluate(() => {
-      const pageSvgs = Array.from(document.querySelectorAll(
-        '#gym-entrance [data-gym-hero-svg], #gym-workout [data-gym-hero-svg]'
-      ));
-      const modalSvg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
-      const cssAnimated = Array.from(document.querySelectorAll(
-        '#gym-entrance [data-gym-hero-svg], #gym-entrance [data-gym-hero-svg] *, #gym-workout [data-gym-hero-svg], #gym-workout [data-gym-hero-svg] *'
-      )).filter((node) => getComputedStyle(node).animationName !== 'none');
-
-      return {
-        pageCount: pageSvgs.length,
-        pagePaused: pageSvgs.map((svg) => svg.animationsPaused()),
-        modalPaused: modalSvg ? modalSvg.animationsPaused() : null,
-        cssAnimatedCount: cssAnimated.length,
-        cssPaused: cssAnimated.every((node) => getComputedStyle(node).animationPlayState === 'paused'),
-      };
-    });
-
-    const closedBefore = await readAnimationState();
+    const closedBefore = await readHeroAnimationState(page);
     expect(closedBefore.pageCount).toBeGreaterThan(0);
     expect(closedBefore.pagePaused).toEqual(closedBefore.pagePaused.map(() => false));
 
     await page.getByRole('button', { name: 'Customize Hero' }).click();
-    const openState = await readAnimationState();
+    const openState = await readHeroAnimationState(page);
     expect(openState.pagePaused).toEqual(openState.pagePaused.map(() => true));
     expect(openState.modalPaused).toBe(false);
     if (openState.cssAnimatedCount > 0) expect(openState.cssPaused).toBe(true);
 
     await heroCustomizerAction(page, 'Cancel').click();
-    const closedAfter = await readAnimationState();
+    const closedAfter = await readHeroAnimationState(page);
     expect(closedAfter.pagePaused).toEqual(closedAfter.pagePaused.map(() => false));
+  });
+
+  test('Reduced motion override keeps hero SVG animations paused through customizer close', async ({ page }) => {
+    await page.goto(`${GYM_URL}?reduce-motion=1`);
+    await activatePersonalGym(page);
+
+    const closedBefore = await readHeroAnimationState(page);
+    expect(closedBefore.pageCount).toBeGreaterThan(0);
+    expect(closedBefore.pagePaused).toEqual(closedBefore.pagePaused.map(() => true));
+
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+    await expect(page.getByRole('dialog', { name: 'Customize your hero' })).toBeVisible();
+
+    await expect.poll(async () => {
+      const state = await readHeroAnimationState(page);
+      return state.modalPaused;
+    }, {
+      message: 'modal preview should also pause when reduced motion is forced',
+    }).toBe(true);
+
+    const openState = await readHeroAnimationState(page);
+    expect(openState.pagePaused).toEqual(openState.pagePaused.map(() => true));
+
+    await heroCustomizerAction(page, 'Cancel').click();
+    const closedAfter = await readHeroAnimationState(page);
+    expect(closedAfter.pagePaused).toEqual(closedAfter.pagePaused.map(() => true));
   });
 
   test('Hero motion animations declare deterministic starts and share synchronized timing', async ({ page }) => {

@@ -1,0 +1,514 @@
+---
+permalink: /se-gym-stats/
+title: "SE Gym Statistics"
+layout: sebook
+---
+{% if site.personal_gym %}
+{% include se-gym-card-data.html %}
+
+<div id="stats-app">
+
+  <!-- Disabled / empty states (hidden by JS when data exists) -->
+  <div id="stats-tracking-off" class="stats-disabled-panel" role="status">
+    <p><i class="fa-solid fa-chart-line" aria-hidden="true"></i>
+       Performance tracking is off.
+       Turn on <strong>Track Performance</strong> in
+       <a href="{{ '/se-gym/' | relative_url }}">SE Gym</a> to start collecting stats.</p>
+  </div>
+  <div id="stats-no-data" class="stats-disabled-panel is-hidden" role="status">
+    <p><i class="fa-solid fa-dumbbell" aria-hidden="true"></i>
+       No data yet — complete a workout with tracking on, then come back here.</p>
+    <a class="gym-btn secondary" href="{{ '/se-gym/' | relative_url }}">Go to SE Gym</a>
+  </div>
+
+  <!-- Dashboard (hidden until JS confirms data) -->
+  <div id="stats-dashboard" class="is-hidden">
+
+    <!-- Section: Overview -->
+    <div class="stats-section">
+      <h2><i class="fa-solid fa-chart-bar section-heading-icon" aria-hidden="true"></i> Overview</h2>
+      <div class="stats-tiles">
+        <div class="stats-tile">
+          <div class="stats-tile-value" id="stat-total-seen">—</div>
+          <div class="stats-tile-label">Total attempts</div>
+        </div>
+        <div class="stats-tile">
+          <div class="stats-tile-value" id="stat-total-correct">—</div>
+          <div class="stats-tile-label">Correct</div>
+        </div>
+        <div class="stats-tile">
+          <div class="stats-tile-value" id="stat-total-incorrect">—</div>
+          <div class="stats-tile-label">Incorrect</div>
+        </div>
+        <div class="stats-tile">
+          <div class="stats-tile-value" id="stat-overall-pct">—</div>
+          <div class="stats-tile-label">Overall accuracy</div>
+        </div>
+        <div class="stats-tile">
+          <div class="stats-tile-value" id="stat-questions-practiced">—</div>
+          <div class="stats-tile-label">Questions practiced</div>
+        </div>
+        <div class="stats-tile">
+          <div class="stats-tile-value" id="stat-decks-practiced">—</div>
+          <div class="stats-tile-label">Decks practiced</div>
+        </div>
+      </div>
+      <!-- Donut chart (decoration only) -->
+      <div class="stats-donut-wrap" aria-hidden="true">
+        <div class="stats-donut" id="overview-donut"></div>
+        <div class="stats-donut-hole">
+          <span class="stats-donut-pct" id="overview-donut-pct"></span>
+        </div>
+      </div>
+      <p id="stats-unmatched-note" class="stats-select-hint is-hidden" role="note"></p>
+    </div>
+
+    <!-- Section: By Difficulty -->
+    <div class="stats-section">
+      <h2><i class="fa-solid fa-gauge-high section-heading-icon" aria-hidden="true"></i> By Difficulty</h2>
+      <table class="stats-diff-table" id="stats-diff-table">
+        <thead><tr>
+          <th scope="col">Level</th>
+          <th scope="col">Seen</th>
+          <th scope="col">Correct</th>
+          <th scope="col">Accuracy</th>
+          <th scope="col" aria-label="Accuracy bar (visual)"></th>
+        </tr></thead>
+        <tbody id="stats-diff-tbody"><!-- filled by JS --></tbody>
+      </table>
+    </div>
+
+    <!-- Section: Best & Worst Questions -->
+    <div class="stats-section">
+      <h2><i class="fa-solid fa-trophy section-heading-icon" aria-hidden="true"></i> Questions</h2>
+      <div class="stats-questions-grid">
+        <div>
+          <h3>Top 10 — most often correct</h3>
+          <ul class="stats-q-list" id="stats-top-questions" aria-label="Top 10 questions by accuracy"></ul>
+        </div>
+        <div>
+          <h3>Bottom 10 — most often wrong</h3>
+          <ul class="stats-q-list" id="stats-bottom-questions" aria-label="Bottom 10 questions by accuracy"></ul>
+        </div>
+      </div>
+      <p class="stats-select-hint">Check questions to add them to your practice basket below.</p>
+    </div>
+
+    <!-- Section: Topics -->
+    <div class="stats-section" id="stats-topics-section">
+      <h2><i class="fa-solid fa-layer-group section-heading-icon" aria-hidden="true"></i> Topics</h2>
+      <section class="stats-topic-mastery" aria-labelledby="stats-mastery-heading">
+        <h3 id="stats-mastery-heading"><i class="fa-solid fa-medal section-heading-icon" aria-hidden="true"></i> Topic Mastery</h3>
+        <ul id="stats-mastery-list" class="mastery-list stats-mastery-list"></ul>
+      </section>
+      <div class="stats-deck-columns">
+        <div>
+          <h3>Best 3 decks</h3>
+          <div class="stats-deck-grid" id="stats-best-decks"></div>
+        </div>
+        <div>
+          <h3>Worst 3 decks</h3>
+          <div class="stats-deck-grid" id="stats-worst-decks"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section: Build a Workout -->
+    <div class="stats-section" id="stats-basket-section">
+      <h2><i class="fa-solid fa-dumbbell section-heading-icon" aria-hidden="true"></i> Build a Workout</h2>
+      <p>Select questions above, or use quick-add shortcuts:</p>
+      <div class="stats-basket-actions">
+        <button type="button" class="gym-btn secondary" id="basket-add-weakest">Add 10 weakest questions</button>
+        <button type="button" class="gym-btn secondary" id="basket-add-bottom">Add all shown bottom questions</button>
+        <button type="button" class="gym-btn secondary" id="basket-clear">Clear selection</button>
+      </div>
+      <p id="stats-action-status" class="stats-action-status" role="status" aria-live="polite"></p>
+      <!-- sticky bar -->
+      <div class="stats-basket-bar" id="stats-basket-bar">
+        <span class="stats-basket-count" aria-live="polite" id="basket-count-label">0 questions selected</span>
+        <div class="stats-basket-actions">
+          <a class="gym-btn primary" id="basket-start-btn" href="{{ '/se-gym/' | relative_url }}" aria-disabled="true">
+            <i class="fa-solid fa-play" aria-hidden="true"></i> Start workout
+          </a>
+          <button type="button" class="gym-btn secondary" id="basket-clear-2">Clear</button>
+        </div>
+      </div>
+      <p id="basket-cap-note" class="stats-select-hint is-hidden">Selection capped at 60 questions (URL length limit).</p>
+    </div>
+
+  </div><!-- #stats-dashboard -->
+</div><!-- #stats-app -->
+
+<!-- ==================== PAGE SCRIPT ==================== -->
+<script>
+(function() {
+  'use strict';
+
+  // Wait for DOM ready
+  function ready(fn) {
+    if (document.readyState !== 'loading') fn();
+    else document.addEventListener('DOMContentLoaded', fn);
+  }
+
+  ready(function() {
+    var GYM_URL = {{ '/se-gym/' | relative_url | jsonify }};
+
+    // ---- Guards ----
+    if (!window.PersonalGym || !window.ALL_CARD_DATA) return;
+    var trackingOffEl = document.getElementById('stats-tracking-off');
+    var noDataEl      = document.getElementById('stats-no-data');
+    var dashboardEl   = document.getElementById('stats-dashboard');
+
+    if (!PersonalGym.isAnalyzePerformance()) {
+      // tracking off: show panel (already visible by default)
+      return;
+    }
+
+    PersonalGym.migrateStatsKeys(ALL_CARD_DATA);
+    var rawStats = PersonalGym.getStats();
+    if (!rawStats || !Object.keys(rawStats).length) {
+      trackingOffEl.classList.add('is-hidden');
+      noDataEl.classList.remove('is-hidden');
+      return;
+    }
+
+    trackingOffEl.classList.add('is-hidden');
+    dashboardEl.classList.remove('is-hidden');
+
+    // ---- Enrich + merge stats entries ----
+    // Sum every recorded key that resolves to the same canonical question so a
+    // question practiced across several surfaces shows once with combined totals.
+    var DIFF_LEVELS = ['basic', 'intermediate', 'advanced', 'expert', 'untagged'];
+    var DIFF_LABELS = { basic: 'Basic', intermediate: 'Intermediate', advanced: 'Advanced', expert: 'Expert', untagged: 'Untagged' };
+
+    // Keep only records we can map to a question in the current corpus. The rest
+    // (removed/renamed decks, or stats from a much older key scheme) have no real
+    // title or text — showing them surfaces hash-like junk decks, "(question text
+    // unavailable)" rows, and un-launchable workout selections. We report a count
+    // instead so the exclusion is honest rather than silent.
+    var canonicalStats = PersonalGym.getCanonicalStatsEntries(ALL_CARD_DATA, rawStats);
+    var unmatchedEntries = canonicalStats.unmatchedEntries;
+    var entries = canonicalStats.entries;
+
+    // If every record is unrecognized, treat the page as having no usable data.
+    if (!entries.length) {
+      dashboardEl.classList.add('is-hidden');
+      noDataEl.classList.remove('is-hidden');
+      return;
+    }
+
+    // Honest note about excluded records.
+    var unmatchedNote = document.getElementById('stats-unmatched-note');
+    if (unmatchedNote && unmatchedEntries.length) {
+      var unmatchedSeen = unmatchedEntries.reduce(function(a,e){ return a + e.seen; }, 0);
+      unmatchedNote.textContent = unmatchedEntries.length + ' older practice record' +
+        (unmatchedEntries.length === 1 ? '' : 's') + ' (' + unmatchedSeen + ' attempt' +
+        (unmatchedSeen === 1 ? '' : 's') + ') from removed or renamed content could not be ' +
+        'matched to current questions and are excluded from the breakdowns below.';
+      unmatchedNote.classList.remove('is-hidden');
+    }
+
+    // ---- Overview ----
+    var totalSeen    = entries.reduce(function(a,e){ return a+e.seen; }, 0);
+    var totalCorrect = entries.reduce(function(a,e){ return a+e.correct; }, 0);
+    var totalIncorrect = totalSeen - totalCorrect;
+    var overallPct   = totalSeen > 0 ? Math.round(totalCorrect/totalSeen*100) : 0;
+    var uniqueDecks  = (function(){
+      var s={}; entries.forEach(function(e){s[e.deckId]=1;}); return Object.keys(s).length;
+    })();
+
+    document.getElementById('stat-total-seen').textContent      = totalSeen;
+    document.getElementById('stat-total-correct').textContent   = totalCorrect;
+    document.getElementById('stat-total-incorrect').textContent = totalIncorrect;
+    document.getElementById('stat-overall-pct').textContent     = overallPct + '%';
+    document.getElementById('stat-questions-practiced').textContent = entries.length;
+    document.getElementById('stat-decks-practiced').textContent = uniqueDecks;
+
+    // Donut
+    var donut = document.getElementById('overview-donut');
+    donut.style.setProperty('--pct', overallPct);
+    document.getElementById('overview-donut-pct').textContent = overallPct + '%';
+
+    // ---- By Difficulty ----
+    var diffStats = {};
+    DIFF_LEVELS.forEach(function(l){ diffStats[l] = { seen:0, correct:0 }; });
+    entries.forEach(function(e){
+      var b = diffStats[e.difficulty] || diffStats['untagged'];
+      b.seen += e.seen; b.correct += e.correct;
+    });
+    var LEVEL_COLORS = { basic:'#1f7a3d', intermediate:'#2774AE', advanced:'#b85b00', expert:'#b81e2c', untagged:'#555555' };
+    var tbody = document.getElementById('stats-diff-tbody');
+    tbody.innerHTML = '';
+    DIFF_LEVELS.forEach(function(level) {
+      var b = diffStats[level];
+      if (!b.seen) return;
+      var pct = Math.round(b.correct/b.seen*100);
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><span class="difficulty-badge level-' + level + '">' + DIFF_LABELS[level] + '</span></td>' +
+        '<td>' + b.seen + '</td>' +
+        '<td>' + b.correct + '</td>' +
+        '<td>' + pct + '%</td>' +
+        '<td aria-hidden="true"><div class="stats-diff-bar-track">' +
+          '<div class="stats-diff-bar-fill" style="width:' + pct + '%;background:' + LEVEL_COLORS[level] + '"></div>' +
+        '</div></td>';
+      tbody.appendChild(tr);
+    });
+
+    // ---- Top / Bottom Questions ----
+    var sortedByAcc = entries.slice().sort(function(a,b){
+      if (b.acc !== a.acc) return b.acc - a.acc;
+      return b.seen - a.seen;
+    });
+    var top10    = sortedByAcc.slice(0, 10);
+    var bottom10 = sortedByAcc.slice(-10).reverse();
+
+    function escHtml(s) {
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+    function stripHtml(s) {
+      return s ? s.replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim() : '';
+    }
+    function diffChip(d) {
+      return '<span class="difficulty-badge level-' + d + '">' + escHtml(DIFF_LABELS[d]||d) + '</span>';
+    }
+    function typeChip(t) {
+      return '<span class="gym-item-badge ' + (t==='quiz'?'quiz-badge':'flashcard-badge') + '">' +
+             (t==='quiz'?'Quiz':'Flashcards') + '</span>';
+    }
+    function masteryPracticeUrl(deck) {
+      var param = deck.cardType === 'quiz' ? 'quiz' : 'flashcards';
+      return GYM_URL + '?' + param + '=' + encodeURIComponent(deck.deckId);
+    }
+    function renderMasteryList(el, decks) {
+      if (!el) return;
+      var labels = PersonalGym.MASTERY_STATE_LABELS || { mastered: 'Mastered', proficient: 'Proficient', learning: 'Learning', 'not-started': 'Not started' };
+      var order = { learning: 0, proficient: 1, mastered: 2, 'not-started': 3 };
+      decks.sort(function(a, b) {
+        if (order[a.state] !== order[b.state]) return order[a.state] - order[b.state];
+        return a.title.localeCompare(b.title);
+      });
+      el.innerHTML = '';
+      decks.forEach(function(deck) {
+        var pct = deck.total > 0 ? Math.round((deck.mastered / deck.total) * 100) : 0;
+        var label = labels[deck.state] || deck.state;
+        var aria = deck.title + ': ' + label + ', ' + deck.mastered + ' of ' + deck.total + ' cards mastered';
+        var row = document.createElement('li');
+        row.className = 'mastery-row mastery-state-' + deck.state;
+        row.innerHTML =
+          '<div class="mastery-info">' +
+            '<strong class="mastery-title">' + escHtml(deck.title) + '</strong>' +
+            '<span class="mastery-meta"><span class="mastery-state">' + escHtml(label) + '</span> · ' + deck.mastered + ' / ' + deck.total + ' mastered</span>' +
+            '<div class="mastery-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' + pct + '" aria-label="' + escHtml(aria) + '">' +
+              '<span class="mastery-bar-fill" style="--mastery-pct:' + pct + '%"></span>' +
+            '</div>' +
+          '</div>' +
+          '<a class="gym-btn secondary mastery-practice-btn" href="' + escHtml(masteryPracticeUrl(deck)) + '" aria-label="Practice ' + escHtml(deck.title) + '">Practice</a>';
+        el.appendChild(row);
+      });
+    }
+
+    function renderQuestionList(el, list) {
+      el.innerHTML = '';
+      list.forEach(function(e, i) {
+        var qText = e.questionHtml ? stripHtml(e.questionHtml) : '(question text unavailable)';
+        var checkId = 'qcheck-' + escHtml(e.key).replace(/[^a-z0-9]/gi,'_') + '-' + i;
+        var li = document.createElement('li');
+        li.className = 'stats-q-row';
+        li.innerHTML =
+          '<input type="checkbox" id="' + checkId + '" class="stats-q-check" data-key="' + escHtml(e.key) + '" aria-label="Select: ' + escHtml(qText.slice(0,80)) + '">' +
+          '<label for="' + checkId + '" class="stats-q-label">' +
+            '<span class="stats-q-text" title="' + escHtml(qText) + '">' + escHtml(qText.slice(0,120)) + (qText.length>120?'…':'') + '</span>' +
+            '<span class="stats-q-meta">' + typeChip(e.deckType) + diffChip(e.difficulty) +
+              '<span class="stats-q-fraction">' + e.correct + '/' + e.seen + ' correct</span>' +
+            '</span>' +
+          '</label>' +
+          '<div class="stats-acc-bar-track" aria-hidden="true">' +
+            '<div class="stats-acc-bar-fill" style="width:' + e.accPct + '%;background:' + LEVEL_COLORS[e.difficulty] + '"></div>' +
+          '</div>';
+        el.appendChild(li);
+      });
+    }
+
+    renderQuestionList(document.getElementById('stats-top-questions'), top10);
+    renderQuestionList(document.getElementById('stats-bottom-questions'), bottom10);
+
+    // ---- Topics / Decks ----
+    renderMasteryList(document.getElementById('stats-mastery-list'), PersonalGym.computeMasteryByDeck(ALL_CARD_DATA, rawStats));
+
+    var deckMap = {};
+    entries.forEach(function(e) {
+      var deckKey = e.deckType + ':' + e.deckId;
+      if (!deckMap[deckKey]) {
+        deckMap[deckKey] = { deckId:e.deckId, deckTitle:e.deckTitle, deckType:e.deckType,
+                             seen:0, correct:0 };
+      }
+      deckMap[deckKey].seen    += e.seen;
+      deckMap[deckKey].correct += e.correct;
+    });
+    var deckList = Object.values(deckMap).filter(function(d){ return d.seen >= 3; });
+    if (deckList.length < 3) {
+      deckList = Object.values(deckMap).filter(function(d){ return d.seen >= 1; });
+    }
+    deckList.forEach(function(d){ d.acc = d.seen>0 ? d.correct/d.seen : 0; d.accPct = Math.round(d.acc*100); });
+    deckList.sort(function(a,b){ return b.acc-a.acc; });
+
+    var MEDAL_ICONS = ['🥇','🥈','🥉'];
+    var EFFORT_ICONS = ['fa-person-running', 'fa-dumbbell', 'fa-rotate-right'];
+    function renderDeckRankIcon(icon, isEffort) {
+      if (!icon) return '';
+      return isEffort
+        ? '<i class="fa-solid ' + icon + ' stats-deck-effort-icon" aria-hidden="true"></i>'
+        : '<span class="stats-deck-medal" aria-hidden="true">' + icon + '</span>';
+    }
+    function renderDeckCards(el, list, iconSet, useEffortIcons) {
+      el.innerHTML = '';
+      list.forEach(function(d, i) {
+        var card = document.createElement('div');
+        card.className = 'stats-deck-card';
+        card.innerHTML =
+          '<div class="stats-deck-header">' +
+            renderDeckRankIcon(iconSet[i], useEffortIcons) +
+            '<span class="gym-item-badge ' + (d.deckType==='quiz'?'quiz-badge':'flashcard-badge') + '">' + (d.deckType==='quiz'?'Quiz':'Flashcards') + '</span>' +
+          '</div>' +
+          '<div class="stats-deck-title">' + escHtml(d.deckTitle) + '</div>' +
+          '<div class="stats-deck-stats">' + d.correct + '/' + d.seen + ' correct · ' + d.accPct + '%</div>' +
+          '<div class="stats-acc-bar-track" aria-hidden="true">' +
+            '<div class="stats-acc-bar-fill" style="width:' + d.accPct + '%;background:var(--color-primary)"></div>' +
+          '</div>' +
+          '<button type="button" class="gym-btn secondary stats-deck-practice" ' +
+            'data-deck-id="' + escHtml(d.deckId) + '" ' +
+            'data-deck-type="' + escHtml(d.deckType) + '" ' +
+            'data-deck-title="' + escHtml(d.deckTitle) + '" ' +
+            'aria-label="Practice weak questions from ' + escHtml(d.deckTitle) + '">' +
+            'Practice weak questions' +
+          '</button>';
+        el.appendChild(card);
+      });
+    }
+
+    var best3  = deckList.slice(0,3);
+    // Only show worst-3 when there are enough decks that a meaningful
+    // bottom-3 differs from the top-3 (need at least 4 to avoid full overlap,
+    // but 6+ for a clean non-overlapping pair).  With ≤ 3 decks there is no
+    // "worst" distinct from "best".
+    var worst3 = deckList.length >= 4 ? deckList.slice(-3).reverse() : [];
+
+    renderDeckCards(document.getElementById('stats-best-decks'), best3, MEDAL_ICONS, false);
+    var worstContainer = document.getElementById('stats-worst-decks');
+    renderDeckCards(worstContainer, worst3, EFFORT_ICONS, true);
+    // Hide the entire worst-3 column when there is nothing to show
+    var worstColumn = worstContainer && worstContainer.closest('.stats-deck-columns > div');
+    if (worstColumn) worstColumn.hidden = !worst3.length;
+
+    // ---- Selection Basket ----
+    var basket = {};  // key → true
+
+    function updateBasket() {
+      var keys = Object.keys(basket);
+      var capped = keys.length > 60;
+      var displayKeys = capped ? keys.slice(0,60) : keys;
+      var label = displayKeys.length === 0 ? '0 questions selected' :
+                  displayKeys.length + ' question' + (displayKeys.length===1?'':'s') + ' selected';
+      document.getElementById('basket-count-label').textContent = label;
+      var capNote = document.getElementById('basket-cap-note');
+      capped ? capNote.classList.remove('is-hidden') : capNote.classList.add('is-hidden');
+
+      var url = GYM_URL + '?questions=' + displayKeys.map(encodeURIComponent).join(',');
+      var btn = document.getElementById('basket-start-btn');
+      btn.href = displayKeys.length > 0 ? url : GYM_URL;
+      btn.setAttribute('aria-disabled', displayKeys.length === 0 ? 'true' : 'false');
+    }
+    updateBasket();
+
+    var actionStatusEl = document.getElementById('stats-action-status');
+    function announce(msg) {
+      if (actionStatusEl) actionStatusEl.textContent = msg || '';
+    }
+
+    // Reflect the basket state onto whatever checkboxes are currently rendered.
+    function syncCheckboxes() {
+      document.querySelectorAll('.stats-q-check').forEach(function(cb){
+        cb.checked = !!basket[cb.dataset.key];
+      });
+    }
+
+    // Add a set of question keys, then give clear visible + screen-reader
+    // feedback (the added questions may not be among the visible top/bottom 10,
+    // so a silent basket-count change is easy to miss).
+    function addEntriesToBasket(entriesToAdd, sourceLabel, emptyMsg) {
+      var added = 0;
+      entriesToAdd.forEach(function(en){ if (!basket[en.key]) { basket[en.key] = true; added++; } });
+      updateBasket();
+      syncCheckboxes();
+      var total = Object.keys(basket).length;
+      if (added > 0) {
+        announce('Added ' + added + ' question' + (added === 1 ? '' : 's') +
+                 (sourceLabel ? ' from ' + sourceLabel : '') + '. ' + total + ' now selected — ' +
+                 'use “Start workout” below to practice them.');
+        var bar = document.getElementById('stats-basket-bar');
+        if (bar && bar.scrollIntoView) bar.scrollIntoView({ block: 'nearest' });
+      } else {
+        announce(emptyMsg || 'Those questions are already in your selection.');
+      }
+    }
+
+    function toggleKey(key, checked) {
+      if (checked) basket[key] = true; else delete basket[key];
+      updateBasket();
+    }
+
+    // Checkbox delegation
+    document.getElementById('stats-app').addEventListener('change', function(e) {
+      if (e.target && e.target.classList.contains('stats-q-check')) {
+        toggleKey(e.target.dataset.key, e.target.checked);
+        announce('');
+      }
+    });
+
+    // Deck "practice weak" delegation — add this deck's below-60%-accuracy questions.
+    document.getElementById('stats-app').addEventListener('click', function(e) {
+      var btn = e.target.closest('.stats-deck-practice');
+      if (!btn) return;
+      var deckId = btn.dataset.deckId;
+      var deckType = btn.dataset.deckType;
+      var deckLabel = btn.getAttribute('data-deck-title') || 'this deck';
+      var weak = entries.filter(function(en){ return en.deckId === deckId && en.deckType === deckType && en.acc < 0.6; });
+      addEntriesToBasket(weak, deckLabel,
+        'No weak questions in ' + deckLabel + ' — you are at 60%+ accuracy on all of them. Nice work!');
+    });
+
+    // Quick-add buttons
+    document.getElementById('basket-add-weakest').addEventListener('click', function() {
+      // The 10 lowest-accuracy questions you have missed at least once.
+      var weakest = entries.filter(function(en){ return en.acc < 1; })
+                           .sort(function(a,b){ return a.acc - b.acc || b.seen - a.seen; })
+                           .slice(0, 10);
+      addEntriesToBasket(weakest, 'your weakest questions',
+        'No questions to review — you have answered everything correctly so far!');
+    });
+
+    document.getElementById('basket-add-bottom').addEventListener('click', function() {
+      addEntriesToBasket(bottom10, 'the lowest-scoring list', 'Those questions are already in your selection.');
+    });
+
+    function clearBasket() {
+      basket = {};
+      syncCheckboxes();
+      updateBasket();
+      announce('Selection cleared.');
+    }
+
+    document.getElementById('basket-clear').addEventListener('click', clearBasket);
+    document.getElementById('basket-clear-2').addEventListener('click', clearBasket);
+
+    // Intercept start button — prevent navigation when basket is empty
+    document.getElementById('basket-start-btn').addEventListener('click', function(e) {
+      if (!Object.keys(basket).length) { e.preventDefault(); }
+    });
+
+  });
+})();
+</script>
+
+{% endif %}
