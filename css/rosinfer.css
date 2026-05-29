@@ -1,0 +1,115 @@
+/*
+ * rosinfer.css
+ *
+ * Presentation for the ROSInfer project summary, rendered by
+ * _includes/rosinfer/description.html inside the framework-layout project
+ * page (/rosinfer.html). Light mode, dark mode (html.dark-mode), and print
+ * are kept coherent here.
+ *
+ * Colors come from css/design-tokens.css, whose custom properties already
+ * carry AA-verified light/dark values and flip under `html.dark-mode`, so
+ * most rules need no separate dark-mode override; explicit overrides below
+ * are only for cases where a token alone is not enough.
+ *
+ * Type sizes: this site sets `html { font-size: 62.5% }` so `1rem = 10px`.
+ * This file therefore uses px/em (never bare rem) for readable text.
+ */
+
+/* researchproject.html wraps each section's include in a centered Bootstrap
+   column (`.col-lg-12.text-center`). Reset to a readable, left-aligned
+   reading column. */
+.rosinfer-summary {
+  max-width: 880px;
+  margin: 0 auto;
+  text-align: left;
+  font-size: var(--font-size-body, 17px);
+  line-height: var(--line-height-body, 1.6);
+  color: var(--color-text, #111111);
+}
+
+.rosinfer-summary p {
+  margin: 0 0 1em;
+}
+
+.rosinfer-lead {
+  font-size: 1.15em;
+  line-height: 1.55;
+}
+
+.rosinfer-summary h3 {
+  margin: 1.6em 0 0.5em;
+  padding-bottom: 0.25em;
+  border-bottom: 2px solid var(--color-primary, #2774AE);
+  font-size: 1.3em;
+  line-height: 1.25;
+}
+
+/* Project logo */
+.rosinfer-figure {
+  margin: 1.5em 0 0.5em;
+  text-align: center;
+}
+
+.rosinfer-logo {
+  display: inline-block;
+  width: 100%;
+  max-width: 320px;
+  height: auto;
+}
+
+/* Four-stage toolchain (definition list: tool name -> what it does) */
+.rosinfer-toolchain {
+  margin: 0.5em 0 0;
+}
+
+.rosinfer-toolchain dt {
+  margin-top: 1em;
+  font-weight: 700;
+  font-size: 1.05em;
+  color: var(--color-primary-strong, #005587);
+}
+
+.rosinfer-toolchain dd {
+  margin: 0.25em 0 0;
+  padding-left: 1em;
+  border-left: 3px solid var(--color-border, #d8dde2);
+}
+
+html.dark-mode .rosinfer-toolchain dd {
+  border-left-color: var(--color-border-strong, #6a737d);
+}
+
+/* Key results */
+.rosinfer-results {
+  margin: 0.5em 0 0;
+  padding-left: 1.25em;
+}
+
+.rosinfer-results li {
+  margin-bottom: 0.9em;
+}
+
+/* Closing context note */
+.rosinfer-callout {
+  margin: 1.8em 0 0;
+  padding: 1em 1.25em;
+  background: var(--color-surface-2, #f8f9fa);
+  border-left: 4px solid var(--color-primary, #2774AE);
+  border-radius: var(--radius-md, 8px);
+  font-size: 0.95em;
+}
+
+html.dark-mode .rosinfer-callout {
+  background: var(--color-surface, #1e1e1e);
+}
+
+.rosinfer-callout p {
+  margin: 0;
+}
+
+/* Reflow: keep the column comfortable on small screens (320px wide) */
+@media (max-width: 600px) {
+  .rosinfer-summary {
+    font-size: var(--font-size-readable-min, 16px);
+  }
+}

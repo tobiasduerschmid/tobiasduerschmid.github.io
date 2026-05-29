@@ -5568,6 +5568,19 @@ Supported options:
             var type = typeSelect.value;
             var newId = generateUniqueId(textarea.value, type, spec.base);
             var place = editorCanvasPoint(svg, clientX, clientY);
+            // A port/interface created by extending "+" from a component attaches
+            // to that source component (the "+" handle only appears on components,
+            // so sourceId is one) instead of becoming an orphaned top-level
+            // declaration that renders detached from any component border.
+            if (type === 'component' && (spec.isPort || spec.isInterface)) {
+              var portLabel = spec.isPort
+                ? (spec.portKind === 'portin' ? 'in' : 'out')
+                : (spec.interfaceKind === 'provide' ? 'P_iface' : 'R_iface');
+              addPortIntoComponent(sourceId, spec, newId, portLabel);
+              renderDiagram();
+              selectAfterRender(sourceId, 'node');
+              return;
+            }
             // Route all elements that need custom source manipulation through
             // placeElementAt. It handles: gitgraph row insertion (branch-safety
             // guard), folder-tree line appending, activity action-chaining,

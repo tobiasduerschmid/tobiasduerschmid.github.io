@@ -49,8 +49,15 @@
     <radialGradient id="hero-stage-glow-{{ hero_variant }}" cx=".5" cy=".18" r=".78"><stop offset="0" stop-color="#edf7ff" stop-opacity=".16"/><stop offset=".42" stop-color="#82bde8" stop-opacity=".08"/><stop offset="1" stop-color="#081325" stop-opacity="0"/></radialGradient>
     <radialGradient id="brain-glow-{{ hero_variant }}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFE470" stop-opacity=".55"/><stop offset=".55" stop-color="#FFD100" stop-opacity=".18"/><stop offset="1" stop-color="#FFD100" stop-opacity="0"/></radialGradient>
     <linearGradient id="hair-grad-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="var(--hero-hair-light, #4a3220)"/>
-      <stop offset=".36" stop-color="var(--hero-hair, #1f140c)"/>
+      <!-- The contrast-aware --hero-hair-light token is intentionally desaturated
+           (e.g. #776c64 for near-black hair), which read as a flat gray crown
+           streak when used at full strength. color-mix re-warms the highlight
+           toward the user's own hair base — safe for any hair color, blonde to
+           black — and the two-step falloff keeps a soft, glossy sheen instead of
+           a hard light/dark seam. -->
+      <stop offset="0" stop-color="color-mix(in srgb, var(--hero-hair-light, #4a3220) 58%, var(--hero-hair, #1f140c))"/>
+      <stop offset=".15" stop-color="color-mix(in srgb, var(--hero-hair-light, #4a3220) 26%, var(--hero-hair, #1f140c))"/>
+      <stop offset=".38" stop-color="var(--hero-hair, #1f140c)"/>
       <stop offset=".78" stop-color="var(--hero-hair-dark, #0f0905)"/>
       <stop offset="1" stop-color="var(--hero-hair-dark, #0f0905)" stop-opacity=".74"/>
     </linearGradient>
@@ -463,7 +470,7 @@
       <path d="M 344 302 C 344 346, 354 390, 372 422 C 388 430, 412 430, 428 422 C 446 390, 456 346, 456 302 C 440 318, 421 328, 400 332 C 379 328, 360 318, 344 302 Z" fill="url(#suit-deep-panel-{{ hero_variant }})" opacity=".34"/>
     <path d="M 332 270 C 324 322, 330 380, 348 420 C 360 430, 382 438, 400 440 C 418 438, 440 430, 452 420 C 470 380, 476 322, 468 270" fill="none" stroke="url(#torso-rim-light-{{ hero_variant }})" stroke-width="12.00" stroke-linecap="round" stroke-linejoin="round" opacity=".54"/>
     <path d="M 352 292 L 384 410 M 448 292 L 416 410" stroke="#04375d" stroke-width="3.30" fill="none" opacity=".5"/>
-    <path d="M 370 258 L 400 306 L 430 258 L 418 308 L 400 330 L 382 308 Z" fill="#f8fcff" opacity=".88"/>
+    <path d="M 372 260 C 384 286, 392 300, 400 320 C 408 300, 416 286, 428 260 C 418 276, 410 286, 400 300 C 390 286, 382 276, 372 260 Z" fill="#eaf4fb" opacity=".5"/>
     <path d="M 360 292 Q 400 314, 440 292" stroke="#083f68" stroke-width="3.90" fill="none" opacity=".46"/>
     <path d="M 400 318 L 400 430" stroke="#073754" stroke-width="3.00" opacity=".42"/>
     <path d="M 346 332 C 364 318, 386 312, 400 312 C 414 312, 436 318, 454 332" stroke="#ffffff" stroke-width="3.30" fill="none" stroke-linecap="round" opacity=".18"/>
@@ -1659,9 +1666,9 @@
         <path d="M 346 178 C 338 140, 363 112, 400 108 C 437 112, 462 140, 454 178 C 440 168, 422 162, 400 162 C 378 162, 360 168, 346 178 Z" fill="var(--hero-hair-dark, #0f0905)" opacity=".4"/>
         <path d="M 348 178 C 343 154, 350 135, 360 124 C 366 116, 373 119, 375 126 C 380 110, 390 110, 394 123 C 400 105, 410 107, 413 124 C 419 114, 430 121, 438 135 C 447 149, 451 164, 446 178 C 435 168, 421 164, 409 166 C 404 170, 397 170, 391 166 C 377 166, 362 170, 348 178 Z" fill="url(#hair-grad-{{ hero_variant }})" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="3.15" stroke-linejoin="round" stroke-linecap="round"/>
         <path d="M 358 164 C 372 154, 389 151, 401 154 C 416 152, 433 157, 444 168 C 432 157, 416 151, 400 151 C 384 149, 371 153, 363 159 C 360 161, 358 163, 358 164 Z" fill="var(--hero-hair, #1f140c)" opacity=".38"/>
-        <path d="M 365 132 C 376 121, 388 118, 397 123 C 405 119, 418 123, 429 134 C 416 126, 404 126, 391 130 C 380 134, 371 136, 365 132 Z" fill="var(--hero-hair-light, #4a3220)" opacity=".56"/>
+        <path d="M 365 132 C 376 121, 388 118, 397 123 C 405 119, 418 123, 429 134 C 416 126, 404 126, 391 130 C 380 134, 371 136, 365 132 Z" fill="color-mix(in srgb, var(--hero-hair-light, #4a3220) 60%, var(--hero-hair, #1f140c))" opacity=".5"/>
         <path d="M 370 126 C 386 116, 410 118, 426 128 M 366 150 C 380 142, 392 140, 400 146 C 410 140, 424 144, 436 152" stroke="var(--hero-hair-rim, #4a3220)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity="var(--hero-hair-detail-opacity, .4)"/>
-        <path d="M 372 122 C 388 116, 412 117, 428 124" stroke="#ffffff" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".34"/>
+        <path d="M 372 122 C 388 116, 412 117, 428 124" stroke="color-mix(in srgb, #ffffff 60%, var(--hero-hair-light, #4a3220))" stroke-width="2.05" fill="none" stroke-linecap="round" opacity=".3"/>
         <use href="#comic-crown-hair-detail-{{ hero_variant }}"/>
       </g>
       <g data-hero-slot="hair" data-hero-option="soft-crop" display="none">
@@ -3491,9 +3498,11 @@
       </g>
       <g data-hero-slot="eyebrow" data-hero-option="arched">
 
-        <path d="M 371 172 C 374 168, 384 164, 395 172 C 392 171, 384 168, 372 173 Z" fill="var(--hero-eyebrow, #1f140c)"/>
+        <!-- Slightly slimmer with a cleaner taper at both ends than the original
+             heavier crescent — reads more refined while staying confident/bold. -->
+        <path d="M 371.5 172 C 375 167.6, 385 164.4, 395 171.4 C 391 170, 384 167, 373 172.5 Z" fill="var(--hero-eyebrow, #1f140c)"/>
 
-        <path d="M 429 172 C 426 168, 416 164, 405 172 C 408 171, 416 168, 428 173 Z" fill="var(--hero-eyebrow, #1f140c)"/>
+        <path d="M 428.5 172 C 425 167.6, 415 164.4, 405 171.4 C 409 170, 416 167, 427 172.5 Z" fill="var(--hero-eyebrow, #1f140c)"/>
 
       </g>
       <g data-hero-slot="eyebrow" data-hero-option="straight" display="none">
@@ -3570,7 +3579,7 @@
         <animateTransform attributeName="transform" type="scale"
                           values="1 1;1 1;1 .08;1 1;1 1"
                           keyTimes="0;0.945;0.968;0.99;1"
-                          dur="5.3s" begin="0s" repeatCount="indefinite"
+                          dur="4.4s" begin="0s" repeatCount="indefinite"
                           additive="sum" calcMode="spline"
                           keySplines="0.45 0 0.55 1;0.25 0 0.2 1;0.25 0.8 0.45 1;0.45 0 0.55 1"/>
         <g transform="translate(-400 -185)">
@@ -4158,32 +4167,39 @@
         <rect x="388" y="402" width="24" height="28" rx="5" fill="var(--hero-cape-dark, #001F38)" stroke="var(--hero-cape-inner-light, #FFE470)" stroke-width="2.40"/>
         <path d="M 346 414 H 362 M 438 414 H 454 M 392 412 H 408" stroke="#fff6c0" stroke-width="2.10" stroke-linecap="round" opacity=".78"/>
       </g>
+      <!-- Differential lower-face breath disabled: the whole face (eyes, brows,
+           nose, mouth, glasses, ears) must move as ONE unit with the head via
+           the shared body-lift, so no feature drifts or scales relative to the
+           others. Values are held at identity (kept rather than deleted so the
+           rig stays self-documenting and trivially reversible). -->
       <g data-hero-motion="lower-face-breath-position">
         <animateTransform attributeName="transform" type="translate"
-                          values="0 0;0 .72;0 0"
+                          values="0 0;0 0;0 0"
                           keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                           additive="sum" calcMode="spline"
                           keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
         <g data-hero-motion="nose-breath-scale" transform="translate(400 208)">
           <animateTransform attributeName="transform" type="scale"
-                            values="1 1;1.014 1.026;1 1"
+                            values="1 1;1 1;1 1"
                             keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                             additive="sum" calcMode="spline"
                             keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
           <g transform="translate(-400 -208)">
       <g data-hero-nose-layer clip-path="url(#face-clear-clip-{{ hero_variant }})">
       <g data-hero-slot="nose-shape" data-hero-option="soft">
-        <path d="M 399.2 188.8 C 400.3 196.2, 400.3 203.6, 399.4 209.6" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width="1.05" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
+        <!-- Bridge shortened to define the lower nose + tip only; the upper bridge
+             stays soft so the nose reads as form, not a long drawn line. -->
+        <path d="M 399.6 196.5 C 400.6 201, 400.6 205.4, 399.5 209.6" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width="1.05" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
         <ellipse cx="400" cy="211.9" rx="3.4" ry="1.55" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
-        <path d="M 398.6 191 C 399 198.2, 398.9 205.4, 398.2 209.8" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".9" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <path d="M 398.4 197.6 C 398.9 201.8, 398.8 205.6, 398.2 209.4" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".9" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="212.3" rx="1.55" ry=".75" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
         <ellipse cx="397.8" cy="213.1" rx=".9" ry=".42" transform="rotate(-16 397.8 213.1)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
         <ellipse cx="402.2" cy="213.1" rx=".9" ry=".42" transform="rotate(16 402.2 213.1)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
       </g>
       <g data-hero-slot="nose-shape" data-hero-option="rounded" display="none">
-        <path d="M 399 190 C 400.1 197.6, 400.1 204.9, 399.4 210.1" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width="1" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
+        <path d="M 399.4 197.5 C 400.4 201.8, 400.4 206.2, 399.5 210.1" stroke="var(--hero-nose-fill, #7a4a2a)" stroke-width="1" stroke-linecap="round" fill="none" opacity="var(--hero-nose-bridge-opacity, .2)"/>
         <ellipse cx="400" cy="212.1" rx="3.8" ry="1.9" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-plane-opacity, .16)"/>
-        <path d="M 398.4 191.8 C 398.9 198.6, 398.8 205.5, 398.2 210.1" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".95" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
+        <path d="M 398.3 198.5 C 398.8 202.4, 398.7 206.4, 398.2 210" stroke="var(--hero-nose-highlight, #fff1dc)" stroke-width=".95" stroke-linecap="round" fill="none" opacity="var(--hero-nose-highlight-opacity, .36)"/>
         <ellipse data-hero-face-detail="nose" cx="400" cy="212.5" rx="1.8" ry=".9" fill="var(--hero-nose-fill, #7a4a2a)" opacity="var(--hero-nose-opacity, .35)"/>
         <ellipse cx="397.5" cy="213.3" rx="1" ry=".5" transform="rotate(-17 397.5 213.3)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
         <ellipse cx="402.5" cy="213.3" rx="1" ry=".5" transform="rotate(17 402.5 213.3)" fill="var(--hero-face-mark, #5a321e)" opacity="var(--hero-nostril-opacity, .55)"/>
@@ -4510,8 +4526,9 @@
         <path d="M 386 245 C 395 250.5, 405 250.5, 414 245" stroke="var(--hero-hair-dark, #0f0905)" stroke-width="2.0" fill="none" stroke-linecap="round" opacity=".32"/>
       </g>
         <g data-hero-motion="mouth-breath-scale" transform="translate(400 226)">
+          <!-- Held at identity — see lower-face-breath note: the face moves as one unit. -->
           <animateTransform attributeName="transform" type="scale"
-                            values="1 1;1.02 1.045;1 1"
+                            values="1 1;1 1;1 1"
                             keyTimes="0;0.55;1" dur="2.2s" begin="0s" repeatCount="indefinite"
                             additive="sum" calcMode="spline"
                             keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"/>
@@ -4896,7 +4913,7 @@
         <path d="M 372 188 Q 382 179, 393 185 M 407 185 Q 418 179, 428 188" stroke="var(--hero-bruin-line, #1f140c)" stroke-width="3.15" fill="none" stroke-linecap="round"/>
         <path d="M 370 194 Q 382 188, 394 194 M 406 194 Q 418 188, 430 194" stroke="#fff0b4" stroke-width="1.80" fill="none" stroke-linecap="round" opacity=".36"/>
         <path d="M 374 199 Q 382 199, 390 199 M 410 199 Q 418 199, 426 199" stroke="var(--hero-eye, #1f140c)" stroke-width="1.65" fill="none" stroke-linecap="round" opacity="0">
-          <animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.56;0.6;0.64;1" dur="3.4s" begin="0s" repeatCount="indefinite" />
+          <animate attributeName="opacity" values="0;0;1;0;0" keyTimes="0;0.56;0.6;0.64;1" dur="4.4s" begin="0s" repeatCount="indefinite" />
         </path>
         <path d="M 390 212 Q 400 204, 410 212 Q 407 221, 400 221 Q 393 221, 390 212 Z" fill="var(--hero-bruin-line, #1f140c)"/>
         <ellipse cx="397" cy="210" rx="2.4" ry="1.5" fill="#ffffff" opacity=".38"/>

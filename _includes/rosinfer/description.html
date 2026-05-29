@@ -1,11 +1,115 @@
-<div class="text-left">
-  <p>Model-based analysis is a common technique to identify incorrect behavioral composition of complex, safety-critical systems, such as robotics systems. However, creating structural and behavioral models for
-    hundreds of software components manually is often a labor-intensive and error-prone process. In this project, we present an approach to infer behavioral models for components of systems based on the
-    Robot Operating System (ROS), the most popular framework for robotics systems, using static analysis by exploiting assumptions about the usage of the ROS framework.
-    This work is a contribution towards making well-proven and powerful but infrequently used methods of model-based analysis more accessible and economical in practice to make robotics systems more
-    reliable and safe.
+<div class="rosinfer-summary">
+  <p class="rosinfer-lead">
+    Robotics systems built on the <a href="https://www.ros.org/">Robot Operating System (ROS)</a>
+    are assembled from hundreds of independently developed software components that interact at run
+    time by passing messages. When those components are composed inconsistently, the system can fail
+    in ways that are hard to debug &mdash; a component waits forever for a message that no other
+    component sends, two components deadlock, or messages are silently dropped because a component is
+    in the wrong state. <strong>ROSInfer</strong> automatically recovers
+    <em>behavioral component models</em> directly from ROS source code so that these
+    <em>behavioral architecture composition bugs</em> can be found before a robot ever moves.
   </p>
-  <div class="item active">
-    <img src="img/rosinfer.svg" data-original-title="ROSInfer" class="img-responsive" alt="ROSInfer project logo">
-  </div>
+
+  <figure class="rosinfer-figure">
+    <img src="img/rosinfer.svg" alt="The ROSInfer pipeline: ROS source code (launch files and C++) is turned into per-component behavioral models, which are then checked to detect bugs such as a missing publisher, a state deadlock, and a too-high publishing frequency." class="rosinfer-logo">
+  </figure>
+
+  <h3>Problem: Finding Behavioral Architecture Composition Bugs in ROS-based Systems</h3>
+  <p>
+    Robotics systems are complex, safety-critical, component-based systems. Their components are
+    typically <strong>reactive</strong> (they respond to incoming messages), <strong>periodic</strong>
+    (they publish data at a fixed frequency), and <strong>state-dependent</strong> (what they do
+    depends on what they have already received). Composing and evolving so many components is
+    error-prone, because each one makes undocumented assumptions about its environment &mdash; for
+    example, that it will receive a set of initialization messages before it starts working.
+  </p>
+  <p>
+    When those assumptions are violated, the behavior of the assembled system diverges from what the
+    developers expected: a component indefinitely waits for a required input, the system reaches a
+    deadlock, or inputs are ignored because the system is in an incorrect state. These bugs are
+    especially hard to find because components often fail silently and the fault is spread across
+    many different locations in the system rather than sitting in one place.
+  </p>
+
+  <h3>Approach: AutomaticallyInferring Behavioral Component Models from Code</h3>
+  <p>
+    Model-based analysis is a well-proven way to catch incorrect behavioral composition &mdash; but
+    it needs formal models, and in practice robotics teams rarely have them. Writing and maintaining
+    state-machine models for hundreds of components by hand is labor-intensive and error-prone, and
+    the models would have to be rewritten every time the code changes.
+  </p>
+  <p>
+    This project makes that analysis practical by inferring the models automatically. The key
+    insight is that only a small slice of a component's behavior is <em>architecturally relevant</em>
+    (what causes it to send messages: its triggers, state variables, and transitions), and that ROS
+    developers implement that behavior using a small, recognizable vocabulary of framework API calls
+    and idioms. By exploiting assumptions about how the ROS API and ecosystem are used, the project
+    recovers a state-machine model of each component's architecturally-relevant behavior by combining
+    static and dynamic analysis.
+  </p>
+
+  <h3>Contributions</h3>
+  <p>
+    The project contributes four tools that take a system from source code to checkable models and
+    readable diagrams:
+  </p>
+  <dl class="rosinfer-toolchain">
+    <dt>ROSInfer &mdash; static recovery</dt>
+    <dd>
+      Statically reconstructs per-component state machines by locating the ROS API calls that define
+      architecturally-relevant behavior (subscriber callbacks for receiving messages, publish calls
+      for sending them, and rate/sleep calls for periodic behavior) and following the control and
+      data flow between them. Values that cannot be determined statically are marked as an explicit
+      &ldquo;unknown&rdquo; so the models are honest about their gaps.
+    </dd>
+    <dt>ROSInstrument &mdash; dynamic completion</dt>
+    <dd>
+      Uses the partial static models to drive targeted experiments: it deploys components and
+      systematically sends messages to them, instrumenting the unknown source locations to observe
+      their real values at run time (such as publishing frequencies or values loaded dynamically),
+      filling in what static analysis alone could not.
+    </dd>
+    <dt>ROSFindBugs &mdash; model checking</dt>
+    <dd>
+      Translates the inferred models into PlusCal/TLA+ and checks properties that matter in the
+      robotics domain &mdash; for example, that every required input is eventually produced by some
+      component, that an input reliably causes its expected output, and that message-publishing
+      frequencies stay within safe bounds &mdash; to flag architecture-misconfiguration bugs.
+    </dd>
+    <dt>ROSView &mdash; visualization</dt>
+    <dd>
+      Automatically turns the inferred models into medium-grained diagrams that combine the
+      component-port-connector structure with behavior (initial state, periodic triggers and their
+      frequency, and conditional reactions), so developers can understand a component's
+      architecturally-relevant behavior at a glance.
+    </dd>
+  </dl>
+
+  <h3>Results</h3>
+  <ul class="rosinfer-results">
+    <li>
+      <strong>Accurate static inference at scale.</strong> ROSInfer was evaluated on five large,
+      real-world ROS systems (Autoware.AI, AutoRally, Fetch, Husky, and Turtlebot) totaling more
+      than 500 components. Against 155 hand-built ground-truth models &mdash; released as a dataset
+      for other researchers &mdash; it inferred the causal trigger for about <strong>88%</strong> of
+      architecturally-relevant behaviors, with a recall of 95% (periodic), 86% (reactive), and 75%
+      (state) and a precision of 91&ndash;100% across behavior types. The analysis scales to whole
+      systems and supports incremental re-analysis as code changes.
+    </li>
+    <li>
+      <strong>Finding real bugs other tools miss.</strong> ROSFindBugs found real behavioral
+      architecture composition bugs in open-source systems that earlier purely-structural recovery
+      could not detect. The project also contributed datasets of real-world architecture
+      misconfiguration bugs (29 across five systems) and behavioral architecture composition bugs
+      (20 mined from open-source ROS projects) to support further research.
+    </li>
+    <li>
+      <strong>Diagrams that help developers.</strong> In a controlled study with 24 practicing
+      roboticists and robotics graduate students, participants given ROSView's automatically
+      generated diagrams answered questions about component behavior more accurately. For a seeded
+      composition bug, everyone with the diagram located it (versus half of those without) and 92%
+      fixed it (versus 42%) &mdash; without taking any more time.
+    </li>
+  </ul>
+
 </div>

@@ -1,5 +1,8 @@
 ---
 title: ROSInfer - Finding Architectural Bugs in ROS-based Robotics Systems
+description: "ROSInfer automatically infers behavioral component models from ROS source code, combining static and dynamic analysis to find behavioral architecture composition bugs in robotics systems."
 layout: framework
 ---
-
+{% assign projects = site.data.researchprojects.projects | where: 'key', 'rosinfer' %}
+{% assign project = projects.first %}
+{% include researchproject.html %}

@@ -1,0 +1,28 @@
+{%- comment -%}
+Emits window.SEGymFeatures from _config.yml's `se_gym_features` map so the SE Gym
+JS can turn individual features on/off. A missing config key defaults to ON; only an
+explicit `false` disables a feature. Any value already present on window.SEGymFeatures
+(e.g. set by a test via page.addInitScript before page scripts run) wins over config,
+so individual features can be exercised in tests regardless of the build's defaults.
+Include this on every page that runs SE Gym JS, before that JS executes.
+{%- endcomment -%}
+<script>
+  (function () {
+    var cfg = {
+      dueReview: {% if site.se_gym_features.due_review == false %}false{% else %}true{% endif %},
+      workoutOfTheDay: {% if site.se_gym_features.workout_of_the_day == false %}false{% else %}true{% endif %},
+      topicMastery: {% if site.se_gym_features.topic_mastery == false %}false{% else %}true{% endif %},
+      trainingLog: {% if site.se_gym_features.training_log == false %}false{% else %}true{% endif %},
+      challengeFriend: {% if site.se_gym_features.challenge_friend == false %}false{% else %}true{% endif %},
+      avatarGating: {% if site.se_gym_features.avatar_gating == false %}false{% else %}true{% endif %}
+    };
+    var pre = window.SEGymFeatures || {};
+    var out = {};
+    for (var k in cfg) {
+      if (Object.prototype.hasOwnProperty.call(cfg, k)) {
+        out[k] = Object.prototype.hasOwnProperty.call(pre, k) ? pre[k] : cfg[k];
+      }
+    }
+    window.SEGymFeatures = out;
+  })();
+</script>

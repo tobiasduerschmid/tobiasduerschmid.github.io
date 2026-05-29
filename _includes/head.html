@@ -247,6 +247,9 @@
   <link rel="stylesheet" href="{{ "/css/se-gym-stats.css" | prepend: site.baseurl }}?v={{ asset_version }}">
   {% endif %}
   {% endif %}
+  {% if page.url == '/rosinfer.html' %}
+  <link rel="stylesheet" href="{{ "/css/rosinfer.css" | prepend: site.baseurl }}?v={{ asset_version }}">
+  {% endif %}
   <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
   <link rel="stylesheet" href="{{ "/css/print-light.css" | prepend: site.baseurl }}?v={{ asset_version }}">
 
