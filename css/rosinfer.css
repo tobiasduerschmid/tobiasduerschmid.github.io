@@ -89,24 +89,6 @@ html.dark-mode .rosinfer-toolchain dd {
   margin-bottom: 0.9em;
 }
 
-/* Closing context note */
-.rosinfer-callout {
-  margin: 1.8em 0 0;
-  padding: 1em 1.25em;
-  background: var(--color-surface-2, #f8f9fa);
-  border-left: 4px solid var(--color-primary, #2774AE);
-  border-radius: var(--radius-md, 8px);
-  font-size: 0.95em;
-}
-
-html.dark-mode .rosinfer-callout {
-  background: var(--color-surface, #1e1e1e);
-}
-
-.rosinfer-callout p {
-  margin: 0;
-}
-
 /* Reflow: keep the column comfortable on small screens (320px wide) */
 @media (max-width: 600px) {
   .rosinfer-summary {

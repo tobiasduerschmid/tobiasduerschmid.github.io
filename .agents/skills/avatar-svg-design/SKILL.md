@@ -177,6 +177,18 @@ For gradients, the SVG defines `hair-grad-{{ hero_variant }}`, `skin-{{ hero_var
 
 **The contrast logic is non-trivial.** Inspect `avatarContrastTokens()` in [`js/se-gym-hero-avatar.js`](../../../js/se-gym-hero-avatar.js:~1700) before assuming a color will work — it adjusts highlights, rims, eyebrows, glasses frames, and face lines to maintain WCAG-compliant contrast for the user's combination of skin and hair color. Hardcoding a hex that "looks fine" against your test palette will likely fail catastrophically against someone else's. (See also the `light-dark-mode` and `wcag-aa-compliance` skills.)
 
+### The desaturated-highlight trap (and the `color-mix` re-warm fix)
+
+The `--hero-hair-light` token (`contrastTokens.hairHighlight`) is **deliberately desaturated** for dark hair: for near-black hair it resolves to a flat warm-*gray* (e.g. `#776c64`, not the SVG's warmer `#4a3220` fallback). That is correct for the JS's purpose — lightening near-black always washes out saturation — but if you then drop that token in at full strength as the *top stop of `hair-grad`* (or as a broad top-light plate at high opacity, or pair it with a pure-`#ffffff` sheen stroke), the result is a **gray crown streak that reads like gray hair or a bald patch** on every dark-haired user. This shipped and looked unprofessional until fixed.
+
+**Two compounding mistakes produce it:** (1) the highlight *color* is gray, and (2) it's applied as a large flat zone with a hard edge to the base. Fix both **in the SVG** (the token itself is contrast-mandated — don't fight it, and don't edit the JS to "fix" the color or you may regress feature contrast):
+
+- **Re-warm toward the user's own hair base with `color-mix`** (already used elsewhere in the project, e.g. `css/tutorial.css`): `color-mix(in srgb, var(--hero-hair-light, #4a3220) 58%, var(--hero-hair, #1f140c))`. Mixing toward `--hero-hair` is **safe for every hair color** — it pulls a blonde highlight toward blonde and a black highlight toward black; it never injects a foreign hue. Mixing toward a fixed warm hex would muddy blondes, so don't.
+- **Shape it as a soft sheen, not a flat plate** — a two-step gradient falloff (highlight → half-strength → base by ~38 %) avoids the hard light/dark seam.
+- **Warm any pure-white sheen stroke** the same way (`color-mix(in srgb, #ffffff 60%, var(--hero-hair-light, …))`) and keep its opacity ≤ ~0.3; pure white at 0.34 over near-black hair is itself a gray line.
+
+This is purely decorative (the SVG is `aria-hidden`), so it is **not** a WCAG concern — but the shared `hair-grad` gradient feeds ~270 fills across all ~90 hair styles, so verify the change on short / fade / long / curly / afro / locs / braids / bun styles and on the blonde + dark-on-dark palettes before trusting it.
+
 ## The hero-slot system
 
 Every customizable feature is a `<g data-hero-slot="…" data-hero-option="…" display="none">` element. The JS reads `state.appearance.hairStyle` (etc.) and toggles `display="inline"` on the matching group, `display="none"` on all others. The slot system is the contract:
@@ -323,7 +335,7 @@ The same principles apply, scaled down:
 - **Eyes** are constructed inside-out: white sclera path → dark iris circle clipped to the eye shape → bright pupil → tiny catchlight dot. The catchlight is what makes the eye read as "alive" — never omit it. The "round" default has both a tiny `#fff` catchlight near `(383.6, 184.6)` and a soft secondary one at `(381.1, 188.1)`. Adding a second catchlight is the cheapest possible upgrade to readability.
 - **Eyebrows** must use `var(--hero-eyebrow, …)` — they're contrast-adjusted by JS for users whose hair color is too close to their skin to read directly.
 - **Mouths** range from `smile` (simple curve) to `toothy-bright-smile` (multi-layer with teeth, cheek dimples, soft lip line). Match the mouth's *complexity* to the rest of the option set — a tutorial avatar that already uses a simple round eye should not have a hyper-detailed multi-tooth grin; the visual weight will be lopsided.
-- **Noses** are 90% subtle: a soft shadow plus a single nostril dot is usually enough. The `noseOpacity` and `nostrilOpacity` variables get set by JS based on skin tone — darker skin tones need higher opacity (the contrast against `#dfa07a` skin is different from against `#3d2515` skin).
+- **Noses** are 90% subtle: a soft shadow plus a single nostril dot is usually enough. The `noseOpacity` and `nostrilOpacity` variables get set by JS based on skin tone — darker skin tones need higher opacity (the contrast against `#dfa07a` skin is different from against `#3d2515` skin). **Keep the bridge contour short.** A bridge shadow/highlight stroke that runs the *full* length of the nose (from between the eyes down to the tip) reads as a long drawn line down the middle of the face — amateurish, and the most common "nose looks off" complaint. For the generic `soft` / `rounded` noses, start the bridge stroke roughly halfway down (≈ `y=197` rather than `y=189`) so it defines only the lower bridge → tip and the upper bridge stays implied by the face's own form shadow. **Do _not_ blanket-shorten every nose option** — characterful noses (aquiline, wide, prominent-bridge variants) keep their full bridge *on purpose*; shortening them all homogenizes the set and erases the variety users pick between.
 
 ## Accessories: glasses, headphones, headwear, jewelry
 
@@ -398,7 +410,17 @@ Three SVG `<animateTransform>` blocks drive the "lifting a barbell" feel:
 - `data-hero-motion="body-lift"` — the body translates `0 → -1 → 4 → -1`, 2.2 s period.
 - `data-hero-motion="barbell-lift"` — the barbell translates `0 → -12 → 12 → -12`, 2.2 s period (counter-phase from the body).
 
-These are coordinated and phase-locked. If you add a new motion, copy the existing pattern (`calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1"`) so the rhythm stays consistent. **Respect `prefers-reduced-motion`:** the project's CSS already pauses these animations when the user has reduced motion turned on — don't add motion that bypasses this.
+There are also several smaller `<animate>` / `<animateTransform>` blocks (chest-plate glow pulse, eye blink, ear wiggle on the bruin, topic-icon cross-fades on the plates).
+
+These are coordinated and phase-locked. If you add a new motion, copy the existing pattern (`calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"`, `keyTimes="0;0.55;1"`, `begin="0s"`) so the rhythm stays consistent. **Respect `prefers-reduced-motion`:** the project's CSS already pauses these animations when the user has reduced motion turned on — don't add motion that bypasses this.
+
+### Two rules that keep everything moving "in sync"
+
+The whole rig must read as one coordinated organism — a viewer should never catch one part sliding on its own clock. Two failure modes break that, and both have shipped here:
+
+1. **Every period must be a harmonic of the 2.2 s base** (2.2 / 4.4 / 6.6 / 13.2 …), with `begin="0s"`. A motion on an unrelated period — an eye-blink at `5.3s`, a flash at `3.4s` — *temporally drifts*: it lands at a different point in the breath every cycle, so the figure looks like a bag of independently-timed parts. The fix is not to remove the motion but to retune its `dur` to the nearest harmonic (the blink → `4.4s` = one blink per two breaths reads perfectly natural while staying phase-locked). After any animation edit, list every `dur=` (`grep -oE 'dur="[0-9.]+s"'`) and confirm they're *all* harmonics of the base.
+
+2. **Don't give a sub-feature its own positional/scale breath that its siblings don't share.** The head, eyes, brows, nose, mouth, ears, and any glasses/accessory all ride the shared `body-lift` already, so they move together for free. A *differential* motion layered on one region — e.g. a `lower-face-breath-position` translate that nudges only the nose+mouth down, or a per-feature `nose-breath-scale` / `mouth-breath-scale` — makes that region drift relative to the eyes, and the face visibly "comes apart" at the bottom of the breath even though the timing is technically phase-locked. Let the face move as **one unit**: keep these differential transforms at identity (`values="0 0;0 0;0 0"` / `1 1;1 1;1 1`) unless you have a deliberate, character-appropriate reason (the bruin's ear-wiggle is an intentional flourish; an accidental lower-face slide is not). The cheapest way to catch this: freeze the SVG at `t=0` and at `t≈1.21s` (the breath extreme) with `setCurrentTime()` and confirm the *spacing between features* is unchanged — only the whole head should have translated.
 
 ## Verification checklist
 

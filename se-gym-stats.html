@@ -8,6 +8,13 @@ layout: sebook
 
 <div id="stats-app">
 
+  {% if site.gym_hero_animation %}
+  <!-- Decorative hero — reflects the learner's saved avatar (customized on /se-gym/). -->
+  <div class="stats-hero" aria-hidden="true">
+    {% include se-gym-hero.svg variant="main" %}
+  </div>
+  {% endif %}
+
   <!-- Disabled / empty states (hidden by JS when data exists) -->
   <div id="stats-tracking-off" class="stats-disabled-panel" role="status">
     <p><i class="fa-solid fa-chart-line" aria-hidden="true"></i>
@@ -99,7 +106,7 @@ layout: sebook
       <h2><i class="fa-solid fa-layer-group section-heading-icon" aria-hidden="true"></i> Topics</h2>
       <section class="stats-topic-mastery" aria-labelledby="stats-mastery-heading">
         <h3 id="stats-mastery-heading"><i class="fa-solid fa-medal section-heading-icon" aria-hidden="true"></i> Topic Mastery</h3>
-        <ul id="stats-mastery-list" class="mastery-list stats-mastery-list"></ul>
+        <ul id="stats-mastery-list" class="mastery-list stats-mastery-list" aria-labelledby="stats-mastery-heading"></ul>
       </section>
       <div class="stats-deck-columns">
         <div>
@@ -139,10 +146,17 @@ layout: sebook
   </div><!-- #stats-dashboard -->
 </div><!-- #stats-app -->
 
+{% include se-gym-feature-flags.html %}
+
 <!-- ==================== PAGE SCRIPT ==================== -->
 <script>
 (function() {
   'use strict';
+
+  // Feature flags from _config.yml via window.SEGymFeatures; missing key = ON.
+  function featureOn(name) {
+    return !window.SEGymFeatures || window.SEGymFeatures[name] !== false;
+  }
 
   // Wait for DOM ready
   function ready(fn) {
@@ -213,8 +227,12 @@ layout: sebook
     var totalCorrect = entries.reduce(function(a,e){ return a+e.correct; }, 0);
     var totalIncorrect = totalSeen - totalCorrect;
     var overallPct   = totalSeen > 0 ? Math.round(totalCorrect/totalSeen*100) : 0;
+    function deckIdentity(entry) {
+      return entry.deckType + ':' + entry.deckId;
+    }
+
     var uniqueDecks  = (function(){
-      var s={}; entries.forEach(function(e){s[e.deckId]=1;}); return Object.keys(s).length;
+      var s={}; entries.forEach(function(e){s[deckIdentity(e)]=1;}); return Object.keys(s).length;
     })();
 
     document.getElementById('stat-total-seen').textContent      = totalSeen;
@@ -233,10 +251,26 @@ layout: sebook
     var diffStats = {};
     DIFF_LEVELS.forEach(function(l){ diffStats[l] = { seen:0, correct:0 }; });
     entries.forEach(function(e){
-      var b = diffStats[e.difficulty] || diffStats['untagged'];
+      var b = diffStats[safeDifficulty(e.difficulty)];
       b.seen += e.seen; b.correct += e.correct;
     });
-    var LEVEL_COLORS = { basic:'#1f7a3d', intermediate:'#2774AE', advanced:'#b85b00', expert:'#b81e2c', untagged:'#555555' };
+    function safeDifficulty(d) {
+      return DIFF_LABELS[d] ? d : 'untagged';
+    }
+    function difficultyClass(d) {
+      return 'level-' + safeDifficulty(d);
+    }
+    function clampedPercent(value) {
+      var pct = parseInt(value, 10);
+      if (!isFinite(pct) || pct < 0) return 0;
+      return pct > 100 ? 100 : pct;
+    }
+    function statsBarFillHtml(className, pct, difficulty) {
+      return '<div class="' + className + ' ' + difficultyClass(difficulty) + '" style="--stats-bar-pct:' + clampedPercent(pct) + '%"></div>';
+    }
+    function objectValues(obj) {
+      return Object.keys(obj).map(function(key) { return obj[key]; });
+    }
     var tbody = document.getElementById('stats-diff-tbody');
     tbody.innerHTML = '';
     DIFF_LEVELS.forEach(function(level) {
@@ -245,12 +279,12 @@ layout: sebook
       var pct = Math.round(b.correct/b.seen*100);
       var tr = document.createElement('tr');
       tr.innerHTML =
-        '<td><span class="difficulty-badge level-' + level + '">' + DIFF_LABELS[level] + '</span></td>' +
+        '<td><span class="difficulty-badge ' + difficultyClass(level) + '">' + DIFF_LABELS[level] + '</span></td>' +
         '<td>' + b.seen + '</td>' +
         '<td>' + b.correct + '</td>' +
         '<td>' + pct + '%</td>' +
         '<td aria-hidden="true"><div class="stats-diff-bar-track">' +
-          '<div class="stats-diff-bar-fill" style="width:' + pct + '%;background:' + LEVEL_COLORS[level] + '"></div>' +
+          statsBarFillHtml('stats-diff-bar-fill', pct, level) +
         '</div></td>';
       tbody.appendChild(tr);
     });
@@ -264,13 +298,14 @@ layout: sebook
     var bottom10 = sortedByAcc.slice(-10).reverse();
 
     function escHtml(s) {
-      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+      return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
     }
     function stripHtml(s) {
       return s ? s.replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim() : '';
     }
     function diffChip(d) {
-      return '<span class="difficulty-badge level-' + d + '">' + escHtml(DIFF_LABELS[d]||d) + '</span>';
+      var difficulty = safeDifficulty(d);
+      return '<span class="difficulty-badge ' + difficultyClass(difficulty) + '">' + escHtml(DIFF_LABELS[difficulty]) + '</span>';
     }
     function typeChip(t) {
       return '<span class="gym-item-badge ' + (t==='quiz'?'quiz-badge':'flashcard-badge') + '">' +
@@ -309,6 +344,7 @@ layout: sebook
     }
 
     function renderQuestionList(el, list) {
+      if (!el) return;
       el.innerHTML = '';
       list.forEach(function(e, i) {
         var qText = e.questionHtml ? stripHtml(e.questionHtml) : '(question text unavailable)';
@@ -324,7 +360,7 @@ layout: sebook
             '</span>' +
           '</label>' +
           '<div class="stats-acc-bar-track" aria-hidden="true">' +
-            '<div class="stats-acc-bar-fill" style="width:' + e.accPct + '%;background:' + LEVEL_COLORS[e.difficulty] + '"></div>' +
+            statsBarFillHtml('stats-acc-bar-fill', e.accPct, e.difficulty) +
           '</div>';
         el.appendChild(li);
       });
@@ -333,12 +369,14 @@ layout: sebook
     renderQuestionList(document.getElementById('stats-top-questions'), top10);
     renderQuestionList(document.getElementById('stats-bottom-questions'), bottom10);
 
-    // ---- Topics / Decks ----
+    // ---- Topics / Decks (feature-flagged: topic_mastery) ----
+    var topicsSection = document.getElementById('stats-topics-section');
+    if (topicsSection) topicsSection.classList.toggle('is-hidden', !featureOn('topicMastery'));
     renderMasteryList(document.getElementById('stats-mastery-list'), PersonalGym.computeMasteryByDeck(ALL_CARD_DATA, rawStats));
 
     var deckMap = {};
     entries.forEach(function(e) {
-      var deckKey = e.deckType + ':' + e.deckId;
+      var deckKey = deckIdentity(e);
       if (!deckMap[deckKey]) {
         deckMap[deckKey] = { deckId:e.deckId, deckTitle:e.deckTitle, deckType:e.deckType,
                              seen:0, correct:0 };
@@ -346,12 +384,17 @@ layout: sebook
       deckMap[deckKey].seen    += e.seen;
       deckMap[deckKey].correct += e.correct;
     });
-    var deckList = Object.values(deckMap).filter(function(d){ return d.seen >= 3; });
+    var deckValues = objectValues(deckMap);
+    var deckList = deckValues.filter(function(d){ return d.seen >= 3; });
     if (deckList.length < 3) {
-      deckList = Object.values(deckMap).filter(function(d){ return d.seen >= 1; });
+      deckList = deckValues.filter(function(d){ return d.seen >= 1; });
     }
     deckList.forEach(function(d){ d.acc = d.seen>0 ? d.correct/d.seen : 0; d.accPct = Math.round(d.acc*100); });
-    deckList.sort(function(a,b){ return b.acc-a.acc; });
+    deckList.sort(function(a,b){
+      if (b.acc !== a.acc) return b.acc-a.acc;
+      if (b.seen !== a.seen) return b.seen-a.seen;
+      return a.deckTitle.localeCompare(b.deckTitle);
+    });
 
     var MEDAL_ICONS = ['🥇','🥈','🥉'];
     var EFFORT_ICONS = ['fa-person-running', 'fa-dumbbell', 'fa-rotate-right'];
@@ -362,6 +405,7 @@ layout: sebook
         : '<span class="stats-deck-medal" aria-hidden="true">' + icon + '</span>';
     }
     function renderDeckCards(el, list, iconSet, useEffortIcons) {
+      if (!el) return;
       el.innerHTML = '';
       list.forEach(function(d, i) {
         var card = document.createElement('div');
@@ -374,7 +418,7 @@ layout: sebook
           '<div class="stats-deck-title">' + escHtml(d.deckTitle) + '</div>' +
           '<div class="stats-deck-stats">' + d.correct + '/' + d.seen + ' correct · ' + d.accPct + '%</div>' +
           '<div class="stats-acc-bar-track" aria-hidden="true">' +
-            '<div class="stats-acc-bar-fill" style="width:' + d.accPct + '%;background:var(--color-primary)"></div>' +
+            '<div class="stats-acc-bar-fill stats-deck-bar-fill" style="--stats-bar-pct:' + clampedPercent(d.accPct) + '%"></div>' +
           '</div>' +
           '<button type="button" class="gym-btn secondary stats-deck-practice" ' +
             'data-deck-id="' + escHtml(d.deckId) + '" ' +
@@ -510,5 +554,39 @@ layout: sebook
   });
 })();
 </script>
+
+{% if site.gym_hero_animation %}
+<!-- Apply the saved hero avatar (or a random one) and honor reduced-motion, same as /se-gym/. -->
+<script src="{{ '/js/se-gym-hero-avatar.js' | relative_url }}" defer></script>
+<script>
+  (function () {
+    function prefersReducedMotion() {
+      return (typeof window.__prefersReducedMotion === 'function')
+        ? window.__prefersReducedMotion()
+        : !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+    }
+    function syncHeroMotion() {
+      var reduce = prefersReducedMotion();
+      document.querySelectorAll('[data-gym-hero-svg]').forEach(function (svg) {
+        if (reduce && typeof svg.pauseAnimations === 'function') {
+          if (typeof svg.setCurrentTime === 'function') svg.setCurrentTime(0);
+          svg.pauseAnimations();
+        } else if (!reduce && typeof svg.unpauseAnimations === 'function') {
+          svg.unpauseAnimations();
+        }
+      });
+    }
+    syncHeroMotion();
+    if (window.matchMedia) {
+      var mq = window.matchMedia('(prefers-reduced-motion: reduce)');
+      if (mq.addEventListener) mq.addEventListener('change', syncHeroMotion);
+      else if (mq.addListener) mq.addListener(syncHeroMotion);
+    }
+    if (window.MutationObserver && document.documentElement) {
+      new MutationObserver(syncHeroMotion).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    }
+  })();
+</script>
+{% endif %}
 
 {% endif %}

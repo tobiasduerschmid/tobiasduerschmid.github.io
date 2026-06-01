@@ -4764,3 +4764,51 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await expect(page.locator('#hero-cust-status')).toContainText(/Randomized/i);
   });
 });
+
+test.describe('SE Gym hero — milestone gating of showpiece accessories', () => {
+  test.beforeEach(async ({ page }) => {
+    await clearState(page);
+  });
+
+  // se-gym.html sets window.SEGymHeroMilestone from total exercise attempts; the
+  // customizer reads it on open. We set it directly to isolate the gating contract
+  // (tier-from-attempts is covered by the milestone tests above).
+  async function openCustomizerAtTier(page, tier) {
+    await page.evaluate((t) => { window.SEGymHeroMilestone = t; }, tier);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+    const modal = page.getByRole('dialog', { name: 'Customize your hero' });
+    await expect(modal).toBeVisible();
+    return modal;
+  }
+
+  test('showpiece gear is locked at the lowest tier and unlocks at diamond', async ({ page }) => {
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+
+    let modal = await openCustomizerAtTier(page, 'none');
+    // The four gated accessories (utility-belt, hero-cape-clasp, halo, crown) are disabled + flagged.
+    await expect(modal.locator('.hero-cust-accessory-choice input[type="checkbox"]:disabled')).toHaveCount(4);
+    await expect(modal.locator('.hero-cust-accessory-lock')).toHaveCount(4);
+    const crown = modal.locator('.hero-cust-accessory-choice[data-choice-value="crown"]');
+    await expect(crown.locator('input[type="checkbox"]')).toBeDisabled();
+    await expect(crown.locator('.hero-cust-accessory-lock')).toHaveText(/Diamond/);
+    await heroCustomizerAction(page, 'Cancel').click();
+
+    // Reaching diamond unlocks every showpiece item.
+    modal = await openCustomizerAtTier(page, 'diamond');
+    await expect(modal.locator('.hero-cust-accessory-choice input[type="checkbox"]:disabled')).toHaveCount(0);
+    await expect(modal.locator('.hero-cust-accessory-lock')).toHaveCount(0);
+  });
+
+  test('a mid tier unlocks only lower-or-equal gear', async ({ page }) => {
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    const modal = await openCustomizerAtTier(page, 'silver');
+    // bronze + silver gear unlocked; gold + diamond gear still locked.
+    await expect(modal.locator('.hero-cust-accessory-choice[data-choice-value="utility-belt"] input')).toBeEnabled();
+    await expect(modal.locator('.hero-cust-accessory-choice[data-choice-value="hero-cape-clasp"] input')).toBeEnabled();
+    await expect(modal.locator('.hero-cust-accessory-choice[data-choice-value="halo"] input')).toBeDisabled();
+    await expect(modal.locator('.hero-cust-accessory-choice[data-choice-value="crown"] input')).toBeDisabled();
+    await expect(modal.locator('.hero-cust-accessory-choice input[type="checkbox"]:disabled')).toHaveCount(2);
+  });
+});

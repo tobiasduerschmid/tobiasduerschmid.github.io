@@ -4586,8 +4586,13 @@ html:not(.dark-mode) .tvm-error-hint code { background: #eaeaf4; color: #b03010;
 }
 
 /* Question cards */
-.tvm-quiz-panel .quiz-question-card { display: none; animation: fadeIn 0.4s ease; }
+.tvm-quiz-panel .quiz-question-card { display: none; animation: tvm-quiz-card-fade-in 0.16s ease; }
 .tvm-quiz-panel .quiz-question-card.active { display: block; }
+
+@keyframes tvm-quiz-card-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
 
 .tvm-quiz-panel .question-text {
   font-size: 1.08em;
@@ -4643,7 +4648,7 @@ html:not(.dark-mode) .tvm-error-hint code { background: #eaeaf4; color: #b03010;
   border-radius: 8px;
   background: #172536;
   text-align: left;
-  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
   cursor: pointer;
   font-size: 0.93em;
   line-height: 1.35;
@@ -4670,7 +4675,6 @@ html:not(.dark-mode) .tvm-error-hint code { background: #eaeaf4; color: #b03010;
   border-color: #8BB8E8;
   background: #20344b;
   box-shadow: 0 9px 22px rgba(0, 0, 0, 0.42);
-  transform: translateY(-1px);
 }
 .tvm-quiz-panel .quiz-option.selected {
   border-color: #8BB8E8;

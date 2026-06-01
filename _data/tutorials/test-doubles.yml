@@ -41,11 +41,18 @@ setup_commands:
     import os as _os, pytest as _pytest, sys as _sys
     _TUTORIAL_DIR = '/tutorial'
     def _make_pytest_patch():
+        # Bind every name _patched touches as a closure local, NOT a module
+        # global. Each run() wipes globals() down to a whitelist before
+        # executing (see js/pyodide-worker.js), so a global lookup of `os` or
+        # the tutorial dir from inside _patched raises NameError at call time.
+        # Closure cells live on the function object and survive the wipe.
         _orig = _pytest.main
         _sysmod = _sys
+        _oslib = _os
+        _tutdir = _TUTORIAL_DIR
         def _patched(*a, **kw):
             try:
-                tutorial_modules = {f[:-3] for f in _os.listdir(_TUTORIAL_DIR) if f.endswith('.py')}
+                tutorial_modules = {f[:-3] for f in _oslib.listdir(_tutdir) if f.endswith('.py')}
             except FileNotFoundError:
                 tutorial_modules = set()
             for m in list(_sysmod.modules):

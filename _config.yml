@@ -19,6 +19,16 @@ gym_milestone_gold: 500
 gym_milestone_diamond: 1000
 gym_milestone_infinity: 5000
 
+# SE Gym feature flags — turn individual gym features on/off.
+# A missing key defaults to ON; set a key to false to disable that feature.
+se_gym_features:
+  due_review: false          # "Due for Review" spaced-repetition queue (gym entrance)
+  workout_of_the_day: false  # one-click balanced daily session (gym entrance)
+  topic_mastery: true        # per-deck mastery panel (stats page)
+  training_log: true         # streak + weekly goal + consistency heatmap (gym entrance)
+  challenge_friend: true     # export/import challenge files (gym entrance + results)
+  avatar_gating: true        # lock showpiece avatar items behind milestone tiers
+
 sass:
   style: compressed
 

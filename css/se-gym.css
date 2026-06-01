@@ -3739,7 +3739,7 @@
       padding: 22px;
       margin: 18px 0;
       box-shadow: 0 18px 40px rgba(0, 59, 92, 0.16);
-      animation: fadeIn 0.4s ease;
+      animation: se-gym-card-fade-in 0.16s ease;
     }
 
     .workout-quiz-card::before {
@@ -3799,7 +3799,7 @@
       border-radius: 8px;
       background: linear-gradient(180deg, #ffffff, #fbfdff);
       text-align: left;
-      transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+      transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
       cursor: pointer;
       font-size: 0.95em;
       line-height: 1.35;
@@ -3812,7 +3812,6 @@
       border-color: #2774AE;
       background: linear-gradient(180deg, #f7fbff, #eef7ff);
       box-shadow: 0 10px 24px rgba(0, 59, 92, 0.14);
-      transform: translateY(-1px);
     }
 
     .workout-quiz-card .quiz-option.selected {
@@ -4171,7 +4170,7 @@
       margin: var(--sp-md, 12px) 0;
       box-shadow: var(--shadow-sm, 0 2px 4px rgba(0, 0, 0, 0.05));
       text-align: center;
-      animation: fadeIn 0.4s ease;
+      animation: se-gym-card-fade-in 0.16s ease;
     }
 
     .workout-flashcard .flashcard-question {
@@ -4475,16 +4474,9 @@
       font-weight: 700;
     }
 
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
+    @keyframes se-gym-card-fade-in {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
     @keyframes slideDown {
@@ -4531,6 +4523,7 @@
       .gym-emoji-piece { animation: none !important; }
       .workout-progress-fill,
       .workout-quiz-card,
+      .workout-flashcard,
       .workout-quiz-card .quiz-option,
       .workout-quiz-card .submit-answer-btn,
       .workout-quiz-card .next-btn {
@@ -4544,6 +4537,9 @@
         transform: none !important;
       }
     }
+
+    html.prm-reduce .gym-emoji-host { display: none !important; }
+    html.prm-reduce .gym-emoji-piece { animation: none !important; }
 
     .hidden {
       display: none !important;
