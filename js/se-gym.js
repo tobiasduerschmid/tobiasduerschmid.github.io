@@ -621,10 +621,10 @@
     if (!isAnalyzePerformance()) return;
     var stats = getStats();
     if (!stats[key]) stats[key] = { seen: 0, correct: 0 };
-<<<<<<< Updated upstream
     var rec = stats[key];
     rec.seen++;
     if (correct) rec.correct++;
+    rec.lastAsked = Date.now();
     // Merge the SM-2-lite review schedule into the same record.
     var sched = scheduleNext(rec, correct, Date.now());
     rec.reps = sched.reps;
@@ -633,11 +633,6 @@
     rec.lapses = sched.lapses;
     rec.due = sched.due;
     rec.last = sched.last;
-=======
-    stats[key].seen++;
-    if (correct) stats[key].correct++;
-    stats[key].lastAsked = Date.now();
->>>>>>> Stashed changes
     saveStats(stats);
   }
 
