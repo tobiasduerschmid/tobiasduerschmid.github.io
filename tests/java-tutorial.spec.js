@@ -77,7 +77,8 @@ test.describe.serial('Java Tutorial — structure', () => {
   /** @type {import('@playwright/test').BrowserContext} */
   let context;
 
-  test.beforeAll(async ({ browser }) => {
+  test.beforeAll(async ({ browser }, testInfo) => {
+    testInfo.setTimeout(120_000);
     context = await browser.newContext();
     page = await context.newPage();
     await page.goto(TUTORIAL_URL);
@@ -176,7 +177,8 @@ test.describe.serial('Java Tutorial — step-by-step', () => {
   /** @type {import('@playwright/test').BrowserContext} */
   let context;
 
-  test.beforeAll(async ({ browser }) => {
+  test.beforeAll(async ({ browser }, testInfo) => {
+    testInfo.setTimeout(120_000);
     context = await browser.newContext();
     page = await context.newPage();
     await page.goto(TUTORIAL_URL);

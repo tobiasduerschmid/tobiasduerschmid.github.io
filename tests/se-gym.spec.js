@@ -74,6 +74,16 @@ async function answerWorkoutMultipleChoice(card, includeOptional = false) {
   await card.locator('.submit-answer-btn').click();
 }
 
+async function answerWorkoutCardWithShortcut(page, card, key) {
+  await page.keyboard.press(key);
+  const submitBtn = card.locator('.submit-answer-btn');
+  if (await submitBtn.isVisible()) {
+    await expect(submitBtn).toBeEnabled();
+    await page.keyboard.press('Enter');
+  }
+  await expect(card.locator('.quiz-explanation')).toBeVisible();
+}
+
 /**
  * Helper: clear all se-gym cookies and localStorage before each test.
  */
@@ -898,8 +908,7 @@ test.describe('Personal Gym - Workout', () => {
     await expect(quizCard.locator('.quiz-shortcuts-hint')).toBeVisible();
     await expect(quizCard.locator('.quiz-option').first()).toBeFocused();
 
-    await page.keyboard.press('A');
-    await expect(quizCard.locator('.quiz-explanation')).toBeVisible();
+    await answerWorkoutCardWithShortcut(page, quizCard, 'A');
     await expect(quizCard.locator('.quiz-shortcuts-hint')).toBeHidden();
 
     await quizCard.locator('.next-btn').click();
@@ -907,8 +916,7 @@ test.describe('Personal Gym - Workout', () => {
     await expect(quizCard).toBeVisible();
     await expect(quizCard.locator('.quiz-option').first()).toBeFocused();
 
-    await page.keyboard.press('1');
-    await expect(quizCard.locator('.quiz-explanation')).toBeVisible();
+    await answerWorkoutCardWithShortcut(page, quizCard, '1');
   });
 
   test('multiple-answer quiz shortcut uses Enter to submit', async ({ page, context }) => {
@@ -1774,6 +1782,18 @@ test.describe('Personal Gym - Performance Tracking', () => {
 
 test.describe('SE Gym - Spaced repetition, Workout of the Day, Topic Mastery', () => {
 
+  // Due-for-Review and Workout-of-the-Day ship OFF by default (see _config.yml).
+  // Force the flags on so these tests exercise them; per-key values set here win
+  // over the build's config defaults (see _includes/se-gym-feature-flags.html).
+  test.beforeEach(async ({ page }) => {
+    await page.addInitScript(() => {
+      window.SEGymFeatures = {
+        dueReview: true, workoutOfTheDay: true, topicMastery: true,
+        trainingLog: true, challengeFriend: true, avatarGating: true
+      };
+    });
+  });
+
   test('SRS scheduleNext grows the interval on success and resets on a lapse', async ({ page }) => {
     await page.goto(GYM_URL);
     const r = await page.evaluate(() => {
@@ -1883,6 +1903,8 @@ test.describe('SE Gym - Spaced repetition, Workout of the Day, Topic Mastery', (
     expect(stats[expected.aggregateKey], 'master deck practice should not create an aggregate deck stats key').toBeUndefined();
 
     await page.getByRole('button', { name: 'Back to Gym Entrance' }).click();
+    await page.goto(STATS_URL);
+    await expect(page.getByRole('heading', { name: 'Topic Mastery' })).toBeVisible();
     await expect(page.locator('.mastery-row').filter({ hasText: expected.sourceTitle })).toBeVisible();
     await expect(page.locator('.mastery-row').filter({ hasText: 'Tools Master Flashcards' })).toHaveCount(0);
   });
@@ -1909,7 +1931,7 @@ test.describe('SE Gym - Spaced repetition, Workout of the Day, Topic Mastery', (
     await expect(page.locator('#wod-status')).toContainText('Completed today');
   });
 
-  test('Topic Mastery lists practiced decks with mastered counts and a working Practice button', async ({ page, context }) => {
+  test('stats page Topic Mastery lists practiced decks and links to a topic workout', async ({ page, context }) => {
     const NOW = Date.now();
     const DAY = 24 * 60 * 60 * 1000;
     await setCookie(context, 'se-gym-active', 'true');
@@ -1920,17 +1942,136 @@ test.describe('SE Gym - Spaced repetition, Workout of the Day, Topic Mastery', (
       // intervalDays >= 7 → "proficient"
       'quiz:git:2': { seen: 3, correct: 3, reps: 3, ef: 2.5, intervalDays: 10, lapses: 0, due: NOW + 10 * DAY, last: NOW },
     });
-    await page.goto(GYM_URL);
-    await expect(page.locator('#mastery-section')).toBeVisible();
-    await a11yCheckpoint(page, 'gym entrance — topic mastery visible', { feature: A11Y_FEATURE, darkMode: true });
+    await page.goto(STATS_URL);
+    await expect(page.getByRole('heading', { name: 'Topic Mastery' })).toBeVisible();
+    await a11yCheckpoint(page, 'stats page — topic mastery visible', { feature: A11Y_FEATURE, darkMode: true });
     const gitRow = page.locator('.mastery-row').filter({ hasText: /git/i }).first();
     await expect(gitRow).toBeVisible();
     // Exactly one git quiz card (quiz:git:1) qualifies as mastered
     await expect(gitRow).toContainText('1 /');
     await expect(gitRow.locator('.mastery-state')).toBeVisible();
     await expect(gitRow.locator('.mastery-bar')).toHaveAttribute('role', 'progressbar');
-    await gitRow.locator('.mastery-practice-btn').click();
+    await gitRow.getByRole('link', { name: /Practice/i }).click();
     await expect(page.locator('#gym-workout')).toBeVisible();
+  });
+
+  test('stats page uses effort icons for the worst deck list', async ({ page, context }) => {
+    await setCookie(context, 'analyze-performance', 'true');
+    await page.goto(GYM_URL);
+    const seeded = await page.evaluate(() => {
+      const candidates = [];
+      function collect(decks, cardType, listKey) {
+        Object.keys(decks).forEach((deckId) => {
+          const deck = decks[deckId];
+          const cards = deck && deck[listKey];
+          if (!deck || deck.isMaster || !Array.isArray(cards) || cards.length === 0) return;
+          candidates.push({ deckId, cardType, title: deck.title, card: cards[0] });
+        });
+      }
+      collect(ALL_CARD_DATA.quizzes, 'quiz', 'questions');
+      collect(ALL_CARD_DATA.flashcards, 'flashcard', 'cards');
+      if (candidates.length < 4) throw new Error('Need at least four source decks for the worst-deck view');
+
+      const selected = candidates.slice(0, 4);
+      const correctCounts = [10, 8, 4, 2];
+      const now = Date.now();
+      const stats = {};
+      selected.forEach((deck, index) => {
+        stats[PersonalGym.cardStatsKey(deck.cardType, deck.deckId, deck.card)] = {
+          seen: 10,
+          correct: correctCounts[index],
+          reps: 1,
+          ef: 2.5,
+          intervalDays: index,
+          lapses: 0,
+          due: now,
+          last: now,
+        };
+      });
+      localStorage.setItem('se-gym-stats', JSON.stringify(stats));
+      return {
+        worstTitles: [selected[3].title, selected[2].title, selected[1].title],
+      };
+    });
+
+    await page.goto(STATS_URL);
+    const worstDecks = page.locator('#stats-worst-decks');
+    await expect(worstDecks).toBeVisible();
+    for (const title of seeded.worstTitles) {
+      await expect(worstDecks.getByText(title)).toBeVisible();
+    }
+    await expect(worstDecks.locator('.stats-deck-effort-icon')).toHaveCount(3);
+    await expect(worstDecks.locator('.stats-deck-medal')).toHaveCount(0);
+  });
+
+  test('stats page counts quiz and flashcard decks with the same id separately', async ({ page, context }) => {
+    await setCookie(context, 'analyze-performance', 'true');
+    await page.goto(GYM_URL);
+    const seeded = await page.evaluate(() => {
+      const sharedId = Object.keys(ALL_CARD_DATA.quizzes).find((deckId) => {
+        const quiz = ALL_CARD_DATA.quizzes[deckId];
+        const flashcards = ALL_CARD_DATA.flashcards[deckId];
+        return quiz && flashcards
+          && Array.isArray(quiz.questions) && quiz.questions.length
+          && Array.isArray(flashcards.cards) && flashcards.cards.length;
+      });
+      if (!sharedId) throw new Error('Need a quiz and flashcard deck sharing one id');
+      const now = Date.now();
+      const quiz = ALL_CARD_DATA.quizzes[sharedId];
+      const flashcards = ALL_CARD_DATA.flashcards[sharedId];
+      const stats = {};
+      stats[PersonalGym.cardStatsKey('quiz', sharedId, quiz.questions[0])] = {
+        seen: 3,
+        correct: 3,
+        reps: 1,
+        ef: 2.5,
+        intervalDays: 1,
+        lapses: 0,
+        due: now,
+        last: now,
+      };
+      stats[PersonalGym.cardStatsKey('flashcard', sharedId, flashcards.cards[0])] = {
+        seen: 3,
+        correct: 2,
+        reps: 1,
+        ef: 2.5,
+        intervalDays: 1,
+        lapses: 0,
+        due: now,
+        last: now,
+      };
+      localStorage.setItem('se-gym-stats', JSON.stringify(stats));
+      return { quizTitle: quiz.title, flashcardTitle: flashcards.title };
+    });
+
+    await page.goto(STATS_URL);
+    await expect(page.locator('#stat-decks-practiced')).toHaveText('2');
+    await expect(page.locator('#stats-best-decks').getByText(seeded.quizTitle)).toBeVisible();
+    await expect(page.locator('#stats-best-decks').getByText(seeded.flashcardTitle)).toBeVisible();
+  });
+
+  test('stats page normalizes malformed local stats before rendering totals', async ({ page, context }) => {
+    await setCookie(context, 'analyze-performance', 'true');
+    await page.goto(GYM_URL);
+    await page.evaluate(() => {
+      const quizId = Object.keys(ALL_CARD_DATA.quizzes).find((deckId) => {
+        const deck = ALL_CARD_DATA.quizzes[deckId];
+        return deck && Array.isArray(deck.questions) && deck.questions.length;
+      });
+      if (!quizId) throw new Error('Need at least one quiz card');
+      const question = ALL_CARD_DATA.quizzes[quizId].questions[0];
+      const key = PersonalGym.cardStatsKey('quiz', quizId, question);
+      localStorage.setItem('se-gym-stats', JSON.stringify({
+        [key]: { seen: '4', correct: '9', intervalDays: 0 },
+        'quiz:missing-content:legacy': { seen: -20, correct: 10 },
+      }));
+    });
+
+    await page.goto(STATS_URL);
+    await expect(page.locator('#stat-total-seen')).toHaveText('4');
+    await expect(page.locator('#stat-total-correct')).toHaveText('4');
+    await expect(page.locator('#stat-total-incorrect')).toHaveText('0');
+    await expect(page.locator('#stat-overall-pct')).toHaveText('100%');
   });
 
   test('SRS panels are gated behind performance tracking and unlock when it is enabled', async ({ page, context }) => {
@@ -1944,12 +2085,110 @@ test.describe('SE Gym - Spaced repetition, Workout of the Day, Topic Mastery', (
     await page.goto(GYM_URL);
     await expect(page.locator('#srs-locked-prompt')).toBeVisible();
     await expect(page.locator('#due-section')).toBeHidden();
-    await expect(page.locator('#mastery-section')).toBeHidden();
     await page.locator('#enable-tracking-btn').click();
     await expect(page.locator('#srs-locked-prompt')).toBeHidden();
-    // The seeded past-due card and practiced deck now surface
+    // The seeded past-due card now surfaces on the gym entrance.
     await expect(page.locator('#due-section')).toBeVisible();
-    await expect(page.locator('#mastery-section')).toBeVisible();
+    await page.goto(STATS_URL);
+    await expect(page.getByRole('heading', { name: 'Topic Mastery' })).toBeVisible();
+    await expect(page.locator('.mastery-row').filter({ hasText: /git/i })).toBeVisible();
   });
 
+});
+
+test.describe('SE Gym — training log (streak, weekly goal, heatmap)', () => {
+  test.beforeEach(async ({ page }) => { await clearState(page); });
+
+  test('streak, weekly-goal progress, and a full heatmap render from activity', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'se-gym-weekly-goal', '3');
+    await page.addInitScript(() => {
+      function dstr(daysAgo) {
+        var d = new Date(); d.setDate(d.getDate() - daysAgo);
+        var m = String(d.getMonth() + 1), dd = String(d.getDate());
+        if (m.length < 2) m = '0' + m; if (dd.length < 2) dd = '0' + dd;
+        return d.getFullYear() + '-' + m + '-' + dd;
+      }
+      // today + the two prior days → a 3-day streak (the gap at day 3 ends it).
+      var act = {};
+      [[0, 2, 10], [1, 1, 5], [2, 1, 5]].forEach(function (t) { act[dstr(t[0])] = { s: t[1], c: t[2] }; });
+      localStorage.setItem('se-gym-activity', JSON.stringify(act));
+    });
+    await page.goto(GYM_URL);
+
+    await expect(page.locator('#gym-streak')).toHaveText(/3-day streak/);
+    await expect(page.locator('#weekly-goal-progress')).toContainText(/sessions this week/);
+    await expect(page.locator('#weekly-goal-input')).toHaveValue('3');
+    // 17 weeks × 7 days = 119 cells, always.
+    await expect(page.locator('#gym-heatmap .gym-heatmap-cell')).toHaveCount(119);
+    await expect(page.locator('#gym-heatmap-summary')).toContainText(/Practiced 3 days/);
+  });
+
+  test('changing the weekly goal persists to its cookie', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await page.goto(GYM_URL);
+    await page.locator('#weekly-goal-input').fill('5');
+    await page.locator('#weekly-goal-input').blur();
+    const cookies = await context.cookies();
+    const goal = cookies.find((c) => c.name === 'se-gym-weekly-goal');
+    expect(goal && decodeURIComponent(goal.value)).toBe('5');
+  });
+});
+
+test.describe('SE Gym — challenge a friend', () => {
+  test.beforeEach(async ({ page }) => { await clearState(page); });
+
+  test('a challenge file imports, plays, reports the verdict, and re-exports', async ({ page, context }) => {
+    const fs = require('fs'); const os = require('os'); const path = require('path');
+    await setCookie(context, 'se-gym-active', 'true');
+    await page.goto(GYM_URL);
+
+    // Hand a one-question challenge (the challenger scored 0/1) to the importer.
+    const file = path.join(os.tmpdir(), `se-gym-challenge-${Date.now()}.json`);
+    fs.writeFileSync(file, JSON.stringify({ type: 'se-gym-challenge', v: 1, score: 0, total: 1, keys: ['git:1'] }));
+    await page.locator('#challenge-upload-input').setInputFiles(file);
+
+    // The challenge's question becomes a one-card workout (git:1 is single-choice).
+    const quizCard = page.locator('.workout-quiz-card');
+    await expect(quizCard).toBeVisible();
+    await quizCard.locator('.quiz-option').first().click();
+    await quizCard.locator('.next-btn').click();
+
+    // Single-card challenge → results with a head-to-head verdict.
+    await expect(page.locator('#workout-results')).toBeVisible();
+    await expect(page.locator('#workout-summary')).toContainText(/Challenge complete/);
+
+    // Re-exporting from the results screen produces a challenge file.
+    const [download] = await Promise.all([
+      page.waitForEvent('download'),
+      page.locator('#workout-challenge-btn').click(),
+    ]);
+    expect(download.suggestedFilename()).toBe('se-gym-challenge.json');
+    fs.unlinkSync(file);
+  });
+});
+
+test.describe('SE Gym — feature flags', () => {
+  test.beforeEach(async ({ page }) => { await clearState(page); });
+
+  test('Due for Review and Workout of the Day are hidden when disabled in config; others stay on', async ({ page, context }) => {
+    // No window.SEGymFeatures override → the build's _config.yml defaults apply
+    // (due_review:false, workout_of_the_day:false; topic_mastery/training_log/
+    // challenge_friend/avatar_gating on).
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'analyze-performance', 'true');
+    await page.goto(GYM_URL);
+    await expect(page.locator('#wod-section')).toBeHidden();
+    await expect(page.locator('#due-section')).toBeHidden();
+    await expect(page.locator('#training-log-section')).toBeVisible();
+    await expect(page.locator('#challenge-section')).toBeVisible();
+  });
+
+  test('a runtime flag re-enables Workout of the Day while Due stays off per config', async ({ page, context }) => {
+    await page.addInitScript(() => { window.SEGymFeatures = { workoutOfTheDay: true }; });
+    await setCookie(context, 'se-gym-active', 'true');
+    await page.goto(GYM_URL);
+    await expect(page.locator('#wod-section')).toBeVisible();
+    await expect(page.locator('#due-section')).toBeHidden();
+  });
 });

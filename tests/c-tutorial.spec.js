@@ -29,7 +29,7 @@ const A11Y_FEATURE = 'c-tutorial';
  */
 
 const TUTORIAL_URL     = '/SEBook/tools/c-tutorial';
-const VM_BOOT_TIMEOUT  = 60_000;
+const VM_BOOT_TIMEOUT  = 120_000;
 const TEST_RUN_TIMEOUT = 30_000;
 
 const config = loadTutorialConfig('c');
@@ -53,7 +53,7 @@ test.describe.serial('C Tutorial', () => {
   let context;
 
   test.beforeAll(async ({ browser }, testInfo) => {
-    testInfo.setTimeout(120_000);
+    testInfo.setTimeout(VM_BOOT_TIMEOUT + 60_000);
     context = await browser.newContext();
     page = await context.newPage();
     await page.goto(TUTORIAL_URL);
@@ -140,7 +140,7 @@ test.describe.serial('C Tutorial — step-by-step', () => {
   let context;
 
   test.beforeAll(async ({ browser }, testInfo) => {
-    testInfo.setTimeout(120_000);
+    testInfo.setTimeout(VM_BOOT_TIMEOUT + 60_000);
     context = await browser.newContext();
     page = await context.newPage();
     await page.goto(TUTORIAL_URL);

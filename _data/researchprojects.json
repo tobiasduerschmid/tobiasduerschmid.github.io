@@ -4,16 +4,19 @@
   [  { "key"       : "rosinfer",
       "title"     : "ROSInfer",
       "subtitle"  : "Finding Architectural Bugs in ROS-based Robotics Systems",
-      "pages" : 
+      "pages" :
       [
       {
         "name" : "Description",
+        "id"   : "description",
         "path" : "rosinfer/description.html"
       }, {
         "name" : "For ROS Developers",
+        "id"   : "developers",
         "path" : "rosinfer/devs.html"
       }, {
         "name" : "Talks",
+        "id"   : "talks",
         "path" : "rosinfer/talks.html"
       }
       ]

@@ -1155,6 +1155,8 @@
   }
   // Locked when the user's current tier ranks below the accessory's required tier.
   function accessoryLocked(accessoryValue, tier) {
+    // Feature flag: when avatar gating is off, nothing is locked.
+    if (typeof window !== 'undefined' && window.SEGymFeatures && window.SEGymFeatures.avatarGating === false) return false;
     var req = GATED_ACCESSORIES[accessoryValue];
     if (!req) return false;
     return tierRank(tier || currentMilestoneTier()) < tierRank(req);

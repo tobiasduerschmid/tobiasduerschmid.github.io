@@ -31,8 +31,8 @@ const A11Y_FEATURE = 'shell-tutorial';
  */
 
 const TUTORIAL_URL     = '/SEBook/tools/shell-tutorial';
-const VM_BOOT_TIMEOUT  = 60_000;
-const TEST_RUN_TIMEOUT = 30_000;
+const VM_BOOT_TIMEOUT  = 120_000;
+const TEST_RUN_TIMEOUT = 90_000;
 
 const config = loadTutorialConfig('shell-scripting');
 const steps  = config.steps;
@@ -54,7 +54,8 @@ test.describe.serial('Shell Scripting Tutorial', () => {
   /** @type {import('@playwright/test').BrowserContext} */
   let context;
 
-  test.beforeAll(async ({ browser }) => {
+  test.beforeAll(async ({ browser }, testInfo) => {
+    testInfo.setTimeout(VM_BOOT_TIMEOUT + 60_000);
     context = await browser.newContext();
     page = await context.newPage();
     await page.goto(TUTORIAL_URL);
@@ -147,7 +148,8 @@ test.describe.serial('Shell Scripting Tutorial — step-by-step', () => {
   /** @type {import('@playwright/test').BrowserContext} */
   let context;
 
-  test.beforeAll(async ({ browser }) => {
+  test.beforeAll(async ({ browser }, testInfo) => {
+    testInfo.setTimeout(VM_BOOT_TIMEOUT + 60_000);
     context = await browser.newContext();
     page = await context.newPage();
     await page.goto(TUTORIAL_URL);

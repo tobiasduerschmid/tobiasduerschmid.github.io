@@ -92,6 +92,19 @@ async function passCurrentStepTests(page, timeout = 30_000) {
   await runCurrentStepTests(page, timeout);
 }
 
+async function pressOptionShortcut(page, option) {
+  await expect(option).toBeVisible({ timeout: 5_000 });
+  const shortcuts = (await option.getAttribute('aria-keyshortcuts') || '').trim().split(/\s+/).filter(Boolean);
+  if (!shortcuts.length) {
+    throw new Error('Quiz option is missing aria-keyshortcuts');
+  }
+  await option.evaluate((el) => {
+    try { el.focus({ preventScroll: true }); }
+    catch (e) { el.focus(); }
+  });
+  await page.keyboard.press(shortcuts[0]);
+}
+
 /**
  * Answer every question in the currently visible quiz correctly.
  * Reads data-correct / data-correct-indices attributes — robust to shuffling.
@@ -107,15 +120,17 @@ async function answerQuizCorrectly(page) {
     const type = await card.getAttribute('data-type');
     if (type === 'multiple') {
       const firstOption = card.locator('.quiz-option').first();
-      const correctStr = await firstOption.getAttribute('data-correct-indices');
+      const correctStr = await firstOption.getAttribute('data-correct-indices') || '';
       const correctSet = new Set(correctStr.split(',').map(Number));
       const options = card.locator('.quiz-option');
       const count = await options.count();
       for (let i = 0; i < count; i++) {
-        if (correctSet.has(Number(await options.nth(i).getAttribute('data-index'))))
-          await options.nth(i).click();
+        const option = options.nth(i);
+        if (correctSet.has(Number(await option.getAttribute('data-index')))) {
+          await pressOptionShortcut(page, option);
+        }
       }
-      await card.locator('.submit-answer-btn').click();
+      await page.keyboard.press('Enter');
     } else if (type === 'parsons') {
       // Move lines from bank to target in the correct order, then click Check
       await page.evaluate(() => {
@@ -137,8 +152,9 @@ async function answerQuizCorrectly(page) {
       const options = card.locator('.quiz-option');
       const count = await options.count();
       for (let i = 0; i < count; i++) {
-        if (await options.nth(i).getAttribute('data-index') === correctIdx) {
-          await options.nth(i).click();
+        const option = options.nth(i);
+        if (await option.getAttribute('data-index') === correctIdx) {
+          await pressOptionShortcut(page, option);
           break;
         }
       }

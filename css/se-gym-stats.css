@@ -252,6 +252,8 @@ html.dark-mode .stats-donut-pct {
   border-radius: var(--radius-pill, 999px);
   transition: width 0.4s ease;
   min-width: 0;
+  width: var(--stats-bar-pct, 0%);
+  background: var(--stats-bar-color, var(--color-primary, #2774AE));
 }
 
 html.dark-mode .stats-diff-table th {
@@ -439,6 +441,37 @@ html.dark-mode .difficulty-badge.level-untagged {
   height: 100%;
   border-radius: var(--radius-pill, 999px);
   transition: width 0.4s ease;
+  width: var(--stats-bar-pct, 0%);
+  background: var(--stats-bar-color, var(--color-primary, #2774AE));
+}
+
+.stats-diff-bar-fill.level-basic,
+.stats-acc-bar-fill.level-basic {
+  --stats-bar-color: #1f7a3d;
+}
+
+.stats-diff-bar-fill.level-intermediate,
+.stats-acc-bar-fill.level-intermediate {
+  --stats-bar-color: #2774AE;
+}
+
+.stats-diff-bar-fill.level-advanced,
+.stats-acc-bar-fill.level-advanced {
+  --stats-bar-color: #b85b00;
+}
+
+.stats-diff-bar-fill.level-expert,
+.stats-acc-bar-fill.level-expert {
+  --stats-bar-color: #b81e2c;
+}
+
+.stats-diff-bar-fill.level-untagged,
+.stats-acc-bar-fill.level-untagged {
+  --stats-bar-color: #555555;
+}
+
+.stats-acc-bar-fill.stats-deck-bar-fill {
+  --stats-bar-color: var(--color-primary, #2774AE);
 }
 
 .stats-select-hint {
@@ -480,6 +513,35 @@ html.dark-mode .stats-q-fraction {
 
 html.dark-mode .stats-acc-bar-track {
   background: var(--color-surface-3, #1a1a1a);
+}
+
+html.dark-mode .stats-diff-bar-fill.level-basic,
+html.dark-mode .stats-acc-bar-fill.level-basic {
+  --stats-bar-color: #4fa34f;
+}
+
+html.dark-mode .stats-diff-bar-fill.level-intermediate,
+html.dark-mode .stats-acc-bar-fill.level-intermediate {
+  --stats-bar-color: #5fa8d3;
+}
+
+html.dark-mode .stats-diff-bar-fill.level-advanced,
+html.dark-mode .stats-acc-bar-fill.level-advanced {
+  --stats-bar-color: #e0a35a;
+}
+
+html.dark-mode .stats-diff-bar-fill.level-expert,
+html.dark-mode .stats-acc-bar-fill.level-expert {
+  --stats-bar-color: #ff8585;
+}
+
+html.dark-mode .stats-diff-bar-fill.level-untagged,
+html.dark-mode .stats-acc-bar-fill.level-untagged {
+  --stats-bar-color: #b0b0b0;
+}
+
+html.dark-mode .stats-acc-bar-fill.stats-deck-bar-fill {
+  --stats-bar-color: var(--color-primary, #8BB8E8);
 }
 
 html.dark-mode .stats-select-hint {
@@ -774,6 +836,8 @@ a.gym-btn[aria-disabled="true"] {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .stats-diff-bar-fill,
+  .stats-acc-bar-fill,
   .mastery-bar-fill {
     transition: none;
   }
@@ -788,5 +852,29 @@ a.gym-btn[aria-disabled="true"] {
 
   .stats-section {
     break-inside: avoid;
+  }
+}
+
+/* ==================== Hero banner ==================== */
+/* A single decorative hero that reflects the learner's saved avatar. The SVG
+   itself (.se-gym-hero-svg) carries its own light/dark drop-shadow from
+   se-gym.css (scoped under .post-content), so this container is layout-only. */
+.stats-hero {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 240px;
+  margin: 0 auto var(--sp-xl, 24px);
+}
+
+@media (max-width: 480px) {
+  .stats-hero {
+    max-width: 170px;
+  }
+}
+
+@media print {
+  .stats-hero {
+    display: none;
   }
 }

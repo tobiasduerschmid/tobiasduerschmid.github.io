@@ -29,7 +29,7 @@ const A11Y_FEATURE = 'git-tutorial';
  */
 
 const TUTORIAL_URL     = '/SEBook/tools/git-tutorial';
-const VM_BOOT_TIMEOUT  = 60_000;
+const VM_BOOT_TIMEOUT  = 120_000;
 const TEST_RUN_TIMEOUT = 120_000;
 
 const config = loadTutorialConfig('git');
@@ -52,13 +52,13 @@ test.describe.serial('Git Tutorial', () => {
   /** @type {import('@playwright/test').BrowserContext} */
   let context;
 
-  test.beforeAll(async ({ browser }) => {
+  test.beforeAll(async ({ browser }, testInfo) => {
     // The default hook timeout is 30 s, but the v86 VM boot can use the
     // full VM_BOOT_TIMEOUT (60 s) under cold-cache or contended dev-server
     // conditions, which makes this hook tip over and cascade-fail every
     // test in the block. The describe-level test.setTimeout(120_000) above
     // affects tests, not hooks — hook timeout must be set inside the hook.
-    test.setTimeout(120_000);
+    testInfo.setTimeout(VM_BOOT_TIMEOUT + 60_000);
     context = await browser.newContext();
     page = await context.newPage();
     await page.goto(TUTORIAL_URL);
@@ -172,7 +172,8 @@ test.describe.serial('Git Tutorial — step-by-step', () => {
   /** @type {import('@playwright/test').BrowserContext} */
   let context;
 
-  test.beforeAll(async ({ browser }) => {
+  test.beforeAll(async ({ browser }, testInfo) => {
+    testInfo.setTimeout(VM_BOOT_TIMEOUT + 60_000);
     context = await browser.newContext();
     page = await context.newPage();
     await page.goto(TUTORIAL_URL);

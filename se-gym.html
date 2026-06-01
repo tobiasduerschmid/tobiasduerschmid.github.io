@@ -763,6 +763,8 @@ layout: sebook
   <script src="{{ '/js/se-gym-hero-avatar.js' | relative_url }}" defer></script>
   {% endif %}
 
+  {% include se-gym-feature-flags.html %}
+
   <script>
     (function () {
       function prefersReducedMotion() {
@@ -829,6 +831,7 @@ layout: sebook
       var difficultCountEl = document.getElementById('difficult-count');
       var difficultAddBtn = document.getElementById('difficult-add-btn');
       var dueSection = document.getElementById('due-section');
+      var wodSection = document.getElementById('wod-section');
       var dueCountEl = document.getElementById('due-count');
       var srsLockedPrompt = document.getElementById('srs-locked-prompt');
       var wodStatusEl = document.getElementById('wod-status');
@@ -893,7 +896,7 @@ layout: sebook
         var vals = params.getAll('questions');
         return vals.reduce(function(acc, v) {
           String(v).split(',').forEach(function(part) {
-            var k = decodeURIComponent(part.trim());
+            var k = part.trim();
             if (k) acc.push(k);
           });
           return acc;
@@ -910,6 +913,11 @@ layout: sebook
       function hideElement(el) {
         if (!el) return;
         el.classList.add('is-hidden');
+      }
+
+      // Feature flags from _config.yml via window.SEGymFeatures; missing key = ON.
+      function featureOn(name) {
+        return !window.SEGymFeatures || window.SEGymFeatures[name] !== false;
       }
 
       function cardPassesDifficultyFilter(data, activeDifficulties) {
@@ -1299,7 +1307,10 @@ layout: sebook
           var stats = PersonalGym.getStats();
           var totalAnswered = 0;
           var keys = Object.keys(stats);
-          for (var i = 0; i < keys.length; i++) { totalAnswered += stats[keys[i]].seen; }
+          for (var i = 0; i < keys.length; i++) {
+            var seenCount = Number(stats[keys[i]] && stats[keys[i]].seen);
+            if (isFinite(seenCount) && seenCount > 0) totalAnswered += Math.floor(seenCount);
+          }
           var MILESTONE_INFINITY = {{ site.gym_milestone_infinity }};
           var MILESTONE_DIAMOND = {{ site.gym_milestone_diamond }};
           var MILESTONE_GOLD = {{ site.gym_milestone_gold }};
@@ -1401,10 +1412,17 @@ layout: sebook
         // ---- Training Log: streak, weekly goal, consistency heatmap ----
         updateTrainingLog();
 
+        // ---- Challenge a Friend (feature-flagged) ----
+        var challengeSectionEl = document.getElementById('challenge-section');
+        if (challengeSectionEl) challengeSectionEl.classList.toggle('is-hidden', !featureOn('challengeFriend'));
+        var challengeResultBtn = document.getElementById('workout-challenge-btn');
+        if (challengeResultBtn) challengeResultBtn.classList.toggle('is-hidden', !featureOn('challengeFriend'));
+
         // Build "Your Gym" section
         var selectedHtml = '';
         var seenQuestions = {};
         gym.forEach(function (entry) {
+          if (!entry || (entry.type !== 'quiz' && entry.type !== 'flashcard')) return;
           var data = entry.type === 'quiz' ? ALL_CARD_DATA.quizzes[entry.id] : ALL_CARD_DATA.flashcards[entry.id];
           if (!data) return;
           var items = entry.type === 'quiz' ? data.questions : data.cards;
@@ -1418,13 +1436,13 @@ layout: sebook
           });
           var badgeClass = entry.type === 'quiz' ? 'quiz-badge' : 'flashcard-badge';
           var badgeText = entry.type === 'quiz' ? (data.isMaster ? 'Master Quiz' : 'Quiz') : (data.isMaster ? 'Master Flashcards' : 'Flashcards');
-          selectedHtml += '<div class="gym-item in-gym" data-type="' + entry.type + '" data-id="' + entry.id + '">' +
+          selectedHtml += '<div class="gym-item in-gym" data-type="' + escapeHtml(entry.type) + '" data-id="' + escapeHtml(entry.id) + '">' +
             '<div class="gym-item-info">' +
-            '<span class="gym-item-badge ' + badgeClass + '">' + badgeText + '</span>' +
-            '<strong class="gym-item-title">' + data.title + '</strong>' +
+            '<span class="gym-item-badge ' + badgeClass + '">' + escapeHtml(badgeText) + '</span>' +
+            '<strong class="gym-item-title">' + escapeHtml(data.title) + '</strong>' +
             '<span class="gym-item-count">(' + count + (entry.type === 'quiz' ? ' questions' : ' cards') + ')</span>' +
             '</div>' +
-            '<button class="gym-add-btn in-gym gym-remove-selected" data-type="' + entry.type + '" data-id="' + entry.id + '" data-original-title="Remove from gym" aria-label="Remove ' + escapeHtml(data.title) + ' from gym">' +
+            '<button class="gym-add-btn in-gym gym-remove-selected" data-type="' + escapeHtml(entry.type) + '" data-id="' + escapeHtml(entry.id) + '" data-original-title="Remove from gym" aria-label="Remove ' + escapeHtml(data.title) + ' from gym">' +
             '<i class="fa-solid fa-check" aria-hidden="true"></i>' +
             '</button>' +
             '</div>';
@@ -1444,7 +1462,7 @@ layout: sebook
             '</div>';
         }
 
-        var hasAnything = gym.length > 0 || (difficultInGym && hasDifficult);
+        var hasAnything = selectedHtml !== '' || (difficultInGym && hasDifficult);
         if (!hasAnything) {
           gymSelectedDiv.innerHTML = '<p class="empty-gym-msg">Your gym is empty. Add quizzes and flashcard sets below.</p>';
         } else {
@@ -1607,10 +1625,23 @@ layout: sebook
       // Update Due-for-Review, the WOD completion badge, and the tracking-gate
       // prompt. SRS reviews require performance tracking.
       function updateSrsSections() {
-        if (wodStatusEl) {
-          var doneToday = PersonalGym.getDailyLast() === PersonalGym.todayStr();
-          wodStatusEl.textContent = doneToday ? '✓ Completed today' : '';
-          wodStatusEl.classList.toggle('is-complete', doneToday);
+        // Workout of the Day (feature-flagged).
+        if (featureOn('workoutOfTheDay')) {
+          if (wodSection) showElement(wodSection);
+          if (wodStatusEl) {
+            var doneToday = PersonalGym.getDailyLast() === PersonalGym.todayStr();
+            wodStatusEl.textContent = doneToday ? '✓ Completed today' : '';
+            wodStatusEl.classList.toggle('is-complete', doneToday);
+          }
+        } else if (wodSection) {
+          hideElement(wodSection);
+        }
+
+        // Due for Review (feature-flagged, then gated by performance tracking).
+        if (!featureOn('dueReview')) {
+          hideElement(dueSection);
+          hideElement(srsLockedPrompt);
+          return;
         }
         if (!PersonalGym.isAnalyzePerformance()) {
           hideElement(dueSection);
@@ -1683,6 +1714,8 @@ layout: sebook
 
       function updateTrainingLog() {
         if (!trainingLogSection) return;
+        if (!featureOn('trainingLog')) { hideElement(trainingLogSection); return; }
+        showElement(trainingLogSection);
         var streak = PersonalGym.computeStreak();
         if (streakEl) {
           streakEl.textContent = streak > 0 ? ('🔥 ' + streak + '-day streak') : 'No active streak — train today to start one.';
@@ -2185,7 +2218,7 @@ layout: sebook
                 });
               }
             });
-          } else {
+          } else if (entry.type === 'flashcard') {
             var fcData = ALL_CARD_DATA.flashcards[entry.id];
             if (!fcData) return;
             fcData.cards.forEach(function (c) {

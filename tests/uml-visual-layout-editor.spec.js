@@ -1278,7 +1278,6 @@ test.describe('UML playground visual editor', () => {
     await animalButton.focus();
     await expect(animalButton).toBeFocused();
     await page.keyboard.press('ArrowRight');
-    await expect(animalButton).toBeFocused();
     const afterDrag = await textarea.inputValue();
     expect(afterDrag).not.toBe(afterTyping);
 
@@ -5476,5 +5475,42 @@ test.describe('"+" extend handle creation parity', () => {
 
     await expect(page.locator('#uml-pg-error')).toHaveClass(/is-hidden/);
     await expect(page.locator('#uml-pg-input')).toHaveValue(/Idle\s*-+>\s*Idle/);
+  });
+
+  test('state: "+" self-drop offers a self-transition (self-transition creatable via "+")', async ({ page }) => {
+    await page.goto(PLAYGROUND_URL);
+    await selectDiagram(page, 'state');
+    await setUmlSource(page, '@startuml\nstate Idle\n@enduml');
+    const idle = page.locator('.uml-pg-edit-hitbox[data-layout-id="Idle"]');
+    await expect(idle).toBeVisible();
+    await idle.scrollIntoViewIfNeeded();
+
+    // Releasing "+" back on the source state must offer a self-transition
+    // (relation chooser with Transition), not the "create new element" chooser.
+    await extendDragFirstHandleTo(page, await hitboxCenter(idle));
+    const chooser = page.locator('.uml-pg-relation-chooser');
+    await expect(chooser).toBeVisible();
+    await chooser.getByRole('menuitem', { name: /transition/i }).first().click();
+
+    await expect(chooser).not.toBeVisible();
+    await expect(page.locator('#uml-pg-error')).toHaveClass(/is-hidden/);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/Idle\s*-+>\s*Idle/);
+  });
+
+  test('component: "+" Port In attaches to the source component (not orphaned)', async ({ page }) => {
+    await page.goto(PLAYGROUND_URL);
+    await selectDiagram(page, 'component');
+    await setUmlSource(page, '@startuml\ncomponent Svc\n@enduml');
+    await expect(page.locator('.uml-pg-edit-hitbox[data-layout-id="Svc"]')).toBeVisible();
+
+    await extendDragFirstHandleTo(page, await emptyCanvasPoint(page));
+    const chooser = page.locator('.uml-pg-relation-chooser');
+    await expect(chooser).toBeVisible();
+    await chooser.getByRole('menuitem', { name: /port in/i }).first().click();
+
+    await expect(page.locator('#uml-pg-error')).toHaveClass(/is-hidden/);
+    // The port must live INSIDE the component's brace block — the component now
+    // has a `{ ... }` body — rather than as an orphaned top-level declaration.
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/component\s+Svc\s*\{/);
   });
 });

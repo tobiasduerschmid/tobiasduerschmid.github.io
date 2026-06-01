@@ -38,14 +38,33 @@
     return null;
   }
 
+  function normalizeGymEntries(value) {
+    if (!Array.isArray(value)) return [];
+    var seen = {};
+    var out = [];
+    value.forEach(function (item) {
+      if (!item) return;
+      var type = item.type;
+      if (type !== 'quiz' && type !== 'flashcard' && type !== 'difficult') return;
+      var id = String(item.id || '');
+      if (!id) return;
+      if (type === 'difficult' && id !== 'difficult') return;
+      var key = type + ':' + id;
+      if (seen[key]) return;
+      seen[key] = true;
+      out.push({ type: type, id: id });
+    });
+    return out;
+  }
+
   function getGym() {
     var raw = getCookie(COOKIE_NAME);
     if (!raw) return [];
-    try { return JSON.parse(raw); } catch (e) { return []; }
+    try { return normalizeGymEntries(JSON.parse(raw)); } catch (e) { return []; }
   }
 
   function saveGym(gym) {
-    setCookie(COOKIE_NAME, JSON.stringify(gym), COOKIE_DAYS);
+    setCookie(COOKIE_NAME, JSON.stringify(normalizeGymEntries(gym)), COOKIE_DAYS);
   }
 
   function isInGym(type, id) {
@@ -98,6 +117,10 @@
     if (parsed < min) return min;
     if (parsed > max) return max;
     return parsed;
+  }
+
+  function plainObjectStore(value) {
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
   }
 
   function normalizeTimedMode(value) {
@@ -332,7 +355,19 @@
 
   function normalizeCardDifficulty(value) {
     var d = value ? String(value).toLowerCase() : '';
-    return d || 'untagged';
+    return DIFFICULTY_LEVELS.indexOf(d) !== -1 ? d : 'untagged';
+  }
+
+  function nonNegativeInteger(value) {
+    var n = typeof value === 'number' ? value : parseInt(value, 10);
+    if (!isFinite(n) || n <= 0) return 0;
+    return Math.floor(n);
+  }
+
+  function statsRecordCounts(record) {
+    var seen = nonNegativeInteger(record && record.seen);
+    var correct = Math.min(seen, nonNegativeInteger(record && record.correct));
+    return { seen: seen, correct: correct };
   }
 
   function visitCardData(cardData, cb) {
@@ -432,6 +467,8 @@
   }
 
   function addStatsToCanonicalBucket(cardData, buckets, key, record, meta) {
+    var counts = statsRecordCounts(record);
+    if (!counts.seen) return;
     var canonical = meta ? meta.canonicalKey : key;
     var bucket = buckets[canonical];
     if (!bucket) {
@@ -469,8 +506,23 @@
       }
       buckets[canonical] = bucket;
     }
-    bucket.seen += record.seen;
-    bucket.correct += typeof record.correct === 'number' ? record.correct : 0;
+    bucket.seen += counts.seen;
+    bucket.correct += counts.correct;
+  }
+
+  // Choose which corpus card a recorded key belongs to. Exactly one match is the
+  // normal case (a canonical key, or a content-hash legacy key). More than one
+  // means an ambiguous legacy id-key shared by same-named quiz and flashcard
+  // decks (e.g. "git:1"): return the card whose canonical key IS the recorded
+  // key if present (unambiguous), otherwise null so the caller treats it as an
+  // unmatched legacy record instead of double-counting it into every candidate.
+  function pickCanonicalMeta(key, metas) {
+    if (!metas || !metas.length) return null;
+    if (metas.length === 1) return metas[0];
+    for (var i = 0; i < metas.length; i++) {
+      if (metas[i].canonicalKey === key) return metas[i];
+    }
+    return null;
   }
 
   function getCanonicalStatsEntries(cardData, rawStats) {
@@ -479,15 +531,8 @@
     var byCanonical = {};
     Object.keys(stats).forEach(function (key) {
       var record = stats[key];
-      if (!record || typeof record.seen !== 'number') return;
-      var metas = corpus.index[key];
-      if (metas && metas.length) {
-        metas.forEach(function (meta) {
-          addStatsToCanonicalBucket(cardData, byCanonical, key, record, meta);
-        });
-      } else {
-        addStatsToCanonicalBucket(cardData, byCanonical, key, record, null);
-      }
+      if (!record) return;
+      addStatsToCanonicalBucket(cardData, byCanonical, key, record, pickCanonicalMeta(key, corpus.index[key]));
     });
     var allEntries = Object.keys(byCanonical).map(function (canonical) {
       var entry = byCanonical[canonical];
@@ -505,11 +550,13 @@
   }
 
   function mergeStatsRecords(current, legacy) {
-    if (!current) return Object.assign({}, legacy);
+    var legacyCounts = statsRecordCounts(legacy);
+    if (!current) return Object.assign({}, legacy, legacyCounts);
+    var currentCounts = statsRecordCounts(current);
     var latest = ((legacy.last || 0) > (current.last || 0)) ? legacy : current;
     var merged = Object.assign({}, latest);
-    merged.seen = (current.seen || 0) + (legacy.seen || 0);
-    merged.correct = (current.correct || 0) + (legacy.correct || 0);
+    merged.seen = currentCounts.seen + legacyCounts.seen;
+    merged.correct = currentCounts.correct + legacyCounts.correct;
     return merged;
   }
 
@@ -526,9 +573,13 @@
       });
     });
     Object.keys(transfers).forEach(function (variantKey) {
-      transfers[variantKey].forEach(function (canonicalKey) {
-        stats[canonicalKey] = mergeStatsRecords(stats[canonicalKey], stats[variantKey]);
-      });
+      // Only migrate a legacy key that maps to exactly one canonical question.
+      // Ambiguous id-keys shared by a same-named quiz and flashcard are left in
+      // place rather than duplicated into both canonical records; the read path
+      // (pickCanonicalMeta) then reports them under "older records".
+      var targets = transfers[variantKey];
+      if (targets.length !== 1) return;
+      stats[targets[0]] = mergeStatsRecords(stats[targets[0]], stats[variantKey]);
       delete stats[variantKey];
       changed = true;
     });
@@ -536,9 +587,10 @@
   }
 
   function classifyMasteryStats(record) {
-    if (!record || !record.seen) return 'new';
-    var interval = typeof record.intervalDays === 'number' ? record.intervalDays : 0;
-    if (interval >= MASTERY_MASTERED_DAYS && record.reps >= 1) return 'mastered';
+    if (!statsRecordCounts(record).seen) return 'new';
+    var interval = typeof record.intervalDays === 'number' && isFinite(record.intervalDays) ? record.intervalDays : 0;
+    var reps = typeof record.reps === 'number' && isFinite(record.reps) ? record.reps : 0;
+    if (interval >= MASTERY_MASTERED_DAYS && reps >= 1) return 'mastered';
     if (interval >= MASTERY_PROFICIENT_DAYS) return 'proficient';
     return 'learning';
   }
@@ -548,9 +600,10 @@
     var decks = {};
     forEachAvailableCard(cardData, function (card) {
       if (card.isMaster) return;
-      var deck = decks[card.deckId];
+      var deckKey = card.cardType + ':' + card.deckId;
+      var deck = decks[deckKey];
       if (!deck) {
-        deck = decks[card.deckId] = {
+        deck = decks[deckKey] = {
           deckId: card.deckId,
           title: card.source,
           cardType: card.cardType,
@@ -586,13 +639,13 @@
   function getStats() {
     try {
       var raw = localStorage.getItem(STATS_KEY);
-      return raw ? JSON.parse(raw) : {};
+      return raw ? plainObjectStore(JSON.parse(raw)) : {};
     } catch (e) { return {}; }
   }
 
   function saveStats(stats) {
     try {
-      localStorage.setItem(STATS_KEY, JSON.stringify(stats));
+      localStorage.setItem(STATS_KEY, JSON.stringify(plainObjectStore(stats)));
     } catch (e) { /* localStorage full or unavailable */ }
   }
 
@@ -607,6 +660,9 @@
     var stats = getStats();
     if (!stats[key]) stats[key] = { seen: 0, correct: 0 };
     var rec = stats[key];
+    var counts = statsRecordCounts(rec);
+    rec.seen = counts.seen;
+    rec.correct = counts.correct;
     rec.seen++;
     if (correct) rec.correct++;
     // Merge the SM-2-lite review schedule into the same record.
@@ -651,12 +707,12 @@
   function getActivity() {
     try {
       var raw = localStorage.getItem(ACTIVITY_KEY);
-      return raw ? JSON.parse(raw) : {};
+      return raw ? plainObjectStore(JSON.parse(raw)) : {};
     } catch (e) { return {}; }
   }
 
   function saveActivity(activity) {
-    try { localStorage.setItem(ACTIVITY_KEY, JSON.stringify(activity)); } catch (e) { /* full/unavailable */ }
+    try { localStorage.setItem(ACTIVITY_KEY, JSON.stringify(plainObjectStore(activity))); } catch (e) { /* full/unavailable */ }
   }
 
   function clearActivity() {
