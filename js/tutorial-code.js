@@ -10351,6 +10351,7 @@
     var isFinalQuiz = stepIndex === this.steps.length - 1;
     var html = window.SebookQuiz.buildHTML({
       stepIndex: stepIndex, quiz: quiz, isFinalQuiz: isFinalQuiz,
+      deckId: 'tutorial-' + this.tutorialId + ':step-' + stepIndex,
       escapeHtml: this._escapeHtml.bind(this),
       renderMarkdown: this._renderMarkdown.bind(this),
     });
@@ -10424,6 +10425,7 @@
   TutorialCode.prototype._buildQuizHTML = function (stepIndex, quiz) {
     return this._autoAbbrHtml(window.SebookQuiz.buildHTML({
       stepIndex: stepIndex, quiz: quiz,
+      deckId: 'tutorial-' + this.tutorialId + ':step-' + stepIndex,
       escapeHtml: this._escapeHtml.bind(this),
       renderMarkdown: this._renderMarkdown.bind(this),
     }));

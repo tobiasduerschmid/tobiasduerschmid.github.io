@@ -2203,14 +2203,39 @@ layout: sebook
           }
         });
 
-        shuffleArray(cards);
-
         var maxCards = getMaxCardsValue();
+<<<<<<< Updated upstream
         if (!hasSelection && cards.length > maxCards) {
           cards = cards.slice(0, maxCards);
+=======
+        if (cards.length > maxCards) {
+          cards = pickStaleCards(cards, maxCards);
+>>>>>>> Stashed changes
         }
+        shuffleArray(cards);
 
         return cards;
+      }
+
+      // When the gym has more eligible cards than maxCards, prefer the ones
+      // the learner has never practiced, and after those the ones practiced
+      // the longest ago. Ties (especially among never-practiced cards) are
+      // broken with a random jitter so the same maxCards-sized subset isn't
+      // returned every workout.
+      function pickStaleCards(cards, n) {
+        var stats = PersonalGym.getStats();
+        var ranked = cards.map(function (card) {
+          var data = card.data;
+          var qkey = card.deckId + ':' + (data.id || PersonalGym.hashQuestion(data.question));
+          var rec = stats[qkey];
+          var lastAsked = (rec && typeof rec.lastAsked === 'number') ? rec.lastAsked : -Infinity;
+          return { card: card, lastAsked: lastAsked, jitter: Math.random() };
+        });
+        ranked.sort(function (a, b) {
+          if (a.lastAsked !== b.lastAsked) return a.lastAsked - b.lastAsked;
+          return a.jitter - b.jitter;
+        });
+        return ranked.slice(0, n).map(function (r) { return r.card; });
       }
 
       function startWorkout(options) {

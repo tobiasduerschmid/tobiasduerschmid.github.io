@@ -586,7 +586,22 @@
   function getStats() {
     try {
       var raw = localStorage.getItem(STATS_KEY);
-      return raw ? JSON.parse(raw) : {};
+      if (!raw) return {};
+      var stats = JSON.parse(raw);
+      // Migrate legacy records: pre-`lastAsked` entries are stamped with "now"
+      // so the workout picker treats them as recently practiced, not unseen
+      // (unseen would be the opposite of what they actually are).
+      var migrated = false;
+      var now = Date.now();
+      for (var k in stats) {
+        if (Object.prototype.hasOwnProperty.call(stats, k)
+            && stats[k] && typeof stats[k].lastAsked !== 'number') {
+          stats[k].lastAsked = now;
+          migrated = true;
+        }
+      }
+      if (migrated) saveStats(stats);
+      return stats;
     } catch (e) { return {}; }
   }
 
@@ -606,6 +621,7 @@
     if (!isAnalyzePerformance()) return;
     var stats = getStats();
     if (!stats[key]) stats[key] = { seen: 0, correct: 0 };
+<<<<<<< Updated upstream
     var rec = stats[key];
     rec.seen++;
     if (correct) rec.correct++;
@@ -617,6 +633,11 @@
     rec.lapses = sched.lapses;
     rec.due = sched.due;
     rec.last = sched.last;
+=======
+    stats[key].seen++;
+    if (correct) stats[key].correct++;
+    stats[key].lastAsked = Date.now();
+>>>>>>> Stashed changes
     saveStats(stats);
   }
 

@@ -7,7 +7,9 @@
  * Public API:
  *   SebookQuiz.shuffle(arr)          → in-place Fisher-Yates
  *   SebookQuiz.buildHTML(opts)       → string of quiz HTML
- *     opts: { stepIndex, quiz, escapeHtml, renderMarkdown }
+ *     opts: { stepIndex, quiz, escapeHtml, renderMarkdown, deckId? }
+ *     When deckId is provided, answers route to PersonalGym.recordResult
+ *     with key "<deckId>:<questionId|hash(questionHTML)>".
  *   SebookQuiz.attach(opts)          → attach behaviour to a host already
  *                                      containing the quiz HTML.
  *     opts: { hostEl, controlsEl, stepIndex, minScore, onPass, onClose }
@@ -79,6 +81,7 @@
   function buildHTML(opts) {
     var stepIndex = opts.stepIndex;
     var quiz = opts.quiz;
+    var deckId = opts.deckId || '';
     var escapeHtml = opts.escapeHtml || _identityEscape;
     var renderMarkdown = opts.renderMarkdown || _identityMarkdown;
     var doShuffle = quiz.shuffle !== false;
@@ -113,6 +116,7 @@
           question: q.question || '', type: 'parsons', explanation: q.explanation || '',
           shuffledItems: items, correctOrder: correctOrder, distractors: distractors,
           options: [], correctOriginals: [], correctLabels: [],
+          questionId: q.id != null ? String(q.id) : '',
         };
       }
       var opts2 = (q.options || []).map(function (text, oi) { return { text: text, originalIndex: oi }; });
@@ -132,6 +136,7 @@
         options: opts2, correctOriginals: correctOriginals, optionalOriginals: optionalOriginals,
         correctLabels: correctLabels, optionalLabels: optionalLabels,
         option_feedback: q.option_feedback || null,
+        questionId: q.id != null ? String(q.id) : '',
       };
     });
     if (doQuestionShuffle) shuffle(questions);
@@ -142,14 +147,18 @@
         : '<strong>Knowledge Check</strong><p>Score ≥' + minPct + '% to continue to Step ' + nextStepNum + '</p>')
       + '</div></div>';
 
-    html += '<div class="quiz-container" id="tvm-quiz-' + stepIndex + '">';
+    html += '<div class="quiz-container" id="tvm-quiz-' + stepIndex + '"'
+      + (deckId ? ' data-quiz-id="' + escapeHtml(deckId) + '"' : '')
+      + '>';
     html += '<div class="quiz-header">';
     if (quiz.title) html += '<div class="quiz-title-row"><h2>' + escapeHtml(quiz.title) + '</h2></div>';
     html += '<div class="quiz-progress-bar"><div class="progress-fill" style="width:0%"></div></div></div>';
     html += '<div class="quiz-questions">';
     questions.forEach(function (q, qi) {
       html += '<div class="quiz-question-card' + (qi === 0 ? ' active' : '')
-        + '" data-question-index="' + qi + '" data-type="' + q.type + '">';
+        + '" data-question-index="' + qi + '" data-type="' + q.type + '"'
+        + (q.questionId ? ' data-question-id="' + escapeHtml(q.questionId) + '"' : '')
+        + '>';
       html += '<div class="question-text">' + renderMarkdown(q.question) + '</div>';
 
       if (q.type === 'parsons') {
@@ -241,6 +250,16 @@
 
     var container = hostEl && hostEl.querySelector('.quiz-container');
     if (!container) return;
+
+    function recordPerf(card, isCorrect) {
+      if (!window.PersonalGym || !PersonalGym.isAnalyzePerformance()) return;
+      var deckId = container.dataset.quizId;
+      if (!deckId) return;
+      var qText = card.querySelector('.question-text');
+      var qKey = card.dataset.questionId || (qText ? PersonalGym.hashQuestion(qText.innerHTML) : '');
+      if (!qKey) return;
+      PersonalGym.recordResult(deckId + ':' + qKey, !!isCorrect);
+    }
 
     function parseIndexList(value) {
       if (!value) return [];
@@ -409,6 +428,7 @@
         if (correct) correct.classList.add('correct');
         revealOptionFeedback(card, opt.dataset.index);
       }
+      recordPerf(card, ok);
       setShortcutHintVisible(card, false);
       if (ca) ca.style.display = 'flex';
       if (exp) exp.classList.remove('hidden');
@@ -444,7 +464,8 @@
       var allowedSet = new Set(corI.concat(optI));
       optionsEls.forEach(function (o) { o.setAttribute('disabled', 'true'); });
       e.currentTarget.classList.add('hidden');
-      if (isAcceptedMultiple(selI, corI, optI)) {
+      var multiCorrect = isAcceptedMultiple(selI, corI, optI);
+      if (multiCorrect) {
         sel.forEach(function (o) { o.classList.add('correct'); });
         score++;
         if (typeof window.spawnConfettiIfMore === 'function') window.spawnConfettiIfMore(card);
@@ -463,6 +484,7 @@
           }
         });
       }
+      recordPerf(card, multiCorrect);
       setShortcutHintVisible(card, false);
       if (ca) ca.style.display = 'flex';
       if (exp) exp.classList.remove('hidden');
@@ -676,6 +698,7 @@
           score++;
           if (typeof window.spawnConfettiIfMore === 'function') window.spawnConfettiIfMore(card);
         }
+        recordPerf(card, isCorrect);
         var ca = card.querySelector('.quiz-correct-answers');
         var exp = card.querySelector('.quiz-explanation');
         if (ca) ca.style.display = 'flex';
