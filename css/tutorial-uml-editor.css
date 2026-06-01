@@ -1126,6 +1126,14 @@ html.dark-mode .uml-pg-splitter:focus-visible {
   justify-content: center;
 }
 
+/* The pane is focusable (tabindex="-1") only so a canvas click can move keyboard
+   focus into the editor, enabling its focus-scoped shortcuts. It is never in the
+   Tab order, so a focus ring on mouse focus would be noise; keyboard-driven
+   focus (:focus-visible) keeps its indicator. */
+#uml-pg-preview-pane:focus:not(:focus-visible) {
+  outline: none;
+}
+
 #uml-pg-output {
   width: 100%;
   padding: 0;
@@ -1556,6 +1564,106 @@ html.dark-mode .uml-pg-extend-line {
 
 html.dark-mode .uml-pg-frag-drop-indicator {
   stroke: #7cc4ff;
+}
+
+/* Activation bars (sequence execution specifications). The body hitbox drags
+   the whole bar; the top/bottom grips change when the object becomes / stops
+   being active. Shares the blue editing accent but adds resize grips so the
+   adjust-when-active affordance reads clearly. */
+.uml-pg-activation-hitbox {
+  fill: rgba(39, 116, 174, 0.06);
+  stroke: rgba(39, 116, 174, 0.6);
+  stroke-width: 1.5;
+  stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke;
+  cursor: move;
+  transition: fill 0.12s ease-out, stroke 0.12s ease-out;
+}
+
+.uml-pg-activation-hitbox:hover {
+  fill: rgba(39, 116, 174, 0.14);
+  stroke: rgba(39, 116, 174, 0.95);
+}
+
+.uml-pg-activation-hitbox.is-selected {
+  fill: rgba(39, 116, 174, 0.18);
+  stroke: #2774AE;
+  stroke-width: 2;
+  stroke-dasharray: none;
+}
+
+/* Top / bottom resize grips. Faintly visible at rest so the resize affordance
+   is discoverable; full strength on hover or when the bar is selected. */
+.uml-pg-activation-handle {
+  fill: #2774AE;
+  stroke: #fff;
+  stroke-width: 1.5;
+  rx: 2;
+  ry: 2;
+  cursor: ns-resize;
+  opacity: 0.5;
+  pointer-events: all;
+  vector-effect: non-scaling-stroke;
+  transition: opacity 0.12s ease-out;
+}
+
+.uml-pg-activation-handle:hover,
+.uml-pg-activation-handle.is-selected,
+.uml-pg-activation-hitbox:hover ~ .uml-pg-activation-handle,
+.uml-pg-activation-hitbox.is-selected ~ .uml-pg-activation-handle {
+  opacity: 1;
+}
+
+/* Row of "Earlier / Later" buttons in the activation properties panel. */
+.uml-pg-prop-btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.uml-pg-prop-btn-row .uml-pg-add-member {
+  flex: 1 1 auto;
+}
+
+/* Full-width snap guide shown while dragging an edge or sweeping a new bar. */
+.uml-pg-activation-guide {
+  stroke: #2774AE;
+  stroke-width: 2;
+  stroke-dasharray: 4 4;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+html.dark-mode .uml-pg-activation-hitbox {
+  fill: rgba(124, 196, 255, 0.10);
+  stroke: rgba(124, 196, 255, 0.6);
+}
+
+html.dark-mode .uml-pg-activation-hitbox:hover {
+  fill: rgba(124, 196, 255, 0.2);
+  stroke: rgba(124, 196, 255, 0.95);
+}
+
+html.dark-mode .uml-pg-activation-hitbox.is-selected {
+  fill: rgba(124, 196, 255, 0.26);
+  stroke: #7cc4ff;
+}
+
+html.dark-mode .uml-pg-activation-handle {
+  fill: #7cc4ff;
+  stroke: #18242f;
+}
+
+html.dark-mode .uml-pg-activation-guide {
+  stroke: #7cc4ff;
+}
+
+/* Honour reduced-motion: the affordance fades are decorative. */
+@media (prefers-reduced-motion: reduce) {
+  .uml-pg-activation-hitbox,
+  .uml-pg-activation-handle {
+    transition: none;
+  }
 }
 
 /* Relation chooser popup */

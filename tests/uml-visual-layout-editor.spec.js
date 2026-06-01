@@ -5514,3 +5514,139 @@ test.describe('"+" extend handle creation parity', () => {
     await expect(page.locator('#uml-pg-input')).toHaveValue(/component\s+Svc\s*\{/);
   });
 });
+
+test.describe('sequence activation bar editing', () => {
+  const ACTIVATION_SOURCE = `@startuml
+actor user: User
+participant app: Application
+user -> app: first()
+activate app
+app -> app: work()
+app --> user: third()
+deactivate app
+@enduml`;
+
+  async function openSequenceWithActivation(page, source = ACTIVATION_SOURCE) {
+    await openPlayground(page);
+    await selectDiagram(page, 'sequence');
+    await setUmlSource(page, source);
+    // The renderer tags each bar; the editor turns that into a hitbox + grips.
+    await page.waitForSelector('.uml-pg-activation-hitbox', { state: 'attached' });
+  }
+
+  test('renders selectable hitbox, two resize grips, and a keyboard target', async ({ page }) => {
+    await openSequenceWithActivation(page);
+    await expect(page.locator('.uml-pg-activation-hitbox')).toHaveCount(1);
+    await expect(page.locator('.uml-pg-activation-handle.is-start')).toHaveCount(1);
+    await expect(page.locator('.uml-pg-activation-handle.is-end')).toHaveCount(1);
+    const a11y = page.locator('.uml-pg-edit-a11y-target[data-layout-id^="actbar:"]');
+    await expect(a11y).toHaveCount(1);
+    await expect(a11y).toHaveAttribute('role', 'button');
+    await expect(a11y).toHaveAttribute('aria-label', /Activation of app/);
+  });
+
+  test('keyboard ArrowDown moves the start later (object activates later)', async ({ page }) => {
+    await openSequenceWithActivation(page);
+    // Initially `activate app` sits before work(); ArrowDown pushes it past work().
+    await expectSourceLineOrder(page, [/^activate app/, /work\(\)/], 'start begins before work() initially');
+    await page.locator('.uml-pg-edit-a11y-target[data-layout-id^="actbar:"]').press('Enter');
+    await page.locator('.uml-pg-edit-a11y-target[data-layout-id^="actbar:"]').press('ArrowDown');
+    await expectSourceLineOrder(page, [/work\(\)/, /^activate app/], 'start now begins after work()');
+  });
+
+  test('Shift+ArrowUp moves the end earlier (object deactivates earlier)', async ({ page }) => {
+    await openSequenceWithActivation(page);
+    // `deactivate app` initially follows third(); Shift+ArrowUp pulls it before third().
+    await expectSourceLineOrder(page, [/third\(\)/, /^deactivate app/], 'end stops after third() initially');
+    const a11y = page.locator('.uml-pg-edit-a11y-target[data-layout-id^="actbar:"]');
+    await a11y.press('Enter');
+    await a11y.press('Shift+ArrowUp');
+    await expectSourceLineOrder(page, [/work\(\)/, /^deactivate app/, /third\(\)/], 'end now stops before third()');
+  });
+
+  test('dragging the bottom grip up shrinks where the activation stops', async ({ page }) => {
+    // Plain (non-self) messages so message-row Y geometry is unambiguous.
+    await openPlayground(page);
+    await selectDiagram(page, 'sequence');
+    await setUmlSource(page, `@startuml
+actor user: User
+participant app: Application
+user -> app: first()
+activate app
+app --> user: second()
+app --> user: third()
+deactivate app
+@enduml`);
+    // Wait for THIS source's render (third() == seqmsg:6) before measuring, so
+    // we never grab a grip left over from a previously-autosaved diagram.
+    await page.waitForSelector('[data-layout-route-id="seqmsg:6"]', { state: 'attached' });
+    await page.waitForSelector('.uml-pg-activation-handle.is-end', { state: 'attached' });
+    await expectSourceLineOrder(page, [/third\(\)/, /^deactivate app/], 'end stops after third() initially');
+
+    // Drag the bottom grip well up to the first() message. Anywhere above
+    // second() clamps the end to the start, so the exact pixel doesn't matter —
+    // the bar must stop earlier (deactivate moves before second() and third()).
+    const endGrip = page.locator('.uml-pg-activation-handle.is-end');
+    await endGrip.evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'center' }));
+    const gripBox = await endGrip.boundingBox();
+    expect(gripBox).not.toBeNull();
+    const firstY = await page.locator('[data-layout-route-id="seqmsg:3"]').first().evaluate((el) => el.getBoundingClientRect().top);
+    await page.mouse.move(gripBox.x + gripBox.width / 2, gripBox.y + gripBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.move(gripBox.x + gripBox.width / 2, firstY, { steps: 10 });
+    await page.mouse.up();
+
+    await expectSourceLineOrder(page, [/^deactivate app/, /second\(\)/], 'end now stops before second()');
+  });
+
+  test('Delete removes the activate/deactivate pair', async ({ page }) => {
+    await openSequenceWithActivation(page);
+    const a11y = page.locator('.uml-pg-edit-a11y-target[data-layout-id^="actbar:"]');
+    await a11y.press('Enter');
+    await a11y.press('Delete');
+    await expect(page.locator('#uml-pg-input')).not.toHaveValue(/activate app/);
+    await expect(page.locator('#uml-pg-input')).not.toHaveValue(/deactivate app/);
+    // The messages around it survive.
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/work\(\)/);
+    await expect(page.locator('.uml-pg-activation-hitbox')).toHaveCount(0);
+  });
+
+  test('Activate tool inserts a bar at the clicked message, not at the end', async ({ page }) => {
+    await openPlayground(page);
+    await selectDiagram(page, 'sequence');
+    await setUmlSource(page, `@startuml
+actor user: User
+participant app: Application
+user -> app: first()
+user -> app: second()
+@enduml`);
+    await page.waitForSelector('[data-layout-route-id="seqmsg:3"]', { state: 'attached' });
+
+    await page.locator('#uml-pg-palette-elements .uml-pg-tool-btn[data-tool-spec="activate"]').click();
+    // Click the app lifeline near the first() message.
+    await page.locator('[data-layout-route-id="seqmsg:3"]').first().evaluate((el) => el.scrollIntoView({ block: 'center', inline: 'center' }));
+    const firstY = await page.locator('[data-layout-route-id="seqmsg:3"]').first().evaluate((el) => el.getBoundingClientRect().top);
+    const appHead = await page.locator('.uml-pg-edit-hitbox[data-layout-id="app"]').boundingBox();
+    expect(appHead).not.toBeNull();
+    await page.mouse.move(appHead.x + appHead.width / 2, firstY + 4);
+    await page.mouse.down();
+    await page.mouse.up();
+
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/activate app/);
+    await expect(page.locator('#uml-pg-input')).toHaveValue(/deactivate app/);
+    // Regression: the bar must NOT be appended after the last message — the
+    // `activate` directive lands before second().
+    await expectSourceLineOrder(page, [/^activate app/, /second\(\)/], 'new activation is positioned in the flow, not at the end');
+  });
+
+  test('selecting a bar shows an Activation properties panel, not an editable identifier', async ({ page }) => {
+    await openSequenceWithActivation(page);
+    await page.locator('.uml-pg-edit-a11y-target[data-layout-id^="actbar:"]').press('Enter');
+    await expect(page.locator('#uml-pg-props-title')).toHaveText(/Activation\s+—\s+app/);
+    const content = page.locator('#uml-pg-props-content');
+    await expect(content).toContainText('Move where it starts and stops');
+    await expect(content.getByRole('button', { name: /move earlier/i }).first()).toBeVisible();
+    // The misleading generic "Identifier: actbar:N" field must not appear.
+    await expect(content).not.toContainText('Identifier');
+  });
+});

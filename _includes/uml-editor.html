@@ -161,7 +161,7 @@ Supported options:
       <textarea id="uml-pg-input" aria-label="ArchUML diagram source" aria-describedby="uml-pg-source-help" aria-controls="uml-pg-output" spellcheck="false" autocorrect="off" autocapitalize="off"></textarea>
     </div>
     <div class="uml-pg-splitter" id="uml-pg-split-editor" role="separator" aria-orientation="vertical" aria-label="Resize editor pane" tabindex="0" aria-valuenow="40" aria-valuemin="20" aria-valuemax="80"></div>
-    <div id="uml-pg-preview-pane" role="region" aria-labelledby="uml-pg-preview-heading" aria-describedby="uml-pg-preview-help">
+    <div id="uml-pg-preview-pane" role="region" aria-labelledby="uml-pg-preview-heading" aria-describedby="uml-pg-preview-help" tabindex="-1">
       <h2 id="uml-pg-preview-heading" class="uml-pg-sr-only">Diagram preview</h2>
       <p id="uml-pg-preview-help" class="uml-pg-sr-only">Preview updates as you edit ArchUML. In visual edit mode, Tab reaches diagram items; Enter selects an item; arrow keys nudge selected elements; Delete removes selected items.</p>
       <div id="uml-pg-output" class="uml-class-diagram-container"></div>
@@ -1856,6 +1856,10 @@ Supported options:
           var rid = line.getAttribute('data-layout-id');
           line.classList.toggle('is-selected', selectedLayoutIds[rid] === 'route');
         });
+        Array.prototype.slice.call(layer.querySelectorAll('.uml-pg-activation-hitbox, .uml-pg-activation-handle')).forEach(function (el) {
+          var rid = el.getAttribute('data-layout-id');
+          el.classList.toggle('is-selected', selectedLayoutIds[rid] === 'activation');
+        });
       }
       if (typeof rebuildPropsPane === 'function') rebuildPropsPane();
     }
@@ -3078,6 +3082,201 @@ Supported options:
       return Object.keys(byId).map(function (id) { return byId[id]; }).filter(function (f) {
         return f.frameBox && f.labelBox;
       });
+    }
+
+    // ─── Activation bars (sequence execution specifications) ──────────────
+    //
+    // An activation bar is the thin rectangle on a lifeline showing the span
+    // during which an object is active. It is produced by a pair of source
+    // lines — `activate X` … `deactivate X` — interleaved with the messages.
+    // The bar's top/bottom snap to the messages those directives sit next to,
+    // because an execution specification starts and stops at occurrences
+    // (messages), not at arbitrary pixels. We model an edge position as a
+    // "slot": the number of messages above the directive (slot 0 = above the
+    // first message, slot N = below the last). Adjusting "when an object is
+    // activated" therefore means moving the `activate` / `deactivate` lines to
+    // a different message slot — which is exactly what the drag/keyboard
+    // gestures below do. The renderer tags each bar rect with its source line
+    // indices so we can map the rendered bar back to the lines to move.
+
+    // Maps a rendered bar id → its source directive lines, so deleteSelected
+    // can drop the right `activate`/`deactivate` pair without re-deriving it.
+    var activationBarIndex = {};
+
+    /**
+     * Find rendered activation bars in the SVG. Returns
+     * { id, startLine, endLine, pIdx, target, box } with box in user space.
+     */
+    function findRenderedActivationBars(svg) {
+      if (!svg) return [];
+      var lines = stripLayoutMetadata(sequenceSourceWithScaffold(textarea.value)).split('\n');
+      return Array.prototype.slice.call(svg.querySelectorAll('rect[data-layout-kind="activation"]'))
+        .filter(function (el) { return !el.closest('defs') && !el.closest('.uml-pg-edit-layer'); })
+        .map(function (el) {
+          var bb = null;
+          try { bb = el.getBBox(); } catch (e) { bb = null; }
+          if (!bb) return null;
+          var startLine = Number(el.getAttribute('data-activation-start-line'));
+          if (!isFinite(startLine) || startLine < 0) return null;
+          var endAttr = el.getAttribute('data-activation-end-line');
+          var endLine = (endAttr === '' || endAttr == null) ? null : Number(endAttr);
+          if (endLine != null && !isFinite(endLine)) endLine = null;
+          var target = '';
+          if (startLine < lines.length) {
+            var m = String(lines[startLine] || '').trim().match(/^activate\s+(\S+)/i);
+            target = m ? m[1] : '';
+          }
+          return {
+            id: el.getAttribute('data-layout-id') || ('actbar:' + startLine),
+            startLine: startLine,
+            endLine: endLine,
+            pIdx: Number(el.getAttribute('data-activation-pidx')) || 0,
+            target: target,
+            box: { x: bb.x, y: bb.y, width: bb.width, height: bb.height }
+          };
+        })
+        .filter(Boolean);
+    }
+
+    /** Sorted [{ lineIdx, y }] for each rendered message arrow (top → bottom). */
+    function sequenceMessageRows(svg) {
+      return findEditableRoutes(svg)
+        .filter(function (route) { return /^seqmsg:\d+$/.test(String(route.id || '')); })
+        .map(function (route) { return { lineIdx: sequenceRouteLineIndex(route.id), y: sequenceRouteVisualY(route) }; })
+        .filter(function (r) { return r.lineIdx >= 0 && isFinite(r.y); })
+        .sort(function (a, b) { return a.y - b.y; });
+    }
+
+    /** Current { startSlot, endSlot, msgCount } of a bar from the live source. */
+    function activationBarSlots(bar) {
+      var lines = stripLayoutMetadata(sequenceSourceWithScaffold(textarea.value)).split('\n');
+      var msgRows = sequenceMessageLineIndices(lines);
+      function slotOf(lineIdx) {
+        if (lineIdx == null) return null;
+        var c = 0;
+        for (var i = 0; i < msgRows.length; i++) { if (msgRows[i] < lineIdx) c++; }
+        return c;
+      }
+      return { startSlot: slotOf(bar.startLine), endSlot: slotOf(bar.endLine), msgCount: msgRows.length };
+    }
+
+    function clampSlot(v, lo, hi) { return Math.max(lo, Math.min(v, hi)); }
+
+    function endumlLineIndex(lines) {
+      for (var i = 0; i < lines.length; i++) {
+        if (/^@enduml\b/i.test(String(lines[i]).trim())) return i;
+      }
+      return lines.length;
+    }
+
+    /**
+     * Rewrite a bar's `activate` / `deactivate` lines so it starts at
+     * `newStartSlot` and ends at `newEndSlot` (null end = open-ended, no
+     * `deactivate`). Re-renders and re-selects the bar. Returns false if the
+     * source changed underneath us.
+     */
+    function setActivationBarSlots(bar, newStartSlot, newEndSlot, undoKind, announceMsg) {
+      var positions = readLayoutPositions(textarea.value);
+      var routes = readLayoutRoutes(textarea.value);
+      clearSequenceMessageLayoutMetadata(positions, routes);
+      var lines = stripLayoutMetadata(sequenceSourceWithScaffold(textarea.value)).split('\n');
+      var startIdx = bar.startLine;
+      if (!/^\s*activate\b/i.test(lines[startIdx] || '')) return false;
+      var hasDeact = bar.endLine != null && /^\s*deactivate\b/i.test(lines[bar.endLine] || '');
+      var actText = lines[startIdx];
+      var targetId = bar.target || actText.trim().replace(/^activate\s+/i, '');
+      var deactText = hasDeact ? lines[bar.endLine] : ('deactivate ' + targetId);
+
+      snapshotForUndo(undoKind || 'activation-edit');
+
+      // Remove the existing directive line(s); message rows shift but keep order.
+      var removeIdxs = [startIdx];
+      if (hasDeact) removeIdxs.push(bar.endLine);
+      removeIdxs.sort(function (a, b) { return b - a; }).forEach(function (idx) {
+        if (idx >= 0 && idx < lines.length) lines.splice(idx, 1);
+      });
+
+      var msgRows = sequenceMessageLineIndices(lines);
+      var endIdx = endumlLineIndex(lines);
+      function slotToBefore(slot) {
+        slot = clampSlot(slot, 0, msgRows.length);
+        return slot < msgRows.length ? msgRows[slot] : endIdx;
+      }
+
+      var sStart = clampSlot(newStartSlot, 0, msgRows.length);
+      var keepDeact = hasDeact || (newEndSlot != null);
+      var beforeStart = slotToBefore(sStart);
+      lines.splice(beforeStart, 0, actText);
+      var newStartIdx = beforeStart;
+      if (keepDeact) {
+        var sEnd = clampSlot(newEndSlot != null ? newEndSlot : msgRows.length, sStart, msgRows.length);
+        var beforeEnd = slotToBefore(sEnd);
+        // The activate insert at beforeStart shifted later indices by one.
+        var insEnd = beforeEnd + (beforeEnd >= beforeStart ? 1 : 0);
+        insEnd = Math.max(newStartIdx + 1, Math.min(insEnd, lines.length));
+        lines.splice(insEnd, 0, deactText);
+      }
+
+      textarea.value = writePositionsIntoSource(lines.join('\n'), 'sequence', positions, routes);
+      selectAfterRender('actbar:' + newStartIdx, 'activation');
+      renderDiagram();
+      if (announceMsg) announce(announceMsg, false);
+      return true;
+    }
+
+    /**
+     * Create a new activation bar on lifeline `targetId` spanning message slots
+     * [startSlot, endSlot]. Used by the Activate tool (click / drag-to-span).
+     */
+    function createActivationBar(targetId, startSlot, endSlot) {
+      if (!targetId) return false;
+      var positions = readLayoutPositions(textarea.value);
+      var routes = readLayoutRoutes(textarea.value);
+      clearSequenceMessageLayoutMetadata(positions, routes);
+      var lines = stripLayoutMetadata(sequenceSourceWithScaffold(textarea.value)).split('\n');
+      var msgRows = sequenceMessageLineIndices(lines);
+      var endIdx = endumlLineIndex(lines);
+      function slotToBefore(slot) {
+        slot = clampSlot(slot, 0, msgRows.length);
+        return slot < msgRows.length ? msgRows[slot] : endIdx;
+      }
+      var sStart = clampSlot(startSlot, 0, msgRows.length);
+      var sEnd = clampSlot(endSlot, sStart, msgRows.length);
+      snapshotForUndo('activation-create');
+      var beforeStart = slotToBefore(sStart);
+      lines.splice(beforeStart, 0, 'activate ' + targetId);
+      var beforeEnd = slotToBefore(sEnd);
+      var insEnd = beforeEnd + (beforeEnd >= beforeStart ? 1 : 0);
+      insEnd = Math.max(beforeStart + 1, Math.min(insEnd, lines.length));
+      lines.splice(insEnd, 0, 'deactivate ' + targetId);
+      textarea.value = writePositionsIntoSource(lines.join('\n'), 'sequence', positions, routes);
+      selectAfterRender('actbar:' + beforeStart, 'activation');
+      renderDiagram();
+      announce('Added activation for "' + targetId + '". Drag its top or bottom edge to change when it starts and stops.', true);
+      return true;
+    }
+
+    /** Keyboard adjust: move the start / end / whole bar by one message slot. */
+    function activationNudge(bar, which, dir) {
+      var s = activationBarSlots(bar);
+      var newStart = s.startSlot;
+      var newEnd = s.endSlot;
+      if (which === 'start') {
+        newStart = clampSlot(newStart + dir, 0, newEnd == null ? s.msgCount : newEnd);
+      } else if (which === 'end') {
+        if (newEnd == null) newEnd = s.msgCount;
+        newEnd = clampSlot(newEnd + dir, newStart, s.msgCount);
+      } else {
+        newStart = clampSlot(newStart + dir, 0, s.msgCount);
+        if (newEnd != null) newEnd = clampSlot(newEnd + dir, newStart, s.msgCount);
+      }
+      if (newStart === s.startSlot && newEnd === s.endSlot) {
+        announce('Activation is already at the ' + (dir < 0 ? 'top' : 'bottom') + '.', false);
+        return;
+      }
+      var label = bar.target || 'object';
+      var verb = which === 'move' ? 'moved' : ('now ' + (which === 'start' ? 'starts' : 'stops') + ' ' + (dir < 0 ? 'earlier' : 'later'));
+      setActivationBarSlots(bar, newStart, newEnd, 'activation-nudge', 'Activation of "' + label + '" ' + verb + '.');
     }
 
     function isRelationLineFor(line, type, sourceId, targetId, op) {
@@ -5406,6 +5605,260 @@ Supported options:
       moveSequenceFragmentToY(fragId, svg, pt.y);
     }
 
+    // ─── Activation bar drag (adjust / move / create) ─────────────────────
+    // Mirrors the fragment drag: a guide line follows the snap target, and on
+    // release we rewrite the source. `mode` is 'start' (drag the top edge),
+    // 'end' (drag the bottom edge), 'move' (drag the body), or 'create' (drag
+    // down a lifeline with the Activate tool to sweep a new bar).
+    var activationDragState = null;
+
+    function selectedActivationToolSpec() {
+      if (!activeTool || activeTool.kind !== 'element' || typeSelect.value !== 'sequence') return null;
+      var spec = activeTool.spec || {};
+      return spec.sequenceControl === 'activate' ? spec : null;
+    }
+
+    function activationSlotForY(rows, canvasY) {
+      var c = 0;
+      for (var i = 0; i < rows.length; i++) { if (rows[i].y < canvasY) c++; }
+      return c;
+    }
+
+    // Y of the boundary a directive in `slot` snaps to: midway between the
+    // (slot-1)-th and slot-th message rows (or just past the ends).
+    function activationSlotGuideY(rows, slot, fallbackY) {
+      if (!rows.length) return fallbackY;
+      if (slot <= 0) return Math.max(0, rows[0].y - 14);
+      if (slot >= rows.length) return rows[rows.length - 1].y + 14;
+      return (rows[slot - 1].y + rows[slot].y) / 2;
+    }
+
+    function computeActivationTarget(s, canvasY) {
+      var slot = activationSlotForY(s.rows, canvasY);
+      var newStart, newEnd, guideSlot;
+      if (s.mode === 'create') {
+        newStart = Math.min(s.createStartSlot, slot);
+        newEnd = Math.max(s.createStartSlot, slot);
+        guideSlot = slot;
+      } else if (s.mode === 'start') {
+        newStart = Math.min(slot, s.endSlot == null ? s.msgCount : s.endSlot);
+        newEnd = s.endSlot;
+        guideSlot = newStart;
+      } else if (s.mode === 'end') {
+        newStart = s.startSlot;
+        newEnd = Math.max(slot, s.startSlot);
+        guideSlot = newEnd;
+      } else { // move
+        var delta = slot - s.startSlot;
+        newStart = s.startSlot + delta;
+        newEnd = (s.endSlot == null ? null : s.endSlot + delta);
+        if (newStart < 0) { if (newEnd != null) newEnd -= newStart; newStart = 0; }
+        if (newEnd != null && newEnd > s.msgCount) { newStart -= (newEnd - s.msgCount); newEnd = s.msgCount; }
+        newStart = Math.max(0, newStart);
+        guideSlot = newStart;
+      }
+      return { startSlot: newStart, endSlot: newEnd, guideY: activationSlotGuideY(s.rows, guideSlot, canvasY) };
+    }
+
+    function applyActivationTarget(s, target) {
+      if (s.mode === 'create') {
+        createActivationBar(s.lifeline.id, target.startSlot, target.endSlot);
+        return;
+      }
+      if (target.startSlot === s.startSlot && target.endSlot === s.endSlot) {
+        setSelectedLayoutId(s.bar.id, 'activation');
+        return;
+      }
+      var label = s.bar.target || 'object';
+      var msg;
+      if (s.mode === 'start') msg = 'Activation of "' + label + '" now starts ' + (target.startSlot < s.startSlot ? 'earlier' : 'later') + '.';
+      else if (s.mode === 'end') msg = 'Activation of "' + label + '" now stops ' + ((s.endSlot != null && target.endSlot < s.endSlot) ? 'earlier' : 'later') + '.';
+      else msg = 'Activation of "' + label + '" moved.';
+      setActivationBarSlots(s.bar, target.startSlot, target.endSlot, 'activation-' + s.mode, msg);
+    }
+
+    function cancelActivationBarDrag() {
+      if (!activationDragState) return;
+      if (activationDragState.guide && activationDragState.guide.parentNode) {
+        activationDragState.guide.parentNode.removeChild(activationDragState.guide);
+      }
+      activationDragState = null;
+    }
+
+    function startActivationBarDrag(svg, layer, bar, mode, event) {
+      if (!svg || !layer || !bar) return false;
+      var pt = editorCanvasPoint(svg, event.clientX, event.clientY);
+      var slots = activationBarSlots(bar);
+      setSelectedLayoutId(bar.id, 'activation');
+      activationDragState = {
+        svg: svg, layer: layer, bar: bar, mode: mode,
+        rows: sequenceMessageRows(svg),
+        startSlot: slots.startSlot, endSlot: slots.endSlot, msgCount: slots.msgCount,
+        startClientX: event.clientX, startClientY: event.clientY, startCanvasY: pt.y,
+        moved: false, guide: null
+      };
+      if (event.currentTarget && event.currentTarget.setPointerCapture) {
+        try { event.currentTarget.setPointerCapture(event.pointerId); } catch (e) {}
+      }
+      return true;
+    }
+
+    function startActivationCreateDrag(svg, layer, lifeline, event) {
+      if (!svg || !layer || !lifeline) return false;
+      var pt = editorCanvasPoint(svg, event.clientX, event.clientY);
+      var rows = sequenceMessageRows(svg);
+      activationDragState = {
+        svg: svg, layer: layer, bar: null, mode: 'create', lifeline: lifeline,
+        rows: rows, msgCount: rows.length,
+        createStartSlot: activationSlotForY(rows, pt.y),
+        startClientX: event.clientX, startClientY: event.clientY, startCanvasY: pt.y,
+        moved: false, guide: null
+      };
+      if (svg.setPointerCapture) { try { svg.setPointerCapture(event.pointerId); } catch (e) {} }
+      announce('Drag down "' + lifeline.id + '" to set the activation span, or release for a one-step bar. Esc to cancel.', true);
+      return true;
+    }
+
+    function updateActivationBarDrag(ev, finish) {
+      if (!activationDragState) return;
+      var s = activationDragState;
+      var ns = 'http://www.w3.org/2000/svg';
+      var pt = editorCanvasPoint(s.svg, ev.clientX, ev.clientY);
+      if (!s.moved && Math.abs(ev.clientY - s.startClientY) > 4) {
+        s.moved = true;
+        var view = parseSvgViewBox(s.svg) || { x: 0, y: 0, width: 4000, height: 4000 };
+        s.guide = document.createElementNS(ns, 'line');
+        s.guide.setAttribute('class', 'uml-pg-activation-guide');
+        s.guide.setAttribute('x1', view.x + 8);
+        s.guide.setAttribute('x2', view.x + view.width - 8);
+        s.layer.appendChild(s.guide);
+      }
+      var target = computeActivationTarget(s, pt.y);
+      if (s.moved && s.guide) {
+        s.guide.setAttribute('y1', target.guideY);
+        s.guide.setAttribute('y2', target.guideY);
+      }
+      if (!finish) return;
+      cancelActivationBarDrag();
+      if (s.mode === 'create') {
+        if (s.moved) createActivationBar(s.lifeline.id, target.startSlot, target.endSlot);
+        else createActivationBar(s.lifeline.id, s.createStartSlot, s.createStartSlot + 1);
+        return;
+      }
+      if (!s.moved) { setSelectedLayoutId(s.bar.id, 'activation'); return; }
+      applyActivationTarget(s, target);
+    }
+
+    function activationAriaLabel(bar) {
+      var who = bar.target || 'object';
+      return 'Activation of ' + who + (bar.endLine == null ? ' (open-ended)' : '') +
+        ' — Enter to select; Up/Down move the start, Shift+Up/Down the end, Alt+Up/Down the whole bar; Delete to remove';
+    }
+
+    /**
+     * Build the canvas affordances for every rendered activation bar: a body
+     * hitbox (drag to move), top/bottom resize handles (drag to change when the
+     * object becomes / stops being active), and a keyboard-focusable target.
+     */
+    function installActivationBarEditor(svg, layer, targetLayer, visualLayer) {
+      var ns = 'http://www.w3.org/2000/svg';
+      activationBarIndex = {};
+      findRenderedActivationBars(svg).forEach(function (bar) {
+        activationBarIndex[bar.id] = { startLine: bar.startLine, endLine: bar.endLine, target: bar.target };
+        var box = bar.box;
+        var grabW = Math.max(box.width, 12);
+        var bx = box.x - (grabW - box.width) / 2;
+        var selected = selectedLayoutIds[bar.id] === 'activation';
+
+        var hitbox = document.createElementNS(ns, 'rect');
+        hitbox.setAttribute('class', 'uml-pg-activation-hitbox' + (selected ? ' is-selected' : ''));
+        hitbox.setAttribute('data-layout-id', bar.id);
+        hitbox.setAttribute('data-layout-kind', 'activation');
+        hitbox.setAttribute('x', bx);
+        hitbox.setAttribute('y', box.y);
+        hitbox.setAttribute('width', grabW);
+        hitbox.setAttribute('height', Math.max(box.height, 6));
+        hitbox.setAttribute('aria-hidden', 'true');
+
+        function makeHandle(edge, y) {
+          var hh = 8;
+          var h = document.createElementNS(ns, 'rect');
+          h.setAttribute('class', 'uml-pg-activation-handle is-' + edge + (selected ? ' is-selected' : ''));
+          h.setAttribute('data-layout-id', bar.id);
+          h.setAttribute('x', bx - 3);
+          h.setAttribute('width', grabW + 6);
+          h.setAttribute('y', y - hh / 2);
+          h.setAttribute('height', hh);
+          h.setAttribute('aria-hidden', 'true');
+          return h;
+        }
+        var startHandle = makeHandle('start', box.y);
+        var endHandle = makeHandle('end', box.y + box.height);
+
+        // Keyboard target — also the WCAG 2.5.8 "equivalent control" for the
+        // small drag handles, so keep it at least 24×24 CSS px and centred on
+        // the bar even when the bar itself is short.
+        var aW = Math.max(grabW + 12, 24);
+        var aH = Math.max(box.height + 12, 24);
+        var a11y = document.createElementNS(ns, 'rect');
+        a11y.setAttribute('class', 'uml-pg-edit-a11y-target');
+        a11y.setAttribute('data-layout-id', bar.id);
+        a11y.setAttribute('x', box.x + box.width / 2 - aW / 2);
+        a11y.setAttribute('y', box.y + box.height / 2 - aH / 2);
+        a11y.setAttribute('width', aW);
+        a11y.setAttribute('height', aH);
+        a11y.setAttribute('tabindex', '0');
+        a11y.setAttribute('role', 'button');
+        a11y.setAttribute('aria-label', activationAriaLabel(bar));
+        targetLayer.appendChild(a11y);
+
+        function selectThis(extend) { setSelectedLayoutId(bar.id, 'activation', extend ? { extend: true } : undefined); }
+        function bodyPointerDown(ev) {
+          if (activeTool) return;
+          ev.preventDefault(); ev.stopPropagation();
+          if (ev.metaKey || ev.ctrlKey || ev.shiftKey) { selectThis(true); return; }
+          startActivationBarDrag(svg, layer, bar, 'move', ev);
+        }
+        hitbox.addEventListener('pointerdown', bodyPointerDown);
+        a11y.addEventListener('pointerdown', bodyPointerDown);
+        startHandle.addEventListener('pointerdown', function (ev) {
+          if (activeTool) return;
+          ev.preventDefault(); ev.stopPropagation();
+          startActivationBarDrag(svg, layer, bar, 'start', ev);
+        });
+        endHandle.addEventListener('pointerdown', function (ev) {
+          if (activeTool) return;
+          ev.preventDefault(); ev.stopPropagation();
+          startActivationBarDrag(svg, layer, bar, 'end', ev);
+        });
+        function onContext(ev) { ev.preventDefault(); ev.stopPropagation(); selectThis(false); }
+        hitbox.addEventListener('contextmenu', onContext);
+        a11y.addEventListener('contextmenu', onContext);
+        a11y.addEventListener('keydown', function (ev) {
+          var k = ev.key;
+          if (k === 'Enter' || k === ' ') { ev.preventDefault(); selectThis(false); }
+          else if (k === 'ArrowUp' || k === 'ArrowDown') {
+            if (activeTool) return;
+            ev.preventDefault();
+            var dir = k === 'ArrowUp' ? -1 : 1;
+            var which = ev.shiftKey ? 'end' : (ev.altKey ? 'move' : 'start');
+            if (selectedLayoutIds[bar.id] !== 'activation') selectThis(false);
+            activationNudge(bar, which, dir);
+          }
+          else if (k === 'Delete' || k === 'Backspace') {
+            ev.preventDefault();
+            if (selectedLayoutIds[bar.id] !== 'activation') selectThis(false);
+            deleteSelected();
+          }
+          else if (k === 'Escape') { ev.preventDefault(); setSelectedLayoutId(null); }
+        });
+
+        visualLayer.appendChild(hitbox);
+        visualLayer.appendChild(startHandle);
+        visualLayer.appendChild(endHandle);
+      });
+    }
+
     function findSequenceMessageDropTarget(state, clientX, clientY) {
       if (!state || !state.svg) return null;
       var target = findSequenceLifelineAtPoint(state.svg, clientX, clientY);
@@ -5632,6 +6085,18 @@ Supported options:
       if (!activeTool || activeTool.kind !== 'element' || typeSelect.value !== 'sequence') return false;
       var spec = activeTool.spec || {};
       if (!spec.sequenceControl && !spec.sequenceNote) return false;
+      // Activate tool on a lifeline head: drop a real, adjustable bar starting
+      // at the lifeline's first message (the user then drags its edges) rather
+      // than appending a stray `activate` line at the bottom of the source.
+      if (spec.sequenceControl === 'activate') {
+        var seqLines = stripLayoutMetadata(sequenceSourceWithScaffold(textarea.value)).split('\n');
+        var msgRows = sequenceMessageLineIndices(seqLines);
+        var startSlot = 0;
+        for (var s = 0; s < msgRows.length; s++) {
+          if (lineMentionsId(seqLines[msgRows[s]], item.id)) { startSlot = s; break; }
+        }
+        return createActivationBar(item.id, startSlot, startSlot + 1);
+      }
       snapshotForUndo();
       if (spec.sequenceControl) {
         textarea.value = appendRawLine(textarea.value, spec.sequenceControl + ' ' + item.id);
@@ -5836,9 +6301,64 @@ Supported options:
         buildRelationProps();
       } else if (selectedLayoutKind === 'fragment') {
         buildFragmentProps();
+      } else if (selectedLayoutKind === 'activation') {
+        buildActivationProps();
       } else {
         buildElementProps();
       }
+    }
+
+    // Properties for a selected activation bar. Deliberately NOT the generic
+    // element panel: an activation has no editable identifier, so we show what
+    // it represents plus keyboard-accessible "earlier / later" controls that
+    // mirror the canvas drag handles.
+    function buildActivationProps() {
+      var id = String(selectedLayoutId || '');
+      var info = activationBarIndex[id];
+      propsTitle.textContent = 'Activation' + (info && info.target ? ' — ' + info.target : '');
+      if (!info) {
+        var miss = document.createElement('p');
+        miss.className = 'uml-pg-prop-hint';
+        miss.textContent = 'This activation bar is no longer in the source.';
+        propsContent.appendChild(miss);
+        return;
+      }
+      var intro = document.createElement('p');
+      intro.className = 'uml-pg-prop-hint';
+      intro.textContent = 'Shows when "' + (info.target || 'the object') + '" is active. Move where it starts and stops:';
+      propsContent.appendChild(intro);
+
+      function adjustFieldset(legendText, which) {
+        var fs = document.createElement('fieldset');
+        fs.className = 'uml-pg-prop-fieldset';
+        var leg = document.createElement('legend');
+        leg.textContent = legendText;
+        fs.appendChild(leg);
+        var row = document.createElement('div');
+        row.className = 'uml-pg-prop-btn-row';
+        [['Earlier', -1], ['Later', 1]].forEach(function (pair) {
+          var btn = document.createElement('button');
+          btn.type = 'button';
+          btn.className = 'uml-pg-add-member';
+          btn.textContent = pair[0];
+          btn.setAttribute('aria-label', legendText + ' — move ' + pair[0].toLowerCase());
+          btn.addEventListener('click', function () {
+            var fresh = activationBarIndex[id] || info;
+            activationNudge({ id: id, startLine: fresh.startLine, endLine: fresh.endLine, target: fresh.target }, which, pair[1]);
+          });
+          row.appendChild(btn);
+        });
+        fs.appendChild(row);
+        propsContent.appendChild(fs);
+      }
+      adjustFieldset('Starts', 'start');
+      adjustFieldset('Stops', 'end');
+      adjustFieldset('Move whole bar', 'move');
+
+      var hint = document.createElement('p');
+      hint.className = 'uml-pg-prop-hint';
+      hint.textContent = 'Tip: on the canvas, drag the bar’s top or bottom edge, or press ↑/↓ (Shift+↑/↓ for the end, Alt+↑/↓ to move it). Press Delete to remove.';
+      propsContent.appendChild(hint);
     }
 
     function buildFragmentProps() {
@@ -7846,6 +8366,27 @@ Supported options:
       var entries = Object.keys(selectedLayoutIds).map(function (id) {
         return { id: id, kind: selectedLayoutIds[id] };
       });
+      // Drop selected activation bars first — each is a plain `activate` +
+      // `deactivate` line pair. Doing this before route indices are computed
+      // keeps those indices valid (removing the directive lines shifts them).
+      var activationLineIdxs = [];
+      entries.forEach(function (e) {
+        if (e.kind !== 'activation') return;
+        var info = activationBarIndex[e.id];
+        if (!info) return;
+        if (info.startLine != null) activationLineIdxs.push(info.startLine);
+        if (info.endLine != null) activationLineIdxs.push(info.endLine);
+      });
+      if (activationLineIdxs.length) {
+        var actPositions = readLayoutPositions(textarea.value);
+        var actRoutes = readLayoutRoutes(textarea.value);
+        clearSequenceMessageLayoutMetadata(actPositions, actRoutes);
+        var actLines = stripLayoutMetadata(sequenceSourceWithScaffold(textarea.value)).split('\n');
+        activationLineIdxs.sort(function (a, b) { return b - a; }).forEach(function (idx) {
+          if (idx >= 0 && idx < actLines.length && /^\s*(de)?activate\b/i.test(actLines[idx])) actLines.splice(idx, 1);
+        });
+        textarea.value = writePositionsIntoSource(actLines.join('\n'), 'sequence', actPositions, actRoutes);
+      }
       // Compute relation line indices once before any mutations so ordinal
       // matching stays consistent if multiple routes are selected.
       var rIndices = relationLineIndices(textarea.value, typeSelect.value);
@@ -7862,6 +8403,8 @@ Supported options:
           if (idx !== -1) routeIdxs.push(idx);
         } else if (e.kind === 'fragment') {
           fragmentIds.push(String(e.id));
+        } else if (e.kind === 'activation') {
+          // Already handled above.
         } else {
           elementIds.push(e.id);
         }
@@ -8128,6 +8671,19 @@ Supported options:
           var sourceLifeline = findSequenceLifelineAtPoint(svg, ev.clientX, ev.clientY);
           if (sourceLifeline) {
             startSequenceMessageDrag(svg, layer, sourceLifeline, null, ev);
+            return;
+          }
+        }
+
+        // Activate tool: click a lifeline to add an activation bar at that
+        // height, or drag down it to sweep the active span. Lands the
+        // `activate`/`deactivate` lines at the clicked messages — not appended
+        // at the end of the source.
+        if (selectedActivationToolSpec()) {
+          var actLifeline = findSequenceLifelineAtPoint(svg, ev.clientX, ev.clientY);
+          if (actLifeline) {
+            ev.preventDefault();
+            startActivationCreateDrag(svg, layer, actLifeline, ev);
             return;
           }
         }
@@ -8478,6 +9034,11 @@ Supported options:
           a11y.addEventListener('keydown', onKey);
           elementVisualLayer.appendChild(hitbox);
         });
+
+        // Activation bars (execution specifications) — drag the body to move,
+        // the top/bottom edges to change when the object becomes / stops being
+        // active, or use the keyboard to adjust the selected bar.
+        installActivationBarEditor(svg, layer, elementTargetLayer, elementVisualLayer);
       }
 
       if (!editables.length) {
@@ -9943,6 +10504,7 @@ Supported options:
       if (extendDragState) updateExtendDrag(event, false);
       if (paletteDragState) updatePaletteDrag(event, false);
       if (fragmentDragState) updateFragmentDrag(event, false);
+      if (activationDragState) updateActivationBarDrag(event, false);
     });
 
     document.addEventListener('pointerup', function (event) {
@@ -9951,6 +10513,7 @@ Supported options:
       if (extendDragState) updateExtendDrag(event, true);
       if (paletteDragState) updatePaletteDrag(event, true);
       if (fragmentDragState) updateFragmentDrag(event, true);
+      if (activationDragState) updateActivationBarDrag(event, true);
     });
 
     if (editToggle) {
@@ -9960,6 +10523,7 @@ Supported options:
           dragState = null;
           cancelSequenceMessageDrag();
           cancelFragmentDrag();
+          cancelActivationBarDrag();
           setSelectedLayoutId(null);
           setActiveTool(null);
           clearEditLayer();
@@ -9975,6 +10539,7 @@ Supported options:
       toolCancel.addEventListener('click', function () {
         cancelSequenceMessageDrag();
         cancelFragmentDrag();
+        cancelActivationBarDrag();
         setActiveTool(null);
         announce('Cancelled.', false);
       });
@@ -9983,6 +10548,33 @@ Supported options:
     var fullscreenBtn = document.getElementById('uml-pg-fullscreen');
     var wrap = document.getElementById('uml-playground-wrap');
     var autosaveIndicator = document.getElementById('uml-pg-autosave');
+
+    // Clicking the canvas must pull keyboard focus into the editor so the
+    // focus-scoped single-key shortcuts work — F (fullscreen), ? (tips), zoom,
+    // select-all, etc. These stay scoped to the focused widget on purpose
+    // (WCAG 2.1.4 Character Key Shortcuts), but the preview pane is otherwise
+    // unfocusable and the SVG-level pointerdown calls preventDefault() for its
+    // pan gesture, which suppresses the browser's native click-to-focus — so a
+    // canvas click would leave focus on <body> and the shortcuts dead. We set
+    // focus explicitly here, only when it is currently outside the editor (so a
+    // canvas click while a diagram item is focused leaves that item focused),
+    // and never steal focus from a control the click already targets.
+    if (previewPane) {
+      previewPane.addEventListener('pointerdown', function (event) {
+        if (event.button !== 0) return;
+        var t = event.target;
+        // If the click targets a more specific focusable control (a toolbar
+        // button, a diagram item's tabindex hitbox, an inline rename field…),
+        // let it take focus naturally. The pane itself is tabindex="-1", so
+        // exclude it from this check — otherwise every canvas click matches.
+        var focusable = t && t.closest &&
+          t.closest('a[href], button, input, textarea, select, [tabindex], [contenteditable]');
+        if (focusable && focusable !== previewPane) return;
+        if (wrap && !wrap.contains(document.activeElement)) {
+          try { previewPane.focus({ preventScroll: true }); } catch (e) { previewPane.focus(); }
+        }
+      });
+    }
 
     // ─── Autosave ─────────────────────────────────────────────────────────
     // Persist the textarea per diagram-type, restore on load. We key by type
@@ -10288,6 +10880,10 @@ Supported options:
         } else if (fragmentDragState) {
           event.preventDefault();
           cancelFragmentDrag();
+          announce('Cancelled.', false);
+        } else if (activationDragState) {
+          event.preventDefault();
+          cancelActivationBarDrag();
           announce('Cancelled.', false);
         } else if (activeTool) {
           event.preventDefault();
