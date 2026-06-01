@@ -9811,6 +9811,21 @@
           self.openFile(f.path, content, f.language, f);
           self._syncFileToBackend(f.path);
           self._originalContent[f.path] = f.content || '';
+        } else if (f.reseed) {
+          // `reseed: true` opts a provided file out of cross-step carry-over.
+          // The guard above only seeds a file the first time its model is
+          // created, so a file that also appears in an earlier step keeps that
+          // earlier content forever — correct for files the student edits and
+          // carries forward (e.g. TDD's evolving scorer.py), wrong for author-
+          // provided scaffolding that the step replaces. Reseed overwrites the
+          // carried-over model + VM copy with THIS step's content on entry, e.g.
+          // test-doubles' quest_service.py, which gains DailyQuestService in
+          // step 2, a reward ledger in step 3, and a push-notifier in step 5.
+          // Reseed files are author-owned, not student-edited, so the autosaved
+          // override is intentionally ignored.
+          self.openFile(f.path, f.content, f.language, f);
+          self._syncFileToBackend(f.path);
+          self._originalContent[f.path] = f.content || '';
         }
       });
       self._suppressAutoSave = false;

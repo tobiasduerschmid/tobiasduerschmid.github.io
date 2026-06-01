@@ -567,6 +567,7 @@ steps:
         language: "python"
 
       - path: "quest_service.py"
+        reseed: true
         content: |
           """QuestForge — daily quest service.
 
@@ -1043,6 +1044,7 @@ steps:
         language: "python"
 
       - path: "quest_service.py"
+        reseed: true
         content: |
           """QuestForge — daily quest service with reward ledger collaborator."""
           import datetime
@@ -2081,6 +2083,7 @@ steps:
         language: "python"
 
       - path: "quest_service.py"
+        reseed: true
         content: |
           """QuestForge — daily quest service with milestone celebration."""
           import datetime
