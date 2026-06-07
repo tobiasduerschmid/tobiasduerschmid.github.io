@@ -826,6 +826,25 @@ steps:
                                              # the file into. default: editor.
         print_language: python               # Override syntax highlight in
                                              # the print view.
+        reseed: true                         # Re-load THIS step's `content` even
+                                             # if a model for `path` already
+                                             # exists from an earlier step. By
+                                             # default a file is seeded only on
+                                             # first creation, so a same-named
+                                             # file carries its content forward
+                                             # across steps (correct when the
+                                             # student edits one file cycle after
+                                             # cycle, e.g. TDD). Set `reseed: true`
+                                             # on author-provided scaffolding that
+                                             # EVOLVES between steps and that the
+                                             # student does NOT edit — e.g. a
+                                             # service module that gains a new
+                                             # class in a later step. Without it,
+                                             # the later step silently keeps the
+                                             # earlier version and its tests fail
+                                             # to import the new symbol. Reseed
+                                             # overwrites the model + VM copy and
+                                             # ignores the autosaved override.
 
     open_file: string                        # Which file to focus on load.
     run_file: string                         # Which file the toolbar Run button

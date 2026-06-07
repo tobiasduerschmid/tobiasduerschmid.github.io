@@ -97,6 +97,8 @@ topics:
         url: /SEBook/process/scrum.html
       - name: Extreme Programming (XP)
         url: /SEBook/process/xp.html
+      - name: People and Processes
+        url: /SEBook/process/people-and-processes.html
 
 
   - name: Testing

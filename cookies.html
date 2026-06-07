@@ -268,7 +268,13 @@ info_nav_title: "Browser storage"
     <tbody>
       <tr data-storage="localStorage" data-key="se-gym-stats">
         <td class="storage-key">se-gym-stats</td>
-        <td>Per-question seen/correct counters plus spaced-repetition scheduling (when each card is next due), the timestamp of the last time each question was asked, and per-topic progress. Powers your most-difficult questions, the "Due for Review" queue, your Topic Mastery levels, and the workout picker that biases new sessions toward cards you have never practiced or have not seen in a long time. Only written when <em>Track Performance</em> is enabled.</td>
+        <td>Per-question seen/correct counters, last-practiced timestamps, spaced-repetition scheduling (when each card is next due), and per-topic progress. Powers workout draws that bias new sessions toward cards you have never practiced or have not seen in a long time, your most-difficult questions, the "Due for Review" queue, and your Topic Mastery levels. Only written when <em>Track Performance</em> is enabled.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+      <tr data-storage="localStorage" data-key="se-gym-workout-progress">
+        <td class="storage-key">se-gym-workout-progress</td>
+        <td>The active SE Gym workout checkpoint: card order, next unanswered position, current score, missed-card list, and per-difficulty tally. Written while a workout is in progress so reloading or leaving halfway can resume at the next unanswered card. Replaced when you restart or start another workout, and deleted when you finish, discard, empty the gym, or disable Personal Gym.</td>
         <td class="status-cell"></td>
         <td class="action-cell"></td>
       </tr>
@@ -585,6 +591,7 @@ info_nav_title: "Browser storage"
   function isDestructiveStorageKey(key) {
     return key === 'se-gym'
       || key === 'se-gym-stats'
+      || key === 'se-gym-workout-progress'
       || key === 'se-bookmarks'
       || key === 'regex-tutorial-progress'
       || key === 'regex-tutorial-advanced-progress'
