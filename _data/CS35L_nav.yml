@@ -89,6 +89,8 @@ topics:
     subtopics:
       - name: Scrum
         url: /SEBook/process/scrum.html
+      - name: People and Processes
+        url: /SEBook/process/people-and-processes.html
 
   - name: Testing
     icon: null

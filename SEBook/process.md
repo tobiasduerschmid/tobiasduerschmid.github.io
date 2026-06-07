@@ -47,6 +47,8 @@ The most common agile processes include:
 * **[Extreme Programming (XP)](/SEBook/process/xp.html)**: Focused on technical excellence through "extreme" versions of good practices, such as Test-Driven Development (TDD), Pair Programming, Continuous Integration, and Collective Code Ownership
 * **Lean Software Development**: Derived from Toyota’s manufacturing principles, Lean focuses on eliminating waste
 
+Process choice is also a design decision. [People and Processes](/SEBook/process/people-and-processes.html) explains how to adapt agile, plan-driven, and risk-driven practices to the human constraints and domain risks of a project.
+
 # Practice This
 
 Use the flashcards to retrieve the process vocabulary, then use the quiz to decide which process assumptions fit realistic project contexts.

@@ -91,6 +91,7 @@ async function clearState(page) {
   await page.context().clearCookies();
   await page.evaluate(() => {
     try { localStorage.removeItem('se-gym-stats'); } catch (e) { /* */ }
+    try { localStorage.removeItem('se-gym-workout-progress'); } catch (e) { /* */ }
   });
 }
 
@@ -941,6 +942,95 @@ test.describe('Personal Gym - Workout', () => {
     await expect(quizCard.locator('.quiz-shortcuts-hint')).toBeHidden();
   });
 
+  test('answered quiz cards checkpoint immediately and resume after reload', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'analyze-performance', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'user_stories' }]));
+    await page.goto(GYM_URL);
+
+    const expectedQuestions = await page.evaluate(() => {
+      function textFromHtml(html) {
+        const node = document.createElement('div');
+        node.innerHTML = html;
+        return node.textContent.replace(/\s+/g, ' ').trim();
+      }
+
+      const quiz = ALL_CARD_DATA.quizzes.user_stories;
+      const stats = {};
+      const now = Date.now();
+      const DAY = 24 * 60 * 60 * 1000;
+      const chosen = [];
+      const seenText = new Set();
+
+      quiz.questions.forEach((question, index) => {
+        const key = PersonalGym.cardStatsKey('quiz', 'user_stories', question);
+        stats[key] = {
+          seen: 1,
+          correct: 1,
+          reps: 1,
+          ef: 2.5,
+          intervalDays: 1,
+          due: now + DAY,
+          last: now + index,
+        };
+
+        const text = textFromHtml(question.question);
+        if ((question.type || 'single') === 'multiple' && text && !seenText.has(text) && chosen.length < 2) {
+          chosen.push({ question, text });
+          seenText.add(text);
+        }
+      });
+
+      if (chosen.length < 2) {
+        throw new Error('User stories quiz needs two multiple-answer questions for workout-resume coverage');
+      }
+
+      chosen.forEach((entry, index) => {
+        const key = PersonalGym.cardStatsKey('quiz', 'user_stories', entry.question);
+        stats[key].last = now - (10 - index) * DAY;
+      });
+
+      localStorage.setItem('se-gym-stats', JSON.stringify(stats));
+      return chosen.map((entry) => entry.text);
+    });
+
+    await page.locator('#max-cards').fill('2');
+    await page.getByRole('button', { name: 'Start Workout' }).first().click();
+
+    const questionText = page.locator('.workout-quiz-card .question-text');
+    await expect(questionText).toBeVisible();
+    expect((await questionText.innerText()).replace(/\s+/g, ' ').trim()).toBe(expectedQuestions[0]);
+
+    const firstCard = page.locator('.workout-quiz-card');
+    await expect(firstCard).toHaveAttribute('data-type', 'multiple');
+    await answerWorkoutMultipleChoice(firstCard);
+    await expect(firstCard.locator('.quiz-explanation')).toBeVisible();
+
+    const savedAfterSubmit = await page.evaluate(() => JSON.parse(localStorage.getItem('se-gym-workout-progress') || 'null'));
+    expect(savedAfterSubmit?.currentStep).toBe(1);
+    expect(savedAfterSubmit?.score).toBe(1);
+
+    await page.reload();
+    await expect(page.locator('#saved-workout-row')).toBeVisible();
+    await expect(page.locator('#saved-workout-summary')).toHaveText('Saved workout: 1 of 2 completed.');
+    await a11yCheckpoint(page, 'gym entrance - saved workout resume prompt', { feature: A11Y_FEATURE, darkMode: true });
+
+    await page.getByRole('button', { name: 'Resume Saved Workout' }).click();
+    await expect(page.locator('#gym-workout')).toBeVisible();
+    await expect(questionText).toBeVisible();
+    expect((await questionText.innerText()).replace(/\s+/g, ' ').trim()).toBe(expectedQuestions[1]);
+
+    const secondCard = page.locator('.workout-quiz-card');
+    await expect(secondCard).toHaveAttribute('data-type', 'multiple');
+    await answerWorkoutMultipleChoice(secondCard);
+    await secondCard.getByRole('button', { name: 'Next' }).click();
+
+    await expect(page.locator('#workout-results')).toBeVisible();
+    await expect(page.locator('#workout-score')).toHaveText('2');
+    await expect(page.locator('#workout-total')).toHaveText('2');
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('se-gym-workout-progress'))).toBeNull();
+  });
+
   test('Parsons shortcuts move numbered lines and Enter checks order', async ({ page, context }) => {
     await setCookie(context, 'se-gym-active', 'true');
     await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'shell_parson' }]));
@@ -1199,6 +1289,89 @@ test.describe('Personal Gym - Workout', () => {
     // Should show results after 2 cards
     await expect(page.locator('#workout-results')).toBeVisible();
     await expect(page.locator('#workout-total')).toHaveText('2');
+  });
+
+  test('limited workouts draw least-recently practiced cards from the current CS 35L quiz', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'analyze-performance', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'CS35_current' }]));
+    await page.goto(GYM_URL);
+
+    await page.getByRole('spinbutton', { name: /max cards/i }).fill('2');
+    const expectedQuestions = await page.evaluate(() => {
+      function textFromHtml(html) {
+        const node = document.createElement('div');
+        node.innerHTML = html;
+        return node.textContent.replace(/\s+/g, ' ').trim();
+      }
+
+      const quiz = ALL_CARD_DATA.quizzes.CS35_current;
+      if (!quiz || !Array.isArray(quiz.questions) || quiz.questions.length < 3) {
+        throw new Error('Current CS 35L quiz needs enough questions for a recency-order regression');
+      }
+
+      const now = Date.now();
+      const DAY = 24 * 60 * 60 * 1000;
+      const stats = {};
+      const chosen = [];
+      const seenText = new Set();
+
+      quiz.questions.forEach((question, index) => {
+        const key = PersonalGym.cardStatsKey('quiz', 'CS35_current', question);
+        stats[key] = {
+          seen: 1,
+          correct: 1,
+          reps: 1,
+          ef: 2.5,
+          intervalDays: 1,
+          due: now + DAY,
+          last: now - 1000 + index,
+        };
+
+        const type = question.type || 'single';
+        const text = textFromHtml(question.question);
+        if (type !== 'parsons' && text && !seenText.has(text) && chosen.length < 2) {
+          chosen.push({ question, text });
+          seenText.add(text);
+        }
+      });
+
+      if (chosen.length < 2) {
+        throw new Error('Current CS 35L quiz needs two non-Parsons questions for this regression');
+      }
+
+      chosen.forEach((entry, index) => {
+        const key = PersonalGym.cardStatsKey('quiz', 'CS35_current', entry.question);
+        stats[key].last = now - (10 - index) * DAY;
+      });
+
+      localStorage.setItem('se-gym-stats', JSON.stringify(stats));
+      return chosen.map((entry) => entry.text);
+    });
+
+    await page.getByRole('button', { name: 'Start Workout' }).first().click();
+
+    const questionText = page.locator('.workout-quiz-card .question-text');
+    await expect(questionText).toBeVisible();
+    expect(
+      (await questionText.innerText()).replace(/\s+/g, ' ').trim(),
+      'the first card should be the least-recently practiced question',
+    ).toBe(expectedQuestions[0]);
+
+    const firstCard = page.locator('.workout-quiz-card');
+    const firstType = await firstCard.getAttribute('data-type');
+    if (firstType === 'multiple') {
+      await answerWorkoutMultipleChoice(firstCard);
+    } else {
+      await firstCard.locator('.quiz-option').first().click();
+    }
+    await firstCard.getByRole('button', { name: 'Next' }).click();
+
+    await expect(questionText).toBeVisible();
+    expect(
+      (await questionText.innerText()).replace(/\s+/g, ' ').trim(),
+      'the second card should be the next least-recently practiced question',
+    ).toBe(expectedQuestions[1]);
   });
 
   test('workout accepts optional quiz indices when selected', async ({ page, context }) => {

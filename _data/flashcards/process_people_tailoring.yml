@@ -1,0 +1,73 @@
+title: "People and Process Tailoring Flashcards"
+description: "Risk-driven design, human decision-making, technical debt backlogs, and domain-specific process fit."
+active: true
+cards:
+  - id: 1
+    difficulty: basic
+    bloom: understand
+    question: "What is **risk-driven design**?"
+    answer: "Risk-driven design means doing more upfront design for decisions that are expensive to reverse, and deferring smaller choices that are cheap to change later."
+    explanation: "The question is not whether to design, but where design effort has the highest payoff."
+
+  - id: 2
+    difficulty: basic
+    bloom: remember
+    question: "Name four kinds of software decisions that are often hard to change."
+    answer: "Programming language, target platform, component architecture, public interfaces, data models, and quality-attribute strategies are common hard-to-change decisions."
+    explanation: "These decisions tend to affect many later choices, so the cost of changing them rises quickly."
+
+  - id: 3
+    difficulty: intermediate
+    bloom: understand
+    question: "How can good architecture help an agile team make decisions late?"
+    answer: "Good architecture hides volatile decisions behind stable boundaries. Information hiding, low coupling, high cohesion, and clear interfaces let the team delay local implementation choices without making the whole system fragile."
+    explanation: "Agility depends on changeability. Architecture is one way to preserve changeability."
+
+  - id: 4
+    difficulty: intermediate
+    bloom: apply
+    question: "What belongs in a **technical debt backlog**?"
+    answer: "Refactorings, design cleanups, documentation gaps, testability improvements, performance experiments, and architecture work that makes future changes cheaper."
+    explanation: "Feature backlogs capture user-visible work; debt backlogs capture work that protects future speed and quality."
+
+  - id: 5
+    difficulty: basic
+    bloom: understand
+    question: "What is the problem with an **ivory tower architect**?"
+    answer: "They make design decisions in isolation and hand them down to implementers, often ignoring the current codebase, domain constraints, and the experience of the people who will build and maintain the system."
+    explanation: "Software design is collaborative because important design decisions affect many people and rely on knowledge distributed across the team."
+
+  - id: 6
+    difficulty: intermediate
+    bloom: analyze
+    question: "When is rational decision-making especially useful in software design?"
+    answer: "When justification is needed, non-experts need guidance, alternatives can be compared, the decision is hard to reverse, or the team needs a record for future maintainers."
+    explanation: "Rational process makes trade-offs explicit and communicable."
+
+  - id: 7
+    difficulty: intermediate
+    bloom: analyze
+    question: "When can experienced intuition be appropriate in software design?"
+    answer: "When time pressure is real, the decision maker has deep domain experience, information is incomplete, the problem is hard to formalize, or a good-enough decision is more valuable than slow optimization."
+    explanation: "Intuition is not a substitute for evidence, but expert pattern recognition can be valuable under uncertainty."
+
+  - id: 8
+    difficulty: advanced
+    bloom: analyze
+    question: "What does **bounded rationality** imply for software process?"
+    answer: "Teams cannot evaluate every possible design or predict every future requirement, so the process should make assumptions visible, reduce cognitive load, invite review, and revisit hard decisions when evidence changes."
+    explanation: "A process that assumes perfect planning will fail when human limits and changing evidence appear."
+
+  - id: 9
+    difficulty: advanced
+    bloom: evaluate
+    question: "Why might a web social product need less upfront design than spacecraft software?"
+    answer: "A web product can usually release, observe usage, roll back, and iterate quickly. Spacecraft software has high failure cost, limited post-launch updates, and strong verification requirements, so more upfront design and formal review are justified."
+    explanation: "The process changes because the economics of feedback and failure change."
+
+  - id: 10
+    difficulty: advanced
+    bloom: apply
+    question: "What is a good process rule for a CS 35L project team?"
+    answer: "Use a lightweight agile process, but write short design notes for hard-to-reverse boundaries such as APIs, data models, storage formats, concurrency models, and deployment assumptions."
+    explanation: "Small teams do not need heavy ceremony, but they still need shared rationale for decisions that will shape later work."

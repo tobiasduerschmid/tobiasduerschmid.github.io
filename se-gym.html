@@ -37,7 +37,7 @@ layout: sebook
       <p class="gym-subtitle"> Make studying fun while following <a
           href="/blog/evidence-based-study-tips-for-college-students/">evidence-based learning techniques</a>. Build
         your
-        own study gym by adding quizzes and flashcard sets, then start a workout to review shuffled cards.</p>
+        own study gym by adding quizzes and flashcard sets, then start a workout to review the cards you practiced least recently.</p>
       {% if site.gym_hero_animation %}
       <!-- ==================== HERO CUSTOMIZER ENTRY ==================== -->
       <div id="hero-customizer-section">
@@ -88,7 +88,8 @@ layout: sebook
               <button type="button" class="info-btn" aria-expanded="false" aria-label="Info about performance tracking" aria-describedby="performance-tracking-tooltip">?</button>
               <span
                   id="performance-tracking-tooltip" role="tooltip" class="info-tooltip">Allows SE Gym to track your performance on each question to be stored locally in
-                  your browser's localStorage to enable you to easily revisit the questions you often get wrong. This
+                  your browser's localStorage to enable you to easily revisit the questions you often get wrong and
+                  rotate limited workouts toward cards you practiced least recently. This
                   will track your
                   performance across quizzes and flash cards across the entire site, not just this page. Your personal
                   data remains on your local device and is not shared with the provider of the site.</span>
@@ -217,6 +218,15 @@ layout: sebook
           </div>
           <p id="max-cards-note" class="gym-summary-text" role="status" aria-live="polite"></p>
           <p id="gym-summary" class="gym-summary-text"></p>
+          <div id="saved-workout-row" class="controls-row is-hidden">
+            <p id="saved-workout-summary" class="gym-summary-text" role="status" aria-live="polite" aria-atomic="true"></p>
+            <button id="resume-workout-btn" class="gym-btn secondary" type="button">
+              <i class="fa-solid fa-rotate-left" aria-hidden="true"></i> Resume Saved Workout
+            </button>
+            <button id="discard-workout-btn" class="gym-btn secondary" type="button">
+              <i class="fa-solid fa-trash" aria-hidden="true"></i> Discard Saved Workout
+            </button>
+          </div>
           <div class="gym-controls-start-row">
             <button id="start-workout-btn-bottom" class="gym-btn primary gym-start-btn" aria-label="Begin workout from controls" disabled><i class="fa-solid fa-play" aria-hidden="true"></i> Start Workout</button>
           </div>
@@ -844,6 +854,10 @@ layout: sebook
       var heatmapSummaryEl = document.getElementById('gym-heatmap-summary');
       var actionStatusEl = document.getElementById('gym-action-status');
       var actionStatusTimer = null;
+      var savedWorkoutRow = document.getElementById('saved-workout-row');
+      var savedWorkoutSummary = document.getElementById('saved-workout-summary');
+      var resumeWorkoutBtn = document.getElementById('resume-workout-btn');
+      var discardWorkoutBtn = document.getElementById('discard-workout-btn');
       var challengeStatusEl = document.getElementById('challenge-status');
       var timedPracticeToggle = document.getElementById('timedPracticeToggle');
       var timedPracticePanel = document.getElementById('timed-practice-panel');
@@ -888,6 +902,8 @@ layout: sebook
       var workoutIsDaily = false; // true when the current workout was started by "Workout of the Day"
       var challengeTarget = null; // { score, total, name } when the current workout is an imported challenge
       var lastTimedPracticeDrawCount = 0;
+      var WORKOUT_PROGRESS_KEY = 'se-gym-workout-progress';
+      var WORKOUT_PROGRESS_VERSION = 1;
 
       // Must be initialized BEFORE getRequestedWorkoutEntries() is called below,
       // because that function reads requestedQuestionKeys.length.
@@ -999,6 +1015,33 @@ layout: sebook
           var tmp = arr[i]; arr[i] = arr[j]; arr[j] = tmp;
         }
         return arr;
+      }
+
+      function finiteNumber(value) {
+        return typeof value === 'number' && isFinite(value) ? value : null;
+      }
+
+      function practiceRecencyRank(card, stats) {
+        var key = cardStatsKey(card.cardType, card.deckId, card.data);
+        var record = stats && stats[key];
+        var last = finiteNumber(record && record.last);
+        return last == null ? Number.NEGATIVE_INFINITY : last;
+      }
+
+      function orderCardsByPracticeRecency(cards) {
+        var stats = PersonalGym.isAnalyzePerformance() ? PersonalGym.getStats() : null;
+        return cards.map(function (card) {
+          return {
+            card: card,
+            lastPracticed: practiceRecencyRank(card, stats),
+            tieBreaker: Math.random()
+          };
+        }).sort(function (a, b) {
+          if (a.lastPracticed !== b.lastPracticed) return a.lastPracticed - b.lastPracticed;
+          return a.tieBreaker - b.tieBreaker;
+        }).map(function (entry) {
+          return entry.card;
+        });
       }
 
       function getMaxCardsValue() {
@@ -1485,11 +1528,15 @@ layout: sebook
         lastTimedPracticeDrawCount = drawCount;
         updateTimedPracticeEstimate(drawCount);
         if (hasAnything) {
-          gymSummary.textContent = totalCards + ' total cards available. Will draw ' + drawCount + ' cards.';
+          gymSummary.textContent = totalCards + ' total cards available. Will draw ' + drawCount +
+            (PersonalGym.isAnalyzePerformance()
+              ? ' least-recently practiced cards.'
+              : ' shuffled cards. Turn on Track Performance to rotate by least-recently practiced cards.');
         } else {
           gymSummary.textContent = '';
         }
         setStartButtonsDisabled(!PersonalGym.isPersonalGymActive() || !hasAnything || drawCount === 0);
+        updateSavedWorkoutResume();
       }
 
       // ---- Difficult questions helper ----
@@ -1617,6 +1664,7 @@ layout: sebook
         workoutCardArea.innerHTML = '';
         workoutTotalEl.textContent = workoutCards.length;
         startWorkoutTimer(workoutCards.length);
+        saveWorkoutProgress(0);
         showWorkoutCard(0);
         scrollToTop();
         return true;
@@ -1773,6 +1821,158 @@ layout: sebook
         var cards = [];
         keys.forEach(function (k) { if (byKey[k]) cards.push(byKey[k]); });
         return cards;
+      }
+
+      function integerInRange(value, min, max, fallback) {
+        var num = parseInt(value, 10);
+        if (!isFinite(num)) return fallback;
+        return Math.max(min, Math.min(max, num));
+      }
+
+      function normalizeWorkoutIndices(indices, total) {
+        if (!Array.isArray(indices)) return [];
+        return indices.reduce(function (acc, value) {
+          var index = parseInt(value, 10);
+          if (isFinite(index) && index >= 0 && index < total) acc.push(index);
+          return acc;
+        }, []);
+      }
+
+      function normalizeWorkoutDifficultyStats(value) {
+        var out = {};
+        DIFFICULTY_LEVELS.concat(['untagged']).forEach(function (key) {
+          var bucket = value && value[key] ? value[key] : {};
+          var seen = Math.max(0, parseInt(bucket.seen, 10) || 0);
+          var correct = Math.max(0, Math.min(seen, parseInt(bucket.correct, 10) || 0));
+          out[key] = { seen: seen, correct: correct };
+        });
+        return out;
+      }
+
+      function readWorkoutProgress() {
+        try {
+          var raw = localStorage.getItem(WORKOUT_PROGRESS_KEY);
+          if (!raw) return null;
+          var data = JSON.parse(raw);
+          if (!data || data.type !== WORKOUT_PROGRESS_KEY || data.v !== WORKOUT_PROGRESS_VERSION || !Array.isArray(data.keys)) return null;
+          var keys = data.keys.filter(function (key) { return typeof key === 'string' && key.length > 0; });
+          if (keys.length === 0 || keys.length !== data.keys.length) return null;
+          return {
+            keys: keys,
+            currentStep: integerInRange(data.currentStep, 0, keys.length, 0),
+            score: integerInRange(data.score, 0, keys.length, 0),
+            incorrectIndices: normalizeWorkoutIndices(data.incorrectIndices, keys.length),
+            difficultyStats: normalizeWorkoutDifficultyStats(data.difficultyStats),
+            isDaily: !!data.isDaily,
+            savedAt: parseInt(data.savedAt, 10) || 0
+          };
+        } catch (e) {
+          return null;
+        }
+      }
+
+      function canCheckpointWorkout() {
+        return PersonalGym.isPersonalGymActive() && workoutCards && workoutCards.length > 0 && !workoutIsReview && !challengeTarget;
+      }
+
+      function saveWorkoutProgress(stepOverride) {
+        if (!canCheckpointWorkout()) return;
+        var keys = workoutCards.map(function (card) {
+          return cardStatsKey(card.cardType, card.deckId, card.data);
+        });
+        var step = typeof stepOverride === 'number' ? stepOverride : workoutCurrentStep;
+        var payload = {
+          type: WORKOUT_PROGRESS_KEY,
+          v: WORKOUT_PROGRESS_VERSION,
+          keys: keys,
+          currentStep: integerInRange(step, 0, keys.length, 0),
+          score: integerInRange(workoutScore, 0, keys.length, 0),
+          incorrectIndices: normalizeWorkoutIndices(workoutIncorrectIndices, keys.length),
+          difficultyStats: normalizeWorkoutDifficultyStats(workoutDifficultyStats),
+          isDaily: !!workoutIsDaily,
+          savedAt: Date.now()
+        };
+        try {
+          localStorage.setItem(WORKOUT_PROGRESS_KEY, JSON.stringify(payload));
+        } catch (e) {
+          return;
+        }
+        updateSavedWorkoutResume();
+      }
+
+      function saveAnsweredWorkoutProgress() {
+        if (workoutIsReview) return;
+        saveWorkoutProgress(workoutCurrentStep + 1);
+      }
+
+      function clearWorkoutProgress() {
+        try { localStorage.removeItem(WORKOUT_PROGRESS_KEY); } catch (e) { /* localStorage unavailable */ }
+        updateSavedWorkoutResume();
+      }
+
+      function updateSavedWorkoutResume() {
+        if (!savedWorkoutRow || !savedWorkoutSummary) return;
+        var saved = readWorkoutProgress();
+        if (!saved) {
+          hideElement(savedWorkoutRow);
+          savedWorkoutSummary.textContent = '';
+          return;
+        }
+        var cards = buildCardsFromKeys(saved.keys);
+        if (cards.length !== saved.keys.length) {
+          clearWorkoutProgress();
+          return;
+        }
+        var completed = Math.min(saved.currentStep, saved.keys.length);
+        savedWorkoutSummary.textContent = 'Saved workout: ' + completed + ' of ' + saved.keys.length + ' completed.';
+        showElement(savedWorkoutRow);
+      }
+
+      function resumeSavedWorkout() {
+        var saved = readWorkoutProgress();
+        if (!saved) {
+          clearWorkoutProgress();
+          announceGymStatus('No saved workout is available.');
+          return;
+        }
+        var cards = buildCardsFromKeys(saved.keys);
+        if (cards.length !== saved.keys.length) {
+          clearWorkoutProgress();
+          announceGymStatus('That saved workout is no longer available. Start a new workout instead.');
+          return;
+        }
+
+        workoutCards = cards;
+        workoutCurrentStep = saved.currentStep;
+        workoutScore = saved.score;
+        workoutIncorrectIndices = saved.incorrectIndices;
+        workoutIsReview = false;
+        workoutReviewQueue = [];
+        workoutReviewStep = 0;
+        workoutEndedByTimer = false;
+        workoutIsDaily = saved.isDaily;
+        challengeTarget = null;
+        workoutDifficultyStats = normalizeWorkoutDifficultyStats(saved.difficultyStats);
+
+        hideElement(libraryView);
+        showElement(workoutView);
+        workoutView.classList.remove('workout-results-active');
+        syncWorkoutHeroVisibility();
+        restartWorkoutHeroAnimations();
+        setWorkoutMode(true);
+        hideElement(workoutResults);
+        if (workoutResultShortcutHint) workoutResultShortcutHint.classList.add('hidden');
+        workoutCardArea.innerHTML = '';
+        workoutTotalEl.textContent = workoutCards.length;
+
+        if (workoutCurrentStep >= workoutCards.length) {
+          finishWorkout();
+          return;
+        }
+
+        startWorkoutTimer(workoutCards.length);
+        showWorkoutCard(workoutCurrentStep);
+        scrollToTop();
       }
 
       function importChallenge(file) {
@@ -1933,32 +2133,11 @@ layout: sebook
         if (difficultCards.length === 0) return;
 
         shuffleArray(difficultCards);
-        workoutCards = difficultCards.map(function (dc) {
+        var hardWorkoutCards = difficultCards.map(function (dc) {
           return { cardType: dc.cardType, source: dc.source + ' (Difficult)', deckId: dc.deckId, data: dc.data };
         });
-
-        workoutCurrentStep = 0;
-        workoutScore = 0;
-        workoutIncorrectIndices = [];
-        workoutIsReview = false;
-        workoutReviewQueue = [];
-        workoutReviewStep = 0;
-        workoutEndedByTimer = false;
-        resetDifficultyStats();
-
-        hideElement(libraryView);
-        showElement(workoutView);
-        workoutView.classList.remove('workout-results-active');
-        syncWorkoutHeroVisibility();
-        restartWorkoutHeroAnimations();
-        setWorkoutMode(true);
-        hideElement(workoutResults);
-        workoutCardArea.innerHTML = '';
-
-        workoutTotalEl.textContent = workoutCards.length;
-        startWorkoutTimer(workoutCards.length);
-        showWorkoutCard(0);
-        scrollToTop();
+        challengeTarget = null;
+        beginWorkout(hardWorkoutCards);
       });
 
       // ---- Workout of the Day / Due Review / Topic-Mastery practice / enable tracking ----
@@ -1966,8 +2145,12 @@ layout: sebook
       if (startDailyWorkoutBtn) {
         startDailyWorkoutBtn.addEventListener('click', function () {
           saveTimedPracticeSettingsFromInputs();
+          challengeTarget = null;
           // beginWorkout() resets workoutIsDaily, so flag this workout AFTER it starts.
-          if (beginWorkout(buildDailyWorkout())) workoutIsDaily = true;
+          if (beginWorkout(buildDailyWorkout())) {
+            workoutIsDaily = true;
+            saveWorkoutProgress(0);
+          }
           else announceGymStatus('No cards available for today’s workout. Add a quiz or flashcard set, or widen your difficulty filter.');
         });
       }
@@ -1976,6 +2159,7 @@ layout: sebook
       if (startReviewBtn) {
         startReviewBtn.addEventListener('click', function () {
           saveTimedPracticeSettingsFromInputs();
+          challengeTarget = null;
           var active = PersonalGym.getActiveDifficulties();
           var due = getDueCards().filter(function (dc) {
             return cardPassesDifficultyFilter(dc.data, active);
@@ -2017,13 +2201,14 @@ layout: sebook
 
       // ---- Empty Gym Button ----
       document.getElementById('empty-gym-btn').addEventListener('click', function () {
-        confirmGymAction(
-          'Empty your gym? This removes all saved quizzes and flashcard sets and cannot be undone.',
-          function () {
-            PersonalGym.clearGym();
-            refreshLibrary();
-          },
-          null
+          confirmGymAction(
+            'Empty your gym? This removes all saved quizzes and flashcard sets and cannot be undone.',
+            function () {
+              PersonalGym.clearGym();
+              clearWorkoutProgress();
+              refreshLibrary();
+            },
+            null
         );
       });
 
@@ -2061,6 +2246,7 @@ layout: sebook
             function () {
               PersonalGym.setPersonalGymActive(false);
               PersonalGym.clearGym();
+              clearWorkoutProgress();
               applyActiveState(false);
               refreshLibrary();
             },
@@ -2236,7 +2422,7 @@ layout: sebook
           }
         });
 
-        shuffleArray(cards);
+        cards = orderCardsByPracticeRecency(cards);
 
         var maxCards = getMaxCardsValue();
         if (!hasSelection && cards.length > maxCards) {
@@ -2251,6 +2437,7 @@ layout: sebook
         var requireActive = !(options && options.requireActive === false);
         if (requireActive && !PersonalGym.isPersonalGymActive()) return;
         saveTimedPracticeSettingsFromInputs();
+        challengeTarget = null;
         beginWorkout(buildWorkoutCards(sourceGym));
       }
 
@@ -2556,6 +2743,7 @@ layout: sebook
               }
               recordDifficultyResult(card, isCorrect);
               PersonalGym.recordResult(cardStatsKey(card.cardType, card.deckId, q), isCorrect);
+              saveAnsweredWorkoutProgress();
               var shortcutHint = div.querySelector('.quiz-shortcuts-hint');
               if (shortcutHint) shortcutHint.classList.add('hidden');
               correctAnswersEl.style.display = 'flex';
@@ -2611,6 +2799,7 @@ layout: sebook
             }
             recordDifficultyResult(card, isMultiCorrect);
             PersonalGym.recordResult(cardStatsKey(card.cardType, card.deckId, q), isMultiCorrect);
+            saveAnsweredWorkoutProgress();
             var shortcutHint = div.querySelector('.quiz-shortcuts-hint');
             if (shortcutHint) shortcutHint.classList.add('hidden');
             correctAnswersEl.style.display = 'flex';
@@ -2798,6 +2987,7 @@ layout: sebook
 
           recordDifficultyResult(card, isCorrect);
           PersonalGym.recordResult(cardStatsKey(card.cardType, card.deckId, q), isCorrect);
+          saveAnsweredWorkoutProgress();
           var ca = div.querySelector('.quiz-correct-answers');
           var exp = div.querySelector('.quiz-explanation');
           if (ca) ca.style.display = 'flex';
@@ -2921,6 +3111,7 @@ layout: sebook
           if (typeof window.spawnConfettiIfMore === 'function') window.spawnConfettiIfMore(correctBtn);
           recordDifficultyResult(card, true);
           PersonalGym.recordResult(cardStatsKey(card.cardType, card.deckId, c), true);
+          saveAnsweredWorkoutProgress();
           nextWorkoutCard();
         });
 
@@ -2928,6 +3119,7 @@ layout: sebook
           workoutIncorrectIndices.push(workoutIsReview ? workoutReviewQueue[workoutReviewStep] : workoutCurrentStep);
           recordDifficultyResult(card, false);
           PersonalGym.recordResult(cardStatsKey(card.cardType, card.deckId, c), false);
+          saveAnsweredWorkoutProgress();
           nextWorkoutCard();
         });
         div.addEventListener('keydown', function (e) {
@@ -3022,6 +3214,7 @@ layout: sebook
 
       function finishWorkout() {
         stopWorkoutTimer(true);
+        clearWorkoutProgress();
         workoutCardArea.innerHTML = '';
         workoutView.classList.add('workout-results-active');
         showElement(workoutResults);
@@ -3148,6 +3341,7 @@ layout: sebook
         hideElement(workoutResults);
         if (workoutResultShortcutHint) workoutResultShortcutHint.classList.add('hidden');
         startWorkoutTimer(workoutCards.length);
+        saveWorkoutProgress(0);
         showWorkoutCard(0);
         scrollToTop();
       }
@@ -3178,6 +3372,14 @@ layout: sebook
       startButtons.forEach(function (button) {
         button.addEventListener('click', startWorkout);
       });
+      if (resumeWorkoutBtn) resumeWorkoutBtn.addEventListener('click', resumeSavedWorkout);
+      if (discardWorkoutBtn) {
+        discardWorkoutBtn.addEventListener('click', function () {
+          clearWorkoutProgress();
+          announceGymStatus('Saved workout discarded.');
+          focusWorkoutAction(startButtons[0]);
+        });
+      }
       backBtn.addEventListener('click', goBackToLibrary);
       workoutRestartBtn.addEventListener('click', restartWorkout);
       workoutReviewBtn.addEventListener('click', startReview);

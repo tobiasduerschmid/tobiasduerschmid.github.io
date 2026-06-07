@@ -1,0 +1,139 @@
+title: "People and Process Tailoring Quiz"
+description: "Practice choosing process weight, design timing, and human decision practices for realistic software domains."
+active: true
+questions:
+  - id: 1
+    difficulty: advanced
+    bloom: evaluate
+    type: single
+    question: |
+      A team is building control software for a medication dosing pump. A software fault could harm patients, the product must satisfy regulatory evidence requirements, and updates after certification are costly. Which process choice best fits?
+    options:
+      - "Use a plan-driven, risk-driven process with documented design and rigorous verification."
+      - "Use pure Scrum with no upfront design so feedback can reshape every safety decision."
+      - "Use a startup-style MVP process and fix design debt after the first hospital pilot."
+      - "Use only code review because working software is the primary measure of progress."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Short feedback loops can still help, but safety-critical decisions need evidence before release. Treating every safety decision as freely changeable ignores certification and failure cost.
+      2: |
+        MVP logic fits market uncertainty better than patient-safety risk. Shortcuts that are acceptable for discovery software can be unacceptable in certified medical devices.
+      3: |
+        Code review is useful, but it is not enough evidence for high-consequence safety decisions. The process needs design records, verification, and traceability.
+    explanation: "High failure cost, regulation, and expensive post-release change push the process toward more upfront design, documented rationale, and rigorous verification. Agile feedback can still appear in prototypes or internal iterations, but it cannot replace evidence for safety-critical decisions."
+
+  - id: 2
+    difficulty: intermediate
+    bloom: apply
+    type: multiple
+    question: |
+      Which decisions are strong candidates for upfront risk-driven design? Select all that apply.
+    options:
+      - "Choosing the public API between two teams."
+      - "Choosing the persistent data model."
+      - "Choosing the target deployment platform."
+      - "Choosing the name of a private helper function."
+      - "Choosing the exact text of an internal debug log."
+    correct_indices: [0, 1, 2]
+    option_feedback:
+      0: |
+        Public APIs are hard to change because other teams and components build against them.
+      1: |
+        Persistent data models are hard to change because existing data, migrations, queries, and tests depend on them.
+      2: |
+        Deployment platforms shape tooling, operations, performance assumptions, and integration constraints.
+      3: |
+        A private helper name is usually easy to rename if it is local to one module.
+      4: |
+        Internal debug text is usually cheap to change unless external tooling or users depend on its exact format.
+    explanation: "Risk-driven design focuses early attention on decisions that create many dependencies or become costly to reverse. Local naming and internal log wording are usually better deferred until code context makes them clearer."
+
+  - id: 3
+    difficulty: intermediate
+    bloom: analyze
+    type: single
+    question: |
+      A senior architect writes a detailed design alone, never checks the current codebase, and gives the team a finished plan to implement. The design is elegant, but developers immediately find that several assumptions are false. What is the best diagnosis?
+    options:
+      - "Ivory tower design: the process excluded the people with implementation and domain knowledge."
+      - "Healthy plan-driven design: a single architect should prevent group disagreement."
+      - "Agile design: developers can simply adapt the plan during the sprint."
+      - "Bounded rationality: the only fix is to remove architects from the process."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Plan-driven work still needs input from implementers, domain experts, and evidence from the existing system. Centralizing all judgment in one person creates avoidable blind spots.
+      2: |
+        Adaptation helps, but calling this Agile hides the core failure: the design was produced without the feedback loop that would have made it realistic.
+      3: |
+        Bounded rationality means human judgment has limits. The fix is better collaboration and evidence, not eliminating architecture work.
+    explanation: "Software construction is collaborative because key knowledge is distributed. A design process should include affected developers and domain experts before decisions are treated as settled."
+
+  - id: 4
+    difficulty: advanced
+    bloom: evaluate
+    type: single
+    question: |
+      An experienced engineer has a strong gut feeling about the right storage architecture. The choice will shape several teams for the next year. What should the team do?
+    options:
+      - "Use the intuition as a candidate, then write down alternatives, trade-offs, and risks."
+      - "Accept the intuition immediately because experienced engineers are usually right."
+      - "Ignore the intuition because only fully rational decisions are professional."
+      - "Postpone all discussion until after implementation reveals whether it worked."
+    correct_index: 0
+    option_feedback:
+      1: |
+        Expert intuition can be valuable, but a hard-to-reverse decision needs communicable rationale and review.
+      2: |
+        Pure analysis can miss useful pattern recognition from experience. The better move is to make the intuition inspectable.
+      3: |
+        Waiting until after implementation can make the storage decision expensive to reverse. The point of upfront review is to reduce that risk before commitment.
+    explanation: "Combine intuitive and rational decision-making. Intuition can generate a promising option quickly; explicit rationale lets the team inspect assumptions before a long-lived design choice becomes expensive."
+
+  - id: 5
+    difficulty: intermediate
+    bloom: apply
+    type: multiple
+    question: |
+      A CS 35L project team wants a lightweight process for the next milestone. Which actions fit the chapter's guidance? Select all that apply.
+    options:
+      - "Keep a feature backlog and a technical debt backlog."
+      - "Write a short design note before changing the data model."
+      - "Invite the teammate implementing the API into the design discussion."
+      - "Freeze all requirements now so the team never has to revisit a plan."
+      - "Delay every refactoring until after the final demo."
+    correct_indices: [0, 1, 2]
+    option_feedback:
+      0: |
+        Separating feature work from design debt makes future-change costs visible during planning.
+      1: |
+        A data model is hard to reverse once code and stored data depend on it, so a short design note is appropriate.
+      2: |
+        The implementer has context about feasibility, integration costs, and edge cases that the design needs.
+      3: |
+        Freezing requirements removes the feedback loop that lightweight agile process is meant to preserve.
+      4: |
+        Some refactoring can wait, but delaying all design cleanup until the end lets debt compound until it is too expensive to address.
+    explanation: "A small course team does not need a heavy architecture process. It does need shared backlogs, short rationale for hard-to-reverse decisions, and collaboration before implementation locks in a choice."
+
+  - id: 6
+    difficulty: advanced
+    bloom: analyze
+    type: single
+    question: |
+      A startup shipped an MVP quickly by reusing libraries and taking shortcuts. It now has paying customers, two new engineers, and a system that is getting slower to change. What process adjustment fits best?
+    options:
+      - "Keep the process lean, but pay down selected debt and clarify architecture."
+      - "Rewrite the whole system from scratch before adding any new features."
+      - "Ignore design debt because shortcuts were appropriate before the MVP."
+      - "Switch to a heavyweight plan-driven process for every future change."
+    correct_index: 0
+    option_feedback:
+      1: |
+        A rewrite may be necessary in rare cases, but it is often another high-risk bet. Start by identifying the debt that blocks current growth.
+      2: |
+        Shortcuts can be appropriate early and harmful later. Once the risk profile changes, the process has to change with it.
+      3: |
+        More discipline is needed, but making every change heavyweight would likely destroy the speed that still matters to the startup.
+    explanation: "Process fit changes over time. Before product-market evidence, speed may dominate. After the product starts growing, onboarding, extensibility, scalability, and reliability become stronger reasons to pay down targeted debt."
