@@ -5,7 +5,7 @@ cards:
   - id: 1
     difficulty: basic
     question: "What **four problems** does a DBMS solve that an application manipulating its own files does not solve by itself?"
-    answer: "(1) **Partial writes** on crash. (2) **Concurrent access** — two writers corrupting each other. (3) **Hardware loss** — disk failure destroying the only copy. (4) **Scale** — slow linear scans over growing data. A DBMS solves each of these *once* instead of re-solving them in every application."
+    answer: "(1) **Partial writes** on crash. (2) **Concurrent access** — two writers corrupting each other. (3) **Hardware loss** — disk failure destroying the only copy. (4) **Slow reads and queries** — indexing and query optimization keep access fast as data grows. A DBMS solves each of these *once* instead of re-solving them in every application."
     explanation: "Keep this list ready. Almost every feature a DBMS offers (transactions, locking, replication, indexes, query optimization) maps to one of these four motivations."
 
   - id: 2
@@ -81,7 +81,7 @@ cards:
     explanation: "CAP-C is a property of *the global view across replicas*. ACID-C is a property of *the schema and constraints*. They share a name but not a meaning."
 
   - id: 16
-    difficulty: intermediate
+    difficulty: advanced
     question: "State the **CAP theorem** precisely (not the 'pick 2 out of 3' slogan)."
     answer: "**When a network partition occurs** in a distributed system, the system must sacrifice either **Consistency** or **Availability** — it cannot keep both. Networks do partition in practice, so `P` is effectively mandatory, and the real operational choice is **CP** (refuse requests during a partition to stay correct) vs. **AP** (keep serving, accept staleness)."
     explanation: "The 'pick 2' slogan is memorable but misleading: C and A are only in tension *during* a partition."
@@ -93,7 +93,7 @@ cards:
     explanation: "CP = correctness over uptime; AP = uptime over correctness. Both are defensible choices — the right one depends on what the application can tolerate."
 
   - id: 18
-    difficulty: intermediate
+    difficulty: advanced
     question: "What is **eventual consistency**, and with which CAP choice is it typically paired?"
     answer: "**Eventual consistency** guarantees that *if no new writes occur, all replicas will eventually converge to the same state* — but gives no bound on when. It is the typical consistency model of **AP** systems: during a partition, replicas diverge; after the partition heals, they reconcile."
     explanation: "Many AP systems pair eventual consistency with *conflict resolution rules* — last-writer-wins, vector clocks, CRDTs — that determine how divergent replicas reconverge."
@@ -123,7 +123,7 @@ cards:
     explanation: "The 'No' is *architectural*, not *lexical*. Read it as 'non-relational', not 'anti-SQL'."
 
   - id: 23
-    difficulty: intermediate
+    difficulty: basic
     question: "Sweet spot of **RDBMS** vs. sweet spot of **NoSQL** — state each in one sentence."
     answer: "**RDBMS**: well-structured data with cross-row invariants, where multi-row ACID transactions, referential integrity, and joins matter (finance, bookings, inventory of record). **NoSQL**: large, loosely-structured data where flexible schemas, horizontal scale, and availability matter more than strict consistency and transactional joins (feeds, catalogs, logs, caches)."
     explanation: "Most real production systems use *both*: a relational store for the transactional core, and a NoSQL store for high-volume side paths (search indices, caches, user-generated content)."

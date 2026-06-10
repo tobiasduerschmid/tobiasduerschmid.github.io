@@ -15,7 +15,7 @@ cards:
     explanation: "The choice of test double follows from which direction matters: control indirect inputs with a **Stub**; observe indirect outputs with a **Spy** or **Mock**. Tests that try to do both with one double are often the ones that feel tangled — separate the concerns and the test usually clarifies."
 
   - id: 3
-    difficulty: basic
+    difficulty: intermediate
     question: "Name all five kinds of test double in the standard taxonomy and what each one is for."
     answer: "**Dummy** — fills a parameter, never used. **Fake** — working implementation with shortcuts (in-memory DB). **Stub** — returns canned values. **Spy** — records calls for after-the-fact assertion. **Mock** — pre-programmed expectations, fails *during* execution."
     explanation: "The five live on two axes: which direction of data flow they control (input vs output) and when verification happens (after vs during). Knowing the full taxonomy keeps you from reaching for a Mock when a Stub or Spy is closer to what you actually need."
@@ -33,7 +33,7 @@ cards:
     explanation: "Spy-based tests put assertions in the test method, so the reader sees what is verified next to the act step; Mock-based tests push expectations into setup. Spies are friendlier when you can't predict all attributes of the interaction up front; mocks fail faster, at the call site, when you can specify the contract precisely."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: advanced
     question: "What is a **Fake**? Canonical example? How is it different from a Stub?"
     answer: "A **Fake** is a *working* alternative implementation with shortcuts unsuitable for production (e.g. in-memory DB satisfying the real interface). A **Stub** returns canned values for specific calls; a Fake actually implements the behavior."
     explanation: "Fakes are ideal when you want realistic behavior at high speed — write a row, read it back, query by index — without standing up the real dependency. They cost more to build but pay back across many tests. Stubs are cheap and case-specific; Fakes are richer and scenario-general."
@@ -51,7 +51,7 @@ cards:
     explanation: "Procedural verification with a Spy is well suited when you cannot predict all attributes of the interactions up front or when assertions need richer logic (grouping, sorting, set comparisons). The cost is that errors are detected at assertion time, not the moment they happen — but you trade that for flexibility the Mock model lacks."
 
   - id: 9
-    difficulty: intermediate
+    difficulty: advanced
     question: "Pick a double for: *'My SUT's constructor requires a `loader`, but this behavior never calls `loader.load_config()`.'*"
     answer: "A **Dummy** suffices — the loader satisfies the signature but is never used in this path. If the SUT *does* read fields from `loader.load_config()`, escalate to a **Stub** returning a specific config."
     explanation: "Reaching for a Mock or Spy here would over-specify the test. The minimum-viable-double rule says pick the simplest double that lets the test do its job — a Dummy exists only to satisfy the signature, and anything heavier is extra coupling for no benefit."
@@ -116,7 +116,7 @@ cards:
     explanation: "Every Fake is a *promise* that it behaves enough like the real collaborator, and that promise can break silently. A contract test captures the behavioral expectations once and runs against both implementations, so the Fake keeps its speed while drift becomes visible the moment one side changes."
 
   - id: 16
-    difficulty: intermediate
+    difficulty: advanced
     question: |
       Diagnose the test smell:
 

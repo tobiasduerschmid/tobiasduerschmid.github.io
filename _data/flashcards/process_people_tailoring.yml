@@ -12,7 +12,7 @@ cards:
   - id: 2
     difficulty: basic
     bloom: remember
-    question: "Name four kinds of software decisions that are often hard to change."
+    question: "Name some kinds of software decisions that are often hard to change."
     answer: "Programming language, target platform, component architecture, public interfaces, data models, and quality-attribute strategies are common hard-to-change decisions."
     explanation: "These decisions tend to affect many later choices, so the cost of changing them rises quickly."
 
@@ -24,7 +24,7 @@ cards:
     explanation: "Agility depends on changeability. Architecture is one way to preserve changeability."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     bloom: apply
     question: "What belongs in a **technical debt backlog**?"
     answer: "Refactorings, design cleanups, documentation gaps, testability improvements, performance experiments, and architecture work that makes future changes cheaper."
@@ -59,14 +59,14 @@ cards:
     explanation: "A process that assumes perfect planning will fail when human limits and changing evidence appear."
 
   - id: 9
-    difficulty: advanced
+    difficulty: intermediate
     bloom: evaluate
     question: "Why might a web social product need less upfront design than spacecraft software?"
     answer: "A web product can usually release, observe usage, roll back, and iterate quickly. Spacecraft software has high failure cost, limited post-launch updates, and strong verification requirements, so more upfront design and formal review are justified."
     explanation: "The process changes because the economics of feedback and failure change."
 
   - id: 10
-    difficulty: advanced
+    difficulty: intermediate
     bloom: apply
     question: "What is a good process rule for a CS 35L project team?"
     answer: "Use a lightweight agile process, but write short design notes for hard-to-reverse boundaries such as APIs, data models, storage formats, concurrency models, and deployment assumptions."

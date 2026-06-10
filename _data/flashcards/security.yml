@@ -27,7 +27,7 @@ cards:
     explanation: "Every web vulnerability whose name contains 'injection' (SQL injection, command injection, LDAP injection, NoSQL injection) shares this same root cause."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: advanced
     question: "What is the **standard fix** for SQL injection, and *why* does it work?"
     answer: "Use **parameterized queries / prepared statements**: write the SQL with placeholders (`?`, `@0`, `$1`, …) and pass the values as separate arguments to the database driver. This works because the database **parses the SQL once with the placeholders in place** before the values are ever attached, so the values cannot grow new SQL syntax — they are bound into an already-parsed query plan as pure data."
     explanation: "Manual escaping is a fragile, error-prone alternative — it loses to subtleties of every database's quoting rules and to Unicode normalization tricks. Don't roll your own escaping."
@@ -45,7 +45,7 @@ cards:
     explanation: "SQLi: code-vs-data confusion in the database. XSS: code-vs-data confusion in the browser. Same underlying shape, different victim, different defenses."
 
   - id: 8
-    difficulty: intermediate
+    difficulty: advanced
     question: "What are the main **defenses against XSS**?"
     answer: "(1) **Output encoding** — escape HTML metacharacters (`<` → `&lt;`, `>` → `&gt;`, `\"` → `&quot;`, `&` → `&amp;`) when rendering user content. Modern templating engines (React JSX, Vue `{{ }}`, Django, Jinja2) escape by default. (2) **Content Security Policy (CSP)** — an HTTP header that restricts which script sources the browser will execute, defending in depth even if encoding fails. (3) **`HttpOnly` cookies** for session tokens — so a successful XSS cannot directly read the token."
     explanation: "Escaping is the foundation; CSP and `HttpOnly` are layers on top. Most XSS bugs in the wild come from explicitly *bypassing* the templating engine's default escaping (`dangerouslySetInnerHTML`, `mark_safe`, `|safe`, `v-html`)."
@@ -81,13 +81,13 @@ cards:
     explanation: "Signatures provide *integrity and authenticity* — they do **not** provide confidentiality (the document is sent in the clear next to its signature). For both confidentiality and authenticity, encrypt-then-sign or sign-then-encrypt — there are subtle ordering issues; libraries like `libsodium` handle this for you."
 
   - id: 14
-    difficulty: advanced
+    difficulty: intermediate
     question: "**Why** do digital signature schemes hash the document first, instead of encrypting the whole document with the private key?"
     answer: "**Performance.** Public-key operations are roughly three orders of magnitude slower per byte than a fast hash like SHA-256. Hashing reduces every document — regardless of size — to a fixed-length digest (32 bytes for SHA-256), so the slow public-key operation runs over those 32 bytes instead of the whole document. The hash's collision-resistance also means an attacker cannot construct a *different* document with the same hash and therefore the same signature."
     explanation: "Without hashing, signing a 1 GB file would require running RSA over a gigabyte of data. With hashing, RSA still runs over 32 bytes — independent of the file's size."
 
   - id: 15
-    difficulty: intermediate
+    difficulty: basic
     question: "**Why is sending the username and password on every request** a bad authentication design?"
     answer: "(1) **Slow** — the server must verify the password (with a deliberately slow hash like bcrypt or Argon2) on every request, adding tens of milliseconds of CPU per call. (2) **Insecure** — the cleartext password lives in the client's memory for the lifetime of the session and crosses the network on every request, multiplying the chances of leaking via a log file, debug trace, or proxy header."
     explanation: "The standard fix is to authenticate *once* with username and password and then issue a short-lived token (session ID or JWT) that rides on subsequent requests. The expensive password check happens once; the cheap token check happens on every call."
@@ -129,7 +129,7 @@ cards:
     explanation: "Obscurity is not useless; it is just not a foundation. Hiding your specific framework versions and config (*complementary obscurity*) is reasonable defense-in-depth on top of strong open mechanisms — never instead of them."
 
   - id: 22
-    difficulty: advanced
+    difficulty: intermediate
     question: "When should you apply **public scrutiny** vs. **complementary obscurity**?"
     answer: "**Public scrutiny** when proposing a *new* security approach or algorithm — expose the design to the security community so weaknesses are found before attackers exploit them. **Complementary obscurity** when *deploying* an existing, well-scrutinized technology in a real product — hide implementation specifics (framework versions, configuration, internal endpoints) to slow down opportunistic attackers who look for known vulnerabilities. The two apply to different layers and are not contradictory."
     explanation: "AES, RSA, and TLS are all openly published — they had to be, to earn trust. But you should not advertise that your production server runs Apache 2.4.49 with a particular CVE outstanding."
@@ -147,7 +147,7 @@ cards:
     explanation: "Walk these four for any system you build or inherit. A defense built without a matching threat model fails — the foil-cover-on-an-emergency-phone is the canonical example."
 
   - id: 25
-    difficulty: advanced
+    difficulty: intermediate
     question: "What four dimensions does a useful **threat model** describe?"
     answer: "(1) **Knowledge** — what does the attacker already know? (Public docs only? Stolen source code? Insider with credentials?) (2) **Actions** — what can they actually *do*? (Send web requests? Run code on a guest VM? Tap the network?) (3) **Resources** — how much time, money, and infrastructure can they spend? (Bored teenager? Criminal cartel? Nation-state?) (4) **Incentive** — *why* do they want to compromise the system? (Financial gain? Espionage? Vandalism?)"
     explanation: "Different threat models warrant different defenses. A consumer mobile app and a defense contractor's collaboration tool may use the same primitives (TLS, auth, encryption at rest) but the *strength* and *layering* differ by orders of magnitude."

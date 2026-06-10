@@ -46,7 +46,7 @@ questions:
     explanation: "In an interactive camera feed a re-sent frame arrives too late to be useful. A dropped UDP packet is a tiny, often imperceptible glitch — the next frame lands within milliseconds — whereas TCP's retransmission can *pause the stream* to redeliver a moment that has already passed, exactly when the homeowner needs the present view. This is why low-latency interactive video commonly uses UDP-based media protocols like RTP/WebRTC; buffered broadcast streaming is a different trade-off that may use HTTP-based delivery."
 
   - id: 3
-    difficulty: advanced
+    difficulty: intermediate
     question: "An indie team is building an **online multiplayer racing game**. Each player's car position and speed update **60 times per second** so all players see each other accurately on the track. The game also records **lap completion events**, awards **podium finishes**, and lets players spend earned currency on **car cosmetic upgrades** that persist between matches. What transport-protocol strategy fits best?"
     options:
       - "TCP for everything — losing a single position update would cause cars to teleport on screen."
@@ -173,7 +173,7 @@ questions:
     explanation: "Polling is just a frequency choice within client-server: the phone (client) initiates each request and the central hub (server) responds. The 5-second interval changes only *how often* requests happen, not who initiates them or where the authoritative state lives. The same shape underlies most dashboard-style apps that poll a backend for fresh data."
 
   - id: 9
-    difficulty: advanced
+    difficulty: intermediate
     type: multiple
     question: "For which of the following would **TCP** be the better choice over UDP? (Select all that apply)"
     options:

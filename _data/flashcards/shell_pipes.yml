@@ -9,19 +9,19 @@ cards:
     explanation: "`grep` filters and prints only the matching lines; `wc -l` counts them. Without the pipe you would have to save a temp file and count it separately."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: advanced
     question: "You have a file `names.txt` with one name per line. Print only the unique names, sorted alphabetically."
     answer: "`sort names.txt | uniq`"
     explanation: "`uniq` only removes *adjacent* duplicates, so `sort` must come first to bring duplicates together. Then `uniq` collapses consecutive identical lines into one."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: advanced
     question: "You have a file `names.txt` with one name per line. Print each unique name alongside a count of how many times it appears."
     answer: "`sort names.txt | uniq -c`"
     explanation: "`sort` brings duplicates together so they are adjacent; `uniq -c` then collapses consecutive identical lines into one and prefixes each with its count."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: advanced
     question: "List all running processes and show only those belonging to user `tobias`."
     answer: "`ps aux | grep tobias`"
     explanation: "`ps aux` prints every running process with its owner; piping to `grep tobias` filters to lines that contain that username."
@@ -33,7 +33,7 @@ cards:
     explanation: "`head -3` keeps only the first three lines; `tail -1` then takes the very last of those — which is line 3 of the original file."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: advanced
     question: "List the 5 largest files in the current directory, with the biggest first, showing only their names."
     answer: "`ls -S | head -5`"
     explanation: "`ls -S` sorts directory entries by file size (largest first); `head -5` keeps only the first 5 lines of that output."
@@ -51,13 +51,13 @@ cards:
     explanation: "`grep` filters to matching lines; `sort` brings identical lines together; `uniq` collapses consecutive duplicates into one — a classic 3-step de-duplication pipeline."
 
   - id: 9
-    difficulty: advanced
+    difficulty: intermediate
     question: "Count the total number of files (not directories) inside the current directory tree."
     answer: "`find . -type f | wc -l`"
     explanation: "`find . -type f` recursively lists every regular file, one per line; `wc -l` counts those lines."
 
   - id: 10
-    difficulty: intermediate
+    difficulty: advanced
     question: "Show the 10 most recently modified files in the current directory, newest first."
     answer: "`ls -t | head -10`"
     explanation: "`ls -t` sorts directory entries by modification time (newest first); `head -10` keeps only the first 10 lines of that output."
@@ -81,7 +81,7 @@ cards:
     explanation: "The `-v` flag inverts the match — `grep` prints every line that does *not* match the pattern. No pipe is needed here, but `grep -v ... | ...` is a common pipeline building block."
 
   - id: 14
-    difficulty: advanced
+    difficulty: expert
     question: "You have two files, `file1.txt` and `file2.txt`. Print all lines from both files that contain the word 'success', sorted alphabetically with duplicates removed."
     answer: "`grep -h 'success' file1.txt file2.txt | sort | uniq`"
     explanation: "`grep` can take multiple file arguments and searches all of them. By default it prefixes each match with the filename (`file1.txt:success!`), which would defeat `uniq` — identical match lines from different files would compare as different strings. The `-h` flag suppresses the filename prefix so `sort | uniq` can dedupe by content."

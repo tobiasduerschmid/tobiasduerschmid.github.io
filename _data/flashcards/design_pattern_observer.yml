@@ -8,12 +8,12 @@ cards:
     answer: "Maintaining a one-to-many dependency between objects efficiently and without tight coupling—when one object changes state, all dependents are notified automatically."
     explanation: "The Subject maintains a dynamic list of Observers and notifies them via `update()`. This avoids polling and avoids hardcoding the subject to specific dependents."
   - id: 2
-    difficulty: intermediate
+    difficulty: advanced
     question: "Push vs. Pull model in Observer: which has tighter coupling?"
     answer: "The **Pull model**, because observers must hold a reference back to the subject and know its interface well enough to query for specific data."
     explanation: "Push: subject sends all data. Pull: subject sends minimal notification, observers query. A hybrid approach (push the event type, observers decide whether to pull) is most common in practice."
   - id: 3
-    difficulty: intermediate
+    difficulty: advanced
     question: "What is the **lapsed listener problem**?"
     answer: "A memory leak where observers register with a subject but are never unsubscribed, causing the subject's reference to keep them alive in memory."
     explanation: "Solutions: explicit unsubscribe (disciplined but error-prone), weak references (language-dependent), or scoped subscriptions tied to lifecycle management."

@@ -24,7 +24,7 @@ questions:
     explanation: "A code smell is a warning sign. The code may run correctly today while still being expensive and risky to change tomorrow."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: advanced
     bloom: analyze
     type: single
     question: |
@@ -45,7 +45,7 @@ questions:
     explanation: "Divergent Change means one module changes in different ways for different reasons. The usual response is to split responsibilities along real change axes."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: advanced
     bloom: analyze
     type: single
     question: |
@@ -66,13 +66,13 @@ questions:
     explanation: "Shotgun Surgery makes a single conceptual change behave like a hunt across the codebase. The design should consolidate the tax-rule responsibility."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: advanced
     bloom: apply
     type: single
     question: |
       Multiple functions accept `street`, `city`, `state`, `zip`, and `country` in that order. Bugs often happen when two adjacent strings are swapped. What is the best smell diagnosis and refactoring response?
     options:
-      - "Data Clumps -> Introduce an `Address` object."
+      - "Data Clumps -> Introduce an Address object."
       - "Feature Envy -> Move all functions into the caller."
       - "Duplicated Code -> Delete every repeated parameter."
       - "Large Class -> Merge the functions into one class."
@@ -87,13 +87,13 @@ questions:
     explanation: "A repeated group of related primitives is a Data Clump. A named object reduces call-site mistakes and gives the concept a stable home."
 
   - id: 5
-    difficulty: advanced
+    difficulty: expert
     bloom: analyze
     type: multiple
     question: |
       A method in `InvoicePrinter` repeatedly calls `invoice.getCustomer().getAddress().getZipCode()` and `invoice.getCustomer().getDiscountTier()` to decide billing rules. Which concerns are plausible? Select all that apply.
     options:
-      - "Feature Envy: the method may belong closer to `Invoice` or `Customer` data."
+      - "Feature Envy: the method may belong closer to Invoice or Customer data."
       - "Inappropriate Intimacy or excessive coupling: the printer knows too much about nested object structure."
       - "A possible Hide Delegate refactoring could reduce client navigation through object chains."
       - "No smell is possible because getters preserve encapsulation automatically."

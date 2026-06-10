@@ -21,25 +21,25 @@ cards:
     explanation: "The distinction matters because external reuse must treat the module as a partially-known black box that can change, disappear, or even be weaponized — while internal reuse usually has access to the original author, source, and tests."
 
   - id: 4
-    difficulty: advanced
+    difficulty: intermediate
     question: "What does Garlan's *Architectural Mismatch* say about reuse?"
     answer: "Real-world modules are **only partially compatible**. They make countless undocumented assumptions about threading, ownership, lifecycle, and error handling, so integrating them requires substantial **glue code**. The vision of snap-together components is closer to an aspiration than a reality."
     explanation: "A later retrospective is a sobering update: more than a decade on, the same mismatches still dominate the cost of integration. This is the reality side of the *vision vs. reality* framing."
 
   - id: 5
     difficulty: basic
-    question: "What does **Design Principle 1: Keep Versions of Your Dependencies Fixed** mean, and how do you do it?"
+    question: "What does the design principle **Keep Versions of Your Dependencies Fixed** mean, and how do you do it?"
     answer: "Pin every dependency (direct *and* transitive) to specific versions so that a clean install at any point in the future resolves identically. Tools: Pipenv `Pipfile.lock`, npm `package-lock.json`, pnpm/yarn lockfiles, Maven `pom.xml`, Cargo `Cargo.lock`."
     explanation: "Defense against silent upstream drift. The `urllib3` 2.0.0 → `requests` → `docker` incident dramatized this: a transitive major-version release broke unrelated, untouched projects overnight."
 
   - id: 6
     difficulty: advanced
-    question: "How does **Design Principle 2 (update for security patches)** interact with Principle 1 (pin versions)? Aren't they in tension?"
-    answer: "They are complementary. Pin so that updates happen **intentionally**, not by accident — but actively update on your own cadence so you receive security fixes and bug fixes. Without Principle 1 your build breaks at random. Without Principle 2 you become Heartbleed."
+    question: "How does the principle **Update Your Dependencies** (for security patches) interact with **Keep Versions Fixed** (pinning)? Aren't they in tension?"
+    answer: "They are complementary. Pin so that updates happen **intentionally**, not by accident — but actively update on your own cadence so you receive security fixes and bug fixes. Without pinning your build breaks at random. Without updating you become Heartbleed."
     explanation: "Heartbleed (CVE-2014-0160) shipped in OpenSSL 1.0.1 in March 2012 and was patched April 7, 2014, but ~91,000 internet-connected devices were still unpatched five years later. Inheriting bug-fix infrastructure only pays out if you actually pull in the fixes."
 
   - id: 7
-    difficulty: intermediate
+    difficulty: basic
     question: "What is the lesson of the `left-pad` incident (March 2016)?"
     answer: "**Strive for fewer package dependencies.** Trivial code (11 lines, prepends characters to a string) from an unreliable source can introduce huge supply-chain risk if you and your transitive consumers depend on it. When the author unpublished `left-pad`, build pipelines across the JavaScript ecosystem broke until npm took the unprecedented step of un-unpublishing it."
     explanation: "Each new dependency is a risk: it can break, stop being maintained, be abandoned, be unpublished, or be silently weaponized (cf. the 2018 *eslint-scope* malicious-package incident). Reimplementing a few lines is often cheaper over the long run than carrying the dependency."
@@ -57,14 +57,14 @@ cards:
     explanation: "The chapter frames the decision as a literal scale — list both sides and weigh. The 'limits on changeability' cost is the sneaky one: a small piece of glue is easy to leave; a whole application built on a framework's worldview is not."
 
   - id: 10
-    difficulty: advanced
+    difficulty: intermediate
     question: "Why did Ariane 5 self-destruct 37 seconds after launch on June 4, 1996?"
     answer: "The Inertial Reference System software was reused **as-is from Ariane 4**, where it had run flawlessly for years. It stored horizontal velocity in a **16-bit integer** for performance reasons. Ariane 5 was bigger and faster: within seconds of launch, horizontal velocity exceeded what a 16-bit integer can hold, the conversion overflowed, both primary and backup SRIs faulted identically, and the rocket interpreted the resulting nonsense as a course deviation and self-destructed. Loss: roughly $370 million."
     explanation: "The canonical internal-reuse failure. The code was correct in Ariane 4's context and incorrect in Ariane 5's context — an *implicit assumption* about velocity range was violated."
 
   - id: 11
     difficulty: basic
-    question: "What is **Design Principle 5: Identify Violated Assumptions**?"
+    question: "What is the design principle **Identify Violated Assumptions**?"
     answer: "Before reusing a module in a new context: (1) read documentation and code to surface what the module **assumes** about its inputs, environment, and timing; (2) check that the module was designed to operate reliably under the conditions you want; (3) don't *assume* the module is correct — *test* it in the new context."
     explanation: "This is the ESA Ariane 501 Inquiry Board's Recommendation R5 generalized into a design principle. Software that worked in one context might not work in another, and the work of finding out is part of the cost of reuse."
 
@@ -81,13 +81,13 @@ cards:
     explanation: "It captures what makes a framework a framework: you hand it your callbacks, and it owns the control flow that decides when to run them — the opposite of calling a library yourself."
 
   - id: 14
-    difficulty: advanced
+    difficulty: intermediate
     question: "What does the research on design alternatives tell us about how many to generate?"
     answer: "Producing **more design options leads to better final designs**. In one study, Team A produced 1 design, Team B produced 3, and Team C produced 5; expert reviewers ranked Team C's selected design highest. The reason is that broad search beats first-idea fixation."
     explanation: "Follow-up work found that just *prompting* less-experienced designers to consider alternatives produced measurably better designs. The discipline is to **generate broadly, evaluate narrowly**."
 
   - id: 15
-    difficulty: advanced
+    difficulty: intermediate
     question: "What are the four steps of the *rational decision process* for design?"
     answer: "(1) **Identify** your requirements — what matters? (2) **Generate** many design alternatives. (3) **Evaluate** how well each alternative meets the requirements. (4) **Consider trade-offs and make a decision.**"
     explanation: "Explicitly walking through these four steps measurably improves design quality, especially for early-career engineers. The act of writing it down externalizes reasoning that intuition alone usually skips."
@@ -117,7 +117,7 @@ cards:
     explanation: "Divide-and-conquer applied to design. Experts routinely solve a stripped-down version of the problem to anchor their understanding, then layer in complexity."
 
   - id: 20
-    difficulty: expert
+    difficulty: advanced
     question: "Heartbleed and left-pad both illustrate that external reuse is **not a one-time investment**. Why?"
     answer: "Once you depend on a module, you also depend on its **ongoing fate**: security vulnerabilities will be discovered (you must update — Heartbleed), maintainers may abandon or weaponize the package (you must monitor — left-pad, eslint-scope), important updates may bundle API-breaking changes (you must test — urllib3 2.0.0). Adopting a dependency is signing up for ongoing maintenance work."
     explanation: "This is the deeper lesson behind all four external-reuse principles. The decision to take a dependency is a decision to maintain a relationship with that dependency for as long as your software lives."

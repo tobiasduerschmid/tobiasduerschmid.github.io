@@ -3,7 +3,7 @@ description: "Retrieval practice for the four-step debugging process — fault /
 active: true
 cards:
   - id: 1
-    difficulty: intermediate
+    difficulty: basic
     question: "Define **fault**, **error**, and **failure** — and explain why keeping them distinct changes how you debug."
     answer: "**Fault** — the erroneous *location* in the code (e.g., `radius` never converted to a number). **Error** — an incorrect *state* during execution (e.g., `radius` holds `'10'` instead of `10`). **Failure** — observable incorrect *outside behavior* at the system boundary (e.g., wrong number printed)."
     explanation: "Each term names a different observation point in the system. You **see** the failure (or the user does), the failure was caused by an **error** somewhere upstream in the execution, and the error was caused by a **fault** in the source code. Fixing the bug means changing the *fault* — but you usually start your investigation from the *failure*. A `try/catch` that swallows the exception suppresses the failure but leaves the fault and the error intact, which is why bare excepts make bugs harder to find, not easier."
@@ -18,10 +18,10 @@ cards:
     difficulty: basic
     question: "Why does **reproducing the bug** come *before* trying to fix it? What are you trying to capture?"
     answer: "A bug you cannot reproduce is a bug you cannot debug — and cannot verify the fix for. Capture two things: the **problem environment** (OS, browser, build version, configuration) and the **problem history** (the sequence of inputs and interactions that triggered the bug)."
-    explanation: "The Therac-25 case is the cautionary tale: a radiation therapy machine killed six patients in the 1980s with overdoses triggered by an operator typing faster than the developers expected. The bug was reproducible only with the operator's actual typing speed — which the test team never matched. Mature bug-report templates ask for environment and history precisely because reproduction is load-bearing for every step that follows."
+    explanation: "The Therac-25 case is the cautionary tale: a radiation therapy machine massively overdosed six patients in the 1980s — several fatally — triggered by an operator typing faster than the developers expected. The bug was reproducible only with the operator's actual typing speed — which the test team never matched. Mature bug-report templates ask for environment and history precisely because reproduction is load-bearing for every step that follows."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     question: "What is **regression testing**, and how does it relate to the bug-reproduction test you wrote in step 1?"
     answer: "**Regression testing** = re-running existing tests after a code change to ensure new updates haven't broken previously-working behavior. The bug-reproduction test you wrote during debugging *becomes* a regression test once the fix lands — it stays in the suite forever to catch the same bug if it sneaks back."
     explanation: "Every fixed bug is one assertion away from coming back. The reproduction test you wrote in step 1 is the cheapest insurance against that — it stays in CI, runs on every commit, and fails immediately if anyone (including your future self or an AI agent rewriting the area) reintroduces the same defect. This is one of the highest ROI moves in the entire process."
@@ -41,7 +41,7 @@ cards:
   - id: 7
     difficulty: advanced
     question: "Compare an **assertion** (`assert x > 0`) and an **exception** (`if x <= 0: raise ValueError`). When is each appropriate?"
-    answer: "**Assertion** = a programmer's claim about an invariant that should *never* be false at runtime (catches developer mistakes). Compiled out in production. **Exception** = a runtime condition that *can* legitimately occur and should be handled (catches user / external mistakes). Always present."
+    answer: "**Assertion** = a programmer's claim about an invariant that should *never* be false at runtime (catches developer mistakes). Often compiled out of production builds. **Exception** = a runtime condition that *can* legitimately occur and should be handled (catches user / external mistakes). Always present."
     explanation: "*'Should never happen'* → assertion. *'Could happen, here's the recovery'* → exception. Assertions document and enforce internal invariants; they fail loudly during development so the bug is found early. Exceptions handle external imperfection — bad user input, network failures, missing files. Catching an assertion is almost always a bug; catching an exception is often the point. Many languages let you compile assertions out of production binaries (`python -O`, `gcc -DNDEBUG`), which is why exceptions stay and assertions go."
 
   - id: 8
@@ -54,7 +54,7 @@ cards:
     difficulty: intermediate
     question: "What is a **time-travel debugger**, and what does it do that an ordinary debugger cannot?"
     answer: "A debugger that records the execution and lets you **step backwards** in time — re-examine a variable's value three statements ago, or replay forward from a point with a hypothetically modified value. Ordinary debuggers only move forward."
-    explanation: "When you set a breakpoint and *miss* the moment that mattered, an ordinary debugger forces you to re-run the program. A time-travel debugger lets you reverse-step within the same recorded execution. Not built into VS Code by default but available as extensions (Python's `rr`, Node's recording proxies, GDB's `record full` + `reverse-continue`). The SEBook ships a [time-travel-enabled Python debugger tutorial](/SEBook/tools/python-debugging) for practice."
+    explanation: "When you set a breakpoint and *miss* the moment that mattered, an ordinary debugger forces you to re-run the program. A time-travel debugger lets you reverse-step within the same recorded execution. Not built into VS Code by default but available as separate tools (`rr` for native Linux binaries, GDB's `record full` + `reverse-continue`, replay-based recorders for Python and Node). The SEBook ships a [time-travel-enabled Python debugger tutorial](/SEBook/tools/python-debugging) for practice."
 
   - id: 10
     difficulty: advanced
@@ -63,25 +63,25 @@ cards:
     explanation: "Bare-except patterns hide the bug *and* leave invariants violated. For a `transfer(from, to, amount)` that's debited the source but failed to credit the destination, *not crashing* is much worse than crashing — the crash would have prevented the half-done transaction; the swallow leaves money missing. The right pattern for monetary operations is an atomic transaction (both updates or neither); the right pattern for handled errors elsewhere is a narrowly-typed `except SpecificError:` with a log line and a recovery path."
 
   - id: 11
-    difficulty: advanced
+    difficulty: intermediate
     question: "A regression test passed two weeks ago and fails today. There are ~200 commits between the two versions and no obvious culprit in the diff. What's the right move, and why does it scale better than the alternatives?"
     answer: "**`git bisect run ./failing-test.sh`** — git performs a binary search across the commits, running the test at each midpoint, and converges on the offending commit in roughly $\\log_2(200) \\approx 8$ test runs instead of ~200. Fully automated if you have a scripted reproduction."
     explanation: "This is one of the highest-leverage payoffs from writing the automated reproduction test in step 1. Without a scripted test, `git bisect` falls back to manual *good/bad* judgments at each step — still useful, but slower. The bisect output is the commit that *introduced* the regression, which usually points straight at the change responsible — much more focused than `git blame`, which only tells you who last touched a particular line."
 
   - id: 12
-    difficulty: advanced
+    difficulty: intermediate
     question: "You just landed a bug fix. The failing reproduction test now passes. What three more things should you do *before* calling the bug closed?"
     answer: "(1) **Add assertions** for nearby invariants — the conditions that produced this bug probably hold elsewhere. (2) **Run the whole test suite** — make sure the fix didn't break a previously-passing test (a *regression*). (3) **Document** the fix — code comment for the non-obvious why, ticket reference in the commit message, root cause in the bug report."
     explanation: "Step 4 is where good debuggers get separated from average ones. The temptation is to mark the ticket FIXED the moment the failing test goes green, but that's a single data point. Running the full suite turns it into a population check. Adding assertions catches the next bug in the family before it ships. Documenting the *why* prevents an AI agent (or a teammate, or future you) from reverting the fix six months from now because the line *'looked unnecessary.'*"
 
   - id: 13
-    difficulty: advanced
+    difficulty: intermediate
     question: "Your team has a 200-step manual reproduction of an intermittent bug. Before fixing the bug, what should you do to the reproduction itself, and why?"
     answer: "**Simplify it.** Iteratively remove steps and re-run; if the bug still occurs without the step, drop it from the reproduction. Most bug reproductions have ~5 essential steps and ~195 confounders. The smaller the reproduction, the faster every fix attempt, the cleaner the eventual regression test, and the less surface area for an unrelated change to mask the bug."
     explanation: "This is called **delta debugging** when automated, and it generalizes: minimize the input that still triggers the bug. A 200-step repro that takes 5 minutes to run burns an hour per fix attempt; a 5-step repro that takes 5 seconds lets you iterate dozens of times per hour. The minimal trigger also tells you something about the root cause that the long reproduction obscures."
 
   - id: 14
-    difficulty: advanced
+    difficulty: intermediate
     question: "Look at this debugger trace. After `input_radius = sys.argv[1]`, the watch panel shows `input_radius = '10'` (with quotes). Two steps later, `diameter = 2 * radius` produces `diameter = '1010'`. What's the bug and where is it?"
     answer: "The bug is **missing type conversion** at the assignment from `sys.argv[1]` — `sys.argv` always returns strings, so `2 * '10'` performs Python string repetition (`'10' + '10' = '1010'`), not arithmetic. The **fault** is one line: `input_radius = sys.argv[1]` should be `input_radius = float(sys.argv[1])`. The *symptom* shows up inside `cal_circumference`, but the *fix* belongs at the input boundary."
     explanation: "Classic case of *where you observe the symptom* ≠ *where you fix the fault*. The debugger's quoted string `'10'` in the watch panel is the diagnostic clue — a number wouldn't be quoted. Boundary type conversion (string → number when reading CLI args, JSON bodies, query parameters, environment variables) is one of the most common bug sources in scripting languages. A defensive version would `assert isinstance(input_radius, (int, float))` immediately after conversion to fail loudly if the input was missing or malformed."

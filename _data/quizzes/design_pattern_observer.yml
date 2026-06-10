@@ -23,7 +23,7 @@ questions:
     explanation: "Push sends the full data set to every observer on every update, so at 1,000 updates/second with 50 widgets that each need only a subset, most of that transfer is wasted work. The SEBook recommends the **Hybrid model** (push the event type, let observers pull only what they need) combined with **batched/deferred notifications** for exactly this scenario."
 
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       A developer registers observers with a subject but never calls `detach()` when the observers are no longer needed. The application gradually slows down over time. What is this problem called?
@@ -145,7 +145,7 @@ questions:
       A spreadsheet cell observes three different data-source subjects. When any source changes, the cell must recompute. What does the cell's `update()` operation need that a single-subject design would not?
     options:
       - "A way to identify which subject changed, e.g. `update(Subject*)`"
-      - "A separate notify() method for each subject it observes"
+      - "A separate `notify()` method for each subject it observes"
       - "Three independent observer lists, one per subject type"
       - "It cannot be done — observers must observe exactly one subject"
     correct_index: 0
@@ -185,7 +185,7 @@ questions:
       The dependency graph between subjects and observers in a system is intricate: some observers depend on several subjects at once, and when multiple subjects change in one logical operation, observers must be updated exactly once — not once per source. Which structural addition does the GoF recommend?
     options:
       - "Replace Observer with Mediator everywhere"
-      - "Introduce a `ChangeManager` that maps subjects to observers and dispatches"
+      - "Introduce a ChangeManager that maps subjects to observers and dispatches"
       - "Switch from Pull to Push so observers don't need to coordinate"
       - "Have each observer keep a counter and ignore duplicate updates"
     correct_index: 1

@@ -23,9 +23,9 @@ questions:
         everything is the fallback Make helps prevent.
     explanation: "**`make` rebuilds targets by comparing file modification timestamps, not hashes.** If a prerequisite (like a `.c` file) is newer than the target (like its `.o` file), `make` recompiles. This timestamp comparison is what enables efficient incremental builds."
   
-  - id: 2 
-    difficulty: basic
-    question: "What specific whitespace character MUST be used to indent the command/recipe lines in a Makefile rule?" 
+  - id: 2
+    difficulty: intermediate
+    question: "What specific whitespace character MUST be used to indent the command/recipe lines in a Makefile rule?"
     options: 
       - "Exactly two spaces" 
       - "Exactly four spaces" 
@@ -64,7 +64,7 @@ questions:
     explanation: "**`$@` evaluates to the target name of the current rule.** It is heavily used in compilation commands (e.g., `gcc ... -o $@`) to specify the output file name without hardcoding it."
   
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     question: "Why is the `.PHONY` directive used in Makefiles (e.g., `.PHONY: clean`)?"
     options: 
       - "To suppress `make` from echoing the command to the terminal."
@@ -84,8 +84,8 @@ questions:
         object-file lists.
     explanation: "**`.PHONY` declares a target as a command, not a file, so `make` always runs its recipe.** If you have a rule named `clean`, and a file literally named `clean` is accidentally created in the directory, `make clean` will say 'clean is up to date' and do nothing. `.PHONY: clean` forces `make` to execute the recipe regardless of whether a file named `clean` exists."
 
-  - id: 5 
-    difficulty: intermediate
+  - id: 5
+    difficulty: advanced
     question: "If a user runs the `make` command in their terminal without specifying a target, what will `make` do?" 
     options: 
       - "It will search for a target named `all` and build it." 
@@ -104,8 +104,8 @@ questions:
         Running `make` without a target is valid. Make uses the first target as the default goal.
     explanation: "**`make` without arguments builds the very first target defined in the Makefile.** By default, `make` begins execution with the first target it encounters in the file. By convention, developers often make the first target `all` (which depends on the main executables) so that running `make` builds the entire project."
 
-  - id: 6 
-    difficulty: intermediate
+  - id: 6
+    difficulty: basic
     question: "You have a pattern rule: `%.o: %.c`. What does the `%` symbol do?" 
     options: 
       - "It is a wildcard — `%.o: %.c` matches every `.c` file to its `.o` counterpart."
@@ -203,9 +203,9 @@ questions:
         makefiles actually use it.
     explanation: "**`CC`, `CFLAGS`, and `LDFLAGS` are standard Makefile conventions; `MAKE_IT_FAST` is not.** Because tools and built-in rules recognize these names, developers can swap compilers or add flags from the command line (e.g., `make CC=clang`) without editing the Makefile. `MAKE_IT_FAST` is invented — a variable only does something if a rule actually reads it."
 
-  - id: 10 
-    difficulty: advanced
-    type: multiple 
+  - id: 10
+    difficulty: intermediate
+    type: multiple
     question: "How does the evaluation logic of a Makefile differ from a standard cookbook recipe or procedural script? (Select all that apply)" 
     options: 
       - "Makefiles are declarative; you declare the final goal and dependencies, and `make` figures out the steps." 

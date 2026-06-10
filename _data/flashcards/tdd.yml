@@ -4,7 +4,7 @@ active: true
 cards:
   - id: 1
     difficulty: basic
-    question: "State Beck's **Three Rules of TDD** in order."
+    question: "State the **Three Rules of TDD** (as formulated by Robert C. Martin, \"Uncle Bob\") in order."
     answer: "(1) No production code unless to make a failing test pass. (2) No more of a test than is sufficient to fail (*failing to compile counts*). (3) No more production code than is sufficient to pass the one failing test."
     explanation: "The rules are deliberately strict. Rule 2's compile-as-failure clause forces you to define the *interface* (how the code is called) before the *implementation*. The rules' point is not bureaucratic compliance — it is keeping every step small enough that the working system is never more than a few minutes away."
 
@@ -21,7 +21,7 @@ cards:
     explanation: "The small-steps methodology is central: if a step is too large, you cannot tell which change broke which test, debugging becomes a scavenger hunt, and the safety net of continuously-green tests is gone. The discipline is to *shrink the test* until the next Green is minutes away, not hours."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: advanced
     question: "Contrast **BUFD (Big Upfront Design)** with **TDD's evolutionary design**. What core fear drove BUFD, and what assumption does TDD challenge?"
     answer: "BUFD feared that 'bad design' woven in early would be impossible to fix, so design had to be finalized before code. TDD challenges that: continuous refactoring under green tests lets design *emerge* — no need to predict the future before coding."
     explanation: "BUFD was a defensive posture against the perceived high cost of change. XP and TDD lowered that cost by keeping the system continuously testable and refactorable, which made the upfront prediction unnecessary. The shift is also philosophical: from 'design as prophecy' to 'design as response to what you now know'."
@@ -33,7 +33,7 @@ cards:
     explanation: "The canonical response is that patterns are targets you refactor *toward* when the code earns them, not templates you apply by default. The TDD discipline of 'simplest thing that could possibly work' in the Green phase actively pushes against premature pattern application."
 
   - id: 6
-    difficulty: advanced
+    difficulty: intermediate
     question: "Explain the **'Rocket Ship to the Moon'** analogy in TDD."
     answer: "TDD grows an architecture incrementally — like a taller and taller tower. Some targets (the moon) need a fundamentally different architecture (a rocket). For ACID databases, distributed consensus, and similar systems, high-level upfront design must precede TDD."
     explanation: "The analogy frames TDD's scope honestly: it is exceptional for evolving local design, weak for jumping to a fundamentally new architectural paradigm. The remedy is not to abandon TDD but to *pair* it with high-level architectural thinking for non-modularizable risks like platform selection, security protocols, and performance targets."
@@ -45,13 +45,13 @@ cards:
     explanation: "This is one of TDD's understated benefits. Conventional documentation describes intended behavior; TDD tests describe verified behavior. The gap matters most precisely when it matters most — when authors are gone and the system has drifted from the docs everyone assumed were accurate."
 
   - id: 8
-    difficulty: expert
+    difficulty: intermediate
     question: "Critique: *'TDD is a complete methodology — every line of every system should be test-first.'* Name at least three contexts where TDD as the *sole* methodology is a poor fit."
     answer: "(1) **Non-incremental architectures** (distributed systems, ACID databases). (2) **Non-binary outcomes** (ML, image recognition — confidence intervals, not pass/fail). (3) **Non-functional properties** (security, performance, reliability — need risk-driven design)."
     explanation: "TDD is exceptional for managing technical debt and evolving local design under known requirements. It's weaker — and sometimes harmful — when used as a complete methodology. The mature stance is to *pair* TDD with risk-driven design for NFRs, with high-level architectural work for non-incremental systems, and with separate quality activities (property tests, statistical evaluation) for non-binary outcomes."
 
   - id: 9
-    difficulty: expert
+    difficulty: advanced
     question: "Connect TDD to **Lehman's Laws of Software Evolution**. Which observation does TDD directly counter, and how?"
     answer: "Lehman observed software's **continuing change**, **increasing complexity**, and **declining quality** over time. TDD acts as a **counter-entropic force**: continuous refactoring under green tests restores quality before debt compounds."
     explanation: "Without an active force pushing back, code drifts toward complexity because each change is a local optimization made under deadline. TDD bakes the counter-force into the day-to-day rhythm: every Green is followed by a Refactor in which the engineer is empowered (and obligated) to improve the design. The discipline is what keeps Lehman's prediction from being deterministic."

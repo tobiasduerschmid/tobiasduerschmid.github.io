@@ -106,7 +106,7 @@ questions:
     explanation: "The practical team-level payoff of SRP is **merge-conflict reduction and fault isolation**: when Finance requests a tax change, they edit a file that HR never touches, so HR's feature cannot be accidentally broken. The other options confuse SRP with unrelated stylistic rules (screen size, DI tooling, field count)."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: advanced
     type: single
     question: |
       According to Liskov's Design-by-Contract formulation, a subclass method must:
@@ -245,7 +245,7 @@ questions:
     explanation: "OCP = **open for extension, closed for modification**. Define a `Carrier` interface with a `cost(order)` method, make UPS, FedEx, USPS, and DHL concrete implementations, and let the calculator dispatch polymorphically — no `switch`, no edits when a new carrier appears."
 
   - id: 10
-    difficulty: advanced
+    difficulty: intermediate
     type: single
     question: |
       A `Printer` interface exposes `print()`, `scan()`, `fax()`, and `staple()`. A simple home printer class must implement all four but throws `UnsupportedOperationException` on `scan`, `fax`, and `staple`.

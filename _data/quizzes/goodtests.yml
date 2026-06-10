@@ -32,7 +32,7 @@ questions:
     explanation: "A test makes one executable claim about behavior: *given this situation, when this action happens, this observable result should follow.* Without an assertion that compares the actual result to an expected one, no claim is made and no evidence is produced. The fix is `assert cart.total_cents() == 10_000` for this fixture — an exact-value oracle that fails for almost every buggy implementation."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: advanced
     type: single
     question: |
       A test consistently passes locally but fails on CI about one run in five, in different places each time. You inspect the test and see:
@@ -102,7 +102,7 @@ questions:
       - "A representative valid case (e.g. `divide(10, 2)`) — the normal-use path the function will most often handle."
       - "The boundary case `divide(0, 5)` — zero numerator, which is the boundary between positive, negative, and zero results."
       - "The invalid case `divide(5, 0)` — division by zero, with a check that the specified error behavior (exception, NaN, sentinel) actually occurs."
-      - "Every integer pair from -100 to 100 — exhaustive enumeration eliminates the chance of missing a problematic combination."
+      - "Every integer pair from `-100` to `100` — exhaustive enumeration eliminates the chance of missing a problematic combination."
     correct_indices: [0, 1, 2]
     option_feedback:
       0: |
@@ -167,13 +167,13 @@ questions:
     explanation: "The *oracle problem* — not knowing the exact expected output — is the core difficulty; the response is to combine **partial oracles** that each capture a different aspect of correctness. For sort: the output must be a permutation of the input, must be monotonically non-decreasing, and must be idempotent under re-sorting. Run these properties on hundreds of generated inputs and you have a strong test even without a hand-computed expected value."
 
   - id: 7
-    difficulty: intermediate
+    difficulty: advanced
     type: single
     question: |
       A team reports 92% line coverage. A regression ships in which a successful order is recorded with `status="refunded"` instead of `status="paid"`. Reviewing the test suite reveals that several tests execute the checkout path but only assert that `status is not None`. What does this episode most directly illustrate?
     options:
       - "The coverage tool measured incorrectly — the real coverage must have been much lower for a bug this obvious to escape."
-      - "High line coverage with weak oracles can leave critical behavior unchecked — coverage measures *execution*, not *what was verified*."
+      - "High line coverage with weak oracles can leave critical behavior unchecked — coverage measures execution, not what was verified."
       - "The team is using line coverage when they should be using branch coverage — switching metrics would catch this class of regression at the same coverage percentage."
       - "Unit tests cannot find this kind of regression — the team needs end-to-end tests that exercise the full checkout flow in a realistic environment."
     correct_index: 1
@@ -187,7 +187,7 @@ questions:
     explanation: "Coverage has only low-to-moderate correlation with suite effectiveness once suite size is controlled. The healthier model: coverage is a *map* of what wasn't visited; mutation testing or seeded-fault analysis is the diagnostic for whether what *was* visited is being checked meaningfully. Mutating `'paid'` to `'refunded'` here produces a surviving mutant — a direct signal that the assertion is too weak."
 
   - id: 8
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       You are about to write the first test for a brand-new `Order.cancel()` method using TDD. Which of these is closest to the intended *Red* step?
@@ -204,7 +204,7 @@ questions:
         Sketching three methods first invites Big Upfront Design and large steps. TDD favors one tiny behavior at a time so each Red→Green→Refactor turn takes minutes, not hours.
       3: |
         Confirming a green starting point is fine practice but it isn't the *Red* step. *Red* is a new failing test that names the next behavior — production code comes *after*, in *Green*.
-    explanation: "Kent Beck's *Three Rules of TDD* say you may not write production code except to make a failing unit test pass, and you may not write more of a test than is sufficient to fail (failing to compile counts). So the Red step is the smallest test that names the next behavior, written before the code. The productivity gain comes from *fine granularity and uniform rhythm*, not from test-first ordering as a slogan."
+    explanation: "Robert C. Martin's (\"Uncle Bob's\") *Three Rules of TDD* say you may not write production code except to make a failing unit test pass, and you may not write more of a test than is sufficient to fail (failing to compile counts). So the Red step is the smallest test that names the next behavior, written before the code. The productivity gain comes from *fine granularity and uniform rhythm*, not from test-first ordering as a slogan."
 
   - id: 9
     difficulty: advanced
@@ -215,7 +215,7 @@ questions:
       - "The test name describes implementation machinery (`helper`, `caches`) rather than a user-observable behavior anyone outside the class would recognize."
       - "Asserting on a private `_cache` couples the test to the current caching strategy — switching to an LRU cache, an external cache, or no cache breaks the test without changing user-visible behavior."
       - "If the cache exists to make repeated lookups return the same value quickly, the test should be expressed as that behavior — e.g. `test_repeated_lookup_returns_same_result` — at the public API."
-      - "Tests should never use the word 'helper' even when the production code does — vocabulary in tests should describe the domain, not the codebase's internal naming."
+      - "Tests should never use the word `helper` even when the production code does — vocabulary in tests should describe the domain, not the codebase's internal naming."
     correct_indices: [0, 1, 2]
     option_feedback:
       0: |

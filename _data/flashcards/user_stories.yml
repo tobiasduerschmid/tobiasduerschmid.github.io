@@ -3,7 +3,7 @@ description: "Test your knowledge on Agile user stories and the criteria for cre
 active: true
 cards:
   - id: 1
-    difficulty: intermediate
+    difficulty: basic
     question: "What is the primary purpose of Acceptance Criteria in a user story?"
     answer: "To define the specific conditions that must be met for a user story to be considered 'Done'. They define the scope of the user story."
     explanation: "They give a feature clear, objective boundaries, which removes ambiguity about what to build and forms the basis for testing whether the story delivers its value. This is also what makes a story testable and estimable."
@@ -33,12 +33,12 @@ cards:
     answer: "The development team must have enough information to roughly gauge the effort required to complete it."
     explanation: "If a story isn't estimable, it usually means it is **too large** or **poorly understood**. The team needs more discussion or a technical spike to clarify the requirements."
   - id: 7
-    difficulty: intermediate
+    difficulty: basic
     question: "Why is it crucial for a user story to be 'Small'?"
     answer: "It must be appropriately sized to be completed within a single Agile iteration or sprint while still delivering meaningful user value."
     explanation: "Smaller stories reduce delivery risk, provide faster feedback loops, and make estimation much more accurate. If a story is too big, it becomes an epic that should be broken down; if it becomes a tiny 'bag of leaves,' it may need to be combined with related work."
   - id: 8
-    difficulty: intermediate
+    difficulty: basic
     question: "How do you ensure a user story is 'Testable'?"
     answer: "By defining clear, objective Acceptance Criteria."
     explanation: "A story is only 'Done' when it can be verified. If you cannot test a story, you cannot prove that it successfully delivers the intended **value** to the user."

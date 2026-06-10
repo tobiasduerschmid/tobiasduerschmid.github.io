@@ -88,7 +88,7 @@ questions:
         `0..*` would suggest zero or more. The shown bounds `[1, 5]` require at least one iteration and at most five.
       3: |
         One iteration is allowed, but it is not the only allowed count. The upper bound permits more pings.
-    explanation: "**`loop [1, 5]` means the enclosed messages execute between 1 and 5 times — the minimum and maximum iteration bounds.** The `loop [1, 5]` fragment specifies a **minimum of 1** and **maximum of 5** iterations. The messages inside will execute between 1 and 5 times depending on conditions at runtime."
+    explanation: "**`loop [1, 5]` means the enclosed messages execute between 1 and 5 times — the minimum and maximum iteration bounds.** How many iterations actually occur depends on conditions at runtime."
 
   - id: 5
     difficulty: intermediate

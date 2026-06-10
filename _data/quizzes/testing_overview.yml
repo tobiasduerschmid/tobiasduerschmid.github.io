@@ -75,7 +75,7 @@ questions:
       A team's test breakdown is: 5 unit tests, 2 integration tests, 250 system (end-to-end) tests. CI takes 90 minutes; flake rate is 12%. What test-pyramid concept is being violated, and what's the structural fix?
     options:
       - "Nothing — system tests are the most realistic, so concentrating coverage at the most realistic level produces the strongest assurance per release."
-      - "This is the *inverted pyramid* (ice-cream cone) — most coverage at the most expensive level. The fix is to push behavior down to unit tests and reserve system tests for critical flows."
+      - "This is the inverted pyramid (ice-cream cone) — most coverage at the most expensive level. The fix is to push behavior down to unit tests and reserve system tests for critical flows."
       - "The team needs to add more system tests so the slow ones become less of a bottleneck through parallelism, and 350 system tests would parallelize better than 250."
       - "The team needs to remove all unit tests because they don't reflect production behavior, and the existing 5 are creating false confidence that hides the production-realism gap."
     correct_index: 1

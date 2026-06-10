@@ -157,8 +157,8 @@ questions:
     explanation: "**RegEx is appropriate for flat pattern matching and format validation, but not for tree-structured data like JSON or HTML.** RegEx excels at pattern matching flat strings, validating strict formats, and doing structural find-and-replace operations. It should NOT be used to parse complex, tree-like structures like JSON or HTML, as it cannot handle infinite nesting and is prone to security bypasses."
 
   - id: 8 
-    difficulty: intermediate
-    type: multiple 
+    difficulty: advanced
+    type: multiple
     question: "In the context of evaluating a regex for data extraction, what represents a 'False Positive' and a 'False Negative'? (Select all that apply)" 
     options: 
       - "A False Positive occurs when the regex matches text that it was not supposed to match." 
@@ -182,7 +182,7 @@ questions:
     explanation: "**A False Positive is an unwanted match (regex too loose); a False Negative is a missed match (regex too strict).** Tightening a pattern to kill false positives tends to introduce false negatives, and loosening it does the reverse — balancing the two is the core tension when writing patterns."
 
   - id: 9
-    difficulty: intermediate
+    difficulty: advanced
     question: "You use the regex `<.*>` to extract a single HTML tag from `<b>bold</b> text`, but it matches the entire string `<b>bold</b>` instead of just `<b>`. What is the simplest fix?"
     options:
       - "Change `.*` to `.+` to require at least one character inside the tag."
@@ -228,7 +228,7 @@ questions:
     explanation: "**Lookaheads are zero-width, chainable, and enable logical AND — but they require a PCRE-style engine and are not in basic POSIX tools.** Because they add nothing to the match, several can stack at one position to enforce independent 'must contain' requirements. Standard `grep`/`sed` (without `-P`) cannot be assumed to support them."
 
   - id: 11
-    difficulty: advanced
+    difficulty: intermediate
     question: "**Arrange** the regex fragments to build a pattern that validates a simple email address like `user@example.com`. The pattern should be anchored to match the entire string."
     type: parsons
     display: inline
@@ -264,7 +264,7 @@ questions:
 
   - id: 13
     difficulty: advanced
-    question: "**Arrange** the regex fragments to extract the protocol and domain from a URL like `https://www.example.com/path`. Use a capturing group for the domain."
+    question: "**Arrange** the regex fragments to extract the protocol (matching only `http` or `https`) and domain from a URL like `https://www.example.com/path`. Use a capturing group for the domain."
     type: parsons
     display: inline
     lines:

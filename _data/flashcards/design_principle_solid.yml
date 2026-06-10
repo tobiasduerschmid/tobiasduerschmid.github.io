@@ -51,7 +51,7 @@ cards:
     explanation: "This is the subtle lesson: LSP is not 'does the subclass make sense on its own?' but 'does every client written against the parent keep working?'"
 
   - id: 9
-    difficulty: intermediate
+    difficulty: advanced
     question: "What is the **Refused Bequest** smell, and how does it relate to LSP?"
     answer: "A subclass inherits a method it doesn't want and overrides it to do nothing or throw. It is the most common LSP violation because the subtype cannot honor the parent's contract for that method."
     explanation: "Classic example: `Ostrich extends Bird` overriding `fly()` to throw. Fix: split the hierarchy — e.g., extract `FlyingBird` — so only classes that can honor `fly()`'s contract are typed as flying."
@@ -81,7 +81,7 @@ cards:
     explanation: "ISP is about interface *cohesion from the client's perspective*. 'Fat' interfaces couple unrelated clients to each other through an irrelevant method set."
 
   - id: 14
-    difficulty: intermediate
+    difficulty: advanced
     question: "State the Dependency Inversion Principle and distinguish it from Dependency Injection."
     answer: "**DIP:** high-level modules and low-level modules both depend on abstractions; abstractions don't depend on details. **DI** is a code-level tactic (constructor/setter injection) used to implement DIP. Using a DI framework does not guarantee DIP."
     explanation: "The chapter is explicit: Spring's `@Autowired` can coexist with full DIP violation if the 'abstraction' is actually shaped by the database library. DIP is an architectural posture; DI is plumbing."

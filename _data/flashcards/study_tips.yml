@@ -3,7 +3,7 @@ description: "Test your knowledge on evidence-based study techniques!"
 active: true
 cards:
   - id: 1
-    difficulty: basic
+    difficulty: intermediate
     question: "Why is rereading a textbook often an ineffective study strategy?"
     answer: "It creates an 'illusion of knowing' or perceptual fluency."
     explanation: "Rereading makes the material feel familiar, but it doesn't trigger the **deep cognitive processing** required for long-term retention."

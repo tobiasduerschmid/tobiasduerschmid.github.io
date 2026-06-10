@@ -45,7 +45,7 @@ questions:
     explanation: "**The three local areas are the Working Directory (files on disk), the Staging Area/index (the next commit being assembled), and the Local Repository (committed history).** `git add` moves a change from the working directory into staging; `git commit` turns staging into a new snapshot in the repository."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: advanced
     question: "What does the command `git diff HEAD` compare?"
     options:
       - "The working directory to the staging area."
@@ -205,7 +205,7 @@ questions:
     explanation: "**A fast-forward merge is possible only when the base branch has gained no new commits since the feature branch diverged, so Git can slide its pointer forward linearly.** If both branches have unique commits since the split, Git instead builds a three-way merge using their common ancestor, producing a merge commit with two parents."
 
   - id: 10
-    difficulty: advanced
+    difficulty: intermediate
     question: |
       **Arrange** the Git commands into the correct order to: create a feature branch, make changes, and integrate them back into main via a merge.
     type: parsons
@@ -260,7 +260,7 @@ questions:
     explanation: "**The correct order is init → add → commit: create the repository, stage all files, then record the first snapshot — clone copies an existing repo and push requires a remote to already exist.** `git init` creates the repository, `git add .` stages every file in the working directory, and `git commit` records the first snapshot. `git clone` copies an *existing* remote repo — it doesn't create one from scratch. `git push` requires a remote to already exist."
 
   - id: 13
-    difficulty: intermediate
+    difficulty: advanced
     question: |
       **Arrange** the commands to register a remote called `origin` and push the `main` branch to it for the first time.
     type: parsons

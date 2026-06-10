@@ -199,7 +199,7 @@ questions:
         named `true` or `false`.
     explanation: "**Exit code 0 means success; `if` tests exit codes not booleans; and `set -e` creates fail-fast behavior for many unhandled failures.** In UNIX, an exit code of 0 means success, while non-zero (like 1) means failure/error. `if` statements work by running a command and proceeding if its exit code is 0. `set -e` is useful, but Bash intentionally does not exit for every nonzero status: tests in `if`/`while`, non-final commands in `&&`/`||` lists, non-final pipeline commands unless `pipefail` is set, and commands inverted with `!` are common exceptions."
   - id: 10
-    difficulty: advanced
+    difficulty: intermediate
     type: multiple
     question: "When you type a command like `python` or `grep` into the terminal, the shell knows exactly what program to run without you providing the full file path. How does the `$PATH` environment variable facilitate this, and how is it managed? (Select all that apply)"
     options:
@@ -223,7 +223,7 @@ questions:
         unsafe compared with an explicit path list.
     explanation: "**`$PATH` is an explicit ordered directory list, not a global crawler — session changes are temporary unless saved to a startup file.** The shell checks the listed directories in order and stops at the first match (crawling the whole disk would be slow and unsafe). An `export PATH=...` in the terminal lasts only for that session unless it is added to a startup file like `~/.bashrc`."
   - id: 11
-    difficulty: intermediate
+    difficulty: advanced
     question: "A developer writes `LOGFILE=\"access errors.log\"` and then runs `wc -l $LOGFILE`. The command fails with 'No such file or directory' errors for both 'access' and 'errors.log'. What is the root cause?"
     options:
       - "The `wc` command does not support filenames with spaces."
@@ -262,7 +262,7 @@ questions:
         particular argument.
     explanation: "**`$2` holds the value `8080` because `$0` is the script name, `$1` is the first argument, and `$2` is the second.** `$0` is the script name (`./deploy.sh`), `$1` is the first argument (`production`), `$2` is the second argument (`8080`), and `$3` would be `myapp`. `$#` holds the total argument count (3)."
   - id: 13
-    difficulty: intermediate
+    difficulty: advanced
     question: "A script contains the line: `cd /deploy/target && ./run_tests.sh && echo 'All tests passed!'`. If `./run_tests.sh` exits with a non-zero status code, what happens next?"
     options:
       - "The script immediately exits and returns a non-zero status to the caller."
@@ -330,7 +330,7 @@ questions:
     explanation: "**The pipeline is grep → sort → uniq → wc -l; `cat` is unnecessary and `>` would write to a file instead of piping.** `grep` filters for ERROR lines, `sort` orders them (required before `uniq`), `uniq` removes adjacent duplicates, and `wc -l` counts the remaining lines. Each `|` pipes stdout to the next command's stdin — the UNIX philosophy of chaining single-purpose tools. `cat` is unnecessary here (UUOC — Useless Use of Cat) and `>` would redirect to a file rather than pipe."
 
   - id: 16
-    difficulty: expert
+    difficulty: advanced
     question: |
       **Arrange** the lines to write a shell script that validates a command-line argument, prints an error to stderr if missing, and exits with a non-zero code. Otherwise it prints a logging message.
     type: parsons
@@ -414,7 +414,7 @@ questions:
     explanation: "**`chmod +x` makes the file executable, `&&` ensures it only runs on success, and `./script.sh` uses the shebang — `||` would run it only on failure.** `chmod +x script.sh` adds the execute bit, making the file runnable as a program. `&&` ensures the script only runs if `chmod` succeeded. `./script.sh` executes it using the shebang to select the interpreter. Using `||` instead of `&&` would run the script only when `chmod` *fails* — the opposite of the intent. `sh script.sh` works but bypasses the shebang, hardcoding the interpreter to `sh` regardless of what the script specifies."
 
   - id: 21
-    difficulty: intermediate
+    difficulty: advanced
     question: |
       You are working inside `project/` which currently has this structure:
 
@@ -446,7 +446,7 @@ questions:
     explanation: "**Without `-p`, `mkdir` requires every parent to already exist — `src/components/` is missing, so the command errors and nothing is created.** Plain `mkdir` creates only the final path segment. Adding `-p` (`mkdir -p src/components/ui`) creates all missing parents in one idempotent operation."
 
   - id: 22
-    difficulty: intermediate
+    difficulty: advanced
     question: |
       You are working inside `project/` which currently has this structure:
 

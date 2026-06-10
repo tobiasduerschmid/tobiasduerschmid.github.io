@@ -9,19 +9,19 @@ cards:
     explanation: "From Parnas's paper *On the Criteria To Be Used in Decomposing Systems into Modules*. The point is to bound the impact of change: a likely-to-change decision should be hidden inside exactly one module, not scattered across the system."
 
   - id: 2
-    difficulty: advanced
+    difficulty: intermediate
     question: "Who introduced the Information Hiding principle, and in what paper?"
     answer: "**David L. Parnas**, in *On the Criteria To Be Used in Decomposing Systems into Modules*, published in **Communications of the ACM**."
     explanation: "Parnas wrote it in response to a decade of software projects failing because step-by-step (flowchart) module decomposition couldn't absorb change — the problem named at the 1968 NATO Software Crisis conference."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: advanced
     question: "What two example modularizations did Parnas compare in his paper, and which won?"
     answer: "He compared a **conventional flowchart-based decomposition** (one module per processing step) and an **information-hiding decomposition** (one module per design decision) using the **KWIC (Key Word In Context) index** program. The information-hiding decomposition was dramatically easier to change, understand, and develop in parallel."
     explanation: "Both decompositions worked, but in the conventional one almost every module had to change when the data structure changed. In the information-hiding version, exactly one module changed."
 
   - id: 4
-    difficulty: basic
+    difficulty: intermediate
     question: "Define a **module** in the Parnas sense."
     answer: "An **independent unit of work** — something that can be assigned to a single engineer or small team and developed in relative isolation. It can be a function, class, package, library, microservice, or subsystem; granularity does not matter."
     explanation: "Parnas's emphasis was on the *work-assignment* nature of a module, because the principle's payoff is largely about parallel work, isolated reasoning, and bounded change."
@@ -69,7 +69,7 @@ cards:
     explanation: "When the CFO swaps providers, the impact is bounded to writing a new gateway implementation. None of the services have to change."
 
   - id: 12
-    difficulty: advanced
+    difficulty: intermediate
     question: "Why is whether a network protocol is **stateful or stateless** part of the **interface**, not the secret?"
     answer: "Because clients **cannot ignore** it. Stateful protocols require clients to maintain a session, reconnect on disconnect, and carry session tokens. Statelessness allows simpler clients. Hiding this would produce mysterious bugs."
     explanation: "Rule of thumb: hide what only the module needs to know to do its job; expose what callers need to know to use it correctly."
@@ -93,7 +93,7 @@ cards:
     explanation: "The right number of abstractions is the smallest number that lets the system change gracefully. Beyond that, every extra layer is tax in indirection, file count, and cognitive load."
 
   - id: 16
-    difficulty: intermediate
+    difficulty: advanced
     question: "How does Information Hiding relate to **Separation of Concerns** (SoC)?"
     answer: "**SoC** decides *which* aspects of the system should live in separate modules. **Information Hiding** decides *how* each module protects its design decisions behind a stable interface. SoC without Information Hiding gives you separate modules that still break each other when details change."
     explanation: "They are complementary principles, not synonyms. Most modern principles (SRP, DIP, layered architecture, microservices) are specific applications of one or both."
@@ -105,7 +105,7 @@ cards:
     explanation: "The Apollo software was already considered highly complex in the 1960s. Modern systems can be orders of magnitude larger, while human working memory has not grown. The design has to reduce cognitive load."
 
   - id: 18
-    difficulty: intermediate
+    difficulty: basic
     question: "What does the formula `n * (n - 1) / 2` remind you about module design?"
     answer: "It is the number of possible pairwise relationships among `n` modules. As module count grows, possible relationships grow roughly **quadratically**, so uncontrolled dependencies quickly become unmanageable."
     explanation: "Information Hiding does not eliminate modules; it keeps the actual dependency graph much smaller than the possible one by exposing narrow, stable contracts."
@@ -113,7 +113,7 @@ cards:
   - id: 19
     difficulty: basic
     question: "What are the symptoms of a **Big Ball of Mud** architecture?"
-    answer: "Low maintainability, low understandability, and high fragility: small changes touch many unrelated modules, readers must know too much at once, and local edits produce surprising distant bugs."
+    answer: "Low modifiability, low understandability, and high fragility: small changes touch many unrelated modules, readers must know too much at once, and local edits produce surprising distant bugs."
     explanation: "A Big Ball of Mud is what happens when design decisions leak everywhere and the dependency graph grows without a disciplined modular structure."
 
   - id: 20
@@ -129,7 +129,7 @@ cards:
     explanation: "Information Hiding is boundary-relative: expose what callers need to use the system correctly; hide the implementation decisions that callers do not need."
 
   - id: 22
-    difficulty: advanced
+    difficulty: intermediate
     question: "What four sections should a useful **design doc** include for an Information Hiding decision?"
     answer: "**Context and scope**, **goals and non-goals**, the **proposed design**, and **alternatives with trade-offs**."
     explanation: "The alternatives-and-trade-offs section is especially important because it preserves why a boundary exists and which future changes it was designed to absorb."

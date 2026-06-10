@@ -96,7 +96,7 @@ questions:
         Aggregation uses a hollow diamond. A filled diamond is the composition notation.
       3: |
         Inheritance uses a hollow triangle arrowhead. The diamond notation is about ownership, not subclassing.
-    explanation: "**The filled diamond represents Composition, indicating that, in this model, Engine's lifecycle is tied to Car.** The filled diamond (<span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"*--\"></span>) represents **Composition** — strong ownership where the part's lifecycle is controlled by the whole."
+    explanation: "**The filled diamond (<span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"*--\"></span>) represents Composition — strong ownership where the part's lifecycle is controlled by the whole.** In this model, the Engine cannot exist without its Car."
 
   - id: 5
     difficulty: intermediate
@@ -170,7 +170,7 @@ questions:
     explanation: "**Composition destroys LineItems with their Order; Order realizes Billable; each LineItem references exactly one Product; and Products survive independently.** The LineItem–Product link is a *plain* association (no diamond), which is why deleting an order leaves the Product in the catalog — only the composition diamond ties lifecycles together."
 
   - id: 8
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: >
       What does the `#` visibility modifier mean in UML?
@@ -228,7 +228,7 @@ questions:
       }
       ```
     options:
-      - "Student has an association to Roster with package-visibility (`~`) `roster`."
+      - "Student has an association to Roster with package visibility (~)."
       - "Student has a dependency on Roster, shown with a dashed arrow."
       - "Student has a composition with Roster, shown with a filled diamond."
       - "Student inherits from Roster, shown with a hollow triangle."
@@ -243,7 +243,7 @@ questions:
     explanation: "**This is an association with `~` (package) visibility.** Storing `Roster` as a field is a permanent structural link (association, not dependency), and the missing Java access modifier defaults to package-private, which maps to `~` in UML."
 
   - id: 11
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: >
       How is an **abstract class** indicated in UML?
@@ -290,7 +290,7 @@ questions:
     explanation: "**A dependency arises from temporary usage — a parameter, local variable, return type, or caught exception.** Storing a reference as an instance *field* instead creates a permanent structural link, which is an association (or aggregation/composition), not a dependency."
 
   - id: 13
-    difficulty: advanced
+    difficulty: basic
     type: single
     question: >
       What does the **arrowhead** on this association mean?
@@ -298,7 +298,7 @@ questions:
       <div data-uml-type="class" data-uml-spec="class Employee&#10;class Boss&#10;Employee --> Boss"></div>
     options:
       - "Employee inherits from Boss (subclass relationship)."
-      - "Employee holds a navigable reference to Boss; Boss has no reference back."
+      - "Employee holds a navigable reference to Boss — not necessarily the reverse."
       - "Boss holds a reference to Employee, not the other way around."
       - "Employee depends on Boss temporarily (like a method parameter)."
     correct_index: 1

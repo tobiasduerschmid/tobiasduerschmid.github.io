@@ -57,22 +57,22 @@ cards:
       ```
     explanation: "Use `.map()` to transform data into JSX. Each element needs a stable `key` prop (use `id`, never array index for dynamic lists)."
   - id: 7
-    difficulty: basic
+    difficulty: intermediate
     question: "Show `<Dashboard />` if `isLoggedIn` is true, otherwise show `<LoginForm />`."
     answer: "`{isLoggedIn ? <Dashboard /> : <LoginForm />}`"
     explanation: "Ternary operator inside JSX for conditional rendering. Both branches must be valid JSX expressions."
   - id: 8
-    difficulty: intermediate
+    difficulty: advanced
     question: "Show a `<Badge />` only when `count` is greater than 0. Be careful not to render the number `0`."
     answer: "`{count > 0 && <Badge count={count} />}`"
     explanation: "Use `count > 0` (not just `count`) because the number `0` is a valid React node and would render as text. `false` renders as nothing."
   - id: 9
-    difficulty: intermediate
+    difficulty: advanced
     question: "Add an item to an array stored in state (`items`/`setItems`) without mutating the original array."
     answer: "`setItems([...items, newItem])`"
     explanation: "Spread the existing array into a new one and append the item. Never use `.push()` — it mutates in-place and React won't detect the change."
   - id: 10
-    difficulty: intermediate
+    difficulty: advanced
     question: "Write a generic `Card` component that wraps any content passed between its opening and closing tags."
     answer: |
       ```jsx
@@ -99,7 +99,7 @@ cards:
       ```
     explanation: "This is **lifting state up** — state lives in the parent, child notifies parent via callback prop. This is the standard React pattern for two-way data binding."
   - id: 12
-    difficulty: basic
+    difficulty: intermediate
     question: "Use `className` (not `class`) to apply the CSS class `app-title` to an `<h1>` element in JSX."
     answer: '`<h1 className="app-title">My App</h1>`'
     explanation: "`class` is a reserved JavaScript keyword (for ES6 classes). JSX uses `className` instead, which maps to the DOM property `element.className`."
@@ -133,19 +133,19 @@ cards:
     explanation: "`prev => prev + 1` asks React for the guaranteed latest value at update time, preventing stale reads if multiple events are batched. Note `onClick={handleClick}` — passing the function reference, not calling it (`handleClick()` would trigger on every render)."
 
   - id: 15
-    difficulty: intermediate
+    difficulty: advanced
     question: "Remove the item with `id === deletedId` from the `tasks` state array."
     answer: "`setTasks(tasks.filter(task => task.id !== deletedId));`"
     explanation: "`.filter()` returns a new array containing only items where the condition is true — the one with the matching `id` is excluded. Never use `.splice()` or index-based deletion on state arrays; they mutate in-place and React won't detect the change."
 
   - id: 16
-    difficulty: intermediate
+    difficulty: advanced
     question: "Update the `score` field of the `player` state object to `newScore`, keeping all other fields unchanged."
     answer: "`setPlayer({ ...player, score: newScore });`"
     explanation: "Spread `...player` copies all existing fields into a new object, then `score: newScore` overrides just that one field. The result is a new object reference, which signals React to re-render. Mutating directly (`player.score = newScore`) would leave the same reference and be invisible to React."
 
   - id: 17
-    difficulty: basic
+    difficulty: intermediate
     question: "Render an `<h2>` and a `<p>` side by side as siblings without adding a wrapper `<div>` to the DOM."
     answer: |
       ```jsx

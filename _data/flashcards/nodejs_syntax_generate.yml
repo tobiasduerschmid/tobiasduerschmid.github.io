@@ -27,12 +27,12 @@ cards:
     answer: "`const add = (a, b) => a + b;`"
     explanation: "Arrow functions use `=>`. For a single expression, the `return` keyword and braces can be omitted."
   - id: 5
-    difficulty: basic
+    difficulty: intermediate
     question: "Given `const nums = [1, 2, 3, 4, 5]`, create a new array containing only the even numbers using a higher-order function."
     answer: "`const evens = nums.filter(n => n % 2 === 0);`"
     explanation: "`.filter()` takes a callback and returns a new array with only elements where the callback returns `true`."
   - id: 6
-    difficulty: basic
+    difficulty: intermediate
     question: "Given `const nums = [1, 2, 3]`, create a new array where each number is doubled."
     answer: "`const doubled = nums.map(n => n * 2);`"
     explanation: "`.map()` transforms each element by applying the callback and returns a new array. The original is unchanged."
@@ -42,7 +42,7 @@ cards:
     answer: "`[1, 2, 3, 4, 5].reduce((acc, n) => acc + n, 0)`"
     explanation: "`.reduce()` accumulates a value. The second argument (`0`) is the initial accumulator value."
   - id: 8
-    difficulty: basic
+    difficulty: intermediate
     question: "Extract `name` and `grade` from `const student = { name: \"Alice\", grade: 95 }` into separate variables in one line."
     answer: "`const { name, grade } = student;`"
     explanation: "Object destructuring extracts named properties. This pattern is used in every React component to destructure props."
@@ -68,7 +68,7 @@ cards:
       ```
     explanation: "`async`/`await` makes async code look synchronous. `await` suspends the function (non-blocking) until the Promise resolves. `try/catch` handles rejections."
   - id: 11
-    difficulty: intermediate
+    difficulty: advanced
     question: "Fetch two independent API endpoints in parallel (not sequentially) and assign the results to `a` and `b`."
     answer: "`const [a, b] = await Promise.all([fetchA(), fetchB()]);`"
     explanation: "`Promise.all()` runs both Promises concurrently. Total time = max(A, B). Sequential `await` would take A + B."
@@ -120,7 +120,7 @@ cards:
     explanation: "`.find()` returns the first matching element (or `undefined`). `.filter()` would return an array `[{ id: 2, name: 'Bob' }]` — one element, but still wrapped in an array."
 
   - id: 19
-    difficulty: basic
+    difficulty: intermediate
     question: "Declare a variable with no initial value. What is its value? Then set a different variable explicitly to 'nothing'."
     answer: |
       ```javascript
@@ -130,7 +130,7 @@ cards:
     explanation: "`undefined` means 'no value assigned yet'. `null` means 'intentionally empty'. JavaScript has both — unlike Python which only has `None`."
 
   - id: 20
-    difficulty: basic
+    difficulty: intermediate
     question: "Write a `for...of` loop that iterates over `const names = ['Alice', 'Bob', 'Carol']` and logs each name."
     answer: |
       ```javascript

@@ -3,7 +3,7 @@ description: "Apply modern code-review research to PR size, reviewer cognition, 
 active: true
 questions:
   - id: 1
-    difficulty: basic
+    difficulty: intermediate
     bloom: understand
     type: single
     question: |
@@ -28,7 +28,7 @@ questions:
     bloom: analyze
     type: single
     question: |
-      Your manager says, "If only 14% to 25% of review comments find functional defects, code review is mostly waste." What is the strongest response?
+      Your manager says, "If only about 15% of review comments find functional defects, code review is mostly waste." What is the strongest response?
     options:
       - "Agree; review should be removed whenever CI exists."
       - "Defect finding is one outcome; most MCR value is maintainability and shared ownership."
@@ -139,7 +139,7 @@ questions:
     explanation: "Assertions and guard clauses both aid review, but they serve different contracts: impossible programmer-error invariants versus expected invalid inputs or edge cases."
 
   - id: 7
-    difficulty: intermediate
+    difficulty: advanced
     bloom: understand
     type: single
     question: |

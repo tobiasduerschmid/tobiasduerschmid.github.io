@@ -3,7 +3,7 @@ description: "Cognitive load, mental models, comprehension metrics, architecture
 active: true
 cards:
   - id: 1
-    difficulty: basic
+    difficulty: intermediate
     bloom: remember
     question: "What are the three kinds of cognitive load in code comprehension?"
     answer: "**Intrinsic load** is the unavoidable difficulty of the domain or algorithm. **Extraneous load** is unnecessary effort caused by poor presentation, inconsistent names, tangled control flow, or bad tooling. **Germane load** is productive effort spent building durable mental models of the system."
@@ -17,7 +17,7 @@ cards:
     explanation: "Bottom-up is useful when the reader lacks context or when the code is genuinely unfamiliar. Top-down is faster when the reader has relevant schemas and the code exposes reliable cues."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: advanced
     bloom: analyze
     question: "What are the four components of the integrated meta-model of program comprehension?"
     answer: "The model combines a **situational model** of system functions, a low-level **program model** of control flow, a **top-down domain model**, and the programmer's **knowledge base**. Developers move among these models opportunistically."
@@ -31,21 +31,21 @@ cards:
     explanation: "Starting from the diff forces bottom-up reconstruction. Starting from intent gives the reviewer a specification layer that makes the diff easier to evaluate."
 
   - id: 5
-    difficulty: advanced
+    difficulty: expert
     bloom: evaluate
     question: "Why can cyclomatic complexity under-predict human difficulty?"
     answer: "Cyclomatic complexity counts branches, but it treats many branch shapes as equally difficult. Humans find deep nesting, long data-flow dependencies, and large visual blocks more costly than a flat set of familiar branches."
     explanation: "Cognitive complexity metrics try to better match human effort by penalizing nesting and interruptions to linear reading."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: advanced
     bloom: analyze
     question: "What is the architecture-code gap?"
     answer: "It is the mismatch between the architect's intensional view of components, layers, constraints, and design decisions and the developer's extensional view of files, classes, packages, and statements."
     explanation: "When this gap is unmanaged, maintainers make local code changes that satisfy the immediate task while eroding the system's intended architecture."
 
   - id: 7
-    difficulty: advanced
+    difficulty: expert
     bloom: evaluate
     question: "Why can excessive abstraction make code harder to understand?"
     answer: "Abstraction hides detail, but too many shallow layers force readers to jump across files and reconstruct interactions that no one layer explains. This can overload working memory even when each class is individually small."

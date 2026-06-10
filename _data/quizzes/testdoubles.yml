@@ -43,7 +43,7 @@ questions:
     explanation: "Spies record calls quietly during the SUT's execution and let the test do the verification afterward. That fits this scenario well because the SUT's behavior is data-dependent — the test can collect everything and then assert on the *property* it cares about (exactly one SMS call), without pre-specifying the full call sequence."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: advanced
     type: single
     question: |
       A team's controller test sets up a `Mock()` for `user_repo` with `user_repo.get.return_value = User(id=1)` and then asserts on the controller's HTTP response — nothing else. The teammate insists this is a Mock; you disagree. What is the most precise classification?
@@ -172,7 +172,7 @@ questions:
     explanation: "Translating between Spy-style and Mock-style assertions is a place tests quietly drift in strength. The parent `mock_calls` list preserves all three claims the Spy made: one gateway call total, method `charge`, and amount `2000`. The cousins (`assert_called_with`, `assert_called`, and method-only `assert_called_once_with`) look similar but encode different contracts. When migrating, audit each translation: a test should make the *same* claim before and after, no more and no less."
 
   - id: 8
-    difficulty: intermediate
+    difficulty: advanced
     type: single
     question: |
       Your SUT takes a `Logger` parameter, but this behavior does not log anything. The test cares only about the SUT's return value. What is the lightest double that lets the test work?
@@ -270,7 +270,7 @@ questions:
     explanation: "`side_effect` is `Mock`'s lever for *behavior beyond returning a canned value*. Set it to an exception class (or instance) and the mock raises on call; set it to an iterable to return different values on consecutive calls; set it to a callable to compute the return value dynamically from the arguments. Using `side_effect = ConnectionError` (the class) is the canonical way to drive the SUT into its error-handling branch in a deterministic, network-free test."
 
   - id: 13
-    difficulty: intermediate
+    difficulty: advanced
     type: single
     question: |
       A teammate's test reads:

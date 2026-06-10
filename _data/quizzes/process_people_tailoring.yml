@@ -3,7 +3,7 @@ description: "Practice choosing process weight, design timing, and human decisio
 active: true
 questions:
   - id: 1
-    difficulty: advanced
+    difficulty: intermediate
     bloom: evaluate
     type: single
     question: |
@@ -71,7 +71,7 @@ questions:
     explanation: "Software construction is collaborative because key knowledge is distributed. A design process should include affected developers and domain experts before decisions are treated as settled."
 
   - id: 4
-    difficulty: advanced
+    difficulty: intermediate
     bloom: evaluate
     type: single
     question: |
@@ -118,7 +118,7 @@ questions:
     explanation: "A small course team does not need a heavy architecture process. It does need shared backlogs, short rationale for hard-to-reverse decisions, and collaboration before implementation locks in a choice."
 
   - id: 6
-    difficulty: advanced
+    difficulty: intermediate
     bloom: analyze
     type: single
     question: |

@@ -30,7 +30,7 @@ cards:
     difficulty: basic
     question: "What metacharacter is used to match any single digit?"
     answer: "`\\d`"
-    explanation: "In ASCII-only engines (POSIX, JavaScript without the `u` flag), `\\d` is equivalent to `[0-9]`. In Unicode-aware engines like Python 3 (the default mode), `\\d` matches any Unicode digit — including non-ASCII digits like Devanagari `९` — so use `[0-9]` explicitly when you only want ASCII digits."
+    explanation: "In ASCII-only engines (such as POSIX tools and JavaScript), `\\d` is equivalent to `[0-9]`. In Unicode-aware engines like Python 3 (the default mode), `\\d` matches any Unicode digit — including non-ASCII digits like Devanagari `९` — so use `[0-9]` explicitly when you only want ASCII digits."
 
   - id: 6  
     difficulty: basic
@@ -69,8 +69,8 @@ cards:
     explanation: "This essentially makes the preceding character, class, or group optional."  
 
   - id: 12  
-    difficulty: intermediate
-    question: "What syntax is used to specify that the preceding element must repeat exactly n times?"  
+    difficulty: basic
+    question: "What syntax is used to specify that the preceding element must repeat exactly n times?"
     answer: "`{n}` (Curly braces with a number)"  
     explanation: "You can also specify a range of repetitions using `{n,m}`."  
 

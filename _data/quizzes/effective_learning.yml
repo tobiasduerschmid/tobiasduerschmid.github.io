@@ -57,7 +57,7 @@ questions:
         Illusions of competence usually come from fluent passive review, such as rereading or recognizing highlighted text. Retrieval and spacing can feel worse in the moment precisely because they expose what is not yet secure.
     explanation: "**Effective strategies feel slower because the short-term friction they create is exactly what drives long-term retention.** This describes **desirable difficulties**, a term from Robert Bjork. Effective learning strategies introduce short-term impediments that make learning feel harder, which ultimately triggers processes that optimize long-term retention."
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     question: "You are working on a new Python project and decide to turn off your AI coding assistant (like GitHub Copilot). According to the concept of 'desirable difficulties', what is the primary benefit of this highly frustrating choice?"
     options:
       - "It forces you to manually recall syntax and logic — the effortful retrieval needed for durable skill."

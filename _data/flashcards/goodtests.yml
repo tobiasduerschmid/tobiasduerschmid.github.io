@@ -21,7 +21,7 @@ cards:
     explanation: "A weak oracle means broken behavior slips through. Strengthening the assertion narrows the set of buggy implementations the test accepts. If the exact value is hard to know in general, you still want it for the *specific fixture* the test arranges."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     question: "Given a `divide(a, b)` function, list at least four classes of input you would test."
     answer: "Representative valid (`divide(10, 2)`); boundaries (`divide(0, 5)`); invalid (`divide(5, 0)`); regression examples from past bugs (`divide(MIN_INT, -1)` overflow)."
     explanation: "Happy-path examples are necessary but not enough. The standard categories are representative valid, boundaries (empty / one / many; min / max / just-below / just-above), invalid, exceptional states (e.g. dependency unavailable), and inputs that once broke the system. Coverage tools show what wasn't *executed*, but not whether you chose these *behavioral classes* well — that judgment is yours."
@@ -81,7 +81,7 @@ cards:
     explanation: "Test names are the first thing a future maintainer sees when CI goes red. A name that describes the behavior turns a test list into a readable specification of the system. A name that describes a method just lets you locate the code; you still have to read the body to understand the failure."
 
   - id: 14
-    difficulty: intermediate
+    difficulty: basic
     question: "In TDD, you've just gotten a test to **Green** with the simplest passing code. What is the *very next* step, and what rule constrains what you may do during it?"
     answer: "**Refactor**: remove duplication and clarify intent while the suite stays green. The rule: you may change the *design* but not the *behavior* — any change that breaks a test is rejected, the next behavior change goes in a new Red."
     explanation: "Kent Beck's original TDD emphasizes tiny steps and refactoring after green. The quality and productivity gains come less from test-first ordering than from **fine granularity and uniform rhythm**. Skipping Refactor is where most of TDD's long-term value evaporates."

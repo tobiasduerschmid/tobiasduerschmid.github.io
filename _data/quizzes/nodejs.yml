@@ -7,7 +7,7 @@ questions:
     question: "A C++ developer argues: 'Single-threaded means Node.js can only handle one request at a time, so it's useless for servers.' What is the flaw in this reasoning?"
     options:
       - "Node.js is actually multi-threaded — each request gets its own thread"
-      - "Node delegates I/O to the OS (via libuv) while one thread handles many concurrent connections."
+      - "Node delegates I/O to the OS (via libuv) while one thread handles many concurrent connections"
       - "Single-threaded is slower, but Node.js compensates with a faster garbage collector"
       - "The flaw is that Node.js compiles to C++ before running, so it actually uses threads internally"
     correct_index: 1
@@ -24,7 +24,7 @@ questions:
     explanation: "Most server work is I/O-bound (waiting on databases, files, network), not CPU-bound. While the Chef (call stack) does one thing at a time, the Appliances (OS, via libuv) handle I/O in the background, so the single thread stays free to serve other requests. This makes the model highly efficient for I/O-bound work but unsuitable for CPU-heavy tasks like video encoding."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: advanced
     question: |
       A developer writes this code and is confused why the output is `A, C, B` instead of `A, B, C`:
       ```javascript
@@ -35,7 +35,7 @@ questions:
       Explain the output using the Event Loop model.
     options:
       - "`setTimeout` has a minimum delay of 1ms, so B is slightly delayed"
-      - "The timer callback waits in the Task Queue until the Call Stack empties."
+      - "The timer callback waits in the Task Queue until the Call Stack empties"
       - "`console.log` is asynchronous in Node.js, so the order is random"
       - "Arrow functions execute after regular functions by design"
     correct_index: 1
@@ -52,11 +52,11 @@ questions:
     explanation: "A 0ms delay means 'as soon as possible', not 'immediately' — the callback waits in the Task Queue while `A` and `C` run synchronously. The Event Loop never interrupts the Call Stack, so it only hands the `B` callback over once synchronous code finishes. This is why blocking the main thread with a long loop prevents all callbacks from firing."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: advanced
     question: "A teammate's code uses `==` for all comparisons and it 'works fine in tests.' You suggest changing to `===` in code review. They push back: 'If it works, why change it?' What is the strongest argument for `===`?"
     options:
       - "`===` is measurably faster at runtime"
-      - "`==` silently coerces across types, masking bugs the moment types diverge (e.g. `'0' == 0`)."
+      - "`==` silently coerces across types, masking bugs the moment types diverge (e.g. `'0' == 0`)"
       - "`==` is deprecated and will be removed in future JavaScript versions"
       - "There is no strong argument — `==` and `===` are interchangeable when types match"
     correct_index: 1
@@ -71,7 +71,7 @@ questions:
     explanation: "The danger isn't that `==` fails now — it's that it hides a fragile assumption. When requirements change (e.g., a user ID becomes a string UUID instead of a number), `==` silently coerces and produces wrong results with no error. `===` fails loudly when types diverge, catching the bug before it reaches production."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: advanced
     question: |
       Compare these two approaches for fetching data from two independent APIs:
 
@@ -89,7 +89,7 @@ questions:
       When should you prefer B over A?
     options:
       - "Always — parallel is always better than sequential"
-      - "When the two operations are independent of each other."
+      - "When the two operations are independent of each other"
       - "Only when the server supports HTTP/2 multiplexing"
       - "Never — `Promise.all` is harder to debug and should be avoided"
     correct_index: 1
@@ -106,10 +106,10 @@ questions:
     explanation: "Sequential `await` is correct when operations depend on each other (fetch a user, then fetch that user's posts). For independent operations, `Promise.all` runs them concurrently — `max(A, B)` instead of `A + B`. If each fetch takes 200ms, sequential = 400ms but parallel = 200ms."
 
   - id: 5
-    difficulty: intermediate
+    difficulty: advanced
     question: "A student writes `var x = 5` inside a `for` loop body. After the loop, they access `x` and are surprised it's still in scope. A C++ programmer would expect `x` to be destroyed at the closing brace. What JavaScript concept explains this?"
     options:
-      - "`var` is function-scoped — it ignores `{}` blocks. Use `let`/`const` for block scope."
+      - "`var` is function-scoped — it ignores `{}` blocks"
       - "`var` creates a global variable that persists for the entire program"
       - "JavaScript does not have any form of block scoping"
       - "`for` loops in JavaScript are macros that expand inline, so there is no inner scope"
@@ -129,7 +129,7 @@ questions:
     question: "Why is the callback pattern fundamental to ALL of Node.js — not just a stylistic choice?"
     options:
       - "Callbacks are the only way to define functions in JavaScript"
-      - "They are how the single-threaded Event Loop notifies your code that an async operation completed."
+      - "They are how the single-threaded Event Loop notifies your code that an async operation completed"
       - "Callbacks are required by the V8 engine's garbage collector"
       - "Callbacks are only used in legacy Node.js — modern versions use a different mechanism"
     correct_index: 1
@@ -159,7 +159,7 @@ questions:
       ```
       They expect "All done!" to print after all items are processed. What is the bug?
     options:
-      - "`.forEach()` ignores the returned promises and returns immediately."
+      - "`.forEach()` ignores the returned promises and returns immediately"
       - "The `async` keyword is not needed inside `.forEach()`"
       - "`processItem` must return a string, not a Promise"
       - "There is no bug — `.forEach()` correctly awaits each callback"
@@ -215,7 +215,7 @@ questions:
     explanation: "`require('express')` imports the framework and `express()` creates the app; `app.get()` registers a handler where `req.query.name` reads the `?name=` parameter and `res.json()` replies with correct JSON headers; `app.listen(3000)` starts the server. The `app.post` distractor uses the wrong HTTP method for a read, and `res.send(name)` would send plain text without JSON formatting."
 
   - id: 10
-    difficulty: intermediate
+    difficulty: advanced
     question: |
       **Arrange** the fragments to build a Promise chain that fetches data, parses JSON, and handles errors.
     type: parsons
@@ -231,7 +231,7 @@ questions:
     explanation: "`fetch(url)` resolves to a Response, `.then(res => res.json())` parses the body (also returning a Promise), `.then(data => ...)` receives the parsed data, and `.catch()` handles any error in the chain — network failure, parse error, and so on. The `.finally` distractor receives no argument, so it can't process data. `res.text` without `()` is a property reference, not a method call."
 
   - id: 11
-    difficulty: intermediate
+    difficulty: advanced
     question: |
       You are building a TikTok-style feed. Match each task to the best array method:
       - Task A: Remove videos the user has already seen
@@ -260,7 +260,7 @@ questions:
       A Discord bot fetches a user's message count from an API. The API returns `"42"` (a string). The bot checks `if (count == 42)` to award a badge. What are ALL the problems?
     options:
       - "Only one problem: `==` should be `===`"
-      - "`==` coerces the string and hides a type mismatch that breaks at other thresholds."
+      - "`==` coerces the string and hides a type mismatch that breaks at other thresholds"
       - "No problems — `==` correctly handles string-to-number comparison"
       - "The only problem is that the API should return a number, not a string"
     correct_index: 1
@@ -297,7 +297,7 @@ questions:
     question: "What does calling an `async` function **always** return, even if the function body just returns a plain number like `return 42`?"
     options:
       - "The plain value (`42`) — `async` is only meaningful when the function contains an `await`"
-      - "A Promise — every `async` function wraps its return in `Promise.resolve()`."
+      - "A Promise — every `async` function wraps its return in `Promise.resolve()`"
       - "An `AsyncIterator` object that must be consumed with `for await...of`"
       - "`undefined` — async functions cannot return values directly"
     correct_index: 1
@@ -399,7 +399,7 @@ questions:
       What is wrong, and what would you suggest?
     options:
       - "The `app.post` callback should use `async/await` to make `computeAIResponse` non-blocking"
-      - "CPU work on the event loop blocks every other player; offload to a Worker Thread."
+      - "CPU work on the event loop blocks every other player; offload to a Worker Thread"
       - "The problem is that `res.json()` is slow — use `res.send()` instead for faster responses"
       - "Nothing is wrong — 2 seconds is an acceptable response time for game servers"
     correct_index: 1
@@ -448,7 +448,7 @@ questions:
     explanation: "`JSON.stringify()` converts an object to a JSON string and `JSON.parse()` converts it back. Plain objects have no `.toJSON()` method, and there is no `JSON.decode()` — both distractors are confusions carried over from other languages."
 
   - id: 21
-    difficulty: basic
+    difficulty: intermediate
     question: |
       What is the value of `x` after this code runs?
       ```javascript
@@ -458,7 +458,7 @@ questions:
       ```
     options:
       - "`x` is `null` and `typeof x` is `\"null\"`"
-      - "`x` is `undefined`, `typeof x` is `\"undefined\"` — unassigned, not null."
+      - "`x` is `undefined`, `typeof x` is `\"undefined\"` — unassigned, not null"
       - "The code throws a `ReferenceError` because `x` has no value"
       - "`x` is `0` — JavaScript auto-initializes numeric variables to zero"
     correct_index: 1

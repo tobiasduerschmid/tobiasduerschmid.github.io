@@ -24,21 +24,21 @@ cards:
     explanation: "Smells guide investigation. A smell is a prompt to ask what design force produced it, not automatic proof that a specific refactoring is required."
 
   - id: 4
-    difficulty: basic
+    difficulty: intermediate
     bloom: apply
     question: "Which refactoring often addresses Data Clumps or Long Parameter List?"
     answer: "**Introduce Parameter Object** groups related values into one named object, such as replacing `startDate, endDate` with a `DateRange`."
     explanation: "The new object reduces call-site mistakes and gives the related data a domain name."
 
   - id: 5
-    difficulty: basic
+    difficulty: intermediate
     bloom: apply
     question: "Which refactoring often addresses Divergent Change?"
     answer: "**Extract Class** separates responsibilities that change for different reasons into specialized classes."
     explanation: "If one class changes for database logic one day and formatting policy the next, it probably owns multiple concerns."
 
   - id: 6
-    difficulty: basic
+    difficulty: intermediate
     bloom: apply
     question: "Which refactoring often addresses repeated type-code conditionals?"
     answer: "**Replace Conditional with Polymorphism** moves each branch's behavior behind a shared interface or superclass, often producing Strategy or State objects."
@@ -52,7 +52,7 @@ cards:
     explanation: "Large refactorings fail when they mix many transformations before feedback. The small-step rhythm makes behavior preservation observable."
 
   - id: 8
-    difficulty: advanced
+    difficulty: expert
     bloom: evaluate
     question: "What is the human supervisor's role when AI performs refactorings?"
     answer: "The human identifies the smell, chooses the transformation, bounds the scope, runs tests after each step, and rejects changes that alter behavior or hide system-level design problems."

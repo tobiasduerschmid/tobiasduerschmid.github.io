@@ -38,7 +38,7 @@ cards:
     answer: "`mkdir src`" 
     explanation: "`mkdir` stands for 'make directory'. It creates a new directory with the specified name, provided you have the correct permissions." 
   - id: 8 
-    difficulty: intermediate
+    difficulty: basic
     question: "You want to view the contents of a very long text file called 'manual.txt' one page at a time so you can scroll through it." 
     answer: "`less manual.txt`" 
     explanation: "The `less` command is a terminal pager program that allows viewing (but not editing) the contents of a text file one screen at a time, allowing both forward and backward navigation."
@@ -58,23 +58,23 @@ cards:
     answer: "`echo 'Hello World'`"
     explanation: "The `echo` command outputs the strings it is being passed as arguments. It is commonly used in scripts to display messages or write data to a file using redirection."
   - id: 12
-    difficulty: basic
+    difficulty: intermediate
     question: "You want to know exactly how many lines are contained within a file named 'essay.txt'."
     answer: "`wc -l essay.txt`"
     explanation: "The `wc` (word count) command prints newline, word, and byte counts for a file. Adding the `-l` flag restricts the output to only the line count."
   - id: 13
-    difficulty: intermediate
+    difficulty: advanced
     question: "You need to perform an automated find-and-replace operation on a stream of text to change the word 'apple' to 'orange'."
     answer: "`sed 's/apple/orange/g'`"
     explanation: "In `sed`'s `s/find/replace/` command, `s` means substitute and the `/` characters delimit the search and replacement terms. The trailing `g` (global) replaces every match on a line rather than just the first."
   - id: 15
-    difficulty: intermediate
+    difficulty: advanced
     question: "You want to store today's date (formatted as YYYY-MM-DD) in a variable called `TODAY` so you can use it to name a backup file dynamically."
     answer: "`TODAY=$(date +%Y-%m-%d)`"
     explanation: "Command substitution `$(...)` executes the inner command in a subshell and replaces itself with the command's standard output. This is the standard way to capture the result of a command into a variable."
 
   - id: 16
-    difficulty: intermediate
+    difficulty: advanced
     question: "A variable `FILE` holds the value `my report.pdf`. Running `rm $FILE` fails with a 'No such file or directory' error for both 'my' and 'report.pdf'. How do you fix this?"
     answer: "`rm \"$FILE\"`"
     explanation: "Without quotes, the shell performs **word splitting** on the expanded variable, breaking `my report.pdf` into two separate arguments: `my` and `report.pdf`. Wrapping the variable in double quotes (`\"$FILE\"`) prevents word splitting and passes the entire value as a single argument."
@@ -86,13 +86,13 @@ cards:
     explanation: "`$#` expands to the total count of positional arguments passed to the script. A typical guard looks like: `if [ $# -ne 2 ]; then echo 'Usage: script.sh src dest'; exit 1; fi`. Other useful special variables: `$1`, `$2` (individual args), `$0` (script name), `$@` (all args)."
 
   - id: 18
-    difficulty: intermediate
+    difficulty: advanced
     question: "You want to create a directory called 'build' and then immediately run `cmake ..` inside it, but only if the directory creation succeeded — all in a single command."
     answer: "`mkdir build && cd build && cmake ..`"
     explanation: "The `&&` (AND) operator runs the next command only if the previous one **succeeded** (exit code 0). If `mkdir` fails, neither `cd` nor `cmake` will execute. This is a concise alternative to a full `if/then/fi` block for simple success-guarded sequences."
 
   - id: 19
-    difficulty: intermediate
+    difficulty: advanced
     question: "At the start of a script, you need to change into `/deploy/target`. If that directory doesn't exist, the script must abort immediately — write a defensive one-liner."
     answer: "`cd /deploy/target || exit 1`"
     explanation: "The `||` (OR) operator runs the right-hand command only if the left-hand command **fails** (non-zero exit code). This is the standard idiom for aborting a script when a critical precondition is not met, without needing a full `if` statement."

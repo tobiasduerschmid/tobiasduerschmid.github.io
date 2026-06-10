@@ -3,7 +3,7 @@ description: "Test your ability to identify, apply, and evaluate the Information
 active: true
 questions:
   - id: 1
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       Who introduced the Information Hiding principle, and in what paper?
@@ -25,7 +25,7 @@ questions:
     explanation: "Parnas's *CACM* paper introduced the principle, four years after the 1968 NATO Software Crisis conference. Dijkstra coined *Separation of Concerns* — a related but broader principle."
 
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     type: single
     question: |
       In Parnas's KWIC (Key Word In Context) example, what was wrong with the **conventional** decomposition (one module per processing step)?
@@ -128,7 +128,7 @@ questions:
     explanation: "This is a **shallow module**: if the new 'module' has nothing meaningful to hide and no plausible second variant, you have added an interface and a file without buying any abstraction value. Information Hiding pays off when there is a real secret worth hiding; otherwise, it just adds vocabulary the reader must learn."
 
   - id: 6
-    difficulty: advanced
+    difficulty: intermediate
     type: single
     question: |
       Which of the following is *most likely* to be **part of the interface** (visible) rather than a hidden secret?
@@ -151,7 +151,7 @@ questions:
     explanation: "Statefulness changes how clients **must** interact with the server (do they reconnect? carry a session token? retransmit on disconnect?). Clients cannot ignore it, so it belongs in the contract. The other three are textbook secrets — clients neither know nor care, and the choice can change without breaking callers."
 
   - id: 7
-    difficulty: intermediate
+    difficulty: advanced
     type: single
     question: |
       Which statement best captures the relationship between **Information Hiding** and **Separation of Concerns (SoC)**?
@@ -174,7 +174,7 @@ questions:
     explanation: "They are complementary. SoC is about *identifying* distinct aspects (data access vs. business rules vs. UI). Information Hiding is about *protecting* each one — the interface should expose only what is unlikely to change. SoC without Information Hiding gives you separate modules that still rip apart when details change."
 
   - id: 8
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       The CFO announces that PayPal will be replaced with Stripe. In a codebase that follows Information Hiding well, what is the expected scope of the change?
@@ -357,7 +357,7 @@ questions:
     explanation: "Information Hiding has real costs: indirection, file count, vocabulary. Spending those costs on a decision that genuinely will never change is wasted ceremony. But 'we'll never need another database' is one of the most commonly falsified predictions in software, so the argument earns scrutiny — and is usually weakest in long-lived systems with multiple teams."
 
   - id: 16
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       Why does unmanaged complexity grow so quickly as a system adds more modules?
@@ -426,7 +426,7 @@ questions:
     explanation: "The Single Choice principle says only one module should know the exhaustive list of alternatives. A common repair is polymorphism: services call `PaymentGateway`, and one factory or configuration boundary chooses which implementation to supply."
 
   - id: 19
-    difficulty: intermediate
+    difficulty: basic
     type: single
     question: |
       What is the strongest evidence that a design is turning into a **Big Ball of Mud**?
@@ -446,10 +446,10 @@ questions:
       3: |
         Good comments can support comprehension. They are a problem only when comments substitute for an
         actual boundary around a leaked decision.
-    explanation: "A Big Ball of Mud is characterized by high coupling, low cohesion, low understandability, and high fragility. The practical symptom is wide, unpredictable change impact: the team cannot make a local change locally."
+    explanation: "A Big Ball of Mud is characterized by low modifiability, low understandability, and high fragility. The practical symptom is wide, unpredictable change impact: the team cannot make a local change locally."
 
   - id: 20
-    difficulty: advanced
+    difficulty: intermediate
     type: single
     question: |
       Which design-doc content is most useful to a future maintainer who asks, "Why does this `PaymentGateway` abstraction exist?"

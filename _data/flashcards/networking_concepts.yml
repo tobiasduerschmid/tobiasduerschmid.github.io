@@ -15,7 +15,7 @@ cards:
   - id: 3
     difficulty: intermediate
     question: "What is a **hybrid architecture**? Give a real-world example."
-    answer: "A hybrid combines client-server and P2P. **Apple FaceTime** uses hybrid: for 1-on-1 calls it attempts a direct P2P connection for lower latency, falling back to Apple's relay servers if NAT or firewalls block the direct path. Group FaceTime routes all participants through Apple's servers to prevent each device from uploading a separate video stream to every other participant."
+    answer: "A hybrid combines client-server and P2P. **Zoom** uses hybrid: communication starts client-server, and for the video and audio of 1-on-1 calls it attempts a direct peer-to-peer connection for lower latency, using the client-server path as a fallback when the direct connection is blocked (e.g., by NAT or firewalls)."
 
   - id: 4
     difficulty: basic

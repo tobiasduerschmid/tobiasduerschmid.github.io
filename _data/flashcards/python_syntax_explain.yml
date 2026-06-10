@@ -14,7 +14,7 @@ cards:
       ```
     answer: "Prints `Score: 95, GPA: 3.8` — the `f\"...\"` is an **f-string** that embeds variables inside `{}`. The `:.1f` format specifier rounds the float to 1 decimal place."
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     question: |
       You are shown Python code. Explain what it does and what it returns or prints.
 
@@ -22,7 +22,7 @@ cards:
       7 / 2
       7 // 2
       ```
-    answer: "`7 / 2` → `3.5` (float division — always returns a float in Python 3). `7 // 2` → `3` (floor/integer division — like C++'s `/` for ints)."
+    answer: "`7 / 2` → `3.5` (float division — always returns a float in Python 3). `7 // 2` → `3` (floor/integer division — like C++'s `/` for positive ints)."
   - id: 3
     difficulty: basic
     question: |
@@ -42,7 +42,7 @@ cards:
       ```
     answer: "Produces `[1, 4, 9, 16, 25]` — a **list comprehension** that squares each number from 1 to 5. `range(1, 6)` is exclusive of the stop value. `**` is the exponentiation operator."
   - id: 5
-    difficulty: basic
+    difficulty: intermediate
     question: |
       You are shown Python code. Explain what it does and what it returns or prints.
 
@@ -52,7 +52,7 @@ cards:
       ```
     answer: "Produces `[23, 42]` — a list comprehension with a **filter condition**. Only elements where `x > 20` are included."
   - id: 6
-    difficulty: basic
+    difficulty: intermediate
     question: |
       You are shown Python code. Explain what it does and what it returns or prints.
 
@@ -63,7 +63,7 @@ cards:
       ```
     answer: "Opens `data.txt`, reads it line by line, and prints each line with leading/trailing whitespace removed. The `with` statement is a **context manager** that automatically closes the file when the block exits, even if an exception occurs."
   - id: 7
-    difficulty: basic
+    difficulty: intermediate
     question: |
       You are shown Python code. Explain what it does and what it returns or prints.
 
@@ -73,7 +73,7 @@ cards:
       ```
     answer: "Prints `0: apple`, `1: banana`, `2: cherry`. `enumerate()` yields `(index, value)` pairs — the Pythonic way to get both index and element without using `range(len(...))`."
   - id: 8
-    difficulty: intermediate
+    difficulty: advanced
     question: |
       You are shown Python code. Explain what it does and what it returns or prints.
 
@@ -93,7 +93,7 @@ cards:
       ```
     answer: "Replaces all IPv4 addresses in `text` with `'x.x.x.x'`. `re.sub(pattern, replacement, string)` is the Python equivalent of `sed 's/old/new/g'`."
   - id: 10
-    difficulty: intermediate
+    difficulty: advanced
     question: |
       You are shown Python code. Explain what it does and what it returns or prints.
 
@@ -104,7 +104,7 @@ cards:
       ```
     answer: "Prints the error message to **stderr** (not stdout), then exits with code 1 (failure). `file=sys.stderr` is like C++'s `std::cerr`. `sys.exit(1)` is like C's `exit(1)`."
   - id: 11
-    difficulty: intermediate
+    difficulty: advanced
     question: |
       You are shown Python code. Explain what it does and what it returns or prints.
 
@@ -114,7 +114,7 @@ cards:
       ```
     answer: "`2 ** 8` → `256` (exponentiation — two to the eighth power). `2 ^ 8` → `10` (**bitwise XOR** — NOT exponentiation!). This is a common mistake from math notation."
   - id: 12
-    difficulty: intermediate
+    difficulty: advanced
     question: |
       You are shown Python code. Explain what it does and what it returns or prints.
 

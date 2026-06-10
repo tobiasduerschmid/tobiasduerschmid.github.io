@@ -51,7 +51,7 @@ cards:
       Thin rectangles on a lifeline showing when an object is processing a method call. They nest when A calls B which calls C — all three carry overlapping bars — so you can see which objects are busy at any point.
 
   - id: 7
-    difficulty: advanced
+    difficulty: intermediate
     question: "What is the correct naming convention for lifelines in sequence diagrams?"
     answer: "`objectName : ClassName` (e.g., `myCart : ShoppingCart` or `: ShoppingCart` for anonymous instances)."
     explanation: >

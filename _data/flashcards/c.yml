@@ -4,7 +4,7 @@ active: true
 cards:
 
   - id: 1
-    difficulty: basic
+    difficulty: intermediate
     question: |
       What does `void* malloc(size_t size)` return on success, and what does it return when the OS cannot satisfy the request?
     answer: |
@@ -15,7 +15,7 @@ cards:
       **You must check for `NULL` before dereferencing the result.** Forgetting this check turns an out-of-memory condition into a silent segfault, often far from the actual allocation site.
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     question: |
       In C, what is `'\0'`? Distinguish it from `'0'` and explain why C strings need it.
     answer: |
@@ -51,7 +51,7 @@ cards:
       Modifying `c` is fine — it's an ordinary local variable. Writing through `s` (e.g., `s[0] = 'B'`) is **undefined behavior** because string literals live in read-only memory.
 
   - id: 5
-    difficulty: intermediate
+    difficulty: advanced
     question: |
       Predict what this program prints:
 
@@ -71,7 +71,7 @@ cards:
       - `%.1f` formats the `float` to 1 decimal place.
       - `%zu` is the format specifier for `size_t` (the type `sizeof` returns); on most platforms `sizeof(int)` is 4.
 
-      **Negative-transfer trap from C++:** mismatched format specifiers (`%d` for a `float`, `%f` for an `int`) compile cleanly but produce garbage at runtime, because `printf` blindly trusts the format string. Always compile with `-Wall -Wformat` to catch this.
+      Mismatched format specifiers (`%d` for a `float`, `%f` for an `int`) compile cleanly but produce garbage at runtime, because `printf` blindly trusts the format string. Always compile with `-Wall -Wformat` to catch this.
 
   - id: 6
     difficulty: intermediate
@@ -120,7 +120,7 @@ cards:
       `sizeof(int)` is needed because `malloc` takes a byte count, not an element count. Forgetting it (`malloc(rows * cols)`) would allocate only one byte per element, and the index expression would walk into unrelated memory.
 
   - id: 8
-    difficulty: advanced
+    difficulty: expert
     question: |
       What is the bug in this code, and what is the most likely runtime symptom?
 
@@ -190,7 +190,7 @@ cards:
       Either reason can justify the discipline cost of manual memory management.
 
   - id: 12
-    difficulty: advanced
+    difficulty: expert
     question: |
       Almost every major language (Python, Java, C#, Rust, Go, Ruby) supports calling into a C library. **Browser JavaScript** does not — and this is not an accident. What is the design rationale?
     answer: |

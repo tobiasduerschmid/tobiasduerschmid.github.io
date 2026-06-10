@@ -1,5 +1,5 @@
 title: "React Concepts Quiz"
-description: "Test your deeper understanding of React's design philosophy, state management, and component architecture. Questions 1–7 cover tutorial material. Questions 8–10 test advanced concepts from the reference page. Questions 11–15 cover event handlers, useEffect, and state immutability."
+description: "Test your deeper understanding of React's design philosophy, state management, component architecture, event handlers, useEffect, and state immutability."
 active: true
 questions:
   - id: 1
@@ -36,7 +36,7 @@ questions:
     question: "A student stores the full filtered list in state alongside the unfiltered list: `const [allTasks, setAllTasks] = useState(tasks)` and `const [filteredTasks, setFilteredTasks] = useState(tasks)`. What design problem does this create?"
     options:
       - "This is correct — having both lists in state makes the component faster"
-      - "Storing derived data violates *minimal state* — the filter string is the only real state."
+      - "Storing derived data violates minimal state — only the filter string is real state."
       - "This is correct — React requires all displayed data to be in state"
       - "The only problem is naming — `filteredTasks` should be called `visibleTasks`"
     correct_index: 1
@@ -72,7 +72,7 @@ questions:
     explanation: "Keys match elements between the old and new virtual DOM trees. A stable ID lets React recognise item #42 as the same item even when its position changes; an index key only ever means \"the item currently at slot 2\", so after a deletion a different item inherits that slot's component state (checkbox, focus, input value)."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: advanced
     question: "In 'Thinking in React', why should you build a **static version** (props only, no state) BEFORE adding any state?"
     options:
       - "Because React cannot compile components that use both props and state"
@@ -117,7 +117,7 @@ questions:
     explanation: "`&&` returns its left operand when that operand is falsy, so `0 && <Badge />` evaluates to `0` — and `0` is a valid React node that renders as the text \"0\". React skips `false`, `null`, and `undefined`, but not `0`. Make the left operand a real boolean (`count > 0 && ...`) so it short-circuits to `false`."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: advanced
     question: "A `<SearchBar>` and a `<ProductTable>` are sibling components. The user types in the search bar and the table should filter. Where should the `filterText` state live, and why?"
     options:
       - "In `SearchBar` — it owns the input, so it should own the state"
@@ -238,7 +238,7 @@ questions:
         Setters can be used from handlers; the bug is invoking the setter while JSX is being evaluated.
       3: |
         The code never waits for a click because the function call has already happened during render.
-    explanation: "`onClick` wants a function reference to call later, but `setCount(count + 1)` calls the setter right now, during render, and hands its return value (`undefined`) to `onClick`. Because that state update triggers another render, which calls the setter again, the component loops forever. Pass the function, don't call it: `onClick={fn}`, never `onClick={fn()}`."
+    explanation: "`onClick` wants a function reference to call later, but `setCount(count + 1)` calls the setter right now, during render, and hands its return value (`undefined`) to `onClick`. Because that state update triggers another render, which calls the setter again, the component re-renders in a loop until React halts it with a \"Too many re-renders\" error. Pass the function, don't call it: `onClick={fn}`, never `onClick={fn()}`."
 
   - id: 12
     difficulty: advanced
@@ -271,7 +271,7 @@ questions:
     explanation: "The dependency array controls when an effect re-runs: `[]` fires once on mount and never again, while `[userId]` also re-fires whenever `userId` changes. Leaving `userId` out leaves the callback closed over the first render's value, so it never refetches. The `react-hooks/exhaustive-deps` lint rule flags exactly this omission."
 
   - id: 13
-    difficulty: intermediate
+    difficulty: advanced
     question: |
       A component tracks a user object: `const [user, setUser] = useState({ name: 'Alice', age: 25 })`. How should you update **only** the `name` to `'Bob'` while keeping `age` intact?
     options:
@@ -302,7 +302,7 @@ questions:
       **(d)** A `<div class="header">` renders but has no CSS styling
     options:
       - "(a) state, (b) props, (c) keys, (d) JSX rules"
-      - "(a) props, (b) state, (c) stable keys, (d) JSX rules"
+      - "(a) props, (b) state, (c) keys, (d) JSX rules"
       - "(a) keys, (b) JSX rules, (c) state, (d) props"
       - "(a) JSX rules, (b) keys, (c) props, (d) state"
     correct_index: 1
@@ -318,7 +318,7 @@ questions:
     explanation: "Each symptom maps to one concept: data not updating when passed in is a **props** issue; a counter stuck at 0 means values aren't in **state** (bare `let` instead of `useState`); state attaching to the wrong row after a delete is an index-**key** issue; and a `class` attribute with no effect is **JSX** (`class` → `className`)."
 
   - id: 15
-    difficulty: intermediate
+    difficulty: advanced
     question: |
       **Arrange** the lines to add an item to a shopping cart stored in React state, using immutable updates.
     type: parsons

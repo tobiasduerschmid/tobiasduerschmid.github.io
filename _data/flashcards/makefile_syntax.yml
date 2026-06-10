@@ -8,9 +8,9 @@ cards:
     answer: "`target: prerequisites \n\tcommand`"  
     explanation: "A rule defines the target file to be built, the prerequisite files it depends on, and the command(s) to execute to build it."  
 
-  - id: 2  
-    difficulty: basic
-    question: "What specific whitespace character MUST be used to indent the command/recipe lines in a Makefile rule?"  
+  - id: 2
+    difficulty: intermediate
+    question: "What specific whitespace character MUST be used to indent the command/recipe lines in a Makefile rule?"
     answer: "A Tab character"  
     explanation: "If you use spaces instead of a Tab, `make` will throw an error (often 'missing separator')."  
 
@@ -26,9 +26,9 @@ cards:
     answer: "`$@`"  
     explanation: "This is commonly used in the compilation command to specify the output file name dynamically."  
 
-  - id: 5  
-    difficulty: intermediate
-    question: "What Automatic Variable represents the name of the first prerequisite?"  
+  - id: 5
+    difficulty: basic
+    question: "What Automatic Variable represents the name of the first prerequisite?"
     answer: "`$<`"  
     explanation: "This is frequently used in pattern rules to pass the specific source file (like a `.c` file) to the compiler."  
 
@@ -38,26 +38,26 @@ cards:
     answer: "`$^`"  
     explanation: "This is often used in linking commands where all object files need to be passed to the compiler at once to create an executable."  
 
-  - id: 7  
-    difficulty: intermediate
+  - id: 7
+    difficulty: basic
     question: "What wildcard character is used to define a Pattern Rule (a generic rule applied to multiple files)?"  
     answer: "`%` (Percent sign)"  
     explanation: "For example, `%.o: %.c` tells `make` how to compile any `.o` object file from a corresponding `.c` source file."  
 
-  - id: 8  
-    difficulty: intermediate
+  - id: 8
+    difficulty: basic
     question: "What special target is used to declare that a target name is an action (like 'clean') and not an actual file to be created?"  
     answer: "`.PHONY: target_name`"  
     explanation: "This prevents conflicts if a file literally named 'clean' is ever created in the directory, ensuring the recipe will always run when invoked."  
 
-  - id: 9  
-    difficulty: advanced
+  - id: 9
+    difficulty: intermediate
     question: "What metacharacter can be placed at the very beginning of a recipe command to suppress `make` from echoing the command to the terminal?"  
     answer: "`@` (At symbol)"  
     explanation: "For example, `@echo \"Done!\"` will print 'Done!' to the terminal without printing the actual 'echo' command first."  
 
-  - id: 10  
-    difficulty: advanced
+  - id: 10
+    difficulty: intermediate
     question: "What syntax is used for string substitution on a variable, such as changing all `.c` extensions in `$(SRCS)` to `.o`?"  
     answer: "`$(SRCS:.c=.o)`"  
     explanation: "This evaluates to the value of the `SRCS` variable, but replaces the suffix `.c` with `.o` for every word in the list."

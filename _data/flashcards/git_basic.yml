@@ -8,7 +8,7 @@ cards:
     answer: "`git revert`"
     explanation: "`git revert` is the safest way to undo changes on a shared branch because it adds a new commit that nullifies the targeted commit, rather than deleting history."
   - id: 2
-    difficulty: intermediate
+    difficulty: advanced
     question: "You want to see exactly what has changed in your working directory compared to your last saved snapshot (the most recent commit)."
     answer: "`git diff HEAD`"
     explanation: "Using `git diff HEAD` compares your current modified tracked files on disk with the most recent commit. Note that it does not show completely untracked files."
@@ -18,7 +18,7 @@ cards:
     answer: "`git init`"
     explanation: "Initializes a new, empty Git repository in the current directory, creating the hidden `.git` folder that holds all version-control data. It is a one-time setup step per project."
   - id: 4
-    difficulty: basic
+    difficulty: intermediate
     question: "You have just installed Git on a new computer and need to set up your username and email address so that your commits are properly attributed to you."
     answer: "`git config`"
     explanation: "Using `git config --global user.name` and `user.email` establishes your default identity, which can be overridden for specific projects using `git config --local`."
@@ -48,7 +48,7 @@ cards:
     answer: "`git diff`"
     explanation: "Running `git diff` without any arguments compares your current working directory against the staging area."
   - id: 10
-    difficulty: basic
+    difficulty: intermediate
     question: "You want to create a new branch pointer for a future feature without switching branches yet. Which command creates that branch at your current commit?"
     answer: "`git branch <branch-name>`"
     explanation: "This command `git branch` creates a new branch pointer at your current commit, allowing you to diverge from the main line of development."
@@ -58,7 +58,7 @@ cards:
     answer: "`git switch main`"
     explanation: "The modern `git switch` command navigates between branches, updating your working directory and moving HEAD. The legacy equivalent `git checkout main` still works and is widely seen in older documentation and scripts."
   - id: 12
-    difficulty: intermediate
+    difficulty: basic
     question: "Your feature branch is complete, and you want to integrate its entire commit history into your current 'main' branch."
     answer: "`git merge <branch-name>`"
     explanation: "Merging with `git merge` takes the divergent histories of two branches and combines them, often resulting in a new 'merge commit' with two parents."
@@ -83,7 +83,7 @@ cards:
     answer: "`git show <commit-hash>`"
     explanation: "`git show` displays the details of a specific Git object, most commonly used to inspect exactly what changed in a single commit."
   - id: 17
-    difficulty: intermediate
+    difficulty: basic
     question: "You want to start working on a new feature in isolation. How do you create a new branch called 'feature-auth' and immediately switch to it in a single command?"
     answer: "`git switch -c feature-auth`"
     explanation: "`git switch -c` creates a new branch and switches to it in one step. The `-c` flag stands for 'create'. The legacy equivalent is `git checkout -b feature-auth`, which you will still encounter in older scripts and documentation."

@@ -9,7 +9,7 @@ questions:
       A mobile app sends a JSON payment request to a payment gateway. The gateway parses it without errors, returns a 200 OK, but the customer is charged $1 instead of $100. The app sent `{"amount": 100, "currency": "USD"}`; the gateway expected `amount` to be in **cents**. Which kind of interoperability failure is this?
     options:
       - "Syntactic interoperability failure — the JSON did not parse correctly."
-      - "Semantic interoperability failure — both sides disagreed on the meaning of `amount`."
+      - "Semantic interoperability failure — both sides disagreed on what the amount means."
       - "Transport-layer failure — the network corrupted the request data in flight."
       - "Authentication failure — the gateway treated the call as a different user."
     correct_index: 1
@@ -20,10 +20,10 @@ questions:
         The data arrived unmodified — the gateway's parse succeeded. The error is in *meaning*, not transmission.
       3: |
         The charge went to the right customer; the wrong *amount* was charged. Authentication is not implicated.
-    explanation: "**Semantic interoperability means both sides interpret the data the same way. Syntactic interoperability (the JSON parsed) is necessary but not sufficient.** The Mars Climate Orbiter ($327M loss) failed for exactly this reason — one side computed impulses in pound-force-seconds while the other expected newton-seconds. Units, encoding, time zones, and reference frames are the classic semantic gotchas; documenting them rigorously (semantic view, shared dictionaries, schemas with units) is what prevents catastrophes."
+    explanation: "**Semantic interoperability means both sides interpret the data the same way. Syntactic interoperability (the JSON parsed) is necessary but not sufficient.** The Mars Climate Orbiter ($193M loss) failed for exactly this reason — one side computed impulses in pound-force-seconds while the other expected newton-seconds. Units, encoding, time zones, and reference frames are the classic semantic gotchas; documenting them rigorously (semantic view, shared dictionaries, schemas with units) is what prevents catastrophes."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: advanced
     type: single
     question: |
       A health-system architect must integrate three hospitals' patient-record systems. They write the requirement: "The systems should be interoperable." Why is this insufficient, and what's a properly specified requirement?
@@ -46,10 +46,10 @@ questions:
     difficulty: intermediate
     type: single
     question: |
-      Your team integrates with a third-party shipping API. The API returns weights in **pounds**, but your internal warehouse system uses **kilograms**. Per the literature, what is the standard design solution?
+      Your team integrates with a third-party shipping API. The API returns weights in **pounds**, but your internal warehouse system uses **kilograms**. What is the standard design solution?
     options:
       - "Push back on the shipping provider until they change their API to use kilograms."
-      - "Introduce an *Adapter* that converts pounds to kilograms at the seam, leaving both systems untouched."
+      - "Introduce an Adapter that converts pounds to kilograms at the seam, leaving both systems untouched."
       - "Modify your warehouse system to support both pounds and kilograms throughout the codebase."
       - "Submit the request in pounds and convert on display only, since it doesn't really matter internally."
     correct_index: 1
@@ -66,7 +66,7 @@ questions:
     difficulty: advanced
     type: multiple
     question: |
-      The Global Distribution System (GDS) case from the SEBook illustrates trade-offs interoperability creates. Which statements correctly characterize the GDS dilemma? Select all that apply.
+      The Global Distribution System (GDS) case illustrates trade-offs interoperability creates. Which statements correctly characterize the GDS dilemma? Select all that apply.
     options:
       - "Highly standardized interfaces are difficult to evolve because every participating system must update simultaneously."
       - "GDS struggled to support Southwest Airlines because Southwest's business model (no traditional seat assignments) didn't fit the standardized interface."
@@ -88,7 +88,7 @@ questions:
     explanation: "**Interoperability and changeability are classical conflicting quality attributes: a widely-adopted standard interface cannot be evolved without coordinating all participants, so it becomes ossified.** This is why standards-driven systems (HL7, banking, EDI, telecom) move slowly — and why fast-evolving systems (microservices internal APIs) often deliberately *avoid* publishing stable interfaces beyond a small consumer set."
 
   - id: 5
-    difficulty: advanced
+    difficulty: intermediate
     type: single
     question: |
       An architect is designing a public API for a new fintech platform. They face a classic *practical interoperability* tension. Which framing captures it correctly?
@@ -108,7 +108,7 @@ questions:
     explanation: "**Practical interoperability requires balancing two conflicting forces: implementation effort (more complex → less adopted) vs variability (more flexible → more useful). The architectural job is to find the *sweet spot* for the specific integrator profile and use-case range.** Pure simplicity and pure feature-richness both fail in real markets; design choices like sensible defaults, optional fields, and tiered APIs help reach the sweet spot."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: advanced
     type: single
     question: |
       Two microservices in your e-commerce platform both manage data about 'Users'. The Cart service stores delivery preferences; the Auth service stores credentials and roles. A new engineer proposes sharing the full User model across both services. What does microservice / bounded-context theory recommend instead?
@@ -128,13 +128,13 @@ questions:
     explanation: "**In microservice architectures, interoperability is managed through *bounded contexts*: each service owns its own model for an entity, and interfaces share only the minimal information (typically a unique identifier) needed for correlation.** This keeps each service's internal model free to evolve independently — the entire reason for microservices. 'DRY across services' is a textbook anti-pattern that re-creates a distributed monolith."
 
   - id: 7
-    difficulty: advanced
+    difficulty: intermediate
     type: single
     question: |
       Your team is integrating with a partner's API. The partner's spec says: "Returns a list of `Order` objects." Your team's QA finds three real interop failures *despite* the JSON parsing successfully every time. Which interop failure mode is most likely the root cause?
     options:
       - "Network packet loss randomly corrupting data between the two systems."
-      - "Semantic ambiguity — `Order` carries different assumptions on each side."
+      - "Semantic ambiguity — the Order type carries different assumptions on each side."
       - "TLS handshake failure preventing the request from completing successfully."
       - "The partner's server is implemented in a different programming language than yours."
     correct_index: 1
@@ -145,13 +145,13 @@ questions:
         TLS handshake failure prevents any communication. The clue is JSON arrived and parsed.
       3: |
         Programming-language differences are abstracted away by the API. Both sides exchange JSON regardless of internal implementation.
-    explanation: "**Semantic interoperability failures hide inside successful syntactic exchanges — the most expensive kind, because they look fine until they cause real damage.** Domain-rich types like 'Order', 'Customer', 'Address' carry implicit assumptions (tax inclusion, currency, validity rules, lifecycle states) that both sides must explicitly document. Tools: semantic views in the interface spec, shared dictionaries (HL7, schema.org), worked example payloads, contract tests that verify interpretation."
+    explanation: "**Semantic interoperability failures hide inside successful syntactic exchanges — the most expensive kind, because they look fine until they cause real damage.** Domain-rich types like 'Order', 'Customer', 'Address' carry implicit assumptions (tax inclusion, currency, validity rules, lifecycle states) that both sides must explicitly document. Tools: semantic views in the interface spec, shared dictionaries (IATA airport codes, SNOMED CT), worked example payloads, integration tests that verify interpretation."
 
   - id: 8
     difficulty: basic
     type: single
     question: |
-      An e-commerce platform allows the user to *use existing services* — third-party payment processing, email delivery, address validation. The CTO calls this "interoperability strategy". What is the underlying business motivation?
+      An e-commerce platform *uses existing services* — third-party payment processing, email delivery, address validation. The CTO calls this an "interoperability strategy". What is the underlying business motivation?
     options:
       - "Reduce vendor lock-in by spreading dependencies across many providers."
       - "Leverage specialized providers instead of building non-differentiating capabilities."
@@ -168,7 +168,7 @@ questions:
     explanation: "**The core business motivation for interoperability is 'use existing services instead of reinventing the wheel': specialized, mature providers (Stripe for payments, SendGrid for email, Twilio for SMS) deliver capabilities at a quality and reliability your team cannot match without massive investment.** This is why interoperability is treated as a strategic enabler, not a nice-to-have — it lets the team focus engineering effort on the few capabilities that differentiate the product."
 
   - id: 9
-    difficulty: advanced
+    difficulty: intermediate
     type: single
     question: |
       A medical records platform wants to demonstrate strong interoperability with hospital systems. They publish a 500-page specification with 200 optional fields and 40 custom data types. Adoption stalls — only 3 hospitals integrate in the first year. Which interop principle did they violate?

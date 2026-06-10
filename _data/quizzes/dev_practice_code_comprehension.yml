@@ -3,7 +3,7 @@ description: "Apply code-comprehension research to realistic reading, review, ar
 active: true
 questions:
   - id: 1
-    difficulty: intermediate
+    difficulty: advanced
     bloom: apply
     type: single
     question: |
@@ -28,7 +28,7 @@ questions:
     bloom: understand
     type: single
     question: |
-      A developer joins a legacy project with no domain knowledge and no reliable naming conventions. They must fix a localized bug in a small parsing function. Which comprehension strategy is most likely at first?
+      A developer joins a legacy project with no domain knowledge and no reliable naming conventions. They must fix a localized bug in a small parsing function. Which comprehension strategy will they most likely need at first?
     options:
       - "Top-down only — they can rely on domain schemas even without domain knowledge."
       - "Bottom-up — trace statements, group lines into chunks, build understanding from the code outward."
@@ -45,7 +45,7 @@ questions:
     explanation: "Bottom-up comprehension is costly but appropriate when the reader lacks the context needed for top-down hypotheses. As the developer learns the domain and identifies reliable beacons, they can switch to more opportunistic strategies."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: advanced
     bloom: analyze
     type: multiple
     question: |

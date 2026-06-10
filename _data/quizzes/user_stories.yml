@@ -167,7 +167,7 @@ questions:
         absence of tests.
     explanation: "This epic bundles patient records, payroll, inventory, and scheduling into one backlog item, so it violates **Small** and **Estimable**: those are separate product areas with different users, risks, and acceptance paths, and cannot be sized or delivered as one slice. Each listed criterion is individually checkable, so Testable is not the central failure — the bundled scope is."
   - id: 5
-    difficulty: advanced
+    difficulty: intermediate
     type: multiple
     question: |
       Read the following user story and its acceptance criteria: 

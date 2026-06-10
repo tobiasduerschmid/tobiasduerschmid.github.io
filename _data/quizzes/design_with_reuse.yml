@@ -31,7 +31,7 @@ questions:
       In the lecture's terminology, which scenario is **external reuse** rather than internal reuse?
     options:
       - "A team reuses a billing module written two years ago by another team in the same company"
-      - "A project depends on the `requests` package installed via pip from PyPI"
+      - "A project depends on the requests package installed via pip from PyPI"
       - "A NASA mission reuses flight software from a previous NASA mission"
       - "An organization extracts shared utilities into an internal product line consumed by all of its products"
     correct_index: 1
@@ -89,10 +89,10 @@ questions:
         update, you also never get the fix. Popularity is mostly orthogonal.
       3: |
         These are general design-decision habits, not the principles Heartbleed dramatizes.
-    explanation: "Heartbleed has two interlocking lessons: reusing a package means inheriting its bugs (so reuse is not a one-time investment), *and* the only way to clear those bugs is to actually apply upstream patches on a real cadence. The tension with Principle 1 (pin versions) is resolved by pinning *intentionally* and updating *intentionally* — never letting either happen by accident."
+    explanation: "Heartbleed has two interlocking lessons: reusing a package means inheriting its bugs (so reuse is not a one-time investment), *and* the only way to clear those bugs is to actually apply upstream patches on a real cadence. The tension with the keep-versions-fixed principle is resolved by pinning *intentionally* and updating *intentionally* — never letting either happen by accident."
 
   - id: 5
-    difficulty: advanced
+    difficulty: intermediate
     type: single
     question: |
       You're considering adding a 12-line npm dependency that capitalizes the first letter of each word in a string. The package has 7 GitHub stars and one maintainer with no commits in the last year. Which course of action best follows the chapter's principles?
@@ -112,7 +112,7 @@ questions:
       3: |
         Refusing to build the feature is disproportionate. The feature can be implemented in-line in
         twelve lines of straightforward code.
-    explanation: "This is the *left-pad* / *isArray* shape of decision. Principle 3 — strive for fewer dependencies — applies most strongly when the code is trivial *and* the source is unreliable. The implementation cost of twelve lines is far less than the long-tail cost of monitoring, auditing, and replacing an abandoned dependency."
+    explanation: "This is the *left-pad* / *isArray* shape of decision. The principle *strive for fewer package dependencies* applies most strongly when the code is trivial *and* the source is unreliable. The implementation cost of twelve lines is far less than the long-tail cost of monitoring, auditing, and replacing an abandoned dependency."
 
   - id: 6
     difficulty: intermediate
@@ -154,7 +154,7 @@ questions:
       Which statement about Snippet A vs. Snippet B is **correct**?
     options:
       - "Both follow the Hollywood Principle (Inversion of Control), because both pass data over HTTP"
-      - "Snippet A is a *library* — your code calls it. Snippet B is a *framework* — it calls your callback"
+      - "Snippet A is a library — your code calls it. Snippet B is a framework — it calls your callback"
       - "Snippet B is a library call because it uses an arrow function; Snippet A is a framework because it uses await"
       - "Snippet B violates the Hollywood Principle — frameworks should never call user-supplied callbacks"
     correct_index: 1
@@ -190,7 +190,7 @@ questions:
       3: |
         Popularity is only a heuristic. A popular framework still has to fit the streaming service's
         latency, concurrency, and back-pressure assumptions.
-    explanation: "The five steps for internal reuse compress to: (1) make assumptions explicit, (2) check them against the new context, (3) don't assume correctness — test in the new context. Batch and streaming differ on at least latency tolerance, concurrency, and back-pressure semantics; each is an assumption to verify before reuse."
+    explanation: "The internal-reuse principle *Identify Violated Assumptions* compresses to: (1) make assumptions explicit, (2) check them against the new context, (3) don't assume correctness — test in the new context. Batch and streaming differ on at least latency tolerance, concurrency, and back-pressure semantics; each is an assumption to verify before reuse."
 
   - id: 9
     difficulty: intermediate
@@ -225,7 +225,7 @@ questions:
     explanation: "The chapter's cost-benefit scale for external reuse names: integration effort, finding & evaluating the module, ongoing updating effort, and limits on changeability — counterbalanced by saved implementation effort, saved testing effort, and the benefit of update propagation."
 
   - id: 10
-    difficulty: advanced
+    difficulty: intermediate
     type: single
     question: |
       In a classic expert-design study, three teams designed the same system: Team A produced 1 detailed design, Team B produced 3 options, Team C produced 5 options. Expert reviewers ranked Team C's chosen design as the best. What is the *correct* takeaway?
@@ -243,11 +243,12 @@ questions:
         The study doesn't argue against detail; it argues against committing to the *first* design.
         Detail is fine once alternatives have been generated.
       3: |
-        The study controlled for time. The variable was the number of alternatives considered.
+        The comparison varies the number of alternatives considered, not the time available. Broader
+        search across options, rather than extra hours, is what improved the chosen design.
     explanation: "Generate-then-evaluate. The purpose of generation is to broaden up; the purpose of evaluation is to narrow down. Just *prompting* less-experienced designers to consider alternatives produces measurably better designs. The intuition: first ideas are typically a local maximum, and exploring alternatives helps you escape it."
 
   - id: 11
-    difficulty: advanced
+    difficulty: intermediate
     type: single
     question: |
       Which of the following is **not** typically a section in a Design Doc as practiced at Google?

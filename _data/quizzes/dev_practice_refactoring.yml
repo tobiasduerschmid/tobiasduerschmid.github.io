@@ -24,7 +24,7 @@ questions:
     explanation: "Refactoring preserves observable behavior while improving internal structure. The behavior-preserving boundary is the key test."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: advanced
     bloom: apply
     type: multiple
     question: |
@@ -113,7 +113,7 @@ questions:
     explanation: "AI-assisted refactoring still needs human scope control. Refactorings should be small and test-verified; behavior changes and side-effect reordering must be reviewed as feature or bug-fix work so reviewers know what contract they are checking."
 
   - id: 6
-    difficulty: intermediate
+    difficulty: advanced
     bloom: analyze
     type: single
     question: |

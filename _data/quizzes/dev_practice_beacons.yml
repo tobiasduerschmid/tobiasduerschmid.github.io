@@ -24,7 +24,7 @@ questions:
     explanation: "Beacons let readers jump to higher-level meaning. Removing them isolates the harder bottom-up work of reconstructing meaning from syntax."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     bloom: apply
     type: single
     question: |
@@ -92,7 +92,7 @@ questions:
     explanation: "Good naming balances reader support against information hiding: the `Singleton` suffix is a beacon for maintainers, but it forces clients to depend on the instantiation strategy. Some beacons belong in internal documentation or package structure rather than public API names."
 
   - id: 5
-    difficulty: advanced
+    difficulty: intermediate
     bloom: analyze
     type: single
     question: |

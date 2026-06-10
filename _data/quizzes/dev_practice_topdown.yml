@@ -24,7 +24,7 @@ questions:
     explanation: "Top-down review starts by building the 'why' and 'what' of the change. The implementation becomes easier to inspect once the reader has a hypothesis to test."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: advanced
     bloom: analyze
     type: single
     question: |
@@ -71,7 +71,7 @@ questions:
     explanation: "Beacons are any reliable cues that help a reader connect low-level code to high-level purpose. They can live in source, tests, architecture, or review metadata."
 
   - id: 4
-    difficulty: advanced
+    difficulty: intermediate
     bloom: evaluate
     type: single
     question: |
@@ -113,7 +113,7 @@ questions:
     explanation: "A beacon is valuable only when it is reliable. Misleading beacons force readers to abandon top-down understanding and re-trace behavior from scratch."
 
   - id: 6
-    difficulty: advanced
+    difficulty: intermediate
     bloom: create
     type: single
     question: |

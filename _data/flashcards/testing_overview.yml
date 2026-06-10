@@ -3,25 +3,25 @@ description: "Retrieval practice for the core vocabulary of software testing —
 active: true
 cards:
   - id: 1
-    difficulty: basic
+    difficulty: intermediate
     question: "What is **regression testing**, and why does it matter in CI?"
     answer: "The repetition of previously-passing tests to confirm that new changes haven't broken existing functionality. In CI it runs on every commit, so today's regression surfaces today."
     explanation: "Without regression testing, every change carries the silent risk of breaking unrelated behavior. The discipline pays off most when the codebase is changing fast or when many engineers are working in parallel — exactly the conditions modern agile teams operate under."
 
   - id: 2
-    difficulty: basic
+    difficulty: intermediate
     question: "What is the difference between **black-box** and **white-box** testing?"
     answer: "**Black-box** — tests derived from the spec, no knowledge of internals. **White-box** — tests derived from the implementation to exercise specific paths or branches."
     explanation: "The two are complementary, not competing. Black-box keeps tests honest to the spec and resistant to implementation drift; white-box exposes paths the spec doesn't enumerate and finds coverage gaps. A healthy suite uses both — black-box for behavior, white-box for implementation-specific risk."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: advanced
     question: "A teammate proposes deleting all white-box tests in favor of black-box tests, saying *'we should only test the spec'*. Critique this proposal."
     answer: "Too aggressive. Black-box alone misses real implementation risks — error paths, defensive branches, behaviors the spec is vague about. Favor black-box for behavior coverage, keep targeted white-box tests for known implementation risks."
     explanation: "The intuition behind the proposal is right — black-box tests survive refactoring better and pin user-visible behavior — but treating it as exclusive is the mistake. Both styles benefit from the same care anyway: strong oracles, deterministic execution, clear failure messages."
 
   - id: 4
-    difficulty: basic
+    difficulty: intermediate
     question: "Name the four levels of the **testing pyramid** from smallest to largest."
     answer: "**Unit** (class/routine in isolation), **Component** (package/larger element in isolation), **Integration** (multiple modules together), **System** (full configuration with real hardware and dependencies)."
     explanation: "The pyramid metaphor suggests that the lowest levels (unit, component) should be the most numerous because they're fast, focused, and cheap to maintain. Higher levels are slower and more brittle but exercise real assumptions the lower levels can't. A healthy strategy mixes all four — not 'unit tests only' and not 'end-to-end tests only'."

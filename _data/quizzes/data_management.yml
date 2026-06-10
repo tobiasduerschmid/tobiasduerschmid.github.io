@@ -155,7 +155,7 @@ questions:
     explanation: "ATMs are the *motivating counterexample* for CAP, not a system that defies it. In practice, banks chose availability: a disconnected ATM keeps dispensing cash up to a cached daily limit, and the resulting transactions are reconciled with the central ledger after the partition heals. That occasionally lets a customer overdraw — but staying open is worth the reconciliation cost. This is textbook AP with eventual consistency."
 
   - id: 9
-    difficulty: intermediate
+    difficulty: advanced
     type: single
     question: |
       The popular phrasing of CAP — *"pick two out of three"* — is memorable but imprecise. **Which statement better captures what the theorem actually says?**
@@ -213,7 +213,7 @@ questions:
     explanation: "Transactional, audited, well-structured data with cross-row invariants is the textbook RDBMS sweet spot: multi-row ACID transactions, foreign-key integrity, SQL joins, and audit-friendly schemas are exactly what brokerage ledgers need. The dominant workload is a regulated ledger of structured records, not graph traversal — so even though some graph databases support transactions, RDBMS is the obvious fit. Reaching for NoSQL by reflex is the real anti-pattern here."
 
   - id: 12
-    difficulty: advanced
+    difficulty: expert
     type: single
     question: |
       A code-review web app handles pull-request approvals. When a reviewer clicks **"Approve PR"**, the system does two things:
@@ -273,7 +273,7 @@ questions:
     options:
       - "Make `student_id` the primary key, because each student is a unique entity."
       - "Use `ROWID` or an auto-increment surrogate key; avoid composite keys since they aren't allowed."
-      - "Use the *composite* `(student_id, course_id, quarter)` — uniqueness holds only across that combination."
+      - "Use the composite `(student_id, course_id, quarter)` — uniqueness holds only across that combination."
     correct_index: 2
     option_feedback:
       0: |

@@ -3,7 +3,7 @@ description: "Test your knowledge of advanced Git commands, debugging tools, and
 active: true
 questions:
   - id: 1
-    difficulty: intermediate
+    difficulty: basic
     question: "You have some uncommitted, incomplete changes in your working directory, but you need to switch to another branch to urgently fix a bug. Which command is best suited to temporarily save your current work without making a messy commit?"
     options:
       - "`git cherry-pick`"
@@ -24,7 +24,7 @@ questions:
     explanation: "**`git stash` shelves your staged and unstaged changes onto a private stack and leaves a clean working tree, so you can switch contexts without committing half-finished work.** Plain `git stash` ignores untracked files; add `-u` to include them. Restore with `git stash pop`."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     question: "What happens when you enter a 'Detached HEAD' state in Git?"
     options:
       - "A merge conflict occurs that Git cannot resolve automatically."
@@ -44,7 +44,7 @@ questions:
     explanation: "**Checking out a commit by its hash points HEAD directly at that commit instead of a branch — \"detached HEAD.\"** New commits made here advance no branch pointer, so once you switch away nothing references them and they can be garbage-collected."
 
   - id: 3
-    difficulty: intermediate
+    difficulty: basic
     question: "Which Git command utilizes a binary search through your commit history to help you pinpoint the exact commit that introduced a bug?"
     options:
       - "`git blame`"
@@ -63,7 +63,7 @@ questions:
     explanation: "**`git bisect` binary-searches commit history to pinpoint the commit that introduced a bug.** You mark one known-good and one known-bad commit; Git checks out the midpoint and you test, repeatedly halving the range until one culprit commit remains — log(n) tests instead of n."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     question: "What is the primary purpose of Git Submodules?"
     options:
       - "To break a single, massive file into smaller, trackable pieces to improve performance."
@@ -83,7 +83,7 @@ questions:
     explanation: "**A submodule embeds an external repository as a subdirectory, pinning it to one specific commit while its history stays independent.** The outer repo stores only that pinned SHA, not a copy of the files — useful for sharing a library across projects without vendoring its code."
 
   - id: 5
-    difficulty: advanced
+    difficulty: intermediate
     type: multiple
     question: "In which of the following scenarios would using `git stash` be considered an appropriate and helpful practice? (Select all that apply)"
     options:
@@ -105,7 +105,7 @@ questions:
     explanation: "**`git stash` shelves staged and unstaged modifications and leaves a clean working tree — ideal for a quick context switch or a clean pull, not for deleting files or moving commits.** It saves work temporarily; it never removes files from history, and applying a finished commit from another branch is `git cherry-pick`'s job."
 
   - id: 6
-    difficulty: advanced
+    difficulty: intermediate
     type: multiple
     question: "Which of the following are valid methods or strategies for integrating changes from a feature branch back into the main codebase? (Select all that apply)"
     options:
@@ -152,7 +152,7 @@ questions:
     explanation: "**On a branch, `.git/HEAD` holds a symbolic reference like `ref: refs/heads/main` (a pointer to a branch pointer); in detached HEAD it holds a raw commit SHA directly.** Detaching (e.g. `git switch --detach <hash>`) disconnects HEAD from every branch, so commits made there advance no branch pointer and can be lost on switching away."
 
   - id: 8
-    difficulty: advanced
+    difficulty: intermediate
     question: |
       **Arrange** the commands to safely stash your work, pull remote changes, and restore your stashed work.
     type: parsons

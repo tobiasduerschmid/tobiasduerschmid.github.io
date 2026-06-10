@@ -43,7 +43,7 @@ questions:
     explanation: "Step 1 of the debugging process is **reproducing the bug**, and that requires both the *problem environment* (browser, OS, network, build version) and the *problem history* (the exact click sequence). Without a reproduction you cannot verify a fix worked — and for a cross-account data leak, an unverified fix is a serious incident waiting to recur. Mature bug-report templates ask these questions precisely because reproduction is load-bearing."
 
   - id: 3
-    difficulty: advanced
+    difficulty: intermediate
     type: multiple
     question: |
       Your team has *just* manually reproduced an intermittent payment bug after two days of investigation. Before anyone touches the production code, which of the following are **worthwhile next steps**? (Select all that apply.)
@@ -52,7 +52,8 @@ questions:
       - "Simplify the reproduction by removing every step that doesn't actually affect whether the bug occurs."
       - "Delete the manual reproduction notes now that you have the bug in your head; they will just clutter the ticket."
       - "Commit the test even though it currently fails, so CI documents the bug's existence until the fix lands."
-    correct_indices: [0, 1, 3]
+    correct_indices: [0, 1]
+    optional_indices: [3]
     option_feedback:
       0: |
         You are about to try a dozen possible fixes, and re-running the reproduction by hand each time is slow and tempting to skip. Automating it now turns every fix attempt into a seconds-long check — and the test becomes the permanent regression test once the bug is fixed.
@@ -60,8 +61,6 @@ questions:
         A 200-step reproduction usually has a handful of essential steps and many confounders. Stripping the non-load-bearing steps makes every fix attempt faster, yields a cleaner regression test, and exposes the minimal trigger that hints at the root cause.
       2: |
         The notes are precisely what lets a teammate (or future you) reproduce the bug after a context switch. Delete them and the next intermittent failure starts from scratch. Add them to the ticket instead of the trash.
-      3: |
-        Committing the failing test (often marked `xfail` or skipped with a TODO referencing the ticket) makes the bug visible in CI and gives the fix a measurable definition of done. Some teams call this "checkpointing the bug."
     explanation: "After reproduction, three moves pay dividends: **automate** the reproduction (a fast feedback loop is what lets you iterate on fixes), **simplify** it (a 200-step reproduction usually has 5 essential steps and 195 confounders), and **preserve** it (committed test, ticket notes, anything that lets the next person continue from where you left off). The automated test also becomes the permanent regression test once the bug is fixed."
 
   - id: 4
@@ -71,7 +70,7 @@ questions:
       A teammate has a Python bug they've been stuck on for an hour. They walk over to your desk and say *"can you look at this?"* You read the function — about 30 lines — and notice nothing obviously wrong. Which suggestion is the **highest-leverage pedagogical move**?
     options:
       - "Take over the keyboard and step through the code with the debugger together; they'll learn by watching."
-      - "Ask them to explain the function to you line by line, from the top, saying what each line *should* do before they read it."
+      - "Ask them to explain the function to you line by line, from the top, saying what each line should do before they read it."
       - "Suggest they paste the function into an AI assistant and ask 'what's the bug?' — it's faster than either of you reading it again."
       - "Tell them to take a 20-minute walk; bugs often resolve themselves when you stop thinking about them."
     correct_index: 1
@@ -202,7 +201,7 @@ questions:
       A junior engineer is debugging a deeply nested issue in a backend microservice. They have been at it for three hours with no progress, just rereading the same 200 lines of code. What is the **single most likely** explanation for why they are stuck?
     options:
       - "The bug requires advanced language knowledge they haven't learned yet; they need a senior engineer to take over."
-      - "*Curse of knowledge* — they keep seeing what they intended, not what the code actually does, and haven't broken the loop."
+      - "Curse of knowledge — they keep seeing what they intended, not what the code actually does, and haven't broken the loop."
       - "The bug is unfixable without rewriting the service; they should escalate to architecture."
       - "Their IDE doesn't support the language well enough; switching IDEs would resolve the issue."
     correct_index: 1
