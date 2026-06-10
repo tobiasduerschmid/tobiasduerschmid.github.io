@@ -641,15 +641,15 @@
       var raw = localStorage.getItem(STATS_KEY);
       if (!raw) return {};
       var stats = plainObjectStore(JSON.parse(raw));
-      // Migrate legacy records: pre-`lastAsked` entries are stamped with "now"
-      // so the workout picker treats them as recently practiced, not unseen
-      // (unseen would be the opposite of what they actually are).
+      // Migrate legacy records: pre-`lastAsked` entries keep their existing SRS
+      // `last` timestamp when one exists, so recency-based workouts preserve
+      // old practice order instead of flattening every legacy card to "now".
       var migrated = false;
       var now = Date.now();
       for (var k in stats) {
         if (Object.prototype.hasOwnProperty.call(stats, k)
             && stats[k] && typeof stats[k].lastAsked !== 'number') {
-          stats[k].lastAsked = now;
+          stats[k].lastAsked = typeof stats[k].last === 'number' && isFinite(stats[k].last) ? stats[k].last : now;
           migrated = true;
         }
       }

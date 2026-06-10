@@ -84,6 +84,35 @@ async function answerWorkoutCardWithShortcut(page, card, key) {
   await expect(card.locator('.quiz-explanation')).toBeVisible();
 }
 
+async function answerVisibleWorkoutCard(page) {
+  const quizCard = page.locator('.workout-quiz-card').first();
+  if (await quizCard.isVisible()) {
+    const type = await quizCard.getAttribute('data-type');
+    if (type === 'multiple') {
+      await answerWorkoutMultipleChoice(quizCard);
+    } else if (type === 'parsons') {
+      await quizCard.locator('.parsons-line').first().click();
+      await quizCard.getByRole('button', { name: 'Check Order' }).click();
+    } else {
+      await quizCard.locator('.quiz-option').first().click();
+    }
+    await quizCard.getByRole('button', { name: 'Next' }).click();
+    return;
+  }
+
+  const flashcard = page.locator('.workout-flashcard').first();
+  await expect(flashcard).toBeVisible();
+  await flashcard.getByRole('button', { name: 'Show Answer' }).click();
+  await flashcard.getByRole('button', { name: 'I got it right' }).click();
+}
+
+async function readTodayActivity(page) {
+  return page.evaluate(() => {
+    const activity = JSON.parse(localStorage.getItem('se-gym-activity') || '{}');
+    return activity[window.PersonalGym.todayStr()] || null;
+  });
+}
+
 /**
  * Helper: clear all se-gym cookies and localStorage before each test.
  */
@@ -663,6 +692,7 @@ test.describe('Personal Gym - Workout', () => {
     await expect(page.locator('#workout-score')).toHaveText('0');
     await expect(page.locator('#workout-total')).toHaveText('1');
     await expect(page.locator('#timed-practice-clock')).toBeHidden();
+    expect(await readTodayActivity(page)).toBeNull();
   });
 
   test('timed practice per-card countdown uses selected workout size', async ({ page, context }) => {
@@ -920,6 +950,55 @@ test.describe('Personal Gym - Workout', () => {
     await answerWorkoutCardWithShortcut(page, quizCard, '1');
   });
 
+  test('single-answer quiz options support arrow-key radio navigation', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'analyze-performance', 'true');
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'scrum' }]));
+    await page.goto(GYM_URL);
+
+    await page.evaluate(() => {
+      const quiz = ALL_CARD_DATA.quizzes.scrum;
+      const now = Date.now();
+      const stats = {};
+      let chosen = null;
+      quiz.questions.forEach((question, index) => {
+        const key = PersonalGym.cardStatsKey('quiz', 'scrum', question);
+        stats[key] = {
+          seen: 1,
+          correct: 1,
+          reps: 1,
+          ef: 2.5,
+          intervalDays: 1,
+          due: now + 86400000,
+          lastAsked: now + index,
+          last: now + index,
+        };
+        if (!chosen && (question.type || 'single') === 'single' && Array.isArray(question.options) && question.options.length > 1) {
+          chosen = question;
+        }
+      });
+      if (!chosen) throw new Error('Scrum quiz needs a single-answer question for arrow-key coverage');
+      const chosenKey = PersonalGym.cardStatsKey('quiz', 'scrum', chosen);
+      stats[chosenKey].lastAsked = now - 86400000;
+      stats[chosenKey].last = stats[chosenKey].lastAsked;
+      localStorage.setItem('se-gym-stats', JSON.stringify(stats));
+    });
+
+    await page.locator('#max-cards').fill('1');
+    await page.getByRole('button', { name: 'Start Workout' }).first().click();
+
+    const quizCard = page.locator('.workout-quiz-card');
+    await expect(quizCard).toBeVisible();
+    await expect(quizCard).toHaveAttribute('data-type', 'single');
+    const secondOption = quizCard.locator('.quiz-option').nth(1);
+    await expect(quizCard.locator('.quiz-option').first()).toBeFocused();
+
+    await page.keyboard.press('ArrowDown');
+
+    await expect(secondOption).toHaveAttribute('aria-checked', 'true');
+    await expect(quizCard.locator('.quiz-explanation')).toBeVisible();
+  });
+
   test('multiple-answer quiz shortcut uses Enter to submit', async ({ page, context }) => {
     await setCookie(context, 'se-gym-active', 'true');
     await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: 'user_stories' }]));
@@ -1011,10 +1090,13 @@ test.describe('Personal Gym - Workout', () => {
     const savedAfterSubmit = await page.evaluate(() => JSON.parse(localStorage.getItem('se-gym-workout-progress') || 'null'));
     expect(savedAfterSubmit?.currentStep).toBe(1);
     expect(savedAfterSubmit?.score).toBe(1);
+    expect(savedAfterSubmit?.activityCardCount).toBe(1);
 
     await page.reload();
     await expect(page.locator('#saved-workout-row')).toBeVisible();
     await expect(page.locator('#saved-workout-summary')).toHaveText('Saved workout: 1 of 2 completed.');
+    await expect(page.getByRole('button', { name: 'Start Workout' }).first()).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Discard Saved Workout' })).toBeEnabled();
     await a11yCheckpoint(page, 'gym entrance - saved workout resume prompt', { feature: A11Y_FEATURE, darkMode: true });
 
     await page.getByRole('button', { name: 'Resume Saved Workout' }).click();
@@ -1197,12 +1279,12 @@ test.describe('Personal Gym - Workout', () => {
     await expect(page.locator('#gym-workout')).toBeHidden();
   });
 
-  test('workout results: review incorrect shows only missed cards', async ({ page, context }) => {
+  test('workout results: review incorrect checkpoints and counts only reviewed cards', async ({ page, context }) => {
     await setCookie(context, 'se-gym-active', 'true');
     await setCookie(context, 'se-gym', JSON.stringify([{ type: 'flashcard', id: 'git' }]));
     await page.goto(GYM_URL);
 
-    await page.locator('#max-cards').fill('2');
+    await page.locator('#max-cards').fill('3');
     await page.locator('#start-workout-btn').click();
 
     // Card 1: mark correct
@@ -1213,10 +1295,16 @@ test.describe('Personal Gym - Workout', () => {
     await page.locator('.show-answer-btn').click();
     await page.locator('.incorrect-btn').click();
 
+    // Card 3: mark incorrect
+    await page.locator('.show-answer-btn').click();
+    await page.locator('.incorrect-btn').click();
+
     // Should see results with review button
     await expect(page.locator('#workout-results')).toBeVisible();
     await expect(page.locator('#workout-score')).toHaveText('1');
+    await expect(page.locator('#workout-total')).toHaveText('3');
     await expect(page.locator('#workout-review-btn')).toBeVisible();
+    expect(await readTodayActivity(page)).toMatchObject({ s: 1, c: 3 });
 
     // Start review
     await page.locator('#workout-review-btn').click();
@@ -1224,6 +1312,22 @@ test.describe('Personal Gym - Workout', () => {
     // Should show a new card (the incorrect one)
     await expect(page.locator('#workout-results')).toBeHidden();
     await expect(page.locator('.workout-flashcard')).toBeVisible();
+
+    await page.locator('.show-answer-btn').click();
+    await page.locator('.correct-btn').click();
+
+    await page.reload();
+    await expect(page.locator('#saved-workout-row')).toBeVisible();
+    await expect(page.locator('#saved-workout-summary')).toHaveText('Saved review: 1 of 2 reviewed.');
+    await page.getByRole('button', { name: 'Resume Saved Workout' }).click();
+
+    await expect(page.locator('.workout-flashcard')).toBeVisible();
+    await page.locator('.show-answer-btn').click();
+    await page.locator('.correct-btn').click();
+
+    await expect(page.locator('#workout-results')).toBeVisible();
+    expect(await readTodayActivity(page)).toMatchObject({ s: 2, c: 5 });
+    await expect.poll(() => page.evaluate(() => localStorage.getItem('se-gym-workout-progress'))).toBeNull();
   });
 
   test('workout results: restart reshuffles cards', async ({ page, context }) => {
@@ -1992,6 +2096,18 @@ test.describe('SE Gym - Spaced repetition, Workout of the Day, Topic Mastery', (
     expect(r.lapse.due).toBeLessThanOrEqual(r.now);
   });
 
+  test('legacy stats migration preserves last practice timestamps for recency ordering', async ({ page }) => {
+    const LAST = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    await seedStats(page, {
+      'quiz:git:1': { seen: 3, correct: 2, reps: 1, ef: 2.5, intervalDays: 1, due: LAST + 86400000, last: LAST },
+    });
+    await page.goto(GYM_URL);
+
+    const migrated = await page.evaluate(() => window.PersonalGym.getStats()['quiz:git:1']);
+    expect(migrated.lastAsked).toBe(LAST);
+    expect(migrated.last).toBe(LAST);
+  });
+
   test('Due for Review surfaces past-due cards (not future ones) and Start Review launches them', async ({ page, context }) => {
     const NOW = Date.now();
     const DAY = 24 * 60 * 60 * 1000;
@@ -2086,10 +2202,8 @@ test.describe('SE Gym - Spaced repetition, Workout of the Day, Topic Mastery', (
     await expect(page.locator('.mastery-row').filter({ hasText: 'Tools Master Flashcards' })).toHaveCount(0);
   });
 
-  test('Workout of the Day records completion and shows the badge on the next visit', async ({ page, context }) => {
+  test('Workout of the Day timeout before an answer does not record completion', async ({ page, context }) => {
     await setCookie(context, 'se-gym-active', 'true');
-    // Finish the workout deterministically (regardless of card type) via a
-    // 1-second per-card timeout rather than answering a random card.
     await setCookie(context, 'se-gym-timed-practice', 'true');
     await setCookie(context, 'se-gym-timer-mode', 'per-question');
     await setCookie(context, 'se-gym-timer-seconds-per-question', '1');
@@ -2101,8 +2215,28 @@ test.describe('SE Gym - Spaced repetition, Workout of the Day, Topic Mastery', (
       localStorage.getItem('se-gym-daily-last'),
       window.PersonalGym.todayStr(),
     ]);
+    expect(dailyLast).toBeNull();
+    expect(today).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+    await page.reload();
+    await expect(page.locator('#wod-status')).toBeVisible();
+    await expect(page.locator('#wod-status')).not.toContainText('Completed today');
+  });
+
+  test('Workout of the Day records completion after every card is answered', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await page.goto(GYM_URL);
+    await page.locator('#max-cards').fill('1');
+    await page.locator('#start-daily-workout-btn').click();
+
+    await answerVisibleWorkoutCard(page);
+    await expect(page.locator('#workout-results')).toBeVisible();
+
+    const [dailyLast, today] = await page.evaluate(() => [
+      localStorage.getItem('se-gym-daily-last'),
+      window.PersonalGym.todayStr(),
+    ]);
     expect(dailyLast).toBe(today);
-    // The "Completed today" badge appears when we return to the entrance
+
     await page.reload();
     await expect(page.locator('#wod-status')).toBeVisible();
     await expect(page.locator('#wod-status')).toContainText('Completed today');
