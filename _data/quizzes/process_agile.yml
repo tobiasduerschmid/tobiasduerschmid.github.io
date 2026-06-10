@@ -63,7 +63,7 @@ questions:
     explanation: "**Cargo-cult Agile adopts the visible rituals (standups, sprints, retrospectives, Scrum Master role) without the values (responsiveness, customer collaboration, working software early). The team feels Agile, the work behaves like Waterfall, and customers see broken software at the end as if nothing changed.** The fix is to start with the values and let the ceremonies serve them — not the reverse."
 
   - id: 4
-    difficulty: intermediate
+    difficulty: basic
     type: multiple
     question: |
       Which of these are **core failures of Waterfall** that Agile was designed to address? Select all that apply.
@@ -128,7 +128,7 @@ questions:
     explanation: "**Self-organizing teams is one of Agile's twelve principles: developers decide how to best organize their work, because they have the best context about trade-offs, dependencies, and risks.** Healthy Agile organizations push *what* decisions up (priorities, strategy) and *how* decisions down (implementation, tooling, organization)."
 
   - id: 7
-    difficulty: intermediate
+    difficulty: advanced
     type: single
     question: |
       Compare **Scrum**, **XP**, and **Lean Software Development** at the highest level. Which framing is most accurate?

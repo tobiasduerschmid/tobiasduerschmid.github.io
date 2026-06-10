@@ -24,7 +24,7 @@ questions:
     explanation: "High failure cost, regulation, and expensive post-release change push the process toward more upfront design, documented rationale, and rigorous verification. Agile feedback can still appear in prototypes or internal iterations, but it cannot replace evidence for safety-critical decisions."
 
   - id: 2
-    difficulty: intermediate
+    difficulty: basic
     bloom: apply
     type: multiple
     question: |

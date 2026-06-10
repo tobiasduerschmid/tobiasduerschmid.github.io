@@ -70,7 +70,7 @@ questions:
     options:
       - "The sort implementation is broken — a surviving mutant on the comparison operator indicates the production sort is producing wrong order on the inputs covered."
       - "Some test input is missing where the difference between `<` and `<=` matters — likely an input with equal keys whose secondary attributes differ."
-      - "Mutation testing produced an equivalent mutant — the operator change is semantically indistinguishable here, and the survival is a measurement artifact rather than a real gap."
+      - "Mutation testing produced an equivalent mutant — the `<` → `<=` change is semantically indistinguishable here, and the survival is a measurement artifact rather than a real gap."
       - "Coverage is the gap — pushing line coverage above the current level on this module would automatically kill this mutant by exercising the comparison more thoroughly."
     correct_index: 1
     option_feedback:

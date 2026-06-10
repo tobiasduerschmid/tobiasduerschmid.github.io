@@ -353,7 +353,7 @@ questions:
     distractors:
       - "    count = count + 1;"
       - "      <button onClick={handleClick()}>+</button>"
-    explanation: "The functional form `setCount(prev => prev + 1)` asks React for the latest state at update time, so batched clicks don't read a stale value. The `count = count + 1` distractor reassigns a local variable and never re-renders; the `onClick={handleClick()}` distractor calls the handler during render instead of registering it, which fires the setter every render and loops forever."
+    explanation: "The functional form `setCount(prev => prev + 1)` asks React for the latest state at update time, so batched clicks don't read a stale value. The `count = count + 1` distractor reassigns a local variable and never re-renders; the `onClick={handleClick()}` distractor calls the handler during render instead of registering it, which fires the setter on every render until React halts it with a \"Too many re-renders\" error."
 
   - id: 17
     difficulty: advanced
