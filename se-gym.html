@@ -1429,9 +1429,17 @@ layout: sebook
         }
 
         // ---- Difficult Questions Gym ----
+        // Gate on the gym being active, not just performance tracking: the
+        // section (with its "Start Hard Workout" button) lives inside
+        // #gym-entrance-sections, which JS marks `inert` while the gym is
+        // inactive. Showing it then renders a button that looks enabled but
+        // cannot be clicked. Tracking can outlive an active gym (disabling the
+        // gym doesn't clear stats), so without this check the dead button leaks
+        // through whenever a lapsed user still has difficult cards on file.
         var difficultCards = [];
         var hasDifficult = false;
-        if (PersonalGym.isAnalyzePerformance()) {
+        var difficultGymAvailable = PersonalGym.isPersonalGymActive() && PersonalGym.isAnalyzePerformance();
+        if (difficultGymAvailable) {
           difficultCards = getDifficultCards().filter(function (dc) {
             return passesDifficultyFilter(dc.data);
           });
@@ -1440,7 +1448,7 @@ layout: sebook
 
         var difficultInGym = gym.some(function (d) { return d.type === 'difficult' && d.id === 'difficult'; });
 
-        if (PersonalGym.isAnalyzePerformance() && hasDifficult) {
+        if (difficultGymAvailable && hasDifficult) {
           showElement(difficultSection);
           difficultCountEl.textContent = '(' + difficultCards.length + ' cards)';
           difficultAddBtn.classList.toggle('in-gym', difficultInGym);

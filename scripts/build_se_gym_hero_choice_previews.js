@@ -295,6 +295,16 @@ async function main() {
         for (const option of group.options) {
           const svg = source.cloneNode(true);
           svg.querySelectorAll('animate, animateTransform').forEach((node) => node.remove());
+          // Standalone `<img src=*.svg>` previews are parsed as strict XML, so an
+          // authoring comment that contains a double hyphen (e.g. a CSS custom
+          // property name like `--hero-hair-light`) makes the whole file fail to
+          // render as a broken image. Inline SVG tolerates it via the lenient HTML
+          // parser, which is why it only shows up in the pre-rendered thumbnails.
+          // Comments serve no purpose in the rendered preview, so drop them all.
+          const commentWalker = document.createTreeWalker(svg, NodeFilter.SHOW_COMMENT);
+          const comments = [];
+          while (commentWalker.nextNode()) comments.push(commentWalker.currentNode);
+          comments.forEach((node) => node.remove());
           const state = representativeState(definition, option.value);
           window.HeroAvatar.applyToSvg(svg, state);
           measureHost.appendChild(svg);
@@ -317,6 +327,24 @@ async function main() {
       }
     }
     measureHost.remove();
+
+    // Fail loudly if any serialized preview is not well-formed XML. Browsers load
+    // `<img src=*.svg>` through a strict XML parser, so a malformed thumbnail
+    // silently renders as a broken image at runtime (no console error, no 404).
+    // Re-parsing here turns that into a build-time error instead.
+    const malformed = [];
+    const parser = new DOMParser();
+    for (const preview of previews) {
+      const doc = parser.parseFromString(preview.svg, 'image/svg+xml');
+      const error = doc.querySelector('parsererror');
+      if (error) {
+        malformed.push(`${preview.key}/${preview.value}: ${error.textContent.replace(/\s+/g, ' ').trim()}`);
+      }
+    }
+    if (malformed.length) {
+      throw new Error('Malformed SVG previews:\n' + malformed.join('\n'));
+    }
+
     return previews;
   }, {
     representativeSkin: REPRESENTATIVE_PREVIEW_SKIN,

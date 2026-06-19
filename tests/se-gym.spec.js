@@ -1848,6 +1848,33 @@ test.describe('Personal Gym - Performance Tracking', () => {
     await expect(page.locator('#difficult-gym-section')).toBeHidden();
   });
 
+  test('difficult questions section stays hidden while the gym is inactive even with difficult cards', async ({ page, context }) => {
+    // Tracking outlives an active gym (disabling the gym keeps stats), so a
+    // lapsed user can have difficult cards on file with the gym switched off.
+    // The section lives inside the `inert` entrance area while inactive, so
+    // surfacing its "Start Hard Workout" button there would render a control
+    // that looks enabled but cannot be clicked. It must stay hidden until the
+    // gym is reactivated.
+    await setCookie(context, 'analyze-performance', 'true'); // tracking on, gym NOT active
+    await page.goto(GYM_URL);
+    await page.evaluate(() => {
+      const quizId = 'design_pattern_singleton';
+      const stats = {};
+      stats[`quiz:${quizId}:1`] = { seen: 10, correct: 1 };
+      stats[`quiz:${quizId}:2`] = { seen: 10, correct: 1 };
+      PersonalGym.saveStats(stats);
+    });
+    await page.reload();
+
+    await expect(page.locator('#difficult-gym-section')).toBeHidden();
+    await expect(page.getByRole('button', { name: 'Start Hard Workout' })).toBeHidden();
+
+    // Reactivating the gym surfaces the section and an enabled, clickable button.
+    await page.locator(ACTIVATE_TOGGLE_SLIDER).click();
+    await expect(page.locator('#difficult-gym-section')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Start Hard Workout' })).toBeEnabled();
+  });
+
   test('difficult questions appear when stats exceed threshold', async ({ page, context }) => {
     // Marker: this test renders the otherwise-hidden Difficult Questions
     // section, which is the only way the audit can sweep it.
