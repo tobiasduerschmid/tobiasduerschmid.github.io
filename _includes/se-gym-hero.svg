@@ -49,7 +49,7 @@
     <radialGradient id="hero-stage-glow-{{ hero_variant }}" cx=".5" cy=".18" r=".78"><stop offset="0" stop-color="#edf7ff" stop-opacity=".16"/><stop offset=".42" stop-color="#82bde8" stop-opacity=".08"/><stop offset="1" stop-color="#081325" stop-opacity="0"/></radialGradient>
     <radialGradient id="brain-glow-{{ hero_variant }}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFE470" stop-opacity=".55"/><stop offset=".55" stop-color="#FFD100" stop-opacity=".18"/><stop offset="1" stop-color="#FFD100" stop-opacity="0"/></radialGradient>
     <linearGradient id="hair-grad-{{ hero_variant }}" x1="0" y1="0" x2="0" y2="1">
-      <!-- The contrast-aware --hero-hair-light token is intentionally desaturated
+      <!-- The contrast-aware hero-hair-light token is intentionally desaturated
            (e.g. #776c64 for near-black hair), which read as a flat gray crown
            streak when used at full strength. color-mix re-warms the highlight
            toward the user's own hair base — safe for any hair color, blonde to
