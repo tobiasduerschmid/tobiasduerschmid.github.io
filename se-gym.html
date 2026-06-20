@@ -347,9 +347,14 @@ layout: sebook
               <span class="gym-item-count">({{ qdata.questions | size }} questions)</span>
               <p class="gym-item-desc">{{ qdata.description }}</p>
             </div>
-            <button class="gym-add-btn" data-type="quiz" data-id="{{ qid }}" data-original-title="Add to gym" aria-label="Add {{ qdata.title | escape }} to gym">
-              <i class="fa-solid fa-plus" aria-hidden="true"></i>
-            </button>
+            <div class="gym-item-actions">
+              <button class="gym-practice-btn" data-type="quiz" data-id="{{ qid }}" data-original-title="Start targeted practice" aria-label="Start targeted practice for {{ qdata.title | escape }}">
+                <i class="fa-solid fa-dumbbell" aria-hidden="true"></i>
+              </button>
+              <button class="gym-add-btn" data-type="quiz" data-id="{{ qid }}" data-original-title="Add to gym" aria-label="Add {{ qdata.title | escape }} to gym">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+              </button>
+            </div>
           </div>
           {% elsif qdata.decks and qdata.active != false %}
           {% assign meta_count = 0 %}
@@ -366,9 +371,14 @@ layout: sebook
               <span class="gym-item-count">({{ meta_count }} questions)</span>
               <p class="gym-item-desc">{{ qdata.description }}</p>
             </div>
-            <button class="gym-add-btn" data-type="quiz" data-id="{{ qid }}" data-original-title="Add to gym" aria-label="Add {{ qdata.title | escape }} to gym">
-              <i class="fa-solid fa-plus" aria-hidden="true"></i>
-            </button>
+            <div class="gym-item-actions">
+              <button class="gym-practice-btn" data-type="quiz" data-id="{{ qid }}" data-original-title="Start targeted practice" aria-label="Start targeted practice for {{ qdata.title | escape }}">
+                <i class="fa-solid fa-dumbbell" aria-hidden="true"></i>
+              </button>
+              <button class="gym-add-btn" data-type="quiz" data-id="{{ qid }}" data-original-title="Add to gym" aria-label="Add {{ qdata.title | escape }} to gym">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+              </button>
+            </div>
           </div>
           {% endif %}
           {% endfor %}
@@ -387,9 +397,14 @@ layout: sebook
               <span class="gym-item-count">({{ fcdata.cards | size }} cards)</span>
               <p class="gym-item-desc">{{ fcdata.description }}</p>
             </div>
-            <button class="gym-add-btn" data-type="flashcard" data-id="{{ fcid }}" data-original-title="Add to gym" aria-label="Add {{ fcdata.title | escape }} to gym">
-              <i class="fa-solid fa-plus" aria-hidden="true"></i>
-            </button>
+            <div class="gym-item-actions">
+              <button class="gym-practice-btn" data-type="flashcard" data-id="{{ fcid }}" data-original-title="Start targeted practice" aria-label="Start targeted practice for {{ fcdata.title | escape }}">
+                <i class="fa-solid fa-dumbbell" aria-hidden="true"></i>
+              </button>
+              <button class="gym-add-btn" data-type="flashcard" data-id="{{ fcid }}" data-original-title="Add to gym" aria-label="Add {{ fcdata.title | escape }} to gym">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+              </button>
+            </div>
           </div>
           {% elsif fcdata.decks and fcdata.active != false %}
           {% assign meta_count = 0 %}
@@ -406,9 +421,14 @@ layout: sebook
               <span class="gym-item-count">({{ meta_count }} cards)</span>
               <p class="gym-item-desc">{{ fcdata.description }}</p>
             </div>
-            <button class="gym-add-btn" data-type="flashcard" data-id="{{ fcid }}" data-original-title="Add to gym" aria-label="Add {{ fcdata.title | escape }} to gym">
-              <i class="fa-solid fa-plus" aria-hidden="true"></i>
-            </button>
+            <div class="gym-item-actions">
+              <button class="gym-practice-btn" data-type="flashcard" data-id="{{ fcid }}" data-original-title="Start targeted practice" aria-label="Start targeted practice for {{ fcdata.title | escape }}">
+                <i class="fa-solid fa-dumbbell" aria-hidden="true"></i>
+              </button>
+              <button class="gym-add-btn" data-type="flashcard" data-id="{{ fcid }}" data-original-title="Add to gym" aria-label="Add {{ fcdata.title | escape }} to gym">
+                <i class="fa-solid fa-plus" aria-hidden="true"></i>
+              </button>
+            </div>
           </div>
           {% endif %}
           {% endfor %}
@@ -974,13 +994,6 @@ layout: sebook
       function setStartButtonsDisabled(disabled) {
         startButtons.forEach(function (button) {
           button.disabled = disabled;
-        });
-      }
-
-      function setSavedWorkoutStartBlock(disabled) {
-        ['start-daily-workout-btn', 'start-review-btn', 'start-hard-workout-btn'].forEach(function (id) {
-          var button = document.getElementById(id);
-          if (button) button.disabled = disabled;
         });
       }
 
@@ -1561,8 +1574,12 @@ layout: sebook
         } else {
           gymSummary.textContent = '';
         }
+        // A pending saved workout still disables the prominent main "Start
+        // Workout" buttons (paired with the adjacent Resume/Discard prompt), but
+        // the quick-start launchers (Today's Workout, Start Review, Start Hard
+        // Workout) and the per-deck practice buttons stay available — they
+        // replace the saved checkpoint when started (see beginWorkout).
         setStartButtonsDisabled(!PersonalGym.isPersonalGymActive() || !hasAnything || drawCount === 0 || hasSavedWorkout);
-        setSavedWorkoutStartBlock(hasSavedWorkout);
       }
 
       // ---- Difficult questions helper ----
@@ -1668,10 +1685,17 @@ layout: sebook
 
       // Shared workout-start sequence for every entry point (normal, hard,
       // review, daily, direct links). Returns false if there are no cards.
-      function beginWorkout(cards) {
+      function beginWorkout(cards, options) {
+        options = options || {};
         workoutIsDaily = false;
         if (!cards || cards.length === 0) return false;
-        if (!challengeTarget && updateSavedWorkoutResume()) {
+        // A pending saved workout normally blocks a fresh start so the user
+        // resumes or discards it first (this guards the prominent main
+        // "Start Workout" button). Targeted and quick-start practice — hard,
+        // per-deck, daily, review — pass replaceSaved to stay always available;
+        // the saveWorkoutProgress(0) below then overwrites the slot so the new
+        // session cleanly replaces the old checkpoint.
+        if (!challengeTarget && !options.replaceSaved && updateSavedWorkoutResume()) {
           announceGymStatus('Resume or discard the saved workout before starting a new one.');
           return false;
         }
@@ -2069,6 +2093,19 @@ layout: sebook
         });
       });
 
+      // Per-deck targeted practice: start a workout for just this quiz/flashcard
+      // set without touching the saved gym selection. Delegated so it also covers
+      // any library rows that get re-rendered. replaceSaved keeps it available
+      // even when a saved workout is pending (it replaces that checkpoint).
+      document.addEventListener('click', function (e) {
+        var btn = e.target && e.target.closest ? e.target.closest('.gym-practice-btn') : null;
+        if (!btn || btn.disabled) return;
+        var type = btn.getAttribute('data-type');
+        var id = btn.getAttribute('data-id');
+        if (!type || !id) return;
+        startWorkout({ sourceGym: [{ type: type, id: id }], requireActive: false, replaceSaved: true });
+      });
+
       // Bind difficult gym add button
       difficultAddBtn.addEventListener('click', function () {
         PersonalGym.toggleGym('difficult', 'difficult');
@@ -2197,7 +2234,7 @@ layout: sebook
         });
         challengeTarget = null;
         if (hardWorkoutCards.length === 0) return;
-        beginWorkout(hardWorkoutCards);
+        beginWorkout(hardWorkoutCards, { replaceSaved: true });
       });
 
       // ---- Workout of the Day / Due Review / Topic-Mastery practice / enable tracking ----
@@ -2212,7 +2249,7 @@ layout: sebook
             return;
           }
           // beginWorkout() resets workoutIsDaily, so flag this workout AFTER it starts.
-          if (beginWorkout(dailyWorkout)) {
+          if (beginWorkout(dailyWorkout, { replaceSaved: true })) {
             workoutIsDaily = true;
             saveWorkoutProgress(0);
           }
@@ -2234,7 +2271,7 @@ layout: sebook
             announceGymStatus('No due cards match your current difficulty filter. Adjust the filter and try again.');
             return;
           }
-          beginWorkout(due);
+          beginWorkout(due, { replaceSaved: true });
         });
       }
 
@@ -2511,7 +2548,7 @@ layout: sebook
           announceGymStatus('No cards match your current gym and difficulty filter.');
           return;
         }
-        beginWorkout(cards);
+        beginWorkout(cards, { replaceSaved: !!(options && options.replaceSaved) });
       }
 
       function showWorkoutCard(index) {
