@@ -932,6 +932,29 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       .toHaveAttribute('src', '/assets/se-gym-hero-choice-previews/accessory-headset-mic.svg');
   });
 
+  test('Production choice thumbnails keep their true colors in dark mode (no SVG inversion)', async ({ page }) => {
+    await page.addInitScript(() => { document.documentElement.classList.add('dark-mode'); });
+    await installStaticChoicePreviewManifest(page, {
+      hairStyle: { long: 'hair-style-long.svg' },
+    });
+
+    await page.goto(GYM_URL);
+    await page.evaluate(() => { document.documentElement.classList.add('dark-mode'); });
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+
+    const hairImage = page.getByRole('button', { name: 'Choose Hair style: Long and flowing' })
+      .locator('[data-hero-choice-preview-img]');
+    await expect(hairImage).toHaveAttribute('src', '/assets/se-gym-hero-choice-previews/hair-style-long.svg');
+
+    // portfolio.css inverts every `.post-content img[src$=".svg"]` in dark mode
+    // for line-art diagrams. These thumbnails are full-color avatar art, so that
+    // inversion would render skin/hair/suit as their negatives — the per-component
+    // override in se-gym.css must win and keep the colors intact.
+    const filter = await hairImage.evaluate((img) => getComputedStyle(img).filter);
+    expect(filter, `thumbnail must opt out of the dark-mode SVG inversion (got "${filter}")`).not.toContain('invert');
+  });
+
   test('Large scroll jumps drop thumbnail work for options that moved far away', async ({ page }) => {
     await useDefaultSavedHero(page);
     await page.goto(GYM_URL);

@@ -1936,6 +1936,67 @@ test.describe('Personal Gym - Performance Tracking', () => {
     await expect(page.locator('#workout-total')).toHaveText('1');
   });
 
+  test('quick-start workouts stay available while a workout is saved', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await setCookie(context, 'analyze-performance', 'true');
+    await page.goto(GYM_URL);
+    await page.evaluate(() => {
+      const quizId = 'design_pattern_singleton';
+      const stats = {};
+      stats[`quiz:${quizId}:1`] = { seen: 10, correct: 1 };
+      stats[`quiz:${quizId}:2`] = { seen: 10, correct: 1 };
+      PersonalGym.saveStats(stats);
+      PersonalGym.addToGym('quiz', quizId);
+    });
+    await page.reload();
+
+    // Create a saved checkpoint: start the main gym workout and answer one card.
+    await page.locator('#max-cards').fill('2');
+    await page.getByRole('button', { name: 'Start Workout' }).first().click();
+    await expect(page.locator('#gym-workout')).toBeVisible();
+    await answerVisibleWorkoutCard(page);
+
+    await page.reload();
+    await expect(page.locator('#saved-workout-row')).toBeVisible();
+    // The prominent main Start button still defers to Resume/Discard...
+    await expect(page.getByRole('button', { name: 'Start Workout' }).first()).toBeDisabled();
+
+    // ...but the quick-start launchers stay available and start immediately,
+    // replacing the saved checkpoint instead of being blocked by it.
+    const hardWorkout = page.getByRole('button', { name: 'Start Hard Workout' });
+    await expect(hardWorkout).toBeEnabled();
+    await hardWorkout.click();
+    await expect(page.locator('#gym-workout')).toBeVisible();
+    await expect(page.locator('#gym-entrance')).toBeHidden();
+  });
+
+  test('per-deck practice button drills one deck without changing the gym', async ({ page, context }) => {
+    await setCookie(context, 'se-gym-active', 'true');
+    await page.goto(GYM_URL);
+    await page.locator('#max-cards').fill('50');
+
+    const expectedCount = await page.evaluate(
+      () => ALL_CARD_DATA.quizzes['design_pattern_singleton'].questions.length
+    );
+
+    const deckCard = page.locator('.gym-item[data-type="quiz"][data-id="design_pattern_singleton"]');
+    const practiceBtn = deckCard.locator('.gym-practice-btn');
+    await expect(practiceBtn).toBeVisible();
+    await expect(practiceBtn).toHaveAccessibleName(/^Start targeted practice for /);
+    await practiceBtn.click();
+
+    await expect(page.locator('#gym-workout')).toBeVisible();
+    await expect(page.locator('#gym-entrance')).toBeHidden();
+    // The whole deck (capped by max-cards, here 50) is drilled.
+    await expect(page.locator('#workout-total')).toHaveText(String(expectedCount));
+
+    // Targeted practice must not modify the saved gym selection.
+    const inGym = await page.evaluate(
+      () => PersonalGym.getGym().some((e) => e.type === 'quiz' && e.id === 'design_pattern_singleton')
+    );
+    expect(inGym).toBe(false);
+  });
+
   test('difficult gym can be added to workout', async ({ page, context }) => {
     await setCookie(context, 'se-gym-active', 'true');
     await setCookie(context, 'analyze-performance', 'true');

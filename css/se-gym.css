@@ -1083,9 +1083,14 @@
     }
     html.dark-mode .hero-cust-choice-preview .se-gym-hero-svg,
     html.dark-mode .hero-cust-choice-preview .se-gym-hero-choice-preview-img {
+      /* portfolio.css inverts every `.post-content img[src$=".svg"]` / svg in dark
+         mode for line-art diagrams. These thumbnails are full-color avatar art, so
+         that inversion turns skin/hair/suit into their negatives. `!important`
+         beats the (un-flagged) portfolio rule and restores the true colors with a
+         soft well shadow instead. */
       filter:
         drop-shadow(0 0.05em 0.05em rgba(0, 0, 0, 0.35))
-        drop-shadow(0 0 0.08em rgba(255, 255, 255, 0.2));
+        drop-shadow(0 0 0.08em rgba(255, 255, 255, 0.2)) !important;
     }
     html.dark-mode .hero-cust-choice-button[data-choice-pending="true"] .hero-cust-choice-preview::before {
       background:
@@ -3240,6 +3245,47 @@
       border-color: #dc3545;
     }
 
+    /* Per-deck targeted-practice launcher. Lives next to the add/remove button so
+       a deck can be drilled without changing the gym selection. */
+    .gym-item-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .gym-practice-btn {
+      background: #1f7a3d;
+      border: 2px solid #145c2c;
+      border-radius: var(--radius-circle, 50%);
+      width: 38px;
+      height: 38px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #ffffff;
+      font-size: 16px;
+      transition: border-color 0.2s, color 0.2s, background 0.2s, box-shadow 0.2s;
+      flex-shrink: 0;
+      padding: 0;
+      box-shadow: 0 3px 8px rgba(0, 59, 92, 0.1);
+    }
+
+    .gym-practice-btn:hover {
+      background: #19682f;
+      border-color: #0f4a23;
+      box-shadow: 0 5px 12px rgba(20, 92, 44, 0.28);
+    }
+
+    .gym-practice-btn:disabled {
+      background: #c5d3c8;
+      border-color: #aab9ad;
+      color: #51604f;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+
     .empty-gym-msg {
       color: #4b5563;
       font-style: italic;
@@ -4977,6 +5023,26 @@
       background: #ff8585;
       border-color: #ffd3d0;
       color: #0a0a14;
+    }
+
+    html.dark-mode .gym-practice-btn {
+      background: #46c46e;
+      border-color: #6fe093;
+      color: #06210f;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.38);
+    }
+
+    html.dark-mode .gym-practice-btn:hover {
+      background: #58d57f;
+      border-color: #8defa9;
+      color: #06210f;
+    }
+
+    html.dark-mode .gym-practice-btn:disabled {
+      background: #2c3b30;
+      border-color: #3f5244;
+      color: #8a988c;
+      box-shadow: none;
     }
 
     html.dark-mode .workout-quiz-card {
