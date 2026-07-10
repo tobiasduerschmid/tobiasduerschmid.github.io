@@ -22,7 +22,7 @@ layout: sebook
     <!-- ==================== LIBRARY VIEW ==================== -->
     <div id="gym-entrance">
       {% if site.gym_hero_animation %}
-      <p class="sr-only">SE Gym illustration: a friendly software-engineering superhero in UCLA blue and gold lifts a topic-loaded barbell overhead.</p>
+      <p class="sr-only">SE Gym illustration: a customizable hero lifts a software-engineering topic barbell overhead.</p>
       <div class="gym-entrance-visual gym-entrance-visual-mobile" aria-hidden="true">
         {% include se-gym-hero.svg variant="mobile" %}
       </div>
@@ -46,6 +46,10 @@ layout: sebook
         <div class="controls-row">
           <button id="customize-hero-btn" class="gym-btn secondary" type="button" hidden>
             <i class="fa-solid fa-wand-magic-sparkles" aria-hidden="true"></i> Customize Hero
+          </button>
+          <button id="toggle-hero-motion-btn" class="gym-btn secondary" type="button" aria-pressed="false">
+            <i class="fa-solid fa-pause" data-hero-motion-icon aria-hidden="true"></i>
+            <span data-hero-motion-label>Pause Hero Motion</span>
           </button>
           <span id="customize-hero-disabled-note" class="gym-summary-text" aria-live="polite">
             Activate the personal gym above to customize your hero.
@@ -546,7 +550,7 @@ layout: sebook
               </div>
               <div class="hero-cust-control">
                 <label for="hero-cust-skin">Skin tone</label>
-                <input type="color" id="hero-cust-skin" value="#dfa07a">
+                <input type="color" id="hero-cust-skin" value="#cf9e82">
               </div>
               <div class="hero-cust-control">
                 <label for="hero-cust-hair-color">Hair color</label>
@@ -605,7 +609,7 @@ layout: sebook
             <fieldset class="hero-cust-fieldset">
               <legend>Body</legend>
               <div class="hero-cust-control">
-                <label for="hero-cust-body-type">Body type</label>
+                <label for="hero-cust-body-type">Body frame</label>
                 <select id="hero-cust-body-type" data-hero-choice="bodyType"></select>
               </div>
             </fieldset>
@@ -797,6 +801,11 @@ layout: sebook
 
   <script>
     (function () {
+      var motionButton = document.getElementById('toggle-hero-motion-btn');
+      var motionLabel = motionButton && motionButton.querySelector('[data-hero-motion-label]');
+      var motionIcon = motionButton && motionButton.querySelector('[data-hero-motion-icon]');
+      window.SEGymHeroMotionPaused = false;
+
       function prefersReducedMotion() {
         return (typeof window.__prefersReducedMotion === 'function')
           ? window.__prefersReducedMotion()
@@ -805,13 +814,40 @@ layout: sebook
 
       function syncHeroMotion() {
         var reduce = prefersReducedMotion();
+        var userPaused = !!window.SEGymHeroMotionPaused;
+        var customizer = document.getElementById('hero-customizer-modal');
+        var customizerOpen = !!(customizer && !customizer.hidden);
         document.querySelectorAll('[data-gym-hero-svg]').forEach(function (svg) {
-          if (reduce && typeof svg.pauseAnimations === 'function') {
-            if (typeof svg.setCurrentTime === 'function') svg.setCurrentTime(0);
+          var backgroundPaused = customizerOpen && !customizer.contains(svg);
+          var paused = reduce || userPaused || backgroundPaused;
+          if (paused && typeof svg.pauseAnimations === 'function') {
+            if (reduce && typeof svg.setCurrentTime === 'function') svg.setCurrentTime(0);
             svg.pauseAnimations();
-          } else if (!reduce && typeof svg.unpauseAnimations === 'function') {
+          } else if (typeof svg.unpauseAnimations === 'function') {
             svg.unpauseAnimations();
           }
+        });
+        if (motionButton) {
+          motionButton.disabled = reduce;
+          motionButton.setAttribute('aria-pressed', (reduce || userPaused) ? 'true' : 'false');
+          if (motionLabel) {
+            motionLabel.textContent = reduce
+              ? 'Motion Reduced'
+              : (userPaused ? 'Play Hero Motion' : 'Pause Hero Motion');
+          }
+          if (motionIcon) {
+            motionIcon.classList.toggle('fa-pause', !userPaused && !reduce);
+            motionIcon.classList.toggle('fa-play', userPaused && !reduce);
+            motionIcon.classList.toggle('fa-person-circle-check', reduce);
+          }
+        }
+      }
+
+      if (motionButton) {
+        motionButton.addEventListener('click', function () {
+          window.SEGymHeroMotionPaused = !window.SEGymHeroMotionPaused;
+          syncHeroMotion();
+          window.dispatchEvent(new CustomEvent('se-gym-hero-motion-change'));
         });
       }
 
@@ -1232,7 +1268,7 @@ layout: sebook
             if (typeof svg.setCurrentTime === 'function') {
               svg.setCurrentTime(0);
             }
-            if (typeof svg.unpauseAnimations === 'function' && !prefersReducedMotion()) {
+            if (typeof svg.unpauseAnimations === 'function' && !prefersReducedMotion() && !window.SEGymHeroMotionPaused) {
               svg.unpauseAnimations();
             }
           }

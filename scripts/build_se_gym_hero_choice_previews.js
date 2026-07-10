@@ -8,13 +8,18 @@ const HERO_INCLUDE = path.join(ROOT, '_includes', 'se-gym-hero.svg');
 const HERO_RUNTIME = path.join(ROOT, 'js', 'se-gym-hero-avatar.js');
 const OUT_DIR = path.join(ROOT, 'assets', 'se-gym-hero-choice-previews');
 const VARIANT = 'choice-preview';
-const REPRESENTATIVE_PREVIEW_SKIN = '#FFD100';
+const REPRESENTATIVE_PREVIEW_SKIN = '#291713';
 const REPRESENTATIVE_PREVIEW_HAIR = '#1f140c';
 
 function renderedHeroInclude() {
-  return fs.readFileSync(HERO_INCLUDE, 'utf8')
+  const rendered = fs.readFileSync(HERO_INCLUDE, 'utf8')
     .replace(/^\{% assign hero_variant = include\.variant \| default: "main" %\}\s*/, '')
+    .replace(/\{% if include\.ready %\}\s*data-hero-avatar-ready="true"\s*\{% endif %\}/g, '')
     .replace(/\{\{\s*hero_variant\s*\}\}/g, VARIANT);
+  if (/\{%|\{\{/.test(rendered)) {
+    throw new Error('Preview source still contains unrendered Liquid markup.');
+  }
+  return rendered;
 }
 
 function cleanDir(dir) {
@@ -29,7 +34,9 @@ function slug(value) {
 async function main() {
   cleanDir(OUT_DIR);
 
-  const browser = await chromium.launch();
+  const browser = await chromium.launch({
+    executablePath: process.env.PLAYWRIGHT_CHROME_EXECUTABLE || undefined,
+  });
   const page = await browser.newPage();
   await page.setContent(`<!doctype html>
     <html lang="en">
@@ -333,16 +340,28 @@ async function main() {
     // silently renders as a broken image at runtime (no console error, no 404).
     // Re-parsing here turns that into a build-time error instead.
     const malformed = [];
+    const rasterizing = [];
     const parser = new DOMParser();
     for (const preview of previews) {
       const doc = parser.parseFromString(preview.svg, 'image/svg+xml');
       const error = doc.querySelector('parsererror');
       if (error) {
         malformed.push(`${preview.key}/${preview.value}: ${error.textContent.replace(/\s+/g, ' ').trim()}`);
+        continue;
+      }
+      const rasterizingNode = doc.querySelector('image, foreignObject, filter, [filter]');
+      const hasCssFilter = /\bfilter\s*:/.test(preview.svg);
+      if (rasterizingNode || hasCssFilter) {
+        rasterizing.push(`${preview.key}/${preview.value}`);
       }
     }
     if (malformed.length) {
       throw new Error('Malformed SVG previews:\n' + malformed.join('\n'));
+    }
+    if (rasterizing.length) {
+      throw new Error(
+        'Rasterizing content is not allowed in SVG previews:\n' + rasterizing.join('\n')
+      );
     }
 
     return previews;

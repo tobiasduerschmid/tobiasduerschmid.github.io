@@ -137,7 +137,7 @@
       height: auto;
       overflow: visible;
       opacity: 0;
-      filter: drop-shadow(0 14px 24px rgba(0, 47, 82, 0.16));
+      filter: none;
     }
     .se-gym-hero-svg[data-hero-avatar-ready="true"] {
       opacity: 1;
@@ -146,47 +146,16 @@
     html.dark-mode .post-content .se-gym-hero-svg,
     html.dark-mode #gym-entrance .se-gym-hero-svg,
     html.dark-mode #gym-workout .se-gym-hero-svg {
-      filter:
-        drop-shadow(0 0 2px rgba(139, 184, 232, 0.72))
-        drop-shadow(0 0 7px rgba(31, 110, 189, 0.34))
-        drop-shadow(0 16px 24px rgba(0, 0, 0, 0.52)) !important;
+      filter: none !important;
     }
 
-    /* Body-type visual differences come from SVG body-shape geometry swaps + silhouette overlays;
-       no whole-image distortion. We keep only a tiny height adjustment for petite/tall so they
-       read as overall shorter/taller without warping the figure. */
-    .se-gym-hero-svg[data-hero-body] { transform-box: view-box; transform-origin: 400px 320px; }
-    .se-gym-hero-svg[data-hero-body="petite"]    { transform: scale(0.92, 0.92); }
-    .se-gym-hero-svg[data-hero-body="petite-curved"] { transform: scale(0.94, 0.94); }
-    .se-gym-hero-svg[data-hero-body="short-soft"] { transform: scale(0.94, 0.96); }
-    .se-gym-hero-svg[data-hero-body="short-curved"] { transform: scale(0.95, 0.96); }
-    .se-gym-hero-svg[data-hero-body="tall"]      { transform: scale(1, 1.07); }
-    .se-gym-hero-svg[data-hero-body="tall-curved"] { transform: scale(1, 1.06); }
-    .se-gym-hero-svg[data-hero-body="tall-soft"] { transform: scale(1, 1.06); }
-    .se-gym-hero-svg[data-hero-body="lean"]      { transform: scale(0.97, 1.04); }
-    .se-gym-hero-svg [data-hero-slot="head-shape"],
-    .se-gym-hero-svg [data-hero-slot="face-clear"] {
-      filter:
-        drop-shadow(0 0 0.45px var(--hero-skin-highlight, rgba(255, 226, 185, 0.28)))
-        drop-shadow(0 0.75px 0.75px var(--hero-feature-shadow, rgba(0, 47, 82, 0.14)));
-    }
-    .se-gym-hero-svg [data-hero-slot="hair"],
-    .se-gym-hero-svg [data-hero-slot="hairline"],
-    .se-gym-hero-svg [data-hero-slot="hair-root"] {
-      filter:
-        drop-shadow(0 0 0.65px var(--hero-hair-rim, rgba(255, 226, 185, 0.32)))
-        drop-shadow(0 0.75px 0.75px var(--hero-hair-shadow, rgba(0, 47, 82, 0.16)));
-    }
-    .se-gym-hero-svg [data-hero-slot="eyebrow"],
-    .se-gym-hero-svg [data-hero-slot="eye-shape"],
-    .se-gym-hero-svg [data-hero-slot="nose-shape"],
-    .se-gym-hero-svg [data-hero-slot="mouth-style"],
-    .se-gym-hero-svg [data-hero-slot="face-feature"],
-    .se-gym-hero-svg [data-hero-slot="facial-hair"],
-    .se-gym-hero-svg [data-hero-slot="accessory"] {
-      filter:
-        drop-shadow(0 0 0.3px var(--hero-feature-rim, rgba(255, 226, 185, 0.36)))
-        drop-shadow(0 0.55px 0.55px var(--hero-feature-shadow, rgba(0, 0, 0, 0.16)));
+    /* Frame variation comes from authored torso geometry and the internal body
+       rig. Scaling the outer SVG would also distort the head and barbell. */
+    /* SVG filters rasterize their target into an off-screen bitmap. Keep every
+       customizable layer vector-native so zooming and animated transforms
+       cannot expose cached pixels; authored paths supply the depth instead. */
+    .se-gym-hero-svg [data-hero-slot] {
+      filter: none;
     }
     .se-gym-hero-svg [data-hero-slot="head-shape"] path[fill*="--hero-face-line"],
     .se-gym-hero-svg [data-hero-slot="head-features"] path[stroke*="--hero-face-line"] {
@@ -318,7 +287,7 @@
     .hero-cust-preview .se-gym-hero-svg {
       width: 100%;
       max-height: min(72vh, 720px);
-      filter: drop-shadow(0 6px 12px rgba(0, 47, 82, 0.18));
+      filter: none;
     }
     .hero-cust-history {
       display: flex;
@@ -771,6 +740,8 @@
       height: 100%;
       display: block;
       object-fit: contain;
+      image-rendering: auto;
+      filter: none;
     }
     .hero-cust-choice-button[data-choice-pending="true"] .hero-cust-choice-preview .se-gym-hero-svg,
     .hero-cust-choice-button[data-choice-pending="true"] .hero-cust-choice-preview .se-gym-hero-choice-preview-img {
@@ -1086,11 +1057,8 @@
       /* portfolio.css inverts every `.post-content img[src$=".svg"]` / svg in dark
          mode for line-art diagrams. These thumbnails are full-color avatar art, so
          that inversion turns skin/hair/suit into their negatives. `!important`
-         beats the (un-flagged) portfolio rule and restores the true colors with a
-         soft well shadow instead. */
-      filter:
-        drop-shadow(0 0.05em 0.05em rgba(0, 0, 0, 0.35))
-        drop-shadow(0 0 0.08em rgba(255, 255, 255, 0.2)) !important;
+         beats the unflagged portfolio rule without rasterizing the SVG. */
+      filter: none !important;
     }
     html.dark-mode .hero-cust-choice-button[data-choice-pending="true"] .hero-cust-choice-preview::before {
       background:

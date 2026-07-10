@@ -1,26 +1,17 @@
 {%- comment -%}
-  Random superhero variant cycler.
+  Compatibility loader for the retired standalone hero variants.
 
-  - Renders all candidate hero SVGs inside a <template> so they stay inert
-    (no IDs activate, no animations run, no DOM weight on screen).
-  - At page load, a small inline script picks one variant uniformly at random
-    and clones it into every [data-gym-hero-slot] element on the page.
+  - Renders the canonical customizable hero once inside an inert <template>.
+  - At page load, the script clones it into every legacy
+    [data-gym-hero-slot] element on the page.
   - When prefers-reduced-motion is "reduce", <animate> / <animateTransform>
     elements are stripped from the clone before insertion so the chosen
     superhero shows but does not move.
-  - All variants share the same viewBox (50 -20 700 665) and external class
-    contract (.se-gym-hero-svg) so the existing light/dark drop-shadow CSS
-    in se-gym.html applies unchanged.
+  - The former named SVG includes now delegate to this same renderer, so visual,
+    accessibility, and reduced-motion fixes have one source of truth.
 {%- endcomment -%}
 <template id="se-gym-hero-variants" aria-hidden="true">
-  <div data-hero-variant="ucla-classic">{% include se-gym-hero.svg variant="original" %}</div>
-  <div data-hero-variant="aqua-captain">{% include se-gym-hero-variants/aqua-captain.svg %}</div>
-  <div data-hero-variant="copper-visor">{% include se-gym-hero-variants/copper-visor.svg %}</div>
-  <div data-hero-variant="crimson-locs">{% include se-gym-hero-variants/crimson-locs.svg %}</div>
-  <div data-hero-variant="emerald-curls">{% include se-gym-hero-variants/emerald-curls.svg %}</div>
-  <div data-hero-variant="forest-engineer">{% include se-gym-hero-variants/forest-engineer.svg %}</div>
-  <div data-hero-variant="silver-spectacles">{% include se-gym-hero-variants/silver-spectacles.svg %}</div>
-  <div data-hero-variant="teal-headwrap">{% include se-gym-hero-variants/teal-headwrap.svg %}</div>
+  <div data-hero-variant="canonical">{% include se-gym-hero.svg variant="legacy-cycle" ready=true %}</div>
 </template>
 <script>
   (function () {

@@ -15,7 +15,17 @@ This file captures every painful lesson I've learned trying to draw comic-style 
 - **Cognitive-load-friendly comic-art pedagogy** from Clip Studio Tips, Domestika, and Wacom's *Etherington Bros Comics Crash Course* (the Shapes → Tufts → Strands framework, the "minimum / maximum volume" guideline, the "clump don't space" rule),
 - **Specific mistakes that have already shipped in this codebase and had to be reverted**, documented below so the next agent can recognize them in their own work.
 
-The customizer is checked into [`_includes/se-gym-hero.svg`](../../../_includes/se-gym-hero.svg), driven by [`js/se-gym-hero-avatar.js`](../../../js/se-gym-hero-avatar.js), and embedded into the page via [`_includes/se-gym-customizer.html`](../../../_includes/se-gym-customizer.html). Every option visible in the customizer's UI is a `<g data-hero-slot="…" data-hero-option="…" display="none">` group inside the SVG.
+The renderer is checked into [`_includes/se-gym-hero.svg`](../../../_includes/se-gym-hero.svg), driven by [`js/se-gym-hero-avatar.js`](../../../js/se-gym-hero-avatar.js), and customized through the dialog in [`se-gym.html`](../../../se-gym.html). Every option visible in the customizer's UI is a `<g data-hero-slot="…" data-hero-option="…" display="none">` group inside the SVG.
+
+## Inclusive trait model
+
+The avatar describes physical and stylistic traits, not inferred identity. Skin tone, head shape, eyes, nose, mouth, hair, facial hair, lashes, body frame, clothing, and head coverings must remain independently combinable.
+
+- Never add race- or ethnicity-labeled face presets. Use literal geometry labels such as “wide bridge,” “rounded tip,” or “soft oval.”
+- Never gate a trait by binary presentation. In particular, facial hair, prominent lashes, long hair, protective styles, turbans, scarves, hijabs, and headwraps must remain available in any combination.
+- Random generation samples independent trait families. Do not reintroduce male/female recipes or use cultural accessories as demographic proxies.
+- Keep the legacy `appearance.presentation` enum readable only for saved-state compatibility; the renderer and new random avatars ignore it.
+- Give darker skin tones, protective hairstyles, fuller bodies, and head coverings the same shading, detail, animation, and compatibility care as every other option.
 
 ## The single biggest rule
 
@@ -133,10 +143,10 @@ The viewBox is `80 -20 640 665`. The entire head + face + hair group is wrapped 
 
 ```svg
 <g data-hero-head-assembly
-   transform="translate(400 236) scale(1.12) translate(-400 -236)">
+   transform="translate(400 236) scale(1.16) translate(-400 -236)">
 ```
 
-— a `1.12x` enlargement around `(400, 236)`. This means that when you place a point at `(x, y)` inside the head assembly, its rendered position is `(400 + 1.12·(x − 400), 236 + 1.12·(y − 236))`. Hair at `y = 126` (skull crown) renders at screen y ≈ 112.7. Hair at `y = 178` (fringe bottom) renders at screen y ≈ 171.04.
+— a `1.16x` enlargement around `(400, 236)`. This means that when you place a point at `(x, y)` inside the head assembly, its rendered position is `(400 + 1.16·(x − 400), 236 + 1.16·(y − 236))`. Hair at `y = 126` (skull crown) renders at screen y ≈ 108.4. Hair at `y = 178` (fringe bottom) renders at screen y ≈ 168.72.
 
 **Practical consequence:** if you draw hair extending up to `y = 60`, it will collide with the barbell (which sits at y ≈ 85–110). If you draw fringe wisps extending down to `y = 195+`, they will cover the eyes (which render at screen y ≈ 178.88). Keep the silhouette in the `y = 96–178` range, with optional wisp tips reaching at most `y = 184`.
 
@@ -152,6 +162,7 @@ The variables you should use, with the fallback hex from [`_includes/se-gym-hero
 | `--hero-hair-light` | Cel-shaded hair highlight | `#4a3220` |
 | `--hero-hair-dark` | Hair shadow / rim outline | `#0f0905` |
 | `--hero-hair-rim` | Inner strand definition lines | `#4a3220` |
+| `--hero-hair-specular` | Hair-derived sheen; never raw white | warm hair-relative tone |
 | `--hero-hair-detail-opacity` | Opacity for fine strand detail | `.5` |
 | `--hero-skin-light` | Skin lit side | `#dfa07a` |
 | `--hero-skin` | Skin mid | `#b46a3d` (darken 22%) |
@@ -166,6 +177,9 @@ The variables you should use, with the fallback hex from [`_includes/se-gym-hero
 | `--hero-cheek` | Blush | varies by skin |
 | `--hero-suit` | Suit primary | user-chosen |
 | `--hero-suit-light` / `--hero-suit-dark` | Suit shading | derived |
+| `--hero-suit-shadow` / `--hero-suit-rim` | Suit occlusion and edge light | derived |
+| `--hero-suit-specular` / `--hero-suit-ambient` | Suit highlight and fill light | derived |
+| `--hero-hand-highlight` | Skin-relative hand form light | derived |
 | `--hero-cape` | Cape outer | user-chosen |
 | `--hero-cape-inner` | Cape inner / gold trim | user-chosen |
 | `--hero-glasses-frame` | Glasses frame | contrast-aware |
@@ -339,7 +353,7 @@ The same principles apply, scaled down:
 
 ## Accessories: glasses, headphones, headwear, jewelry
 
-Most accessories sit inside a `transform:scale(.8928571429); transform-origin: 400px 252px` group (defined in the project's CSS `<style>` block near line 110 of the SVG). This means an accessory drawn at the head's full scale renders ~10% smaller, accounting for the `1.12x` head-assembly scale that's already applied to the head. **If you add a new accessory and it looks "too big", check whether the project's existing scale-down rule applies** — adding a fresh `<g data-hero-slot="accessory">` without the standard `transform` will render at full head-assembly scale and look comically oversized.
+Most accessories sit inside a `transform:scale(.8620689655); transform-origin: 400px 252px` group in the SVG's scoped styles. This is the inverse of the `1.16x` head-assembly scale, so body-anchored accessories retain their authored size. **If you add a new accessory and it looks "too big", check whether the standard inverse-scale rule applies** — a fresh `<g data-hero-slot="accessory">` without it renders at full head-assembly scale.
 
 Glasses specifically must:
 
@@ -348,19 +362,22 @@ Glasses specifically must:
 
 ## Body shapes, outfits, and mascots
 
-The SVG includes 30+ body-shape variants (`narrow-shoulders`, `athletic`, `hourglass`, `plus-size`, …) and 25+ outfit options (`super-suit`, `hoodie`, `varsity-jacket`, …). Body shapes share the suit gradient (`url(#suit-{{ hero_variant }})`); outfits override or layer on top.
+The SVG includes 21 body-shape variants and 22 outfit options. Body shapes share the suit gradient (`url(#suit-{{ hero_variant }})`); outfits override or layer on top.
 
 When adding a new body shape:
 
 - Match the existing path structure: an outer darker silhouette path + an inner gradient-filled path. The outer path is `fill="#0a3e6f"` (the suit-dark fallback); the inner uses `fill="url(#suit-{{ hero_variant }})"`.
 - Keep the same waistline (`y ≈ 410`) and neckline (`y ≈ 246`) so the belt buckle, shoulders, and head assembly still align.
 - Register the option in `BODY_SHAPES` and `ALL_SILHOUETTE_FEATURES` in [`js/se-gym-hero-avatar.js`](../../../js/se-gym-hero-avatar.js:~660).
+- Update `BODY_RIG_FITS` so shared surfaces, chest details, arms, hand anchors, seams, legs, boots, and milestone shoes adapt with the frame. Never scale the outer `.se-gym-hero-svg`; that distorts the head and barbell.
+- Update `BODY_ARM_MORPHOLOGY_STRENGTH` so the default limb volume matches the authored torso. Milestone strength is independent and adds to—never replaces—the body-frame baseline.
+- Tag new shared body layers with the appropriate `data-hero-body-fit-target` (`surface`, `chest`, `arms`, `arm-seams`, `hands`, `lower-body`, or `milestone-shoes`). All fit transforms scale around the central x-axis and must preserve the shoulder, wrist, waist, and bar anchors.
 
 The bruin mascot variant (`data-hero-kind-layer="bruin"`) is a parallel set of fur-and-muzzle paths that replace the human head, hands, and torso. It uses its own gradient (`bruin-fur-{{ hero_variant }}`). If you add a hero feature, you must usually also add a bruin equivalent (or explicitly opt it out of the bruin layer).
 
 ## Arm muscle tiers (milestone-driven)
 
-The hero's arms are not one fixed shape — they swap between five sleeves depending on how many milestones the user has earned. The tiers are tied to the existing `data-hero-slot="milestone-power"` mechanism, so the same JS toggle that lights the bronze/silver/gold/diamond power glow and updates the boot plates *also* picks the corresponding arm geometry. No extra JS plumbing is required.
+The hero's arms are not one fixed shape — they interpolate between six authored silhouettes depending on milestone strength. The arm silhouettes use `data-hero-slot="muscle-strength"`; milestone power layers separately control the glow and boot plates.
 
 ```
 none    — slim cylindrical sleeve   (shoulder width ≈ 18 px in viewBox units)
@@ -368,9 +385,10 @@ bronze  — toned, gentle bicep curve (shoulder width ≈ 24 px, peak ≈ 32 px)
 silver  — athletic, clear bicep peak + deltoid groove (peak ≈ 46 px)
 gold    — muscular, defined separation + rim light (peak ≈ 64 px)
 diamond — bodybuilder, dramatic peak + dual specular sheens (peak ≈ 84 px)
+infinity — maximum stylized strength with the richest form lighting
 ```
 
-Each tier lives in its own `<g data-hero-slot="milestone-power" data-hero-option="…" data-hero-muscle-zone="…">` block inside the four arm sub-groups:
+Each tier lives in its own `<g data-hero-slot="muscle-strength" data-hero-option="…" data-hero-muscle-zone="…">` block inside the four arm sub-groups:
 
 - `data-hero-muscle-zone="left-upper"` — left shoulder / bicep / tricep
 - `data-hero-muscle-zone="left-forearm"` — left forearm (rotates with elbow pivot)
@@ -379,7 +397,7 @@ Each tier lives in its own `<g data-hero-slot="milestone-power" data-hero-option
 
 Critical invariants the tiers must preserve:
 
-1. **Shared pivots.** The shoulder rotation centre is `(322, 268)` for the left arm and `(478, 268)` for the right; the elbow centre is `(322, 162)` / `(478, 162)`. These are referenced in the parent `<g data-arm-side="…"><animateTransform>` and **must not shift between tiers** — otherwise the overhead-press animation jerks on every milestone swap. All five silhouette paths therefore end at exactly `(322, 162)` / `(478, 162)` and start at exactly `(322 ± n, 268)` / `(478 ± n, 268)`.
+1. **Shared pivots.** The shoulder rotation centre is `(322, 268)` for the left arm and `(478, 268)` for the right; the elbow centre is `(322, 162)` / `(478, 162)`. These are referenced in the parent `<g data-arm-side="…"><animateTransform>` and **must not shift between tiers** — otherwise the overhead-press animation jerks on every milestone swap. All six silhouette paths therefore end at exactly `(322, 162)` / `(478, 162)` and start at exactly `(322 ± n, 268)` / `(478 ± n, 268)`.
 2. **One continuous cubic-Bezier silhouette per tier.** No `L` commands. The lateral side (away from body centerline x=400) bulges more than the medial side — that's the asymmetric anatomy that makes muscles read as natural instead of tubular.
 3. **Cel-shaded FILL plates, not strokes**, for primary form light/shadow. Strokes are reserved for specular sheens, deltoid grooves, brachialis lines, and rim lights. The shading reads as painted depth at any render size — including the 180 px customizer thumbnail and the 600 px hero.
 4. **Specular sheen** is always a thin near-white stroke at low opacity (~0.3–0.6) placed on the bicep peak's brightest point. For `diamond`, layer two sheens (wide + narrow) for tighter catchlight.
@@ -387,9 +405,9 @@ Critical invariants the tiers must preserve:
 6. **Anatomy lines** (gold + diamond) are thin dark grooves at muscle-separation points: the deltoid-bicep junction and the brachialis edge below the bicep.
 7. **The gold wristband cuff stays identical across all tiers** — it's a metal accessory that doesn't flex.
 
-The five tiers all live in `_includes/se-gym-hero.svg` between the `data-hero-human-arms` opening `<g>` and the matching closing `</g>`. The animation `<animateTransform>` elements sit outside the muscle-tier blocks, at the `data-arm-side` level, so they're shared across tiers and never duplicated.
+The six tiers all live in `_includes/se-gym-hero.svg` between the `data-hero-human-arms` opening `<g>` and the matching closing `</g>`. The animation `<animateTransform>` elements sit outside the muscle-tier blocks, at the `data-arm-side` level, so they're shared across tiers and never duplicated.
 
-### Adding a new muscle tier (e.g. "platinum")
+### Adding a new muscle tier
 
 If you ever add a sixth tier:
 
@@ -402,17 +420,18 @@ If you ever add a sixth tier:
 
 When tweaking an existing tier's silhouette, **keep the start and end points unchanged**. The path should always start at `M <shoulder_x> 268` (where `shoulder_x` varies by tier — e.g. 313 for none, 299 for diamond on the left) and the curves should always pass through `(322, 162)` for left or `(478, 162)` for right. Otherwise the elbow joint stops tracking the upper-arm bottom, and you get a visible disconnect during the press cycle.
 
-## Animation: the lift cycle
+## Animation: the lift cycle and idle life
 
 Three SVG `<animateTransform>` blocks drive the "lifting a barbell" feel:
 
-- `data-hero-motion="cape-rock"` — the cape rotates ±2° around `(400, 268)`, 2.2 s period.
-- `data-hero-motion="body-lift"` — the body translates `0 → -1 → 4 → -1`, 2.2 s period.
-- `data-hero-motion="barbell-lift"` — the barbell translates `0 → -12 → 12 → -12`, 2.2 s period (counter-phase from the body).
+- `data-hero-motion="cape-rock"` — the cape shares the body's `0 → +1.2 → 0` settle and rotates `−1.2° → +1.8° → −1.2°`, 2.2 s period.
+- `data-hero-motion="body-lift"` — the body settles `0 → +1.2 → 0` instead of hovering, 2.2 s period.
+- `data-hero-motion="barbell-lift"` — the barbell translates `−16 → +16 → −16`, 2.2 s period.
+- The head adds a restrained `4.4s` settle. The eyes and eyelashes crossfade to authored closed-lid arcs rather than squashing irises into a line.
 
 There are also several smaller `<animate>` / `<animateTransform>` blocks (chest-plate glow pulse, eye blink, ear wiggle on the bruin, topic-icon cross-fades on the plates).
 
-These are coordinated and phase-locked. If you add a new motion, copy the existing pattern (`calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"`, `keyTimes="0;0.55;1"`, `begin="0s"`) so the rhythm stays consistent. **Respect `prefers-reduced-motion`:** the project's CSS already pauses these animations when the user has reduced motion turned on — don't add motion that bypasses this.
+These are coordinated and phase-locked. If you add a new motion, copy the existing pattern (`calcMode="spline" keySplines="0.5 0 0.4 1; 0.2 0.7 0.3 1"`, `keyTimes="0;0.55;1"`, `begin="0s"`) so the rhythm stays consistent. **Respect both motion controls:** `prefers-reduced-motion` and the visible “Pause Hero Motion” control pause every SVG timeline. Do not add CSS or JavaScript motion that bypasses either mechanism.
 
 ### Two rules that keep everything moving "in sync"
 
@@ -430,7 +449,7 @@ After any avatar SVG change, before claiming done:
 1. **Render the page.** Start the Jekyll dev server with the `preview_*` tools, navigate to `/se-gym/`, and look at the hero at the page's default size *and* at the customizer thumbnail size. A design that looks good at 600×620 but mushy at 180×190 is incomplete.
 2. **Switch to dark mode.** The `--hero-*` color variables work in both modes by design, but if you've used a hardcoded hex, dark mode will reveal it. (Cross-reference the `light-dark-mode` skill.)
 3. **Try at least three appearance combinations:** light skin + dark hair (the default), dark skin + light hair, dark skin + dark hair. The contrast logic in `avatarContrastTokens()` produces meaningfully different outlines in each case; make sure your design holds up.
-4. **Toggle every milestone tier** (`bronze`, `silver`, `gold`, `diamond`) and confirm the hero still reads.
+4. **Toggle every milestone tier** (`bronze`, `silver`, `gold`, `diamond`, `infinity`) and confirm the hero still reads.
 5. **Verify accessibility.** The avatar SVG is `aria-hidden="true"` so it doesn't appear in the accessibility tree, but if you've added any *text labels* (like the "SE" emblem at line ~604), they must satisfy WCAG 2.2 AA contrast. Cross-reference the `wcag-aa-compliance` skill.
 6. **Walk the customizer.** Open the customizer panel and confirm your new option appears in the right preset group, the thumbnail renders correctly, and selecting it updates the main hero.
 

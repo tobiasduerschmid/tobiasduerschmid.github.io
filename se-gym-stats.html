@@ -556,37 +556,9 @@ layout: sebook
 </script>
 
 {% if site.gym_hero_animation %}
-<!-- Apply the saved hero avatar (or a random one) and honor reduced-motion, same as /se-gym/. -->
+<!-- The shared avatar runtime applies the saved/random hero, honors reduced
+     motion, and auto-stops decorative motion on pages without a pause control. -->
 <script src="{{ '/js/se-gym-hero-avatar.js' | relative_url }}" defer></script>
-<script>
-  (function () {
-    function prefersReducedMotion() {
-      return (typeof window.__prefersReducedMotion === 'function')
-        ? window.__prefersReducedMotion()
-        : !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-    }
-    function syncHeroMotion() {
-      var reduce = prefersReducedMotion();
-      document.querySelectorAll('[data-gym-hero-svg]').forEach(function (svg) {
-        if (reduce && typeof svg.pauseAnimations === 'function') {
-          if (typeof svg.setCurrentTime === 'function') svg.setCurrentTime(0);
-          svg.pauseAnimations();
-        } else if (!reduce && typeof svg.unpauseAnimations === 'function') {
-          svg.unpauseAnimations();
-        }
-      });
-    }
-    syncHeroMotion();
-    if (window.matchMedia) {
-      var mq = window.matchMedia('(prefers-reduced-motion: reduce)');
-      if (mq.addEventListener) mq.addEventListener('change', syncHeroMotion);
-      else if (mq.addListener) mq.addListener(syncHeroMotion);
-    }
-    if (window.MutationObserver && document.documentElement) {
-      new MutationObserver(syncHeroMotion).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
-    }
-  })();
-</script>
 {% endif %}
 
 {% endif %}
