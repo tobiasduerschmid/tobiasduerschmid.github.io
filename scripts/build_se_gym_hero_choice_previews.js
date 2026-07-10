@@ -7,9 +7,26 @@ const ROOT = path.resolve(__dirname, '..');
 const HERO_INCLUDE = path.join(ROOT, '_includes', 'se-gym-hero.svg');
 const HERO_RUNTIME = path.join(ROOT, 'js', 'se-gym-hero-avatar.js');
 const OUT_DIR = path.join(ROOT, 'assets', 'se-gym-hero-choice-previews');
+const TEMP_OUT_DIR = `${OUT_DIR}.building`;
+const BACKUP_OUT_DIR = `${OUT_DIR}.previous`;
 const VARIANT = 'choice-preview';
 const REPRESENTATIVE_PREVIEW_SKIN = '#291713';
 const REPRESENTATIVE_PREVIEW_HAIR = '#1f140c';
+
+function assertVectorPureHeroSource(svg) {
+  const violations = [];
+  const forbiddenTags = Array.from(svg.matchAll(/<(image|foreignObject|filter|text)\b/gi), (match) => match[1]);
+  if (forbiddenTags.length) violations.push(`forbidden elements: ${Array.from(new Set(forbiddenTags)).join(', ')}`);
+  if (/\sfilter\s*=|\bfilter\s*:/i.test(svg)) violations.push('filter attribute or CSS declaration');
+  if (/data:image\/(?:png|jpe?g|gif|webp|avif)|\.(?:png|jpe?g|gif|webp|avif)(?:[?"')]|$)/i.test(svg)) {
+    violations.push('raster image reference');
+  }
+  if (/(?:href|xlink:href)\s*=\s*["'](?!#)/i.test(svg)) violations.push('external href reference');
+  if (/url\(\s*["']?(?!#)/i.test(svg)) violations.push('external CSS URL reference');
+  if (violations.length) {
+    throw new Error('SE Gym hero must remain deterministic vector-only SVG: ' + violations.join('; '));
+  }
+}
 
 function renderedHeroInclude() {
   const rendered = fs.readFileSync(HERO_INCLUDE, 'utf8')
@@ -19,6 +36,7 @@ function renderedHeroInclude() {
   if (/\{%|\{\{/.test(rendered)) {
     throw new Error('Preview source still contains unrendered Liquid markup.');
   }
+  assertVectorPureHeroSource(rendered);
   return rendered;
 }
 
@@ -27,21 +45,35 @@ function cleanDir(dir) {
   fs.mkdirSync(dir, { recursive: true });
 }
 
+function replaceOutputDir() {
+  fs.rmSync(BACKUP_OUT_DIR, { recursive: true, force: true });
+  const hadPreviousOutput = fs.existsSync(OUT_DIR);
+  if (hadPreviousOutput) fs.renameSync(OUT_DIR, BACKUP_OUT_DIR);
+  try {
+    fs.renameSync(TEMP_OUT_DIR, OUT_DIR);
+  } catch (error) {
+    if (hadPreviousOutput && fs.existsSync(BACKUP_OUT_DIR)) fs.renameSync(BACKUP_OUT_DIR, OUT_DIR);
+    throw error;
+  }
+  fs.rmSync(BACKUP_OUT_DIR, { recursive: true, force: true });
+}
+
 function slug(value) {
   return String(value).replace(/[^a-z0-9_-]+/gi, '-').replace(/^-+|-+$/g, '').toLowerCase();
 }
 
 async function main() {
-  cleanDir(OUT_DIR);
+  const heroSource = renderedHeroInclude();
 
   const browser = await chromium.launch({
     executablePath: process.env.PLAYWRIGHT_CHROME_EXECUTABLE || undefined,
   });
+  cleanDir(TEMP_OUT_DIR);
   const page = await browser.newPage();
   await page.setContent(`<!doctype html>
     <html lang="en">
       <head><meta charset="utf-8"><title>SE Gym Hero Choice Preview Build</title></head>
-      <body><div id="source">${renderedHeroInclude()}</div></body>
+      <body><div id="source">${heroSource}</div></body>
     </html>`);
   await page.addScriptTag({ path: HERO_RUNTIME });
   await page.waitForFunction(() => window.HeroAvatar && window.HeroAvatar.CHOICE_SETS);
@@ -89,6 +121,9 @@ async function main() {
       state.appearance.hairColor = representativeHair;
       if (definition.key === 'bodyType' || definition.key === 'outfitStyle' || definition.key === 'accessory') {
         state.appearance.hairStyle = 'short';
+      }
+      if (definition.key === 'outfitStyle' || definition.key === 'accessory') {
+        state.body.type = 'athletic';
       }
       if (definition.key === 'accessory') {
         const accessory = window.HeroAvatar.normalizeAvatar({
@@ -349,9 +384,10 @@ async function main() {
         malformed.push(`${preview.key}/${preview.value}: ${error.textContent.replace(/\s+/g, ' ').trim()}`);
         continue;
       }
-      const rasterizingNode = doc.querySelector('image, foreignObject, filter, [filter]');
+      const rasterizingNode = doc.querySelector('image, foreignObject, filter, text, [filter]');
       const hasCssFilter = /\bfilter\s*:/.test(preview.svg);
-      if (rasterizingNode || hasCssFilter) {
+      const hasRasterReference = /data:image\/(?:png|jpe?g|gif|webp|avif)|\.(?:png|jpe?g|gif|webp|avif)(?:[?"')]|$)/i.test(preview.svg);
+      if (rasterizingNode || hasCssFilter || hasRasterReference) {
         rasterizing.push(`${preview.key}/${preview.value}`);
       }
     }
@@ -374,7 +410,7 @@ async function main() {
   const assets = {};
   for (const preview of previews) {
     const file = `${slug(preview.key)}-${slug(preview.value)}.svg`;
-    fs.writeFileSync(path.join(OUT_DIR, file), `${preview.svg}\n`);
+    fs.writeFileSync(path.join(TEMP_OUT_DIR, file), `${preview.svg}\n`);
     if (!assets[preview.key]) assets[preview.key] = {};
     assets[preview.key][preview.value] = file;
   }
@@ -388,13 +424,15 @@ async function main() {
     }, null, 2),
     ';\n',
   ].join('');
-  fs.writeFileSync(path.join(OUT_DIR, 'manifest.js'), manifest);
+  fs.writeFileSync(path.join(TEMP_OUT_DIR, 'manifest.js'), manifest);
 
   await browser.close();
+  replaceOutputDir();
   console.log(`Generated ${previews.length} SE Gym hero choice preview SVGs in ${path.relative(ROOT, OUT_DIR)}`);
 }
 
 main().catch((error) => {
+  fs.rmSync(TEMP_OUT_DIR, { recursive: true, force: true });
   console.error(error);
   process.exit(1);
 });

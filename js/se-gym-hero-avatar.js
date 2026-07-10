@@ -12,6 +12,9 @@
   // hair, and nose planes instead of masking weak rendering with brand yellow.
   var REPRESENTATIVE_PREVIEW_SKIN = '#291713';
   var REPRESENTATIVE_PREVIEW_HAIR = '#1f140c';
+  // These persisted emoji values are compatibility keys only. The hero renders
+  // each one through an authored SVG symbol, never through a platform font.
+  var VECTOR_EMBLEM_VALUES = ['🚀', '⚡', '💡', '🛡️', '🐛', '🎯', '🌟', '🦾'];
 
   function choice(value, label) {
     return { value: value, label: label };
@@ -685,24 +688,36 @@
   var DEEP_SET_EYE_SHAPES = { 'deep-set': true };
   var ANGLED_ALMOND_EYE_SHAPES = { 'relaxed-almond': true, 'tapered-almond': true, 'upturned-almond': true, 'downturned-soft': true };
   var EYELASH_STYLE_GEOMETRY = {
-    'short-soft': { count: 9, length: 2.3, reach: 0.86, strokeWidth: 0.48, opacity: 0.34 },
-    'short-dense': { count: 11, length: 2.2, reach: 0.96, strokeWidth: 0.48, opacity: 0.36 },
+    'short-soft': { count: 4, length: 2.3, reach: 0.86, strokeWidth: 0.48, opacity: 0.34 },
+    'short-dense': { count: 6, length: 2.2, reach: 0.96, strokeWidth: 0.48, opacity: 0.36 },
     'barely-there': { count: 3, length: 2.75, reach: 0.64, strokeWidth: 0.54, opacity: 0.34 },
-    subtle: { count: 5, length: 2.95, reach: 0.88, strokeWidth: 0.56, opacity: 0.38 },
-    'short-natural': { count: 5, length: 2.72, reach: 0.86, strokeWidth: 0.54, opacity: 0.36 },
-    'short-corner': { count: 4, length: 2.8, reach: 0.62, strokeWidth: 0.54, opacity: 0.36 },
-    'short-upper': { count: 6, length: 2.85, reach: 0.92, strokeWidth: 0.54, opacity: 0.38 },
-    'outer-corner': { count: 4, length: 3.55, reach: 0.66, strokeWidth: 0.58, opacity: 0.38 },
-    'soft-fan': { count: 7, length: 3.75, reach: 0.94, strokeWidth: 0.58, opacity: 0.4 },
-    'balanced-fan': { count: 8, length: 3.45, reach: 0.92, strokeWidth: 0.56, opacity: 0.39 },
-    'delicate-long': { count: 6, length: 4.15, reach: 0.84, strokeWidth: 0.52, opacity: 0.38, outerBoost: 0.12 },
-    'soft-lift': { count: 6, length: 3.7, reach: 0.78, strokeWidth: 0.56, opacity: 0.4, outerBoost: 0.32 },
-    'full-upper': { count: 8, length: 3.95, reach: 0.96, strokeWidth: 0.6, opacity: 0.42 },
-    'long-classic': { count: 11, length: 4.35, reach: 0.96, strokeWidth: 0.62, opacity: 0.42 },
-    'long-doll': { count: 13, length: 4.6, reach: 0.96, strokeWidth: 0.64, opacity: 0.42, outerBoost: 0.18 },
-    'long-glam': { count: 14, length: 4.9, reach: 0.96, strokeWidth: 0.66, opacity: 0.42, outerBoost: 0.35 },
-    winged: { count: 7, length: 4.4, reach: 0.74, strokeWidth: 0.62, opacity: 0.42, outerBoost: 0.55 },
-    dense: { count: 14, length: 4.05, reach: 0.96, strokeWidth: 0.6, opacity: 0.4 }
+    subtle: { count: 4, length: 2.95, reach: 0.88, strokeWidth: 0.56, opacity: 0.38 },
+    'short-natural': { count: 4, length: 2.72, reach: 0.86, strokeWidth: 0.54, opacity: 0.36 },
+    'short-corner': { count: 3, length: 2.8, reach: 0.62, strokeWidth: 0.54, opacity: 0.36 },
+    'short-upper': { count: 5, length: 2.85, reach: 0.92, strokeWidth: 0.54, opacity: 0.38 },
+    'outer-corner': { count: 3, length: 3.55, reach: 0.66, strokeWidth: 0.58, opacity: 0.38 },
+    'soft-fan': { count: 5, length: 3.75, reach: 0.94, strokeWidth: 0.58, opacity: 0.4 },
+    'balanced-fan': { count: 5, length: 3.45, reach: 0.92, strokeWidth: 0.56, opacity: 0.39 },
+    'delicate-long': { count: 5, length: 4.15, reach: 0.84, strokeWidth: 0.52, opacity: 0.38, outerBoost: 0.12 },
+    'soft-lift': { count: 4, length: 3.7, reach: 0.78, strokeWidth: 0.56, opacity: 0.4, outerBoost: 0.32 },
+    'full-upper': { count: 6, length: 3.95, reach: 0.96, strokeWidth: 0.6, opacity: 0.42 },
+    'long-classic': { count: 7, length: 4.35, reach: 0.96, strokeWidth: 0.62, opacity: 0.42 },
+    'long-doll': { count: 7, length: 4.6, reach: 0.96, strokeWidth: 0.64, opacity: 0.42, outerBoost: 0.18 },
+    'long-glam': { count: 8, length: 4.9, reach: 0.96, strokeWidth: 0.66, opacity: 0.42, outerBoost: 0.35 },
+    winged: { count: 4, length: 4.4, reach: 0.74, strokeWidth: 0.62, opacity: 0.42, outerBoost: 0.55 },
+    dense: { count: 7, length: 4.05, reach: 0.96, strokeWidth: 0.6, opacity: 0.4 }
+  };
+  // Curated, deliberately uneven root positions create small lash tufts rather
+  // than the mechanical picket-fence effect of uniformly sampled geometry.
+  var EYELASH_CLUSTER_PROFILES = {
+    1: [0.5],
+    2: [0.18, 0.78],
+    3: [0.08, 0.46, 0.86],
+    4: [0.04, 0.29, 0.61, 0.91],
+    5: [0.03, 0.2, 0.45, 0.7, 0.93],
+    6: [0.02, 0.16, 0.34, 0.56, 0.77, 0.95],
+    7: [0.02, 0.13, 0.28, 0.47, 0.66, 0.82, 0.96],
+    8: [0.01, 0.11, 0.23, 0.39, 0.57, 0.73, 0.87, 0.97]
   };
   var EYELASH_FAMILY_GEOMETRY = {
     round: { kind: 'ellipse', cx: 381, cy: 185, rx: 7, ry: 8.5, startAngle: 205, endAngle: 335, lengthScale: 1, fanBias: 0.18, riseBias: 0.1 },
@@ -966,7 +981,7 @@
     { key: 'eyebrows', label: 'Eyebrows', slots: ['eyebrow'], cx: 400, cy: 172 },
     { key: 'nose', label: 'Nose', slots: ['nose-shape'], cx: 400, cy: 196 },
     { key: 'mouth', label: 'Mouth', slots: ['mouth-style'], cx: 400, cy: 223 },
-    { key: 'cheeks', label: 'Cheeks', selectors: ['ellipse[fill*="--hero-cheek"]', 'ellipse[fill-opacity*="--hero-cheek-opacity"]'], cx: 400, cy: 212 },
+    { key: 'cheeks', label: 'Cheeks', selectors: ['[data-hero-cheek-blush]'], cx: 400, cy: 212 },
     { key: 'faceFeature', label: 'Facial details', slots: ['face-feature'], cx: 400, cy: 207 },
     { key: 'facialHair', label: 'Facial hair', slots: ['facial-hair'], cx: 400, cy: 228 },
     { key: 'body', label: 'Body', slots: [], selectors: ['[data-hero-body-fit-target="surface"]', '[data-hero-body-fit-target="chest"]', '[data-hero-body-fit-target="arm-seams"]', '[data-hero-body-fit-target="lower-body"]', '[data-hero-body-fit-target="milestone-shoes"]', '[data-hero-motion="cape-rock"]'], cx: 400, cy: 360 },
@@ -1945,12 +1960,12 @@
       hairShadow: hairLum < 0.28 ? 'rgba(0, 0, 0, 0.42)' : 'rgba(53, 31, 15, 0.24)',
       featureRim: darkSkin ? 'rgba(255, 226, 185, 0.72)' : 'rgba(44, 21, 8, 0.22)',
       featureShadow: darkSkin ? 'rgba(0, 0, 0, 0.44)' : 'rgba(0, 47, 82, 0.18)',
-      noseOpacity: darkSkin ? '0.55' : '0.35',
-      noseBridgeOpacity: darkSkin ? '0.2' : '0.15',
-      nosePlaneOpacity: darkSkin ? '0.24' : '0.17',
-      noseHighlightOpacity: darkSkin ? (deepSkin ? '0.34' : '0.3') : '0.28',
-      nostrilOpacity: darkSkin ? '0.5' : '0.34',
-      cheekOpacity: darkSkin ? '0.16' : '0.28',
+      noseOpacity: darkSkin ? '0.58' : '0.46',
+      noseBridgeOpacity: darkSkin ? '0.26' : '0.2',
+      nosePlaneOpacity: darkSkin ? '0.3' : '0.24',
+      noseHighlightOpacity: darkSkin ? (deepSkin ? '0.36' : '0.33') : '0.34',
+      nostrilOpacity: darkSkin ? '0.56' : '0.46',
+      cheekOpacity: darkSkin ? '0.16' : '0.24',
       contourOpacity: darkSkin ? '0.38' : '0.18',
       subtleLineOpacity: darkSkin ? '0.16' : '0.14',
       smileCreaseOpacity: darkSkin ? '0.07' : '0.08',
@@ -1960,16 +1975,9 @@
       faceMarkOpacity: darkSkin ? '0.28' : '0.34',
       faceMarkStrongOpacity: darkSkin ? '0.38' : '0.48',
       hairDetailOpacity: darkHair ? (darkSkin ? '0.48' : '0.42') : '0.46',
-      faceCoreHighlightOpacity: darkSkin ? '0.44' : '0.42',
-      faceFormShadowOpacity: darkSkin ? '0.34' : '0.28',
-      faceSoftShadowOpacity: darkSkin ? '0.1' : '0.08',
-      faceScatterOpacity: darkSkin ? '0.1' : '0.07',
-      faceAoOpacity: darkSkin ? '0.08' : '0.06',
-      faceBounceOpacity: darkSkin ? '0.07' : '0.05',
-      faceRimOpacity: darkSkin ? '0.08' : '0.05',
-      faceHighlightOpacity: darkSkin ? '0.09' : '0.07',
+      faceCoreHighlightOpacity: darkSkin ? '0.3' : '0.28',
+      faceFormShadowOpacity: darkSkin ? '0.28' : '0.22',
       faceAmbientOpacity: darkSkin ? '0.08' : '0.07',
-      faceShadowOpacity: darkSkin ? '0.1' : '0.08',
       jawLineOpacity: darkSkin ? '0.18' : '0.16',
       neckShadowOpacity: darkSkin ? '0.42' : '0.24',
       neckHighlightOpacity: darkSkin ? '0.18' : '0.14',
@@ -2314,24 +2322,27 @@
     };
   }
 
-  function buildEyelashPath(style, family) {
+  function buildEyelashPath(style, family, underFrames) {
     var config = EYELASH_STYLE_GEOMETRY[style];
     var familyGeometry = EYELASH_FAMILY_GEOMETRY[family] || EYELASH_FAMILY_GEOMETRY.almond;
     if (!config) return '';
 
-    var count = Math.max(1, config.count || 1);
+    var count = Math.max(1, Math.min(8, config.count || 1));
     var reach = config.reach === undefined ? 1 : config.reach;
+    var clusterProfile = EYELASH_CLUSTER_PROFILES[count] || EYELASH_CLUSTER_PROFILES[8];
+    var frameLengthScale = underFrames ? 0.72 : 1;
     var segments = [];
     for (var i = 0; i < count; i++) {
-      var slot = count === 1 ? 0.5 : i / (count - 1);
+      var slot = clusterProfile[i];
       var u = Math.max(0, Math.min(1, slot * reach));
       var sample = lashSampleForFamily(familyGeometry, u);
-      var taper = 1 - slot * 0.18 + (i % 2 ? 0.04 : 0);
+      var tuftScale = i % 3 === 0 ? 1.08 : (i % 3 === 1 ? 0.82 : 0.95);
+      var taper = (1 - slot * 0.12) * tuftScale;
       var outerBoost = config.outerBoost ? Math.max(0, 1 - slot * 1.6) * config.outerBoost : 0;
-      var length = (config.length + outerBoost) * (familyGeometry.lengthScale || 1) * taper;
+      var length = (config.length + outerBoost) * (familyGeometry.lengthScale || 1) * taper * frameLengthScale;
       var endX = sample.x + sample.direction.x * length;
       var endY = sample.y + sample.direction.y * length;
-      var controlX = sample.x + sample.direction.x * length * 0.58 - 0.16;
+      var controlX = sample.x + sample.direction.x * length * 0.58 + (i % 2 ? 0.12 : -0.12);
       var controlY = sample.y + sample.direction.y * length * 0.48 - 0.1;
       var segment = { sx: sample.x, sy: sample.y, cx: controlX, cy: controlY, ex: endX, ey: endY };
       segments.push(segment, mirrorLashSegment(segment));
@@ -2345,7 +2356,7 @@
     }).join(' ');
   }
 
-  function updateEyelashGeometry(group, family) {
+  function updateEyelashGeometry(group, family, underFrames) {
     var style = group.getAttribute('data-hero-option') || 'none';
     var path = group.querySelector('[data-hero-lash-path]');
     if (!path) return;
@@ -2354,23 +2365,28 @@
       path.removeAttribute('d');
       path.setAttribute('display', 'none');
       path.removeAttribute('data-hero-lash-family');
+      path.removeAttribute('data-hero-lash-fit');
       return;
     }
 
-    path.setAttribute('d', buildEyelashPath(style, family));
+    path.setAttribute('d', buildEyelashPath(style, family, underFrames));
     path.setAttribute('data-hero-lash-family', family);
+    path.setAttribute('data-hero-lash-fit', underFrames ? 'under-frames' : 'open');
     path.setAttribute('display', 'inline');
     path.setAttribute('stroke-width', String(config.strokeWidth));
-    path.setAttribute('opacity', String(config.opacity));
+    path.setAttribute('opacity', String(config.opacity * (underFrames ? 0.82 : 1)));
   }
 
-  function applyEyelashFit(svg, eyeShape) {
+  function applyEyelashFit(svg, eyeShape, accessories) {
     var fit = eyelashFitForEyeShape(eyeShape);
+    var underFrames = (accessories || []).some(function (accessory) {
+      return FACE_ACCESSORIES.indexOf(accessory) !== -1;
+    });
     svg.setAttribute('data-hero-eye-family', fit.family);
     var groups = svg.querySelectorAll('[data-hero-slot="eyelash-style"]');
     for (var i = 0; i < groups.length; i++) {
       setBaseTransform(groups[i], '');
-      updateEyelashGeometry(groups[i], fit.family);
+      updateEyelashGeometry(groups[i], fit.family, underFrames);
     }
   }
 
@@ -2710,6 +2726,8 @@
     svg.style.setProperty('--hero-hair-shadow', contrastTokens.hairShadow);
     svg.style.setProperty('--hero-hair-detail-opacity', contrastTokens.hairDetailOpacity);
     svg.style.setProperty('--hero-eye', state.appearance.eyeColor);
+    svg.style.setProperty('--hero-eye-light', lighten(state.appearance.eyeColor, 0.38));
+    svg.style.setProperty('--hero-eye-dark', darken(state.appearance.eyeColor, 0.54));
     svg.style.setProperty('--hero-eyebrow', contrastTokens.eyebrow);
     svg.style.setProperty('--hero-feature-rim', contrastTokens.featureRim);
     svg.style.setProperty('--hero-feature-shadow', contrastTokens.featureShadow);
@@ -2728,14 +2746,7 @@
     svg.style.setProperty('--hero-face-mark-strong-opacity', contrastTokens.faceMarkStrongOpacity);
     svg.style.setProperty('--hero-face-core-highlight-opacity', contrastTokens.faceCoreHighlightOpacity);
     svg.style.setProperty('--hero-face-form-shadow-opacity', contrastTokens.faceFormShadowOpacity);
-    svg.style.setProperty('--hero-face-soft-shadow-opacity', contrastTokens.faceSoftShadowOpacity);
-    svg.style.setProperty('--hero-face-scatter-opacity', contrastTokens.faceScatterOpacity);
-    svg.style.setProperty('--hero-face-ao-opacity', contrastTokens.faceAoOpacity);
-    svg.style.setProperty('--hero-face-bounce-opacity', contrastTokens.faceBounceOpacity);
-    svg.style.setProperty('--hero-face-rim-opacity', contrastTokens.faceRimOpacity);
-    svg.style.setProperty('--hero-face-highlight-opacity', contrastTokens.faceHighlightOpacity);
     svg.style.setProperty('--hero-face-ambient-opacity', contrastTokens.faceAmbientOpacity);
-    svg.style.setProperty('--hero-face-shadow-opacity', contrastTokens.faceShadowOpacity);
     svg.style.setProperty('--hero-jaw-line-opacity', contrastTokens.jawLineOpacity);
     svg.style.setProperty('--hero-neck-shadow-opacity', contrastTokens.neckShadowOpacity);
     svg.style.setProperty('--hero-neck-highlight-opacity', contrastTokens.neckHighlightOpacity);
@@ -2772,6 +2783,25 @@
     svg.style.setProperty('--hero-cape-inner', state.outfit.capeInner);
   }
 
+  function applyVectorEmblem(svg, value) {
+    var emblemGroup = svg.querySelector('[data-hero-slot="emblem"]');
+    var emblemArt = svg.querySelector('[data-hero-emblem-art]');
+    var defaultBuckle = svg.querySelector('[data-hero-buckle-default]');
+    var emblemValue = typeof value === 'string' ? value : '';
+    var hasEmblem = VECTOR_EMBLEM_VALUES.indexOf(emblemValue) !== -1;
+
+    if (emblemArt) {
+      emblemArt.setAttribute('data-hero-emblem-value', hasEmblem ? emblemValue : '');
+      var vectors = emblemArt.querySelectorAll('[data-hero-emblem-vector]');
+      for (var i = 0; i < vectors.length; i++) {
+        var selected = hasEmblem && vectors[i].getAttribute('data-hero-emblem-vector') === emblemValue;
+        vectors[i].setAttribute('display', selected ? 'inline' : 'none');
+      }
+    }
+    if (emblemGroup) emblemGroup.setAttribute('display', hasEmblem ? 'inline' : 'none');
+    if (defaultBuckle) defaultBuckle.style.display = hasEmblem ? 'none' : '';
+  }
+
   function applyToSvg(svg, state) {
     var heroKind = normalizeHeroKind(state.kind);
     var bodyType = canonicalChoiceValue('bodyType', state.body.type);
@@ -2798,7 +2828,7 @@
     setSlot(svg, 'eye-shape', eyeShape);
     setSlot(svg, 'ear-shape', earShape);
     setSlot(svg, 'eyelash-style', state.appearance.eyelashStyle || 'none');
-    applyEyelashFit(svg, eyeShape);
+    applyEyelashFit(svg, eyeShape, compositedAccessories);
     setSlot(svg, 'head-shape', headStyle);
     setSlot(svg, 'face-clear', headStyle);
     setSlot(svg, 'head-features', headStyle);
@@ -2822,17 +2852,7 @@
 
     applyBodyTypeToSvg(svg, heroKind === 'bruin' ? 'athletic' : bodyType);
 
-    var emblemGroup = svg.querySelector('[data-hero-slot="emblem"]');
-    var emblemText = svg.querySelector('[data-hero-emblem-text]');
-    var defaultBuckle = svg.querySelector('[data-hero-buckle-default]');
-    var hasEmblem = !!(state.outfit.emblem || '');
-    if (emblemGroup && emblemText) {
-      emblemText.textContent = state.outfit.emblem || '';
-      emblemGroup.setAttribute('display', hasEmblem ? 'inline' : 'none');
-    }
-    if (defaultBuckle) {
-      defaultBuckle.style.display = hasEmblem ? 'none' : '';
-    }
+    applyVectorEmblem(svg, state.outfit.emblem || '');
     applyFineTuneToSvg(svg, state.fineTune);
     applyMilestoneToSvg(
       svg,
@@ -2928,31 +2948,8 @@
   function isHex(v) { return typeof v === 'string' && HEX_COLOR.test(v); }
   function inEnum(v, key) { return typeof v === 'string' && ENUMS[key].indexOf(canonicalChoiceValue(key, v)) !== -1; }
 
-  function countGraphemes(s) {
-    if (typeof Intl !== 'undefined' && typeof Intl.Segmenter === 'function') {
-      var seg = new Intl.Segmenter('en', { granularity: 'grapheme' });
-      var count = 0;
-      var it = seg.segment(s)[Symbol.iterator]();
-      while (!it.next().done) count++;
-      return count;
-    }
-    return Array.from(s).length;
-  }
-
   function isValidEmblem(v) {
-    if (typeof v !== 'string') return false;
-    if (v === '') return true;
-    // Accept any single grapheme cluster — covers Extended_Pictographic emoji,
-    // flag emojis (Regional_Indicator pairs), ZWJ sequences, skin-tone modifiers,
-    // and keycap sequences which Intl.Segmenter correctly groups as one grapheme.
-    if (countGraphemes(v) !== 1) return false;
-    try {
-      // Reject plain ASCII letters/digits — must contain an emoji-class codepoint
-      return /\p{Extended_Pictographic}|\p{Regional_Indicator}|[⃣️]/u.test(v);
-    } catch (e) {
-      // Fallback for older browsers: accept if string is non-trivial in length (most emojis are 2-8 code units)
-      return v.length >= 1 && v.length <= 8;
-    }
+    return typeof v === 'string' && (v === '' || VECTOR_EMBLEM_VALUES.indexOf(v) !== -1);
   }
 
   function validateAvatar(obj) {
@@ -2991,7 +2988,7 @@
       }
     }
     if (!isFineTuneStateValid(obj.fineTune)) return { ok: false, error: 'Invalid fine tuning.' };
-    if (!isValidEmblem(o.emblem)) return { ok: false, error: 'Emblem must be empty or a single emoji.' };
+    if (!isValidEmblem(o.emblem)) return { ok: false, error: 'Choose one of the available vector emblems or leave it empty.' };
     return { ok: true };
   }
 
@@ -3963,6 +3960,9 @@
       if (definition && (definition.key === 'bodyType' || definition.key === 'outfitStyle' || definition.key === 'accessory')) {
         state.appearance.hairStyle = 'short';
       }
+      if (definition && (definition.key === 'outfitStyle' || definition.key === 'accessory')) {
+        state.body.type = 'athletic';
+      }
       return normalizeAvatar(state);
     }
 
@@ -4269,7 +4269,7 @@
     function captureChoicePreviewSnapshot() {
       var source = modal.querySelector('.hero-cust-preview [data-gym-hero-svg]');
       if (!source) return null;
-      var emblemText = source.querySelector('[data-hero-emblem-text]');
+      var emblemArt = source.querySelector('[data-hero-emblem-art]');
       return {
         source: source,
         styleCssText: source.style.cssText,
@@ -4281,7 +4281,7 @@
         kindLayers: collectDisplaySnapshot(source, '[data-hero-kind-layer]'),
         defaultTorsoDisplay: collectInlineDisplaySnapshot(source, '[data-hero-default-torso]'),
         defaultBuckleDisplay: collectInlineDisplaySnapshot(source, '[data-hero-buckle-default]'),
-        emblemText: emblemText ? emblemText.textContent : ''
+        emblemValue: emblemArt ? emblemArt.getAttribute('data-hero-emblem-value') || '' : ''
       };
     }
 
@@ -4305,8 +4305,7 @@
       );
       var snapshotOpaqueHat = snapshotAccessories.some(function (accessory) { return !!OPAQUE_HAT_ACCESSORIES[accessory]; });
       setOpaqueHatHairClip(svg, snapshotOpaqueHat && baseState.appearance.hairStyle !== 'bald');
-      var emblemText = svg.querySelector('[data-hero-emblem-text]');
-      if (emblemText) emblemText.textContent = snapshot.emblemText;
+      applyVectorEmblem(svg, snapshot.emblemValue);
     }
 
     function applyChoicePreviewDelta(svg, definition, optionValue, baseState) {
@@ -4338,13 +4337,13 @@
         setSlot(svg, 'eyebrow', optionValue);
       } else if (definition.key === 'eyeShape') {
         setSlot(svg, 'eye-shape', canonicalChoiceValue('eyeShape', optionValue));
-        applyEyelashFit(svg, optionValue);
+        applyEyelashFit(svg, optionValue, getCompositedAccessories(getAccessories(baseState.outfit), baseState.appearance.hairStyle || 'short'));
       } else if (definition.key === 'earShape') {
         setSlot(svg, 'ear-shape', canonicalChoiceValue('earShape', optionValue));
         applyHeadShapeFit(svg, baseState.appearance.headStyle || 'default');
       } else if (definition.key === 'eyelashStyle') {
         setSlot(svg, 'eyelash-style', optionValue);
-        applyEyelashFit(svg, baseState.appearance.eyeShape || 'round');
+        applyEyelashFit(svg, baseState.appearance.eyeShape || 'round', getCompositedAccessories(getAccessories(baseState.outfit), baseState.appearance.hairStyle || 'short'));
       } else if (definition.key === 'noseShape') {
         setSlot(svg, 'nose-shape', optionValue);
       } else if (definition.key === 'mouthStyle') {
@@ -4371,6 +4370,7 @@
         setSlot(svg, 'outfit-style', optionValue);
       } else if (definition.key === 'accessory') {
         setSlot(svg, 'accessory', canonicalChoiceValue('accessory', optionValue));
+        applyEyelashFit(svg, baseState.appearance.eyeShape || 'round', [canonicalChoiceValue('accessory', optionValue)]);
         applyHeadShapeFit(svg, baseState.appearance.headStyle || 'default');
       }
     }
@@ -5501,7 +5501,7 @@
     emblemInput.addEventListener('input', function () {
       var v = emblemInput.value;
       if (!isValidEmblem(v)) {
-        setStatus('Emblem must be a single emoji.', true);
+        setStatus('Choose one of the available vector emblems or leave it empty.', true);
         return;
       }
       setStatus('');

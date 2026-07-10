@@ -674,11 +674,11 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
     const choices = [
       { label: 'Headset with mic', value: 'headset-mic' },
-      { label: 'Plain cross pendant', value: 'cross-pendant' },
-      { label: 'Six-point star pendant', value: 'six-point-star-pendant' },
-      { label: 'Eight-spoke wheel pendant', value: 'wheel-pendant' },
-      { label: 'Sacred syllable pendant', value: 'sacred-syllable-pendant' },
-      { label: 'Open hand pendant', value: 'open-hand-pendant' },
+      { label: 'Cross pendant', value: 'cross-pendant' },
+      { label: 'Star of David pendant', value: 'six-point-star-pendant' },
+      { label: 'Dharma wheel pendant', value: 'wheel-pendant' },
+      { label: 'Om pendant', value: 'sacred-syllable-pendant' },
+      { label: 'Hamsa pendant', value: 'open-hand-pendant' },
       { label: 'Student ID badge', value: 'student-id-badge' },
       { label: 'Backpack straps', value: 'backpack-straps' },
       { label: 'Messenger bag strap', value: 'messenger-bag' },
@@ -1098,8 +1098,13 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     const hero = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
     const vectorAudit = await hero.evaluate((svg) => ({
       embeddedRasterCount: svg.querySelectorAll('image, foreignObject').length,
+      fontGlyphCount: svg.querySelectorAll('text').length,
       rasterizingDefinitionCount: svg.querySelectorAll('filter, feGaussianBlur, feDropShadow').length,
       filterAttributeCount: svg.querySelectorAll('[filter]').length,
+      externalReferenceCount: Array.from(svg.querySelectorAll('[href], [xlink\\:href]')).filter((node) => {
+        const href = node.getAttribute('href') || node.getAttribute('xlink:href') || '';
+        return href && !href.startsWith('#');
+      }).length,
       rootFilter: getComputedStyle(svg).filter,
       renderingHints: {
         shapes: svg.getAttribute('shape-rendering'),
@@ -1118,8 +1123,10 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
     expect(vectorAudit).toEqual({
       embeddedRasterCount: 0,
+      fontGlyphCount: 0,
       rasterizingDefinitionCount: 0,
       filterAttributeCount: 0,
+      externalReferenceCount: 0,
       rootFilter: 'none',
       renderingHints: {
         shapes: 'geometricPrecision',
@@ -2723,14 +2730,6 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     const failures = await preview.evaluate((svg) => {
       const baseState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS)));
       const styles = ['none', 'short-soft', 'short-dense', 'barely-there', 'subtle', 'short-natural', 'short-corner', 'short-upper', 'outer-corner', 'soft-fan', 'balanced-fan', 'delicate-long', 'soft-lift', 'full-upper', 'long-classic', 'long-doll', 'long-glam', 'winged', 'dense'];
-      const minimumLashSegments = {
-        'short-soft': 18,
-        'short-dense': 22,
-        'long-classic': 22,
-        'long-doll': 26,
-        'long-glam': 28,
-        dense: 28,
-      };
       const failures = [];
 
       function visibleSlot(slot, option) {
@@ -2817,8 +2816,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         const lashPaths = group ? Array.from(group.querySelectorAll('path[stroke*="--hero-eyebrow"]')) : [];
         if (style !== 'none' && lashPaths.length === 0) failures.push({ slot: 'eyelash-style', style, reason: 'style has no lash paths' });
         const lashSegmentCount = lashPaths.reduce((total, path) => total + quadraticLashSegments(path.getAttribute('d') || '').length, 0);
-        if (minimumLashSegments[style] && lashSegmentCount < minimumLashSegments[style]) {
-          failures.push({ slot: 'eyelash-style', style, reason: 'style should render many individual lashes', lashSegmentCount });
+        if (style !== 'none' && (lashSegmentCount < 6 || lashSegmentCount > 16)) {
+          failures.push({ slot: 'eyelash-style', style, reason: 'style should use a restrained cluster of three to eight tufts per eye', lashSegmentCount });
         }
         for (const path of lashPaths) {
           const d = path.getAttribute('d') || '';
@@ -2886,6 +2885,29 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       const deepSetAnchors = leftEyeAnchors(pathByEyeShape['deep-set']);
       if (Math.max(...deepSetAnchors.map((anchor) => anchor.y)) > 184.5) {
         failures.push({ slot: 'eyelash-style', reason: 'deep-set lash roots should sit on the upper lid instead of inside the eye' });
+      }
+
+      const openState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+      openState.appearance.eyelashStyle = 'long-glam';
+      window.HeroAvatar.applyToSvg(svg, openState);
+      const openPath = svg.querySelector('[data-hero-slot="eyelash-style"][data-hero-option="long-glam"] [data-hero-lash-path]');
+      const openSegments = quadraticLashSegments(openPath ? openPath.getAttribute('d') || '' : '');
+      const openMaxLength = Math.max(...openSegments.map((segment) => Math.hypot(segment.ex - segment.sx, segment.ey - segment.sy)));
+      const leftRoots = openSegments.filter((segment) => segment.sx < 400).map((segment) => segment.sx).sort((a, b) => a - b);
+      const rootGaps = leftRoots.slice(1).map((root, index) => (root - leftRoots[index]).toFixed(2));
+      if (new Set(rootGaps).size < 3) {
+        failures.push({ slot: 'eyelash-style', reason: 'glam lashes should form authored, uneven clusters rather than an evenly spaced fan', rootGaps });
+      }
+
+      const framedState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(openState)));
+      framedState.outfit.accessory = 'glasses';
+      framedState.outfit.accessories = ['glasses'];
+      window.HeroAvatar.applyToSvg(svg, framedState);
+      const framedPath = svg.querySelector('[data-hero-slot="eyelash-style"][data-hero-option="long-glam"] [data-hero-lash-path]');
+      const framedSegments = quadraticLashSegments(framedPath ? framedPath.getAttribute('d') || '' : '');
+      const framedMaxLength = Math.max(...framedSegments.map((segment) => Math.hypot(segment.ex - segment.sx, segment.ey - segment.sy)));
+      if (!framedPath || framedPath.getAttribute('data-hero-lash-fit') !== 'under-frames' || framedMaxLength > openMaxLength * 0.75) {
+        failures.push({ slot: 'eyelash-style', reason: 'eye frames should shorten prominent lashes enough to prevent rim collisions', openMaxLength, framedMaxLength });
       }
 
       for (const headStyle of ['soft-features', 'heart']) {
@@ -2977,7 +2999,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         const svgPoint = svg.createSVGPoint();
         svgPoint.x = point.x;
         svgPoint.y = point.y;
-        const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
+        const screenPoint = svgPoint.matrixTransform(group.getScreenCTM());
         return (
           screenPoint.x >= rect.left - 0.5 &&
           screenPoint.x <= rect.right + 0.5 &&
@@ -3469,7 +3491,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         const svgPoint = svg.createSVGPoint();
         svgPoint.x = point.x;
         svgPoint.y = point.y;
-        const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
+        const screenPoint = svgPoint.matrixTransform(group.getScreenCTM());
         return (
           screenPoint.x >= rect.left - 0.5 &&
           screenPoint.x <= rect.right + 0.5 &&
@@ -3950,16 +3972,17 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await clearAccessories(page);
     await page.getByLabel('Hair style', { exact: true }).selectOption('coils');
     await page.getByLabel('Outfit style', { exact: true }).selectOption('hoodie');
-    await page.getByLabel('Hijab', { exact: true }).check();
     await page.getByLabel('Earrings', { exact: true }).check();
+    await page.getByLabel('Hijab', { exact: true }).check();
 
     const preview = page.locator('#hero-customizer-modal [data-gym-hero-svg]');
     await expect(preview.locator('[data-hero-slot="outfit-style"][data-hero-option="hoodie"]'))
       .toHaveAttribute('display', 'inline');
     await expect(preview.locator('[data-hero-slot="accessory"][data-hero-option="hijab"]'))
       .toHaveAttribute('display', 'inline');
+    await expect(page.locator('#hero-customizer-modal input[name="hero-cust-accessory"][value="earrings"]')).not.toBeChecked();
     await expect(preview.locator('[data-hero-slot="accessory"][data-hero-option="earrings"]'))
-      .toHaveAttribute('display', 'inline');
+      .toHaveAttribute('display', 'none');
     await expect(preview.locator('[data-hero-slot="hair"][data-hero-option="coils"]'))
       .toHaveAttribute('display', 'none');
     await expect(page.getByLabel('Hair style', { exact: true })).toHaveValue('coils');
@@ -4084,13 +4107,6 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         hairDetailOpacity: styles.getPropertyValue('--hero-hair-detail-opacity').trim(),
         faceCoreHighlightOpacity: styles.getPropertyValue('--hero-face-core-highlight-opacity').trim(),
         faceFormShadowOpacity: styles.getPropertyValue('--hero-face-form-shadow-opacity').trim(),
-        faceSoftShadowOpacity: styles.getPropertyValue('--hero-face-soft-shadow-opacity').trim(),
-        faceScatterOpacity: styles.getPropertyValue('--hero-face-scatter-opacity').trim(),
-        faceAoOpacity: styles.getPropertyValue('--hero-face-ao-opacity').trim(),
-        faceBounceOpacity: styles.getPropertyValue('--hero-face-bounce-opacity').trim(),
-        faceRimOpacity: styles.getPropertyValue('--hero-face-rim-opacity').trim(),
-        faceHighlightOpacity: styles.getPropertyValue('--hero-face-highlight-opacity').trim(),
-        faceShadowOpacity: styles.getPropertyValue('--hero-face-shadow-opacity').trim(),
         jawLineOpacity: styles.getPropertyValue('--hero-jaw-line-opacity').trim(),
         neckShadowOpacity: styles.getPropertyValue('--hero-neck-shadow-opacity').trim(),
         smileLineStroke: renderedPaint(smileLine, 'stroke', '--hero-mouth-line'),
@@ -4112,8 +4128,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     });
 
     expect(tokens.polishAfterFaceClear).toBe(true);
-    expect(tokens.facePolishPathCount).toBe(0);
-    expect(tokens.facePolishEllipseCount).toBeGreaterThanOrEqual(6);
+    expect(tokens.facePolishPathCount).toBe(2);
+    expect(tokens.facePolishEllipseCount).toBe(2);
     expect(tokens.featuresAfterPolish).toBe(true);
     expect(tokens.skinHighlightSoft.toLowerCase()).not.toBe(tokens.skin.toLowerCase());
     expect(tokens.skinMid.toLowerCase()).not.toBe(tokens.skin.toLowerCase());
@@ -4130,7 +4146,11 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(contrastRatio(tokens.lipHighlight, tokens.lipFill)).toBeLessThanOrEqual(1.6);
     expect(contrastRatio(tokens.mouthLine, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.smileLineStroke, tokens.skin)).toBeGreaterThanOrEqual(3);
-    expect(contrastRatio(tokens.noseFill, tokens.skin)).toBeGreaterThanOrEqual(3);
+    // The nose plane is form shading, not an ink outline. It should remain
+    // visible on deep skin without becoming a harsh vertical stripe; nostrils
+    // and other semantic marks are covered by the higher-contrast faceMark token.
+    expect(contrastRatio(tokens.noseFill, tokens.skin)).toBeGreaterThanOrEqual(1.4);
+    expect(contrastRatio(tokens.noseFill, tokens.skin)).toBeLessThanOrEqual(2.2);
     expect(contrastRatio(tokens.eyebrow, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(contrastRatio(tokens.jawLine, tokens.skin)).toBeGreaterThanOrEqual(3);
     expect(Number(tokens.noseOpacity)).toBeGreaterThanOrEqual(0.45);
@@ -4141,16 +4161,9 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(Number(tokens.contourOpacity)).toBeLessThanOrEqual(0.4);
     expect(Number(tokens.hairDetailOpacity)).toBeGreaterThanOrEqual(0.35);
     expect(Number(tokens.hairDetailOpacity)).toBeLessThanOrEqual(0.55);
-    expect(Number(tokens.faceCoreHighlightOpacity)).toBeGreaterThanOrEqual(0.35);
-    expect(Number(tokens.faceCoreHighlightOpacity)).toBeLessThanOrEqual(0.5);
-    expect(Number(tokens.faceFormShadowOpacity)).toBeLessThanOrEqual(0.5);
-    expect(Number(tokens.faceSoftShadowOpacity)).toBeLessThanOrEqual(0.16);
-    expect(Number(tokens.faceScatterOpacity)).toBeLessThanOrEqual(0.12);
-    expect(Number(tokens.faceAoOpacity)).toBeLessThanOrEqual(0.14);
-    expect(Number(tokens.faceBounceOpacity)).toBeLessThanOrEqual(0.11);
-    expect(Number(tokens.faceRimOpacity)).toBeLessThanOrEqual(0.14);
-    expect(Number(tokens.faceHighlightOpacity)).toBeLessThanOrEqual(0.14);
-    expect(Number(tokens.faceShadowOpacity)).toBeLessThanOrEqual(0.16);
+    expect(Number(tokens.faceCoreHighlightOpacity)).toBeGreaterThanOrEqual(0.25);
+    expect(Number(tokens.faceCoreHighlightOpacity)).toBeLessThanOrEqual(0.35);
+    expect(Number(tokens.faceFormShadowOpacity)).toBeLessThanOrEqual(0.35);
     expect(Number(tokens.jawLineOpacity)).toBeLessThanOrEqual(0.3);
     expect(Number(tokens.neckShadowOpacity)).toBeGreaterThanOrEqual(0.35);
     expect(Number(tokens.neckShadowOpacity)).toBeLessThanOrEqual(0.48);
@@ -4418,12 +4431,14 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(previewFailures).toEqual([]);
   });
 
-  test('Customizer keyboard shortcut chips meet light-mode contrast', async ({ page }) => {
+  test('Vector emblem shortcut icons are named and meet non-text contrast', async ({ page }) => {
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
 
-    const contrastRatios = await page.locator('#hero-cust-emblem-hint kbd').evaluateAll((nodes) => {
+    const shortcutButtons = page.locator('.hero-cust-quickbtn[data-emblem-quickpick]');
+    await expect(shortcutButtons).toHaveCount(8);
+    const results = await shortcutButtons.evaluateAll((nodes) => {
       function parseRgb(color) {
         const match = color.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
         if (!match) throw new Error(`Unsupported color ${color}`);
@@ -4444,12 +4459,17 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       }
       return nodes.map((node) => {
         const style = getComputedStyle(node);
-        return ratio(parseRgb(style.color), parseRgb(style.backgroundColor));
+        return {
+          name: node.getAttribute('aria-label') || '',
+          hasVector: Boolean(node.querySelector('svg path, svg circle, svg ellipse')),
+          hasTextGlyph: Array.from(node.childNodes).some((child) => child.nodeType === Node.TEXT_NODE && child.textContent.trim()),
+          contrast: ratio(parseRgb(style.color), parseRgb(style.backgroundColor)),
+        };
       });
     });
 
-    expect(contrastRatios.length).toBeGreaterThan(0);
-    expect(Math.min(...contrastRatios)).toBeGreaterThanOrEqual(4.5);
+    expect(results.every((result) => result.name && result.hasVector && !result.hasTextGlyph)).toBe(true);
+    expect(Math.min(...results.map((result) => result.contrast))).toBeGreaterThanOrEqual(3);
   });
 
   test('Expanded head shapes update the preview', async ({ page }) => {
@@ -4722,28 +4742,36 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(failures).toEqual([]);
   });
 
-  test('Typing an emoji into the emblem updates the preview text', async ({ page }) => {
+  test('Selecting a curated emblem renders only its authored SVG symbol', async ({ page }) => {
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
     await page.getByRole('button', { name: 'Customize Hero' }).click();
-    await page.getByLabel('Emblem (one emoji)').fill('🚀');
+    await page.getByLabel('Vector emblem', { exact: true }).selectOption('🚀');
     const preview = page.locator('#hero-customizer-modal .hero-cust-preview [data-gym-hero-svg]');
-    const emblemText = preview.locator('[data-hero-emblem-text]');
-    await expect(emblemText).toHaveText('🚀');
+    const emblemArt = preview.locator('[data-hero-emblem-art]');
+    await expect(emblemArt).toHaveAttribute('data-hero-emblem-value', '🚀');
+    await expect(emblemArt.locator('[data-hero-emblem-vector="🚀"]')).toHaveAttribute('display', 'inline');
+    await expect(emblemArt.locator('[data-hero-emblem-vector]:not([data-hero-emblem-vector="🚀"])')).toHaveCount(7);
+    await expect(emblemArt.locator('text, image, foreignObject')).toHaveCount(0);
     const emblemGroup = preview.locator('[data-hero-slot="emblem"]');
     await expect(emblemGroup).toHaveAttribute('display', 'inline');
 
     await page.getByRole('button', { name: 'Clear', exact: true }).click();
-    await expect(emblemText).toHaveText('');
+    await expect(emblemArt).toHaveAttribute('data-hero-emblem-value', '');
+    await expect(emblemArt.locator('[data-hero-emblem-vector][display="inline"]')).toHaveCount(0);
     await expect(emblemGroup).toHaveAttribute('display', 'none');
   });
 
-  test('Non-emoji emblem text is rejected with a status message', async ({ page }) => {
+  test('Emblem validation accepts only the vector-backed registry', async ({ page }) => {
     await page.goto(GYM_URL);
-    await activatePersonalGym(page);
-    await page.getByRole('button', { name: 'Customize Hero' }).click();
-    await page.getByLabel('Emblem (one emoji)').fill('hello');
-    await expect(page.locator('#hero-cust-status')).toContainText('Emblem must be a single emoji.');
+    const validity = await page.evaluate(() => ({
+      empty: window.HeroAvatar.isValidEmblem(''),
+      rocket: window.HeroAvatar.isValidEmblem('🚀'),
+      star: window.HeroAvatar.isValidEmblem('🌟'),
+      arbitraryEmoji: window.HeroAvatar.isValidEmblem('😀'),
+      text: window.HeroAvatar.isValidEmblem('hello'),
+    }));
+    expect(validity).toEqual({ empty: true, rocket: true, star: true, arbitraryEmoji: false, text: false });
   });
 
   test('Save persists to localStorage and applies to all on-page heroes', async ({ page }) => {
@@ -5486,7 +5514,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       .toHaveAttribute('display', 'inline');
     await expect(svg.locator('[data-hero-slot="accessory"][data-hero-option="glasses"]'))
       .toHaveAttribute('display', 'inline');
-    await expect(svg.locator('[data-hero-emblem-text]')).toHaveText('🌟');
+    await expect(svg.locator('[data-hero-emblem-art]')).toHaveAttribute('data-hero-emblem-value', '🌟');
+    await expect(svg.locator('[data-hero-emblem-vector="🌟"]')).toHaveAttribute('display', 'inline');
   });
 
   test('Download exports a JSON file with the current state', async ({ page }) => {

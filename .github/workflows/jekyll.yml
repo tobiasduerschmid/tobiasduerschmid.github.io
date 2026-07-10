@@ -88,6 +88,11 @@ jobs:
         env:
           JEKYLL_ENV: production
 
+      - name: Verify SE Gym hero vector and composition contracts
+        run: npx playwright test tests/se-gym-hero-avatar.spec.js
+        env:
+          CI: 'true'
+
       - name: Upload artifact
         if: github.event_name == 'push'
         uses: actions/upload-pages-artifact@v3
