@@ -299,6 +299,8 @@ module Jekyll
 end
 
 Jekyll::Hooks.register [:posts, :pages, :documents], :post_render do |post|
+  next if ENV['UML_STATIC_RENDERING'] == '0'
+
   is_production = Jekyll.env == 'production' || ENV['JEKYLL_ENV'] == 'production' || ENV['CI']
   next unless is_production
 
