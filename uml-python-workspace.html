@@ -49,6 +49,7 @@ permalink: /uml-python-workspace.html
   <script src="{{ '/js/tutorial-quiz.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-inline-markdown.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-code.js' | relative_url }}"></script>
+  <script src="{{ '/js/coi-serviceworker-client.js' | relative_url }}"></script>
   <script>
     (function () {
       var statusEl = document.getElementById('generated-python-status');
@@ -120,51 +121,24 @@ permalink: /uml-python-workspace.html
         } catch (err) {}
       }
 
-      function registerIsolationWorkerThenReload(payload) {
+      function prepareIsolationThenReload(payload) {
         if (!storePayloadForReload(payload)) {
           startTutorial(payload);
           return;
         }
         setStatus('Preparing Python debugger...');
-        if (!('serviceWorker' in navigator)) {
-          startTutorial(payload);
-          return;
-        }
-
-        var reloaded = false;
-        function reloadOnce() {
-          if (reloaded) return;
-          reloaded = true;
-          window.location.reload();
-        }
-
-        navigator.serviceWorker.addEventListener('controllerchange', reloadOnce);
-        navigator.serviceWorker.register('{{ "/coi-serviceworker.js" | relative_url }}')
-          .then(function (reg) {
-            reg.update();
-            if (reg.installing) {
-              reg.installing.addEventListener('statechange', function () {
-                if (this.state === 'installed' || this.state === 'activated') reloadOnce();
-              });
-            } else if (reg.waiting || reg.active) {
-              reloadOnce();
-            }
-            window.setTimeout(reloadOnce, 4000);
-          })
-          .catch(function () {
+        window.SEBookCoiServiceWorker.ensure({
+          workerUrl: '{{ "/coi-serviceworker.js" | relative_url }}',
+          requiresIsolation: true,
+          onFailure: function () {
             startTutorial(payload);
-          });
+          }
+        });
       }
 
-      function shouldReloadForIsolation() {
-        return !window.crossOriginIsolated
-          && 'serviceWorker' in navigator
-          && !navigator.serviceWorker.controller;
-      }
-
-      function bootPayload(payload, fromReload) {
-        if (!fromReload && shouldReloadForIsolation()) {
-          registerIsolationWorkerThenReload(payload);
+      function bootPayload(payload) {
+        if (!window.crossOriginIsolated) {
+          prepareIsolationThenReload(payload);
           return;
         }
         startTutorial(payload);
@@ -247,7 +221,7 @@ permalink: /uml-python-workspace.html
         }
         try {
           if (readyTimer) window.clearInterval(readyTimer);
-          bootPayload(data, false);
+          bootPayload(data);
         } catch (err) {
           var message = err && err.message ? err.message : String(err);
           setStatus(message, true);
@@ -262,7 +236,7 @@ permalink: /uml-python-workspace.html
         payloadReceived = true;
         window.setTimeout(function () {
           try {
-            bootPayload(storedPayload, true);
+            bootPayload(storedPayload);
           } catch (err) {
             setStatus(err && err.message ? err.message : String(err), true);
           }

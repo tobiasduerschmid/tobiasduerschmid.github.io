@@ -9,124 +9,81 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: "pages-${{ github.ref }}"
   cancel-in-progress: false
 
 jobs:
-  # The full WCAG 2.2 AA audit takes 30–75 minutes. Gate it on a commit-message
-  # marker so most pushes/PRs stay fast. Add "[WCAG audit]" to the head commit
-  # message to opt in. Deploys still go out when the audit is skipped — the
-  # deploy job's `if:` treats a skipped audit as a pass.
-  decide-audit:
-    runs-on: ubuntu-latest
-    outputs:
-      run_audit: ${{ steps.check.outputs.run_audit }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 1
-
-      - name: Check head commit message for "[WCAG audit]" marker
-        id: check
-        run: |
-          msg="$(git log -1 --pretty=%B)"
-          echo "Head commit message:"
-          echo "$msg"
-          if printf '%s' "$msg" | grep -qF '[WCAG audit]'; then
-            echo "Marker found — will run WCAG audit."
-            echo "run_audit=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "Marker not found — skipping WCAG audit."
-            echo "run_audit=false" >> "$GITHUB_OUTPUT"
-          fi
-
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           submodules: recursive
-
-      - name: Initialize submodules
-        run: |
-          git submodule sync --recursive
-          git submodule update --init --recursive
+          persist-credentials: false
 
       - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
-        with:
-          ruby-version: '3.3.0'
-          bundler-cache: true
-
-      - name: Setup Pages
-        if: github.event_name == 'push'
-        uses: actions/configure-pages@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install preview build dependencies
-        run: npm ci || npm install
-
-      - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
-
-      - name: Pre-render SE Gym hero choice previews
-        run: node scripts/build_se_gym_hero_choice_previews.js
-
-      - name: Build with Jekyll
-        run: bundle exec jekyll build
-        env:
-          JEKYLL_ENV: production
-
-      - name: Verify SE Gym hero vector and composition contracts
-        run: npx playwright test tests/se-gym-hero-avatar.spec.js
-        env:
-          CI: 'true'
-
-      - name: Upload artifact
-        if: github.event_name == 'push'
-        uses: actions/upload-pages-artifact@v3
-
-  audit-accessibility:
-    needs: decide-audit
-    if: needs.decide-audit.outputs.run_audit == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 90
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with:
-          submodules: recursive
-
-      - name: Initialize submodules
-        run: |
-          git submodule sync --recursive
-          git submodule update --init --recursive
-
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@v1
+        uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # v1
         with:
           ruby-version: '3.3.0'
           bundler-cache: true
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
           cache: 'npm'
 
       - name: Install Node dependencies
-        run: npm ci || npm install
+        run: npm ci
+
+      - name: Pre-render SE Gym hero choice previews
+        run: node scripts/build_se_gym_hero_choice_previews.js
+
+      - name: Build with Jekyll
+        run: bundle exec jekyll build --strict_front_matter
+        env:
+          JEKYLL_ENV: production
+
+      - name: Run Node unit tests
+        run: npm run test:unit
+
+      - name: Upload Pages artifact
+        if: github.event_name == 'push'
+        uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
+
+  test:
+    name: Test shard ${{ matrix.shard }} of 4
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # v1
+        with:
+          ruby-version: '3.3.0'
+          bundler-cache: true
+
+      - name: Setup Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Node dependencies
+        run: npm ci
 
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
@@ -134,63 +91,46 @@ jobs:
       - name: Pre-render SE Gym hero choice previews
         run: node scripts/build_se_gym_hero_choice_previews.js
 
-      - name: Build site for audit
-        run: bundle exec jekyll build
-        env:
-          JEKYLL_ENV: production
-
-      - name: Run WCAG 2.2 AA audit
-        run: npx playwright test tests/wcag22-complete-audit.spec.js tests/wcag22-source-implementation-sweep.spec.js tests/accessibility.spec.js
-        env:
-          WCAG_AUDIT_FULL_SWEEP: '1'
-          CI: 'true'
-
-      # Interactive features (gym, quizzes, tutorials) only render some of
-      # their UI after a learner drives the page — the static URL sweep above
-      # cannot see those post-interaction states. The behavior tests for those
-      # features already reach every state, and the `A11Y_INTERACTIVE_CHECKS`
-      # flag asks them to run an axe pass at each one. Default off; turned on
-      # here so the full audit covers post-interaction screens too.
-      - name: Run interactive-state a11y sweep (gym, quizzes, tutorials)
-        run: npx playwright test tests/se-gym.spec.js tests/quiz.spec.js tests/git-tutorial.spec.js tests/git-advanced-tutorial.spec.js tests/python-tutorial.spec.js tests/java-tutorial.spec.js tests/c-tutorial.spec.js tests/nodejs-tutorial.spec.js tests/react-tutorial.spec.js tests/shell-tutorial.spec.js tests/sql-tutorial.spec.js tests/tdd-tutorial.spec.js tests/testing-foundations-tutorial.spec.js tests/playwright-tutorial.spec.js tests/prolog-tutorial.spec.js tests/makefile-tutorial.spec.js
+      - name: Run browser, data, and WCAG 2.2 AA regression suite
+        run: npx playwright test --shard=${{ matrix.shard }}/4
         env:
           A11Y_INTERACTIVE_CHECKS: '1'
           WCAG_AUDIT_FULL_SWEEP: '1'
           CI: 'true'
 
-      - name: Upload audit report
+      - name: Upload WCAG audit reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: wcag-audit-report
+          name: wcag-audit-report-${{ matrix.shard }}
           path: tmp/wcag22-*.json
-          if-no-files-found: warn
+          if-no-files-found: ignore
 
       - name: Upload Playwright report
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: playwright-report
+          name: playwright-report-${{ matrix.shard }}
           path: playwright-report/
           if-no-files-found: warn
 
   deploy:
-    # Deploy to Pages when:
-    #   - the event is a push to master AND
-    #   - the build succeeded AND
-    #   - the audit either succeeded or was skipped (no marker in commit message)
     if: |
       always()
       && github.event_name == 'push'
       && github.ref == 'refs/heads/master'
       && needs.build.result == 'success'
-      && (needs.audit-accessibility.result == 'success' || needs.audit-accessibility.result == 'skipped')
+      && needs.test.result == 'success'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    needs: [build, audit-accessibility]
+    needs: [build, test]
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@d6db90164ac5ed86f2b6aed7e0febac5b3c0c03e # v4

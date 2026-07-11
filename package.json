@@ -5,10 +5,11 @@
   "main": "index.js",
   "scripts": {
     "test": "playwright test",
+    "test:unit": "node --test scripts/tests/*.test.js",
     "pdf": "node scripts/generate_pdfs.js"
   },
   "dependencies": {
-    "js-yaml": "^4.1.1",
+    "js-yaml": "^4.3.0",
     "pdf-lib": "^1.17.1"
   },
   "repository": {

@@ -18,12 +18,13 @@
 // covered as separate test cases.
 //
 const { test, expect } = require('@playwright/test');
+const { a11yCheckpoint } = require('./a11y-helpers');
 
 const CS35L_URL = '/SEBook/CS35L.html';
 
 async function openSchedulerModal(page) {
-  await page.locator('#schedule-study-btn').click();
-  await expect(page.locator('#study-schedule-modal')).toBeVisible();
+  await page.getByRole('button', { name: 'Schedule Study' }).click();
+  await expect(page.getByRole('dialog', { name: 'Schedule Your Study Plan' })).toBeVisible();
 }
 
 test.describe('CS 35L Study Schedule — page entry point', () => {
@@ -59,6 +60,43 @@ test.describe('AC1 — selecting a time period between four days and two weeks',
     const label = page.locator('label[for="study-schedule-days"]');
     await expect(label).toBeVisible();
     await expect(label).toHaveText(/4.*14|four.*fourteen|four.*two weeks/i);
+  });
+
+  test('Tab and Shift+Tab wrap within the open modal', async ({ page }) => {
+    await page.goto(CS35L_URL);
+    await openSchedulerModal(page);
+
+    const dialog = page.getByRole('dialog', { name: 'Schedule Your Study Plan' });
+    const firstControl = dialog.getByRole('spinbutton', { name: /Number of days/i });
+    const lastControl = dialog.getByRole('button', { name: 'Cancel' });
+    await expect(firstControl).toBeFocused();
+
+    await lastControl.focus();
+    await page.keyboard.press('Tab');
+    await expect(firstControl).toBeFocused();
+
+    await page.keyboard.press('Shift+Tab');
+    await expect(lastControl).toBeFocused();
+    await a11yCheckpoint(page, 'study schedule modal focus containment', {
+      feature: 'study-schedule',
+      include: '#study-schedule-modal'
+    });
+  });
+
+  test('background controls cannot keep focus while the modal is open', async ({ page }) => {
+    await page.goto(CS35L_URL);
+    await openSchedulerModal(page);
+
+    const dialog = page.getByRole('dialog', { name: 'Schedule Your Study Plan' });
+    const firstControl = dialog.getByRole('spinbutton', { name: /Number of days/i });
+    // The trigger is deliberately absent from the accessibility tree while
+    // its branch is inert, so use the component's stable DOM id solely to
+    // simulate an outside script attempting to move focus there.
+    await page.evaluate(function () {
+      document.getElementById('schedule-study-btn').focus();
+    });
+
+    await expect(firstControl).toBeFocused();
   });
 
   test('the minimum 4-day plan is accepted', async ({ page }) => {
@@ -127,11 +165,13 @@ test.describe('AC1 — selecting a time period between four days and two weeks',
 
   test('Escape closes the modal without generating a plan', async ({ page }) => {
     await page.goto(CS35L_URL);
+    const openButton = page.getByRole('button', { name: 'Schedule Study' });
     await openSchedulerModal(page);
 
     await page.keyboard.press('Escape');
     await expect(page.locator('#study-schedule-modal')).toBeHidden();
     await expect(page.locator('#study-plan-output')).toBeHidden();
+    await expect(openButton).toBeFocused();
   });
 });
 

@@ -46,6 +46,21 @@
       $trigger.removeAttr('title');
     }
 
+    function clearTooltipTimer($trigger, dataKey) {
+      var timer = $trigger.data(dataKey);
+      if (!timer) return;
+      window.clearTimeout(timer);
+      $trigger.removeData(dataKey);
+    }
+
+    function clearHideTimer($trigger) {
+      clearTooltipTimer($trigger, 'a11yTooltipHideTimer');
+    }
+
+    function clearShowTimer($trigger) {
+      clearTooltipTimer($trigger, 'a11yTooltipShowTimer');
+    }
+
     function initAccessibleTooltips(selector, options) {
       var $triggers = $(selector);
       if (!$triggers.length) return;
@@ -64,22 +79,6 @@
         if (data && data.$tip) return data.$tip;
         var id = $trigger.attr('aria-describedby');
         return id ? $('#' + id) : $();
-      }
-
-      function clearHideTimer($trigger) {
-        var timer = $trigger.data('a11yTooltipHideTimer');
-        if (timer) {
-          window.clearTimeout(timer);
-          $trigger.removeData('a11yTooltipHideTimer');
-        }
-      }
-
-      function clearShowTimer($trigger) {
-        var timer = $trigger.data('a11yTooltipShowTimer');
-        if (timer) {
-          window.clearTimeout(timer);
-          $trigger.removeData('a11yTooltipShowTimer');
-        }
       }
 
       // :focus-visible isolates genuine keyboard focus. Plain :focus also
@@ -164,12 +163,31 @@
           scheduleHide($trigger);
         });
 
-      $(document).on('keydown.a11yTooltip', function (e) {
-        if (e.key === 'Escape' || e.keyCode === 27) {
-          $triggers.tooltip('hide');
+    }
+
+    function hideLiveAccessibleTooltips() {
+      $(tooltipSelector).each(function () {
+        var $trigger = $(this);
+        clearHideTimer($trigger);
+        clearShowTimer($trigger);
+        if ($trigger.data('bs.tooltip')) {
+          $trigger.tooltip('hide');
         }
       });
     }
+
+    function onAccessibleTooltipKeydown(e) {
+      if (e.key === 'Escape' || e.keyCode === 27) {
+        hideLiveAccessibleTooltips();
+      }
+    }
+
+    // Initialization runs repeatedly for MutationObserver batches. Keep one
+    // document-level listener and query the live DOM on demand so removed
+    // trigger collections are never retained by old closures.
+    $(document)
+      .off('keydown.a11yTooltip')
+      .on('keydown.a11yTooltip', onAccessibleTooltipKeydown);
 
     window.initAccessibleTooltips = initAccessibleTooltips;
     initAccessibleTooltips(tooltipSelector);

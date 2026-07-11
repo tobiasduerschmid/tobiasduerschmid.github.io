@@ -1195,6 +1195,13 @@ synchronizes with the main tutorial via `BroadcastChannel` (see
 Each popout listens for state-snapshot, state-update, and step-change
 messages on the BroadcastChannel and re-renders accordingly.
 
+React preview iframes in both the main tutorial and
+`tutorial-output-popup.html` deliberately omit the sandbox
+`allow-same-origin` token. Their `srcdoc` therefore has an opaque origin and
+learner code cannot read or mutate the tutorial page's DOM or browser storage.
+Keep preview refresh and hot reload on the existing `postMessage` boundary;
+do not restore direct parent access to iframe globals or documents.
+
 `uml-python-workspace.html` is a separate generated-code workspace opened by
 the UML editor's "Generate Python" action. It receives a one-shot
 `postMessage` payload (`archuml-generated-python`) from the UML editor, then
@@ -1225,6 +1232,17 @@ channel.
   preview panel in the DOM, toggling the inactive one with `hidden` so it is
   not exposed to assistive tech. Existing single-backend tutorials keep using
   top-level `setup_commands`.
+  React hot reload sends source and style patches into the opaque-origin
+  preview with `postMessage`; the parent runtime must not inspect frame globals
+  such as `Babel`. The preview announces its generation as ready only after its
+  ordered Babel script end-marker and initial React render have settled; until
+  then the parent retains only the latest source/style patch for that generation.
+  Repository-authored React `tests[].command` checks execute inside that preview
+  through a request-id and `event.source`-checked assertion broker. The broker
+  receives only a restricted `frame` facade
+  (`contentDocument` and `contentWindow` for the preview itself), stripped
+  learner `code`, an `assert` helper, and the learner `files` map. Never pass
+  parent DOM nodes, storage, or other host-page capabilities through it.
   Timed practice is opt-in per step with `max-time` (minutes) and optional
   `lockout-time` (minutes, default 60). The countdown remains visible in the
   step nav while the step or quiz is active; at one minute or less it uses a
@@ -1397,6 +1415,11 @@ under the same prefix family as other tutorial state so the global
   the expression pure and self-contained, for example
   `doubleAll [1, 2, 3] == [2, 4, 6]`; do not use shell commands or Python-style
   `assert` statements.
+- **React DOM assertions** (`react`): a plain `tests[].command` runs inside the
+  opaque-origin preview through the checked assertion broker. It receives
+  `frame`, `code`, `assert`, and `files`; `frame.contentDocument` refers only
+  to the preview document. Keep commands repository-authored and do not add
+  host-page capabilities to this interface.
 - **playwright** (react): `command:` is Playwright-compat JS run by
   `js/playwright-compat/runner.js` (a subset of `@playwright/test`).
   Reference selectors via `page.getByRole(...)`, `page.getByText(...)`.

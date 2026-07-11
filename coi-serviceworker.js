@@ -19,6 +19,8 @@
 'use strict';
 
 var VM_CACHE = 'vm-assets-v2';
+var OWNED_VM_CACHE_RE = /^vm-assets-v\d+$/;
+var ISOLATION_QUERY = 'sebook-coi';
 
 // Match same-origin VM asset paths exactly so unrelated requests (HTML, CSS,
 // page-specific JSON) keep going through the COI rewrite path below.
@@ -32,7 +34,7 @@ self.addEventListener('activate', function (e) {
   e.waitUntil(
     caches.keys().then(function (keys) {
       return Promise.all(keys.filter(function (k) {
-        return k !== VM_CACHE;
+        return k !== VM_CACHE && OWNED_VM_CACHE_RE.test(k);
       }).map(function (k) { return caches.delete(k); }));
     }).then(function () { return self.clients.claim(); })
   );
@@ -133,7 +135,13 @@ self.addEventListener('fetch', function (e) {
     return;
   }
 
-  // Everything else: re-fetch with COOP/COEP injected. Headers are required
+  // Only navigation requests explicitly marked by the tutorial bootstrap need
+  // isolation headers. The worker has root scope because isolated tutorial
+  // pages and generated workspaces live at different paths, but ordinary site
+  // pages must retain their normal opener/embed behavior.
+  if (e.request.mode !== 'navigate' || url.searchParams.get(ISOLATION_QUERY) !== '1') return;
+
+  // Re-fetch the marked document with COOP/COEP injected. Headers are required
   // for crossOriginIsolated, which SharedArrayBuffer + Atomics.wait depend on.
   e.respondWith(
     fetch(e.request).then(function (response) {

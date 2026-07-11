@@ -343,13 +343,14 @@ info_nav_title: "Browser storage"
     <code>tutorial-editor-split-&lt;id&gt;</code> &mdash; split-pane editor on/off &middot;
     <code>tutorial-cooldown-&lt;id&gt;</code> &mdash; per-step "Test My Work" cooldown end times &middot;
     <code>tutorial-time-practice-&lt;id&gt;</code> &mdash; timed-practice deadlines and lockout windows &middot;
-    <code>tutorial-popout-state-&lt;path&gt;</code> &mdash; detached editor crash-recovery snapshot &middot;
+    <code>tutorial-popout-state-&lt;path&gt;-&lt;session&gt;</code> &mdash; tab-scoped detached editor crash-recovery snapshot &middot;
     <code>tutorial-debug-bps-&lt;id&gt;</code> &mdash; debugger breakpoints &middot;
+    <code>tutorial-debug-excbps-&lt;id&gt;</code> &mdash; debugger exception breakpoints &middot;
     <code>tutorial-debug-watchpoint-remove-choice-&lt;id&gt;</code> &mdash; remembered watchpoint removal choice &middot;
     <code>tutorial-debug-section-&lt;id&gt;-&lt;name&gt;</code> &amp;
     <code>tutorial-debug-subsection-&lt;id&gt;-&lt;name&gt;</code> &mdash; debugger panel collapse/expand state.
   </p>
-  <button class="cookies-btn danger" data-clear-category="tutorial-static" data-clear-prefixes="tutorial-progress-,tutorial-editor-split-,tutorial-cooldown-,tutorial-time-practice-,tutorial-popout-state-,tutorial-debug-bps-,tutorial-debug-watchpoint-remove-choice-,tutorial-debug-section-,tutorial-debug-subsection-" type="button">
+  <button class="cookies-btn danger" data-clear-category="tutorial-static" data-clear-prefixes="tutorial-progress-,tutorial-editor-split-,tutorial-cooldown-,tutorial-time-practice-,tutorial-popout-state-,tutorial-debug-bps-,tutorial-debug-excbps-,tutorial-debug-watchpoint-remove-choice-,tutorial-debug-section-,tutorial-debug-subsection-" type="button">
     <i class="fa fa-trash" aria-hidden="true"></i> Delete all tutorial state
   </button>
 
@@ -475,7 +476,10 @@ info_nav_title: "Browser storage"
     <li>
       <strong><code>sessionStorage</code></strong> &mdash; not used persistently. A single one-time migration step
       reads and clears a legacy <code>prefersReducedMotion</code> entry to promote it into
-      <code>localStorage</code>. The generated Python workspace may briefly store
+      <code>localStorage</code>. Each tutorial main tab stores a random
+      <code>tutorial-popout-session-&lt;path&gt;</code> identifier so its detached windows
+      can reconnect after that tab reloads without sharing a channel with another tab.
+      The generated Python workspace may briefly store
       <code>archuml-generated-python-payload</code> in the popup tab so the code survives
       the one-time cross-origin-isolation reload needed by the Python debugger. It
       also receives or mirrors that same temporary payload in the popup window name
@@ -488,6 +492,9 @@ info_nav_title: "Browser storage"
       <code>snapshots</code>. These records are per-browser tutorial state used to speed up
       reset and restore flows. <strong>WebSQL</strong> and <strong>File System Access API</strong>
       (<code>showDirectoryPicker</code>, <code>showSaveFilePicker</code>) are not used.
+      <button id="cookies-delete-vm-snapshots" class="cookies-btn danger" type="button">
+        <i class="fa fa-trash" aria-hidden="true"></i> Delete saved VM snapshots
+      </button>
     </li>
     <li>
       <strong>Cache API</strong> (<code>caches.open</code>) &mdash; the service worker (see below)
@@ -497,8 +504,11 @@ info_nav_title: "Browser storage"
       (<code>bzImage</code>), the root filesystem (<code>rootfs.cpio.gz</code>), and the
       v86 engine + BIOS files (<code>v86.wasm</code>, <code>libv86.js</code>,
       <code>seabios.bin</code>, <code>vgabios.bin</code>). They are byte-for-byte copies of
-      what the server already ships &mdash; no per-user data. Clearing site data in
-      your browser settings removes them; the next tutorial load will refetch.
+      what the server already ships &mdash; no per-user data. The next tutorial load
+      will refetch them after deletion.
+      <button id="cookies-delete-vm-cache" class="cookies-btn danger" type="button">
+        <i class="fa fa-trash" aria-hidden="true"></i> Delete cached VM assets
+      </button>
     </li>
     <li>
       <strong>Service worker</strong> &mdash; tutorials that need cross-origin isolation
@@ -510,12 +520,15 @@ info_nav_title: "Browser storage"
       <code>SharedArrayBuffer</code> works on GitHub Pages, and (b) caches the VM
       assets described above so repeat visits skip the multi-MB downloads.
       It does not store any per-user data.
+      <button id="cookies-unregister-tutorial-worker" class="cookies-btn danger" type="button">
+        <i class="fa fa-trash" aria-hidden="true"></i> Unregister tutorial service worker
+      </button>
     </li>
     <li>
       <strong><code>BroadcastChannel</code></strong> &mdash; used as in-memory messaging between
       the main tutorial window or generated Python workspace and detached editor /
       instructions / debugger / output / UML pop-out windows (channel names
-      <code>ttsync-&lt;path&gt;</code>, <code>uml-sync-&lt;path&gt;</code>).
+      <code>ttsync-&lt;path&gt;-&lt;session&gt;</code>, <code>uml-sync-&lt;path&gt;</code>).
       Messages live only while at least one of the windows is open and are not written to disk.
       The browser-based Linux VM (v86) also uses a <code>v86-inbrowser-&lt;n&gt;</code> channel for
       its virtual networking; same lifetime, no persistence.
@@ -573,6 +586,61 @@ info_nav_title: "Browser storage"
   }
   function deleteLS(key) {
     try { localStorage.removeItem(key); } catch (e) { /* ignore */ }
+  }
+
+  // -------- IndexedDB, Cache API, and Service Worker helpers --------
+  function deleteDatabase(name) {
+    if (!window.indexedDB) return Promise.resolve(false);
+    return new Promise(function (resolve, reject) {
+      var settled = false;
+      var request;
+      try { request = window.indexedDB.deleteDatabase(name); }
+      catch (error) { reject(error); return; }
+
+      function settle(callback, value) {
+        if (settled) return;
+        settled = true;
+        callback(value);
+      }
+      request.onsuccess = function () { settle(resolve, true); };
+      request.onerror = function () { settle(reject, request.error || new Error('IndexedDB deletion failed.')); };
+      request.onblocked = function () {
+        settle(reject, new Error('Close other tutorial tabs before deleting saved VM snapshots.'));
+      };
+    });
+  }
+
+  function deleteVmAssetCache() {
+    if (!window.caches) return Promise.resolve(false);
+    return window.caches.delete('vm-assets-v2');
+  }
+
+  function unregisterTutorialServiceWorker() {
+    if (!('serviceWorker' in navigator)) return Promise.resolve(false);
+    return navigator.serviceWorker.getRegistrations().then(function (registrations) {
+      var owned = registrations.filter(function (registration) {
+        var worker = registration.active || registration.waiting || registration.installing;
+        if (!worker || !worker.scriptURL) return false;
+        try { return new URL(worker.scriptURL).pathname === '{{ "/coi-serviceworker.js" | relative_url }}'; }
+        catch (error) { return false; }
+      });
+      return Promise.all(owned.map(function (registration) {
+        return registration.unregister();
+      })).then(function (results) {
+        return results.some(Boolean);
+      });
+    });
+  }
+
+  function runStorageDeletion(button, action, successMessage) {
+    button.disabled = true;
+    return action().then(function () {
+      toast(successMessage);
+    }).catch(function (error) {
+      toast(error && error.message ? error.message : 'Could not delete that browser storage.');
+    }).then(function () {
+      button.disabled = false;
+    });
   }
 
   // -------- Toast --------
@@ -647,6 +715,7 @@ info_nav_title: "Browser storage"
     { prefix: 'tutorial-time-practice-',                  label: 'Timed-practice deadlines and lockout windows' },
     { prefix: 'tutorial-popout-state-',                   label: 'Detached editor crash-recovery snapshot' },
     { prefix: 'tutorial-debug-bps-',                      label: 'Debugger breakpoints' },
+    { prefix: 'tutorial-debug-excbps-',                   label: 'Debugger exception breakpoints' },
     { prefix: 'tutorial-debug-watchpoint-remove-choice-', label: 'Watchpoint removal preference' },
     { prefix: 'tutorial-debug-section-',                  label: 'Debugger section collapse/expand state' },
     { prefix: 'tutorial-debug-subsection-',               label: 'Debugger subsection collapse/expand state' }
@@ -798,13 +867,31 @@ info_nav_title: "Browser storage"
     toast('Refreshed');
   });
 
+  document.getElementById('cookies-delete-vm-snapshots').addEventListener('click', function () {
+    if (!confirm('Delete all saved tutorial VM reset snapshots? They will be recreated when needed.')) return;
+    runStorageDeletion(this, function () {
+      return deleteDatabase('sebook-tutorial-vm-snapshots');
+    }, 'Saved VM snapshots deleted');
+  });
+
+  document.getElementById('cookies-delete-vm-cache').addEventListener('click', function () {
+    runStorageDeletion(this, deleteVmAssetCache, 'Cached VM assets deleted');
+  });
+
+  document.getElementById('cookies-unregister-tutorial-worker').addEventListener('click', function () {
+    runStorageDeletion(this, unregisterTutorialServiceWorker, 'Tutorial service worker unregistered');
+  });
+
   // -------- Delete everything --------
   document.getElementById('cookies-delete-all').addEventListener('click', function () {
+    var deleteAllButton = this;
     if (!confirm(
-      'Delete EVERY cookie and localStorage entry this site has stored in your browser?\n\n' +
+      'Delete EVERY cookie and browser-storage entry this site has stored?\n\n' +
       'This will sign you out of any preferences, lose your tutorial progress, and clear ' +
       'bookmarks/SE Gym data. It cannot be undone.'
     )) return;
+
+    deleteAllButton.disabled = true;
 
     // Cookies: every key we know about, plus a sweep of whatever else is on document.cookie.
     var cookieParts = document.cookie.split(';');
@@ -817,8 +904,20 @@ info_nav_title: "Browser storage"
     try { localStorage.clear(); } catch (e) { /* ignore */ }
     try { sessionStorage.clear(); } catch (e) { /* ignore */ }
 
-    renderAll();
-    toast('All site storage deleted');
+    Promise.allSettled([
+      deleteDatabase('sebook-tutorial-vm-snapshots'),
+      deleteVmAssetCache(),
+      unregisterTutorialServiceWorker()
+    ]).then(function (results) {
+      renderAll();
+      deleteAllButton.disabled = false;
+      var failed = results.filter(function (result) { return result.status === 'rejected'; });
+      if (failed.length) {
+        toast('Most site storage was deleted. Close other tutorial tabs and try again to remove the remaining VM data.');
+      } else {
+        toast('All site storage deleted');
+      }
+    });
   });
 
   // -------- Init --------

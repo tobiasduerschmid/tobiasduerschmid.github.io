@@ -32,7 +32,7 @@ const A11Y_FEATURE = 'react-tutorial';
  *           answers the quiz, and advances to the next step.
  */
 
-const TUTORIAL_URL     = '/SEBook/tools/react-tutorial';
+const TUTORIAL_URL     = '/SEBook/tools/react-tutorial.html';
 const BOOT_TIMEOUT     = 30_000;
 const TEST_RUN_TIMEOUT = 20_000;
 
@@ -47,7 +47,9 @@ async function waitForTutorialReady(page) {
 
 async function saveAndWaitForPreview(page) {
   await page.locator('.tvm-editor-container').click();
-  await page.keyboard.press('Control+s');
+  const saveModifier = await page.evaluate(() =>
+    /Macintosh|Mac OS X|iPhone|iPad|iPod/.test(navigator.userAgent) ? 'Meta' : 'Control');
+  await page.keyboard.press(`${saveModifier}+s`);
   await expect(page.frameLocator('.tvm-preview-frame').locator('body')).toBeVisible({ timeout: 5_000 });
 }
 

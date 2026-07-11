@@ -37,7 +37,7 @@
   <div class="wrap">
     <pre class="out-pre is-hidden" id="outEl"></pre>
     <iframe class="preview-frame is-hidden" id="frameEl" title="Live tutorial preview"
-      sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
+      sandbox="allow-scripts allow-forms"></iframe>
     <div class="overlay" id="overlayEl">Waiting for tutorial&hellip;</div>
   </div>
   </main>
@@ -61,6 +61,10 @@
 
     var kind = new URLSearchParams(location.search).get('kind') || 'output';
     var lastFrameContent = null;
+    var previewReady = false;
+    var expectedPreviewGeneration = null;
+    var activePreviewGeneration = null;
+    var pendingReactPatch = null;
 
     var client = SebookPopoutClient.connect({
       role: 'output',
@@ -72,6 +76,17 @@
 
     setKind(kind);
     document.title = labelForKind(kind) + ' — ' + client.tutorialTitle;
+
+    window.addEventListener('message', function (event) {
+      if (!els.frame || event.source !== els.frame.contentWindow) return;
+      var message = event.data;
+      if (!message || message.type !== 'sebook-react-preview-ready') return;
+      if (expectedPreviewGeneration !== null &&
+          message.generation !== expectedPreviewGeneration) return;
+      activePreviewGeneration = message.generation;
+      previewReady = true;
+      flushReactPatch();
+    });
 
     // ── Header control wiring (button → request main) ────────────────────
     els.run.addEventListener('click', function () { client.post('request-run', { args: els.args.value || '' }); });
@@ -113,6 +128,21 @@
       if (typeof c.streamFilter === 'string') els.stream.value = c.streamFilter;
     }
 
+    function flushReactPatch() {
+      if (!previewReady || !pendingReactPatch || !els.frame.contentWindow) return;
+      if (pendingReactPatch.generation !== activePreviewGeneration) return;
+      var payload = pendingReactPatch;
+      pendingReactPatch = null;
+      try { els.frame.contentWindow.postMessage(payload, '*'); }
+      catch (e) { pendingReactPatch = payload; }
+    }
+
+    function queueReactPatch(payload) {
+      if (!payload) return;
+      pendingReactPatch = payload;
+      flushReactPatch();
+    }
+
     function applySnapshot(snap) {
       if (!snap) return;
       if (typeof snap.darkMode === 'boolean') {
@@ -130,6 +160,14 @@
         var key = (isUrl ? 'src:' : 'srcdoc:') + content;
         if (key !== lastFrameContent) {
           lastFrameContent = key;
+          previewReady = false;
+          activePreviewGeneration = null;
+          expectedPreviewGeneration = typeof snap.previewGeneration === 'number'
+            ? snap.previewGeneration : null;
+          if (!pendingReactPatch ||
+              pendingReactPatch.generation !== expectedPreviewGeneration) {
+            pendingReactPatch = null;
+          }
           if (isUrl) {
             els.frame.removeAttribute('srcdoc');
             els.frame.src = content;
@@ -139,6 +177,10 @@
           }
         }
       } else {
+        previewReady = false;
+        expectedPreviewGeneration = null;
+        activePreviewGeneration = null;
+        pendingReactPatch = null;
         setVisible(els.frame, false);
         setVisible(els.out, true);
         if (kind === 'terminal') els.out.textContent = snap.content || '';
@@ -159,13 +201,7 @@
           applyControlsState(msg.controls);
           break;
         case 'react-patch':
-          // Forward hot-reload payload into our iframe — its srcdoc
-          // registered the same react-hot-reload listener, so this
-          // re-renders without a full srcdoc swap.
-          if (msg.payload && els.frame && els.frame.contentWindow) {
-            try { els.frame.contentWindow.postMessage(msg.payload, '*'); }
-            catch (e) { /* ignore */ }
-          }
+          queueReactPatch(msg.payload);
           break;
       }
     }

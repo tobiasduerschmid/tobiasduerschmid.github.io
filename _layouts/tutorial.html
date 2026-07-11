@@ -326,61 +326,25 @@
         VM-asset cache (state.bin.gz alone is ~50 MB; Cache Storage avoids
         repeat downloads, while validator checks prevent stale snapshots).
   {%- endcomment -%}
-  {% if tutorial_uses_webcontainer or tutorial_uses_v86 or tutorial_data.debugger %}
-  <!-- Register Cross-Origin Isolation service worker.
-       WebContainers needs it always; the time-travel debugger needs it for
-       SharedArrayBuffer + Atomics.wait (used to block the pyodide worker on
-       step/continue commands). Conditional injection keeps non-debugger
-       pyodide tutorials clean of the COEP header (which can break embedded
-       third-party iframes). -->
+  {% assign tutorial_requires_coi = false %}
+  {% if tutorial_uses_webcontainer or tutorial_data.debugger %}
+    {% assign tutorial_requires_coi = true %}
+  {% endif %}
+  {% if tutorial_requires_coi or tutorial_uses_v86 %}
+  <!-- Register the shared tutorial worker. WebContainers and the debugger
+       opt their document navigation into COOP/COEP; v86-only tutorials use
+       the same worker solely for its validated VM-asset cache. -->
+  <script src="{{ '/js/coi-serviceworker-client.js' | relative_url }}"></script>
   <script>
     (function () {
-      if (!('serviceWorker' in navigator)) return;
-      // Always force an update check — this is what gets stale SWs replaced
-      // when we ship a fix. Without it, browsers can serve a 24h-cached SW.
-      // Once a new SW activates, `controllerchange` fires; we reload so the
-      // page picks up the new headers immediately.
-      var reloadedForUpdate = false;
-      navigator.serviceWorker.addEventListener('controllerchange', function () {
-        if (reloadedForUpdate) return;
-        reloadedForUpdate = true;
-        window.location.reload();
+      window.SEBookCoiServiceWorker.ensure({
+        workerUrl: '{{ "/coi-serviceworker.js" | relative_url }}',
+        requiresIsolation: {% if tutorial_requires_coi %}true{% else %}false{% endif %},
+        needsVmCache: {% if tutorial_uses_v86 %}true{% else %}false{% endif %},
+        onFailure: function (error) {
+          console.error('Could not prepare the tutorial service worker:', error);
+        }
       });
-
-      if (window.crossOriginIsolated) {
-        // Already isolated — still trigger an update check in the background
-        // so any future SW patches roll out without manual cache clearing.
-        navigator.serviceWorker.getRegistration().then(function (reg) {
-          if (reg) reg.update();
-        });
-        return;
-      }
-      // If a SW is already controlling this page but `crossOriginIsolated`
-      // is still false, reloading won't help (the headers are already being
-      // applied as much as they're going to be). Reloading anyway would
-      // create an infinite refresh loop.
-      if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.getRegistration().then(function (reg) {
-          if (reg) reg.update();
-        });
-        return;
-      }
-      navigator.serviceWorker.register('{{ "/coi-serviceworker.js" | relative_url }}')
-        .then(function (reg) {
-          reg.update();   // force a fresh fetch of the SW source
-          function reload() { window.location.reload(); }
-          if (reg.installing) {
-            reg.installing.addEventListener('statechange', function () {
-              if (this.state === 'installed') reload();
-            });
-          } else if (reg.waiting) {
-            reload();
-          } else if (reg.active) {
-            // Registered but no controller — fresh load. Reload once to put
-            // the SW in control of this client.
-            reload();
-          }
-        });
     })();
   </script>
   {% endif %}

@@ -104,6 +104,10 @@
   var V86_VISIBLE_COMMAND_TIMEOUT_MS = 240000;
   var HASKELL_BOOT_TIMEOUT_MS = 30000;
   var HASKELL_EXECUTION_TIMEOUT_MS = 30000;
+  var REACT_PREVIEW_READY = 'sebook-react-preview-ready';
+  var REACT_ASSERTION_REQUEST = 'sebook-react-assertion-request';
+  var REACT_ASSERTION_RESULT = 'sebook-react-assertion-result';
+  var REACT_ASSERTION_TIMEOUT_MS = 15000;
 
   function hashString(s) {
     var h = 2166136261;
@@ -272,7 +276,10 @@
     this._silentRunning = false;      // true while a silent cmd is in-flight
     this._silentListeners = [];       // in-flight _runSilent listener registrations
     this._resetInProgress = false;    // guard against concurrent resetStep() calls
-    this._stepSetupPromise = null;    // active first-visit setup_commands chain
+    // Resolves when the active step's files, setup commands, and derived
+    // visible files are ready. Solution application and callers of loadStep()
+    // use this as the single step-readiness barrier.
+    this._stepSetupPromise = null;
     this._visFilterMarker = null;     // string to suppress from xterm output
     this._visFilterBuf = '';       // partial-match buffer for _visFilterMarker
     this._rpcPending = {};            // virtio-console RPC id -> callbacks
@@ -345,6 +352,8 @@
     this._testCooldownTimer = null;
     this._testRunInFlight = false;
     this._silentTestRun = false;
+    this._testRunSequence = 0;
+    this._activeTestRun = null;
     if (this._testCooldownSeconds > 0) {
       this._testCooldownStorageKey = 'tutorial-cooldown-' + this.tutorialId;
     }
@@ -477,6 +486,12 @@
     this._previewFrame = null;
     this._previewTestBtn = null;
     this._reactRebuildTimer = null;
+    this._reactPreviewGeneration = 0;
+    this._reactPreviewReady = false;
+    this._pendingReactPatch = null;
+    this._reactPreviewReadyWaiters = {};
+    this._reactPreviewMessageHandler = null;
+    this._reactAssertionRequestId = 0;
 
     // Browser JS runner state
     this._jsRunnerFrame = null;
@@ -976,6 +991,14 @@
     }
     this.editorModels = {};
     if (this.term) { this.term.dispose(); this.term = null; }
+    if (this._reactPreviewMessageHandler) {
+      window.removeEventListener('message', this._reactPreviewMessageHandler);
+      this._reactPreviewMessageHandler = null;
+    }
+    Object.keys(this._reactPreviewReadyWaiters).forEach(function (generation) {
+      clearTimeout(this._reactPreviewReadyWaiters[generation].timeoutId);
+    }, this);
+    this._reactPreviewReadyWaiters = {};
   };
 
   // ---------------------------------------------------------------------------
@@ -1099,7 +1122,7 @@
         '</div></div>' +
         '<div class="tvm-preview-test-panel"></div>' +
         '<div class="tvm-preview-container">' +
-        '<iframe class="tvm-preview-frame" title="Live preview" aria-label="Live preview" data-no-tooltip="true" sandbox="allow-scripts allow-same-origin"></iframe>' +
+        '<iframe class="tvm-preview-frame" title="Live preview" aria-label="Live preview" data-no-tooltip="true" sandbox="allow-scripts"></iframe>' +
         '</div></div>' +
         '</div>';
     } else if (this.config.usePreview) {
@@ -1113,7 +1136,7 @@
         '</div></div>' +
         '<div class="tvm-preview-test-panel" style="display:none"></div>' +
         '<div class="tvm-preview-container">' +
-        '<iframe class="tvm-preview-frame" title="Live preview" aria-label="Live preview" data-no-tooltip="true" sandbox="allow-scripts allow-same-origin"></iframe>' +
+        '<iframe class="tvm-preview-frame" title="Live preview" aria-label="Live preview" data-no-tooltip="true" sandbox="allow-scripts"></iframe>' +
         '</div></div>';
     } else if (this._umlPositionRight && this._umlDiagramEnabled && !this._outputPositionBottomLeft) {
       // Right-positioned UML, default Output placement: output + UML share a
@@ -1854,6 +1877,13 @@
       }
       if (this._previewFrame) {
         this._previewFrame.setAttribute('data-no-tooltip', 'true');
+        this._reactPreviewMessageHandler = function (event) {
+          if (event.source !== self._previewFrame.contentWindow) return;
+          var message = event.data;
+          if (!message || message.type !== REACT_PREVIEW_READY) return;
+          self._markReactPreviewReady(message.generation);
+        };
+        window.addEventListener('message', this._reactPreviewMessageHandler);
       }
       this._previewTestBtn = this.root.querySelector('.tvm-preview-test-btn');
       var refreshBtn = this.root.querySelector('.tvm-refresh-btn');
@@ -4048,15 +4078,7 @@
         if (msg.type === 'loading') { self._showLoading(msg.message); return; }
         if (msg.type === 'ready') {
           self.booted = true;
-          var setupCmds = self.setupCommands;
-          if (setupCmds && setupCmds.length > 0) {
-            self._postWorker(
-              { type: 'runCode', code: setupCmds.join('\n'), silent: true },
-              function () { resolve(); }
-            );
-          } else {
-            resolve();
-          }
+          resolve();
           return;
         }
         if (msg.type === 'stdout') { self._appendOutput(msg.text, 'stdout'); return; }
@@ -4276,7 +4298,7 @@
     if (container) container.scrollTop = container.scrollHeight;
   };
 
-  /** Post a message to the Pyodide worker; optional callback on response. */
+  /** Post a message to the active backend worker; optional callback on response. */
   TutorialCode.prototype._postWorker = function (msg, callback) {
     if (!this._worker) return;
     var id = ++this._workerMsgId;
@@ -4286,7 +4308,48 @@
     return id;
   };
 
-  /** Append text to Python output panel. type: 'stdout' | 'stderr' | 'info' */
+  /**
+   * Run the current step's worker-backed setup as an awaited command.
+   * Worker setup is part of the step-readiness contract: a non-zero exit
+   * status rejects loadStep() instead of silently exposing a half-ready step.
+   */
+  TutorialCode.prototype._runStepWorkerSetupCommands = function (step) {
+    var commands = step && step.setup_commands;
+    if (!commands || commands.length === 0) return Promise.resolve();
+
+    var message;
+    if (this.config.backend === 'pyodide' || this.config.backend === 'java') {
+      message = { type: 'runCode', code: commands.join('\n'), silent: true };
+    } else if (this.config.backend === 'prolog') {
+      message = { type: 'runProlog', code: commands.join('\n'), silent: true };
+    } else if (this.config.backend === 'sql') {
+      message = { type: 'runSQL', sql: commands.join('\n'), silent: true };
+    } else if (this.config.backend === 'haskell') {
+      return Promise.reject(new Error(
+        'The Haskell backend does not support setup_commands; provide step files instead.'
+      ));
+    } else {
+      return Promise.resolve();
+    }
+
+    var self = this;
+    return new Promise(function (resolve, reject) {
+      if (!self._worker) {
+        reject(new Error('Cannot prepare step: ' + self.config.backend + ' worker is not ready'));
+        return;
+      }
+      self._postWorker(message, function (response) {
+        if (response && response.exitCode === 0) {
+          resolve();
+          return;
+        }
+        var detail = response && (response.error || response.message);
+        reject(new Error('Step setup failed' + (detail ? ': ' + detail : '')));
+      });
+    });
+  };
+
+  /** Append text to the output panel. type: 'stdout' | 'stderr' | 'info' */
   TutorialCode.prototype._appendOutput = function (text, type) {
     if (!this.outputPre) return;
     var wrapper = document.createElement('span');
@@ -5430,22 +5493,58 @@
       '<\/script></body></html>';
   };
 
-  TutorialCode.prototype._rebuildReactPreview = function (onReady) {
+  TutorialCode.prototype._markReactPreviewReady = function (generation) {
+    if (generation !== this._reactPreviewGeneration) return;
+    this._reactPreviewReady = true;
+    this._flushPendingReactPatch();
+
+    var waiter = this._reactPreviewReadyWaiters[generation];
+    if (!waiter) return;
+    clearTimeout(waiter.timeoutId);
+    delete this._reactPreviewReadyWaiters[generation];
+    if (!waiter.fired) {
+      waiter.fired = true;
+      setTimeout(waiter.callback, 700);
+    }
+  };
+
+  TutorialCode.prototype._flushPendingReactPatch = function () {
+    var payload = this._pendingReactPatch;
+    if (!this._reactPreviewReady || !payload) return;
+    if (payload.generation !== this._reactPreviewGeneration) {
+      this._pendingReactPatch = null;
+      return;
+    }
+
+    this._pendingReactPatch = null;
+    try {
+      this._previewFrame.contentWindow.postMessage(payload, '*');
+    } catch (error) {
+      this._reactPreviewReady = false;
+      this._rebuildReactPreview();
+    }
+  };
+
+  TutorialCode.prototype._rebuildReactPreview = function (onReady, stepOverride) {
     if (!this._previewFrame) return;
     var self = this;
-    var step = this.steps[this.currentStep >= 0 ? this.currentStep : 0];
-    var srcdoc = this._buildReactSrcdoc(step);
+    var generation = ++this._reactPreviewGeneration;
+    var step = stepOverride || this.steps[this.currentStep >= 0 ? this.currentStep : 0];
+    this._reactPreviewReady = false;
+    this._pendingReactPatch = null;
+
     if (onReady) {
-      var fired = false;
-      var safetyTimeout = setTimeout(function () {
-        if (!fired) { fired = true; onReady(); }
+      var waiter = { callback: onReady, fired: false, timeoutId: null };
+      waiter.timeoutId = setTimeout(function () {
+        if (self._reactPreviewReadyWaiters[generation] !== waiter) return;
+        delete self._reactPreviewReadyWaiters[generation];
+        waiter.fired = true;
+        onReady();
       }, 2000);
-      this._previewFrame.onload = function () {
-        clearTimeout(safetyTimeout);
-        if (!fired) { fired = true; setTimeout(onReady, 700); }
-      };
+      this._reactPreviewReadyWaiters[generation] = waiter;
     }
-    this._previewFrame.srcdoc = srcdoc;
+
+    this._previewFrame.srcdoc = this._buildReactSrcdoc(step, generation);
   };
 
   TutorialCode.prototype._getReactPreviewFileOrder = function (step) {
@@ -5485,16 +5584,9 @@
       '[data-bs-theme="dark"] .btn-outline-secondary.disabled { color: #94a3b8; background-color: transparent; border-color: #64748b; }\n';
   };
 
-  /**
-   * Hot-patch the live preview via postMessage instead of replacing srcdoc.
-   * Falls back to a full rebuild if the frame isn't ready (Babel not loaded yet).
-   */
+  /** Hot-patch the live preview without reaching into its isolated document. */
   TutorialCode.prototype._patchReactPreview = function () {
     if (!this._previewFrame) return;
-    // Check if Babel is available in the frame — if not, fall back to full rebuild
-    var fw;
-    try { fw = this._previewFrame.contentWindow; } catch (e) { fw = null; }
-    if (!fw || !fw.Babel) { return this._rebuildReactPreview(); }
 
     var self = this;
     var step = this.steps[this.currentStep >= 0 ? this.currentStep : 0];
@@ -5523,8 +5615,15 @@
     var css = this._reactPreviewBaseCss(bodyBg, bodyColor) +
       customStyles;
 
-    var payload = { type: 'react-hot-reload', files: files, css: css, appAlias: appAlias };
-    fw.postMessage(payload, '*');
+    var payload = {
+      type: 'react-hot-reload',
+      generation: this._reactPreviewGeneration,
+      files: files,
+      css: css,
+      appAlias: appAlias,
+    };
+    this._pendingReactPatch = payload;
+    this._flushPendingReactPatch();
     // If a preview popout is open, forward the patch over BroadcastChannel
     // so the popup's iframe re-renders too — same hot-reload, near-instant.
     if (this._popoutManager && this._popoutManager.isDetached('output')) {
@@ -5532,9 +5631,38 @@
     }
   };
 
-  TutorialCode.prototype._buildReactSrcdoc = function (step) {
+  TutorialCode.prototype._reactAssertionBrokerScript = function () {
+    var requestType = JSON.stringify(REACT_ASSERTION_REQUEST);
+    var resultType = JSON.stringify(REACT_ASSERTION_RESULT);
+    return '(function(){\n' +
+      '  var hostWindow=parent;\n' +
+      '  var AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;\n' +
+      '  var frame=Object.freeze({contentDocument:document,contentWindow:window});\n' +
+      '  function assertResult(condition,message){\n' +
+      '    if(!condition)throw new Error(message||"Assertion failed");\n' +
+      '  }\n' +
+      '  function reply(payload){hostWindow.postMessage(payload,"*");}\n' +
+      '  window.addEventListener("message",function(event){\n' +
+      '    var request=event.data;\n' +
+      '    if(event.source!==hostWindow||!request||request.type!==' + requestType + ')return;\n' +
+      '    if((typeof request.id!=="string"&&typeof request.id!=="number")||typeof request.command!=="string")return;\n' +
+      '    Promise.resolve().then(function(){\n' +
+      '      var runAssertion=new AsyncFunction("frame","code","assert","files",request.command);\n' +
+      '      return runAssertion(frame,request.code||"",assertResult,request.files||{});\n' +
+      '    }).then(function(){\n' +
+      '      reply({type:' + resultType + ',id:request.id,passed:true});\n' +
+      '    },function(error){\n' +
+      '      var message=String(error&&error.message||error||"Assertion failed").slice(0,2000);\n' +
+      '      reply({type:' + resultType + ',id:request.id,passed:false,error:message});\n' +
+      '    });\n' +
+      '  });\n' +
+      '})();';
+  };
+
+  TutorialCode.prototype._buildReactSrcdoc = function (step, previewGeneration) {
     var self = this;
     var fileOrder = this._getReactPreviewFileOrder(step);
+    var readyMessageType = JSON.stringify(REACT_PREVIEW_READY);
 
     // Give the App component a step-unique name so it never collides across
     // steps when Babel compiles all <script type="text/babel"> tags into the
@@ -5600,21 +5728,23 @@
       '<script>\n' +
       '/* Hot-reload: cache createRoot + listen for file patches from the tutorial host */\n' +
       '(function(){\n' +
+      '  var previewGeneration=' + Number(previewGeneration || 0) + ';\n' +
+      '  var pendingPatch=null;\n' +
+      '  var initialScriptsComplete=false;\n' +
+      '  var settleScheduled=false;\n' +
       '  if(window.ReactDOM&&typeof ReactDOM.createRoot==="function"){\n' +
       '    var _oCR=ReactDOM.createRoot.bind(ReactDOM);\n' +
       '    ReactDOM.createRoot=function(el){if(!window.__rr)window.__rr=_oCR(el);return window.__rr;};\n' +
       '  }\n' +
-      '  window.addEventListener("message",function(e){\n' +
-      '    if(!e.data||e.data.type!=="react-hot-reload")return;\n' +
-      '    if(!window.Babel)return;\n' +
+      '  function applyPatch(payload){\n' +
       '    var s=document.getElementById("__user-styles__");\n' +
-      '    if(s&&e.data.css!==undefined)s.textContent=e.data.css;\n' +
-      '    var files=e.data.files||[];\n' +
-      '    var alias=e.data.appAlias;\n' +
+      '    if(s&&payload.css!==undefined)s.textContent=payload.css;\n' +
+      '    var files=payload.files||[];\n' +
+      '    var alias=payload.appAlias;\n' +
       '    var rootEl=document.getElementById("root");\n' +
       '    try{\n' +
       '      for(var i=0;i<files.length;i++){\n' +
-      '        var t=Babel.transform(files[i],{presets:["react"],filename:"hot.jsx"}).code;\n' +
+      '        var t=Babel.transform(files[i],{presets:[["react",{runtime:"classic"}]],filename:"hot.jsx"}).code;\n' +
       '        (0,eval)(t);\n' +
       '      }\n' +
       '      if(window.__rr&&alias&&window[alias]){\n' +
@@ -5626,16 +5756,45 @@
       '        \'#c0392b;padding:16px;margin:16px;font-family:monospace;font-size:13px;\'+\n' +
       '        \'border-radius:4px;white-space:pre-wrap"><strong>Error:</strong><br>\'+m+\'</div>\';\n' +
       '    }\n' +
+      '  }\n' +
+      '  function flushPendingPatch(){\n' +
+      '    if(!initialScriptsComplete||!window.Babel||!pendingPatch)return;\n' +
+      '    var payload=pendingPatch;\n' +
+      '    pendingPatch=null;\n' +
+      '    applyPatch(payload);\n' +
+      '  }\n' +
+      '  function markInitialScriptsComplete(){\n' +
+      '    if(initialScriptsComplete||settleScheduled)return;\n' +
+      '    settleScheduled=true;\n' +
+      '    var settle=function(){\n' +
+      '      initialScriptsComplete=true;\n' +
+      '      parent.postMessage({type:' + readyMessageType + ',generation:previewGeneration},"*");\n' +
+      '      flushPendingPatch();\n' +
+      '    };\n' +
+      '    if(typeof requestAnimationFrame==="function"){\n' +
+      '      requestAnimationFrame(function(){requestAnimationFrame(settle);});\n' +
+      '    }else{setTimeout(settle,0);}\n' +
+      '  }\n' +
+      '  window.addEventListener("message",function(e){\n' +
+      '    if(e.source!==parent||!e.data||e.data.type!=="react-hot-reload")return;\n' +
+      '    if(e.data.generation!==previewGeneration)return;\n' +
+      '    pendingPatch=e.data;\n' +
+      '    flushPendingPatch();\n' +
       '  });\n' +
+      '  window.__sebookReactPreviewBabelReady=flushPendingPatch;\n' +
+      '  window.__sebookReactPreviewInitialScriptsComplete=markInitialScriptsComplete;\n' +
       '})();\n' +
       '<\/script>\n' +
-      '<script src="https://unpkg.com/@babel/standalone/babel.min.js"><\/script>\n' +
+      '<script>\n' + this._reactAssertionBrokerScript() + '\n<\/script>\n' +
+      '<script src="https://unpkg.com/@babel/standalone/babel.min.js" onload="window.__sebookReactPreviewBabelReady&&window.__sebookReactPreviewBabelReady()"><\/script>\n' +
       '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">\n' +
       '<script src="https://cdn.jsdelivr.net/npm/react-bootstrap@2.10.7/dist/react-bootstrap.min.js"><\/script>\n' +
       '<style id="__user-styles__">\n' +
       this._reactPreviewBaseCss(bodyBg, bodyColor) +
       customStyles + '\n</style>\n</head>\n<body>\n<div id="root"></div>\n' +
-      scripts + '\n</body>\n</html>';
+      scripts + '\n' +
+      '<script type="text/babel">window.__sebookReactPreviewInitialScriptsComplete();<\/script>\n' +
+      '</body>\n</html>';
   };
 
   // ---------------------------------------------------------------------------
@@ -6557,6 +6716,7 @@
     return {
       kind: kind,
       content: content,
+      previewGeneration: kind === 'preview' ? this._reactPreviewGeneration : null,
       darkMode: document.documentElement.classList.contains('dark-mode'),
     };
   };
@@ -6585,6 +6745,7 @@
           self._popoutManager.broadcastOutputUpdate({
             kind: 'preview',
             content: previewFrame.srcdoc || previewFrame.src || '',
+            previewGeneration: self._reactPreviewGeneration,
           });
         }
       };
@@ -8889,7 +9050,7 @@
     }
     var solution = step.solution;
 
-    var p = this._stepSetupPromise ? this._stepSetupPromise.catch(function () {}) : Promise.resolve();
+    var p = this._stepSetupPromise || Promise.resolve();
 
     // 1. Pyodide: clear Python import cache before writing files. This must be
     // awaited so a following Run/Test click cannot collide with the worker's
@@ -8916,19 +9077,28 @@
     }
     // 2. Apply file overrides — reuse existing openFile + _syncFileToBackend
     if (solution.files) {
-      self._suppressAutoSave = true;
-      solution.files.forEach(function (f) {
-        self.openFile(f.path, f.content, f.language, f);
-        p = p.then(function () { return self._syncFileToBackend(f.path); });
+      p = p.then(function () {
+        self._suppressAutoSave = true;
+        var syncs = [];
+        try {
+          solution.files.forEach(function (f) {
+            self.openFile(f.path, f.content, f.language, f);
+            syncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
+          });
+        } finally {
+          self._suppressAutoSave = false;
+        }
+
+        // Activate the step's open_file (the main file the student works on),
+        // not the first solution file (which may be a dependency).
+        var target = step.open_file ||
+          (solution.files.length > 0 ? solution.files[solution.files.length - 1].path : null);
+        if (target) {
+          self._setActiveFile(target);
+          self._renderTabs();
+        }
+        return Promise.all(syncs);
       });
-      self._suppressAutoSave = false;
-      // Activate the step's open_file (the main file the student works on),
-      // not the first solution file (which may be a dependency).
-      var target = step.open_file || (solution.files.length > 0 ? solution.files[solution.files.length - 1].path : null);
-      if (target) {
-        self._setActiveFile(target);
-        self._renderTabs();
-      }
     }
 
     // 3. Run solution commands (backend-specific dispatch)
@@ -9045,7 +9215,6 @@
       }
     } catch (e) { /* ignore */ }
     var self = this;
-    this._stepSetupPromise = null;
     for (var name in this.editorModels) {
       if (this.editorModels.hasOwnProperty(name)) {
         var current = this.editorModels[name].model.getValue();
@@ -9927,12 +10096,27 @@
       return Promise.resolve();
     }
     var requestedBackend = this._stepRequestedBackend(step);
+    var previousStepReady = this._stepSetupPromise
+      ? this._stepSetupPromise.catch(function () {})
+      : null;
     var load = function () {
-      return Promise.resolve(self._loadStepContent(index)).then(function () {
+      // Preserve the runtime's long-standing synchronous UI switch when no
+      // earlier step is still preparing. Only defer the switch when there is
+      // an actual readiness barrier to cross.
+      var contentReady = previousStepReady
+        ? previousStepReady.then(function () { return self._loadStepContent(index); })
+        : self._loadStepContent(index);
+      return Promise.resolve(contentReady).then(function () {
         self._prewarmNextBackend(index);
       });
     };
-    if (!this._mixedBackendMode) return load();
+    if (!this._mixedBackendMode) {
+      return load().catch(function (err) {
+        self._showError('Failed to prepare step: ' + (err && err.message || err));
+        console.error('TutorialCode step preparation error:', err);
+        throw err;
+      });
+    }
 
     if (!this._backendReady[requestedBackend]) {
       this._backgroundBackendLoadingSuppressed = false;
@@ -9943,16 +10127,16 @@
     }).then(function () {
       self._hideLoading();
     }, function (err) {
-      self._showError('Failed to start ' + backendLabel(requestedBackend) + ' runtime: ' + (err && err.message || err));
-      console.error('TutorialCode backend switch error:', err);
+      self._showError('Failed to prepare ' + backendLabel(requestedBackend) + ' step: ' + (err && err.message || err));
+      console.error('TutorialCode step preparation error:', err);
       throw err;
     });
   };
 
   TutorialCode.prototype._loadStepContent = function (index) {
-    if (index < 0 || index >= this.steps.length) return;
+    if (index < 0 || index >= this.steps.length) return Promise.resolve();
     // Block navigation to locked steps (unless instructor mode)
-    if (!this.instructorMode && !this._stepsUnlocked.has(index)) return;
+    if (!this.instructorMode && !this._stepsUnlocked.has(index)) return Promise.resolve();
 
     if (window.TutorChat) { window.TutorChat.onStepChange(); }
     // Time-travel debugger: clear history + close any active debug session.
@@ -10018,6 +10202,7 @@
       } catch (e) { /* ignore */ }
     }
 
+    var stepFileSyncs = [];
     if (step.files) {
       self._suppressAutoSave = true;
       step.files.forEach(function (f) {
@@ -10027,7 +10212,7 @@
             ? override.content
             : f.content;
           self.openFile(f.path, content, f.language, f);
-          self._syncFileToBackend(f.path);
+          stepFileSyncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
           self._originalContent[f.path] = f.content || '';
         } else if (f.reseed) {
           // `reseed: true` opts a provided file out of cross-step carry-over.
@@ -10042,7 +10227,7 @@
           // Reseed files are author-owned, not student-edited, so the autosaved
           // override is intentionally ignored.
           self.openFile(f.path, f.content, f.language, f);
-          self._syncFileToBackend(f.path);
+          stepFileSyncs.push(Promise.resolve(self._syncFileToBackend(f.path)));
           self._originalContent[f.path] = f.content || '';
         }
       });
@@ -10054,10 +10239,14 @@
     // tab popups detect orphaned files via fileList).
     self._broadcastStepState();
 
-    // Keep the shell-side user-command listener in sync with the current step,
-    // independent of firstVisit vs. revisit.
+    // File writes define the first phase of step readiness. Setup commands may
+    // read those files, so every later preparation phase is chained after this
+    // barrier rather than being launched independently.
+    var stepReadyPromise = Promise.all(stepFileSyncs);
     if (!self._isBackgroundSyncPaused()) {
-      self._updateUserCmdListener(step);
+      stepReadyPromise = stepReadyPromise.then(function () {
+        return self._updateUserCmdListener(step);
+      });
     }
 
     var hasSetup = firstVisit && step.setup_commands && step.setup_commands.length > 0;
@@ -10077,17 +10266,16 @@
       // history-insert time because _runSilent appends a "#__SIL_<id>"
       // marker that matches the boot-time HISTIGNORE pattern.
       self._showTerminalLoading('Preparing step\u2026');
-      var p = Promise.resolve();
       if (hasSetup) {
         var setupBatch = tutorialShellBatch(step.setup_commands.map(function (c) { return String(c).trim(); }));
-        p = p.then(function () { return self._runSilent(setupBatch); });
+        stepReadyPromise = stepReadyPromise.then(function () { return self._runSilent(setupBatch); });
       }
       // Cache the clean "entry state" BEFORE post_fileload_setup runs, so the
       // snapshot represents the post-setup_commands baseline (no `bash
       // ../reproduce.sh` baked in). Fast-path resets restore this baseline and
       // re-run reproduce.sh on top \u2014 that's what makes "clear reproduce.sh +
       // Reset" a true full restart and "delete a line + Reset" a real undo.
-      var setupPromise = p.then(function () {
+      stepReadyPromise = stepReadyPromise.then(function () {
         var cachePromise = Promise.resolve();
         if (self._canCacheLiveStepEntrySnapshot(index)) {
           cachePromise = self._saveStepEntrySnapshot(index, { persist: false });
@@ -10098,9 +10286,9 @@
       // is where `bash build-git.sh` replays the just-synced script on top of
       // the freshly-booted VM for the user's view.
       if (hasPostFileload) {
-        setupPromise = setupPromise.then(function () { return self._runPostFileloadSetup(step); });
+        stepReadyPromise = stepReadyPromise.then(function () { return self._runPostFileloadSetup(step); });
       }
-      setupPromise = setupPromise.then(function () {
+      stepReadyPromise = stepReadyPromise.then(function () {
         return self._refreshStepVisibleFiles(step, { includeStepFiles: false });
       }).then(function () {
         return self._runStepDir(step);
@@ -10108,24 +10296,18 @@
         self._hideTerminalLoading();
         self._refreshGitGraph && self._refreshGitGraph();
       });
-      var setupWait = setupPromise.catch(function () {});
-      self._stepSetupPromise = setupWait;
-      setupWait.then(function () {
-        if (self._stepSetupPromise === setupWait) self._stepSetupPromise = null;
-      });
     } else if (firstVisit && step.setup_commands && step.setup_commands.length > 0) {
       visibleFilesRefreshScheduled = true;
-      if (this.config.backend === 'pyodide') {
-        this._postWorker({ type: 'runCode', code: step.setup_commands.join('\n'), silent: true });
-      } else if (this.config.backend === 'prolog') {
-        this._postWorker({ type: 'runProlog', code: step.setup_commands.join('\n'), silent: true });
-      } else if (this.config.backend === 'java') {
-        this._postWorker({ type: 'runCode', code: step.setup_commands.join('\n'), silent: true });
-      }
-      self._refreshStepVisibleFiles(step, { includeStepFiles: false });
+      stepReadyPromise = stepReadyPromise.then(function () {
+        return self._runStepWorkerSetupCommands(step);
+      }).then(function () {
+        return self._refreshStepVisibleFiles(step, { includeStepFiles: false });
+      });
     }
     if (!visibleFilesRefreshScheduled) {
-      self._refreshStepVisibleFiles(step, { includeStepFiles: false });
+      stepReadyPromise = stepReadyPromise.then(function () {
+        return self._refreshStepVisibleFiles(step, { includeStepFiles: false });
+      });
     }
 
     if (this.config.backend === 'v86' && !this._isBackgroundSyncPaused()) {
@@ -10140,7 +10322,9 @@
     if (step.step_dir && !self._isBackgroundSyncPaused() &&
         (this.config.backend === 'v86' || this.config.backend === 'webcontainer') &&
         !(hasSetup || hasPostFileload)) {
-      self._runSilent('[ "$(pwd)" = ' + shellQuote(step.step_dir) + ' ] || cd ' + shellQuote(step.step_dir));
+      stepReadyPromise = stepReadyPromise.then(function () {
+        return self._runStepDir(step);
+      });
     }
 
     // Configure query input for Prolog backend
@@ -10300,10 +10484,24 @@
     // Update URL hash to reflect current step key (if defined)
     this._updateStepHash(index);
 
+    // Publish the full readiness barrier before autosave or any caller can
+    // invoke applySolution(). Autosave persists state only; it must never
+    // erase or shorten this lifecycle barrier.
+    var activeStepReady = stepReadyPromise;
+    this._stepSetupPromise = activeStepReady;
+    var clearStepReady = function () {
+      if (self._stepSetupPromise === activeStepReady) self._stepSetupPromise = null;
+    };
+    activeStepReady.then(clearStepReady, function () {
+      self._hideTerminalLoading();
+      clearStepReady();
+    });
+
     // Auto-save progress when navigating to a new step
     if (this.autoSaveEnabled) this._autoSaveProgress();
 
     this._startTimedPractice(index);
+    return activeStepReady;
   };
 
   // Update the URL hash to the current step's key (or clear it for step 0 without a key)
@@ -10496,6 +10694,9 @@
   };
 
   TutorialCode.prototype._buildTestButtonHTML = function (index) {
+    if (this._testRunInFlight) {
+      return '<button class="tvm-btn tvm-btn-test" disabled data-original-title="Wait for the current test run to finish">\u23f3 Running tests\u2026</button>';
+    }
     var remaining = this._cooldownRemaining(index);
     if (remaining <= 0) {
       return '<button class="tvm-btn tvm-btn-test" data-original-title="Run the tests for this step">\u2713 Test My Work</button>';
@@ -10931,13 +11132,15 @@
     // results return. Without this guard, the second run can replace the
     // pending test buffer/state and produce ghost results in the panel.
     if (this._testRunInFlight) return;
-    var step = this.steps[this.currentStep];
+    var stepIndex = this.currentStep;
+    var step = this.steps[stepIndex];
     if (!step || !this._stepHasTests(step)) return;
     var self = this;
     if (this._mixedBackendMode) {
       var requestedBackend = this._stepRequestedBackend(step);
       if (this.config.backend !== this._effectiveBackend(requestedBackend)) {
         return this._ensureBackendReady(requestedBackend).then(function () {
+          if (self.currentStep !== stepIndex) return;
           return self._runTests(opts);
         });
       }
@@ -10945,27 +11148,40 @@
     var silent = !!(opts && opts.silent);
     // Refuse a non-silent run while cooldown is still active (the disabled
     // button can't be clicked, but a popout could still post 'request-run-tests').
-    if (!silent && this._cooldownEnabled() && this._cooldownRemaining(this.currentStep) > 0) return;
+    if (!silent && this._cooldownEnabled() && this._cooldownRemaining(stepIndex) > 0) return;
+    var run = {
+      id: ++this._testRunSequence,
+      stepIndex: stepIndex,
+      silent: silent,
+      completed: false,
+    };
+    this._activeTestRun = run;
     this._silentTestRun = silent;
     this._testRunInFlight = true;
+    this._refreshTestButton(stepIndex);
     if (this._popoutManager && !silent) this._popoutManager.broadcastTestStarted();
     var backend = this.config.backend;
-    if (backend === 'v86') this._runTestsV86();
-    else if (backend === 'pyodide') this._runTestsPyodide();
-    else if (backend === 'webcontainer') this._runTestsWebContainer();
-    else if (backend === 'react') this._runTestsReact();
-    else if (backend === 'browser') this._runTestsBrowser();
-    else if (backend === 'sql') this._runTestsSQL();
-    else if (backend === 'prolog') this._runTestsProlog();
-    else if (backend === 'java') this._runTestsJava();
-    else if (backend === 'haskell') this._runTestsHaskell();
-    else this._testRunInFlight = false;
+    if (backend === 'v86') this._runTestsV86(run);
+    else if (backend === 'pyodide') this._runTestsPyodide(run);
+    else if (backend === 'webcontainer') this._runTestsWebContainer(run);
+    else if (backend === 'react') this._runTestsReact(run);
+    else if (backend === 'browser') this._runTestsBrowser(run);
+    else if (backend === 'sql') this._runTestsSQL(run);
+    else if (backend === 'prolog') this._runTestsProlog(run);
+    else if (backend === 'java') this._runTestsJava(run);
+    else if (backend === 'haskell') this._runTestsHaskell(run);
+    else {
+      run.completed = true;
+      this._activeTestRun = null;
+      this._testRunInFlight = false;
+      this._silentTestRun = false;
+    }
   };
 
   // v86 test runner — marker-delimited output from the interactive shell.
-  TutorialCode.prototype._runTestsV86 = function () {
+  TutorialCode.prototype._runTestsV86 = function (run) {
     var self = this;
-    var step = this.steps[this.currentStep];
+    var step = this.steps[run.stepIndex];
     var tests = step && step.tests;
     if (!tests || !tests.length) return;
 
@@ -10991,7 +11207,7 @@
     this._muteCount++;
     this._testCallbacks = [
       function () { self._muteCount--; },
-      function () { self._renderTestResults(tests, self._testResults); },
+      function () { self._renderTestResults(tests, self._testResults, run); },
       // Cooldown re-renders the button group; only re-enable when not in cooldown.
       function () {
         if (sureBtn) sureBtn.disabled = false;
@@ -11001,7 +11217,7 @@
     var safetyTimer = setTimeout(function () {
       if (self._testListening) {
         self._testListening = false; self._testBuffer = ''; self._muteCount--;
-        self._renderTestResults(tests, self._testResults);
+        self._renderTestResults(tests, self._testResults, run);
         if (sureBtn) sureBtn.disabled = false;
         if (testBtn && !self._cooldownEnabled()) testBtn.disabled = false;
       }
@@ -11041,9 +11257,9 @@
   };
 
   // SQL — each test.command is a JS snippet with __run_query / assert helpers
-  TutorialCode.prototype._runTestsSQL = function () {
+  TutorialCode.prototype._runTestsSQL = function (run) {
     var self = this;
-    var step = this.steps[this.currentStep];
+    var step = this.steps[run.stepIndex];
     var tests = step && step.tests;
     if (!tests || !tests.length) return;
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
@@ -11052,7 +11268,7 @@
 
     function runNext(i) {
       clearTimeout(testTimeout);
-      if (i >= tests.length) { self._renderTestResults(tests, results); return; }
+      if (i >= tests.length) { self._renderTestResults(tests, results, run); return; }
 
       // 15s timeout for infinite loops within AsyncFunction test execution
       testTimeout = setTimeout(function () {
@@ -11061,7 +11277,7 @@
           self.term.write('\n\r\n\r\x1b[31;1mError: Execution timed out (15s).\x1b[0m\n\r');
           self.term.write('\x1b[33mIf you wrote an infinite loop, your sandbox is permanently gridlocked and you MUST refresh the page to continue!\x1b[0m\n\r');
         }
-        self._renderTestResults(tests, new Array(tests.length).fill(null));
+        self._renderTestResults(tests, new Array(tests.length).fill(null), run);
       }, 15000);
 
       self._postWorker(
@@ -11073,9 +11289,9 @@
   };
 
   // Java — each test.command is run as Java code; exit 0 if no exception
-  TutorialCode.prototype._runTestsJava = function () {
+  TutorialCode.prototype._runTestsJava = function (run) {
     var self = this;
-    var step = this.steps[this.currentStep];
+    var step = this.steps[run.stepIndex];
     var tests = step && step.tests;
     if (!tests || !tests.length) return;
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
@@ -11111,7 +11327,7 @@
 
     function runNext(i) {
       clearTimeout(testTimeout);
-      if (i >= tests.length) { self._renderTestResults(tests, results); return; }
+      if (i >= tests.length) { self._renderTestResults(tests, results, run); return; }
 
       var test = tests[i];
 
@@ -11131,7 +11347,7 @@
 
       testTimeout = setTimeout(function () {
         console.warn('Java test execution timed out.');
-        self._renderTestResults(tests, new Array(tests.length).fill(null));
+        self._renderTestResults(tests, new Array(tests.length).fill(null), run);
       }, 30000);
 
       self._postWorker(
@@ -11145,9 +11361,9 @@
   // Haskell — each test.command is a Boolean expression evaluated after the
   // current module is loaded. The runtime reports success only when the
   // expression evaluates to True; False, compile errors, and exceptions fail.
-  TutorialCode.prototype._runTestsHaskell = function () {
+  TutorialCode.prototype._runTestsHaskell = function (run) {
     var self = this;
-    var step = this.steps[this.currentStep];
+    var step = this.steps[run.stepIndex];
     var tests = step && step.tests;
     if (!tests || !tests.length) return;
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
@@ -11172,7 +11388,7 @@
       clearTimeout(testTimeout);
       if (i >= tests.length) {
         finished = true;
-        self._renderTestResults(tests, results);
+        self._renderTestResults(tests, results, run);
         return;
       }
 
@@ -11181,7 +11397,7 @@
         finished = true;
         if (activeRequestId !== null) delete self._workerCallbacks[activeRequestId];
         console.warn('Haskell test execution timed out.');
-        self._renderTestResults(tests, new Array(tests.length).fill(null));
+        self._renderTestResults(tests, new Array(tests.length).fill(null), run);
         self._restartHaskellExecutor().catch(function () {});
       }, HASKELL_EXECUTION_TIMEOUT_MS);
 
@@ -11200,9 +11416,9 @@
   };
 
   // Prolog — each test.command is a JS snippet with __query / __consult / assert
-  TutorialCode.prototype._runTestsProlog = function () {
+  TutorialCode.prototype._runTestsProlog = function (run) {
     var self = this;
-    var step = this.steps[this.currentStep];
+    var step = this.steps[run.stepIndex];
     var tests = step && step.tests;
     if (!tests || !tests.length) return;
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
@@ -11225,7 +11441,7 @@
     }
 
     function runNext(i) {
-      if (i >= tests.length) { self._renderTestResults(tests, results); return; }
+      if (i >= tests.length) { self._renderTestResults(tests, results, run); return; }
       // Each test gets a fresh consult of the program + async query execution
       self._postWorker(
         { type: 'runTest', program: program, code: tests[i].command },
@@ -11238,9 +11454,9 @@
   };
 
   // Pyodide — each test.command is run as Python code; exit 0 if no exception
-  TutorialCode.prototype._runTestsPyodide = function () {
+  TutorialCode.prototype._runTestsPyodide = function (run) {
     var self = this;
-    var step = this.steps[this.currentStep];
+    var step = this.steps[run.stepIndex];
     var tests = step && step.tests;
     if (!tests || !tests.length) return;
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
@@ -11249,7 +11465,7 @@
 
     function runNext(i) {
       clearTimeout(testTimeout);
-      if (i >= tests.length) { self._renderTestResults(tests, results); return; }
+      if (i >= tests.length) { self._renderTestResults(tests, results, run); return; }
 
       // 30 seconds per-test timeout for spotting infinite loops
       testTimeout = setTimeout(function () {
@@ -11258,7 +11474,7 @@
           self.term.write('\n\r\n\r\x1b[31;1mError: Execution timed out (30s).\x1b[0m\n\r');
           self.term.write('\x1b[33mIf you wrote an infinite loop (e.g. `while True:`), your sandbox is permanently gridlocked and you MUST refresh the page to continue!\x1b[0m\n\r');
         }
-        self._renderTestResults(tests, new Array(tests.length).fill(null));
+        self._renderTestResults(tests, new Array(tests.length).fill(null), run);
       }, 30000);
 
       self._postWorker(
@@ -11271,9 +11487,9 @@
 
   // WebContainers — run the current Node file with real Node, then evaluate
   // the same JS assertion snippets used by the browser-backend Node tutorial.
-  TutorialCode.prototype._runTestsWebContainer = function () {
+  TutorialCode.prototype._runTestsWebContainer = function (run) {
     var self = this;
-    var step = this.steps[this.currentStep];
+    var step = this.steps[run.stepIndex];
     var tests = step && step.tests;
     if (!tests || !tests.length) return;
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
@@ -11318,9 +11534,9 @@
           console.warn('WebContainer test ' + i + ' failed:', e.message);
         }
       }
-      self._renderTestResults(tests, results);
+      self._renderTestResults(tests, results, run);
     }).catch(function (err) {
-      self._renderTestResults(tests, new Array(tests.length).fill(null));
+      self._renderTestResults(tests, new Array(tests.length).fill(null), run);
       console.error('WC test run failed:', err);
     });
   };
@@ -11360,7 +11576,7 @@
     var timeout = Number(cfg.timeout || cfg.expect_timeout || 5000);
     function rebuildPreview() {
       return new Promise(function (resolve) {
-        self._rebuildReactPreview(resolve);
+        self._rebuildReactPreview(resolve, step);
       });
     }
 
@@ -11457,98 +11673,122 @@
     throw new Error('Unknown Playwright expectation: ' + expected);
   };
 
-  TutorialCode.prototype._runPlaywrightExpectationTest = function (test) {
-    var step = this.steps[this.currentStep];
+  TutorialCode.prototype._runPlaywrightExpectationTest = function (test, run) {
+    var stepIndex = run && typeof run.stepIndex === 'number' ? run.stepIndex : this.currentStep;
+    var step = this.steps[stepIndex];
     var self = this;
-    return this._runPlaywrightCompatSpecs(step).then(function (run) {
-      self._checkPlaywrightExpectation(test, run);
+    return this._runPlaywrightCompatSpecs(step).then(function (playwrightRun) {
+      self._checkPlaywrightExpectation(test, playwrightRun);
     });
   };
 
-  TutorialCode.prototype._runReactAssertionTests = function (tests) {
+  TutorialCode.prototype._getReactAssertionContext = function (step) {
     var self = this;
+    var files = {};
+    Object.keys(this.editorModels || {}).forEach(function (filename) {
+      files[filename] = self.editorModels[filename].model.getValue();
+    });
+    var source = this._getReactPreviewFileOrder(step).map(function (filename) {
+      if (/\.css$/i.test(filename) || !self.editorModels[filename]) return '';
+      return self.editorModels[filename].model.getValue();
+    }).filter(Boolean).join('\n');
+    return { code: this._stripCode(source), files: files };
+  };
+
+  TutorialCode.prototype._runReactAssertionInPreview = function (test, context) {
+    var frame = this._previewFrame;
+    var frameWindow = frame && frame.contentWindow;
+    if (!frameWindow) return Promise.reject(new Error('React preview is unavailable'));
+    if (!test || typeof test.command !== 'string') {
+      return Promise.reject(new Error('React assertion is missing a command'));
+    }
+
+    var requestId = 'react-assertion-' + (++this._reactAssertionRequestId);
+    return new Promise(function (resolve, reject) {
+      var timeoutId = setTimeout(function () {
+        window.removeEventListener('message', handleResult);
+        reject(new Error('React assertion timed out after ' +
+          (REACT_ASSERTION_TIMEOUT_MS / 1000) + ' seconds'));
+      }, REACT_ASSERTION_TIMEOUT_MS);
+
+      function handleResult(event) {
+        if (event.source !== frameWindow) return;
+        var result = event.data;
+        if (!result || result.type !== REACT_ASSERTION_RESULT || result.id !== requestId) return;
+        clearTimeout(timeoutId);
+        window.removeEventListener('message', handleResult);
+        if (result.passed === true) resolve();
+        else reject(new Error(result.error || 'Assertion failed'));
+      }
+
+      window.addEventListener('message', handleResult);
+      try {
+        frameWindow.postMessage({
+          type: REACT_ASSERTION_REQUEST,
+          id: requestId,
+          command: test.command,
+          code: context.code,
+          files: context.files,
+        }, '*');
+      } catch (error) {
+        clearTimeout(timeoutId);
+        window.removeEventListener('message', handleResult);
+        reject(error);
+      }
+    });
+  };
+
+  TutorialCode.prototype._runReactAssertionTests = function (tests, run) {
+    var self = this;
+    var stepIndex = run && typeof run.stepIndex === 'number' ? run.stepIndex : this.currentStep;
+    var step = this.steps[stepIndex];
     return new Promise(function (resolve) {
       // Rebuild a fresh preview, then run tests after React has settled.
       self._rebuildReactPreview(function () {
-        var frame = self._previewFrame;
+        var context = self._getReactAssertionContext(step);
         var results = [];
-        var AsyncFunction = Object.getPrototypeOf(async function () { }).constructor;
-        var testTimeout;
 
         function runNext(i) {
-          clearTimeout(testTimeout);
           if (i >= tests.length) { resolve(results); return; }
 
-          testTimeout = setTimeout(function () {
-            console.warn('React test execution timed out. Asynchronous promise deadlock reached.');
-            if (self.term) {
-              self.term.write('\n\r\n\r\x1b[31;1mError: React evaluation timed out (15s).\x1b[0m\n\r');
-              self.term.write('\x1b[33mTests were unable to complete cleanly (did an awaited promise never resolve?). Please reload the page if frozen!\x1b[0m\n\r');
-            }
-            resolve(new Array(tests.length).fill(null));
-          }, 15000);
-
-          try {
-            if (tests[i].playwright || tests[i].student_playwright || tests[i].studentTest) {
-              self._runPlaywrightExpectationTest(tests[i]).then(function () {
-                results[i] = true;
-                runNext(i + 1);
-              }).catch(function (e) {
-                results[i] = false;
-                console.warn('React test ' + i + ' failed:', e.message);
-                runNext(i + 1);
-              });
-              return;
-            }
-
-            var scripts = frame.contentDocument.querySelectorAll('[type="text/babel"]');
-            var source = Array.from(scripts).map(function (s) { return s.textContent; }).join('\n');
-            var code = self._stripCode(source);
-            /* jshint evil:true */
-            var files = {};
-            Object.keys(self.editorModels || {}).forEach(function (filename) {
-              files[filename] = self.editorModels[filename].model.getValue();
-            });
-            var fn = new AsyncFunction('frame', 'code', 'assert', 'files', tests[i].command);
-            fn(frame, code, function assertFn(cond, msg) {
-              if (!cond) throw new Error(msg || 'Assertion failed');
-            }, files).then(function () {
-              results[i] = true;
-              runNext(i + 1);
-            }).catch(function (e) {
-              results[i] = false;
-              console.warn('React test ' + i + ' failed:', e.message);
-              runNext(i + 1);
-            });
-          } catch (e) {
+          var assertionPromise;
+          if (tests[i].playwright || tests[i].student_playwright || tests[i].studentTest) {
+            assertionPromise = self._runPlaywrightExpectationTest(tests[i], run);
+          } else {
+            assertionPromise = self._runReactAssertionInPreview(tests[i], context);
+          }
+          assertionPromise.then(function () {
+            results[i] = true;
+            runNext(i + 1);
+          }).catch(function (e) {
             results[i] = false;
             console.warn('React test ' + i + ' failed:', e.message);
             runNext(i + 1);
-          }
+          });
         }
         runNext(0);
-      });
+      }, step);
     });
   };
 
   // React — each test.command is evaluated as JS; `frame` is the preview iframe
-  TutorialCode.prototype._runTestsReact = function () {
-    var step = this.steps[this.currentStep];
+  TutorialCode.prototype._runTestsReact = function (run) {
+    var step = this.steps[run.stepIndex];
     var tests = step && step.tests;
     if (!tests || !tests.length) return;
     var self = this;
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
-    this._runReactAssertionTests(tests).then(function (results) {
-      self._renderTestResults(tests, results);
+    this._runReactAssertionTests(tests, run).then(function (results) {
+      self._renderTestResults(tests, results, run);
     });
   };
 
   // Browser — runs user code, collects output, then evaluates JS assertions
   // test.command receives: output (string), source (string), code (string),
   //   assert(cond, msg), files (object mapping filename -> source)
-  TutorialCode.prototype._runTestsBrowser = function () {
+  TutorialCode.prototype._runTestsBrowser = function (run) {
     var self = this;
-    var step = this.steps[this.currentStep];
+    var step = this.steps[run.stepIndex];
     var tests = step && step.tests;
     if (!tests || !tests.length) return;
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
@@ -11576,7 +11816,7 @@
       var results = [];
 
       function runNext(i) {
-        if (i >= tests.length) { self._renderTestResults(tests, results); return; }
+        if (i >= tests.length) { self._renderTestResults(tests, results, run); return; }
         try {
           var code = self._stripCode(source);
           /* jshint evil:true */
@@ -11739,12 +11979,33 @@
     this._announceTestResult(tests, results);
   };
 
-  TutorialCode.prototype._renderTestResults = function (tests, results) {
+  TutorialCode.prototype._renderTestResults = function (tests, results, run) {
+    run = run || this._activeTestRun;
+    if (!run || run.completed) return;
+
+    run.completed = true;
+    var isActiveRun = this._activeTestRun === run;
+    if (isActiveRun) {
+      this._activeTestRun = null;
+      this._testRunInFlight = false;
+      this._silentTestRun = false;
+      this._refreshTestButton(this.currentStep);
+    }
+
+    // Navigation is intentionally allowed while a slow test backend finishes.
+    // A completion belongs only to the step where the run started; discarding
+    // stale results prevents it from painting, passing, or unlocking the step
+    // the learner is viewing now. `completed` also makes timeout/worker races
+    // idempotent when two completion paths arrive for one run.
+    if (!isActiveRun || this.currentStep !== run.stepIndex) {
+      return;
+    }
+
     this._testResults = results; // store for hint engine
     var passed = results.filter(function (r) { return r === true; }).length;
     var total = tests.length, allPass = passed === total;
-    var silent = this._silentTestRun;
-    this._testRunInFlight = false;
+    var silent = run.silent;
+    var stepIndex = run.stepIndex;
 
     var html = this._buildTestResultsHTML(tests, results);
     if (!silent) {
@@ -11757,16 +12018,16 @@
       }
     }
     if (allPass && this.requireTests) {
-      this._stepsPassed.add(this.currentStep);
-      this._stepsUnlocked.add(this.currentStep + 1);
+      this._stepsPassed.add(stepIndex);
+      this._stepsUnlocked.add(stepIndex + 1);
       this._renderStepNav();
       var nextBtn = this.stepControlsEl.querySelector('.tvm-btn-next');
       if (nextBtn) { nextBtn.disabled = false; nextBtn.removeAttribute('title'); }
       if (this.autoSaveEnabled) this._autoSaveProgress();
     }
-    if (allPass && this._timedPracticeConfig(this.steps[this.currentStep])) {
-      this._stepsPassed.add(this.currentStep);
-      this._markTimedPracticeCompleteIfSolved(this.currentStep);
+    if (allPass && this._timedPracticeConfig(this.steps[stepIndex])) {
+      this._stepsPassed.add(stepIndex);
+      this._markTimedPracticeCompleteIfSolved(stepIndex);
     }
     if (this._popoutManager) {
       if (!silent) {
@@ -11774,7 +12035,7 @@
           resultsHTML: html,
           results: results,
           allPassed: allPass,
-          stepIndex: this.currentStep,
+          stepIndex: stepIndex,
         });
       }
       this._broadcastNavState();
@@ -11783,11 +12044,8 @@
     // restart the timer (otherwise students could just spam the silent button
     // and learn nothing — the wait stays anchored to the last visible test).
     if (!silent && this._cooldownEnabled()) {
-      this._startTestCooldown(this.currentStep);
+      this._startTestCooldown(stepIndex);
     }
-    // Cleared last so _showTestPanel's silent-mode check above still sees the
-    // correct value; the next click sets it again before the renderer runs.
-    this._silentTestRun = false;
   };
 
   // ---------------------------------------------------------------------------

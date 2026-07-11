@@ -3587,6 +3587,10 @@ layout: sebook
       // Known tutorial localStorage keys: tutorial-progress-<id> (from tutorial-code.js),
       // plus two standalone regex tutorials that predate the shared prefix.
       var TUTORIAL_PROGRESS_PREFIX = 'tutorial-progress-';
+      var TUTORIAL_PROGRESS_EXPORT_FORMAT = 'se-gym-tutorial-progress';
+      var TUTORIAL_PROGRESS_EXPORT_VERSION = 1;
+      var MAX_TUTORIAL_PROGRESS_IMPORT_BYTES = 4 * 1024 * 1024;
+      var MAX_TUTORIAL_PROGRESS_IMPORT_ENTRIES = 250;
       var STANDALONE_TUTORIAL_KEYS = {
         'regex-tutorial-progress': 'RegEx Tutorial: Basics',
         'regex-tutorial-advanced-progress': 'RegEx Tutorial: Advanced'
@@ -3604,6 +3608,46 @@ layout: sebook
           return TUTORIAL_TITLES[id] || id;
         }
         return key;
+      }
+
+      function isPlainObject(value) {
+        return value !== null && typeof value === 'object' && !Array.isArray(value);
+      }
+
+      function isImportableTutorialKey(key) {
+        if (Object.prototype.hasOwnProperty.call(STANDALONE_TUTORIAL_KEYS, key)) return true;
+        if (typeof key !== 'string' || key.indexOf(TUTORIAL_PROGRESS_PREFIX) !== 0) return false;
+        var tutorialId = key.substring(TUTORIAL_PROGRESS_PREFIX.length);
+        return /^[a-z0-9][a-z0-9-]{0,127}$/.test(tutorialId);
+      }
+
+      function validateTutorialProgressExport(parsed) {
+        if (!isPlainObject(parsed)
+            || parsed.format !== TUTORIAL_PROGRESS_EXPORT_FORMAT
+            || parsed.version !== TUTORIAL_PROGRESS_EXPORT_VERSION
+            || !isPlainObject(parsed.entries)) {
+          return { error: 'That file is not a supported tutorial-progress export. Use a version 1 JSON file produced by Download Tutorial Progress.' };
+        }
+
+        var keys = Object.keys(parsed.entries);
+        if (keys.length === 0) {
+          return { error: 'That file has no tutorial entries. There is nothing to import.' };
+        }
+        if (keys.length > MAX_TUTORIAL_PROGRESS_IMPORT_ENTRIES) {
+          return { error: 'That file contains too many tutorial entries to import safely.' };
+        }
+
+        for (var i = 0; i < keys.length; i++) {
+          var key = keys[i];
+          var entry = parsed.entries[key];
+          if (!isImportableTutorialKey(key)
+              || !isPlainObject(entry)
+              || !Object.prototype.hasOwnProperty.call(entry, 'value')
+              || !isPlainObject(entry.value)) {
+            return { error: 'That file contains an invalid tutorial entry and was not imported.' };
+          }
+        }
+        return { entries: parsed.entries };
       }
 
       function collectStoredTutorialKeys() {
@@ -3706,8 +3750,8 @@ layout: sebook
           return;
         }
         var payload = {
-          format: 'se-gym-tutorial-progress',
-          version: 1,
+          format: TUTORIAL_PROGRESS_EXPORT_FORMAT,
+          version: TUTORIAL_PROGRESS_EXPORT_VERSION,
           exportedAt: new Date().toISOString(),
           entries: {}
         };
@@ -3784,10 +3828,10 @@ layout: sebook
         var selected = getCheckedKeys(importList);
         var imported = 0;
         selected.forEach(function (key) {
+          if (!isImportableTutorialKey(key)) return;
           var entry = pendingImportEntries[key];
           if (!entry) return;
-          var value = entry.value;
-          var raw = typeof value === 'string' ? value : JSON.stringify(value);
+          var raw = JSON.stringify(entry.value);
           try {
             localStorage.setItem(key, raw);
             imported++;
@@ -3802,26 +3846,30 @@ layout: sebook
       }
 
       function handleUploadFile(file) {
+        if (!file || file.size > MAX_TUTORIAL_PROGRESS_IMPORT_BYTES) {
+          setTutorialProgressStatus('That file is too large to import safely. Choose a tutorial-progress file smaller than 4 MB.', true);
+          return;
+        }
         var reader = new FileReader();
         reader.onload = function (ev) {
           var text = ev.target.result;
+          if (typeof text !== 'string' || text.length > MAX_TUTORIAL_PROGRESS_IMPORT_BYTES) {
+            setTutorialProgressStatus('That file is too large to import safely. Choose a tutorial-progress file smaller than 4 MB.', true);
+            return;
+          }
           var parsed;
           try { parsed = JSON.parse(text); }
           catch (e) {
             setTutorialProgressStatus('Could not read file: ' + (e && e.message ? e.message : 'invalid JSON.') + ' Try re-exporting with the Download Tutorial Progress button.', true);
             return;
           }
-          if (!parsed || typeof parsed !== 'object' || !parsed.entries || typeof parsed.entries !== 'object') {
-            setTutorialProgressStatus('That file does not look like a tutorial-progress export. Use a JSON file produced by Download Tutorial Progress.', true);
-            return;
-          }
-          var keys = Object.keys(parsed.entries);
-          if (keys.length === 0) {
-            setTutorialProgressStatus('That file has no tutorial entries. There is nothing to import.', true);
+          var validation = validateTutorialProgressExport(parsed);
+          if (validation.error) {
+            setTutorialProgressStatus(validation.error, true);
             return;
           }
           setTutorialProgressStatus('', false);
-          openImportModal(parsed.entries);
+          openImportModal(validation.entries);
         };
         reader.onerror = function () { setTutorialProgressStatus('Failed to read file. Try a smaller JSON file, or refresh the page and retry.', true); };
         reader.readAsText(file);

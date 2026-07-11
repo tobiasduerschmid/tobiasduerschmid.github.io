@@ -532,8 +532,8 @@ info_nav_title: "My Settings"
               Each tutorial separately remembers a few things you set <em>on
               that tutorial</em>: how you split the editor and output panes,
               which side panels you popped out, the breakpoints you placed
-              in the time-travel debugger, and which debugger sections you
-              expanded or collapsed. Timed-practice tutorials also remember
+              in the time-travel debugger (including exception breakpoints),
+              and which debugger sections you expanded or collapsed. Timed-practice tutorials also remember
               per-step deadlines and cooldowns under
               <code>tutorial-time-practice-&lt;id&gt;</code>.
             </p>
@@ -561,6 +561,8 @@ info_nav_title: "My Settings"
               <em>new</em> work is saved. To erase already-saved progress for
               a specific tutorial, use
               <a href="{{ '/cookies/' | relative_url }}">Browser storage</a>.
+              That page can also remove saved VM reset snapshots, cached VM
+              assets, and the tutorial service worker.
             </p>
           </div>
         </div>

@@ -2,7 +2,8 @@
  * TutorialPopoutManager — robust multi-window sync for the tutorial editor.
  *
  * Owns:
- *   - one BroadcastChannel  (channel:  'ttsync-' + pathname)
+ *   - one tab-scoped BroadcastChannel
+ *     (channel: 'ttsync-' + pathname + '-' + sessionId)
  *   - a registry of open popup Window references keyed by role
  *     ('tab:<filename>' or 'instructions')
  *   - heartbeat + closed-poll loops for liveness detection
@@ -13,7 +14,7 @@
  * supplies hook callbacks; popups talk to it via the message protocol below.
  *
  * Message protocol
- *   {type, sourceId, ts, ...payload}
+ *   {type, sourceId, sessionId, ts, ...payload}
  *   sourceId lets the manager ignore its own broadcasts (BroadcastChannel
  *   does not echo to the same context, but we still tag for clarity / for
  *   future wires that may not have that guarantee).
@@ -23,12 +24,47 @@
 
   var CHANNEL_PREFIX = 'ttsync-';
   var STORAGE_PREFIX = 'tutorial-popout-state-';
+  var SESSION_STORAGE_PREFIX = 'tutorial-popout-session-';
   var HEARTBEAT_MS = 2000;
   var DEAD_AFTER_MS = 15000;
   var CLOSE_POLL_MS = 1000;
 
   function uid() {
     return 'm-' + Math.random().toString(36).slice(2, 10);
+  }
+
+  function randomSessionId() {
+    if (window.crypto && window.crypto.getRandomValues) {
+      var words = new Uint32Array(2);
+      window.crypto.getRandomValues(words);
+      return words[0].toString(36) + words[1].toString(36);
+    }
+    return Math.random().toString(36).slice(2) + Date.now().toString(36);
+  }
+
+  function isReloadNavigation() {
+    try {
+      var entries = window.performance && window.performance.getEntriesByType
+        ? window.performance.getEntriesByType('navigation') : [];
+      if (entries && entries[0]) return entries[0].type === 'reload';
+      return !!(window.performance && window.performance.navigation
+        && window.performance.navigation.type === 1);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  function tabSessionId(pathname) {
+    var key = SESSION_STORAGE_PREFIX + pathname;
+    try {
+      var existing = sessionStorage.getItem(key);
+      if (existing && isReloadNavigation()) return existing;
+      var created = randomSessionId();
+      sessionStorage.setItem(key, created);
+      return created;
+    } catch (e) {
+      return randomSessionId();
+    }
   }
 
   /**
@@ -52,8 +88,9 @@
     this.hooks = opts.hooks || {};
 
     this.sourceId = 'main-' + uid();
-    this.channelName = CHANNEL_PREFIX + this.pathname;
-    this.storageKey = STORAGE_PREFIX + this.pathname;
+    this.sessionId = tabSessionId(this.pathname);
+    this.channelName = CHANNEL_PREFIX + this.pathname + '-' + this.sessionId;
+    this.storageKey = STORAGE_PREFIX + this.pathname + '-' + this.sessionId;
 
     this.channel = null;
     this._popups = {};         // role -> {window, openedAt}
@@ -119,6 +156,7 @@
     var darkMode = document.documentElement.classList.contains('dark-mode');
     var url = this.tabPopupUrl
       + '?channel=' + encodeURIComponent(this.channelName)
+      + '&session=' + encodeURIComponent(this.sessionId)
       + '&filename=' + encodeURIComponent(filename)
       + '&dark=' + (darkMode ? '1' : '0')
       + (this.tutorialTitle ? '&title=' + encodeURIComponent(this.tutorialTitle) : '');
@@ -145,11 +183,12 @@
       this._sendPaneSnapshot(pane, meta);
       return existing.window;
     }
-    var winName = 'tpane-' + this.pathname + '-' + pane;
+    var winName = 'tpane-' + this.pathname + '-' + this.sessionId + '-' + pane;
     var darkMode = (meta && meta.darkMode)
       || document.documentElement.classList.contains('dark-mode');
     var url = this.panePopupUrl
       + '?channel=' + encodeURIComponent(this.channelName)
+      + '&session=' + encodeURIComponent(this.sessionId)
       + '&pane=' + encodeURIComponent(pane)
       + '&dark=' + (darkMode ? '1' : '0')
       + (this.tutorialTitle ? '&title=' + encodeURIComponent(this.tutorialTitle) : '');
@@ -198,11 +237,12 @@
       this._sendOutputSnapshot(meta);
       return existing.window;
     }
-    var winName = 'toutput-' + this.pathname;
+    var winName = 'toutput-' + this.pathname + '-' + this.sessionId;
     var darkMode = (meta && meta.darkMode)
       || document.documentElement.classList.contains('dark-mode');
     var url = this.outputPopupUrl
       + '?channel=' + encodeURIComponent(this.channelName)
+      + '&session=' + encodeURIComponent(this.sessionId)
       + '&kind=' + encodeURIComponent((meta && meta.kind) || 'output')
       + '&dark=' + (darkMode ? '1' : '0')
       + (this.tutorialTitle ? '&title=' + encodeURIComponent(this.tutorialTitle) : '');
@@ -221,6 +261,7 @@
     this._post('output-snapshot', {
       kind: meta.kind || 'output',
       content: meta.content || '',
+      previewGeneration: meta.previewGeneration,
       darkMode: !!meta.darkMode,
     });
   };
@@ -255,11 +296,12 @@
       this._sendGraphSnapshot(meta);
       return existing.window;
     }
-    var winName = 'tgraph-' + this.pathname;
+    var winName = 'tgraph-' + this.pathname + '-' + this.sessionId;
     var darkMode = (meta && meta.darkMode)
       || document.documentElement.classList.contains('dark-mode');
     var url = this.graphPopupUrl
       + '?channel=' + encodeURIComponent(this.channelName)
+      + '&session=' + encodeURIComponent(this.sessionId)
       + '&dark=' + (darkMode ? '1' : '0')
       + (this.tutorialTitle ? '&title=' + encodeURIComponent(this.tutorialTitle) : '');
     var w = window.open(url, winName, 'width=900,height=720,resizable=yes,scrollbars=yes');
@@ -300,10 +342,11 @@
       this._safeHook('onDebuggerPopupReopened');
       return existing.window;
     }
-    var winName = 'tdebugger-' + this.pathname;
+    var winName = 'tdebugger-' + this.pathname + '-' + this.sessionId;
     var darkMode = document.documentElement.classList.contains('dark-mode');
     var url = this.debuggerPopupUrl
       + '?channel=' + encodeURIComponent(this.channelName)
+      + '&session=' + encodeURIComponent(this.sessionId)
       + '&dark=' + (darkMode ? '1' : '0')
       + (this.tutorialTitle ? '&title=' + encodeURIComponent(this.tutorialTitle) : '');
     var w = window.open(url, winName, 'width=520,height=820,resizable=yes,scrollbars=yes');
@@ -332,9 +375,10 @@
     var darkMode = document.documentElement.classList.contains('dark-mode');
     var url = this.instructionsPopupUrl
       + '?channel=' + encodeURIComponent(this.channelName)
+      + '&session=' + encodeURIComponent(this.sessionId)
       + '&dark=' + (darkMode ? '1' : '0')
       + (this.tutorialTitle ? '&title=' + encodeURIComponent(this.tutorialTitle) : '');
-    var winName = 'tinstr-' + this.pathname;
+    var winName = 'tinstr-' + this.pathname + '-' + this.sessionId;
     var w = window.open(url, winName, 'width=720,height=820,resizable=yes,scrollbars=yes');
     if (!w) return null;
     this._popups[role] = { window: w, openedAt: Date.now() };
@@ -402,7 +446,7 @@
   // Incoming routing (popup -> main)
   // ---------------------------------------------------------------------------
   TutorialPopoutManager.prototype._onMessage = function (msg) {
-    if (!msg || msg.sourceId === this.sourceId) return;
+    if (!msg || msg.sessionId !== this.sessionId || msg.sourceId === this.sourceId) return;
     switch (msg.type) {
       case 'hello': this._handleHello(msg); break;
       case 'file-edit': this._handleFileEdit(msg); break;
@@ -636,7 +680,7 @@
   // ---------------------------------------------------------------------------
   TutorialPopoutManager.prototype._post = function (type, payload) {
     if (!this.channel) return;
-    var msg = { type: type, sourceId: this.sourceId, ts: Date.now() };
+    var msg = { type: type, sourceId: this.sourceId, sessionId: this.sessionId, ts: Date.now() };
     if (payload) {
       for (var k in payload) msg[k] = payload[k];
     }
@@ -655,7 +699,7 @@
   };
 
   TutorialPopoutManager.prototype._windowNameForFile = function (filename) {
-    return 'ttab-' + this.pathname + '-' + filename;
+    return 'ttab-' + this.pathname + '-' + this.sessionId + '-' + filename;
   };
 
   TutorialPopoutManager.prototype._writeStateMirror = function (extra) {

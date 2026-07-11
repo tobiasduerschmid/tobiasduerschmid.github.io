@@ -3,20 +3,59 @@ const fs = require('fs');
 const path = require('path');
 const yaml = require('js-yaml');
 const { chromium } = require('@playwright/test');
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 
-const book = process.argv[2] || 'SE Book';
+const BOOK_CONFIGURATIONS = Object.freeze({
+  'SE Book': Object.freeze({ navName: 'sebook' }),
+  CS35L: Object.freeze({ navName: 'CS35L' }),
+  CS130: Object.freeze({ navName: 'CS130' }),
+});
 
-var nav_path
-if (book == 'SE Book') {
-  nav_path = 'sebook'
-} else {
-  nav_path = book
+function resolveBookConfiguration(bookName) {
+  if (!Object.hasOwn(BOOK_CONFIGURATIONS, bookName)) {
+    const supportedBooks = Object.keys(BOOK_CONFIGURATIONS).join(', ');
+    throw new Error(`Unsupported book "${bookName}". Expected one of: ${supportedBooks}.`);
+  }
+  return BOOK_CONFIGURATIONS[bookName];
 }
-async function mergePDFs() {
+
+function mergeTaggedPdfs(introPath, chapterPaths, outputPath) {
+  execFileSync(
+    'cpdf',
+    ['-merge', '-process-struct-trees', introPath, ...chapterPaths, '-o', outputPath],
+    { stdio: 'inherit' },
+  );
+}
+
+function addPdfBookmarks(bookmarksPath, inputPath, outputPath) {
+  execFileSync(
+    'cpdf',
+    ['-add-bookmarks', bookmarksPath, inputPath, '-o', outputPath],
+    { stdio: 'inherit' },
+  );
+}
+
+function overlayPdfStamps(inputPath, stampsPath, outputPath) {
+  try {
+    execFileSync(
+      'qpdf',
+      [inputPath, '--overlay', stampsPath, '--', outputPath],
+      { stdio: 'inherit' },
+    );
+  } catch (error) {
+    if (error.status === 3) {
+      console.warn('qpdf finished with warnings (status 3), which is normal for complex merges.');
+      return;
+    }
+    throw error;
+  }
+}
+
+async function mergePDFs(book = 'SE Book') {
+  const { navName } = resolveBookConfiguration(book);
   console.log('Starting Unified SE Book PDF merge (preserving accessibility tags)...');
 
-  const navPath = path.join(__dirname, `../_data/${nav_path}_nav.yml`);
+  const navPath = path.join(__dirname, `../_data/${navName}_nav.yml`);
   const navContent = fs.readFileSync(navPath, 'utf8');
   const nav = yaml.load(navContent);
 
@@ -54,7 +93,7 @@ async function mergePDFs() {
 
   // 2. Generate Initial Intro to get page count
   const browser = await chromium.launch();
-  const page = await browser.newPage();
+  let page;
 
   async function generateIntro(tocData) {
     const categories = Array.from(new Set(tocData.map(e => e.category)));
@@ -111,34 +150,43 @@ async function mergePDFs() {
     });
   }
 
-  // Pass 1: Dummy data to get page count
-  await generateIntro(uniquePdfEntries.map(e => ({ ...e, page: 1 })));
-  const introDoc1 = await PDFDocument.load(fs.readFileSync(introPath));
-  const actualIntroPageCount = introDoc1.getPageCount();
-  console.log(`Intro generated. Pages: ${actualIntroPageCount}`);
-
-  // 3. Real Page Count calculation (Page 1 = First content page)
+  let actualIntroPageCount;
   const tocEntries = [];
-  let currentRunningPage = 1;
-  for (const entry of uniquePdfEntries) {
-    const bytes = fs.readFileSync(entry.path);
-    const doc = await PDFDocument.load(bytes);
-    const count = doc.getPageCount();
-    tocEntries.push({
-      ...entry,
-      page: currentRunningPage
-    });
-    currentRunningPage += count;
-  }
+  try {
+    page = await browser.newPage();
 
-  // Pass 2: Real data
-  await generateIntro(tocEntries);
-  await browser.close();
+    // Pass 1: Dummy data to get page count
+    await generateIntro(uniquePdfEntries.map(e => ({ ...e, page: 1 })));
+    const introDoc1 = await PDFDocument.load(fs.readFileSync(introPath));
+    actualIntroPageCount = introDoc1.getPageCount();
+    console.log(`Intro generated. Pages: ${actualIntroPageCount}`);
+
+    // 3. Real Page Count calculation (Page 1 = First content page)
+    let currentRunningPage = 1;
+    for (const entry of uniquePdfEntries) {
+      const bytes = fs.readFileSync(entry.path);
+      const doc = await PDFDocument.load(bytes);
+      const count = doc.getPageCount();
+      tocEntries.push({
+        ...entry,
+        page: currentRunningPage
+      });
+      currentRunningPage += count;
+    }
+
+    // Pass 2: Real data
+    await generateIntro(tocEntries);
+  } finally {
+    await browser.close();
+  }
 
   // 4. Merge with cpdf (Preserves accessibility tags and internal links)
   console.log('Merging tagged PDFs with cpdf...');
-  const cpdfMergeCommand = `cpdf -merge -process-struct-trees "${introPath}" ${uniquePdfEntries.map(e => `"${e.path}"`).join(' ')} -o "${tempMergedPath}"`;
-  execSync(cpdfMergeCommand);
+  mergeTaggedPdfs(
+    introPath,
+    uniquePdfEntries.map(entry => entry.path),
+    tempMergedPath,
+  );
 
   // 4b. Add Bookmarks with cpdf
   console.log('Adding PDF bookmarks...');
@@ -156,8 +204,7 @@ async function mergePDFs() {
   });
   fs.writeFileSync(bookmarksPath, bookmarksContent);
   const tempBookmarkedPath = path.join(pdfsDir, book + '_Full_bookmarked.pdf');
-  const cpdfBookmarksCommand = `cpdf -add-bookmarks "${bookmarksPath}" "${tempMergedPath}" -o "${tempBookmarkedPath}"`;
-  execSync(cpdfBookmarksCommand);
+  addPdfBookmarks(bookmarksPath, tempMergedPath, tempBookmarkedPath);
 
   // 5. Create "Stamps" (page numbers & clickable ToC links)
   console.log('Generating page number overlay and ToC links...');
@@ -246,16 +293,7 @@ async function mergePDFs() {
 
   // 6. Final Overlay
   console.log('Final overlay...');
-  const qpdfOverlayCommand = `qpdf "${tempBookmarkedPath}" --overlay "${stampsPath}" -- "${outputPath}"`;
-  try {
-    execSync(qpdfOverlayCommand);
-  } catch (e) {
-    if (e.status === 3) {
-      console.warn('qpdf finished with warnings (status 3), which is normal for complex merges.');
-    } else {
-      throw e;
-    }
-  }
+  overlayPdfStamps(tempBookmarkedPath, stampsPath, outputPath);
 
   // Cleanup
   [introPath, tempMergedPath, tempBookmarkedPath, stampsPath, bookmarksPath].forEach(p => {
@@ -265,4 +303,18 @@ async function mergePDFs() {
   console.log(`Success! Tagged & Numbered PDF with Bookmarks created at: ${outputPath}`);
 }
 
-mergePDFs().catch(console.error);
+if (require.main === module) {
+  const requestedBook = process.argv[2] ?? 'SE Book';
+  mergePDFs(requestedBook).catch(error => {
+    console.error('PDF merge failed:', error);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = {
+  addPdfBookmarks,
+  mergePDFs,
+  mergeTaggedPdfs,
+  overlayPdfStamps,
+  resolveBookConfiguration,
+};

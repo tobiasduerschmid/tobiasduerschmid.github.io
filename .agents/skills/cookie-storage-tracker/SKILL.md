@@ -131,22 +131,25 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - `tutorial-autosave`
 - `regex-tutorial-progress`, `regex-tutorial-advanced-progress`
 
-**localStorage — dynamic prefixes (9)** (one entry per tutorial id / page path):
+**localStorage — dynamic prefixes (10)** (one entry per tutorial id / page path):
 - `tutorial-progress-<id>` — saved code & current step
 - `tutorial-editor-split-<id>` — split-pane preference
 - `tutorial-cooldown-<id>` — per-step "Test My Work" cooldown end times
 - `tutorial-time-practice-<id>` — timed-practice deadlines and lockout windows
-- `tutorial-popout-state-<path>` — detached editor crash-recovery snapshot
+- `tutorial-popout-state-<path>-<session>` — tab-scoped detached editor crash-recovery snapshot
 - `tutorial-debug-bps-<id>` — debugger breakpoints
+- `tutorial-debug-excbps-<id>` — debugger exception breakpoints
 - `tutorial-debug-watchpoint-remove-choice-<id>` — watchpoint removal preference
 - `tutorial-debug-section-<id>-<name>` — debugger panel collapse
 - `tutorial-debug-subsection-<id>-<name>` — debugger sub-panel collapse
 
-**Adjacent surfaces (currently documented as ephemeral / unused):**
-- `sessionStorage` — one-time migration of `prefersReducedMotion`, plus the generated Python workspace's short-lived `archuml-generated-python-payload` reload bridge; the same generated-workspace bridge is seeded/mirrored briefly in `window.name`; neither persists across visits
-- IndexedDB, Cache API, File System Access, WebSQL — **not used**
+**Adjacent surfaces:**
+- `sessionStorage` — one-time migration of `prefersReducedMotion`; a tab-scoped `tutorial-popout-session-<path>` nonce that reconnects detached tutorial windows after reload without cross-tab channel sharing; plus the generated Python workspace's short-lived `archuml-generated-python-payload` reload bridge (also mirrored briefly in `window.name`)
+- IndexedDB — database `sebook-tutorial-vm-snapshots`, object store `snapshots`, stores compressed v86 reset snapshots; `/cookies/` provides a dedicated delete control and includes it in “Delete everything”
+- Cache API — cache `vm-assets-v2` stores server-provided v86 VM assets; `/cookies/` provides a dedicated delete control and includes it in “Delete everything”
+- File System Access and WebSQL — **not used**
 - Service Worker — `coi-serviceworker.js` is registered for COOP/COEP header injection on isolated tutorial workspaces and for the v86 VM asset cache; it stores no per-user data
-- `BroadcastChannel` — channel names `ttsync-<path>`, `uml-sync-<path>`, and `v86-inbrowser-<n>` (v86 VM networking); messages are in-memory only
+- `BroadcastChannel` — channel names `ttsync-<path>-<session>`, `uml-sync-<path>`, and `v86-inbrowser-<n>` (v86 VM networking); messages are in-memory only
 - Cross-origin cookies — third-party iframes (e.g. YouTube embeds) are out of scope
 
 **User-facing settings currently represented in `/settings/`:**
@@ -160,6 +163,6 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - UML accent color: `uml-accent-color`
 - SEBook bookmarks enabled: `se-bookmarks-active`
 - SE Gym enabled, timed practice, workout hero, difficulty visibility/filtering, and performance tracking: `se-gym-active`, `se-gym-timed-practice`, `se-gym-timer-mode`, `se-gym-timer-total-minutes`, `se-gym-timer-seconds-per-question`, `se-gym-show-workout-hero`, `se-gym-show-difficulty`, `se-gym-active-difficulties`, `analyze-performance`, `se-gym-stats`
-- Per-tutorial state and progress: `tutorial-progress-<id>`, `tutorial-editor-split-<id>`, `tutorial-cooldown-<id>`, `tutorial-time-practice-<id>`, `tutorial-popout-state-<path>`, `tutorial-debug-bps-<id>`, `tutorial-debug-watchpoint-remove-choice-<id>`, `tutorial-debug-section-<id>-<name>`, `tutorial-debug-subsection-<id>-<name>`, `regex-tutorial-progress`, `regex-tutorial-advanced-progress`
+- Per-tutorial state and progress: `tutorial-progress-<id>`, `tutorial-editor-split-<id>`, `tutorial-cooldown-<id>`, `tutorial-time-practice-<id>`, `tutorial-popout-state-<path>-<session>`, `tutorial-debug-bps-<id>`, `tutorial-debug-excbps-<id>`, `tutorial-debug-watchpoint-remove-choice-<id>`, `tutorial-debug-section-<id>-<name>`, `tutorial-debug-subsection-<id>-<name>`, `regex-tutorial-progress`, `regex-tutorial-advanced-progress`
 
 If your change makes any line in this section wrong, edit `cookies.html` first, then update this snapshot.

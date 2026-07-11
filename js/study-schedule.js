@@ -14,6 +14,15 @@
 
   var MIN_DAYS = 4;
   var MAX_DAYS = 14;
+  var MODAL_FOCUSABLE_SELECTOR = [
+    'a[href]',
+    'button:not([disabled])',
+    'input:not([disabled])',
+    'select:not([disabled])',
+    'textarea:not([disabled])',
+    '[contenteditable="true"]',
+    '[tabindex]'
+  ].join(',');
 
   /**
    * Validate a requested number of days.
@@ -119,31 +128,121 @@
   }
 
   // --- Modal plumbing ------------------------------------------------------
+  var activeModal = null;
   var lastFocusedBeforeModal = null;
+  var backgroundElementsMadeInert = [];
+
+  function modalFocusTargets(modal) {
+    return Array.prototype.filter.call(
+      modal.querySelectorAll(MODAL_FOCUSABLE_SELECTOR),
+      function (element) {
+        var tabindex = element.getAttribute('tabindex');
+        var isSequential = tabindex === null || Number(tabindex) >= 0;
+        var isVisible = element.getClientRects().length > 0 &&
+          window.getComputedStyle(element).visibility !== 'hidden';
+        return isSequential && isVisible;
+      }
+    );
+  }
+
+  function focusModalStart(modal) {
+    var targets = modalFocusTargets(modal);
+    if (targets.length) {
+      targets[0].focus();
+      return;
+    }
+    modal.setAttribute('tabindex', '-1');
+    modal.focus();
+  }
+
+  function makeBackgroundInert(modal) {
+    backgroundElementsMadeInert = [];
+    var branch = modal;
+    while (branch && branch.parentElement) {
+      var parent = branch.parentElement;
+      Array.prototype.forEach.call(parent.children, function (sibling) {
+        if (sibling === branch || sibling.hasAttribute('inert')) return;
+        sibling.setAttribute('inert', '');
+        backgroundElementsMadeInert.push(sibling);
+      });
+      if (parent === document.body) return;
+      branch = parent;
+    }
+  }
+
+  function restoreBackgroundInteraction() {
+    backgroundElementsMadeInert.forEach(function (element) {
+      element.removeAttribute('inert');
+    });
+    backgroundElementsMadeInert = [];
+  }
+
+  function trapModalTabKey(e, modal) {
+    var targets = modalFocusTargets(modal);
+    if (!targets.length) {
+      e.preventDefault();
+      focusModalStart(modal);
+      return;
+    }
+
+    var activeIndex = targets.indexOf(document.activeElement);
+    var leavingBackward = e.shiftKey && activeIndex <= 0;
+    var leavingForward = !e.shiftKey && activeIndex === targets.length - 1;
+    if (activeIndex < 0 || leavingBackward || leavingForward) {
+      e.preventDefault();
+      targets[e.shiftKey ? targets.length - 1 : 0].focus();
+    }
+  }
+
+  function onModalFocusIn(e) {
+    if (!activeModal || activeModal.hidden || activeModal.contains(e.target)) return;
+    focusModalStart(activeModal);
+  }
+
+  function activateModalFocusTrap(modal) {
+    if (activeModal === modal) return;
+    activeModal = modal;
+    lastFocusedBeforeModal = document.activeElement;
+    makeBackgroundInert(modal);
+    document.addEventListener('keydown', onModalKeydown, true);
+    document.addEventListener('focusin', onModalFocusIn, true);
+  }
+
+  function deactivateModalFocusTrap(modal) {
+    if (activeModal !== modal) return;
+    document.removeEventListener('keydown', onModalKeydown, true);
+    document.removeEventListener('focusin', onModalFocusIn, true);
+    restoreBackgroundInteraction();
+
+    var focusTarget = lastFocusedBeforeModal;
+    activeModal = null;
+    lastFocusedBeforeModal = null;
+    if (focusTarget && document.documentElement.contains(focusTarget) &&
+        !focusTarget.hasAttribute('disabled') && typeof focusTarget.focus === 'function') {
+      focusTarget.focus();
+    }
+  }
 
   function openModal(modal) {
-    lastFocusedBeforeModal = document.activeElement;
     modal.hidden = false;
-    var input = document.getElementById('study-schedule-days');
-    if (input) input.focus();
-    document.addEventListener('keydown', onModalKeydown, true);
+    activateModalFocusTrap(modal);
+    focusModalStart(modal);
   }
 
   function closeModal(modal) {
     modal.hidden = true;
-    document.removeEventListener('keydown', onModalKeydown, true);
-    if (lastFocusedBeforeModal && typeof lastFocusedBeforeModal.focus === 'function') {
-      lastFocusedBeforeModal.focus();
-    }
+    deactivateModalFocusTrap(modal);
   }
 
   function onModalKeydown(e) {
+    if (!activeModal || activeModal.hidden) return;
     if (e.key === 'Escape' || e.keyCode === 27) {
-      var modal = document.getElementById('study-schedule-modal');
-      if (modal && !modal.hidden) {
-        e.preventDefault();
-        closeModal(modal);
-      }
+      e.preventDefault();
+      closeModal(activeModal);
+      return;
+    }
+    if (e.key === 'Tab' || e.keyCode === 9) {
+      trapModalTabKey(e, activeModal);
     }
   }
 

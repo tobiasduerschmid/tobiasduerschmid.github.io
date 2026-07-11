@@ -11,8 +11,8 @@
  * (optionally) a callback to compute its final-state payload before
  * the window closes.
  *
- * Wire protocol is deliberately untouched — this is purely a code
- * organization refactor. Identical messages, identical behavior.
+ * Every message is bound to the tab-scoped session passed in the popup URL,
+ * so two main tabs on the same tutorial cannot control each other's popouts.
  */
 (function () {
   'use strict';
@@ -44,6 +44,7 @@
    *   flashStatus: (text:string, cls?:string, ms?:number) => void,
    *   role: string,
    *   sourceId: string,
+   *   sessionId: string,
    *   params: URLSearchParams,
    *   tutorialTitle: string,
    *   channel: BroadcastChannel,
@@ -56,9 +57,10 @@
     }
     var params = new URLSearchParams(location.search);
     var chName = params.get('channel');
-    if (!chName) {
-      if (opts.overlayEl) opts.overlayEl.textContent = 'Invalid popup URL (missing channel).';
-      throw new Error('SebookPopoutClient: missing channel param');
+    var sessionId = params.get('session');
+    if (!chName || !sessionId) {
+      if (opts.overlayEl) opts.overlayEl.textContent = 'Invalid popup URL (missing session).';
+      throw new Error('SebookPopoutClient: missing channel or session param');
     }
 
     var role = opts.role;
@@ -76,7 +78,7 @@
 
     // ── Helpers ────────────────────────────────────────────────────────────
     function post(type, payload) {
-      var msg = { type: type, sourceId: sourceId, ts: Date.now() };
+      var msg = { type: type, sourceId: sourceId, sessionId: sessionId, ts: Date.now() };
       if (payload) for (var k in payload) msg[k] = payload[k];
       try { channel.postMessage(msg); } catch (e) { /* ignore */ }
     }
@@ -114,7 +116,7 @@
     // ── Built-in message handling (heartbeat, dark-mode, force-close, save) ─
     channel.addEventListener('message', function (e) {
       var msg = e.data || {};
-      if (msg.sourceId === sourceId) return;
+      if (msg.sessionId !== sessionId || msg.sourceId === sourceId) return;
       switch (msg.type) {
         case 'heartbeat':
           lastHeartbeat = Date.now();
@@ -184,6 +186,7 @@
       flashStatus: flashStatus,
       role: role,
       sourceId: sourceId,
+      sessionId: sessionId,
       params: params,
       tutorialTitle: tutorialTitle,
       channel: channel,
