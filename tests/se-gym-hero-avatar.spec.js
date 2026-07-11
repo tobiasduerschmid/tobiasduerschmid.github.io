@@ -1122,7 +1122,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
     for (const color of [previewColors.top, previewColors.bottom]) {
       expect(contrastRatio('#1f140c', color), `representative dark hair should remain visible on ${color}`).toBeGreaterThanOrEqual(3);
-      expect(contrastRatio('#291713', color), `representative deep skin should remain visible on ${color}`).toBeGreaterThanOrEqual(3);
+      expect(contrastRatio('#ffd100', color), `representative yellow skin should remain visible on ${color}`).toBeGreaterThanOrEqual(3);
     }
     expect(contrastRatio('#e9ecf2', previewColors.border)).toBeGreaterThanOrEqual(3);
     expect(previewColors.backgroundImage).toContain('linear-gradient');
@@ -1677,7 +1677,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     const representativeHairColor = await longHairPreview.evaluate((svg) =>
       getComputedStyle(svg).getPropertyValue('--hero-hair').trim().toLowerCase()
     );
-    expect(representativeSkinColor).toBe('#291713');
+    expect(representativeSkinColor).toBe('#ffd100');
     expect(representativeHairColor).toBe('#1f140c');
 
     await setColorInput(page, '#hero-cust-hair-color', '#123456');

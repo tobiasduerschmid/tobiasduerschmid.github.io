@@ -8,9 +8,9 @@
   var SCHEMA_VERSION = 1;
   var CHOICE_PREVIEW_OBSERVER_MARGIN = 160;
   var CHOICE_PREVIEW_QUEUE_RETAIN_MARGIN = 520;
-  // A deep neutral human tone stress-tests feature contrast, blush, facial
-  // hair, and nose planes instead of masking weak rendering with brand yellow.
-  var REPRESENTATIVE_PREVIEW_SKIN = '#291713';
+  // Brand yellow keeps generic choice previews visibly illustrative rather
+  // than suggesting that any option represents a real person's appearance.
+  var REPRESENTATIVE_PREVIEW_SKIN = '#FFD100';
   var REPRESENTATIVE_PREVIEW_HAIR = '#1f140c';
   // These persisted emoji values are compatibility keys only. The hero renders
   // each one through an authored SVG symbol, never through a platform font.

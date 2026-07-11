@@ -10,7 +10,7 @@ const OUT_DIR = path.join(ROOT, 'assets', 'se-gym-hero-choice-previews');
 const TEMP_OUT_DIR = `${OUT_DIR}.building`;
 const BACKUP_OUT_DIR = `${OUT_DIR}.previous`;
 const VARIANT = 'choice-preview';
-const REPRESENTATIVE_PREVIEW_SKIN = '#291713';
+const REPRESENTATIVE_PREVIEW_SKIN = '#FFD100';
 const REPRESENTATIVE_PREVIEW_HAIR = '#1f140c';
 
 function assertVectorPureHeroSource(svg) {
