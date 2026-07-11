@@ -95,7 +95,8 @@ audit-a11y-interactive:
 	  tests/sql-tutorial.spec.js tests/tdd-tutorial.spec.js \
 	  tests/testing-foundations-tutorial.spec.js \
 	  tests/playwright-tutorial.spec.js tests/prolog-tutorial.spec.js \
-	  tests/makefile-tutorial.spec.js
+	  tests/makefile-tutorial.spec.js \
+	  tests/haskell-backend-demo-tutorial.spec.js
 
 # Targeted: full a11y sweep of one tutorial. Runs the all-step test with
 # accessibility assertions at every step and every quiz.

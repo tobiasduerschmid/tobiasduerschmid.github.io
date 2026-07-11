@@ -1,0 +1,93 @@
+title: "Haskell Backend Demo"
+description: "Try a compact MicroHs WebAssembly runtime that runs a practical Haskell subset in the browser, without requiring the full Glasgow Haskell Compiler toolchain."
+
+# Demo / playground — not a published student tutorial. Keep it reachable for
+# backend verification without listing it on the generated tutorials index.
+exclude_from_index: true
+
+backend: haskell
+require_tests: true
+autosave_type: none
+
+steps:
+  # Pedagogy: PRIMM — Predict and Run the starter, Investigate the result,
+  # then Modify and Make a general list transformation.
+  - title: "A Pure List Transformation"
+    instructions: |
+      ### Why this matters
+
+      Haskell programs separate pure transformations from the effects that display their results. This demo keeps that idea small enough to inspect in one glance while proving that the compact MicroHs WebAssembly runtime can edit, run, and test a practical Haskell subset directly in the browser. It is intentionally not the full Glasgow Haskell Compiler toolchain.
+
+      ### 🎯 You will learn to
+
+      - Apply a pure function to transform every value in a list
+      - Run a Haskell program and use executable checks to validate its behavior
+
+      ### Predict, run, and investigate
+
+      Before clicking **Run**, predict what `main` prints:
+
+      - `[1,2,3]`
+      - `[2,4,6]`
+      - A type error
+
+      Commit to one answer, then run `Main.hs`.
+
+      <details markdown="1"><summary>Reveal after running</summary>
+
+      The starter prints `[1,2,3]`. The name `doubleScores` describes the goal, but its current definition returns `scores` unchanged. Haskell evaluates the definition that exists, not the intention implied by its name.
+
+      </details>
+
+      ### Modify and make
+
+      Change `doubleScores` so it returns a new list containing twice every input score. `map` is the direct Haskell tool for applying one pure function to every element, although any behaviorally equivalent definition is valid.
+
+      1. Run the program and confirm that it prints `[2,4,6]`.
+      2. Click **Test My Work**. The checks also use negative and zero values, so a hard-coded sample answer will not pass.
+
+      The runtime supports a useful teaching subset of Haskell and the ordinary Prelude. Features that depend on the complete Glasgow Haskell Compiler ecosystem may not be available in this compact browser runtime.
+
+    files:
+      - path: "Main.hs"
+        language: "haskell"
+        content: |
+          module Main where
+
+          doubleScores :: [Int] -> [Int]
+          doubleScores scores = scores
+
+          main :: IO ()
+          main = print (doubleScores [1, 2, 3])
+
+    open_file: "Main.hs"
+    run_file: "Main.hs"
+
+    tests:
+      - description: "doubleScores doubles each score in the sample list"
+        command: "doubleScores [1, 2, 3] == [2, 4, 6]"
+        hints:
+          - text: "Treat the list as one input value and describe the transformation that should happen to each element."
+          - text: "`map` applies the same function to every element without mutating the original list."
+          - text: "A partial multiplication such as `(* 2)` can be passed to `map`; supply the score list separately."
+      - description: "doubleScores handles negative and zero scores"
+        command: "doubleScores [-2, 0, 5] == [-4, 0, 10]"
+        hints:
+          - text: "Avoid returning a fixed sample list; the function must use whichever list it receives."
+          - text: "The same doubling rule applies to negative, zero, and positive values."
+          - text: "Build the result by applying one multiplication function to every input element."
+
+    solution:
+      files:
+        - path: "Main.hs"
+          language: "haskell"
+          content: |
+            module Main where
+
+            doubleScores :: [Int] -> [Int]
+            doubleScores scores = map (* 2) scores
+
+            main :: IO ()
+            main = print (doubleScores [1, 2, 3])
+      explanation: |
+        `map (* 2) scores` creates a new list by applying multiplication by two to every score. `doubleScores` stays pure: it returns a value without printing or mutating anything. The separate `main` action is responsible for displaying that value.

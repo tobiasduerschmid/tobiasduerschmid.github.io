@@ -1,14 +1,16 @@
 /**
  * TutorialCode — Unified interactive tutorial engine
  *
- * Supports three pluggable execution backends, selected via the YAML field
- * `backend`:
+ * Supports pluggable execution backends, selected via the YAML field
+ * `backend`. The browser-native workers include:
  *
  *   backend: v86          (default) Full Linux VM via v86 emulator
  *   backend: pyodide      Python in-browser via Pyodide + Web Worker.
  *                         Uses an output panel instead of a terminal.
  *   backend: webcontainer Node.js via StackBlitz WebContainers.
  *                         Requires Cross-Origin Isolation (COOP/COEP).
+ *   backend: haskell      Haskell via MicroHs compiled to WebAssembly.
+ *                         Uses an output panel instead of a terminal.
  *
  * The UI (Monaco editor, split panels, step navigation, quizzes, tests) is
  * identical across backends. Only the execution layer differs.
@@ -100,6 +102,8 @@
   // Instructor solution batches can contain multi-command Git workflows; keep
   // applySolution() pending until those scripts have a real chance to finish.
   var V86_VISIBLE_COMMAND_TIMEOUT_MS = 240000;
+  var HASKELL_BOOT_TIMEOUT_MS = 30000;
+  var HASKELL_EXECUTION_TIMEOUT_MS = 30000;
 
   function hashString(s) {
     var h = 2166136261;
@@ -129,6 +133,7 @@
     makefile: 'makefile', Makefile: 'makefile',
     pl: 'prolog', pro: 'prolog',
     java: 'java',
+    hs: 'haskell', lhs: 'haskell',
   };
 
   function detectLanguage(filename) {
@@ -154,6 +159,7 @@
     if (backend === 'react') return 'React';
     if (backend === 'webcontainer') return 'Node.js';
     if (backend === 'browser') return 'Browser Node sandbox';
+    if (backend === 'haskell') return 'Haskell';
     if (backend === 'v86') return 'Linux VM';
     return backend;
   }
@@ -211,6 +217,7 @@
       sqlWorkerPath: options.sqlWorkerPath || '/js/sql-worker.js',
       prologWorkerPath: options.prologWorkerPath || '/js/prolog-worker.js',
       javaWorkerPath: options.javaWorkerPath || '/js/java-worker.js',
+      haskellFramePath: options.haskellFramePath || '/haskell-runtime-frame.html',
       // Derived flags
       useTerminal: useTerminal,
       usePreview: (backend === 'react' || hasReactStep),    // live iframe preview for React tutorials
@@ -349,10 +356,15 @@
     this._timedPracticeTimer = null;
     this._timedPracticeCurrentStep = null;
 
-    // Pyodide worker state
+    // Worker/executor state for browser-native backends. The Haskell backend
+    // uses a sandboxed iframe behind the same postMessage-shaped interface
+    // because the upstream MicroHs build exceeds Chrome Worker's call stack.
     this._worker = null;
     this._workerMsgId = 0;
     this._workerCallbacks = {};
+    this._haskellRunTimer = null;
+    this._haskellRunRequestId = null;
+    this._haskellRestartPromise = null;
 
     // WebContainers state
     this._webcontainer = null;
@@ -953,6 +965,7 @@
     this._stopGuestClockSync();
     this._clearTimedPracticeTimer();
     clearTimeout(this._terminalReadinessTimer);
+    clearTimeout(this._haskellRunTimer);
     if (this.emulator) { this.emulator.stop(); this.emulator = null; }
     if (this._worker) { this._worker.terminate(); this._worker = null; }
     if (this._shellProcess) { this._shellProcess = null; }
@@ -2970,6 +2983,7 @@
     if (backend === 'sql') return this._initSQL();
     if (backend === 'prolog') return this._initProlog();
     if (backend === 'java') return this._initJava();
+    if (backend === 'haskell') return this._initHaskell();
     return Promise.reject(new Error('Unknown backend: ' + backend));
   };
 
@@ -4061,6 +4075,149 @@
     });
   };
 
+  // ---- Haskell backend (MicroHs WebAssembly via sandboxed runtime frame) ----
+  TutorialCode.prototype._createHaskellExecutor = function () {
+    var namespace = 'sebook-haskell-runtime';
+    var frame = document.createElement('iframe');
+    var outboundQueue = [];
+    var frameLoaded = false;
+    var executor = {
+      onmessage: null,
+      onerror: null,
+      postMessage: function (message) {
+        if (!frameLoaded || !frame.contentWindow) {
+          outboundQueue.push(message);
+          return;
+        }
+        frame.contentWindow.postMessage({ namespace: namespace, message: message }, '*');
+      },
+      terminate: function () {
+        window.removeEventListener('message', handleRuntimeMessage);
+        outboundQueue.length = 0;
+        frame.remove();
+      },
+    };
+
+    function handleRuntimeMessage(event) {
+      if (event.source !== frame.contentWindow) return;
+      var envelope = event.data;
+      if (!envelope || envelope.namespace !== namespace || !envelope.message) return;
+      if (typeof executor.onmessage === 'function') {
+        executor.onmessage({ data: envelope.message });
+      }
+    }
+
+    window.addEventListener('message', handleRuntimeMessage);
+    frame.hidden = true;
+    frame.tabIndex = -1;
+    frame.title = 'Haskell runtime';
+    frame.setAttribute('sandbox', 'allow-scripts');
+    frame.src = this.config.haskellFramePath;
+    frame.addEventListener('load', function () {
+      frameLoaded = true;
+      while (outboundQueue.length > 0 && frame.contentWindow) {
+        frame.contentWindow.postMessage(
+          { namespace: namespace, message: outboundQueue.shift() },
+          '*'
+        );
+      }
+    });
+    frame.addEventListener('error', function () {
+      if (typeof executor.onerror === 'function') {
+        executor.onerror({ message: 'Failed to load the Haskell runtime frame' });
+      }
+    });
+    this.root.appendChild(frame);
+    return executor;
+  };
+
+  TutorialCode.prototype._initHaskell = function () {
+    var self = this;
+    this._showLoading('Loading Haskell runtime\u2026 (first load may take a moment)');
+    return new Promise(function (resolve, reject) {
+      var initialized = false;
+      var bootTimer = setTimeout(function () {
+        if (initialized) return;
+        if (self._worker) self._worker.terminate();
+        self._worker = null;
+        reject(new Error('Haskell runtime initialization timed out'));
+      }, HASKELL_BOOT_TIMEOUT_MS);
+      self._worker = self._createHaskellExecutor();
+
+      self._worker.onmessage = function (e) {
+        var msg = e.data;
+        if (msg.type === 'loading') { self._showLoading(msg.message); return; }
+        if (msg.type === 'ready') {
+          if (self.setupCommands && self.setupCommands.length > 0) {
+            clearTimeout(bootTimer);
+            reject(new Error(
+              'The Haskell backend does not support setup_commands; provide starter files instead.'
+            ));
+            return;
+          }
+          initialized = true;
+          clearTimeout(bootTimer);
+          self.booted = true;
+          resolve();
+          return;
+        }
+        if (msg.type === 'stdout') { self._appendOutput(msg.text, 'stdout'); return; }
+        if (msg.type === 'stderr') { self._appendOutput(msg.text, 'stderr'); return; }
+        if (msg.type === 'error') {
+          clearTimeout(bootTimer);
+          if (!initialized) {
+            reject(new Error(msg.message));
+          } else {
+            self._appendOutput('\nHaskell runtime error: ' + msg.message + '\n', 'err');
+            self._restartHaskellExecutor().catch(function () {});
+          }
+          return;
+        }
+        if (msg.id !== undefined && self._workerCallbacks[msg.id]) {
+          var cb = self._workerCallbacks[msg.id];
+          delete self._workerCallbacks[msg.id];
+          cb(msg);
+        }
+      };
+
+      self._worker.onerror = function (err) {
+        clearTimeout(bootTimer);
+        reject(new Error('Haskell worker error: ' + (err.message || err)));
+      };
+    });
+  };
+
+  TutorialCode.prototype._restartHaskellExecutor = function () {
+    if (this._haskellRestartPromise) return this._haskellRestartPromise;
+    var self = this;
+
+    clearTimeout(this._haskellRunTimer);
+    this._haskellRunTimer = null;
+    this._haskellRunRequestId = null;
+    this._workerCallbacks = {};
+    if (this._worker) this._worker.terminate();
+    this._worker = null;
+    this.booted = false;
+
+    var runBtn = this.root && this.root.querySelector('.tvm-run-btn');
+    var stopBtn = this.root && this.root.querySelector('.tvm-stop-btn');
+    if (runBtn) {
+      runBtn.disabled = false;
+      runBtn.textContent = '\u25b6 ' + this._runLabel;
+    }
+    if (stopBtn) stopBtn.style.display = 'none';
+
+    this._haskellRestartPromise = this._initHaskell().then(function () {
+      self._hideLoading();
+      self._haskellRestartPromise = null;
+    }, function (error) {
+      self._haskellRestartPromise = null;
+      self._showError('Failed to restart Haskell runtime: ' + (error.message || error));
+      throw error;
+    });
+    return this._haskellRestartPromise;
+  };
+
   /** Render a SQL result set as a table inside the output panel. */
   TutorialCode.prototype._appendTable = function (columns, rows) {
     if (!this.outputPre) return;
@@ -4384,6 +4541,51 @@
             self._appendOutput('\n\u2717 Exited with error\n', 'err');
           }
         });
+      });
+      return;
+    }
+
+    if (backend === 'haskell') {
+      var haskellPath = '/tutorial/' + filename;
+      // Sync the complete workspace so imports resolve just as they do in a
+      // local Haskell project, even when the active file is not Main.hs.
+      var haskellFiles = Object.keys(self.editorModels);
+      var haskellSyncChain = Promise.resolve();
+      haskellFiles.forEach(function (file) {
+        haskellSyncChain = haskellSyncChain.then(function () {
+          return self._syncFileToBackend(file);
+        });
+      });
+      haskellSyncChain.then(function () {
+        self._clearOutput();
+        self._appendOutput('\u25b6 ' + filename + '\n', 'info');
+        var runBtn = self.root.querySelector('.tvm-run-btn');
+        var stopBtn = self.root.querySelector('.tvm-stop-btn');
+        if (runBtn) { runBtn.disabled = true; runBtn.textContent = '\u23f3 Compiling\u2026'; }
+        if (stopBtn) stopBtn.style.display = 'inline-block';
+        var requestId = self._postWorker({ type: 'run', path: haskellPath }, function (msg) {
+          clearTimeout(self._haskellRunTimer);
+          self._haskellRunTimer = null;
+          self._haskellRunRequestId = null;
+          if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 ' + self._runLabel; }
+          if (stopBtn) stopBtn.style.display = 'none';
+          if (msg.exitCode === 0) {
+            self._appendOutput('\n\u2713 Done\n', 'info');
+          } else {
+            self._appendOutput('\n\u2717 Exited with error\n', 'err');
+          }
+        });
+        self._haskellRunRequestId = requestId;
+        clearTimeout(self._haskellRunTimer);
+        self._haskellRunTimer = setTimeout(function () {
+          if (self._haskellRunRequestId !== requestId) return;
+          delete self._workerCallbacks[requestId];
+          self._appendOutput(
+            '\n\u2717 Execution timed out; the Haskell runtime was restarted.\n',
+            'err'
+          );
+          self._restartHaskellExecutor().catch(function () {});
+        }, HASKELL_EXECUTION_TIMEOUT_MS);
       });
       return;
     }
@@ -4903,6 +5105,14 @@
    * `onDone()` fires 1.5 s after the iframe loads (enough for short async code).
    */
   TutorialCode.prototype._stopExecution = function () {
+    if (this.config.backend === 'haskell' && this._worker) {
+      if (this._haskellRunRequestId !== null) {
+        delete this._workerCallbacks[this._haskellRunRequestId];
+      }
+      this._appendOutput('\nExecution stopped; restarting the Haskell runtime.\n', 'info');
+      this._restartHaskellExecutor().catch(function () {});
+      return;
+    }
     if (this._webcontainerRunProcess) {
       try { this._webcontainerRunProcess.kill(); } catch (e) { }
       this._webcontainerRunProcess = null;
@@ -5437,7 +5647,8 @@
         this.config.backend === 'react' ? 'jsx' :
           (this.config.backend === 'browser' || this.config.backend === 'webcontainer') ? 'javascript' :
             this.config.backend === 'prolog' ? 'prolog' :
-              this.config.backend === 'java' ? 'java' : 'shell-sebook',
+              this.config.backend === 'java' ? 'java' :
+                this.config.backend === 'haskell' ? 'haskell' : 'shell-sebook',
       theme: this._isDarkMode() ? THEMES.dark.monaco : THEMES.light.monaco,
       fontSize: this.config.fontSize,
       fontFamily: "'Fira Code', 'Cascadia Code', Menlo, monospace",
@@ -5475,7 +5686,8 @@
           this.config.backend === 'react' ? 'JSX' :
             (this.config.backend === 'browser' || this.config.backend === 'webcontainer') ? 'JavaScript' :
               this.config.backend === 'prolog' ? 'Prolog' :
-                this.config.backend === 'java' ? 'Java' : 'Shell') +
+                this.config.backend === 'java' ? 'Java' :
+                  this.config.backend === 'haskell' ? 'Haskell' : 'Shell') +
         ' code editor. Press Control F1 (Command F1 on macOS) for accessibility help. Press Escape to release focus to the surrounding page.',
       accessibilitySupport: 'auto',
       accessibilityPageSize: 25,
@@ -5596,7 +5808,7 @@
       monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
       function () { self._saveCurrentFile(); }
     );
-    if (this._mixedBackendMode || this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'java') {
+    if (this._mixedBackendMode || this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'java' || this.config.backend === 'haskell') {
       editor.addCommand(
         monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
         function () { self._runCurrentFile(); }
@@ -8553,7 +8765,7 @@
       if (self.config.backend === 'v86') {
         self._syncFileToV86(filename, content).then(done).catch(done);
 
-      } else if (self.config.backend === 'pyodide' || self.config.backend === 'sql' || self.config.backend === 'prolog' || self.config.backend === 'java') {
+      } else if (self.config.backend === 'pyodide' || self.config.backend === 'sql' || self.config.backend === 'prolog' || self.config.backend === 'java' || self.config.backend === 'haskell') {
         self._postWorker(
           { type: 'write', path: '/tutorial/' + filename, content: content },
           done
@@ -8749,6 +8961,12 @@
               silent: true
             }, resolve);
           });
+        });
+      } else if (this.config.backend === 'haskell') {
+        p = p.then(function () {
+          return Promise.reject(new Error(
+            'Haskell solutions support file replacements, not solution commands.'
+          ));
         });
       }
     }
@@ -10004,7 +10222,7 @@
     }
 
     // Clear output panel between steps
-    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'webcontainer' || this.config.backend === 'prolog' || this.config.backend === 'java') this._clearOutput();
+    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'webcontainer' || this.config.backend === 'prolog' || this.config.backend === 'java' || this.config.backend === 'haskell') this._clearOutput();
     // Rebuild React preview when a new step is loaded
     if (this.config.backend === 'react') {
       var stepSelf = this;
@@ -10740,6 +10958,7 @@
     else if (backend === 'sql') this._runTestsSQL();
     else if (backend === 'prolog') this._runTestsProlog();
     else if (backend === 'java') this._runTestsJava();
+    else if (backend === 'haskell') this._runTestsHaskell();
     else this._testRunInFlight = false;
   };
 
@@ -10921,6 +11140,63 @@
       );
     }
     runNext(0);
+  };
+
+  // Haskell — each test.command is a Boolean expression evaluated after the
+  // current module is loaded. The runtime reports success only when the
+  // expression evaluates to True; False, compile errors, and exceptions fail.
+  TutorialCode.prototype._runTestsHaskell = function () {
+    var self = this;
+    var step = this.steps[this.currentStep];
+    var tests = step && step.tests;
+    if (!tests || !tests.length) return;
+    this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
+
+    var runFile = (step && step.run_file) || this.activeFileName ||
+      (step.files && step.files[0] && step.files[0].path) || '';
+    var runPath = '/tutorial/' + runFile;
+    var results = [];
+    var testTimeout;
+    var activeRequestId = null;
+    var finished = false;
+    var syncChain = Promise.resolve();
+
+    Object.keys(this.editorModels).forEach(function (filename) {
+      syncChain = syncChain.then(function () {
+        return self._syncFileToBackend(filename);
+      });
+    });
+
+    function runNext(i) {
+      if (finished) return;
+      clearTimeout(testTimeout);
+      if (i >= tests.length) {
+        finished = true;
+        self._renderTestResults(tests, results);
+        return;
+      }
+
+      testTimeout = setTimeout(function () {
+        if (finished) return;
+        finished = true;
+        if (activeRequestId !== null) delete self._workerCallbacks[activeRequestId];
+        console.warn('Haskell test execution timed out.');
+        self._renderTestResults(tests, new Array(tests.length).fill(null));
+        self._restartHaskellExecutor().catch(function () {});
+      }, HASKELL_EXECUTION_TIMEOUT_MS);
+
+      activeRequestId = self._postWorker(
+        { type: 'runTest', path: runPath, expression: tests[i].command },
+        function (msg) {
+          if (finished) return;
+          activeRequestId = null;
+          results[i] = (msg.exitCode === 0);
+          runNext(i + 1);
+        }
+      );
+    }
+
+    syncChain.then(function () { runNext(0); });
   };
 
   // Prolog — each test.command is a JS snippet with __query / __consult / assert

@@ -1,6 +1,6 @@
 ---
 name: tutorial-authoring
-description: Authoring guide and architecture reference for the SEBook in-browser tutorial system. Use this skill EVERY TIME you create, edit, review, restructure, or extend anything that touches `_data/tutorials/*.yml`, the `_layouts/tutorial.html` / `_layouts/print-tutorial.html` layouts, the `tutorial-*-popup.html` popout windows at the repo root, the `js/tutorial-*.js` runtime (`tutorial-code.js`, `tutorial-quiz.js`, `tutorial-popout-manager.js`, `tutorial-popout-client.js`, `tutorial-refactorings.js`), backend workers (`pyodide-worker.js`, `sql-worker.js`, `java-worker.js`, `prolog-worker.js`, `playwright-compat/*`), the time-travel debugger under `js/debugger/`, the autosave / progress / reset machinery, the in-tutorial quiz / hint / test schemas, the print view, the SE Gym tutorial-progress import/export flows, the `SEBook/<section>/<slug>-tutorial.md` + `SEBook/<section>/<slug>-tutorial/print.md` page-pair convention, the `/SEBook/tutorials` auto-generated index, or any new feature added to the tutorial runtime. Also trigger on requests like "add a new tutorial on X", "add a step to <tutorial>", "convert this lecture into a tutorial", "design a quiz / hint / test for step N", "set up a print view for this tutorial", "add a new tutorial backend", "wire up a new popout window", "add a new YAML field to the tutorial schema", "review this tutorial draft", "audit tutorials for PRIMM / spaced practice / Bloom coverage", or any task that involves the tutorial runtime, schema, or content. **You MUST update this SKILL.md whenever you add, rename, remove, or change the semantics of a tutorial-runtime feature** — new YAML fields, new backends, new popout windows, new test runners, new quiz / hint mechanics, new autosave / reset modes, new debugger capabilities, changed permalink conventions, or any architectural change that an author or future agent needs to know to build or modify a tutorial correctly. Out-of-date schema or architecture notes here cause real downstream bugs (broken tutorials, missing print views, mis-shaped quizzes, lost progress).
+description: Authoring guide and architecture reference for the SEBook in-browser tutorial system. Use this skill EVERY TIME you create, edit, review, restructure, or extend anything that touches `_data/tutorials/*.yml`, the `_layouts/tutorial.html` / `_layouts/print-tutorial.html` layouts, the `tutorial-*-popup.html` popout windows at the repo root, the `js/tutorial-*.js` runtime (`tutorial-code.js`, `tutorial-quiz.js`, `tutorial-popout-manager.js`, `tutorial-popout-client.js`, `tutorial-refactorings.js`), backend workers (`pyodide-worker.js`, `sql-worker.js`, `java-worker.js`, `prolog-worker.js`, `haskell-worker.js`, `playwright-compat/*`), the time-travel debugger under `js/debugger/`, the autosave / progress / reset machinery, the in-tutorial quiz / hint / test schemas, the print view, the SE Gym tutorial-progress import/export flows, the `SEBook/<section>/<slug>-tutorial.md` + `SEBook/<section>/<slug>-tutorial/print.md` page-pair convention, the `/SEBook/tutorials` auto-generated index, or any new feature added to the tutorial runtime. Also trigger on requests like "add a new tutorial on X", "add a step to <tutorial>", "convert this lecture into a tutorial", "design a quiz / hint / test for step N", "set up a print view for this tutorial", "add a new tutorial backend", "wire up a new popout window", "add a new YAML field to the tutorial schema", "review this tutorial draft", "audit tutorials for PRIMM / spaced practice / Bloom coverage", or any task that involves the tutorial runtime, schema, or content. **You MUST update this SKILL.md whenever you add, rename, remove, or change the semantics of a tutorial-runtime feature** — new YAML fields, new backends, new popout windows, new test runners, new quiz / hint mechanics, new autosave / reset modes, new debugger capabilities, changed permalink conventions, or any architectural change that an author or future agent needs to know to build or modify a tutorial correctly. Out-of-date schema or architecture notes here cause real downstream bugs (broken tutorials, missing print views, mis-shaped quizzes, lost progress).
 ---
 
 # SEBook tutorial authoring & architecture
@@ -603,13 +603,17 @@ exclude_from_index: boolean            # If true, /SEBook/tutorials hides
                                        # and any non-student-facing tutorial.
 
 # === Backend selection ===
-backend: v86 | pyodide | webcontainer | react | uml-editor | multiple
+backend: v86 | pyodide | webcontainer | react | haskell | uml-editor | multiple
                                        # default: v86
 
 # v86           — full Linux VM (shell, gcc, git, etc.). Most tutorials.
 # pyodide       — Python in-browser, no shell. Required for `debugger: true`.
 # webcontainer  — Node.js + npm + dev server (StackBlitz). Needs COOP/COEP.
 # react         — React + Vite + live preview iframe + Playwright-compat.
+# haskell       — Haskell in a hidden, sandboxed runtime frame through the
+#                 repository's locally pinned MicroHs WebAssembly runtime.
+#                 Uses the output panel rather than a shell, is single-backend
+#                 only, and does not require cross-origin isolation.
 # uml-editor    — ArchUML visual editor workspace for diagramming tutorials.
 #                 The standard instruction panel renders on the left, the UML
 #                 editor renders on the right, and `tests[].assertions`
@@ -629,9 +633,9 @@ backend: v86 | pyodide | webcontainer | react | uml-editor | multiple
 # tutorial-level default per step. First-pass mixed mode is intentionally
 # narrow: use only `pyodide`, `react`, `webcontainer`, or `browser` steps,
 # with `browser` serving as the in-page Node fallback if WebContainers cannot
-# boot. Keep `v86`, `uml-editor`, SQL, Prolog, Java, debugger tutorials, and
-# terminal-heavy WebContainer flows single-backend until the runtime explicitly
-# supports those combinations.
+# boot. Keep `v86`, `haskell`, `uml-editor`, SQL, Prolog, Java, debugger
+# tutorials, and terminal-heavy WebContainer flows single-backend until the
+# runtime explicitly supports those combinations.
 
 # === Common feature flags ===
 require_tests: boolean                 # If true, student must pass each step's
@@ -666,8 +670,8 @@ cooldown_seconds: integer              # Optional, default 0 (disabled). When
                                        # so refreshing can't bypass the wait.
                                        # Works on every backend (v86, pyodide,
                                        # webcontainer, react, browser, sql,
-                                       # prolog, java, uml-editor) plus the
-                                       # instructions popout. Implementation:
+                                       # prolog, java, haskell, uml-editor) plus
+                                       # the instructions popout. Implementation:
                                        # _buildTestButtonHTML / _runTests /
                                        # _renderTestResults in
                                        # js/tutorial-code.js + the matching
@@ -745,6 +749,8 @@ run_label: string                      # Override Run button label
 setup_commands: [string]               # Run once at tutorial load for
                                        # single-backend tutorials only.
                                        # bash for v86, python for pyodide.
+                                       # Unsupported by the haskell backend;
+                                       # put required definitions in files.
 setup_commands_by_backend:             # Mixed-backend tutorials only.
   pyodide: [string]                    # Run once when that backend first
   react: [string]                      # initializes. Usually empty for React.
@@ -855,6 +861,13 @@ steps:
                                              # `pytest.main([path, "-v"])` and
                                              # the toolbar label changes to
                                              # "Test".
+                                             # In Haskell tutorials, Run syncs
+                                             # every workspace file, derives the
+                                             # module name from `run_file` (or
+                                             # the active `.hs` file), imports
+                                             # that module, and invokes `:main`.
+                                             # Prefer the conventional
+                                             # `Main.hs` / `Main` entry point.
     run_files: [string]                      # Pyodide + `pytest: true` only:
                                              # run all listed pytest files from
                                              # the toolbar Test button. Use this
@@ -1090,6 +1103,8 @@ steps:
     solution:                                # Instructor-mode reveal target.
       files: [{ path, content, language }]
       commands: [string]                     # Bash to replay solution state.
+                                             # Unsupported by the haskell
+                                             # backend; use solution.files.
       explanation: |                         # Markdown — *why* this works.
         Walk-through of the solution and the trade-offs.
 ```
@@ -1297,29 +1312,45 @@ channel.
   `critical`, `ref`, `neg`, found/lost messages, activation markers, notes,
   create/destroy) are preserved as helper calls or structured comments
   instead of being dropped.
-- **Backend workers** — `js/pyodide-worker.js` (Python),
+- **Backend runtime adapters** — `js/pyodide-worker.js` (Python),
   `js/sql-worker.js`, `js/java-worker.js`, `js/prolog-worker.js`,
+  `haskell-runtime-frame.html` + `js/haskell-worker.js` (a sandboxed Haskell
+  frame through `js/vendor/microhs/mhs-embed.js`, the local, pinned MicroHs
+  WebAssembly runtime),
   `js/playwright-compat/runner.js` (in-browser Playwright for React),
   `js/pyodide-git.js` / `js/pyodide-unix.js` (POSIX mocks).
 
 ### 4.6 Backends — what each supports
 
-| Feature                | v86 | pyodide | webcontainer | browser | react | uml-editor |
-|------------------------|-----|---------|--------------|---------|-------|------------|
-| Shell terminal         | ✅  | ❌      | ✅           | ❌      | ❌    | ❌         |
-| Compiled languages     | ✅  | ❌      | (npm only)   | ❌      | ❌    | ❌         |
-| `git`                  | ✅  | mocked  | ✅           | ❌      | ❌    | ❌         |
-| Time-travel debugger   | ❌  | ✅      | ❌           | ❌      | ❌    | ❌         |
-| Live preview iframe    | ❌  | ❌      | ✅           | ❌      | ✅    | ❌         |
-| Playwright tests       | ❌  | ❌      | ❌           | ❌      | ✅    | ❌         |
-| UML assertion tests    | ❌  | ❌      | ❌           | ❌      | ❌    | ✅         |
-| `pytest`               | ❌  | ✅      | ❌           | ❌      | ❌    | ❌         |
-| Linter                 | ✅  | ✅      | ✅           | ✅      | ✅    | ❌         |
+| Feature                | v86 | pyodide | webcontainer | browser | react | haskell | uml-editor |
+|------------------------|-----|---------|--------------|---------|-------|---------|------------|
+| Shell terminal         | ✅  | ❌      | ✅           | ❌      | ❌    | ❌      | ❌         |
+| Compiled languages     | ✅  | ❌      | (npm only)   | ❌      | ❌    | ✅      | ❌         |
+| `git`                  | ✅  | mocked  | ✅           | ❌      | ❌    | ❌      | ❌         |
+| Time-travel debugger   | ❌  | ✅      | ❌           | ❌      | ❌    | ❌      | ❌         |
+| Live preview iframe    | ❌  | ❌      | ✅           | ❌      | ✅    | ❌      | ❌         |
+| Playwright tests       | ❌  | ❌      | ❌           | ❌      | ✅    | ❌      | ❌         |
+| UML assertion tests    | ❌  | ❌      | ❌           | ❌      | ❌    | ❌      | ✅         |
+| `pytest`               | ❌  | ✅      | ❌           | ❌      | ❌    | ❌      | ❌         |
+| Linter                 | ✅  | ✅      | ✅           | ✅      | ✅    | ❌      | ❌         |
 
 Mixed-backend tutorials are supported only for `pyodide`, `react`,
 `webcontainer`, and `browser` in this first pass. They are for short
 author-controlled backend switches between steps, not for terminal-first
 Node labs, debugger flows, or VM-heavy tutorials.
+
+`haskell` is deliberately a single-backend mode. A hidden
+`sandbox="allow-scripts"` iframe owns a persistent, serialized MicroHs REPL
+session and loads the locally pinned, single-threaded WebAssembly runtime. The
+parent page talks to that frame through the Worker-like, namespaced
+`postMessage` proxy in `TutorialCode`; keep the source, origin, and namespace
+checks intact. Do not add Haskell to mixed-backend dispatch or enable the
+cross-origin-isolation service worker for it; MicroHs does not use
+`SharedArrayBuffer` or worker threads. Before each Run, the runtime syncs all
+workspace files, reloads the base environment, imports the module derived from
+`run_file` (or the active `.hs` path), and invokes `:main`. Use `Main.hs` as the
+conventional entry point. Haskell `setup_commands` and `solution.commands` are
+intentionally unsupported; express setup and solutions through workspace files.
 
 If you add a backend, update this table.
 
@@ -1359,6 +1390,13 @@ under the same prefix family as other tutorial state so the global
   Separately, the toolbar Run/Test button uses step `run_file` by default;
   when a Pyodide pytest step needs that toolbar button to run multiple
   student-facing pytest files, set `run_files: [...]`.
+- **Haskell** (`haskell`): each `tests[].command` is a Haskell Boolean
+  expression evaluated after the current workspace is synced and the module
+  selected by the step's `run_file` (or the active `.hs` file) is imported.
+  `True` passes; `False`, a compile error, or a runtime exception fails. Keep
+  the expression pure and self-contained, for example
+  `doubleAll [1, 2, 3] == [2, 4, 6]`; do not use shell commands or Python-style
+  `assert` statements.
 - **playwright** (react): `command:` is Playwright-compat JS run by
   `js/playwright-compat/runner.js` (a subset of `@playwright/test`).
   Reference selectors via `page.getByRole(...)`, `page.getByText(...)`.

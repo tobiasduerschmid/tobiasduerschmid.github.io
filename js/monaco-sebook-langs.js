@@ -23,6 +23,7 @@
     makefile: 'makefile', Makefile: 'makefile',
     pl: 'prolog', pro: 'prolog',
     java: 'java',
+    hs: 'haskell', lhs: 'haskell',
   };
 
   function detectLanguage(filename) {
@@ -148,6 +149,64 @@
         string: [
           [/\\./, 'string'],
           [/[^"\\]+/, 'string'],
+          [/"/, 'string', '@pop'],
+        ],
+      },
+    });
+
+    // ---- Haskell Monarch tokenizer ----
+    monaco.languages.register({ id: 'haskell' });
+    monaco.languages.setLanguageConfiguration('haskell', {
+      comments: { lineComment: '--', blockComment: ['{-', '-}'] },
+      brackets: [['(', ')'], ['[', ']'], ['{', '}']],
+      autoClosingPairs: [
+        { open: '(', close: ')' }, { open: '[', close: ']' },
+        { open: '{', close: '}' }, { open: '"', close: '"' },
+        { open: "'", close: "'" }, { open: '{-', close: '-}' },
+      ],
+      surroundingPairs: [
+        { open: '(', close: ')' }, { open: '[', close: ']' },
+        { open: '{', close: '}' }, { open: '"', close: '"' },
+        { open: "'", close: "'" },
+      ],
+    });
+    monaco.languages.setMonarchTokensProvider('haskell', {
+      defaultToken: '',
+      keywords: [
+        'as', 'case', 'class', 'data', 'default', 'deriving', 'do', 'else',
+        'foreign', 'hiding', 'if', 'import', 'in', 'infix', 'infixl',
+        'infixr', 'instance', 'let', 'module', 'newtype', 'of', 'qualified',
+        'then', 'type', 'where',
+      ],
+      constants: ['True', 'False', 'Nothing', 'Just', 'LT', 'EQ', 'GT'],
+      tokenizer: {
+        root: [
+          [/--.*$/, 'comment'],
+          [/\{-/, 'comment', '@blockComment'],
+          [/"/, 'string', '@string'],
+          [/'(?:[^'\\]|\\.)'/, 'string'],
+          [/0[xX][0-9a-fA-F]+/, 'number.hex'],
+          [/0[oO][0-7]+/, 'number.octal'],
+          [/\d+(?:\.\d+)?(?:[eE][+\-]?\d+)?/, 'number'],
+          [/[A-Z][\w']*/, {
+            cases: { '@constants': 'constant', '@default': 'type' },
+          }],
+          [/[a-z_][\w']*/, {
+            cases: { '@keywords': 'keyword', '@default': 'identifier' },
+          }],
+          [/[!#$%&*+./<=>?@\\^|~:\-]+/, 'operator'],
+          [/[()\[\]{},;]/, 'delimiter'],
+          [/\s+/, ''],
+        ],
+        blockComment: [
+          [/[^\-{}]+/, 'comment'],
+          [/\{-/, 'comment', '@push'],
+          [/-\}/, 'comment', '@pop'],
+          [/[\-{}]/, 'comment'],
+        ],
+        string: [
+          [/[^\\"]+/, 'string'],
+          [/\\./, 'string.escape'],
           [/"/, 'string', '@pop'],
         ],
       },

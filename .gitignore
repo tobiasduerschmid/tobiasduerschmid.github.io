@@ -2,6 +2,9 @@ _site
 .sass-cache
 .bundle
 vendor/
+!js/vendor/
+!js/vendor/microhs/
+!js/vendor/microhs/**
 node_modules/
 playwright-report/
 test-results/
