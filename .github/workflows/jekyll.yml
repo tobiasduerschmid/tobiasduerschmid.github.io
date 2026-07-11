@@ -39,11 +39,13 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
+      - name: Install Playwright browser for static UML rendering
+        run: npx playwright install --with-deps chromium
+
       - name: Build with Jekyll
         run: bundle exec jekyll build --strict_front_matter
         env:
           JEKYLL_ENV: production
-          UML_STATIC_RENDERING: '0'
 
       - name: Run Node unit tests
         run: npm run test:unit
