@@ -144,6 +144,7 @@ html.dark-mode .uml-reference-intro {
 @media (max-width: 900px) {
   .sebook-practice-hero-group {
     flex-direction: column;
+    align-items: stretch;
   }
 
   .sebook-practice-hero-group > .sebook-practice-hero-side {

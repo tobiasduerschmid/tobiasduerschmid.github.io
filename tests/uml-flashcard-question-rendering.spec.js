@@ -48,11 +48,12 @@ async function setCookie(context, name, value) {
   }]);
 }
 
-async function expectRenderedUml(question) {
-  const umlContainer = question.locator('[data-uml-type="class"]');
-  await expect(umlContainer).toBeVisible();
-  // UMLShared.renderAll injects an <svg> child into each container after rendering.
-  await expect(umlContainer.locator('svg')).toBeVisible({ timeout: 5000 });
+async function expectRenderedUml(question, accessibleName) {
+  const diagram = question.getByRole('img', { name: accessibleName });
+  await expect(diagram).toBeVisible();
+  await expect.poll(() => diagram.evaluate((element) =>
+    element instanceof SVGSVGElement || Boolean(element.querySelector('svg'))
+  )).toBe(true);
 }
 
 test.describe('UML class diagram flashcards - question diagrams render in SEBook', () => {
@@ -93,7 +94,7 @@ test.describe('UML class diagram flashcards - question diagrams render in SEBook
     const card1 = container.locator('.flashcard-card[data-card-id="1"]');
     const question = card1.locator('.flashcard-question');
     await expect(question).toContainText('following symbol');
-    await expectRenderedUml(question);
+    await expectRenderedUml(question, /Department aggregates Professor/i);
   });
 
   test('Card 3 (composition vs aggregation) shows its diagram in the question', async ({ page }) => {
@@ -117,7 +118,10 @@ test.describe('UML class diagram flashcards - question diagrams render in SEBook
     const card3 = container.locator('.flashcard-card[data-card-id="3"]');
     const question = card3.locator('.flashcard-question');
     await expect(question).toContainText('these two relationships');
-    await expectRenderedUml(question);
+    await expectRenderedUml(
+      question,
+      /Building composes Room.*Library aggregates Book/i,
+    );
   });
 });
 
@@ -151,7 +155,10 @@ test.describe('UML class diagram flashcards - question diagrams render in SE Gym
 
       if (text.includes('following symbol') || text.includes('these two relationships')) {
         // The question references a visual — verify it's actually rendered.
-        await expectRenderedUml(question);
+        const accessibleName = text.includes('following symbol')
+          ? /Department aggregates Professor/i
+          : /Building composes Room.*Library aggregates Book/i;
+        await expectRenderedUml(question, accessibleName);
         if (text.includes('following symbol')) sawAggregation = true;
         if (text.includes('these two relationships')) sawComparison = true;
       }

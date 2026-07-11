@@ -55,6 +55,18 @@ const EXCLUDED_FILES = new Set([
   'css/scrolling-nav.css',
 ]);
 
+// Third-party source trees are excluded by repository-relative path rather
+// than directory basename so an authored directory named `vendor` elsewhere
+// remains covered by this ownership audit.
+const EXCLUDED_SUBTREES = ['js/vendor'];
+
+function isInExcludedSubtree(fullPath) {
+  const relativePath = path.relative(ROOT, fullPath).split(path.sep).join('/');
+  return EXCLUDED_SUBTREES.some((subtree) =>
+    relativePath === subtree || relativePath.startsWith(subtree + '/'),
+  );
+}
+
 // .scss files are intentionally omitted: their nesting + `//` line
 // comments confuse a simple regex parser, and they are compiled to .css
 // before reaching the browser. The compiled CSS pairs `:visited`
@@ -72,6 +84,7 @@ function collectSourceFiles(dir) {
       if (EXCLUDED_DIRS.has(entry.name)) continue;
     }
     const full = path.join(dir, entry.name);
+    if (isInExcludedSubtree(full)) continue;
     if (entry.isDirectory()) {
       if (EXCLUDED_DIRS.has(entry.name)) continue;
       out.push(...collectSourceFiles(full));

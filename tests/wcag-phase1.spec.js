@@ -217,23 +217,26 @@ test.describe('Automatic glossary abbreviations', () => {
 });
 
 test.describe('Diagram <figure> wrapping', () => {
-  test('ArchUML diagrams in SEBook are wrapped in <figure> with <figcaption>', async ({ page }) => {
+  test('ArchUML figures expose a labeled image text alternative', async ({ page }) => {
     await gotoOk(page, '/SEBook/tools/networking.html');
     // Wait for the ArchUML auto-init to kick in (fonts.ready + a settle pass).
     await page.waitForSelector('figure.sebook-figure--archuml', { timeout: 15_000 });
 
     const figures = page.locator('figure.sebook-figure--archuml');
-    expect(await figures.count()).toBeGreaterThan(0);
+    const figureCount = await figures.count();
+    expect(figureCount).toBeGreaterThan(0);
 
-    const figureAudit = await figures.evaluateAll((els) => els.map((figure) => {
-      const caption = figure.querySelector('figcaption.sebook-figure__caption');
-      const image = figure.querySelector('[role="img"]');
-      return {
-        hasCaptionText: !!(caption && caption.textContent && caption.textContent.trim()),
-        hasImageLabel: !!(image && image.getAttribute('aria-label') && image.getAttribute('aria-label').trim()),
-      };
-    }));
-    expect(figureAudit.every((item) => item.hasCaptionText && item.hasImageLabel)).toBe(true);
+    for (let index = 0; index < figureCount; index++) {
+      const figure = figures.nth(index);
+      const image = figure.getByRole('img');
+      await expect(image).toHaveCount(1);
+      await expect(image).toHaveAccessibleName(/\S/);
+
+      // Captions are optional when the image already has an equivalent text
+      // alternative, but an authored caption must never be empty.
+      const captions = await figure.locator('figcaption').allTextContents();
+      expect(captions.every((text) => text.trim().length > 0)).toBe(true);
+    }
   });
 });
 

@@ -47,6 +47,8 @@
     this._encoder = new TextEncoder();
     this._decoder = new TextDecoder();
     this._msgListener = null;
+    this._runtimeGeneration = 0;
+    this._pendingStopGeneration = null;
   }
 
   BrowserChannel.prototype.install = function () {
@@ -59,9 +61,10 @@
   };
 
   BrowserChannel.prototype.dispose = function () {
-    if (this.worker) {
-      try { this.worker.terminate(); } catch (e) {}
-      this.worker = null;
+    var worker = this.worker;
+    this.worker = null;
+    if (worker) {
+      try { worker.terminate(); } catch (e) {}
     }
     this.sab = null;
     this.i32 = null;
@@ -74,6 +77,9 @@
       this._fail('Browser debugger requires crossOriginIsolated; reload the page.');
       return;
     }
+    this.dispose();
+    this._runtimeGeneration += 1;
+    this._pendingStopGeneration = null;
     this.sab = new SharedArrayBuffer(SAB_TOTAL_BYTES);
     this.i32 = new Int32Array(this.sab);
     this.u8 = new Uint8Array(this.sab);
@@ -91,10 +97,12 @@
     }
     this.worker = worker;
     worker.addEventListener('message', function (e) {
+      if (self.worker !== worker) return;
       if (!e.data || !e.data.__ttd || !e.data.payload) return;
       self._dispatchMessage(e.data.payload);
     });
     worker.addEventListener('error', function (e) {
+      if (self.worker !== worker) return;
       console.error('[BrowserChannel] worker error:', e.message, e.filename, e.lineno);
       self._fail('Worker error: ' + (e.message || 'unknown'));
     });
@@ -149,12 +157,30 @@
   // ---- Outbound (mirrors PyodideChannel SAB writes) ---------------------
 
   BrowserChannel.prototype.sendCommand = function (cmdCode) {
+    if (cmdCode === 5) {
+      var stoppedGeneration = this._runtimeGeneration;
+      if (this._pendingStopGeneration === stoppedGeneration) return;
+      this._pendingStopGeneration = stoppedGeneration;
+      this.dispose();
+
+      // Stop cannot be cooperative: learner code may be in a synchronous
+      // infinite loop and unable to process either SAB or message commands.
+      // Settle on the next microtask so DebuggerController.sendCommand can
+      // finish publishing its current state before endSession clears it.
+      var self = this;
+      Promise.resolve().then(function () {
+        if (self._pendingStopGeneration !== stoppedGeneration) return;
+        self._pendingStopGeneration = null;
+        if (self._runtimeGeneration !== stoppedGeneration) return;
+        if (self.controller && self.controller.onDebugComplete) {
+          self.controller.onDebugComplete({ exitCode: 0, stopped: true });
+        }
+      });
+      return;
+    }
     if (!this.i32) return;
     Atomics.store(this.i32, SLOT_CMD, cmdCode);
     Atomics.notify(this.i32, SLOT_CMD, 1);
-    if (cmdCode === 5 && this.worker) {
-      try { this.worker.postMessage({ __ttd_control: true, cmd: 5 }); } catch (e) {}
-    }
   };
 
   BrowserChannel.prototype.sendWatches = function (watches) {

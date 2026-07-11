@@ -8,10 +8,10 @@ init-submodules:
 
 install: init-submodules
 	bundle install
-	npm install
+	npm ci
 	npx playwright install
-	brew install cpdf # This needs to update for other OS
-	pipenv install
+	pipenv sync
+	@# Optional PDF CLI tools are checked with platform-specific guidance by `make pdf`.
 
 build:
 	if [ "$$JEKYLL_ENV" = "production" ]; then node scripts/build_se_gym_hero_choice_previews.js; fi
@@ -49,7 +49,9 @@ test-run: test-check
 run-hero-fast:
 	bundle exec jekyll serve --incremental --port $(JEKYLL_PORT)
 
-pdf: build
+pdf:
+	node scripts/pdf-tools.js
+	$(MAKE) build
 	npm run pdf
 	node scripts/merge_pdfs.js CS35L
 	node scripts/merge_pdfs.js CS130

@@ -81,9 +81,53 @@
   // running through the chevron's interior.
   var ARROW_LENGTH = 13;
 
-  // Each GitGraph gets a unique arrow-marker id so multiple graphs on the
-  // same page (e.g. the 7-step print grid) don't collide on element ids.
-  var _instanceCounter = 0;
+  // Each GitGraph gets a document-unique namespace. The state lives on
+  // `window` so evaluating this bundle more than once cannot reset the
+  // allocator, and the DOM check also avoids IDs emitted by build-time SVGs.
+  var GRAPH_ID_STATE_KEY = '__sebookGitGraphIdStateV1';
+  var GRAPH_ID_SUFFIXES = [
+    '', '-desc', '-summary', '-details', '-status',
+    '-tx-hatched', '-tx-crosshatch', '-tx-dotted', '-tx-grid', '-tx-striped'
+  ];
+  var GRAPH_TEXTURES = {
+    hatched: true,
+    crosshatch: true,
+    dotted: true,
+    grid: true,
+    striped: true
+  };
+
+  function _graphIdNamespaceIsInUse(baseId) {
+    if (typeof document === 'undefined' || !document.getElementById) return false;
+    for (var i = 0; i < GRAPH_ID_SUFFIXES.length; i++) {
+      if (document.getElementById(baseId + GRAPH_ID_SUFFIXES[i])) return true;
+    }
+    return false;
+  }
+
+  function _gitGraphIdState() {
+    var host = typeof window !== 'undefined' ? window : {};
+    var state = host[GRAPH_ID_STATE_KEY];
+    if (!state || typeof state.nextId !== 'number' || !isFinite(state.nextId) || state.nextId < 0) {
+      state = { nextId: 0 };
+      host[GRAPH_ID_STATE_KEY] = state;
+    }
+    state.nextId = Math.floor(state.nextId);
+    return state;
+  }
+
+  function _allocateGraphIdNamespace() {
+    var state = _gitGraphIdState();
+    var baseId;
+    do {
+      // Reset safely before integer precision can stop advancing the counter;
+      // the DOM collision check still guarantees a free namespace.
+      if (state.nextId >= Number.MAX_SAFE_INTEGER - 1) state.nextId = 0;
+      baseId = 'git-graph-arrow-' + (++state.nextId);
+    } while (_graphIdNamespaceIsInUse(baseId));
+    return baseId;
+  }
+
   var _liveInstances = [];
   var _themeObserver = null;
   function _syncStaticBranchLabelFills() {
@@ -588,7 +632,7 @@
     this.svg = null;
     this._data = null;
     this._animating = false;
-    this._arrowId = 'git-graph-arrow-' + (++_instanceCounter);
+    this._arrowId = _allocateGraphIdNamespace();
     // Register the live instance so the dark-mode observer can ask each one to
     // redraw when the user toggles the theme — we bake colours into SVG attrs
     // at render time, so nothing else picks up the new `--git-graph-bg` value.
@@ -1365,24 +1409,32 @@
   };
 
   GitGraph.prototype._textureDefsMarkup = function () {
+    var texturePrefix = this._arrowId + '-tx-';
     return '<defs>' +
-      '<pattern id="git-tx-hatched" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">' +
+      '<pattern id="' + texturePrefix + 'hatched" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">' +
         '<line x1="0" y1="0" x2="0" y2="8" stroke="#fff" stroke-width="1.4" stroke-opacity="0.35"/>' +
       '</pattern>' +
-      '<pattern id="git-tx-crosshatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">' +
+      '<pattern id="' + texturePrefix + 'crosshatch" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">' +
         '<line x1="0" y1="0" x2="0" y2="8" stroke="#fff" stroke-width="1" stroke-opacity="0.35"/>' +
         '<line x1="0" y1="0" x2="8" y2="0" stroke="#fff" stroke-width="1" stroke-opacity="0.35"/>' +
       '</pattern>' +
-      '<pattern id="git-tx-dotted" width="6" height="6" patternUnits="userSpaceOnUse">' +
+      '<pattern id="' + texturePrefix + 'dotted" width="6" height="6" patternUnits="userSpaceOnUse">' +
         '<circle cx="3" cy="3" r="1.1" fill="#fff" fill-opacity="0.4"/>' +
       '</pattern>' +
-      '<pattern id="git-tx-grid" width="9" height="9" patternUnits="userSpaceOnUse">' +
+      '<pattern id="' + texturePrefix + 'grid" width="9" height="9" patternUnits="userSpaceOnUse">' +
         '<path d="M0 0 L9 0 M0 0 L0 9" stroke="#fff" stroke-width="0.7" stroke-opacity="0.35" fill="none"/>' +
       '</pattern>' +
-      '<pattern id="git-tx-striped" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(90)">' +
+      '<pattern id="' + texturePrefix + 'striped" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(90)">' +
         '<rect width="4" height="10" fill="#fff" fill-opacity="0.25"/>' +
       '</pattern>' +
       '</defs>';
+  };
+
+  GitGraph.prototype._texturePatternId = function (texture) {
+    var normalized = String(texture || '').toLowerCase();
+    return Object.prototype.hasOwnProperty.call(GRAPH_TEXTURES, normalized)
+      ? this._arrowId + '-tx-' + normalized
+      : '';
   };
 
   GitGraph.prototype._appendArrowDefs = function (svgRoot) {
@@ -2723,9 +2775,11 @@
         'fill="' + color + '" stroke="' + secondary + '" stroke-width="2.5" class="git-graph-node" data-layout-id="' + this._escapeXml(cm.hash) + '"/>';
 
       // Texture overlay
-      if (cm.texture) {
+      var texturePatternId = this._texturePatternId(cm.texture);
+      if (texturePatternId) {
         svg += '<circle cx="' + cx + '" cy="' + cy + '" r="' + NODE_RADIUS + '" ' +
-          'fill="url(#git-tx-' + cm.texture + ')" stroke="none" data-layout-id="' + this._escapeXml(cm.hash) + '"/>';
+          'fill="url(#' + texturePatternId + ')" stroke="none" data-layout-id="' +
+          this._escapeXml(cm.hash) + '"/>';
       }
 
       var hd = _hashDisplay(cm.shortHash);

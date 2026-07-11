@@ -10,6 +10,16 @@ const {
 const TUTORIAL_URL = '/SEBook/tools/react-tutorial.html';
 const PLAYWRIGHT_TUTORIAL_URL = '/SEBook/tools/playwright-tutorial.html';
 const PREVIEW_SELECTOR = 'iframe[title="Live preview"]';
+const WORKING_TODO_SPEC = [
+  "import { test, expect } from '@playwright/test';",
+  '',
+  "test('user can add a todo', async ({ page }) => {",
+  "  await page.goto('/');",
+  "  await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');",
+  "  await page.getByRole('button', { name: /add todo/i }).click();",
+  "  await expect(page.getByRole('listitem')).toHaveText('Milk');",
+  '});',
+].join('\n');
 
 async function openReactTutorial(page) {
   await page.goto(TUTORIAL_URL);
@@ -174,14 +184,28 @@ test.describe('React preview isolation', () => {
       "test('user can add a todo', async ({ page }) => {",
       "  let hostDocumentValue = 'blocked';",
       "  let hostStorageValue = 'blocked';",
+      "  let indexedDbAccess = 'blocked';",
+      "  let cacheAccess = 'blocked';",
       '  try {',
       '    hostDocumentValue = parent.document.documentElement.dataset.playwrightRunnerSecret;',
       '  } catch (error) {}',
       '  try {',
       "    hostStorageValue = localStorage.getItem('playwright-runner-secret');",
       '  } catch (error) {}',
+      '  try {',
+      "    indexedDB.open('playwright-runner-secret');",
+      "    indexedDbAccess = 'allowed';",
+      '  } catch (error) {}',
+      '  try {',
+      "    if (typeof caches !== 'undefined') {",
+      "      await caches.open('playwright-runner-secret');",
+      "      cacheAccess = 'allowed';",
+      '    }',
+      '  } catch (error) {}',
       "  expect(hostDocumentValue).toBe('blocked');",
       "  expect(hostStorageValue).toBe('blocked');",
+      "  expect(indexedDbAccess).toBe('blocked');",
+      "  expect(cacheAccess).toBe('blocked');",
       '',
       "  await page.goto('/');",
       "  await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');",
@@ -193,44 +217,64 @@ test.describe('React preview isolation', () => {
     await page.getByRole('button', { name: /test my work/i }).click();
 
     await expect(page.getByText('All 3 tests passed!')).toBeVisible({ timeout: 20_000 });
-    await expect(page.getByTitle('Isolated Playwright test runner')).toHaveCount(0);
     await expect(page.locator('html')).toHaveAttribute('data-playwright-runner-secret', 'host-only');
     await expect.poll(() => page.evaluate(() =>
       localStorage.getItem('playwright-runner-secret'))).toBe('host-only');
   });
 
-  test('the isolated Playwright frame is removed when its bootstrap cannot load', async ({ page }) => {
+  test('synchronous learner Playwright loops are terminated and later runs recover', async ({ page }) => {
+    await openPlaywrightTutorial(page);
+    await setTutorialFileContent(page, 'tests/todo.spec.js', [
+      "import { test, expect } from '@playwright/test';",
+      '',
+      'while (true) {}',
+      '',
+      "test('user can add a todo', async ({ page }) => {",
+      "  await page.goto('/');",
+      "  await page.getByRole('textbox', { name: /todo item/i }).fill('Milk');",
+      "  await page.getByRole('button', { name: /add todo/i }).click();",
+      "  await expect(page.getByRole('listitem')).toHaveText('Milk');",
+      '});',
+    ].join('\n'));
+
+    const testButton = page.getByRole('button', { name: /test my work/i });
+    await testButton.click();
+    await expect(page.getByText(/2\s*\/\s*3 tests passed/)).toBeVisible({ timeout: 20_000 });
+    await expect(testButton).toBeEnabled();
+
+    await setTutorialFileContent(page, 'tests/todo.spec.js', WORKING_TODO_SPEC);
+    await testButton.click();
+    await expect(page.getByText('All 3 tests passed!')).toBeVisible({ timeout: 20_000 });
+  });
+
+  test('a stalled worker-source fetch is aborted and does not poison later runs', async ({ page }) => {
     await openPlaywrightTutorial(page);
     let blockedBootstrap = false;
-    await page.route('**/js/playwright-compat/runner.js', async route => {
+    let releaseBootstrap;
+    const stalledBootstrap = new Promise(resolve => { releaseBootstrap = resolve; });
+    const runnerPattern = '**/js/playwright-compat/runner.js';
+    const stallRunnerSource = async route => {
       blockedBootstrap = true;
-      await route.abort('failed');
-    });
-
-    const outcome = await page.evaluate(async () => {
-      const previewChannel = new MessageChannel();
+      await stalledBootstrap;
       try {
-        await window.SEBookPlaywrightCompat.run({
-          port: previewChannel.port1,
-          files: {},
-          testFiles: [],
-          resetBetweenTests: false,
-        });
-        return { status: 'resolved', message: '' };
+        await route.continue();
       } catch (error) {
-        return { status: 'rejected', message: String(error && error.message || error) };
-      } finally {
-        previewChannel.port1.close();
-        previewChannel.port2.close();
+        // The runner's bootstrap watchdog aborts this request before the test
+        // releases it. Continuing an already-aborted route is expected to fail.
       }
-    });
+    };
+    await page.route(runnerPattern, stallRunnerSource);
 
+    const testButton = page.getByRole('button', { name: /test my work/i });
+    await testButton.click();
+    await expect(page.getByText(/2\s*\/\s*3 tests passed/)).toBeVisible({ timeout: 20_000 });
     expect(blockedBootstrap).toBe(true);
-    expect(outcome).toEqual({
-      status: 'rejected',
-      message: 'Timed out while starting the isolated Playwright runner',
-    });
-    await expect(page.getByTitle('Isolated Playwright test runner')).toHaveCount(0);
+
+    releaseBootstrap();
+    await page.unroute(runnerPattern, stallRunnerSource);
+    await expect(testButton).toBeEnabled();
+    await testButton.click();
+    await expect(page.getByText('All 3 tests passed!')).toBeVisible({ timeout: 20_000 });
   });
 
   test('the preview popout also gives rendered apps an opaque origin', async ({ page }) => {

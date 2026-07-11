@@ -5,6 +5,14 @@ const requestedJekyllPort = process.env.JEKYLL_PORT || '4000';
 const jekyllPort = /^\d+$/.test(requestedJekyllPort) ? requestedJekyllPort : '4000';
 const jekyllHost = '127.0.0.1';
 const localChromeExecutable = process.env.PLAYWRIGHT_CHROME_EXECUTABLE;
+const defaultWebServerTimeoutMs = 10 * 60 * 1000;
+const requestedWebServerTimeoutMs = process.env.PLAYWRIGHT_WEB_SERVER_TIMEOUT_MS;
+const parsedWebServerTimeoutMs = Number(requestedWebServerTimeoutMs);
+const webServerTimeoutMs = /^\d+$/.test(requestedWebServerTimeoutMs || '')
+  && Number.isSafeInteger(parsedWebServerTimeoutMs)
+  && parsedWebServerTimeoutMs > 0
+  ? parsedWebServerTimeoutMs
+  : defaultWebServerTimeoutMs;
 
 module.exports = defineConfig({
 
@@ -21,7 +29,9 @@ module.exports = defineConfig({
     reuseExistingServer: !process.env.CI,
 
     // Optional: How long to wait for the server to start before timing out (in milliseconds)
-    timeout: 300 * 1000,
+    // A clean build of this content-heavy site can exceed five minutes on CI.
+    // Keep a finite startup bound while allowing slower runners to override it.
+    timeout: webServerTimeoutMs,
   },
 
   testDir: './tests',

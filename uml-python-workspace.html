@@ -210,6 +210,9 @@ permalink: /uml-python-workspace.html
             tutorial._refreshUMLDiagram();
           }
           if (!workspaceEl.querySelector('.tvm-error')) setStatus('Ready');
+        }).catch(function (error) {
+          setStatus('Failed to start generated Python tutorial: ' +
+            String(error && error.message || error));
         });
       }
 

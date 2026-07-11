@@ -12,10 +12,10 @@ This site exposes a complete, user-managed inventory of every cookie and `localS
 
 The privacy/cookie notice that appears at the bottom of every page links to the storage inventory and tells users:
 
-> "This site stores a few preferences and your progress locally in your browser
-> (cookies and localStorage) so it works the way you left it. **Nothing is sent
-> to or stored on any external server**, and this site does not sell, share, or
-> disclose any user data to third parties."
+> "Saved preferences and progress stay in your browser. This site has no
+> analytics or advertising trackers. StackBlitz processes workspace files and
+> commands for WebContainer-backed Node.js tutorials; do not enter secrets or
+> confidential code there."
 
 That promise only holds if **every** persisted entry is documented and deletable. If you introduce, rename, or remove a key in code without updating `cookies.html`, the user is silently misled and cannot delete the new entry. If you introduce, rename, or remove a user-facing setting without updating `settings.html`, users lose the central place where preferences are discoverable and controllable. **This is non-negotiable for this project.** Treat `cookies.html` as a privacy contract and `settings.html` as the preferences contract under version control, not as afterthought documentation.
 
@@ -150,7 +150,8 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - File System Access and WebSQL — **not used**
 - Service Worker — `coi-serviceworker.js` is registered for COOP/COEP header injection on isolated tutorial workspaces and for the v86 VM asset cache; it stores no per-user data
 - `BroadcastChannel` — channel names `ttsync-<path>-<session>`, `uml-sync-<path>`, and `v86-inbrowser-<n>` (v86 VM networking); messages are in-memory only
-- Cross-origin cookies — third-party iframes (e.g. YouTube embeds) are out of scope
+- Third-party processing — the local `@webcontainer/api` wrapper opens StackBlitz's versioned cross-origin headless runtime and passes it WebContainer tutorial workspace files and commands; this boundary and StackBlitz's privacy policy are disclosed on `/cookies/` and in the site-wide notice
+- Cross-origin storage/cookies — third-party frames (including YouTube embeds and StackBlitz's WebContainer runtime) may use storage scoped to their own origins; `/cookies/` directs users to browser site-data controls because this origin cannot inspect or delete it
 
 **User-facing settings currently represented in `/settings/`:**
 - Dark mode: `dark-mode`

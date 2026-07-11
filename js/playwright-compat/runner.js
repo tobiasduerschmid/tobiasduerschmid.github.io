@@ -3,18 +3,20 @@
  *
  * This is a teaching runner for browser-hosted tutorials. Students write
  * Playwright-shaped spec files that can be copied into a real project, while
- * this runner drives the tutorial preview iframe with a focused subset of the
- * Playwright API. Preview commands travel through the React assertion
- * broker's private MessageChannel so app code cannot inspect or forge them.
+ * this runner evaluates those specs in a terminable opaque-origin worker and
+ * drives the tutorial preview iframe with a focused subset of the Playwright
+ * API. Preview commands travel through the React assertion broker's private
+ * MessageChannel so app code cannot inspect or forge them.
  */
 (function (global) {
   'use strict';
 
-  var runnerScript = global.document && global.document.currentScript;
   var NativePromise = global.Promise;
   var NativeError = global.Error;
   var NativeString = global.String;
   var NativeMessageChannel = global.MessageChannel;
+  var NativeWorker = global.Worker;
+  var NativeAbortController = global.AbortController;
   var scheduleTimeout = global.setTimeout.bind(global);
   var cancelTimeout = global.clearTimeout.bind(global);
   var call = Function.prototype.call;
@@ -26,10 +28,12 @@
   var startPort = call.bind(MessagePort.prototype.start);
   var closePort = call.bind(MessagePort.prototype.close);
   var sliceString = call.bind(String.prototype.slice);
-  var ISOLATED_READY = 'sebook-playwright-isolated-ready';
-  var ISOLATED_INIT = 'sebook-playwright-isolated-init';
-  var ISOLATED_BOOT_TIMEOUT_MS = 10000;
-  var ISOLATED_RESET_TIMEOUT_MS = 30000;
+  var WORKER_SOURCE_URL = '/js/playwright-compat/runner.js';
+  var WORKER_INIT = 'sebook-playwright-worker-init';
+  var WORKER_BOOT_TIMEOUT_MS = 10000;
+  var WORKER_WATCHDOG_GRACE_MS = 500;
+  var PREVIEW_RESET_TIMEOUT_MS = 30000;
+  var cachedWorkerSource = null;
   var resetSequence = 0;
 
   function delay(ms) {
@@ -170,6 +174,16 @@
           commandType: type,
           payload: payload || {},
         });
+      });
+    };
+  }
+
+  function WorkerWatchdog(port) {
+    this.arm = function (timeout, label) {
+      postPortMessage(port, {
+        type: 'watchdog-arm',
+        timeout: timeout,
+        label: label,
       });
     };
   }
@@ -505,6 +519,8 @@
     this.previewFrame = options.previewFrame;
     this.port = options.port;
     this.requestType = options.requestType || 'playwright';
+    this.watchdog = options.watchdog || null;
+    this.resetTimeout = options.resetTimeout || PREVIEW_RESET_TIMEOUT_MS;
     this.files = options.files || {};
     this.testFiles = options.testFiles || [];
     this.timeout = options.timeout || 5000;
@@ -543,13 +559,20 @@
 
   CompatRunner.prototype._runOne = function (testCase) {
     var self = this;
-    if (testCase.skip) return NativePromise.resolve(true);
+    if (testCase.skip) {
+      if (this.watchdog) this.watchdog.arm(this.timeout, 'Playwright test scheduling');
+      return NativePromise.resolve(true);
+    }
     var broker;
     var work = NativePromise.resolve();
     if (this.resetBetweenTests && this.rebuildPreview) {
+      if (this.watchdog) this.watchdog.arm(this.resetTimeout, 'React preview reset');
       work = work.then(function () { return self.rebuildPreview(); });
+    } else if (this.watchdog) {
+      this.watchdog.arm(this.timeout, 'Learner Playwright test');
     }
     return work.then(function (rebuiltPreview) {
+      if (self.watchdog) self.watchdog.arm(self.timeout, 'Learner Playwright test');
       if (rebuiltPreview && rebuiltPreview.frame) {
         self.previewFrame = rebuiltPreview.frame;
         if (rebuiltPreview.port) self.port = rebuiltPreview.port;
@@ -586,6 +609,7 @@
   };
 
   CompatRunner.prototype.run = function () {
+    if (this.watchdog) this.watchdog.arm(this.timeout, 'Learner Playwright spec loading');
     var loadError = this.evaluateSpecs();
     if (loadError) {
       console.warn('[PlaywrightCompat] Failed to load spec:', loadError.error);
@@ -917,7 +941,7 @@
       var timer = scheduleTimeout(function () {
         removePortEventListener(port, 'message', handleResetResult);
         reject(new NativeError('Timed out while rebuilding the React preview'));
-      }, timeout || ISOLATED_RESET_TIMEOUT_MS);
+      }, timeout || PREVIEW_RESET_TIMEOUT_MS);
 
       function handleResetResult(event) {
         var message = event.data;
@@ -933,13 +957,14 @@
     });
   }
 
-  function runInsideSandbox(message, sessionPort) {
+  function runInsideWorker(message, sessionPort) {
     var execution;
     try {
       var timeout = Number(message.timeout) || 5000;
       var resetTimeout = timeout * 3;
-      if (resetTimeout < ISOLATED_RESET_TIMEOUT_MS) resetTimeout = ISOLATED_RESET_TIMEOUT_MS;
+      if (resetTimeout < PREVIEW_RESET_TIMEOUT_MS) resetTimeout = PREVIEW_RESET_TIMEOUT_MS;
       startPort(sessionPort);
+      postPortMessage(sessionPort, { type: 'ready' });
 
       var runner = new CompatRunner({
         files: message.files || {},
@@ -948,6 +973,8 @@
         resetBetweenTests: message.resetBetweenTests !== false,
         port: sessionPort,
         requestType: 'preview-command',
+        watchdog: new WorkerWatchdog(sessionPort),
+        resetTimeout: resetTimeout,
         rebuildPreview: function () {
           return requestPreviewReset(sessionPort, resetTimeout);
         },
@@ -965,40 +992,52 @@
     });
   }
 
-  function listenForIsolatedRun() {
-    if (global.parent === global) return;
-
+  function listenForWorkerRun() {
     function handleInit(event) {
       var message = event.data;
       var sessionPort = event.ports && event.ports[0];
-      if (event.source !== global.parent || !message || message.type !== ISOLATED_INIT || !sessionPort) return;
+      if (!message || message.type !== WORKER_INIT || !sessionPort) return;
       removeWindowEventListener('message', handleInit);
-
-      // The public bootstrap API must disappear before any learner-authored
-      // source is evaluated. The transferred port remains closure-only.
-      try { delete global.SEBookPlaywrightCompat; } catch (deleteError) { /* non-fatal */ }
-      runInsideSandbox(message, sessionPort);
+      runInsideWorker(message, sessionPort);
     }
 
     addWindowEventListener('message', handleInit);
-    global.parent.postMessage({ type: ISOLATED_READY }, '*');
   }
 
-  function createIsolatedFrame() {
-    var frame = global.document.createElement('iframe');
-    frame.hidden = true;
-    frame.title = 'Isolated Playwright test runner';
-    frame.tabIndex = -1;
-    frame.setAttribute('aria-hidden', 'true');
-    frame.setAttribute('sandbox', 'allow-scripts');
-    frame.srcdoc = [
-      '<!doctype html><html lang="en"><head>',
-      '<meta charset="utf-8"><title>Isolated Playwright test runner</title>',
-      '</head><body>',
-      '<script src="/js/playwright-compat/runner.js" data-sebook-isolated-runner><\/script>',
-      '</body></html>',
-    ].join('');
-    return frame;
+  function loadWorkerSource(signal) {
+    if (cachedWorkerSource) return NativePromise.resolve(cachedWorkerSource);
+
+    // Do not cache an in-flight request. A browser/network stack can leave a
+    // fetch pending indefinitely; sharing that Promise would poison every
+    // later test run even after its own bootstrap watchdog fired. Each run
+    // owns and can abort its fetch until one request completes successfully.
+    var requestOptions = { credentials: 'same-origin' };
+    if (signal) requestOptions.signal = signal;
+    return global.fetch(WORKER_SOURCE_URL, requestOptions).then(function (response) {
+      if (!response.ok) {
+        throw new NativeError('HTTP ' + response.status + ' while loading ' + WORKER_SOURCE_URL);
+      }
+      return response.text();
+    }).then(function (source) {
+      if (!source) throw new NativeError('Worker source was empty');
+      cachedWorkerSource = source;
+      return source;
+    }).catch(function (error) {
+      throw new NativeError('Could not load isolated Playwright worker: ' + errorMessage(error));
+    });
+  }
+
+  function createOpaqueWorker(source) {
+    if (typeof NativeWorker !== 'function') {
+      throw new NativeError('This browser does not support Web Workers');
+    }
+    // The HTML Standard assigns data-URL workers a unique opaque origin. That
+    // keeps learner specs away from the tutorial's DOM and origin storage,
+    // while Worker#terminate gives the host a hard stop for synchronous loops.
+    var workerUrl = 'data:text/javascript;charset=utf-8,' + encodeURIComponent(
+      source + '\n//# sourceURL=' + WORKER_SOURCE_URL
+    );
+    return new NativeWorker(workerUrl, { name: 'SEBook Playwright learner specs' });
   }
 
   function run(options) {
@@ -1017,15 +1056,19 @@
         return;
       }
 
-      var isolatedFrame = createIsolatedFrame();
+      var worker = null;
       var sessionPort = null;
       var previewBroker = null;
       var previewFrame = options.previewFrame || null;
       var previewPort = options.port;
       var bootTimer = null;
+      var watchdogTimer = null;
+      var sourceAbortController = typeof NativeAbortController === 'function'
+        ? new NativeAbortController()
+        : null;
       var settled = false;
 
-      function sendToSandbox(payload) {
+      function sendToWorker(payload) {
         if (settled || !sessionPort) return;
         postPortMessage(sessionPort, payload);
       }
@@ -1048,15 +1091,26 @@
       }
 
       function cleanup() {
-        removeWindowEventListener('message', handleReady);
         if (bootTimer) cancelTimeout(bootTimer);
+        if (watchdogTimer) cancelTimeout(watchdogTimer);
+        bootTimer = null;
+        watchdogTimer = null;
+        if (sourceAbortController) {
+          try { sourceAbortController.abort(); } catch (abortError) { /* already settled */ }
+          sourceAbortController = null;
+        }
         disposePreviewBroker();
         if (sessionPort) {
           removePortEventListener(sessionPort, 'message', handleSessionMessage);
           try { closePort(sessionPort); } catch (closeError) { /* already closed */ }
           sessionPort = null;
         }
-        if (isolatedFrame.parentNode) isolatedFrame.parentNode.removeChild(isolatedFrame);
+        if (worker) {
+          worker.removeEventListener('error', handleWorkerError);
+          worker.removeEventListener('messageerror', handleWorkerMessageError);
+          worker.terminate();
+          worker = null;
+        }
       }
 
       function finishWithError(error) {
@@ -1075,7 +1129,7 @@
       }
 
       function replyToPreviewCommand(message, ok, value, error) {
-        sendToSandbox({
+        sendToWorker({
           type: 'playwright-result',
           id: message.id,
           ok: ok,
@@ -1103,7 +1157,7 @@
 
       function handleResetRequest(message) {
         if (typeof options.rebuildPreview !== 'function') {
-          sendToSandbox({
+          sendToWorker({
             type: 'reset-result',
             id: message.id,
             ok: false,
@@ -1116,7 +1170,7 @@
         try {
           rebuild = options.rebuildPreview();
         } catch (error) {
-          sendToSandbox({ type: 'reset-result', id: message.id, ok: false, error: errorMessage(error) });
+          sendToWorker({ type: 'reset-result', id: message.id, ok: false, error: errorMessage(error) });
           return;
         }
 
@@ -1127,16 +1181,37 @@
           disposePreviewBroker();
           previewFrame = rebuiltPreview.frame || previewFrame;
           previewPort = rebuiltPreview.port;
-          sendToSandbox({ type: 'reset-result', id: message.id, ok: true });
+          sendToWorker({ type: 'reset-result', id: message.id, ok: true });
         }).catch(function (error) {
-          sendToSandbox({ type: 'reset-result', id: message.id, ok: false, error: errorMessage(error) });
+          sendToWorker({ type: 'reset-result', id: message.id, ok: false, error: errorMessage(error) });
         });
+      }
+
+      function armWatchdog(message) {
+        if (watchdogTimer) cancelTimeout(watchdogTimer);
+        var timeout = Number(message.timeout);
+        if (!(timeout > 0) || !global.isFinite(timeout)) {
+          timeout = Number(options.timeout) || 5000;
+        }
+        var label = message.label || 'Learner Playwright code';
+        watchdogTimer = scheduleTimeout(function () {
+          finishWithError(new NativeError(
+            label + ' timed out after ' + timeout + 'ms and was terminated'
+          ));
+        }, timeout + WORKER_WATCHDOG_GRACE_MS);
       }
 
       function handleSessionMessage(event) {
         var message = event.data;
         if (!message || typeof message.type !== 'string') return;
-        if (message.type === 'preview-command') {
+        if (message.type === 'ready') {
+          if (bootTimer) {
+            cancelTimeout(bootTimer);
+            bootTimer = null;
+          }
+        } else if (message.type === 'watchdog-arm') {
+          armWatchdog(message);
+        } else if (message.type === 'preview-command') {
           handlePreviewCommand(message);
         } else if (message.type === 'reset-preview') {
           handleResetRequest(message);
@@ -1147,46 +1222,60 @@
         }
       }
 
-      function handleReady(event) {
-        if (event.source !== isolatedFrame.contentWindow || !event.data || event.data.type !== ISOLATED_READY) return;
-        removeWindowEventListener('message', handleReady);
-        if (bootTimer) {
-          cancelTimeout(bootTimer);
-          bootTimer = null;
-        }
+      function handleWorkerError(event) {
+        if (event && typeof event.preventDefault === 'function') event.preventDefault();
+        finishWithError(new NativeError(
+          'Isolated Playwright worker failed: ' + (event && event.message || 'unknown error')
+        ));
+      }
 
+      function handleWorkerMessageError() {
+        finishWithError(new NativeError('Isolated Playwright worker sent an unreadable message'));
+      }
+
+      function startWorker(source) {
+        if (settled) return;
+        var bootstrapPort = null;
         try {
+          worker = createOpaqueWorker(source);
+          worker.addEventListener('error', handleWorkerError);
+          worker.addEventListener('messageerror', handleWorkerMessageError);
           var channel = new NativeMessageChannel();
           sessionPort = channel.port1;
+          bootstrapPort = channel.port2;
           addPortEventListener(sessionPort, 'message', handleSessionMessage);
           startPort(sessionPort);
-          isolatedFrame.contentWindow.postMessage({
-            type: ISOLATED_INIT,
+          worker.postMessage({
+            type: WORKER_INIT,
             files: options.files || {},
             testFiles: options.testFiles || [],
             timeout: Number(options.timeout) || 5000,
             resetBetweenTests: options.resetBetweenTests !== false,
-          }, '*', [channel.port2]);
+          }, [bootstrapPort]);
+          bootstrapPort = null;
         } catch (error) {
+          if (bootstrapPort) {
+            try { closePort(bootstrapPort); } catch (closeError) { /* already closed */ }
+          }
           finishWithError(error);
         }
       }
 
-      addWindowEventListener('message', handleReady);
       bootTimer = scheduleTimeout(function () {
-        finishWithError(new NativeError('Timed out while starting the isolated Playwright runner'));
-      }, ISOLATED_BOOT_TIMEOUT_MS);
-      global.document.body.appendChild(isolatedFrame);
+        finishWithError(new NativeError('Timed out while starting the isolated Playwright worker'));
+      }, WORKER_BOOT_TIMEOUT_MS);
+      loadWorkerSource(sourceAbortController && sourceAbortController.signal)
+        .then(startWorker)
+        .catch(finishWithError);
     });
   }
 
-  global.SEBookPlaywrightCompat = {
-    run: run,
-    agentScript: agentScript,
-    listenForIsolatedRun: listenForIsolatedRun,
-  };
-
-  if (runnerScript && runnerScript.hasAttribute('data-sebook-isolated-runner')) {
-    listenForIsolatedRun();
+  if (typeof global.document === 'undefined' && typeof global.importScripts === 'function') {
+    listenForWorkerRun();
+  } else {
+    global.SEBookPlaywrightCompat = {
+      run: run,
+      agentScript: agentScript,
+    };
   }
-})(window);
+})(typeof window !== 'undefined' ? window : self);

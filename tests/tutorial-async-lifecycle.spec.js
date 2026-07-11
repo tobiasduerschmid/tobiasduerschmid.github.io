@@ -170,6 +170,77 @@ test.describe('tutorial asynchronous lifecycle', () => {
     expect(events).toContain('solution-resolved');
   });
 
+  test('rapid navigation keeps the immediate first UI switch and prepares only the latest queued step', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    await page.evaluate(() => {
+      const events = [];
+      const setupResolvers = {};
+      const tutorial = window.__installTutorialHarness([
+        { title: 'Zero', setup_commands: ['prepare-zero'], files: [{ path: 'zero.js', content: '0' }] },
+        { title: 'One', setup_commands: ['prepare-one'], files: [{ path: 'one.js', content: '1' }] },
+        { title: 'Two', setup_commands: ['prepare-two'], files: [{ path: 'two.js', content: '2' }] },
+      ], { backend: 'v86', requireTests: false });
+      tutorial._stepsUnlocked = new Set([0, 1, 2]);
+      tutorial._syncFileToBackend = (filename) => {
+        events.push(`sync:${filename}`);
+        return Promise.resolve();
+      };
+      tutorial._runSilent = (command) => {
+        const match = command.match(/prepare-(zero|one|two)/);
+        if (!match) return Promise.resolve();
+        events.push(`setup:${match[1]}`);
+        return new Promise((resolve) => { setupResolvers[match[1]] = resolve; });
+      };
+
+      const first = tutorial.loadStep(0);
+      const immediate = {
+        currentStep: tutorial.currentStep,
+        heading: tutorial.stepContentEl.querySelector('h2').textContent,
+      };
+      const intermediate = tutorial.loadStep(1);
+      const latest = tutorial.loadStep(2);
+      window.__rapidNavigation = {
+        tutorial,
+        events,
+        setupResolvers,
+        immediate,
+        promises: [first, intermediate, latest],
+      };
+    });
+
+    expect(await page.evaluate(() => window.__rapidNavigation.immediate)).toEqual({
+      currentStep: 0,
+      heading: 'Zero',
+    });
+    await expect.poll(() => page.evaluate(() => window.__rapidNavigation.events.slice())).toEqual([
+      'sync:zero.js',
+      'setup:zero',
+    ]);
+
+    await page.evaluate(() => window.__rapidNavigation.setupResolvers.zero());
+    await expect.poll(() => page.evaluate(() => window.__rapidNavigation.events.slice())).toEqual([
+      'sync:zero.js',
+      'setup:zero',
+      'sync:two.js',
+      'setup:two',
+    ]);
+    await page.evaluate(() => window.__rapidNavigation.setupResolvers.two());
+
+    const state = await page.evaluate(async () => ({
+      results: await Promise.all(window.__rapidNavigation.promises),
+      currentStep: window.__rapidNavigation.tutorial.currentStep,
+      visited: Array.from(window.__rapidNavigation.tutorial._stepsVisited),
+      events: window.__rapidNavigation.events.slice(),
+    }));
+    expect(state).toEqual({
+      results: [false, false, true],
+      currentStep: 2,
+      visited: [2],
+      events: ['sync:zero.js', 'setup:zero', 'sync:two.js', 'setup:two'],
+    });
+  });
+
   test('failed first-visit setup is neither persisted nor treated as visited before retry', async ({ page }) => {
     await loadTutorialRuntime(page);
 
@@ -302,6 +373,342 @@ test.describe('tutorial asynchronous lifecycle', () => {
     });
   });
 
+  test('start resolves only after the initial step is ready', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    await page.evaluate(() => {
+      localStorage.clear();
+      const events = [];
+      const tutorial = window.__installTutorialHarness([{
+        title: 'Initial Step',
+        instructionsHTML: '',
+      }], {
+        backend: 'browser',
+        autosaveType: 'none',
+        requireTests: false,
+      });
+      tutorial.booted = false;
+
+      tutorial._buildUI = () => {};
+      tutorial._showLoading = () => {};
+      tutorial._hideLoading = () => { events.push('loading-hidden'); };
+      tutorial._loadDependencies = () => Promise.resolve();
+      tutorial._initEditor = () => Promise.resolve();
+      tutorial._initBackend = () => Promise.resolve();
+      tutorial._resolveStepFromHash = () => -1;
+      tutorial._loadSavedProgress = () => null;
+      tutorial._refreshPrompt = () => {
+        events.push('prompt-refreshed');
+        return Promise.resolve();
+      };
+
+      let releaseStep;
+      tutorial.loadStep = (index) => {
+        events.push(`step-requested:${index}`);
+        return new Promise((resolve) => {
+          releaseStep = () => {
+            events.push('step-ready');
+            resolve();
+          };
+        });
+      };
+
+      let startResolved = false;
+      const startPromise = tutorial.start().then(() => {
+        startResolved = true;
+        events.push('start-resolved');
+      });
+      window.__initialStart = {
+        events,
+        get startResolved() { return startResolved; },
+        releaseStep: () => releaseStep(),
+        startPromise,
+      };
+    });
+
+    await expect.poll(() => page.evaluate(() => ({
+      events: window.__initialStart.events.slice(),
+      startResolved: window.__initialStart.startResolved,
+    }))).toEqual({
+      events: ['step-requested:0'],
+      startResolved: false,
+    });
+
+    const state = await page.evaluate(async () => {
+      window.__initialStart.releaseStep();
+      await window.__initialStart.startPromise;
+      return {
+        events: window.__initialStart.events.slice(),
+        startResolved: window.__initialStart.startResolved,
+      };
+    });
+    expect(state).toEqual({
+      events: [
+        'step-requested:0',
+        'step-ready',
+        'prompt-refreshed',
+        'loading-hidden',
+        'start-resolved',
+      ],
+      startResolved: true,
+    });
+  });
+
+  for (const autosaveType of ['files', 'commands-and-files']) {
+    test(`start waits for ${autosaveType} progress restoration`, async ({ page }) => {
+      await loadTutorialRuntime(page);
+
+      await page.evaluate((restoreType) => {
+        localStorage.clear();
+        localStorage.setItem('tutorial-autosave', 'true');
+        const events = [];
+        const tutorial = window.__installTutorialHarness([{
+          title: 'Saved Step',
+          instructionsHTML: '',
+        }], {
+          backend: 'browser',
+          autosaveType: restoreType,
+          requireTests: false,
+        });
+        tutorial.booted = false;
+
+        tutorial._buildUI = () => {};
+        tutorial._showLoading = () => {};
+        tutorial._hideLoading = () => { events.push('loading-hidden'); };
+        tutorial._loadDependencies = () => Promise.resolve();
+        tutorial._initEditor = () => Promise.resolve();
+        tutorial._initBackend = () => Promise.resolve();
+        tutorial._resolveStepFromHash = () => -1;
+        tutorial._loadSavedProgress = () => ({
+          step: 0,
+          files: {},
+          activeFile: null,
+          stepsUnlocked: [0],
+          stepsVisited: [],
+          stepsPassed: [],
+          quizPassed: [],
+        });
+        tutorial.loadStep = () => {
+          events.push('step-loaded');
+          return Promise.resolve();
+        };
+        tutorial._runStepDir = () => Promise.resolve();
+        tutorial._ensureGitGraphPromptHook = () => Promise.resolve();
+        tutorial._refreshPrompt = () => {
+          events.push('prompt-refreshed');
+          return Promise.resolve();
+        };
+        tutorial._autoSaveProgress = () => {};
+        tutorial._pauseBackgroundSync = () => {};
+        tutorial._resumeBackgroundSync = () => {};
+        tutorial._refreshGitGraph = () => {};
+
+        let releaseRestore;
+        const waitForRestore = () => {
+          events.push('restore-requested');
+          return new Promise((resolve) => {
+            releaseRestore = () => {
+              events.push('restore-ready');
+              resolve();
+            };
+          });
+        };
+        tutorial._applySavedFiles = restoreType === 'files'
+          ? waitForRestore
+          : () => Promise.reject(new Error('unexpected files-only restore'));
+        tutorial._restoreCommandsAndFiles = restoreType === 'commands-and-files'
+          ? waitForRestore
+          : () => Promise.reject(new Error('unexpected command restore'));
+
+        let startResolved = false;
+        const startPromise = tutorial.start().then(() => {
+          startResolved = true;
+          events.push('start-resolved');
+        });
+        window.__savedStart = {
+          events,
+          get startResolved() { return startResolved; },
+          get releaseRestore() { return releaseRestore; },
+          startPromise,
+        };
+      }, autosaveType);
+
+      await expect.poll(() => page.evaluate(() => ({
+        events: window.__savedStart.events.slice(),
+        startResolved: window.__savedStart.startResolved,
+        canRelease: typeof window.__savedStart.releaseRestore === 'function',
+      }))).toEqual({
+        events: ['step-loaded', 'restore-requested'],
+        startResolved: false,
+        canRelease: true,
+      });
+
+      const state = await page.evaluate(async () => {
+        window.__savedStart.releaseRestore();
+        await window.__savedStart.startPromise;
+        return {
+          events: window.__savedStart.events.slice(),
+          startResolved: window.__savedStart.startResolved,
+        };
+      });
+      expect(state).toEqual({
+        events: [
+          'step-loaded',
+          'restore-requested',
+          'restore-ready',
+          'prompt-refreshed',
+          'loading-hidden',
+          'start-resolved',
+        ],
+        startResolved: true,
+      });
+    });
+  }
+
+  test('cached commands-and-files restoration reenables autosave after saved files are ready', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    const state = await page.evaluate(async () => {
+      const tutorial = window.__installTutorialHarness([{
+        title: 'Cached Step',
+        files: [{ path: 'main.js', content: 'console.log("starter")' }],
+      }], {
+        backend: 'v86',
+        autosaveType: 'commands-and-files',
+        requireTests: false,
+      });
+      tutorial._suppressAutoSave = true;
+      tutorial.emulator = { restore_state() {} };
+      tutorial._restoreStepEntrySnapshot = () => Promise.resolve(true);
+      tutorial._syncStepFiles = () => Promise.resolve();
+      tutorial._applySavedFiles = () => Promise.resolve();
+      tutorial._runPostFileloadSetup = () => Promise.resolve();
+      tutorial._refreshStepVisibleFiles = () => Promise.resolve();
+      tutorial._updateUserCmdListener = () => Promise.resolve();
+
+      let suppressedWhenAutosaved = null;
+      tutorial._autoSaveProgress = () => {
+        suppressedWhenAutosaved = tutorial._suppressAutoSave;
+        return true;
+      };
+
+      await tutorial._restoreCommandsAndFiles({
+        step: 0,
+        files: { 'main.js': 'console.log("saved")' },
+        activeFile: 'main.js',
+      });
+      return {
+        autosaveSuppressed: tutorial._suppressAutoSave,
+        suppressedWhenAutosaved,
+      };
+    });
+
+    expect(state).toEqual({
+      autosaveSuppressed: false,
+      suppressedWhenAutosaved: false,
+    });
+  });
+
+  test('start rejects instead of running readiness callbacks after an initial load failure', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    const state = await page.evaluate(async () => {
+      localStorage.clear();
+      const tutorial = window.__installTutorialHarness([{
+        title: 'Broken Step',
+        instructionsHTML: '',
+      }], {
+        backend: 'browser',
+        autosaveType: 'none',
+        requireTests: false,
+      });
+      tutorial.booted = false;
+
+      let shownError = '';
+      tutorial._buildUI = () => {};
+      tutorial._showLoading = () => {};
+      tutorial._showError = (message) => { shownError = message; };
+      tutorial._loadDependencies = () => Promise.resolve();
+      tutorial._initEditor = () => Promise.resolve();
+      tutorial._initBackend = () => Promise.resolve();
+      tutorial._resolveStepFromHash = () => -1;
+      tutorial._loadSavedProgress = () => null;
+      tutorial.loadStep = () => Promise.reject(new Error('initial setup failed'));
+
+      let readinessCallbackRan = false;
+      let rejection = '';
+      await tutorial.start().then(() => {
+        readinessCallbackRan = true;
+      }).catch((error) => {
+        rejection = error.message;
+      });
+      return { readinessCallbackRan, rejection, shownError };
+    });
+
+    expect(state).toEqual({
+      readinessCallbackRan: false,
+      rejection: 'initial setup failed',
+      shownError: 'Failed to start tutorial: initial setup failed',
+    });
+  });
+
+  test('failed saved-progress restoration resumes background work and rejects start', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    const state = await page.evaluate(async () => {
+      localStorage.clear();
+      localStorage.setItem('tutorial-autosave', 'true');
+      const tutorial = window.__installTutorialHarness([{
+        title: 'Saved Step',
+        instructionsHTML: '',
+      }], {
+        backend: 'browser',
+        autosaveType: 'files',
+        requireTests: false,
+      });
+      tutorial.booted = false;
+
+      let shownError = '';
+      let resumeCalls = 0;
+      tutorial._buildUI = () => {};
+      tutorial._showLoading = () => {};
+      tutorial._showError = (message) => { shownError = message; };
+      tutorial._loadDependencies = () => Promise.resolve();
+      tutorial._initEditor = () => Promise.resolve();
+      tutorial._initBackend = () => Promise.resolve();
+      tutorial._resolveStepFromHash = () => -1;
+      tutorial._loadSavedProgress = () => ({
+        step: 0,
+        files: {},
+        activeFile: null,
+        stepsUnlocked: [0],
+        stepsVisited: [],
+        stepsPassed: [],
+        quizPassed: [],
+      });
+      tutorial.loadStep = () => Promise.resolve();
+      tutorial._applySavedFiles = () => Promise.reject(new Error('saved files unavailable'));
+      tutorial._pauseBackgroundSync = () => {};
+      tutorial._resumeBackgroundSync = () => { resumeCalls += 1; };
+
+      let rejection = '';
+      await tutorial.start().catch((error) => { rejection = error.message; });
+      return {
+        rejection,
+        shownError,
+        resumeCalls,
+        autosaveSuppressed: tutorial._suppressAutoSave,
+      };
+    });
+
+    expect(state).toEqual({
+      rejection: 'saved files unavailable',
+      shownError: 'Failed to restore progress: saved files unavailable',
+      resumeCalls: 1,
+      autosaveSuppressed: false,
+    });
+  });
+
   test('a test completion from a previous step cannot pass or unlock the current step', async ({ page }) => {
     await loadTutorialRuntime(page);
 
@@ -385,6 +792,889 @@ test.describe('tutorial asynchronous lifecycle', () => {
     });
 
     expect(state).toEqual({ celebrations: 1, passed: [0], summaries: 1 });
+  });
+
+  test('Run acquires one transaction before file sync and releases it after success or failure', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    const state = await page.evaluate(async () => {
+      const tutorial = window.__installTutorialHarness([{
+        title: 'Atomic Run',
+        files: [{ path: 'main.py', content: 'print("ready")', language: 'python' }],
+        open_file: 'main.py',
+      }], { backend: 'pyodide', requireTests: false });
+      tutorial._syncFileToBackend = () => Promise.resolve();
+      await tutorial.loadStep(0);
+      tutorial.root.insertAdjacentHTML('beforeend', [
+        '<button type="button" class="tvm-run-btn">Run</button>',
+        '<button type="button" class="tvm-stop-btn">Stop execution</button>',
+      ].join(''));
+
+      let syncCalls = 0;
+      let executeCalls = 0;
+      let finishSync;
+      tutorial._syncFileToBackend = () => {
+        syncCalls += 1;
+        return new Promise((resolve) => { finishSync = resolve; });
+      };
+      tutorial._runWorkerExecution = () => {
+        executeCalls += 1;
+        return Promise.resolve({ exitCode: 0 });
+      };
+
+      const first = tutorial._runCurrentFile();
+      const second = tutorial._runCurrentFile();
+      const third = tutorial._runCurrentFile();
+      const guardedSynchronously = first === second && second === third &&
+        tutorial._activeRunTransaction !== null;
+      finishSync();
+      const successful = await Promise.all([first, second, third]);
+
+      tutorial._syncFileToBackend = () => Promise.reject(new Error('sync failed'));
+      const failed = await tutorial._runCurrentFile();
+      const runButton = tutorial.root.querySelector('.tvm-run-btn');
+      const stopButton = tutorial.root.querySelector('.tvm-stop-btn');
+      return {
+        guardedSynchronously,
+        successful,
+        failed,
+        syncCalls,
+        executeCalls,
+        activeTransaction: tutorial._activeRunTransaction,
+        runDisabled: runButton.disabled,
+        stopDisplay: stopButton.style.display,
+      };
+    });
+
+    expect(state).toEqual({
+      guardedSynchronously: true,
+      successful: [true, true, true],
+      failed: false,
+      syncCalls: 1,
+      executeCalls: 1,
+      activeTransaction: null,
+      runDisabled: false,
+      stopDisplay: 'none',
+    });
+  });
+
+  test('inline Test and Run share one WebContainer execution transaction in either order', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    const state = await page.evaluate(async () => {
+      const tutorial = window.__installTutorialHarness([{
+        title: 'Shared execution',
+        run_file: 'main.js',
+        test_file: 'test.js',
+        files: [
+          { path: 'main.js', content: 'console.log("run")', language: 'javascript' },
+          { path: 'test.js', content: 'console.log("test")', language: 'javascript' },
+        ],
+        open_file: 'main.js',
+      }], { backend: 'webcontainer', requireTests: false });
+      tutorial._syncFileToBackend = () => Promise.resolve();
+      await tutorial.loadStep(0);
+      tutorial.root.insertAdjacentHTML('beforeend', [
+        '<button type="button" class="tvm-run-btn">Run</button>',
+        '<button type="button" class="tvm-test-run-btn">Test</button>',
+        '<button type="button" class="tvm-stop-btn">Stop execution</button>',
+      ].join(''));
+
+      const calls = [];
+      let finishOperation;
+      tutorial._runWebContainerNodeFile = (filename) => {
+        calls.push(filename);
+        return new Promise((resolve) => { finishOperation = resolve; });
+      };
+
+      const testFirst = tutorial._runTestFile();
+      const runDuringTest = tutorial._runCurrentFile();
+      const testControls = {
+        samePromise: testFirst === runDuringTest,
+        runDisabled: tutorial.root.querySelector('.tvm-run-btn').disabled,
+        testDisabled: tutorial.root.querySelector('.tvm-test-run-btn').disabled,
+        testLabel: tutorial.root.querySelector('.tvm-test-run-btn').textContent,
+      };
+      finishOperation({ exitCode: 0, output: '' });
+      await Promise.all([testFirst, runDuringTest]);
+
+      const runFirst = tutorial._runCurrentFile();
+      const testDuringRun = tutorial._runTestFile();
+      const runControls = {
+        samePromise: runFirst === testDuringRun,
+        runDisabled: tutorial.root.querySelector('.tvm-run-btn').disabled,
+        testDisabled: tutorial.root.querySelector('.tvm-test-run-btn').disabled,
+      };
+      finishOperation({ exitCode: 0, output: '' });
+      await Promise.all([runFirst, testDuringRun]);
+
+      return {
+        calls,
+        testControls,
+        runControls,
+        activeTransaction: tutorial._activeRunTransaction,
+        finalRunDisabled: tutorial.root.querySelector('.tvm-run-btn').disabled,
+        finalTestDisabled: tutorial.root.querySelector('.tvm-test-run-btn').disabled,
+        finalTestLabel: tutorial.root.querySelector('.tvm-test-run-btn').textContent,
+        finalStopDisplay: tutorial.root.querySelector('.tvm-stop-btn').style.display,
+      };
+    });
+
+    expect(state).toEqual({
+      calls: ['test.js', 'main.js'],
+      testControls: {
+        samePromise: true,
+        runDisabled: true,
+        testDisabled: true,
+        testLabel: '⏳ Testing…',
+      },
+      runControls: {
+        samePromise: true,
+        runDisabled: true,
+        testDisabled: true,
+      },
+      activeTransaction: null,
+      finalRunDisabled: false,
+      finalTestDisabled: false,
+      finalTestLabel: '✓ Test',
+      finalStopDisplay: 'none',
+    });
+  });
+
+  test('WebContainer Node execution uses a safe workspace-relative entry path', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    const state = await page.evaluate(async () => {
+      const tutorial = window.__installTutorialHarness([{
+        title: 'Node paths',
+        files: [{
+          path: 'project/src/main.js',
+          content: 'console.log("ready")',
+          language: 'javascript',
+        }],
+        open_file: 'project/src/main.js',
+      }], { backend: 'webcontainer', requireTests: false });
+      tutorial._syncFileToBackend = () => Promise.resolve();
+      await tutorial.loadStep(0);
+
+      const syncedFiles = [];
+      const spawnCalls = [];
+      tutorial._syncFileToBackend = (filename) => {
+        syncedFiles.push(filename);
+        return Promise.resolve();
+      };
+      tutorial._ensureWebContainerNodeRuntime = () => Promise.resolve();
+      tutorial._webcontainerCwd = '/tutorial/project';
+      tutorial._webcontainer = {
+        spawn(command, args, options) {
+          spawnCalls.push({ command, args, options });
+          return Promise.resolve({
+            output: {
+              getReader() {
+                return {
+                  read: () => Promise.resolve({ done: true }),
+                  cancel: () => Promise.resolve(),
+                };
+              },
+            },
+            exit: Promise.resolve(0),
+            kill() {},
+          });
+        },
+      };
+
+      const run = await tutorial._runWebContainerNodeFile('/tutorial/project/src/main.js', {
+        skipArgsInput: true,
+        extraArgs: ['--verbose'],
+      });
+
+      const mainEntry = tutorial.editorModels['project/src/main.js'];
+      tutorial.editorModels = { '-entry.js': mainEntry };
+      tutorial._webcontainerCwd = '/tutorial';
+      const optionSafeRun = await tutorial._runWebContainerNodeFile('-entry.js', {
+        skipArgsInput: true,
+      });
+
+      const unsafeErrors = [];
+      for (const unsafePath of ['../../outside.js', '/outside.js', '/tutoriality/main.js']) {
+        try {
+          await tutorial._runWebContainerNodeFile(unsafePath, { skipArgsInput: true });
+        } catch (error) {
+          unsafeErrors.push(error.message);
+        }
+      }
+
+      return { syncedFiles, spawnCalls, run, optionSafeRun, unsafeErrors };
+    });
+
+    expect(state).toEqual({
+      syncedFiles: ['project/src/main.js', '-entry.js'],
+      spawnCalls: [
+        {
+          command: 'node',
+          args: ['src/main.js', '--verbose'],
+          options: { cwd: '/tutorial/project' },
+        },
+        {
+          command: 'node',
+          args: ['./-entry.js'],
+          options: { cwd: '/tutorial' },
+        },
+      ],
+      run: { exitCode: 0, output: '' },
+      optionSafeRun: { exitCode: 0, output: '' },
+      unsafeErrors: [
+        'Node entry file must stay inside the tutorial workspace',
+        'Node entry file must stay inside the tutorial workspace',
+        'Node entry file must stay inside the tutorial workspace',
+      ],
+    });
+  });
+
+  test('a timed-out Haskell Run restarts and settles the shared Run transaction', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    const state = await page.evaluate(async () => {
+      const tutorial = window.__installTutorialHarness([{
+        title: 'Haskell Run',
+        files: [{ path: 'Main.hs', content: 'main = putStrLn "ready"', language: 'haskell' }],
+        open_file: 'Main.hs',
+      }], { backend: 'haskell', requireTests: false });
+      tutorial._syncFileToBackend = () => Promise.resolve();
+      await tutorial.loadStep(0);
+      tutorial.root.insertAdjacentHTML('beforeend', [
+        '<button type="button" class="tvm-run-btn">Run</button>',
+        '<button type="button" class="tvm-stop-btn">Stop execution</button>',
+      ].join(''));
+      tutorial._haskellExecutionTimeoutMs = 5;
+      tutorial._worker = { postMessage() {}, terminate() {} };
+      let restartCalls = 0;
+      tutorial._restartHaskellExecutor = () => {
+        restartCalls += 1;
+        tutorial.booted = true;
+        return Promise.resolve();
+      };
+
+      const result = await tutorial._runCurrentFile();
+      const runButton = tutorial.root.querySelector('.tvm-run-btn');
+      const stopButton = tutorial.root.querySelector('.tvm-stop-btn');
+      return {
+        result,
+        restartCalls,
+        pendingRequests: Object.keys(tutorial._workerCallbacks).length,
+        activeTransaction: tutorial._activeRunTransaction,
+        runDisabled: runButton.disabled,
+        stopDisplay: stopButton.style.display,
+      };
+    });
+
+    expect(state).toEqual({
+      result: false,
+      restartCalls: 1,
+      pendingRequests: 0,
+      activeTransaction: null,
+      runDisabled: false,
+      stopDisplay: 'none',
+    });
+  });
+
+  test('a Haskell test workspace sync failure settles the active test transaction', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    await page.evaluate(async () => {
+      const tutorial = window.__installTutorialHarness([{
+        title: 'Haskell Tests',
+        files: [{ path: 'Main.hs', content: 'double x = x * 2', language: 'haskell' }],
+        open_file: 'Main.hs',
+        tests: [{ description: 'doubles a value', command: 'double 2 == 4' }],
+      }], { backend: 'haskell' });
+      tutorial._syncFileToBackend = () => Promise.resolve();
+      await tutorial.loadStep(0);
+      tutorial._syncFileToBackend = () => Promise.reject(new Error('workspace sync failed'));
+      tutorial._runTests();
+      window.__haskellSyncFailureTutorial = tutorial;
+    });
+
+    await expect.poll(() => page.evaluate(() => {
+      const tutorial = window.__haskellSyncFailureTutorial;
+      const testButton = tutorial.stepControlsEl.querySelector('.tvm-btn-test');
+      return {
+        activeRun: tutorial._activeTestRun,
+        inFlight: tutorial._testRunInFlight,
+        testDisabled: testButton && testButton.disabled,
+      };
+    })).toEqual({
+      activeRun: null,
+      inFlight: false,
+      testDisabled: false,
+    });
+  });
+
+  test('WebContainer test results complete the active test transaction', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    await page.evaluate(async () => {
+      const tutorial = window.__installTutorialHarness([
+        {
+          title: 'Node Test',
+          instructionsHTML: '',
+          files: [{ path: 'main.js', content: 'console.log("ready")', language: 'javascript' }],
+          open_file: 'main.js',
+          tests: [{ description: 'program ran', command: 'assert(output.includes("ready"))' }],
+        },
+        {
+          title: 'Unlocked Step',
+          instructionsHTML: '',
+          files: [{ path: 'next.js', content: '', language: 'javascript' }],
+          open_file: 'next.js',
+        },
+      ], { backend: 'webcontainer' });
+      tutorial._syncFileToBackend = () => Promise.resolve();
+      tutorial._runWebContainerNodeFile = () => Promise.resolve({
+        exitCode: 0,
+        output: 'ready\n',
+      });
+
+      await tutorial.loadStep(0);
+      tutorial._runTests();
+      window.__webContainerTestTutorial = tutorial;
+    });
+
+    await expect(page.locator('.tvm-test-summary')).toHaveText('✅ All 1 tests passed!');
+    await expect(page.getByRole('button', { name: '✓ Test My Work' })).toBeEnabled();
+    const state = await page.evaluate(() => {
+      const tutorial = window.__webContainerTestTutorial;
+      return {
+        inFlight: tutorial._testRunInFlight,
+        activeRun: tutorial._activeTestRun,
+        passed: Array.from(tutorial._stepsPassed),
+        unlocked: Array.from(tutorial._stepsUnlocked),
+      };
+    });
+    expect(state).toEqual({
+      inFlight: false,
+      activeRun: null,
+      passed: [0],
+      unlocked: [0, 1],
+    });
+  });
+
+  test('a WebContainer boot timeout falls back and tears down a late instance', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    const state = await page.evaluate(async () => {
+      const tutorial = window.__installTutorialHarness([], {
+        backend: 'webcontainer',
+        requireTests: false,
+      });
+      tutorial.booted = false;
+      tutorial._webcontainerBootTimeoutMs = 5;
+      tutorial._showLoading = () => {};
+
+      let resolveBoot;
+      const bootResult = new Promise((resolve) => { resolveBoot = resolve; });
+      tutorial._loadWebContainerAPI = () => Promise.resolve({
+        WebContainer: { boot: () => bootResult },
+      });
+
+      await tutorial._initBackend();
+      const afterFallback = {
+        backend: tutorial.config.backend,
+        booted: tutorial.booted,
+        hasWebContainer: tutorial._webcontainer !== null,
+        reason: tutorial._webcontainerUnavailableReason,
+      };
+
+      let teardownCalls = 0;
+      let finishTeardown;
+      const teardownCalled = new Promise((resolve) => { finishTeardown = resolve; });
+      resolveBoot({
+        teardown() {
+          teardownCalls += 1;
+          finishTeardown();
+        },
+      });
+      await teardownCalled;
+
+      return { afterFallback, teardownCalls };
+    });
+
+    expect(state.afterFallback).toEqual({
+      backend: 'browser',
+      booted: true,
+      hasWebContainer: false,
+      reason: 'WebContainer boot timed out after 5 ms',
+    });
+    expect(state.teardownCalls).toBe(1);
+  });
+
+  test('a partial WebContainer initialization is cleaned up before browser fallback', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    const state = await page.evaluate(async () => {
+      const tutorial = window.__installTutorialHarness([], {
+        backend: 'webcontainer',
+        requireTests: false,
+      });
+      tutorial.booted = false;
+      tutorial._showLoading = () => {};
+
+      let unsubscribeCalls = 0;
+      let teardownCalls = 0;
+      const partialRuntime = {
+        fs: {
+          mkdir: () => Promise.reject(new Error('workspace unavailable')),
+        },
+        on() {
+          return () => { unsubscribeCalls += 1; };
+        },
+        teardown() {
+          teardownCalls += 1;
+        },
+      };
+      tutorial._loadWebContainerAPI = () => Promise.resolve({
+        WebContainer: { boot: () => Promise.resolve(partialRuntime) },
+      });
+
+      await tutorial._initBackend();
+      return {
+        backend: tutorial.config.backend,
+        booted: tutorial.booted,
+        hasWebContainer: tutorial._webcontainer !== null,
+        unsubscribeCalls,
+        teardownCalls,
+      };
+    });
+
+    expect(state).toEqual({
+      backend: 'browser',
+      booted: true,
+      hasWebContainer: false,
+      unsubscribeCalls: 1,
+      teardownCalls: 1,
+    });
+  });
+
+  test('WebContainer global setup is awaited as one state-preserving shell batch', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    const state = await page.evaluate(async () => {
+      const tutorial = window.__installTutorialHarness([], {
+        backend: 'webcontainer',
+        requireTests: false,
+      });
+      tutorial.booted = false;
+      tutorial._showLoading = () => {};
+
+      const commands = [];
+      let finishExit;
+      let finishSpawn;
+      const commandSpawned = new Promise((resolve) => { finishSpawn = resolve; });
+      const runtime = {
+        fs: { mkdir: () => Promise.resolve() },
+        on: () => () => {},
+        teardown: () => {},
+        spawn(command, args, options) {
+          commands.push({ command, args, cwd: options.cwd });
+          const exit = new Promise((resolve) => { finishExit = resolve; });
+          finishSpawn();
+          return Promise.resolve({
+            exit,
+            output: {
+              getReader: () => ({
+                read: () => Promise.resolve({ done: true }),
+                cancel: () => Promise.resolve(),
+              }),
+            },
+            kill() {},
+          });
+        },
+      };
+      tutorial._loadWebContainerAPI = () => Promise.resolve({
+        WebContainer: { boot: () => Promise.resolve(runtime) },
+      });
+
+      let initialized = false;
+      const initialization = tutorial._initWebContainer(['prepare-one', 'prepare-two'])
+        .then(() => { initialized = true; });
+      await commandSpawned;
+      const beforeExit = { commandCount: commands.length, initialized, booted: tutorial.booted };
+      finishExit(0);
+      await initialization;
+
+      return {
+        beforeExit,
+        initialized,
+        booted: tutorial.booted,
+        commands,
+      };
+    });
+
+    expect(state.beforeExit).toEqual({ commandCount: 1, initialized: false, booted: false });
+    expect(state.initialized).toBe(true);
+    expect(state.booted).toBe(true);
+    expect(state.commands).toHaveLength(1);
+    expect(state.commands[0].cwd).toBe('/tutorial');
+    const setupSource = state.commands[0].args.join('\n');
+    expect(setupSource.indexOf('prepare-one')).toBeLessThan(setupSource.indexOf('prepare-two'));
+  });
+
+  test('failed WebContainer global setup rejects readiness instead of falling back', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    const state = await page.evaluate(async () => {
+      const tutorial = window.__installTutorialHarness([], {
+        backend: 'webcontainer',
+        requireTests: false,
+      });
+      tutorial.booted = false;
+      tutorial._showLoading = () => {};
+
+      let outputRead = false;
+      let teardownCalls = 0;
+      const runtime = {
+        fs: { mkdir: () => Promise.resolve() },
+        on: () => () => {},
+        teardown() { teardownCalls += 1; },
+        spawn() {
+          return Promise.resolve({
+            exit: Promise.resolve(9),
+            output: {
+              getReader: () => ({
+                read() {
+                  if (outputRead) return Promise.resolve({ done: true });
+                  outputRead = true;
+                  return Promise.resolve({ done: false, value: 'dependency install failed' });
+                },
+                cancel: () => Promise.resolve(),
+              }),
+            },
+            kill() {},
+          });
+        },
+      };
+      tutorial._loadWebContainerAPI = () => Promise.resolve({
+        WebContainer: { boot: () => Promise.resolve(runtime) },
+      });
+
+      let setupError;
+      try {
+        await tutorial._initBackend(undefined, ['install-dependencies']);
+      } catch (error) {
+        setupError = {
+          message: error.message,
+          code: error.code,
+          exitCode: error.exitCode,
+        };
+      }
+
+      return {
+        setupError,
+        backend: tutorial.config.backend,
+        booted: tutorial.booted,
+        hasWebContainer: tutorial._webcontainer !== null,
+        unavailableReason: tutorial._webcontainerUnavailableReason,
+        teardownCalls,
+      };
+    });
+
+    expect(state).toEqual({
+      setupError: {
+        message: 'WebContainer global setup failed with exit code 9: dependency install failed',
+        code: 'WEBCONTAINER_COMMAND_FAILED',
+        exitCode: 9,
+      },
+      backend: 'webcontainer',
+      booted: false,
+      hasWebContainer: false,
+      unavailableReason: null,
+      teardownCalls: 1,
+    });
+  });
+
+  test('WebContainer commands reject nonzero exits and recover after timeouts', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    const state = await page.evaluate(async () => {
+      const tutorial = window.__installTutorialHarness([], {
+        backend: 'webcontainer',
+        requireTests: false,
+      });
+      let spawnCount = 0;
+      let timedOutProcessKilled = false;
+      let spawnCountAtTimeout = null;
+      tutorial._webcontainer = {
+        spawn() {
+          const index = spawnCount++;
+          let outputRead = false;
+          const exit = index === 0
+            ? new Promise(() => {})
+            : Promise.resolve(index === 1 ? 0 : 7);
+          return Promise.resolve({
+            exit,
+            output: {
+              getReader: () => ({
+                read: () => {
+                  if (index !== 2 || outputRead) return Promise.resolve({ done: true });
+                  outputRead = true;
+                  return Promise.resolve({ done: false, value: 'setup broke' });
+                },
+                cancel: () => Promise.resolve(),
+              }),
+            },
+            kill() {
+              if (index === 0) {
+                timedOutProcessKilled = true;
+                spawnCountAtTimeout = spawnCount;
+              }
+            },
+          });
+        },
+      };
+
+      let timeoutError;
+      const timedCommand = tutorial._runWebContainerCommand('hang', {
+        timeoutMs: 5,
+        label: 'Timed command',
+      }).catch((error) => {
+        timeoutError = { message: error.message, code: error.code };
+      });
+
+      const recoveryCommand = tutorial._runWebContainerCommand('recover', {
+        timeoutMs: 50,
+        label: 'Recovery command',
+      });
+      await timedCommand;
+      const recovered = await recoveryCommand;
+
+      let nonzeroError;
+      try {
+        await tutorial._runWebContainerCommand('fail', {
+          timeoutMs: 50,
+          label: 'Failing setup',
+        });
+      } catch (error) {
+        nonzeroError = {
+          message: error.message,
+          code: error.code,
+          exitCode: error.exitCode,
+          output: error.output,
+        };
+      }
+
+      return {
+        timeoutError,
+        timedOutProcessKilled,
+        spawnCountAtTimeout,
+        recovered,
+        nonzeroError,
+        spawnCount,
+      };
+    });
+
+    expect(state.timeoutError).toEqual({
+      message: 'Timed command timed out after 5 ms',
+      code: 'WEBCONTAINER_COMMAND_TIMEOUT',
+    });
+    expect(state.timedOutProcessKilled).toBe(true);
+    expect(state.spawnCountAtTimeout).toBe(1);
+    expect(state.recovered).toEqual({ exitCode: 0, output: '' });
+    expect(state.nonzeroError).toEqual({
+      message: 'Failing setup failed with exit code 7: setup broke',
+      code: 'WEBCONTAINER_COMMAND_FAILED',
+      exitCode: 7,
+      output: 'setup broke',
+    });
+    expect(state.spawnCount).toBe(3);
+  });
+
+  test('WebContainer step directories change only after an awaited validation succeeds', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    const state = await page.evaluate(async () => {
+      const tutorial = window.__installTutorialHarness([], {
+        backend: 'webcontainer',
+        requireTests: false,
+      });
+      const requestedCwds = [];
+      let exitCode = 4;
+      tutorial._webcontainer = {
+        spawn(command, args, options) {
+          requestedCwds.push(options.cwd);
+          return Promise.resolve({
+            exit: Promise.resolve(exitCode),
+            output: {
+              getReader: () => ({
+                read: () => Promise.resolve({ done: true }),
+                cancel: () => Promise.resolve(),
+              }),
+            },
+            kill() {},
+          });
+        },
+      };
+
+      let outsideFailure = '';
+      try {
+        await tutorial._runStepDir({ step_dir: '/tutorial/../../outside' });
+      } catch (error) {
+        outsideFailure = error.message;
+      }
+
+      let failure = '';
+      try {
+        await tutorial._runStepDir({ step_dir: '/tutorial/work/../project/' });
+      } catch (error) {
+        failure = error.message;
+      }
+      const cwdAfterFailure = tutorial._webcontainerCwd;
+
+      exitCode = 0;
+      await tutorial._runStepDir({ step_dir: '/tutorial/work/../project/' });
+      await tutorial._runSilent('pwd');
+
+      return {
+        outsideFailure,
+        failure,
+        cwdAfterFailure,
+        cwdAfterSuccess: tutorial._webcontainerCwd,
+        requestedCwds,
+      };
+    });
+
+    expect(state).toEqual({
+      outsideFailure: 'WebContainer step_dir must stay inside /tutorial: /tutorial/../../outside',
+      failure: 'WebContainer step directory failed with exit code 4',
+      cwdAfterFailure: '/tutorial',
+      cwdAfterSuccess: '/tutorial/project',
+      requestedCwds: ['/tutorial/project', '/tutorial/project', '/tutorial/project'],
+    });
+  });
+
+  test('browser Worker preserves Node modules, files, argv, output, and completion cleanup', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    const state = await page.evaluate(async () => {
+      const tutorial = window.__installTutorialHarness([], {
+        backend: 'browser',
+        requireTests: false,
+      });
+      tutorial.openFile('dependency.js', 'module.exports = { value: 42 };', 'javascript');
+      tutorial.openFile('message.txt', 'hello', 'text');
+      const output = [];
+      let completionCalls = 0;
+      const outcome = await tutorial._runBrowserCode([
+        'const dependency = require("./dependency");',
+        'const fs = require("fs");',
+        'console.log(process.argv.slice(2).join("|"), dependency.value, fs.readFileSync("message.txt", "utf8"));',
+      ].join('\n'), (text, kind) => output.push({ text, kind }), () => {
+        completionCalls += 1;
+      }, 1000, { argv: ['Ada', 'Lovelace'], scriptPath: 'main.js' });
+      return {
+        outcome,
+        output,
+        completionCalls,
+        runnerWorker: tutorial._jsRunnerWorker,
+        finishCallback: tutorial._jsFinish,
+        safetyTimer: tutorial._jsSafetyTimer,
+      };
+    });
+
+    expect(state).toEqual({
+      outcome: { ok: true, reason: 'complete' },
+      output: [{ text: 'Ada|Lovelace 42 hello\n', kind: 'stdout' }],
+      completionCalls: 1,
+      runnerWorker: null,
+      finishCallback: null,
+      safetyTimer: null,
+    });
+  });
+
+  test('a synchronous browser infinite loop is terminated without freezing the host page', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    const state = await page.evaluate(async () => {
+      const tutorial = window.__installTutorialHarness([], {
+        backend: 'browser',
+        requireTests: false,
+      });
+      const output = [];
+      const started = performance.now();
+      const outcome = await tutorial._runBrowserCode(
+        'while (true) {}',
+        (text, kind) => output.push({ text, kind }),
+        null,
+        20,
+      );
+      const hostStillResponsive = await Promise.resolve(true);
+      return {
+        outcome,
+        output,
+        hostStillResponsive,
+        elapsed: performance.now() - started,
+        runnerWorker: tutorial._jsRunnerWorker,
+      };
+    });
+
+    expect(state.outcome).toEqual({ ok: false, reason: 'timeout' });
+    expect(state.output).toContainEqual({
+      text: '\nExecution timed out and was stopped.\n',
+      kind: 'stderr',
+    });
+    expect(state.hostStillResponsive).toBe(true);
+    expect(state.elapsed).toBeLessThan(1000);
+    expect(state.runnerWorker).toBeNull();
+  });
+
+  test('browser Worker servers receive host HTTP requests and return responses', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    const state = await page.evaluate(async () => {
+      const tutorial = window.__installTutorialHarness([{
+        title: 'Server',
+        http_client: true,
+      }], { backend: 'browser', requireTests: false });
+      tutorial.currentStep = 0;
+      tutorial._httpMethodEl = { value: 'GET' };
+      tutorial._httpUrlEl = { value: 'http://localhost:3000/hello/Ada' };
+      tutorial._httpBodyEditor = null;
+      tutorial._httpResponseBodyEl = document.createElement('pre');
+      tutorial._httpResponseMetaEl = document.createElement('div');
+      tutorial._httpEmptyEl = document.createElement('div');
+
+      let markReady;
+      const ready = new Promise((resolve) => { markReady = resolve; });
+      let receiveResponse;
+      const response = new Promise((resolve) => { receiveResponse = resolve; });
+      tutorial._handleHttpResponse = (message) => receiveResponse(message);
+      const run = tutorial._runBrowserCode([
+        'const express = require("express");',
+        'const app = express();',
+        'app.get("/hello/:name", (req, res) => res.json({ hello: req.params.name }));',
+        'app.listen(3000);',
+      ].join('\n'), (text) => {
+        if (text.includes('listening on port 3000')) markReady();
+      }, null, 1000, { scriptPath: 'server.js' });
+
+      await ready;
+      tutorial._sendHttpRequest();
+      const httpResponse = await response;
+      tutorial._stopExecution();
+      const outcome = await run;
+      return {
+        status: httpResponse.status,
+        body: JSON.parse(httpResponse.body),
+        outcome,
+        runnerWorker: tutorial._jsRunnerWorker,
+      };
+    });
+
+    expect(state).toEqual({
+      status: 200,
+      body: { hello: 'Ada' },
+      outcome: { ok: false, reason: 'stopped' },
+      runnerWorker: null,
+    });
   });
 
   test('learner-controlled runtime errors render as text instead of host-page markup', async ({ page }) => {

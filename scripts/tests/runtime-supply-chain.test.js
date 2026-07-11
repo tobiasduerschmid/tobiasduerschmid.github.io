@@ -3,11 +3,80 @@ const crypto = require('node:crypto');
 const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
+const zlib = require('node:zlib');
 
 const repositoryRoot = path.resolve(__dirname, '../..');
 
 function read(relativePath) {
   return fs.readFileSync(path.join(repositoryRoot, relativePath), 'utf8');
+}
+
+function parseAssignments(source) {
+  return Object.fromEntries(source
+    .split('\n')
+    .filter(line => /^[A-Z0-9_]+=/.test(line))
+    .map(line => {
+      const separator = line.indexOf('=');
+      return [line.slice(0, separator), line.slice(separator + 1)];
+    }));
+}
+
+function inspectNewcArchive(bytes, capturedNames = new Set()) {
+  const names = new Set();
+  const capturedFiles = new Map();
+  const align4 = value => (value + 3) & ~3;
+  let offset = 0;
+
+  while (offset + 110 <= bytes.length) {
+    const magic = bytes.toString('ascii', offset, offset + 6);
+    assert.ok(magic === '070701' || magic === '070702',
+      `rootfs contains an invalid newc header at byte ${offset}`);
+    const fileSize = Number.parseInt(bytes.toString('ascii', offset + 54, offset + 62), 16);
+    const nameSize = Number.parseInt(bytes.toString('ascii', offset + 94, offset + 102), 16);
+    assert.ok(Number.isSafeInteger(fileSize) && Number.isSafeInteger(nameSize) && nameSize > 0,
+      `rootfs contains invalid newc sizes at byte ${offset}`);
+
+    const nameStart = offset + 110;
+    const nameEnd = nameStart + nameSize - 1;
+    const rawName = bytes.toString('utf8', nameStart, nameEnd);
+    const name = rawName.replace(/^\.\//, '');
+    const dataStart = align4(nameStart + nameSize);
+    const dataEnd = dataStart + fileSize;
+    assert.ok(dataEnd <= bytes.length, `rootfs entry ${name} extends beyond the archive`);
+    if (name === 'TRAILER!!!') break;
+
+    names.add(name);
+    if (capturedNames.has(name)) capturedFiles.set(name, bytes.subarray(dataStart, dataEnd));
+    offset = align4(dataEnd);
+  }
+
+  return { names, capturedFiles };
+}
+
+function parseApkInstalledDatabase(bytes) {
+  const packages = new Map();
+  for (const record of bytes.toString('utf8').split(/\n\n+/)) {
+    const name = record.match(/^P:(.+)$/m)?.[1];
+    const version = record.match(/^V:(.+)$/m)?.[1];
+    if (name && version) packages.set(name, version);
+  }
+  return packages;
+}
+
+function verifyVmReleaseChecksums() {
+  const expectedFiles = ['SNAPSHOT_INPUTS', 'bzImage', 'rootfs.cpio.gz', 'state.bin.gz'];
+  const manifestEntries = read('vm/dist/SHA256SUMS').trim().split('\n').map(line => {
+    const match = line.match(/^([a-f0-9]{64})  ([A-Za-z0-9._-]+)$/);
+    assert.ok(match, `vm/dist/SHA256SUMS has a malformed entry: ${line}`);
+    return [match[2], match[1]];
+  });
+  assert.deepEqual(manifestEntries.map(([filename]) => filename), expectedFiles,
+    'VM release checksums must cover every published compatibility artifact in stable order');
+  for (const [filename, expectedHash] of manifestEntries) {
+    const bytes = fs.readFileSync(path.join(repositoryRoot, 'vm/dist', filename));
+    assert.equal(crypto.createHash('sha256').update(bytes).digest('hex'), expectedHash,
+      `vm/dist/${filename} must match its release checksum`);
+  }
 }
 
 function relativeFilePathsUnder(relativeDirectory) {
@@ -299,17 +368,12 @@ test('Pyodide boot and tutorial package closures are complete and same-origin', 
     'the reviewed local Pyflakes wheel must not regain a mutable package-index fallback');
 });
 
-test('VM regeneration uses repository-owned artifacts and pinned top-level build inputs', () => {
+test('VM regeneration and deployed snapshots match their pinned compatibility inputs', () => {
   const inputs = read('vm/build-inputs.env');
   const setup = read('vm/setup.sh');
   const rootfsBuild = read('vm/build-rootfs.sh');
-  const values = Object.fromEntries(inputs
-    .split('\n')
-    .filter(line => /^[A-Z0-9_]+=/.test(line))
-    .map(line => {
-      const separator = line.indexOf('=');
-      return [line.slice(0, separator), line.slice(separator + 1)];
-    }));
+  const snapshotBuild = read('vm/build-snapshot.js');
+  const values = parseAssignments(inputs);
 
   assert.match(inputs, /^ALPINE_IMAGE=alpine@sha256:[a-f0-9]{64}$/m);
   assert.match(inputs, /^TCC_COMMIT=[a-f0-9]{40}$/m);
@@ -320,10 +384,18 @@ test('VM regeneration uses repository-owned artifacts and pinned top-level build
   assert.match(setup, /verify_pinned_artifact "\$V86_DIR\/libv86\.js"/);
   assert.match(rootfsBuild, /"bash=\$APK_BASH_VERSION"/);
   assert.match(rootfsBuild, /"linux-virt=\$APK_LINUX_VIRT_VERSION"/);
+  assert.match(rootfsBuild, /expected-apk-runtime\.lock:ro/);
+  assert.match(rootfsBuild, /diff -u \/expected-apk-runtime\.lock \/tmp\/apk-runtime\.actual/);
   assert.doesNotMatch(rootfsBuild, /apk add[^\n]*linux-virt[^\n]*\|\| true/);
   assert.match(rootfsBuild, /test -s \/output\/\.bzImage\.new/);
-  assert.match(rootfsBuild, /mv \/output\/\.bzImage\.new \/output\/bzImage/);
+  assert.match(rootfsBuild, /mv "\$DIST_DIR\/\.bzImage\.new" "\$DIST_DIR\/bzImage"/);
+  assert.match(rootfsBuild, /gzip -t \/output\/\.rootfs\.cpio\.gz\.new/);
+  assert.match(rootfsBuild,
+    /mv "\$DIST_DIR\/\.rootfs\.cpio\.gz\.new" "\$DIST_DIR\/rootfs\.cpio\.gz"/);
+  assert.match(rootfsBuild, /Invalidated the previous VM snapshot/);
   assert.match(rootfsBuild, /git checkout --detach "\$TCC_COMMIT"/);
+  assert.match(snapshotBuild, /fs\.renameSync\(OUT_TMP, OUT\)/);
+  assert.match(snapshotBuild, /writeReleaseMetadata\(\)/);
 
   const pinnedArtifacts = [
     ['assets/v86/libv86.js', 'V86_LIBV86_SHA256'],
@@ -339,4 +411,84 @@ test('VM regeneration uses repository-owned artifacts and pinned top-level build
       `${relativePath} must match ${hashVariable}`,
     );
   }
+
+  verifyVmReleaseChecksums();
+
+  const rootfsBytes = zlib.gunzipSync(
+    fs.readFileSync(path.join(repositoryRoot, 'vm/dist/rootfs.cpio.gz')),
+  );
+  const installedDatabasePath = 'lib/apk/db/installed';
+  const rootfs = inspectNewcArchive(rootfsBytes, new Set([installedDatabasePath]));
+  const installedDatabase = rootfs.capturedFiles.get(installedDatabasePath);
+  assert.ok(installedDatabase, 'VM rootfs must contain Alpine installed-package metadata');
+  assert.equal(rootfs.names.has('expected-apk-runtime.lock'), false,
+    'VM rootfs must not publish its build-only package-closure mount');
+  assert.equal(rootfs.names.has('tmp/apk-runtime.actual'), false,
+    'VM rootfs must not publish its build-only package-closure scratch file');
+  const installedPackages = parseApkInstalledDatabase(installedDatabase);
+  const deployedPackageClosure = [...installedPackages]
+    .map(([packageName, version]) => `${packageName}=${version}`)
+    .sort();
+  assert.deepEqual(
+    read('vm/apk-runtime.lock').trim().split('\n'),
+    deployedPackageClosure,
+    'deployed rootfs must match the reviewed complete Alpine runtime closure',
+  );
+  const pinnedRuntimePackages = {
+    APK_BASH_VERSION: 'bash',
+    APK_COREUTILS_VERSION: 'coreutils',
+    APK_DIFFUTILS_VERSION: 'diffutils',
+    APK_FINDUTILS_VERSION: 'findutils',
+    APK_GREP_VERSION: 'grep',
+    APK_SED_VERSION: 'sed',
+    APK_GAWK_VERSION: 'gawk',
+    APK_GIT_VERSION: 'git',
+    APK_MAKE_VERSION: 'make',
+    APK_NANO_VERSION: 'nano',
+    APK_LESS_VERSION: 'less',
+    APK_FILE_VERSION: 'file',
+    APK_TREE_VERSION: 'tree',
+    APK_MUSL_DEV_VERSION: 'musl-dev',
+    APK_LINUX_VIRT_VERSION: 'linux-virt',
+  };
+  for (const [variableName, packageName] of Object.entries(pinnedRuntimePackages)) {
+    assert.equal(installedPackages.get(packageName), values[variableName],
+      `deployed rootfs package ${packageName} must match ${variableName}`);
+  }
+
+  const kernelVersion = values.APK_LINUX_VIRT_VERSION.replace(/-r\d+$/, '');
+  const kernelRelease = `${kernelVersion}-0-virt`;
+  assert.ok(rootfs.names.has(`lib/modules/${kernelRelease}/modules.dep`),
+    `rootfs module tree must match deployed kernel ${kernelRelease}`);
+  for (const modulePattern of ['9p.ko', '9pnet_virtio.ko', 'virtio_blk.ko', 'virtio_net.ko']) {
+    assert.ok([...rootfs.names].some(name =>
+      name.startsWith(`lib/modules/${kernelRelease}/`) && name.includes(modulePattern)),
+    `rootfs must retain required ${modulePattern} payload`);
+  }
+  const kernelBytes = fs.readFileSync(path.join(repositoryRoot, 'vm/dist/bzImage'));
+  assert.ok(kernelBytes.includes(Buffer.from(kernelRelease)),
+    `bzImage must identify itself as ${kernelRelease}`);
+
+  const snapshotInputs = parseAssignments(read('vm/dist/SNAPSHOT_INPUTS'));
+  const snapshotDependencies = {
+    BZIMAGE_SHA256: 'vm/dist/bzImage',
+    ROOTFS_SHA256: 'vm/dist/rootfs.cpio.gz',
+    V86_LIBV86_SHA256: 'assets/v86/libv86.js',
+    V86_WASM_SHA256: 'assets/v86/v86.wasm',
+    V86_SEABIOS_SHA256: 'assets/v86/seabios.bin',
+    V86_VGABIOS_SHA256: 'assets/v86/vgabios.bin',
+  };
+  for (const [hashName, relativePath] of Object.entries(snapshotDependencies)) {
+    const bytes = fs.readFileSync(path.join(repositoryRoot, relativePath));
+    const actualHash = crypto.createHash('sha256').update(bytes).digest('hex');
+    assert.equal(snapshotInputs[hashName], actualHash,
+      `VM snapshot must be regenerated when ${relativePath} changes`);
+    if (values[hashName]) assert.equal(snapshotInputs[hashName], values[hashName]);
+  }
+  assert.equal(snapshotInputs.MEMORY_MB, '192');
+  assert.equal(snapshotInputs.VGA_MEMORY_MB, '2');
+  assert.match(read('vm/snapshot/index.html'), /var MEMORY_MB = 192;/);
+  assert.match(read('vm/snapshot/index.html'), /vga_memory_size: 2 \* 1024 \* 1024/);
+  assert.match(read('js/tutorial-code.js'), /memoryMB: options\.memoryMB \|\| 192/);
+  assert.match(read('js/tutorial-code.js'), /vga_memory_size: 2 \* 1024 \* 1024/);
 });

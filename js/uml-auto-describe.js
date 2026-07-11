@@ -1149,9 +1149,37 @@
     if (!el) return;
     var desc = describe(type, spec);
     if (!desc) return;
-    el.setAttribute('aria-label', desc);
     var svg = el.tagName && el.tagName.toLowerCase() === 'svg' ? el : (el.querySelector && el.querySelector('svg'));
-    if (svg) svg.setAttribute('aria-label', desc);
+    if (svg) {
+      var containerOwnsImageRole = el !== svg && el.getAttribute && el.getAttribute('role') === 'img';
+      if (containerOwnsImageRole) {
+        el.setAttribute('aria-label', desc);
+        svg.removeAttribute('role');
+        svg.removeAttribute('aria-label');
+        svg.removeAttribute('aria-labelledby');
+        svg.removeAttribute('aria-describedby');
+        svg.setAttribute('aria-hidden', 'true');
+        svg.setAttribute('focusable', 'false');
+      } else {
+        svg.removeAttribute('aria-hidden');
+        svg.removeAttribute('focusable');
+        svg.setAttribute('role', 'img');
+        svg.setAttribute('aria-label', desc);
+      }
+      var title = null;
+      for (var i = 0; i < svg.childNodes.length; i++) {
+        var child = svg.childNodes[i];
+        if (child.nodeType === 1 && child.tagName && child.tagName.toLowerCase() === 'title') {
+          title = child;
+          break;
+        }
+      }
+      if (!title) {
+        title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        svg.insertBefore(title, svg.firstChild);
+      }
+      title.textContent = desc;
+    }
     try { attachVerboseDescription(el, type, spec); } catch (_) { /* leave bundle's output */ }
   }
 

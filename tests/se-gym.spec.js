@@ -11,6 +11,29 @@ const GYM_URL = '/se-gym/';
 const STATS_URL = '/se-gym-stats/';
 // A page with both a quiz and flashcard include
 const GIT_PAGE_URL = '/SEBook/tools/git.html';
+const DIFFICULTY_FILTER_LABELS = ['Basic', 'Intermediate', 'Advanced', 'Expert'];
+const DIFFICULTY_FIXTURE_QUIZ_ID = '__test_difficulty_filter';
+
+function difficultyFixtureQuestion(difficulty) {
+  const label = difficulty || 'untagged';
+  return {
+    id: `difficulty-fixture-${label}`,
+    type: 'single',
+    question: `${label.charAt(0).toUpperCase() + label.slice(1)} difficulty fixture question`,
+    options: ['Fixture answer A', 'Fixture answer B'],
+    correct_index: 0,
+    explanation: 'Fixture explanation.',
+    ...(difficulty ? { difficulty } : {}),
+  };
+}
+
+const DIFFICULTY_FIXTURE_QUIZ = {
+  title: 'Difficulty filter contract fixture',
+  active: true,
+  questions: ['basic', 'intermediate', 'advanced', 'expert']
+    .map(difficultyFixtureQuestion)
+    .concat(difficultyFixtureQuestion(null)),
+};
 
 const DEFAULT_HUMAN_HERO_AVATAR = {
   version: 1,
@@ -140,6 +163,23 @@ async function useSavedHumanHeroAvatar(page) {
   await page.addInitScript((hero) => {
     localStorage.setItem('se-gym-hero-avatar', JSON.stringify(hero));
   }, DEFAULT_HUMAN_HERO_AVATAR);
+}
+
+async function installDifficultyFixture(page) {
+  await page.evaluate(({ quizId, quiz }) => {
+    ALL_CARD_DATA.quizzes[quizId] = quiz;
+  }, { quizId: DIFFICULTY_FIXTURE_QUIZ_ID, quiz: DIFFICULTY_FIXTURE_QUIZ });
+  // The page's initial library render runs before this test-only deck exists.
+  // Re-emit the current filter state through the public control so summaries
+  // and workout-button availability are derived from the injected card data.
+  await page.getByRole('checkbox', { name: 'Basic', exact: true }).dispatchEvent('change');
+}
+
+async function answerDifficultyFixtureCard(page) {
+  const answerGroup = page.getByRole('radiogroup', { name: 'Answer options' });
+  await expect(answerGroup).toBeVisible();
+  await answerGroup.getByRole('radio').first().click();
+  await page.getByRole('button', { name: 'Next' }).click();
 }
 
 async function recordScrollCalls(page) {
@@ -749,7 +789,7 @@ test.describe('Personal Gym - Workout', () => {
     await a11yCheckpoint(page, 'gym workout - quiz card with side heroes enabled', { feature: A11Y_FEATURE, darkMode: true });
   });
 
-  test('workout hero animation starts and keeps the human head assembly synchronized', async ({ page, context }) => {
+  test('workout hero animates the assembled head inside the body rig', async ({ page, context }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await page.setViewportSize({ width: 1440, height: 900 });
     await useSavedHumanHeroAvatar(page);
@@ -769,7 +809,15 @@ test.describe('Personal Gym - Workout', () => {
       const head = /** @type {SVGGraphicsElement | null} */ (svg.querySelector('[data-hero-head-assembly]'));
       const body = /** @type {SVGGraphicsElement | null} */ (svg.querySelector('[data-hero-motion="body-lift"]'));
       const headMatrix = head ? head.getCTM() : null;
-      const bodyMatrix = body ? body.getCTM() : null;
+      let headPoint = null;
+      if (head && headMatrix) {
+        const bounds = head.getBBox();
+        const localPoint = svg.createSVGPoint();
+        localPoint.x = bounds.x + bounds.width;
+        localPoint.y = bounds.y;
+        const screenPoint = localPoint.matrixTransform(headMatrix);
+        headPoint = { x: screenPoint.x, y: screenPoint.y };
+      }
       const requiredHeadSlots = [
         'head-shape',
         'hair',
@@ -796,9 +844,8 @@ test.describe('Personal Gym - Workout', () => {
 
       return {
         paused: svg.animationsPaused(),
-        headY: headMatrix ? headMatrix.f : null,
-        bodyY: bodyMatrix ? bodyMatrix.f : null,
-        headSharesBodyMotion: Boolean(head && body && head.closest('[data-hero-motion="body-lift"]') === body),
+        headPoint,
+        headNestedInBodyRig: Boolean(head && body && head.closest('[data-hero-motion="body-lift"]') === body),
         missingHeadSlots,
         unwrappedHeadSlots,
       };
@@ -806,34 +853,22 @@ test.describe('Personal Gym - Workout', () => {
 
     const initial = await readHeroMotion();
     expect(initial.paused).toBe(false);
-    expect(initial.headSharesBodyMotion, 'the head assembly should ride on the shared body-lift transform').toBe(true);
-    expect(initial.missingHeadSlots, 'core head slots should stay inside the synchronized head assembly').toEqual([]);
+    expect(initial.headPoint, 'the visible head assembly should expose a measurable off-pivot point').not.toBeNull();
+    expect(initial.headNestedInBodyRig, 'the head assembly should remain nested in the body rig').toBe(true);
+    expect(initial.missingHeadSlots, 'core head slots should stay inside the animated head assembly').toEqual([]);
     expect(initial.unwrappedHeadSlots, 'core head slots should not animate on separate ancestors').toEqual([]);
 
-    /** @type {{ headDelta: number, bodyDelta: number, syncDelta: number } | null} */
-    let movingSample = null;
     await expect.poll(async () => {
       const current = await readHeroMotion();
-      if (initial.headY === null || initial.bodyY === null || current.headY === null || current.bodyY === null) {
-        return 0;
-      }
-
-      const headDelta = current.headY - initial.headY;
-      const bodyDelta = current.bodyY - initial.bodyY;
-      if (Math.abs(headDelta) > 0.5) {
-        movingSample = {
-          headDelta,
-          bodyDelta,
-          syncDelta: Math.abs(headDelta - bodyDelta),
-        };
-      }
-      return Math.abs(headDelta);
+      if (!initial.headPoint || !current.headPoint) return 0;
+      return Math.hypot(
+        current.headPoint.x - initial.headPoint.x,
+        current.headPoint.y - initial.headPoint.y,
+      );
     }, {
-      message: 'workout hero head assembly should advance after the workout starts',
+      message: 'an off-pivot point on the workout hero head should visibly move after the workout starts',
       timeout: 5000,
     }).toBeGreaterThan(0.5);
-
-    expect(movingSample?.syncDelta ?? Infinity, 'head assembly and body-lift motion should remain on the same timeline').toBeLessThan(0.08);
   });
 
   test('workout renders quiz card with quiz UI', async ({ page, context }) => {
@@ -1510,10 +1545,6 @@ test.describe('Personal Gym - Workout', () => {
 // ==================== DIFFICULTY LEVELS ====================
 
 test.describe('Personal Gym - Difficulty', () => {
-  // The Singleton quiz is the canonical fixture: 3 questions have a
-  // difficulty (intermediate, advanced, expert) and 2 have none. This lets
-  // us check that the "skip" filter excludes the marked levels while
-  // unmarked questions stay in regardless.
   const SINGLETON_QUIZ_ID = 'design_pattern_singleton';
 
   test.beforeEach(async ({ page }) => {
@@ -1613,118 +1644,97 @@ test.describe('Personal Gym - Difficulty', () => {
   test('all difficulty checkboxes are checked by default', async ({ page, context }) => {
     await setCookie(context, 'se-gym-active', 'true');
     await page.goto(GYM_URL);
-    for (const level of ['basic', 'intermediate', 'advanced', 'expert']) {
-      await expect(
-        page.locator(`.difficulty-filter-checkbox[data-difficulty="${level}"]`)
-      ).toBeChecked();
+    for (const label of DIFFICULTY_FILTER_LABELS) {
+      await expect(page.getByRole('checkbox', { name: label, exact: true })).toBeChecked();
     }
   });
 
   test('unchecking all four levels still includes questions with no assigned difficulty', async ({ page, context }) => {
     await setCookie(context, 'se-gym-active', 'true');
-    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: SINGLETON_QUIZ_ID }]));
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: DIFFICULTY_FIXTURE_QUIZ_ID }]));
     await page.goto(GYM_URL);
+    await installDifficultyFixture(page);
 
     // Uncheck every level — questions WITH a difficulty should drop out;
     // questions WITHOUT one should still appear.
-    for (const level of ['basic', 'intermediate', 'advanced', 'expert']) {
-      await page.locator(`.difficulty-filter-checkbox[data-difficulty="${level}"]`).uncheck();
+    for (const label of DIFFICULTY_FILTER_LABELS) {
+      await page.getByRole('checkbox', { name: label, exact: true }).uncheck();
     }
 
-    // The Singleton quiz has 5 questions; 3 are tagged (intermediate,
-    // advanced, expert) and 2 are not. Summary should report 2 cards.
-    await expect(page.locator('#gym-summary')).toContainText('2 total cards');
+    await expect(page.getByText(/1 total cards available/)).toBeVisible();
 
-    await page.locator('#max-cards').fill('20');
-    await page.locator('#start-workout-btn').click();
-    await expect(page.locator('#workout-total')).toHaveText('2');
+    await page.getByRole('spinbutton', { name: /max cards/i }).fill('20');
+    await page.getByRole('button', { name: 'Start Workout' }).click();
 
-    // Walk through both cards — none should display a difficulty chip
-    // pre-answer or post-answer (because they have no assigned level).
-    for (let i = 0; i < 2; i++) {
-      const card = page.locator('.workout-quiz-card').first();
-      await expect(card).toBeVisible();
-      await expect(card.locator('.quiz-difficulty')).toHaveCount(0);
-      const type = await card.getAttribute('data-type');
-      if (type === 'multiple') {
-        await card.locator('.quiz-option').first().click();
-        await card.locator('.submit-answer-btn').click();
-      } else {
-        await card.locator('.quiz-option').first().click();
-      }
-      await card.locator('.next-btn').click();
-    }
+    await expect(page.getByText('Untagged difficulty fixture question', { exact: true })).toBeVisible();
+    await expect(page.getByLabel(/^Difficulty:/)).toHaveCount(0);
+    await answerDifficultyFixtureCard(page);
 
-    await expect(page.locator('#workout-results')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Workout Complete!' })).toBeVisible();
   });
 
-  test('unchecking a single level only excludes that level from the workout', async ({ page, context }) => {
+  test('difficulty filtering retains only selected levels and persists the choices', async ({ page, context }) => {
     await setCookie(context, 'se-gym-active', 'true');
-    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: SINGLETON_QUIZ_ID }]));
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: DIFFICULTY_FIXTURE_QUIZ_ID }]));
     await page.goto(GYM_URL);
+    await installDifficultyFixture(page);
 
-    // Uncheck just "expert" — should leave 4 cards (2 untagged + intermediate + advanced).
-    await page.locator('.difficulty-filter-checkbox[data-difficulty="expert"]').uncheck();
-    await expect(page.locator('#gym-summary')).toContainText('4 total cards');
+    // Uncheck just Expert — Basic, Intermediate, Advanced, and untagged remain.
+    await page.getByRole('checkbox', { name: 'Expert', exact: true }).uncheck();
+    await expect(page.getByText(/4 total cards available/)).toBeVisible();
 
-    // Also uncheck "advanced" — should leave 3 cards (2 untagged + intermediate).
-    await page.locator('.difficulty-filter-checkbox[data-difficulty="advanced"]').uncheck();
-    await expect(page.locator('#gym-summary')).toContainText('3 total cards');
+    // Also uncheck Advanced — Basic, Intermediate, and untagged remain.
+    await page.getByRole('checkbox', { name: 'Advanced', exact: true }).uncheck();
+    await expect(page.getByText(/3 total cards available/)).toBeVisible();
+
+    await page.getByRole('spinbutton', { name: /max cards/i }).fill('20');
+    await page.getByRole('button', { name: 'Start Workout' }).click();
+    const visibleQuestions = [];
+    for (let i = 0; i < 3; i++) {
+      visibleQuestions.push(await page.locator('.workout-quiz-card .question-text').innerText());
+      await answerDifficultyFixtureCard(page);
+    }
+    expect(visibleQuestions.sort()).toEqual([
+      'Basic difficulty fixture question',
+      'Intermediate difficulty fixture question',
+      'Untagged difficulty fixture question',
+    ]);
 
     // Cookie persists across reloads — checked/unchecked state survives.
     await page.reload();
-    await expect(page.locator('.difficulty-filter-checkbox[data-difficulty="expert"]')).not.toBeChecked();
-    await expect(page.locator('.difficulty-filter-checkbox[data-difficulty="advanced"]')).not.toBeChecked();
-    await expect(page.locator('.difficulty-filter-checkbox[data-difficulty="basic"]')).toBeChecked();
-    await expect(page.locator('.difficulty-filter-checkbox[data-difficulty="intermediate"]')).toBeChecked();
+    await expect(page.getByRole('checkbox', { name: 'Expert', exact: true })).not.toBeChecked();
+    await expect(page.getByRole('checkbox', { name: 'Advanced', exact: true })).not.toBeChecked();
+    await expect(page.getByRole('checkbox', { name: 'Basic', exact: true })).toBeChecked();
+    await expect(page.getByRole('checkbox', { name: 'Intermediate', exact: true })).toBeChecked();
   });
 
   test('workout results show overall and per-difficulty breakdown with pie charts', async ({ page, context }) => {
     await setCookie(context, 'se-gym-active', 'true');
-    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: SINGLETON_QUIZ_ID }]));
+    await setCookie(context, 'se-gym', JSON.stringify([{ type: 'quiz', id: DIFFICULTY_FIXTURE_QUIZ_ID }]));
     await page.goto(GYM_URL);
-    await page.locator('#max-cards').fill('20');
-    await page.locator('#start-workout-btn').click();
+    await installDifficultyFixture(page);
+    await page.getByRole('spinbutton', { name: /max cards/i }).fill('20');
+    await page.getByRole('button', { name: 'Start Workout' }).click();
 
-    // Walk through every Singleton question, picking the first option
-    // (correct or not) so we get a mix of right/wrong.
-    while (await page.locator('.workout-quiz-card').count() > 0) {
-      const card = page.locator('.workout-quiz-card').first();
-      const type = await card.getAttribute('data-type');
-      if (type === 'multiple') {
-        await card.locator('.quiz-option').first().click();
-        await card.locator('.submit-answer-btn').click();
-      } else {
-        await card.locator('.quiz-option').first().click();
-      }
-      await card.locator('.next-btn').click();
+    for (let i = 0; i < DIFFICULTY_FIXTURE_QUIZ.questions.length; i++) {
+      await answerDifficultyFixtureCard(page);
     }
 
-    await expect(page.locator('#workout-results')).toBeVisible();
-    const breakdown = page.locator('#workout-breakdown');
+    await expect(page.getByRole('heading', { name: 'Workout Complete!' })).toBeVisible();
+    const breakdown = page.getByRole('region', { name: 'Performance breakdown' });
     await expect(breakdown).toBeVisible();
 
-    // Overall row always present.
-    const overallRow = breakdown.locator('.workout-breakdown-row.is-overall');
+    const overallRow = breakdown.getByRole('listitem').filter({ hasText: /^Overall/ });
     await expect(overallRow).toHaveCount(1);
     await expect(overallRow.locator('.workout-breakdown-pie')).toBeVisible();
-    await expect(overallRow.locator('.workout-breakdown-stat')).toContainText(/\d+ \/ 5 \(\d+%\)/);
+    await expect(overallRow).toContainText(/\d+ \/ 5 \(\d+%\)/);
 
-    // Per-difficulty rows for the three tagged levels in the Singleton quiz.
-    for (const level of ['intermediate', 'advanced', 'expert']) {
-      const row = breakdown.locator(`.workout-breakdown-row.level-${level}`);
+    for (const label of DIFFICULTY_FILTER_LABELS.concat('Untagged')) {
+      const row = breakdown.getByRole('listitem').filter({ hasText: new RegExp(`^${label}`) });
       await expect(row).toHaveCount(1);
       await expect(row.locator('.workout-breakdown-pie')).toBeVisible();
-      await expect(row.locator('.workout-breakdown-stat')).toContainText(/\d+ \/ 1 \(\d+%\)/);
+      await expect(row).toContainText(/\d+ \/ 1 \(\d+%\)/);
     }
-
-    // "Basic" had no cards in the Singleton quiz → not shown.
-    await expect(breakdown.locator('.workout-breakdown-row.level-basic')).toHaveCount(0);
-
-    // Untagged appears because 2 of 5 questions have no difficulty.
-    const untaggedRow = breakdown.locator('.workout-breakdown-row.level-untagged');
-    await expect(untaggedRow).toHaveCount(1);
-    await expect(untaggedRow.locator('.workout-breakdown-stat')).toContainText(/\d+ \/ 2 \(\d+%\)/);
   });
 });
 

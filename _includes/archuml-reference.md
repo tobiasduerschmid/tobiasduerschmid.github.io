@@ -1722,7 +1722,7 @@ Inside any note body:
 
 **Example — Python code in note:**
 
-```
+````
 @startuml
 class BankAccount {
   + balance: float
@@ -1737,7 +1737,7 @@ note right of BankAccount
   ```
 end note
 @enduml
-```
+````
 
 <pre><code class="language-uml-class">
 @startuml
@@ -1746,12 +1746,12 @@ class BankAccount {
   + withdraw(amount: float)
 }
 note right of BankAccount
-  ```python
+  &#96;&#96;&#96;python
   def withdraw(self, amount):
       if amount > self.balance:
           raise InsufficientFunds(self.balance)
       self.balance -= amount
-  ```
+  &#96;&#96;&#96;
 end note
 @enduml
 </code></pre>
@@ -1760,7 +1760,7 @@ end note
 
 **Example — Java code in note:**
 
-```
+````
 @startuml
 class OrderService {
   + placeOrder(order: Order): boolean
@@ -1775,7 +1775,7 @@ note right of OrderService
   ```
 end note
 @enduml
-```
+````
 
 <pre><code class="language-uml-class">
 @startuml
@@ -1783,13 +1783,13 @@ class OrderService {
   + placeOrder(order: Order): boolean
 }
 note right of OrderService
-  ```java
+  &#96;&#96;&#96;java
   public boolean placeOrder(Order order) {
       if (order == null)
           throw new IllegalArgumentException();
       return repository.save(order);
   }
-  ```
+  &#96;&#96;&#96;
 end note
 @enduml
 </code></pre>
@@ -1849,7 +1849,7 @@ Override any of the following CSS custom properties to theme diagrams globally:
   --uml-fill:            #fdfcf8;   /* default element fill */
   --uml-header-fill:     #dbe8f8;   /* class header / title bar fill */
   --uml-line:            #444;       /* alternate line color */
-  --uml-secondary-line:  #6c7c8d;   /* notes / secondary strokes */
+  --uml-secondary-line:  #657484;   /* notes / secondary strokes */
   --uml-secondary-fill:  #eef4fa;   /* note background */
   --uml-label-fill:      rgba(255,255,255,0.94);   /* relationship label bg */
   --uml-label-stroke:    rgba(64,96,160,0.18);     /* relationship label border */

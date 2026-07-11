@@ -1768,17 +1768,14 @@ deactivate app
     await expect(popup.locator('#generated-python-title')).toHaveText('Generated Python Tutorial');
     await expect(popup.locator('.tvm-run-btn')).toBeVisible();
     await expect(popup.locator('.tvm-output-panel')).toBeVisible();
-    await popup.waitForFunction(() => {
-      const tutorial = window.__archUmlGeneratedPythonTutorial;
-      const diagrams = tutorial && tutorial._umlLastDiagrams;
-      return Boolean(tutorial && tutorial._umlDiagramEnabled && tutorial._umlPositionRight
-        && diagrams && /class\s+Application/.test(diagrams.classDiagram || ''));
-    }, null, { timeout: 30000 });
-    await expect(popup.locator('.tvm-right-tab[data-panel="uml"]')).toBeVisible();
-    await popup.locator('.tvm-right-tab[data-panel="uml"]').click();
-    await expect(popup.locator('.tvm-right-tab[data-panel="uml"]')).toHaveClass(/active/);
-    await expect(popup.locator('.tvm-uml-right-view')).toBeVisible();
-    await expect(popup.locator('.tvm-diagram-content svg')).toBeVisible();
+    const umlDiagramButton = popup.getByRole('button', { name: 'UML Diagram', exact: true });
+    await expect(umlDiagramButton).toBeVisible({ timeout: 30000 });
+    await umlDiagramButton.click();
+
+    const diagram = popup.getByRole('img', {
+      name: /UML class diagram.*Application.*Database/i,
+    });
+    await expect(diagram).toBeVisible({ timeout: 30000 });
 
     expect(pythonText).toContain('class Application:');
     expect(pythonText).toContain('class Database:');

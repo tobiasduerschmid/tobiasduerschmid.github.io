@@ -748,13 +748,19 @@ run_label: string                      # Override Run button label
 # === Setup / lifecycle hooks ===
 setup_commands: [string]               # Run once at tutorial load for
                                        # single-backend tutorials only.
-                                       # bash for v86, python for pyodide.
+                                       # bash for v86, Python for pyodide,
+                                       # serialized `sh` for WebContainer.
+                                       # Readiness waits for every command;
+                                       # timeout or nonzero exit rejects setup.
                                        # Unsupported by the haskell backend;
                                        # put required definitions in files.
 setup_commands_by_backend:             # Mixed-backend tutorials only.
   pyodide: [string]                    # Run once when that backend first
   react: [string]                      # initializes. Usually empty for React.
-  webcontainer: [string]               # Shell commands in the WebContainer.
+  webcontainer: [string]               # Awaited, serialized shell commands in
+                                       # the WebContainer. A failure rejects
+                                       # backend readiness instead of silently
+                                       # continuing in the browser fallback.
   browser: [string]                    # Reserved for browser fallback setup.
 post_fileload_setup: [string]          # Run after files are synced.
 user_command_listener: string | null   # JS callback name for command events
@@ -936,11 +942,14 @@ steps:
     step_dir: /absolute/path                 # v86 / webcontainer only. When
                                              # this step opens, drop the user's
                                              # interactive terminal into the
-                                             # specified directory (a `cd` is
-                                             # injected into the same bash
-                                             # session via _runSilent, so the
-                                             # PWD persists for everything the
-                                             # student types next). Used by
+                                             # specified directory. v86 injects
+                                             # `cd` into its persistent shell;
+                                             # WebContainer first validates an
+                                             # absolute path under `/tutorial`
+                                             # with an awaited, bounded command,
+                                             # then uses it for background runs
+                                             # and restarts the interactive
+                                             # shell there. Used by
                                              # multi-step build / Make tutorials
                                              # where the terminal should stay in
                                              # the active project directory. For
@@ -1211,12 +1220,17 @@ the assertion broker captures the agent's temporary command function before
 learner code runs and deletes the global hook. Preview reset callbacks return
 the replacement frame and port so `js/playwright-compat/runner.js` can adopt
 both before constructing its next broker. Learner-authored Playwright spec
-source is evaluated only in a hidden `sandbox="allow-scripts"` iframe with an
-opaque origin; reset requests, preview commands, and results cross that boundary
-only through a fresh transferred `MessagePort`, and the runner removes the
-iframe and closes the port after every run. Never move assertion commands,
-request ids, or results back onto `window.postMessage`; learner code can observe
-and forge public frame messages.
+source is evaluated only in a fresh, dedicated worker created from a `data:` URL,
+which the HTML Standard assigns a unique opaque origin. The host fetches the
+repository-owned runner source, transfers a private `MessagePort` before any
+learner code executes, and uses a host-thread watchdog to terminate the worker
+when synchronous spec loading or a test callback exceeds its configured bound.
+Reset requests, preview commands, and results use only that capability port;
+success, failure, bootstrap errors, and watchdog expiry all close the port and
+terminate the worker. Keep the `data:`-URL origin boundary: a same-origin worker
+would regain access to origin-scoped storage such as IndexedDB. Never move
+assertion commands, request ids, or results back onto public worker/window
+messages; learner code can observe and forge public message traffic.
 
 `uml-python-workspace.html` is a separate generated-code workspace opened by
 the UML editor's "Generate Python" action. It receives a one-shot
@@ -1248,6 +1262,42 @@ channel.
   preview panel in the DOM, toggling the inactive one with `hidden` so it is
   not exposed to assistive tech. Existing single-backend tutorials keep using
   top-level `setup_commands`.
+  WebContainer boot and shell-command handshakes are bounded. Module, boot, or
+  workspace-initialization failure tears down any partial or late runtime before
+  selecting the browser fallback. Authored WebContainer setup failures do not
+  fall back because doing so would silently skip required tutorial state.
+  Global setup, first-visit step setup, background shell work, and `step_dir`
+  validation share one serialized command queue; each call awaits process exit
+  and output drain, rejects on timeout or nonzero status, and leaves the queue
+  usable after failure. Do not reintroduce fire-and-forget terminal writes or
+  fixed delays for lifecycle commands.
+  WebContainer Node entry files are normalized within the tutorial workspace
+  and passed to `node` relative to the active `/tutorial` working directory
+  (including a validated `step_dir`). Reject paths that escape that workspace;
+  WebContainer's mounted filesystem does not reliably resolve host-style
+  absolute `/tutorial/...` entry arguments. Prefix root-level filenames that
+  begin with `-` so Node cannot interpret learner file names as CLI options.
+  Live UML rendering depends on `UMLShared.applySvgAccessibility` from the
+  ArchUML bundle. The hook must put `role="img"`, a usable accessible name,
+  and an SVG `<title>` on each rendered SVG; `js/uml-auto-describe.js` wraps it
+  to replace both the fallback name and title with a model-specific description.
+  Step navigation is one serialized transaction with a single coalesced
+  pending destination: the first idle `loadStep()` still updates its UI
+  synchronously, rapid later requests discard intermediate destinations, and
+  only the latest request may commit visited/hash/autosave/timer state.
+  `start()` returns the initial lifecycle promise: it must not resolve until
+  the selected step (including any saved-progress restoration), prompt, and
+  loading state are ready. Callers may safely perform initial UML or other
+  derived-view refreshes in `start().then(...)`; do not detach the `loadStep()`
+  or restore chain from that promise. Initialization and restoration failures
+  render the runtime's visible error state and reject this promise; layout
+  entry points that intentionally start in place must catch that rejection
+  after letting the runtime own its user-facing error message.
+  Run is likewise one atomic transaction acquired before backend initialization or
+  file sync; the inline `test_file` action, Run button, popout, and
+  Ctrl/Cmd+Enter requests share that guard and both execution buttons remain
+  disabled until the identity-matched transaction settles. Every backend must
+  settle it on success, failure, Stop, or timeout.
   React hot reload sends source and style patches into the opaque-origin
   preview with `postMessage`; the parent runtime must not inspect frame globals
   such as `Babel`. The preview announces its generation as ready only after its
@@ -1299,6 +1349,13 @@ channel.
   step setup, and only then re-enables Run (returning focus there when Stop was
   keyboard-activated). Execution timeouts use the same restart path, so an
   infinite learner program does not require a page reload.
+  Browser-backend learner code runs in a fresh opaque-origin `data:` Worker,
+  with repository-owned Node/module/fs/argv/server mocks. Host HTTP-client
+  requests are routed to that Worker while a server step remains active. Every
+  normal, stopped, failed, or timed-out completion terminates the exact Worker
+  and clears callback/timer references before notifying callers. Keep the
+  host-owned deadline: Worker termination is what prevents a synchronous
+  learner infinite loop from freezing the tutorial page.
 - **`js/tutorial-hero-celebration.js`** — shared test-pass celebration used
   by every `TutorialCode` backend and the `uml-editor` backend. After a
   visible gate-style test run passes all tests, it clones the saved SE Gym
@@ -1332,6 +1389,12 @@ channel.
   (rename, extract, inline) used by the refactoring tutorials.
 - **`js/debugger/*.js`** — time-travel debugger: `sync.js`,
   `ui-render.js`, `editor-attach.js`, `main.js`, `worker-extension.js`.
+  Browser-backend Stop is a hard cancellation: `browser-channel.js`
+  terminates the dedicated learner-runtime worker immediately, settles the
+  controller on the next microtask, and generation-guards that completion so
+  it cannot close a newer debug session. The next run always creates a fresh
+  worker. Keep that host-owned termination path; a cooperative message cannot
+  interrupt learner code that is stuck in a synchronous infinite loop.
   Breakpoint gutter clicks use `editor-attach.js`'s shared hitbox helper,
   which centers the pointer target on the visible Monaco breakpoint dot and
   is reused by the main editor and popout editors. Empty breakpoint hitboxes
@@ -1365,7 +1428,8 @@ channel.
   `haskell-runtime-frame.html` + `js/haskell-worker.js` (a sandboxed Haskell
   frame through `js/vendor/microhs/mhs-embed.js`, the local, pinned MicroHs
   WebAssembly runtime),
-  `js/playwright-compat/runner.js` (in-browser Playwright for React),
+  `js/playwright-compat/runner.js` (in-browser Playwright for React; host-side
+  preview proxy plus an opaque-origin, terminable learner-spec worker),
   `js/pyodide-git.js` / `js/pyodide-unix.js` (POSIX mocks).
 
 Third-party code that executes in the tutorial page or a same-origin worker is
@@ -1409,9 +1473,21 @@ The v86 engine and BIOS are repository-owned artifacts verified by
 `vm/setup.sh`. VM regeneration takes its Alpine image digest, exact top-level
 APK versions, TinyCC commit, and artifact hashes from `vm/build-inputs.env`;
 do not restore `latest`, branch-head clones, mutable image tags, or `master`
-URLs. Alpine still resolves transitive APK dependencies from its live v3.19
-repositories, so this is fail-on-top-level-drift hardening, not a claim of a
-bit-for-bit reproducible dependency closure.
+URLs. The complete installed Alpine runtime closure must match
+`vm/apk-runtime.lock`; refresh that lock only in a reviewed VM dependency
+update. Repositories and generated file metadata remain live inputs, so the
+rootfs is not claimed to be byte-for-byte reproducible.
+
+`vm/build-rootfs.sh` stages and validates both boot artifacts before replacing
+the published pair. A successful rebuild deliberately deletes the old v86
+save-state and its manifests because a snapshot embeds the kernel, initrd,
+emulator/BIOS bytes, and memory configuration. After serving the rebuilt
+files, run `make vm-snapshot`: `vm/build-snapshot.js` publishes
+`state.bin.gz` atomically, writes `vm/dist/SNAPSHOT_INPUTS` with every
+compatibility hash/configuration value, and writes `vm/dist/SHA256SUMS` for the
+release artifacts. Never restore or commit only part of that set;
+`scripts/tests/runtime-supply-chain.test.js` rejects package, kernel/module,
+snapshot-input, or checksum drift.
 
 ### 4.6 Backends — what each supports
 
@@ -1497,7 +1573,9 @@ under the same prefix family as other tutorial state so the global
   `True` passes; `False`, a compile error, or a runtime exception fails. Keep
   the expression pure and self-contained, for example
   `doubleAll [1, 2, 3] == [2, 4, 6]`; do not use shell commands or Python-style
-  `assert` statements.
+  `assert` statements. A workspace-sync failure must render an indeterminate
+  result and settle the active test transaction; never leave the test spinner
+  or `_testRunInFlight` waiting for a Haskell request that was never sent.
 - **React DOM assertions** (`react`): a plain `tests[].command` runs inside the
   opaque-origin preview through the broker's private `MessageChannel`. It
   receives `frame`, `code`, `assert`, and `files`; `frame.contentDocument`
@@ -1508,7 +1586,10 @@ under the same prefix family as other tutorial state so the global
   `js/playwright-compat/runner.js` (a subset of `@playwright/test`).
   Reference selectors via `page.getByRole(...)`, `page.getByText(...)`. Its
   locator/action requests and responses share the React assertion broker's
-  private capability port; do not add a public-window fallback.
+  private capability port; do not add a public-window fallback. Learner spec
+  source runs in a fresh opaque-origin dedicated worker, and the host terminates
+  that worker if synchronous loading or a test callback exceeds the configured
+  Playwright timeout, so an infinite loop cannot freeze the tutorial page.
 - **UML assertions** (`uml-editor`): `tests[].assertions` are structural
   checks against the current ArchUML source. Use `kind: element|class|state|
   participant`, `kind: member`, `kind: relation|transition|message`, or

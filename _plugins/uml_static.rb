@@ -23,21 +23,53 @@ module Jekyll
 
     UML_TYPES = %w[class sequence state component deployment usecase activity].freeze
     DIAGRAM_TYPES = %w[freeform gitgraph folder-tree venn er].freeze
+    RENDERER_INPUT_PATHS = %w[
+      js/ArchUML/uml-bundle.js
+      js/ArchUML/uml_to_svg.js
+      js/git-graph.js
+    ].freeze
+
+    # A malformed raw block must stop at the next pre/code boundary instead of
+    # borrowing a closing tag from a later, unrelated block.
+    CODE_BLOCK_PATTERN = %r{
+      <pre\b[^>]*>\s*<code\b([^>]*)>
+      (
+        (?:(?!</?(?:pre|code)\b)[\s\S])*?
+      )
+      </code\s*>\s*</pre\s*>
+    }mix.freeze
+
+    SVG_ATTRIBUTE_PATTERN = /\b([A-Za-z_:][A-Za-z0-9_.:-]*)(\s*=\s*)(["'])(.*?)\3/m.freeze
+    SVG_ROOT_PATTERN = /\A(\s*<svg\b)([^>]*)>/mi.freeze
+    SVG_ROOT_A11Y_ATTRIBUTE_PATTERN = /\s+(?:role|aria-label|aria-labelledby|aria-describedby|aria-hidden|focusable)\s*=\s*(["'])(.*?)\1/mi.freeze
+    LOCAL_FRAGMENT_ATTRIBUTES = %w[href xlink:href usemap].freeze
+    LOCAL_IDREF_ATTRIBUTES = %w[
+      aria-activedescendant aria-controls aria-describedby aria-details
+      aria-errormessage aria-flowto aria-labelledby aria-owns
+      for form headers itemref list
+    ].freeze
+    SVG_SYNCBASE_ATTRIBUTES = %w[begin end].freeze
 
     class << self
       def setup
         @cache = {}
         @node_path = find_node
-        @script_path = File.join(Dir.pwd, 'js/ArchUML/uml_to_svg.js')
+        @script_path = File.join(Dir.pwd, RENDERER_INPUT_PATHS[1])
         @describe_script_path = File.join(Dir.pwd, 'js/uml-describe-cli.js')
-        @bundle_path = File.join(Dir.pwd, 'js/ArchUML/uml-bundle.js')
         @cache_dir = File.join(Dir.pwd, '.uml_cache')
-        @renderer_hash = begin
-          Digest::MD5.file(@bundle_path).hexdigest
-        rescue StandardError
-          'renderer-unknown'
-        end
+        @renderer_hash = renderer_fingerprint(Dir.pwd)
         FileUtils.mkdir_p(@cache_dir)
+      end
+
+      def renderer_fingerprint(root_path)
+        digest = Digest::SHA256.new
+        RENDERER_INPUT_PATHS.each do |relative_path|
+          absolute_path = File.join(root_path, relative_path)
+          digest << relative_path << "\0"
+          digest << (File.file?(absolute_path) ? File.binread(absolute_path) : '<missing>')
+          digest << "\0"
+        end
+        digest.hexdigest
       end
 
       def find_node
@@ -110,8 +142,9 @@ module Jekyll
 
       def collect_code_blocks(content)
         blocks = []
-        content.scan(%r{<pre\b[^>]*>\s*<code\b([^>]*)>([\s\S]*?)</code>\s*</pre>}mi) do |attrs, text|
-          original = Regexp.last_match(0)
+        content.scan(CODE_BLOCK_PATTERN) do |attrs, text|
+          match = Regexp.last_match
+          original = match[0]
           type = diagram_type_from_code_class(html_attr(attrs, 'class'))
           next unless type
 
@@ -121,7 +154,8 @@ module Jekyll
             type: type,
             text: caption_info[:text],
             caption: caption_info[:caption],
-            original: original
+            original: original,
+            position: match.begin(0)
           }
         end
         blocks
@@ -130,8 +164,9 @@ module Jekyll
       def collect_data_attribute_blocks(content)
         blocks = []
         content.scan(%r{<div\b(?=[^>]*\bdata-uml-type=)(?=[^>]*\bdata-uml-spec=)([^>]*)>[\s\S]*?</div>}mi) do |attrs|
+          match = Regexp.last_match
           attrs = attrs[0] if attrs.is_a?(Array)
-          original = Regexp.last_match(0)
+          original = match[0]
           type = html_attr(attrs, 'data-uml-type')
           spec = html_attr(attrs, 'data-uml-spec')
           next unless type && spec
@@ -141,7 +176,8 @@ module Jekyll
             type: normalize_type(type),
             text: caption_info[:text],
             caption: caption_info[:caption],
-            original: original
+            original: original,
+            position: match.begin(0)
           }
         end
         blocks
@@ -250,7 +286,88 @@ module Jekyll
         Jekyll.logger.error 'UMLStatic:', "Could not parse renderer output: #{e.message}"
       end
 
-      def wrap_svg(block, description_payload)
+      def svg_namespace_prefix(page_identifier, occurrence_index)
+        page_digest = Digest::SHA256.hexdigest(page_identifier.to_s)[0, 12]
+        "uml-#{page_digest}-#{occurrence_index + 1}"
+      end
+
+      def svg_id_mapping(svg, namespace)
+        attributes = svg.to_s.scan(SVG_ATTRIBUTE_PATTERN)
+        ids = attributes.filter_map do |name, _equals, _quote, value|
+          value if name.casecmp?('id') && !value.empty?
+        end
+        ids.uniq.to_h { |id| [id, "#{namespace}-#{id}"] }
+      end
+
+      def local_id_pattern(id_mapping)
+        ordered_ids = id_mapping.keys.sort_by { |id| [-id.length, id] }
+        Regexp.union(ordered_ids)
+      end
+
+      def rewrite_local_urls(value, id_mapping)
+        id_pattern = local_id_pattern(id_mapping)
+        value.gsub(/(?i:url)\(\s*(["']?)#(#{id_pattern})\1\s*\)/) do |reference|
+          id = Regexp.last_match(2)
+          reference.sub("##{id}", "##{id_mapping.fetch(id)}")
+        end
+      end
+
+      def rewrite_fragment_reference(value, id_mapping)
+        return value unless value.start_with?('#')
+
+        id = value.delete_prefix('#')
+        id_mapping.key?(id) ? "##{id_mapping.fetch(id)}" : value
+      end
+
+      def rewrite_idref_list(value, id_mapping)
+        value.gsub(/\S+/) { |id| id_mapping.fetch(id, id) }
+      end
+
+      def rewrite_syncbase_references(value, id_mapping)
+        id_pattern = local_id_pattern(id_mapping)
+        value.gsub(/(^|[;\s])(#{id_pattern})(?=\.)/) do
+          separator = Regexp.last_match(1)
+          id = Regexp.last_match(2)
+          "#{separator}#{id_mapping.fetch(id)}"
+        end
+      end
+
+      def rewrite_svg_attribute(name, value, id_mapping)
+        normalized_name = name.downcase
+        return id_mapping.fetch(value, value) if normalized_name == 'id'
+        return rewrite_fragment_reference(value, id_mapping) if LOCAL_FRAGMENT_ATTRIBUTES.include?(normalized_name)
+        return rewrite_idref_list(value, id_mapping) if LOCAL_IDREF_ATTRIBUTES.include?(normalized_name)
+        return rewrite_syncbase_references(value, id_mapping) if SVG_SYNCBASE_ATTRIBUTES.include?(normalized_name)
+
+        value
+      end
+
+      def namespace_svg_ids(svg, namespace)
+        id_mapping = svg_id_mapping(svg, namespace)
+        return svg if id_mapping.empty?
+
+        # Cache entries stay canonical. Only the copied string inserted at a
+        # particular page occurrence receives a document-local namespace.
+        with_local_urls = rewrite_local_urls(svg.to_s, id_mapping)
+        with_local_urls.gsub(SVG_ATTRIBUTE_PATTERN) do
+          name = Regexp.last_match(1)
+          equals = Regexp.last_match(2)
+          quote = Regexp.last_match(3)
+          value = Regexp.last_match(4)
+          rewritten_value = rewrite_svg_attribute(name, value, id_mapping)
+          "#{name}#{equals}#{quote}#{rewritten_value}#{quote}"
+        end
+      end
+
+      def hide_nested_svg_from_accessibility(svg)
+        svg.to_s.sub(SVG_ROOT_PATTERN) do
+          opening = Regexp.last_match(1)
+          attributes = Regexp.last_match(2).gsub(SVG_ROOT_A11Y_ATTRIBUTE_PATTERN, '')
+          %(#{opening}#{attributes} aria-hidden="true" focusable="false">)
+        end
+      end
+
+      def wrap_svg(block, description_payload, namespace_prefix)
         safe_type = type_class(block[:type])
         brief = description_payload.is_a?(Hash) ? description_payload['brief'] : nil
         verbose = description_payload.is_a?(Hash) ? description_payload['verbose'] : nil
@@ -265,11 +382,13 @@ module Jekyll
                      end
 
         verbose_html = render_verbose_description(verbose, safe_type)
+        namespaced_svg = namespace_svg_ids(block[:svg], namespace_prefix)
+        presentational_svg = hide_nested_svg_from_accessibility(namespaced_svg)
 
         <<~HTML
           <figure class="sebook-figure sebook-figure--archuml sebook-figure--archuml-#{safe_type}">
             <div class="uml-#{safe_type}-diagram-container" data-uml-rendered="true" role="img" aria-label="#{CGI.escapeHTML(desc)}">
-              #{block[:svg]}
+              #{presentational_svg}
             </div>
             #{figcaption}
             #{verbose_html}
@@ -277,10 +396,11 @@ module Jekyll
         HTML
       end
 
-      def process(content)
+      def process(content, page_identifier: 'document')
         setup if @cache.nil?
 
         blocks = collect_code_blocks(content) + collect_data_attribute_blocks(content)
+        blocks.sort_by! { |block| block[:position] }
         return content if blocks.empty?
 
         render_missing_blocks(blocks)
@@ -289,7 +409,9 @@ module Jekyll
         blocks.each_with_index do |block, idx|
           next unless block[:svg]
 
-          content.gsub!(block[:original], wrap_svg(block, descriptions[idx.to_s]))
+          namespace_prefix = svg_namespace_prefix(page_identifier, idx)
+          replacement = wrap_svg(block, descriptions[idx.to_s], namespace_prefix)
+          content.sub!(block[:original], replacement)
         end
 
         content
@@ -303,6 +425,6 @@ Jekyll::Hooks.register [:posts, :pages, :documents], :post_render do |post|
   next unless is_production
 
   if post.output && (post.output.include?('<html') || post.url.end_with?('/', '.html'))
-    post.output = Jekyll::UMLStatic.process(post.output)
+    post.output = Jekyll::UMLStatic.process(post.output, page_identifier: post.url)
   end
 end

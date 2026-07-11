@@ -67,3 +67,17 @@ test('tutorial state deletion includes debugger exception breakpoints', async ({
 
   await expect.poll(() => page.evaluate(() => localStorage.getItem('tutorial-debug-excbps-python'))).toBeNull();
 });
+
+test('site privacy disclosures identify the StackBlitz WebContainer boundary', async ({ page }) => {
+  await page.goto('/');
+  const notice = page.locator('.cookie-notice');
+  await expect(notice).toContainText('StackBlitz processes workspace files and commands');
+  await expect(notice.getByRole('link', { name: /learn how data is handled/i }))
+    .toHaveAttribute('href', /\/cookies\/$/);
+
+  await page.goto('/cookies/');
+  await expect(page.getByRole('heading', { name: 'Your Browser Storage' })).toBeVisible();
+  await expect(page.getByText(/third-party processing boundary/i)).toBeVisible();
+  await expect(page.getByRole('link', { name: 'StackBlitz privacy policy' }))
+    .toHaveAttribute('href', 'https://stackblitz.com/privacy-policy');
+});

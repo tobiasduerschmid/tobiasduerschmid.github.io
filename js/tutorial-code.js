@@ -111,6 +111,22 @@
     return "'" + String(s).replace(/'/g, "'\\''") + "'";
   }
 
+  function normalizeTutorialAbsolutePath(value) {
+    var raw = String(value || '');
+    if (raw.charAt(0) !== '/' || raw.indexOf('\0') !== -1) return null;
+    var segments = [];
+    raw.split('/').forEach(function (segment) {
+      if (!segment || segment === '.') return;
+      if (segment === '..') {
+        segments.pop();
+        return;
+      }
+      segments.push(segment);
+    });
+    var normalized = '/' + segments.join('/');
+    return /^\/tutorial(?:\/|$)/.test(normalized) ? normalized : null;
+  }
+
   function b64EncodeUtf8(s) {
     var bytes = new TextEncoder().encode(String(s));
     var bin = '';
@@ -131,6 +147,316 @@
       .join('\n');
   }
 
+  /** Repository-owned harness executed inside an opaque-origin data Worker. */
+  function browserRunnerWorkerMain() {
+    'use strict';
+
+    var runId = 0;
+    var serverHandler = null;
+    var jsFiles = {};
+    var fsFiles = {};
+    var moduleCache = {};
+
+    self.window = self;
+    self.global = self;
+
+    function send(type, text, extra) {
+      var message = { __jsrun: true, __rid: runId, type: type, text: text || '' };
+      Object.keys(extra || {}).forEach(function (key) { message[key] = extra[key]; });
+      self.postMessage(message);
+    }
+
+    function format(args) {
+      return Array.prototype.map.call(args, function (value) {
+        if (typeof value !== 'object' || value === null) return String(value);
+        try { return JSON.stringify(value, null, 2); }
+        catch (error) { return String(value); }
+      }).join(' ');
+    }
+
+    self.console = {
+      log: function () { send('stdout', format(arguments) + '\n'); },
+      info: function () { send('stdout', format(arguments) + '\n'); },
+      warn: function () { send('stdout', '[warn] ' + format(arguments) + '\n'); },
+      error: function () { send('stderr', format(arguments) + '\n'); },
+    };
+    self.addEventListener('error', function (event) {
+      var error = event && event.error;
+      send('stderr', String(error && (error.stack || error.message) || event.message || 'Worker error') + '\n');
+      if (event && event.preventDefault) event.preventDefault();
+    });
+    self.addEventListener('unhandledrejection', function (event) {
+      var reason = event && event.reason;
+      send('stderr', 'UnhandledPromiseRejection: ' +
+        String(reason && (reason.stack || reason.message) || reason || 'Unknown') + '\n');
+    });
+
+    function resolveRelative(specifier) {
+      var normalized = String(specifier)
+        .replace(/^(\.\.\/)+/, '')
+        .replace(/^\.\//, '');
+      if (Object.prototype.hasOwnProperty.call(jsFiles, normalized)) return normalized;
+      if (Object.prototype.hasOwnProperty.call(jsFiles, normalized + '.js')) return normalized + '.js';
+      var base = normalized.split('/').pop();
+      if (Object.prototype.hasOwnProperty.call(jsFiles, base)) return base;
+      if (Object.prototype.hasOwnProperty.call(jsFiles, base + '.js')) return base + '.js';
+      return null;
+    }
+
+    function matchRoute(pattern, url) {
+      if (!pattern || pattern === '*') return {};
+      var patternParts = pattern.split('/');
+      var urlParts = url.split('/');
+      if (patternParts.length !== urlParts.length) return null;
+      var params = {};
+      for (var i = 0; i < patternParts.length; i++) {
+        if (patternParts[i] && patternParts[i].charAt(0) === ':') {
+          params[patternParts[i].slice(1)] = decodeURIComponent(urlParts[i]);
+        } else if (patternParts[i] !== urlParts[i]) {
+          return null;
+        }
+      }
+      return params;
+    }
+
+    function makeRouter() {
+      var routes = [];
+      return {
+        get: function (path, handler) { routes.push({ m: 'GET', p: path, h: handler }); },
+        post: function (path, handler) { routes.push({ m: 'POST', p: path, h: handler }); },
+        put: function (path, handler) { routes.push({ m: 'PUT', p: path, h: handler }); },
+        delete: function (path, handler) { routes.push({ m: 'DELETE', p: path, h: handler }); },
+        use: function (path, handler) {
+          if (typeof path === 'function') { handler = path; path = '*'; }
+          if (handler) routes.push({ m: 'USE', p: path, h: handler });
+        },
+        __routes: routes,
+      };
+    }
+
+    function makeExpress() {
+      var express = function () {
+        var routes = [];
+        var app = {
+          get: function (path, handler) { routes.push({ m: 'GET', p: path, h: handler }); },
+          post: function (path, handler) { routes.push({ m: 'POST', p: path, h: handler }); },
+          put: function (path, handler) { routes.push({ m: 'PUT', p: path, h: handler }); },
+          delete: function (path, handler) { routes.push({ m: 'DELETE', p: path, h: handler }); },
+          all: function (path, handler) {
+            ['GET', 'POST', 'PUT', 'DELETE'].forEach(function (method) {
+              routes.push({ m: method, p: path, h: handler });
+            });
+          },
+          use: function (path, handler) {
+            if (typeof path === 'function') { handler = path; path = '*'; }
+            if (!handler) return;
+            routes.push(handler.__routes
+              ? { m: 'MOUNT', p: path, router: handler.__routes }
+              : { m: 'USE', p: path, h: handler });
+          },
+          listen: function (port, host, callback) {
+            var ready = typeof host === 'function' ? host : callback;
+            console.log('Express server listening on port ' + port);
+            if (ready) ready();
+            serverHandler = function (req, res) {
+              res.status = function (status) { this._status = status; this.writeHead(status); return this; };
+              res.json = function (object) {
+                this.writeHead(this._status || 200);
+                this.end(JSON.stringify(object, null, 2));
+              };
+              res.send = function (body) {
+                if (typeof body === 'object') return this.json(body);
+                this.end(String(body));
+              };
+              var found = null;
+              var foundParams = {};
+              outer: for (var routeIndex = 0; routeIndex < routes.length; routeIndex++) {
+                var route = routes[routeIndex];
+                if (route.m === 'MOUNT') {
+                  var nestedUrl = req.url;
+                  if (nestedUrl === route.p) nestedUrl = '/';
+                  else if (nestedUrl.indexOf(route.p + '/') === 0) nestedUrl = nestedUrl.slice(route.p.length);
+                  else continue;
+                  for (var nestedIndex = 0; nestedIndex < route.router.length; nestedIndex++) {
+                    var nested = route.router[nestedIndex];
+                    if (nested.m !== req.method) continue;
+                    var nestedParams = matchRoute(nested.p, nestedUrl);
+                    if (nestedParams !== null) {
+                      found = nested.h;
+                      foundParams = nestedParams;
+                      break outer;
+                    }
+                  }
+                } else if (route.m === req.method) {
+                  var params = matchRoute(route.p, req.url);
+                  if (params !== null) { found = route.h; foundParams = params; break; }
+                }
+              }
+              if (found) { req.params = foundParams; found(req, res); }
+              else { res.writeHead(404); res.end('404 Not Found'); }
+            };
+          },
+        };
+        return app;
+      };
+      express.Router = makeRouter;
+      express.json = function () {
+        return function (req, res, next) { if (next) next(); };
+      };
+      return express;
+    }
+
+    function requireModule(specifier) {
+      if (specifier === 'http') {
+        return {
+          createServer: function (handler) {
+            serverHandler = handler;
+            return {
+              listen: function (port, host, callback) {
+                var ready = typeof host === 'function' ? host : callback;
+                console.log('HTTP server listening on port ' + port);
+                if (ready) ready();
+              },
+            };
+          },
+        };
+      }
+      if (specifier === 'express') return makeExpress();
+      if (specifier === 'fs') {
+        return {
+          readFile: function (path, encoding, callback) {
+            if (typeof encoding === 'function') callback = encoding;
+            setTimeout(function () {
+              var data = fsFiles[path];
+              if (data === undefined) callback(new Error("ENOENT: no such file or directory, open '" + path + "'"), null);
+              else callback(null, data);
+            }, 0);
+          },
+          readFileSync: function (path) {
+            var data = fsFiles[path];
+            if (data === undefined) throw new Error("ENOENT: no such file: '" + path + "'");
+            return data;
+          },
+          writeFile: function (path, data, encoding, callback) {
+            if (typeof encoding === 'function') callback = encoding;
+            fsFiles[path] = String(data);
+            setTimeout(function () { if (callback) callback(null); }, 0);
+          },
+          promises: {
+            readFile: function (path) {
+              return new Promise(function (resolve, reject) {
+                setTimeout(function () {
+                  var data = fsFiles[path];
+                  if (data === undefined) reject(new Error("ENOENT: no such file or directory, open '" + path + "'"));
+                  else resolve(data);
+                }, 0);
+              });
+            },
+          },
+        };
+      }
+      if (typeof specifier === 'string' &&
+          (specifier.indexOf('./') === 0 || specifier.indexOf('../') === 0 || specifier.indexOf('/') < 0)) {
+        var key = resolveRelative(specifier);
+        if (key === null) throw new Error('Cannot find module: ' + specifier);
+        if (Object.prototype.hasOwnProperty.call(moduleCache, key)) return moduleCache[key];
+        var module = { exports: {} };
+        moduleCache[key] = module.exports;
+        (new Function('require', 'module', 'exports', jsFiles[key]))(
+          requireModule,
+          module,
+          module.exports
+        );
+        moduleCache[key] = module.exports;
+        return module.exports;
+      }
+      throw new Error('Module not found: ' + specifier);
+    }
+
+    function startRun(message) {
+      runId = message.runId;
+      serverHandler = null;
+      jsFiles = message.jsFiles || {};
+      fsFiles = message.fsFiles || {};
+      moduleCache = {};
+      self.module = { exports: {} };
+      self.exports = self.module.exports;
+      self.require = requireModule;
+      self.process = {
+        argv: ['node', message.scriptPath || ''].concat(message.argv || []),
+        env: {},
+        platform: 'browser',
+        version: 'v18.0.0',
+        cwd: function () { return '/tutorial'; },
+        exit: function () { throw new Error('__PROCESS_EXIT__'); },
+        on: function () {},
+        stdout: { write: function (text) { send('stdout', String(text)); } },
+        stderr: { write: function (text) { send('stderr', String(text)); } },
+      };
+      try {
+        (new Function(String(message.code || '')))();
+      } catch (error) {
+        if (!error || error.message !== '__PROCESS_EXIT__') {
+          console.error(error && (error.stack || error.message) || error);
+        }
+      }
+      send('sync_done', '');
+      setTimeout(function () { send('done', ''); }, Math.max(1, Number(message.timeoutMs) || 5500));
+    }
+
+    function handleHttpRequest(message) {
+      if (!serverHandler) return;
+      var rawUrl = message.url;
+      if (rawUrl.indexOf('http') === 0) {
+        try {
+          var parsed = new URL(rawUrl);
+          rawUrl = parsed.pathname + parsed.search;
+        } catch (error) { /* use the raw path */ }
+      }
+      var urlParts = rawUrl.split('?');
+      var query = {};
+      if (urlParts[1]) {
+        urlParts[1].split('&').forEach(function (part) {
+          var pair = part.split('=');
+          query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || '');
+        });
+      }
+      var body = message.body;
+      try {
+        if (typeof body === 'string' && /^[\[{]/.test(body.trim())) body = JSON.parse(body);
+      } catch (error) { /* preserve the original string */ }
+      var request = {
+        method: message.method,
+        url: urlParts[0],
+        query: query,
+        params: {},
+        body: body,
+        headers: {},
+      };
+      var response = {
+        _body: '',
+        _status: 200,
+        writeHead: function (status) { this._status = status; },
+        end: function (responseBody) {
+          this._body = responseBody || this._body;
+          send('http_response', '', { status: this._status, body: this._body });
+        },
+      };
+      try {
+        serverHandler(request, response);
+      } catch (error) {
+        response.writeHead(500);
+        response.end(error && (error.stack || error.message) || String(error));
+      }
+    }
+
+    self.addEventListener('message', function (event) {
+      var message = event.data || {};
+      if (message.type === 'run') startRun(message);
+      else if (message.type === 'http_request') handleHttpRequest(message);
+    });
+  }
+
   var V86_SNAPSHOT_CACHE_VERSION = 5;
   var V86_SILENT_COMMAND_TIMEOUT_MS = 240000;
   // Instructor solution batches can contain multi-command Git workflows; keep
@@ -146,6 +472,10 @@
   var WORKER_REQUEST_TIMEOUT_MS = 60000;
   var WORKER_EXECUTION_TIMEOUT_MS = 30000;
   var WORKER_FILE_TIMEOUT_MS = 15000;
+  // WebContainer is a remote-backed runtime. Neither its boot handshake nor a
+  // spawned command is allowed to leave tutorial readiness pending forever.
+  var WEBCONTAINER_BOOT_TIMEOUT_MS = 120000;
+  var WEBCONTAINER_COMMAND_TIMEOUT_MS = 120000;
   var HASKELL_BOOT_TIMEOUT_MS = 30000;
   var HASKELL_EXECUTION_TIMEOUT_MS = 30000;
   var REACT_PREVIEW_READY = 'sebook-react-preview-ready';
@@ -323,6 +653,10 @@
     // visible files are ready. Solution application and callers of loadStep()
     // use this as the single step-readiness barrier.
     this._stepSetupPromise = null;
+    this._stepLoadSequence = 0;
+    this._latestStepLoadRequestId = 0;
+    this._activeStepLoadRequest = null;
+    this._pendingStepLoadRequest = null;
     this._visFilterMarker = null;     // string to suppress from xterm output
     this._visFilterBuf = '';       // partial-match buffer for _visFilterMarker
     this._rpcPending = {};            // virtio-console RPC id -> callbacks
@@ -421,17 +755,26 @@
     this._workerWorkspaceFiles = Object.create(null);
     this._workerRestartPromise = null;
     this._destroyed = false;
-    this._haskellRunTimer = null;
-    this._haskellRunRequestId = null;
+    this._runSequence = 0;
+    this._activeRunTransaction = null;
     this._haskellRestartPromise = null;
+    this._haskellExecutionTimeoutMs = HASKELL_EXECUTION_TIMEOUT_MS;
 
     // WebContainers state
     this._webcontainer = null;
     this._shellProcess = null;
     this._shellWriter = null;
+    this._shellInputWriter = null;
+    this._shellOutputReader = null;
+    this._shellInputDispose = null;
     this._webcontainerRunProcess = null;
+    this._webcontainerRunFinish = null;
     this._webcontainerServerUrls = {};
     this._webcontainerServerReadyUnsub = null;
+    this._webcontainerUnavailableReason = null;
+    this._webcontainerCommandQueue = Promise.resolve();
+    this._webcontainerCwd = '/tutorial';
+    this._webcontainerBootTimeoutMs = WEBCONTAINER_BOOT_TIMEOUT_MS;
 
     // Git graph state
     this.gitGraphPath = options.gitGraphPath || null;
@@ -546,8 +889,10 @@
     this._reactAssertionPortGeneration = -1;
 
     // Browser JS runner state
-    this._jsRunnerFrame = null;
+    this._jsRunnerWorker = null;
     this._jsRunnerMsgId = 0;
+    this._jsFinish = null;
+    this._jsSafetyTimer = null;
 
     // Time-travel debugger opt-in. Supported backends:
     //   - pyodide (Python, via bdb + sys.settrace, in a Web Worker + SAB)
@@ -712,6 +1057,14 @@
   // ---------------------------------------------------------------------------
   TutorialCode.prototype.start = function () {
     var self = this;
+    var restoreErrorMessage = null;
+    function handleRestoreFailure(error) {
+      var failure = error instanceof Error ? error : new Error(String(error));
+      restoreErrorMessage = 'Failed to restore progress: ' + failure.message;
+      self._suppressAutoSave = false;
+      self._resumeBackgroundSync();
+      throw failure;
+    }
     this._buildUI();
     this._showLoading('Loading tutorial environment…');
 
@@ -771,10 +1124,12 @@
             // starter-file content before the saved files have been applied.
             self._suppressAutoSave = true;
             self._pauseBackgroundSync();
-            var savedStepLoaded = Promise.resolve(self.loadStep(saved.step));
+            var savedStepLoaded = Promise.resolve().then(function () {
+              return self.loadStep(saved.step);
+            });
             if (self.autosaveType === 'commands-and-files') {
               // _restoreCommandsAndFiles re-enables autosave after _applySavedFiles
-              savedStepLoaded.then(function () {
+              return savedStepLoaded.then(function () {
                 return self._restoreCommandsAndFiles(saved);
               }).then(function () {
                 var curStep = self.steps[saved.step];
@@ -787,13 +1142,9 @@
                   self._resumeBackgroundSync();
                   self._refreshGitGraph();
                 });
-              }, function (err) {
-                self._resumeBackgroundSync();
-                self._showError('Failed to restore progress: ' + (err && err.message || err));
-                console.error('TutorialCode restore error:', err);
-              });
+              }).catch(handleRestoreFailure);
             } else {
-              savedStepLoaded.then(function () {
+              return savedStepLoaded.then(function () {
                 return self._applySavedFiles(saved.files, saved.activeFile);
               }).then(function () {
                 self._suppressAutoSave = false;
@@ -809,18 +1160,14 @@
                   self._resumeBackgroundSync();
                   self._refreshGitGraph();
                 });
-              }, function (err) {
-                self._resumeBackgroundSync();
-                self._showError('Failed to restore progress: ' + (err && err.message || err));
-                console.error('TutorialCode restore error:', err);
-              });
+              }).catch(handleRestoreFailure);
             }
           } else {
             if (hashStep >= 0) {
               // Unlock all steps up to the hash target so loadStep doesn't reject
               for (var hi = 0; hi <= hashStep; hi++) self._stepsUnlocked.add(hi);
             }
-            Promise.resolve(self.loadStep(hashStep >= 0 ? hashStep : 0)).then(function () {
+            return Promise.resolve(self.loadStep(hashStep >= 0 ? hashStep : 0)).then(function () {
               return self._refreshPrompt();
             }).then(function () {
               self._hideLoading();
@@ -831,8 +1178,12 @@
         }
       })
       .catch(function (err) {
-        self._showError('Failed to start tutorial: ' + err.message);
+        var message = restoreErrorMessage
+          ? restoreErrorMessage
+          : 'Failed to start tutorial: ' + (err && err.message || err);
+        self._showError(message);
         console.error('TutorialCode error:', err);
+        throw err;
       });
   };
 
@@ -1037,10 +1388,14 @@
     this._stopGuestClockSync();
     this._clearTimedPracticeTimer();
     clearTimeout(this._terminalReadinessTimer);
-    clearTimeout(this._haskellRunTimer);
     if (this.emulator) { this.emulator.stop(); this.emulator = null; }
     this._terminateWorker('Tutorial runtime was destroyed');
-    if (this._shellProcess) { this._shellProcess = null; }
+    this._disposeWebContainerRuntime().catch(function () {});
+    if (this._jsFinish) this._jsFinish(false, 'destroyed');
+    if (this._jsRunnerWorker) {
+      try { this._jsRunnerWorker.terminate(); } catch (e) { /* already terminated */ }
+      this._jsRunnerWorker = null;
+    }
     if (this.editor) { this.editor.dispose(); this.editor = null; }
     if (this.editor2) { this.editor2.dispose(); this.editor2 = null; }
     for (var n in this.editorModels) {
@@ -3080,14 +3435,22 @@
     if (backend === 'webcontainer') {
       var self = this;
       return this._initWebContainer(setupCommandsOverride).catch(function (err) {
-        self._webcontainerUnavailableReason = err && (err.message || String(err)) || 'unknown error';
-        console.warn('[TutorialCode] WebContainer unavailable; falling back to browser backend:', err);
-        if (!backendOverride) {
-          self.config.backend = 'browser';
-          self.config.useTerminal = false;
-        }
-        self._showLoading('WebContainer unavailable — using browser Node sandbox…');
-        return self._initBrowserBackend();
+        return self._disposeWebContainerRuntime().then(function () {
+          // An authored setup command is part of the tutorial contract. Falling
+          // back to the browser shim would silently skip that contract, so only
+          // dependency/boot failures are eligible for fallback.
+          if (err && err.webContainerSetupFailure) throw err;
+
+          self._webcontainerUnavailableReason =
+            err && (err.message || String(err)) || 'unknown error';
+          console.warn('[TutorialCode] WebContainer unavailable; falling back to browser backend:', err);
+          if (!backendOverride) {
+            self.config.backend = 'browser';
+            self.config.useTerminal = false;
+          }
+          self._showLoading('WebContainer unavailable — using browser Node sandbox…');
+          return self._initBrowserBackend();
+        });
       });
     }
     if (backend === 'react') return this._initReactBackend();
@@ -3812,6 +4175,27 @@
     if (this.config.backend !== 'v86' && this.config.backend !== 'webcontainer') {
       return Promise.resolve();
     }
+    if (this.config.backend === 'webcontainer') {
+      var self = this;
+      var cwd = normalizeTutorialAbsolutePath(step.step_dir);
+      if (!cwd) {
+        return Promise.reject(new Error(
+          'WebContainer step_dir must stay inside /tutorial: ' + step.step_dir
+        ));
+      }
+      // Spawning in the requested directory is an awaited existence/access
+      // check. Once it succeeds, subsequent background commands inherit that
+      // working directory. If an interactive shell exists, restart it there so
+      // the prompt and the command API agree about the active directory.
+      return this._runWebContainerCommand(':', {
+        cwd: cwd,
+        label: 'WebContainer step directory',
+      }).then(function () {
+        self._webcontainerCwd = cwd;
+        if (!self.config.useTerminal) return;
+        return self._restartWebContainerShell(cwd);
+      });
+    }
     return this._runSilent('[ "$(pwd)" = ' + shellQuote(step.step_dir) + ' ] || cd ' + shellQuote(step.step_dir));
   };
 
@@ -3846,13 +4230,15 @@
   };
 
   /**
-   * Run a command in the v86 terminal without any visible output.
-   * Returns a Promise that resolves when the command completes.
-   * Calls are serialized via a queue so overlapping invocations
-   * never race on the mute state.
+   * Run a command without visible output. v86 uses its prompt-marker queue;
+   * WebContainer uses a bounded, serialized child process. Both return only
+   * after the command has actually completed.
    */
   TutorialCode.prototype._runSilent = function (cmd) {
     var self = this;
+    if (this.config.backend === 'webcontainer') {
+      return this._runWebContainerCommand(cmd, { label: 'WebContainer command' });
+    }
     if (this.config.backend !== 'v86') return Promise.resolve();
     return new Promise(function (resolve) {
       self._silentQueue.push({ cmd: cmd, resolve: resolve });
@@ -3942,8 +4328,10 @@
       }
       return self._runVisibleInline(cmd);
     } else if (this.config.backend === 'webcontainer') {
-      self.sendCommand(cmd);
-      return delay(800);
+      return self._runWebContainerCommand(cmd, {
+        label: 'WebContainer command',
+        echoOutput: true,
+      });
     }
     return Promise.resolve();
   };
@@ -4362,24 +4750,16 @@
     if (this._haskellRestartPromise) return this._haskellRestartPromise;
     var self = this;
 
-    clearTimeout(this._haskellRunTimer);
-    this._haskellRunTimer = null;
-    this._haskellRunRequestId = null;
     this._terminateWorker('Haskell runtime restarting');
-
-    var runBtn = this.root && this.root.querySelector('.tvm-run-btn');
-    var stopBtn = this.root && this.root.querySelector('.tvm-stop-btn');
-    if (runBtn) {
-      runBtn.disabled = false;
-      runBtn.textContent = '\u25b6 ' + this._runLabel;
-    }
-    if (stopBtn) stopBtn.style.display = 'none';
+    this._setRunTransactionControls('restarting');
 
     this._haskellRestartPromise = this._initHaskell().then(function () {
       self._hideLoading();
       self._haskellRestartPromise = null;
+      self._setRunTransactionControls('idle');
     }, function (error) {
       self._haskellRestartPromise = null;
+      self._setRunTransactionControls('unavailable');
       self._showError('Failed to restart Haskell runtime: ' + (error.message || error));
       throw error;
     });
@@ -4923,30 +5303,147 @@
     if (this.outputPre) this.outputPre.innerHTML = '';
   };
 
-  TutorialCode.prototype._runCurrentFile = function () {
+  TutorialCode.prototype._setRunTransactionControls = function (state, label) {
+    var runBtn = this.root && this.root.querySelector('.tvm-run-btn');
+    var testRunBtn = this.root && this.root.querySelector('.tvm-test-run-btn');
+    var stopBtn = this.root && this.root.querySelector('.tvm-stop-btn');
+    if (state === 'running' || state === 'restarting') {
+      if (runBtn) {
+        runBtn.disabled = true;
+        runBtn.textContent = label || (state === 'restarting'
+          ? '\u23f3 Restarting\u2026'
+          : '\u23f3 Running\u2026');
+      }
+      if (testRunBtn) {
+        testRunBtn.disabled = true;
+        if (state === 'running' && this._activeRunTransaction &&
+            this._activeRunTransaction.kind === 'test-file') {
+          testRunBtn.textContent = '\u23f3 Testing\u2026';
+        }
+      }
+      if (stopBtn) stopBtn.style.display = state === 'running' ? 'inline-block' : 'none';
+      return;
+    }
+    if (state === 'unavailable') {
+      if (runBtn) {
+        runBtn.disabled = true;
+        runBtn.textContent = 'Runtime unavailable';
+      }
+      if (testRunBtn) testRunBtn.disabled = true;
+      if (stopBtn) stopBtn.style.display = 'none';
+      return;
+    }
+    if (runBtn && (!this._debuggerCtl || !this._debuggerCtl.session)) {
+      runBtn.disabled = false;
+      runBtn.textContent = '\u25b6 ' + this._effectiveRunLabel();
+    }
+    if (testRunBtn) {
+      testRunBtn.disabled = false;
+      testRunBtn.textContent = '\u2713 Test';
+    }
+    if (stopBtn) stopBtn.style.display = 'none';
+  };
+
+  TutorialCode.prototype._handleRunTransactionFailure = function (run, error) {
+    var reason = error && error.reason;
+    if (reason !== 'terminated' && !(error && error.runMessageShown)) {
+      var fallback = {
+        sql: 'SQL execution failed',
+        prolog: 'Prolog execution failed',
+        java: 'Java execution failed',
+        haskell: 'Haskell execution failed',
+        pyodide: 'Could not run Python code',
+        webcontainer: 'Node execution failed',
+        browser: 'JavaScript execution failed',
+      }[run.backend] || 'Execution failed';
+      this._appendOutput('\n\u2717 ' + (error && error.message || fallback) + '\n', 'err');
+    }
+    var recovery = this._workerRestartPromise || this._haskellRestartPromise;
+    return recovery ? Promise.resolve(recovery).catch(function () {}) : Promise.resolve();
+  };
+
+  TutorialCode.prototype._finalizeRunTransaction = function (run) {
+    if (this._activeRunTransaction !== run) return;
+    this._activeRunTransaction = null;
+    var workerBacked = run.backend === 'pyodide' || run.backend === 'sql' ||
+      run.backend === 'prolog' || run.backend === 'java' || run.backend === 'haskell';
+    this._setRunTransactionControls(workerBacked && !this.booted ? 'unavailable' : 'idle');
+  };
+
+  TutorialCode.prototype._startExecutionTransaction = function (run, execute, label) {
+    if (this._activeRunTransaction) return this._activeRunTransaction.promise;
+    this._activeRunTransaction = run;
+    this._setRunTransactionControls('running', label);
+
     var self = this;
-    var step = this.steps[this.currentStep >= 0 ? this.currentStep : 0];
+    var execution;
+    try {
+      execution = execute();
+    } catch (error) {
+      execution = Promise.reject(error);
+    }
+    run.promise = Promise.resolve(execution).then(function (result) {
+      return result !== false;
+    }, function (error) {
+      return self._handleRunTransactionFailure(run, error).then(function () { return false; });
+    }).then(function (succeeded) {
+      self._finalizeRunTransaction(run);
+      return succeeded;
+    }, function (error) {
+      // Failure reporting must never strand the atomic guard or controls.
+      self._finalizeRunTransaction(run);
+      console.error('TutorialCode run finalization error:', error);
+      return false;
+    });
+    return run.promise;
+  };
+
+  TutorialCode.prototype._runCurrentFile = function () {
+    if (this._activeRunTransaction) return this._activeRunTransaction.promise;
+
+    var stepIndex = this.currentStep >= 0 ? this.currentStep : 0;
+    var step = this.steps[stepIndex];
+    var runFiles = this._stepRunFiles(step);
+    if (!this.activeFileName && !runFiles.length) return Promise.resolve(false);
+    var run = {
+      id: ++this._runSequence,
+      kind: 'run-file',
+      stepIndex: stepIndex,
+      step: step,
+      runFiles: runFiles,
+      filename: runFiles[0] || this.activeFileName,
+      backend: this.config.backend,
+      promise: null,
+    };
+    var self = this;
+    return this._startExecutionTransaction(run, function () {
+      return self._executeCurrentFileRun(run);
+    });
+  };
+
+  TutorialCode.prototype._executeCurrentFileRun = function (run) {
+    var self = this;
+    var step = run.step;
     if (this._mixedBackendMode) {
       var requestedBackend = this._stepRequestedBackend(step);
       if (this.config.backend !== this._effectiveBackend(requestedBackend)) {
         return this._ensureBackendReady(requestedBackend).then(function () {
-          return self._runCurrentFile();
+          if (self.currentStep !== run.stepIndex) return false;
+          run.backend = self.config.backend;
+          return self._executeCurrentFileRun(run);
         });
       }
     }
+    if (this.currentStep !== run.stepIndex) return Promise.resolve(false);
     var backend = this.config.backend;
-    var runFiles = this._stepRunFiles(step);
-    if (!this.activeFileName && !runFiles.length) return;
-    var filename = runFiles[0] || this.activeFileName;
+    run.backend = backend;
+    var runFiles = run.runFiles;
+    var filename = run.filename;
 
     if (backend === 'browser') {
       var code = this.editorModels[filename] ? this.editorModels[filename].model.getValue() : '';
       self._clearOutput();
       self._appendOutput('\u25b6 ' + filename + '\n', 'info');
-      var runBtn = self.root.querySelector('.tvm-run-btn');
-      var stopBtn = self.root.querySelector('.tvm-stop-btn');
-      if (runBtn) { runBtn.disabled = true; runBtn.textContent = '\u23f3 Running\u2026'; }
-      if (stopBtn) { stopBtn.style.display = 'inline-block'; }
       // Read argv from the visible args input (when has_args is set on the step)
       // so the browser-sandbox fallback gets the same `process.argv` as the
       // real WebContainer would.
@@ -4956,39 +5453,32 @@
         var bm = bArgsInp.value.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
         browserArgv = bm.map(function (s) { return s.replace(/^"|"$/g, ''); });
       }
-      self._runBrowserCode(code, function (text, kind) {
+      return self._runBrowserCode(code, function (text, kind) {
         self._appendOutput(text, kind === 'stderr' ? 'err' : 'out');
-      }, function () {
-        if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 ' + self._runLabel; }
-        if (stopBtn) { stopBtn.style.display = 'none'; }
-      }, undefined, { argv: browserArgv, scriptPath: filename });
-      return;
+      }, null, undefined, { argv: browserArgv, scriptPath: filename }).then(function (outcome) {
+        return !!(outcome && outcome.ok);
+      });
     }
 
     if (backend === 'webcontainer') {
       self._clearOutput();
       self._appendOutput('\u25b6 ' + filename + '\n', 'info');
-      var wcRunBtn = self.root.querySelector('.tvm-run-btn');
-      var wcStopBtn = self.root.querySelector('.tvm-stop-btn');
-      if (wcRunBtn) { wcRunBtn.disabled = true; wcRunBtn.textContent = '\u23f3 Running\u2026'; }
-      if (wcStopBtn) { wcStopBtn.style.display = 'inline-block'; }
-      self._runWebContainerNodeFile(filename, {
+      return self._runWebContainerNodeFile(filename, {
         serverStep: !!(step && step.http_client),
+        timeout: step && step.http_client ? undefined : WORKER_EXECUTION_TIMEOUT_MS,
         echoOutput: true,
-      }).then(function () {
-        if (wcRunBtn) { wcRunBtn.disabled = false; wcRunBtn.textContent = '\u25b6 ' + self._effectiveRunLabel(); }
-        if (wcStopBtn) { wcStopBtn.style.display = 'none'; }
-      }).catch(function (err) {
-        self._appendOutput(String(err && err.message || err) + '\n', 'err');
-        if (wcRunBtn) { wcRunBtn.disabled = false; wcRunBtn.textContent = '\u25b6 ' + self._effectiveRunLabel(); }
-        if (wcStopBtn) { wcStopBtn.style.display = 'none'; }
+      }).then(function (result) {
+        if (result && result.exitCode !== 0) {
+          self._appendOutput('\n\u2717 Node exited with code ' + result.exitCode + '\n', 'err');
+          return false;
+        }
+        return true;
       });
-      return;
     }
 
     if (backend === 'sql') {
       var sqlPath = '/tutorial/' + filename;
-      this._syncFileToBackend(filename).then(function () {
+      return this._syncFileToBackend(filename).then(function () {
         self._clearOutput();
         self._appendOutput('\u25b6 ' + filename + '\n', 'info');
         return self._runWorkerExecution(
@@ -4997,16 +5487,12 @@
         ).then(function (msg) {
           if (msg.exitCode !== 0) self._appendOutput('\n\u2717 Error\n', 'err');
         });
-      }).catch(function (error) {
-        if (error && error.reason === 'terminated') return;
-        self._appendOutput('\n\u2717 ' + (error && error.message || 'SQL execution failed') + '\n', 'err');
       });
-      return;
     }
 
     if (backend === 'prolog') {
       var plPath = '/tutorial/' + filename;
-      this._syncFileToBackend(filename).then(function () {
+      return this._syncFileToBackend(filename).then(function () {
         self._clearOutput();
         self._appendOutput('\u25b6 ' + filename + '\n', 'info');
         var query = '';
@@ -5018,11 +5504,7 @@
         ).then(function (msg) {
           if (msg.exitCode !== 0 && !query) self._appendOutput('\n\u2717 Error\n', 'err');
         });
-      }).catch(function (error) {
-        if (error && error.reason === 'terminated') return;
-        self._appendOutput('\n\u2717 ' + (error && error.message || 'Prolog execution failed') + '\n', 'err');
       });
-      return;
     }
 
     if (backend === 'java') {
@@ -5033,7 +5515,7 @@
       allFiles.forEach(function (f) {
         syncChain = syncChain.then(function () { return self._syncFileToBackend(f); });
       });
-      syncChain.then(function () {
+      return syncChain.then(function () {
         self._clearOutput();
         self._appendOutput('\u25b6 ' + filename + '\n', 'info');
         return self._runWorkerExecution(
@@ -5046,11 +5528,7 @@
             self._appendOutput('\n\u2717 Exited with error\n', 'err');
           }
         });
-      }).catch(function (error) {
-        if (error && error.reason === 'terminated') return;
-        self._appendOutput('\n\u2717 ' + (error && error.message || 'Java execution failed') + '\n', 'err');
       });
-      return;
     }
 
     if (backend === 'haskell') {
@@ -5064,41 +5542,39 @@
           return self._syncFileToBackend(file);
         });
       });
-      haskellSyncChain.then(function () {
+      return haskellSyncChain.then(function () {
         self._clearOutput();
         self._appendOutput('\u25b6 ' + filename + '\n', 'info');
-        var runBtn = self.root.querySelector('.tvm-run-btn');
-        var stopBtn = self.root.querySelector('.tvm-stop-btn');
-        if (runBtn) { runBtn.disabled = true; runBtn.textContent = '\u23f3 Compiling\u2026'; }
-        if (stopBtn) stopBtn.style.display = 'inline-block';
-        var requestId = self._postWorker({ type: 'run', path: haskellPath }, function (msg) {
-          clearTimeout(self._haskellRunTimer);
-          self._haskellRunTimer = null;
-          self._haskellRunRequestId = null;
-          if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 ' + self._runLabel; }
-          if (stopBtn) stopBtn.style.display = 'none';
+        self._setRunTransactionControls('running', '\u23f3 Compiling\u2026');
+        return self._requestWorker(
+          { type: 'run', path: haskellPath },
+          { timeoutMs: self._haskellExecutionTimeoutMs }
+        ).then(function (msg) {
           if (msg.exitCode === 0) {
             self._appendOutput('\n\u2713 Done\n', 'info');
           } else {
             self._appendOutput('\n\u2717 Exited with error\n', 'err');
           }
+          return msg.exitCode === 0;
+        }).catch(function (error) {
+          if (error && error.reason === 'timeout') {
+            self._appendOutput(
+              '\n\u2717 Execution timed out; the Haskell runtime was restarted.\n',
+              'err'
+            );
+            error.runMessageShown = true;
+            return self._restartHaskellExecutor().then(function () {
+              throw error;
+            }, function () {
+              throw error;
+            });
+          }
+          throw error;
         });
-        self._haskellRunRequestId = requestId;
-        clearTimeout(self._haskellRunTimer);
-        self._haskellRunTimer = setTimeout(function () {
-          if (self._haskellRunRequestId !== requestId) return;
-          self._discardWorkerRequest(requestId);
-          self._appendOutput(
-            '\n\u2717 Execution timed out; the Haskell runtime was restarted.\n',
-            'err'
-          );
-          self._restartHaskellExecutor().catch(function () {});
-        }, HASKELL_EXECUTION_TIMEOUT_MS);
       });
-      return;
     }
 
-    if (backend !== 'pyodide') return;
+    if (backend !== 'pyodide') return Promise.resolve(false);
     var pytestRunFiles = runFiles.length ? runFiles : [filename];
     var runAsPytest = self._pytestMode && pytestRunFiles.length > 0 &&
       pytestRunFiles.every(function (file) { return self._isPytestFile(file); });
@@ -5109,7 +5585,7 @@
       ? self._syncFilesToBackend(Object.keys(self.editorModels || {}))
       : self._syncFileToBackend(filename);
 
-    syncPromise.then(function () {
+    return syncPromise.then(function () {
       self._clearOutput();
       var runLabel = runAsPytest ? pytestRunFiles.join(', ') : filename;
       self._appendOutput('\u25b6 ' + runLabel + (runAsPytest ? ' (pytest)' : '') + '\n', 'info');
@@ -5156,12 +5632,6 @@
           self._appendOutput('\n\u2717 Exited with error\n', 'err');
         }
       });
-    }).catch(function (error) {
-      if (error && error.reason === 'terminated') return;
-      self._appendOutput(
-        '\n\u2717 ' + (error && error.message || 'Could not run Python code') + '\n',
-        'err'
-      );
     });
   };
 
@@ -5170,63 +5640,63 @@
   // this up today, because that's the only backend that has a real Node
   // process and a sensible spawn-a-different-file mental model.
   TutorialCode.prototype._runTestFile = function () {
-    var self = this;
-    var step = this.steps[this.currentStep >= 0 ? this.currentStep : 0];
+    if (this._activeRunTransaction) return this._activeRunTransaction.promise;
+    var stepIndex = this.currentStep >= 0 ? this.currentStep : 0;
+    var step = this.steps[stepIndex];
     var testFile = step && step.test_file;
-    if (!testFile) return;
     var backend = this.config.backend;
-    var runBtn = this.root.querySelector('.tvm-run-btn');
-    var testBtn = this.root.querySelector('.tvm-test-run-btn');
-    var stopBtn = this.root.querySelector('.tvm-stop-btn');
+    if (!testFile || (backend !== 'webcontainer' && backend !== 'browser')) {
+      return Promise.resolve(false);
+    }
 
-    if (backend === 'webcontainer') {
-      self._clearOutput();
-      self._appendOutput('▶ ' + testFile + '\n', 'info');
-      if (testBtn) { testBtn.disabled = true; testBtn.textContent = '⏳ Testing…'; }
-      if (runBtn) { runBtn.disabled = true; }
-      if (stopBtn) { stopBtn.style.display = 'inline-block'; }
-      self._runWebContainerNodeFile(testFile, {
+    var transaction = {
+      id: ++this._runSequence,
+      kind: 'test-file',
+      stepIndex: stepIndex,
+      step: step,
+      filename: testFile,
+      backend: backend,
+      promise: null,
+    };
+    var self = this;
+    return this._startExecutionTransaction(transaction, function () {
+      return self._executeTestFileRun(transaction);
+    }, '\u23f3 Testing\u2026');
+  };
+
+  TutorialCode.prototype._executeTestFileRun = function (transaction) {
+    var self = this;
+    var testFile = transaction.filename;
+    self._clearOutput();
+    self._appendOutput('\u25b6 ' + testFile + '\n', 'info');
+
+    if (transaction.backend === 'webcontainer') {
+      return self._runWebContainerNodeFile(testFile, {
         echoOutput: true,
         skipArgsInput: true,
-      }).then(function (run) {
-        if (testBtn) { testBtn.disabled = false; testBtn.textContent = '✓ Test'; }
-        if (runBtn) { runBtn.disabled = false; }
-        if (stopBtn) { stopBtn.style.display = 'none'; }
-        if (run && run.exitCode === 0) {
-          self._appendOutput('\n✓ Test run finished\n', 'info');
-        } else {
-          self._appendOutput('\n✗ Test run finished with failures (exit ' +
-            (run && run.exitCode != null ? run.exitCode : '?') + ')\n', 'err');
+        timeout: WORKER_EXECUTION_TIMEOUT_MS,
+      }).then(function (result) {
+        if (result && result.exitCode === 0) {
+          self._appendOutput('\n\u2713 Test run finished\n', 'info');
+          return true;
         }
-      }).catch(function (err) {
-        self._appendOutput(String(err && err.message || err) + '\n', 'err');
-        if (testBtn) { testBtn.disabled = false; testBtn.textContent = '✓ Test'; }
-        if (runBtn) { runBtn.disabled = false; }
-        if (stopBtn) { stopBtn.style.display = 'none'; }
+        self._appendOutput(
+          '\n\u2717 Test run finished with failures (exit ' +
+          (result && result.exitCode != null ? result.exitCode : '?') + ')\n',
+          'err'
+        );
+        return false;
       });
-      return;
     }
 
-    if (backend === 'browser') {
-      // Fallback path when WebContainer is unavailable. Run the test file
-      // directly via _runBrowserCode — the sandbox `require()` resolves
-      // `../left-pad.js` against the in-editor files, so the test file's
-      // own require call still works.
-      var bCode = this.editorModels[testFile] ? this.editorModels[testFile].model.getValue() : '';
-      self._clearOutput();
-      self._appendOutput('▶ ' + testFile + '\n', 'info');
-      if (testBtn) { testBtn.disabled = true; testBtn.textContent = '⏳ Testing…'; }
-      if (runBtn) { runBtn.disabled = true; }
-      if (stopBtn) { stopBtn.style.display = 'inline-block'; }
-      self._runBrowserCode(bCode, function (text, kind) {
-        self._appendOutput(text, kind === 'stderr' ? 'err' : 'out');
-      }, function () {
-        if (testBtn) { testBtn.disabled = false; testBtn.textContent = '✓ Test'; }
-        if (runBtn) { runBtn.disabled = false; }
-        if (stopBtn) { stopBtn.style.display = 'none'; }
-      }, undefined, { argv: [], scriptPath: testFile });
-      return;
-    }
+    var code = this.editorModels[testFile]
+      ? this.editorModels[testFile].model.getValue()
+      : '';
+    return self._runBrowserCode(code, function (text, kind) {
+      self._appendOutput(text, kind === 'stderr' ? 'err' : 'out');
+    }, null, undefined, { argv: [], scriptPath: testFile }).then(function (outcome) {
+      return !!(outcome && outcome.ok);
+    });
   };
 
   TutorialCode.prototype._syncAllEditorFilesToWebContainer = function () {
@@ -5243,13 +5713,32 @@
     opts = opts || {};
     var self = this;
     if (!this._webcontainer) return Promise.reject(new Error('WebContainer is not ready yet'));
+    var normalizedFilename = this._normalizeRunFilename(filename);
+    if (!normalizedFilename) {
+      return Promise.reject(new Error('Node entry file must stay inside the tutorial workspace'));
+    }
+    var runCwd = normalizeTutorialAbsolutePath(this._webcontainerCwd || '/tutorial') || '/tutorial';
+    var cwdParts = runCwd.replace(/^\/tutorial\/?/, '').split('/').filter(function (part) {
+      return !!part;
+    });
+    var fileParts = normalizedFilename.split('/');
+    var commonParts = 0;
+    while (commonParts < cwdParts.length && commonParts < fileParts.length &&
+           cwdParts[commonParts] === fileParts[commonParts]) {
+      commonParts++;
+    }
+    var entryParts = cwdParts.slice(commonParts).map(function () { return '..'; })
+      .concat(fileParts.slice(commonParts));
+    var nodeEntryPath = entryParts.join('/') || '.';
+    if (nodeEntryPath.charAt(0) === '-') nodeEntryPath = './' + nodeEntryPath;
     if (this._webcontainerRunProcess) {
       try { this._webcontainerRunProcess.kill(); } catch (e) { }
+      if (this._webcontainerRunFinish) this._webcontainerRunFinish(130);
       this._webcontainerRunProcess = null;
     }
     // Read user-typed argv from the visible args input. Tests skip this so
     // a stray Run-button arg can't leak into the Test pass-state.
-    var nodeArgs = [filename];
+    var nodeArgs = [nodeEntryPath];
     if (!opts.skipArgsInput && self.root) {
       var argsInp = self.root.querySelector('.tvm-args-input');
       if (argsInp && argsInp.style.display !== 'none' && argsInp.value.trim() !== '') {
@@ -5263,21 +5752,27 @@
     return this._syncAllEditorFilesToWebContainer()
       .then(function () { return self._ensureWebContainerNodeRuntime(); })
       .then(function () {
-        return self._webcontainer.spawn('node', nodeArgs, { cwd: '/tutorial' });
+        return self._webcontainer.spawn('node', nodeArgs, {
+          cwd: runCwd,
+        });
       })
       .then(function (proc) {
         self._webcontainerRunProcess = proc;
         var output = '';
         var reader = proc.output.getReader();
         var settled = false;
+        var runTimer = null;
         return new Promise(function (resolve) {
           function finish(exitCode) {
             if (settled) return;
             settled = true;
+            if (runTimer) clearTimeout(runTimer);
             if (self._webcontainerRunProcess === proc) self._webcontainerRunProcess = null;
+            if (self._webcontainerRunFinish === finish) self._webcontainerRunFinish = null;
             try { reader.cancel(); } catch (e) { }
             resolve({ exitCode: exitCode == null ? 0 : exitCode, output: output });
           }
+          self._webcontainerRunFinish = finish;
           (function readLoop() {
             reader.read().then(function (result) {
               if (result.done) return;
@@ -5293,13 +5788,13 @@
             finish(1);
           });
           if (opts.serverStep) {
-            setTimeout(function () {
+            runTimer = setTimeout(function () {
               if (opts.keepAlive) return;
               try { proc.kill(); } catch (e) { }
               finish(0);
             }, opts.serverTimeout || 3600000);
           } else if (opts.timeout) {
-            setTimeout(function () {
+            runTimer = setTimeout(function () {
               try { proc.kill(); } catch (e) { }
               finish(124);
             }, opts.timeout);
@@ -5316,7 +5811,24 @@
   };
 
   TutorialCode.prototype._normalizeRunFilename = function (filename) {
-    return String(filename || '').replace(/^\/tutorial\/?/, '').replace(/^\/+/, '');
+    var raw = String(filename || '');
+    if (raw.charAt(0) === '/') {
+      if (!/^\/tutorial(?:\/|$)/.test(raw)) return '';
+      raw = raw.replace(/^\/tutorial(?:\/|$)/, '');
+    }
+    if (!raw || raw.indexOf('\0') !== -1) return '';
+    var parts = [];
+    var escapedWorkspace = false;
+    raw.split('/').forEach(function (part) {
+      if (!part || part === '.') return;
+      if (part === '..') {
+        if (parts.length === 0) escapedWorkspace = true;
+        else parts.pop();
+        return;
+      }
+      parts.push(part);
+    });
+    return escapedWorkspace ? '' : parts.join('/');
   };
 
   TutorialCode.prototype._stepRunFiles = function (step) {
@@ -5365,19 +5877,11 @@
   };
 
   // ---- WebContainers backend -------------------------------------------------
-  TutorialCode.prototype._initWebContainer = function (setupCommandsOverride) {
-    var self = this;
-    var setupCommands = Array.isArray(setupCommandsOverride)
-      ? setupCommandsOverride
-      : (self.setupCommands || []);
-    this._showLoading('Booting WebContainers\u2026');
-
+  TutorialCode.prototype._loadWebContainerAPI = function () {
     // Under COEP=credentialless (set by the COI service worker), dynamic
-    // `import()` of cross-origin ESM defaults to a no-cors fetch and the
-    // browser refuses to instantiate the resulting opaque response as a
-    // module. Prepending a `<link rel="modulepreload" crossorigin="anonymous">`
-    // forces a CORS fetch (jsdelivr serves `Access-Control-Allow-Origin: *`),
-    // and the dynamic import then reuses the CORS-fetched copy from cache.
+    // `import()` of cross-origin ESM defaults to a no-cors fetch. Preloading
+    // with CORS lets the import reuse a response whose integrity and origin
+    // policy have already been checked.
     function preloadModule(url) {
       return new Promise(function (resolve, reject) {
         var existing = document.querySelector('link[rel="modulepreload"][href="' + url + '"]');
@@ -5396,91 +5900,325 @@
 
     return preloadModule(CDN.WEBCONTAINER)
       .then(function () { return import(CDN.WEBCONTAINER); })
-      .then(function (module) {
-      var WebContainer = module.WebContainer;
-      return WebContainer.boot();
-    }).then(function (wc) {
-      self._webcontainer = wc;
-      self._webcontainerServerUrls = {};
-      if (wc && typeof wc.on === 'function') {
-        try {
-          self._webcontainerServerReadyUnsub = wc.on('server-ready', function (port, url) {
-            self._webcontainerServerUrls[String(port)] = url;
-            if (self._debuggerCtl && self._debuggerCtl.session && typeof self._debuggerCtl.setStatus === 'function') {
-              self._debuggerCtl.setStatus('server running');
-            }
-          });
-        } catch (e) { /* older WebContainer API shape */ }
-      }
-
-      // Pre-create /tutorial directory
-      return wc.fs.mkdir('tutorial', { recursive: true }).then(function () {
-        return self.config.useTerminal ? self._startWebContainerShell() : Promise.resolve();
+      .catch(function (error) {
+        var unavailable = error instanceof Error ? error : new Error(String(error));
+        unavailable.webContainerUnavailable = true;
+        throw unavailable;
       });
-    }).then(function () {
-      self.booted = true;
+  };
 
-      // Run setup commands in the shell
-      if (setupCommands.length > 0) {
-        if (self.config.useTerminal) {
-          setupCommands.forEach(function (cmd) { self.sendCommand(cmd); });
-        } else {
-          var setupChain = Promise.resolve();
-          setupCommands.forEach(function (cmd) {
-            setupChain = setupChain.then(function () { return self._runWebContainerShellCommand(cmd); });
-          });
-          return setupChain.then(function () { return delay(300); });
+  TutorialCode.prototype._teardownWebContainerInstance = function (instance) {
+    if (!instance || typeof instance.teardown !== 'function') return Promise.resolve();
+    try {
+      return Promise.resolve(instance.teardown()).catch(function (error) {
+        console.warn('[TutorialCode] WebContainer teardown failed:', error);
+      });
+    } catch (error) {
+      console.warn('[TutorialCode] WebContainer teardown failed:', error);
+      return Promise.resolve();
+    }
+  };
+
+  /**
+   * Bound the remote boot handshake. A promise may resolve after its timeout;
+   * that late instance is torn down instead of leaking behind browser fallback.
+   */
+  TutorialCode.prototype._bootWebContainer = function (WebContainer, timeoutMs) {
+    var self = this;
+    var limit = Math.max(1, Number(timeoutMs) || WEBCONTAINER_BOOT_TIMEOUT_MS);
+    return new Promise(function (resolve, reject) {
+      var settled = false;
+      var timer = setTimeout(function () {
+        if (settled) return;
+        settled = true;
+        var error = new Error('WebContainer boot timed out after ' + limit + ' ms');
+        error.code = 'WEBCONTAINER_BOOT_TIMEOUT';
+        error.webContainerUnavailable = true;
+        reject(error);
+      }, limit);
+
+      Promise.resolve().then(function () {
+        if (!WebContainer || typeof WebContainer.boot !== 'function') {
+          throw new Error('WebContainer API does not expose boot()');
         }
-      }
-      return delay(300);
+        return WebContainer.boot();
+      }).then(function (instance) {
+        if (settled || self._destroyed) {
+          self._teardownWebContainerInstance(instance);
+          return;
+        }
+        settled = true;
+        clearTimeout(timer);
+        resolve(instance);
+      }, function (reason) {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        var error = reason instanceof Error ? reason : new Error(String(reason));
+        error.webContainerUnavailable = true;
+        reject(error);
+      });
     });
   };
 
-  TutorialCode.prototype._startWebContainerShell = function () {
+  TutorialCode.prototype._stopWebContainerShell = function () {
+    var cleanup = [];
+    if (this._shellInputDispose && typeof this._shellInputDispose.dispose === 'function') {
+      try { this._shellInputDispose.dispose(); } catch (e) { /* already detached */ }
+    }
+    this._shellInputDispose = null;
+    if (this._shellProcess) {
+      try { this._shellProcess.kill(); } catch (e2) { /* already stopped */ }
+    }
+    if (this._shellOutputReader && typeof this._shellOutputReader.cancel === 'function') {
+      try {
+        cleanup.push(Promise.resolve(this._shellOutputReader.cancel()).catch(function () {}));
+      } catch (e3) { /* already released */ }
+    }
+    if (this._shellInputWriter && typeof this._shellInputWriter.releaseLock === 'function') {
+      try { this._shellInputWriter.releaseLock(); } catch (e4) { /* pending write */ }
+    }
+    this._shellProcess = null;
+    this._shellWriter = null;
+    this._shellInputWriter = null;
+    this._shellOutputReader = null;
+    return Promise.all(cleanup).then(function () {});
+  };
+
+  TutorialCode.prototype._disposeWebContainerRuntime = function () {
+    var instance = this._webcontainer;
+    this._webcontainer = null;
+    if (this._webcontainerRunProcess) {
+      try { this._webcontainerRunProcess.kill(); } catch (e) { /* already stopped */ }
+      if (this._webcontainerRunFinish) this._webcontainerRunFinish(130);
+      this._webcontainerRunProcess = null;
+    }
+    this._webcontainerRunFinish = null;
+    if (typeof this._webcontainerServerReadyUnsub === 'function') {
+      try { this._webcontainerServerReadyUnsub(); } catch (e2) { /* already detached */ }
+    }
+    this._webcontainerServerReadyUnsub = null;
+    this._webcontainerServerUrls = {};
+    this._webcontainerCwd = '/tutorial';
+    this._webcontainerCommandQueue = Promise.resolve();
+    this.booted = false;
     var self = this;
+    return this._stopWebContainerShell().then(function () {
+      return self._teardownWebContainerInstance(instance);
+    });
+  };
+
+  TutorialCode.prototype._initWebContainer = function (setupCommandsOverride) {
+    var self = this;
+    var setupCommands = Array.isArray(setupCommandsOverride)
+      ? setupCommandsOverride
+      : (self.setupCommands || []);
+    this._showLoading('Booting WebContainers\u2026');
+
+    return this._loadWebContainerAPI()
+      .then(function (module) {
+        return self._bootWebContainer(module.WebContainer, self._webcontainerBootTimeoutMs);
+      })
+      .then(function (wc) {
+        self._webcontainer = wc;
+        self._webcontainerCwd = '/tutorial';
+        self._webcontainerServerUrls = {};
+        if (wc && typeof wc.on === 'function') {
+          try {
+            self._webcontainerServerReadyUnsub = wc.on('server-ready', function (port, url) {
+              self._webcontainerServerUrls[String(port)] = url;
+              if (self._debuggerCtl && self._debuggerCtl.session && typeof self._debuggerCtl.setStatus === 'function') {
+                self._debuggerCtl.setStatus('server running');
+              }
+            });
+          } catch (e) { /* older WebContainer API shape */ }
+        }
+
+        return wc.fs.mkdir('tutorial', { recursive: true }).then(function () {
+          return self.config.useTerminal
+            ? self._startWebContainerShell('/tutorial')
+            : Promise.resolve();
+        });
+      })
+      .then(function () {
+        return self._runWebContainerCommands(setupCommands, {
+          cwd: '/tutorial',
+          label: 'WebContainer global setup',
+        }).catch(function (error) {
+          error.webContainerSetupFailure = true;
+          throw error;
+        });
+      })
+      .then(function () {
+        self.booted = true;
+      });
+  };
+
+  TutorialCode.prototype._startWebContainerShell = function (cwd) {
+    var self = this;
+    var shellCwd = cwd || this._webcontainerCwd || '/tutorial';
     return this._webcontainer.spawn('jsh', {
+      cwd: shellCwd,
       terminal: { cols: self.term ? self.term.cols : 80, rows: self.term ? self.term.rows : 24 },
     }).then(function (process) {
       self._shellProcess = process;
 
-      // Wire xterm → shell stdin
       var writer = process.input.getWriter();
-      self._shellWriter = { write: function (data) { writer.write(data); } };
-      self.term.onData(function (data) { writer.write(data); });
+      self._shellInputWriter = writer;
+      self._shellWriter = { write: function (data) { return writer.write(data); } };
+      if (self.term && typeof self.term.onData === 'function') {
+        self._shellInputDispose = self.term.onData(function (data) {
+          writer.write(data).catch(function () {});
+        });
+      }
 
-      // Wire shell stdout → xterm
       var reader = process.output.getReader();
+      self._shellOutputReader = reader;
       (function readLoop() {
         reader.read().then(function (result) {
-          if (result.done) return;
-          self.term.write(result.value);
+          if (result.done || self._shellOutputReader !== reader) return;
+          if (self.term) self.term.write(result.value);
           readLoop();
         }).catch(function () { });
       })();
-
-      // Change to /tutorial dir
-      writer.write('cd tutorial\n');
     });
   };
 
-  TutorialCode.prototype._runWebContainerShellCommand = function (cmd) {
-    if (!this._webcontainer) return Promise.resolve({ exitCode: 1, output: '' });
-    return this._webcontainer.spawn('sh', ['-c', cmd], { cwd: '/tutorial' })
-      .then(function (proc) {
+  TutorialCode.prototype._restartWebContainerShell = function (cwd) {
+    var self = this;
+    return this._stopWebContainerShell().then(function () {
+      return self._startWebContainerShell(cwd);
+    });
+  };
+
+  TutorialCode.prototype._runWebContainerCommands = function (commands, options) {
+    var list = Array.isArray(commands) ? commands : [];
+    var normalized = list.map(function (command) {
+      return String(command || '').trim();
+    }).filter(function (command) { return !!command; });
+    if (normalized.length === 0) return Promise.resolve();
+
+    // One shell preserves ordinary list semantics such as `cd project`
+    // followed by `npm install`, while the shared primitive still serializes
+    // the whole batch against every other background WebContainer command.
+    return this._runWebContainerCommand(tutorialShellBatch(normalized), options);
+  };
+
+  /**
+   * Execute one WebContainer shell command through the shared serialized queue.
+   * The timeout covers spawn, output draining, and exit. Every failure rejects
+   * with command context; callers never have to inspect an ignored exitCode.
+   */
+  TutorialCode.prototype._runWebContainerCommand = function (cmd, options) {
+    options = options || {};
+    var self = this;
+    var previous = this._webcontainerCommandQueue || Promise.resolve();
+    var task = previous.catch(function () {}).then(function () {
+      var wc = self._webcontainer;
+      if (!wc) throw new Error('WebContainer is not ready yet');
+      var timeoutMs = Math.max(1, Number(options.timeoutMs) || WEBCONTAINER_COMMAND_TIMEOUT_MS);
+      var cwd = options.cwd || self._webcontainerCwd || '/tutorial';
+      var label = options.label || 'WebContainer command';
+      var command = 'set -e\n' + String(cmd);
+
+      return new Promise(function (resolve, reject) {
+        var settled = false;
+        var process = null;
+        var reader = null;
         var output = '';
-        var reader = proc.output.getReader();
-        (function readLoop() {
-          reader.read().then(function (result) {
-            if (result.done) return;
-            output += result.value || '';
-            readLoop();
-          }).catch(function () {});
-        })();
-        return proc.exit.then(function (exitCode) {
-          try { reader.cancel(); } catch (e) {}
-          return { exitCode: exitCode, output: output };
+        var decoder = new TextDecoder('utf-8');
+
+        function cancelReader() {
+          if (!reader || typeof reader.cancel !== 'function') return;
+          try { Promise.resolve(reader.cancel()).catch(function () {}); }
+          catch (e) { /* already released */ }
+        }
+
+        function fail(error, killProcess) {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          if (killProcess && process) {
+            try { process.kill(); } catch (e) { /* already stopped */ }
+          }
+          cancelReader();
+          reject(error);
+        }
+
+        function echo(text) {
+          if (!options.echoOutput || !text) return;
+          if (self.term) self.term.write(text);
+          else self._appendOutput(text, 'out');
+        }
+
+        var timer = setTimeout(function () {
+          var error = new Error(label + ' timed out after ' + timeoutMs + ' ms');
+          error.code = 'WEBCONTAINER_COMMAND_TIMEOUT';
+          fail(error, true);
+        }, timeoutMs);
+
+        Promise.resolve().then(function () {
+          return wc.spawn('sh', ['-c', command], { cwd: cwd });
+        }).then(function (spawned) {
+          if (settled) {
+            try { spawned.kill(); } catch (e) { /* timed out before spawn */ }
+            return;
+          }
+          process = spawned;
+          reader = process.output && process.output.getReader
+            ? process.output.getReader()
+            : null;
+
+          var outputDone = Promise.resolve();
+          if (reader) {
+            outputDone = new Promise(function (resolveOutput, rejectOutput) {
+              (function readLoop() {
+                reader.read().then(function (result) {
+                  if (result.done) {
+                    var trailing = decoder.decode();
+                    if (trailing) { output += trailing; echo(trailing); }
+                    resolveOutput();
+                    return;
+                  }
+                  var text = typeof result.value === 'string'
+                    ? result.value
+                    : decoder.decode(result.value, { stream: true });
+                  output += text || '';
+                  echo(text || '');
+                  readLoop();
+                }).catch(rejectOutput);
+              })();
+            });
+          }
+
+          return Promise.all([Promise.resolve(process.exit), outputDone]);
+        }).then(function (result) {
+          if (settled || !result) return;
+          var exitCode = result[0];
+          if (exitCode !== 0) {
+            var detail = output.trim();
+            var error = new Error(
+              label + ' failed with exit code ' + exitCode +
+              (detail ? ': ' + detail.slice(-2000) : '')
+            );
+            error.code = 'WEBCONTAINER_COMMAND_FAILED';
+            error.exitCode = exitCode;
+            error.output = output;
+            fail(error, false);
+            return;
+          }
+          settled = true;
+          clearTimeout(timer);
+          resolve({ exitCode: exitCode, output: output });
+        }).catch(function (error) {
+          fail(error instanceof Error ? error : new Error(String(error)), true);
         });
       });
+    });
+
+    // A failed command rejects its caller without poisoning later commands.
+    this._webcontainerCommandQueue = task.catch(function () {});
+    return task;
   };
 
   TutorialCode.prototype._ensureWebContainerNodeRuntime = function () {
@@ -5609,10 +6347,11 @@
   };
 
   /**
-   * Run `code` in a sandboxed hidden iframe.
-   * Console output is forwarded via postMessage.
-   * `onOutput(text, 'stdout'|'stderr')` is called for each line.
-   * `onDone()` fires 1.5 s after the iframe loads (enough for short async code).
+   * Run `code` in a disposable opaque-origin Worker.
+   * Console output is forwarded via the Worker's private host channel.
+   * `onOutput(text, 'stdout'|'stderr')` is called for each chunk. Completion
+   * waits briefly after synchronous code for short async callbacks, while a
+   * host-owned deadline can terminate even a Worker blocked in a tight loop.
    */
   TutorialCode.prototype._stopExecution = function () {
     if (this.config.backend === 'haskell' && this._worker) {
@@ -5632,319 +6371,131 @@
     }
     if (this._webcontainerRunProcess) {
       try { this._webcontainerRunProcess.kill(); } catch (e) { }
+      if (this._webcontainerRunFinish) this._webcontainerRunFinish(130);
       this._webcontainerRunProcess = null;
-      var runBtnWc = this.root && this.root.querySelector('.tvm-run-btn');
-      var stopBtnWc = this.root && this.root.querySelector('.tvm-stop-btn');
-      if (runBtnWc && (!this._debuggerCtl || !this._debuggerCtl.session)) {
-        runBtnWc.disabled = false;
-        runBtnWc.textContent = '\u25b6 ' + this._effectiveRunLabel();
-      }
-      if (stopBtnWc) stopBtnWc.style.display = 'none';
     }
     if (this._jsFinish) {
-      this._jsFinish();
-      this._jsFinish = null;
+      this._jsFinish(true, 'stopped');
     }
-    if (this._jsRunnerFrame) {
-      try { document.body.removeChild(this._jsRunnerFrame); } catch (e) { }
-      this._jsRunnerFrame = null;
-    }
+  };
+
+  TutorialCode.prototype._createOpaqueBrowserRunnerWorker = function () {
+    var source = '(' + browserRunnerWorkerMain.toString() + ')();\n' +
+      '//# sourceURL=/js/tutorial-browser-runner-worker.js';
+    var workerUrl = 'data:text/javascript;charset=utf-8,' + encodeURIComponent(source);
+    return new Worker(workerUrl, { name: 'SEBook browser learner runtime' });
   };
 
   TutorialCode.prototype._runBrowserCode = function (code, onOutput, onDone, timeoutOverride, opts) {
     opts = opts || {};
+    if (this._jsFinish) this._jsFinish(true, 'replaced');
+
     var self = this;
-    if (this._jsFinish) {
-      this._jsFinish();
-    }
-    if (this._jsRunnerFrame) {
-      try { document.body.removeChild(this._jsRunnerFrame); } catch (e) { }
-      this._jsRunnerFrame = null;
-    }
-
-    var frame = document.createElement('iframe');
-    frame.style.cssText = 'display:none;position:absolute;left:-9999px;width:1px;height:1px;';
-    frame.setAttribute('sandbox', 'allow-scripts');
-    frame.setAttribute('title', 'Hidden JavaScript execution sandbox');
-    document.body.appendChild(frame);
-    this._jsRunnerFrame = frame;
-
     var runId = ++this._jsRunnerMsgId;
-    var rid = runId;
+    var step = this.steps[this.currentStep >= 0 ? this.currentStep : 0];
+    var isServerStep = !!(step && (step.http_client === true || step.terminal === true));
+    var hardTimeoutMs = timeoutOverride || (isServerStep ? 3600000 : 5000);
+    var workerTimeoutMs = timeoutOverride || (isServerStep ? 3600000 : 5500);
+    var worker = null;
+    var graceTimer = null;
     var done = false;
+    var resolveCompletion;
+    var completion = new Promise(function (resolve) { resolveCompletion = resolve; });
 
-    function finish() {
+    function finish(notifyCaller, reason) {
       if (done) return;
       done = true;
-      if (self._jsSafetyTimer) { clearTimeout(self._jsSafetyTimer); self._jsSafetyTimer = null; }
-      window.removeEventListener('message', msgListener);
-      if (onDone) onDone();
+      if (graceTimer) clearTimeout(graceTimer);
+      if (self._jsSafetyTimer) {
+        clearTimeout(self._jsSafetyTimer);
+        self._jsSafetyTimer = null;
+      }
+      if (worker) {
+        worker.onmessage = null;
+        worker.onerror = null;
+        worker.onmessageerror = null;
+        try { worker.terminate(); } catch (error) { /* already terminated */ }
+      }
+      if (self._jsRunnerWorker === worker) self._jsRunnerWorker = null;
+      if (self._jsFinish === finish) self._jsFinish = null;
+      var outcome = { ok: reason === 'complete', reason: reason || 'complete' };
+      resolveCompletion(outcome);
+      if (notifyCaller !== false && onDone) {
+        try { onDone(outcome); }
+        catch (error) { console.error('[TutorialCode] Browser completion callback failed:', error); }
+      }
     }
     this._jsFinish = finish;
 
-    var step = this.steps[this.currentStep >= 0 ? this.currentStep : 0];
-    var isServerStep = step && (step.http_client === true || step.terminal === true);
-    var safetyTimeoutVal = timeoutOverride || (isServerStep ? 3600000 : 5000);
-    var sandboxTimeoutVal = timeoutOverride || (isServerStep ? 3600000 : 5500);
+    var jsFiles = {};
+    var fsFiles = {};
+    Object.keys(this.editorModels || {}).forEach(function (filename) {
+      var content = self.editorModels[filename].model.getValue();
+      if (/\.js$/.test(filename)) jsFiles[filename] = content;
+      else fsFiles[filename] = content;
+    });
 
-    var safetyTimer = setTimeout(finish, safetyTimeoutVal);
-    this._jsSafetyTimer = safetyTimer;
+    try {
+      worker = this._createOpaqueBrowserRunnerWorker();
+      this._jsRunnerWorker = worker;
+    } catch (error) {
+      if (onOutput) onOutput(String(error && error.message || error) + '\n', 'stderr');
+      finish(true, 'error');
+      return completion;
+    }
 
-    function msgListener(e) {
-      if (!e.data || e.data.__jsrun !== true || e.data.__rid !== runId) return;
-      if (e.data.type === 'done') { finish(); return; }
-      if (e.data.type === 'sync_done') {
-        if (!isServerStep) {
-          // Give a short grace period (200ms) for any pending console logs
-          // or setTimeout(0) calls to finish before we kill the frame.
-          setTimeout(finish, 200);
+    worker.onmessage = function (event) {
+      var message = event.data;
+      if (!message || message.__jsrun !== true || message.__rid !== runId) return;
+      if (message.type === 'done') {
+        finish(true, 'complete');
+        return;
+      }
+      if (message.type === 'sync_done') {
+        if (!isServerStep && !graceTimer) {
+          graceTimer = setTimeout(function () { finish(true, 'complete'); }, 200);
         }
         return;
       }
-      if (e.data.type === 'http_response') {
-        self._handleHttpResponse(e.data);
+      if (message.type === 'http_response') {
+        self._handleHttpResponse(message);
         return;
       }
-      if (onOutput) onOutput(e.data.text || '', e.data.type === 'stderr' ? 'stderr' : 'stdout');
-    }
-    window.addEventListener('message', msgListener);
-
-    // Build file maps for the sandbox module system and fs mock
-    var jsFiles = {}, fsFiles = {};
-    for (var fn in self.editorModels) {
-      if (self.editorModels.hasOwnProperty(fn)) {
-        var fc = self.editorModels[fn].model.getValue();
-        if (/\.js$/.test(fn)) { jsFiles[fn] = fc; } else { fsFiles[fn] = fc; }
+      if (onOutput) {
+        onOutput(message.text || '', message.type === 'stderr' ? 'stderr' : 'stdout');
       }
+    };
+    worker.onerror = function (event) {
+      if (event && event.preventDefault) event.preventDefault();
+      if (onOutput) onOutput(String(event && event.message || 'Browser worker failed') + '\n', 'stderr');
+      finish(true, 'error');
+    };
+    worker.onmessageerror = function () {
+      if (onOutput) onOutput('Browser worker returned an unreadable message\n', 'stderr');
+      finish(true, 'error');
+    };
+
+    this._jsSafetyTimer = setTimeout(function () {
+      if (onOutput) onOutput('\nExecution timed out and was stopped.\n', 'stderr');
+      finish(true, 'timeout');
+    }, hardTimeoutMs);
+
+    try {
+      worker.postMessage({
+        type: 'run',
+        runId: runId,
+        code: String(code || ''),
+        argv: opts.argv || [],
+        scriptPath: opts.scriptPath || '',
+        jsFiles: jsFiles,
+        fsFiles: fsFiles,
+        timeoutMs: workerTimeoutMs,
+      });
+    } catch (error) {
+      if (onOutput) onOutput(String(error && error.message || error) + '\n', 'stderr');
+      finish(true, 'error');
     }
-
-    var escaped = code.split('<\/script>').join('<\\/script>');
-
-    var sandboxScript =
-      '(function(){\n' +
-      '  var rid=' + rid + ';\n' +
-      '  function __s(t,x){parent.postMessage({__jsrun:true,__rid:rid,type:t,text:x},"*");}\n' +
-      '  function __f(a){return Array.from(a).map(function(v){\n' +
-      '    return typeof v==="object"&&v!==null?JSON.stringify(v,null,2):String(v);\n' +
-      '  }).join(" ");}\n' +
-      '  console.log =function(){__s("stdout",__f(arguments)+"\\n");};\n' +
-      '  console.info =function(){__s("stdout",__f(arguments)+"\\n");};\n' +
-      '  console.warn =function(){__s("stdout","[warn] "+__f(arguments)+"\\n");};\n' +
-      '  console.error=function(){__s("stderr",__f(arguments)+"\\n");};\n' +
-      '  window.onerror=function(m,src,l,c,e){\n' +
-      '    __s("stderr",(e&&(e.stack||e.message)?e.stack||e.message:m)+"\\n");\n' +
-      '    return true;\n' +
-      '  };\n' +
-      '  window.addEventListener("unhandledrejection",function(e){\n' +
-      '    __s("stderr","UnhandledPromiseRejection: "+(e.reason?e.reason.message||String(e.reason):"Unknown")+"\\n");\n' +
-      '  });\n' +
-
-      '  // Node.js globals\n' +
-      '  var module = { exports: {} }; var exports = module.exports;\n' +
-      '  // process mock — argv is [node, scriptPath, ...userArgs] like real Node\n' +
-      '  var __argv = ' + JSON.stringify(opts.argv || []) + ';\n' +
-      '  var __scriptPath = ' + JSON.stringify(opts.scriptPath || '') + ';\n' +
-      '  var __exitCode = 0;\n' +
-      '  window.process = {\n' +
-      '    argv: ["node", __scriptPath].concat(__argv),\n' +
-      '    env: {},\n' +
-      '    platform: "browser",\n' +
-      '    version: "v18.0.0",\n' +
-      '    cwd: function() { return "/tutorial"; },\n' +
-      '    exit: function(c) { __exitCode = c|0; throw new Error("__PROCESS_EXIT__"); },\n' +
-      '    on: function() {},\n' +
-      '    stdout: { write: function(s) { __s("stdout", String(s)); } },\n' +
-      '    stderr: { write: function(s) { __s("stderr", String(s)); } },\n' +
-      '  };\n' +
-      '  // Mock Node.js modules\n' +
-      '  var __server_handler = null;\n' +
-      '  var __jsFiles = ' + JSON.stringify(jsFiles) + ';\n' +
-      '  var __fsFiles = ' + JSON.stringify(fsFiles) + ';\n' +
-      '  var __moduleCache = {};\n' +
-      '  function __resolveRel(spec) {\n' +
-      '    // Resolve "./x" or "../x" against __jsFiles. The lecture project is\n' +
-      '    // flat with one __tests__/ subdirectory, so we strip the leading\n' +
-      '    // ./ or ../ and look up by basename + .js fallback.\n' +
-      '    var s = String(spec).replace(/^(\\.\\.\\/)+/, "").replace(/^\\.\\//, "");\n' +
-      '    if (__jsFiles.hasOwnProperty(s)) return s;\n' +
-      '    if (__jsFiles.hasOwnProperty(s + ".js")) return s + ".js";\n' +
-      '    var base = s.split("/").pop();\n' +
-      '    if (__jsFiles.hasOwnProperty(base)) return base;\n' +
-      '    if (__jsFiles.hasOwnProperty(base + ".js")) return base + ".js";\n' +
-      '    return null;\n' +
-      '  }\n' +
-      '  function __matchRoute(pat, url) {\n' +
-      '    if (!pat || pat === "*") return {};\n' +
-      '    var pp = pat.split("/"), up = url.split("/");\n' +
-      '    if (pp.length !== up.length) return null;\n' +
-      '    var prms = {};\n' +
-      '    for (var i = 0; i < pp.length; i++) {\n' +
-      '      if (pp[i] && pp[i][0] === ":") { prms[pp[i].slice(1)] = decodeURIComponent(up[i]); }\n' +
-      '      else if (pp[i] !== up[i]) return null;\n' +
-      '    }\n' +
-      '    return prms;\n' +
-      '  }\n' +
-      '  function __makeRouter() {\n' +
-      '    var rr = [];\n' +
-      '    return {\n' +
-      '      get:    function(p,h){rr.push({m:"GET",p:p,h:h});},\n' +
-      '      post:   function(p,h){rr.push({m:"POST",p:p,h:h});},\n' +
-      '      put:    function(p,h){rr.push({m:"PUT",p:p,h:h});},\n' +
-      '      "delete": function(p,h){rr.push({m:"DELETE",p:p,h:h});},\n' +
-      '      use:    function(p,h){if(typeof p==="function"){h=p;p="*";}if(h)rr.push({m:"USE",p:p,h:h});},\n' +
-      '      __routes: rr\n' +
-      '    };\n' +
-      '  }\n' +
-      '  window.require = function(m) {\n' +
-      '    if (m === "http") return {\n' +
-      '      createServer: function(h) { __server_handler = h; return { listen: function(p, h, c) { var cb = typeof h === "function" ? h : c; console.log("HTTP server listening on port " + p); if (cb) cb(); } }; }\n' +
-      '    };\n' +
-      '    if (m === "express") {\n' +
-      '      var ef = function() {\n' +
-      '        var routes = [];\n' +
-      '        var app = {\n' +
-      '          get:    function(p, h) { routes.push({ m: "GET",    p: p, h: h }); },\n' +
-      '          post:   function(p, h) { routes.push({ m: "POST",   p: p, h: h }); },\n' +
-      '          put:    function(p, h) { routes.push({ m: "PUT",    p: p, h: h }); },\n' +
-      '          "delete": function(p, h) { routes.push({ m: "DELETE", p: p, h: h }); },\n' +
-      '          all: function(p, h) {\n' +
-      '            ["GET", "POST", "PUT", "DELETE"].forEach(function(m) {\n' +
-      '              routes.push({ m: m, p: p, h: h });\n' +
-      '            });\n' +
-      '          },\n' +
-      '          use:    function(p, h) {\n' +
-      '            if (typeof p === "function") { h = p; p = "*"; }\n' +
-      '            if (!h) return;\n' +
-      '            if (h.__routes) { routes.push({ m: "MOUNT", p: p, router: h.__routes }); }\n' +
-      '            else { routes.push({ m: "USE", p: p, h: h }); }\n' +
-      '          },\n' +
-      '          listen: function(port, host, cb) {\n' +
-      '            var actualCb = typeof host === "function" ? host : cb;\n' +
-      '            console.log("Express server listening on port " + port);\n' +
-      '            if (actualCb) actualCb();\n' +
-      '            __server_handler = function(req, res) {\n' +
-      '              res.status = function(s) { this._status = s; this.writeHead(s); return this; };\n' +
-      '              res.json   = function(obj) { this.writeHead(this._status||200); this.end(JSON.stringify(obj, null, 2)); };\n' +
-      '              res.send   = function(body) {\n' +
-      '                if (typeof body === "object") return this.json(body);\n' +
-      '                this.end(String(body));\n' +
-      '              };\n' +
-      '              var found = null, foundParams = {};\n' +
-      '              outer: for (var ri = 0; ri < routes.length; ri++) {\n' +
-      '                var r = routes[ri];\n' +
-      '                if (r.m === "MOUNT") {\n' +
-      '                  var pfx = r.p, sub = req.url;\n' +
-      '                  if (sub === pfx) sub = "/";\n' +
-      '                  else if (sub.indexOf(pfx + "/") === 0) sub = sub.slice(pfx.length);\n' +
-      '                  else continue;\n' +
-      '                  for (var rj = 0; rj < r.router.length; rj++) {\n' +
-      '                    var sr = r.router[rj];\n' +
-      '                    if (sr.m === req.method) {\n' +
-      '                      var sp = __matchRoute(sr.p, sub);\n' +
-      '                      if (sp !== null) { found = sr.h; foundParams = sp; break outer; }\n' +
-      '                    }\n' +
-      '                  }\n' +
-      '                } else if (r.m === req.method) {\n' +
-      '                  var rp = __matchRoute(r.p, req.url);\n' +
-      '                  if (rp !== null) { found = r.h; foundParams = rp; break; }\n' +
-      '                }\n' +
-      '              }\n' +
-      '              if (found) { req.params = foundParams; found(req, res); }\n' +
-      '              else { res.writeHead(404); res.end("404 Not Found"); }\n' +
-      '            };\n' +
-      '          }\n' +
-      '        };\n' +
-      '        return app;\n' +
-      '      };\n' +
-      '      ef.Router = __makeRouter;\n' +
-      '      ef.json = function() { return function(req, res, next) { if (next) next(); }; };\n' +
-      '      return ef;\n' +
-      '    }\n' +
-      '    if (m === "fs") {\n' +
-      '      return {\n' +
-      '        readFile: function(p, e, cb) {\n' +
-      '          if (typeof e === "function") { cb = e; }\n' +
-      '          setTimeout(function() {\n' +
-      '            var d = __fsFiles[p];\n' +
-      '            if (d === undefined) cb(new Error("ENOENT: no such file or directory, open \'" + p + "\'"), null);\n' +
-      '            else cb(null, d);\n' +
-      '          }, 0);\n' +
-      '        },\n' +
-      '        readFileSync: function(p, e) {\n' +
-      '          var d = __fsFiles[p];\n' +
-      '          if (d === undefined) throw new Error("ENOENT: no such file: \'" + p + "\'");\n' +
-      '          return d;\n' +
-      '        },\n' +
-      '        writeFile: function(p, data, e, cb) {\n' +
-      '          if (typeof e === "function") { cb = e; }\n' +
-      '          __fsFiles[p] = String(data);\n' +
-      '          setTimeout(function() { if (cb) cb(null); }, 0);\n' +
-      '        },\n' +
-      '        promises: {\n' +
-      '          readFile: function(p, e) {\n' +
-      '            return new Promise(function(ok, err) {\n' +
-      '              setTimeout(function() {\n' +
-      '                var d = __fsFiles[p];\n' +
-      '                if (d === undefined) err(new Error("ENOENT: no such file or directory, open \'" + p + "\'"));\n' +
-      '                else ok(d);\n' +
-      '              }, 0);\n' +
-      '            });\n' +
-      '          }\n' +
-      '        }\n' +
-      '      };\n' +
-      '    }\n' +
-      '    if (typeof m === "string" && (m.indexOf("./") === 0 || m.indexOf("../") === 0 || m.indexOf("/") < 0)) {\n' +
-      '      var mkey = __resolveRel(m);\n' +
-      '      if (mkey === null) throw new Error("Cannot find module: " + m);\n' +
-      '      if (__moduleCache.hasOwnProperty(mkey)) return __moduleCache[mkey];\n' +
-      '      var msrc = __jsFiles[mkey];\n' +
-      '      var mod = { exports: {} };\n' +
-      '      __moduleCache[mkey] = mod.exports;\n' +
-      '      (new Function("require","module","exports", msrc))(window.require, mod, mod.exports);\n' +
-      '      __moduleCache[mkey] = mod.exports;\n' +
-      '      return mod.exports;\n' +
-      '    }\n' +
-      '    throw new Error("Module not found: " + m);\n' +
-      '  };\n' +
-
-      '  window.addEventListener("message", function(e) {\n' +
-      '    if (!e.data || e.data.type !== "http_request" || !__server_handler) return;\n' +
-      '    var rawUrl = e.data.url;\n' +
-      '    if (rawUrl.indexOf("http") === 0) {\n' +
-      '      try { var u = new URL(rawUrl); rawUrl = u.pathname + u.search; } catch(err) { }\n' +
-      '    }\n' +
-      '    var urlParts = rawUrl.split("?");\n' +
-      '    var query = {};\n' +
-      '    if (urlParts[1]) {\n' +
-      '      urlParts[1].split("&").forEach(function(p) {\n' +
-      '        var pair = p.split("=");\n' +
-      '        query[decodeURIComponent(pair[0])] = decodeURIComponent(pair[1] || "");\n' +
-      '      });\n' +
-      '    }\n' +
-      '    var body = e.data.body;\n' +
-      '    try {\n' +
-      '      if (typeof body === "string" && (body.trim().indexOf("{") === 0 || body.trim().indexOf("[") === 0)) {\n' +
-      '        body = JSON.parse(body);\n' +
-      '      }\n' +
-      '    } catch(err) { }\n' +
-      '    var req = { method: e.data.method, url: urlParts[0], query: query, params: {}, body: body, headers: {} };\n' +
-      '    var res = {\n' +
-      '      _body: "", _status: 200, \n' +
-      '      writeHead: function(s) { this._status = s; },\n' +
-      '      end: function(b) {\n' +
-      '        this._body = b || this._body;\n' +
-      '        parent.postMessage({__jsrun:true,__rid:rid,type:"http_response",status:this._status,body:this._body},"*");\n' +
-      '      }\n' +
-      '    };\n' +
-      '    try { __server_handler(req, res); } catch(err) { res.status(500).send(err.stack || err.message); }\n' +
-      '  });\n' +
-      '})();';
-
-    frame.srcdoc = '<!DOCTYPE html><html><head><script>' + sandboxScript + '<\/script></head><body><script>' +
-      'try{\n' + escaped + '\n}catch(e){if(e&&e.message!=="__PROCESS_EXIT__")console.error(e.stack||e.message);}\n' +
-      'parent.postMessage({__jsrun:true,__rid:' + rid + ',type:"sync_done"},"*");\n' +
-      'setTimeout(function(){parent.postMessage({__jsrun:true,__rid:' + rid + ',type:"done"},"*");},' + sandboxTimeoutVal + ');' +
-      '<\/script></body></html>';
+    return completion;
   };
 
   TutorialCode.prototype._markReactPreviewReady = function (generation) {
@@ -6392,8 +6943,8 @@
           return loadScriptOnce('/js/debugger/node-channel.js?v=' + dbgAssetVersion);
         });
       }
-      // Browser-backend tutorials use the browser channel (sandboxed iframe
-      // + acorn AST instrumentation + SAB for synchronous step pause).
+      // Browser-backend tutorials use the terminable browser worker channel
+      // with acorn AST instrumentation + SAB for synchronous step pause.
       if (needsBrowserChannel) {
         p = p.then(function () {
           if (window.SEBookBrowserChannel) return null;
@@ -10546,6 +11097,7 @@
         }).then(function () {
           return self._updateUserCmdListener(savedStepObj);
         }).then(function () {
+          self._suppressAutoSave = false;
           self._autoSaveProgress();
         });
       });
@@ -10651,6 +11203,81 @@
     if (index < 0 || index >= this.steps.length) return Promise.resolve();
     if (!this.instructorMode && !this._stepsUnlocked.has(index)) return Promise.resolve();
 
+    var resolveRequest;
+    var rejectRequest;
+    var requestPromise = new Promise(function (resolve, reject) {
+      resolveRequest = resolve;
+      rejectRequest = reject;
+    });
+    var request = {
+      id: ++this._stepLoadSequence,
+      index: index,
+      requestedBackend: this._stepRequestedBackend(this.steps[index]),
+      waiters: [{ id: this._stepLoadSequence, resolve: resolveRequest, reject: rejectRequest }],
+    };
+    this._latestStepLoadRequestId = request.id;
+
+    if (this._activeStepLoadRequest) {
+      // Keep at most one queued destination. Waiters for an intermediate
+      // destination follow the replacement and resolve `false` only after the
+      // final destination is ready, so callers never continue in the middle of
+      // a different step's setup transaction.
+      if (this._pendingStepLoadRequest) {
+        request.waiters = this._pendingStepLoadRequest.waiters.concat(request.waiters);
+      }
+      this._pendingStepLoadRequest = request;
+    } else {
+      this._startStepLoadRequest(request);
+    }
+    return requestPromise;
+  };
+
+  TutorialCode.prototype._startStepLoadRequest = function (request) {
+    var self = this;
+    this._activeStepLoadRequest = request;
+    var operation;
+    try {
+      // This call is intentionally synchronous when the backend is already
+      // ready. The first idle load therefore updates the visible step before
+      // loadStep() returns, preserving the runtime's established UI behavior.
+      operation = this._performStepLoad(request);
+    } catch (error) {
+      operation = Promise.reject(error);
+    }
+    Promise.resolve(operation).then(function () {
+      self._finishStepLoadRequest(request, null);
+    }, function (error) {
+      self._finishStepLoadRequest(request, error);
+    });
+  };
+
+  TutorialCode.prototype._finishStepLoadRequest = function (request, error) {
+    if (this._activeStepLoadRequest !== request) return;
+    this._activeStepLoadRequest = null;
+
+    var pending = this._pendingStepLoadRequest;
+    this._pendingStepLoadRequest = null;
+    if (pending) {
+      pending.waiters = request.waiters.concat(pending.waiters);
+      this._startStepLoadRequest(pending);
+      return;
+    }
+
+    if (error) {
+      var prefix = this._mixedBackendMode
+        ? 'Failed to prepare ' + backendLabel(request.requestedBackend) + ' step: '
+        : 'Failed to prepare step: ';
+      this._showError(prefix + (error && error.message || error));
+      console.error('TutorialCode step preparation error:', error);
+    }
+    request.waiters.forEach(function (waiter) {
+      if (error) waiter.reject(error);
+      else waiter.resolve(waiter.id === request.id);
+    });
+  };
+
+  TutorialCode.prototype._performStepLoad = function (request) {
+    var index = request.index;
     var self = this;
     var step = this.steps[index];
     var timedStatus = this._timedPracticeStatus(index);
@@ -10658,28 +11285,15 @@
       this._renderTimedPracticeLockout(index);
       return Promise.resolve();
     }
-    var requestedBackend = this._stepRequestedBackend(step);
-    var previousStepReady = this._stepSetupPromise
-      ? this._stepSetupPromise.catch(function () {})
-      : null;
+    var requestedBackend = request.requestedBackend;
     var load = function () {
-      // Preserve the runtime's long-standing synchronous UI switch when no
-      // earlier step is still preparing. Only defer the switch when there is
-      // an actual readiness barrier to cross.
-      var contentReady = previousStepReady
-        ? previousStepReady.then(function () { return self._loadStepContent(index); })
-        : self._loadStepContent(index);
-      return Promise.resolve(contentReady).then(function () {
-        self._prewarmNextBackend(index);
+      var contentReady = self._loadStepContent(index, request.id);
+      return Promise.resolve(contentReady).then(function (committed) {
+        if (committed !== false) self._prewarmNextBackend(index);
+        return committed;
       });
     };
-    if (!this._mixedBackendMode) {
-      return load().catch(function (err) {
-        self._showError('Failed to prepare step: ' + (err && err.message || err));
-        console.error('TutorialCode step preparation error:', err);
-        throw err;
-      });
-    }
+    if (!this._mixedBackendMode) return load();
 
     if (!this._backendReady[requestedBackend]) {
       this._backgroundBackendLoadingSuppressed = false;
@@ -10687,16 +11301,13 @@
     }
     return this._ensureBackendReady(requestedBackend).then(function () {
       return load();
-    }).then(function () {
-      self._hideLoading();
-    }, function (err) {
-      self._showError('Failed to prepare ' + backendLabel(requestedBackend) + ' step: ' + (err && err.message || err));
-      console.error('TutorialCode step preparation error:', err);
-      throw err;
+    }).then(function (committed) {
+      if (request.id === self._latestStepLoadRequestId) self._hideLoading();
+      return committed;
     });
   };
 
-  TutorialCode.prototype._loadStepContent = function (index) {
+  TutorialCode.prototype._loadStepContent = function (index, requestId) {
     if (index < 0 || index >= this.steps.length) return Promise.resolve();
     // Block navigation to locked steps (unless instructor mode)
     if (!this.instructorMode && !this._stepsUnlocked.has(index)) return Promise.resolve();
@@ -10835,8 +11446,16 @@
       // marker that matches the boot-time HISTIGNORE pattern.
       self._showTerminalLoading('Preparing step\u2026');
       if (hasSetup) {
-        var setupBatch = tutorialShellBatch(step.setup_commands.map(function (c) { return String(c).trim(); }));
-        stepReadyPromise = stepReadyPromise.then(function () { return self._runSilent(setupBatch); });
+        if (this.config.backend === 'webcontainer') {
+          stepReadyPromise = stepReadyPromise.then(function () {
+            return self._runWebContainerCommands(step.setup_commands, {
+              label: 'WebContainer step setup',
+            });
+          });
+        } else {
+          var setupBatch = tutorialShellBatch(step.setup_commands.map(function (c) { return String(c).trim(); }));
+          stepReadyPromise = stepReadyPromise.then(function () { return self._runSilent(setupBatch); });
+        }
       }
       // Cache the clean "entry state" BEFORE post_fileload_setup runs, so the
       // snapshot represents the post-setup_commands baseline (no `bash
@@ -10940,7 +11559,7 @@
     // expose a Run-button argv field (e.g. `node main.js 124 1 90093 9193`).
     // The browser-sandbox fallback (when WebContainer can't boot) gets the
     // same wiring so the lecture still looks the same — argv is parsed and
-    // injected into `process.argv` by the iframe shim.
+    // injected into `process.argv` by the browser Worker shim.
     if (this.config.backend === 'webcontainer' || this.config.backend === 'browser') {
       var wcArgsInp = this.root.querySelector('.tvm-args-input');
       var wcArgsLbl = this.root.querySelector('.tvm-args-label');
@@ -11053,11 +11672,16 @@
     // Until then autosave stays suppressed and the step remains unvisited, so
     // retrying a failed first visit re-runs its setup commands.
     var activeStepReady = stepReadyPromise.then(function () {
+      if (requestId && requestId !== self._latestStepLoadRequestId) {
+        self._suppressAutoSave = autoSaveSuppressedBeforeStepLoad;
+        return false;
+      }
       self._stepsVisited.add(index);
       self._updateStepHash(index);
       self._suppressAutoSave = autoSaveSuppressedBeforeStepLoad;
       if (self.autoSaveEnabled && !self._suppressAutoSave) self._autoSaveProgress();
       self._startTimedPractice(index);
+      return true;
     }, function (error) {
       self._suppressAutoSave = autoSaveSuppressedBeforeStepLoad;
       throw error;
@@ -11975,7 +12599,16 @@
       );
     }
 
-    syncChain.then(function () { runNext(0); });
+    return syncChain.then(function () {
+      runNext(0);
+    }).catch(function (error) {
+      if (finished) return;
+      finished = true;
+      clearTimeout(testTimeout);
+      if (activeRequestId !== null) self._discardWorkerRequest(activeRequestId);
+      console.warn('Haskell test workspace sync failed:', error && error.message || error);
+      self._renderTestResults(tests, new Array(tests.length).fill(null), run);
+    });
   };
 
   // Prolog — each test.command is a JS snippet with __query / __consult / assert
@@ -12080,8 +12713,8 @@
       timeout: 3500,
       echoOutput: false,
       skipArgsInput: true,
-    }).then(function (run) {
-      var output = run.output || '';
+    }).then(function (processResult) {
+      var output = processResult.output || '';
       var results = [];
       for (var i = 0; i < tests.length; i++) {
         try {
@@ -14528,13 +15161,13 @@
       return;
     }
 
-    if (this._jsRunnerFrame && this._jsRunnerFrame.contentWindow) {
-      this._jsRunnerFrame.contentWindow.postMessage({
+    if (this._jsRunnerWorker) {
+      this._jsRunnerWorker.postMessage({
         type: 'http_request',
         method: method,
         url: url,
         body: body
-      }, '*');
+      });
     } else {
       this._httpResponseBodyEl.textContent = 'Error: Server is not running. Click "\u25b6 Run" first to start the Node.js process.';
       this._httpResponseBodyEl.style.color = '#e55';

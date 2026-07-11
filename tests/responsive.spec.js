@@ -8,7 +8,10 @@ const { test, expect, devices } = require('@playwright/test');
  * focusing on the mobile navigation menu.
  */
 
-test.use({ ...devices['iPhone 13'] });
+// This suite exercises viewport-responsive layout, not browser-engine parity.
+// Keep the configured project browser instead of inheriting the device
+// descriptor's defaultBrowserType (WebKit for iPhone descriptors).
+test.use({ viewport: devices['iPhone 13'].viewport });
 
 test.describe('Responsive Layout', () => {
 

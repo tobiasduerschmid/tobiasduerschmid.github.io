@@ -74,10 +74,28 @@ function requestWithMethod(request, method, headers) {
   });
 }
 
+function vmAssetFetchResult(response, cacheLifetime) {
+  return {
+    response: response,
+    cacheLifetime: cacheLifetime || Promise.resolve(),
+  };
+}
+
+function cacheVMAssetResponse(cache, request, response) {
+  if (!response.ok) return vmAssetFetchResult(response);
+  var cacheLifetime = Promise.resolve().then(function () {
+    return cache.put(request, response.clone());
+  }).catch(function (error) {
+    // Cache Storage is an optimization. Quota, eviction, and browser-storage
+    // failures must not turn a valid network response into a failed fetch.
+    console.warn('[coi-serviceworker] Failed to cache VM asset:', error);
+  });
+  return vmAssetFetchResult(response, cacheLifetime);
+}
+
 function fetchAndCacheVMAsset(cache, request) {
   return fetch(requestWithMethod(request, 'GET')).then(function (response) {
-    if (response.ok) cache.put(request, response.clone());
-    return response;
+    return cacheVMAssetResponse(cache, request, response);
   });
 }
 
@@ -88,12 +106,11 @@ function conditionalFetchVMAsset(cache, request, cached) {
   if (validators.lastModified) headers.set('If-Modified-Since', validators.lastModified);
 
   return fetch(requestWithMethod(request, 'GET', headers)).then(function (response) {
-    if (response.status === 304 && cached) return cached;
+    if (response.status === 304 && cached) return vmAssetFetchResult(cached);
     if (response.ok) {
-      cache.put(request, response.clone());
-      return response;
+      return cacheVMAssetResponse(cache, request, response);
     }
-    return cached || response;
+    return vmAssetFetchResult(cached || response);
   });
 }
 
@@ -103,14 +120,22 @@ function handleVMAssetRequest(request) {
       if (!cached) return fetchAndCacheVMAsset(cache, request);
 
       return fetch(requestWithMethod(request, 'HEAD')).then(function (headResponse) {
-        if (headResponse.ok && sameValidators(cached, headResponse)) return cached;
+        if (headResponse.ok && sameValidators(cached, headResponse)) {
+          return vmAssetFetchResult(cached);
+        }
         if (headResponse.ok) return fetchAndCacheVMAsset(cache, request);
         return conditionalFetchVMAsset(cache, request, cached);
       }).catch(function () {
         return conditionalFetchVMAsset(cache, request, cached)
-          .catch(function () { return cached; });
+          .catch(function () { return vmAssetFetchResult(cached); });
       });
+    }, function (error) {
+      console.warn('[coi-serviceworker] Failed to read VM asset cache:', error);
+      return fetch(requestWithMethod(request, 'GET')).then(vmAssetFetchResult);
     });
+  }, function (error) {
+    console.warn('[coi-serviceworker] Failed to open VM asset cache:', error);
+    return fetch(requestWithMethod(request, 'GET')).then(vmAssetFetchResult);
   });
 }
 
@@ -144,7 +169,13 @@ self.addEventListener('fetch', function (e) {
   // deploy. HEAD avoids downloading the body when cached bytes are current;
   // conditional GET is the standards-compliant fallback if HEAD is unavailable.
   if (VM_ASSET_RE.test(url.pathname)) {
-    e.respondWith(handleVMAssetRequest(e.request));
+    var vmAssetFetch = handleVMAssetRequest(e.request);
+    e.respondWith(vmAssetFetch.then(function (result) {
+      return result.response;
+    }));
+    e.waitUntil(vmAssetFetch.then(function (result) {
+      return result.cacheLifetime;
+    }));
     return;
   }
 

@@ -127,6 +127,96 @@ test.describe('debugger runtime robustness', () => {
       .toEqual(exceptionBreakpoints);
   });
 
+  test('Stop terminates a wedged browser runtime and the next debug run starts cleanly', async () => {
+    const workers = [];
+    class WedgableWorker {
+      constructor() {
+        this.terminated = false;
+        workers.push(this);
+      }
+
+      addEventListener(type, listener) {
+        this[type] = listener;
+      }
+
+      postMessage() {
+        // The first learner runtime represents synchronous infinite code: it
+        // accepts messages but never returns to its event loop to process them.
+      }
+
+      terminate() {
+        this.terminated = true;
+      }
+
+      complete() {
+        this.message({
+          data: {
+            __ttd: true,
+            payload: { type: 'debugComplete', exitCode: 0 },
+          },
+        });
+      }
+    }
+
+    const sandbox = loadScriptInVm('js/debugger/browser-channel.js', {
+      Worker: WedgableWorker,
+    });
+    sandbox.window.SharedArrayBuffer = SharedArrayBuffer;
+    sandbox.window.crossOriginIsolated = true;
+
+    let channel;
+    const completions = [];
+    const controller = {
+      state: 'idle',
+      onDebugComplete(message) {
+        this.state = 'idle';
+        completions.push(message);
+        channel.dispose();
+      },
+    };
+    const Channel = sandbox.window.SEBookBrowserChannel;
+    channel = new Channel(controller, {});
+    const start = () => {
+      controller.state = 'running';
+      channel.startSession({
+        filename: '/tutorial/app.js',
+        code: 'while (true) {}',
+        files: {},
+      });
+    };
+
+    start();
+    const wedgedWorker = workers[0];
+    channel.sendCommand(5);
+
+    expect(wedgedWorker.terminated).toBe(true);
+    start();
+    const nextWorker = workers[1];
+    expect(nextWorker).toBeDefined();
+    expect(nextWorker.terminated).toBe(false);
+    await new Promise(resolve => setImmediate(resolve));
+    expect(controller.state).toBe('running');
+    expect(completions).toHaveLength(0);
+
+    wedgedWorker.complete();
+    await Promise.resolve();
+    expect(controller.state).toBe('running');
+    expect(completions).toHaveLength(0);
+
+    channel.sendCommand(5);
+    expect(nextWorker.terminated).toBe(true);
+    await new Promise(resolve => setImmediate(resolve));
+    expect(controller.state).toBe('idle');
+    expect(completions).toEqual([{ exitCode: 0, stopped: true }]);
+
+    start();
+    const freshWorker = workers[2];
+    freshWorker.complete();
+    expect(controller.state).toBe('idle');
+    expect(completions).toHaveLength(2);
+    expect(freshWorker.terminated).toBe(true);
+  });
+
   test('browser channel forwards HTTP requests to the debug worker and dispatches responses', () => {
     const handled = [];
     const workerMessages = [];
@@ -336,8 +426,9 @@ test.describe('debugger runtime robustness', () => {
     await expect(page.locator('.tvm-debug-btn-unavailable')).toBeVisible();
 
     await page.locator('.tvm-debug-btn-unavailable').click();
-    await expect(page.locator('.tvm-debug-view-unavailable')).toBeVisible();
-    await expect(page.getByRole('button', { name: /reload to activate debugger/i })).toBeVisible();
-    await expect(page.locator('.tvm-debug-view-unavailable')).toContainText('full browser preview');
+    const unavailableView = page.getByLabel('Debugger availability');
+    await expect(unavailableView).toBeVisible();
+    await expect(unavailableView.getByRole('button', { name: /reload to activate debugger/i })).toBeVisible();
+    await expect(unavailableView).toContainText('full browser preview');
   });
 });

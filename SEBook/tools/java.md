@@ -434,8 +434,7 @@ String first = (String) names.get(0);  // cast inserted by compiler
 
 Java Collections are organized by **interfaces**. Declare variables as the interface type:
 
-<pre><code class="language-uml-class">
-@startuml
+<div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 interface Collection
 interface List
 interface Set
@@ -455,8 +454,7 @@ HashSet ..|> Set
 TreeSet ..|> Set
 HashMap ..|> Map
 TreeMap ..|> Map
-@enduml
-</code></pre>
+@enduml'></div>
 
 | Need | Interface | Implementation | Python Equivalent |
 |------|-----------|---------------|-------------------|

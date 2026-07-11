@@ -474,7 +474,10 @@
         playwright: config.playwright || null,
       });
       window._tutorial = tutorial;
-      tutorial.start();
+      tutorial.start().catch(function () {
+        // start() owns the visible error state; consume the rejected readiness
+        // promise here because this layout intentionally starts it in place.
+      });
 
       // Wire Auto-save toggle + Reset Step button
       var autoSaveToggle = document.getElementById('autoSaveToggle');

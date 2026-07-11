@@ -13,9 +13,11 @@ info_nav_title: "Browser storage"
     <p>
       This site keeps a few small things in your browser so it remembers what you were doing &mdash;
       your <strong>theme</strong>, <strong>tutorial progress</strong>, <strong>bookmarks</strong>,
-      audio settings, and similar UI preferences. <strong>Nothing leaves your device.</strong>
-      No personal information is collected, no analytics are sent off-site, and no data is shared
-      with third parties.
+      audio settings, and similar {% include abbr.html term="UI" %} preferences. Those saved preferences and progress stay in
+      your browser. This site does not run analytics or advertising trackers. Node.js tutorials
+      that use WebContainers are the exception to the otherwise local-only tutorial runtimes:
+      their workspace files and commands are passed to a StackBlitz-controlled runtime that
+      executes in your browser. Do not enter secrets or confidential code in those tutorials.
     </p>
     <p class="u-bottomless">
       Below is the complete inventory of every cookie and <code>localStorage</code> key this site
@@ -534,15 +536,30 @@ info_nav_title: "Browser storage"
       its virtual networking; same lifetime, no persistence.
     </li>
     <li>
-      <strong>Third-party CDNs</strong> &mdash; this site loads fonts, FontAwesome icons, jQuery,
-      Bootstrap, Mermaid, marked, KaTeX, Monaco, Pyodide, and the WebContainers runtime
-      from public CDNs. We don't send those services any user data, but their
-      networks see the request. No analytics, telemetry, or trackers are loaded.
+      <strong>Third-party assets</strong> &mdash; this site loads fonts, FontAwesome icons, jQuery,
+      Bootstrap, Mermaid, marked, KaTeX, React preview libraries, and several integrity-checked
+      worker dependencies from public content-delivery networks. Those networks receive the
+      ordinary asset request (including your {% include abbr.html term="IP" %} address and browser headers), but the request does
+      not include your saved preferences or tutorial progress. Monaco and Pyodide, plus the
+      WebContainer {% include abbr.html term="API" %} wrapper, are served from this site. No analytics or advertising trackers
+      are loaded.
     </li>
     <li>
-      <strong>Cross-origin cookies</strong> &mdash; embedded YouTube videos and similar
-      third-party iframes set their own cookies on their own origin. Those are governed
-      by those services' privacy policies and can't be reached or deleted from this page.
+      <strong>StackBlitz WebContainers</strong> &mdash; Node.js tutorials using the
+      <code>webcontainer</code> backend open a versioned, cross-origin runtime from
+      <code>stackblitz.com</code>. The site passes that runtime the tutorial workspace files and
+      commands so it can execute them in your browser. This is a third-party processing boundary,
+      even though the Node.js compute runs in-browser. Do not put passwords,
+      {% include abbr.html term="API" text="API keys" %}, personal
+      data, or confidential source code in those exercises. See the
+      <a href="https://stackblitz.com/privacy-policy">StackBlitz privacy policy</a> for its
+      practices.
+    </li>
+    <li>
+      <strong>Cross-origin storage and cookies</strong> &mdash; embedded YouTube videos, the
+      StackBlitz WebContainer runtime, and similar third-party frames may use cookies or browser
+      storage scoped to their own origins. Those are governed by the services' privacy policies
+      and cannot be inspected or deleted from this site; use your browser's site-data controls.
     </li>
   </ul>
 
