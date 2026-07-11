@@ -147,7 +147,10 @@ function _ensureGit(dir) {
   _gitDir = dir || '/tutorial';
   if (_git) return Promise.resolve();
   try {
-    importScripts('https://cdn.jsdelivr.net/npm/isomorphic-git@1.27.1/index.umd.min.js');
+    if (!self.SEBookWorkerScriptIntegrity) {
+      importScripts('/js/vendor/worker-script-integrity.js');
+    }
+    self.SEBookWorkerScriptIntegrity.importDependency('isomorphicGit');
     _git = self.git;
     _gitFsAdapter = _makeFsAdapter();
     // Make sure the working directory exists (it might not, e.g. /tutorial/sub).

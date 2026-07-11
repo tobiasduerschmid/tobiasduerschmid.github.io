@@ -6,11 +6,20 @@
 # entire filesystem as a cpio initrd. This ensures all shared libraries
 # and dependencies are properly resolved.
 
-set -e
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 DIST_DIR="$SCRIPT_DIR/dist"
 OVERLAY_DIR="$SCRIPT_DIR/overlay"
+BUILD_INPUTS="$SCRIPT_DIR/build-inputs.env"
+
+if [ ! -r "$BUILD_INPUTS" ]; then
+    echo "ERROR: Missing VM build input manifest: $BUILD_INPUTS" >&2
+    exit 1
+fi
+
+# shellcheck disable=SC1090 -- the repository-owned manifest is the contract.
+. "$BUILD_INPUTS"
 
 mkdir -p "$DIST_DIR"
 
@@ -18,27 +27,28 @@ echo "Building 32-bit Alpine Linux rootfs for v86..."
 echo ""
 
 docker run --rm --platform linux/386 \
+    --env-file "$BUILD_INPUTS" \
     -v "$DIST_DIR:/output" \
     -v "$OVERLAY_DIR:/overlay:ro" \
-    alpine:3.19 sh -c '
+    "$ALPINE_IMAGE" sh -c '
     set -e
 
     echo "[1/4] Installing packages..."
     apk add --no-cache \
-        bash \
-        coreutils \
-        diffutils \
-        findutils \
-        grep \
-        sed \
-        gawk \
-        git \
-        make \
-        nano \
-        less \
-        file \
-        tree \
-        musl-dev
+        "bash=$APK_BASH_VERSION" \
+        "coreutils=$APK_COREUTILS_VERSION" \
+        "diffutils=$APK_DIFFUTILS_VERSION" \
+        "findutils=$APK_FINDUTILS_VERSION" \
+        "grep=$APK_GREP_VERSION" \
+        "sed=$APK_SED_VERSION" \
+        "gawk=$APK_GAWK_VERSION" \
+        "git=$APK_GIT_VERSION" \
+        "make=$APK_MAKE_VERSION" \
+        "nano=$APK_NANO_VERSION" \
+        "less=$APK_LESS_VERSION" \
+        "file=$APK_FILE_VERSION" \
+        "tree=$APK_TREE_VERSION" \
+        "musl-dev=$APK_MUSL_DEV_VERSION"
 
     # Alpine package/app-link details can vary; tutorials and tests use the
     # portable command name `awk`, so guarantee it exists when gawk is present.
@@ -48,16 +58,21 @@ docker run --rm --platform linux/386 \
 
     # Build TCC (Tiny C Compiler) from source — not in Alpine repos for 386
     echo "    Installing TCC (Tiny C Compiler)..."
-    apk add --no-cache gcc 2>&1 | tail -1
-    git clone --depth 1 https://repo.or.cz/tinycc.git /tmp/tcc
+    apk add --no-cache "gcc=$APK_GCC_VERSION"
+    git clone --no-checkout https://repo.or.cz/tinycc.git /tmp/tcc
     cd /tmp/tcc
+    git checkout --detach "$TCC_COMMIT"
+    if [ "$(git rev-parse HEAD)" != "$TCC_COMMIT" ]; then
+        echo "ERROR: TinyCC checkout does not match pinned commit" >&2
+        exit 1
+    fi
     ./configure --prefix=/usr \
         --elfinterp=/lib/ld-musl-i386.so.1 \
         --crtprefix=/usr/lib \
         --sysincludepaths=/usr/include \
         --libpaths=/usr/lib \
         --config-bcheck=no
-    make -j$(nproc)
+    make -j"$(nproc)"
     make install
     # TCC looks for libtcc1.a in /usr/lib (its libdir), not /usr/lib/tcc
     cp /usr/lib/tcc/libtcc1.a /usr/lib/libtcc1.a
@@ -67,7 +82,7 @@ docker run --rm --platform linux/386 \
     cd /
     rm -rf /tmp/tcc
     # Remove build-time GCC (huge), keep only TCC
-    apk del gcc 2>&1 | tail -1
+    apk del gcc
 
     echo "[2/4] Configuring system..."
 
@@ -110,13 +125,13 @@ docker run --rm --platform linux/386 \
 MOTD
 
     echo "[3/4] Installing kernel & network modules..."
-    apk add --no-cache linux-virt 2>/dev/null || true
-    if [ -f /boot/vmlinuz-virt ]; then
-        cp /boot/vmlinuz-virt /output/bzImage
-        echo "    kernel: $(du -sh /output/bzImage | cut -f1)"
-    else
-        echo "    WARNING: linux-virt not available. Provide a kernel at vm/dist/bzImage"
-    fi
+    rm -f /output/.bzImage.new
+    apk add --no-cache "linux-virt=$APK_LINUX_VIRT_VERSION"
+    test -s /boot/vmlinuz-virt
+    cp /boot/vmlinuz-virt /output/.bzImage.new
+    test -s /output/.bzImage.new
+    mv /output/.bzImage.new /output/bzImage
+    echo "    kernel: $(du -sh /output/bzImage | cut -f1)"
 
     # Strip unused kernel modules avoiding --parents issue
     mkdir -p /tmp/keep_modules

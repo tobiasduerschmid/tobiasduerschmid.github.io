@@ -10,7 +10,6 @@
     '.highlighter-rouge .highlight pre',
     'pre.highlight',
     '.tvm-step-content-wrap',
-    '.tvm-editor-tabs',
     '.tvm-git-graph-container',
     '.tvm-output-container',
     '.tvm-diagram-content',
@@ -45,6 +44,11 @@
     // are intentionally hidden from AT (e.g. tab-panel back-faces, alternate
     // language tabs) and a focusable element inside aria-hidden is itself a
     // WCAG 4.1.2 violation.
+    //
+    // Do not add the editor tab strip here. Its individual file buttons already
+    // form a roving keyboard interface and scroll into view when focused. Making
+    // the parent strip focusable adds a redundant stop whose group name competes
+    // with the visible child labels (WCAG 2.5.3).
     const blocks = document.querySelectorAll(SCROLLABLE_REGION_SELECTOR);
     blocks.forEach((pre) => {
       if (pre.hasAttribute('tabindex')) return;
@@ -144,8 +148,8 @@
     try { installFocusVisibilityGuard(); } catch (e) { /* non-fatal */ }
   }
 
-  // Tutorial step content (.tvm-step-content-wrap), editor tab rows, and
-  // Rouge code blocks inside dynamically-rendered content are inserted
+  // Tutorial step content (.tvm-step-content-wrap) and Rouge code blocks
+  // inside dynamically-rendered content are inserted
   // AFTER DOMContentLoaded by the tutorial JS. Re-run the patch a few times
   // post-load, then keep one throttled observer for later step transitions.
   function scheduleLatePasses() {

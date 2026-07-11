@@ -10,7 +10,7 @@
  *      to SVG without each caller writing its own DOM-walking helper.
  *
  * Wire-up (do this in any page that uses mermaid):
- *   <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+ *   <script src="https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js"></script>
  *   <script src="/js/mermaid-theme.js"></script>
  *   // Then, after each markdown render that may contain ```mermaid blocks:
  *   //   SebookMermaid.render(rootEl)

@@ -1201,6 +1201,22 @@ React preview iframes in both the main tutorial and
 learner code cannot read or mutate the tutorial page's DOM or browser storage.
 Keep preview refresh and hot reload on the existing `postMessage` boundary;
 do not restore direct parent access to iframe globals or documents.
+Repository-authored assertion commands and results are the exception to that
+public transport: `js/react-assertion-broker.js` creates a private
+`MessageChannel` before learner scripts execute. The host accepts only the
+first transferred port from a freshly-created preview `WindowProxy`, and every
+preview rebuild replaces the iframe element so an older learner realm cannot
+race the next handshake. The same channel carries Playwright-compat commands;
+the assertion broker captures the agent's temporary command function before
+learner code runs and deletes the global hook. Preview reset callbacks return
+the replacement frame and port so `js/playwright-compat/runner.js` can adopt
+both before constructing its next broker. Learner-authored Playwright spec
+source is evaluated only in a hidden `sandbox="allow-scripts"` iframe with an
+opaque origin; reset requests, preview commands, and results cross that boundary
+only through a fresh transferred `MessagePort`, and the runner removes the
+iframe and closes the port after every run. Never move assertion commands,
+request ids, or results back onto `window.postMessage`; learner code can observe
+and forge public frame messages.
 
 `uml-python-workspace.html` is a separate generated-code workspace opened by
 the UML editor's "Generate Python" action. It receives a one-shot
@@ -1238,11 +1254,15 @@ channel.
   ordered Babel script end-marker and initial React render have settled; until
   then the parent retains only the latest source/style patch for that generation.
   Repository-authored React `tests[].command` checks execute inside that preview
-  through a request-id and `event.source`-checked assertion broker. The broker
-  receives only a restricted `frame` facade
+  through the private capability port installed by
+  `js/react-assertion-broker.js`. The broker receives only a restricted `frame` facade
   (`contentDocument` and `contentWindow` for the preview itself), stripped
   learner `code`, an `assert` helper, and the learner `files` map. Never pass
-  parent DOM nodes, storage, or other host-page capabilities through it.
+  parent DOM nodes, storage, or other host-page capabilities through it. Keep
+  the broker script before Babel and every learner-authored script in the
+  generated `srcdoc`; its closed-over port is the trust boundary that keeps
+  commands and results invisible to learner `message` listeners while still
+  allowing interactive assertions to click and inspect the live React DOM.
   Timed practice is opt-in per step with `max-time` (minutes) and optional
   `lockout-time` (minutes, default 60). The countdown remains visible in the
   step nav while the step or quiz is active; at one minute or less it uses a
@@ -1269,6 +1289,16 @@ channel.
   keep dense tutorial chrome from flashing incidental boxes during cursor
   travel; keyboard focus still shows them immediately because focus is
   deliberate navigation.
+  Pyodide, SQL, Prolog, and Java worker messages are bounded RPCs: every
+  callback is released by a response, timeout, termination, or `destroy()`.
+  Global and per-step setup reject readiness when their command exits nonzero,
+  and worker file sync resolves only after the worker acknowledges the write;
+  callers must propagate those rejections instead of presenting a half-ready
+  step or a false saved state. The output-panel Stop action terminates a wedged
+  worker, reruns global setup, restores all Monaco files, reruns the active
+  step setup, and only then re-enables Run (returning focus there when Stop was
+  keyboard-activated). Execution timeouts use the same restart path, so an
+  infinite learner program does not require a page reload.
 - **`js/tutorial-hero-celebration.js`** — shared test-pass celebration used
   by every `TutorialCode` backend and the `uml-editor` backend. After a
   visible gate-style test run passes all tests, it clones the saved SE Gym
@@ -1338,6 +1368,51 @@ channel.
   `js/playwright-compat/runner.js` (in-browser Playwright for React),
   `js/pyodide-git.js` / `js/pyodide-unix.js` (POSIX mocks).
 
+Third-party code that executes in the tutorial page or a same-origin worker is
+fail-closed. Page and preview scripts use exact versions plus Subresource
+Integrity; dynamic cross-origin loads are accepted only when their URL has an
+entry in `CDN_INTEGRITY`. Monaco 0.44.0 is served as the complete reviewed
+`min/vs` tree under `js/vendor/monaco-editor/0.44.0/`, because its AMD loader
+fetches modules, workers, CSS, translations, and its font transitively.
+Pyodide 0.27.0 loads the reviewed core under
+`js/vendor/pyodide/0.27.0/`; both Python workers must import that local
+`pyodide.js` and pass the same directory as `indexURL` so the Wasm, stdlib,
+lock file, and glue script stay same-origin. That directory also owns the
+lockfile-complete `pytest` and `hypothesis` wheels required by current
+tutorial setup plus the exact `pyflakes` linter wheel. A new tutorial-level
+`loadPackage()` dependency requires vendoring its entire lockfile closure;
+otherwise the local index correctly fails instead of executing a mutable
+remote package. Classic workers, whose `importScripts()`
+API has no native SRI parameter, must load any remaining remote scripts through
+`js/vendor/worker-script-integrity.js`; that adapter verifies pinned SHA-256
+bytes before evaluating them, and SQL also supplies a verified Wasm binary.
+Never add a direct remote `importScripts()` call or a floating CDN version.
+The root `coi-serviceworker.js` adds COOP/COEP to explicitly marked isolated
+document navigations and adds COEP to same-origin dedicated/shared worker main
+scripts. Keep both response paths: cross-origin isolation is recursive, so an
+isolated document cannot start a worker whose own response omits COEP.
+
+WebContainer has a separate, explicit trust boundary: the repository owns a
+reviewed single-file `@webcontainer/api` wrapper under
+`js/vendor/webcontainer/`, but that wrapper connects to StackBlitz's
+cross-origin, versioned headless runtime and sends the WebContainer workspace
+to it. The remote frame cannot execute in the tutorial page's origin, but it is
+still a third-party processor of tutorial files; do not describe this backend
+as fully local or fully vendored.
+
+When updating a dependency, replace its whole versioned snapshot or refresh
+its digest, verify the vendor `SHA256SUMS`, and run
+`scripts/tests/runtime-supply-chain.test.js` plus the affected real-backend
+tutorial tests.
+
+The v86 engine and BIOS are repository-owned artifacts verified by
+`vm/setup.sh`. VM regeneration takes its Alpine image digest, exact top-level
+APK versions, TinyCC commit, and artifact hashes from `vm/build-inputs.env`;
+do not restore `latest`, branch-head clones, mutable image tags, or `master`
+URLs. Alpine still resolves transitive APK dependencies from its live v3.19
+repositories, so this is fail-on-top-level-drift hardening, not a claim of a
+bit-for-bit reproducible dependency closure.
+
 ### 4.6 Backends — what each supports
 
 | Feature                | v86 | pyodide | webcontainer | browser | react | haskell | uml-editor |
@@ -1393,6 +1468,14 @@ keys. **If you change the persistence schema, also update**:
 `se-gym.html`, the storage inventory at `/cookies/` (per
 `cookie-storage-tracker` skill), and this skill.
 
+`TutorialCode.saveProgress()` returns `true` only after `localStorage`
+accepts the complete write and returns `false` when persistence is disabled
+or the write fails. Auto-save callers route that result through the shared
+status reporter: a rejected write shows a visible **Save failed** marker and
+announces that the latest changes are not saved, and that warning remains
+until a later write succeeds. Never display or broadcast a saved confirmation
+without checking the persistence result first.
+
 A separate `tutorial-cooldown-<tutorialId>` localStorage key holds the
 "Test My Work" cooldown end timestamps when `cooldown_seconds:` is set
 on a tutorial. Shape: `{ "<stepIndex>": <unix-ms-end-time> }`. Stored
@@ -1416,13 +1499,16 @@ under the same prefix family as other tutorial state so the global
   `doubleAll [1, 2, 3] == [2, 4, 6]`; do not use shell commands or Python-style
   `assert` statements.
 - **React DOM assertions** (`react`): a plain `tests[].command` runs inside the
-  opaque-origin preview through the checked assertion broker. It receives
-  `frame`, `code`, `assert`, and `files`; `frame.contentDocument` refers only
-  to the preview document. Keep commands repository-authored and do not add
-  host-page capabilities to this interface.
+  opaque-origin preview through the broker's private `MessageChannel`. It
+  receives `frame`, `code`, `assert`, and `files`; `frame.contentDocument`
+  refers only to the preview document. Keep commands repository-authored, do
+  not add host-page capabilities to this interface, and never expose assertion
+  traffic through public window messages.
 - **playwright** (react): `command:` is Playwright-compat JS run by
   `js/playwright-compat/runner.js` (a subset of `@playwright/test`).
-  Reference selectors via `page.getByRole(...)`, `page.getByText(...)`.
+  Reference selectors via `page.getByRole(...)`, `page.getByText(...)`. Its
+  locator/action requests and responses share the React assertion broker's
+  private capability port; do not add a public-window fallback.
 - **UML assertions** (`uml-editor`): `tests[].assertions` are structural
   checks against the current ArchUML source. Use `kind: element|class|state|
   participant`, `kind: member`, `kind: relation|transition|message`, or

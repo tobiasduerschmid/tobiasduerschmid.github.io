@@ -6,10 +6,11 @@
  */
 'use strict';
 
-importScripts('https://cdn.jsdelivr.net/pyodide/v0.27.0/full/pyodide.js');
+var PYODIDE_INDEX_URL = '/js/vendor/pyodide/0.27.0/';
+importScripts(PYODIDE_INDEX_URL + 'pyodide.js');
 
 var pyodideReady = Promise.all([
-  loadPyodide({ indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.27.0/full/' }),
+  loadPyodide({ indexURL: PYODIDE_INDEX_URL }),
   fetch(new URL('python-ast-analyzer.py', self.location.href).href).then(function (response) {
     if (!response.ok) throw new Error('Unable to load Python AST analyzer.');
     return response.text();

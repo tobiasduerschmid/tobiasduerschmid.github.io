@@ -303,7 +303,9 @@ class Store extends EventEmitter {
     // Load TypeScript compiler from CDN
     (function () {
       var s = document.createElement('script');
-      s.src = 'https://cdn.jsdelivr.net/npm/typescript@5/lib/typescript.min.js';
+      s.src = 'https://cdn.jsdelivr.net/npm/typescript@5.9.3/lib/typescript.min.js';
+      s.integrity = 'sha384-LDb+pvmOeRIyOeeIuwLFSYWg1ONahfOXlQuZxYV+f7HeTMjyJN3TK7qV+WD9lZdj';
+      s.crossOrigin = 'anonymous';
       s.onload = function () {
         tsLoaded = true;
         document.getElementById('load-status').textContent = 'TypeScript compiler loaded. Ready.';

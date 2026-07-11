@@ -2349,7 +2349,6 @@ html.dark-mode .tvm-diagram-fullscreen-overlay .tvm-diagram-fs-content svg {
      empty-state copy clears 4.5:1. */
   color: #aab2c0;
   font-family: system-ui, sans-serif;
-  font-size: 14px;
   text-align: center;
   padding: 20px;
 }
@@ -3887,7 +3886,7 @@ html:not(.dark-mode) .tvm-test-summary.partial {
 }
 
 .tvm-error h3 { font-size: 1.4em; color: #ef5350; }
-.tvm-error p { color: #808090; max-width: 500px; line-height: 1.65; font-size: 0.95em; }
+.tvm-error p { color: #808090; max-width: 500px; line-height: 1.65; }
 .tvm-error-hint code { background: #2a2a38; padding: 2px 8px; border-radius: 4px; color: #f0a070; }
 .tvm-error button {
   margin-top: 12px;
@@ -3897,11 +3896,15 @@ html:not(.dark-mode) .tvm-test-summary.partial {
   border: none;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
+  font: inherit;
   font-weight: 600;
   transition: background 0.15s;
 }
-.tvm-error button:hover { background: #1a8ae6; }
+.tvm-error button:hover { background: #006cbd; }
+.tvm-error button:focus-visible {
+  outline: 3px solid #f4d35e;
+  outline-offset: 3px;
+}
 
 /* ───────────────────────────────────────────
    Tutorial navbar: keep title visible when compact
@@ -4503,6 +4506,7 @@ html:not(.dark-mode) .tvm-error {
 
 html:not(.dark-mode) .tvm-error p { color: #505060; }
 html:not(.dark-mode) .tvm-error-hint code { background: #eaeaf4; color: #b03010; }
+html:not(.dark-mode) .tvm-error button:focus-visible { outline-color: #005ea8; }
 
 /* Responsive border on narrow screens */
 @media (max-width: 900px) {

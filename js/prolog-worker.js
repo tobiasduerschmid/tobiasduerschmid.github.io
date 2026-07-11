@@ -57,8 +57,9 @@ function flushWriteBuffer() {
 }
 
 // Tau Prolog — ISO Prolog interpreter in pure JavaScript
-importScripts('https://cdn.jsdelivr.net/npm/tau-prolog@0.3.4/modules/core.js');
-importScripts('https://cdn.jsdelivr.net/npm/tau-prolog@0.3.4/modules/lists.js');
+importScripts('/js/vendor/worker-script-integrity.js');
+self.SEBookWorkerScriptIntegrity.importDependency('tauPrologCore');
+self.SEBookWorkerScriptIntegrity.importDependency('tauPrologLists');
 
 var session = null;   // Tau Prolog session
 var files   = {};     // In-memory file map: path → content string

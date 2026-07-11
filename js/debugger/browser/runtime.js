@@ -192,7 +192,10 @@ function loadAcorn() {
     if (self.__ttdInstrument) return resolve();
     try {
       // Acorn ships UMD; in a worker context it attaches to `self`.
-      importScripts('https://cdn.jsdelivr.net/npm/acorn@8.14.0/dist/acorn.min.js');
+      if (!self.SEBookWorkerScriptIntegrity) {
+        importScripts('/js/vendor/worker-script-integrity.js');
+      }
+      self.SEBookWorkerScriptIntegrity.importDependency('acorn');
       // Now load our instrumenter (same-origin) which expects `acorn` global.
       importScripts('/js/debugger/browser/instrument.js');
     } catch (e) {

@@ -31,7 +31,7 @@
 (function () {
   'use strict';
 
-  var MONACO_VS = 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs';
+  var MONACO_VS = '/js/vendor/monaco-editor/0.44.0/min/vs';
   var DEFAULT_OPTIONS = {
     fontSize: 16,
     minimap: { enabled: false },

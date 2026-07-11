@@ -30,7 +30,9 @@
 'use strict';
 
 // sql.js — SQLite compiled to WebAssembly via Emscripten (v1.10.3)
-importScripts('https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/sql-wasm.js');
+importScripts('/js/vendor/worker-script-integrity.js');
+self.SEBookWorkerScriptIntegrity.importDependency('sqlJs');
+var sqlWasmBinary = self.SEBookWorkerScriptIntegrity.downloadDependency('sqlWasm');
 
 var SQL_CLASS = null;   // SQL.js constructor, captured after init
 var db        = null;   // Active SQL.Database instance
@@ -41,10 +43,9 @@ var files     = {};     // In-memory file map: path → content string
 self.postMessage({ type: 'loading', message: 'Loading SQL runtime\u2026' });
 
 initSqlJs({
-  // Tell Emscripten where to fetch the companion .wasm binary
-  locateFile: function (filename) {
-    return 'https://cdn.jsdelivr.net/npm/sql.js@1.10.3/dist/' + filename;
-  },
+  // Supplying verified bytes prevents Emscripten from fetching an unchecked
+  // companion binary after the JavaScript loader has passed integrity checks.
+  wasmBinary: sqlWasmBinary,
 }).then(function (SQL) {
   SQL_CLASS = SQL;
   db = new SQL.Database();

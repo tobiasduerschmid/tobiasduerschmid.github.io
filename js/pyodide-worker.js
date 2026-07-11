@@ -30,8 +30,10 @@
  */
 'use strict';
 
-// Pyodide v0.27.x — Python 3.12
-importScripts('https://cdn.jsdelivr.net/pyodide/v0.27.0/full/pyodide.js');
+// Pyodide v0.27.0 — Python 3.12. Keep the loader and every core bootstrap
+// artifact on the same versioned, repository-owned path.
+var PYODIDE_INDEX_URL = '/js/vendor/pyodide/0.27.0/';
+importScripts(PYODIDE_INDEX_URL + 'pyodide.js');
 
 var pyodide = null;
 var _running = false;
@@ -41,7 +43,7 @@ var _running = false;
 self.postMessage({ type: 'loading', message: 'Loading Python runtime…' });
 
 loadPyodide({
-  indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.27.0/full/',
+  indexURL: PYODIDE_INDEX_URL,
 }).then(function (py) {
   pyodide = py;
 
@@ -297,29 +299,15 @@ function _ensureLinter() {
   if (_linterLoadPromise) return _linterLoadPromise;
 
   _linterLoadPromise = (function () {
-    // Step 1: try the bundled package (pyodide ships pyflakes in some
-    // versions but not all). If that throws, fall through to micropip.
-    return pyodide.loadPackage('pyflakes').catch(function (err) {
-      console.warn('[lint] loadPackage("pyflakes") failed, falling back to micropip:', err && err.message || err);
-      // Step 2: micropip pulls from PyPI. Pure-Python wheel, ~30 KB, fast.
-      return pyodide.loadPackage('micropip').then(function () {
-        return pyodide.runPythonAsync(
-          'import micropip\n' +
-          'await micropip.install("pyflakes")\n'
-        );
-      });
-    }).then(function () {
-      // Step 3: inject the lint helper. Use ast.parse for SyntaxError +
-      // pyflakes Checker for everything else. Falls back to ast-only if the
-      // pyflakes import didn't actually take.
+    // Pyflakes is part of the reviewed, same-origin Pyodide package lock.
+    // Propagate any load/import failure instead of executing a mutable PyPI
+    // fallback or silently degrading diagnostics.
+    return pyodide.loadPackage('pyflakes').then(function () {
+      // Inject the lint helper. Use ast.parse for SyntaxError + pyflakes
+      // Checker for everything else.
       var bootstrapCode = [
         'import ast as _ast, json as _json',
-        '_HAS_PYFLAKES = False',
-        'try:',
-        '    from pyflakes.checker import Checker as _PyflakesChecker',
-        '    _HAS_PYFLAKES = True',
-        'except ImportError:',
-        '    _PyflakesChecker = None',
+        'from pyflakes.checker import Checker as _PyflakesChecker',
         '',
         'def __lint(source, filename):',
         '    out = []',
@@ -336,30 +324,29 @@ function _ensureLinter() {
         '            "code": "SyntaxError",',
         '        })',
         '        return _json.dumps(out)',
-        '    if _HAS_PYFLAKES:',
-        '        try:',
-        '            checker = _PyflakesChecker(tree, filename)',
-        '            for msg in checker.messages:',
-        '                try:',
-        '                    text = msg.message % msg.message_args',
-        '                except Exception:',
-        '                    text = str(msg)',
-        '                out.append({',
-        '                    "severity": "warning",',
-        '                    "line": msg.lineno or 1,',
-        '                    "col": (msg.col or 0) + 1,',
-        '                    "endLine": msg.lineno or 1,',
-        '                    "endCol": (msg.col or 0) + 1,',
-        '                    "message": text,',
-        '                    "code": type(msg).__name__,',
-        '                })',
-        '        except Exception as e:',
+        '    try:',
+        '        checker = _PyflakesChecker(tree, filename)',
+        '        for msg in checker.messages:',
+        '            try:',
+        '                text = msg.message % msg.message_args',
+        '            except Exception:',
+        '                text = str(msg)',
         '            out.append({',
-        '                "severity": "info",',
-        '                "line": 1, "col": 1, "endLine": 1, "endCol": 1,',
-        '                "message": "linter error: " + str(e),',
-        '                "code": "LinterError",',
+        '                "severity": "warning",',
+        '                "line": msg.lineno or 1,',
+        '                "col": (msg.col or 0) + 1,',
+        '                "endLine": msg.lineno or 1,',
+        '                "endCol": (msg.col or 0) + 1,',
+        '                "message": text,',
+        '                "code": type(msg).__name__,',
         '            })',
+        '    except Exception as e:',
+        '        out.append({',
+        '            "severity": "info",',
+        '            "line": 1, "col": 1, "endLine": 1, "endCol": 1,',
+        '            "message": "linter error: " + str(e),',
+        '            "code": "LinterError",',
+        '        })',
         '    return _json.dumps(out)',
       ].join('\n');
       pyodide.runPython(bootstrapCode);

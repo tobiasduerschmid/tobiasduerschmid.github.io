@@ -1,0 +1,33 @@
+{
+  "packages": {
+    "hypothesis": {
+      "depends": [
+        "attrs",
+        "sortedcontainers"
+      ],
+      "file_name": "hypothesis-6.125.3-py3-none-any.whl",
+      "imports": [
+        "hypothesis"
+      ],
+      "install_dir": "site",
+      "name": "hypothesis",
+      "package_type": "package",
+      "sha256": "ae0381987d0ccacc62867343acc38a0ca5e959fc4da98b3e018b0debf080a557",
+      "unvendored_tests": false,
+      "version": "6.125.3"
+    },
+    "pyflakes": {
+      "depends": [],
+      "file_name": "pyflakes-3.2.0-py2.py3-none-any.whl",
+      "imports": [
+        "pyflakes"
+      ],
+      "install_dir": "site",
+      "name": "pyflakes",
+      "package_type": "package",
+      "sha256": "84b5be138a2dfbb40689ca07e2152deb896a65c3a3e24c251c5c62489568074a",
+      "unvendored_tests": false,
+      "version": "3.2.0"
+    }
+  }
+}

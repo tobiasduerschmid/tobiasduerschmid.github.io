@@ -26,17 +26,42 @@
     && document.currentScript && document.currentScript.src) || '';
 
   // ---------------------------------------------------------------------------
-  // CDN URLs
+  // Pinned third-party assets. Every cross-origin script/style loaded by this
+  // runtime must have a matching Subresource Integrity value below.
   // ---------------------------------------------------------------------------
   var CDN = {
     XTERM_JS: 'https://cdn.jsdelivr.net/npm/xterm@4.19.0/lib/xterm.min.js',
     XTERM_CSS: 'https://cdn.jsdelivr.net/npm/xterm@4.19.0/css/xterm.css',
     XTERM_FIT: 'https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.5.0/lib/xterm-addon-fit.min.js',
-    MONACO_LOADER: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs/loader.min.js',
-    MONACO_VS: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.44.0/min/vs',
+    MONACO_LOADER: '/js/vendor/monaco-editor/0.44.0/min/vs/loader.js',
+    MONACO_VS: '/js/vendor/monaco-editor/0.44.0/min/vs',
     MARKED: 'https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js',
-    WEBCONTAINER: 'https://cdn.jsdelivr.net/npm/@webcontainer/api@1.6.4/dist/index.js',
+    WEBCONTAINER: '/js/vendor/webcontainer/api-1.6.4.js',
+    TYPESCRIPT: 'https://cdn.jsdelivr.net/npm/typescript@5.9.3/lib/typescript.min.js',
   };
+
+  var CDN_INTEGRITY = Object.freeze({
+    'https://cdn.jsdelivr.net/npm/xterm@4.19.0/lib/xterm.min.js':
+      'sha384-oCDPyKUktjqfdFkt4w+d4Xr8sx5BY4V7jTID+/uOABIuJY5jvybHK9I2Y97Bys9D',
+    'https://cdn.jsdelivr.net/npm/xterm@4.19.0/css/xterm.css':
+      'sha384-CAUJ9lBaihiKDjVUl2YiWXGJPJ9WjsWZlyqblkhJU3lFzIQb368x0Ns1jDFrFJrW',
+    'https://cdn.jsdelivr.net/npm/xterm-addon-fit@0.5.0/lib/xterm-addon-fit.min.js':
+      'sha384-6M2z0GY6uKJvy5qdiP4Rg/fF4YNh3IF7X9j/iEEiFk707OW9nVCUNdOun47YwDyp',
+    'https://cdn.jsdelivr.net/npm/marked@9.1.6/marked.min.js':
+      'sha384-odPBjvtXVM/5hOYIr3A1dB+flh0c3wAT3bSesIOqEGmyUA4JoKf/YTWy0XKOYAY7',
+    'https://cdn.jsdelivr.net/npm/typescript@5.9.3/lib/typescript.min.js':
+      'sha384-LDb+pvmOeRIyOeeIuwLFSYWg1ONahfOXlQuZxYV+f7HeTMjyJN3TK7qV+WD9lZdj'
+  });
+
+  function crossOriginIntegrity(url) {
+    var resolved = new URL(url, window.location.href);
+    if (resolved.origin === window.location.origin) return '';
+    var integrity = CDN_INTEGRITY[resolved.href];
+    if (!integrity) {
+      throw new Error('Refusing to load cross-origin asset without integrity metadata: ' + resolved.href);
+    }
+    return integrity;
+  }
 
   // ---------------------------------------------------------------------------
   // Utilities
@@ -45,6 +70,13 @@
     return new Promise(function (resolve, reject) {
       if (document.querySelector('script[src="' + url + '"]')) { resolve(); return; }
       var s = document.createElement('script');
+      try {
+        var integrity = crossOriginIntegrity(url);
+        if (integrity) s.integrity = integrity;
+      } catch (error) {
+        reject(error);
+        return;
+      }
       s.src = url; s.onload = resolve;
       s.onerror = function () { reject(new Error('Failed to load: ' + url)); };
       // For cross-origin scripts, request CORS so the response works under
@@ -64,6 +96,8 @@
     if (document.querySelector('link[href="' + url + '"]')) return;
     var l = document.createElement('link');
     l.rel = 'stylesheet'; l.href = url;
+    var integrity = crossOriginIntegrity(url);
+    if (integrity) l.integrity = integrity;
     try {
       var u = new URL(url, window.location.href);
       if (u.origin !== window.location.origin) l.crossOrigin = 'anonymous';
@@ -102,11 +136,20 @@
   // Instructor solution batches can contain multi-command Git workflows; keep
   // applySolution() pending until those scripts have a real chance to finish.
   var V86_VISIBLE_COMMAND_TIMEOUT_MS = 240000;
+  // Worker messages are RPCs even though the transport is postMessage.  Every
+  // request needs a finite lifetime so a crashed or wedged runtime cannot
+  // retain callbacks forever.  Execution gets the shorter bound because a
+  // timed-out learner program is recoverable by restarting its disposable
+  // worker; initialization and authored setup receive more time for first-load
+  // dependency work.
+  var WORKER_BOOT_TIMEOUT_MS = 120000;
+  var WORKER_REQUEST_TIMEOUT_MS = 60000;
+  var WORKER_EXECUTION_TIMEOUT_MS = 30000;
+  var WORKER_FILE_TIMEOUT_MS = 15000;
   var HASKELL_BOOT_TIMEOUT_MS = 30000;
   var HASKELL_EXECUTION_TIMEOUT_MS = 30000;
   var REACT_PREVIEW_READY = 'sebook-react-preview-ready';
-  var REACT_ASSERTION_REQUEST = 'sebook-react-assertion-request';
-  var REACT_ASSERTION_RESULT = 'sebook-react-assertion-result';
+  var REACT_ASSERTION_BROKER_READY = 'sebook-react-assertion-broker-ready';
   var REACT_ASSERTION_TIMEOUT_MS = 15000;
 
   function hashString(s) {
@@ -371,6 +414,13 @@
     this._worker = null;
     this._workerMsgId = 0;
     this._workerCallbacks = {};
+    // Last content acknowledged by a disposable worker for every workspace
+    // file, including files whose Monaco tabs were later closed. A worker
+    // restart loses its in-memory filesystem, so the restart transaction
+    // replays this map before restoring the currently-open editor models.
+    this._workerWorkspaceFiles = Object.create(null);
+    this._workerRestartPromise = null;
+    this._destroyed = false;
     this._haskellRunTimer = null;
     this._haskellRunRequestId = null;
     this._haskellRestartPromise = null;
@@ -492,6 +542,8 @@
     this._reactPreviewReadyWaiters = {};
     this._reactPreviewMessageHandler = null;
     this._reactAssertionRequestId = 0;
+    this._reactAssertionPort = null;
+    this._reactAssertionPortGeneration = -1;
 
     // Browser JS runner state
     this._jsRunnerFrame = null;
@@ -705,11 +757,15 @@
             // Always ensure all steps up to the saved step are unlocked
             // (handles old saves AND incomplete unlock data)
             for (var si = 0; si <= saved.step; si++) self._stepsUnlocked.add(si);
-            if (saved.stepsVisited) self._stepsVisited = new Set(saved.stepsVisited);
+            if (saved.stepsVisited) {
+              self._stepsVisited = new Set(saved.stepsVisited);
+            } else {
+              // Legacy saves predate stepsVisited. Only those require the old
+              // assumption that the persisted current step was fully ready.
+              self._stepsVisited.add(saved.step);
+            }
             if (saved.stepsPassed) self._stepsPassed = new Set(saved.stepsPassed);
             if (saved.quizPassed) self._quizPassed = new Set(saved.quizPassed);
-            // Mark saved step as already visited so loadStep won't override files
-            self._stepsVisited.add(saved.step);
             // Suppress autosave for the entire restore sequence so loadStep's
             // end-of-step _autoSaveProgress cannot clobber localStorage with
             // starter-file content before the saved files have been applied.
@@ -976,13 +1032,14 @@
   };
 
   TutorialCode.prototype.destroy = function () {
+    this._destroyed = true;
     this._stopFileWatch();
     this._stopGuestClockSync();
     this._clearTimedPracticeTimer();
     clearTimeout(this._terminalReadinessTimer);
     clearTimeout(this._haskellRunTimer);
     if (this.emulator) { this.emulator.stop(); this.emulator = null; }
-    if (this._worker) { this._worker.terminate(); this._worker = null; }
+    this._terminateWorker('Tutorial runtime was destroyed');
     if (this._shellProcess) { this._shellProcess = null; }
     if (this.editor) { this.editor.dispose(); this.editor = null; }
     if (this.editor2) { this.editor2.dispose(); this.editor2 = null; }
@@ -995,6 +1052,7 @@
       window.removeEventListener('message', this._reactPreviewMessageHandler);
       this._reactPreviewMessageHandler = null;
     }
+    this._closeReactAssertionBroker();
     Object.keys(this._reactPreviewReadyWaiters).forEach(function (generation) {
       clearTimeout(this._reactPreviewReadyWaiters[generation].timeoutId);
     }, this);
@@ -1880,8 +1938,12 @@
         this._reactPreviewMessageHandler = function (event) {
           if (event.source !== self._previewFrame.contentWindow) return;
           var message = event.data;
-          if (!message || message.type !== REACT_PREVIEW_READY) return;
-          self._markReactPreviewReady(message.generation);
+          if (!message) return;
+          if (message.type === REACT_ASSERTION_BROKER_READY) {
+            self._acceptReactAssertionBroker(event, message);
+          } else if (message.type === REACT_PREVIEW_READY) {
+            self._markReactPreviewReady(message.generation);
+          }
         };
         window.addEventListener('message', this._reactPreviewMessageHandler);
       }
@@ -2048,9 +2110,29 @@
   };
 
   TutorialCode.prototype._showError = function (msg) {
-    this.root.innerHTML =
-      '<div class="tvm-error"><h3>Tutorial Error</h3><p>' + msg + '</p>' +
-      '<button onclick="location.reload()">Retry</button></div>';
+    // Worker/setup errors can contain learner-authored source and exception
+    // text. Build this state with text nodes so an error can never inject
+    // markup or script into the tutorial page's origin.
+    var errorState = document.createElement('div');
+    errorState.className = 'tvm-error';
+    errorState.setAttribute('role', 'alert');
+    errorState.setAttribute('aria-live', 'assertive');
+
+    var heading = document.createElement('h3');
+    heading.textContent = 'Tutorial Error';
+    errorState.appendChild(heading);
+
+    var detail = document.createElement('p');
+    detail.textContent = String(msg == null ? 'Unknown tutorial error' : msg);
+    errorState.appendChild(detail);
+
+    var retry = document.createElement('button');
+    retry.type = 'button';
+    retry.textContent = 'Retry';
+    retry.addEventListener('click', function () { window.location.reload(); });
+    errorState.appendChild(retry);
+
+    this.root.replaceChildren(errorState);
   };
 
   // ---------------------------------------------------------------------------
@@ -3916,6 +3998,13 @@
       : (self.setupCommands || []);
     this._showLoading('Loading Python runtime\u2026 (first load may take a moment)');
     return new Promise(function (resolve, reject) {
+      var initialized = false;
+      var bootTimer = setTimeout(function () {
+        if (initialized) return;
+        var message = 'Pyodide runtime initialization timed out';
+        self._terminateWorker(message);
+        reject(new Error(message));
+      }, WORKER_BOOT_TIMEOUT_MS);
       self._worker = new Worker(self.config.workerPath);
 
       self._worker.onmessage = function (e) {
@@ -3925,13 +4014,14 @@
           return;
         }
         if (msg.type === 'ready') {
-          self.booted = true;
           // Run global setup (treated as Python code for pyodide backend)
           var setupCmds = setupCommands;
           var pythonSetup = setupCmds.length > 0
-            ? new Promise(function (r) {
-                self._postWorker({ type: 'runCode', code: setupCmds.join('\n'), silent: true }, function () { r(); });
-              })
+            ? self._runWorkerCommand(
+                { type: 'runCode', code: setupCmds.join('\n'), silent: true },
+                'Python global setup',
+                { timeoutMs: WORKER_REQUEST_TIMEOUT_MS }
+              )
             : Promise.resolve();
           // Git bring-up runs after Python setup so user-supplied imports
           // can't race with the FS adapter being attached. The git terminal
@@ -3939,8 +4029,15 @@
           // iso-git module loaded and dir registered.
           var gitSetup = self.gitGraphPath
             ? pythonSetup.then(function () {
-                return new Promise(function (r) {
-                  self._postWorker({ type: 'gitInit', dir: self.gitGraphPath }, function () { r(); });
+                return self._requestWorker(
+                  { type: 'gitInit', dir: self.gitGraphPath },
+                  { timeoutMs: WORKER_REQUEST_TIMEOUT_MS }
+                ).then(function (response) {
+                  if (response && response.type === 'git_init_ok') return;
+                  throw new Error(
+                    'Python git initialization failed: ' +
+                    (response && (response.message || response.error) || 'unknown error')
+                  );
                 });
               }).then(function () {
                 self._initGitTerminal();
@@ -3958,7 +4055,16 @@
                 }
               })
             : pythonSetup;
-          gitSetup.then(function () { resolve(); });
+          gitSetup.then(function () {
+            initialized = true;
+            clearTimeout(bootTimer);
+            self.booted = true;
+            resolve();
+          }, function (error) {
+            clearTimeout(bootTimer);
+            self._terminateWorker(error && error.message || 'Python initialization failed');
+            reject(error);
+          });
           return;
         }
         if (msg.type === 'stdout') {
@@ -3970,19 +4076,21 @@
           return;
         }
         if (msg.type === 'error') {
-          reject(new Error(msg.message));
+          clearTimeout(bootTimer);
+          self._handleWorkerFailure(
+            msg.message || 'Pyodide runtime failed',
+            initialized,
+            reject
+          );
           return;
         }
-        // Routed callback by id
-        if (msg.id !== undefined && self._workerCallbacks[msg.id]) {
-          var cb = self._workerCallbacks[msg.id];
-          delete self._workerCallbacks[msg.id];
-          cb(msg);
-        }
+        self._routeWorkerResponse(msg);
       };
 
       self._worker.onerror = function (err) {
-        reject(new Error('Pyodide worker error: ' + (err.message || err)));
+        clearTimeout(bootTimer);
+        var message = 'Pyodide worker error: ' + (err.message || err);
+        self._handleWorkerFailure(message, initialized, reject);
       };
     });
   };
@@ -3992,37 +4100,54 @@
     var self = this;
     this._showLoading('Loading SQL runtime\u2026 (first load may take a moment)');
     return new Promise(function (resolve, reject) {
+      var initialized = false;
+      var bootTimer = setTimeout(function () {
+        if (initialized) return;
+        var message = 'SQL runtime initialization timed out';
+        self._terminateWorker(message);
+        reject(new Error(message));
+      }, WORKER_BOOT_TIMEOUT_MS);
       self._worker = new Worker(self.config.sqlWorkerPath);
 
       self._worker.onmessage = function (e) {
         var msg = e.data;
         if (msg.type === 'loading') { self._showLoading(msg.message); return; }
         if (msg.type === 'ready') {
-          self.booted = true;
           var setupCmds = self.setupCommands;
-          if (setupCmds && setupCmds.length > 0) {
-            self._postWorker(
-              { type: 'runSQL', sql: setupCmds.join('\n'), silent: true },
-              function () { resolve(); }
-            );
-          } else {
+          var setup = setupCmds && setupCmds.length > 0
+            ? self._runWorkerCommand(
+                { type: 'runSQL', sql: setupCmds.join('\n'), silent: true },
+                'SQL global setup',
+                { timeoutMs: WORKER_REQUEST_TIMEOUT_MS }
+              )
+            : Promise.resolve();
+          setup.then(function () {
+            initialized = true;
+            clearTimeout(bootTimer);
+            self.booted = true;
             resolve();
-          }
+          }, function (error) {
+            clearTimeout(bootTimer);
+            self._terminateWorker(error && error.message || 'SQL initialization failed');
+            reject(error);
+          });
           return;
         }
         if (msg.type === 'stdout') { self._appendOutput(msg.text, 'stdout'); return; }
         if (msg.type === 'stderr') { self._appendOutput(msg.text, 'stderr'); return; }
         if (msg.type === 'table') { self._appendTable(msg.columns, msg.rows); return; }
-        if (msg.type === 'error') { reject(new Error(msg.message)); return; }
-        if (msg.id !== undefined && self._workerCallbacks[msg.id]) {
-          var cb = self._workerCallbacks[msg.id];
-          delete self._workerCallbacks[msg.id];
-          cb(msg);
+        if (msg.type === 'error') {
+          clearTimeout(bootTimer);
+          self._handleWorkerFailure(msg.message || 'SQL runtime failed', initialized, reject);
+          return;
         }
+        self._routeWorkerResponse(msg);
       };
 
       self._worker.onerror = function (err) {
-        reject(new Error('SQL worker error: ' + (err.message || err)));
+        clearTimeout(bootTimer);
+        var message = 'SQL worker error: ' + (err.message || err);
+        self._handleWorkerFailure(message, initialized, reject);
       };
     });
   };
@@ -4032,36 +4157,53 @@
     var self = this;
     this._showLoading('Loading Prolog runtime\u2026 (first load may take a moment)');
     return new Promise(function (resolve, reject) {
+      var initialized = false;
+      var bootTimer = setTimeout(function () {
+        if (initialized) return;
+        var message = 'Prolog runtime initialization timed out';
+        self._terminateWorker(message);
+        reject(new Error(message));
+      }, WORKER_BOOT_TIMEOUT_MS);
       self._worker = new Worker(self.config.prologWorkerPath);
 
       self._worker.onmessage = function (e) {
         var msg = e.data;
         if (msg.type === 'loading') { self._showLoading(msg.message); return; }
         if (msg.type === 'ready') {
-          self.booted = true;
           var setupCmds = self.setupCommands;
-          if (setupCmds && setupCmds.length > 0) {
-            self._postWorker(
-              { type: 'runProlog', code: setupCmds.join('\n'), silent: true },
-              function () { resolve(); }
-            );
-          } else {
+          var setup = setupCmds && setupCmds.length > 0
+            ? self._runWorkerCommand(
+                { type: 'runProlog', code: setupCmds.join('\n'), silent: true },
+                'Prolog global setup',
+                { timeoutMs: WORKER_REQUEST_TIMEOUT_MS }
+              )
+            : Promise.resolve();
+          setup.then(function () {
+            initialized = true;
+            clearTimeout(bootTimer);
+            self.booted = true;
             resolve();
-          }
+          }, function (error) {
+            clearTimeout(bootTimer);
+            self._terminateWorker(error && error.message || 'Prolog initialization failed');
+            reject(error);
+          });
           return;
         }
         if (msg.type === 'stdout') { self._appendOutput(msg.text, 'stdout'); return; }
         if (msg.type === 'stderr') { self._appendOutput(msg.text, 'stderr'); return; }
-        if (msg.type === 'error') { reject(new Error(msg.message)); return; }
-        if (msg.id !== undefined && self._workerCallbacks[msg.id]) {
-          var cb = self._workerCallbacks[msg.id];
-          delete self._workerCallbacks[msg.id];
-          cb(msg);
+        if (msg.type === 'error') {
+          clearTimeout(bootTimer);
+          self._handleWorkerFailure(msg.message || 'Prolog runtime failed', initialized, reject);
+          return;
         }
+        self._routeWorkerResponse(msg);
       };
 
       self._worker.onerror = function (err) {
-        reject(new Error('Prolog worker error: ' + (err.message || err)));
+        clearTimeout(bootTimer);
+        var message = 'Prolog worker error: ' + (err.message || err);
+        self._handleWorkerFailure(message, initialized, reject);
       };
     });
   };
@@ -4071,28 +4213,39 @@
     var self = this;
     this._showLoading('Loading Java runtime… (first load may take a moment)');
     return new Promise(function (resolve, reject) {
+      var initialized = false;
+      var bootTimer = setTimeout(function () {
+        if (initialized) return;
+        var message = 'Java runtime initialization timed out';
+        self._terminateWorker(message);
+        reject(new Error(message));
+      }, WORKER_BOOT_TIMEOUT_MS);
       self._worker = new Worker(self.config.javaWorkerPath);
 
       self._worker.onmessage = function (e) {
         var msg = e.data;
         if (msg.type === 'loading') { self._showLoading(msg.message); return; }
         if (msg.type === 'ready') {
+          initialized = true;
+          clearTimeout(bootTimer);
           self.booted = true;
           resolve();
           return;
         }
         if (msg.type === 'stdout') { self._appendOutput(msg.text, 'stdout'); return; }
         if (msg.type === 'stderr') { self._appendOutput(msg.text, 'stderr'); return; }
-        if (msg.type === 'error') { reject(new Error(msg.message)); return; }
-        if (msg.id !== undefined && self._workerCallbacks[msg.id]) {
-          var cb = self._workerCallbacks[msg.id];
-          delete self._workerCallbacks[msg.id];
-          cb(msg);
+        if (msg.type === 'error') {
+          clearTimeout(bootTimer);
+          self._handleWorkerFailure(msg.message || 'Java runtime failed', initialized, reject);
+          return;
         }
+        self._routeWorkerResponse(msg);
       };
 
       self._worker.onerror = function (err) {
-        reject(new Error('Java worker error: ' + (err.message || err)));
+        clearTimeout(bootTimer);
+        var message = 'Java worker error: ' + (err.message || err);
+        self._handleWorkerFailure(message, initialized, reject);
       };
     });
   };
@@ -4195,11 +4348,7 @@
           }
           return;
         }
-        if (msg.id !== undefined && self._workerCallbacks[msg.id]) {
-          var cb = self._workerCallbacks[msg.id];
-          delete self._workerCallbacks[msg.id];
-          cb(msg);
-        }
+        self._routeWorkerResponse(msg);
       };
 
       self._worker.onerror = function (err) {
@@ -4216,10 +4365,7 @@
     clearTimeout(this._haskellRunTimer);
     this._haskellRunTimer = null;
     this._haskellRunRequestId = null;
-    this._workerCallbacks = {};
-    if (this._worker) this._worker.terminate();
-    this._worker = null;
-    this.booted = false;
+    this._terminateWorker('Haskell runtime restarting');
 
     var runBtn = this.root && this.root.querySelector('.tvm-run-btn');
     var stopBtn = this.root && this.root.querySelector('.tvm-stop-btn');
@@ -4238,6 +4384,160 @@
       throw error;
     });
     return this._haskellRestartPromise;
+  };
+
+  TutorialCode.prototype._isRestartableWorkerBackend = function (backend) {
+    return backend === 'pyodide' || backend === 'sql' ||
+      backend === 'prolog' || backend === 'java';
+  };
+
+  TutorialCode.prototype._setWorkerExecutionControls = function (state) {
+    var runBtn = this.root && this.root.querySelector('.tvm-run-btn');
+    var stopBtn = this.root && this.root.querySelector('.tvm-stop-btn');
+    if (state === 'running') {
+      if (stopBtn) stopBtn.style.display = 'inline-block';
+      return;
+    }
+    if (state === 'restarting') {
+      if (runBtn) {
+        runBtn.disabled = true;
+        runBtn.textContent = '\u23f3 Restarting\u2026';
+      }
+      if (stopBtn) stopBtn.style.display = 'none';
+      return;
+    }
+    if (state === 'unavailable') {
+      if (runBtn) {
+        runBtn.disabled = true;
+        runBtn.textContent = 'Runtime unavailable';
+      }
+      if (stopBtn) stopBtn.style.display = 'none';
+      return;
+    }
+    if (runBtn && (!this._debuggerCtl || !this._debuggerCtl.session)) {
+      runBtn.disabled = false;
+      runBtn.textContent = '\u25b6 ' + this._effectiveRunLabel();
+    }
+    if (stopBtn) stopBtn.style.display = 'none';
+    if (this._restoreRunFocusAfterWorkerRestart && runBtn) {
+      this._restoreRunFocusAfterWorkerRestart = false;
+      runBtn.focus();
+    }
+  };
+
+  TutorialCode.prototype._runWorkerExecution = function (message, runningLabel) {
+    var runBtn = this.root && this.root.querySelector('.tvm-run-btn');
+    if (runBtn) {
+      runBtn.disabled = true;
+      runBtn.textContent = runningLabel || '\u23f3 Running\u2026';
+    }
+    this._setWorkerExecutionControls('running');
+    var self = this;
+    return this._requestWorker(message, {
+      timeoutMs: WORKER_EXECUTION_TIMEOUT_MS,
+      restartOnTimeout: true,
+    }).then(function (response) {
+      self._setWorkerExecutionControls('idle');
+      return response;
+    }, function (error) {
+      // Timeout and termination paths own the control state while the worker
+      // is reconstructed.  Other transport errors can return to idle now.
+      if (error.reason !== 'timeout' && error.reason !== 'terminated') {
+        self._setWorkerExecutionControls('idle');
+      }
+      throw error;
+    });
+  };
+
+  /**
+   * Handle a fatal worker event according to the runtime phase.
+   *
+   * Initialization failures reject the active boot transaction. Once boot has
+   * completed, the same event is a runtime crash: reconstruct the disposable
+   * worker so controls and the learner workspace recover automatically.
+   */
+  TutorialCode.prototype._handleWorkerFailure = function (message, initialized, rejectInitialization) {
+    this._terminateWorker(message);
+    if (!initialized) {
+      rejectInitialization(new Error(message));
+      return;
+    }
+    if (this._destroyed) return;
+    this._restartWorkerBackend(message).catch(function () {});
+  };
+
+  /** Replay files acknowledged by the previous disposable worker. */
+  TutorialCode.prototype._replayWorkerWorkspace = function (workspace, backend) {
+    if (!this._isRestartableWorkerBackend(backend)) return Promise.resolve();
+    var self = this;
+    var chain = Promise.resolve();
+    Object.keys(workspace || {}).forEach(function (filename) {
+      chain = chain.then(function () {
+        return self._writeFileToWorker(filename, workspace[filename], backend);
+      });
+    });
+    return chain;
+  };
+
+  /**
+   * Replace a wedged disposable worker and reconstruct the active workspace.
+   * Global setup, file sync, and current-step setup form one readiness chain;
+   * Run stays disabled until all three complete.
+   */
+  TutorialCode.prototype._restartWorkerBackend = function (reason) {
+    if (this._workerRestartPromise) return this._workerRestartPromise;
+    if (this._destroyed) return Promise.reject(new Error('Tutorial runtime was destroyed'));
+
+    var backend = this.config.backend;
+    if (!this._isRestartableWorkerBackend(backend)) {
+      return Promise.reject(new Error('Backend cannot be restarted: ' + backend));
+    }
+
+    var self = this;
+    var requestedBackend = this._activeRequestedBackend || backend;
+    var setupOverride = this._mixedBackendMode
+      ? this._setupCommandsForBackend(requestedBackend, backend)
+      : undefined;
+    var activeStep = this.steps[this.currentStep] || null;
+    var filenames = Object.keys(this.editorModels || {});
+    var workspace = Object.create(null);
+    Object.keys(this._workerWorkspaceFiles || {}).forEach(function (filename) {
+      workspace[filename] = self._workerWorkspaceFiles[filename];
+    });
+
+    delete this._backendReady[requestedBackend];
+    delete this._backendReady[backend];
+    this._setWorkerExecutionControls('restarting');
+    this._showLoading('Restarting ' + backendLabel(backend) + ' runtime\u2026');
+    this._terminateWorker(reason || backendLabel(backend) + ' runtime restarted');
+
+    this._workerRestartPromise = this._initBackend(backend, setupOverride)
+      .then(function () {
+        return self._replayWorkerWorkspace(workspace, backend);
+      })
+      .then(function () {
+        return self._syncFilesToBackend(filenames);
+      })
+      .then(function () {
+        return self._runStepWorkerSetupCommands(activeStep);
+      })
+      .then(function () {
+        self._backendReady[requestedBackend] = true;
+        self._backendReady[backend] = true;
+        self._hideLoading();
+        self._setWorkerExecutionControls('idle');
+        self._appendOutput('\n' + backendLabel(backend) + ' runtime restarted and ready.\n', 'info');
+        self._workerRestartPromise = null;
+      }, function (error) {
+        self._workerRestartPromise = null;
+        self._setWorkerExecutionControls('unavailable');
+        self._showError(
+          'Failed to restart ' + backendLabel(backend) + ' runtime: ' +
+          (error && error.message || error)
+        );
+        throw error;
+      });
+    return this._workerRestartPromise;
   };
 
   /** Render a SQL result set as a table inside the output panel. */
@@ -4298,14 +4598,155 @@
     if (container) container.scrollTop = container.scrollHeight;
   };
 
-  /** Post a message to the active backend worker; optional callback on response. */
-  TutorialCode.prototype._postWorker = function (msg, callback) {
-    if (!this._worker) return;
+  TutorialCode.prototype._workerRequestError = function (id, message, reason) {
+    return {
+      type: 'request_error',
+      id: id,
+      exitCode: 1,
+      error: message,
+      message: message,
+      reason: reason || 'error',
+    };
+  };
+
+  /** Complete one worker RPC exactly once and release its timeout. */
+  TutorialCode.prototype._settleWorkerRequest = function (id, response) {
+    var pending = this._workerCallbacks[id];
+    if (!pending) return false;
+    delete this._workerCallbacks[id];
+    if (pending.timeoutId) clearTimeout(pending.timeoutId);
+    pending.callback(response);
+    return true;
+  };
+
+  TutorialCode.prototype._discardWorkerRequest = function (id) {
+    var pending = this._workerCallbacks[id];
+    if (!pending) return false;
+    delete this._workerCallbacks[id];
+    if (pending.timeoutId) clearTimeout(pending.timeoutId);
+    return true;
+  };
+
+  /** Route a response carrying an RPC id to its registered request. */
+  TutorialCode.prototype._routeWorkerResponse = function (message) {
+    if (!message || message.id === undefined) return false;
+    return this._settleWorkerRequest(message.id, message);
+  };
+
+  /** Settle every outstanding RPC before a worker is discarded. */
+  TutorialCode.prototype._settlePendingWorkerRequests = function (message, reason) {
+    var self = this;
+    Object.keys(this._workerCallbacks).forEach(function (id) {
+      try {
+        self._settleWorkerRequest(
+          id,
+          self._workerRequestError(Number(id), message, reason)
+        );
+      } catch (error) {
+        console.error('[TutorialCode] Worker cancellation callback failed:', error);
+      }
+    });
+  };
+
+  /** Terminate the current worker after releasing every outstanding request. */
+  TutorialCode.prototype._terminateWorker = function (reason) {
+    var worker = this._worker;
+    this._worker = null;
+    this.booted = false;
+    this._settlePendingWorkerRequests(reason || 'Worker terminated', 'terminated');
+    if (worker) {
+      try { worker.terminate(); } catch (e) { /* already terminated */ }
+    }
+  };
+
+  /**
+   * Post one bounded RPC to the active backend worker.
+   *
+   * The callback always receives exactly one terminal response: the worker's
+   * reply, a timeout response, or a lifecycle cancellation response.
+   */
+  TutorialCode.prototype._postWorker = function (msg, callback, options) {
+    options = options || {};
+    var self = this;
     var id = ++this._workerMsgId;
-    msg.id = id;
-    if (callback) this._workerCallbacks[id] = callback;
-    this._worker.postMessage(msg);
+    var timeoutMs = options.timeoutMs === undefined
+      ? WORKER_REQUEST_TIMEOUT_MS
+      : Math.max(1, Number(options.timeoutMs) || WORKER_REQUEST_TIMEOUT_MS);
+    var request = Object.assign({}, msg, { id: id });
+
+    if (!this._worker || this._destroyed) {
+      var unavailable = this._destroyed
+        ? 'Tutorial runtime was destroyed'
+        : 'Worker is not ready';
+      if (callback) {
+        Promise.resolve().then(function () {
+          callback(self._workerRequestError(id, unavailable, 'unavailable'));
+        });
+      }
+      return id;
+    }
+
+    if (callback) {
+      var timeoutId = setTimeout(function () {
+        var detail = 'Worker request "' + (msg.type || 'unknown') + '" timed out after ' + timeoutMs + ' ms';
+        var settled = !!self._workerCallbacks[id];
+        try {
+          self._settleWorkerRequest(
+            id,
+            self._workerRequestError(id, detail, 'timeout')
+          );
+        } catch (error) {
+          console.error('[TutorialCode] Worker timeout callback failed:', error);
+        }
+        if (settled && options.restartOnTimeout && !self._destroyed) {
+          self._restartWorkerBackend(detail).catch(function () {});
+        }
+      }, timeoutMs);
+      this._workerCallbacks[id] = { callback: callback, timeoutId: timeoutId };
+    }
+
+    try {
+      this._worker.postMessage(request);
+    } catch (error) {
+      if (callback) {
+        Promise.resolve().then(function () {
+          self._settleWorkerRequest(
+            id,
+            self._workerRequestError(
+              id,
+              'Could not send worker request: ' + (error && error.message || error),
+              'post-error'
+            )
+          );
+        });
+      }
+    }
     return id;
+  };
+
+  /** Promise facade for a bounded worker RPC. */
+  TutorialCode.prototype._requestWorker = function (message, options) {
+    var self = this;
+    return new Promise(function (resolve, reject) {
+      self._postWorker(message, function (response) {
+        if (response && response.type === 'request_error') {
+          var error = new Error(response.message || 'Worker request failed');
+          error.reason = response.reason;
+          reject(error);
+          return;
+        }
+        resolve(response);
+      }, options);
+    });
+  };
+
+  /** Run a worker command whose contract is exitCode === 0. */
+  TutorialCode.prototype._runWorkerCommand = function (message, label, options) {
+    return this._requestWorker(message, options).then(function (response) {
+      if (response && response.exitCode === 0) return response;
+      var detail = response && (response.error || response.message);
+      throw new Error(label + ' failed' + (detail ? ': ' + detail : ''));
+    });
   };
 
   /**
@@ -4332,21 +4773,16 @@
       return Promise.resolve();
     }
 
-    var self = this;
-    return new Promise(function (resolve, reject) {
-      if (!self._worker) {
-        reject(new Error('Cannot prepare step: ' + self.config.backend + ' worker is not ready'));
-        return;
-      }
-      self._postWorker(message, function (response) {
-        if (response && response.exitCode === 0) {
-          resolve();
-          return;
-        }
-        var detail = response && (response.error || response.message);
-        reject(new Error('Step setup failed' + (detail ? ': ' + detail : '')));
-      });
-    });
+    if (!this._worker) {
+      return Promise.reject(new Error(
+        'Cannot prepare step: ' + this.config.backend + ' worker is not ready'
+      ));
+    }
+    return this._runWorkerCommand(
+      message,
+      backendLabel(this.config.backend) + ' step setup',
+      { timeoutMs: WORKER_REQUEST_TIMEOUT_MS }
+    );
   };
 
   /** Append text to the output panel. type: 'stdout' | 'stderr' | 'info' */
@@ -4552,33 +4988,39 @@
 
     if (backend === 'sql') {
       var sqlPath = '/tutorial/' + filename;
-      this._syncFileToBackend(filename, function () {
+      this._syncFileToBackend(filename).then(function () {
         self._clearOutput();
         self._appendOutput('\u25b6 ' + filename + '\n', 'info');
-        var runBtn = self.root.querySelector('.tvm-run-btn');
-        if (runBtn) { runBtn.disabled = true; runBtn.textContent = '\u23f3 Running\u2026'; }
-        self._postWorker({ type: 'run', path: sqlPath }, function (msg) {
-          if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 ' + self._runLabel; }
+        return self._runWorkerExecution(
+          { type: 'run', path: sqlPath },
+          '\u23f3 Running\u2026'
+        ).then(function (msg) {
           if (msg.exitCode !== 0) self._appendOutput('\n\u2717 Error\n', 'err');
         });
+      }).catch(function (error) {
+        if (error && error.reason === 'terminated') return;
+        self._appendOutput('\n\u2717 ' + (error && error.message || 'SQL execution failed') + '\n', 'err');
       });
       return;
     }
 
     if (backend === 'prolog') {
       var plPath = '/tutorial/' + filename;
-      this._syncFileToBackend(filename, function () {
+      this._syncFileToBackend(filename).then(function () {
         self._clearOutput();
         self._appendOutput('\u25b6 ' + filename + '\n', 'info');
-        var runBtn = self.root.querySelector('.tvm-run-btn');
-        if (runBtn) { runBtn.disabled = true; runBtn.textContent = '\u23f3 Running\u2026'; }
         var query = '';
         var argsInp = self.root.querySelector('.tvm-args-input');
         if (argsInp) query = argsInp.value.trim();
-        self._postWorker({ type: 'run', path: plPath, query: query }, function (msg) {
-          if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 ' + self._runLabel; }
+        return self._runWorkerExecution(
+          { type: 'run', path: plPath, query: query },
+          '\u23f3 Running\u2026'
+        ).then(function (msg) {
           if (msg.exitCode !== 0 && !query) self._appendOutput('\n\u2717 Error\n', 'err');
         });
+      }).catch(function (error) {
+        if (error && error.reason === 'terminated') return;
+        self._appendOutput('\n\u2717 ' + (error && error.message || 'Prolog execution failed') + '\n', 'err');
       });
       return;
     }
@@ -4594,16 +5036,19 @@
       syncChain.then(function () {
         self._clearOutput();
         self._appendOutput('\u25b6 ' + filename + '\n', 'info');
-        var runBtn = self.root.querySelector('.tvm-run-btn');
-        if (runBtn) { runBtn.disabled = true; runBtn.textContent = '\u23f3 Compiling…'; }
-        self._postWorker({ type: 'run', path: javaPath }, function (msg) {
-          if (runBtn) { runBtn.disabled = false; runBtn.textContent = '\u25b6 ' + self._runLabel; }
+        return self._runWorkerExecution(
+          { type: 'run', path: javaPath },
+          '\u23f3 Compiling\u2026'
+        ).then(function (msg) {
           if (msg.exitCode === 0) {
             self._appendOutput('\n\u2713 Done\n', 'info');
           } else {
             self._appendOutput('\n\u2717 Exited with error\n', 'err');
           }
         });
+      }).catch(function (error) {
+        if (error && error.reason === 'terminated') return;
+        self._appendOutput('\n\u2717 ' + (error && error.message || 'Java execution failed') + '\n', 'err');
       });
       return;
     }
@@ -4642,7 +5087,7 @@
         clearTimeout(self._haskellRunTimer);
         self._haskellRunTimer = setTimeout(function () {
           if (self._haskellRunRequestId !== requestId) return;
-          delete self._workerCallbacks[requestId];
+          self._discardWorkerRequest(requestId);
           self._appendOutput(
             '\n\u2717 Execution timed out; the Haskell runtime was restarted.\n',
             'err'
@@ -4681,11 +5126,10 @@
         }).concat(['-v']);
         var pyCode = 'import pytest; raise SystemExit(pytest.main(' +
           JSON.stringify(pytestArgs) + '))';
-        self._postWorker({ type: 'runCode', code: pyCode }, function (msg) {
-          if (runBtn) {
-            runBtn.disabled = false;
-            runBtn.textContent = '\u25b6 ' + self._effectiveRunLabel();
-          }
+        return self._runWorkerExecution(
+          { type: 'runCode', code: pyCode },
+          runningLabel
+        ).then(function (msg) {
           if (msg.exitCode === 0) {
             self._appendOutput('\n\u2713 All tests passed\n', 'info');
           } else {
@@ -4693,7 +5137,6 @@
             self._appendOutput('\n\u2717 Tests failed\n', 'err');
           }
         });
-        return;
       }
 
       var args = [];
@@ -4703,19 +5146,22 @@
         args = matches.map(function (s) { return s.replace(/^"|"$/g, ''); });
       }
 
-      self._postWorker({ type: 'run', path: path, args: args }, function (msg) {
-        if (runBtn) {
-          runBtn.disabled = false;
-          runBtn.textContent = '\u25b6 ' + self._effectiveRunLabel();
-        }
+      return self._runWorkerExecution(
+        { type: 'run', path: path, args: args },
+        runningLabel
+      ).then(function (msg) {
         if (msg.exitCode === 0) {
           self._appendOutput('\n\u2713 Done\n', 'info');
         } else {
           self._appendOutput('\n\u2717 Exited with error\n', 'err');
         }
       });
-    }).catch(function () {
-      self._appendOutput('\n\u2717 Could not sync files before running\n', 'err');
+    }).catch(function (error) {
+      if (error && error.reason === 'terminated') return;
+      self._appendOutput(
+        '\n\u2717 ' + (error && error.message || 'Could not run Python code') + '\n',
+        'err'
+      );
     });
   };
 
@@ -4940,6 +5386,8 @@
         link.rel = 'modulepreload';
         link.href = url;
         link.crossOrigin = 'anonymous';
+        var integrity = crossOriginIntegrity(url);
+        if (integrity) link.integrity = integrity;
         link.onload = resolve;
         link.onerror = function () { reject(new Error('Failed to preload: ' + url)); };
         document.head.appendChild(link);
@@ -4947,7 +5395,6 @@
     }
 
     return preloadModule(CDN.WEBCONTAINER)
-      .catch(function () { /* preload failed \u2014 try import anyway */ })
       .then(function () { return import(CDN.WEBCONTAINER); })
       .then(function (module) {
       var WebContainer = module.WebContainer;
@@ -5169,11 +5616,18 @@
    */
   TutorialCode.prototype._stopExecution = function () {
     if (this.config.backend === 'haskell' && this._worker) {
-      if (this._haskellRunRequestId !== null) {
-        delete this._workerCallbacks[this._haskellRunRequestId];
-      }
       this._appendOutput('\nExecution stopped; restarting the Haskell runtime.\n', 'info');
       this._restartHaskellExecutor().catch(function () {});
+      return;
+    }
+    if (this._isRestartableWorkerBackend(this.config.backend) && this._worker) {
+      var workerStopBtn = this.root && this.root.querySelector('.tvm-stop-btn');
+      this._restoreRunFocusAfterWorkerRestart = document.activeElement === workerStopBtn;
+      this._appendOutput(
+        '\nExecution stopped; restarting the ' + backendLabel(this.config.backend) + ' runtime.\n',
+        'info'
+      );
+      this._restartWorkerBackend('Execution stopped by the learner').catch(function () {});
       return;
     }
     if (this._webcontainerRunProcess) {
@@ -5525,6 +5979,49 @@
     }
   };
 
+  TutorialCode.prototype._closeReactAssertionBroker = function () {
+    if (this._reactAssertionPort) {
+      try { this._reactAssertionPort.close(); } catch (error) { /* already closed */ }
+    }
+    this._reactAssertionPort = null;
+    this._reactAssertionPortGeneration = -1;
+  };
+
+  TutorialCode.prototype._acceptReactAssertionBroker = function (event, message) {
+    var transferredPort = event.ports && event.ports[0];
+    var isCurrentPreview = event.source === this._previewFrame.contentWindow &&
+      message.generation === this._reactPreviewGeneration;
+
+    // The repository-owned broker posts first, before learner scripts run.
+    // Accepting exactly one port prevents later learner messages from
+    // replacing the private assertion capability.
+    if (!isCurrentPreview || this._reactAssertionPort || !transferredPort) {
+      if (transferredPort) {
+        try { transferredPort.close(); } catch (error) { /* already closed */ }
+      }
+      return;
+    }
+
+    this._reactAssertionPort = transferredPort;
+    this._reactAssertionPortGeneration = message.generation;
+    this._reactAssertionPort.start();
+  };
+
+  TutorialCode.prototype._replaceReactPreviewFrame = function (srcdoc) {
+    var oldFrame = this._previewFrame;
+    var replacement = oldFrame.cloneNode(false);
+    replacement.removeAttribute('src');
+    replacement.removeAttribute('srcdoc');
+    replacement.srcdoc = srcdoc;
+
+    if (this._previewFrameSync) {
+      try { oldFrame.removeEventListener('load', this._previewFrameSync); } catch (error) { /* detached */ }
+    }
+    oldFrame.parentNode.replaceChild(replacement, oldFrame);
+    this._previewFrame = replacement;
+    if (this._previewFrameSync) replacement.addEventListener('load', this._previewFrameSync);
+  };
+
   TutorialCode.prototype._rebuildReactPreview = function (onReady, stepOverride) {
     if (!this._previewFrame) return;
     var self = this;
@@ -5544,7 +6041,10 @@
       this._reactPreviewReadyWaiters[generation] = waiter;
     }
 
-    this._previewFrame.srcdoc = this._buildReactSrcdoc(step, generation);
+    // A new iframe element gives each generation a fresh WindowProxy. Code in
+    // the previous preview therefore cannot race the next broker handshake.
+    this._closeReactAssertionBroker();
+    this._replaceReactPreviewFrame(this._buildReactSrcdoc(step, generation));
   };
 
   TutorialCode.prototype._getReactPreviewFileOrder = function (step) {
@@ -5631,34 +6131,6 @@
     }
   };
 
-  TutorialCode.prototype._reactAssertionBrokerScript = function () {
-    var requestType = JSON.stringify(REACT_ASSERTION_REQUEST);
-    var resultType = JSON.stringify(REACT_ASSERTION_RESULT);
-    return '(function(){\n' +
-      '  var hostWindow=parent;\n' +
-      '  var AsyncFunction=Object.getPrototypeOf(async function(){}).constructor;\n' +
-      '  var frame=Object.freeze({contentDocument:document,contentWindow:window});\n' +
-      '  function assertResult(condition,message){\n' +
-      '    if(!condition)throw new Error(message||"Assertion failed");\n' +
-      '  }\n' +
-      '  function reply(payload){hostWindow.postMessage(payload,"*");}\n' +
-      '  window.addEventListener("message",function(event){\n' +
-      '    var request=event.data;\n' +
-      '    if(event.source!==hostWindow||!request||request.type!==' + requestType + ')return;\n' +
-      '    if((typeof request.id!=="string"&&typeof request.id!=="number")||typeof request.command!=="string")return;\n' +
-      '    Promise.resolve().then(function(){\n' +
-      '      var runAssertion=new AsyncFunction("frame","code","assert","files",request.command);\n' +
-      '      return runAssertion(frame,request.code||"",assertResult,request.files||{});\n' +
-      '    }).then(function(){\n' +
-      '      reply({type:' + resultType + ',id:request.id,passed:true});\n' +
-      '    },function(error){\n' +
-      '      var message=String(error&&error.message||error||"Assertion failed").slice(0,2000);\n' +
-      '      reply({type:' + resultType + ',id:request.id,passed:false,error:message});\n' +
-      '    });\n' +
-      '  });\n' +
-      '})();';
-  };
-
   TutorialCode.prototype._buildReactSrcdoc = function (step, previewGeneration) {
     var self = this;
     var fileOrder = this._getReactPreviewFileOrder(step);
@@ -5723,8 +6195,8 @@
       '});\n' +
       '<\/script>\n' +
       playwrightAgent +
-      '<script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"><\/script>\n' +
-      '<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"><\/script>\n' +
+      '<script crossorigin="anonymous" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" src="https://cdn.jsdelivr.net/npm/react@18.3.1/umd/react.development.js"><\/script>\n' +
+      '<script crossorigin="anonymous" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" src="https://cdn.jsdelivr.net/npm/react-dom@18.3.1/umd/react-dom.development.js"><\/script>\n' +
       '<script>\n' +
       '/* Hot-reload: cache createRoot + listen for file patches from the tutorial host */\n' +
       '(function(){\n' +
@@ -5785,10 +6257,11 @@
       '  window.__sebookReactPreviewInitialScriptsComplete=markInitialScriptsComplete;\n' +
       '})();\n' +
       '<\/script>\n' +
-      '<script>\n' + this._reactAssertionBrokerScript() + '\n<\/script>\n' +
-      '<script src="https://unpkg.com/@babel/standalone/babel.min.js" onload="window.__sebookReactPreviewBabelReady&&window.__sebookReactPreviewBabelReady()"><\/script>\n' +
-      '<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">\n' +
-      '<script src="https://cdn.jsdelivr.net/npm/react-bootstrap@2.10.7/dist/react-bootstrap.min.js"><\/script>\n' +
+      '<script src="/js/react-assertion-broker.js" data-preview-generation="' +
+      Number(previewGeneration || 0) + '"><\/script>\n' +
+      '<script crossorigin="anonymous" integrity="sha384-ezQ6HS3FLspd9te19o2McUV6FAK091+GG7KO54f/R8DKgCDi7fULhapNrd5LY+vG" src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.29.7/babel.min.js" onload="window.__sebookReactPreviewBabelReady&&window.__sebookReactPreviewBabelReady()"><\/script>\n' +
+      '<link crossorigin="anonymous" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">\n' +
+      '<script crossorigin="anonymous" integrity="sha384-ZXFmpIouTtWEZYH3HibV/bvRMl4Ofw42uKArYibKyfmjlawNFX+/AeYXEv1UyZ/R" src="https://cdn.jsdelivr.net/npm/react-bootstrap@2.10.7/dist/react-bootstrap.min.js"><\/script>\n' +
       '<style id="__user-styles__">\n' +
       this._reactPreviewBaseCss(bodyBg, bodyColor) +
       customStyles + '\n</style>\n</head>\n<body>\n<div id="root"></div>\n' +
@@ -6031,7 +6504,9 @@
       var existing = monaco.editor.getModel(uri);
       if (existing) existing.dispose();
       var model = monaco.editor.createModel(content || '', language, uri);
-      this.editorModels[filename] = { model: model, filename: filename, lastSyncContent: content || '' };
+      // The backend has not acknowledged this model yet. _syncFileToBackend
+      // records the exact content only after the write succeeds.
+      this.editorModels[filename] = { model: model, filename: filename, lastSyncContent: null };
       var self = this;
       var saveTimer;
       var lintTimer;
@@ -6053,13 +6528,20 @@
         if (self._suppressAutoSave) return;
         clearTimeout(saveTimer);
         saveTimer = setTimeout(function () {
-          self._syncFileToBackend(filename);
-          // Make DAG refresh: if this file is the active Makefile (or a file
-          // referenced by it), the dependency graph may have changed.
-          // Cheap to re-run; gated on the pane being open.
-          if (self.makeDagPath && self._currentView === 'make_dag' && /\bMakefile\b/i.test(filename)) {
-            self._maybeAutoRefreshMakeDag();
-          }
+          self._syncFileToBackend(filename).then(function () {
+            // Make DAG refresh: if this file is the active Makefile (or a file
+            // referenced by it), the dependency graph may have changed.
+            // Cheap to re-run; gated on the pane being open.
+            if (self.makeDagPath && self._currentView === 'make_dag' && /\bMakefile\b/i.test(filename)) {
+              self._maybeAutoRefreshMakeDag();
+            }
+          }).catch(function (error) {
+            self._appendOutput(
+              '\n\u2717 Could not sync ' + filename + ': ' +
+              (error && error.message || error) + '\n',
+              'err'
+            );
+          });
         }, 800);
         // UML refresh is deferred to explicit save (_saveCurrentFile) — not on every keystroke.
         // React preview is also save-only — popups send a request-save via Ctrl+S.
@@ -6487,21 +6969,44 @@
     });
   };
 
+  /**
+   * Sync the active file to its backend and, when enabled, browser storage.
+   *
+   * @returns {Promise<boolean>} true only when every required save completed.
+   */
   TutorialCode.prototype._saveCurrentFile = function () {
-    if (!this.activeFileName) return;
+    if (!this.activeFileName) return Promise.resolve(false);
     if (this._mixedBackendMode) {
       this._setActiveBackend(this._stepRequestedBackend(this.steps[this.currentStep]));
     }
-    this._syncFileToBackend(this.activeFileName);
-    var tab = this.editorTabsEl.querySelector('.tvm-tab.active');
-    if (!tab && this.editorTabsElRight) tab = this.editorTabsElRight.querySelector('.tvm-tab.active');
-    if (tab) { tab.classList.add('saved'); setTimeout(function () { tab.classList.remove('saved'); }, 1200); }
-    if (this.autoSaveEnabled) this._saveFile(this.activeFileName);
-    if (this.config.backend === 'react') this._patchReactPreview();
-    // UML: refresh on explicit save if this file is watched
-    if (this._umlWatchedFiles.indexOf(this.activeFileName) !== -1) {
-      this._scheduleUMLRefresh(true);
-    }
+    var self = this;
+    var filename = this.activeFileName;
+    return this._syncFileToBackend(filename).then(function () {
+      var progressSaved = true;
+      if (self.autoSaveEnabled) {
+        progressSaved = self._saveFile(filename);
+        self._reportAutoSaveResult(progressSaved);
+      }
+      var tab = self.editorTabsEl.querySelector('.tvm-tab.active');
+      if (!tab && self.editorTabsElRight) tab = self.editorTabsElRight.querySelector('.tvm-tab.active');
+      if (tab && progressSaved) {
+        tab.classList.add('saved');
+        setTimeout(function () { tab.classList.remove('saved'); }, 1200);
+      }
+      if (self.config.backend === 'react') self._patchReactPreview();
+      // UML: refresh on explicit save if this file is watched
+      if (self._umlWatchedFiles.indexOf(filename) !== -1) {
+        self._scheduleUMLRefresh(true);
+      }
+      return progressSaved;
+    }).catch(function (error) {
+      self._appendOutput(
+        '\n\u2717 Could not save ' + filename + ': ' +
+        (error && error.message || error) + '\n',
+        'err'
+      );
+      return false;
+    });
   };
 
   // ---------------------------------------------------------------------------
@@ -6741,10 +7246,11 @@
       // Preview: re-broadcast the iframe srcdoc whenever it loads (build /
       // hot-patch / refresh).
       this._previewFrameSync = function () {
+        var activePreviewFrame = self._previewFrame;
         if (self._popoutManager && self._popoutManager.isDetached('output')) {
           self._popoutManager.broadcastOutputUpdate({
             kind: 'preview',
-            content: previewFrame.srcdoc || previewFrame.src || '',
+            content: activePreviewFrame.srcdoc || activePreviewFrame.src || '',
             previewGeneration: self._reactPreviewGeneration,
           });
         }
@@ -7379,13 +7885,16 @@
           }
           var prev = self.activeFileName;
           self.activeFileName = filename;
+          var savePromise;
           try {
-            self._saveCurrentFile();
+            savePromise = self._saveCurrentFile();
           } finally {
             self.activeFileName = prev;
           }
-          // Confirm back to popups so they can flash a "Saved ✓" indicator.
-          self._popoutManager._post('save-confirmed', { filename: filename });
+          savePromise.then(function (saved) {
+            // Never broadcast a confirmation for a backend or persistence failure.
+            if (saved) self._popoutManager._post('save-confirmed', { filename: filename });
+          });
         },
         onFileEditFromPopup: function (filename, content) {
           self._applyFileEditFromPopup(filename, content);
@@ -7733,13 +8242,9 @@
   /** Lazily load the TypeScript compiler (for JS/TS UML analysis) */
   TutorialCode.prototype._loadTypeScriptCompiler = function (callback) {
     if (typeof window !== 'undefined' && window.ts) { callback(); return; }
-    var script = document.createElement('script');
-    script.src = 'https://cdn.jsdelivr.net/npm/typescript@5/lib/typescript.min.js';
-    script.onload = callback;
-    script.onerror = function () {
-      console.error('Failed to load TypeScript compiler from CDN');
-    };
-    document.head.appendChild(script);
+    loadScript(CDN.TYPESCRIPT).then(callback).catch(function (error) {
+      console.error('Failed to load the integrity-checked TypeScript compiler', error);
+    });
   };
 
   /** Lazily load the JS/TS UML analyzer */
@@ -8242,10 +8747,7 @@
       })
       .catch(function (err) {
         console.error('Mermaid render error:', err);
-        self._setUMLDiagramAccessibleName('Diagram rendering error.');
-        self._umlContentEl.innerHTML =
-          '<div class="tvm-diagram-empty">Diagram rendering error.<br>' +
-          '<small style="opacity:0.7">' + (err.message || err) + '</small></div>';
+        self._showUMLError('Diagram rendering error. ' + (err.message || err));
       });
   };
 
@@ -8257,11 +8759,21 @@
     this._umlContentEl.setAttribute('aria-label', name);
   };
 
+  /** Render learner-influenced diagram status without interpreting it as HTML. */
+  TutorialCode.prototype._renderUMLMessage = function (container, msg, isError) {
+    if (!container) return;
+    var message = document.createElement('div');
+    message.className = 'tvm-diagram-empty';
+    message.textContent = String(msg == null ? '' : msg);
+    message.setAttribute('role', isError ? 'alert' : 'status');
+    container.replaceChildren(message);
+  };
+
   /** Show an empty-state message in the diagram area */
   TutorialCode.prototype._showUMLEmpty = function (msg) {
     if (this._umlContentEl) {
       this._setUMLDiagramAccessibleName(msg);
-      this._umlContentEl.innerHTML = '<div class="tvm-diagram-empty">' + msg + '</div>';
+      this._renderUMLMessage(this._umlContentEl, msg, false);
     }
   };
 
@@ -8269,7 +8781,7 @@
   TutorialCode.prototype._showUMLError = function (msg) {
     if (this._umlContentEl) {
       this._setUMLDiagramAccessibleName(msg);
-      this._umlContentEl.innerHTML = '<div class="tvm-diagram-empty" style="color:#e55;">' + msg + '</div>';
+      this._renderUMLMessage(this._umlContentEl, msg, true);
     }
   };
 
@@ -8348,7 +8860,7 @@
 
     this._umlFsContentEl.innerHTML = '';
     if (!this._umlLastDiagrams) {
-      this._umlFsContentEl.innerHTML = '<div class="tvm-diagram-empty">No diagram data yet. Refresh first.</div>';
+      this._renderUMLMessage(this._umlFsContentEl, 'No diagram data yet. Refresh first.', false);
       return;
     }
     this._applyUMLColors(this._umlFsContentEl);
@@ -8361,7 +8873,7 @@
             UMLShared.applySvgAccessibility(this._umlFsContentEl, 'sequence', seqSyntax);
           }
         } else {
-          this._umlFsContentEl.innerHTML = '<div class="tvm-diagram-empty">No sequence diagram available.</div>';
+          this._renderUMLMessage(this._umlFsContentEl, 'No sequence diagram available.', false);
         }
       } else {
         var classSyntax = this._umlLastDiagrams.classDiagram;
@@ -8372,11 +8884,11 @@
             UMLShared.applySvgAccessibility(this._umlFsContentEl, 'class', laidOutClassSyntax);
           }
         } else {
-          this._umlFsContentEl.innerHTML = '<div class="tvm-diagram-empty">No class diagram available.</div>';
+          this._renderUMLMessage(this._umlFsContentEl, 'No class diagram available.', false);
         }
       }
     } catch (e) {
-      this._umlFsContentEl.innerHTML = '<div class="tvm-diagram-empty" style="color:#e55;">Render error: ' + (e.message || e) + '</div>';
+      this._renderUMLMessage(this._umlFsContentEl, 'Render error: ' + (e.message || e), true);
     }
     this._applyUMLZoom(this._umlFsContentEl, this._umlFsZoom, fzLabel);
   };
@@ -8911,48 +9423,60 @@
   // ---------------------------------------------------------------------------
   // File Sync  (editor → backend)
   // ---------------------------------------------------------------------------
+  TutorialCode.prototype._writeFileToWorker = function (filename, content, backend) {
+    var effectiveBackend = backend || this.config.backend;
+    return this._requestWorker(
+      { type: 'write', path: '/tutorial/' + filename, content: content },
+      { timeoutMs: WORKER_FILE_TIMEOUT_MS }
+    ).then(function (response) {
+      if (response && (response.type === 'write_ok' || response.type === 'write_done')) return;
+      var detail = response && (response.message || response.error);
+      throw new Error(
+        'Could not sync "' + filename + '" to the ' + backendLabel(effectiveBackend) +
+        ' runtime' + (detail ? ': ' + detail : '')
+      );
+    });
+  };
+
   TutorialCode.prototype._syncFileToBackend = function (filename, callback) {
     var entry = this.editorModels[filename];
     if (!entry) { if (callback) callback(); return Promise.resolve(); }
     var content = entry.model.getValue();
-    entry.lastSyncContent = content;
     var self = this;
+    var backend = this.config.backend;
 
     // UML refresh is triggered from _saveCurrentFile (explicit save only), not here.
+    var writePromise;
 
-    return new Promise(function (resolve) {
-      var done = function () { if (callback) callback(); resolve(); };
+    if (backend === 'v86') {
+      writePromise = this._syncFileToV86(filename, content);
+    } else if (backend === 'pyodide' || backend === 'sql' ||
+               backend === 'prolog' || backend === 'java' ||
+               backend === 'haskell') {
+      writePromise = this._writeFileToWorker(filename, content, backend);
+    } else if (backend === 'webcontainer' && this._webcontainer) {
+      var wcPath = 'tutorial/' + filename;
+      var wcDir = wcPath.substring(0, wcPath.lastIndexOf('/'));
+      var wc = this._webcontainer;
+      var doWrite = function () { return wc.fs.writeFile(wcPath, content); };
+      writePromise = wcDir && wcDir !== 'tutorial'
+        ? wc.fs.mkdir(wcDir, { recursive: true }).then(doWrite)
+        : doWrite();
+    } else {
+      // React rebuilds only on explicit save; browser-only backends execute
+      // directly from the Monaco model and have no separate filesystem.
+      writePromise = Promise.resolve();
+    }
 
-      if (self.config.backend === 'v86') {
-        self._syncFileToV86(filename, content).then(done).catch(done);
-
-      } else if (self.config.backend === 'pyodide' || self.config.backend === 'sql' || self.config.backend === 'prolog' || self.config.backend === 'java' || self.config.backend === 'haskell') {
-        self._postWorker(
-          { type: 'write', path: '/tutorial/' + filename, content: content },
-          done
-        );
-
-      } else if (self.config.backend === 'webcontainer' && self._webcontainer) {
-        var wcPath = 'tutorial/' + filename;
-        var wcDir = wcPath.substring(0, wcPath.lastIndexOf('/'));
-        var wc = self._webcontainer;
-        var doWrite = function () {
-          wc.fs.writeFile(wcPath, content).then(done).catch(done);
-        };
-        if (wcDir && wcDir !== 'tutorial') {
-          wc.fs.mkdir(wcDir, { recursive: true }).then(doWrite).catch(doWrite);
-        } else {
-          doWrite();
-        }
-
-      } else if (self.config.backend === 'react') {
-        // Preview only rebuilds on explicit save (Ctrl+S / save button),
-        // not on every keystroke — see _saveCurrentFile.
-        done();
-
-      } else {
-        done();
+    return Promise.resolve(writePromise).then(function () {
+      // Record only the exact content that the backend acknowledged. If the
+      // editor changed while the write was in flight, the next flush detects
+      // that newer content and writes it separately.
+      entry.lastSyncContent = content;
+      if (self._isRestartableWorkerBackend(backend)) {
+        self._workerWorkspaceFiles[filename] = content;
       }
+      if (callback) callback();
     });
   };
 
@@ -9191,13 +9715,12 @@
   };
 
   /**
-   * Save the current step index and all open file contents to localStorage.
-   */
-  /**
    * Full save: persists step, unlock state, and only files changed from original.
+   *
+   * @returns {boolean} true only when localStorage accepted the complete write.
    */
   TutorialCode.prototype.saveProgress = function () {
-    if (!this.autosaveType) return;
+    if (!this.autosaveType) return false;
     // Start from the previously persisted overrides so files that aren't
     // currently open as tabs (closed during a step transition) keep their
     // saved edits. Only files that are still in the editor get re-evaluated
@@ -9241,33 +9764,43 @@
     };
     try {
       localStorage.setItem(this._storageKey(), JSON.stringify(data));
+      return true;
     } catch (e) {
       console.warn('TutorialCode: could not save progress', e);
+      return false;
     }
   };
 
   /**
-   * Targeted save: persists only a single file (if changed) plus current step.
+   * Targeted save: updates one file override plus the current step, removing
+   * the override when the file has returned to its starter content.
    * Used by auto-save on Ctrl+S to avoid re-serializing everything.
+   *
+   * @returns {boolean} true only when localStorage accepted the write.
    */
   TutorialCode.prototype._saveFile = function (filename) {
-    if (!this.autosaveType) return;
+    if (!this.autosaveType) return false;
     var entry = this.editorModels[filename];
-    if (!entry) return;
+    if (!entry) return false;
     var current = entry.model.getValue();
     var original = this._originalContent[filename];
-    if (original !== undefined && current === original) return; // unchanged
 
     try {
       var raw = localStorage.getItem(this._storageKey());
       var data = raw ? JSON.parse(raw) : {};
       if (!data.files) data.files = {};
-      data.files[filename] = { content: current, language: entry.model.getLanguageId() };
+      if (original !== undefined && current === original) {
+        delete data.files[filename];
+      } else {
+        data.files[filename] = { content: current, language: entry.model.getLanguageId() };
+      }
       data.step = this.currentStep;
       data.activeFile = this.activeFileName;
       localStorage.setItem(this._storageKey(), JSON.stringify(data));
+      return true;
     } catch (e) {
       console.warn('TutorialCode: could not save file', e);
+      return false;
     }
   };
 
@@ -9920,17 +10453,27 @@
     return p;
   };
 
-  /**
-   * Silently auto-save progress to localStorage (no toast).
-   * Bails out when _suppressAutoSave is set so that restore sequences
-   * (which call loadStep before the saved files have been applied)
-   * cannot overwrite the student's saved content with starter-file content.
-   */
-  TutorialCode.prototype._autoSaveProgress = function () {
-    if (this.currentStep < 0) return;
-    if (this._suppressAutoSave) return;   // never clobber during file-load sequences
-    this.saveProgress();
+  TutorialCode.prototype._reportAutoSaveResult = function (saved) {
     var status = document.getElementById('tutorialAutosaveStatus');
+    var visibleStatus = document.getElementById('tutorialAutosaveVisibleStatus');
+
+    if (!saved) {
+      clearTimeout(this._autoSaveStatusTimer);
+      this._lastAutoSaveStatusAt = 0;
+      if (visibleStatus) {
+        visibleStatus.textContent = 'Save failed';
+        visibleStatus.classList.remove('is-hidden');
+      }
+      if (status) {
+        status.textContent = 'Auto-save failed. Your latest changes are not saved. Copy them before reloading, then try again.';
+      }
+      return;
+    }
+
+    if (visibleStatus) {
+      visibleStatus.textContent = '';
+      visibleStatus.classList.add('is-hidden');
+    }
     if (!status) return;
     var now = Date.now();
     if (this._lastAutoSaveStatusAt && now - this._lastAutoSaveStatusAt < 5000) return;
@@ -9940,6 +10483,26 @@
     this._autoSaveStatusTimer = setTimeout(function () {
       status.textContent = '';
     }, 1500);
+  };
+
+  /**
+   * Silently auto-save progress to localStorage (no toast).
+   * Bails out when _suppressAutoSave is set so that restore sequences
+   * (which call loadStep before the saved files have been applied)
+   * cannot overwrite the student's saved content with starter-file content.
+   *
+   * @returns {boolean} true only when the progress write succeeded.
+   */
+  TutorialCode.prototype._autoSaveProgress = function () {
+    // Reset/replay paths call this helper directly. Honour the user's navbar
+    // preference here so disabling autosave and deleting progress cannot be
+    // undone by an asynchronous reset completion.
+    if (!this.autoSaveEnabled) return false;
+    if (this.currentStep < 0) return false;
+    if (this._suppressAutoSave) return false;   // never clobber during file-load sequences
+    var saved = this.saveProgress();
+    this._reportAutoSaveResult(saved);
+    return saved;
   };
 
   /**
@@ -10147,7 +10710,16 @@
     }
 
     var firstVisit = !this._stepsVisited.has(index);
-    this._stepsVisited.add(index);
+
+    // Save the step the learner is leaving before currentStep changes. The
+    // destination is committed only after every file write and setup command
+    // succeeds, so a half-prepared step can never become the persisted resume
+    // point or suppress its own setup on retry.
+    var autoSaveSuppressedBeforeStepLoad = this._suppressAutoSave;
+    if (this.autoSaveEnabled && !autoSaveSuppressedBeforeStepLoad) {
+      this._autoSaveProgress();
+    }
+    this._suppressAutoSave = true;
     this.currentStep = index;
     var step = this.steps[index];
 
@@ -10179,11 +10751,6 @@
 
     var self = this;
 
-    // Persist any pending edits to localStorage before changing the tab set,
-    // so revisits can recover the student's work. Skipped during the boot-time
-    // restore sequence (which sets _suppressAutoSave for the same reason).
-    if (this.autoSaveEnabled && !this._suppressAutoSave) this._autoSaveProgress();
-
     // Close any open files that aren't part of this step. The underlying VM
     // filesystem is untouched, so terminal commands (`cat`, etc.) can still
     // read those files.
@@ -10204,6 +10771,7 @@
 
     var stepFileSyncs = [];
     if (step.files) {
+      var autoSaveSuppressedBeforeFileLoad = self._suppressAutoSave;
       self._suppressAutoSave = true;
       step.files.forEach(function (f) {
         if (!self.editorModels[f.path]) {
@@ -10231,7 +10799,7 @@
           self._originalContent[f.path] = f.content || '';
         }
       });
-      self._suppressAutoSave = false;
+      self._suppressAutoSave = autoSaveSuppressedBeforeFileLoad;
     }
     if (step.open_file) { self._setActiveFile(step.open_file); self._renderTabs(); }
 
@@ -10481,13 +11049,19 @@
       this._refreshUMLDiagram();
     }
 
-    // Update URL hash to reflect current step key (if defined)
-    this._updateStepHash(index);
-
-    // Publish the full readiness barrier before autosave or any caller can
-    // invoke applySolution(). Autosave persists state only; it must never
-    // erase or shorten this lifecycle barrier.
-    var activeStepReady = stepReadyPromise;
+    // Commit navigation only after the complete readiness barrier succeeds.
+    // Until then autosave stays suppressed and the step remains unvisited, so
+    // retrying a failed first visit re-runs its setup commands.
+    var activeStepReady = stepReadyPromise.then(function () {
+      self._stepsVisited.add(index);
+      self._updateStepHash(index);
+      self._suppressAutoSave = autoSaveSuppressedBeforeStepLoad;
+      if (self.autoSaveEnabled && !self._suppressAutoSave) self._autoSaveProgress();
+      self._startTimedPractice(index);
+    }, function (error) {
+      self._suppressAutoSave = autoSaveSuppressedBeforeStepLoad;
+      throw error;
+    });
     this._stepSetupPromise = activeStepReady;
     var clearStepReady = function () {
       if (self._stepSetupPromise === activeStepReady) self._stepSetupPromise = null;
@@ -10497,10 +11071,6 @@
       clearStepReady();
     });
 
-    // Auto-save progress when navigating to a new step
-    if (this.autoSaveEnabled) this._autoSaveProgress();
-
-    this._startTimedPractice(index);
     return activeStepReady;
   };
 
@@ -11264,26 +11834,20 @@
     if (!tests || !tests.length) return;
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
     var results = [];
-    var testTimeout;
 
     function runNext(i) {
-      clearTimeout(testTimeout);
       if (i >= tests.length) { self._renderTestResults(tests, results, run); return; }
 
-      // 15s timeout for infinite loops within AsyncFunction test execution
-      testTimeout = setTimeout(function () {
-        console.warn('SQL test execution timed out. Infinite loop suspected.');
-        if (self.term) {
-          self.term.write('\n\r\n\r\x1b[31;1mError: Execution timed out (15s).\x1b[0m\n\r');
-          self.term.write('\x1b[33mIf you wrote an infinite loop, your sandbox is permanently gridlocked and you MUST refresh the page to continue!\x1b[0m\n\r');
-        }
-        self._renderTestResults(tests, new Array(tests.length).fill(null), run);
-      }, 15000);
-
-      self._postWorker(
+      self._requestWorker(
         { type: 'runCode', code: tests[i].command, silent: true },
-        function (msg) { results[i] = (msg.exitCode === 0); runNext(i + 1); }
-      );
+        { timeoutMs: 15000, restartOnTimeout: true }
+      ).then(function (msg) {
+        results[i] = (msg.exitCode === 0);
+        runNext(i + 1);
+      }).catch(function (error) {
+        console.warn('SQL test execution stopped:', error && error.message || error);
+        self._renderTestResults(tests, new Array(tests.length).fill(null), run);
+      });
     }
     runNext(0);
   };
@@ -11296,7 +11860,6 @@
     if (!tests || !tests.length) return;
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
     var results = [];
-    var testTimeout;
 
     // Gather all editor source code for source_must_contain / source_must_not_contain checks
     var editorCode = '';
@@ -11326,7 +11889,6 @@
     }
 
     function runNext(i) {
-      clearTimeout(testTimeout);
       if (i >= tests.length) { self._renderTestResults(tests, results, run); return; }
 
       var test = tests[i];
@@ -11345,15 +11907,16 @@
         return;
       }
 
-      testTimeout = setTimeout(function () {
-        console.warn('Java test execution timed out.');
-        self._renderTestResults(tests, new Array(tests.length).fill(null), run);
-      }, 30000);
-
-      self._postWorker(
+      self._requestWorker(
         { type: 'runCode', code: test.command, silent: true },
-        function (msg) { results[i] = (msg.exitCode === 0); runNext(i + 1); }
-      );
+        { timeoutMs: WORKER_EXECUTION_TIMEOUT_MS, restartOnTimeout: true }
+      ).then(function (msg) {
+        results[i] = (msg.exitCode === 0);
+        runNext(i + 1);
+      }).catch(function (error) {
+        console.warn('Java test execution stopped:', error && error.message || error);
+        self._renderTestResults(tests, new Array(tests.length).fill(null), run);
+      });
     }
     runNext(0);
   };
@@ -11395,7 +11958,7 @@
       testTimeout = setTimeout(function () {
         if (finished) return;
         finished = true;
-        if (activeRequestId !== null) delete self._workerCallbacks[activeRequestId];
+        if (activeRequestId !== null) self._discardWorkerRequest(activeRequestId);
         console.warn('Haskell test execution timed out.');
         self._renderTestResults(tests, new Array(tests.length).fill(null), run);
         self._restartHaskellExecutor().catch(function () {});
@@ -11431,26 +11994,32 @@
 
     // Sync files first, then run tests sequentially
     var filenames = Object.keys(this.editorModels);
-    var syncCount = 0;
     var totalFiles = filenames.length;
-
-    function afterSync() {
-      syncCount++;
-      if (syncCount < totalFiles) return;
-      runNext(0);
-    }
 
     function runNext(i) {
       if (i >= tests.length) { self._renderTestResults(tests, results, run); return; }
       // Each test gets a fresh consult of the program + async query execution
-      self._postWorker(
+      self._requestWorker(
         { type: 'runTest', program: program, code: tests[i].command },
-        function (msg) { results[i] = (msg.exitCode === 0); runNext(i + 1); }
-      );
+        { timeoutMs: WORKER_EXECUTION_TIMEOUT_MS, restartOnTimeout: true }
+      ).then(function (msg) {
+        results[i] = (msg.exitCode === 0);
+        runNext(i + 1);
+      }).catch(function (error) {
+        console.warn('Prolog test execution stopped:', error && error.message || error);
+        self._renderTestResults(tests, new Array(tests.length).fill(null), run);
+      });
     }
 
     if (totalFiles === 0) { runNext(0); return; }
-    filenames.forEach(function (fn) { self._syncFileToBackend(fn, afterSync); });
+    Promise.all(filenames.map(function (filename) {
+      return self._syncFileToBackend(filename);
+    })).then(function () {
+      runNext(0);
+    }).catch(function (error) {
+      console.warn('Prolog test file sync failed:', error && error.message || error);
+      self._renderTestResults(tests, new Array(tests.length).fill(null), run);
+    });
   };
 
   // Pyodide — each test.command is run as Python code; exit 0 if no exception
@@ -11461,26 +12030,20 @@
     if (!tests || !tests.length) return;
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
     var results = [];
-    var testTimeout;
 
     function runNext(i) {
-      clearTimeout(testTimeout);
       if (i >= tests.length) { self._renderTestResults(tests, results, run); return; }
 
-      // 30 seconds per-test timeout for spotting infinite loops
-      testTimeout = setTimeout(function () {
-        console.warn('Pyodide test execution timed out. Infinite loop suspected.');
-        if (self.term) {
-          self.term.write('\n\r\n\r\x1b[31;1mError: Execution timed out (30s).\x1b[0m\n\r');
-          self.term.write('\x1b[33mIf you wrote an infinite loop (e.g. `while True:`), your sandbox is permanently gridlocked and you MUST refresh the page to continue!\x1b[0m\n\r');
-        }
-        self._renderTestResults(tests, new Array(tests.length).fill(null), run);
-      }, 30000);
-
-      self._postWorker(
+      self._requestWorker(
         { type: 'runCode', code: tests[i].command, silent: true },
-        function (msg) { results[i] = (msg.exitCode === 0); runNext(i + 1); }
-      );
+        { timeoutMs: WORKER_EXECUTION_TIMEOUT_MS, restartOnTimeout: true }
+      ).then(function (msg) {
+        results[i] = (msg.exitCode === 0);
+        runNext(i + 1);
+      }).catch(function (error) {
+        console.warn('Pyodide test execution stopped:', error && error.message || error);
+        self._renderTestResults(tests, new Array(tests.length).fill(null), run);
+      });
     }
     runNext(0);
   };
@@ -11576,13 +12139,16 @@
     var timeout = Number(cfg.timeout || cfg.expect_timeout || 5000);
     function rebuildPreview() {
       return new Promise(function (resolve) {
-        self._rebuildReactPreview(resolve, step);
+        self._rebuildReactPreview(function () {
+          resolve({ frame: self._previewFrame, port: self._reactAssertionPort });
+        }, step);
       });
     }
 
-    return rebuildPreview().then(function () {
+    return rebuildPreview().then(function (preview) {
       return window.SEBookPlaywrightCompat.run({
-        previewFrame: self._previewFrame,
+        previewFrame: preview.frame,
+        port: preview.port,
         files: files,
         testFiles: testFiles,
         timeout: timeout,
@@ -11696,9 +12262,10 @@
   };
 
   TutorialCode.prototype._runReactAssertionInPreview = function (test, context) {
-    var frame = this._previewFrame;
-    var frameWindow = frame && frame.contentWindow;
-    if (!frameWindow) return Promise.reject(new Error('React preview is unavailable'));
+    var assertionPort = this._reactAssertionPort;
+    if (!assertionPort || this._reactAssertionPortGeneration !== this._reactPreviewGeneration) {
+      return Promise.reject(new Error('React assertion broker is unavailable'));
+    }
     if (!test || typeof test.command !== 'string') {
       return Promise.reject(new Error('React assertion is missing a command'));
     }
@@ -11706,33 +12273,32 @@
     var requestId = 'react-assertion-' + (++this._reactAssertionRequestId);
     return new Promise(function (resolve, reject) {
       var timeoutId = setTimeout(function () {
-        window.removeEventListener('message', handleResult);
+        assertionPort.removeEventListener('message', handleResult);
         reject(new Error('React assertion timed out after ' +
           (REACT_ASSERTION_TIMEOUT_MS / 1000) + ' seconds'));
       }, REACT_ASSERTION_TIMEOUT_MS);
 
       function handleResult(event) {
-        if (event.source !== frameWindow) return;
         var result = event.data;
-        if (!result || result.type !== REACT_ASSERTION_RESULT || result.id !== requestId) return;
+        if (!result || result.type !== 'result' || result.id !== requestId) return;
         clearTimeout(timeoutId);
-        window.removeEventListener('message', handleResult);
+        assertionPort.removeEventListener('message', handleResult);
         if (result.passed === true) resolve();
         else reject(new Error(result.error || 'Assertion failed'));
       }
 
-      window.addEventListener('message', handleResult);
+      assertionPort.addEventListener('message', handleResult);
       try {
-        frameWindow.postMessage({
-          type: REACT_ASSERTION_REQUEST,
+        assertionPort.postMessage({
+          type: 'evaluate',
           id: requestId,
           command: test.command,
           code: context.code,
           files: context.files,
-        }, '*');
+        });
       } catch (error) {
         clearTimeout(timeoutId);
-        window.removeEventListener('message', handleResult);
+        assertionPort.removeEventListener('message', handleResult);
         reject(error);
       }
     });
@@ -13703,15 +14269,16 @@
     var seq = Promise.resolve();
     lines.forEach(function (line) {
       seq = seq.then(function () {
-        return new Promise(function (resolve) {
-          self._postWorker({ type: 'gitRun', line: String(line), cwd: dir, dir: dir }, function (msg) {
-            if (msg.stderr) {
-              // Surface setup errors to the console so authors can debug,
-              // but don't reject — let the rest of bring-up proceed.
-              console.warn('git_setup:', line, '→', msg.stderr.trim());
-            }
-            resolve();
-          });
+        return self._requestWorker(
+          { type: 'gitRun', line: String(line), cwd: dir, dir: dir },
+          { timeoutMs: WORKER_REQUEST_TIMEOUT_MS }
+        ).then(function (message) {
+          if (message && message.type === 'git_run_done' && message.exitCode === 0) return;
+          var detail = message && (message.stderr || message.message || message.error);
+          throw new Error(
+            'Python git setup command failed: ' + line +
+            (detail ? ' (' + String(detail).trim() + ')' : '')
+          );
         });
       });
     });

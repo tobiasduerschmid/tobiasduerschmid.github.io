@@ -4,15 +4,86 @@
  * This is a teaching runner for browser-hosted tutorials. Students write
  * Playwright-shaped spec files that can be copied into a real project, while
  * this runner drives the tutorial preview iframe with a focused subset of the
- * Playwright API.
+ * Playwright API. Preview commands travel through the React assertion
+ * broker's private MessageChannel so app code cannot inspect or forge them.
  */
 (function (global) {
   'use strict';
 
-  var RESPONSE_TAG = '__sebookPlaywrightCompat';
+  var runnerScript = global.document && global.document.currentScript;
+  var NativePromise = global.Promise;
+  var NativeError = global.Error;
+  var NativeString = global.String;
+  var NativeMessageChannel = global.MessageChannel;
+  var scheduleTimeout = global.setTimeout.bind(global);
+  var cancelTimeout = global.clearTimeout.bind(global);
+  var call = Function.prototype.call;
+  var addWindowEventListener = global.addEventListener.bind(global);
+  var removeWindowEventListener = global.removeEventListener.bind(global);
+  var addPortEventListener = call.bind(MessagePort.prototype.addEventListener);
+  var removePortEventListener = call.bind(MessagePort.prototype.removeEventListener);
+  var postPortMessage = call.bind(MessagePort.prototype.postMessage);
+  var startPort = call.bind(MessagePort.prototype.start);
+  var closePort = call.bind(MessagePort.prototype.close);
+  var sliceString = call.bind(String.prototype.slice);
+  var ISOLATED_READY = 'sebook-playwright-isolated-ready';
+  var ISOLATED_INIT = 'sebook-playwright-isolated-init';
+  var ISOLATED_BOOT_TIMEOUT_MS = 10000;
+  var ISOLATED_RESET_TIMEOUT_MS = 30000;
+  var resetSequence = 0;
 
   function delay(ms) {
-    return new Promise(function (resolve) { setTimeout(resolve, ms); });
+    return new NativePromise(function (resolve) { scheduleTimeout(resolve, ms); });
+  }
+
+  function errorMessage(error) {
+    var message;
+    try {
+      message = NativeString(error && error.message || error || 'Playwright runner failed');
+    } catch (stringError) {
+      message = 'Playwright runner failed';
+    }
+    return sliceString(message, 0, 2000);
+  }
+
+  function resetScrollState(frame) {
+    try {
+      var doc = frame && frame.contentDocument;
+      var win = frame && frame.contentWindow;
+      // fill()/click() focus controls. Blur before the result panel resizes the
+      // preview, otherwise Chrome can re-anchor its scroll to the focused node.
+      if (doc && doc.activeElement && doc.activeElement.blur) doc.activeElement.blur();
+      var html = doc && doc.documentElement;
+      var previousBehavior = html && html.style.scrollBehavior;
+      if (html) html.style.scrollBehavior = 'auto';
+      if (win && typeof win.scrollTo === 'function') {
+        try { win.scrollTo({ top: 0, left: 0, behavior: 'instant' }); }
+        catch (innerError) { win.scrollTo(0, 0); }
+      }
+      if (html) html.style.scrollBehavior = previousBehavior || '';
+    } catch (frameError) { /* opaque-origin or detached preview */ }
+
+    // Element scrolling inside an iframe has historically nudged scrollable
+    // ancestors in Chrome. Reset those host containers as defense in depth.
+    try {
+      var node = frame && frame.parentNode;
+      while (node && node.nodeType === 1) {
+        if (node.scrollTop) node.scrollTop = 0;
+        if (node.scrollLeft) node.scrollLeft = 0;
+        node = node.parentNode;
+      }
+    } catch (hostError) { /* detached preview */ }
+  }
+
+  function scheduleScrollReset(frame) {
+    resetScrollState(frame);
+    if (typeof global.requestAnimationFrame === 'function') {
+      global.requestAnimationFrame(function () {
+        global.requestAnimationFrame(function () { resetScrollState(frame); });
+      });
+    } else {
+      scheduleTimeout(function () { resetScrollState(frame); }, 0);
+    }
   }
 
   function normalizeText(value) {
@@ -56,54 +127,52 @@
   }
 
   function PreviewBroker(frame, options) {
-    this.frame = frame;
-    this.timeout = (options && options.timeout) || 5000;
-    this._seq = 0;
-    this._pending = {};
-    this._onMessage = this._handleMessage.bind(this);
-    global.addEventListener('message', this._onMessage);
-  }
+    var timeoutMs = (options && options.timeout) || 5000;
+    var port = options && options.port;
+    var requestType = options && options.requestType || 'playwright';
+    var sequence = 0;
+    var pending = {};
+    if (!port) throw new Error('Private React preview broker is unavailable');
 
-  PreviewBroker.prototype.dispose = function () {
-    global.removeEventListener('message', this._onMessage);
-    Object.keys(this._pending).forEach(function (id) {
-      this._pending[id].reject(new Error('Playwright runner was disposed'));
-      clearTimeout(this._pending[id].timer);
-    }, this);
-    this._pending = {};
-  };
-
-  PreviewBroker.prototype._handleMessage = function (event) {
-    if (!event.data || event.data[RESPONSE_TAG] !== 'response') return;
-    if (this.frame && event.source !== this.frame.contentWindow) return;
-    var item = this._pending[event.data.id];
-    if (!item) return;
-    delete this._pending[event.data.id];
-    clearTimeout(item.timer);
-    if (event.data.ok) item.resolve(event.data.value);
-    else item.reject(new Error(event.data.error || 'Playwright command failed'));
-  };
-
-  PreviewBroker.prototype.command = function (type, payload, timeout) {
-    if (!this.frame || !this.frame.contentWindow) {
-      return Promise.reject(new Error('Preview iframe is not ready'));
+    function handleMessage(event) {
+      if (!event.data || event.data.type !== 'playwright-result') return;
+      var item = pending[event.data.id];
+      if (!item) return;
+      delete pending[event.data.id];
+      cancelTimeout(item.timer);
+      if (event.data.ok) item.resolve(event.data.value);
+      else item.reject(new Error(event.data.error || 'Playwright command failed'));
     }
-    var id = ++this._seq;
-    var self = this;
-    return new Promise(function (resolve, reject) {
-      var timer = setTimeout(function () {
-        delete self._pending[id];
-        reject(new Error('Timed out waiting for preview command: ' + type));
-      }, timeout || self.timeout);
-      self._pending[id] = { resolve: resolve, reject: reject, timer: timer };
-      self.frame.contentWindow.postMessage({
-        __sebookPlaywrightCompat: 'request',
-        id: id,
-        type: type,
-        payload: payload || {},
-      }, '*');
-    });
-  };
+
+    addPortEventListener(port, 'message', handleMessage);
+    startPort(port);
+
+    this.dispose = function () {
+      removePortEventListener(port, 'message', handleMessage);
+      Object.keys(pending).forEach(function (id) {
+        pending[id].reject(new Error('Playwright runner was disposed'));
+        cancelTimeout(pending[id].timer);
+      });
+      pending = {};
+    };
+
+    this.command = function (type, payload, timeout) {
+      var id = ++sequence;
+      return new NativePromise(function (resolve, reject) {
+        var timer = scheduleTimeout(function () {
+          delete pending[id];
+          reject(new Error('Timed out waiting for preview command: ' + type));
+        }, timeout || timeoutMs);
+        pending[id] = { resolve: resolve, reject: reject, timer: timer };
+        postPortMessage(port, {
+          type: requestType,
+          id: id,
+          commandType: type,
+          payload: payload || {},
+        });
+      });
+    };
+  }
 
   function Locator(page, steps) {
     this._page = page;
@@ -434,6 +503,8 @@
 
   function CompatRunner(options) {
     this.previewFrame = options.previewFrame;
+    this.port = options.port;
+    this.requestType = options.requestType || 'playwright';
     this.files = options.files || {};
     this.testFiles = options.testFiles || [];
     this.timeout = options.timeout || 5000;
@@ -451,7 +522,11 @@
       var transformed = transformSpec(source);
       try {
         /* jshint evil:true */
-        var fn = new Function('test', 'expect', transformed + '\n//# sourceURL=' + filename);
+        var fn = new Function(
+          'test',
+          'expect',
+          '"use strict";\n' + transformed + '\n//# sourceURL=' + filename
+        );
         fn(testApi, expectApi);
       } catch (err) {
         return {
@@ -468,14 +543,22 @@
 
   CompatRunner.prototype._runOne = function (testCase) {
     var self = this;
-    if (testCase.skip) return Promise.resolve(true);
+    if (testCase.skip) return NativePromise.resolve(true);
     var broker;
-    var work = Promise.resolve();
+    var work = NativePromise.resolve();
     if (this.resetBetweenTests && this.rebuildPreview) {
       work = work.then(function () { return self.rebuildPreview(); });
     }
-    return work.then(function () {
-      broker = new PreviewBroker(self.previewFrame, { timeout: self.timeout });
+    return work.then(function (rebuiltPreview) {
+      if (rebuiltPreview && rebuiltPreview.frame) {
+        self.previewFrame = rebuiltPreview.frame;
+        if (rebuiltPreview.port) self.port = rebuiltPreview.port;
+      }
+      broker = new PreviewBroker(self.previewFrame, {
+        timeout: self.timeout,
+        port: self.port,
+        requestType: self.requestType,
+      });
       var page = new Page(broker);
       var fixtures = { page: page };
       var chain = page.goto('/');
@@ -486,10 +569,10 @@
       testCase.afterEach.forEach(function (hook) {
         chain = chain.then(function () { return hook(fixtures); });
       });
-      return Promise.race([
+      return NativePromise.race([
         chain,
         delay(self.timeout).then(function () {
-          throw new Error('Test timed out after ' + self.timeout + 'ms');
+          throw new NativeError('Test timed out after ' + self.timeout + 'ms');
         }),
       ]);
     }).then(function () {
@@ -506,13 +589,13 @@
     var loadError = this.evaluateSpecs();
     if (loadError) {
       console.warn('[PlaywrightCompat] Failed to load spec:', loadError.error);
-      return Promise.resolve({
+      return NativePromise.resolve({
         tests: [{ description: 'Load ' + loadError.filename }],
         results: [false],
       });
     }
     if (!this.registry.length) {
-      return Promise.resolve({
+      return NativePromise.resolve({
         tests: [{ description: 'At least one Playwright test is defined' }],
         results: [false],
       });
@@ -521,7 +604,7 @@
       return { description: item.title + (item.skip ? ' (skipped)' : '') };
     });
     var results = [];
-    var chain = Promise.resolve();
+    var chain = NativePromise.resolve();
     this.registry.forEach(function (testCase, index) {
       chain = chain.then(function () {
         return this._runOne(testCase).then(function (result) {
@@ -529,64 +612,13 @@
         });
       }.bind(this));
     }, this);
-    var self = this;
-    function resetScrollState() {
-      try {
-        var doc = self.previewFrame && self.previewFrame.contentDocument;
-        var win = self.previewFrame && self.previewFrame.contentWindow;
-        // Blur any focused element: fill()/click() called .focus(), and when
-        // the iframe gets resized by the test results panel appearing, Chrome
-        // auto-scrolls the iframe to keep the focused element visible —
-        // which would undo the scrollTo(0, 0) below.
-        if (doc && doc.activeElement && doc.activeElement.blur) doc.activeElement.blur();
-        // Reset iframe contentWindow scroll. Force instant behavior: if the
-        // iframe's html has scroll-behavior: smooth, a plain scrollTo animates
-        // and Chrome's focus / scroll-anchoring auto-scroll wins the race
-        // before the animation finishes.
-        var html = doc && doc.documentElement;
-        var prevBehavior = html && html.style.scrollBehavior;
-        if (html) html.style.scrollBehavior = 'auto';
-        if (win && typeof win.scrollTo === 'function') {
-          try { win.scrollTo({ top: 0, left: 0, behavior: 'instant' }); }
-          catch (inner) { win.scrollTo(0, 0); }
-        }
-        if (html) html.style.scrollBehavior = prevBehavior || '';
-      } catch (e) { /* cross-origin or detached frame — ignore */ }
-      // Reset host-page scroll ancestors: Element.scrollIntoView() inside the
-      // iframe historically propagated up to the tutorial container in Chrome.
-      // The agent script is now scoped, but reset ancestors as defense in
-      // depth in case cached bundles, React effects, or future actions still
-      // nudge the host.
-      try {
-        var node = self.previewFrame && self.previewFrame.parentNode;
-        while (node && node.nodeType === 1) {
-          if (node.scrollTop) node.scrollTop = 0;
-          if (node.scrollLeft) node.scrollLeft = 0;
-          node = node.parentNode;
-        }
-      } catch (e) { /* ignore */ }
-    }
-    return chain.then(function () {
-      // Reset once synchronously, then again after the next paint. The test
-      // results panel becomes visible immediately after this promise resolves,
-      // shrinking the iframe — and Chrome may re-anchor scroll across that
-      // resize, undoing a synchronous-only reset.
-      resetScrollState();
-      if (typeof requestAnimationFrame === 'function') {
-        requestAnimationFrame(function () {
-          requestAnimationFrame(resetScrollState);
-        });
-      } else {
-        setTimeout(resetScrollState, 0);
-      }
-      return { tests: tests, results: results };
-    });
+    return chain.then(function () { return { tests: tests, results: results }; });
   };
 
   function agentScript(config) {
     config = config || {};
     var testIdAttribute = config.testIdAttribute || 'data-testid';
-    return '(' + function (responseTag, tidAttr) {
+    return '(' + function (tidAttr) {
       function normalizeText(value) {
         return String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
       }
@@ -872,27 +904,289 @@
         if (payload.type === 'assert') return checkAssertion(payload.payload);
         throw new Error('Unsupported Playwright command: ' + payload.type);
       }
-      window.addEventListener('message', function (event) {
-        var data = event.data;
-        if (!data || data.__sebookPlaywrightCompat !== 'request') return;
-        Promise.resolve().then(function () {
-          return handle(data);
-        }).then(function (value) {
-          event.source.postMessage({ __sebookPlaywrightCompat: 'response', id: data.id, ok: true, value: value }, '*');
-        }).catch(function (err) {
-          event.source.postMessage({ __sebookPlaywrightCompat: 'response', id: data.id, ok: false, error: err && err.message || String(err) }, '*');
-        });
+      // The repository-owned assertion broker captures this function before
+      // learner scripts run, deletes the temporary global, and invokes it only
+      // for requests received through its private MessageChannel.
+      window.__sebookPlaywrightCompatCommand = handle;
+    } + ')(' + JSON.stringify(testIdAttribute) + ');';
+  }
+
+  function requestPreviewReset(port, timeout) {
+    var id = 'reset-' + (++resetSequence);
+    return new NativePromise(function (resolve, reject) {
+      var timer = scheduleTimeout(function () {
+        removePortEventListener(port, 'message', handleResetResult);
+        reject(new NativeError('Timed out while rebuilding the React preview'));
+      }, timeout || ISOLATED_RESET_TIMEOUT_MS);
+
+      function handleResetResult(event) {
+        var message = event.data;
+        if (!message || message.type !== 'reset-result' || message.id !== id) return;
+        removePortEventListener(port, 'message', handleResetResult);
+        cancelTimeout(timer);
+        if (message.ok) resolve(true);
+        else reject(new NativeError(message.error || 'Could not rebuild the React preview'));
+      }
+
+      addPortEventListener(port, 'message', handleResetResult);
+      postPortMessage(port, { type: 'reset-preview', id: id });
+    });
+  }
+
+  function runInsideSandbox(message, sessionPort) {
+    var execution;
+    try {
+      var timeout = Number(message.timeout) || 5000;
+      var resetTimeout = timeout * 3;
+      if (resetTimeout < ISOLATED_RESET_TIMEOUT_MS) resetTimeout = ISOLATED_RESET_TIMEOUT_MS;
+      startPort(sessionPort);
+
+      var runner = new CompatRunner({
+        files: message.files || {},
+        testFiles: message.testFiles || [],
+        timeout: timeout,
+        resetBetweenTests: message.resetBetweenTests !== false,
+        port: sessionPort,
+        requestType: 'preview-command',
+        rebuildPreview: function () {
+          return requestPreviewReset(sessionPort, resetTimeout);
+        },
       });
-    } + ')(' + JSON.stringify(RESPONSE_TAG) + ', ' + JSON.stringify(testIdAttribute) + ');';
+      execution = runner.run();
+    } catch (error) {
+      postPortMessage(sessionPort, { type: 'fatal', error: errorMessage(error) });
+      return;
+    }
+
+    execution.then(function (result) {
+      postPortMessage(sessionPort, { type: 'complete', result: result });
+    }).catch(function (error) {
+      postPortMessage(sessionPort, { type: 'fatal', error: errorMessage(error) });
+    });
+  }
+
+  function listenForIsolatedRun() {
+    if (global.parent === global) return;
+
+    function handleInit(event) {
+      var message = event.data;
+      var sessionPort = event.ports && event.ports[0];
+      if (event.source !== global.parent || !message || message.type !== ISOLATED_INIT || !sessionPort) return;
+      removeWindowEventListener('message', handleInit);
+
+      // The public bootstrap API must disappear before any learner-authored
+      // source is evaluated. The transferred port remains closure-only.
+      try { delete global.SEBookPlaywrightCompat; } catch (deleteError) { /* non-fatal */ }
+      runInsideSandbox(message, sessionPort);
+    }
+
+    addWindowEventListener('message', handleInit);
+    global.parent.postMessage({ type: ISOLATED_READY }, '*');
+  }
+
+  function createIsolatedFrame() {
+    var frame = global.document.createElement('iframe');
+    frame.hidden = true;
+    frame.title = 'Isolated Playwright test runner';
+    frame.tabIndex = -1;
+    frame.setAttribute('aria-hidden', 'true');
+    frame.setAttribute('sandbox', 'allow-scripts');
+    frame.srcdoc = [
+      '<!doctype html><html lang="en"><head>',
+      '<meta charset="utf-8"><title>Isolated Playwright test runner</title>',
+      '</head><body>',
+      '<script src="/js/playwright-compat/runner.js" data-sebook-isolated-runner><\/script>',
+      '</body></html>',
+    ].join('');
+    return frame;
   }
 
   function run(options) {
-    var runner = new CompatRunner(options || {});
-    return runner.run();
+    options = options || {};
+    return new NativePromise(function (resolve, reject) {
+      if (!global.document || !global.document.body) {
+        reject(new NativeError('Playwright runner requires a document body'));
+        return;
+      }
+      if (!options.port) {
+        reject(new NativeError('Private React preview broker is unavailable'));
+        return;
+      }
+      if (options.resetBetweenTests !== false && typeof options.rebuildPreview !== 'function') {
+        reject(new NativeError('Playwright runner cannot reset the React preview'));
+        return;
+      }
+
+      var isolatedFrame = createIsolatedFrame();
+      var sessionPort = null;
+      var previewBroker = null;
+      var previewFrame = options.previewFrame || null;
+      var previewPort = options.port;
+      var bootTimer = null;
+      var settled = false;
+
+      function sendToSandbox(payload) {
+        if (settled || !sessionPort) return;
+        postPortMessage(sessionPort, payload);
+      }
+
+      function disposePreviewBroker() {
+        if (!previewBroker) return;
+        previewBroker.dispose();
+        previewBroker = null;
+      }
+
+      function getPreviewBroker() {
+        if (!previewBroker) {
+          previewBroker = new PreviewBroker(previewFrame, {
+            timeout: Number(options.timeout) || 5000,
+            port: previewPort,
+            requestType: 'playwright',
+          });
+        }
+        return previewBroker;
+      }
+
+      function cleanup() {
+        removeWindowEventListener('message', handleReady);
+        if (bootTimer) cancelTimeout(bootTimer);
+        disposePreviewBroker();
+        if (sessionPort) {
+          removePortEventListener(sessionPort, 'message', handleSessionMessage);
+          try { closePort(sessionPort); } catch (closeError) { /* already closed */ }
+          sessionPort = null;
+        }
+        if (isolatedFrame.parentNode) isolatedFrame.parentNode.removeChild(isolatedFrame);
+      }
+
+      function finishWithError(error) {
+        if (settled) return;
+        settled = true;
+        cleanup();
+        reject(error instanceof NativeError ? error : new NativeError(errorMessage(error)));
+      }
+
+      function finishWithResult(result) {
+        if (settled) return;
+        scheduleScrollReset(previewFrame);
+        settled = true;
+        cleanup();
+        resolve(result);
+      }
+
+      function replyToPreviewCommand(message, ok, value, error) {
+        sendToSandbox({
+          type: 'playwright-result',
+          id: message.id,
+          ok: ok,
+          value: value,
+          error: error || '',
+        });
+      }
+
+      function handlePreviewCommand(message) {
+        if ((typeof message.id !== 'string' && typeof message.id !== 'number') ||
+            typeof message.commandType !== 'string') return;
+        var command;
+        try {
+          command = getPreviewBroker().command(message.commandType, message.payload || {});
+        } catch (error) {
+          replyToPreviewCommand(message, false, null, errorMessage(error));
+          return;
+        }
+        command.then(function (value) {
+          replyToPreviewCommand(message, true, value, '');
+        }).catch(function (error) {
+          replyToPreviewCommand(message, false, null, errorMessage(error));
+        });
+      }
+
+      function handleResetRequest(message) {
+        if (typeof options.rebuildPreview !== 'function') {
+          sendToSandbox({
+            type: 'reset-result',
+            id: message.id,
+            ok: false,
+            error: 'Playwright runner cannot reset the React preview',
+          });
+          return;
+        }
+
+        var rebuild;
+        try {
+          rebuild = options.rebuildPreview();
+        } catch (error) {
+          sendToSandbox({ type: 'reset-result', id: message.id, ok: false, error: errorMessage(error) });
+          return;
+        }
+
+        NativePromise.resolve(rebuild).then(function (rebuiltPreview) {
+          if (!rebuiltPreview || !rebuiltPreview.port) {
+            throw new NativeError('Rebuilt React preview did not provide a private broker');
+          }
+          disposePreviewBroker();
+          previewFrame = rebuiltPreview.frame || previewFrame;
+          previewPort = rebuiltPreview.port;
+          sendToSandbox({ type: 'reset-result', id: message.id, ok: true });
+        }).catch(function (error) {
+          sendToSandbox({ type: 'reset-result', id: message.id, ok: false, error: errorMessage(error) });
+        });
+      }
+
+      function handleSessionMessage(event) {
+        var message = event.data;
+        if (!message || typeof message.type !== 'string') return;
+        if (message.type === 'preview-command') {
+          handlePreviewCommand(message);
+        } else if (message.type === 'reset-preview') {
+          handleResetRequest(message);
+        } else if (message.type === 'complete') {
+          finishWithResult(message.result);
+        } else if (message.type === 'fatal') {
+          finishWithError(new NativeError(message.error || 'Isolated Playwright runner failed'));
+        }
+      }
+
+      function handleReady(event) {
+        if (event.source !== isolatedFrame.contentWindow || !event.data || event.data.type !== ISOLATED_READY) return;
+        removeWindowEventListener('message', handleReady);
+        if (bootTimer) {
+          cancelTimeout(bootTimer);
+          bootTimer = null;
+        }
+
+        try {
+          var channel = new NativeMessageChannel();
+          sessionPort = channel.port1;
+          addPortEventListener(sessionPort, 'message', handleSessionMessage);
+          startPort(sessionPort);
+          isolatedFrame.contentWindow.postMessage({
+            type: ISOLATED_INIT,
+            files: options.files || {},
+            testFiles: options.testFiles || [],
+            timeout: Number(options.timeout) || 5000,
+            resetBetweenTests: options.resetBetweenTests !== false,
+          }, '*', [channel.port2]);
+        } catch (error) {
+          finishWithError(error);
+        }
+      }
+
+      addWindowEventListener('message', handleReady);
+      bootTimer = scheduleTimeout(function () {
+        finishWithError(new NativeError('Timed out while starting the isolated Playwright runner'));
+      }, ISOLATED_BOOT_TIMEOUT_MS);
+      global.document.body.appendChild(isolatedFrame);
+    });
   }
 
   global.SEBookPlaywrightCompat = {
     run: run,
     agentScript: agentScript,
+    listenForIsolatedRun: listenForIsolatedRun,
   };
+
+  if (runnerScript && runnerScript.hasAttribute('data-sebook-isolated-runner')) {
+    listenForIsolatedRun();
+  }
 })(window);

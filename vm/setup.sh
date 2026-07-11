@@ -2,77 +2,65 @@
 # setup.sh - Download v86 engine files and build the tutorial VM image
 # Usage: ./vm/setup.sh
 
-set -e
+set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 V86_DIR="$PROJECT_DIR/assets/v86"
 DIST_DIR="$SCRIPT_DIR/dist"
+BUILD_INPUTS="$SCRIPT_DIR/build-inputs.env"
+
+if [ ! -r "$BUILD_INPUTS" ]; then
+    echo "ERROR: Missing VM build input manifest: $BUILD_INPUTS" >&2
+    exit 1
+fi
+
+# shellcheck disable=SC1090 -- the repository-owned manifest is the contract.
+. "$BUILD_INPUTS"
+
+sha256_file() {
+    if command -v sha256sum >/dev/null 2>&1; then
+        sha256sum "$1" | awk '{print $1}'
+    else
+        shasum -a 256 "$1" | awk '{print $1}'
+    fi
+}
+
+verify_pinned_artifact() {
+    local artifact_path="$1"
+    local expected_sha256="$2"
+    local artifact_name
+    local actual_sha256
+    artifact_name="$(basename "$artifact_path")"
+
+    if [ ! -f "$artifact_path" ]; then
+        echo "ERROR: Missing repository-pinned v86 artifact: $artifact_path" >&2
+        echo "Restore it from Git before running VM setup." >&2
+        exit 1
+    fi
+
+    actual_sha256="$(sha256_file "$artifact_path")"
+    if [ "$actual_sha256" != "$expected_sha256" ]; then
+        echo "ERROR: Integrity check failed for $artifact_name" >&2
+        echo "  expected: $expected_sha256" >&2
+        echo "  actual:   $actual_sha256" >&2
+        echo "Refresh build-inputs.env only as part of a reviewed dependency update." >&2
+        exit 1
+    fi
+    echo "Verified $artifact_name"
+}
 
 echo "=== Tutorial VM Setup ==="
 echo ""
 
 # -------------------------------------------------------
-# Step 1: Download v86 engine (libv86.js, v86.wasm, BIOS)
+# Step 1: Verify the repository-pinned v86 engine and BIOS
 # -------------------------------------------------------
-echo "--- Step 1: Downloading v86 engine ---"
-mkdir -p "$V86_DIR"
-
-# Try downloading from the latest GitHub release
-RELEASE_URL="https://api.github.com/repos/copy/v86/releases/latest"
-echo "Fetching latest v86 release info..."
-RELEASE_JSON=$(curl -sS "$RELEASE_URL" 2>/dev/null || echo "{}")
-
-LIBV86_URL=$(echo "$RELEASE_JSON" | python3 -c "
-import sys, json
-try:
-    data = json.load(sys.stdin)
-    for asset in data.get('assets', []):
-        if asset['name'] == 'libv86.js':
-            print(asset['browser_download_url'])
-            break
-except: pass
-" 2>/dev/null || echo "")
-
-V86WASM_URL=$(echo "$RELEASE_JSON" | python3 -c "
-import sys, json
-try:
-    data = json.load(sys.stdin)
-    for asset in data.get('assets', []):
-        if asset['name'] == 'v86.wasm':
-            print(asset['browser_download_url'])
-            break
-except: pass
-" 2>/dev/null || echo "")
-
-if [ -n "$LIBV86_URL" ] && [ -n "$V86WASM_URL" ]; then
-    echo "Downloading libv86.js from release..."
-    curl -L --progress-bar -o "$V86_DIR/libv86.js" "$LIBV86_URL"
-    echo "Downloading v86.wasm from release..."
-    curl -L --progress-bar -o "$V86_DIR/v86.wasm" "$V86WASM_URL"
-else
-    echo ""
-    echo "Could not find release assets. Building v86 from source..."
-    echo "This requires: rust, make, clang, java (closure compiler)"
-    echo ""
-    TEMP_DIR=$(mktemp -d)
-    trap "rm -rf $TEMP_DIR" EXIT
-    git clone --depth 1 https://github.com/copy/v86.git "$TEMP_DIR/v86"
-    cd "$TEMP_DIR/v86"
-    make build/libv86.js build/v86.wasm
-    cp build/libv86.js "$V86_DIR/"
-    cp build/v86.wasm "$V86_DIR/"
-    cd "$PROJECT_DIR"
-    rm -rf "$TEMP_DIR"
-    trap - EXIT
-fi
-
-# Download BIOS files from v86 repository
-echo "Downloading BIOS files..."
-curl -sS -L -o "$V86_DIR/seabios.bin" \
-    "https://raw.githubusercontent.com/copy/v86/master/bios/seabios.bin"
-curl -sS -L -o "$V86_DIR/vgabios.bin" \
-    "https://raw.githubusercontent.com/copy/v86/master/bios/vgabios.bin"
+echo "--- Step 1: Verifying v86 engine ---"
+verify_pinned_artifact "$V86_DIR/libv86.js" "$V86_LIBV86_SHA256"
+verify_pinned_artifact "$V86_DIR/v86.wasm" "$V86_WASM_SHA256"
+verify_pinned_artifact "$V86_DIR/seabios.bin" "$V86_SEABIOS_SHA256"
+verify_pinned_artifact "$V86_DIR/vgabios.bin" "$V86_VGABIOS_SHA256"
 
 echo "v86 engine ready: $V86_DIR"
 ls -lh "$V86_DIR"

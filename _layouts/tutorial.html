@@ -24,9 +24,10 @@
         <label id="autoSaveLabel" class="tutorial-nav-control tutorial-nav-hidden"
                data-original-title="Automatically save step and code so you can resume later">
           <i class="fa-solid fa-floppy-disk" aria-hidden="true"></i> Auto-save
+          <span id="tutorialAutosaveVisibleStatus" class="is-hidden" aria-hidden="true"></span>
           <span id="tutorialAutosaveStatus" class="sr-only" role="status" aria-live="polite" aria-atomic="true"></span>
           <span class="tvm-dark-toggle-wrap">
-            <input type="checkbox" id="autoSaveToggle" class="tvm-toggle-input" checked>
+            <input type="checkbox" id="autoSaveToggle" class="tvm-toggle-input" aria-label="Auto-save" checked>
             <span class="tvm-dark-toggle-track">
               <span class="tvm-dark-toggle-thumb"></span>
             </span>
@@ -276,7 +277,9 @@
   <!-- Mermaid.js — themed via SebookMermaid to match the ArchUML visual language.
        crossorigin=anonymous ensures the response is valid under COEP=credentialless
        (which the COI shim sets on debugger / webcontainer tutorials). -->
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js"
+          integrity="sha384-T/0lMUdJpd2S1ZHtRiofG3htU3xPCrFVeAQ1UUE2TJwlEJSV5NUwn30kP28n238E"
+          crossorigin="anonymous"></script>
   <script src="{{ '/js/mermaid-theme.js' | relative_url }}"></script>
 
   <!-- Custom UML diagram renderers -->
@@ -547,7 +550,7 @@
             } else {
               tutorial.autoSaveEnabled = true;
               localStorage.setItem('tutorial-autosave', 'true');
-              tutorial.saveProgress();
+              tutorial._reportAutoSaveResult(tutorial.saveProgress());
             }
           });
 
@@ -781,8 +784,12 @@
 
   <!-- Only load jQuery + Bootstrap (skip portfolio/carousel scripts).
        crossorigin=anonymous required for COEP=credentialless contexts. -->
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js" crossorigin="anonymous"></script>
-  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js" crossorigin="anonymous"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"
+          integrity="sha384-1H217gwSVyLSIfaLxHbE7dRb3v4mYCKbpQvzx0cegeju1MVsGrX5xXxAvs/HgeFs"
+          crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/js/bootstrap.min.js"
+          integrity="sha384-4Kp4aQ6UNeqsJ/ithPcxYnnIGt/QJJ64J9QtfDAJZUTaePAIPm9aaBdu7Gw84oGs"
+          crossorigin="anonymous"></script>
   <script>
     (function () {
       var tooltipSelector = '[data-toggle="tooltip"], [data-original-title], [data-tooltip], [title]:not([data-no-tooltip]):not(iframe)';
