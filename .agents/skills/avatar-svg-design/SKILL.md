@@ -100,6 +100,8 @@ Professional comic artists construct hair in three passes, in this order:
 
 The Clip Studio guide puts it bluntly: *"clump a few strands together, so it looks more natural. It should not be evenly spaced."* This is the single most important pedagogical principle for strand work.
 
+The same rule governs the **`curl-symbol` texture marks** on the curly / coily family (`curly`, `coils`, `afro`, `rounded-afro`, `curly-bob`, `rounded-curls`, `voluminous-curls`, `curly-layers`). The standard block (July 2026 cleanup) is **two tone groups, clumped asymmetrically**: a `--hero-hair-dark` group (stroke ~1.8–2, opacity ~.4) whose arcs tuck into *specific perimeter bumps* — these carry the texture on light hair — plus one or two `--hero-hair-light` arcs (stroke ~1.4–1.5, opacity ~.55) *inside the key-light zone only* — these carry it on dark hair. A single rim-tone group fanned evenly across the crown reads as floating scribbled worms; that shipped and was reworked. Vary every scale and rotation, and keep marks concentric with the silhouette scallop they sit inside.
+
 ## Volume guidelines (minimum and maximum volume)
 
 The Etherington Bros / Clip Studio rule:
@@ -397,7 +399,7 @@ Each tier lives in its own `<g data-hero-slot="muscle-strength" data-hero-option
 
 Critical invariants the tiers must preserve:
 
-1. **Shared pivots.** The shoulder rotation centre is `(322, 268)` for the left arm and `(478, 268)` for the right; the elbow centre is `(322, 162)` / `(478, 162)`. These are referenced in the parent `<g data-arm-side="…"><animateTransform>` and **must not shift between tiers** — otherwise the overhead-press animation jerks on every milestone swap. All six silhouette paths therefore end at exactly `(322, 162)` / `(478, 162)` and start at exactly `(322 ± n, 268)` / `(478 ± n, 268)`.
+1. **Shared pivots, dome-capped ends.** The shoulder rotation centre is `(322, 268)` for the left arm and `(478, 268)` for the right; the elbow centre is `(322, 162)` / `(478, 162)`. These are referenced in the parent `<g data-arm-side="…"><animateTransform>` and **must not shift between tiers** — otherwise the overhead-press animation jerks on every milestone swap. Each upper-arm silhouette ends in a **rounded dome wrapping the elbow pivot** (apex at `x=322/478`, `y≈152–154.5` by tier, horizontal tangent at the apex), and each forearm's base cap bulges to `y≈169–172` below the pivot — two round bone ends circling the same pivot stay joined at any rotation, so no separate joint patch is needed. **Never taper either segment to a point at the pivot**: a zero-width apex at `(322, 162)` produces the hourglass "balloon-animal" pinch that shipped before the July 2026 arm cleanup. Shoulder ends still start at exactly `(322 ± n, 268)` / `(478 ± n, 268)`.
 2. **One continuous cubic-Bezier silhouette per tier.** No `L` commands. The lateral side (away from body centerline x=400) bulges more than the medial side — that's the asymmetric anatomy that makes muscles read as natural instead of tubular.
 3. **Cel-shaded FILL plates, not strokes**, for primary form light/shadow. Strokes are reserved for specular sheens, deltoid grooves, brachialis lines, and rim lights. The shading reads as painted depth at any render size — including the 180 px customizer thumbnail and the 600 px hero.
 4. **Specular sheen** is always a thin near-white stroke at low opacity (~0.3–0.6) placed on the bicep peak's brightest point. For `diamond`, layer two sheens (wide + narrow) for tighter catchlight.
@@ -418,7 +420,13 @@ If you ever add a sixth tier:
 
 ### Editing existing muscle tiers
 
-When tweaking an existing tier's silhouette, **keep the start and end points unchanged**. The path should always start at `M <shoulder_x> 268` (where `shoulder_x` varies by tier — e.g. 313 for none, 299 for diamond on the left) and the curves should always pass through `(322, 162)` for left or `(478, 162)` for right. Otherwise the elbow joint stops tracking the upper-arm bottom, and you get a visible disconnect during the press cycle.
+When tweaking an existing tier's silhouette, **keep the start points and the dome-cap convention unchanged**. The path should always start at `M <shoulder_x> 268` (where `shoulder_x` varies by tier — e.g. 313 for none, 299 for diamond on the left), and the elbow end must remain a rounded dome centred on the pivot (`(322, 162)` left / `(478, 162)` right) — the dome, not a point, is what keeps the joint covered during the press cycle. Verify any elbow edit at the press extreme (`svg.setCurrentTime(1.21)` — 56° forearm bend), not just at rest.
+
+Three companion conventions from the July 2026 arm cleanup:
+
+- **`arm-suit` is a `userSpaceOnUse` gradient** spanning wrist (`y=64`) to shoulder (`y=276`), shared by both segments. Bounding-box units gave the upper arm and forearm separate light-to-dark ramps that met at the elbow as a hard value seam. Don't convert it back, and don't fill arm parts with bbox-mapped gradients.
+- **No elbow joint lens.** The forearm's own base arc reads as the elbow crease. The old `arm-joint` radial-gradient lens read as a doll-joint ball and was removed.
+- **The deltoid overlap caps** (one per shoulder, after the tier groups) are filled with `url(#arm-suit-…)` so they extend the sleeve invisibly while masking the shoulder pivot. Don't give them their own gradient or rim stroke — that recreates the "balloon knot".
 
 ## Animation: the lift cycle and idle life
 

@@ -1799,7 +1799,6 @@
     var skinLum = relativeLuminance(skin);
     var hairLum = relativeLuminance(hair);
     var skinShadow = darken(skin, 0.22);
-    var skinMid = mix(skin, skinShadow, skinLum < 0.13 ? 0.24 : (skinLum < 0.2 ? 0.28 : 0.24));
     var skinRamp = [skin, skinShadow];
     var darkSkin = skinLum < 0.24;
     var deepSkin = skinLum < 0.13;
@@ -1823,6 +1822,12 @@
       [skin],
       darkSkin ? 2.2 : 1.35
     );
+    // Deep complexions need a warm midtone plane between the key light and
+    // jaw shadow. Darkening this stop flattened the face into one value;
+    // lifting it locally preserves volume without changing the chosen base.
+    var skinMid = darkSkin
+      ? mix(skin, warmHighlight, deepSkin ? 0.13 : 0.09)
+      : mix(skin, skinShadow, 0.24);
     var hairHighlight = darkHair
       ? mix(lighten(hair, darkSkin ? 0.48 : 0.38), '#8a6748', darkSkin ? 0.22 : 0.12)
       : lighten(hair, 0.35);
@@ -1910,7 +1915,7 @@
       ? firstContrastColorAgainstAll([hairRim, faceLine, lighten(hair, 0.58), mix(hair, '#f1c27d', 0.38), darken(hair, 0.5)], skinRamp, featureTarget)
       : hair;
     var skinHighlightSoft = darkSkin
-      ? mix(skin, warmHighlight, deepSkin ? 0.28 : 0.24)
+      ? mix(skin, warmHighlight, deepSkin ? 0.36 : 0.3)
       : mix(skin, '#fff2df', 0.2);
     var handHighlight = skinRelativeAccent(skin, skinHighlightSoft, deepSkin ? 0.34 : 0.42, 1.45);
     var noseFill = mix(skin, faceLine, darkSkin ? 0.38 : 0.46);
@@ -1921,9 +1926,9 @@
     var skinAmbient = darkSkin
       ? mix(skin, '#7c7180', deepSkin ? 0.18 : 0.14)
       : mix(skin, '#ffe6cc', 0.14);
-    var facePlaneShadow = darkSkin
-      ? mix(skinShadow, '#2a1710', deepSkin ? 0.1 : 0.06)
-      : darken(skin, 0.2);
+    var facePlaneShadow = deepSkin
+      ? mix(skinShadow, '#000000', 0.24)
+      : (darkSkin ? mix(skinShadow, '#2a1710', 0.06) : darken(skin, 0.2));
     var jawLine = firstContrastColorAgainstAll(
       darkSkin
         ? [faceLine, '#b08a69', mix(skin, '#f1c27d', 0.68), '#f4d7b5']
@@ -1975,9 +1980,9 @@
       faceMarkOpacity: darkSkin ? '0.28' : '0.34',
       faceMarkStrongOpacity: darkSkin ? '0.38' : '0.48',
       hairDetailOpacity: darkHair ? (darkSkin ? '0.48' : '0.42') : '0.46',
-      faceCoreHighlightOpacity: darkSkin ? '0.3' : '0.28',
-      faceFormShadowOpacity: darkSkin ? '0.28' : '0.22',
-      faceAmbientOpacity: darkSkin ? '0.08' : '0.07',
+      faceCoreHighlightOpacity: deepSkin ? '0.35' : (darkSkin ? '0.32' : '0.28'),
+      faceFormShadowOpacity: darkSkin ? (deepSkin ? '0.34' : '0.3') : '0.22',
+      faceAmbientOpacity: deepSkin ? '0.11' : (darkSkin ? '0.09' : '0.07'),
       jawLineOpacity: darkSkin ? '0.18' : '0.16',
       neckShadowOpacity: darkSkin ? '0.42' : '0.24',
       neckHighlightOpacity: darkSkin ? '0.18' : '0.14',
@@ -2013,6 +2018,25 @@
     }
   }
 
+  function syncForegroundHairline(svg, hairStyle) {
+    var hair = svg.querySelector('[data-hero-slot="hair"][data-hero-option="' + hairStyle + '"]');
+    var hairline = svg.querySelector('[data-hero-slot="hairline"][data-hero-option="' + hairStyle + '"]');
+    if (!hair || !hairline || hairStyle === 'bald') return;
+    if (hairline.getAttribute('data-hero-foreground-source') === hairStyle) return;
+
+    while (hairline.firstChild) hairline.removeChild(hairline.firstChild);
+    for (var i = 0; i < hair.children.length; i++) {
+      var child = hair.children[i];
+      var isBackfill = child.matches('use[href*="hair-backfill"]');
+      var isRearLayer = child.matches('[data-hero-hair-layer="back"]');
+      if (isBackfill || isRearLayer) continue;
+      var foregroundClone = child.cloneNode(true);
+      foregroundClone.setAttribute('data-hero-foreground-hair', 'true');
+      hairline.appendChild(foregroundClone);
+    }
+    hairline.setAttribute('data-hero-foreground-source', hairStyle);
+  }
+
   function promoteSelectedWearableLayers(svg, accessories) {
     var foregroundWearables = ['over-ear-headphones', 'headset-mic'];
     for (var i = 0; i < foregroundWearables.length; i++) {
@@ -2034,13 +2058,22 @@
   }
 
   function setOpaqueHatHairClip(svg, enabled) {
-    var clip = svg.querySelector('[data-hero-under-hat-hair-clip]');
+    var hairClip = svg.querySelector('[data-hero-under-hat-hair-clip]');
+    var hairlineClip = svg.querySelector('[data-hero-under-hat-hairline-clip]');
     var groups = svg.querySelectorAll('[data-hero-slot="hair"], [data-hero-slot="hairline"], [data-hero-slot="hair-root"]');
     for (var i = 0; i < groups.length; i++) groups[i].style.removeProperty('clip-path');
-    if (!enabled || !clip || !clip.id) return;
-    var clipValue = 'url(#' + clip.id + ')';
+    if (!enabled || !hairClip || !hairClip.id) return;
+    var hairClipValue = 'url(#' + hairClip.id + ')';
     for (var j = 0; j < groups.length; j++) {
-      if (groups[j].getAttribute('display') === 'inline') groups[j].style.setProperty('clip-path', clipValue);
+      if (groups[j].getAttribute('display') !== 'inline') continue;
+      var slot = groups[j].getAttribute('data-hero-slot');
+      if (slot === 'hairline') {
+        if (hairlineClip && hairlineClip.id) {
+          groups[j].style.setProperty('clip-path', 'url(#' + hairlineClip.id + ')');
+        }
+        continue;
+      }
+      groups[j].style.setProperty('clip-path', hairClipValue);
     }
   }
 
@@ -2833,6 +2866,7 @@
     setSlot(svg, 'face-clear', headStyle);
     setSlot(svg, 'head-features', headStyle);
     setSlot(svg, 'hairline', hidesHair ? 'none' : renderedHairStyle);
+    if (!hidesHair) syncForegroundHairline(svg, renderedHairStyle);
     var revealsHairline = compositedAccessories.some(function (accessory) { return !!HAIRLINE_VISIBLE_COVERINGS[accessory]; });
     var hairCapOption = hairStyle === 'bald'
       ? null

@@ -59,6 +59,14 @@ const CHOICE_PREVIEW_VIEWBOXES = {
   upper: '246 86 308 374',
 };
 
+const FACE_SAFE_CROWN_REGION = Object.freeze({
+  left: 328,
+  top: 56,
+  right: 472,
+  bottom: 186,
+  sampleStep: 4,
+});
+
 const DEFAULT_SAVED_HERO = {
   version: 1,
   kind: 'human',
@@ -326,6 +334,66 @@ async function entranceHeroSignatures(page) {
       ].join('|');
     });
   });
+}
+
+async function measureForegroundCrown(hairline, hairStyle) {
+  return hairline.evaluate((group, { style, region }) => {
+    const svg = group.ownerSVGElement;
+    const screenTransform = group.getScreenCTM();
+    const geometryCount = group.querySelectorAll(
+      'path, ellipse, circle, rect, polygon, polyline, line, use'
+    ).length;
+    const bounds = group.getBBox();
+    const paintMap = [];
+    const unsafePaintedPoints = [];
+    let paintedPointCount = 0;
+    let unsafePaintedPointCount = 0;
+
+    const auditRegion = {
+      left: Math.min(region.left, bounds.x) - region.sampleStep,
+      top: Math.min(region.top, bounds.y) - region.sampleStep,
+      right: Math.max(region.right, bounds.x + bounds.width) + region.sampleStep,
+      bottom: Math.max(region.bottom, bounds.y + bounds.height) + region.sampleStep,
+    };
+
+    for (let y = auditRegion.top; y <= auditRegion.bottom; y += region.sampleStep) {
+      for (let x = auditRegion.left; x <= auditRegion.right; x += region.sampleStep) {
+        const point = svg.createSVGPoint();
+        point.x = x;
+        point.y = y;
+        const screenPoint = point.matrixTransform(screenTransform);
+        const isPainted = document.elementsFromPoint(screenPoint.x, screenPoint.y)
+          .some((element) => element.closest && element.closest('[data-hero-slot="hairline"]') === group);
+        paintMap.push(isPainted ? '1' : '0');
+        if (!isPainted) continue;
+
+        paintedPointCount++;
+        const isFaceSafe = x >= region.left
+          && x <= region.right
+          && y >= region.top
+          && y <= region.bottom;
+        if (!isFaceSafe) {
+          unsafePaintedPointCount++;
+          if (unsafePaintedPoints.length < 12) unsafePaintedPoints.push({ x, y });
+        }
+      }
+    }
+
+    return {
+      style,
+      geometryCount,
+      paintedPointCount,
+      unsafePaintedPointCount,
+      unsafePaintedPoints,
+      paintMap: paintMap.join(''),
+      bounds: {
+        left: bounds.x,
+        top: bounds.y,
+        right: bounds.x + bounds.width,
+        bottom: bounds.y + bounds.height,
+      },
+    };
+  }, { style: hairStyle, region: FACE_SAFE_CROWN_REGION });
 }
 
 test.describe('SE Gym Hero Avatar Customizer', () => {
@@ -2545,6 +2613,46 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await expect(shortGroup).toHaveAttribute('display', 'none');
   });
 
+  test('Representative hair families keep distinct face-safe foreground crowns', async ({ page }) => {
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+    await clearAccessories(page);
+
+    const representativeStyles = ['short', 'straight-long-layers', 'coils', 'box-braids', 'locs-bun', 'mohawk'];
+    const hairStyle = page.getByLabel('Hair style', { exact: true });
+    const preview = page.getByRole('dialog', { name: 'Customize your hero' })
+      .locator('[data-gym-hero-svg]');
+    const crowns = [];
+
+    for (const style of representativeStyles) {
+      await hairStyle.selectOption(style);
+      const activeHairline = preview.locator(
+        `[data-hero-slot="hairline"][data-hero-option="${style}"]`
+      );
+      await expect(activeHairline).toHaveAttribute('display', 'inline');
+      crowns.push(await measureForegroundCrown(activeHairline, style));
+    }
+
+    const invalidCrowns = crowns.filter(({ geometryCount, paintedPointCount, unsafePaintedPointCount }) =>
+      geometryCount === 0
+      || paintedPointCount === 0
+      || unsafePaintedPointCount > 0
+    );
+    expect(invalidCrowns, 'foreground crowns should render nonempty geometry inside the face-safe crown region')
+      .toEqual([]);
+
+    const stylesByPaintMap = new Map();
+    for (const crown of crowns) {
+      const matchingStyles = stylesByPaintMap.get(crown.paintMap) || [];
+      matchingStyles.push(crown.style);
+      stylesByPaintMap.set(crown.paintMap, matchingStyles);
+    }
+    const collapsedCrowns = Array.from(stylesByPaintMap.values()).filter((styles) => styles.length > 1);
+    expect(collapsedCrowns, 'representative hair families should retain visibly distinct crown silhouettes')
+      .toEqual([]);
+  });
+
   test('Long hair stays behind the face surface around facial features', async ({ page }) => {
     await page.goto(GYM_URL);
     await activatePersonalGym(page);
@@ -3364,10 +3472,16 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
             failures.push({ hairStyle, headwear, reason: 'opaque hat should not use the crown-shaped covering hair cap' });
           }
           const activeHair = svg.querySelector(`[data-hero-slot="hair"][data-hero-option="${hairStyle}"]`);
+          const activeHairline = svg.querySelector(`[data-hero-slot="hairline"][data-hero-option="${hairStyle}"]`);
           const clip = svg.querySelector('[data-hero-under-hat-hair-clip]');
+          const hairlineClip = svg.querySelector('[data-hero-under-hat-hairline-clip]');
           const activeClip = activeHair ? activeHair.style.getPropertyValue('clip-path') : '';
+          const activeHairlineClip = activeHairline ? activeHairline.style.getPropertyValue('clip-path') : '';
           if (hairStyle !== 'bald' && (!clip || !activeClip.includes(clip.id))) {
             failures.push({ hairStyle, headwear, reason: 'opaque hat should clip only the hidden crown while preserving lower authored hair' });
+          }
+          if (hairStyle !== 'bald' && (!hairlineClip || !activeHairlineClip.includes(hairlineClip.id))) {
+            failures.push({ hairStyle, headwear, reason: 'opaque hat should keep foreground hair inside the face-safe lower crown' });
           }
           for (const point of [
             { name: 'upper-left crown', x: 360, y: 112 },
@@ -3384,6 +3498,9 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
             const hit = hitSlot(point);
             if (hit.slot === 'accessory' && hit.option === headwear) {
               failures.push(Object.assign({ hairStyle, headwear, reason: 'opaque hat obscures an eye' }, hit));
+            }
+            if (['hair', 'hairline', 'hair-root'].includes(hit.slot)) {
+              failures.push(Object.assign({ hairStyle, headwear, reason: 'opaque-hat hair obscures an eye' }, hit));
             }
           }
         }

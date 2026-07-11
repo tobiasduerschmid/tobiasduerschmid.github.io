@@ -12,6 +12,12 @@
       "runtimeExecutable": "bundle",
       "runtimeArgs": ["exec", "jekyll", "serve", "--incremental", "--port", "4000"],
       "port": 4000
+    },
+    {
+      "name": "static-site",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "4567", "--directory", "_site"],
+      "port": 4567
     }
   ]
 }
