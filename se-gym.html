@@ -795,12 +795,6 @@ layout: sebook
   <!-- Verbal aria-label generator (parses live SE Gym diagrams as the user types) -->
   <script src="{{ '/js/uml-auto-describe.js' | relative_url }}" defer></script>
   {% if site.gym_hero_animation %}
-  {% if jekyll.environment == 'production' %}
-  <script>
-    window.SEGymHeroChoicePreviewBaseUrl = "{{ '/assets/se-gym-hero-choice-previews/' | relative_url }}";
-  </script>
-  <script src="{{ '/assets/se-gym-hero-choice-previews/manifest.js' | relative_url }}" defer></script>
-  {% endif %}
   <!-- Hero avatar customizer (load + save + modal) -->
   <script src="{{ '/js/se-gym-hero-avatar.js' | relative_url }}" defer></script>
   {% endif %}

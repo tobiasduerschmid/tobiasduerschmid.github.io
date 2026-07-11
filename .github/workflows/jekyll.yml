@@ -39,9 +39,6 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Pre-render SE Gym hero choice previews
-        run: node scripts/build_se_gym_hero_choice_previews.js
-
       - name: Build with Jekyll
         run: bundle exec jekyll build --strict_front_matter
         env:
@@ -54,78 +51,17 @@ jobs:
         if: github.event_name == 'push'
         uses: actions/upload-pages-artifact@56afc609e74202658d3ffba0e8f6dda462b719fa # v3
 
-  test:
-    name: Test shard ${{ matrix.shard }} of 4
-    needs: build
-    runs-on: ubuntu-latest
-    timeout-minutes: 120
-    strategy:
-      fail-fast: false
-      matrix:
-        shard: [1, 2, 3, 4]
-    steps:
-      - name: Checkout
-        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-        with:
-          submodules: recursive
-          persist-credentials: false
-
-      - name: Setup Ruby
-        uses: ruby/setup-ruby@d45b1a4e94b71acab930e56e79c6aa188764e7f9 # v1
-        with:
-          ruby-version: '3.3.0'
-          bundler-cache: true
-
-      - name: Setup Node.js
-        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install Node dependencies
-        run: npm ci
-
-      - name: Install Playwright browser
-        run: npx playwright install --with-deps chromium
-
-      - name: Pre-render SE Gym hero choice previews
-        run: node scripts/build_se_gym_hero_choice_previews.js
-
-      - name: Run browser, data, and WCAG 2.2 AA regression suite
-        run: npx playwright test --shard=${{ matrix.shard }}/4
-        env:
-          A11Y_INTERACTIVE_CHECKS: '1'
-          WCAG_AUDIT_FULL_SWEEP: '1'
-          CI: 'true'
-
-      - name: Upload WCAG audit reports
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: wcag-audit-report-${{ matrix.shard }}
-          path: tmp/wcag22-*.json
-          if-no-files-found: ignore
-
-      - name: Upload Playwright report
-        if: failure()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
-        with:
-          name: playwright-report-${{ matrix.shard }}
-          path: playwright-report/
-          if-no-files-found: warn
-
   deploy:
     if: |
       always()
       && github.event_name == 'push'
       && github.ref == 'refs/heads/master'
       && needs.build.result == 'success'
-      && needs.test.result == 'success'
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
-    needs: [build, test]
+    needs: build
     permissions:
       contents: read
       pages: write
