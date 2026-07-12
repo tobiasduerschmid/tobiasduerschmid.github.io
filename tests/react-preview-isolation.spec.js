@@ -247,6 +247,36 @@ test.describe('React preview isolation', () => {
     await expect(page.getByText('All 3 tests passed!')).toBeVisible({ timeout: 20_000 });
   });
 
+  test('commands from a timed-out learner test cannot mutate the next reset preview', async ({ page }) => {
+    await openPlaywrightTutorial(page);
+    await setTutorialFileContent(page, 'tests/todo.spec.js', [
+      "import { test, expect } from '@playwright/test';",
+      '',
+      'let startLateAction;',
+      'const nextTestStarted = new Promise(resolve => { startLateAction = resolve; });',
+      'let markLateActionAttempted;',
+      'const lateActionAttempted = new Promise(resolve => { markLateActionAttempted = resolve; });',
+      '',
+      "test('action scheduled by a timed-out test', async ({ page }) => {",
+      '  await nextTestStarted;',
+      "  const lateAction = page.getByRole('textbox', { name: /todo item/i })",
+      "    .fill('late mutation').catch(() => {});",
+      '  markLateActionAttempted();',
+      '  await lateAction;',
+      '});',
+      '',
+      "test('user can add a todo', async ({ page }) => {",
+      '  startLateAction();',
+      '  await lateActionAttempted;',
+      "  await expect(page.getByRole('textbox', { name: /todo item/i })).toHaveValue('');",
+      '});',
+    ].join('\n'));
+
+    await page.getByRole('button', { name: /test my work/i }).click();
+
+    await expect(page.getByText('All 3 tests passed!')).toBeVisible({ timeout: 20_000 });
+  });
+
   test('a stalled worker-source fetch is aborted and does not poison later runs', async ({ page }) => {
     await openPlaywrightTutorial(page);
     let blockedBootstrap = false;

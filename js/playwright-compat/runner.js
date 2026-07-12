@@ -136,6 +136,7 @@
     var requestType = options && options.requestType || 'playwright';
     var sequence = 0;
     var pending = {};
+    var disposed = false;
     if (!port) throw new Error('Private React preview broker is unavailable');
 
     function handleMessage(event) {
@@ -152,15 +153,20 @@
     startPort(port);
 
     this.dispose = function () {
+      if (disposed) return;
+      disposed = true;
       removePortEventListener(port, 'message', handleMessage);
       Object.keys(pending).forEach(function (id) {
-        pending[id].reject(new Error('Playwright runner was disposed'));
+        pending[id].reject(new NativeError('Playwright runner was disposed'));
         cancelTimeout(pending[id].timer);
       });
       pending = {};
     };
 
     this.command = function (type, payload, timeout) {
+      if (disposed) {
+        return NativePromise.reject(new NativeError('Playwright runner was disposed'));
+      }
       var id = ++sequence;
       return new NativePromise(function (resolve, reject) {
         var timer = scheduleTimeout(function () {

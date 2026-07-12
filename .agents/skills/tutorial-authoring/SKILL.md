@@ -1231,6 +1231,12 @@ terminate the worker. Keep the `data:`-URL origin boundary: a same-origin worker
 would regain access to origin-scoped storage such as IndexedDB. Never move
 assertion commands, request ids, or results back onto public worker/window
 messages; learner code can observe and forge public message traffic.
+Each Playwright-compat test owns a disposable preview broker. A per-test timeout
+settles the result but cannot synchronously cancel arbitrary learner promises,
+so disposing that broker must make every later command from the losing chain
+reject before it posts to the shared session port. Keep this boundary when
+adding Playwright-shaped APIs; otherwise a delayed action from a timed-out test
+can mutate the freshly reset preview used by the next test.
 
 `uml-python-workspace.html` is a separate generated-code workspace opened by
 the UML editor's "Generate Python" action. It receives a one-shot
@@ -1262,6 +1268,16 @@ channel.
   preview panel in the DOM, toggling the inactive one with `hidden` so it is
   not exposed to assistive tech. Existing single-backend tutorials keep using
   top-level `setup_commands`.
+  Backend initialization and restart promises are cached only while pending;
+  successful, failed, invalidated, and superseded transactions must all release
+  their cache entries. Background prewarming passes immutable loading-display
+  options into its own initializer instead of mutating a shared suppression
+  flag, so overlapping foreground initialization always retains its loading
+  state. Fatal worker events carry the failed backend identity. If that backend
+  is visible, the runtime reconstructs it immediately; if it is parked behind
+  another mixed-backend step, the runtime invalidates it and rebuilds it lazily
+  when the learner returns. Never infer the failed worker from the currently
+  visible panel.
   WebContainer boot and shell-command handshakes are bounded. Module, boot, or
   workspace-initialization failure tears down any partial or late runtime before
   selecting the browser fallback. Authored WebContainer setup failures do not

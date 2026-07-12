@@ -7,6 +7,7 @@ const { a11yCheckpoint } = require('./a11y-helpers');
 
 const A11Y_FEATURE = 'se-gym-hero-avatar';
 const GYM_URL = '/se-gym/';
+const EXHAUSTIVE_GEOMETRY_TIMEOUT_MS = 180_000;
 
 const ACTIVATE_TOGGLE_SLIDER = '#activatePersonalGymToggle + .slider';
 const MILESTONE_CONFIG = [
@@ -146,6 +147,68 @@ async function activatePersonalGym(page) {
     await page.locator(ACTIVATE_TOGGLE_SLIDER).click();
   }
   await expect(page.locator('#activatePersonalGymToggle')).toBeChecked();
+}
+
+async function installGeometryHero(page) {
+  await page.goto(GYM_URL);
+  await page.waitForFunction(() => (
+    window.HeroAvatar &&
+    document.querySelector('#hero-customizer-modal [data-gym-hero-svg]')
+  ));
+
+  await page.evaluate(() => {
+    const source = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+    if (!source) throw new Error('Hero customizer geometry source is missing.');
+
+    const svg = source.cloneNode(true);
+    svg.querySelectorAll('animate, animateMotion, animateTransform, set')
+      .forEach((animation) => animation.remove());
+    svg.setAttribute('data-hero-avatar-ready', 'true');
+
+    // Keep only the option sources that define the exhaustive matrices. The
+    // production customizer contains hundreds of thumbnail controls; leaving
+    // that unrelated DOM attached makes every SVG hit-test recalculate a much
+    // larger layout and can starve Chromium's renderer.
+    const optionSources = document.createElement('div');
+    optionSources.hidden = true;
+    ['#hero-cust-hair-style', '#hero-cust-head-style'].forEach((selector) => {
+      const sourceSelect = document.querySelector(selector);
+      if (!sourceSelect) throw new Error(`Hero geometry option source is missing: ${selector}`);
+      optionSources.appendChild(sourceSelect.cloneNode(true));
+    });
+
+    const host = document.createElement('div');
+    host.setAttribute('data-hero-geometry-test-host', '');
+    host.setAttribute('aria-hidden', 'true');
+    Object.assign(host.style, {
+      position: 'fixed',
+      inset: '0 auto auto 0',
+      width: '640px',
+      height: '665px',
+      zIndex: '2147483647',
+    });
+    Object.assign(svg.style, {
+      display: 'block',
+      width: '640px',
+      height: '665px',
+      maxWidth: 'none',
+      maxHeight: 'none',
+      opacity: '1',
+      visibility: 'visible',
+    });
+    host.appendChild(svg);
+    document.body.replaceChildren(host, optionSources);
+
+    window.HeroAvatar.applyToSvg(svg, window.HeroAvatar.DEFAULTS);
+    if (typeof svg.pauseAnimations === 'function') svg.pauseAnimations();
+    if (typeof svg.getAnimations === 'function') {
+      svg.getAnimations().forEach((animation) => animation.cancel());
+    }
+  });
+
+  const geometryHero = page.locator('[data-hero-geometry-test-host] [data-gym-hero-svg]');
+  await expect(geometryHero).toHaveCount(1);
+  return geometryHero;
 }
 
 async function clearAccessories(page) {
@@ -3189,13 +3252,10 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
   });
 
   test('Every selectable hair style keeps the facial feature area clear', async ({ page }) => {
-    await page.goto(GYM_URL);
-    await activatePersonalGym(page);
-    await page.getByRole('button', { name: 'Customize Hero' }).click();
-    await clearAccessories(page);
+    test.setTimeout(EXHAUSTIVE_GEOMETRY_TIMEOUT_MS);
+    const geometryHero = await installGeometryHero(page);
 
-    const blockedFeatureHitsByStyle = await page.evaluate(() => {
-      const svg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+    const blockedFeatureHitsByStyle = await geometryHero.evaluate((svg) => {
       const styles = Array.from(document.querySelectorAll('#hero-cust-hair-style option'))
         .map((node) => node.value)
         .filter(Boolean);
@@ -3256,18 +3316,14 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
   });
 
   test('Foreground hair shapes stay out of the eye area', async ({ page }) => {
-    await page.goto(GYM_URL);
-    await activatePersonalGym(page);
-    await page.getByRole('button', { name: 'Customize Hero' }).click();
-    await clearAccessories(page);
+    test.setTimeout(EXHAUSTIVE_GEOMETRY_TIMEOUT_MS);
+    const geometryHero = await installGeometryHero(page);
 
-    const eyeIntersectionFailures = await page.evaluate(() => {
-      const svg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+    const eyeIntersectionFailures = await geometryHero.evaluate(async (svg) => {
       const styles = Array.from(document.querySelectorAll('#hero-cust-hair-style option'))
         .map((node) => node.value)
         .filter(Boolean);
       const headStyles = ['default', 'full-cheeks', 'broad', 'oblong', 'soft-full-cheek-jaw'];
-      const eyeShapes = ['round', 'wide', 'almond'];
       const foregroundHairSlots = ['hair-cap', 'hairline', 'hair-root'];
       const eyePoints = [
         { name: 'left eye center', x: 381, y: 185 },
@@ -3301,28 +3357,28 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
       for (const hairStyle of styles) {
         for (const headStyle of headStyles) {
-          for (const eyeShape of eyeShapes) {
-            const state = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
-            state.appearance.hairStyle = hairStyle;
-            state.appearance.headStyle = headStyle;
-            state.appearance.eyeShape = eyeShape;
-            window.HeroAvatar.applyToSvg(svg, state);
+          // Eye shapes occupy the same protected coordinates and do not alter
+          // hair transforms. Rendering every shape would repeat this exact
+          // geometry matrix without exercising another partition.
+          const state = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(baseState)));
+          state.appearance.hairStyle = hairStyle;
+          state.appearance.headStyle = headStyle;
+          window.HeroAvatar.applyToSvg(svg, state);
 
-            for (const point of eyePoints) {
-              const foregroundHairHits = stackedSlotsAt(point)
-                .filter((hit) => foregroundHairSlots.includes(hit.slot));
-              if (foregroundHairHits.length) {
-                failures.push({
-                  hairStyle,
-                  headStyle,
-                  eyeShape,
-                  point: point.name,
-                  foregroundHairHits,
-                });
-              }
+          for (const point of eyePoints) {
+            const foregroundHairHits = stackedSlotsAt(point)
+              .filter((hit) => foregroundHairSlots.includes(hit.slot));
+            if (foregroundHairHits.length) {
+              failures.push({
+                hairStyle,
+                headStyle,
+                point: point.name,
+                foregroundHairHits,
+              });
             }
           }
         }
+        await new Promise((resolve) => requestAnimationFrame(resolve));
       }
 
       return failures;
@@ -3335,14 +3391,10 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
   });
 
   test('Every selectable hair style has complete visible behavior across face shapes, coverings, and opaque hats', async ({ page }) => {
-    test.setTimeout(90000);
-    await page.goto(GYM_URL);
-    await activatePersonalGym(page);
-    await page.getByRole('button', { name: 'Customize Hero' }).click();
-    await clearAccessories(page);
+    test.setTimeout(EXHAUSTIVE_GEOMETRY_TIMEOUT_MS);
+    const geometryHero = await installGeometryHero(page);
 
-    const hairFailures = await page.evaluate(() => {
-      const svg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+    const hairFailures = await geometryHero.evaluate(async (svg) => {
       const baseState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS)));
       const hairStyles = Array.from(document.querySelectorAll('#hero-cust-hair-style option'))
         .map((node) => node.value)
@@ -3504,6 +3556,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
             }
           }
         }
+        await new Promise((resolve) => requestAnimationFrame(resolve));
       }
 
       return failures;
@@ -3513,13 +3566,10 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
   });
 
   test('Front-heavy hair styles keep fitted hairlines across varied head shapes', async ({ page }) => {
-    await page.goto(GYM_URL);
-    await activatePersonalGym(page);
-    await page.getByRole('button', { name: 'Customize Hero' }).click();
-    await clearAccessories(page);
+    test.setTimeout(EXHAUSTIVE_GEOMETRY_TIMEOUT_MS);
+    const geometryHero = await installGeometryHero(page);
 
-    const fitFailures = await page.evaluate(() => {
-      const svg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+    const fitFailures = await geometryHero.evaluate((svg) => {
       const baseState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS)));
       const cases = [
         { headStyle: 'round', hairStyle: 'straight-fringe' },
@@ -3566,13 +3616,10 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
   });
 
   test('Head-bound hair, accessories, and details fit the selected head shape', async ({ page }) => {
-    await page.goto(GYM_URL);
-    await activatePersonalGym(page);
-    await page.getByRole('button', { name: 'Customize Hero' }).click();
-    await clearAccessories(page);
+    test.setTimeout(EXHAUSTIVE_GEOMETRY_TIMEOUT_MS);
+    const geometryHero = await installGeometryHero(page);
 
-    const fitFailures = await page.evaluate(() => {
-      const svg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+    const fitFailures = await geometryHero.evaluate((svg) => {
       const baseState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS)));
       const failures = [];
       const cases = [
@@ -3702,13 +3749,10 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
   });
 
   test('Every selectable hair style keeps the costume emblem clear', async ({ page }) => {
-    await page.goto(GYM_URL);
-    await activatePersonalGym(page);
-    await page.getByRole('button', { name: 'Customize Hero' }).click();
-    await clearAccessories(page);
+    test.setTimeout(EXHAUSTIVE_GEOMETRY_TIMEOUT_MS);
+    const geometryHero = await installGeometryHero(page);
 
-    const hairOverCostumeHits = await page.evaluate(() => {
-      const svg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+    const hairOverCostumeHits = await geometryHero.evaluate(async (svg) => {
       const styles = Array.from(document.querySelectorAll('#hero-cust-hair-style option'))
         .map((node) => node.value)
         .filter(Boolean);
@@ -3765,6 +3809,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
             }
           }
         }
+        await new Promise((resolve) => requestAnimationFrame(resolve));
       }
       return failures;
     });
@@ -3776,13 +3821,10 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
   });
 
   test('Every selectable hair style keeps the center chin and neck area clean', async ({ page }) => {
-    await page.goto(GYM_URL);
-    await activatePersonalGym(page);
-    await page.getByRole('button', { name: 'Customize Hero' }).click();
-    await clearAccessories(page);
+    test.setTimeout(EXHAUSTIVE_GEOMETRY_TIMEOUT_MS);
+    const geometryHero = await installGeometryHero(page);
 
-    const centerHairHits = await page.evaluate(() => {
-      const svg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+    const centerHairHits = await geometryHero.evaluate((svg) => {
       const baseState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS)));
       baseState.outfit.accessory = 'none';
       baseState.outfit.accessories = [];

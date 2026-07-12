@@ -2172,4 +2172,180 @@ test.describe('tutorial asynchronous lifecycle', () => {
     );
     await expect(page.getByRole('button', { name: 'Retry' })).toBeVisible();
   });
+
+  test('background backend prewarming cannot suppress foreground or later loading states', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    const state = await page.evaluate(async () => {
+      const tutorial = window.__installTutorialHarness([
+        { title: 'Python', backend: 'pyodide', files: [] },
+        { title: 'Node', backend: 'webcontainer', files: [] },
+      ], {
+        backend: 'multiple',
+        requireTests: false,
+      });
+      tutorial.root.insertAdjacentHTML('beforeend', [
+        '<div class="tvm-loading"><span class="tvm-loading-text"></span></div>',
+        '<div class="tvm-container"></div>',
+      ].join(''));
+      tutorial.loadingEl = tutorial.root.querySelector('.tvm-loading');
+      tutorial.containerEl = tutorial.root.querySelector('.tvm-container');
+
+      const resolvers = {};
+      tutorial._initBackend = (backend, _setupCommands, loadingOptions) => {
+        tutorial._showLoading(`Initializing ${backend}`, loadingOptions);
+        return new Promise((resolve) => { resolvers[backend] = resolve; });
+      };
+
+      const prewarm = tutorial._ensureBackendReady('pyodide', { prewarm: true });
+      await Promise.resolve();
+      const foreground = tutorial._ensureBackendReady('webcontainer');
+      await Promise.resolve();
+
+      const foregroundMessage = tutorial.loadingEl
+        .querySelector('.tvm-loading-text').textContent;
+      resolvers.pyodide();
+      await prewarm;
+      resolvers.webcontainer();
+      await foreground;
+
+      tutorial._showLoading('Later foreground load');
+      return {
+        foregroundMessage,
+        laterMessage: tutorial.loadingEl.querySelector('.tvm-loading-text').textContent,
+        display: tutorial.loadingEl.style.display,
+      };
+    });
+
+    expect(state).toEqual({
+      foregroundMessage: 'Initializing webcontainer',
+      laterMessage: 'Later foreground load',
+      display: 'flex',
+    });
+  });
+
+  test('an inactive crashed worker is invalidated and lazily rebuilt when its backend returns', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    const state = await page.evaluate(async () => {
+      const OriginalWorker = window.Worker;
+      const instances = [];
+
+      class RecoverableWorker {
+        constructor() {
+          this.terminated = false;
+          instances.push(this);
+          queueMicrotask(() => this.onmessage({ data: { type: 'ready' } }));
+        }
+
+        postMessage() {}
+
+        terminate() {
+          this.terminated = true;
+        }
+      }
+
+      window.Worker = RecoverableWorker;
+      try {
+        const tutorial = window.__installTutorialHarness([
+          { title: 'Python', backend: 'pyodide', files: [] },
+          { title: 'React', backend: 'react', files: [] },
+        ], {
+          backend: 'multiple',
+          requireTests: false,
+        });
+        tutorial._showLoading = () => {};
+        tutorial._hideLoading = () => {};
+
+        await tutorial._ensureBackendReady('pyodide');
+        const crashedWorker = tutorial._worker;
+        tutorial._backendReady.react = true;
+        tutorial._setActiveBackend('react');
+
+        crashedWorker.onerror({ message: 'inactive Python crash' });
+        await Promise.resolve();
+        const stateAfterCrash = {
+          workerCleared: tutorial._worker === null,
+          pythonReady: !!tutorial._backendReady.pyodide,
+          reactStillBooted: tutorial.booted,
+        };
+
+        await tutorial._ensureBackendReady('pyodide');
+        return {
+          stateAfterCrash,
+          workerCount: instances.length,
+          crashedWorkerTerminated: crashedWorker.terminated,
+          workerReplaced: tutorial._worker !== null && tutorial._worker !== crashedWorker,
+          pythonReady: !!tutorial._backendReady.pyodide,
+          booted: tutorial.booted,
+        };
+      } finally {
+        window.Worker = OriginalWorker;
+      }
+    });
+
+    expect(state).toEqual({
+      stateAfterCrash: {
+        workerCleared: true,
+        pythonReady: false,
+        reactStillBooted: true,
+      },
+      workerCount: 2,
+      crashedWorkerTerminated: true,
+      workerReplaced: true,
+      pythonReady: true,
+      booted: true,
+    });
+  });
+
+  test('a failed worker restart clears stale readiness so the next use retries initialization', async ({ page }) => {
+    await loadTutorialRuntime(page);
+
+    const state = await page.evaluate(async () => {
+      const tutorial = window.__installTutorialHarness([], {
+        backend: 'pyodide',
+        requireTests: false,
+      });
+      tutorial._showLoading = () => {};
+      tutorial._hideLoading = () => {};
+      tutorial._showError = () => {};
+      tutorial._replayWorkerWorkspace = () => Promise.resolve();
+      tutorial._syncFilesToBackend = () => Promise.resolve();
+      tutorial._runStepWorkerSetupCommands = () => Promise.resolve();
+
+      let initializationCount = 0;
+      tutorial._initBackend = () => {
+        initializationCount += 1;
+        if (initializationCount === 2) {
+          return Promise.reject(new Error('replacement failed'));
+        }
+        tutorial.booted = true;
+        return Promise.resolve();
+      };
+
+      await tutorial._ensureBackendReady('pyodide');
+      let restartError = '';
+      try {
+        await tutorial._restartWorkerBackend('simulated crash', 'pyodide');
+      } catch (error) {
+        restartError = error.message;
+      }
+      const readyAfterFailedRestart = !!tutorial._backendReady.pyodide;
+
+      await tutorial._ensureBackendReady('pyodide');
+      return {
+        initializationCount,
+        restartError,
+        readyAfterFailedRestart,
+        readyAfterRetry: !!tutorial._backendReady.pyodide,
+      };
+    });
+
+    expect(state).toEqual({
+      initializationCount: 3,
+      restartError: 'replacement failed',
+      readyAfterFailedRestart: false,
+      readyAfterRetry: true,
+    });
+  });
 });

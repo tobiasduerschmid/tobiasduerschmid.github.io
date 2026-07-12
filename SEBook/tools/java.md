@@ -589,7 +589,12 @@ try {
 }
 ```
 
-# Design Principles
+{% assign java_design_principles_id = 'design-principles' %}
+{% if page.layout == 'sebook-combined' %}
+  {% assign java_design_principles_id = 'java-design-principles' %}
+{% endif %}
+
+# Java Design Principles {#{{ java_design_principles_id }}}
 
 ## Top 10 Java Best Practices
 

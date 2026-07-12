@@ -616,7 +616,6 @@
     this._backendInitPromises = {};
     this._backendReady = {};
     this._activeRequestedBackend = backend;
-    this._backgroundBackendLoadingSuppressed = false;
     this.requireTests = options.requireTests || false;
     this.instructorMode = options.instructorMode || false;
     this.disableQuiz = options.disableQuiz || false;
@@ -754,6 +753,7 @@
     // replays this map before restoring the currently-open editor models.
     this._workerWorkspaceFiles = Object.create(null);
     this._workerRestartPromise = null;
+    this._workerRestartBackend = null;
     this._destroyed = false;
     this._runSequence = 0;
     this._activeRunTransaction = null;
@@ -981,14 +981,17 @@
 
     var previousRequested = this._activeRequestedBackend;
     var previousBackend = this.config.backend;
-    var previousSuppressLoading = this._backgroundBackendLoadingSuppressed;
     var setupCommandsForBackend = this._setupCommandsForBackend(requested, effective);
-    if (opts.prewarm) this._backgroundBackendLoadingSuppressed = true;
     if (!opts.prewarm) this.config.backend = requested;
 
     var initPromise = Promise.resolve().then(function () {
-      return self._initBackend(requested, setupCommandsForBackend);
+      return self._initBackend(requested, setupCommandsForBackend, {
+        suppressLoading: !!opts.prewarm,
+      });
     }).then(function () {
+      if (self._backendInitPromises[requested] !== initPromise) {
+        throw new Error(backendLabel(requested) + ' initialization was superseded');
+      }
       var resolved = self._effectiveBackend(requested);
       self._backendReady[requested] = true;
       self._backendReady[resolved] = true;
@@ -1000,7 +1003,6 @@
         self._setActiveBackend(requested);
       }
     }, function (err) {
-      delete self._backendInitPromises[requested];
       if (!opts.prewarm || self._activeRequestedBackend === previousRequested) {
         self.config.backend = previousBackend;
         self._activeRequestedBackend = previousRequested;
@@ -1008,14 +1010,32 @@
       }
       throw err;
     }).then(function () {
-      self._backgroundBackendLoadingSuppressed = previousSuppressLoading;
+      if (self._backendInitPromises[requested] === initPromise) {
+        delete self._backendInitPromises[requested];
+      }
     }, function (err) {
-      self._backgroundBackendLoadingSuppressed = previousSuppressLoading;
+      if (self._backendInitPromises[requested] === initPromise) {
+        delete self._backendInitPromises[requested];
+      }
       throw err;
     });
 
     this._backendInitPromises[requested] = initPromise;
     return initPromise;
+  };
+
+  /**
+   * Mark one backend unavailable and detach any obsolete readiness promise.
+   * A pending initialization that later settles observes that it no longer
+   * owns the cache entry and cannot publish stale readiness.
+   */
+  TutorialCode.prototype._invalidateBackendReadiness = function (requestedBackend) {
+    var requested = normalizeBackendName(requestedBackend);
+    var effective = this._effectiveBackend(requested);
+    delete this._backendReady[requested];
+    delete this._backendReady[effective];
+    delete this._backendInitPromises[requested];
+    if (effective !== requested) delete this._backendInitPromises[effective];
   };
 
   TutorialCode.prototype._prewarmNextBackend = function (index) {
@@ -2339,8 +2359,8 @@
     this._initSplitters();
   };
 
-  TutorialCode.prototype._showLoading = function (msg) {
-    if (this._backgroundBackendLoadingSuppressed) return;
+  TutorialCode.prototype._showLoading = function (msg, options) {
+    if (options && options.suppressLoading) return;
     if (this.loadingEl) {
       this.loadingEl.style.display = 'flex';
       this.loadingEl.querySelector('.tvm-loading-text').textContent = msg;
@@ -3428,13 +3448,13 @@
   // ---------------------------------------------------------------------------
   // Backend Initialisation — routes to v86 / pyodide / webcontainer
   // ---------------------------------------------------------------------------
-  TutorialCode.prototype._initBackend = function (backendOverride, setupCommandsOverride) {
+  TutorialCode.prototype._initBackend = function (backendOverride, setupCommandsOverride, loadingOptions) {
     var backend = normalizeBackendName(backendOverride || this.config.backend);
     if (backend === 'v86') return this._initV86();
-    if (backend === 'pyodide') return this._initPyodide(setupCommandsOverride);
+    if (backend === 'pyodide') return this._initPyodide(setupCommandsOverride, loadingOptions);
     if (backend === 'webcontainer') {
       var self = this;
-      return this._initWebContainer(setupCommandsOverride).catch(function (err) {
+      return this._initWebContainer(setupCommandsOverride, loadingOptions).catch(function (err) {
         return self._disposeWebContainerRuntime().then(function () {
           // An authored setup command is part of the tutorial contract. Falling
           // back to the browser shim would silently skip that contract, so only
@@ -3448,7 +3468,10 @@
             self.config.backend = 'browser';
             self.config.useTerminal = false;
           }
-          self._showLoading('WebContainer unavailable — using browser Node sandbox…');
+          self._showLoading(
+            'WebContainer unavailable — using browser Node sandbox…',
+            loadingOptions
+          );
           return self._initBrowserBackend();
         });
       });
@@ -4379,12 +4402,15 @@
   };
 
   // ---- Pyodide backend -------------------------------------------------------
-  TutorialCode.prototype._initPyodide = function (setupCommandsOverride) {
+  TutorialCode.prototype._initPyodide = function (setupCommandsOverride, loadingOptions) {
     var self = this;
     var setupCommands = Array.isArray(setupCommandsOverride)
       ? setupCommandsOverride
       : (self.setupCommands || []);
-    this._showLoading('Loading Python runtime\u2026 (first load may take a moment)');
+    this._showLoading(
+      'Loading Python runtime\u2026 (first load may take a moment)',
+      loadingOptions
+    );
     return new Promise(function (resolve, reject) {
       var initialized = false;
       var bootTimer = setTimeout(function () {
@@ -4398,7 +4424,7 @@
       self._worker.onmessage = function (e) {
         var msg = e.data;
         if (msg.type === 'loading') {
-          self._showLoading(msg.message);
+          self._showLoading(msg.message, loadingOptions);
           return;
         }
         if (msg.type === 'ready') {
@@ -4468,7 +4494,8 @@
           self._handleWorkerFailure(
             msg.message || 'Pyodide runtime failed',
             initialized,
-            reject
+            reject,
+            'pyodide'
           );
           return;
         }
@@ -4478,7 +4505,7 @@
       self._worker.onerror = function (err) {
         clearTimeout(bootTimer);
         var message = 'Pyodide worker error: ' + (err.message || err);
-        self._handleWorkerFailure(message, initialized, reject);
+        self._handleWorkerFailure(message, initialized, reject, 'pyodide');
       };
     });
   };
@@ -4526,7 +4553,7 @@
         if (msg.type === 'table') { self._appendTable(msg.columns, msg.rows); return; }
         if (msg.type === 'error') {
           clearTimeout(bootTimer);
-          self._handleWorkerFailure(msg.message || 'SQL runtime failed', initialized, reject);
+          self._handleWorkerFailure(msg.message || 'SQL runtime failed', initialized, reject, 'sql');
           return;
         }
         self._routeWorkerResponse(msg);
@@ -4535,7 +4562,7 @@
       self._worker.onerror = function (err) {
         clearTimeout(bootTimer);
         var message = 'SQL worker error: ' + (err.message || err);
-        self._handleWorkerFailure(message, initialized, reject);
+        self._handleWorkerFailure(message, initialized, reject, 'sql');
       };
     });
   };
@@ -4582,7 +4609,7 @@
         if (msg.type === 'stderr') { self._appendOutput(msg.text, 'stderr'); return; }
         if (msg.type === 'error') {
           clearTimeout(bootTimer);
-          self._handleWorkerFailure(msg.message || 'Prolog runtime failed', initialized, reject);
+          self._handleWorkerFailure(msg.message || 'Prolog runtime failed', initialized, reject, 'prolog');
           return;
         }
         self._routeWorkerResponse(msg);
@@ -4591,7 +4618,7 @@
       self._worker.onerror = function (err) {
         clearTimeout(bootTimer);
         var message = 'Prolog worker error: ' + (err.message || err);
-        self._handleWorkerFailure(message, initialized, reject);
+        self._handleWorkerFailure(message, initialized, reject, 'prolog');
       };
     });
   };
@@ -4624,7 +4651,7 @@
         if (msg.type === 'stderr') { self._appendOutput(msg.text, 'stderr'); return; }
         if (msg.type === 'error') {
           clearTimeout(bootTimer);
-          self._handleWorkerFailure(msg.message || 'Java runtime failed', initialized, reject);
+          self._handleWorkerFailure(msg.message || 'Java runtime failed', initialized, reject, 'java');
           return;
         }
         self._routeWorkerResponse(msg);
@@ -4633,7 +4660,7 @@
       self._worker.onerror = function (err) {
         clearTimeout(bootTimer);
         var message = 'Java worker error: ' + (err.message || err);
-        self._handleWorkerFailure(message, initialized, reject);
+        self._handleWorkerFailure(message, initialized, reject, 'java');
       };
     });
   };
@@ -4836,14 +4863,39 @@
    * completed, the same event is a runtime crash: reconstruct the disposable
    * worker so controls and the learner workspace recover automatically.
    */
-  TutorialCode.prototype._handleWorkerFailure = function (message, initialized, rejectInitialization) {
+  TutorialCode.prototype._handleWorkerFailure = function (
+    message,
+    initialized,
+    rejectInitialization,
+    failedBackend
+  ) {
+    var backend = normalizeBackendName(failedBackend || this.config.backend);
+    var activeRequested = this._activeRequestedBackend || this.config.backend;
+    var activeBackend = this._effectiveBackend(activeRequested);
+    var failedBackendIsActive = activeBackend === backend;
+
     this._terminateWorker(message);
+    this._invalidateBackendReadiness(backend);
+    if (!failedBackendIsActive) {
+      // `booted` predates mixed-backend readiness and still gates a few
+      // active-runtime paths. Preserve the visible backend's state when a
+      // parked worker fails in the background.
+      this.booted = !!this._backendReady[activeBackend];
+    }
     if (!initialized) {
       rejectInitialization(new Error(message));
       return;
     }
     if (this._destroyed) return;
-    this._restartWorkerBackend(message).catch(function () {});
+    if (!failedBackendIsActive) {
+      console.warn(
+        '[TutorialCode] Inactive ' + backendLabel(backend) +
+        ' runtime failed; it will restart when next used:',
+        message
+      );
+      return;
+    }
+    this._restartWorkerBackend(message, backend).catch(function () {});
   };
 
   /** Replay files acknowledged by the previous disposable worker. */
@@ -4864,60 +4916,121 @@
    * Global setup, file sync, and current-step setup form one readiness chain;
    * Run stays disabled until all three complete.
    */
-  TutorialCode.prototype._restartWorkerBackend = function (reason) {
-    if (this._workerRestartPromise) return this._workerRestartPromise;
+  TutorialCode.prototype._restartWorkerBackend = function (reason, backendOverride) {
+    var backend = normalizeBackendName(backendOverride || this.config.backend);
+    if (this._workerRestartPromise) {
+      if (!this._workerRestartBackend || this._workerRestartBackend === backend) {
+        return this._workerRestartPromise;
+      }
+      return Promise.reject(new Error(
+        'Cannot restart ' + backend + ' while ' + this._workerRestartBackend + ' is restarting'
+      ));
+    }
     if (this._destroyed) return Promise.reject(new Error('Tutorial runtime was destroyed'));
 
-    var backend = this.config.backend;
     if (!this._isRestartableWorkerBackend(backend)) {
       return Promise.reject(new Error('Backend cannot be restarted: ' + backend));
     }
 
     var self = this;
-    var requestedBackend = this._activeRequestedBackend || backend;
+    var requestedBackend = backendOverride
+      ? backend
+      : normalizeBackendName(this._activeRequestedBackend || backend);
+    var activeBackend = this._effectiveBackend(
+      this._activeRequestedBackend || this.config.backend
+    );
+    var restartIsVisible = activeBackend === backend;
     var setupOverride = this._mixedBackendMode
       ? this._setupCommandsForBackend(requestedBackend, backend)
       : undefined;
-    var activeStep = this.steps[this.currentStep] || null;
-    var filenames = Object.keys(this.editorModels || {});
+    var activeStep = restartIsVisible ? (this.steps[this.currentStep] || null) : null;
+    var filenames = restartIsVisible ? Object.keys(this.editorModels || {}) : [];
     var workspace = Object.create(null);
     Object.keys(this._workerWorkspaceFiles || {}).forEach(function (filename) {
       workspace[filename] = self._workerWorkspaceFiles[filename];
     });
 
-    delete this._backendReady[requestedBackend];
-    delete this._backendReady[backend];
-    this._setWorkerExecutionControls('restarting');
-    this._showLoading('Restarting ' + backendLabel(backend) + ' runtime\u2026');
+    this._invalidateBackendReadiness(requestedBackend);
+    this._invalidateBackendReadiness(backend);
+    if (restartIsVisible) {
+      this._setWorkerExecutionControls('restarting');
+      this._showLoading('Restarting ' + backendLabel(backend) + ' runtime\u2026');
+    }
     this._terminateWorker(reason || backendLabel(backend) + ' runtime restarted');
 
-    this._workerRestartPromise = this._initBackend(backend, setupOverride)
+    var restartPromise = Promise.resolve().then(function () {
+      return self._initBackend(backend, setupOverride, {
+        suppressLoading: !restartIsVisible,
+      });
+    })
       .then(function () {
         return self._replayWorkerWorkspace(workspace, backend);
       })
       .then(function () {
+        if (!restartIsVisible) return;
         return self._syncFilesToBackend(filenames);
       })
       .then(function () {
+        if (!restartIsVisible) return;
         return self._runStepWorkerSetupCommands(activeStep);
       })
       .then(function () {
+        if (self._workerRestartPromise !== restartPromise ||
+            self._backendInitPromises[requestedBackend] !== restartPromise) {
+          throw new Error(backendLabel(backend) + ' restart was superseded');
+        }
         self._backendReady[requestedBackend] = true;
         self._backendReady[backend] = true;
-        self._hideLoading();
-        self._setWorkerExecutionControls('idle');
-        self._appendOutput('\n' + backendLabel(backend) + ' runtime restarted and ready.\n', 'info');
-        self._workerRestartPromise = null;
+        if (restartIsVisible) {
+          self._hideLoading();
+          self._setWorkerExecutionControls('idle');
+          self._appendOutput(
+            '\n' + backendLabel(backend) + ' runtime restarted and ready.\n',
+            'info'
+          );
+        }
       }, function (error) {
-        self._workerRestartPromise = null;
-        self._setWorkerExecutionControls('unavailable');
-        self._showError(
-          'Failed to restart ' + backendLabel(backend) + ' runtime: ' +
-          (error && error.message || error)
-        );
+        if (self._workerRestartPromise === restartPromise && restartIsVisible) {
+          self._setWorkerExecutionControls('unavailable');
+          self._showError(
+            'Failed to restart ' + backendLabel(backend) + ' runtime: ' +
+            (error && error.message || error)
+          );
+        }
+        throw error;
+      }).then(function (value) {
+        if (self._workerRestartPromise === restartPromise) {
+          self._workerRestartPromise = null;
+          self._workerRestartBackend = null;
+        }
+        if (self._backendInitPromises[requestedBackend] === restartPromise) {
+          delete self._backendInitPromises[requestedBackend];
+        }
+        if (backend !== requestedBackend &&
+            self._backendInitPromises[backend] === restartPromise) {
+          delete self._backendInitPromises[backend];
+        }
+        return value;
+      }, function (error) {
+        if (self._workerRestartPromise === restartPromise) {
+          self._workerRestartPromise = null;
+          self._workerRestartBackend = null;
+        }
+        if (self._backendInitPromises[requestedBackend] === restartPromise) {
+          delete self._backendInitPromises[requestedBackend];
+        }
+        if (backend !== requestedBackend &&
+            self._backendInitPromises[backend] === restartPromise) {
+          delete self._backendInitPromises[backend];
+        }
         throw error;
       });
-    return this._workerRestartPromise;
+
+    this._workerRestartPromise = restartPromise;
+    this._workerRestartBackend = backend;
+    this._backendInitPromises[requestedBackend] = restartPromise;
+    if (backend !== requestedBackend) this._backendInitPromises[backend] = restartPromise;
+    return restartPromise;
   };
 
   /** Render a SQL result set as a table inside the output panel. */
@@ -6008,12 +6121,12 @@
     });
   };
 
-  TutorialCode.prototype._initWebContainer = function (setupCommandsOverride) {
+  TutorialCode.prototype._initWebContainer = function (setupCommandsOverride, loadingOptions) {
     var self = this;
     var setupCommands = Array.isArray(setupCommandsOverride)
       ? setupCommandsOverride
       : (self.setupCommands || []);
-    this._showLoading('Booting WebContainers\u2026');
+    this._showLoading('Booting WebContainers\u2026', loadingOptions);
 
     return this._loadWebContainerAPI()
       .then(function (module) {
@@ -11296,7 +11409,6 @@
     if (!this._mixedBackendMode) return load();
 
     if (!this._backendReady[requestedBackend]) {
-      this._backgroundBackendLoadingSuppressed = false;
       this._showLoading('Starting ' + backendLabel(requestedBackend) + ' runtime\u2026');
     }
     return this._ensureBackendReady(requestedBackend).then(function () {
