@@ -3,9 +3,15 @@
   "version": "1.0.0",
   "description": "Homepage Portfolio optimized for researchers and those who strive for a minimal, file-based \"content management\" (**Datafolio**). The complete site's content is based on a json/xml file per section (e.g., ```contact.json```, ```projects.json```, ```publications.json```, ```talks.json```, and ```teaching.json```) as well as the pages ```_config.yml``` information.",
   "main": "index.js",
+  "workspaces": [
+    "apps/software-construction-quest"
+  ],
   "scripts": {
     "test": "playwright test",
     "test:unit": "node --test scripts/tests/*.test.js",
+    "build:quest": "npm run build --workspace @sebook/software-construction-quest",
+    "check:quest": "npm run check --workspace @sebook/software-construction-quest",
+    "dev:quest": "npm run dev --workspace @sebook/software-construction-quest",
     "pdf": "node scripts/generate_pdfs.js"
   },
   "dependencies": {

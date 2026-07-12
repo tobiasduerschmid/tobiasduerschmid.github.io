@@ -34,6 +34,11 @@
   description: A contract that lets one piece of software call another. APIs hide implementation details and expose a stable surface — function names, parameter types, and return values — that callers can depend on.
   related: [REST, HTTP, SDK]
 
+- term: ASCII
+  definition: American Standard Code for Information Interchange
+  description: A seven-bit character encoding for English letters, digits, punctuation, and control characters. UTF-8 preserves the same byte values for ASCII characters.
+  related: [UTF-8]
+
 - term: AST
   definition: Abstract Syntax Tree
   description: A tree representation of source code structure used by compilers, interpreters, linters, refactoring tools, and code-analysis systems.
@@ -68,6 +73,11 @@
   definition: Create, Read, Update, Delete
   description: The four basic operations on persistent storage. Most data-driven applications expose some form of CRUD interface for the entities they manage.
   related: [SQL, REST, API]
+
+- term: CS
+  definition: Computer Science
+  description: The study of computation, information, algorithms, software, and computer systems. Course identifiers such as CS 35L use this abbreviation.
+  related: []
 
 - term: CSRF
   definition: Cross-Site Request Forgery
@@ -469,6 +479,11 @@
   description: The address of a resource on the web. A URL identifies the protocol (https), the host (example.com), an optional path (/page), and optional query parameters and fragment.
   related: [HTTP, HTTPS, HTML]
 
+- term: UTF-8
+  definition: Unicode Transformation Format, 8-bit
+  description: A variable-width text encoding for Unicode. UTF-8 represents ASCII characters with one byte and other characters with multiple bytes.
+  related: []
+
 - term: UX
   definition: User Experience
   description: The full experience a user has with a product — discovery, learning, regular use, recovery from errors. UI is one part of UX.
@@ -488,6 +503,11 @@
   definition: Work In Progress
   description: A label for unfinished work, often used for temporary commits, draft branches, or pull requests that are not ready for review.
   related: [PR]
+
+- term: WebGL
+  definition: Web Graphics Library
+  description: A browser API for hardware-accelerated 2D and 3D graphics rendered in an HTML canvas.
+  related: [API, HTML]
 
 - term: XML
   definition: Extensible Markup Language

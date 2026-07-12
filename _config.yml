@@ -107,6 +107,7 @@ exclude:
   - AGENTS.md
   - CLAUDE.md
   - GEMINI.md
+  - apps
   - vm/setup.sh
   - vm/build-rootfs.sh
   - vm/build-snapshot.js

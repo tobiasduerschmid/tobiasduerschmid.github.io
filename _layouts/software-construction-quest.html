@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+
+{% include head.html %}
+
+<body id="page-top" class="software-construction-quest-layout">
+  <a href="#main-content" class="skip-link">Skip to main content</a>
+
+  <header class="scq-site-header">
+    <nav class="scq-site-nav" aria-label="Main navigation">
+      <a class="scq-site-nav__brand" href="{{ '/SEBook/' | relative_url }}">SEBook</a>
+      <ul>
+        <li><a href="{{ '/se-gym/' | relative_url }}">SE Gym</a></li>
+        <li><a href="{{ '/settings/' | relative_url }}">Settings</a></li>
+        <li><a href="{{ '/' | relative_url }}">Main site</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main-content" class="scq-main" tabindex="-1">
+    <div id="software-construction-quest-root">
+      <div class="scq-loading-shell">
+        <h1>The Broken Build</h1>
+        <p>Loading the Software Construction Quest…</p>
+        <noscript>
+          <p>
+            This interactive quest needs JavaScript. The course readings and tutorials
+            remain available in <a href="{{ '/SEBook/' | relative_url }}">SEBook</a>.
+          </p>
+        </noscript>
+      </div>
+    </div>
+  </main>
+
+  {% include footer.html %}
+
+  <div class="container" role="region" aria-label="Privacy notice">
+    {% include cookie-notice.html %}
+  </div>
+
+  <script type="module" src="{{ '/assets/software-construction-quest/software-construction-quest.js' | relative_url }}?v={{ site.asset_version }}"></script>
+</body>
+</html>

@@ -118,6 +118,7 @@ function allTargetUrls() {
     tutorials: urls.filter((url) => tutorialSet.has(url)),
     sebook: urls.filter((url) => url.startsWith('/SEBook/') && !tutorialSet.has(url)),
     seGym: urls.filter((url) => url === '/se-gym/' || url.startsWith('/se-gym/') || url === '/se-gym-stats/' || url.startsWith('/se-gym-stats/')),
+    applications: urls.filter((url) => url === '/software-construction-quest/'),
     blog: urls.filter((url) => url === '/blog/' || url.startsWith('/blog/')),
   };
   for (const key of Object.keys(groups)) {

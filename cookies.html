@@ -304,6 +304,29 @@ info_nav_title: "Browser storage"
     <i class="fa fa-trash" aria-hidden="true"></i> Delete SE Gym saved data
   </button>
 
+  <h3>Software Construction Quest progress</h3>
+  <table class="storage-table" data-category="quest-localstorage">
+    <thead>
+      <tr>
+        <th class="col-key">Key</th>
+        <th class="col-purpose">Purpose</th>
+        <th class="col-status">Status</th>
+        <th class="col-action">Delete</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr data-storage="localStorage" data-key="software-construction-quest-progress">
+        <td class="storage-key">software-construction-quest-progress</td>
+        <td>Versioned, local-only progress for the Software Construction Quest: mission attempts, conceptual-hint use, completion timestamps, spaced-review levels, and the last selected mission. The quest reads your saved SE Gym hero separately but never changes it.</td>
+        <td class="status-cell"></td>
+        <td class="action-cell"></td>
+      </tr>
+    </tbody>
+  </table>
+  <button class="cookies-btn danger" data-clear-category="quest-localstorage" type="button">
+    <i class="fa fa-trash" aria-hidden="true"></i> Delete Software Construction Quest progress
+  </button>
+
   <h3>Tutorial progress &amp; debugger state</h3>
   <p>
     These keys are <em>per-tutorial</em> &mdash; one entry per tutorial you have ever opened. Static keys are listed first; dynamic keys (those including a tutorial id or page path) are discovered from your browser and listed at the end.
@@ -677,6 +700,7 @@ info_nav_title: "Browser storage"
     return key === 'se-gym'
       || key === 'se-gym-stats'
       || key === 'se-gym-workout-progress'
+      || key === 'software-construction-quest-progress'
       || key === 'se-bookmarks'
       || key === 'regex-tutorial-progress'
       || key === 'regex-tutorial-advanced-progress'
@@ -711,7 +735,7 @@ info_nav_title: "Browser storage"
     btn.removeAttribute('title');
     btn.disabled = !isSet;
     btn.addEventListener('click', function () {
-      if (isDestructiveStorageKey(key) && !confirm('Delete ' + key + '? This may remove saved tutorial work, bookmarks, or SE Gym data and cannot be undone.')) return;
+      if (isDestructiveStorageKey(key) && !confirm('Delete ' + key + '? This may remove saved learning work, bookmarks, or SE Gym data and cannot be undone.')) return;
       if (storage === 'cookie') deleteCookie(key);
       else deleteLS(key);
       renderRow(row);

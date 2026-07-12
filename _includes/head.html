@@ -254,6 +254,9 @@
   {% if page.url == '/rosinfer.html' %}
   <link rel="stylesheet" href="{{ "/css/rosinfer.css" | prepend: site.baseurl }}?v={{ asset_version }}">
   {% endif %}
+  {% if page.layout == 'software-construction-quest' %}
+  <link rel="stylesheet" href="{{ "/assets/software-construction-quest/software-construction-quest.css" | prepend: site.baseurl }}?v={{ asset_version }}">
+  {% endif %}
   <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
   <link rel="stylesheet" href="{{ "/css/print-light.css" | prepend: site.baseurl }}?v={{ asset_version }}">
 

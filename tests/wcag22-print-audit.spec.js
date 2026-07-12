@@ -159,6 +159,7 @@ function allTargetUrlsByFeature() {
     tutorialPrint: urls.filter((url) => tutorialSet.has(url) && url.includes('/print')),
     sebook: urls.filter((url) => url.startsWith('/SEBook/') && !tutorialSet.has(url)),
     seGym: urls.filter((url) => url === '/se-gym/' || url.startsWith('/se-gym/')),
+    applications: urls.filter((url) => url === '/software-construction-quest/'),
     blog: urls.filter((url) => url === '/blog/' || url.startsWith('/blog/')),
     popouts: urls.filter((url) => /(?:^\/tutorial-.*-popup\.html$|^\/uml-popup\.html$)/.test(url)),
   };

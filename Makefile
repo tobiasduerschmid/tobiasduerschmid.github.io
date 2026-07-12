@@ -15,11 +15,13 @@ install: init-submodules
 
 build:
 	if [ "$$JEKYLL_ENV" = "production" ]; then node scripts/build_se_gym_hero_choice_previews.js; fi
+	npm run build:quest
 	bundle exec jekyll build --incremental
 
 test-build:
 	bundle exec jekyll clean
 	if [ "$$JEKYLL_ENV" = "production" ]; then node scripts/build_se_gym_hero_choice_previews.js; fi
+	npm run build:quest
 	bundle exec jekyll build
 
 prod:
