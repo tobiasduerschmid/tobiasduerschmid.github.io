@@ -630,12 +630,33 @@ backend: v86 | pyodide | webcontainer | react | haskell | uml-editor | multiple
 #                 must set `steps[].backend`.
 #
 # Mixed-backend tutorials may also set `steps[].backend` to override a normal
-# tutorial-level default per step. First-pass mixed mode is intentionally
-# narrow: use only `pyodide`, `react`, `webcontainer`, or `browser` steps,
-# with `browser` serving as the in-page Node fallback if WebContainers cannot
-# boot. Keep `v86`, `haskell`, `uml-editor`, SQL, Prolog, Java, debugger
-# tutorials, and terminal-heavy WebContainer flows single-backend until the
-# runtime explicitly supports those combinations.
+# tutorial-level default per step. Mixed mode supports `v86`, `pyodide`,
+# `react`, `webcontainer`, and `browser` steps, with `browser` serving as the
+# in-page Node fallback if WebContainers cannot boot. Keep `haskell`,
+# `uml-editor`, SQL, Prolog, Java, and debugger tutorials single-backend until
+# the runtime explicitly supports those combinations.
+#
+# v86 IN MIXED MODE. A mixed tutorial containing at least one `v86` step gets
+# a third runtime panel — the xterm terminal — alongside the output and
+# preview panels, and `_updateRuntimePanelVisibility` shows exactly one of the
+# three per step. The flag driving this is `TutorialCode._mixedNeedsTerminal`
+# (set in the constructor when a `v86` step is declared); `config.useTerminal`
+# stays FALSE in mixed mode because it selects the single-backend layout
+# branches. Consequences for authors:
+#   - Supply the VM's setup through `setup_commands_by_backend.v86`, not
+#     top-level `setup_commands` (which mixed mode empties). `_initV86` threads
+#     that list into `_setupFilesystem`.
+#   - v86 steps have NO Run button — the terminal replaces the output panel.
+#     Ctrl/Cmd+Enter syncs the buffer to the VM instead of executing.
+#   - v86 is deliberately excluded from `_prewarmNextBackend`. Prewarming
+#     leaves `config.backend` on the visible backend, which would make the
+#     boot path skip its setup batch and flash a loading overlay over an
+#     active step, so the first v86 step pays the full boot cost.
+#   - `libv86.js` is preloaded by `_loadDependencies` only for single-backend
+#     v86 tutorials; `_initV86` lazy-loads it when `window.V86` is absent.
+#   - The VM has no C++ compiler: `/usr/bin/gcc` is a wrapper around TinyCC
+#     (C only). Gate C++ steps on file structure with `grep`/`awk`, not on
+#     compiler output. See `cs131-refresher.yml` for the pattern.
 
 # === Common feature flags ===
 require_tests: boolean                 # If true, student must pass each step's
@@ -1519,10 +1540,16 @@ snapshot-input, or checksum drift.
 | `pytest`               | ❌  | ✅      | ❌           | ❌      | ❌    | ❌      | ❌         |
 | Linter                 | ✅  | ✅      | ✅           | ✅      | ✅    | ❌      | ❌         |
 
-Mixed-backend tutorials are supported only for `pyodide`, `react`,
-`webcontainer`, and `browser` in this first pass. They are for short
-author-controlled backend switches between steps, not for terminal-first
-Node labs, debugger flows, or VM-heavy tutorials.
+Mixed-backend tutorials support `v86`, `pyodide`, `react`, `webcontainer`,
+and `browser`. They are for author-controlled backend switches between steps,
+not for debugger flows or terminal-first Node labs.
+
+A mixed tutorial that declares a `v86` step renders the terminal as a third
+`.tvm-runtime-panel`, keyed off `TutorialCode._mixedNeedsTerminal`. That flag
+also pulls xterm into `_loadDependencies` and starts the terminal in
+`start()`; the panel is re-`fit()` each time it becomes visible, because xterm
+measures a hidden container as zero columns. See §3.1 for the authoring
+consequences (per-backend setup commands, no Run button, no v86 prewarm).
 
 `haskell` is deliberately a single-backend mode. A hidden
 `sandbox="allow-scripts"` iframe owns a persistent, serialized MicroHs REPL

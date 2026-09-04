@@ -2594,7 +2594,10 @@ html:not(.dark-mode) .tvm-terminal-loading {
   background: #161618;
   color: #888;
   padding: 6px 14px;
-  font-size: 12px;
+  /* Matches .tvm-output-header: this label sits beside the output panel's
+     header in mixed-backend tutorials, and 12px is below the project's
+     readable-text floor. */
+  font-size: var(--font-size-readable-min, 16px);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;

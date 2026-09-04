@@ -1,0 +1,2371 @@
+title: "CS131 Refresher: Parameter Passing, Recursion & Objects"
+description: >-
+  This tutorial is meant to refresh your memory about the key concepts from
+  CS31, CS32 and CS35L that you might have forgotten: parameter passing by
+  value, reference and pointer; recursion; inheritance and polymorphism;
+  linked lists; and basic Python. The goal is to make sure you're ready to hit
+  the ground running once we start CS131. C++ steps run in a Linux VM, Python
+  steps run live in the browser.
+
+# Bloom-verb objectives. Authoring-time metadata for self-audit; the runtime
+# does not render this list.
+learning_objectives:
+  - "Predict what a C++ function prints when its parameter is passed by value, by reference, and by pointer."
+  - "Explain the difference between changing a pointer and changing what the pointer points to."
+  - "Apply Python's single parameter passing scheme to say which changes the caller sees and which it doesn't."
+  - "Write recursive functions with no loops of any kind, using a base case that stops on every input."
+  - "Write a recursive function that returns a new list instead of changing the one it was given."
+  - "Evaluate how a C++ parameter's declared type decides which version of a virtual function runs."
+  - "Write a linked list class in Python and explain why it needs no destructor."
+
+backend: multiple
+require_tests: true
+autosave_type: files
+linter: true
+font_size: 16
+
+setup_commands_by_backend:
+  pyodide:
+    - "import sys; sys.path.insert(0, '/tutorial')"
+  v86:
+    - "mkdir -p /tutorial/cs131"
+
+steps:
+  # =========================================================================
+  # STEP 1 — C++ parameter passing (HW0 problem 1a-1d)
+  # =========================================================================
+  # Pedagogy: PRIMM — Predict before Run, then Make.
+  # Variation Theory: four variants of one call, exactly one critical feature
+  # (how the parameter is bound) varies between them, so the difference the
+  # student must notice is isolated.
+  - title: "Value, Reference, and Pointer Semantics"
+    backend: v86
+    step_dir: /tutorial/cs131
+    instructions: |
+      ### Why this matters
+
+      CS131 spends the whole quarter on one question: what does a name actually
+      refer to? C++ is the last language you'll use that makes you answer that
+      question out loud, in the parameter list, every single time. In past
+      quarters plenty of students had gotten rusty on this and it caused them to
+      fall behind, so let's fix it now.
+
+      ### 🎯 You will learn to
+
+      - Work out whether an assignment inside a function is visible to the caller
+      - Tell the difference between changing a pointer and changing what it points to
+      - Write the reference and pointer versions of a function that modifies its argument
+
+      ### The Point class
+
+      Everything on this step uses the following Point class, which makes all of
+      its members public for simplicity:
+
+      ```cpp
+      class Point {
+      public:
+          Point(int x = 0, int y = 0) { x_ = x; y_ = y; }
+          void display() const { cout << "(" << x_ << ", " << y_ << ")" << endl; }
+          int x_, y_;
+      };
+      ```
+
+      Here's how each version below gets used:
+
+      ```cpp
+      Point pt(10, 10);
+      modify(pt);       // or modify(&pt) for the pointer versions
+      pt.display();
+      ```
+
+      Every version does the same two things to its parameter. It sets `x_` to
+      50 on line A, then assigns a whole new `Point(20, 30)` over it on line B.
+      The only thing that changes between them is how the parameter is declared:
+
+      ```cpp
+      // Version A - pass by value
+      void modify(Point p) {
+          p.x_ = 50;          // line A
+          p = Point(20, 30);  // line B
+      }
+
+      // Version B - pass by reference
+      void modify(Point &p) {
+          p.x_ = 50;          // line A
+          p = Point(20, 30);  // line B
+      }
+
+      // Version C - pass by pointer, reassigning the pointer
+      void modify(Point *p) {
+          p->x_ = 50;             // line A
+          p = new Point(20, 30);  // line B
+      }
+
+      // Version D - pass by pointer, writing through the pointer
+      void modify(Point *p) {
+          p->x_ = 50;         // line A
+          *p = Point(20, 30); // line B
+      }
+      ```
+
+      ### ✏️ Predict before you read on
+
+      For each version, figure out what will be printed and try to explain why
+      you get that result. Don't just compile and run the code to get answers,
+      but try to understand what's really happening under the hood.
+
+      Write down all four answers before you open the reveal. Each one is:
+
+      - **(a)** `(10, 10)` — the caller sees neither line
+      - **(b)** `(50, 10)` — the caller sees line A but not line B
+      - **(c)** `(20, 30)` — the caller sees both lines
+
+      Versions C and D are the interesting ones. Their parameter lists are
+      identical and their line A is identical. Only line B is different.
+
+      <details>
+      <summary>Reveal &mdash; all four answers</summary>
+      <p><strong>A prints (10, 10).</strong> Why? Because when we pass by value
+      we make a copy of the original <code>pt</code> variable and pass that in.
+      Both lines modify a temporary copy, and the copy dies at the closing
+      brace, so no changes are made to the original <code>pt</code>.</p>
+      <p><strong>B prints (20, 30).</strong> Why? Because when you pass by
+      reference, the formal parameter <code>p</code> is essentially an alias for
+      the passed-in variable <code>pt</code>. Any change, including assigning a
+      whole new value to <code>p</code>, modifies the original <code>pt</code>
+      as if you'd referred to it instead of <code>p</code>.</p>
+      <p><strong>C prints (50, 10).</strong> Why? Because here we're passing the
+      address of <code>pt</code> into modify. Think of <code>pt</code> as a house
+      that holds some stuff (the values <code>x_</code> and <code>y_</code>), and
+      think of <code>p</code> as a piece of paper where we wrote down the address
+      of that house. Line A uses the address on the paper to find the house and
+      change its <code>x_</code> to 50, so that change sticks. But line B only
+      scratches out the address on our paper and writes down the address of a
+      brand new house. That does nothing to the contents of the original house,
+      so <code>pt.y_</code> is still 10. We also have a memory leak, since we
+      never delete the memory we allocated with <code>new</code>.</p>
+      <p><strong>D prints (20, 30).</strong> Why? Because <code>*p = Point(20, 30);</code>
+      creates a temporary new Point at 20, 30 and copies its contents into the
+      memory pointed to by <code>p</code>, which is the <code>pt</code> variable.
+      Using our analogy again: we read the address on the paper, drive to that
+      address (that's what the <code>*</code> means), and update the contents of
+      the house.</p>
+      <p>C and D are the whole lesson. <code>p = ...</code> changes where the
+      arrow points. <code>*p = ...</code> changes what it points at.</p>
+      </details>
+
+      ### 🔧 Now write two of them yourself
+
+      > **Heads up: there is no C++ compiler in this VM.** That's on purpose.
+      > On C++ steps the checker reads the **structure** of your code, not its
+      > output, so you have to reason your way to the answer instead of
+      > compiling until it works. You still get a terminal for `cat`, `grep` and
+      > `less` so you can inspect your own files. The Python steps that follow
+      > do run, and it turns out Python behaves like one of the four versions
+      > above, so you'll get an answer you can check there.
+
+      Open **`param_passing.cpp`**. `modify_by_value` is already written for you
+      as a worked example. Fill in the other two so that **both leave the
+      caller's point at `(20, 30)`**.
+
+      - `modify_by_reference` — you pick how the parameter is declared.
+      - `modify_by_pointer` — the parameter is already `Point *p`. Reach the
+        caller's object on every assignment. Don't point `p` somewhere else.
+
+      There's no `main()` in the file; the driver is the snippet above.
+    files:
+      - path: "cs131/param_passing.cpp"
+        language: "cpp"
+        content: |
+          #include <iostream>
+          using namespace std;
+
+          class Point {
+          public:
+              Point(int x = 0, int y = 0) {
+                  x_ = x;
+                  y_ = y;
+              }
+              void display() const {
+                  cout << "(" << x_ << ", " << y_ << ")" << endl;
+              }
+
+              int x_, y_;
+          };
+
+          // Version A - by value. Finished for you.
+          // The caller still sees (10, 10) after this returns.
+          void modify_by_value(Point p) {
+              p.x_ = 50;
+              p = Point(20, 30);
+          }
+
+          // Version B - by reference.
+          // Goal: after this returns, the CALLER's point is (20, 30).
+          // You choose how the parameter is bound.
+          void modify_by_reference() {
+          }
+
+          // Version D - by pointer, written so the caller sees both lines.
+          // Goal: after this returns, the CALLER's point is (20, 30).
+          // The parameter is already a pointer. Do not make it point elsewhere.
+          void modify_by_pointer(Point *p) {
+          }
+
+    open_file: "cs131/param_passing.cpp"
+
+    tests:
+      - description: "modify_by_reference binds its parameter as a Point reference"
+        command: "sed 's|//.*||' /tutorial/cs131/param_passing.cpp | grep -qE 'modify_by_reference[[:space:]]*\\([[:space:]]*Point[[:space:]]*&[[:space:]]*[A-Za-z_]'"
+        hints:
+          - text: "All four versions differ only in the parameter list. Look back at the version that printed `(20, 30)` without any pointer syntax in its body, and copy the shape of its parameter."
+          - text: "C++ writes \"another name for the caller's object\" as a single character between the type and the parameter name."
+            condition: "code_missing: &"
+          - text: "You have the right character. Make sure it's inside the parentheses of `modify_by_reference`, between `Point` and the parameter name: `Point ?p`."
+            condition: "code_contains: &"
+      - description: "modify_by_reference sets x_ to 50 and then assigns a whole new Point through the alias"
+        command: "sed 's|//.*||' /tutorial/cs131/param_passing.cpp | awk '/modify_by_reference/,/^}/' | tr '\\n' ' ' | grep -qE '\\.[[:space:]]*x_[[:space:]]*=[[:space:]]*50.*=[[:space:]]*Point[[:space:]]*\\([[:space:]]*20'"
+        hints:
+          - text: "The body isn't the interesting part here. Line A and line B are already written for you in `modify_by_value` just above. The point is that with the parameter declared differently, those same two lines now reach the caller."
+          - text: "Both statements from the worked example belong here, in the same order. The checker looks for the `x_ = 50` write and the whole-object assignment."
+            condition: "code_missing: 20, 30"
+          - text: "Here's the shape. Two statements, no pointer syntax: `p.x_ = ...;` then `p = Point(..., ...);`"
+            condition: "code_missing: x_ = 50"
+      - description: "modify_by_pointer writes through the pointer instead of rebinding it"
+        command: "sed 's|//.*||' /tutorial/cs131/param_passing.cpp | awk '/modify_by_pointer/,/^}/' | tr '\\n' ' ' | grep -qE '(->[[:space:]]*x_|\\([[:space:]]*\\*[A-Za-z_]+[[:space:]]*\\)[[:space:]]*\\.[[:space:]]*x_)[[:space:]]*=[[:space:]]*50'"
+        hints:
+          - text: "`p` holds an address. To change the object at that address you have to follow the address first. Reading or writing `p` itself only touches the piece of paper the address is written on."
+          - text: "There are two ways to write \"the x_ of the object p points at\". One uses an arrow. The other dereferences first and then uses a dot. Either one works."
+            condition: "code_missing: ->"
+      - description: "modify_by_pointer copies a new Point into the caller's object (no `new`, no rebind)"
+        command: "sed 's|//.*||' /tutorial/cs131/param_passing.cpp | awk '/modify_by_pointer/,/^}/' | tr '\\n' ' ' | grep -qE '\\*[[:space:]]*[A-Za-z_]+[[:space:]]*=[[:space:]]*Point[[:space:]]*\\([[:space:]]*20' && ! sed 's|//.*||' /tutorial/cs131/param_passing.cpp | awk '/modify_by_pointer/,/^}/' | grep -qE '=[[:space:]]*new[[:space:]]+Point'"
+        hints:
+          - text: "This is exactly the version C versus version D difference from the reveal. One of them leaves the caller at `(50, 10)`. You want the other one."
+          - text: "`p = something` scratches out the address on the paper, and the caller never finds out. You want the assignment whose left side names the house, not the paper."
+            condition: "code_contains: new Point"
+          - text: "Here's the shape. The left side of your second statement is one character followed by the parameter name: `?p = Point(20, 30);`"
+            condition: "code_missing: 20, 30"
+
+    quiz:
+      title: "Step 1 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: |
+            A function is declared `void bump(Point *p)` and its whole body is
+            the single line `p = new Point(0, 0);`. The caller runs:
+
+            ```cpp
+            Point pt(7, 7);
+            bump(&pt);
+            pt.display();
+            ```
+
+            What gets printed, and what happens to the heap object?
+          options:
+            - "`(7, 7)`; the heap object is leaked"
+            - "`(0, 0)`; the heap object becomes `pt`"
+            - "`(7, 7)`; the heap object is freed at the closing brace"
+            - "`(0, 0)`; the heap object is leaked"
+          correct_index: 0
+          option_feedback:
+            1: "Assigning to `p` only rewrites the address the parameter holds. `pt` still lives at the old address and never gets written to, so its members keep their original values."
+            2: "C++ frees local variables at the closing brace, but `new` allocates on the heap. Only a matching `delete` frees that, and there isn't one here."
+            3: "The leak half is right, but not the printed half. The only thing the assignment changed was the parameter's own copy of the address."
+          explanation: "The parameter is a copy of an address. Overwriting it points the local copy somewhere else and leaves the caller's object alone, and the new Point is never freed, so it leaks."
+        - type: single
+          difficulty: advanced
+          question: |
+            You want `resize` to be able to replace the caller's whole `Point`,
+            and you'd rather write `resize(pt)` at the call site than
+            `resize(&pt)`. Which parameter list does that?
+          options:
+            - "`void resize(Point &p)`"
+            - "`void resize(Point p)`"
+            - "`void resize(Point *p)`"
+            - "`void resize(const Point &p)`"
+          correct_index: 0
+          option_feedback:
+            1: "A by-value parameter is a copy. Replacing it replaces the copy, and the copy is thrown away when the function returns."
+            2: "This one can replace the caller's object, but only through `*p`, and it forces the call site to say `resize(&pt)`, which is what the question rules out."
+            3: "`const` is the problem. It makes the alias read-only, so the compiler rejects any assignment to `p` or its members."
+          explanation: "A non-const reference parameter is an alias for the caller's object, so assigning to it replaces that object. And references need no `&` at the call site."
+        - type: multiple
+          difficulty: advanced
+          question: |
+            `void f(Point *p)` is called as `f(&pt)`, where the caller holds
+            `Point pt(1, 1)`. Which statements inside `f` does the caller see
+            after `f` returns?
+          options:
+            - "`p->y_ = 9;`"
+            - "`*p = Point(4, 4);`"
+            - "`p = new Point(4, 4);`"
+            - "`Point q = *p; q.y_ = 9;`"
+          correct_indices: [0, 1]
+          option_feedback:
+            0: "This is the most common write of all. The arrow follows the address to the caller's object before assigning, so the caller sees it."
+            1: "This is the version C versus version D difference again. Dereferencing on the left side copies the new Point into the caller's object."
+            2: "This only rewrites the parameter's own copy of the address. The caller's object never gets written to."
+            3: "`Point q = *p;` makes a brand new local copy. Changes to `q` never travel back through `p`."
+          explanation: "Only statements that go through the address change the caller's object: `p->member` and `*p` on the left side. Assigning to `p` itself, or to a copy made from `*p`, stays local."
+    solution:
+      files:
+        - path: "cs131/param_passing.cpp"
+          language: "cpp"
+          content: |
+            #include <iostream>
+            using namespace std;
+
+            class Point {
+            public:
+                Point(int x = 0, int y = 0) {
+                    x_ = x;
+                    y_ = y;
+                }
+                void display() const {
+                    cout << "(" << x_ << ", " << y_ << ")" << endl;
+                }
+
+                int x_, y_;
+            };
+
+            // Version A - by value. Finished for you.
+            // The caller still sees (10, 10) after this returns.
+            void modify_by_value(Point p) {
+                p.x_ = 50;
+                p = Point(20, 30);
+            }
+
+            // Version B - by reference. `p` is a second NAME for the caller's
+            // object, so both statements land on the caller's point.
+            void modify_by_reference(Point &p) {
+                p.x_ = 50;
+                p = Point(20, 30);
+            }
+
+            // Version D - by pointer. Every assignment goes THROUGH the
+            // address, so the caller sees both statements.
+            void modify_by_pointer(Point *p) {
+                p->x_ = 50;
+                *p = Point(20, 30);
+            }
+      explanation: |
+        Both bodies do exactly what `modify_by_value` does: set `x_`, then
+        replace the whole object. The only thing that changed is how the
+        parameter is declared.
+
+        `Point &p` makes `p` an alias. There is no second object, so
+        `p = Point(20, 30)` really is `pt = Point(20, 30)`.
+
+        `Point *p` gives you a copy of an address. Both `p->x_` and `*p` follow
+        that address to the caller's object, so both reach `pt`. The tempting
+        wrong move is `p = new Point(20, 30)`, which only rewrites the address
+        on our piece of paper. That leaves `pt` at `(50, 10)` and leaks the
+        memory we allocated.
+
+        Keep versions C and D in mind for the next two steps. Python has exactly
+        one parameter passing scheme, and it behaves like one of these four.
+
+  # =========================================================================
+  # STEP 2 — The Point class in Python (HW0 problem 2a-2b)
+  # =========================================================================
+  # Pedagogy: PRIMM — Predict before Run. The prediction is the payoff of
+  # Step 1: the student must map Python onto one of four C++ variants they
+  # have just reasoned through, then run the code and find out.
+  - title: "The Point Class in Python"
+    backend: pyodide
+    instructions: |
+      ### Why this matters
+
+      For this step we'll explore classes and parameter passing in Python to get
+      a feel for how it's similar to and different from C++. As it turns out,
+      Python only has a single parameter passing scheme, not three different
+      approaches like C++. Python's approach is like one of C++'s approaches.
+      See if you can figure out which one it uses.
+
+      ### 🎯 You will learn to
+
+      - Write a C++ class in Python 3.x syntax
+      - Work out which C++ parameter passing scheme Python's single scheme matches
+
+      ### From C++ to Python
+
+      Same class, different syntax. Three things change:
+
+      | C++ | Python | Why |
+      |---|---|---|
+      | `Point(int x = 0, int y = 0) { ... }` | `def __init__(self, x=0, y=0):` | The constructor has a fixed name, and the object it's working on is an explicit first parameter |
+      | `x_ = x;` | `self.x_ = x` | Nothing is declared in a class body. An attribute springs into existence the first time you assign to it through `self` |
+      | `public:` / `private:` | *(nothing)* | In Python, everything is public by default |
+
+      ### ✏️ Predict before you run
+
+      `point_lab.py` already contains the Python version of the driver from
+      Step 1:
+
+      ```python
+      def modify(p):
+          p.x_ = 50          # line A
+          p = Point(20, 30)  # line B
+
+      pt = Point(10, 10)
+      modify(pt)
+      pt.display()
+      ```
+
+      Once you've written the class and pressed **Run**, what gets printed?
+
+      - **(a)** `(10, 10)` — like C++ version A, Python copies the object
+      - **(b)** `(50, 10)` — like C++ version C, line A lands but line B doesn't
+      - **(c)** `(20, 30)` — like C++ version B or D, both lines land
+      - **(d)** A `TypeError` — you can't assign to a parameter in Python
+
+      Pick a letter before you press Run, then see whether the machine agrees
+      with you.
+
+      ### 🔧 Your task
+
+      Open **`point_lab.py`** and write an equivalent version of the Point class
+      in Python 3.x syntax. Fill in `__init__` and `display`.
+
+      - Store the coordinates as `self.x_` and `self.y_`, keeping the C++ names
+        so the two files are easy to compare.
+      - `display` must **print** the point, not return it, in the same format the
+        C++ `display()` used: `(50, 10)`.
+    files:
+      - path: "point_lab.py"
+        language: "python"
+        content: |
+          class Point:
+              """Python twin of the C++ Point from Step 1."""
+
+              def __init__(self, x=0, y=0):
+                  # TODO: give this instance its two coordinates, named x_ and y_
+                  pass
+
+              def display(self):
+                  # TODO: print this point in the same format as the C++ version,
+                  # e.g. a point at x=50, y=10 prints as:  (50, 10)
+                  pass
+
+
+          def modify(p):
+              p.x_ = 50          # line A
+              p = Point(20, 30)  # line B
+
+
+          # The Python twin of the C++ driver from Step 1.
+          pt = Point(10, 10)
+          modify(pt)
+          pt.display()
+
+    open_file: "point_lab.py"
+
+    tests:
+      - description: "Point stores the coordinates passed to it as x_ and y_"
+        command: |
+          import io, contextlib
+          src = open('/tutorial/point_lab.py').read()
+          ns = {}
+          with contextlib.redirect_stdout(io.StringIO()):
+              exec(src, ns)
+          Point = ns['Point']
+          p = Point(3, 4)
+          assert getattr(p, 'x_', None) == 3 and getattr(p, 'y_', None) == 4, \
+              f"Point(3, 4) should have x_ == 3 and y_ == 4, got x_={getattr(p, 'x_', None)!r}, y_={getattr(p, 'y_', None)!r}"
+        hints:
+          - text: "In Python nothing is declared ahead of time. An attribute exists on an object the moment you assign to it through `self`."
+          - text: "`__init__` gets the object it's building as its first parameter. The two coordinates arrive as the second and third."
+            condition: "code_missing: self.x_"
+          - text: "Here's the shape. Two assignments, no `return`: `self.x_ = ...` and `self.y_ = ...`"
+            condition: "code_contains: pass"
+      - description: "Point() with no arguments defaults to (0, 0)"
+        command: |
+          import io, contextlib
+          src = open('/tutorial/point_lab.py').read()
+          ns = {}
+          with contextlib.redirect_stdout(io.StringIO()):
+              exec(src, ns)
+          p = ns['Point']()
+          assert getattr(p, 'x_', None) == 0 and getattr(p, 'y_', None) == 0, \
+              f"Point() should default to (0, 0), got ({getattr(p, 'x_', None)!r}, {getattr(p, 'y_', None)!r})"
+        hints:
+          - text: "The C++ constructor said `int x = 0, int y = 0`, and the starter signature already has the Python equivalent. Make sure you assign the parameters instead of hard-coding numbers."
+      - description: "display() prints the point as (x, y)"
+        command: |
+          import io, contextlib
+          src = open('/tutorial/point_lab.py').read()
+          ns = {}
+          with contextlib.redirect_stdout(io.StringIO()):
+              exec(src, ns)
+          buf = io.StringIO()
+          p = ns['Point'](3, 4)
+          with contextlib.redirect_stdout(buf):
+              result = p.display()
+          printed = buf.getvalue()
+          assert ''.join(printed.split()) == '(3,4)', \
+              f"display() should print (3, 4) — got {printed!r}"
+          assert result is None, "display() should print the point, not return it"
+        hints:
+          - text: "Compare with the C++ version. It printed a parenthesis, the x value, a comma and a space, the y value, then a closing parenthesis. Yours has to produce the same characters."
+          - text: "An f-string is the cleanest way to mix attribute values in with the punctuation."
+            condition: "code_missing: print("
+          - text: "Here's the shape: `print(f\"({...}, {...})\")`. Fill in the two attributes."
+            condition: "code_contains: print("
+      - description: "Running the file prints (50, 10) — Python matches exactly one C++ variant"
+        command: |
+          output = __run_capture('/tutorial/point_lab.py')
+          assert ''.join(output.split()) == '(50,10)', \
+              f"Expected the driver to print (50, 10) — got {output!r}"
+
+    quiz:
+      title: "Step 2 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: |
+            The driver prints `(50, 10)`. Which of the four C++ versions from
+            Step 1 does Python's parameter passing behave like?
+          options:
+            - "Version C, pass by pointer, then reassign the pointer"
+            - "Version A, pass by value, copying the whole object"
+            - "Version B, pass by reference, an alias for the caller"
+            - "Version D, pass by pointer, writing through the pointer"
+          correct_index: 0
+          option_feedback:
+            1: "If Python had copied the object, line A would have been hidden too and we'd have seen `(10, 10)`. The 50 got through, so no copy was made."
+            2: "An alias would have let line B through too, printing `(20, 30)`. Line B got lost, so `p` isn't a second name for `pt`."
+            3: "Writing through a pointer gets both lines across. Line B here reassigns the local name instead of writing into the caller's object."
+          explanation: "Python hands the function a copy of a reference to the object. Attribute writes travel through that reference to the caller's object, but assigning to the parameter only points the function's own name somewhere else. That's exactly what version C did."
+        - type: single
+          difficulty: advanced
+          question: |
+            Is there any way to update just line B so that Python changes the
+            value of the `pt` variable through assignment in `modify()`?
+          options:
+            - "No, assigning to a parameter can never reach the caller's variable"
+            - "Yes, write `global p` above line B first"
+            - "Yes, write `p := Point(20, 30)` using the walrus operator"
+            - "Yes, write `p = &Point(20, 30)` to take a reference"
+          correct_index: 0
+          option_feedback:
+            1: "`global` applies to module-level names. `pt` is one here, but the parameter is called `p`, so this would create or reassign a module-level `p` and leave `pt` alone."
+            2: "The walrus operator is still assignment. It just also produces a value, and it reassigns the local name exactly like `=` does."
+            3: "Python has no address-of operator. `&` means bitwise AND between integers, so this line would raise a `TypeError`."
+          explanation: "No! Python has no ability to use assignment to change a variable like `pt` from within a different function than `pt` was defined in. We can change the members of `pt` using code like `p.x_ = 50`, or return a new value and let the caller reassign, but not assignment to `p` itself."
+        - type: single
+          difficulty: basic
+          question: |
+            Back to Step 1 for a moment. C++ wrote `x_ = x;` inside the
+            constructor with nothing in front of it. Why does Python need
+            `self.x_ = x` instead?
+          options:
+            - "Without `self.`, `x_` is just a local that dies at the return"
+            - "`self` is a keyword Python requires before every assignment"
+            - "`self.` marks the attribute public, like C++'s `public:` label"
+            - "Python needs it to allocate storage for the attribute in advance"
+          correct_index: 0
+          option_feedback:
+            1: "`self` is an ordinary parameter name, not a keyword, and you only need it when you mean an attribute rather than a local variable."
+            2: "Python has no access control to opt into. Every attribute is reachable from outside the class no matter how it was assigned."
+            3: "Nothing is declared ahead of time in Python. The attribute appears the moment you first assign to it through `self`."
+          explanation: "C++ member functions have an implicit `this`, so a bare `x_` finds the member. Python has no implicit `this`. A bare name is always a local variable, so you have to name the object explicitly with `self`."
+    solution:
+      files:
+        - path: "point_lab.py"
+          language: "python"
+          content: |
+            class Point:
+                """Python twin of the C++ Point from Step 1."""
+
+                def __init__(self, x=0, y=0):
+                    self.x_ = x
+                    self.y_ = y
+
+                def display(self):
+                    print(f"({self.x_}, {self.y_})")
+
+
+            def modify(p):
+                p.x_ = 50          # line A
+                p = Point(20, 30)  # line B
+
+
+            # The Python twin of the C++ driver from Step 1.
+            pt = Point(10, 10)
+            modify(pt)
+            pt.display()
+      explanation: |
+        `self.x_ = x` inside `__init__` is what brings the attribute into
+        existence. There's no declaration anywhere, and no `public:` either,
+        because in Python everything is public by default.
+
+        The output is `(50, 10)`, just like our result in version C, which means
+        that Python uses pointers to pass values to functions! In Python we call
+        these pointers "object references", but they're nearly identical to
+        pointers in C++. Following the reference with `p.x_ = 50` reaches the
+        caller's object. Assigning a whole new object to `p` does not.
+
+  # =========================================================================
+  # STEP 3 — Object references and rebinding (HW0 problem 2c)
+  # =========================================================================
+  # Pedagogy: productive failure (Bjork) — the student is asked to write the
+  # naive swap that a pass-by-reference language would allow, watch it fail,
+  # and only then generalize the rule. Also spaced practice on Step 1.
+  - title: "Mutation Versus Rebinding"
+    backend: pyodide
+    instructions: |
+      ### Why this matters
+
+      "Why didn't my function change my variable?" is the most common Python
+      question we get, and it's the #1 mistake beginning Python programmers
+      make. There's one rule behind all of it, and once you've written the
+      broken version yourself you won't get it wrong again.
+
+      ### 🎯 You will learn to
+
+      - Apply the change-it versus reassign-it rule to say which changes survive a call
+      - Explain why a simple `swap(a, b)` can't work in Python
+
+      ### The rule
+
+      A call binds the function's parameter names to the same objects the caller
+      passed in. Two very different things can happen next:
+
+      - **You change the object.** `p.x_ = 50`, `items.append(3)`, `d["k"] = 1`.
+        You reach through the name to the object itself. The caller is holding
+        that same object, so the caller sees the change.
+      - **You reassign the name.** `p = Point(20, 30)`, `items = []`. You point
+        the function's own name at a different object. The caller's name never
+        moved.
+
+      ### 🔧 Your task
+
+      Open **`references_lab.py`** and write two functions.
+
+      1. `swap_coords(p)` — swap one point's own `x_` and `y_` in place. The
+         caller has to see the change without reassigning anything.
+      2. `swap_points(a, b)` — write the naive version on purpose: the one you'd
+         write in a language where parameters are aliases for the caller's
+         variables. Reassign `a` and `b` to each other and nothing else. Don't
+         touch their attributes.
+
+      Writing the broken one deliberately is the point of this step. The checker
+      verifies that `swap_coords` works, that `swap_points` really does attempt
+      the swap, and that the caller's variables come back **unswapped**.
+
+      ### ✏️ Predict before you run
+
+      After `swap_coords(first)` and then `swap_points(first, second)`, what do
+      the three `display()` calls print?
+
+      <details>
+      <summary>Reveal &mdash; after you have run it</summary>
+      <p><code>(2, 1)</code>, then <code>(2, 1)</code> and <code>(3, 4)</code>.</p>
+      <p><code>swap_coords</code> changes the object, so the change sticks.
+      <code>swap_points</code> reassigns two local names that disappear at the
+      <code>return</code>, so <code>first</code> and <code>second</code> in the
+      caller never move. During the call, <code>a</code> and <code>b</code>
+      really were pointing at the caller's objects. Python just gives you no way
+      to reach back through a parameter to the caller's variable.</p>
+      <p>The fix isn't a different kind of parameter, because Python doesn't have
+      one. It's <code>first, second = second, first</code> at the call site, or
+      having the function return the pair.</p>
+      </details>
+    files:
+      - path: "references_lab.py"
+        language: "python"
+        content: |
+          class Point:
+              def __init__(self, x=0, y=0):
+                  self.x_ = x
+                  self.y_ = y
+
+              def display(self):
+                  print(f"({self.x_}, {self.y_})")
+
+
+          def swap_coords(p):
+              """Swap this point's own x_ and y_, in place.
+
+              The caller must see the swap without reassigning anything.
+              """
+              # TODO
+              pass
+
+
+          def swap_points(a, b):
+              """Deliberately naive: rebind a and b to each other.
+
+              Write the version you would write in a language where parameters
+              are aliases for the caller's variables. Do not touch .x_ or .y_ —
+              watching this one fail is the point of the exercise.
+              """
+              # TODO
+              pass
+
+
+          first = Point(1, 2)
+          second = Point(3, 4)
+
+          swap_coords(first)
+          first.display()
+
+          swap_points(first, second)
+          first.display()
+          second.display()
+
+    open_file: "references_lab.py"
+
+    tests:
+      - description: "swap_coords swaps a point's coordinates in place"
+        command: |
+          import io, contextlib
+          src = open('/tutorial/references_lab.py').read()
+          ns = {}
+          with contextlib.redirect_stdout(io.StringIO()):
+              exec(src, ns)
+          Point, swap_coords = ns['Point'], ns['swap_coords']
+          for start, want in [((3, 7), (7, 3)), ((5, 9), (9, 5)), ((4, 4), (4, 4))]:
+              p = Point(*start)
+              swap_coords(p)
+              got = (p.x_, p.y_)
+              assert got == want, \
+                  f"swap_coords on Point{start} should leave {want}, got {got}"
+        hints:
+          - text: "The caller keeps its own name for the object and never reassigns it, so whatever you do has to happen to the object's attributes."
+          - text: "Writing `p.x_ = p.y_` first throws away the value you still need. Python can assign both at once, from a pair built before either assignment happens."
+            condition: "code_missing: ,"
+          - text: "Here's the shape. One line, two targets, two sources: `p.x_, p.y_ = ..., ...`"
+            condition: "code_contains: pass"
+      - description: "swap_points really does rebind both of its parameters"
+        command: |
+          import ast
+          src = open('/tutorial/references_lab.py').read()
+          tree = ast.parse(src)
+          fn = next((n for n in ast.walk(tree)
+                     if isinstance(n, ast.FunctionDef) and n.name == 'swap_points'), None)
+          assert fn is not None, "No function named swap_points was found"
+          params = {a.arg for a in fn.args.args}
+          rebound = set()
+          for node in ast.walk(fn):
+              if isinstance(node, (ast.Assign, ast.AugAssign)):
+                  targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+                  for tgt in targets:
+                      elts = tgt.elts if isinstance(tgt, (ast.Tuple, ast.List)) else [tgt]
+                      for e in elts:
+                          if isinstance(e, ast.Name):
+                              rebound.add(e.id)
+          missing = sorted(params - rebound)
+          assert not missing, \
+              f"swap_points should assign to both of its parameters; never assigned: {missing}"
+        hints:
+          - text: "This step needs the broken version to actually exist. An empty body proves nothing, so the checker looks for a real attempt at the swap."
+          - text: "Python swaps two names in one statement, with both names on the left of the `=` and both on the right in the other order."
+            condition: "code_contains: pass"
+      - description: "swap_points leaves the caller's two variables unswapped"
+        command: |
+          import io, contextlib
+          src = open('/tutorial/references_lab.py').read()
+          ns = {}
+          with contextlib.redirect_stdout(io.StringIO()):
+              exec(src, ns)
+          Point, swap_points = ns['Point'], ns['swap_points']
+          a, b = Point(1, 2), Point(3, 4)
+          swap_points(a, b)
+          assert (a.x_, a.y_) == (1, 2) and (b.x_, b.y_) == (3, 4), \
+              ("swap_points must not change the caller's objects — rebind the parameters only, "
+               f"but got a=({a.x_}, {a.y_}) and b=({b.x_}, {b.y_})")
+        hints:
+          - text: "If this check fails, the function is doing more than reassigning. It's reaching through the names and editing the objects themselves."
+          - text: "Swapping `a.x_` with `b.x_` changes the shared objects, so the caller does see it. This step wants the version that only moves the local names."
+            condition: "code_contains: .x_"
+
+    quiz:
+      title: "Step 3 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: multiple
+          difficulty: intermediate
+          question: |
+            `def f(xs, d, n)` is called as `f(my_list, my_dict, my_int)`.
+            Which bodies leave a change that the caller can see?
+          options:
+            - "`xs.append(4)`"
+            - "`d[\"key\"] = 4`"
+            - "`xs = xs + [4]`"
+            - "`n += 1`"
+          correct_indices: [0, 1]
+          option_feedback:
+            0: "`append` changes the list object itself, and both names refer to that same object."
+            1: "Assigning to a key changes the dictionary object itself. It doesn't reassign `d`."
+            2: "`+` builds a brand new list, and `=` points the local name at it. The caller's list is never touched. `xs += [4]` would be the version that does change it."
+            3: "Integers can't be changed in place, so `+=` computes a new one and points the local name at it."
+          explanation: "A change survives the call when it changes the shared object. Any statement that just points a parameter name at a different object is invisible to the caller."
+        - type: single
+          difficulty: advanced
+          question: |
+            Back to Step 1 again. A C++ function is declared `void f(Point p)`
+            and its body is `p.x_ = 99;`. The caller runs
+            `Point pt(1, 1); f(pt); pt.display();`
+
+            How does that compare with the Python call `f(pt)`, where
+            `def f(p): p.x_ = 99`?
+          options:
+            - "C++ prints `(1, 1)`, but Python's `pt.x_` becomes 99"
+            - "Both leave the caller's point at `(1, 1)`"
+            - "Both set the caller's `x_` to 99"
+            - "C++ sets `x_` to 99, but Python leaves it at 1"
+          correct_index: 0
+          option_feedback:
+            1: "Python never copies the object on a call, so the write lands on the caller's object."
+            2: "A C++ by-value parameter is a real copy made by the copy constructor, so the write lands on that copy and is thrown away."
+            3: "This has the two languages backwards. Copying is what C++ does when you pass by value, and Python is the one that shares the object."
+          explanation: "Passing by value in C++ copies the object, so the function edits a copy. Python has no such mode. The function always gets a reference to the same object, so attribute writes are shared."
+        - type: single
+          difficulty: advanced
+          question: |
+            A colleague fixes the broken swap like this:
+
+            ```python
+            def swap_points(a, b):
+                a.x_, b.x_ = b.x_, a.x_
+                a.y_, b.y_ = b.y_, a.y_
+            ```
+
+            Does the caller now see `first` and `second` swapped?
+          options:
+            - "The contents swap, but each variable still names the object it started with"
+            - "Yes, and this is the idiomatic Python fix"
+            - "No, assigning to an attribute is still reassigning, so nothing survives"
+            - "Only if both points were created in the same function"
+          correct_index: 0
+          option_feedback:
+            1: "It does produce the values the caller wanted, but it isn't a swap of variables. Anything else holding a reference to either object will see its contents change underneath it."
+            2: "Assigning to an attribute changes the object rather than reassigning a name, so these writes definitely survive the call."
+            3: "Where the points were created makes no difference. What matters is whether a statement changes a shared object or reassigns a local name."
+          explanation: "Changing attributes reaches the shared objects, so the printed coordinates really do swap. What didn't happen is a swap of the caller's names. `first` still refers to the object it always did. To swap the names you need `first, second = second, first` at the call site."
+    solution:
+      files:
+        - path: "references_lab.py"
+          language: "python"
+          content: |
+            class Point:
+                def __init__(self, x=0, y=0):
+                    self.x_ = x
+                    self.y_ = y
+
+                def display(self):
+                    print(f"({self.x_}, {self.y_})")
+
+
+            def swap_coords(p):
+                """Swap this point's own x_ and y_, in place."""
+                p.x_, p.y_ = p.y_, p.x_
+
+
+            def swap_points(a, b):
+                """Deliberately naive: rebind a and b to each other."""
+                a, b = b, a
+
+
+            first = Point(1, 2)
+            second = Point(3, 4)
+
+            swap_coords(first)
+            first.display()
+
+            swap_points(first, second)
+            first.display()
+            second.display()
+      explanation: |
+        `swap_coords` works for two reasons. The pair on the right, `(p.y_, p.x_)`,
+        is built before either assignment happens, so neither value gets thrown
+        away mid-swap. And assigning to an attribute reaches the object the
+        caller is holding too.
+
+        `swap_points` fails for a reason that has nothing to do with pairs.
+        `a, b = b, a` reassigns two names that stop existing at the `return`.
+        During the call those names really did refer to the caller's objects.
+        Python just has no way to reach back through a parameter and change the
+        caller's variable. This may be surprising, but it's true, and it's the
+        #1 mistake beginning Python programmers make. C++ gives you two ways to
+        do it (`Point &p` and `*p = ...`). Python gives you none.
+
+  # =========================================================================
+  # STEP 4 — Recursion in C++ (HW0 problem 3a-3b, C++ half)
+  # =========================================================================
+  # Pedagogy: generation / productive failure — the student derives the
+  # recursive shape in C++ from reasoning alone (no compiler), then validates
+  # the same algorithm empirically in Python on Step 5. Writing it before
+  # being able to test it is the desirable difficulty.
+  - title: "Recursion With No Loops Allowed"
+    backend: v86
+    step_dir: /tutorial/cs131
+    instructions: |
+      ### Why this matters
+
+      In this step we'll drill you on basic recursion (shudder). As we'll soon
+      learn, functional programming is entirely based on recursion — there are
+      no loops — so it's important to brush up on your recursion before we
+      start class.
+
+      ### 🎯 You will learn to
+
+      - Write a recursive function whose base case stops on every input
+      - Break an array traversal into "the first item" plus "the rest"
+
+      ### The shape of every array recursion
+
+      A C++ array doesn't know its own length, so recursion on arrays uses a
+      pointer and a count. `arr + 1` is the same array starting one element
+      later. This is the pointer arithmetic from CS31, and it's how you say "the
+      rest of the array" without copying anything:
+
+      | Concept | C++ | Python |
+      |---|---|---|
+      | the first item | `arr[0]` | `values[0]` |
+      | everything but the first | `arr + 1, n - 1` | `values[1:]` |
+      | is there only one item left? | `n == 1` | `len(values) == 1` |
+
+      Here's the recipe for any array recursion:
+
+      1. **Base case.** What's the answer when there's exactly one item left?
+         Both functions here are guaranteed at least one item, so `n == 1` is a
+         safe place to stop.
+      2. **Recursive case.** Ask the same function for the answer to
+         `arr + 1, n - 1`, then combine that answer with `arr[0]`.
+
+      ### ✏️ Predict before you write
+
+      For `index_of_biggest`, the recursive call answers a question about the
+      sub-array starting at `arr + 1`. If that call returns `2`, what is that 2
+      an index into?
+
+      - **(a)** The original array, so use it as is
+      - **(b)** The sub-array, so the original index is one higher
+      - **(c)** The sub-array, so the original index is one lower
+
+      This is the classic off-by-one in this exact problem, so it's worth
+      deciding before you type.
+
+      <details>
+      <summary>Reveal</summary>
+      <p><strong>(b).</strong> The recursive call knows nothing about the element
+      you sliced off. Index 2 of <code>arr + 1</code> is index 3 of
+      <code>arr</code>. So every index that comes back from recursion needs
+      <code>+ 1</code> before you can compare it against <code>arr[0]</code> or
+      return it.</p>
+      <p>That's why <code>find_biggest</code> is easier than
+      <code>index_of_biggest</code>. Values mean the same thing no matter which
+      sub-array they came from. Indices don't.</p>
+      </details>
+
+      ### 🔧 Your task
+
+      Open **`recursion.cpp`** and write both functions. Given an array that is
+      guaranteed to have at least one item, `find_biggest` returns the largest
+      value in the array, and `index_of_biggest` returns the index of the
+      largest value, where the first item is at index zero. Assume there are no
+      duplicate numbers. **No looping allowed!** The checker enforces that.
+
+      ```cpp
+      int arr[] = {-1, 10, 3};
+      find_biggest(arr, 3);      // 10
+      index_of_biggest(arr, 3);  // 1
+      ```
+
+      Remember that this VM has no C++ compiler, so the checker reads structure:
+      recursive, no loops, a real base case, a real comparison. **Step 5 asks
+      you for the same two algorithms in Python, where they actually run**, so
+      treat this step as designing the algorithm and the next one as proving it
+      works.
+    files:
+      - path: "cs131/recursion.cpp"
+        language: "cpp"
+        content: |
+          // Return the largest value in arr[0..n-1].
+          // Guaranteed: n >= 1. No loops allowed.
+          int find_biggest(int arr[], int n) {
+              // TODO: base case, then combine arr[0] with the answer for the rest
+          }
+
+          // Return the INDEX (into arr) of the largest value in arr[0..n-1].
+          // Guaranteed: n >= 1, no duplicate values. No loops allowed.
+          int index_of_biggest(int arr[], int n) {
+              // TODO: remember that an index from the sub-array needs adjusting
+          }
+
+    open_file: "cs131/recursion.cpp"
+
+    tests:
+      - description: "No loop appears anywhere in recursion.cpp"
+        command: "! sed 's|//.*||' /tutorial/cs131/recursion.cpp | grep -qE '(^|[^[:alnum:]_])(for|while|goto)([^[:alnum:]_]|$)'"
+        hints:
+          - text: "Every trip through a loop becomes one call in a recursion. The loop body becomes the combining step, and the loop condition becomes the base case."
+          - text: "If you wrote a `for` that walks from index 0 to n, the recursive version handles `arr[0]` itself and hands `arr + 1, n - 1` to another call."
+      - description: "find_biggest calls itself"
+        command: "[ $(sed 's|//.*||' /tutorial/cs131/recursion.cpp | awk '/find_biggest[[:space:]]*\\(/{f=1} f{print} f&&/^}/{exit}' | grep -c 'find_biggest') -ge 2 ]"
+        hints:
+          - text: "A recursive function mentions its own name twice, once in the signature and once in the body."
+          - text: "The recursive call has to ask about a smaller problem: the same array shifted forward by one, with the count reduced by one."
+      - description: "find_biggest has a base case on n and compares array elements"
+        command: "sed 's|//.*||' /tutorial/cs131/recursion.cpp | awk '/find_biggest[[:space:]]*\\(/{f=1} f{print} f&&/^}/{exit}' | tr '\\n' ' ' | grep -qE 'n[[:space:]]*(==|<=|<)[[:space:]]*[12]' && sed 's|//.*||' /tutorial/cs131/recursion.cpp | awk '/find_biggest[[:space:]]*\\(/{f=1} f{print} f&&/^}/{exit}' | grep -qE '([A-Za-z_][A-Za-z0-9_]*[[:space:]]*\\[[^]]*\\][[:space:]]*[<>]|[<>][[:space:]]*[A-Za-z_][A-Za-z0-9_]*[[:space:]]*\\[)'"
+        hints:
+          - text: "Without a base case the recursion never stops. We're guaranteed `n >= 1`, so ask yourself what the answer is when only one element is left."
+          - text: "The recursive case has to decide something. Is the biggest value in the rest of the array larger than the one you sliced off? That decision needs a comparison against an array element."
+            condition: "code_missing: >"
+          - text: "Here's the shape: `if (n == 1) return arr[0];` then store the recursive answer for `arr + 1, n - 1`, and return whichever of it and `arr[0]` is larger."
+      - description: "index_of_biggest calls itself"
+        command: "[ $(sed 's|//.*||' /tutorial/cs131/recursion.cpp | awk '/index_of_biggest[[:space:]]*\\(/{f=1} f{print} f&&/^}/{exit}' | grep -c 'index_of_biggest') -ge 2 ]"
+        hints:
+          - text: "Same shape as `find_biggest`. The name appears in the signature and once more in the body, on the smaller problem."
+          - text: "You may use a helper function if necessary, but the simplest version recurses on `index_of_biggest(arr + 1, n - 1)` directly and then fixes up the index it gets back."
+      - description: "index_of_biggest has a base case on n and compares array elements"
+        command: "sed 's|//.*||' /tutorial/cs131/recursion.cpp | awk '/index_of_biggest[[:space:]]*\\(/{f=1} f{print} f&&/^}/{exit}' | tr '\\n' ' ' | grep -qE 'n[[:space:]]*(==|<=|<)[[:space:]]*[12]' && sed 's|//.*||' /tutorial/cs131/recursion.cpp | awk '/index_of_biggest[[:space:]]*\\(/{f=1} f{print} f&&/^}/{exit}' | grep -qE '([A-Za-z_][A-Za-z0-9_]*[[:space:]]*\\[[^]]*\\][[:space:]]*[<>]|[<>][[:space:]]*[A-Za-z_][A-Za-z0-9_]*[[:space:]]*\\[)'"
+        hints:
+          - text: "The base case here returns an index, not a value. When one element is left, what index is the biggest one at?"
+          - text: "You can't compare indices to decide which is bigger. You have to compare the values those indices point at, which means two array lookups in the comparison."
+            condition: "code_missing: >"
+          - text: "Here's the shape: `if (n == 1) return 0;` then `int rest = index_of_biggest(arr + 1, n - 1) + 1;` then return `rest` or `0` depending on how `arr[rest]` compares with `arr[0]`."
+
+    quiz:
+      title: "Step 4 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: |
+            A student writes:
+
+            ```cpp
+            int find_biggest(int arr[], int n) {
+                int rest = find_biggest(arr + 1, n - 1);
+                if (n == 1) return arr[0];
+                return rest > arr[0] ? rest : arr[0];
+            }
+            ```
+
+            What happens when this runs on a three-element array?
+          options:
+            - "It recurses forever and overflows the stack"
+            - "It returns `arr[0]`, because the base case fires immediately"
+            - "It returns the largest value correctly"
+            - "It returns the largest value in `arr + 1` and misses `arr[0]`"
+          correct_index: 0
+          option_feedback:
+            1: "The `n == 1` check is never reached, because the recursive call above it runs first and drives `n` past 1 on the way down."
+            2: "The combining logic is right, but it never runs. The function recurses before it ever checks whether it should stop."
+            3: "That would be a mistake in the comparison. The problem here happens earlier, because the recursion never reaches a stopping point."
+          explanation: "A base case only stops the recursion if you check it before the recursive call. Here `n` goes 3, 2, 1, 0, -1, and so on, and the check never gets a chance to fire, so the stack grows until it overflows."
+        - type: single
+          difficulty: advanced
+          question: |
+            `index_of_biggest(arr + 1, n - 1)` returns `0`. What does that
+            `0` mean, and what should you do with it?
+          options:
+            - "The biggest of the rest is at index 1 of `arr`, so add 1 before using it"
+            - "The biggest of the rest is at index 0 of `arr`, so use it as is"
+            - "The rest is empty, so return 0 immediately"
+            - "The biggest of the rest is `arr[0]`, so the answer is already found"
+          correct_index: 0
+          option_feedback:
+            1: "The call was given a different starting address, so the index it returns is counted from `arr + 1`, not from `arr`."
+            2: "A return value of 0 just means \"the first one\". An empty array never reaches this code, because the base case stops the recursion first."
+            3: "`arr[0]` is exactly the element we sliced off before the recursive call, so the recursion couldn't have been talking about it."
+          explanation: "Every index that comes back from a recursive call is counted from the sub-array that call received. To turn it into an index into the original array, add 1 for each element you sliced off, which is exactly one here."
+        - type: multiple
+          difficulty: advanced
+          question: |
+            Back to Steps 1 through 3. `find_biggest(int arr[], int n)` is
+            called as `find_biggest(scores, 5)`. Which statements are true?
+          options:
+            - "`arr` inside the function is a pointer, not a copy of the array"
+            - "Writing `arr[0] = 99` inside the function changes the caller's array"
+            - "`arr + 1` creates a copy of the array minus its first element"
+            - "Passing the array copies all 5 elements onto the stack"
+          correct_indices: [0, 1]
+          option_feedback:
+            0: "An array parameter is silently rewritten as a pointer. That's also why `n` has to be passed separately, since the pointer doesn't know the length."
+            1: "The function is holding the caller's address, so writing through a subscript reaches the caller's array."
+            2: "Pointer arithmetic produces a new address, not new storage. `arr + 1` is a different starting point into the same array."
+            3: "C++ never copies an array on a call. That's exactly why you can't get the length back out of `arr` and have to pass it separately."
+          explanation: "An array argument turns into a pointer to its first element, so the function shares the caller's array. It's the same reach-through-an-address behavior you traced in Step 1, and it's why `arr + 1, n - 1` costs nothing."
+    solution:
+      files:
+        - path: "cs131/recursion.cpp"
+          language: "cpp"
+          content: |
+            // Return the largest value in arr[0..n-1].
+            // Guaranteed: n >= 1. No loops allowed.
+            int find_biggest(int arr[], int n) {
+                if (n == 1) return arr[0];
+                int rest = find_biggest(arr + 1, n - 1);
+                if (rest > arr[0])
+                    return rest;
+                else
+                    return arr[0];
+            }
+
+            // Return the INDEX (into arr) of the largest value in arr[0..n-1].
+            // Guaranteed: n >= 1, no duplicate values. No loops allowed.
+            int index_of_biggest(int arr[], int n) {
+                if (n == 1) return 0;
+                int rest = index_of_biggest(arr + 1, n - 1) + 1;
+                if (arr[rest] > arr[0])
+                    return rest;
+                else
+                    return 0;
+            }
+      explanation: |
+        Both functions have the same shape. Check the base case first, make one
+        recursive call on a smaller problem, then combine the two answers.
+
+        The only real difference is the `+ 1`. `find_biggest` can use the
+        recursive answer as is, because a value means the same thing no matter
+        which sub-array it came from. `index_of_biggest` can't. The index it
+        gets back is measured from `arr + 1`, so we have to shift it before we
+        compare or return it. The other place this problem trips people up is
+        the comparison: we compare `arr[rest] > arr[0]`, which compares values,
+        not indices.
+
+  # =========================================================================
+  # STEP 5 — The same two algorithms in Python (HW0 problem 3a-3b, Python half)
+  # =========================================================================
+  # Pedagogy: worked example with fading + interleaving. The algorithm was
+  # designed on Step 4 in a language that could not run it; here it executes
+  # against real inputs, so a wrong design surfaces as a failing test.
+  - title: "The Same Recursion in Python"
+    backend: pyodide
+    instructions: |
+      ### Why this matters
+
+      You designed both algorithms on the last step without ever running them.
+      Now they run. If your C++ version had an off-by-one or a base case in the
+      wrong place, this is where you find out, and the fix carries straight back
+      to the C++ you already wrote.
+
+      ### 🎯 You will learn to
+
+      - Turn pointer-and-count recursion into slice-based recursion
+      - Check a recursive algorithm against inputs chosen to break it
+
+      ### Slices replace pointer arithmetic
+
+      Here are some hints to help you if you haven't worked with lists in Python
+      before. Python lists know their own length, so the count parameter goes
+      away:
+
+      | C++ | Python |
+      |---|---|
+      | `find_biggest(arr + 1, n - 1)` | `find_biggest(values[1:])` |
+      | `n == 1` | `len(values) == 1` |
+      | `arr[0]` | `values[0]` |
+
+      Given a list `x`, to obtain everything but the first item (that is, the
+      tail of the list) you write `x[1:]`. To get the length of a list, use
+      `len()`. One real difference from C++: `values[1:]` builds a **new list**
+      every call, where `arr + 1` was just an address. Same answer, more
+      copying, and it's a trade CS131 will keep making in favor of never
+      changing anything in place.
+
+      ### 🔧 Your task
+
+      Open **`recursion_lab.py`** and write both functions. Still no loops, and
+      now no comprehensions either, since a comprehension is just a loop in
+      disguise and the checker treats it as one.
+
+      ```python
+      find_biggest([-1, 10, 3])      # 10
+      index_of_biggest([-1, 10, 3])  # 1
+      ```
+
+      The tests run your functions on all-negative lists, single-element lists,
+      and lists whose largest value sits at the front, the middle, and the end.
+      Two of those catch bugs that a quick check on `[1, 2, 3]` never would.
+      Think about which two before you press Test.
+    files:
+      - path: "recursion_lab.py"
+        language: "python"
+        content: |
+          def find_biggest(values):
+              """Return the largest value in values. Assumes at least one item.
+
+              No loops, no comprehensions, no max().
+              """
+              # TODO
+              pass
+
+
+          def index_of_biggest(values):
+              """Return the index of the largest value in values.
+
+              Assumes at least one item and no duplicates.
+              No loops, no comprehensions.
+              """
+              # TODO
+              pass
+
+
+          print(find_biggest([-1, 10, 3]))      # expect 10
+          print(index_of_biggest([-1, 10, 3]))  # expect 1
+
+    open_file: "recursion_lab.py"
+
+    tests:
+      - description: "find_biggest returns the largest value, including all-negative lists"
+        command: |
+          import io, contextlib
+          src = open('/tutorial/recursion_lab.py').read()
+          ns = {}
+          with contextlib.redirect_stdout(io.StringIO()):
+              exec(src, ns)
+          find_biggest = ns['find_biggest']
+          cases = [([5], 5), ([-1, 10, 3], 10), ([1, 2, 3], 3), ([9, 2, 3], 9),
+                   ([-5, -2, -9], -2), ([3, 41, 5, 9, 27, 11], 41), ([7, 7, 2], 7)]
+          for values, want in cases:
+              got = find_biggest(list(values))
+              assert got == want, f"find_biggest({values}) should be {want}, got {got!r}"
+        hints:
+          - text: "Start from the base case. When the list holds exactly one item, the answer needs no recursion at all."
+          - text: "The all-negative list is the giveaway. Any solution that starts from a \"biggest so far\" of 0 gets that case wrong. The first item is the only safe starting point."
+          - text: "Here's the shape: `if len(values) == 1: return values[0]`, then compare `values[0]` against the answer for `values[1:]` and return the larger one."
+            condition: "code_contains: pass"
+      - description: "index_of_biggest returns the correct index for front, middle, and end maxima"
+        command: |
+          import io, contextlib
+          src = open('/tutorial/recursion_lab.py').read()
+          ns = {}
+          with contextlib.redirect_stdout(io.StringIO()):
+              exec(src, ns)
+          index_of_biggest = ns['index_of_biggest']
+          cases = [([5], 0), ([-1, 10, 3], 1), ([1, 2, 3], 2), ([9, 2, 3], 0),
+                   ([-5, -2, -9], 1), ([3, 41, 5, 9, 27, 11], 1), ([4, 1, 8, 2, 99], 4)]
+          for values, want in cases:
+              got = index_of_biggest(list(values))
+              assert got == want, f"index_of_biggest({values}) should be {want}, got {got!r}"
+        hints:
+          - text: "Use the decision you made on the previous step. The index the recursive call hands back is counted from the slice, not from the original list."
+          - text: "If your answers are always too small, the shift is missing. If the only case that fails is the one with the largest value at the front, look at what the base case returns."
+          - text: "Here's the shape: `if len(values) == 1: return 0`, then `rest = index_of_biggest(values[1:]) + 1`, then compare `values[rest]` with `values[0]`."
+            condition: "code_contains: pass"
+      - description: "Neither function mutates the list it was given"
+        command: |
+          import io, contextlib
+          src = open('/tutorial/recursion_lab.py').read()
+          ns = {}
+          with contextlib.redirect_stdout(io.StringIO()):
+              exec(src, ns)
+          original = [4, 1, 9, 2]
+          probe = list(original)
+          ns['find_biggest'](probe)
+          assert probe == original, f"find_biggest changed its argument: {probe} (was {original})"
+          probe = list(original)
+          ns['index_of_biggest'](probe)
+          assert probe == original, f"index_of_biggest changed its argument: {probe} (was {original})"
+        hints:
+          - text: "Slicing with `values[1:]` makes a copy. Methods like `pop`, `remove` and `sort` change the caller's list in place, which is the shared-object rule from Step 3."
+          - text: "If you reached for `.pop(0)` to peel off the first item, use a slice instead. The slice leaves the original alone."
+            condition: "code_contains: pop"
+      - description: "Both functions are recursive and use no loops or comprehensions"
+        command: |
+          import ast
+          src = open('/tutorial/recursion_lab.py').read()
+          tree = ast.parse(src)
+          LOOPS = (ast.For, ast.While, ast.AsyncFor,
+                   ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)
+          for name in ('find_biggest', 'index_of_biggest'):
+              fn = next((n for n in ast.walk(tree)
+                         if isinstance(n, ast.FunctionDef) and n.name == name), None)
+              assert fn is not None, f"No function named {name} was found"
+              bad = [type(n).__name__ for n in ast.walk(fn) if isinstance(n, LOOPS)]
+              assert not bad, f"{name} must not loop — found {bad[0]}"
+              calls = [n for n in ast.walk(fn)
+                       if isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+                       and n.func.id == name]
+              assert calls, f"{name} never calls itself — it has to be recursive"
+        hints:
+          - text: "A list comprehension, a generator expression and a `for` statement are all the same thing to this checker, because they all loop. The exercise is to repeat by calling yourself instead."
+          - text: "`max(values)` and `values.index(...)` finish the job without any recursion, which is what this check rules out. Write the traversal yourself."
+
+    quiz:
+      title: "Step 5 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: |
+            Why does `find_biggest` store the recursive result in a variable
+            first, rather than writing this?
+
+            ```python
+            return find_biggest(values[1:]) if find_biggest(values[1:]) > values[0] else values[0]
+            ```
+          options:
+            - "It redoes the whole recursion twice per level, so the cost explodes"
+            - "Python forbids calling the same function twice in one expression"
+            - "The two calls could return different answers"
+            - "Conditional expressions cannot appear in a `return` statement"
+          correct_index: 0
+          option_feedback:
+            1: "Nothing in Python stops you from doing this, and it runs fine. The problem is what it costs, not whether it's allowed."
+            2: "Both calls get the same list and the function keeps no state, so they return the same answer. That's exactly why one of them is wasted work."
+            3: "A conditional expression is an ordinary expression, and it's perfectly valid after `return`."
+          explanation: "Each level makes two full recursive calls, so the number of calls doubles at every level and linear work becomes exponential. Saving the result in a variable once keeps it linear."
+        - type: parsons
+          difficulty: intermediate
+          question: |
+            Put together a recursive `count_items(values)` that returns the
+            length of a list without calling `len()` on the whole list, and
+            without loops or comprehensions.
+          lines:
+            - "def count_items(values):"
+            - "    if not values:"
+            - "        return 0"
+            - "    return 1 + count_items(values[1:])"
+          distractors:
+            - "    return count_items(values[1:])"
+            - "    for item in values:"
+        - type: single
+          difficulty: advanced
+          question: |
+            Back to Steps 2 and 3. Inside `index_of_biggest`, we pass
+            `values[1:]` to the recursive call. If that call appended to the
+            list it received, would the caller's list change?
+          options:
+            - "No, a slice is a new list, so the two functions share nothing"
+            - "Yes, the function gets a reference, so all changes are shared"
+            - "Yes, but only for the elements the slice actually included"
+            - "No, Python copies every argument on every call"
+          correct_index: 0
+          option_feedback:
+            1: "The function does get a reference, but to the slice, not to the original. `values[1:]` already built a separate list before the call happened."
+            2: "A slice copies the references into a brand new list. Appending to that list only changes its own length, and the original list is untouched."
+            3: "Python never copies arguments. The call copied nothing here. The copy was made by the slicing expression, before the call happened."
+          explanation: "Two separate things happen here. First `values[1:]` builds a new list, then the call shares a reference to that new list. Changing it is invisible to the caller, which is exactly why slicing is safe to recurse on."
+    solution:
+      files:
+        - path: "recursion_lab.py"
+          language: "python"
+          content: |
+            def find_biggest(values):
+                """Return the largest value in values. Assumes at least one item."""
+                if len(values) == 1:
+                    return values[0]
+                rest = find_biggest(values[1:])
+                if rest > values[0]:
+                    return rest
+                return values[0]
+
+
+            def index_of_biggest(values):
+                """Return the index of the largest value in values."""
+                if len(values) == 1:
+                    return 0
+                rest = index_of_biggest(values[1:]) + 1
+                if values[rest] > values[0]:
+                    return rest
+                return 0
+
+
+            print(find_biggest([-1, 10, 3]))      # expect 10
+            print(index_of_biggest([-1, 10, 3]))  # expect 1
+      explanation: |
+        Line for line, this is the C++ from Step 4 with `arr + 1, n - 1`
+        replaced by `values[1:]` and `n == 1` replaced by `len(values) == 1`.
+        The algorithm didn't change at all. Only the way we say "the rest of the
+        list" changed.
+
+        There are two details the test inputs are built to catch. Starting from
+        `values[0]` instead of from `0` is what makes the all-negative case
+        work. And the `+ 1` on the recursive index is what makes `[1, 2, 3]`
+        return 2 instead of 1, which is the same off-by-one you thought about
+        before writing any code.
+
+  # =========================================================================
+  # STEP 6 — Recursive list building (HW0 problem 3c)
+  # =========================================================================
+  # Pedagogy: PRIMM Make — this is the step that transfers directly to the
+  # functional-programming unit, so it is the one with the least scaffolding.
+  - title: "Building New Lists Recursively"
+    backend: pyodide
+    instructions: |
+      ### Why this matters
+
+      The last two steps looked at a list. This one transforms one, without
+      changing the original. As it turns out, the way we solve this problem in
+      Python is very similar to the way we'd solve it in a functional
+      programming language, so really try to wrap your head around this one and
+      it'll help your functional programming skills immensely.
+
+      ### 🎯 You will learn to
+
+      - Build a new list recursively instead of changing an existing one
+      - Pick a base case for a function that can legitimately be handed an empty list
+
+      ### Building, not removing
+
+      The instinct from CS31 is to walk the list and delete the matches. Nothing
+      here deletes anything. Instead, each call answers one question. Does the
+      first item belong in the output? Then it glues its answer onto whatever
+      the rest of the list produced. Here are the list operations you'll need:
+
+      ```python
+      x = [10, 20, 30]
+      x[1:]        # [20, 30]          the rest of the list
+      [5] + x      # [5, 10, 20, 30]   a NEW list, x is untouched
+      len(x)       # 3
+      ```
+
+      Note the difference between `[5] + x` and `x.append(5)`. The first builds
+      a new list and leaves `x` alone. The second changes the list the caller is
+      holding. This step needs the first one.
+
+      ### 🔧 Your task
+
+      Open **`del_item_lab.py`** and write `del_item(values, item)`, which takes
+      a list of values as its first parameter and an item to delete as its
+      second. Without changing the values list, and without using loops of any
+      kind, your function must return an output list that removes all of the
+      occurrences of item from the input list:
+
+      ```python
+      x = [1, 2, 3, 1, 4]
+      y = del_item(x, 1)
+      print(y)   # prints [2, 3, 4]
+      print(x)   # still prints [1, 2, 3, 1, 4]
+      ```
+
+      No comprehensions either. Three cases decide the whole function: the list
+      is empty, the first item matches, and the first item doesn't.
+
+      ### ✏️ Predict before you run
+
+      This one starts with a base case for the **empty** list, not for a
+      one-element list like the previous step. Why can't `len(values) == 1`
+      work here?
+
+      <details>
+      <summary>Reveal</summary>
+      <p>Two reasons. First, <code>del_item([], x)</code> is a legal call. Unlike
+      the previous problems, nothing guarantees a non-empty list.</p>
+      <p>Second, and more importantly, even starting from a non-empty list the
+      recursion reaches the empty list on its way down.
+      <code>del_item([7], 7)</code> has to return <code>[]</code>, so the empty
+      list is a real answer this function has to be able to produce, not an
+      error case.</p>
+      </details>
+    files:
+      - path: "del_item_lab.py"
+        language: "python"
+        content: |
+          def del_item(values, item):
+              """Return a NEW list with every occurrence of item removed.
+
+              values must come back unchanged.
+              No loops, no comprehensions, no .remove(), no del.
+              """
+              # TODO: three cases - empty, first item matches, first item doesn't
+              pass
+
+
+          x = [1, 2, 3, 1, 4]
+          y = del_item(x, 1)
+          print(y)  # expect [2, 3, 4]
+          print(x)  # expect [1, 2, 3, 1, 4]
+
+    open_file: "del_item_lab.py"
+
+    tests:
+      - description: "del_item removes every occurrence and returns the remaining items in order"
+        command: |
+          import io, contextlib
+          src = open('/tutorial/del_item_lab.py').read()
+          ns = {}
+          with contextlib.redirect_stdout(io.StringIO()):
+              exec(src, ns)
+          del_item = ns['del_item']
+          cases = [(([1, 2, 3, 1, 4], 1), [2, 3, 4]),
+                   (([], 7), []),
+                   (([2, 2, 2], 2), []),
+                   (([1, 2], 9), [1, 2]),
+                   (([5], 5), []),
+                   (([4, 4, 1, 4], 4), [1]),
+                   (([3, 1, 3, 2, 3], 3), [1, 2])]
+          for (values, item), want in cases:
+              got = del_item(list(values), item)
+              assert got == want, f"del_item({values}, {item}) should be {want}, got {got!r}"
+        hints:
+          - text: "Three cases, in this order. There is nothing left to look at. The first item is the one being deleted. The first item is a keeper."
+          - text: "Two of the three cases recurse on the same smaller list. The only difference between them is whether the first item gets glued back on."
+            condition: "code_contains: pass"
+          - text: "Here's the shape: `if not values: return []`, then `rest = del_item(values[1:], item)`, then return either `rest` or `[values[0]] + rest`."
+            condition: "code_missing: return"
+      - description: "del_item leaves the caller's list unchanged"
+        command: |
+          import io, contextlib
+          src = open('/tutorial/del_item_lab.py').read()
+          ns = {}
+          with contextlib.redirect_stdout(io.StringIO()):
+              exec(src, ns)
+          original = [1, 2, 3, 1, 4]
+          probe = list(original)
+          ns['del_item'](probe, 1)
+          assert probe == original, \
+              f"del_item changed the list it was given: {probe} (was {original})"
+        hints:
+          - text: "`.remove()`, `.pop()` and `del values[i]` all change the caller's list. That's the shared-object rule from Step 3 again."
+          - text: "Slicing and `+` both produce new lists. If you only ever build with those two, the original can't be touched."
+      - description: "del_item is recursive and uses no loops, comprehensions, or list mutation"
+        command: |
+          import ast
+          src = open('/tutorial/del_item_lab.py').read()
+          tree = ast.parse(src)
+          fn = next((n for n in ast.walk(tree)
+                     if isinstance(n, ast.FunctionDef) and n.name == 'del_item'), None)
+          assert fn is not None, "No function named del_item was found"
+          LOOPS = (ast.For, ast.While, ast.AsyncFor,
+                   ast.ListComp, ast.SetComp, ast.DictComp, ast.GeneratorExp)
+          bad = [type(n).__name__ for n in ast.walk(fn) if isinstance(n, LOOPS)]
+          assert not bad, f"del_item must not loop — found {bad[0]}"
+          assert not any(isinstance(n, ast.Delete) for n in ast.walk(fn)), \
+              "del_item must not use `del` — build a new list instead"
+          banned = {'remove', 'pop', 'clear'}
+          used = sorted({n.func.attr for n in ast.walk(fn)
+                         if isinstance(n, ast.Call) and isinstance(n.func, ast.Attribute)
+                         and n.func.attr in banned})
+          assert not used, f"del_item must not mutate the list — found .{used[0]}()"
+          assert any(isinstance(n, ast.Call) and isinstance(n.func, ast.Name)
+                     and n.func.id == 'del_item' for n in ast.walk(fn)), \
+              "del_item never calls itself — it has to be recursive"
+        hints:
+          - text: "`filter()` and comprehensions both solve this in one line, which is why neither is allowed. The exercise is the recursion, not the answer."
+          - text: "If the loop check is failing on a line you think has no loop, look for square brackets containing a `for`. That's a comprehension."
+
+    quiz:
+      title: "Step 6 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: |
+            A student writes the match case as
+            `return del_item(values[1:], item)` and the keep case as
+            `return [values[0]] + del_item(values[1:], item)`.
+
+            What is the base case that makes both of these terminate?
+          options:
+            - "`if not values: return []`"
+            - "`if len(values) == 1: return values`"
+            - "`if not values: return values`"
+            - "`if values[0] == item: return []`"
+          correct_index: 0
+          option_feedback:
+            1: "Stopping at one item never looks at that last element, so a match at the end gets returned instead of removed. It also crashes when called with an empty list."
+            2: "This does stop, but at the bottom of the recursion it hands back the caller's own list, so the result can end up sharing it."
+            3: "This throws away the entire rest of the list the moment it finds a match, instead of removing just that one item."
+          explanation: "The recursion shrinks the list by one element per call, so it always ends up at the empty list. Returning a fresh `[]` there gives the `+` chain something new to build on, and keeps the caller's list out of the result."
+        - type: multiple
+          difficulty: advanced
+          question: |
+            Which of these leave the list `x = [1, 2, 3]` unchanged after they
+            run?
+          options:
+            - "`x[1:]`"
+            - "`[0] + x`"
+            - "`x.append(4)`"
+            - "`x.pop()`"
+          correct_indices: [0, 1]
+          option_feedback:
+            0: "Slicing is the workhorse of this step. It reads from `x` and builds a separate list."
+            1: "`+` builds a third list and never writes into either of the two it was given."
+            2: "`append` changes the list in place. It returns `None` precisely so you don't treat it as producing a new list."
+            3: "`pop` removes the last element from `x` and returns it, so the list is one shorter afterwards."
+          explanation: "Slicing and `+` don't destroy anything. They read what they're given and produce new lists. The list methods that return `None` are the ones that change the caller's list."
+        - type: single
+          difficulty: expert
+          question: |
+            We said this problem is very similar to the way we'd solve it in a
+            functional programming language. Which property of your solution is
+            the one that makes it functional?
+          options:
+            - "It builds new values instead of changing existing ones"
+            - "It uses recursion rather than a loop"
+            - "It takes the item to delete as a parameter"
+            - "It returns a list rather than printing one"
+          correct_index: 0
+          option_feedback:
+            1: "Recursion is how functional languages repeat things, but a recursive function that changes a shared array is still not functional. Recursion is a consequence of the rule, not the rule itself."
+            2: "Taking a parameter is ordinary good design in any language and says nothing about how the function treats state."
+            3: "Returning rather than printing is a step in the right direction, but a function can return a value and still have changed something on the way."
+          explanation: "The defining property is that nothing gets changed. Given the same input, the function always produces the same output and leaves nothing behind. Recursion and returned values follow from working that way."
+    solution:
+      files:
+        - path: "del_item_lab.py"
+          language: "python"
+          content: |
+            def del_item(values, item):
+                """Return a NEW list with every occurrence of item removed."""
+                if len(values) == 0:
+                    return []
+
+                if values[0] != item:
+                    return [values[0]] + del_item(values[1:], item)
+
+                return del_item(values[1:], item)
+
+
+            x = [1, 2, 3, 1, 4]
+            y = del_item(x, 1)
+            print(y)  # expect [2, 3, 4]
+            print(x)  # expect [1, 2, 3, 1, 4]
+      explanation: |
+        Read the three returns as three sentences. An empty list has nothing to
+        delete, so the answer is a new empty list. If the first item is a keeper,
+        the answer is that item glued onto whatever the rest produces. Otherwise
+        the answer is just whatever the rest produces, and the item gets dropped
+        simply by not being glued back on.
+
+        Nothing is ever removed from `values`. `values[1:]` reads, `[a] + b`
+        builds, and we never assign to the original list or call a method that
+        changes it. That's why `print(x)` still shows `[1, 2, 3, 1, 4]` after the
+        call, and it's the same habit functional programming will ask for on
+        every data structure, not just lists.
+
+  # =========================================================================
+  # STEP 7 — Inheritance and polymorphism (HW0 problem 4)
+  # =========================================================================
+  # Pedagogy: PRIMM — Predict, then Make (extend the hierarchy).
+  # Also a deliberate interleave: comedy_club takes Person& , so this step
+  # re-tests Step 1's reference semantics inside a new topic.
+  - title: "Virtual Dispatch and Object Slicing"
+    backend: v86
+    step_dir: /tutorial/cs131
+    instructions: |
+      ### Why this matters
+
+      In this step we'll explore inheritance and polymorphism using C++. This is
+      the CS32 idea CS131 pulls apart most thoroughly, because every language
+      you meet this quarter answers "which function body actually runs?"
+      differently. The C++ answer has two moving parts: whether the function is
+      `virtual`, and how the object was passed. Mix them up and you get output
+      that looks like the compiler is broken.
+
+      ### 🎯 You will learn to
+
+      - Trace which version of a function runs when a base-class reference names a derived object
+      - Evaluate how a parameter's declared form changes that choice
+      - Add a new subclass to an existing hierarchy
+
+      ### The comedy club
+
+      Consider the following classes, which represent regular people and people
+      who giggle (a subclass of people) when they attend a comedy club:
+
+      ```cpp
+      class Person {
+      public:
+        Person(const std::string& name) { name_ = name; }
+        void listen_to_joke() { laugh(); }
+        virtual void laugh()  { cout << "haha!\n"; }
+        virtual void heckle() { cout << "that's dumb!\n"; }
+      private:
+        std::string name_;
+      };
+
+      class GigglyPerson : public Person {
+      public:
+        GigglyPerson(const std::string& name) : Person(name) { }
+        virtual void laugh()  { cout << "giggle giggle!\n"; }
+        virtual void heckle() { cout << "that's... giggle... dumb... giggle!\n"; }
+      };
+      ```
+
+      Now consider the following code that uses our classes:
+
+      ```cpp
+      void comedy_club(Person& p) {
+        p.listen_to_joke();
+        p.heckle();
+      }
+
+      int main() {
+        Person p("Leia");
+        comedy_club(p);
+
+        GigglyPerson g("Sanjay");
+        comedy_club(g);
+      }
+      ```
+
+      Notice what `listen_to_joke` is: a **non-virtual** function, defined only
+      on `Person`, that calls `laugh()`. Nobody overrides it. Keep that in mind
+      for the prediction.
+
+      ### ✏️ Predict before you read on
+
+      What will this program print? Why? Don't just compile and run this code.
+      Instead, try to reason out what is printed and why that's the case. If you
+      get it wrong, dive in and figure out the root cause of your
+      misunderstanding! Four lines come out, so write all four down before you
+      open the reveal.
+
+      - **(a)** `haha!`, `that's dumb!`, `haha!`, `that's... giggle... dumb... giggle!`
+      - **(b)** `haha!`, `that's dumb!`, `giggle giggle!`, `that's... giggle... dumb... giggle!`
+      - **(c)** `haha!`, `that's dumb!`, `haha!`, `that's dumb!`
+
+      <details>
+      <summary>Reveal</summary>
+      <p><strong>(b).</strong></p>
+      <pre><code>haha!&#10;that's dumb!&#10;giggle giggle!&#10;that's... giggle... dumb... giggle!</code></pre>
+      <p>Line 3 is the interesting one. <code>comedy_club(g)</code> binds the
+      reference <code>p</code> to the <code>GigglyPerson</code> object
+      <code>g</code>. There's no copy and nothing gets sliced off, because
+      <code>p</code> is a reference, which is version B from Step 1.
+      <code>p.listen_to_joke()</code> runs <code>Person</code>'s only copy of
+      that function, and inside it the bare call <code>laugh()</code> means
+      <code>this-&gt;laugh()</code>. <code>this</code> points at a
+      <code>GigglyPerson</code> and <code>laugh</code> is <code>virtual</code>,
+      so the overridden version in <code>GigglyPerson</code> is the one that
+      runs.</p>
+      <p>The non-virtual function didn't need to be overridden. It only needed to
+      call something virtual. This dynamic method dispatch is a key feature of
+      object-oriented programming.</p>
+      </details>
+
+      ### 🔧 Your task
+
+      Open **`comedy_club.cpp`** and add a third kind of audience member:
+      `StonePerson`, who is unimpressed by everything.
+
+      - Inherit publicly from `Person`.
+      - Forward the name to the `Person` constructor in an initializer list.
+        `Person` has no default constructor, so this isn't optional.
+      - Override **both** `laugh` and `heckle`. The joke gets `...silence...`,
+        and the heckle gets something equally deadpan. The exact strings are up
+        to you.
+      - In `main`, send a `StonePerson` through `comedy_club` alongside the
+        other two.
+
+      Then predict your own program's six lines before you press Test. Still no
+      compiler here, so the checker reads structure.
+    files:
+      - path: "cs131/comedy_club.cpp"
+        language: "cpp"
+        content: |
+          #include <iostream>
+          #include <string>
+          using namespace std;
+
+          class Person {
+          public:
+            Person(const std::string& name) { name_ = name; }
+            void listen_to_joke() { laugh(); }
+            virtual void laugh()  { cout << "haha!\n"; }
+            virtual void heckle() { cout << "that's dumb!\n"; }
+          private:
+            std::string name_;
+          };
+
+          class GigglyPerson : public Person {
+          public:
+            GigglyPerson(const std::string& name) : Person(name) { }
+            virtual void laugh()  { cout << "giggle giggle!\n"; }
+            virtual void heckle() { cout << "that's... giggle... dumb... giggle!\n"; }
+          };
+
+          // TODO: add StonePerson here.
+          // Inherit publicly from Person, forward the name to Person's
+          // constructor, and override both laugh() and heckle().
+
+          void comedy_club(Person& p) {
+            p.listen_to_joke();
+            p.heckle();
+          }
+
+          int main() {
+            Person p("Leia");
+            comedy_club(p);
+
+            GigglyPerson g("Sanjay");
+            comedy_club(g);
+
+            // TODO: build a StonePerson and send it to comedy_club too.
+          }
+
+    open_file: "cs131/comedy_club.cpp"
+
+    tests:
+      - description: "StonePerson publicly inherits from Person"
+        command: "sed 's|//.*||' /tutorial/cs131/comedy_club.cpp | grep -qE 'class[[:space:]]+StonePerson[[:space:]]*:[[:space:]]*public[[:space:]]+Person'"
+        hints:
+          - text: "`GigglyPerson` just above is your template. Copy the shape of its class header, not its bodies."
+          - text: "Leaving out `public` is legal C++, but it changes the meaning. A `class` inherits privately by default, and `comedy_club(Person&)` would then refuse your object."
+      - description: "StonePerson's constructor forwards the name to Person"
+        command: "sed 's|//.*||' /tutorial/cs131/comedy_club.cpp | grep -qE 'StonePerson[[:space:]]*\\([^)]*\\)[[:space:]]*:[[:space:]]*Person[[:space:]]*\\('"
+        hints:
+          - text: "`Person` declares only one constructor, and it requires a name. That means the compiler can't build the `Person` part of your object on its own."
+          - text: "You call the base class constructor in the initializer list, which goes after your constructor's parameter list and a colon, before the opening brace of the body."
+          - text: "Here's the shape: `StonePerson(const std::string& name) : Person(name) { }`"
+            condition: "code_missing: StonePerson"
+      - description: "StonePerson overrides both laugh and heckle"
+        command: "sed 's|//.*||' /tutorial/cs131/comedy_club.cpp | awk '/class[[:space:]]+StonePerson/{f=1} f{print} f&&/^};/{exit}' | grep -q 'laugh' && sed 's|//.*||' /tutorial/cs131/comedy_club.cpp | awk '/class[[:space:]]+StonePerson/{f=1} f{print} f&&/^};/{exit}' | grep -q 'heckle'"
+        hints:
+          - text: "You need two overrides. `comedy_club` calls `heckle` directly and reaches `laugh` through `listen_to_joke`, so missing either one shows up in the output."
+          - text: "An override repeats the base declaration exactly, with the same name, the same parameter list and the same return type, but a different body. A different signature creates a new function instead of replacing the old one."
+      - description: "main sends a StonePerson through comedy_club"
+        command: "sed 's|//.*||' /tutorial/cs131/comedy_club.cpp | awk '/int[[:space:]]+main/,/^}/' | grep -qE 'StonePerson[[:space:]]+[A-Za-z_]' && [ $(sed 's|//.*||' /tutorial/cs131/comedy_club.cpp | awk '/int[[:space:]]+main/,/^}/' | grep -c 'comedy_club[[:space:]]*(') -ge 3 ]"
+        hints:
+          - text: "The other two audience members each take two lines in `main`. Build the object, then pass it. Yours needs the same two lines."
+          - text: "`comedy_club` takes `Person&`, so you pass the object by name. No `&` and no `new`, exactly like the `GigglyPerson` call above it."
+
+    quiz:
+      title: "Step 7 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: |
+            `listen_to_joke` is not virtual, and `GigglyPerson` never
+            overrides it. So why does `comedy_club(g)` still print
+            `giggle giggle!`?
+          options:
+            - "`listen_to_joke` calls `laugh()`, which is virtual, on a GigglyPerson"
+            - "Any function called on a derived object dispatches dynamically"
+            - "`GigglyPerson` inherits `listen_to_joke` and recompiles it against its own `laugh`"
+            - "Passing by reference makes every member function behave as if virtual"
+          correct_index: 0
+          option_feedback:
+            1: "Only functions declared `virtual` in the base class are chosen at run time. A non-virtual call is decided at compile time, from the declared type."
+            2: "Inheritance shares one compiled function. It doesn't make a separate copy per subclass. The choice happens at run time, through the virtual call inside it."
+            3: "References do prevent slicing, which is what gives dispatch anything to choose between, but the choosing itself still requires `virtual`."
+          explanation: "The bare `laugh()` inside `listen_to_joke` means `this->laugh()`. `this` points at a `GigglyPerson` and `laugh` is virtual, so the overridden version runs even though the function around it is an ordinary one."
+        - type: single
+          difficulty: advanced
+          question: |
+            Back to Step 1. Someone changes the signature to
+            `void comedy_club(Person p)`, by value instead of by reference.
+            What does `comedy_club(g)` print now?
+          options:
+            - "`haha!` then `that's dumb!`, because the GigglyPerson part is sliced off"
+            - "`giggle giggle!` then `that's... giggle... dumb... giggle!`, unchanged"
+            - "Nothing, because the call no longer compiles"
+            - "`haha!` then `that's... giggle... dumb... giggle!`"
+          correct_index: 0
+          option_feedback:
+            1: "Passing by value builds a `Person`-sized object using `Person`'s copy constructor, so the overrides don't come along."
+            2: "It compiles without complaint, because a `GigglyPerson` is a `Person` and the copy is perfectly legal. That silence is what makes this bug so hard to spot."
+            3: "The choice isn't made per call. Once the parameter is a `Person` object, every virtual call on it finds `Person`'s version."
+          explanation: "This is object slicing. The copy constructor builds a plain `Person` out of the `Person` part of `g` and throws the rest away. The parameter really is a `Person`, so both virtual calls find `Person`'s bodies."
+        - type: single
+          difficulty: advanced
+          question: |
+            Which parameter types let `comedy_club` reach an overridden
+            version in a subclass?
+          options:
+            - "`Person&` and `Person*` only"
+            - "All three of `Person`, `Person&` and `Person*`"
+            - "`Person*` only, because dispatch needs an address"
+            - "`Person` and `Person&`, but not `Person*`"
+          correct_index: 0
+          option_feedback:
+            1: "Passing by value is exactly the one that can't. It copies a `Person`-shaped object and loses the subclass part before any call happens."
+            2: "A reference is an address underneath too, and it names the original object just like a pointer does. Both keep the real type intact."
+            3: "This has it backwards. A pointer keeps the real type, and passing by value is the one that destroys it."
+          explanation: "Dynamic dispatch needs the original subclass object to still be there behind the parameter. References and pointers both name it. A by-value parameter is a new, smaller object with no subclass part left to dispatch to."
+        - type: multiple
+          difficulty: advanced
+          question: |
+            Which of these would stop `StonePerson`'s overrides from being
+            reached through `comedy_club`?
+          options:
+            - "Declaring the class as `class StonePerson : Person`"
+            - "Naming the override `void laugh(int volume)`"
+            - "Writing `void laugh() { cout << \"...silence...\\n\"; }` without `virtual`"
+            - "Giving `StonePerson` a constructor that forwards the name to `Person`"
+          correct_indices: [0, 1]
+          option_feedback:
+            0: "A `class` inherits privately unless you say `public`, and a private base means the conversion to `Person&` isn't allowed."
+            1: "Signatures have to match. Adding a parameter defines an unrelated function, so the base version keeps winning the virtual call."
+            2: "An override is virtual whether or not you repeat the keyword. Writing it again is a readability choice, not a behavior change."
+            3: "That's required for the class to compile at all, since `Person` has no default constructor. It enables the overrides rather than blocking them."
+          explanation: "An override is reached only when the subclass converts publicly to the base and the function's signature matches the virtual one exactly. Repeating `virtual` is optional. Getting either of those two wrong quietly falls back to the base version."
+        - type: single
+          difficulty: expert
+          question: |
+            Back to Steps 2 and 3. If you translated this hierarchy to Python,
+            which C++ mechanism would you no longer have to worry about?
+          options:
+            - "Object slicing on assignment or parameter passing"
+            - "Calling a base-class method from a subclass"
+            - "Overriding a method in a subclass"
+            - "Constructing the base part of a subclass instance"
+          correct_index: 0
+          option_feedback:
+            1: "Python writes this as `super().method()`, which does the same job as the qualified `Person::method()` call."
+            2: "Python overrides by name in the subclass body, and every method is dispatched dynamically, so this exists in Python and is simpler there."
+            3: "Python writes this as `super().__init__(...)`, which does the same job as C++'s constructor initializer list."
+          explanation: "Slicing happens because C++ objects have a fixed size and get copied by value. Python names always refer to whole objects and never copy on assignment or on a call, so there's no way to lose the subclass part."
+    solution:
+      files:
+        - path: "cs131/comedy_club.cpp"
+          language: "cpp"
+          content: |
+            #include <iostream>
+            #include <string>
+            using namespace std;
+
+            class Person {
+            public:
+              Person(const std::string& name) { name_ = name; }
+              void listen_to_joke() { laugh(); }
+              virtual void laugh()  { cout << "haha!\n"; }
+              virtual void heckle() { cout << "that's dumb!\n"; }
+            private:
+              std::string name_;
+            };
+
+            class GigglyPerson : public Person {
+            public:
+              GigglyPerson(const std::string& name) : Person(name) { }
+              virtual void laugh()  { cout << "giggle giggle!\n"; }
+              virtual void heckle() { cout << "that's... giggle... dumb... giggle!\n"; }
+            };
+
+            class StonePerson : public Person {
+            public:
+              StonePerson(const std::string& name) : Person(name) { }
+              virtual void laugh()  { cout << "...silence...\n"; }
+              virtual void heckle() { cout << "i've heard better.\n"; }
+            };
+
+            void comedy_club(Person& p) {
+              p.listen_to_joke();
+              p.heckle();
+            }
+
+            int main() {
+              Person p("Leia");
+              comedy_club(p);
+
+              GigglyPerson g("Sanjay");
+              comedy_club(g);
+
+              StonePerson s("Wren");
+              comedy_club(s);
+            }
+      explanation: |
+        `StonePerson` is `GigglyPerson` with different strings, and that's the
+        point. Adding a third behavior meant changing nothing in `Person` and
+        nothing in `comedy_club`. That's what dynamic method dispatch buys you.
+
+        Two details are easy to miss, and both are about matching. The class
+        header needs `public`, because a `class` inherits privately by default
+        and a private base makes `Person&` unreachable. And each override needs
+        the exact signature of the virtual function it replaces: `void laugh()`,
+        no parameters. A near miss like `void laugh(int)` compiles fine and
+        silently does nothing, which is why this shows up on exams so often.
+
+        The initializer list isn't a style choice here. `Person` declares a
+        constructor that takes a name, so it has no default constructor, and the
+        base part can't be built without `: Person(name)`.
+
+  # =========================================================================
+  # STEP 8 — Linked list in Python (HW0 problem 5)
+  # =========================================================================
+  # Pedagogy: worked example with fading (full C++ source given, Python
+  # written from scratch) + interleaving — the capstone quiz reaches back to
+  # references, recursion, and dispatch.
+  - title: "Linked Lists Without a Destructor"
+    backend: pyodide
+    instructions: |
+      ### Why this matters
+
+      Here's a linked list class written in C++. Write the equivalent class in
+      Python, so you can learn how linked lists work in Python. A linked list is
+      the smallest data structure where "who owns this memory?" has a real
+      answer, and C++ and Python answer it completely differently.
+
+      ### 🎯 You will learn to
+
+      - Write a singly linked list in Python with a nested node class
+      - Explain why the C++ destructor has no Python equivalent
+
+      ### The C++ original
+
+      ```cpp
+      class List {
+      private:
+        struct Node {
+          Node(int v) { val = v; next = nullptr; }
+          int val;
+          Node *next;
+        };
+
+        Node *head_;
+      public:
+        List() { head_ = nullptr; }
+        ~List() {
+          while (head_ != nullptr) {
+            Node *temp = head_->next;
+            delete head_;
+            head_ = temp;
+          }
+        }
+        void add_to_front(int val) {
+          Node *new_node = new Node(val);
+          new_node->next = head_;
+          head_ = new_node;
+        }
+        void print() {
+          Node *p = head_;
+          while (p) {
+            cout << p->val << endl;
+            p = p->next;
+          }
+        }
+      };
+      ```
+
+      Three of those four members port across almost unchanged. One of them
+      disappears entirely.
+
+      | C++ | Python |
+      |---|---|
+      | `struct Node { ... };` nested and private | a `class Node:` nested inside `List` |
+      | `Node *head_;` set to `nullptr` | `self.head = None` |
+      | `new Node(val)` | `self.Node(val)` |
+      | `~List()` walking the chain calling `delete` | *nothing at all* |
+
+      ### 🔧 Your task
+
+      Open **`linked_list_lab.py`** and finish the class:
+
+      - `Node` stays **nested inside `List`**, with attributes `val` and `next`,
+        mirroring the C++ layout.
+      - `List.__init__` starts with `self.head = None`.
+      - `add_to_front(val)` links a new node in at the front. It returns nothing.
+      - `values()` returns a plain Python list of the values, **front to back**,
+        by walking the chain.
+      - `print_items()` prints one value per line, front to back.
+
+      Loops are welcome again on this step. The no-loops rule belonged to the
+      recursion problems, not to this one.
+
+      ### ✏️ Predict before you run
+
+      You add 1, then 2, then 3, each to the front. What does `values()` return,
+      and which end of the chain is `head`?
+
+      <details>
+      <summary>Reveal</summary>
+      <p><code>[3, 2, 1]</code>. Every insertion goes in front of whatever was
+      already there, so the newest item is always <code>head</code> and the list
+      comes out in reverse insertion order. That's why
+      <code>add_to_front</code> is so cheap, and why a stack is the natural
+      thing to build out of one of these.</p>
+      </details>
+    files:
+      - path: "linked_list_lab.py"
+        language: "python"
+        content: |
+          class List:
+              """Python port of the C++ singly linked list."""
+
+              class Node:
+                  def __init__(self, v):
+                      # TODO: a node holds a value and a link to the next node
+                      pass
+
+              def __init__(self):
+                  # TODO: an empty list points at nothing
+                  pass
+
+              def add_to_front(self, val):
+                  # TODO: build a node, link it ahead of the current front,
+                  # then make it the new front
+                  pass
+
+              def values(self):
+                  # TODO: walk the chain and collect the values, front to back
+                  pass
+
+              def print_items(self):
+                  # TODO: print one value per line, front to back
+                  pass
+
+              # No destructor needed - see the quiz below for why.
+
+
+          lst = List()
+          lst.add_to_front(1)
+          lst.add_to_front(2)
+          lst.add_to_front(3)
+          print(lst.values())  # expect [3, 2, 1]
+          lst.print_items()
+
+    open_file: "linked_list_lab.py"
+
+    tests:
+      - description: "The nodes form a real chain: head, .next, .val"
+        command: |
+          import io, contextlib
+          src = open('/tutorial/linked_list_lab.py').read()
+          ns = {}
+          with contextlib.redirect_stdout(io.StringIO()):
+              exec(src, ns)
+          List = ns['List']
+          assert hasattr(List, 'Node'), "Node should be a class nested inside List, as in the C++ version"
+          lst = List()
+          assert getattr(lst, 'head', 'missing') is None, \
+              "A brand-new List should have head set to None"
+          for v in (1, 2, 3):
+              lst.add_to_front(v)
+          chain, node, guard = [], lst.head, 0
+          while node is not None and guard < 100:
+              chain.append(node.val)
+              node = node.next
+              guard += 1
+          assert chain == [3, 2, 1], \
+              f"Walking head/.next/.val should visit 3, 2, 1 — visited {chain}"
+        hints:
+          - text: "Three attribute names matter here, because the checker walks the chain itself: `head` on the list, and `val` and `next` on each node."
+          - text: "A brand new node's `next` should start out as nothing at all, which is how Python writes `nullptr`."
+            condition: "code_contains: pass"
+          - text: "Order matters in `add_to_front`. Point the new node at the current front before you move the front, or you lose the rest of the chain."
+      - description: "values() returns the values front to back, and [] for an empty list"
+        command: |
+          import io, contextlib
+          src = open('/tutorial/linked_list_lab.py').read()
+          ns = {}
+          with contextlib.redirect_stdout(io.StringIO()):
+              exec(src, ns)
+          List = ns['List']
+          def assert_acyclic(lst):
+              # Walking a cyclic chain would hang the runtime, so turn the
+              # classic add_to_front ordering bug into a readable failure.
+              node, seen = lst.head, set()
+              while node is not None:
+                  assert id(node) not in seen, \
+                      "The chain loops back on itself — check the order of the two assignments in add_to_front"
+                  seen.add(id(node))
+                  node = node.next
+          assert List().values() == [], f"An empty List should give [], got {List().values()!r}"
+          lst = List()
+          for v in (1, 2, 3):
+              lst.add_to_front(v)
+          assert_acyclic(lst)
+          assert lst.values() == [3, 2, 1], \
+              f"After adding 1, 2, 3 to the front, values() should be [3, 2, 1], got {lst.values()!r}"
+          single = List()
+          single.add_to_front(42)
+          assert single.values() == [42], f"A one-item list should give [42], got {single.values()!r}"
+        hints:
+          - text: "The C++ `print` walked the list with a cursor. Start at the front, do something, move to `next`, stop when there's nothing left. `values` is the same walk with a different body."
+          - text: "The empty case should work without a special branch. A walk that starts at `None` just never runs its body."
+          - text: "Here's the shape. Start with an empty result list and a cursor at the front. While the cursor isn't `None`, append its value and move the cursor to `next`. Then return the result."
+            condition: "code_contains: pass"
+      - description: "print_items() prints one value per line, front to back"
+        command: |
+          import io, contextlib
+          src = open('/tutorial/linked_list_lab.py').read()
+          ns = {}
+          with contextlib.redirect_stdout(io.StringIO()):
+              exec(src, ns)
+          lst = ns['List']()
+          for v in (1, 2, 3):
+              lst.add_to_front(v)
+          node, seen = lst.head, set()
+          while node is not None:
+              assert id(node) not in seen, \
+                  "The chain loops back on itself — check the order of the two assignments in add_to_front"
+              seen.add(id(node))
+              node = node.next
+          buf = io.StringIO()
+          with contextlib.redirect_stdout(buf):
+              lst.print_items()
+          lines = [line.strip() for line in buf.getvalue().splitlines() if line.strip()]
+          assert lines == ['3', '2', '1'], \
+              f"print_items() should print 3, 2 and 1 on separate lines — got {buf.getvalue()!r}"
+        hints:
+          - text: "The C++ version printed `endl` after every value. Python's `print()` already ends each call with a newline, so one call per node is all you need."
+          - text: "You already have a method that produces the values in the right order, so this one can just walk that result and print each item."
+      - description: "add_to_front links nodes rather than storing values in a Python list"
+        command: |
+          import ast, io, contextlib
+          src = open('/tutorial/linked_list_lab.py').read()
+          ns = {}
+          with contextlib.redirect_stdout(io.StringIO()):
+              exec(src, ns)
+          lst = ns['List']()
+          for v in (7, 8):
+              lst.add_to_front(v)
+          node = lst.head
+          assert node is not None and hasattr(node, 'next') and hasattr(node, 'val'), \
+              "head should refer to a node object carrying val and next"
+          assert not isinstance(lst.head, (list, tuple)), \
+              "head should be a node, not a Python list or tuple"
+          assert node.next is not None and node.next.next is None, \
+              "Two nodes should be linked head -> node -> None"
+          assert ns['List']().add_to_front(1) is None, \
+              "add_to_front should link the node in place, not return the list"
+        hints:
+          - text: "The exercise is the chain itself. Backing the class with a Python list would work, but it would skip the thing we're asking you to build."
+          - text: "Each call makes exactly one node and changes exactly one thing about the list, which is the node at the front."
+
+    quiz:
+      title: "Step 8 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: |
+            The C++ `List` needs `~List()` to walk the chain calling `delete`.
+            Why does the Python version need nothing like it?
+          options:
+            - "Python frees an object once nothing refers to it any more"
+            - "Python allocates nodes on the stack, so they die with the function"
+            - "Python's garbage collector runs at exit and frees everything then"
+            - "Nested classes are freed together with the class that contains them"
+          correct_index: 0
+          option_feedback:
+            1: "Every Python object lives on the heap. What's different from C++ is who decides when it gets released, not where it was allocated."
+            2: "Waiting until the program exits would be a leak for anything long-running. Nodes get reclaimed as soon as the list stops referring to them."
+            3: "Nesting just says where the class lives. It has nothing to do with how long the objects made from it stick around."
+          explanation: "Python counts how many references reach each object and frees it when that count hits zero, with a cycle collector for the leftovers. Dropping the list drops the reference to `head`, and that cascades all the way down the chain."
+        - type: single
+          difficulty: intermediate
+          question: |
+            Inside `add_to_front`, does the order of these two lines matter?
+
+            ```python
+            new_node.next = self.head
+            self.head = new_node
+            ```
+          options:
+            - "Yes, swapping them makes the new node point at itself and loses the rest"
+            - "No, both assignments happen before the method returns"
+            - "Yes, swapping them raises an AttributeError on the first call"
+            - "No, Python evaluates both right sides before assigning"
+          correct_index: 0
+          option_feedback:
+            1: "Both lines do run, but the second one reads a value the first one already overwrote, so the old chain is gone before we can hang on to it."
+            2: "It fails quietly rather than loudly. `self.head` is a perfectly valid node by then, so nothing raises. The list just becomes a one-element loop."
+            3: "That's how assigning a pair works, but these are two separate statements, so the first one's effect is visible to the second."
+          explanation: "The first line has to grab the old front while `self.head` still points at it. Reversing the order overwrites `self.head` first, so the new node ends up linked to itself and every earlier node becomes unreachable."
+        - type: single
+          difficulty: advanced
+          question: |
+            Back to Steps 1 through 3. Two variables refer to the same `List`:
+
+            ```python
+            a = List()
+            b = a
+            b.add_to_front(5)
+            print(a.values())
+            ```
+
+            What is printed?
+          options:
+            - "`[5]`"
+            - "`[]`"
+            - "`[5, 5]`"
+            - "An AttributeError"
+          correct_index: 0
+          option_feedback:
+            1: "`b = a` copies a reference, not the object. There's only one list here, and `add_to_front` changes it."
+            2: "Only one node was added, and only one list exists, so there's nothing to duplicate."
+            3: "Both names refer to a fully built `List`, so every attribute access works normally."
+          explanation: "Assignment between names never copies an object. `a` and `b` are two names for one list, so a change through either one is visible through both. It's the same shared-object rule from Step 3, one level up from attributes."
+        - type: multiple
+          difficulty: advanced
+          question: |
+            Which C++ features in the original `List` have no Python
+            counterpart?
+          options:
+            - "`delete` on each node"
+            - "`private:` hiding `head_` and `Node` from callers"
+            - "The `while` loop that walks the chain"
+            - "`Node *next;` linking one node to the next"
+          correct_indices: [0, 1]
+          option_feedback:
+            0: "This is the headline difference. Freeing memory by hand has no Python equivalent at all."
+            1: "Python has a naming convention for \"please don't touch this\", but nothing enforces it, so everything stays reachable."
+            2: "The walk ports over unchanged. `while` exists in both languages and means the same thing."
+            3: "The link ports over as an ordinary attribute holding either another node or `None`. The structure is identical, and only the syntax changes."
+          explanation: "The two things that vanish are both about control that C++ gives you: freeing memory yourself, and enforced access restrictions. The data structure itself, a node holding a value and a link and walked by a loop, survives the translation intact."
+        - type: parsons
+          difficulty: intermediate
+          question: |
+            Put `add_to_front` together so that the existing chain survives.
+          lines:
+            - "def add_to_front(self, val):"
+            - "    new_node = self.Node(val)"
+            - "    new_node.next = self.head"
+            - "    self.head = new_node"
+          distractors:
+            - "    self.head = new_node"
+            - "    return self.head"
+    solution:
+      files:
+        - path: "linked_list_lab.py"
+          language: "python"
+          content: |
+            class List:
+                """Python port of the C++ singly linked list."""
+
+                class Node:
+                    def __init__(self, v):
+                        self.val = v
+                        self.next = None
+
+                def __init__(self):
+                    self.head = None
+
+                def add_to_front(self, val):
+                    new_node = self.Node(val)
+                    new_node.next = self.head
+                    self.head = new_node
+
+                def values(self):
+                    result = []
+                    p = self.head
+                    while p is not None:
+                        result.append(p.val)
+                        p = p.next
+                    return result
+
+                def print_items(self):
+                    for val in self.values():
+                        print(val)
+
+                # No destructor needed - see the quiz below for why.
+
+
+            lst = List()
+            lst.add_to_front(1)
+            lst.add_to_front(2)
+            lst.add_to_front(3)
+            print(lst.values())  # expect [3, 2, 1]
+            lst.print_items()
+      explanation: |
+        Line for line, `add_to_front` and the chain walk are the C++ originals
+        with `->` becoming `.` and `nullptr` becoming `None`. The algorithm
+        didn't change, because the algorithm was never the C++-specific part.
+
+        A few key things to note:
+
+        - In Python, everything is public by default. There's no need for the
+          `public` or `private` specifiers, and the `Node` class is nested
+          purely to say where it belongs.
+        - Memory management in Python is done automatically using a garbage
+          collector, so there's no need for explicit memory deallocation as in
+          C++. No `new`, no `delete`, and no destructor is needed.
+        - The nested Node class in Python is defined similarly to how it's done
+          in C++, but we use the `self` keyword in methods to refer to instance
+          variables or other methods.
+
+        That's the whole refresher in one class: same structure, same traversal,
+        and a completely different answer to who is responsible for the memory.

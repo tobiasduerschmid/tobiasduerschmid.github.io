@@ -524,6 +524,11 @@
     react: true,
     webcontainer: true,
     browser: true,
+    // v86 participates in mixed tutorials so a single tutorial can pair a
+    // compiled-language step (Linux VM + terminal) with an interpreted one.
+    // Unlike the other mixed backends it needs an xterm terminal panel, which
+    // _buildUI adds as a third runtime panel — see _mixedNeedsTerminal.
+    v86: true,
   };
 
   function normalizeBackendName(name) {
@@ -570,6 +575,7 @@
       normalizeBackendName(declaredBackends[0]) !== backend
     ));
     var hasReactStep = declaredBackends.indexOf('react') !== -1;
+    var hasV86Step = declaredBackends.indexOf('v86') !== -1;
     var useTerminal = !mixedBackendMode &&
       (backend === 'v86' || (backend === 'webcontainer' && options.terminal === true));
 
@@ -613,6 +619,11 @@
     this.setupCommands = mixedBackendMode ? [] : (options.setupCommands || []);
     this._declaredBackends = declaredBackends;
     this._mixedBackendMode = mixedBackendMode;
+    // Mixed tutorials keep config.useTerminal false (it drives the
+    // single-backend layout branches). This flag is the mixed-mode
+    // equivalent: build the terminal panel, load xterm, and start the
+    // terminal even while a non-v86 step is showing.
+    this._mixedNeedsTerminal = mixedBackendMode && hasV86Step;
     this._backendInitPromises = {};
     this._backendReady = {};
     this._activeRequestedBackend = backend;
@@ -951,10 +962,23 @@
     if (!this._mixedBackendMode || !this.root) return;
     var effective = normalizeBackendName(backend || this.config.backend);
     var showPreview = effective === 'react';
+    var showTerminal = effective === 'v86';
     var outputPanel = this.root.querySelector('.tvm-output-panel');
     var previewPanel = this.root.querySelector('.tvm-preview-panel');
-    if (outputPanel) outputPanel.hidden = showPreview;
+    var terminalPanel = this.root.querySelector('.tvm-terminal-panel');
+    if (outputPanel) outputPanel.hidden = showPreview || showTerminal;
     if (previewPanel) previewPanel.hidden = !showPreview;
+    if (terminalPanel) terminalPanel.hidden = !showTerminal;
+    // xterm measures its container to pick a cell grid. A fit() performed
+    // while the panel was hidden yields a 0-column terminal, so re-fit (and
+    // re-sync the guest's stty) once the panel is actually laid out.
+    if (showTerminal && this.fitAddon) {
+      var self = this;
+      requestAnimationFrame(function () {
+        try { self.fitAddon.fit(); } catch (e) { /* container not laid out yet */ }
+        if (self.term) self._syncTerminalSize(self.term.cols, self.term.rows);
+      });
+    }
   };
 
   TutorialCode.prototype._ensureBackendReady = function (requestedBackend, opts) {
@@ -963,7 +987,7 @@
     var requested = normalizeBackendName(requestedBackend);
     if (this._mixedBackendMode && !MIXED_BACKEND_SUPPORTED[requested]) {
       return Promise.reject(new Error(
-        'Mixed-backend tutorials currently support pyodide, react, webcontainer, and browser steps only.'
+        'Mixed-backend tutorials currently support v86, pyodide, react, webcontainer, and browser steps only.'
       ));
     }
 
@@ -1048,6 +1072,7 @@
       var nextIndex = (index + offset) % this.steps.length;
       var nextBackend = this._stepRequestedBackend(this.steps[nextIndex]);
       if (nextBackend !== current &&
+          nextBackend !== 'v86' &&
           !this._backendReady[nextBackend] &&
           !this._backendInitPromises[nextBackend] &&
           !queued[nextBackend]) {
@@ -1090,7 +1115,7 @@
 
     return this._loadDependencies()
       .then(function () {
-        if (self.config.useTerminal) {
+        if (self.config.useTerminal || self._mixedNeedsTerminal) {
           self._showLoading('Starting terminal…');
           self._initTerminal();
         }
@@ -1543,8 +1568,15 @@
         '<button class="tvm-output-popout-btn" data-original-title="Open output in separate window">⧉<span class="sr-only">Open output in separate window</span></button>' +
         '</div></div>' +
         outputContainerHtml;
+      var mixedTerminalHtml = this._mixedNeedsTerminal
+        ? '<div class="tvm-terminal-panel tvm-runtime-panel" hidden>' +
+          '<div class="tvm-terminal-header"><span>Terminal</span></div>' +
+          '<div class="tvm-terminal-container"></div>' +
+          '</div>'
+        : '';
       terminalHtml = '<div class="tvm-runtime-panels">' +
         '<div class="tvm-output-panel tvm-runtime-panel">' + mixedOutputBody + '</div>' +
+        mixedTerminalHtml +
         '<div class="tvm-preview-panel tvm-runtime-panel" hidden>' +
         '<div class="tvm-preview-header">' +
         '<span>Live Preview</span>' +
@@ -2296,7 +2328,7 @@
       })(outTermTabs[ti]);
     }
 
-    if (this.config.useTerminal) {
+    if (this.config.useTerminal || this._mixedNeedsTerminal) {
       this.terminalContainerEl = this.root.querySelector('.tvm-terminal-container');
     }
 
@@ -2684,6 +2716,7 @@
     // Also needed for the embedded git terminal that pyodide tutorials with
     // git_graph render below the gitgraph panel.
     var needsXterm = this.config.useTerminal
+      || this._mixedNeedsTerminal
       || (this.gitGraphPath && this.config.backend !== 'v86');
     var prereqPromise;
     if (needsXterm) {
@@ -3450,7 +3483,7 @@
   // ---------------------------------------------------------------------------
   TutorialCode.prototype._initBackend = function (backendOverride, setupCommandsOverride, loadingOptions) {
     var backend = normalizeBackendName(backendOverride || this.config.backend);
-    if (backend === 'v86') return this._initV86();
+    if (backend === 'v86') return this._initV86(setupCommandsOverride, loadingOptions);
     if (backend === 'pyodide') return this._initPyodide(setupCommandsOverride, loadingOptions);
     if (backend === 'webcontainer') {
       var self = this;
@@ -3504,13 +3537,20 @@
     }).catch(function () { return null; });
   };
 
-  TutorialCode.prototype._initV86 = function () {
+  TutorialCode.prototype._initV86 = function (setupCommandsOverride, loadingOptions) {
     var self = this;
-    this._showLoading('Booting Linux \u2014 this may take a few seconds\u2026');
-    return self._loadSnapshot().then(function (snapshotBuffer) {
+    // Mixed-backend tutorials only reach a v86 step partway through, so
+    // libv86.js is not preloaded by _loadDependencies for them.
+    var libPromise = window.V86
+      ? Promise.resolve()
+      : loadScript(this.config.v86Path + '/libv86.js');
+    this._showLoading('Booting Linux \u2014 this may take a few seconds\u2026', loadingOptions);
+    return libPromise.then(function () {
+      return self._loadSnapshot();
+    }).then(function (snapshotBuffer) {
       self._usingSnapshot = !!snapshotBuffer;
       if (snapshotBuffer) {
-        self._showLoading('Restoring VM snapshot\u2026');
+        self._showLoading('Restoring VM snapshot\u2026', loadingOptions);
       }
       return new Promise(function (resolve, reject) {
       try {
@@ -3622,7 +3662,7 @@
           if (!promptDetected && (bootOutput.includes('$ ') || bootOutput.includes('# ') || bootOutput.includes(':~'))) {
             promptDetected = true; self.booted = true;
             self.emulator.remove_listener('serial0-output-byte', onBoot);
-            self._setupFilesystem().then(resolve);
+            self._setupFilesystem(setupCommandsOverride).then(resolve);
           }
         }
         self.emulator.add_listener('serial0-output-byte', onBoot);
@@ -3641,7 +3681,7 @@
             self.emulator.remove_listener('serial0-output-byte', onBoot);
             self.booted = true;
             console.warn('TutorialCode: boot prompt not detected, continuing anyway.');
-            self._setupFilesystem().then(resolve);
+            self._setupFilesystem(setupCommandsOverride).then(resolve);
           }
         }, 30000);
       } catch (err) { reject(err); }
@@ -3649,7 +3689,7 @@
     });
   };
 
-  TutorialCode.prototype._setupFilesystem = function () {
+  TutorialCode.prototype._setupFilesystem = function (setupCommandsOverride) {
     var self = this;
     if (self._usingSnapshot) {
       self._showLoading('Preparing tutorial\u2026');
@@ -3689,7 +3729,9 @@
         'printf "%s\\n" "$cmd" | eval "$__USER_CMD_LISTENER"; ' +
       '}; ' +
       'case ";$PROMPT_COMMAND;" in *";__record_user_cmd;"*) ;; *) PROMPT_COMMAND="__record_user_cmd${PROMPT_COMMAND:+;$PROMPT_COMMAND}";; esac';
-    var setupCommands = self.setupCommands || [];
+    // Mixed tutorials leave self.setupCommands empty and supply per-backend
+    // commands through setup_commands_by_backend instead.
+    var setupCommands = setupCommandsOverride || self.setupCommands || [];
     var setupBatch = setupCommands.join('\n');
     var startDir = self.gitGraphPath
       ? 'cd ' + shellQuote(self.gitGraphPath) + ' 2>/dev/null || cd /tutorial'
@@ -5552,6 +5594,10 @@
     run.backend = backend;
     var runFiles = run.runFiles;
     var filename = run.filename;
+
+    if (backend === 'v86') {
+      return this._syncFileToBackend(filename).then(function () { return false; });
+    }
 
     if (backend === 'browser') {
       var code = this.editorModels[filename] ? this.editorModels[filename].model.getValue() : '';
