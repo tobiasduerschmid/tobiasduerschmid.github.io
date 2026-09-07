@@ -1,4 +1,7 @@
 topics:
+  - name: Python & C++ Refresher
+    icon: null
+    url: /SEBook/tools/cs131-refresher-tutorial
   - name: Haskell Learning Path
     icon: null
     url: /SEBook/tools/haskell.html

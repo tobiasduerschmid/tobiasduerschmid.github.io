@@ -1,0 +1,74 @@
+{
+  "LLVM.txt": {
+    "source": "https://raw.githubusercontent.com/llvm/llvm-project/97196c8eeb1d495fa43bb8af2fb26af5ef5b89fb/LICENSE.TXT",
+    "sha256": "8d85c1057d742e597985c7d4e6320b015a9139385cff4cbae06ffc0ebe89afee"
+  },
+  "YoWASP-Clang.txt": {
+    "source": "https://raw.githubusercontent.com/YoWASP/clang/944dd7c774954180e621cc8e12984023a7f8bcbe/LICENSE.txt",
+    "sha256": "65c6633c2c9effa87f95bfe794d5da07bd3faab2814e4a0a15883e28ec4e543f"
+  },
+  "YoWASP-Runtime.txt": {
+    "source": {
+      "archive": "https://registry.npmjs.org/@yowasp/runtime/-/yowasp-runtime-11.0.67.tgz",
+      "member": "package/LICENSE.txt"
+    },
+    "sha256": "dfc801f3db426280b60a2808c56b944e48f66025a2fcdd60826ae43084351800"
+  },
+  "jco.txt": {
+    "source": "https://raw.githubusercontent.com/bytecodealliance/jco/jco-v1.15.1/LICENSE",
+    "sha256": "268872b9816f90fd8e85db5a28d33f8150ebb8dd016653fb39ef1f94f2686bc5"
+  },
+  "nanotar.txt": {
+    "source": {
+      "archive": "https://registry.npmjs.org/nanotar/-/nanotar-0.2.0.tgz",
+      "member": "package/LICENSE"
+    },
+    "sha256": "46231df5a7733c3f52f11b71f3df61813007745b62b09031acfb45fb42d75082"
+  },
+  "wasi-APACHE-LLVM.txt": {
+    "source": "https://raw.githubusercontent.com/WebAssembly/wasi-libc/ac020b86fd44bafe60aa4fa12f407d16e3731329/LICENSE-APACHE-LLVM",
+    "sha256": "268872b9816f90fd8e85db5a28d33f8150ebb8dd016653fb39ef1f94f2686bc5"
+  },
+  "wasi-APACHE.txt": {
+    "source": "https://raw.githubusercontent.com/WebAssembly/wasi-libc/ac020b86fd44bafe60aa4fa12f407d16e3731329/LICENSE-APACHE",
+    "sha256": "a60eea817514531668d7e00765731449fe14d059d3249e0bc93b36de45f759f2"
+  },
+  "wasi-MIT.txt": {
+    "source": "https://raw.githubusercontent.com/WebAssembly/wasi-libc/ac020b86fd44bafe60aa4fa12f407d16e3731329/LICENSE-MIT",
+    "sha256": "23f18e03dc49df91622fe2a76176497404e46ced8a715d9d2b67a7446571cca3"
+  },
+  "wasi-cloudlibc.txt": {
+    "source": "https://raw.githubusercontent.com/WebAssembly/wasi-libc/ac020b86fd44bafe60aa4fa12f407d16e3731329/libc-bottom-half/cloudlibc/LICENSE",
+    "sha256": "c8b789cf5a746611e6300a0cc7750dbf92b61912a709d04e639245f7290656d0"
+  },
+  "wasi-dlmalloc.txt": {
+    "source": {
+      "url": "https://raw.githubusercontent.com/WebAssembly/wasi-libc/ac020b86fd44bafe60aa4fa12f407d16e3731329/dlmalloc/src/malloc.c",
+      "first_lines": 10
+    },
+    "sha256": "c9c0f4879df94f00413079bdd2d4730a292d6dd0e0886dc0cedc6559d3a36e35"
+  },
+  "wasi-emmalloc-LICENSE.txt": {
+    "source": "https://raw.githubusercontent.com/emscripten-core/emscripten/4.0.10/LICENSE",
+    "sha256": "620a78084fc7ca97c0b5dea9abf891f3ffcadfdbf305276f099c9c4e12fc1d86"
+  },
+  "wasi-emmalloc.txt": {
+    "source": {
+      "url": "https://raw.githubusercontent.com/WebAssembly/wasi-libc/ac020b86fd44bafe60aa4fa12f407d16e3731329/emmalloc/emmalloc.c",
+      "first_lines": 5
+    },
+    "sha256": "29287bd974b6699e1574554b3ee2ed01a19f97110618742b0a49fa74fcfedc99"
+  },
+  "wasi-fts.txt": {
+    "source": "https://raw.githubusercontent.com/WebAssembly/wasi-libc/ac020b86fd44bafe60aa4fa12f407d16e3731329/fts/musl-fts/COPYING",
+    "sha256": "55af87e4017668f54467a3380e7ebbac5e672d8c763bfe95e6fc882a6fdc4046"
+  },
+  "wasi-libc.txt": {
+    "source": "https://raw.githubusercontent.com/WebAssembly/wasi-libc/ac020b86fd44bafe60aa4fa12f407d16e3731329/LICENSE",
+    "sha256": "2711a8b5a5cdfef0e639f96c1aca12ae23d7d64a02d0507f1bdf14d2b27bbc3a"
+  },
+  "wasi-musl.txt": {
+    "source": "https://raw.githubusercontent.com/WebAssembly/wasi-libc/ac020b86fd44bafe60aa4fa12f407d16e3731329/libc-top-half/musl/COPYRIGHT",
+    "sha256": "f9bc4423732350eb0b3f7ed7e91d530298476f8fec0c6c427a1c04ade22655af"
+  }
+}

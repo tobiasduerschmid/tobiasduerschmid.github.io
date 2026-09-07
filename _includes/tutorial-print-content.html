@@ -91,7 +91,7 @@
       <span class="print-quiz-icon"><i class="fa fa-question-circle"></i></span>
       <h3 class="print-quiz-title">{{ quiz.title | escape | replace: '=', '&#61;' }}</h3>
       {% if quiz.min_score %}
-      <span class="print-quiz-threshold">Min. score: {{ quiz.min_score | times: 100 | round }}%</span>
+      <span class="print-quiz-threshold">{% if tutorial_data.require_quiz == false %}Practice target: {{ quiz.min_score | times: 100 | round }}% (optional){% else %}Min. score: {{ quiz.min_score | times: 100 | round }}%{% endif %}</span>
       {% endif %}
     </div>
     <div class="print-quiz-body">

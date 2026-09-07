@@ -405,6 +405,7 @@
         setupCommands: config.setup_commands || [],
         setupCommandsByBackend: config.setup_commands_by_backend || {},
         requireTests: config.require_tests || false,
+        requireQuiz: config.require_quiz !== false,
         autosaveType: effectiveAutosaveType,
         resetType: '{{ tutorial_reset_type }}',
         instructorMode: instructorMode,
@@ -418,6 +419,7 @@
         sqlWorkerPath: '{{ "/js/sql-worker.js"    | relative_url }}',
         prologWorkerPath: '{{ "/js/prolog-worker.js" | relative_url }}',
         javaWorkerPath:   '{{ "/js/java-worker.js"   | relative_url }}',
+        cppWorkerPath:    '{{ "/js/cpp-worker.js"    | relative_url }}',
         haskellFramePath: '{{ "/haskell-runtime-frame.html" | relative_url }}',
         gitGraphPath: config.git_graph || null,
         gitGraph: !!config.git_graph,
@@ -913,10 +915,24 @@
             // Keyboard / focus path: immediate, no delay.
             showTooltip(this);
           })
-          .on('mouseleave.a11yTooltip focusout.a11yTooltip', function () {
+          .on('mouseleave.a11yTooltip', function () {
             var $trigger = jQuery(this);
             clearShowTimer($trigger);
             scheduleHide($trigger);
+          })
+          .on('focusout.a11yTooltip', function () {
+            var $trigger = jQuery(this);
+            clearShowTimer($trigger);
+            clearHideTimer($trigger);
+            var $tip = getTip($trigger);
+            if ($trigger.is(':hover') || ($tip.length && $tip.is(':hover'))) {
+              scheduleHide($trigger);
+              return;
+            }
+            // A departing focus tooltip must not cover the next keyboard stop.
+            // Keep the hover grace period, but skip both it and the fade here.
+            $tip.removeClass('fade');
+            $trigger.tooltip('hide');
           });
 
         jQuery(document).on('keydown.a11yTooltip', function (event) {

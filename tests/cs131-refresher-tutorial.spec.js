@@ -1,40 +1,16 @@
 // @ts-check
-//
-// Covers the CS131 refresher, the first tutorial to mix v86 (C++) steps with
-// pyodide (Python) steps. The behaviour unique to this tutorial — and the
-// reason this spec exists separately from multi-backend-placeholder — is the
-// terminal runtime panel: mixed mode previously built only the output and
-// preview panels, so a v86 step had nowhere to render.
 const { test, expect } = require('@playwright/test');
 const {
-  loadTutorialConfig,
-  expectActiveStep,
-  expectStepCount,
-  passCurrentStepTests,
-  expectRenderedStepTests,
+  loadTutorialConfig, expectActiveStep, expectStepCount,
+  passCurrentStepTests, expectRenderedStepTests,
 } = require('./tutorial-helpers');
 
 const TUTORIAL_URL = '/SEBook/tools/cs131-refresher-tutorial';
 const BOOT_TIMEOUT = 120_000;
-const TEST_TIMEOUT = 60_000;
-
 const config = loadTutorialConfig('cs131-refresher');
 const steps = config.steps;
-
-const outputPanel = (page) => page.locator('.tvm-output-panel');
-const previewPanel = (page) => page.locator('.tvm-preview-panel');
-const terminalPanel = (page) => page.locator('.tvm-terminal-panel');
-
-/** Exactly one runtime panel is visible, and it is the one the backend needs. */
-async function expectRuntimePanelFor(page, backend) {
-  const expectations = {
-    v86: [terminalPanel(page), outputPanel(page), previewPanel(page)],
-    pyodide: [outputPanel(page), terminalPanel(page), previewPanel(page)],
-  }[backend];
-  const [visible, ...hidden] = expectations;
-  await expect(visible).toBeVisible({ timeout: BOOT_TIMEOUT });
-  for (const panel of hidden) await expect(panel).toBeHidden();
-}
+const runButton = page => page.getByRole('button', { name: /▶ Run/, exact: false });
+const output = page => page.locator('.tvm-output-pre');
 
 async function gotoStep(page, index) {
   await page.getByRole('button', { name: new RegExp(`^Step ${index + 1}:`) }).click();
@@ -42,62 +18,147 @@ async function gotoStep(page, index) {
   await expect(page.locator('.tvm-loading')).toBeHidden({ timeout: BOOT_TIMEOUT });
 }
 
-test.describe.serial('CS131 refresher tutorial', () => {
+async function replaceSource(page, filename, source) {
+  // Monaco's public model API edits the same document that the learner types in.
+  await page.evaluate(({ filename, source }) => {
+    const model = window.monaco.editor.getModels().find(model => model.uri.path.endsWith('/' + filename));
+    if (!model) throw new Error('Editor file missing: ' + filename);
+    model.setValue(source);
+  }, { filename, source });
+}
+
+async function expectSource(page, filename, source) {
+  await expect.poll(() => page.evaluate(filename => {
+    return window.monaco.editor.getModels().find(model => model.uri.path.endsWith('/' + filename))?.getValue();
+  }, filename)).toBe(source);
+}
+
+const pointFile = 'cs131/param_passing.cpp';
+const pointSolution = steps[0].solution.files.find(file => file.path === pointFile).content;
+
+// A compact alternative solution deliberately uses member assignments and new
+// parameter names. Logging and the learner's driver are irrelevant to grading.
+const alternativePointSolution = `#include <iostream>
+struct Point {
+  int x_, y_;
+  Point(int x=0, int y=0): x_(x), y_(y) {}
+};
+void modify_by_value(Point copy) { copy = Point(20,30); }
+void modify_by_reference(Point &original) { original.x_=20; original.y_=30; }
+void modify_by_pointer(Point *address) { *address = Point(20,30); }
+int main() { std::cout << "a different driver\\n"; return 0; }
+`;
+
+test.describe('CS131 browser C++ and Python refresher', () => {
   test.setTimeout(360_000);
 
-  /** @type {import('@playwright/test').Page} */
-  let page;
-  /** @type {import('@playwright/test').BrowserContext} */
-  let context;
-
-  test.beforeAll(async ({ browser }, testInfo) => {
-    testInfo.setTimeout(180_000);
-    context = await browser.newContext();
-    page = await context.newPage();
-    // Instructor mode exposes applySolution() for the per-step gate checks.
-    await page.goto(`${TUTORIAL_URL}?instructor-mode=true`);
-    await page.waitForSelector('.tvm-step-btn', { timeout: BOOT_TIMEOUT });
+  test.beforeEach(async ({ page }) => {
+    await page.goto(`${TUTORIAL_URL}?instructor-mode=true&autosave=true`, { waitUntil: 'domcontentloaded' });
     await expect(page.locator('.tvm-loading')).toBeHidden({ timeout: BOOT_TIMEOUT });
+    await expect(runButton(page)).toBeEnabled({ timeout: BOOT_TIMEOUT });
   });
 
-  test.afterAll(async () => { await context?.close(); });
-
-  test('alternates C++ VM steps with Python steps', async () => {
+  test('all published checks pass and every C++ solution compiles and runs', async ({ page }) => {
     await expectStepCount(page, 8);
-    expect(steps.map((step) => step.backend)).toEqual([
-      'v86', 'pyodide', 'pyodide', 'v86', 'pyodide', 'pyodide', 'v86', 'pyodide',
-    ]);
-    expect(config.backend).toBe('multiple');
-    // Mixed mode empties top-level setup_commands, so the VM's working
-    // directory has to come from the per-backend map or step 1's tests
-    // would read a path that was never created.
-    expect(config.setup_commands_by_backend.v86).toContain('mkdir -p /tutorial/cs131');
-    await expectActiveStep(page, 0);
-  });
-
-  test('a v86 step renders the terminal instead of the output panel', async () => {
-    await expectRuntimePanelFor(page, 'v86');
-    await expect(page.locator('.tvm-terminal-container .xterm')).toBeVisible({ timeout: BOOT_TIMEOUT });
-    // The Run button lives in the output panel, which v86 steps replace.
-    await expect(page.locator('.tvm-run-btn')).toBeHidden();
-  });
-
-  test('switching to a Python step swaps the terminal for the output panel', async () => {
-    await gotoStep(page, 1);
-    await expectRuntimePanelFor(page, 'pyodide');
-    await expect(page.locator('.tvm-run-btn')).toBeVisible();
-
-    await gotoStep(page, 0);
-    await expectRuntimePanelFor(page, 'v86');
-  });
-
-  test('every step gates on its own backend and passes for the published solution', async () => {
     for (const [index, step] of steps.entries()) {
-      await gotoStep(page, index);
-      await expectRuntimePanelFor(page, step.backend);
-      await passCurrentStepTests(page, TEST_TIMEOUT);
-      // The result rows only exist after a run; assert the step's own gates ran.
-      await expectRenderedStepTests(page, step);
+      await test.step(step.title, async () => {
+        await gotoStep(page, index);
+        await expect(page.locator('.tvm-output-panel')).toBeVisible();
+        await expect(page.locator('.tvm-terminal-panel')).toBeHidden();
+        if (step.tests?.length) {
+          await passCurrentStepTests(page, 60_000);
+          await expectRenderedStepTests(page, step);
+        } else {
+          await page.evaluate(() => window._tutorial.applySolution());
+          await expect(page.getByRole('button', { name: /test my work/i })).toHaveCount(0);
+          await expect(page.getByRole('heading', { name: /check your work/i })).toBeVisible();
+        }
+        if (step.backend === 'cpp') {
+          await runButton(page).click();
+          await expect(output(page)).toContainText('✓ Done', { timeout: 60_000 });
+          await expect(output(page)).not.toContainText('Exited with error');
+        }
+      });
     }
+  });
+
+  test('Point checks accept equivalent solutions and detect pointer rebinding and compile errors', async ({ page }) => {
+    await replaceSource(page, pointFile, alternativePointSolution);
+    const check = page.getByRole('button', { name: /test my work/i });
+    await check.click();
+    await expect(page.locator('.tvm-test-summary')).toContainText('All 3 tests passed!', { timeout: 60_000 });
+
+    const pointerRebinding = alternativePointSolution.replace('*address = Point(20,30);', 'address = new Point(20,30);');
+    await replaceSource(page, pointFile, pointerRebinding);
+    await check.click();
+    await expect(page.locator('.tvm-test-summary')).toContainText(/2\s*\/\s*3 tests passed/, { timeout: 60_000 });
+    await expect(page.getByRole('button', { name: /^Next →$/ })).toBeEnabled();
+
+    await replaceSource(page, pointFile, 'this is not C++');
+    await check.click();
+    await expect(page.locator('.tvm-test-summary')).toContainText(/0\s*\/\s*3 tests passed/, { timeout: 60_000 });
+    await expect(output(page)).toContainText('error:');
+    await expect(page.getByRole('button', { name: /^Next →$/ })).toBeEnabled();
+  });
+
+  test('switching languages and reloading preserves current source without loading a Linux VM', async ({ page }) => {
+    const vmRequests = [];
+    page.on('request', request => {
+      if (/\/(?:libv86\.js|v86\.wasm|bzImage|rootfs\.cpio\.gz)(?:\?|$)/.test(request.url())) vmRequests.push(request.url());
+    });
+    const customSource = pointSolution + '\n// Keep this change across languages.\n';
+    await replaceSource(page, pointFile, customSource);
+    await gotoStep(page, 1);
+    await passCurrentStepTests(page, 60_000);
+    await gotoStep(page, 0);
+    await expectSource(page, pointFile, customSource);
+    await runButton(page).click();
+    await expect(output(page)).toContainText('✓ Done', { timeout: 60_000 });
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(page.locator('.tvm-loading')).toBeHidden({ timeout: BOOT_TIMEOUT });
+    await expectSource(page, pointFile, customSource);
+    expect(vmRequests).toEqual([]);
+  });
+
+  test('Stop interrupts C++ execution and the reconstructed compiler runs the next edit', async ({ page }) => {
+    const loopingSource = '#include <iostream>\nint main(){ std::cout << "loop started" << std::endl; while(true){} }\n';
+    await replaceSource(page, pointFile, loopingSource);
+    await runButton(page).click();
+    await expect(output(page)).toContainText('loop started', { timeout: 60_000 });
+    const stop = page.getByRole('button', { name: /Stop$/ });
+    await stop.focus();
+    await page.keyboard.press('Enter');
+    await expect(runButton(page)).toBeEnabled({ timeout: BOOT_TIMEOUT });
+    await expect(output(page)).toContainText('C++ runtime restarted and ready.');
+    await expectSource(page, pointFile, loopingSource);
+    await replaceSource(page, pointFile, '#include <iostream>\nint main(){std::cout << "after restart\\n";}\n');
+    await runButton(page).click();
+    await expect(output(page)).toContainText('after restart', { timeout: 60_000 });
+    await expect(output(page)).toContainText('✓ Done');
+  });
+
+  test('a hanging Point check times out without earning a pass and leaves navigation available', async ({ page }) => {
+    await replaceSource(page, pointFile, alternativePointSolution.replace(
+      'original.x_=20; original.y_=30;', 'while(true) {}'
+    ));
+    await page.getByRole('button', { name: /test my work/i }).click();
+    await expect(page.getByRole('button', { name: /^Next →$/ })).toBeEnabled();
+    await expect(page.locator('.tvm-test-summary')).toContainText(/1\s*\/\s*3 tests passed/, { timeout: 60_000 });
+    await expect(output(page)).toContainText('timed out');
+    await expect(runButton(page)).toBeEnabled({ timeout: BOOT_TIMEOUT });
+    await replaceSource(page, pointFile, alternativePointSolution);
+    await page.getByRole('button', { name: /test my work/i }).click();
+    await expect(page.locator('.tvm-test-summary')).toContainText('All 3 tests passed!', { timeout: 60_000 });
+  });
+
+  test('leaving an executing C++ program still allows Python to run', async ({ page }) => {
+    await replaceSource(page, pointFile, '#include <iostream>\nint main(){std::cout << "running" << std::endl; while(true){}}');
+    await runButton(page).click();
+    await expect(output(page)).toContainText('running', { timeout: 60_000 });
+    await gotoStep(page, 1);
+    await expect(runButton(page)).toBeEnabled();
+    await page.evaluate(() => window._tutorial.applySolution());
+    await runButton(page).click();
+    await expect(output(page)).toContainText('(50, 10)', { timeout: 60_000 });
   });
 });
