@@ -1,0 +1,19 @@
+<div id="{{ include.id }}" class="course-bookmarks">
+  <p class="course-bookmarks-intro">{{ include.intro }}</p>
+
+  {% for topic in include.topics %}
+  <div class="course-bookmarks-topic-group">
+    <a href="{{ topic.url }}" class="course-bookmarks-topic-link">
+      <i class="fa-solid fa-book-open" aria-hidden="true"></i>
+      {{ topic.name }}
+    </a>
+    {% if topic.subtopics %}
+    <ul class="course-bookmarks-subtopic-list">
+      {% for subtopic in topic.subtopics %}
+      <li><a href="{{ subtopic.url }}">{{ subtopic.name }}</a></li>
+      {% endfor %}
+    </ul>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>

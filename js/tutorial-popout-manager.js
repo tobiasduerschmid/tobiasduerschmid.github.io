@@ -456,6 +456,7 @@
       case 'request-run-tests': this._safeHook('onRunTestsRequest', { silent: !!msg.silent }); break;
       case 'request-save': this._safeHook('onSaveFileRequest', msg.filename); break;
       case 'quiz-passed': this._safeHook('onQuizPassedFromPopup', msg.stepIndex); break;
+      case 'quiz-skipped': this._safeHook('onQuizSkippedFromPopup', msg.stepIndex); break;
       case 'request-run': this._safeHook('onRunOutputRequest', msg.args || ''); break;
       case 'request-stop': this._safeHook('onStopOutputRequest'); break;
       case 'request-clear': this._safeHook('onClearOutputRequest'); break;

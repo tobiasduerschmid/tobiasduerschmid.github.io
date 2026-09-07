@@ -1,0 +1,13 @@
+title: "CS 131 Master Flashcards"
+description: "Explain, apply, and connect programming-language concepts. Excludes Language of the Week showcases."
+active: true
+decks:
+  - cs131_foundations
+  - cs131_python
+  - cs131_functional
+  - cs131_types_scope_memory
+  - cs131_functions
+  - cs131_control
+  - cs131_oop
+  - cs131_logic
+  - cs131_implementation

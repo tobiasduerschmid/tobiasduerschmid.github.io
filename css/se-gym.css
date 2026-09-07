@@ -263,6 +263,15 @@
       gap: 1.5rem;
       align-items: start;
     }
+    /* Keep detached SVG measurements laid out and invisible in every theme. */
+    .hero-avatar-measure-host {
+      position: absolute;
+      left: -10000px;
+      top: -10000px;
+      opacity: 0;
+      pointer-events: none;
+    }
+
     .hero-cust-preview-pane {
       position: sticky;
       top: 0;

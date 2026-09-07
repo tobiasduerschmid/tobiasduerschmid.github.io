@@ -1,0 +1,296 @@
+title: "CS 131: Python Object Semantics"
+description: "Trace identity, mutation, copying, parameters, and shared state."
+active: true
+# Essential Python slide 11 (Language of the Week: OpenCL) is excluded.
+questions:
+  # Sources: essential_python.pptx, slides 4, 6; Homework Problems, PYTHON2.
+  - id: assignment-shares-object
+    type: single
+    difficulty: basic
+    bloom: understand
+    question: "After Python executes `b = a` for a list `a`, what relationship holds immediately afterward?"
+    options:
+      - "The names refer to separate lists with equal elements."
+      - "Both names refer to the same list object."
+      - "Rebinding either name will rebind the other name."
+    correct_index: 1
+    option_feedback:
+      0: "Assignment copies a reference, without making another list."
+      2: "Names remain separate bindings even when they refer to the same object."
+    explanation: "Object sharing and name binding are distinct. Mutating the shared list can be observed through either name, while rebinding one name leaves the other binding alone."
+
+  # Sources: essential_python.pptx, slides 10, 13; Homework Problems, PYTHON4.
+  - id: string-rebinding
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    question: |
+      What does this Python code print?
+
+      ```python
+      label = "go"
+      saved = label
+      label += "!"
+      print(saved, label)
+      ```
+    options: ["`go go`", "`go! go!`", "`go go!`"]
+    correct_index: 2
+    option_feedback:
+      0: "The augmented assignment updates the `label` binding to the concatenated string."
+      1: "Strings are immutable; updating `label` does not change the string observed through `saved`."
+    explanation: "`saved` retains the original string. `label` refers to the concatenated string after the assignment."
+
+  # Sources: essential_python.pptx, slides 14–16; Homework Problems, PYTHON2–3.
+  - id: mutation-then-parameter-rebinding
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    question: |
+      What does this Python code print?
+
+      ```python
+      def revise(items):
+          items.append(8)
+          items = [0]
+      data = [3]
+      revise(data)
+      print(data)
+      ```
+    options: ["`[3]`", "`[3, 8]`", "`[0]`"]
+    correct_index: 1
+    option_feedback:
+      0: "The parameter initially shares the list, so `append` changes the caller's list."
+      2: "Assigning a new list to the parameter changes only that local binding."
+    explanation: "The append mutates the shared object before the local parameter is rebound. `data` still refers to that mutated object."
+
+  # Sources: essential_python.pptx, slide 7; Homework Problems, PYTHON4; F24 midterm, Q4 pp. 7–8.
+  - id: shallow-copy-two-level-trace
+    type: single
+    difficulty: advanced
+    bloom: analyze
+    question: |
+      What does this Python code print?
+
+      ```python
+      from copy import copy
+      original = [[2], [4]]
+      duplicate = copy(original)
+      duplicate[0].append(6)
+      duplicate[1] = [9]
+      print(original)
+      ```
+    options: ["`[[2], [4]]`", "`[[2, 6], [9]]`", "`[[2, 6], [4]]`"]
+    correct_index: 2
+    option_feedback:
+      0: "A shallow copy shares the inner lists, so appending to the first inner list remains visible."
+      1: "The outer lists are separate. Replacing a slot in `duplicate` does not replace that slot in `original`."
+    explanation: "The first operation changes a shared inner object; the second changes a slot in the copied outer list. Track those two levels separately."
+
+  # Sources: essential_python.pptx, slide 7; Homework Problems, PYTHON4.
+  - id: deep-copy-snapshot
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    question: "A snapshot of a nested list of integers must remain unchanged when any original inner list is edited. Which operation provides that isolation? Assume ordinary built-in lists."
+    options: ["`snapshot = original`", "`snapshot = copy.copy(original)`", "`snapshot = copy.deepcopy(original)`"]
+    correct_index: 2
+    option_feedback:
+      0: "Assignment keeps the entire original object shared."
+      1: "Copying only the outer list leaves the mutable inner lists shared."
+    explanation: "A deep copy recursively copies the nested mutable lists. Sharing immutable integer values does not undermine isolation from later list edits."
+
+  # Sources: essential_python.pptx, slide 8; Homework Problems, PYTHON4.
+  - id: list-equality-versus-identity
+    type: multiple
+    difficulty: intermediate
+    bloom: analyze
+    question: "After `a = [5]`, `b = [5]`, and `c = a` in Python, which expressions are true? Select all that apply."
+    options: ["`a == b`", "`a is b`", "`a is c`", "`b is c`"]
+    correct_indices: [0, 2]
+    option_feedback:
+      0: "List equality compares corresponding elements, which are equal here."
+      1: "The separate list literals create distinct objects even though their elements are equal."
+      2: "Assignment binds `c` to the same object as `a`."
+      3: "`c` shares `a`'s object; it does not share the separately created list `b`."
+    explanation: "Equality asks whether list contents compare equal; identity asks whether two references designate the same object."
+
+  # Source: essential_python.pptx, slide 8.
+  - id: default-user-class-equality
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    question: "Two distinct instances of a plain Python class have identical fields. The class inherits directly from `object` and defines no equality method. How do `a == b` and `a is b` evaluate?"
+    options: ["Both are true.", "Equality is true; identity is false.", "Both are false."]
+    correct_index: 2
+    option_feedback:
+      0: "Separate construction creates separate identities; equal fields do not merge the instances."
+      1: "Field-based equality must be implemented or supplied by a class mechanism; plain `object` does not add it."
+    explanation: "Under the stated class definition, equality uses the default identity-based behavior. A custom `__eq__` can change equality without changing `is`."
+
+  # Sources: essential_python.pptx, slide 5; Homework Problems, PYTHON5.
+  - id: shared-class-list
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    question: |
+      What does this Python code print?
+
+      ```python
+      class Group:
+          members = []
+      left, right = Group(), Group()
+      left.members.append("Ada")
+      print(right.members)
+      ```
+    options: ["`[]`", "`['Ada']`", "An attribute lookup error."]
+    correct_index: 1
+    option_feedback:
+      0: "Neither instance has its own `members` binding; both attribute lookups find the class's list."
+      2: "Instance lookup can find an attribute defined on its class."
+    explanation: "The append mutates the shared class attribute. Per-instance collections should normally be initialized on `self` for each instance."
+
+  # Source: essential_python.pptx, slide 5.
+  - id: instance-shadowing-class-attribute
+    type: single
+    difficulty: advanced
+    bloom: analyze
+    question: |
+      What does this Python code print?
+
+      ```python
+      class Meter:
+          unit = "m"
+      a, b = Meter(), Meter()
+      a.unit = "cm"
+      Meter.unit = "km"
+      print(a.unit, b.unit)
+      ```
+    options: ["`km km`", "`cm m`", "`cm km`"]
+    correct_index: 2
+    option_feedback:
+      0: "Assigning `a.unit` creates an instance attribute that shadows the class attribute for `a`."
+      1: "`b` has no instance attribute named `unit`; its lookup sees the current class value."
+    explanation: "`a` owns its overriding attribute. `b` continues to find `Meter.unit`, whose value changes to `km`."
+
+  # Source: essential_python.pptx, slide 17.
+  - id: mutable-default-timing
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    question: |
+      What does this Python code print?
+
+      ```python
+      def record(value, log=[]):
+          log.append(value)
+          return len(log)
+      print(record(4), record(7))
+      ```
+    options: ["`1 1`", "`1 2`", "`2 2`"]
+    correct_index: 1
+    option_feedback:
+      0: "The default list is created when the function definition executes, rather than anew for each call."
+      2: "Each call returns an integer length immediately. The first returned integer does not change when the list later grows."
+    explanation: "Both calls omit `log` and therefore share the default list. Its lengths at the two return points are 1 and 2."
+
+  # Sources: essential_python.pptx, slide 17; Homework Problems, PYTHON2, PYTHON4.
+  - id: sentinel-preserves-explicit-empty-list
+    type: single
+    difficulty: advanced
+    bloom: evaluate
+    question: "A function uses `items=None` as its default. It should allocate a list when omitted, but mutate an explicitly supplied empty list. Which initialization preserves that contract?"
+    options:
+      - "`if items is None: items = []`"
+      - "`if not items: items = []`"
+      - "`items = list(items or [])`"
+    correct_index: 0
+    option_feedback:
+      1: "An empty list is false in a condition, so this replaces a caller-supplied list and breaks sharing."
+      2: "Constructing a new list replaces the caller's object, even when preserving its elements."
+    explanation: "The sentinel test distinguishes omission from a valid empty collection. The parameter retains the caller's object when one was explicitly provided."
+
+  # Sources: essential_python.pptx, slides 10, 13; Homework Problems, PYTHON4.
+  - id: tuple-containing-mutable-list
+    type: multiple
+    difficulty: advanced
+    bloom: analyze
+    question: "Start each operation independently with Python `pair = ([1], 2)`. Which operations complete without error? Select all that apply."
+    options:
+      - "`pair[0].append(3)`"
+      - "`pair[0] = [3]`"
+      - "`pair = ([3], 2)`"
+      - "`pair[1] = 3`"
+    correct_indices: [0, 2]
+    option_feedback:
+      0: "Tuple immutability leaves the referenced list free to mutate."
+      1: "Replacing a tuple slot attempts to change the tuple itself."
+      2: "Names can be rebound even when the objects they reference are immutable."
+      3: "The tuple's slots cannot be replaced, regardless of whether a slot contains an integer or a list."
+    explanation: "Immutability constrains the tuple's own slots, not all objects reachable from those slots and not the name that refers to the tuple."
+
+  # Sources: essential_python.pptx, slide 9; Homework Problems, PYTHON5 A.
+  - id: subclass-initialization
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    question: "A Python base class initializes `self.name` in `__init__`. A subclass defines an empty `__init__`, then calls an inherited method that reads `self.name`. No other code sets that field. What causes the failure?"
+    options:
+      - "The subclass must redeclare every inherited method."
+      - "The subclass initializer did not run the base initializer."
+      - "Inherited methods cannot read fields on subclass instances."
+    correct_index: 1
+    option_feedback:
+      0: "Methods remain inherited when a subclass defines an initializer."
+      2: "Inherited methods receive the subclass instance as `self`; the problem is that the expected field was never initialized."
+    explanation: "When a subclass supplies its own initializer, required base initialization must be invoked explicitly, usually with `super().__init__(...)`."
+
+  # Sources: essential_python.pptx, slides 12–13; Homework Problems, PYTHON4.
+  - id: alias-through-container
+    type: multiple
+    difficulty: intermediate
+    bloom: analyze
+    question: "Start each operation independently with Python `row = [1]; grid = [row]`. Which operations change the contents observed through `grid`? Select all that apply."
+    options:
+      - "`row.append(2)`"
+      - "`row = [2]`"
+      - "`row[0] = 2`"
+      - "`row = row + [2]`"
+    correct_indices: [0, 2]
+    option_feedback:
+      0: "The grid refers to the list that `append` mutates."
+      1: "Rebinding the local name does not replace the reference stored inside `grid`."
+      2: "Element assignment changes the list already referenced by `grid`."
+      3: "Concatenation creates another list, and the assignment rebinds only `row`."
+    explanation: "The grid stores an object reference, not a live connection to the variable name `row`. Only operations on the original object are visible through that reference."
+
+  # Source: essential_python.pptx, slide 12.
+  - id: list-operation-costs
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    question: "A Python list contains n ordinary integers. Compare reading a valid `items[j]` with checking `target in items` when the target is absent. Assume the standard array-backed list and constant-time integer comparisons."
+    options:
+      - "Both operations take constant time."
+      - "Indexing is constant time; membership is linear."
+      - "Both operations scan all n elements."
+    correct_index: 1
+    option_feedback:
+      0: "A list has no membership index that can prove an element absent without searching."
+      2: "Array-backed storage can compute an element's location directly from its index."
+    explanation: "Indexing accesses one slot, O(1). An unsuccessful membership check examines all n values, O(n), under the stated comparison-cost assumption."
+
+  # Sources: essential_python.pptx, slide 7; Homework Problems, PYTHON3–4; Quiz 1 solutions, Q2 C–D.
+  - id: choose-copy-boundary
+    type: single
+    difficulty: advanced
+    bloom: evaluate
+    question: "A function must reorder a list of mutable records without reordering the caller's list. Updates to each record must remain shared with the caller. Which copying policy matches both requirements?"
+    options:
+      - "Copy only the outer list before reordering."
+      - "Deep-copy the records before reordering."
+      - "Reorder the caller's original list directly."
+    correct_index: 0
+    option_feedback:
+      1: "Copying the records breaks the required sharing of record updates."
+      2: "Reordering the original list changes the caller's order, violating the other requirement."
+    explanation: "A shallow copy separates the sequence of references while retaining the referenced records. Copy depth should follow the ownership and sharing contract."

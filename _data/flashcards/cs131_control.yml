@@ -1,0 +1,107 @@
+title: "CS 131: Control and Concurrency"
+description: "Explain evaluation and suspension, design lazy traversals, and justify concurrency choices."
+active: true
+# Sources: control_palooza_v7.pptx; Homework Problems (Public), CTRL sections;
+# CS131 Fall 25 Quiz 4. Slide/question locators accompany each card.
+# Exclude Language of the Week: slide 15 (Ruby).
+cards:
+  # Source: Control slides 6–13; Homework CTRL1.
+  - id: cs131-control-card-safe-guard
+    difficulty: intermediate
+    bloom: apply
+    question: "Write a Python condition that calls `passes(record)` only when `record` is not `None`. Explain why reversing the two tests changes safety even if logical conjunction is commutative."
+    answer: "Use `record is not None and passes(record)`. Python evaluates the left operand first and skips the right operand when the left is false. Reversing the tests calls `passes` before establishing that its argument exists."
+    explanation: "Self-check: separate the truth table of conjunction from the operational behavior of evaluation. The function call may fail or have effects, so its position matters."
+
+  # Source: Control slides 17–22.
+  - id: cs131-control-card-loop-exits
+    difficulty: basic
+    bloom: understand
+    question: "Inside a nested loop in a function, contrast an unlabeled `continue`, an unlabeled `break`, and `return`. Describe which work is skipped by each."
+    answer: "Continue skips the remainder of the nearest loop's current iteration and proceeds according to that loop's iteration rule. Break exits the nearest loop, allowing surrounding code to continue. Return exits the entire function, including both loops."
+    explanation: "Self-check: a break in the inner loop does not generally stop the outer loop. In a counter-controlled for loop, continue still follows that loop's update-and-test behavior."
+
+  # Source: Control slides 39–49; Quiz 4, Problem 2 b/d.
+  - id: cs131-control-card-independent-traversal
+    difficulty: advanced
+    bloom: create
+    question: "Design the iterator behavior of a reusable `RangeLike(start, stop)` object so that nested loops traverse all ordered pairs of its values. State what the collection stores, what each iterator stores, and what happens when a loop requests an iterator."
+    answer: "The collection stores the range bounds. Each iterator stores its own current position and the stop bound. Each new traversal request returns a fresh iterator initialized to start; asking an iterator for its own iterator returns itself. Advancing one iterator changes only that iterator's position."
+    explanation: "Self-check: for values 1 and 2, nested loops must visit `(1,1)`, `(1,2)`, `(2,1)`, and `(2,2)`. A single position shared by both loops fails this check; copying all elements is unnecessary."
+
+  # Source: Control slides 51–57; Quiz 4, Problem 2.
+  - id: cs131-control-card-generator-progress
+    difficulty: intermediate
+    bloom: apply
+    question: |
+      Predict the two values printed and explain where the generator pauses after each request.
+
+      ```python
+      def steps():
+          value = 2
+          yield value
+          value += 3
+          yield value
+      it = steps()
+      print(next(it))
+      print(next(it))
+      ```
+    answer: "The values are 2, then 5. The first request runs through initialization to the first yield. The second resumes after that yield, updates the retained local variable, and pauses at the second yield."
+    explanation: "Self-check: execution resumes rather than restarting the body. A third next call would run to the end and signal exhaustion with `StopIteration`."
+
+  # Source: Control slides 51–58; Homework CTRL2 B;
+  # Final F24 solutions, pp. 19 and 22.
+  - id: cs131-control-card-lazy-transform
+    difficulty: advanced
+    bloom: create
+    question: "Write a Python generator `positive_squares(values)` that yields the square of each positive input in order, without first materializing the input or output. It should work when a consumer requests a finite prefix of an unbounded input."
+    answer: |
+      ```python
+      def positive_squares(values):
+          for value in values:
+              if value > 0:
+                  yield value * value
+      ```
+
+      For `[-2, 0, 3, 1]`, the yielded values are 9 and 1.
+    explanation: "Self-check: preserve order, exclude zero, and produce output incrementally. Laziness does not guarantee every request terminates: an unbounded input with no later positive value can keep the next request searching forever."
+
+  # Source: Control slides 65–66 and 98; Homework CTRL6.
+  - id: cs131-control-card-concurrency-parallelism
+    difficulty: basic
+    bloom: understand
+    question: "How can two downloads finish sooner with concurrency on one application thread, even though the thread never executes two instructions simultaneously? State the condition that makes overlap useful."
+    answer: "While one download waits for the network, the runtime can start or advance another. Their waiting intervals overlap, so total elapsed time can fall even without parallel application execution. This requires nonblocking operations and useful independent work to run during waits."
+    explanation: "Self-check: attribute the benefit to overlapping waiting, not making the single processor execute two instruction streams at once. Concurrency is not a guaranteed speedup for every workload."
+
+  # Source: Control slides 75–78; Homework CTRL5.
+  - id: cs131-control-card-lost-update
+    difficulty: advanced
+    bloom: analyze
+    question: "Two workers each increment a counter initially equal to 10 using separate read, add-one, and write steps. Give an interleaving that leaves 11 instead of 12, then name the unit that synchronization must protect."
+    answer: "Both workers read 10. Each computes 11. One writes 11, then the other writes its own 11, overwriting rather than incorporating the first update. Synchronization must protect the entire read-modify-write, or replace it with an atomic increment."
+    explanation: "Self-check: the explanation must identify the stale read. A lock around just the final write prevents simultaneous writes but still allows both workers to calculate from 10."
+
+  # Source: Control slides 69–74; Homework CTRL5 A/B.
+  - id: cs131-control-card-fork-join-dependencies
+    difficulty: intermediate
+    bloom: evaluate
+    question: "Tasks `left` and `right` independently compute partial results; `combine` needs both. Describe where to start and join the tasks, and explain why joining each immediately after starting it loses the intended benefit."
+    answer: "Start both tasks before waiting for either. Join both before combine reads their results. Starting and immediately joining left before starting right makes right wait for left's completion, so the independent computations cannot overlap."
+    explanation: "Self-check: preserve the true dependency—combine needs both results—without inventing a dependency between the independent producers. The runtime still decides actual parallel scheduling."
+
+  # Source: Control slides 84–89; Quiz 4, Problem 3 a.
+  - id: cs131-control-card-await-readiness
+    difficulty: advanced
+    bloom: analyze
+    question: "A runtime specifies that awaiting an already completed handle returns its outcome immediately, while awaiting a pending handle suspends the current task. Why is 'every await lets another task run' an unsafe assumption in this runtime?"
+    answer: "If the handle is already complete, await returns without suspension. The current task can therefore continue running through many await expressions without allowing another task to run. Only an actual suspension gives this cooperative scheduler control under the stated rules."
+    explanation: "Self-check: base the answer on the runtime's readiness rule. Async syntax alone does not specify when work is scheduled or whether a particular await yields."
+
+  # Source: Control slides 82–98; Homework CTRL5 B.4 and CTRL6.
+  - id: cs131-control-card-workload-design
+    difficulty: expert
+    bloom: evaluate
+    question: "A service both waits on many independent network requests and performs expensive calculations on their responses. Propose a concurrency design that keeps request handling responsive and bounds resource use. Explain which part addresses each workload."
+    answer: "Use nonblocking asynchronous operations to overlap network waiting. Send expensive calculations to a bounded worker pool and await their results from the event loop. Limit queued or admitted work as needed so demand cannot grow memory without bound."
+    explanation: "Self-check: calculation must not monopolize the event-loop thread; the pool must bound active workers; and a large incoming workload still needs an explicit queue or admission policy. More threads alone do not guarantee lower latency."

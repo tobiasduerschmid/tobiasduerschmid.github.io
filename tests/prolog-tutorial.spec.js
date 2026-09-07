@@ -2,211 +2,160 @@
 const { test, expect } = require('@playwright/test');
 const {
   loadTutorialConfig,
-  passCurrentStepTests,
-  answerQuizCorrectly,
+  waitForTutorialReady,
   setEditorContent,
+  answerQuizCorrectly,
   expectActiveStep,
   expectStepCount,
-  expectRenderedStepTests,
 } = require('./tutorial-helpers');
 const { a11yCheckpoint } = require('./a11y-helpers');
 
-// Feature key for `A11Y_INTERACTIVE_FEATURES`. With the flag enabled
-// (`A11Y_INTERACTIVE_CHECKS=1`) this spec runs an axe pass at every step's
-// post-solution state and at every quiz gate. With the env var omitted the
-// checkpoints below are no-ops.
-const A11Y_FEATURE = 'prolog-tutorial';
+const COURSES = ['prolog', 'prolog-search'];
+const RUN_TIMEOUT = 30_000;
+const runButton = page => page.getByRole('button', { name: /run$/i });
+const testButton = page => page.getByRole('button', { name: /test my work/i });
+const nextButton = page => page.getByRole('button', { name: /^Next/ });
+const output = page => page.getByRole('region', { name: 'Program output' });
+const queryInput = page => page.getByRole('textbox', { name: 'Query (Prolog goal)' });
 
-/**
- * Tests: Prolog Essentials Tutorial (Tau Prolog WebWorker backend)
- *
- * Two serial describe blocks share one page each — the tutorial boots only
- * twice per run (instead of once per test).
- *
- * The Prolog backend runs Tau Prolog entirely in the browser via a Web Worker.
- * Program output is appended to .tvm-output-pre as text.
- *
- * Block 1 – Structure, navigation, run/clear, editor.
- * Block 2 – YAML-driven: applies each step's solution, verifies test count,
- *           answers the quiz, and advances to the next step.
- */
-
-const TUTORIAL_URL     = '/SEBook/tools/prolog-tutorial';
-const BOOT_TIMEOUT     = 30_000;
-const TEST_RUN_TIMEOUT = 20_000;
-
-const config = loadTutorialConfig('prolog');
-const steps  = config.steps;
-
-async function waitForTutorialReady(page) {
-  await page.waitForSelector('.tvm-output-panel', { timeout: BOOT_TIMEOUT });
-  await page.waitForSelector('.tvm-step-btn',     { timeout: 10_000 });
-  await expect(page.locator('.tvm-loading')).toBeHidden({ timeout: BOOT_TIMEOUT });
+async function openTutorial(page, id) {
+  await page.goto(`/SEBook/tools/${id}-tutorial`);
+  await waitForTutorialReady(page);
+  await expect(queryInput(page)).toBeVisible();
+  await expect(runButton(page)).toBeEnabled();
 }
 
-async function clickRun(page) {
-  const runBtn = page.locator('.tvm-run-btn');
-  await expect(runBtn).toBeVisible({ timeout: 5_000 });
-  await runBtn.click();
-  await expect(runBtn).toHaveText(/^▶\s+/, { timeout: TEST_RUN_TIMEOUT });
+async function runQuery(page, goal) {
+  await page.getByRole('button', { name: 'Clear', exact: true }).click();
+  await queryInput(page).fill(goal);
+  await runButton(page).click();
+  await expect(runButton(page)).toBeEnabled({ timeout: RUN_TIMEOUT });
 }
 
-// =============================================================================
-// Block 1 – Structure, navigation, run/clear, editor
-// =============================================================================
-test.describe.serial('Prolog Tutorial', () => {
-  test.setTimeout(120_000);
+for (const id of COURSES) {
+  const config = loadTutorialConfig(id);
+  test.describe(config.title, () => {
+    test('a learner completes every coding exercise and knowledge check, including the final check', async ({ page }) => {
+      test.setTimeout(300_000);
+      const pageErrors = [];
+      page.on('pageerror', error => pageErrors.push(error.message));
+      await openTutorial(page, id);
+      await expectStepCount(page, config.steps.length);
+      await expect(nextButton(page)).toBeDisabled();
 
-  /** @type {import('@playwright/test').Page} */
-  let page;
+      // An incomplete answer cannot unlock a knowledge check.
+      await testButton(page).click();
+      await expect(page.getByRole('status').filter({ hasText: /of \d+ tests passed/ }))
+        .toContainText(/0 of \d+ tests passed/, { timeout: RUN_TIMEOUT });
+      await expect(nextButton(page)).toBeDisabled();
 
-  /** @type {import('@playwright/test').BrowserContext} */
-  let context;
+      for (const [index, step] of config.steps.entries()) {
+        await expectActiveStep(page, index);
+        await expect(page.getByRole('heading', { name: step.title, exact: true })).toBeVisible();
+        await expect(queryInput(page)).toHaveValue(step.default_query);
+        // Monaco's supported model API supplies learner edits; the verdict is
+        // observed through the same controls and status messages learners use.
+        const entry = step.solution.files.find(file => file.path === step.run_file);
+        expect(await setEditorContent(page, entry.content)).toBe(true);
+        await testButton(page).click();
+        await expect(page.getByRole('status').filter({ hasText: /^All \d+ tests? passed\./ }))
+          .toHaveText(`All ${step.tests.length} ${step.tests.length === 1 ? 'test' : 'tests'} passed.`, { timeout: RUN_TIMEOUT });
+        await a11yCheckpoint(page, `${id}: step ${index + 1} passing`, {
+          feature: 'prolog-tutorial', darkMode: true,
+        });
+        await nextButton(page).click();
+        await a11yCheckpoint(page, `${id}: step ${index + 1} knowledge check`, {
+          feature: 'prolog-tutorial', darkMode: true,
+        });
+        await answerQuizCorrectly(page);
+        if (index < config.steps.length - 1) {
+          await page.getByRole('button', { name: /continue/i }).click();
+        }
+      }
+      await expect(page.getByRole('status').filter({ hasText: /Tutorial Complete/i })).toBeVisible();
+      await a11yCheckpoint(page, `${id}: completed`, { feature: 'prolog-tutorial', darkMode: true });
+      expect(pageErrors).toEqual([]);
+    });
 
-  test.beforeAll(async ({ browser }, testInfo) => {
-    testInfo.setTimeout(120_000);
-    context = await browser.newContext();
-    page = await context.newPage();
-    await page.goto(TUTORIAL_URL);
-    await waitForTutorialReady(page);
+    test('print views include every lesson and keep code solutions instructor-only', async ({ page }) => {
+      await page.goto(`/SEBook/tools/${id}-tutorial/print`);
+      await expect(page).toHaveTitle(`${config.title} — Print View`);
+      for (const step of config.steps) {
+        await expect(page.getByRole('heading', { name: new RegExp(step.title) })).toBeVisible();
+        await expect(page.getByRole('heading', { name: step.quiz.title, exact: true })).toBeVisible();
+      }
+      await expect(page.getByRole('heading', { name: 'Solution', exact: true })).toHaveCount(0);
+      await a11yCheckpoint(page, `${id}: learner print view`, { feature: 'prolog-tutorial' });
+      await page.goto(`/SEBook/tools/${id}-tutorial/print?instructor-mode=true`);
+      await expect(page.getByRole('heading', { name: 'Solution', exact: true })).toHaveCount(config.steps.length);
+      await a11yCheckpoint(page, `${id}: instructor print view`, { feature: 'prolog-tutorial' });
+    });
   });
+}
 
-  test.afterAll(async () => { await context?.close(); });
-
-  // --- Structure ---
-
-  test('tutorial loads with correct number of steps from YAML', async () => {
-    await expect(page.locator('.tvm-container')).toBeVisible();
-    await expect(page.locator('.tvm-loading')).toBeHidden();
-    await expectStepCount(page, steps.length);
-    await expectActiveStep(page, 0);
-    await expect(page.locator('.tvm-step-content')).not.toBeEmpty();
-  });
-
-  test('output panel is present — no terminal for Prolog backend', async () => {
-    await expect(page.locator('.tvm-output-panel')).toBeVisible();
-    await expect(page.locator('.tvm-terminal-container')).toHaveCount(0);
-  });
-
-  test('run and clear buttons are present', async () => {
-    await expect(page.locator('.tvm-run-btn')).toBeVisible();
-    await expect(page.locator('.tvm-clear-btn')).toBeVisible();
-  });
-
-  test('editor shows a file tab on the first step', async () => {
-    const tabs = page.locator('.tvm-tab');
-    await expect(tabs.first()).toBeVisible({ timeout: 10_000 });
-    expect(await tabs.count()).toBeGreaterThanOrEqual(1);
-    await expect(page.locator('.tvm-editor-container')).toBeVisible();
-  });
-
-  // --- Run / clear ---
-
-  test('running a Prolog file answers the current query from edited facts', async () => {
-    await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
-      { timeout: 15_000 });
-    await setEditorContent(page, 'parent(tom, bob).');
-    await page.locator('.tvm-editor-container').click();
-    await page.keyboard.press('Control+s');
-    await clickRun(page);
-    await expect(page.locator('.tvm-output-pre'))
-      .toContainText(/X\s*=\s*bob|bob/i, { timeout: TEST_RUN_TIMEOUT });
-  });
-
-  test('clear button empties the output panel', async () => {
-    await page.locator('.tvm-clear-btn').click();
-    const text = await page.locator('.tvm-output-pre').textContent();
-    expect(text?.trim() ?? '').toBe('');
-  });
-
-  // --- Editor ---
-
-  test('editor content can be modified', async () => {
-    await page.waitForFunction(() => window.monaco?.editor?.getEditors?.()?.length > 0,
-      { timeout: 15_000 });
-    const before = await page.evaluate(() =>
-      window.monaco.editor.getEditors()[0].getModel().getValue());
-    expect(before).toBeTruthy();
-    await setEditorContent(page, before + '\n% added comment');
-    const after = await page.evaluate(() =>
-      window.monaco.editor.getEditors()[0].getModel().getValue());
-    expect(after).toContain('% added comment');
-  });
-
-  // --- Quiz flow (also unlocks step 2 for the navigation test) ---
-
-  test('quiz flow: passing step 1 → next → quiz → continue advances to step 2', async () => {
-    await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
-    await page.locator('.tvm-btn-next').click();
-    await page.waitForSelector('.tvm-quiz-panel .quiz-question-card.active', { timeout: 5_000 });
-    await answerQuizCorrectly(page);
-    await page.locator('.tvm-quiz-continue-btn').click();
-    await expectActiveStep(page, 1);
-    await expect(page.locator('.tvm-quiz-panel')).toBeHidden();
-  });
-
-  // --- Navigation (step 2 is now unlocked) ---
-
-  test('step buttons navigate between unlocked steps; prev button navigates back', async () => {
-    const stepButtons = page.locator('.tvm-step-btn');
-    await stepButtons.first().click();
-    await expectActiveStep(page, 0);
-    await stepButtons.nth(1).click();
-    await expectActiveStep(page, 1);
-    await page.locator('.tvm-btn-prev').click();
-    await expectActiveStep(page, 0);
-  });
+test('queries run edited facts, distinguish failure from errors, and recover after invalid source', async ({ page }) => {
+  await openTutorial(page, 'prolog');
+  await runQuery(page, 'parent(Who, bob)');
+  await expect(output(page)).toContainText(/Who\s*=\s*tom/);
+  await runQuery(page, 'parent(bob, tom)');
+  await expect(output(page)).toContainText('false.');
+  expect(await setEditorContent(page, 'parent(tom, bob')).toBe(true);
+  await runQuery(page, 'parent(tom, Who)');
+  await expect(output(page)).toContainText(/error/i);
+  expect(await setEditorContent(page, 'parent(tom, mia).')).toBe(true);
+  await runQuery(page, 'parent(tom, Who)');
+  await expect(output(page)).toContainText(/Who\s*=\s*mia/);
+  await expect(output(page)).not.toContainText(/error/i);
+  await queryInput(page).focus();
+  await expect(queryInput(page)).toBeFocused();
+  await page.getByRole('button', { name: 'Clear', exact: true }).click();
+  await expect(output(page)).toBeEmpty();
 });
 
-// =============================================================================
-// Block 2 – YAML-driven step-by-step tests (one shared page, one boot)
-// =============================================================================
-test.describe.serial('Prolog Tutorial — step-by-step', () => {
-  test.setTimeout(120_000);
+test('a learner can stop an endless collected search and run repaired code', async ({ page }) => {
+  await openTutorial(page, 'prolog');
+  expect(await setEditorContent(page, 'spin :- spin.')).toBe(true);
+  await queryInput(page).fill('findall(X, spin, Answers)');
+  await runButton(page).click();
+  const stopButton = page.getByRole('button', { name: /Stop$/ });
+  await expect(stopButton).toBeVisible();
+  await stopButton.click();
+  await expect(output(page)).toContainText('Execution stopped');
+  await expect(runButton(page)).toBeEnabled({ timeout: RUN_TIMEOUT });
+  expect(await setEditorContent(page, 'parent(tom, mia).')).toBe(true);
+  await runQuery(page, 'parent(tom, Child)');
+  await expect(output(page)).toContainText(/Child\s*=\s*mia/);
+  await a11yCheckpoint(page, 'Prolog: recovered after Stop', { feature: 'prolog-tutorial', darkMode: true });
+});
 
-  /** @type {import('@playwright/test').Page} */
-  let page;
-
-  /** @type {import('@playwright/test').BrowserContext} */
-  let context;
-
-  test.beforeAll(async ({ browser }, testInfo) => {
-    testInfo.setTimeout(120_000);
-    context = await browser.newContext();
-    page = await context.newPage();
-    await page.goto(TUTORIAL_URL);
-    await waitForTutorialReady(page);
+test('Run and Test My Work use the designated Prolog entry while a different file is open', async ({ page }) => {
+  await openTutorial(page, 'prolog');
+  // Configure a small two-file tutorial through its author-facing constructor.
+  // This fixture is not a mock: it uses the real editor, worker, and grading UI.
+  await page.evaluate(async () => {
+    window._tutorial.destroy();
+    window._tutorial = new window.TutorialCode('#tutorial-container', {
+      backend: 'prolog', tutorialId: 'prolog-entry-file-test', requireTests: true,
+      autosaveType: 'none', disableQuiz: true,
+      steps: [{
+        title: 'Entry File Selection', instructions: 'Run the designated entry file.',
+        files: [
+          { path: '/tutorial/entry.pl', language: 'prolog', content: 'choice(entry).' },
+          { path: 'notes.pl', language: 'prolog', content: 'choice(notes).' },
+        ],
+        run_file: 'entry.pl', open_file: '/tutorial/notes.pl',
+        default_query: 'choice(Value)',
+        tests: [{ description: 'The entry relation is consulted',
+          command: "assert((await __query('findall(X,choice(X),Xs), Xs == [entry].')).length === 1, 'The entry file should supply the relation.');" }],
+      }],
+    });
+    await window._tutorial.start();
   });
-
-  test.afterAll(async () => { await context?.close(); });
-
-  for (let i = 0; i < steps.length; i++) {
-    const step   = steps[i];
-    const isLast = i === steps.length - 1;
-
-    if (step.tests?.length > 0) {
-      test(`step ${i + 1} "${step.title}": solution passes all ${step.tests.length} tests`, async () => {
-        if (!step.solution) {
-          throw new Error(`Step ${i + 1} "${step.title}" has tests but no solution key in the YAML`);
-        }
-        await passCurrentStepTests(page, TEST_RUN_TIMEOUT);
-        await expectRenderedStepTests(page, step);
-        await a11yCheckpoint(page, `prolog tutorial — step ${i + 1} all tests passing`, { feature: A11Y_FEATURE, darkMode: true });
-      });
-    }
-
-    if (step.quiz?.questions?.length > 0 && !isLast) {
-      test(`step ${i + 1} "${step.title}": quiz gate — advances to step ${i + 2}`, async () => {
-        await page.locator('.tvm-btn-next').click();
-        await expect(page.locator('.tvm-quiz-panel')).toBeVisible({ timeout: 5_000 });
-        await a11yCheckpoint(page, `prolog tutorial — step ${i + 1} quiz gate (first question)`, { feature: A11Y_FEATURE, darkMode: true });
-        await answerQuizCorrectly(page);
-        await expect(page.locator('.tvm-quiz-panel .quiz-results:not(.hidden)')).toBeVisible();
-        await expect(page.locator('.tvm-quiz-continue-btn')).toBeVisible();
-        await a11yCheckpoint(page, `prolog tutorial — step ${i + 1} quiz results`, { feature: A11Y_FEATURE, darkMode: true });
-        await page.locator('.tvm-quiz-continue-btn').click();
-        await expect(page.locator('.tvm-quiz-panel')).toBeHidden({ timeout: 5_000 });
-      });
-    }
-  }
+  await expect(page.getByRole('button', { name: 'notes.pl', exact: true })).toBeVisible();
+  await runButton(page).click();
+  await expect(output(page)).toContainText(/Value\s*=\s*entry/, { timeout: RUN_TIMEOUT });
+  await expect(output(page)).not.toContainText('notes');
+  await testButton(page).click();
+  await expect(page.getByRole('status').filter({ hasText: /^All 1 test passed\./ }))
+    .toHaveText('All 1 test passed.', { timeout: RUN_TIMEOUT });
 });

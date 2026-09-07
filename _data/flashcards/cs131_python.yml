@@ -1,0 +1,92 @@
+title: "CS 131: Python Object Semantics"
+description: "Explain aliasing and copying, then design small examples that expose them."
+active: true
+# Essential Python slide 11 (OpenCL showcase) is excluded.
+cards:
+  # Source: essential_python.pptx, slides 4, 6, 13.
+  - id: names-objects-mutation
+    difficulty: basic
+    bloom: understand
+    question: "Explain the difference between rebinding a Python name and mutating an object. Include the effect on another name referring to the old object."
+    answer: "Rebinding changes which object one name refers to; other names retain their bindings. Mutation changes the object itself, so every alias to that object can observe the change."
+
+  # Sources: essential_python.pptx, slides 14–16; Homework Problems, PYTHON2.
+  - id: object-reference-is-not-variable-alias
+    difficulty: intermediate
+    bloom: analyze
+    question: "Why can a Python function append to the caller's list but fail to replace that list by assigning a new list to its parameter?"
+    answer: "The caller's name and the parameter are separate bindings to the same object. Append changes that shared object. Assignment to the parameter changes only the function's local binding; it does not alias or rebind the caller's variable."
+
+  # Sources: essential_python.pptx, slide 7; Homework Problems, PYTHON4; F24 midterm Q4 pp. 7–8.
+  - id: explain-copy-depth
+    difficulty: intermediate
+    bloom: understand
+    question: "For an ordinary nested list, distinguish assignment, a shallow copy, and a deep copy. Which mutable objects remain shared with the original?"
+    answer: "Assignment shares the original outer and inner lists. A shallow copy creates another outer list while sharing the inner lists. A deep copy recursively copies the inner mutable lists, isolating their later edits from the original."
+
+  # Sources: essential_python.pptx, slides 8, 10.
+  - id: demonstrate-equality-without-identity
+    difficulty: intermediate
+    bloom: apply
+    question: "Give a short Python example where two lists compare equal but have different identities. Explain why neither result is contradictory."
+    answer: "`a = [8]; b = [8]` makes `a == b` true and `a is b` false. Equality compares the lists' values; identity distinguishes the separately constructed objects."
+
+  # Source: essential_python.pptx, slides 5, 17.
+  - id: diagnose-unintended-sharing
+    difficulty: advanced
+    bloom: analyze
+    question: "Two instances unexpectedly share a list, and two calls unexpectedly share a default list. Where was each list likely created, and how should per-instance or per-call state be created?"
+    answer: "A class-body list is shared through the class, so create per-instance lists inside `__init__` on `self`. A mutable default is created when the function definition executes; use a sentinel such as `None` and allocate inside each call that omits the argument."
+
+  # Sources: essential_python.pptx, slide 17; Homework Problems, PYTHON2.
+  - id: create-safe-optional-list
+    difficulty: advanced
+    bloom: create
+    question: "Write `add(value, items=None)` so omitted lists are fresh, while supplied lists, including empty ones, are mutated and returned. Give two checks that distinguish those requirements."
+    answer: |
+      ```python
+      def add(value, items=None):
+          if items is None:
+              items = []
+          items.append(value)
+          return items
+      ```
+
+      Check that `add(2)` and `add(5)` return `[2]` and `[5]` independently. Then use `provided = []`: `add(7, provided)` must return the very same object as `provided`, which now contains `[7]`.
+    explanation: "Self-check: a truthiness test would replace an explicitly supplied empty list. Use a sentinel comparison so omission and emptiness stay distinct."
+
+  # Sources: essential_python.pptx, slides 10, 13; Homework Problems, PYTHON4 A.4–A.5.
+  - id: immutable-container-mutable-child
+    difficulty: intermediate
+    bloom: analyze
+    question: "Why can `bundle = ([4],)` allow `bundle[0].append(6)` but reject `bundle[0] = [6]`?"
+    answer: "The append changes the referenced list. The assignment attempts to replace the tuple's reference slot. Tuple immutability forbids slot replacement, but does not make the objects stored in those slots immutable."
+
+  # Sources: essential_python.pptx, slide 9; Homework Problems, PYTHON5 A.
+  - id: explain-missing-base-initialization
+    difficulty: intermediate
+    bloom: analyze
+    question: "A subclass defines `__init__` and inherits a working method, yet calling that method reports a missing instance attribute. What initialization dependency should be checked first?"
+    answer: "Check whether the inherited method relies on fields created by the base initializer and whether the subclass called that initializer. Defining an initializer does not automatically invoke the base initializer. Usually the subclass needs `super().__init__(...)`."
+
+  # Sources: essential_python.pptx, slide 7; Homework Problems, PYTHON4.
+  - id: evaluate-copy-policy
+    difficulty: advanced
+    bloom: evaluate
+    question: "A view needs its own sort order but must show live edits to the same records as the original list. Explain which copy depth fits and what it deliberately leaves shared."
+    answer: "Use a shallow copy of the outer list. The view can reorder its own reference slots while both lists still refer to the same mutable records. A deep copy would isolate the record edits that the view needs to observe."
+
+  # Sources: essential_python.pptx, slides 6–7, 13; Homework Problems, PYTHON3.
+  - id: create-aliasing-counterexample
+    difficulty: advanced
+    bloom: create
+    question: "Construct a nested-list example that disproves the claim 'a shallow copy prevents every edit to the copy from affecting the original.' Show one edit that propagates and one that does not."
+    answer: |
+      ```python
+      from copy import copy
+      original = [[1]]
+      other = copy(original)
+      other[0].append(2)  # original becomes [[1, 2]]
+      other[0] = [9]     # original stays [[1, 2]]
+      ```
+    explanation: "Self-check: identify the shared child object and the separate outer lists. One edit must mutate the shared child; the other must replace a slot only in the copied outer list."

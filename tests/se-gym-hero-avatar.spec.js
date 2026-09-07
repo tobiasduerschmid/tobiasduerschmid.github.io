@@ -1918,20 +1918,24 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await page.getByRole('button', { name: 'Customize Hero' }).click();
 
     const colorControls = [
-      { presetsLabel: 'Preset swatches for skin', hslLabel: 'HSL sliders for skin', presets: 15 },
-      { presetsLabel: 'Preset swatches for hair', hslLabel: 'HSL sliders for hair', presets: 16 },
-      { presetsLabel: 'Preset swatches for eyes', hslLabel: 'HSL sliders for eyes', presets: 8 },
-      { presetsLabel: 'Preset swatches for suit', hslLabel: 'HSL sliders for suit', presets: 12 },
-      { presetsLabel: 'Preset swatches for cape and headwear', hslLabel: 'HSL sliders for cape and headwear', presets: 10 },
-      { presetsLabel: 'Preset swatches for accent', hslLabel: 'HSL sliders for accent', presets: 8 },
+      { presetsLabel: 'Preset swatches for skin', hslLabel: 'HSL sliders for skin', palette: 'skin' },
+      { presetsLabel: 'Preset swatches for hair', hslLabel: 'HSL sliders for hair', palette: 'hair' },
+      { presetsLabel: 'Preset swatches for eyes', hslLabel: 'HSL sliders for eyes', palette: 'eye' },
+      { presetsLabel: 'Preset swatches for suit', hslLabel: 'HSL sliders for suit', palette: 'suit' },
+      { presetsLabel: 'Preset swatches for cape and headwear', hslLabel: 'HSL sliders for cape and headwear', palette: 'cape' },
+      { presetsLabel: 'Preset swatches for accent', hslLabel: 'HSL sliders for accent', palette: 'capeInner' },
     ];
+    const paletteSizes = await page.evaluate(() => Object.fromEntries(
+      Object.entries(window.HeroAvatar.PALETTES).map(([name, colors]) =>
+        [name, new Set(colors.map(color => color.toLowerCase())).size])
+    ));
 
     for (const control of colorControls) {
       const presets = page.getByRole('group', { name: control.presetsLabel });
       const hsl = page.getByRole('group', { name: control.hslLabel });
 
       await expect(presets, `${control.presetsLabel} should be visible on mobile`).toBeVisible();
-      await expect(presets.getByRole('button')).toHaveCount(control.presets);
+      await expect(presets.getByRole('button')).toHaveCount(paletteSizes[control.palette]);
       await expect(hsl.getByLabel(/^Hue /)).toBeVisible();
       await expect(hsl.getByLabel(/^Saturation /)).toBeVisible();
       await expect(hsl.getByLabel(/^Lightness /)).toBeVisible();
@@ -1949,6 +1953,10 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     await expect(page
       .getByRole('group', { name: 'Preset swatches for hair' })
       .getByRole('button', { name: 'Use hair preset #2774AE' })).toBeVisible();
+    for (const color of ['#B7BDC8', '#EEE7DD', '#66418C', '#B74F7E', '#287B7B']) {
+      await expect(page.getByRole('group', { name: 'Preset swatches for hair' })
+        .getByRole('button', { name: `Use hair preset ${color}` })).toBeVisible();
+    }
 
     const hairPreset = page
       .getByRole('group', { name: 'Preset swatches for hair' })
@@ -2738,11 +2746,13 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         const faceClear = svg.querySelector('[data-hero-slot="face-clear"][data-hero-option="default"]');
         const hairline = svg.querySelector('[data-hero-slot="hairline"][data-hero-option="long"]');
         const eyebrow = svg.querySelector('[data-hero-slot="eyebrow"][data-hero-option="arched"]');
+        const headSurface = svg.querySelector('[data-hero-slot="head-shape"][data-hero-option="default"] > path');
         const skinGradient = svg.querySelector('linearGradient[id^="skin-"]');
         return {
           skinGradientUnits: skinGradient && skinGradient.getAttribute('gradientUnits'),
-          skinGradientY1: skinGradient && skinGradient.getAttribute('y1'),
-          skinGradientY2: skinGradient && skinGradient.getAttribute('y2'),
+          // Both surfaces need the same coordinate-space material to avoid a
+          // seam; its precise light direction is an art decision.
+          skinSurfaceFillsMatch: getComputedStyle(headSurface).fill === getComputedStyle(faceClear.querySelector('path')).fill,
           faceAfterHair: Boolean(
             hair &&
             faceClear &&
@@ -2763,8 +2773,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
     expect(layerComposition).toEqual({
       skinGradientUnits: 'userSpaceOnUse',
-      skinGradientY1: '82',
-      skinGradientY2: '270',
+      skinSurfaceFillsMatch: true,
       faceAfterHair: true,
       hairlineAfterFaceClear: true,
       eyebrowAfterHairline: true,
@@ -3095,10 +3104,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
   });
 
   test('Long and side-panel hair styles connect cleanly at the temples', async ({ page }) => {
-    await page.goto(GYM_URL);
-    await activatePersonalGym(page);
-    await page.getByRole('button', { name: 'Customize Hero' }).click();
-    await clearAccessories(page);
+    const geometryHero = await installGeometryHero(page);
 
     const styles = [
       'long',
@@ -3134,7 +3140,6 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       'sleek-bob-bangs',
       'curtain-bangs',
       'soft-bangs',
-      'low-pony-bangs',
       'butterfly-layers',
       'wavy',
       'center-part',
@@ -3142,8 +3147,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       'half-up',
     ];
 
-    const connectivityFailures = await page.evaluate(({ styles, sidePanelStyles }) => {
-      const svg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+    const connectivityFailures = await geometryHero.evaluate((svg, { styles, sidePanelStyles }) => {
       const sidePanelSet = new Set(sidePanelStyles);
       const baseState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS)));
       baseState.outfit.accessory = 'none';
@@ -3153,7 +3157,8 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         const svgPoint = svg.createSVGPoint();
         svgPoint.x = point.x;
         svgPoint.y = point.y;
-        const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
+        const head = svg.querySelector('[data-hero-slot="head-shape"][display="inline"]');
+        const screenPoint = svgPoint.matrixTransform(head.getScreenCTM());
         const element = document.elementFromPoint(screenPoint.x, screenPoint.y);
         const slot = element && element.closest('[data-hero-slot]');
         return {
@@ -3165,18 +3170,15 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       function slotCoversPoint(point, slotName, option) {
         const group = svg.querySelector('[data-hero-slot="' + slotName + '"][data-hero-option="' + option + '"]');
         if (!group || group.getAttribute('display') !== 'inline') return false;
-        const rect = group.getBoundingClientRect();
-        if (!rect.width || !rect.height) return false;
+        // Anatomical points belong to the head frame. Applying the selected
+        // hair group's fit here would move the expected point with the hair.
+        const head = svg.querySelector('[data-hero-slot="head-shape"][display="inline"]');
         const svgPoint = svg.createSVGPoint();
         svgPoint.x = point.x;
         svgPoint.y = point.y;
-        const screenPoint = svgPoint.matrixTransform(group.getScreenCTM());
-        return (
-          screenPoint.x >= rect.left - 0.5 &&
-          screenPoint.x <= rect.right + 0.5 &&
-          screenPoint.y >= rect.top - 0.5 &&
-          screenPoint.y <= rect.bottom + 0.5
-        );
+        const screenPoint = svgPoint.matrixTransform(head.getScreenCTM());
+        return document.elementsFromPoint(screenPoint.x, screenPoint.y)
+          .some((element) => group.contains(element));
       }
 
       function coveredPointHits(points, candidateSlots, option) {
@@ -3202,17 +3204,6 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         state.appearance.hairStyle = style;
         window.HeroAvatar.applyToSvg(svg, state);
 
-        const root = svg.querySelector('[data-hero-slot="hair-root"][data-hero-option="' + style + '"]');
-        if (!root || root.getAttribute('display') !== 'inline') {
-          failures.push({
-            style,
-            name: 'hair root display',
-            slot: root && root.getAttribute('data-hero-slot'),
-            option: root && root.getAttribute('data-hero-option'),
-            display: root && root.getAttribute('display'),
-          });
-        }
-
         const templeSlots = coveredPointHits([
           { name: 'left temple root', x: 356, y: 178 },
           { name: 'right temple root', x: 444, y: 178 },
@@ -3221,6 +3212,15 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
           if (!point.covered) {
             failures.push(Object.assign({ style }, point));
           }
+        }
+
+        // A low ponytail is gathered to one side; it does not have two
+        // hanging side panels. Its visible tail still has to meet the head.
+        if (style === 'low-pony-bangs' || style === 'ponytail') {
+          const tail = coveredPointHits([
+            { name: 'gathered ponytail behind head', x: 454, y: 205 },
+          ], ['hair'], style)[0];
+          if (!tail.covered) failures.push(Object.assign({ style }, tail));
         }
 
         if (sidePanelSet.has(style)) {
@@ -3649,19 +3649,16 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         return { width: rect.width, top: rect.top, bottom: rect.bottom, headFit: group.getAttribute('data-hero-head-fit') };
       }
 
-      function screenRectCoversSvgPoint(group, point) {
-        const rect = group.getBoundingClientRect();
-        if (!rect.width || !rect.height) return false;
+      function paintedGroupCoversHeadPoint(group, point) {
+        // These points describe the chosen head, not an accessory's unfitted
+        // source. A bounding box or a second fit transform can hide a gap.
+        const head = svg.querySelector('[data-hero-slot="head-shape"][display="inline"]');
         const svgPoint = svg.createSVGPoint();
         svgPoint.x = point.x;
         svgPoint.y = point.y;
-        const screenPoint = svgPoint.matrixTransform(group.getScreenCTM());
-        return (
-          screenPoint.x >= rect.left - 0.5 &&
-          screenPoint.x <= rect.right + 0.5 &&
-          screenPoint.y >= rect.top - 0.5 &&
-          screenPoint.y <= rect.bottom + 0.5
-        );
+        const screenPoint = svgPoint.matrixTransform(head.getScreenCTM());
+        return document.elementsFromPoint(screenPoint.x, screenPoint.y)
+          .some((element) => group.contains(element));
       }
 
       function renderCoverage(check) {
@@ -3675,7 +3672,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         if (!group || group.getAttribute('display') !== 'inline') return null;
         return {
           headFit: group.getAttribute('data-hero-head-fit'),
-          uncoveredPoints: check.points.filter((point) => !screenRectCoversSvgPoint(group, point)),
+          uncoveredPoints: check.points.filter((point) => !paintedGroupCoversHeadPoint(group, point)),
         };
       }
 
@@ -3713,11 +3710,13 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
           points: [{ name: 'left fringe edge', x: 352, y: 162 }, { name: 'right fringe edge', x: 448, y: 162 }],
         },
         {
-          slot: 'hair-root',
+          slot: 'hair',
           option: 'long',
           hairStyle: 'long',
           headStyle: 'broad',
-          points: [{ name: 'left temple root', x: 352, y: 180 }, { name: 'right temple root', x: 448, y: 180 }],
+          // Just outside this broad head's ~350/450 temple edges. Interior
+          // face points should remain skin even when hair continues behind.
+          points: [{ name: 'left hair against temple', x: 348, y: 180 }, { name: 'right hair against temple', x: 452, y: 180 }],
         },
         {
           slot: 'accessory',
@@ -3983,10 +3982,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
   });
 
   test('Raised and tied hair options keep the scalp visually connected', async ({ page }) => {
-    await page.goto(GYM_URL);
-    await activatePersonalGym(page);
-    await page.getByRole('button', { name: 'Customize Hero' }).click();
-    await clearAccessories(page);
+    const geometryHero = await installGeometryHero(page);
 
     const styles = [
       'coily-puff',
@@ -4005,8 +4001,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       'top-knot',
     ];
 
-    const failures = await page.evaluate((styles) => {
-      const svg = document.querySelector('#hero-customizer-modal [data-gym-hero-svg]');
+    const failures = await geometryHero.evaluate((svg, styles) => {
       const baseState = window.HeroAvatar.normalizeAvatar(JSON.parse(JSON.stringify(window.HeroAvatar.DEFAULTS)));
       baseState.outfit.accessory = 'none';
       baseState.outfit.accessories = [];
@@ -4018,70 +4013,28 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
         state.appearance.hairStyle = style;
         window.HeroAvatar.applyToSvg(svg, state);
 
-        const hairline = svg.querySelector(`[data-hero-slot="hairline"][data-hero-option="${style}"]`);
-        const root = svg.querySelector(`[data-hero-slot="hair-root"][data-hero-option="${style}"]`);
-        if (!hairline || hairline.getAttribute('display') !== 'inline') {
-          failures.push({ style, point: 'hairline layer', slot: hairline && hairline.getAttribute('display') });
-        }
-        if (!root || root.getAttribute('display') !== 'inline') {
-          failures.push({ style, point: 'hair-root layer', slot: root && root.getAttribute('display') });
-        }
-
-        function slotCoversPoint(point, slotName) {
-          const group = svg.querySelector(`[data-hero-slot="${slotName}"][data-hero-option="${style}"]`);
-          if (!group || group.getAttribute('display') !== 'inline') return false;
-          const rect = group.getBoundingClientRect();
-          if (!rect.width || !rect.height) return false;
-          const svgPoint = svg.createSVGPoint();
-          svgPoint.x = point.x;
-          svgPoint.y = point.y;
-          const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
-          return (
-            screenPoint.x >= rect.left - 0.5 &&
-            screenPoint.x <= rect.right + 0.5 &&
-            screenPoint.y >= rect.top - 0.5 &&
-            screenPoint.y <= rect.bottom + 0.5
-          );
-        }
-
-        const points = [
-          { name: 'top forehead hairline', x: 400, y: 158 },
+        const head = svg.querySelector('[data-hero-slot="head-shape"][display="inline"]');
+        // Sample a continuous arc inside the upper forehead, down to both
+        // temples. Hairline contours may differ; the painted connection may
+        // not contain a skin/background gap. The head's matrix includes its
+        // assembly size, pose, and user-selected proportions.
+        const points = Array.from({ length: 25 }, (_, index) => {
+          const offset = -44 + index * 88 / 24;
+          return { name: 'forehead-to-temple arc', x: 400 + offset, y: 150 + 24 * (offset / 44) ** 2 };
+        }).concat([
           { name: 'left temple root', x: 356, y: 178 },
           { name: 'right temple root', x: 444, y: 178 },
-        ];
-        const coverage = points.map((point) => {
-          const expectedSlot = point.name === 'top forehead hairline' ? 'hairline' : 'hair-root';
-          if (slotCoversPoint(point, expectedSlot)) {
-            return { name: point.name, slot: expectedSlot, option: style, covered: true };
-          }
+        ]);
+        for (const point of points) {
           const svgPoint = svg.createSVGPoint();
           svgPoint.x = point.x;
           svgPoint.y = point.y;
-          const screenPoint = svgPoint.matrixTransform(svg.getScreenCTM());
+          const screenPoint = svgPoint.matrixTransform(head.getScreenCTM());
           const element = document.elementFromPoint(screenPoint.x, screenPoint.y);
           const slot = element && element.closest('[data-hero-slot]');
-          return {
-            name: point.name,
-            slot: slot && slot.getAttribute('data-hero-slot'),
-            option: slot && slot.getAttribute('data-hero-option'),
-            covered: false,
-          };
-        });
-        const expected = [
-          { point: 'top forehead hairline', slot: 'hairline' },
-          { point: 'left temple root', slot: 'hair-root' },
-          { point: 'right temple root', slot: 'hair-root' },
-        ];
-        for (const expectedHit of expected) {
-          const hit = coverage.find((item) => item.name === expectedHit.point);
-          if (!hit || !hit.covered || hit.slot !== expectedHit.slot || hit.option !== style) {
-            failures.push({
-              style,
-              point: expectedHit.point,
-              slot: hit && hit.slot,
-              option: hit && hit.option,
-              covered: hit && hit.covered,
-            });
+          if (!slot || !['hair', 'hairline', 'hair-root'].includes(slot.getAttribute('data-hero-slot')) ||
+              slot.getAttribute('data-hero-option') !== style) {
+            failures.push({ style, point, slot: slot && slot.getAttribute('data-hero-slot'), option: slot && slot.getAttribute('data-hero-option') });
           }
         }
       }
@@ -4240,6 +4193,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
       const faceClear = svg.querySelector('[data-hero-slot="face-clear"][data-hero-option="oblong"]');
       const facePolish = svg.querySelector('[data-hero-polish="face"]');
       const eyebrow = svg.querySelector('[data-hero-slot="eyebrow"][data-hero-option="arched"]');
+      const eyes = svg.querySelector('[data-hero-slot="eye-shape"][display="inline"]');
       return {
         skin: styles.getPropertyValue('--hero-skin-light').trim(),
         skinScatter: styles.getPropertyValue('--hero-skin-scatter').trim(),
@@ -4276,8 +4230,12 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
           facePolish &&
           (faceClear.compareDocumentPosition(facePolish) & Node.DOCUMENT_POSITION_FOLLOWING)
         ),
-        facePolishPathCount: facePolish ? facePolish.querySelectorAll('path').length : -1,
-        facePolishEllipseCount: facePolish ? facePolish.querySelectorAll('ellipse').length : -1,
+        // Soft jaw highlights are intentional. A shared stroke above the eyes
+        // creates a phantom hairline, especially on a bald portrait.
+        foreheadLightStrokes: facePolish && eyes ? Array.from(facePolish.querySelectorAll('path, ellipse'))
+          .filter((element) => getComputedStyle(element).stroke !== 'none' &&
+            element.getBBox().y < eyes.getBBox().y)
+          .map((element) => getComputedStyle(element).stroke) : ['missing face material'],
         featuresAfterPolish: Boolean(
           facePolish &&
           eyebrow &&
@@ -4287,8 +4245,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     });
 
     expect(tokens.polishAfterFaceClear).toBe(true);
-    expect(tokens.facePolishPathCount).toBe(2);
-    expect(tokens.facePolishEllipseCount).toBe(2);
+    expect(tokens.foreheadLightStrokes).toEqual([]);
     expect(tokens.featuresAfterPolish).toBe(true);
     expect(tokens.skinHighlightSoft.toLowerCase()).not.toBe(tokens.skin.toLowerCase());
     expect(tokens.skinMid.toLowerCase()).not.toBe(tokens.skin.toLowerCase());

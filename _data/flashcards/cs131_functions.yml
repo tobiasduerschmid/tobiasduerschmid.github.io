@@ -1,0 +1,113 @@
+title: "CS 131: Functions"
+description: "Explain calling semantics and failure contracts, then design small function interfaces and closures."
+active: true
+# Sources: function_palooza_v8.pptx; Homework Problems (Public), FUNC sections;
+# CS131 Fall 25 Quiz 3. Slide/question locators accompany each card.
+# Exclude Language of the Week: slides 3 (Forth), 72 (Lean), 73 (Rust).
+cards:
+  # Source: Functions slide 9; Quiz 3, Problem 1.
+  - id: cs131-functions-card-mutation-rebinding
+    difficulty: basic
+    bloom: understand
+    question: "In Python, why can a function append to its caller's list but cannot replace the caller's list by assigning a new list to its parameter? Explain using names and objects."
+    answer: "The caller's name and the parameter initially refer to the same object. Append changes that shared object. Assignment changes which object the local parameter names, leaving the caller's binding intact."
+    explanation: "Self-check: distinguish mutation of an object from rebinding of a name. Calling both actions 'changing the parameter' hides the distinction that determines the caller's observation."
+
+  # Source: Functions slides 10–13.
+  - id: cs131-functions-card-copy-out-conflict
+    difficulty: advanced
+    bloom: analyze
+    question: "A value-result function has two separate local parameters whose results are copied back to the same caller variable. Explain why making local copies does not eliminate every aliasing problem. What additional rule would make the final value predictable?"
+    answer: "The parameters do not alias during the body, but their copy-out destinations do. Copying either result last overwrites the other. A specified copy-out order makes the result predictable; rejecting calls with overlapping destinations can prevent this conflict instead."
+    explanation: "Self-check: locate the conflict at return, rather than during local assignments. Equal local results also happen to avoid observable disagreement, but they do not solve the general design problem."
+
+  # Source: Functions slides 16–23; Homework FUNC1 A.
+  - id: cs131-functions-card-default-interface-design
+    difficulty: expert
+    bloom: create
+    question: "Design a call syntax for a language whose `resize` function has required `width` and optional `height` and `keep_ratio`. Optional parameters may occur anywhere in its declaration. Show a call that supplies only width, a call supplying width and height, and the binding rule that prevents ambiguity."
+    answer: |
+      One design requires named arguments:
+
+      ```text
+      resize(width: 120)
+      resize(width: 120, height: 80)
+      ```
+
+      Each argument binds to the parameter with the same name. Missing optional parameters use their declared defaults; a missing required name is an error.
+    explanation: "Self-check: both calls must bind uniquely without inspecting argument values or types, and the rule must explain omissions. Other designs, such as explicit omission markers, are acceptable if they also establish a unique binding."
+
+  # Source: Functions slides 27 and 34–43; Homework FUNC2.
+  - id: cs131-functions-card-error-information
+    difficulty: intermediate
+    bloom: evaluate
+    question: "A parser returns a value or fails because input is empty, malformed, or unsupported. The caller needs a different message for each reason. Explain why an optional value is insufficient and propose the information its return type should carry."
+    answer: "An optional communicates only value versus absence. A result type should carry either the parsed value or a failure variant such as Empty, Malformed, or Unsupported, with location details when needed."
+    explanation: "Self-check: the design must distinguish every failure that requires different caller behavior, and legitimate parsed values must not collide with error sentinels."
+
+  # Source: Functions slides 52–65; Homework FUNC3 A; Quiz 3, Problem 4.
+  - id: cs131-functions-card-propagation-cleanup
+    difficulty: advanced
+    bloom: analyze
+    question: "Function `load` acquires a resource and calls `decode`. Decoding raises an exception caught by `main`, which called `load`. Why is a release statement immediately after `decode` insufficient, and where should release belong? Assume cleanup succeeds."
+    answer: "Propagation leaves the rest of the ordinary `load` body unexecuted, so the release statement can be skipped. Release should be guaranteed by a finally block or a scoped resource manager established after successful acquisition. The original failure should still reach `main`."
+    explanation: "Self-check: cover both normal and exceptional exits, release only an acquired resource, and avoid a return in cleanup that would replace the pending failure."
+
+  # Source: Functions slides 75–85; Homework FUNC4 C.
+  - id: cs131-functions-card-closure-factory
+    difficulty: advanced
+    bloom: create
+    question: "Write a Python function `make_minimum(limit)` that returns a predicate accepting numbers at least `limit`. Create two predicates with different limits and give a check demonstrating they keep independent configurations."
+    answer: |
+      ```python
+      def make_minimum(limit):
+          return lambda value: value >= limit
+
+      small = make_minimum(3)
+      large = make_minimum(10)
+      assert small(6) is True
+      assert large(6) is False
+      assert large(10) is True
+      ```
+    explanation: "Self-check: the factory must return a callable rather than the result of calling it, each factory call must retain its own limit, and the comparison must include equality. A nested named function is equally valid."
+
+  # Source: Functions slides 82–85; Homework FUNC4 B.
+  - id: cs131-functions-card-capture-lifetime
+    difficulty: intermediate
+    bloom: analyze
+    question: "A C++ closure must read a local integer after the factory that created it has returned. The intended behavior is to remember that integer's value at creation. Which capture strategy fits, and why would reference capture be unsafe?"
+    answer: "Capture the integer by value so the closure stores its own copy. Reference capture would refer to the factory's local integer, whose lifetime ends when the factory returns. A reference capture does not extend that lifetime."
+    explanation: "Self-check: justify both the observed value and the lifetime. Capturing a pointer by value would copy only the pointer, so it would not by itself solve the lifetime of a separately referenced object."
+
+  # Source: Functions slides 89–104; Homework FUNC5 A–C.
+  - id: cs131-functions-card-polymorphism-distinction
+    difficulty: basic
+    bloom: understand
+    question: "Contrast two ways to support a `combine` operation on several types: separate implementations selected by argument type, and one definition parameterized by a type. What kind of reuse does each provide?"
+    answer: "Ad-hoc polymorphism supplies type-specific implementations, such as overloads. Parametric polymorphism expresses a shared definition using a type parameter, with constraints for any operations it requires. Both can share an operation name, but only the latter directly shares the parameterized algorithm."
+    explanation: "Self-check: distinguish reuse of an interface or name from reuse of a common algorithm. A generic implementation may still be specialized during compilation."
+
+  # Source: Functions slides 100–109; Homework FUNC5 C; Quiz 3, Problem 5.
+  - id: cs131-functions-card-generic-bound
+    difficulty: advanced
+    bloom: create
+    question: "A statically checked generic function `total_weight(items)` adds the weight of each item. Types need not share a class hierarchy. Specify the smallest useful capability bound and outline the function. Assume weight returns an integer and integer addition is built in."
+    answer: |
+      Require a capability with a single operation, `weight(): Integer`:
+
+      ```text
+      function total_weight<T supports weight(): Integer>(items: List<T>):
+          total = 0
+          for item in items:
+              total = total + item.weight()
+          return total
+      ```
+    explanation: "Self-check: the bound must justify every operation on `T`; it should not demand unrelated methods or a particular concrete class. The empty input must return zero. Syntax may vary; the capability contract is what matters."
+
+  # Source: Functions slides 95–109; Homework FUNC5 C, explanatory note.
+  - id: cs131-functions-card-monomorphization
+    difficulty: advanced
+    bloom: analyze
+    question: "A generic function is statically checked against its declared capabilities, then compiled into versions specialized for integer and string arguments. Why is this consistent? Name one tradeoff specialization can introduce."
+    answer: "Checking validates the definition's permitted operations; specialization chooses how to generate code for uses of that validated definition. These are separate decisions. Specialized versions may enable type-specific optimization while increasing compiled code size."
+    explanation: "Self-check: do not infer a language's checking rules solely from the number of generated code versions. Specialization is not proof that all operations were deferred to runtime."

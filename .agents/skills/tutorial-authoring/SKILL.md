@@ -1,6 +1,6 @@
 ---
 name: tutorial-authoring
-description: Authoring guide and architecture reference for the SEBook in-browser tutorial system. Use this skill EVERY TIME you create, edit, review, restructure, or extend anything that touches `_data/tutorials/*.yml`, the `_layouts/tutorial.html` / `_layouts/print-tutorial.html` layouts, the `tutorial-*-popup.html` popout windows at the repo root, the `js/tutorial-*.js` runtime (`tutorial-code.js`, `tutorial-quiz.js`, `tutorial-popout-manager.js`, `tutorial-popout-client.js`, `tutorial-refactorings.js`), backend workers (`pyodide-worker.js`, `sql-worker.js`, `java-worker.js`, `prolog-worker.js`, `haskell-worker.js`, `playwright-compat/*`), the time-travel debugger under `js/debugger/`, the autosave / progress / reset machinery, the in-tutorial quiz / hint / test schemas, the print view, the SE Gym tutorial-progress import/export flows, the `SEBook/<section>/<slug>-tutorial.md` + `SEBook/<section>/<slug>-tutorial/print.md` page-pair convention, the `/SEBook/tutorials` auto-generated index, or any new feature added to the tutorial runtime. Also trigger on requests like "add a new tutorial on X", "add a step to <tutorial>", "convert this lecture into a tutorial", "design a quiz / hint / test for step N", "set up a print view for this tutorial", "add a new tutorial backend", "wire up a new popout window", "add a new YAML field to the tutorial schema", "review this tutorial draft", "audit tutorials for PRIMM / spaced practice / Bloom coverage", or any task that involves the tutorial runtime, schema, or content. **You MUST update this SKILL.md whenever you add, rename, remove, or change the semantics of a tutorial-runtime feature** — new YAML fields, new backends, new popout windows, new test runners, new quiz / hint mechanics, new autosave / reset modes, new debugger capabilities, changed permalink conventions, or any architectural change that an author or future agent needs to know to build or modify a tutorial correctly. Out-of-date schema or architecture notes here cause real downstream bugs (broken tutorials, missing print views, mis-shaped quizzes, lost progress).
+description: Authoring guide and architecture reference for the SEBook in-browser tutorial system. Use this skill EVERY TIME you create, edit, review, restructure, or extend anything that touches `_data/tutorials/*.yml`, the `_layouts/tutorial.html` / `_layouts/print-tutorial.html` layouts, the `tutorial-*-popup.html` popout windows at the repo root, the `js/tutorial-*.js` runtime (`tutorial-code.js`, `tutorial-quiz.js`, `tutorial-popout-manager.js`, `tutorial-popout-client.js`, `tutorial-refactorings.js`), backend workers (`cpp-worker.js`, `pyodide-worker.js`, `sql-worker.js`, `java-worker.js`, `prolog-worker.js`, `haskell-worker.js`, `playwright-compat/*`), the time-travel debugger under `js/debugger/`, the autosave / progress / reset machinery, the in-tutorial quiz / hint / test schemas, the print view, the SE Gym tutorial-progress import/export flows, the `SEBook/<section>/<slug>-tutorial.md` + `SEBook/<section>/<slug>-tutorial/print.md` page-pair convention, the `/SEBook/tutorials` auto-generated index, or any new feature added to the tutorial runtime. Also trigger on requests like "add a new tutorial on X", "add a step to <tutorial>", "convert this lecture into a tutorial", "design a quiz / hint / test for step N", "set up a print view for this tutorial", "add a new tutorial backend", "wire up a new popout window", "add a new YAML field to the tutorial schema", "review this tutorial draft", "audit tutorials for PRIMM / spaced practice / Bloom coverage", or any task that involves the tutorial runtime, schema, or content. **You MUST update this SKILL.md whenever you add, rename, remove, or change the semantics of a tutorial-runtime feature** — new YAML fields, new backends, new popout windows, new test runners, new quiz / hint mechanics, new autosave / reset modes, new debugger capabilities, changed permalink conventions, or any architectural change that an author or future agent needs to know to build or modify a tutorial correctly. Out-of-date schema or architecture notes here cause real downstream bugs (broken tutorials, missing print views, mis-shaped quizzes, lost progress).
 ---
 
 # SEBook tutorial authoring & architecture
@@ -317,7 +317,13 @@ Read `.agents/skills/quiz-format/SKILL.md` before writing or editing any
 
 ### Tests should be precise — low false-positive *and* low false-negative
 
-Step `tests:` are the gate that lets a student advance. They have two
+Step `tests:` provide diagnostic feedback and gate advancement only when
+`require_tests: true`. For a self-directed refresher such as CS131, set
+`require_tests: false` and `require_quiz: false`: students can move on without
+running or passing tests and can skip knowledge checks or continue with a low
+score. Keep `min_score: 0.8` as the diagnostic pass threshold. Skipping or
+continuing after a low score must never record a passed test or quiz.
+Tests have two
 opposite failure modes you must defend against simultaneously:
 
 - **False positive (test passes on a wrong solution):** the student moves on
@@ -478,6 +484,13 @@ students are confused" reports.
       block, and either `tests:` *or* a clear "exploratory step" callout.
 - [ ] **Quiz `title:` is `"Step N — Knowledge Check"`** (1-indexed); quiz
       `min_score: 0.8`. No exceptions.
+- [ ] **C++ tutorials use `backend: cpp`**, `language: cpp`, and an explicit
+      `run_file` containing a C++17 program with `main`. Use files for setup
+      and solutions, and complete C++ harnesses for automatic checks; do not
+      author shell commands or rely on a C++ compiler in the v86 VM.
+- [ ] **Progression policy is deliberate.** Self-directed review may use
+      `require_tests: false` and `require_quiz: false`; verify skipped checks
+      stay unpassed, including after reload and in the instructions popout.
 - [ ] **Solutions live in `solution:`, not in `instructions:`.**
 - [ ] **Hints are multi-layered** (≥3 layers for non-trivial tests),
       with `condition:` where useful, and **never reveal the literal
@@ -548,6 +561,9 @@ remove entries by hand. Things to know:
 - [ ] Open the live tutorial in a browser. Every step's tests pass for
       the intended solution and fail for at least one plausible wrong
       solution.
+- [ ] For a required quiz, code-test success enables Next to open the check
+      while the following numbered step stays locked; only passing the quiz
+      unlocks that step. Check the same progression in detached instructions.
 - [ ] Open the **print view** at `/SEBook/<section>/<slug>-tutorial/print`
       and confirm: instructions render, code blocks have syntax
       highlighting, quiz questions list options with correct ones marked,
@@ -603,13 +619,21 @@ exclude_from_index: boolean            # If true, /SEBook/tutorials hides
                                        # and any non-student-facing tutorial.
 
 # === Backend selection ===
-backend: v86 | pyodide | webcontainer | react | haskell | uml-editor | multiple
+backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | uml-editor | multiple
                                        # default: v86
 
 # v86           — full Linux VM (shell, gcc, git, etc.). Most tutorials.
+# cpp           — C++17 compiled locally by pinned YoWASP Clang in a module
+#                 worker, then executed as WebAssembly through WASI. Uses the
+#                 output panel and Run; no shell, VM, SharedArrayBuffer, or
+#                 cross-origin isolation is required. Supports mixed cpp /
+#                 pyodide tutorials. See §4.6 for limits and §4.8 for checks.
 # pyodide       — Python in-browser, no shell. Required for `debugger: true`.
 # webcontainer  — Node.js + npm + dev server (StackBlitz). Needs COOP/COEP.
 # react         — React + Vite + live preview iframe + Playwright-compat.
+# prolog        — Single-backend Tau Prolog 0.3.4 worker, locally pinned under
+#                 js/vendor/tau-prolog/0.3.4/. A Query field runs goals against
+#                 the step's run_file. Supports the course not/1 alias for \+/1.
 # haskell       — Haskell in a hidden, sandboxed runtime frame through the
 #                 repository's locally pinned MicroHs WebAssembly runtime.
 #                 Uses the output panel rather than a shell, is single-backend
@@ -630,12 +654,38 @@ backend: v86 | pyodide | webcontainer | react | haskell | uml-editor | multiple
 #                 must set `steps[].backend`.
 #
 # Mixed-backend tutorials may also set `steps[].backend` to override a normal
-# tutorial-level default per step. First-pass mixed mode is intentionally
-# narrow: use only `pyodide`, `react`, `webcontainer`, or `browser` steps,
-# with `browser` serving as the in-page Node fallback if WebContainers cannot
-# boot. Keep `v86`, `haskell`, `uml-editor`, SQL, Prolog, Java, debugger
-# tutorials, and terminal-heavy WebContainer flows single-backend until the
-# runtime explicitly supports those combinations.
+# tutorial-level default per step. Mixed mode supports `v86`, `cpp`, `pyodide`,
+# `react`, `webcontainer`, and `browser` steps, with `browser` serving as the
+# in-page Node fallback if WebContainers cannot boot. Keep `haskell`,
+# `uml-editor`, SQL, Prolog, Java, and debugger tutorials single-backend until
+# the runtime explicitly supports those combinations.
+# Mixed tutorials with multiple worker backends (such as cpp and pyodide)
+# replace the active worker lazily when switching languages, restoring the
+# source files mirrored by the host. They do not prewarm the other worker
+# backend or keep both language runtimes alive concurrently.
+#
+# v86 IN MIXED MODE. A mixed tutorial containing at least one `v86` step gets
+# a third runtime panel — the xterm terminal — alongside the output and
+# preview panels, and `_updateRuntimePanelVisibility` shows exactly one of the
+# three per step. The flag driving this is `TutorialCode._mixedNeedsTerminal`
+# (set in the constructor when a `v86` step is declared); `config.useTerminal`
+# stays FALSE in mixed mode because it selects the single-backend layout
+# branches. Consequences for authors:
+#   - Supply the VM's setup through `setup_commands_by_backend.v86`, not
+#     top-level `setup_commands` (which mixed mode empties). `_initV86` threads
+#     that list into `_setupFilesystem`.
+#   - v86 steps have NO Run button — the terminal replaces the output panel.
+#     Ctrl/Cmd+Enter syncs the buffer to the VM instead of executing.
+#   - v86 is deliberately excluded from `_prewarmNextBackend`. Prewarming
+#     leaves `config.backend` on the visible backend, which would make the
+#     boot path skip its setup batch and flash a loading overlay over an
+#     active step, so the first v86 step pays the full boot cost.
+#   - `libv86.js` is preloaded by `_loadDependencies` only for single-backend
+#     v86 tutorials; `_initV86` lazy-loads it when `window.V86` is absent.
+#   - The VM has no C++ compiler: `/usr/bin/gcc` is a wrapper around TinyCC
+#     (C only). Use `backend: cpp` for runnable C++ steps; the CS131 refresher
+#     alternates cpp and pyodide and no longer needs a VM terminal. Do not
+#     present grep/awk source patterns as evidence of C++ behavior.
 
 # === Common feature flags ===
 require_tests: boolean                 # If true, student must pass each step's
@@ -648,6 +698,22 @@ require_tests: boolean                 # If true, student must pass each step's
                                        # This makes purely-quiz / summary /
                                        # reflection steps work inside an
                                        # otherwise test-gated tutorial.
+require_quiz: boolean                  # Default true. Set false to keep quizzes
+                                       # as optional diagnostic practice. They
+                                       # still open on Next, with Skip Knowledge
+                                       # Check available immediately and Continue
+                                       # available after any score. Only scores
+                                       # meeting min_score record quizPassed.
+                                       # Pair with require_tests: false for
+                                       # completely optional checks. Applies to
+                                       # TutorialCode backends and the shared
+                                       # instructions popout. Print views label
+                                       # min_score as an optional practice target.
+                                       # When required, passing code tests enables
+                                       # Next to open the quiz, but the following
+                                       # numbered step stays locked until the
+                                       # quiz is passed. The same distinction
+                                       # applies to instructions popouts.
 font_size: integer                     # Optional Monaco/editor font size in px.
                                        # Defaults to 16 so code, terminal input,
                                        # and editor popouts meet the site's
@@ -668,7 +734,7 @@ cooldown_seconds: integer              # Optional, default 0 (disabled). When
                                        # localStorage `tutorial-cooldown-<id>`
                                        # (a `{stepIndex: endsAt}` JSON map),
                                        # so refreshing can't bypass the wait.
-                                       # Works on every backend (v86, pyodide,
+                                       # Works on every backend (v86, cpp, pyodide,
                                        # webcontainer, react, browser, sql,
                                        # prolog, java, haskell, uml-editor) plus
                                        # the instructions popout. Implementation:
@@ -752,7 +818,7 @@ setup_commands: [string]               # Run once at tutorial load for
                                        # serialized `sh` for WebContainer.
                                        # Readiness waits for every command;
                                        # timeout or nonzero exit rejects setup.
-                                       # Unsupported by the haskell backend;
+                                       # Unsupported by the cpp and haskell backends;
                                        # put required definitions in files.
 setup_commands_by_backend:             # Mixed-backend tutorials only.
   pyodide: [string]                    # Run once when that backend first
@@ -777,6 +843,7 @@ reset_type:    files | commands                       # default: files
 #   files                 — restore step's starter files only.
 #   commands              — also replay setup_commands + prior solution
 #                           commands to restore VM state.
+# C++ tutorials use file autosave/reset; they do not replay shell commands.
 
 # === Test runner (per backend) ===
 pytest: boolean                        # Treat test_*.py as a pytest suite
@@ -803,7 +870,7 @@ steps:
                                              # in the visible heading for code
                                              # spans/emphasis; keep the plain
                                              # text descriptive for nav labels.
-    backend: pyodide | react | webcontainer | browser
+    backend: v86 | cpp | pyodide | react | webcontainer | browser
                                              # Optional per-step backend
                                              # override. Inherits the
                                              # tutorial-level backend when
@@ -867,6 +934,15 @@ steps:
                                              # `pytest.main([path, "-v"])` and
                                              # the toolbar label changes to
                                              # "Test".
+                                             # In C++ tutorials, Run compiles
+                                             # this translation unit as C++17
+                                             # and executes its main function
+                                             # on every run. Current workspace
+                                             # files are available as includes
+                                             # under /tutorial. Use an explicit
+                                             # workspace-relative entry, e.g.
+                                             # main.cpp; opening another file
+                                             # does not change the Run target.
                                              # In Haskell tutorials, Run syncs
                                              # every workspace file, derives the
                                              # module name from `run_file` (or
@@ -922,6 +998,11 @@ steps:
                                              # `node <run_file>` invocation as
                                              # `process.argv.slice(2)`, prolog
                                              # uses it as the goal query.
+    default_query: string                    # prolog only. Initial Query field
+                                             # value on each step load. Write a
+                                             # goal without the ?- prompt; its
+                                             # final period is optional. The
+                                             # field is always shown for Prolog.
     default_args: string                     # webcontainer only. Initial
                                              # value the argv field shows on
                                              # step load. Useful so the first
@@ -981,6 +1062,8 @@ steps:
           # bash for v86: `test -f /tutorial/foo.py`
           # python for pyodide: `output = __run_capture('/tutorial/x.py');
           #   assert "expected" in output`
+          # cpp: complete C++17 harness with its own main; include current
+          #   learner files using /tutorial as the include root. Exit 0 passes.
         assertions:                          # uml-editor backend only:
                                              # structural checks against the
                                              # current ArchUML source. Each
@@ -1112,8 +1195,8 @@ steps:
     solution:                                # Instructor-mode reveal target.
       files: [{ path, content, language }]
       commands: [string]                     # Bash to replay solution state.
-                                             # Unsupported by the haskell
-                                             # backend; use solution.files.
+                                             # Unsupported by the cpp and haskell
+                                             # backends; use solution.files.
       explanation: |                         # Markdown — *why* this works.
         Walk-through of the solution and the trade-offs.
 ```
@@ -1163,6 +1246,16 @@ Tutorial presentation is stylesheet-owned:
   presentation and initial hidden states; JS may toggle classes or set only
   genuinely computed runtime values such as pane sizes, progress widths,
   pan/zoom transforms, or user-derived CSS custom properties.
+- On screens at or below 900 CSS pixels wide, `css/tutorial.css` uses normal
+  document flow: the navbar, instructions, quizzes, editor, and output remain
+  reachable by scrolling the page. Instruction and quiz regions grow with
+  their content; code and output retain usable minimum work areas. Preserve
+  that reflow at high zoom and at 320 by 256 CSS pixels rather than trapping
+  content below fixed-height chrome. Desktop panes and print keep their
+  separate layout rules.
+- Active file tabs reveal themselves by changing only their own tab strip's
+  horizontal scroll. Avoid `scrollIntoView` here: it can move the document
+  away from the lesson on initial load when the editor is below the fold.
 
 ### 4.2 Page-pair convention
 
@@ -1195,6 +1288,14 @@ synchronizes with the main tutorial via `BroadcastChannel` (see
 `js/tutorial-popout-client.js` and `js/tutorial-popout-manager.js`):
 
 - `tutorial-instructions-popup.html` — step instructions + quiz.
+  Optional quizzes carry `allowSkip` in `quiz-show`; `quiz-skipped` requests
+  navigation from the main runtime without recording a passed quiz. The main
+  runtime accepts skip requests only for the current step when
+  `require_quiz: false`. The final optional check offers Finish Review;
+  `quiz-review-finished` mirrors the acknowledgment to the popout without
+  claiming all tests or knowledge checks passed. Instructions snapshots and
+  navigation messages include `hasUnpassedQuiz` so the final step's Next
+  control can still open its knowledge check in the popout.
 - `tutorial-output-popup.html` — stdout / stderr / preview iframe.
 - `tutorial-debugger-popup.html` — time-travel debugger UI (pyodide).
 - `tutorial-pane-popup.html` — single editor pane (test or code file).
@@ -1261,8 +1362,15 @@ channel.
   progression, quiz gating, debugger sync. Where most behavioral changes go.
   For mixed-backend tutorials, the runtime resolves the active backend as
   `step.backend || backend || "v86"`, initializes each supported backend
-  lazily, runs `setup_commands_by_backend[backend]` once when that backend
-  first boots, then prewarms later step backends in the background. The active
+  lazily, and runs supported `setup_commands_by_backend[backend]` entries
+  when that backend boots. Later eligible backends may prewarm in the
+  background. When a tutorial mixes multiple worker backends, such as `cpp`
+  and `pyodide`, changing language terminates the previous worker, invalidates
+  its readiness, initializes the requested worker, and restores the host's
+  mirrored source files. The other worker backend is not prewarmed: replacing
+  an active interpreter in the background would lose state and increase memory
+  pressure. Compiler files and ordinary Python setup must therefore be
+  reconstructible when revisiting a language. The active
   backend is switched before step file sync, Run, Test My Work, Reset, and
   Solution application. Mixed runtime UI keeps both the output panel and React
   preview panel in the DOM, toggling the inactive one with `hidden` so it is
@@ -1354,8 +1462,11 @@ channel.
   this runtime intentionally wait 1 second before showing on pointer hover to
   keep dense tutorial chrome from flashing incidental boxes during cursor
   travel; keyboard focus still shows them immediately because focus is
-  deliberate navigation.
-  Pyodide, SQL, Prolog, and Java worker messages are bounded RPCs: every
+  deliberate navigation. When keyboard focus leaves a tooltip trigger, hide
+  its tooltip immediately without a fade so it cannot cover the next focused
+  control. Preserve the hover grace period when the pointer is travelling
+  from a trigger into its tooltip, and keep Escape dismissal available.
+  C++, Pyodide, SQL, Prolog, and Java worker messages are bounded RPCs: every
   callback is released by a response, timeout, termination, or `destroy()`.
   Global and per-step setup reject readiness when their command exits nonzero,
   and worker file sync resolves only after the worker acknowledges the write;
@@ -1365,6 +1476,10 @@ channel.
   step setup, and only then re-enables Run (returning focus there when Stop was
   keyboard-activated). Execution timeouts use the same restart path, so an
   infinite learner program does not require a page reload.
+  C++ and Python initialization belongs to its specific worker: cancelling
+  that worker immediately settles its boot promise and clears the boot timer.
+  Late events and superseded restart stages cannot change the newly selected
+  language, replay files into it, or leave its Run control disabled.
   Browser-backend learner code runs in a fresh opaque-origin `data:` Worker,
   with repository-owned Node/module/fs/argv/server mocks. Host HTTP-client
   requests are routed to that Worker while a server step remains active. Every
@@ -1384,7 +1499,12 @@ channel.
   backend-specific celebration code.
 - **`js/tutorial-quiz.js`** — shared quiz renderer (used by main page and
   the instructions popup). `single` / `multiple` / `parsons` types,
-  `min_score` gating, `option_feedback` rendering. Tutorial quiz answer
+  `min_score` gating, `option_feedback` rendering.
+  Optional checks use `allowSkip` and `onSkip`; `onPass` remains reserved for
+  passing results. Skip is available while answering and returns on Try Again;
+  results replace it with Continue/Finish Review so a passing score cannot be
+  discarded through the skip action. Main and popout use the same engine so feedback, skip,
+  low-score continuation, and keyboard focus behave consistently. Tutorial quiz answer
   options expose scoped shortcuts: visible option labels (`A`, `B`, `C`, …)
   and number keys (`1`, `2`, `3`, … through `9`) select/toggle the matching
   currently visible answer while the quiz has focus. For multiple-answer
@@ -1440,7 +1560,8 @@ channel.
   create/destroy) are preserved as helper calls or structured comments
   instead of being dropped.
 - **Backend runtime adapters** — `js/pyodide-worker.js` (Python),
-  `js/sql-worker.js`, `js/java-worker.js`, `js/prolog-worker.js`,
+  `js/cpp-worker.js` (C++17 module worker using pinned local YoWASP Clang
+  and the browser WASI shim), `js/sql-worker.js`, `js/java-worker.js`, `js/prolog-worker.js`,
   `haskell-runtime-frame.html` + `js/haskell-worker.js` (a sandboxed Haskell
   frame through `js/vendor/microhs/mhs-embed.js`, the local, pinned MicroHs
   WebAssembly runtime),
@@ -1455,7 +1576,7 @@ entry in `CDN_INTEGRITY`. Monaco 0.44.0 is served as the complete reviewed
 `min/vs` tree under `js/vendor/monaco-editor/0.44.0/`, because its AMD loader
 fetches modules, workers, CSS, translations, and its font transitively.
 Pyodide 0.27.0 loads the reviewed core under
-`js/vendor/pyodide/0.27.0/`; both Python workers must import that local
+  `js/vendor/pyodide/0.27.0/`; both Python workers must import that local
 `pyodide.js` and pass the same directory as `indexURL` so the Wasm, stdlib,
 lock file, and glue script stay same-origin. That directory also owns the
 lockfile-complete `pytest` and `hypothesis` wheels required by current
@@ -1466,6 +1587,21 @@ remote package. Classic workers, whose `importScripts()`
 API has no native SRI parameter, must load any remaining remote scripts through
 `js/vendor/worker-script-integrity.js`; that adapter verifies pinned SHA-256
 bytes before evaluating them, and SQL also supplies a verified Wasm binary.
+Prolog loads the unchanged Tau Prolog 0.3.4 core and lists module from
+`js/vendor/tau-prolog/0.3.4/`, with its upstream license and `SHA256SUMS`.
+Its startup does not request a CDN. Verify that snapshot and the worker's real
+language behavior with `node --test scripts/tests/prolog-worker.test.js`.
+C++ loads YoWASP Clang `22.0.0-git20542-10` from
+`js/vendor/yowasp-clang/22.0.0-git20542-10/` and the WASI execution shim from
+`js/vendor/browser-wasi-shim/0.4.2/`. Both are local pinned snapshots with
+licenses and `SHA256SUMS`; the compiler snapshot includes Clang/LLVM/LLD and
+the WASI C/C++ headers and libraries. `scripts/vendor_cpp_runtime.py` records
+the upstream archive integrities and reproduces the local gzip-resource loader
+adaptation; compiler binaries are unchanged. The cold compiler download is
+approximately 26 MB compressed. Student source is compiled locally, never sent
+to a remote compilation service. YoWASP's upstream repository is archived;
+future dependency changes require an explicit vendor review, not an assumption
+of continuing upstream releases.
 Never add a direct remote `importScripts()` call or a floating CDN version.
 The root `coi-serviceworker.js` adds COOP/COEP to explicitly marked isolated
 document navigations and adds COEP to same-origin dedicated/shared worker main
@@ -1507,22 +1643,83 @@ snapshot-input, or checksum drift.
 
 ### 4.6 Backends — what each supports
 
-| Feature                | v86 | pyodide | webcontainer | browser | react | haskell | uml-editor |
-|------------------------|-----|---------|--------------|---------|-------|---------|------------|
-| Shell terminal         | ✅  | ❌      | ✅           | ❌      | ❌    | ❌      | ❌         |
-| Compiled languages     | ✅  | ❌      | (npm only)   | ❌      | ❌    | ✅      | ❌         |
-| `git`                  | ✅  | mocked  | ✅           | ❌      | ❌    | ❌      | ❌         |
-| Time-travel debugger   | ❌  | ✅      | ❌           | ❌      | ❌    | ❌      | ❌         |
-| Live preview iframe    | ❌  | ❌      | ✅           | ❌      | ✅    | ❌      | ❌         |
-| Playwright tests       | ❌  | ❌      | ❌           | ❌      | ✅    | ❌      | ❌         |
-| UML assertion tests    | ❌  | ❌      | ❌           | ❌      | ❌    | ❌      | ✅         |
-| `pytest`               | ❌  | ✅      | ❌           | ❌      | ❌    | ❌      | ❌         |
-| Linter                 | ✅  | ✅      | ✅           | ✅      | ✅    | ❌      | ❌         |
+| Feature                | v86 | cpp | pyodide | webcontainer | browser | react | prolog | haskell | uml-editor |
+|------------------------|-----|-----|---------|--------------|---------|-------|--------|---------|------------|
+| Shell terminal         | ✅  | ❌  | ❌      | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         |
+| Compiled languages     | C   | C++17 | ❌    | (npm only)   | ❌      | ❌    | ❌     | ✅      | ❌         |
+| `git`                  | ✅  | ❌  | mocked  | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         |
+| Time-travel debugger   | ❌  | ❌  | ✅      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         |
+| Live preview iframe    | ❌  | ❌  | ❌      | ✅           | ❌      | ✅    | ❌     | ❌      | ❌         |
+| Playwright tests       | ❌  | ❌  | ❌      | ❌           | ❌      | ✅    | ❌     | ❌      | ❌         |
+| UML assertion tests    | ❌  | ❌  | ❌      | ❌           | ❌      | ❌    | ❌     | ❌      | ✅         |
+| `pytest`               | ❌  | ❌  | ✅      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         |
+| Linter                 | ✅  | ❌  | ✅      | ✅           | ✅      | ✅    | ❌     | ❌      | ❌         |
 
-Mixed-backend tutorials are supported only for `pyodide`, `react`,
-`webcontainer`, and `browser` in this first pass. They are for short
-author-controlled backend switches between steps, not for terminal-first
-Node labs, debugger flows, or VM-heavy tutorials.
+Mixed-backend tutorials support `v86`, `cpp`, `pyodide`, `react`, `webcontainer`,
+and `browser`. They are for author-controlled backend switches between steps,
+not for debugger flows or terminal-first Node labs.
+
+`cpp` compiles a C++17 translation unit and runs its `main` function on every
+Run; it does not reuse a binary from a previous successful compile. Current
+workspace files are synced beneath `/tutorial`, which is also the include
+root. Author a named `run_file`, normally `main.cpp`, and `language: cpp` for
+the editor. Compilation uses the pinned local YoWASP Clang module worker;
+the resulting WebAssembly executes in a fresh WASI program instance. Every
+request starts with a fresh compiler filesystem assembled from the in-memory
+source mirror, so a compile failure cannot execute an old program.
+
+This backend uses the output panel, with compiler diagnostics and program
+output, rather than a shell terminal. It requires no VM, `SharedArrayBuffer`,
+or cross-origin isolation. There is no interactive stdin control, shell
+command interface, or promise of arbitrary operating-system libraries. The
+pinned WASI C++ library does not support exception handling, so compilation
+uses `-fno-exceptions`; do not author `throw`, `try`, or `catch` exercises for
+this backend. Classes, references, strings, streams, and local headers are
+available. Use starter files and `solution.files`; `setup_commands`,
+per-backend setup commands for `cpp`, and `solution.commands` are unsupported.
+Compilation and execution share a 30-second host deadline for each Run or
+automatic check.
+Output is capped at 256 KiB per request, and the generated student program's
+WebAssembly memory is capped at 128 MiB; the compiler itself has separate
+memory requirements. Stop and deadline expiry terminate the worker; restart
+restores the current editor files before Run becomes available again. This
+compiler workspace adds no persistence beyond ordinary tutorial autosave.
+
+The CS131 refresher alternates `cpp` and `pyodide` workers lazily, preserving
+edited source in the host while replacing the active language worker. Its
+Point exercise checks actual resulting coordinates; explanations still need
+manual review. Other C++ exploration steps can run their programs and compare
+the observed behavior with the lesson's manual review prompts. A successful
+Run proves that one program executed, not that every exercise requirement was
+verified; keep automatic `tests:` separate from that exploratory feedback.
+
+A mixed tutorial that declares a `v86` step renders the terminal as a third
+`.tvm-runtime-panel`, keyed off `TutorialCode._mixedNeedsTerminal`. That flag
+also pulls xterm into `_loadDependencies` and starts the terminal in
+`start()`; the panel is re-`fit()` each time it becomes visible, because xterm
+measures a hidden container as zero columns. See §3.1 for the authoring
+consequences (per-backend setup commands, no Run button, no v86 prewarm).
+
+`prolog` is a single-backend worker mode. Run consults the step's `run_file`
+(falling back to the active editor file) as source text in a fresh session,
+then executes the Query field. Prolog `files[].path`, `solution.files[].path`,
+`open_file`, and `run_file` accept either workspace-relative paths (`main.pl`)
+or absolute paths below `/tutorial/` (`/tutorial/main.pl`). The constructor
+normalizes these to one relative editor identity without mutating the supplied
+configuration. The two spellings may be mixed across references to the same
+file; paths escaping `/tutorial/` are rejected. This keeps Run, tests, and
+solution application from looking up different editor models or writing
+`/tutorial//tutorial/...` paths. A bare source string such as `ready.` is never
+treated as an implicit URL. Import list predicates explicitly with
+`:- use_module(library(lists)).`. The worker installs the course compatibility
+clause `not(Goal) :- \+ Goal.` before consulting learner code. Core terms,
+unification, backtracking, recursion, arithmetic, negation, cut, and collections
+use the real interpreter. This is a bounded educational environment, not full
+SWI-Prolog: it does not supply SWI-specific constraint libraries, a tracer UI,
+or host file/terminal access. Interactive queries display at most 100 answers;
+each answer has a 100,000-inference budget, with the shared host watchdog and
+Stop/restart path also active. Limits must be reported, not described as proof
+of finite failure. No new persistence keys are used.
 
 `haskell` is deliberately a single-backend mode. A hidden
 `sandbox="allow-scripts"` iframe owns a persistent, serialized MicroHs REPL
@@ -1534,7 +1731,10 @@ cross-origin-isolation service worker for it; MicroHs does not use
 `SharedArrayBuffer` or worker threads. Before each Run, the runtime syncs all
 workspace files, reloads the base environment, imports the module derived from
 `run_file` (or the active `.hs` path), and invokes `:main`. Use `Main.hs` as the
-conventional entry point. Haskell `setup_commands` and `solution.commands` are
+conventional entry point. Author `files[].path`, `solution.files[].path`, and
+`run_file` as workspace-relative paths such as `Main.hs` or `Helpers/Math.hs`;
+the host adds `/tutorial/` when syncing files. Absolute `/tutorial/...` paths
+are not a supported Haskell authoring form. Haskell `setup_commands` and `solution.commands` are
 intentionally unsupported; express setup and solutions through workspace files.
 
 If you add a backend, update this table.
@@ -1577,6 +1777,22 @@ under the same prefix family as other tutorial state so the global
 ### 4.8 Test execution
 
 - **bash** (v86 / webcontainer): `command:` is shell. Exit 0 = pass.
+- **C++** (`cpp`): every `tests[].command` is a complete C++17 harness
+  translation unit with its own `main`, compiled against the current learner
+  files. `/tutorial` is the include root, so a harness can include a current
+  source or header by its workspace-relative path. When including a learner
+  source file that already defines a driver `main`, rename that symbol with
+  `#define main learner_main` before the include, then `#undef main` before
+  defining the harness entry point. Assert the specified observable behavior
+  through learner functions or objects rather than matching source text.
+  The check passes only when compilation succeeds and the harness exits with
+  code 0. Compilation errors, failed assertions, runtime errors, nonzero exit,
+  output exhaustion, or the host deadline fail the check; they must never
+  reuse an earlier executable or count partial output as success. Each check
+  gets a fresh compiler filesystem and WASI program instance, sharing only
+  the current source files with the student's Run. Harnesses are C++ programs,
+  not shell commands, JavaScript assertions, or Python fragments. Keep manual
+  reasoning prompts separate when code execution cannot assess them.
 - **python** (pyodide): `command:` is Python with the helper
   `__run_capture('/path/to/script.py')` returning captured stdout. Use
   `assert <expected> in output, "<friendly fail message>"`.
@@ -1592,6 +1808,23 @@ under the same prefix family as other tutorial state so the global
   `assert` statements. A workspace-sync failure must render an indeterminate
   result and settle the active test transaction; never leave the test spinner
   or `_testRunInFlight` waiting for a Haskell request that was never sent.
+- **Prolog** (`prolog`): each `tests[].command` is repository-authored JavaScript
+  with `assert(condition, message)`, `await __query(goal)`,
+  `await __consult(source)`, and `__read_file(path)`. Each test starts with a
+  fresh consult of the same `run_file` used by Run, regardless of the selected
+  editor tab. `__query` resolves to the complete list of formatted answers;
+  finite failure resolves to `[]`. Syntax/runtime errors, inference exhaustion,
+  and more than 100 answers reject and fail the grade; they never return a
+  partial list that could masquerade as a passing result. Exactly 100 complete
+  answers are valid. Use bounded Prolog goals that compare terms or complete
+  `findall`/`sort` results, then assert the success count, instead of coupling
+  grades to whitespace in formatted substitutions. Await sequential queries.
+  Legacy un-awaited `__query`/`__consult` commands remain supported by the
+  existing compatibility rewrite; new commands should explicitly await them.
+  Write output is flushed at each completed command, so tests cannot leak
+  buffered text into the next Run. `setup_commands` are consulted Prolog
+  source, but each Run/Test replaces the session: put required program
+  definitions and library imports in the step file.
 - **React DOM assertions** (`react`): a plain `tests[].command` runs inside the
   opaque-origin preview through the broker's private `MessageChannel`. It
   receives `frame`, `code`, `assert`, and `files`; `frame.contentDocument`
@@ -1669,6 +1902,13 @@ Failure surfaces inline in `.tvm-test-panel` below the instructions
 (green/red/yellow), with all matching `hints[].condition` hints
 auto-expanded.
 
+Code-test success records `stepsPassed` independently from navigation access.
+`_isNextStepLocked` allows a passed step to open its knowledge check, while
+`_renderTestResults` adds the following step to `stepsUnlocked` only when no
+required quiz remains. Required quizzes unlock it through `_completeQuiz` and
+`_advanceAfterQuiz`; popout navigation uses the same host state. Existing saved
+visits and explicit step deep links retain their established access behavior.
+
 ---
 
 ## 5. When you add or change a tutorial-runtime feature
@@ -1722,7 +1962,7 @@ comments above each step naming the PRIMM phase and any pedagogy.
 title: "<Tutorial title>"
 description: "<one-sentence student-facing summary>"
 
-backend: pyodide                         # or v86 / webcontainer / react
+backend: pyodide                         # or cpp / v86 / webcontainer / react
 require_tests: true
 linter: true
 

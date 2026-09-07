@@ -1,0 +1,351 @@
+title: "CS 131: Control and Concurrency"
+description: "Trace evaluation and iteration, then reason about synchronization and asynchronous execution."
+active: true
+# Sources: control_palooza_v7.pptx (slide numbers below); Homework Problems
+# (Public), CTRL sections; CS131 Fall 25 Quiz 4; named past-exam solutions.
+# Exclude Language of the Week: slide 15 (Ruby).
+questions:
+  # Source: Control slides 2–5. Use explicit pseudocode semantics to avoid
+  # unsequenced-side-effect questions whose C++ behavior is undefined.
+  - id: cs131-control-grouping-versus-order
+    type: single
+    difficulty: basic
+    bloom: understand
+    question: "A language groups `f() - g() - h()` as `(f() - g()) - h()`, but separately leaves the order of the three calls unspecified. What does left associativity establish?"
+    options:
+      - "The calls execute in the order `f`, then `g`, then `h`."
+      - "The grouping of subtraction, independent of call order."
+      - "The calls execute in the order `h`, then `g`, then `f`."
+      - "The three calls must execute simultaneously."
+    correct_index: 1
+    option_feedback:
+      0: "Associativity describes the expression's grouping; this language's separate evaluation rule does not promise left-to-right calls."
+      2: "Call order is not determined by the direction in which arithmetic is grouped."
+      3: "Leaving an order unspecified does not require parallel execution."
+    explanation: "Grouping determines how returned values are combined. Evaluation order determines when the operand computations occur; side effects can make that separate rule observable."
+
+  # Source: Control slides 6–14; Homework CTRL1 C.
+  - id: cs131-control-short-circuit-precedence
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    question: "In a language with left-to-right short-circuit evaluation and higher precedence for `and` than `or`, evaluate `a() or b() and c()`. `a()` returns false, `b()` returns false, and `c()` returns true. Which calls occur?"
+    options:
+      - "Only `a()`."
+      - "`a()`, then `c()`."
+      - "`a()`, then `b()`."
+      - "`a()`, then `b()`, then `c()`."
+    correct_index: 2
+    option_feedback:
+      0: "A false left side does not determine an or-expression; its right side still needs evaluation."
+      1: "The right side is `b() and c()`, so it must first evaluate `b()`."
+      3: "Once `b()` is false, the and-expression is false without calling `c()`."
+    explanation: "The expression is `a() or (b() and c())`. A false `a()` requires the right side; a false `b()` then skips `c()`."
+
+  # Source: Control slides 6–13; Homework CTRL1 A.
+  - id: cs131-control-short-circuit-required-effects
+    type: multiple
+    difficulty: intermediate
+    bloom: analyze
+    question: "A program uses `valid() && save() && remove_temp()`, with left-to-right short-circuiting. Each function returns a boolean. Which behavior is guaranteed? Select all that apply."
+    options:
+      - "`save()` runs only if `valid()` returns true."
+      - "`remove_temp()` runs whenever `valid()` returns true."
+      - "A failed `save()` automatically undoes its earlier effects."
+      - "`remove_temp()` is skipped if `save()` returns false."
+    correct_indices: [0, 3]
+    option_feedback:
+      0: "A false validation result determines the whole conjunction and skips the remaining calls."
+      1: "Successful validation is insufficient: saving must also return true before cleanup is reached."
+      2: "Boolean evaluation controls which calls occur; it does not provide transactions or rollback."
+      3: "A false save result ends the conjunction, so required cleanup should not depend on this position."
+    explanation: "Short-circuiting skips work once the boolean result is settled. This is useful for guards, but unconditional cleanup must be expressed separately."
+
+  # Source: Control slides 17–22.
+  - id: cs131-control-break-loop-scope
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    question: |
+      What pairs does this Python code print?
+
+      ```python
+      for row in [1, 2]:
+          for col in [4, 5]:
+              if col == 5:
+                  break
+              print(row, col)
+      ```
+    options:
+      - "`(1, 4)` only"
+      - "`(1, 4)` and `(2, 4)`"
+      - "`(1, 5)` and `(2, 5)`"
+      - "All four row-column pairs"
+    correct_index: 1
+    option_feedback:
+      0: "An unlabeled break exits the nearest enclosing loop; the outer loop still advances."
+      2: "The break is reached before printing when the column is 5."
+      3: "Breaking exits the inner loop before its remaining print can execute."
+    explanation: "Each outer iteration prints column 4, then stops its own inner traversal at column 5. The second row still gets an inner traversal."
+
+  # Source: Control slides 25–30.
+  - id: cs131-control-pattern-order
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    question: |
+      In Python, which result does `classify([2, 9])` return?
+
+      ```python
+      def classify(value):
+          match value:
+              case [x, y] if x == y:
+                  return "equal pair"
+              case [x, y]:
+                  return "pair"
+              case _:
+                  return "other"
+      ```
+    options:
+      - "`\"equal pair\"` because two values match the shape."
+      - "`\"other\"` because the first guard is false."
+      - "Both `\"equal pair\"` and `\"pair\"` are returned."
+      - "`\"pair\"` because the next case matches."
+    correct_index: 3
+    option_feedback:
+      0: "A case requires both the structural pattern and its guard to succeed."
+      1: "A failed guard permits trying later cases, including the unguarded pair pattern."
+      2: "A selected case returns from the function; matching cases do not accumulate results."
+    explanation: "The input matches a two-element sequence, but 2 and 9 are unequal. The first guard fails; the next pair case succeeds."
+
+  # Source: Control slides 39–44; Quiz 4, Problem 2 b/d.
+  - id: cs131-control-iterable-versus-iterator
+    type: single
+    difficulty: basic
+    bloom: understand
+    question: "A collection needs two nested loops to traverse it independently. Which responsibility belongs to each iterator, rather than one shared position stored in the collection?"
+    options:
+      - "Tracking the position of its own traversal."
+      - "Owning a complete copy of the collection's elements."
+      - "Choosing how many loops the entire program may run."
+      - "Preventing every possible change to the collection."
+    correct_index: 0
+    option_feedback:
+      1: "Independent positions can refer to the same underlying elements; copying all data is not required."
+      2: "An iterator manages one traversal, not the program's loop structure."
+      3: "Mutation policies vary; a separate traversal position alone does not enforce immutability."
+    explanation: "The iterable supplies traversal objects. Each iterator maintains its own progress, so advancing an inner loop need not move the outer loop's position."
+
+  # Source: Control slides 41–49; Quiz 4, Problem 2 b/d;
+  # Final F24 solutions, pp. 21–22 and 32–33.
+  - id: cs131-control-shared-iterator-state
+    type: single
+    difficulty: advanced
+    bloom: analyze
+    question: |
+      What does this Python code print, and why?
+
+      ```python
+      values = [4, 5, 6]
+      first = iter(values)
+      second = first
+      print(next(first), next(second))
+      ```
+    options:
+      - "`4 4`: each variable creates a fresh traversal."
+      - "`4 6`: the second iterator skips the first position."
+      - "`4 5`: both names refer to one traversal object."
+      - "`5 6`: creating an iterator consumes the first value."
+    correct_index: 2
+    option_feedback:
+      0: "Assignment aliases the iterator object; only another `iter(values)` call would request an independent list iterator."
+      1: "The shared iterator advances once per next call, so no element is skipped here."
+      3: "Creating a list iterator initializes traversal state without consuming an element."
+    explanation: "The first next call consumes 4. The second name reaches that same iterator, now positioned to return 5."
+
+  # Source: Control slides 51–57; Quiz 4, Problem 2 c.
+  - id: cs131-control-generator-suspension
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    question: |
+      Which messages are printed by this Python code?
+
+      ```python
+      def numbers():
+          print("begin")
+          yield 4
+          print("resume")
+          yield 5
+      stream = numbers()
+      print("ready")
+      next(stream)
+      ```
+    options:
+      - "`begin`, then `ready`"
+      - "`ready`, then `begin`"
+      - "`ready`, then `begin`, then `resume`"
+      - "`ready` only"
+    correct_index: 1
+    option_feedback:
+      0: "Calling a Python generator function creates the generator without starting its body."
+      2: "The first yield suspends the generator; reaching the later print needs another request."
+      3: "The explicit next call begins execution and reaches the first print before yielding."
+    explanation: "Generator creation does not run the body. The first next call runs until the first yield, so only `begin` is printed from inside the generator."
+
+  # Source: Control slides 39–58; Homework CTRL2 B; Quiz 4, Problem 2.
+  - id: cs131-control-lazy-stream-properties
+    type: multiple
+    difficulty: intermediate
+    bloom: analyze
+    question: "A Python generator computes one measurement per request from an unbounded source. Which claims are justified? Select all that apply."
+    options:
+      - "A consumer can stop after a finite prefix."
+      - "Constructing the generator computes the entire sequence."
+      - "The generator retains execution state between requests."
+      - "Requesting an iterator from it restarts its computation."
+    correct_indices: [0, 2]
+    option_feedback:
+      0: "Demand-driven production lets the consumer request only the finite prefix it needs."
+      1: "An unbounded sequence cannot be fully materialized; lazy production avoids that requirement."
+      2: "Resuming after yield requires remembering local state and where execution stopped."
+      3: "A Python generator is its own iterator; restarting requires a new generator instance."
+    explanation: "A generator produces values as requested and suspends with its state intact. Laziness controls when computation happens; it does not turn a single traversal into a reusable collection."
+
+  # Source: Control slides 65–66 and 98; Homework CTRL6.
+  - id: cs131-control-concurrency-without-parallelism
+    type: single
+    difficulty: basic
+    bloom: understand
+    question: "A single-threaded server handles another request while the first awaits a network response. At any instant, only one request's application code runs. How should this execution be described?"
+    options:
+      - "Parallel execution because both requests are unfinished."
+      - "Sequential execution because there is only one thread."
+      - "A race condition because the requests overlap in time."
+      - "Concurrent execution without parallel application code."
+    correct_index: 3
+    option_feedback:
+      0: "Overlapping task lifetimes do not require application instructions to run simultaneously."
+      1: "Interleaving progress among multiple outstanding requests is concurrency even on one thread."
+      2: "Overlap alone is not a race; a race requires an order-sensitive conflict in shared behavior or state."
+    explanation: "Concurrency allows multiple tasks to make progress over overlapping intervals. Parallelism means actual simultaneous execution, which this application's single thread does not provide."
+
+  # Source: Control slides 69–74; Homework CTRL5 A/B.
+  - id: cs131-control-fork-before-join
+    type: single
+    difficulty: intermediate
+    bloom: evaluate
+    question: "Two independent computations can run on separate worker threads. `start(task)` launches a thread; `join(thread)` blocks until that thread finishes. Which plan permits overlap and guarantees both results are ready before combining them?"
+    options:
+      - "Start both; join both; combine their results."
+      - "Start one; join it; start the other; join it; combine."
+      - "Start both; combine; join both before returning."
+      - "Start both; join one; combine their results."
+    correct_index: 0
+    option_feedback:
+      1: "Waiting for the first task before starting the second serializes the two computations."
+      2: "Combining before completion can read unfinished results."
+      3: "One worker finishing does not guarantee the independent worker has also finished."
+    explanation: "Start the independent work before waiting. Then join every worker whose output the combination needs; overlap is permitted even though actual scheduling depends on the runtime."
+
+  # Source: Control slides 75–78; Homework CTRL5 B.
+  - id: cs131-control-atomic-update
+    type: multiple
+    difficulty: advanced
+    bloom: evaluate
+    question: "Two workers update the same counter. An increment consists of a read, an addition, and a write; these steps can interleave. Which designs prevent a lost update, assuming every writer follows the chosen design? Select all that apply."
+    options:
+      - "Protect the complete read-add-write with one shared lock."
+      - "Use one atomic increment operation for each update."
+      - "Lock the read and write separately, unlocking between them."
+      - "Wait for both workers after their unprotected updates."
+    correct_indices: [0, 1]
+    option_feedback:
+      0: "The shared lock prevents another writer from entering the whole update while it is in progress."
+      1: "Atomic increment makes the state change indivisible with respect to the other increments."
+      2: "Another worker can change the counter between the protected read and protected write, leaving a stale value to write back."
+      3: "Waiting establishes completion; it cannot repair an update that was already overwritten."
+    explanation: "The critical operation is the entire read-modify-write. Protecting fragments or waiting afterward does not prevent two workers from basing updates on the same old value."
+
+  # Source: Control slides 81–89 and 98; Homework CTRL6 i; Quiz 4, Problem 3.
+  - id: cs131-control-await-suspension
+    type: single
+    difficulty: intermediate
+    bloom: understand
+    question: "On a cooperative, single-threaded event loop, a task awaits a pending network operation that uses nonblocking input/output. What can the loop do while that task is suspended?"
+    options:
+      - "Continue that task past the await using a placeholder result."
+      - "Run another ready task until it suspends or completes."
+      - "Stop all application tasks until that network operation ends."
+      - "Move every suspended task onto a newly created thread."
+    correct_index: 1
+    option_feedback:
+      0: "Code after the await needs the operation's result or failure, so the awaiting task must pause."
+      2: "Suspension releases the event loop to run other ready work."
+      3: "Await does not inherently create a thread; this runtime multiplexes application tasks on one thread."
+    explanation: "An await on a pending operation suspends the current task. Other ready tasks can run, and the suspended task can resume when the awaited outcome becomes available."
+
+  # Source: Control slides 83–96; Quiz 4, Problem 3 a.
+  - id: cs131-control-scheduled-spawn-trace
+    type: single
+    difficulty: advanced
+    bloom: apply
+    question: |
+      A single-threaded cooperative runtime defines `spawn_scheduled` to queue a task without running it immediately. `await` suspends the caller until that task finishes. What is printed?
+
+      ```text
+      task child(): print("child"); return 7
+      task main():
+          h = spawn_scheduled(child)
+          print("parent")
+          answer = await(h)
+          print(answer)
+      ```
+    options:
+      - "`child, parent, 7`"
+      - "`parent, 7, child`"
+      - "`parent, child, 7`"
+      - "`parent, child` only"
+    correct_index: 2
+    option_feedback:
+      0: "Scheduled spawn queues the child; the currently running parent continues until its await."
+      1: "The awaited result is unavailable until the child has run and returned."
+      3: "Child completion makes the awaiting parent ready to resume and print the result."
+    explanation: "The parent queues the child and prints before suspending. The child then prints and finishes; the parent resumes with the returned value 7."
+
+  # Source: Control slides 82–98; Homework CTRL5 A.2 and CTRL6.
+  - id: cs131-control-cooperative-starvation
+    type: single
+    difficulty: advanced
+    bloom: evaluate
+    question: "A single-threaded cooperative event loop runs a long image calculation with no await or yield. Network tasks are ready but unresponsive. Which change addresses the cause while preserving responsive request handling?"
+    options:
+      - "Mark the calculation async but leave its body unchanged."
+      - "Create more tasks that run the same uninterrupted calculation."
+      - "Await its result only after the calculation has already finished."
+      - "Move the calculation to a worker and await its completion."
+    correct_index: 3
+    option_feedback:
+      0: "An async declaration does not insert suspension points into computation."
+      1: "More ready tasks cannot run while one task holds the event-loop thread without yielding."
+      2: "Waiting after completion does not undo the interval during which the event loop was blocked."
+    explanation: "Cooperative scheduling requires tasks to give up the event-loop thread. A suitable worker can perform the calculation while the event loop awaits its result and services other requests."
+
+  # Source: Control slides 70–78 and 98; Homework CTRL5 B.4 and CTRL6.
+  - id: cs131-control-bounded-worker-design
+    type: multiple
+    difficulty: expert
+    bloom: evaluate
+    question: "A service has thousands of independent calculations and a fixed number of processor cores. It must limit active workers and avoid shared-counter races. Which design choices directly support these goals? Select all that apply."
+    options:
+      - "Use a bounded worker pool fed from a synchronized work queue."
+      - "Have workers send results to a single aggregation task."
+      - "Start one operating-system thread for every calculation."
+      - "Let workers update the shared total without coordination."
+    correct_indices: [0, 1]
+    option_feedback:
+      0: "A fixed pool bounds active workers while queued tasks wait for capacity."
+      1: "A single owner of aggregation state avoids competing updates when messages are transferred safely."
+      2: "One thread per task does not impose the requested bound and can add excessive scheduling and memory costs."
+      3: "Independent calculations can still conflict when they write a common total."
+    explanation: "Separate task count from worker count, and give shared aggregation state a clear owner. The queue and result-transfer mechanism still need their own synchronization guarantees."

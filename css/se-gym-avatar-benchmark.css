@@ -1,0 +1,17 @@
+
+:root{font:16px/1.5 system-ui,sans-serif;color:#182b3c;background:#f3f6f8;color-scheme:light}
+html.dark-mode{color:#edf3f8;background:#111d2b;color-scheme:dark}
+*{box-sizing:border-box}body{margin:0}main,header,footer{max-width:1280px;margin:auto;padding:24px}
+h1{font-size:2em;line-height:1.2}h2{font-size:1.5em}h3{font-size:1.2em}p,li,summary,pre,a{font-size:1em}
+a,a:visited{color:#075b93}html.dark-mode a,html.dark-mode a:visited{color:#8dd2ff}
+a:focus-visible,summary:focus-visible{outline:3px solid #bf4d00;outline-offset:4px}html.dark-mode a:focus-visible,html.dark-mode summary:focus-visible{outline-color:#ffcf70}
+nav{display:flex;flex-wrap:wrap;gap:12px 24px}nav a{min-height:28px}.skip{position:absolute;left:-10000px}.skip:focus{position:static;display:block;padding:16px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:24px}
+article{padding:18px;border:1px solid #8195a8;border-radius:10px;background:#fff;min-width:0}html.dark-mode article{background:#1c2b3d;border-color:#8ca0b4}
+.render-light{background:#eef2f5}.render-dark{background:#162333}.preview{display:block;width:180px;height:187px;margin:0 auto}
+img{max-width:100%;height:auto}.native-sheet{display:block}.case-links{display:flex;flex-wrap:wrap;gap:12px}pre{white-space:pre-wrap;overflow-wrap:anywhere}
+details{margin-top:16px}summary{cursor:pointer;min-height:28px}.fail{border-left:5px solid #a32316}.review{border-left:5px solid #955300}
+html.dark-mode .fail{border-left-color:#ff978c}html.dark-mode .review{border-left-color:#ffd082}
+table{border-collapse:collapse;width:100%}th,td{border-bottom:1px solid #8195a8;padding:10px;text-align:left;vertical-align:top;overflow-wrap:anywhere}
+.table-scroll{overflow-x:auto}code{overflow-wrap:anywhere}.status{font-weight:650}.sheets{columns:3 240px}.sheets li{break-inside:avoid;margin-bottom:12px}
+@media print{html,html.dark-mode{color:#182b3c;background:#fff;color-scheme:light}html.dark-mode article{background:#fff;border-color:#8195a8}html.dark-mode a,html.dark-mode a:visited{color:#075b93}nav,.skip{display:none}article{break-inside:avoid}}

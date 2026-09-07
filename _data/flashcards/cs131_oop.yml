@@ -1,0 +1,91 @@
+title: "CS 131: Object-Oriented Programming"
+description: "Explain object contracts, diagnose inheritance failures, and design small alternatives with explicit self-checks."
+active: true
+# Sources: oop_palooza_v7.pptx, Homework Problems (Public), Fall 2025 Quizzes 2 and 4.
+# No material from Language of the Week slides 28 or 78.
+cards:
+  # Sources: lecture slides 31–37; homework OOP1 Part A.
+  - id: cs131-oop-card-hidden-representation
+    difficulty: basic
+    bloom: understand
+    question: "Why can a class with only private fields still expose its representation through a getter that returns its internal mutable list?"
+    answer: "The returned reference gives clients direct access to the internal object. They can mutate it without going through the class's checks and can depend on its list representation."
+    explanation: "Encapsulation is about the access clients actually gain, not only field visibility. A narrow operation, immutable view, or defensive copy may preserve the intended boundary, depending on the contract."
+
+  # Sources: lecture slides 40–41; homework OOP1 Part B.
+  - id: cs131-oop-card-self
+    difficulty: intermediate
+    bloom: apply
+    question: "A Python class defines `def deposit(self, amount)`. Explain where both arguments come from in `account.deposit(8)`, and rewrite the call using the class name `Account`."
+    answer: "`account` supplies `self`, and 8 supplies `amount`. For this ordinary instance method, the explicit form is `Account.deposit(account, 8)`."
+    explanation: "The receiver connects a shared method definition to one particular object's state. The method's body can therefore operate on many different instances without duplicating its code."
+
+  # Sources: lecture slides 51–76; Fall 2025 Quiz 4, Problem 1(a, c–e).
+  - id: cs131-oop-card-inheritance-dimensions
+    difficulty: basic
+    bloom: understand
+    question: "Contrast interface inheritance, implementation-only inheritance, and ordinary public subclassing in terms of interface exposure and code reuse."
+    answer: "Interface inheritance establishes a supported role or type without requiring shared method bodies. Implementation-only inheritance reuses base code without publicly exposing the base type. Public subclassing typically combines an inherited public interface with implementation reuse."
+    explanation: "Ask two separate questions: what can clients rely on, and where does the implementation come from? Reuse alone does not establish a public subtype relationship."
+
+  # Sources: lecture slides 113–114; Liskov & Wing (1994).
+  # Rule verified: https://www.eiffel.org/doc/solutions/Design_by_Contract_and_Assertions
+  # Slide 114's precondition wording is reversed; use the corrected rule here.
+  - id: cs131-oop-card-preconditions
+    difficulty: advanced
+    bloom: evaluate
+    question: "A base parser accepts every nonempty string. A proposed subtype accepts only alphabetic strings. Does this preserve behavioral substitutability? Give one counterexample and state the input-side rule."
+    answer: "No. A client may legally pass `room 7` under the base contract, but the subtype rejects it. An override may accept more inputs, but cannot require a stronger precondition than the inherited contract."
+    explanation: "Judge from the base client's perspective: every call already permitted must remain permitted. The corresponding output-side rule is that an override cannot weaken promised postconditions."
+
+  # Sources: lecture slides 118–126; Fall 2025 Quiz 4, Problem 1(f).
+  - id: cs131-oop-card-static-type-dynamic-type
+    difficulty: intermediate
+    bloom: analyze
+    question: "A `Base&` in C++ refers to a Derived object. Explain how its static type and dynamic type can both matter to a method call."
+    answer: "The static type determines which member names and signatures are available through the reference. For a virtual call, the dynamic type helps select the final overriding implementation. Nonvirtual calls use the statically selected method."
+    explanation: "A base reference does not expose every extra method of the derived class, even though virtual calls may execute derived behavior. Interface availability and implementation selection are distinct."
+
+  # Sources: lecture slide 95.
+  - id: cs131-oop-card-overriding
+    difficulty: intermediate
+    bloom: analyze
+    question: "A base class declares virtual `send()`. A derived class adds `send(int priority)` without an override annotation. Why should the author check this before assuming calls through a base reference use the new code?"
+    answer: "The new parameter list defines a different method rather than an override of `send()`. A base-reference call to `send()` still selects the matching base operation unless some actual override exists."
+    explanation: "An explicit override annotation lets a supporting language check the intended relationship. Matching a name alone is insufficient; the relevant method signature must match too."
+
+  # Sources: lecture slides 101–104; homework OOP5 Part A.
+  - id: cs131-oop-card-diamond
+    difficulty: advanced
+    bloom: analyze
+    question: "In C++, two classes each nonvirtually inherit a common base with mutable state; a fourth class inherits both. What two questions must a designer resolve about that shared ancestor?"
+    answer: "Should the final object contain one shared ancestor state or two separate copies? When a method is inherited through both paths, which path or override should a call use?"
+    explanation: "A diamond raises both representation and behavior questions. Disambiguating a method name does not by itself merge duplicated base state."
+
+  # Sources: lecture slides 79–81; homework OOP3 Part C.
+  - id: cs131-oop-card-prototype-shadowing
+    difficulty: intermediate
+    bloom: apply
+    question: "A JavaScript object inherits a plain data property `theme` from its prototype. It then assigns its own `theme`, and later deletes that own property. Where does a subsequent read obtain `theme`, assuming the prototype is unchanged?"
+    answer: "It obtains the prototype's value again. The own property temporarily shadowed the inherited one; deleting it exposes the property found farther up the prototype chain."
+    explanation: "Property lookup checks the receiver before its prototype. Shadowing is distinct from modifying or deleting the prototype's own property."
+
+  # Sources: lecture slides 69–75; homework OOP2 Part B.3.
+  - id: cs131-oop-card-create-delegation
+    difficulty: expert
+    bloom: create
+    question: "Design a bounded task inbox that reuses an ordinary list without inheriting from it. Name the private state and public insertion operation, then explain how to prevent clients from bypassing its capacity limit. Pseudocode is sufficient."
+    answer: |
+      One design stores a private `tasks` list and an immutable `capacity`.
+      Public `add(task)` checks whether the list is full, reports failure if so,
+      and otherwise appends the task. A removal operation may return one task,
+      but no operation returns the mutable internal list.
+    explanation: "Self-check: use composition, route every insertion through the capacity check, and avoid leaking a mutable alias to storage. Alternative names and return conventions are valid if the invariant and public contract stay explicit."
+
+  # Sources: lecture slides 107–114; homework OOP3 Part C.4.
+  - id: cs131-oop-card-create-contract-counterexample
+    difficulty: advanced
+    bloom: create
+    question: "A base `Stack.push(x)` promises to add x even when x is already present. A proposed subtype silently ignores duplicates. Construct a short client sequence showing why that subtype breaks the base contract. Assume a new empty stack and ordinary size semantics."
+    answer: "Call `push(6)`, then `push(6)`, then inspect `size()`. The base contract requires size 2; the proposed subtype reports size 1. The client uses only base operations and still distinguishes the violation."
+    explanation: "Self-check: start from a valid state, make calls allowed by the base contract, and identify a promised result the subtype fails to deliver. Matching method signatures does not repair a changed behavioral contract."

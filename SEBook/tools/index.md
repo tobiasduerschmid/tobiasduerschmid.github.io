@@ -57,4 +57,8 @@ Use the master deck when you want a mixed review of the standalone tools materia
 
 # Supplemental Tooling
 
-[The Spec Card](/SEBook/tools/spec-card) is a fillable planning tool for end-to-end tests. Additional focused tutorials and demos, including [SQL](/SEBook/tools/sql-tutorial), [Prolog](/SEBook/tools/prolog-tutorial), and time-travel debugger demos for [Python](/SEBook/tools/debugger-demo) and [Node.js](/SEBook/tools/debugger-node-demo), support narrower practice paths when a course or lesson calls for them.
+[Haskell](/SEBook/tools/haskell.html) provides a three-part interactive path through pure expressions, recursion, higher-order functions, laziness, and persistent data, adapted from the CS131 course material. Start with [Haskell 1: Expressions, Types, and Recursion](/SEBook/tools/haskell-tutorial).
+
+[Prolog Foundations](/SEBook/tools/prolog-tutorial) turns the CS 131 logic-programming material into practice with facts, unification, backtracking, and recursive relations. Continue with [Prolog Lists and Search](/SEBook/tools/prolog-search-tutorial) for list construction, arithmetic, negation, accumulators, and a search capstone. Both tutorials include predictions, coding exercises, knowledge checks, and printable study views.
+
+[The Spec Card](/SEBook/tools/spec-card) is a fillable planning tool for end-to-end tests. Additional focused tutorials and demos, including [SQL](/SEBook/tools/sql-tutorial) and time-travel debugger demos for [Python](/SEBook/tools/debugger-demo) and [Node.js](/SEBook/tools/debugger-node-demo), support narrower practice paths when a course or lesson calls for them.

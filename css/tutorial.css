@@ -2594,7 +2594,10 @@ html:not(.dark-mode) .tvm-terminal-loading {
   background: #161618;
   color: #888;
   padding: 6px 14px;
-  font-size: 12px;
+  /* Matches .tvm-output-header: this label sits beside the output panel's
+     header in mixed-backend tutorials, and 12px is below the project's
+     readable-text floor. */
+  font-size: var(--font-size-readable-min, 16px);
   font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -2826,6 +2829,25 @@ html:not(.dark-mode) .tvm-args-input {
 .tvm-args-input:focus {
   outline: none;
   border-color: #0078d4;
+}
+
+/* Prolog goals share the toolbar's readable size and existing theme colors.
+   The flexible width also keeps the Query field usable in narrow workspaces. */
+.tvm-args-input.tvm-prolog-query {
+  display: inline-block;
+  flex: 1 1 180px;
+  min-width: 0;
+  width: auto;
+  font: inherit;
+}
+.tvm-args-label.tvm-prolog-query-label {
+  display: inline-block;
+  font: inherit;
+  white-space: nowrap;
+}
+.tvm-args-input.tvm-prolog-query:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
 }
 
 /* Stream filter styling */
@@ -3992,6 +4014,73 @@ body.tutorial-layout #navnav .navbar-right > #tts-read-btn {
 
 #tutorial-container {
   height: 100%;
+}
+
+/* At high zoom or on a narrow screen, the navbar and pinned panel controls can
+   consume the entire viewport. Let the document carry the vertical scroll;
+   instructional text and quizzes grow with their content. Editors, terminals,
+   and previews retain text-relative working areas and their own content scroll.
+   Screen-only rules leave the dedicated print layout and desktop split intact. */
+@media screen and (max-width: 900px) {
+  html:has(body.tutorial-layout),
+  body.tutorial-layout {
+    height: auto;
+    min-height: 100%;
+    overflow: visible !important;
+  }
+
+  body.tutorial-layout #navnav {
+    position: relative !important;
+    margin-bottom: 0;
+  }
+
+  body.tutorial-layout .tutorial-page {
+    position: static !important;
+    overflow: visible;
+  }
+
+  body.tutorial-layout :is(.tutorial-page .container, #tutorial-container, .tvm-container) {
+    height: auto;
+    overflow: visible;
+  }
+
+  body.tutorial-layout :is(
+    .tvm-instructions-panel, .tvm-steps-view, .tvm-step-content-wrap,
+    .tvm-quiz-panel, .tvm-workspace, .tvm-editor-panel, .tvm-editor-body,
+    .tvm-editor-pane, .tvm-output-panel, .tvm-output-view,
+    .tvm-terminal-panel, .tvm-preview-panel, .tvm-runtime-panels, .tvm-runtime-panel
+  ) {
+    /* Override sizes left by desktop splitter drags when the viewport shrinks. */
+    flex: 0 0 auto !important;
+    height: auto;
+    min-width: 0;
+    overflow: visible;
+  }
+
+  body.tutorial-layout :is(.tvm-editor-body, .tvm-runtime-panels) {
+    flex-direction: column;
+  }
+
+  body.tutorial-layout :is(.tvm-step-content-wrap, .tvm-quiz-panel) {
+    padding-inline: 1em;
+  }
+
+  body.tutorial-layout :is(.tvm-editor-container, .tvm-terminal-container, .tvm-preview-container) {
+    flex: 0 0 auto;
+    height: 24em;
+    min-height: 24em;
+  }
+
+  body.tutorial-layout .tvm-output-container {
+    flex: 0 0 auto;
+    min-height: 8em;
+    overflow-y: visible;
+  }
+
+  /* These dividers resize viewport fractions; natural document flow has none. */
+  body.tutorial-layout :is(.tvm-hsplitter, .tvm-vsplitter, .tvm-editor-pane-divider) {
+    display: none !important;
+  }
 }
 
 

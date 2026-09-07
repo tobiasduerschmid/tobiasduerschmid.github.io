@@ -1,0 +1,1212 @@
+# Course alignment: logic_palooza_v6_handouts.pdf pp. 19, 43–44, 46–56,
+# 77–94; Homework Problems (Public).docx LOGIC5, LOGIC7, LOGIC8;
+# CS131 Fall 25 Quiz 4 (with solutions).docx Q4–5;
+# [Final] F24 V1 (Public).pdf Q7 pp. 23–25;
+# [Final] F23 (Public).pdf Prolog section pp. 22–24;
+# [Final] F23 Solutions (Public).pdf Prolog section pp. 28–31.
+# New examples preserve the course's predict/trace/complete progression.
+# Scope: course-assessed list algorithms get independent practice. Collection
+# helpers and the final search task support transfer; cut is an optional
+# operational extension, not a prerequisite for the course-aligned exercises.
+title: "Prolog Lists and Search"
+description: "Continue after Prolog Foundations: build list relations, evaluate arithmetic, control goal order, and generate solutions to a small scheduling problem. For programmers comfortable with facts, rules, unification, and recursive membership; allow 100–115 minutes across two sessions."
+learning_objectives:
+  - "Apply recursive list relations in construction, checking, and finite splitting modes."
+  - "Analyze all answers to a deletion query, including repeated values and overlapping clauses."
+  - "Apply arithmetic evaluation and comparisons after their inputs are bound."
+  - "Analyze negation as failure under a stated closed-world assumption."
+  - "Evaluate which list operations preserve order, duplicates, and all valid answers."
+  - "Create accumulator-based reversal and an interleaving relation with complete base cases."
+  - "Create a finite generate-and-test search whose results satisfy every constraint."
+backend: prolog
+require_tests: true
+autosave_type: files
+
+steps:
+  # Source: Homework LOGIC7 A.2; F24 final Q7 A. Component before integration.
+  # Pedagogy: PRIMM — Predict before Run, then worked example with fading
+  - title: "Append as a Relation"
+    instructions: |
+      ### Why this matters
+
+      A list relation can assemble a playlist, check a proposed playlist, or find its missing pieces. Which arguments are already known changes the question you are asking. It can also change whether the search finishes.
+
+      ### 🎯 You will learn to
+
+      - Apply a recursive list relation to concatenate two finite lists.
+      - Analyze how the same clauses enumerate every split of a known list.
+
+      This tutorial continues [Prolog Foundations](/SEBook/tools/prolog-tutorial).
+      You should already be able to trace a recursive membership predicate.
+      Plan a break after Step 5; return for the second half after some time away.
+
+      ### One Relationship, Several Questions
+
+      The supplied `append(Left, Right, Whole)` relation means that `Whole`
+      contains `Left` followed by `Right`, preserving both lists' order.
+      The directive at the top of the file loads the list library. Keep it.
+
+      Thinking time: before running the default query, choose a prediction
+      for `append(Left, Right, [lofi, jazz])`:
+
+      - Only `Left = [lofi]`, `Right = [jazz]`.
+      - Three splits, including the two empty-list splits.
+      - An error because two arguments are unknown.
+
+      Run, then inspect every answer. Empty lists count as lists!
+      Now try `append([lofi], [jazz], Whole)` and
+      `append([lofi], [jazz], [jazz, lofi])`.
+
+      ### Your Relation
+
+      Implement `join_lists(Left, Right, Whole)` with the same meaning for
+      finite lists. The base case is supplied: placing an empty list before
+      `Right` leaves `Right` unchanged. Write the recursive clause yourself.
+
+      Think about the first element of a nonempty `Left`. Where must that
+      element appear in `Whole`? What smaller relationship must hold between
+      the remaining lists?
+
+      Verify construction, a failed check, and **all three splits** of
+      `[lofi, jazz]`. Use the base/head/tail reasoning above to derive the relationship.
+      The checks accept any implementation with the specified results; explain
+      your recursive clause so a passing check also reflects your understanding.
+
+      A **mode** describes which arguments are known when a predicate is
+      called. `join_lists(Left, Right, [lofi, jazz])` has a finite search.
+      Leaving all three arguments unknown describes infinitely many lists;
+      a relation being meaningful does not make every mode terminate.
+
+      Before continuing, explain why neither input list is mutated.
+    default_query: "append(Left, Right, [lofi, jazz])"
+    files:
+      - path: "/tutorial/search-01-append.pl"
+        language: prolog
+        content: |
+          :- use_module(library(lists)).
+
+          join_lists([], Right, Right).
+          % Complete the relationship for a nonempty first list.
+    open_file: "/tutorial/search-01-append.pl"
+    run_file: "/tutorial/search-01-append.pl"
+    tests:
+      - description: "join_lists preserves order and supports every split, including empty lists"
+        command: |
+          assert((await __query("findall(R, join_lists([lofi,jazz],[ambient],R), Rs), sort(Rs, Unique), Unique == [[lofi,jazz,ambient]]")).length > 0, "Joining must preserve both input lists in order.");
+          assert((await __query("findall(pair(L,R), join_lists(L,R,[lofi,jazz]), Pairs), sort(Pairs, Unique), sort([pair([],[lofi,jazz]),pair([lofi],[jazz]),pair([lofi,jazz],[])], Expected), Unique == Expected")).length > 0, "Find all three splits, including both empty-list splits, without additional answers.");
+          assert((await __query("findall(R, join_lists([],[],R), Rs), sort(Rs, Unique), Unique == [[]]")).length > 0, "Joining two empty lists must produce only the empty list.");
+          assert((await __query("join_lists([lofi],[jazz],[jazz,lofi])")).length === 0, "A check must fail when the proposed list has the wrong order.");
+        hints:
+          - title: "The First Element's Destination"
+            text: "The first element of Left is also the first element of Whole. Right has not contributed any elements yet."
+          - title: "The Remaining Relationship"
+            text: "After matching those first elements, join the tail of Left with the unchanged Right to obtain the tail of Whole."
+          - title: "Three Connected Arguments"
+            text: "Use a clause with the shape `join_lists([Head|LeftTail], Right, [Head|WholeTail]) :- ...`. The body must connect the two tails through the same relation."
+    quiz:
+      title: "Step 1 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "What does `append(Prefix, [encore], [intro, solo, encore])` determine?"
+          options:
+            - "`Prefix = [intro, solo]`"
+            - "`Prefix = [intro, solo, encore]`"
+            - "`Prefix = [encore]`"
+          correct_index: 0
+          option_feedback:
+            1: "The known second list already contributes the final encore. Including it in Prefix would add it twice."
+            2: "Prefix is the part before the known suffix, rather than the suffix itself."
+          explanation: "The query checks which prefix followed by [encore] gives the known whole list. The relationship stays the same when the unknown argument moves."
+    solution:
+      files:
+        - path: "/tutorial/search-01-append.pl"
+          language: prolog
+          content: |
+            :- use_module(library(lists)).
+
+            join_lists([], Right, Right).
+            join_lists([Head|LeftTail], Right, [Head|WholeTail]) :-
+                join_lists(LeftTail, Right, WholeTail).
+      explanation: |
+        The nonempty clause shares the first element between Left and Whole.
+        Its body relates the remaining lists. No expression returns a list:
+        unification connects the result argument to the structure in the head.
+        With a fixed two-element Whole, the empty-prefix clause succeeds at
+        lengths zero, one, and two, so there are three splits.
+
+  # Source: logic handout pp. 77–94; F24 Solutions appendix pp. 36–37.
+  # The lecture's unguarded recursive clause also matches an equal head.
+  # Pedagogy: PRIMM — contrast cases expose functional-to-relational negative transfer
+  - title: "One Removal, Several Answers"
+    instructions: |
+      ### Why this matters
+
+      “Delete an item” leaves an important question unanswered: the first occurrence, any one occurrence, or every occurrence? Prolog will follow the clauses you wrote. It does not add an implicit “otherwise” between them.
+
+      ### 🎯 You will learn to
+
+      - Analyze overlapping clauses when a list contains repeated values.
+      - Create a relation that removes exactly one occurrence in every possible way.
+
+      ### A Worked Removal
+
+      `remove_one(Item, Input, Rest)` should hold when removing **exactly one**
+      occurrence of `Item` from `Input` gives `Rest`. Preserve all other elements
+      in their original order. If the item is absent, the relation fails.
+
+      The supplied clause handles removing the head of a list. Run it first.
+      Then try `remove_one(lofi, [lofi, jazz, lofi], Rest)`.
+      At this point it can remove only the first element.
+
+      Thinking time: after the full relation is implemented, should that query
+      produce only `[jazz, lofi]`, only `[jazz]`, or both `[jazz, lofi]` and
+      `[lofi, jazz]`? Commit to a prediction before adding the next clause.
+
+      ### Your Task
+
+      Add a recursive clause that keeps the current head and removes one
+      matching item farther into the tail. It must remain available **even if
+      the current head matches Item**: that is how a later occurrence can be
+      removed on backtracking.
+
+      Try `remove_one(X, [jazz, lofi], Rest)` too. A single relation now finds
+      both the removed element and the remaining list.
+      `remove_one(lofi, [jazz], Rest)` and `remove_one(lofi, [], Rest)` must fail.
+
+      ### The “Otherwise” That Is Not There
+
+      A clause headed by `[Head|Tail]` matches any nonempty list. Naming a
+      variable `Head` does not mean “a head different from Item.” This is
+      easy to miss when translating ordered pattern matching from Haskell
+      or an `if`/`else` chain from Python.
+
+      Do not add an empty-input success clause: combined with an unrestricted
+      keep-head clause, it would also allow keeping the entire original list.
+      Our specification says exactly one removal.
+
+      A first-occurrence-only version would be a **different** specification.
+      A **ground** term contains no unbound variables. For ground Item and
+      Input, its keep-head case could require
+      `Head \= Item`. That restriction would discard valid answers here.
+
+      Explain the two different output lists before opening the solution.
+    default_query: "remove_one(lofi, [lofi, jazz, lofi], Rest)"
+    files:
+      - path: "/tutorial/search-02-removal.pl"
+        language: prolog
+        content: |
+          % Remove exactly one occurrence, retaining every possible result.
+          remove_one(Item, [Item|Tail], Tail).
+          % Add the case that removes an item later in the list.
+    open_file: "/tutorial/search-02-removal.pl"
+    run_file: "/tutorial/search-02-removal.pl"
+    tests:
+      - description: "remove_one returns exactly the valid one-removal results"
+        command: |
+          assert((await __query("findall(R, remove_one(lofi,[lofi,jazz,lofi],R), Rs), sort(Rs, Unique), sort([[jazz,lofi],[lofi,jazz]], Expected), Unique == Expected")).length > 0, "Remove either occurrence on backtracking; never keep both or delete both.");
+          assert((await __query("findall(pair(X,R), remove_one(X,[jazz,lofi],R), Rs), sort(Rs, Unique), sort([pair(jazz,[lofi]),pair(lofi,[jazz])], Expected), Unique == Expected")).length > 0, "An unknown Item must discover both possible removed elements and their matching remainder.");
+          assert((await __query("remove_one(lofi,[],R)")).length === 0, "An empty list contains no occurrence to remove.");
+          assert((await __query("remove_one(lofi,[jazz],R)")).length === 0, "An absent item must fail, rather than return the unchanged input.");
+        hints:
+          - title: "A Later Match"
+            text: "To delete an occurrence after the head, preserve that head and solve a smaller removal problem on the tail."
+          - title: "Alternatives Remain Available"
+            text: "The keep-head rule is another possibility, not an else branch. Do not rule it out just because the head could also be deleted."
+          - title: "The Rebuilt List"
+            text: "The recursive head has the shape `remove_one(Item, [Head|Tail], [Head|RestTail])`. Its body relates Item, Tail, and RestTail. No empty-list success case is needed."
+    quiz:
+      title: "Step 2 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: advanced
+          question: "Suppose the completed relation gains `remove_one(_, [], []).` What extra result becomes possible for `remove_one(lofi, [lofi, jazz], R)`?"
+          options:
+            - "`R = [lofi, jazz]`"
+            - "`R = []`"
+            - "`R = [jazz, lofi]`"
+          correct_index: 0
+          option_feedback:
+            1: "The keep-head case preserves each skipped element. Empty-input success does not delete the already preserved heads."
+            2: "The clauses preserve the relative order of retained elements; they cannot swap them."
+          explanation: "The recursive clause can keep both heads, reach the empty list, and succeed through the new base case without removing anything. A clause's meaning comes from its actual patterns and goals."
+    solution:
+      files:
+        - path: "/tutorial/search-02-removal.pl"
+          language: prolog
+          content: |
+            remove_one(Item, [Item|Tail], Tail).
+            remove_one(Item, [Head|Tail], [Head|RestTail]) :-
+                remove_one(Item, Tail, RestTail).
+      explanation: |
+        A successful proof chooses exactly one use of the first clause. Every
+        earlier recursive call preserves one head. There is no successful
+        path that preserves every head because the relation fails at [] when
+        no deletion happened. With repeated values, different choices may
+        produce identical answer lists; duplicate proofs do not mean two
+        elements were removed.
+
+  # Source: logic handout pp. 7–12; Homework LOGIC5 numeric comparisons.
+  # Pedagogy: PRIMM — prediction plus explicit negative transfer from assignment
+  - title: "Arithmetic and Bound Inputs"
+    instructions: |
+      ### Why this matters
+
+      `X = 3 + 4` matches a term; it does not calculate seven. Prolog's arithmetic predicates perform evaluation explicitly, and they need their numeric inputs before they run. Goal order now affects whether a program can compute at all.
+
+      ### 🎯 You will learn to
+
+      - Distinguish unification, arithmetic evaluation, and numeric comparison.
+      - Apply arithmetic only after its input values are available.
+
+      ### Three Different Questions
+
+      Try these queries individually, predicting each result first:
+
+      | Query | Question |
+      | --- | --- |
+      | `X = 3 + 4` | Can X unify with the compound term 3 + 4? |
+      | `X is 3 + 4` | What number does the right-hand expression evaluate to? |
+      | `3 + 4 =:= 7` | Do these two expressions evaluate to equal numbers? |
+
+      Run and compare. `is` evaluates its **right** side, then unifies its
+      left side with the resulting number. `=:=` evaluates both sides and
+      compares them. Neither is an equation solver: `7 is X + 4` raises an
+      instantiation error when X is still unknown.
+
+      The comparisons `>`, `<`, `>=`, and `=<` also evaluate numeric
+      expressions. Prolog writes “less than or equal” as `=<`.
+      `=\=` means arithmetic inequality; it differs from `\=`, which tests
+      whether two terms cannot unify. `==` checks term identity without
+      binding variables and without evaluating arithmetic.
+
+      ### Thinking Time
+
+      The starter defines `minutes(lofi, 3)` but places
+      `Total is Minutes + Gap` before looking up Minutes. Will the default
+      query succeed, fail, or raise an error? Predict, then Run.
+
+      An error here is useful evidence: which variable still lacks a number?
+
+      ### Your Task
+
+      Repair `slot_minutes(Track, Gap, Total)`. Track identifies a supplied
+      track; Gap is a known nonnegative integer. Total is its duration plus
+      Gap. The lookup must also allow an unknown Track to enumerate the
+      supplied tracks when Gap is known.
+
+      Then implement `fits_slot(Track, Limit)`: a supplied track fits when its
+      duration is **at most** the known Limit. The exact boundary counts.
+      It must fail for an unknown track name.
+
+      Test `slot_minutes(lofi, 2, Total)`, `fits_slot(Track, 3)`, and a
+      ground check with a deliberately wrong total. Arithmetic results do
+      not overwrite an incompatible value already bound to Total.
+    default_query: "slot_minutes(lofi, 2, Total)"
+    files:
+      - path: "/tutorial/search-03-arithmetic.pl"
+        language: prolog
+        content: |
+          minutes(lofi, 3).
+          minutes(jazz, 5).
+          minutes(ambient, 2).
+
+          slot_minutes(Track, Gap, Total) :-
+              Total is Minutes + Gap,
+              minutes(Track, Minutes).
+
+          % Replace this placeholder with the duration-limit relationship.
+          fits_slot(_, _) :- fail.
+    open_file: "/tutorial/search-03-arithmetic.pl"
+    run_file: "/tutorial/search-03-arithmetic.pl"
+    tests:
+      - description: "Duration calculations use bound inputs and include the exact limit"
+        command: |
+          assert((await __query("findall(T, slot_minutes(lofi,2,T), Ts), sort(Ts, U), U == [5]")).length > 0, "Look up the duration before evaluating the total.");
+          assert((await __query("findall(pair(X,T), slot_minutes(X,0,T), Rs), sort(Rs,U), sort([pair(lofi,3),pair(jazz,5),pair(ambient,2)],E), U == E")).length > 0, "A known zero gap must enumerate exactly the supplied tracks and their durations.");
+          assert((await __query("findall(X, fits_slot(X,3), Xs), sort(Xs,U), U == [ambient,lofi]")).length > 0, "The limit includes durations below it and exactly equal to it, but excludes longer tracks.");
+          assert((await __query("findall(X, fits_slot(X,2), Xs), sort(Xs,U), U == [ambient]")).length > 0, "A smaller limit must exclude lofi while retaining ambient at the exact boundary.");
+          assert((await __query("findall(X, fits_slot(X,5), Xs), sort(Xs,U), U == [ambient,jazz,lofi]")).length > 0, "At limit five, every supplied track fits, including jazz at the boundary.");
+          assert((await __query("fits_slot(X,1)")).length === 0, "A limit below every supplied duration must yield no tracks.");
+          assert((await __query("findall(T, slot_minutes(jazz,4,T), Ts), sort(Ts,U), U == [9]")).length > 0, "Use both the selected track and the supplied gap when calculating a different total.");
+          assert((await __query("slot_minutes(lofi,2,6)")).length === 0, "A wrong proposed total must fail.");
+          assert((await __query("fits_slot(missing,100)")).length === 0, "Only tracks in the supplied facts have known durations.");
+        hints:
+          - title: "The Unknown Number"
+            text: "Read the body from left to right. Minutes must already be a number when arithmetic uses it."
+          - title: "A Fact Before a Calculation"
+            text: "Put the duration lookup before evaluation. For the second relation, compare the looked-up duration with the known limit, including equality."
+          - title: "Two Numeric Relationships"
+            text: "The calculation has the shape `lookup(...), Total is ...`. The check has the shape `lookup(...), Duration =< ...`. Fill in the existing predicate and arguments."
+    quiz:
+      title: "Step 3 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "Which query succeeds while binding X to the number 9?"
+          options:
+            - "`X is 4 + 5`"
+            - "`X = 4 + 5`"
+            - "`X =:= 4 + 5`"
+          correct_index: 0
+          option_feedback:
+            1: "Unification binds X to the unevaluated compound term +(4,5), rather than to the number 9."
+            2: "Arithmetic comparison needs both expressions to be evaluable. It does not bind an unknown X to a solution."
+          explanation: "Use is when evaluating a known right-hand arithmetic expression into a result. Use =:= when both sides already contain evaluable arithmetic."
+    solution:
+      files:
+        - path: "/tutorial/search-03-arithmetic.pl"
+          language: prolog
+          content: |
+            minutes(lofi, 3).
+            minutes(jazz, 5).
+            minutes(ambient, 2).
+
+            slot_minutes(Track, Gap, Total) :-
+                minutes(Track, Minutes),
+                Total is Minutes + Gap.
+
+            fits_slot(Track, Limit) :-
+                minutes(Track, Minutes),
+                Minutes =< Limit.
+      explanation: |
+        The fact lookup supplies each duration before it is used. An unknown
+        Track can therefore be generated safely. The given Gap and Limit
+        are input numbers; this arithmetic version promises no reverse mode
+        that solves for an unknown gap or limit. That mode contract is part
+        of what makes the predicate usable.
+
+  # Source: Homework LOGIC5 (count values at/below a threshold with recursion).
+  # Pedagogy: worked example with fading — membership's recursion plus numeric state
+  - title: "A Recursive Count"
+    instructions: |
+      ### Why this matters
+
+      A recursive list predicate often needs to produce a number rather than another list. The smaller problem gives you a partial result, and arithmetic connects it to the full result. Keeping those dependencies explicit prevents the familiar “X = X + 1” mistake.
+
+      ### 🎯 You will learn to
+
+      - Create a recursive numeric result with complete base and boundary cases.
+      - Analyze why a recursive result must exist before it is used in arithmetic.
+
+      ### A Worked Sum
+
+      The supplied `total_minutes(List, Total)` first obtains the total of
+      the tail, then adds the head. Trace it on `[2, 5]`: the empty tail gives
+      zero, the next call gives five, and the outer call gives seven.
+      Each call has its own variables. No variable is incremented in place.
+
+      Thinking time: in the recursive clause, swap the two body goals.
+      Does the answer stay seven, become five, or produce an instantiation
+      error? Predict, make the swap, and Run. Restore the working order.
+
+      ### Your Task
+
+      Implement `count_short(Durations, Limit, Count)`. Durations is a finite
+      list of known nonnegative integers; Limit is a known nonnegative
+      integer. Count is the number of entries **at most** Limit.
+
+      Preserve repeated entries: `[2, 5, 2]` contains two short tracks when
+      the limit is two. The empty list has count zero. A head equal to the
+      limit belongs in the counted case.
+
+      Plan three cases before writing:
+
+      - What does an empty list contribute?
+      - How does an included head change the tail's count?
+      - How does an excluded head change it?
+
+      Only one numeric comparison branch should apply to a given head.
+      Check `[2, 5, 2, 3]` with limit two, then test the empty list and a
+      list containing only boundary values. We test the relation's results,
+      not your helper names or whether you chose a separate accumulator.
+
+      Explain why a returned count of two represents two **positions** in
+      the input even when their values are equal.
+    default_query: "total_minutes([2, 5], Total)"
+    files:
+      - path: "/tutorial/search-04-count.pl"
+        language: prolog
+        content: |
+          total_minutes([], 0).
+          total_minutes([Head|Tail], Total) :-
+              total_minutes(Tail, TailTotal),
+              Total is Head + TailTotal.
+
+          % Count every entry whose duration is at most Limit.
+          count_short(_, _, _) :- fail.
+    open_file: "/tutorial/search-04-count.pl"
+    run_file: "/tutorial/search-04-count.pl"
+    tests:
+      - description: "count_short counts every eligible position and handles all boundaries"
+        command: |
+          assert((await __query("findall(C,count_short([2,5,2,3],2,C),Cs), sort(Cs,U), U == [2]")).length > 0, "Both occurrences of 2 count, while 3 and 5 do not.");
+          assert((await __query("findall(C,count_short([],2,C),Cs), sort(Cs,U), U == [0]")).length > 0, "An empty input has exactly count zero.");
+          assert((await __query("findall(C,count_short([0,1,2],1,C),Cs), sort(Cs,U), U == [2]")).length > 0, "Count values below and equal to the limit; exclude those just above.");
+          assert((await __query("findall(C,count_short([4,5],3,C),Cs), sort(Cs,U), U == [0]")).length > 0, "No eligible entries means zero, rather than failure.");
+          assert((await __query("findall(C,count_short([3,3,3],3,C),Cs), sort(Cs,U), U == [3]")).length > 0, "Every repeated boundary value contributes one.");
+        hints:
+          - title: "A Number for Every Tail"
+            text: "Start with count zero for the empty list. Every larger answer depends on a count for its tail."
+          - title: "Two Disjoint Cases"
+            text: "Use the at-most comparison for the counted case and the strictly-greater comparison for the skipped case. This avoids both missing and overlapping numeric cases."
+          - title: "The Count Dependency"
+            text: "In the counted case, first obtain a TailCount from a recursive call, then relate Count to TailCount plus one. In the skipped case, the full count and tail count are the same."
+    quiz:
+      title: "Step 4 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "For the counted case, why must `Count is TailCount + 1` follow the recursive call that produces TailCount?"
+          options:
+            - "Arithmetic needs TailCount to be a number."
+            - "The recursive call must always be first in any rule."
+            - "Count must be initialized to zero in every call."
+          correct_index: 0
+          option_feedback:
+            1: "Goal order follows dependencies. A ground head comparison may run before recursion; there is no universal recursion-first rule."
+            2: "Each recursive call has fresh variables. Only the empty-list case contributes zero; larger results are related to the tail result."
+          explanation: "is evaluates its right side immediately. The recursive call supplies the numeric TailCount that the evaluation depends on."
+    solution:
+      files:
+        - path: "/tutorial/search-04-count.pl"
+          language: prolog
+          content: |
+            total_minutes([], 0).
+            total_minutes([Head|Tail], Total) :-
+                total_minutes(Tail, TailTotal),
+                Total is Head + TailTotal.
+
+            count_short([], _, 0).
+            count_short([Head|Tail], Limit, Count) :-
+                Head =< Limit,
+                count_short(Tail, Limit, TailCount),
+                Count is TailCount + 1.
+            count_short([Head|Tail], Limit, Count) :-
+                Head > Limit,
+                count_short(Tail, Limit, Count).
+      explanation: |
+        On the stated numeric inputs, =< and > cover all cases without
+        overlap. The counted branch adds one after recursion supplies a
+        number. The skipped branch passes the same Count through to the tail.
+        Repeated values remain separate list positions, so they each count.
+
+  # Source: logic handout pp. 16–19; F23 final Q7 dedup uses not(member(...)).
+  # Pedagogy: mistake-based familiarization plus spaced retrieval of variable binding
+  - title: "Negation After Generation"
+    instructions: |
+      ### Why this matters
+
+      “There is no proof” is different from “find me everything that is not true.” Negation as failure asks the first question. Running it before a variable has a concrete value can silently eliminate every candidate you hoped to find.
+
+      ### 🎯 You will learn to
+
+      - Analyze a negated goal under an explicit closed-world assumption.
+      - Apply a finite generator before checking each candidate with negation.
+
+      ### What `not` Asks
+
+      The course writes `not(Goal)`; the standard spelling `\+ Goal` has the
+      same meaning here. Prolog tries Goal. If Goal succeeds, the negation
+      fails. If the search for Goal finishes without a proof, the negation
+      succeeds. Bindings made while trying Goal do not escape the negation.
+      If Goal never finishes, negation cannot conclude that it failed.
+
+      In this exercise, `blocked/1` is a **complete record for today's playlist**.
+      An absent entry therefore means that track is allowed today. This is a
+      modeling assumption about this database, not evidence about the real world.
+
+      ### Thinking Time
+
+      The starter has three tracks, and only jazz is blocked. Predict whether
+      `allowed(Track)` returns two tracks, returns three tracks, or fails.
+      Run the starter before changing it.
+
+      `not(blocked(Track))` runs while Track is unknown. Finding **any**
+      blocked track is enough to make that goal fail. It does not enumerate
+      the complement of blocked tracks.
+
+      ### Your Task
+
+      Repair `allowed(Track)` so it generates a supplied track first, then
+      checks whether that concrete track is blocked. It must enumerate
+      exactly lofi and ambient, fail for jazz, and fail for missing track names.
+      Preserve the supplied facts.
+
+      Then add `fresh_track(Track, Played)`: Track is allowed and is absent
+      from Played, a finite list of ground track names. The list library's
+      `member(Item, List)` has the meaning you implemented in the first tutorial.
+      Repeated entries in Played must not change which tracks are fresh.
+
+      Try `fresh_track(Track, [lofi, lofi])` and
+      `fresh_track(Track, [])`. Explain which goal binds Track before either
+      negative check runs.
+
+      This is a good stopping point for today. Before taking a break, write
+      one sentence from memory explaining why unbound negation is unsafe for
+      enumerating missing values. Next time, test that explanation before
+      rereading it.
+    default_query: "allowed(Track)"
+    files:
+      - path: "/tutorial/search-05-negation.pl"
+        language: prolog
+        content: |
+          :- use_module(library(lists)).
+
+          track(lofi).
+          track(jazz).
+          track(ambient).
+          blocked(jazz).
+
+          allowed(Track) :-
+              not(blocked(Track)),
+              track(Track).
+
+          % An allowed track that has not appeared in Played.
+          fresh_track(_, _) :- fail.
+    open_file: "/tutorial/search-05-negation.pl"
+    run_file: "/tutorial/search-05-negation.pl"
+    tests:
+      - description: "Ground negative checks enumerate exactly the permitted fresh tracks"
+        command: |
+          assert((await __query("findall(T,allowed(T),Ts), sort(Ts,U), U == [ambient,lofi]")).length > 0, "Generate track candidates before negation; return exactly ambient and lofi.");
+          assert((await __query("findall(T,fresh_track(T,[lofi,lofi]),Ts), sort(Ts,U), U == [ambient]")).length > 0, "Repeated played entries still exclude lofi; jazz remains blocked.");
+          assert((await __query("findall(T,fresh_track(T,[]),Ts), sort(Ts,U), U == [ambient,lofi]")).length > 0, "With no played tracks, both allowed tracks are fresh.");
+          assert((await __query("fresh_track(missing,[])")).length === 0, "A missing track is not a candidate merely because it is unblocked.");
+          assert((await __query("fresh_track(jazz,[])")).length === 0, "A blocked track is never fresh.");
+          assert((await __query("fresh_track(T,[lofi,ambient])")).length === 0, "No candidates remain after every allowed track has been played.");
+        hints:
+          - title: "A Concrete Candidate"
+            text: "Negation checks one possibility. Find a track from the finite track facts before asking whether it is blocked."
+          - title: "An Allowed and Unplayed Track"
+            text: "For fresh_track, first generate an allowed track. Then negate membership of that bound track in the given Played list."
+          - title: "The Goal Dependency"
+            text: "Think `candidate(Track), not(disqualifying_fact(Track))`. Reuse your allowed relation as the candidate generator for the played-list check."
+    quiz:
+      title: "Step 5 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "Given `sold_out(jazz).`, what happens to `not(sold_out(X))` when X is unbound?"
+          options:
+            - "It fails because sold_out(X) has a proof."
+            - "It finds every track other than jazz."
+            - "It succeeds while binding X to jazz."
+          correct_index: 0
+          option_feedback:
+            1: "Negation does not generate a complement set. It tests whether its enclosed goal can succeed with the bindings currently available."
+            2: "Finding a proof makes the negation fail, and bindings from that attempted proof do not become answers to the outer query."
+          explanation: "The fact sold_out(jazz) proves the unbound goal sold_out(X), so not(sold_out(X)) fails immediately."
+        - type: single
+          difficulty: intermediate
+          question: "Recall unification: what happens to `X = lofi, X = jazz`?"
+          options:
+            - "It fails because one X cannot match both atoms."
+            - "It succeeds with jazz replacing the earlier value."
+            - "It returns lofi and jazz as separate answers."
+          correct_index: 0
+          option_feedback:
+            1: "Unification does not overwrite an existing binding. The second goal must agree with the first."
+            2: "Comma requires both goals to hold in the same proof. It does not offer a choice between them."
+          explanation: "Both occurrences name the same variable in this query. Distinct atoms cannot satisfy the two required bindings together."
+    solution:
+      files:
+        - path: "/tutorial/search-05-negation.pl"
+          language: prolog
+          content: |
+            :- use_module(library(lists)).
+
+            track(lofi).
+            track(jazz).
+            track(ambient).
+            blocked(jazz).
+
+            allowed(Track) :-
+                track(Track),
+                not(blocked(Track)).
+
+            fresh_track(Track, Played) :-
+                allowed(Track),
+                not(member(Track, Played)).
+      explanation: |
+        track/1 provides one ground candidate at a time. The blocked check
+        then has a definite question, and backtracking can ask it for the
+        next candidate. fresh_track repeats that generator-then-filter
+        pattern. Its stated mode requires Played to be a ground finite list.
+        This is useful closed-world querying, not unrestricted logical negation.
+
+  # Source: Quiz 4 Q4 (order and duplicate answers); F23 Q7 duplicate removal.
+  # findall/sort/sum_list are explicit support tools for inspecting complete results.
+  # Pedagogy: PRIMM — deliberate contrast between proof sequence and distinct answers
+  - title: "Collected Answers and Duplicates"
+    instructions: |
+      ### Why this matters
+
+      A query can find the same value through several proofs. A report may want every occurrence, every distinct value, or a total. Those are different specifications, and choosing the wrong collection operation quietly changes the result.
+
+      ### 🎯 You will learn to
+
+      - Analyze the difference between a sequence of proofs and a set of values.
+      - Apply collection helpers without accidentally discarding required duplicates.
+
+      Welcome back. Before Run, recall why a negative check should follow a
+      generator and why `is` needs bound numeric inputs.
+
+      ### A Worked Collection
+
+      `findall(Template, Goal, Bag)` runs Goal to exhaustion and collects
+      Template for each proof, in search order. It preserves duplicates.
+      If there are no proofs, it succeeds with `Bag = []`.
+
+      The default query collects every track someone requested. Predict its
+      answer before running: `[lofi, jazz]`, `[lofi, jazz, lofi]`, or failure
+      because lofi appears twice?
+
+      After Run, try these complete queries:
+
+      - `findall(T, request(_, T), Bag), sort(Bag, Unique)`
+      - `sum_list([3, 5, 3], Total)`
+
+      `sort(List, Sorted)` sorts into Prolog's standard term order **and removes
+      duplicates**. On the atoms here, ambient precedes jazz, and jazz precedes
+      lofi. It does not preserve request order. `sum_list(Numbers, Total)`
+      adds a finite list of known numbers; it does not remove duplicates.
+
+      ### Your Task
+
+      Implement `requested_tracks(Tracks)`: collect every **distinct**
+      requested track and return it in the order produced by `sort/2`.
+
+      Also implement `requested_minutes(Person, Total)`: for a known person,
+      sum the durations of **all their requests**, including repeated requests.
+      A person with no requests has total zero. Every request in this database
+      has a matching duration fact.
+
+      Alex requested lofi twice; each request takes three minutes. The total
+      must include both. First collect numeric durations by combining the
+      request and duration goals, then total that list. Parentheses group a
+      conjunction used as findall's Goal: `findall(Value, (Goal1, Goal2), Bag)`.
+
+      Before testing, explain where removing duplicates is required and where
+      it would be a bug. Your checks should include a person with no requests.
+    default_query: "findall(Track, request(_, Track), Tracks)"
+    files:
+      - path: "/tutorial/search-06-collections.pl"
+        language: prolog
+        content: |
+          :- use_module(library(lists)).
+
+          request(alex, lofi).
+          request(blair, jazz).
+          request(alex, lofi).
+          minutes(lofi, 3).
+          minutes(jazz, 5).
+
+          % A sorted list of distinct requested track names.
+          requested_tracks(_) :- fail.
+
+          % Total minutes of all requests by a known person.
+          requested_minutes(_, _) :- fail.
+    open_file: "/tutorial/search-06-collections.pl"
+    run_file: "/tutorial/search-06-collections.pl"
+    tests:
+      - description: "Collections distinguish unique track names from repeated request time"
+        command: |
+          assert((await __query("findall(Ts,requested_tracks(Ts),Rs), sort(Rs,U), U == [[jazz,lofi]]")).length > 0, "Return exactly the distinct requested tracks in sorted order.");
+          assert((await __query("findall(T,requested_minutes(alex,T),Ts), sort(Ts,U), U == [6]")).length > 0, "Alex's two three-minute requests total six, including the repeated request.");
+          assert((await __query("findall(T,requested_minutes(blair,T),Ts), sort(Ts,U), U == [5]")).length > 0, "Blair's one five-minute request totals five.");
+          assert((await __query("findall(T,requested_minutes(casey,T),Ts), sort(Ts,U), U == [0]")).length > 0, "No requests must produce total zero, rather than fail.");
+        hints:
+          - title: "Choose What One Proof Contributes"
+            text: "For the first relation, each request contributes a track name. For the second, a request and its duration fact together contribute one number."
+          - title: "Two Different Final Operations"
+            text: "Use findall in both relations. Sort the names to remove duplicates; sum the durations without sorting away repeated values."
+          - title: "The Collected Numeric Value"
+            text: "The time calculation has the shape `findall(Minutes, (request(...), minutes(...)), Durations), sum_list(Durations, Total)`. Connect both goals through the requested track."
+    quiz:
+      title: "Step 6 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "Two valid requests each have duration 4. What changes if their duration list is sorted with `sort/2` before `sum_list/2`?"
+          options:
+            - "The total becomes 4 because a duplicate is removed."
+            - "The total stays 8 because sorting keeps both entries."
+            - "The query fails because duplicate numbers are invalid."
+          correct_index: 0
+          option_feedback:
+            1: "Prolog's sort/2 also removes duplicates. A sorting operation that preserves duplicates would require a different contract."
+            2: "Duplicate numbers are valid list elements. sort/2 accepts them and keeps one copy of each distinct term."
+          explanation: "sort([4,4], Sorted) gives Sorted = [4]. That is right for distinct values but wrong when both requests must contribute time."
+    solution:
+      files:
+        - path: "/tutorial/search-06-collections.pl"
+          language: prolog
+          content: |
+            :- use_module(library(lists)).
+
+            request(alex, lofi).
+            request(blair, jazz).
+            request(alex, lofi).
+            minutes(lofi, 3).
+            minutes(jazz, 5).
+
+            requested_tracks(Tracks) :-
+                findall(Track, request(_, Track), Bag),
+                sort(Bag, Tracks).
+
+            requested_minutes(Person, Total) :-
+                findall(Minutes,
+                        (request(Person, Track), minutes(Track, Minutes)),
+                        Durations),
+                sum_list(Durations, Total).
+      explanation: |
+        The name list is a set-like report, so sorting and removing duplicates
+        matches its contract. Durations represent separate requests, so each
+        proof must remain in the numeric list. findall returns [] for Casey,
+        and the sum of an empty list is zero. The known Person argument is
+        a mode precondition; this predicate is not a grouping operation that
+        enumerates one total per unknown person.
+
+  # Source: Homework LOGIC8 B; [Final] F24 V1 Q7 A–B pp. 23–24.
+  # Pedagogy: worked example with fading — explicit invariant before independent helper
+  - title: "Reversal With an Accumulator"
+    instructions: |
+      ### Why this matters
+
+      A direct recursive reverse repeatedly appends to the end of a list. An accumulator changes the smaller problem: carry the reversed prefix with you, so each recursive step only adds a head. The key is giving that extra argument a precise meaning.
+
+      ### 🎯 You will learn to
+
+      - Analyze the pending goals of a direct recursive reverse.
+      - Create a reversal helper with a stated accumulator invariant.
+
+      ### A Worked Reverse
+
+      The supplied `reverse_slow(Input, Output)` reverses the tail, then appends
+      the original head at the end. Its two body goals have a dependency:
+      `ReversedTail` must become a finite list before append walks it.
+
+      Thinking time: for `reverse_slow([lofi, jazz], [jazz, ambient])`, will
+      Prolog return false, overwrite ambient, or accept the matching jazz
+      prefix? Predict, then Run. Matching only part of the proposed output
+      is not enough to prove the entire relation.
+
+      On paper, write the two body goals after the outer head unifies.
+      Do not treat the second goal as already successful just because the
+      first one succeeds.
+
+      ### The Accumulator's Meaning
+
+      In `reverse_into(Remaining, Accumulator, Result)`, the intended Result
+      is **reverse(Remaining) followed by Accumulator**. The accumulator
+      stores the prefix already processed, in reverse order.
+
+      For instance, `reverse_into([jazz], [lofi], Result)` should relate
+      Result to `[jazz, lofi]`. Moving jazz from Remaining onto the front
+      of Accumulator leaves no work and an accumulator `[jazz, lofi]`.
+      Notice that the accumulator is a newly related list, not mutated storage.
+
+      ### Your Task
+
+      Implement `reverse_into/3` for a finite ground Remaining list and a
+      finite ground Accumulator list. When Remaining is empty, the accumulated
+      list is the result. Otherwise, move one head and recurse on the tail.
+
+      Then implement `reverse_fast(Input, Output)` by starting that helper
+      with an empty accumulator. Both versions must preserve all elements,
+      including duplicates. We check the helper's public relationship with
+      nonempty accumulators as well as the wrapper's outputs.
+
+      Try head/tail construction when deriving the helper, then compare
+      your approach with the solution after the checks pass. The checks
+      verify the result relationship; they do not measure efficiency.
+      For a length-n input, the supplied reverse walks successively longer
+      tails during append (quadratic list traversal), while one-head-at-a-time
+      accumulation takes linear list traversal in this forward mode.
+      To evaluate your algorithm, name the list traversal performed by each
+      recursive call; a passing result check alone cannot establish that cost.
+
+      Verify empty, singleton, and repeated-element inputs. Explain the
+      invariant after moving the first two heads of `[lofi, jazz, ambient]`.
+    default_query: "reverse_slow([lofi, jazz], [jazz, ambient])"
+    files:
+      - path: "/tutorial/search-07-reverse.pl"
+        language: prolog
+        content: |
+          :- use_module(library(lists)).
+
+          reverse_slow([], []).
+          reverse_slow([Head|Tail], Output) :-
+              reverse_slow(Tail, ReversedTail),
+              append(ReversedTail, [Head], Output).
+
+          % Result is reverse(Remaining) followed by Accumulator.
+          reverse_into(_, _, _) :- fail.
+
+          reverse_fast(_, _) :- fail.
+    open_file: "/tutorial/search-07-reverse.pl"
+    run_file: "/tutorial/search-07-reverse.pl"
+    tests:
+      - description: "The reverse helper obeys its invariant and the wrapper preserves every element"
+        command: |
+          assert((await __query("findall(R,reverse_into([a,b],[tail],R),Rs), sort(Rs,U), U == [[b,a,tail]]")).length > 0, "A nonempty accumulator belongs after the reversed remaining list.");
+          assert((await __query("findall(R,reverse_into([],[tail],R),Rs), sort(Rs,U), U == [[tail]]")).length > 0, "No remaining elements means the accumulator itself is the result.");
+          assert((await __query("findall(R,reverse_fast([lofi,jazz,lofi,ambient],R),Rs), sort(Rs,U), U == [[ambient,lofi,jazz,lofi]]")).length > 0, "Reverse every position without dropping repeated elements.");
+          assert((await __query("findall(R,reverse_fast([],R),Rs), sort(Rs,U), U == [[]]")).length > 0, "The reverse of an empty list is empty.");
+          assert((await __query("findall(R,reverse_fast([lofi],R),Rs), sort(Rs,U), U == [[lofi]]")).length > 0, "The reverse of a singleton is that singleton.");
+          assert((await __query("reverse_fast([lofi,jazz],[jazz,ambient])")).length === 0, "An incorrect proposed output must fail rather than be overwritten.");
+        hints:
+          - title: "No Remaining Work"
+            text: "Use the helper's meaning with Remaining = []. Reversing nothing contributes nothing before the accumulator."
+          - title: "Move One Head"
+            text: "Recurse on the remaining tail, with the current head placed at the front of the accumulator. Keep the same final Result argument."
+          - title: "The Wrapper's Starting State"
+            text: "Your helper needs an empty-input clause and a nonempty-input clause. The wrapper calls it with Input, an empty accumulator, and Output."
+    quiz:
+      title: "Step 7 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: advanced
+          question: "The invariant is Result = reverse(Remaining) followed by Accumulator. What is `reverse_into([c], [b,a], Result)`?"
+          options:
+            - "`Result = [c,b,a]`"
+            - "`Result = [a,b,c]`"
+            - "`Result = [b,a,c]`"
+          correct_index: 0
+          option_feedback:
+            1: "The accumulator is already reversed. Reversing it again would undo the work already completed."
+            2: "The reversed remaining list goes before the accumulator, rather than after it."
+          explanation: "Moving c onto the accumulator yields [c,b,a]. Remaining is then empty, so that accumulated list is the result."
+    solution:
+      files:
+        - path: "/tutorial/search-07-reverse.pl"
+          language: prolog
+          content: |
+            :- use_module(library(lists)).
+
+            reverse_slow([], []).
+            reverse_slow([Head|Tail], Output) :-
+                reverse_slow(Tail, ReversedTail),
+                append(ReversedTail, [Head], Output).
+
+            reverse_into([], Accumulator, Accumulator).
+            reverse_into([Head|Tail], Accumulator, Result) :-
+                reverse_into(Tail, [Head|Accumulator], Result).
+
+            reverse_fast(Input, Output) :-
+                reverse_into(Input, [], Output).
+      explanation: |
+        The invariant fixes both the base case and the update. When a head
+        moves to the accumulator, reversing the remaining tail and then
+        attaching [Head|Accumulator] gives the same final Result. Every step
+        reduces the known Remaining list, so the forward mode terminates.
+        Do not infer that every query with unknown input lists must terminate.
+
+  # Source: Homework LOGIC8 C; [Final] F24 V1 Q7 C p. 25 (new track examples).
+  # Pedagogy: faded scaffolding — independent transfer with boundary partitions
+  - title: "Interleaving Unequal Lists"
+    instructions: |
+      ### Why this matters
+
+      Two friends contribute tracks, and the playlist alternates between them. Equal-length examples hide the most common bug: losing the rest when one friend has more tracks. A complete recursive specification accounts for every way the inputs can run out.
+
+      ### 🎯 You will learn to
+
+      - Create a two-list recursive relation that preserves both input orders.
+      - Analyze empty and unequal-length cases before choosing base clauses.
+
+      ### Thinking Time
+
+      Predict `interleave([lofi, jazz], [ambient], Mix)`. Should Mix be
+      `[lofi, ambient]`, `[lofi, ambient, jazz]`, or `[lofi, jazz, ambient]`?
+      The starter handles empty inputs but is missing the recursive case.
+      Run it now to see the distinction between a wrong output and no proof.
+
+      ### Your Task
+
+      Implement `interleave(First, Second, Mix)` for two finite ground lists.
+      Take one element from First, then one from Second, and repeat. When
+      either list is exhausted, retain **all** the remaining elements from
+      the other list in their existing order.
+
+      The empty-list cases are supplied. Write the nonempty case from your
+      own argument: which two heads appear next in Mix, and what relation
+      connects the two tails to the rest of Mix?
+
+      The query with two empty lists can have two identical proofs under the
+      supplied clauses. That is acceptable here: the contract specifies the
+      resulting list, not a unique proof. Do not add a cut merely to hide a
+      duplicate proof.
+
+      Test these partitions before pressing Test My Work:
+
+      - Both lists empty; only First empty; only Second empty.
+      - Equal lengths; First longer; Second longer.
+      - Repeated values, which must remain repeated positions.
+
+      Finally query with a wrong ground Mix to check that the predicate
+      verifies a relationship rather than accepting any proposed list.
+      Explain how this base-case reasoning differs from `remove_one`:
+      why is “return the remaining list” correct here, while “return the
+      original list without any deletion” violated the earlier task?
+    default_query: "interleave([lofi, jazz], [ambient], Mix)"
+    files:
+      - path: "/tutorial/search-08-interleave.pl"
+        language: prolog
+        content: |
+          interleave([], Second, Second).
+          interleave(First, [], First).
+          % Add the case in which both lists have a head and a tail.
+    open_file: "/tutorial/search-08-interleave.pl"
+    run_file: "/tutorial/search-08-interleave.pl"
+    tests:
+      - description: "Interleaving keeps every position in all empty and unequal-length cases"
+        command: |
+          assert((await __query("findall(R,interleave([a,b],[1,2],R),Rs), sort(Rs,U), U == [[a,1,b,2]]")).length > 0, "Alternate starting with the first list.");
+          assert((await __query("findall(R,interleave([a,b,c],[1],R),Rs), sort(Rs,U), U == [[a,1,b,c]]")).length > 0, "Keep the entire remainder when the first list is longer.");
+          assert((await __query("findall(R,interleave([a],[1,2,3],R),Rs), sort(Rs,U), U == [[a,1,2,3]]")).length > 0, "Keep the entire remainder when the second list is longer.");
+          assert((await __query("findall(R,interleave([],[a,b],R),Rs), sort(Rs,U), U == [[a,b]]")).length > 0, "An empty first list leaves the second unchanged.");
+          assert((await __query("findall(R,interleave([a,b],[],R),Rs), sort(Rs,U), U == [[a,b]]")).length > 0, "An empty second list leaves the first unchanged.");
+          assert((await __query("findall(R,interleave([],[],R),Rs), sort(Rs,U), U == [[]]")).length > 0, "Two empty lists have the empty result; duplicate proofs are allowed.");
+          assert((await __query("findall(R,interleave([a,a],[a],R),Rs), sort(Rs,U), U == [[a,a,a]]")).length > 0, "Equal values are separate positions and must not be deduplicated.");
+        hints:
+          - title: "Two Heads Before the Recursive Result"
+            text: "When both inputs are nonempty, the next two output elements are already determined by the specification."
+          - title: "Two Smaller Inputs"
+            text: "Remove one head from each input for the recursive call. Its result is the tail after the two newly placed output heads."
+          - title: "The Three List Patterns"
+            text: "The nonempty head uses `[A|As]`, `[B|Bs]`, and `[A,B|Rest]`. The body connects the two input tails to Rest with the same relation."
+    quiz:
+      title: "Step 8 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "A broken interleave returns [] whenever either input becomes empty. Which check exposes lost elements that an equal-length check may miss?"
+          options:
+            - "`interleave([a,b], [1], [a,1,b])`"
+            - "`interleave([a], [1], [a,1])`"
+            - "`interleave([], [], [])`"
+          correct_index: 0
+          option_feedback:
+            1: "Both inputs become empty together, so there is no leftover element for the broken base case to discard."
+            2: "No input elements exist here. Returning [] happens to meet this case's specification."
+          explanation: "With unequal lengths, one input still contains b when the other empties. The correct relation must retain b."
+        - type: single
+          difficulty: intermediate
+          question: "Recall collection semantics: two different proofs both yield Mix = [a,1]. What does `findall(Mix, Goal, Bag)` collect?"
+          options:
+            - "`Bag = [[a,1],[a,1]]`"
+            - "`Bag = [[a,1]]`"
+            - "`Bag = [a,1,a,1]`"
+          correct_index: 0
+          option_feedback:
+            1: "findall preserves one template value per proof; it does not remove duplicate results."
+            2: "Each template value is itself a list. Collecting those values does not flatten their contents."
+          explanation: "A bag records the answer from each successful proof. sort/2 can remove duplicate lists later if the task calls for distinct result values."
+    solution:
+      files:
+        - path: "/tutorial/search-08-interleave.pl"
+          language: prolog
+          content: |
+            interleave([], Second, Second).
+            interleave(First, [], First).
+            interleave([A|As], [B|Bs], [A,B|Rest]) :-
+                interleave(As, Bs, Rest).
+      explanation: |
+        The nonempty case contributes exactly one element from each input,
+        preserving each input's order. Either empty-list case then retains
+        the whole remaining list. Both empty cases can prove the all-empty
+        query, giving duplicate proofs of the same value; the result-list
+        contract permits that. A different arrangement of disjoint base cases
+        is also correct.
+
+  # Source: logic handout pp. 20–44 (all consistent combinations/goal order);
+  # Homework LOGIC5–8 and F24 Q7 provide the component skills.
+  # A new finite scheduling context checks transfer rather than copying exam answers.
+  # Pedagogy: PRIMM — independent Make, mixed retrieval, and optional operational investigation
+  - title: "A Finite Playlist Search"
+    instructions: |
+      ### Why this matters
+
+      A small search problem lets you combine the ideas: generate a candidate, bind its parts, and check constraints. Prolog can find every valid arrangement if your generator covers the possibilities and your tests discard exactly the invalid ones.
+
+      ### 🎯 You will learn to
+
+      - Create a finite generator followed by constraints on ground candidates.
+      - Evaluate a search by its complete answer set, including impossible cases.
+
+      ### One New Generator
+
+      The list library provides `permutation(Items, Order)`. With a known
+      finite Items list, it generates arrangements using every input position
+      exactly once. Predict whether the default query returns only the
+      original list, all six orders, or lists with repeated tracks. Then Run.
+
+      This final task uses **three distinct supplied tracks**, so there are
+      exactly six candidate orders. Repeated input values could lead to
+      duplicate arrangements, just as repeated facts lead to duplicate proofs.
+      We keep the search small enough to inspect every candidate by hand.
+
+      ### Your Task
+
+      Create `playlist(Tracks, BlockedFirst, MaxOpeningMinutes, Order)`.
+      Tracks is a known list of exactly three distinct tracks from the supplied
+      duration facts. BlockedFirst is a known track name; MaxOpeningMinutes
+      is a known nonnegative integer. Order is valid exactly when:
+
+      1. It is a permutation of Tracks: every supplied track appears once.
+      2. Its first track differs from BlockedFirst.
+      3. Its first two tracks together take **at most** MaxOpeningMinutes.
+
+      We will test different track lists, blocked-first choices, and limits;
+      do not hard-code a single answer. The contract is restricted to these
+      stated inputs. You do not need to validate malformed or unknown tracks.
+
+      Generate an order before testing the constraints. Use a list pattern
+      to name its first two tracks. Look up both durations before adding
+      them. For the first-track check, ground `\=` or safe `not(First = ... )`
+      can express the required distinction.
+
+      Thinking time: for `[lofi,jazz,ambient]`, with lofi blocked from first
+      position and a limit of five, enumerate the six candidates on paper.
+      Mark the ones that survive **each** rule. Then run your relation and
+      compare its complete answer set to your prediction.
+
+      Change the limit to four, then seven. Explain which previously
+      rejected candidates become valid and why. A result containing one
+      good playlist is insufficient if another valid playlist is missing.
+      A search is **sound** when every returned answer is valid, and
+      **complete** when every valid answer is found. Both matter here.
+
+      ### Optional Exploration: A Cut's Boundary
+
+      The exercises are complete without a cut. If you want to investigate
+      search control, add the following separate experiment after your code:
+
+      ```prolog
+      first_choice(Items, X) :- member(X, Items), !.
+      pair_after_cut(X, Y) :- first_choice([a,b], X), member(Y, [1,2]).
+      ```
+
+      `!` is a **cut**. When reached, it commits the current invocation to
+      choices made since entering that predicate, including earlier goals
+      in its clause; it also removes that invocation's other clause choices.
+      It does not cancel alternatives in the caller or in goals to its right.
+
+      Predict `pair_after_cut(X,Y)` before running: only `(a,1)`, both `(a,1)`
+      and `(a,2)`, or all four pairs? Explain why the second member call can
+      still backtrack. A cut inside playlist would risk throwing away valid
+      arrangements. It is an operational choice, not a proof that those
+      discarded arrangements are false.
+
+      ### A Spaced Return
+
+      Tomorrow, hide the solutions and rebuild either the reverse helper or
+      interleave from its contract. Then change this search so the first
+      track must precede a specified track elsewhere in the order. Before
+      writing code, decide whether you need a generator, an arithmetic check,
+      a list relation, or a combination. That decision is the skill to retain.
+    default_query: "permutation([lofi, jazz, ambient], Order)"
+    files:
+      - path: "/tutorial/search-09-playlist.pl"
+        language: prolog
+        content: |
+          :- use_module(library(lists)).
+
+          minutes(lofi, 3).
+          minutes(jazz, 5).
+          minutes(ambient, 2).
+          minutes(funk, 4).
+
+          % Tracks: exactly three distinct supplied tracks, already known.
+          % Order: every permutation satisfying both opening constraints.
+          playlist(_, _, _, _) :- fail.
+    open_file: "/tutorial/search-09-playlist.pl"
+    run_file: "/tutorial/search-09-playlist.pl"
+    tests:
+      - description: "The search returns every and only valid arrangement across changed constraints"
+        command: |
+          assert((await __query("findall(O,playlist([lofi,jazz,ambient],lofi,5,O),Os), sort(Os,U), U == [[ambient,lofi,jazz]]")).length > 0, "Only ambient followed by lofi meets both constraints at limit five.");
+          assert((await __query("findall(O,playlist([lofi,jazz,ambient],lofi,7,O),Os), sort(Os,U), sort([[ambient,lofi,jazz],[ambient,jazz,lofi],[jazz,ambient,lofi]],E), U == E")).length > 0, "At limit seven, retain all three valid orders and no others.");
+          assert((await __query("playlist([lofi,jazz,ambient],lofi,4,O)")).length === 0, "No permitted opening pair fits into four minutes.");
+          assert((await __query("findall(O,playlist([lofi,jazz,ambient],jazz,5,O),Os), sort(Os,U), sort([[ambient,lofi,jazz],[lofi,ambient,jazz]],E), U == E")).length > 0, "Changing the blocked first track changes which orders are allowed.");
+          assert((await __query("findall(O,playlist([funk,lofi,ambient],funk,6,O),Os), sort(Os,U), sort([[ambient,lofi,funk],[ambient,funk,lofi],[lofi,ambient,funk]],E), U == E")).length > 0, "Use the given track list and durations; do not hard-code the first scenario.");
+        hints:
+          - title: "An Arrangement Before a Check"
+            text: "Separate candidate generation from rejection. A ground permutation gives the later pattern, inequality, and duration lookups concrete values."
+          - title: "The Opening Pair"
+            text: "Unify the generated order with a list pattern naming its first two tracks. Reject a blocked first track, then look up both durations and compare their sum with the limit."
+          - title: "The Constraint Chain"
+            text: "The body has the shape: generate Order, extract two heads, compare the first track, look up two numbers, check their sum. All those goals belong to the same successful proof."
+    quiz:
+      title: "Step 9 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: advanced
+          question: "A search returns one valid arrangement but omits two others. Which property of the requested relation is missing?"
+          options:
+            - "Completeness: every valid arrangement is found."
+            - "Soundness: each returned arrangement is valid."
+            - "Groundness: each arrangement contains no variables."
+          correct_index: 0
+          option_feedback:
+            1: "The given result is valid, so this observation does not show an invalid returned answer. The gap is in answers that were never returned."
+            2: "The observation concerns omitted results, rather than variables inside an answer. A ground result can still be part of an incomplete search."
+          explanation: "For this finite task, success means both soundness (no invalid results) and completeness (no missing valid results). Compare the complete result set to the contract."
+        - type: single
+          difficulty: intermediate
+          question: "Recall arithmetic: which ordering makes a duration check usable when Track is initially unknown and Limit is known?"
+          options:
+            - "`minutes(Track, M), M =< Limit`"
+            - "`M =< Limit, minutes(Track, M)`"
+            - "`not(minutes(Track, M)), M =< Limit`"
+          correct_index: 0
+          option_feedback:
+            1: "The comparison runs before M has a numeric value. Prolog's arithmetic comparisons do not solve for it."
+            2: "Negation does not generate a track or export a numeric duration. The positive lookup supplies the comparison's inputs."
+          explanation: "The duration fact is a generator when Track is unknown. Its successful binding gives the comparison a numeric M."
+    solution:
+      files:
+        - path: "/tutorial/search-09-playlist.pl"
+          language: prolog
+          content: |
+            :- use_module(library(lists)).
+
+            minutes(lofi, 3).
+            minutes(jazz, 5).
+            minutes(ambient, 2).
+            minutes(funk, 4).
+
+            playlist(Tracks, BlockedFirst, MaxOpeningMinutes, Order) :-
+                permutation(Tracks, Order),
+                Order = [First,Second|_],
+                First \= BlockedFirst,
+                minutes(First, FirstMinutes),
+                minutes(Second, SecondMinutes),
+                FirstMinutes + SecondMinutes =< MaxOpeningMinutes.
+      explanation: |
+        permutation supplies the finite candidate space. Every later goal
+        filters one concrete candidate: the pattern extracts its opening
+        tracks, the ground inequality excludes the blocked first track,
+        and the positive lookups bind the numeric inputs to the comparison.
+        The comparison evaluates both expressions, so a separate is goal is
+        unnecessary here. An is-based intermediate total is also correct.
+
+        At limit five with lofi blocked first, only [ambient,lofi,jazz]
+        survives. At limit seven, [ambient,jazz,lofi] and [jazz,ambient,lofi]
+        also survive. The generator continues backtracking after each answer,
+        so all valid candidates remain reachable.
+
+        In the optional cut experiment, first_choice commits X to a. The
+        caller's later member goal still yields Y = 1 and Y = 2. The cut's
+        boundary is its predicate invocation; it does not globally stop search.

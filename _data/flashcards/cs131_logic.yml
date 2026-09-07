@@ -1,0 +1,113 @@
+title: "CS 131: Logic Programming Flashcards"
+description: "Explain and construct small relations, trace proof search, and check assumptions behind negation and list recursion."
+active: true
+cards:
+  # Sources: logic_palooza_v6.pptx slides 6–7; Homework Problems (Public).docx LOGIC2 B.
+  - id: relation-contract-explanation
+    bloom: understand
+    difficulty: basic
+    question: "A team stores `depends(build, compile)`. What must its documentation say before someone can safely write rules using depends?"
+    answer: "It must define the meaning of each argument position, such as: depends(A, B) means A requires B. Prolog does not infer this direction from the predicate's English name."
+    explanation: "Self-check: distinguish the ordered relation the team intends from Prolog's structural matching. Swapping arguments generally asks a different question."
+
+  # Sources: logic_palooza_v6.pptx slides 7–8; Homework Problems (Public).docx LOGIC3; [Final] S23 V1 (Public).pdf p11 question 5.
+  - id: construct-shared-resource-rule
+    bloom: create
+    difficulty: advanced
+    question: "Write a Prolog rule `shares_resource(A, B)` using `needs(Task, Resource)`. It should hold when the two tasks need at least one common resource. Self-pairs are allowed. Explain what enforces a common resource."
+    answer: |
+      One solution is:
+
+      ```prolog
+      shares_resource(A, B) :- needs(A, R), needs(B, R).
+      ```
+
+      The same R appears in both subgoals, so one successful proof must use the same resource for both tasks.
+    explanation: "Self-check: the two needs calls must share their resource variable. Using two unrelated variables would merely show that both tasks need something; multiple shared resources may produce duplicate task pairs."
+
+  # Sources: logic_palooza_v6.pptx slides 21–30; Homework Problems (Public).docx LOGIC4 A.6–A.10.
+  - id: explain-repeated-variable-failure
+    bloom: analyze
+    difficulty: intermediate
+    question: "Explain why `record(X, tag(X)) = record(green, tag(blue))` fails. How would replacing the inner X with a fresh Y change the outcome?"
+    answer: "The first arguments bind X to green, so tag(X) becomes tag(green), which cannot match tag(blue). With a fresh Y inside tag, unification succeeds with X = green and Y = blue."
+    explanation: "Self-check: mention both propagation of the first binding and consistency of repeated occurrences. A fresh variable removes an equality constraint; it is not a rename of the whole original X."
+
+  # Sources: logic_palooza_v6.pptx slides 18–20, 30–31; [Final] F22 (Public).pdf p11 question 21.
+  - id: explain-unification-resolution
+    bloom: understand
+    difficulty: basic
+    question: "Why can a goal successfully unify with a rule head but still have no solution through that rule? Distinguish unification from resolution."
+    answer: "Unification only finds a consistent match between the goal and the rule head. Resolution must also prove every body subgoal using the resulting bindings; a body subgoal may fail or its search may not terminate."
+    explanation: "Self-check: a local match identifies a candidate proof step, not a complete proof. Resolution coordinates further matches and backtracking."
+
+  # Sources: logic_palooza_v6.pptx slides 14–19, 31; CS131 Fall 25 Quiz 4 (with solutions).docx Problem 4.
+  - id: trace-conjunction-backtracking
+    bloom: apply
+    difficulty: intermediate
+    question: |
+      Predict all bindings for `match(X)` in order, and explain why one candidate is skipped.
+
+      ```prolog
+      candidate(ivy). candidate(omar). candidate(zoe).
+      approved(omar). approved(zoe).
+      match(X) :- candidate(X), approved(X).
+      ```
+    answer: "X = omar, then X = zoe. The ivy candidate fails approved(ivy), so Prolog backtracks, undoes that candidate binding, and tries the next candidate."
+    explanation: "Self-check: each answer must satisfy both goals with the same X. The order comes from searching candidate facts before moving to their approval checks."
+
+  # Sources: logic_palooza_v6.pptx slides 11–12; [Final] F23 (Public).pdf p24 question 8c.
+  - id: negation-data-completeness
+    bloom: evaluate
+    difficulty: advanced
+    question: "A finite database has no `unpaid(jo)` fact or rule proving it. Why can `not(unpaid(jo))` succeed without establishing that Jo has paid? State an assumption that would justify using this result."
+    answer: "Negation succeeds because the search for unpaid(jo) fails. Missing evidence could instead be an incomplete record. Using this to conclude paid requires a complete, current unpaid relation and a domain policy in which the alternatives really are paid or unpaid."
+    explanation: "Self-check: separate failure to prove a database predicate from knowledge about the world. Negation as failure also depends on the inner search terminating."
+
+  # Sources: logic_palooza_v6.pptx slides 8–9, 32; [Final] S23 V1 (Public).pdf p11 question 5.
+  - id: repair-path-search
+    bloom: create
+    difficulty: expert
+    question: "For a finite directed graph with no cycles, write `reachable(A, B)` using `edge(A, B)`. It should find paths of at least one edge from a given A. Include a base clause and explain how your recursive subgoal order makes progress."
+    answer: |
+      One solution is:
+
+      ```prolog
+      reachable(A, B) :- edge(A, B).
+      reachable(A, B) :- edge(A, Next), reachable(Next, B).
+      ```
+
+      The base clause finds direct edges. The recursive clause chooses an actual outgoing edge before searching from its endpoint.
+    explanation: "Self-check: direct and longer paths must work, the recursive call must advance through an edge, and the termination argument must use the stated finite acyclic graph. On cyclic graphs, this version can revisit nodes indefinitely."
+
+  # Sources: logic_palooza_v6.pptx slides 34–38, 47; Homework Problems (Public).docx LOGIC7 A.2.
+  - id: generate-list-prefix-splits
+    bloom: apply
+    difficulty: intermediate
+    question: "Without treating append as a one-directional function, give every pair of lists P and S satisfying `append(P, S, [sun, moon])`."
+    answer: "P = [], S = [sun, moon]; P = [sun], S = [moon]; P = [sun, moon], S = []."
+    explanation: "Self-check: include both empty-list boundaries, preserve element order, and verify that concatenating each pair reconstructs the same whole list."
+
+  # Sources: logic_palooza_v6.pptx slides 38–46; Homework Problems (Public).docx LOGIC7–8; [Final] F23 (Public).pdf p22 question 8a.
+  - id: construct-double-elements
+    bloom: create
+    difficulty: advanced
+    question: "Write `double_items(Input, Output)` for finite ground lists. Each input element should appear twice consecutively in the output, in the original order. Give the empty-list case and one recursive clause."
+    answer: |
+      One solution is:
+
+      ```prolog
+      double_items([], []).
+      double_items([H|T], [H,H|R]) :- double_items(T, R).
+      ```
+
+      For example, double_items([red, blue], Out) yields Out = [red, red, blue, blue].
+    explanation: "Self-check: the empty input produces [], the recursive call consumes the input tail, and exactly two copies of the head precede the recursively produced tail. A nested [H,H] element would produce a different shape."
+
+  # Sources: logic_palooza_v6.pptx slides 39–46; [Final] F23 (Public).pdf pp22–24 question 8; CS131 Fall 25 Quiz 4 (with solutions).docx Problem 5.
+  - id: list-filter-counterexample
+    bloom: analyze
+    difficulty: advanced
+    question: "A removal predicate has one rule that drops a matching head and another that always keeps the head before recurring. Give the smallest ground input that reveals why the keep rule needs a condition when the promise is to remove every target occurrence."
+    answer: "Use target a and input [a]. The drop rule can produce [], but backtracking into the unconditional keep rule can also produce [a]. For ground input, allow keeping the head only when it differs from the target."
+    explanation: "Self-check: request all answers, not just the first successful one. The counterexample must expose an incorrect additional proof, showing why testing only the first answer can hide a relational bug."

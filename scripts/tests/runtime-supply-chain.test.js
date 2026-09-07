@@ -241,6 +241,17 @@ test('cross-origin page scripts are version-pinned and carry SRI metadata', () =
     'the reviewed WebContainer snapshot must not regain unchecked relative imports');
 });
 
+test('Prolog loads its unchanged reviewed interpreter and lists library locally', () => {
+  const versionDirectory = 'js/vendor/tau-prolog/0.3.4';
+  const checksums = verifyChecksumManifest(versionDirectory);
+  assert.equal(checksums.get('core.js'), '696c4117abffb1d11ac56f17727ee5790785ece21e8da66573449b016d8016a5');
+  assert.equal(checksums.get('lists.js'), '6268ac8c67b2f5c20134a8b6717e63db80aef17ba32e851107cbc8e5eb8adf42');
+  assert.match(read(versionDirectory + '/LICENSE'), /BSD 3-Clause License/);
+  const worker = read('js/prolog-worker.js');
+  assert.match(worker, /importScripts\('\/js\/vendor\/tau-prolog\/0\.3\.4\/core\.js'\)/);
+  assert.match(worker, /importScripts\('\/js\/vendor\/tau-prolog\/0\.3\.4\/lists\.js'\)/);
+});
+
 test('Monaco loads only from its complete reviewed local AMD runtime', () => {
   const versionDirectory = 'js/vendor/monaco-editor/0.44.0';
   const checksums = verifyChecksumManifest(versionDirectory);

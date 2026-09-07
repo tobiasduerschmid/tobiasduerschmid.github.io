@@ -64,6 +64,10 @@
   description: The processor that executes machine instructions. CPU speed and workload shape performance for compute-heavy programs.
   related: [OS, RAM]
 
+- term: cons
+  definition: Construct a list cell
+  description: A functional-programming operation that builds a list from one head element and an existing tail list. In Haskell, the colon constructor performs this operation, and a matching pattern separates the head from the tail.
+
 - term: CRUD
   definition: Create, Read, Update, Delete
   description: The four basic operations on persistent storage. Most data-driven applications expose some form of CRUD interface for the entities they manage.
@@ -308,6 +312,10 @@
   definition: Pull Request
   description: A request to merge a branch of code into another branch — usually a long-lived integration branch like main or master. Pull requests are the unit of code review on GitHub, GitLab, and similar platforms.
   related: [CI, CD]
+
+- term: Prolog
+  definition: Programming in logic
+  description: A logic programming language in which facts and rules describe relations. Queries use unification and backtracking to search for proofs and discover variable bindings.
 
 - term: PVM
   definition: Python Virtual Machine

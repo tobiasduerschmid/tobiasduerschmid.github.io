@@ -1,0 +1,89 @@
+title: "CS 131: Types, Scope, and Memory"
+description: "Explain guarantees and build counterexamples about types, bindings, and lifetime."
+active: true
+# Assessment-grounded companion to the building-block overview in intro slide 23.
+cards:
+  # Sources: Homework Problems, TYPING4, TYPING7.
+  - id: annotation-versus-checking
+    difficulty: basic
+    bloom: understand
+    question: "Why does the absence of a written type annotation fail to prove that a variable is dynamically typed?"
+    answer: "A compiler may infer the type from the initializer and later uses, then reject incompatible operations before execution. Type annotation describes how a type is supplied; static versus dynamic checking concerns when and how constraints are enforced."
+
+  # Sources: Homework Problems, TYPING8–9; Quiz 2 solutions, Q1(c), Q2(c–f).
+  - id: conversion-precision-range
+    difficulty: intermediate
+    bloom: apply
+    question: "An integer type stores -5 through 5; another type stores half-integers from 0 through 4.5. Give one value that cannot be preserved in each conversion direction."
+    answer: "The integer value -1 cannot be represented by the nonnegative half-integer type. The half-integer value 0.5 cannot be represented by the integer type. Both conversions can lose information or fail, despite the second type supporting fractional values."
+
+  # Sources: Homework Problems, TYPING2–3.
+  - id: structural-nominal-contracts
+    difficulty: intermediate
+    bloom: understand
+    question: "Two independently declared record types have the same fields. Explain why a structural type system might accept substitution while a nominal type system might reject it."
+    answer: "Structural compatibility compares the required fields and their types. Nominal compatibility depends on declaration identity or an explicitly established relationship. Matching field layout alone need not establish that relationship."
+
+  # Sources: Homework Problems, TYPING6; Quiz 2 solutions, Q2(d).
+  - id: limits-of-compile-success
+    difficulty: advanced
+    bloom: evaluate
+    question: "A statically checked module receives external data through an unchecked boundary. Why is 'the module compiles' insufficient evidence that using the data is safe?"
+    answer: "The checker may trust an annotation or an unchecked value without inspecting the actual external input. The boundary needs validation or another enforced guarantee before the module can rely on its expected structure. Static checks are useful within the assumptions they establish."
+
+  # Sources: Homework Problems, DATA1; Quiz 2 solutions, Q3.
+  - id: lexical-dynamic-distinction
+    difficulty: basic
+    bloom: understand
+    question: "A function reads a name it does not define locally. What environment determines that name under lexical scoping, and under dynamic scoping?"
+    answer: "Lexical scoping follows where the function was defined and its enclosing environments. Dynamic scoping searches the active calling context for the most recent visible binding, following that language's rules. The caller and the defining environment can differ."
+
+  # Sources: Homework Problems, TYPING10; F24 midterm Q5 pp. 9–12.
+  - id: design-lexical-environments
+    difficulty: expert
+    bloom: create
+    question: "Propose an environment representation for a lexically scoped interpreter that supports nested functions and block shadowing without exposing unrelated caller locals. Describe lookup in two or three sentences."
+    answer: "Use an environment containing its bindings and a link to its lexical parent. A function retains the environment where it was defined; a call creates a local environment linked to that retained environment, and nested blocks link to their enclosing block. Lookup checks local bindings, then follows lexical-parent links rather than the caller-frame stack."
+    explanation: "Self-check: a caller-only local must stay hidden, inner declarations must shadow outer ones, and a closure must retain the defining environment it needs. Equivalent representations are valid if they preserve all three properties."
+
+  # Sources: Homework Problems, DATA1; Quiz 2 solutions, Q2(b).
+  - id: lifetime-outlasts-visibility
+    difficulty: intermediate
+    bloom: analyze
+    question: "Give an example of storage remaining alive while its name is outside the current lexical scope. Explain which concept concerns visibility and which concerns existence."
+    answer: "While a global function runs, its caller's local variable may remain stored for the caller's eventual return but cannot be named inside the callee. Scope concerns where the name resolves; lifetime concerns how long its storage exists. A captured binding surviving its creating call is another valid example."
+
+  # Sources: Homework Problems, DATA4–5.
+  - id: demand-and-recomputation
+    difficulty: intermediate
+    bloom: analyze
+    question: "A delayed expression increments a counter. Compare zero uses and two uses under call-by-name and call-by-need. Assume successful evaluation and no eager evaluation of the binding."
+    answer: "With zero uses, neither policy evaluates the expression. With two uses, call-by-name evaluates twice and increments twice; call-by-need evaluates once, increments once, and reuses the cached result. Effects expose a difference that a pure expression's repeated equal results may hide."
+
+  # Sources: Homework Problems, DATA3; Quiz 2 solutions, Q4.
+  - id: roots-and-reachable-objects
+    difficulty: intermediate
+    bloom: apply
+    question: "Only a root reference to `P` exists. `P` refers to `Q`; `Q` refers to `R`. A separate pair `S` and `T` refers only to each other. Which objects should a tracing collector retain, and why?"
+    answer: "Retain P, Q, and R because a root reaches them directly or transitively. S and T are unreachable, even though they have references from each other, so a tracing collector can reclaim both."
+
+  # Sources: Homework Problems, DATA3 A; Quiz 2 solutions, Q2(g), Q4.
+  - id: evaluate-collector-workload
+    difficulty: advanced
+    bloom: evaluate
+    question: "Compare pure reference counting and a copying tracing collector for a workload with unreachable cycles and a large surviving heap. Name one concern for each."
+    answer: "Reference counting alone cannot reclaim isolated cycles whose counts stay positive. A collector that copies every survivor can repeatedly move a large live heap. The trade-off depends on cycle handling, survival rates, and the actual collector policy; neither label alone establishes overall performance."
+
+  # Sources: Homework Problems, DATA2; Quiz 2 solutions, Q5.
+  - id: move-borrow-responsibility
+    difficulty: intermediate
+    bloom: understand
+    question: "In a system where a move invalidates the source variable's old value and a read-only borrow leaves ownership unchanged, how does moving a resource into a function differ from lending it? Explain the caller's access afterward."
+    answer: "A move transfers ownership and invalidates the caller's old access path unless ownership is returned or the variable is reinitialized. A read-only borrow grants temporary access while ownership stays with the caller, so the caller can use its resource again subject to the borrowing rules."
+
+  # Sources: Homework Problems, DATA3; Quiz 2 solutions, Q4(d).
+  - id: identity-after-compaction
+    difficulty: advanced
+    bloom: analyze
+    question: "How can two references continue to identify the same mutable object after a garbage collector relocates it? What would go wrong if relocation created two independent logical copies?"
+    answer: "The runtime updates references or resolves them through a handle that tracks the object's new location. Both references must still designate one logical object. Separate logical copies would break shared mutation, so an edit through one reference would no longer be observed through the other."

@@ -1,0 +1,20 @@
+topics:
+  - name: Python & C++ Refresher
+    icon: null
+    url: /SEBook/tools/cs131-refresher-tutorial
+  - name: Haskell Learning Path
+    icon: null
+    url: /SEBook/tools/haskell.html
+    subtopics:
+      - name: "Haskell 1: Expressions, Types, and Recursion"
+        url: /SEBook/tools/haskell-tutorial
+      - name: "Haskell 2: Functions and Laziness"
+        url: /SEBook/tools/haskell-functions-tutorial
+      - name: "Haskell 3: Data and Persistent Programs"
+        url: /SEBook/tools/haskell-data-tutorial
+  - name: Prolog Foundations
+    icon: null
+    url: /SEBook/tools/prolog-tutorial
+    subtopics:
+      - name: Prolog Lists and Search
+        url: /SEBook/tools/prolog-search-tutorial

@@ -250,6 +250,12 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
     color: #111 !important;
   }
 
+  /* Rouge's dark token colors are individually important. Override those
+     descendants too, so a saved dark theme cannot make printed code faint. */
+  html.dark-mode body .highlight [class] {
+    color: #111 !important;
+  }
+
   html.dark-mode table,
   html.dark-mode th,
   html.dark-mode td {

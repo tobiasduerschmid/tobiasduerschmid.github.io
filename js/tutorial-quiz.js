@@ -12,7 +12,7 @@
  *     with key "<deckId>:<questionId|hash(questionHTML)>".
  *   SebookQuiz.attach(opts)          → attach behaviour to a host already
  *                                      containing the quiz HTML.
- *     opts: { hostEl, controlsEl, stepIndex, minScore, onPass, onClose }
+ *     opts: { hostEl, controlsEl, stepIndex, minScore, onPass, allowSkip?, onSkip? }
  *   SebookQuiz.mount(opts)           → buildHTML + setInnerHTML + attach
  *     opts: same as buildHTML + attach combined.
  *
@@ -90,6 +90,7 @@
     var minPct = Math.round((quiz.min_score !== undefined ? quiz.min_score : 0.8) * 100);
     var nextStepNum = stepIndex + 2;
     var isFinalQuiz = !!opts.isFinalQuiz;
+    var allowSkip = !!opts.allowSkip;
 
     function appendAnswerBadges(labels, noteText) {
       if (!labels.length) return '';
@@ -142,10 +143,13 @@
     if (doQuestionShuffle) shuffle(questions);
 
     var html = '<div class="tvm-quiz-gate-header"><span class="tvm-quiz-gate-icon">&#128203;</span>'
-      + '<div>' + (isFinalQuiz
+      + '<div>' + (allowSkip
+        ? '<strong>' + (isFinalQuiz ? 'Final Knowledge Check' : 'Knowledge Check') + '</strong><p>Your score is for feedback. Passing is optional.</p>'
+        : isFinalQuiz
         ? '<strong>Final Knowledge Check</strong><p>Score ≥' + minPct + '% to complete the tutorial</p>'
         : '<strong>Knowledge Check</strong><p>Score ≥' + minPct + '% to continue to Step ' + nextStepNum + '</p>')
       + '</div></div>';
+    if (allowSkip) html += '<button type="button" class="tvm-btn tvm-quiz-skip-btn">Skip Knowledge Check</button>';
 
     html += '<div class="quiz-container" id="tvm-quiz-' + stepIndex + '"'
       + (deckId ? ' data-quiz-id="' + escapeHtml(deckId) + '"' : '')
@@ -230,7 +234,8 @@
       + '<span style="font-size:0.95em;font-weight:400;"> / ' + questions.length + '</span></div>'
       + '<p class="score-summary"></p><div class="tvm-quiz-threshold">Passing score: ' + minPct + '%</div>'
       + '<div class="results-actions">'
-      + (isFinalQuiz ? '' : '<button class="tvm-quiz-continue-btn hidden">Continue to Step ' + nextStepNum + ' →</button>')
+      + (isFinalQuiz && !allowSkip ? '' : '<button class="tvm-quiz-continue-btn hidden">'
+        + (isFinalQuiz ? 'Finish Review' : 'Continue to Step ' + nextStepNum + ' →') + '</button>')
       + '<button class="restart-btn">Try Again</button></div>'
       + '<p class="quiz-result-shortcut-hint hidden"></p></div></div></div>';
     html += '<div class="tvm-quiz-avatar-wrap" aria-hidden="true" style="display:none"></div>';
@@ -246,10 +251,13 @@
     var stepIndex = opts.stepIndex;
     var minScore = (opts.minScore !== undefined && opts.minScore !== null) ? opts.minScore : 0.8;
     var onPass = opts.onPass || function () {};
+    var allowSkip = !!opts.allowSkip;
+    var onSkip = opts.onSkip || function () {};
     var isFinalQuiz = !!opts.isFinalQuiz;
 
     var container = hostEl && hostEl.querySelector('.quiz-container');
     if (!container) return;
+    var skipBtn = hostEl.querySelector('.tvm-quiz-skip-btn');
 
     function recordPerf(card, isCorrect) {
       if (!window.PersonalGym || !PersonalGym.isAnalyzePerformance()) return;
@@ -493,6 +501,7 @@
     function nextQ() { currentQ++; if (currentQ < total) showQ(currentQ); else finishQuiz(); }
     function finishQuiz() {
       cards.forEach(function (c) { c.classList.remove('active'); });
+      if (skipBtn) skipBtn.classList.add('hidden');
       if (resultsArea) resultsArea.classList.remove('hidden');
       if (scoreDisplay) scoreDisplay.textContent = score;
       if (progressBar) progressBar.style.width = '100%';
@@ -504,12 +513,12 @@
       var resultHint = container.querySelector('.quiz-result-shortcut-hint');
       var focusBtn = null;
       if (passed) {
-        if (summary) summary.textContent = isFinalQuiz
+        if (summary) summary.textContent = allowSkip ? 'Knowledge check passed. You can continue when you are ready.' : isFinalQuiz
           ? 'Tutorial complete — great job!'
           : "Great job! You're ready for the next step.";
         if (contBtn) contBtn.classList.remove('hidden');
         if (restBtn) restBtn.classList.add('hidden');
-        if (st) st.textContent = isFinalQuiz ? '✓ Tutorial Complete' : '✓ Passed';
+        if (st) st.textContent = isFinalQuiz && !allowSkip ? '✓ Tutorial Complete' : '✓ Passed';
         if (resultHint) {
           if (contBtn) {
             resultHint.innerHTML = 'Shortcut: <kbd>' + enterKeyLabel() + '</kbd> continues.';
@@ -520,25 +529,29 @@
           }
         }
         if (contBtn) focusBtn = contBtn;
-        if (isFinalQuiz) onPass(stepIndex);
+        if (isFinalQuiz && !allowSkip) onPass(stepIndex);
       } else {
         var needed = Math.ceil(minScore * total);
-        if (summary) summary.textContent = 'You scored ' + score + '/' + total + '. Need at least '
-          + needed + ' (' + Math.round(minScore * 100) + '%) to continue. Review and try again!';
-        if (contBtn) contBtn.classList.add('hidden');
+        if (summary) summary.textContent = allowSkip
+          ? 'You scored ' + score + '/' + total + '. Review the explanations, try again, or continue when you are ready.'
+          : 'You scored ' + score + '/' + total + '. Need at least '
+            + needed + ' (' + Math.round(minScore * 100) + '%) to continue. Review and try again!';
+        if (contBtn) contBtn.classList.toggle('hidden', !allowSkip);
         if (restBtn) restBtn.classList.remove('hidden');
         if (st) st.textContent = '✗ ' + score + '/' + total;
         if (resultHint) {
-          resultHint.innerHTML = 'Shortcut: <kbd>' + enterKeyLabel() + '</kbd> tries again.';
+          resultHint.innerHTML = 'Shortcut: <kbd>' + enterKeyLabel() + '</kbd> '
+            + (allowSkip && contBtn ? 'continues.' : 'tries again.');
           resultHint.classList.remove('hidden');
         }
-        focusBtn = restBtn;
+        focusBtn = allowSkip && contBtn ? contBtn : restBtn;
       }
       if (hostEl) hostEl.scrollTop = 0;
       focusQuizAction(focusBtn);
     }
     function restartQuiz() {
       currentQ = 0; score = 0;
+      if (skipBtn) skipBtn.classList.remove('hidden');
       if (resultsArea) resultsArea.classList.add('hidden');
       cards.forEach(function (card) {
         var optionsEls = card.querySelectorAll('.quiz-option');
@@ -604,7 +617,11 @@
     var rBtn = container.querySelector('.restart-btn');
     if (rBtn) rBtn.addEventListener('click', restartQuiz);
     var cBtn = container.querySelector('.tvm-quiz-continue-btn');
-    if (cBtn) cBtn.addEventListener('click', function () { onPass(stepIndex); });
+    if (cBtn) cBtn.addEventListener('click', function () {
+      if (score / total >= minScore) onPass(stepIndex);
+      else if (allowSkip) onSkip(stepIndex);
+    });
+    if (skipBtn && allowSkip) skipBtn.addEventListener('click', function () { onSkip(stepIndex); });
 
     // ── Parsons Problem drag-and-drop ────────────────────────────────────
     var parsonsDragEl = null;
@@ -764,8 +781,19 @@
         : (opts.quiz && opts.quiz.min_score !== undefined ? opts.quiz.min_score : 0.8),
       isFinalQuiz: !!opts.isFinalQuiz,
       onPass: opts.onPass,
+      allowSkip: opts.allowSkip,
+      onSkip: opts.onSkip,
     });
     _mountQuizAvatar(hostEl);
+  }
+
+  function showReviewFinished(hostEl, controlsEl) {
+    hostEl.innerHTML = '<h2>Review Finished</h2><p>You can revisit any step to practice or check your work. '
+      + 'Skipping a check or continuing with a low score does not mark it as passed.</p>';
+    var status = controlsEl && controlsEl.querySelector('.tvm-quiz-status');
+    if (status) status.textContent = 'Review finished';
+    var back = controlsEl && controlsEl.querySelector('.tvm-quiz-back');
+    if (back) back.focus();
   }
 
   window.SebookQuiz = {
@@ -773,5 +801,6 @@
     buildHTML: buildHTML,
     attach: attach,
     mount: mount,
+    showReviewFinished: showReviewFinished,
   };
 })();

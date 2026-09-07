@@ -10,6 +10,7 @@
  *   backend: webcontainer Node.js via StackBlitz WebContainers.
  *                         Requires Cross-Origin Isolation (COOP/COEP).
  *   backend: haskell      Haskell via MicroHs compiled to WebAssembly.
+ *   backend: cpp          C++17 via a browser Clang compiler and WASI worker.
  *                         Uses an output panel instead of a terminal.
  *
  * The UI (Monaco editor, split panels, step navigation, quizzes, tests) is
@@ -521,10 +522,18 @@
 
   var MIXED_BACKEND_SUPPORTED = {
     pyodide: true,
+    cpp: true,
     react: true,
     webcontainer: true,
     browser: true,
+    // v86 participates in mixed tutorials so a single tutorial can pair a
+    // compiled-language step (Linux VM + terminal) with an interpreted one.
+    // Unlike the other mixed backends it needs an xterm terminal panel, which
+    // _buildUI adds as a third runtime panel — see _mixedNeedsTerminal.
+    v86: true,
   };
+
+  var WORKER_BACKENDS = { pyodide: true, cpp: true, java: true, prolog: true, sql: true, haskell: true };
 
   function normalizeBackendName(name) {
     return String(name || 'v86').trim().toLowerCase();
@@ -533,6 +542,7 @@
   function backendLabel(name) {
     var backend = normalizeBackendName(name);
     if (backend === 'pyodide') return 'Python';
+    if (backend === 'cpp') return 'C++';
     if (backend === 'react') return 'React';
     if (backend === 'webcontainer') return 'Node.js';
     if (backend === 'browser') return 'Browser Node sandbox';
@@ -570,6 +580,7 @@
       normalizeBackendName(declaredBackends[0]) !== backend
     ));
     var hasReactStep = declaredBackends.indexOf('react') !== -1;
+    var hasV86Step = declaredBackends.indexOf('v86') !== -1;
     var useTerminal = !mixedBackendMode &&
       (backend === 'v86' || (backend === 'webcontainer' && options.terminal === true));
 
@@ -594,6 +605,7 @@
       sqlWorkerPath: options.sqlWorkerPath || '/js/sql-worker.js',
       prologWorkerPath: options.prologWorkerPath || '/js/prolog-worker.js',
       javaWorkerPath: options.javaWorkerPath || '/js/java-worker.js',
+      cppWorkerPath: options.cppWorkerPath || '/js/cpp-worker.js',
       haskellFramePath: options.haskellFramePath || '/haskell-runtime-frame.html',
       // Derived flags
       useTerminal: useTerminal,
@@ -608,15 +620,23 @@
       enableGitGutter: !!options.gitGutter && !!options.gitGraph,
     };
 
-    this.steps = steps;
+    this.steps = backend === 'prolog'
+      ? steps.map(this._normalizePrologStep.bind(this))
+      : steps;
     this.setupCommandsByBackend = options.setupCommandsByBackend || {};
     this.setupCommands = mixedBackendMode ? [] : (options.setupCommands || []);
     this._declaredBackends = declaredBackends;
     this._mixedBackendMode = mixedBackendMode;
+    // Mixed tutorials keep config.useTerminal false (it drives the
+    // single-backend layout branches). This flag is the mixed-mode
+    // equivalent: build the terminal panel, load xterm, and start the
+    // terminal even while a non-v86 step is showing.
+    this._mixedNeedsTerminal = mixedBackendMode && hasV86Step;
     this._backendInitPromises = {};
     this._backendReady = {};
     this._activeRequestedBackend = backend;
     this.requireTests = options.requireTests || false;
+    this.requireQuiz = options.requireQuiz !== false;
     this.instructorMode = options.instructorMode || false;
     this.disableQuiz = options.disableQuiz || false;
     this.lectureMode = options.lectureMode || false;
@@ -745,6 +765,10 @@
     // uses a sandboxed iframe behind the same postMessage-shaped interface
     // because the upstream MicroHs build exceeds Chrome Worker's call stack.
     this._worker = null;
+    this._workerBackend = null;
+    this._multipleWorkerBackends = declaredBackends.filter(function (name) {
+      return WORKER_BACKENDS[name];
+    }).length > 1;
     this._workerMsgId = 0;
     this._workerCallbacks = {};
     // Last content acknowledged by a disposable worker for every workspace
@@ -951,10 +975,23 @@
     if (!this._mixedBackendMode || !this.root) return;
     var effective = normalizeBackendName(backend || this.config.backend);
     var showPreview = effective === 'react';
+    var showTerminal = effective === 'v86';
     var outputPanel = this.root.querySelector('.tvm-output-panel');
     var previewPanel = this.root.querySelector('.tvm-preview-panel');
-    if (outputPanel) outputPanel.hidden = showPreview;
+    var terminalPanel = this.root.querySelector('.tvm-terminal-panel');
+    if (outputPanel) outputPanel.hidden = showPreview || showTerminal;
     if (previewPanel) previewPanel.hidden = !showPreview;
+    if (terminalPanel) terminalPanel.hidden = !showTerminal;
+    // xterm measures its container to pick a cell grid. A fit() performed
+    // while the panel was hidden yields a 0-column terminal, so re-fit (and
+    // re-sync the guest's stty) once the panel is actually laid out.
+    if (showTerminal && this.fitAddon) {
+      var self = this;
+      requestAnimationFrame(function () {
+        try { self.fitAddon.fit(); } catch (e) { /* container not laid out yet */ }
+        if (self.term) self._syncTerminalSize(self.term.cols, self.term.rows);
+      });
+    }
   };
 
   TutorialCode.prototype._ensureBackendReady = function (requestedBackend, opts) {
@@ -963,11 +1000,18 @@
     var requested = normalizeBackendName(requestedBackend);
     if (this._mixedBackendMode && !MIXED_BACKEND_SUPPORTED[requested]) {
       return Promise.reject(new Error(
-        'Mixed-backend tutorials currently support pyodide, react, webcontainer, and browser steps only.'
+        'Mixed-backend tutorials currently support cpp, v86, pyodide, react, webcontainer, and browser steps only.'
       ));
     }
 
     var effective = this._effectiveBackend(requested);
+    // Browser compilers share the worker protocol, but never its interpreter
+    // instance. Replace the worker when changing languages and restore source
+    // files from the host; this also bounds memory in mixed-language lessons.
+    if (WORKER_BACKENDS[effective] && this._workerBackend && this._workerBackend !== effective) {
+      this._invalidateBackendReadiness(this._workerBackend);
+      this._terminateWorker('Switching tutorial language');
+    }
     if (!opts.prewarm) this._setActiveBackend(requested);
     if (this._backendReady[requested] || this._backendReady[effective]) {
       if (!opts.prewarm) this._setActiveBackend(requested);
@@ -989,6 +1033,10 @@
         suppressLoading: !!opts.prewarm,
       });
     }).then(function () {
+      if (self._multipleWorkerBackends && WORKER_BACKENDS[effective]) {
+        return self._replayWorkerWorkspace(self._workerWorkspaceFiles, effective);
+      }
+    }).then(function () {
       if (self._backendInitPromises[requested] !== initPromise) {
         throw new Error(backendLabel(requested) + ' initialization was superseded');
       }
@@ -1001,6 +1049,13 @@
         }
       } else {
         self._setActiveBackend(requested);
+        // A Run cancelled during a language switch finishes while the next
+        // compiler is still booting. Restore its controls only after that
+        // replacement worker and its workspace are actually ready.
+        if (self._multipleWorkerBackends && WORKER_BACKENDS[resolved] &&
+            !self._activeRunTransaction && !self._testRunInFlight) {
+          self._setRunTransactionControls('idle');
+        }
       }
     }, function (err) {
       if (!opts.prewarm || self._activeRequestedBackend === previousRequested) {
@@ -1048,6 +1103,8 @@
       var nextIndex = (index + offset) % this.steps.length;
       var nextBackend = this._stepRequestedBackend(this.steps[nextIndex]);
       if (nextBackend !== current &&
+          nextBackend !== 'v86' &&
+          !(this._multipleWorkerBackends && WORKER_BACKENDS[nextBackend]) &&
           !this._backendReady[nextBackend] &&
           !this._backendInitPromises[nextBackend] &&
           !queued[nextBackend]) {
@@ -1090,7 +1147,7 @@
 
     return this._loadDependencies()
       .then(function () {
-        if (self.config.useTerminal) {
+        if (self.config.useTerminal || self._mixedNeedsTerminal) {
           self._showLoading('Starting terminal…');
           self._initTerminal();
         }
@@ -1543,8 +1600,15 @@
         '<button class="tvm-output-popout-btn" data-original-title="Open output in separate window">⧉<span class="sr-only">Open output in separate window</span></button>' +
         '</div></div>' +
         outputContainerHtml;
+      var mixedTerminalHtml = this._mixedNeedsTerminal
+        ? '<div class="tvm-terminal-panel tvm-runtime-panel" hidden>' +
+          '<div class="tvm-terminal-header"><span>Terminal</span></div>' +
+          '<div class="tvm-terminal-container"></div>' +
+          '</div>'
+        : '';
       terminalHtml = '<div class="tvm-runtime-panels">' +
         '<div class="tvm-output-panel tvm-runtime-panel">' + mixedOutputBody + '</div>' +
+        mixedTerminalHtml +
         '<div class="tvm-preview-panel tvm-runtime-panel" hidden>' +
         '<div class="tvm-preview-header">' +
         '<span>Live Preview</span>' +
@@ -2296,7 +2360,7 @@
       })(outTermTabs[ti]);
     }
 
-    if (this.config.useTerminal) {
+    if (this.config.useTerminal || this._mixedNeedsTerminal) {
       this.terminalContainerEl = this.root.querySelector('.tvm-terminal-container');
     }
 
@@ -2684,6 +2748,7 @@
     // Also needed for the embedded git terminal that pyodide tutorials with
     // git_graph render below the gitgraph panel.
     var needsXterm = this.config.useTerminal
+      || this._mixedNeedsTerminal
       || (this.gitGraphPath && this.config.backend !== 'v86');
     var prereqPromise;
     if (needsXterm) {
@@ -3450,7 +3515,8 @@
   // ---------------------------------------------------------------------------
   TutorialCode.prototype._initBackend = function (backendOverride, setupCommandsOverride, loadingOptions) {
     var backend = normalizeBackendName(backendOverride || this.config.backend);
-    if (backend === 'v86') return this._initV86();
+    if (WORKER_BACKENDS[backend]) this._workerBackend = backend;
+    if (backend === 'v86') return this._initV86(setupCommandsOverride, loadingOptions);
     if (backend === 'pyodide') return this._initPyodide(setupCommandsOverride, loadingOptions);
     if (backend === 'webcontainer') {
       var self = this;
@@ -3481,6 +3547,7 @@
     if (backend === 'sql') return this._initSQL();
     if (backend === 'prolog') return this._initProlog();
     if (backend === 'java') return this._initJava();
+    if (backend === 'cpp') return this._initCPP(setupCommandsOverride, loadingOptions);
     if (backend === 'haskell') return this._initHaskell();
     return Promise.reject(new Error('Unknown backend: ' + backend));
   };
@@ -3504,13 +3571,20 @@
     }).catch(function () { return null; });
   };
 
-  TutorialCode.prototype._initV86 = function () {
+  TutorialCode.prototype._initV86 = function (setupCommandsOverride, loadingOptions) {
     var self = this;
-    this._showLoading('Booting Linux \u2014 this may take a few seconds\u2026');
-    return self._loadSnapshot().then(function (snapshotBuffer) {
+    // Mixed-backend tutorials only reach a v86 step partway through, so
+    // libv86.js is not preloaded by _loadDependencies for them.
+    var libPromise = window.V86
+      ? Promise.resolve()
+      : loadScript(this.config.v86Path + '/libv86.js');
+    this._showLoading('Booting Linux \u2014 this may take a few seconds\u2026', loadingOptions);
+    return libPromise.then(function () {
+      return self._loadSnapshot();
+    }).then(function (snapshotBuffer) {
       self._usingSnapshot = !!snapshotBuffer;
       if (snapshotBuffer) {
-        self._showLoading('Restoring VM snapshot\u2026');
+        self._showLoading('Restoring VM snapshot\u2026', loadingOptions);
       }
       return new Promise(function (resolve, reject) {
       try {
@@ -3622,7 +3696,7 @@
           if (!promptDetected && (bootOutput.includes('$ ') || bootOutput.includes('# ') || bootOutput.includes(':~'))) {
             promptDetected = true; self.booted = true;
             self.emulator.remove_listener('serial0-output-byte', onBoot);
-            self._setupFilesystem().then(resolve);
+            self._setupFilesystem(setupCommandsOverride).then(resolve);
           }
         }
         self.emulator.add_listener('serial0-output-byte', onBoot);
@@ -3641,7 +3715,7 @@
             self.emulator.remove_listener('serial0-output-byte', onBoot);
             self.booted = true;
             console.warn('TutorialCode: boot prompt not detected, continuing anyway.');
-            self._setupFilesystem().then(resolve);
+            self._setupFilesystem(setupCommandsOverride).then(resolve);
           }
         }, 30000);
       } catch (err) { reject(err); }
@@ -3649,7 +3723,7 @@
     });
   };
 
-  TutorialCode.prototype._setupFilesystem = function () {
+  TutorialCode.prototype._setupFilesystem = function (setupCommandsOverride) {
     var self = this;
     if (self._usingSnapshot) {
       self._showLoading('Preparing tutorial\u2026');
@@ -3689,7 +3763,9 @@
         'printf "%s\\n" "$cmd" | eval "$__USER_CMD_LISTENER"; ' +
       '}; ' +
       'case ";$PROMPT_COMMAND;" in *";__record_user_cmd;"*) ;; *) PROMPT_COMMAND="__record_user_cmd${PROMPT_COMMAND:+;$PROMPT_COMMAND}";; esac';
-    var setupCommands = self.setupCommands || [];
+    // Mixed tutorials leave self.setupCommands empty and supply per-backend
+    // commands through setup_commands_by_backend instead.
+    var setupCommands = setupCommandsOverride || self.setupCommands || [];
     var setupBatch = setupCommands.join('\n');
     var startDir = self.gitGraphPath
       ? 'cd ' + shellQuote(self.gitGraphPath) + ' 2>/dev/null || cd /tutorial'
@@ -4401,6 +4477,32 @@
     return Promise.resolve();
   };
 
+  // A boot transaction belongs to one disposable worker. Termination must
+  // settle it immediately, including its timer, before a replacement starts.
+  TutorialCode.prototype._trackWorkerInitialization = function (worker, resolve, reject) {
+    var self = this;
+    var initialization = {
+      worker: worker,
+      timer: null,
+      settled: false,
+      finish: function (error) {
+        if (initialization.settled) return;
+        initialization.settled = true;
+        clearTimeout(initialization.timer);
+        if (self._workerInitialization === initialization) self._workerInitialization = null;
+        if (error) reject(error);
+        else resolve();
+      },
+      cancel: function (reason) {
+        var error = new Error(reason || 'Worker initialization was cancelled');
+        error.reason = 'terminated';
+        initialization.finish(error);
+      },
+    };
+    this._workerInitialization = initialization;
+    return initialization;
+  };
+
   // ---- Pyodide backend -------------------------------------------------------
   TutorialCode.prototype._initPyodide = function (setupCommandsOverride, loadingOptions) {
     var self = this;
@@ -4413,15 +4515,18 @@
     );
     return new Promise(function (resolve, reject) {
       var initialized = false;
-      var bootTimer = setTimeout(function () {
-        if (initialized) return;
+      var worker = new Worker(self.config.workerPath);
+      self._worker = worker;
+      var initialization = self._trackWorkerInitialization(worker, resolve, reject);
+      initialization.timer = setTimeout(function () {
+        if (self._worker !== worker || initialized) return;
         var message = 'Pyodide runtime initialization timed out';
+        initialization.finish(new Error(message));
         self._terminateWorker(message);
-        reject(new Error(message));
       }, WORKER_BOOT_TIMEOUT_MS);
-      self._worker = new Worker(self.config.workerPath);
 
-      self._worker.onmessage = function (e) {
+      worker.onmessage = function (e) {
+        if (self._worker !== worker) return;
         var msg = e.data;
         if (msg.type === 'loading') {
           self._showLoading(msg.message, loadingOptions);
@@ -4470,14 +4575,14 @@
               })
             : pythonSetup;
           gitSetup.then(function () {
+            if (self._worker !== worker) return;
             initialized = true;
-            clearTimeout(bootTimer);
             self.booted = true;
-            resolve();
+            initialization.finish();
           }, function (error) {
-            clearTimeout(bootTimer);
+            if (self._worker !== worker) return;
+            initialization.finish(error);
             self._terminateWorker(error && error.message || 'Python initialization failed');
-            reject(error);
           });
           return;
         }
@@ -4490,7 +4595,7 @@
           return;
         }
         if (msg.type === 'error') {
-          clearTimeout(bootTimer);
+          if (!initialized) initialization.finish(new Error(msg.message || 'Pyodide runtime failed'));
           self._handleWorkerFailure(
             msg.message || 'Pyodide runtime failed',
             initialized,
@@ -4502,9 +4607,10 @@
         self._routeWorkerResponse(msg);
       };
 
-      self._worker.onerror = function (err) {
-        clearTimeout(bootTimer);
+      worker.onerror = function (err) {
+        if (self._worker !== worker) return;
         var message = 'Pyodide worker error: ' + (err.message || err);
+        if (!initialized) initialization.finish(new Error(message));
         self._handleWorkerFailure(message, initialized, reject, 'pyodide');
       };
     });
@@ -4665,6 +4771,56 @@
     });
   };
 
+  // ---- C++ backend (Clang/WASI in a disposable module worker) ---------------
+  TutorialCode.prototype._initCPP = function (setupCommandsOverride, loadingOptions) {
+    var self = this;
+    var commands = setupCommandsOverride === undefined ? this.setupCommands : setupCommandsOverride;
+    if (commands && commands.length) {
+      return Promise.reject(new Error('C++ does not support setup_commands; provide starter files instead.'));
+    }
+    this._showLoading('Loading C++ compiler… (first load may take a moment)', loadingOptions);
+    return new Promise(function (resolve, reject) {
+      var initialized = false;
+      var worker = new Worker(self.config.cppWorkerPath, { type: 'module' });
+      self._worker = worker;
+      var initialization = self._trackWorkerInitialization(worker, resolve, reject);
+      initialization.timer = setTimeout(function () {
+        if (self._worker !== worker || initialized) return;
+        initialization.finish(new Error('C++ compiler initialization timed out'));
+        self._handleWorkerFailure('C++ compiler initialization timed out', false, reject, 'cpp');
+      }, WORKER_BOOT_TIMEOUT_MS);
+      worker.onmessage = function (event) {
+        if (self._worker !== worker) return;
+        var message = event.data;
+        if (message.type === 'loading') {
+          self._showLoading(message.message, loadingOptions);
+          return;
+        }
+        if (message.type === 'ready') {
+          initialized = true;
+          self.booted = true;
+          initialization.finish();
+          return;
+        }
+        if (message.type === 'stdout' || message.type === 'stderr') {
+          self._appendOutput(message.text, message.type);
+          return;
+        }
+        if (message.type === 'error') {
+          if (!initialized) initialization.finish(new Error(message.message || 'C++ runtime failed'));
+          self._handleWorkerFailure(message.message || 'C++ runtime failed', initialized, reject, 'cpp');
+          return;
+        }
+        self._routeWorkerResponse(message);
+      };
+      worker.onerror = function (error) {
+        if (self._worker !== worker) return;
+        if (!initialized) initialization.finish(new Error('C++ worker error: ' + error.message));
+        self._handleWorkerFailure('C++ worker error: ' + error.message, initialized, reject, 'cpp');
+      };
+    });
+  };
+
   // ---- Haskell backend (MicroHs WebAssembly via sandboxed runtime frame) ----
   TutorialCode.prototype._createHaskellExecutor = function () {
     var namespace = 'sebook-haskell-runtime';
@@ -4794,7 +4950,7 @@
   };
 
   TutorialCode.prototype._isRestartableWorkerBackend = function (backend) {
-    return backend === 'pyodide' || backend === 'sql' ||
+    return backend === 'pyodide' || backend === 'cpp' || backend === 'sql' ||
       backend === 'prolog' || backend === 'java';
   };
 
@@ -4958,30 +5114,45 @@
     }
     this._terminateWorker(reason || backendLabel(backend) + ' runtime restarted');
 
+    function requireCurrentRestart() {
+      if (self._workerRestartPromise !== restartPromise ||
+          self._backendInitPromises[requestedBackend] !== restartPromise) {
+        var error = new Error(backendLabel(backend) + ' restart was superseded');
+        error.reason = 'terminated';
+        throw error;
+      }
+    }
+
+    function restartIsStillVisible() {
+      return restartIsVisible && self._effectiveBackend(
+        self._activeRequestedBackend || self.config.backend
+      ) === backend && self._backendInitPromises[requestedBackend] === restartPromise;
+    }
+
     var restartPromise = Promise.resolve().then(function () {
       return self._initBackend(backend, setupOverride, {
         suppressLoading: !restartIsVisible,
       });
     })
       .then(function () {
+        requireCurrentRestart();
         return self._replayWorkerWorkspace(workspace, backend);
       })
       .then(function () {
-        if (!restartIsVisible) return;
+        requireCurrentRestart();
+        if (!restartIsStillVisible()) return;
         return self._syncFilesToBackend(filenames);
       })
       .then(function () {
-        if (!restartIsVisible) return;
+        requireCurrentRestart();
+        if (!restartIsStillVisible()) return;
         return self._runStepWorkerSetupCommands(activeStep);
       })
       .then(function () {
-        if (self._workerRestartPromise !== restartPromise ||
-            self._backendInitPromises[requestedBackend] !== restartPromise) {
-          throw new Error(backendLabel(backend) + ' restart was superseded');
-        }
+        requireCurrentRestart();
         self._backendReady[requestedBackend] = true;
         self._backendReady[backend] = true;
-        if (restartIsVisible) {
+        if (restartIsStillVisible()) {
           self._hideLoading();
           self._setWorkerExecutionControls('idle');
           self._appendOutput(
@@ -4990,7 +5161,8 @@
           );
         }
       }, function (error) {
-        if (self._workerRestartPromise === restartPromise && restartIsVisible) {
+        if (error.reason !== 'terminated' && self._workerRestartPromise === restartPromise &&
+            restartIsStillVisible()) {
           self._setWorkerExecutionControls('unavailable');
           self._showError(
             'Failed to restart ' + backendLabel(backend) + ' runtime: ' +
@@ -5145,7 +5317,11 @@
   TutorialCode.prototype._terminateWorker = function (reason) {
     var worker = this._worker;
     this._worker = null;
+    this._workerBackend = null;
     this.booted = false;
+    if (this._workerInitialization && this._workerInitialization.worker === worker) {
+      this._workerInitialization.cancel(reason);
+    }
     this._settlePendingWorkerRequests(reason || 'Worker terminated', 'terminated');
     if (worker) {
       try { worker.terminate(); } catch (e) { /* already terminated */ }
@@ -5258,9 +5434,9 @@
       message = { type: 'runProlog', code: commands.join('\n'), silent: true };
     } else if (this.config.backend === 'sql') {
       message = { type: 'runSQL', sql: commands.join('\n'), silent: true };
-    } else if (this.config.backend === 'haskell') {
+    } else if (this.config.backend === 'haskell' || this.config.backend === 'cpp') {
       return Promise.reject(new Error(
-        'The Haskell backend does not support setup_commands; provide step files instead.'
+        backendLabel(this.config.backend) + ' does not support setup_commands; provide step files instead.'
       ));
     } else {
       return Promise.resolve();
@@ -5479,7 +5655,7 @@
     if (this._activeRunTransaction !== run) return;
     this._activeRunTransaction = null;
     var workerBacked = run.backend === 'pyodide' || run.backend === 'sql' ||
-      run.backend === 'prolog' || run.backend === 'java' || run.backend === 'haskell';
+      run.backend === 'prolog' || run.backend === 'java' || run.backend === 'cpp' || run.backend === 'haskell';
     this._setRunTransactionControls(workerBacked && !this.booted ? 'unavailable' : 'idle');
   };
 
@@ -5513,6 +5689,7 @@
 
   TutorialCode.prototype._runCurrentFile = function () {
     if (this._activeRunTransaction) return this._activeRunTransaction.promise;
+    if (this.config.backend === 'cpp' && this._testRunInFlight) return Promise.resolve(false);
 
     var stepIndex = this.currentStep >= 0 ? this.currentStep : 0;
     var step = this.steps[stepIndex];
@@ -5552,6 +5729,10 @@
     run.backend = backend;
     var runFiles = run.runFiles;
     var filename = run.filename;
+
+    if (backend === 'v86') {
+      return this._syncFileToBackend(filename).then(function () { return false; });
+    }
 
     if (backend === 'browser') {
       var code = this.editorModels[filename] ? this.editorModels[filename].model.getValue() : '';
@@ -5620,9 +5801,9 @@
       });
     }
 
-    if (backend === 'java') {
-      var javaPath = '/tutorial/' + filename;
-      // Sync ALL files first (Java may need multiple .java files compiled together)
+    if (backend === 'java' || backend === 'cpp') {
+      var compiledPath = '/tutorial/' + filename;
+      // Both compilers may read other source files from the workspace.
       var allFiles = Object.keys(self.editorModels);
       var syncChain = Promise.resolve();
       allFiles.forEach(function (f) {
@@ -5632,7 +5813,7 @@
         self._clearOutput();
         self._appendOutput('\u25b6 ' + filename + '\n', 'info');
         return self._runWorkerExecution(
-          { type: 'run', path: javaPath },
+          { type: 'run', path: compiledPath },
           '\u23f3 Compiling\u2026'
         ).then(function (msg) {
           if (msg.exitCode === 0) {
@@ -5950,6 +6131,33 @@
     else if (step && step.run_file) raw = [step.run_file];
     else if (this.activeFileName) raw = [this.activeFileName];
     return raw.map(this._normalizeRunFilename).filter(function (file) { return !!file; });
+  };
+
+  // Authored Prolog paths may be workspace-relative or /tutorial/... absolute.
+  // Normalize once so editors, Run, tests, solutions, and save/restore share
+  // the same file identity. Clone specs rather than changing the input config.
+  TutorialCode.prototype._normalizePrologStep = function (step) {
+    var self = this;
+    function normalizePath(path) {
+      var filename = self._normalizeRunFilename(path);
+      if (!filename) throw new Error('Prolog files must be inside /tutorial/: ' + path);
+      return filename;
+    }
+    function normalizeFiles(files) {
+      return files.map(function (file) {
+        return Object.assign({}, file, { path: normalizePath(file.path) });
+      });
+    }
+    var normalized = Object.assign({}, step);
+    if (step.files) normalized.files = normalizeFiles(step.files);
+    if (step.open_file) normalized.open_file = normalizePath(step.open_file);
+    if (step.run_file) normalized.run_file = normalizePath(step.run_file);
+    if (step.solution && step.solution.files) {
+      normalized.solution = Object.assign({}, step.solution, {
+        files: normalizeFiles(step.solution.files),
+      });
+    }
+    return normalized;
   };
 
   TutorialCode.prototype._syncFilesToBackend = function (filenames) {
@@ -6944,6 +7152,7 @@
           (this.config.backend === 'browser' || this.config.backend === 'webcontainer') ? 'javascript' :
             this.config.backend === 'prolog' ? 'prolog' :
               this.config.backend === 'java' ? 'java' :
+                this.config.backend === 'cpp' ? 'cpp' :
                 this.config.backend === 'haskell' ? 'haskell' : 'shell-sebook',
       theme: this._isDarkMode() ? THEMES.dark.monaco : THEMES.light.monaco,
       fontSize: this.config.fontSize,
@@ -6983,6 +7192,7 @@
             (this.config.backend === 'browser' || this.config.backend === 'webcontainer') ? 'JavaScript' :
               this.config.backend === 'prolog' ? 'Prolog' :
                 this.config.backend === 'java' ? 'Java' :
+                  this.config.backend === 'cpp' ? 'C++' :
                   this.config.backend === 'haskell' ? 'Haskell' : 'Shell') +
         ' code editor. Press Control F1 (Command F1 on macOS) for accessibility help. Press Escape to release focus to the surrounding page.',
       accessibilitySupport: 'auto',
@@ -7104,7 +7314,7 @@
       monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
       function () { self._saveCurrentFile(); }
     );
-    if (this._mixedBackendMode || this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'java' || this.config.backend === 'haskell') {
+    if (this._mixedBackendMode || this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell') {
       editor.addCommand(
         monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter,
         function () { self._runCurrentFile(); }
@@ -7164,7 +7374,7 @@
       this._filePaneOverrides[filename] = fileSpec.pane;
     }
     if (!this.editorModels[filename]) {
-      var uri = monaco.Uri.parse('file:///' + filename);
+      var uri = monaco.Uri.file('/' + filename.replace(/^\/+/, ''));
       var existing = monaco.editor.getModel(uri);
       if (existing) existing.dispose();
       var model = monaco.editor.createModel(content || '', language, uri);
@@ -7516,14 +7726,22 @@
       }
     }
 
-    // Ensure the active tab is always visible — scroll it into view horizontally
-    // without affecting page-level vertical scroll (block: 'nearest').
-    var activeTab = this.editorTabsEl.querySelector('.tvm-tab.active');
-    if (activeTab) activeTab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    if (this.editorTabsElRight) {
-      var activeTabRight = this.editorTabsElRight.querySelector('.tvm-tab.active');
-      if (activeTabRight) activeTabRight.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    // Reveal a selected file within its own strip. scrollIntoView also scrolls
+    // ancestor containers and would move a narrow page away from the lesson.
+    function revealActiveTab(tabStrip) {
+      if (!tabStrip) return;
+      var activeTab = tabStrip.querySelector('.tvm-tab.active');
+      if (!activeTab) return;
+      var stripBounds = tabStrip.getBoundingClientRect();
+      var tabBounds = activeTab.getBoundingClientRect();
+      if (tabBounds.left < stripBounds.left) {
+        tabStrip.scrollLeft += tabBounds.left - stripBounds.left;
+      } else if (tabBounds.right > stripBounds.right) {
+        tabStrip.scrollLeft += tabBounds.right - stripBounds.right;
+      }
     }
+    revealActiveTab(this.editorTabsEl);
+    revealActiveTab(this.editorTabsElRight);
   };
 
   /**
@@ -8266,6 +8484,7 @@
       darkMode: document.documentElement.classList.contains('dark-mode'),
       stepsUnlocked: Array.from(this._stepsUnlocked || []),
       hasTests: this._stepHasTests(this.steps[this.currentStep]),
+      hasUnpassedQuiz: this._hasUnpassedQuiz(this.currentStep),
       nextLocked: this._isNextStepLocked(),
       cooldownSeconds: this._testCooldownSeconds || 0,
       cooldownRemaining: this._cooldownRemaining(this.currentStep),
@@ -8284,8 +8503,15 @@
     // Steps with no tests can't be gated by tests — there's nothing to pass.
     // (A quiz, if present, opens via clicking Next, not by gating it.)
     if (!this._stepHasTests(this.steps[idx])) return false;
-    var nextStepUnlocked = !this.requireTests || this.instructorMode || this._stepsUnlocked.has(idx + 1);
-    return !nextStepUnlocked;
+    var canContinue = !this.requireTests || this.instructorMode ||
+      this._stepsPassed.has(idx) || this._stepsUnlocked.has(idx + 1);
+    return !canContinue;
+  };
+
+  TutorialCode.prototype._hasUnpassedQuiz = function (index) {
+    var step = this.steps[index];
+    return !!(!this.disableQuiz && step && step.quiz && step.quiz.questions
+      && step.quiz.questions.length && !this._quizPassed.has(index));
   };
 
   TutorialCode.prototype._broadcastStepState = function () {
@@ -8302,6 +8528,7 @@
       },
       stepsUnlocked: Array.from(this._stepsUnlocked || []),
       hasTests: this._stepHasTests(step),
+      hasUnpassedQuiz: this._hasUnpassedQuiz(this.currentStep),
       nextLocked: this._isNextStepLocked(),
       cooldownSeconds: this._testCooldownSeconds || 0,
       cooldownRemaining: this._cooldownRemaining(this.currentStep),
@@ -8327,6 +8554,7 @@
     this._popoutManager.broadcastNavState({
       stepsUnlocked: Array.from(this._stepsUnlocked || []),
       nextLocked: this._isNextStepLocked(),
+      hasUnpassedQuiz: this._hasUnpassedQuiz(this.currentStep),
       cooldownSeconds: this._testCooldownSeconds || 0,
       cooldownRemaining: this._cooldownRemaining(this.currentStep),
     });
@@ -8538,6 +8766,9 @@
         onRunTestsRequest: function (opts) { self._runTests(opts || {}); },
         onQuizPassedFromPopup: function (stepIndex) {
           if (typeof stepIndex === 'number') self._completeQuiz(stepIndex);
+        },
+        onQuizSkippedFromPopup: function (stepIndex) {
+          if (typeof stepIndex === 'number') self._skipQuiz(stepIndex);
         },
         onSaveFileRequest: function (filename) {
           // Save the file the popup tells us about — temporarily make it the
@@ -10115,7 +10346,7 @@
     if (backend === 'v86') {
       writePromise = this._syncFileToV86(filename, content);
     } else if (backend === 'pyodide' || backend === 'sql' ||
-               backend === 'prolog' || backend === 'java' ||
+               backend === 'prolog' || backend === 'java' || backend === 'cpp' ||
                backend === 'haskell') {
       writePromise = this._writeFileToWorker(filename, content, backend);
     } else if (backend === 'webcontainer' && this._webcontainer) {
@@ -10320,10 +10551,10 @@
             }, resolve);
           });
         });
-      } else if (this.config.backend === 'haskell') {
+      } else if (this.config.backend === 'haskell' || this.config.backend === 'cpp') {
         p = p.then(function () {
           return Promise.reject(new Error(
-            'Haskell solutions support file replacements, not solution commands.'
+            backendLabel(self.config.backend) + ' solutions support file replacements, not solution commands.'
           ));
         });
       }
@@ -11631,19 +11862,18 @@
       var plArgsInp = this.root.querySelector('.tvm-args-input');
       var plArgsLbl = this.root.querySelector('.tvm-args-label');
       if (plArgsInp) {
-        plArgsInp.style.display = 'inline-block';
-        plArgsInp.style.minWidth = '260px';
-        plArgsInp.style.flex = '1';
+        plArgsInp.removeAttribute('style');
+        plArgsInp.classList.add('tvm-prolog-query');
         plArgsInp.placeholder = 'e.g. parent(tom, X)';
         plArgsInp.value = step.default_query || '';
-        plArgsInp.setAttribute('data-original-title', 'Prolog query (without trailing period)');
+        plArgsInp.setAttribute('aria-label', 'Query (Prolog goal)');
+        plArgsInp.setAttribute('data-original-title', 'Query (Prolog goal; trailing period optional)');
         plArgsInp.removeAttribute('title');
       }
       if (plArgsLbl) {
-        plArgsLbl.style.display = 'inline-block';
-        plArgsLbl.textContent = '?-';
-        plArgsLbl.style.fontSize = '16px';
-        plArgsLbl.style.fontWeight = '600';
+        plArgsLbl.removeAttribute('style');
+        plArgsLbl.classList.add('tvm-prolog-query-label');
+        plArgsLbl.textContent = 'Query ?-';
       }
     }
 
@@ -11705,7 +11935,7 @@
     }
 
     // Clear output panel between steps
-    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'webcontainer' || this.config.backend === 'prolog' || this.config.backend === 'java' || this.config.backend === 'haskell') this._clearOutput();
+    if (this.config.backend === 'pyodide' || this.config.backend === 'browser' || this.config.backend === 'webcontainer' || this.config.backend === 'prolog' || this.config.backend === 'java' || this.config.backend === 'cpp' || this.config.backend === 'haskell') this._clearOutput();
     // Rebuild React preview when a new step is loaded
     if (this.config.backend === 'react') {
       var stepSelf = this;
@@ -11881,8 +12111,7 @@
     html += this._stepHasTests(step)
       ? this._buildTestButtonHTML(index)
       : '<span></span>';
-    var hasUnpassedQuiz = !this.disableQuiz && step.quiz && step.quiz.questions
-      && step.quiz.questions.length > 0 && !this._quizPassed.has(index);
+    var hasUnpassedQuiz = this._hasUnpassedQuiz(index);
     var hasNextStep = index < this.steps.length - 1;
     var showNext = hasNextStep || hasUnpassedQuiz;
     html += showNext
@@ -12091,6 +12320,7 @@
     var isFinalQuiz = stepIndex === this.steps.length - 1;
     var html = window.SebookQuiz.buildHTML({
       stepIndex: stepIndex, quiz: quiz, isFinalQuiz: isFinalQuiz,
+      allowSkip: !this.requireQuiz,
       deckId: 'tutorial-' + this.tutorialId + ':step-' + stepIndex,
       escapeHtml: this._escapeHtml.bind(this),
       renderMarkdown: this._renderMarkdown.bind(this),
@@ -12108,7 +12338,9 @@
         quizHTML: html,
         minScore: quiz.min_score !== undefined ? quiz.min_score : 0.8,
         isFinalQuiz: isFinalQuiz,
+        allowSkip: !this.requireQuiz,
         onPass: function (idx) { self._completeQuiz(idx); },
+        onSkip: function (idx) { self._skipQuiz(idx); },
       });
       this._initTooltips(this.quizPanelEl);
     }
@@ -12128,6 +12360,7 @@
         quizHTML: html,
         minScore: quiz.min_score !== undefined ? quiz.min_score : 0.8,
         isFinalQuiz: isFinalQuiz,
+        allowSkip: !this.requireQuiz,
       });
     }
   };
@@ -12146,14 +12379,28 @@
   // user took it in. Called from main's onPass hook AND from the
   // BroadcastChannel quiz-passed handler when the popup completes one.
   TutorialCode.prototype._completeQuiz = function (stepIndex) {
+    if (stepIndex !== this.currentStep) return;
     this._quizPassed.add(stepIndex);
     this._markTimedPracticeCompleteIfSolved(stepIndex);
-    this._stepsUnlocked.add(stepIndex + 1);
-    if (this.autoSaveEnabled) this._autoSaveProgress();
+    this._advanceAfterQuiz(stepIndex);
+  };
+
+  TutorialCode.prototype._skipQuiz = function (stepIndex) {
+    if (this.requireQuiz || stepIndex !== this.currentStep) return;
+    this._advanceAfterQuiz(stepIndex);
+  };
+
+  // Navigation is independent of evidence that a knowledge check was passed.
+  TutorialCode.prototype._advanceAfterQuiz = function (stepIndex) {
     var hasNextStep = stepIndex + 1 < this.steps.length;
+    if (hasNextStep) this._stepsUnlocked.add(stepIndex + 1);
+    if (this.autoSaveEnabled) this._autoSaveProgress();
     if (hasNextStep) {
       if (this.quizPanelEl && this.quizPanelEl.style.display !== 'none') this._hideStepQuiz();
       this.loadStep(stepIndex + 1);
+    } else if (!this.requireQuiz) {
+      window.SebookQuiz.showReviewFinished(this.quizPanelEl, this.stepControlsEl);
+      if (this._popoutManager) this._popoutManager._post('quiz-review-finished');
     }
   };
 
@@ -12410,10 +12657,24 @@
       .on('focusin.a11yTooltip', function () {
         showTooltip(this);
       })
-      .on('mouseleave.a11yTooltip focusout.a11yTooltip', function () {
+      .on('mouseleave.a11yTooltip', function () {
         var $trigger = jQuery(this);
         clearTimer($trigger, 'a11yTooltipShowTimer');
         scheduleHide($trigger);
+      })
+      .on('focusout.a11yTooltip', function () {
+        var $trigger = jQuery(this);
+        clearTimer($trigger, 'a11yTooltipShowTimer');
+        clearTimer($trigger, 'a11yTooltipHideTimer');
+        var $tip = getTip($trigger);
+        if ($trigger.is(':hover') || ($tip.length && $tip.is(':hover'))) {
+          scheduleHide($trigger);
+          return;
+        }
+        // A departing focus tooltip must not cover the next keyboard stop.
+        // Keep the hover grace period, but skip both it and the fade here.
+        $tip.removeClass('fade');
+        $trigger.tooltip('hide');
       });
 
     jQuery(document)
@@ -12438,6 +12699,7 @@
     // results return. Without this guard, the second run can replace the
     // pending test buffer/state and produce ghost results in the panel.
     if (this._testRunInFlight) return;
+    if (this.config.backend === 'cpp' && this._activeRunTransaction) return;
     var stepIndex = this.currentStep;
     var step = this.steps[stepIndex];
     if (!step || !this._stepHasTests(step)) return;
@@ -12475,6 +12737,7 @@
     else if (backend === 'sql') this._runTestsSQL(run);
     else if (backend === 'prolog') this._runTestsProlog(run);
     else if (backend === 'java') this._runTestsJava(run);
+    else if (backend === 'cpp') this._runTestsCPP(run);
     else if (backend === 'haskell') this._runTestsHaskell(run);
     else {
       run.completed = true;
@@ -12657,6 +12920,62 @@
     runNext(0);
   };
 
+  // C++ — each command is a complete harness, compiled against current files.
+  // The harness owns the assertions; compiler output and student logging are
+  // never interpreted as evidence that a check passed.
+  TutorialCode.prototype._runTestsCPP = function (run) {
+    var self = this;
+    var step = this.steps[run.stepIndex];
+    var tests = step.tests;
+    var worker = this._worker;
+    var runFile = this._stepRunFiles(step)[0] || this.activeFileName;
+    var results = new Array(tests.length).fill(null);
+    var compilerDiagnosticShown = false;
+    this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Compiling and running tests…</div>');
+    this._setRunTransactionControls('running', '\u23f3 Testing…');
+
+    function finish() {
+      self._renderTestResults(tests, results, run);
+      if (!self._activeRunTransaction && !self._workerRestartPromise) {
+        self._setRunTransactionControls('idle');
+      }
+    }
+
+    function runNext(index) {
+      // Navigation remains available during checks. Never submit the next
+      // C++ harness to a replacement worker for another language or step.
+      if (index === tests.length || self.currentStep !== run.stepIndex || self._worker !== worker) {
+        finish();
+        return;
+      }
+      return self._requestWorker({
+        type: 'runTest', path: '/tutorial/' + runFile,
+        code: tests[index].command, silent: true,
+      }, {
+        timeoutMs: WORKER_EXECUTION_TIMEOUT_MS, restartOnTimeout: true,
+      }).then(function (message) {
+        results[index] = message.type === 'run_done' && message.phase === 'run' && message.exitCode === 0;
+        if (message.phase === 'compile' && message.stderr && !compilerDiagnosticShown &&
+            self.currentStep === run.stepIndex) {
+          compilerDiagnosticShown = true;
+          self._appendOutput('C++ check compiler diagnostics:\n' + message.stderr, 'stderr');
+        }
+        return runNext(index + 1);
+      });
+    }
+
+    return this._syncFilesToBackend(Object.keys(this.editorModels)).then(function () {
+      return runNext(0);
+    }).catch(function (error) {
+      if (self.currentStep === run.stepIndex && error.reason !== 'terminated') {
+        self._appendOutput(error.reason === 'timeout'
+          ? 'C++ checks timed out after 30 seconds. Check for an unintended loop.\n'
+          : 'C++ checks stopped: ' + error.message + '\n', 'stderr');
+      }
+      finish();
+    });
+  };
+
   // Haskell — each test.command is a Boolean expression evaluated after the
   // current module is loaded. The runtime reports success only when the
   // expression evaluates to True; False, compile errors, and exceptions fail.
@@ -12732,10 +13051,10 @@
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
     var results = [];
 
-    // Get the active file content to send with each test
-    var activeFile = this.activeFileName;
-    var program = (activeFile && this.editorModels[activeFile])
-      ? this.editorModels[activeFile].model.getValue() : '';
+    // Match Run's authored entry point even when the learner opens another tab.
+    var programFile = this._stepRunFiles(step)[0] || this.activeFileName;
+    var program = (programFile && this.editorModels[programFile])
+      ? this.editorModels[programFile].model.getValue() : '';
 
     // Sync files first, then run tests sequentially
     var filenames = Object.keys(this.editorModels);
@@ -13328,9 +13647,13 @@
         window.SEGymHeroCelebration.show({ hostEl: this.stepContentEl });
       }
     }
-    if (allPass && this.requireTests) {
+    if (allPass) {
       this._stepsPassed.add(stepIndex);
-      this._stepsUnlocked.add(stepIndex + 1);
+      // Next opens the knowledge check; the numbered navigation must wait
+      // until that required check is passed before exposing the next step.
+      if (!this.requireQuiz || !this._hasUnpassedQuiz(stepIndex)) {
+        this._stepsUnlocked.add(stepIndex + 1);
+      }
       this._renderStepNav();
       var nextBtn = this.stepControlsEl.querySelector('.tvm-btn-next');
       if (nextBtn) { nextBtn.disabled = false; nextBtn.removeAttribute('title'); }

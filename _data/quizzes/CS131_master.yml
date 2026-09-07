@@ -1,0 +1,13 @@
+title: "CS 131 Master Quiz"
+description: "Concept practice across programming languages, grouped by topic. Excludes Language of the Week showcases."
+active: true
+decks:
+  - cs131_foundations
+  - cs131_python
+  - cs131_functional
+  - cs131_types_scope_memory
+  - cs131_functions
+  - cs131_control
+  - cs131_oop
+  - cs131_logic
+  - cs131_implementation
