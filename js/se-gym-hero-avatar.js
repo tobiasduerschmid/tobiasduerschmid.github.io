@@ -404,6 +404,8 @@
           choice('forehead-freckles', 'Forehead freckles'),
           choice('beauty-mark', 'Beauty mark'),
           choice('small-moles', 'Small moles'),
+          choice('birthmark', 'Cheek birthmark'),
+          choice('vitiligo', 'Vitiligo patches'),
           choice('dimples', 'Dimples'),
           choice('soft-dimples', 'Soft dimples'),
           choice('chin-dimple', 'Chin dimple'),
@@ -502,6 +504,10 @@
           choice('mask', 'Hero mask'),
           choice('monocle', 'Monocle'),
           choice('eyepatch', 'Eyepatch')
+        ]),
+        choiceGroup('Hearing aids', [
+          choice('hearing-aid-left', 'Left hearing aid'),
+          choice('hearing-aids', 'Hearing aids')
         ]),
         choiceGroup('Jewelry and details', [
           choice('earrings', 'Earrings'),
@@ -653,7 +659,7 @@
   var HAIR_CLIP_CONCEALING_ACCESSORIES = { headwrap: true, 'draped-scarf': true, hijab: true, turban: true, 'wrapped-dastar': true, 'embroidered-prayer-cap': true, beanie: true, 'baseball-cap': true, 'bucket-hat': true, bandana: true };
   var HAIR_CLIP_INCOMPATIBLE_STYLES = { bald: true, mohawk: true };
   var FOREHEAD_DETAIL_CONCEALING_ACCESSORIES = { beanie: true, 'baseball-cap': true, 'bucket-hat': true };
-  var CONCEALED_AUDIO_ACCESSORIES = { 'wireless-earbuds': true, 'wired-earbuds': true };
+  var CONCEALED_AUDIO_ACCESSORIES = { 'wireless-earbuds': true, 'wired-earbuds': true, 'hearing-aid-left': true, 'hearing-aids': true };
   var EAR_CONCEALING_AUDIO_ACCESSORIES = { 'over-ear-headphones': true, 'headset-mic': true };
   // Looser wraps may reveal a small hairline. Full coverings never synthesize
   // one, regardless of the hairstyle saved underneath.
@@ -670,6 +676,8 @@
     halo: true,
     monocle: true,
     eyepatch: true,
+    'hearing-aid-left': true,
+    'hearing-aids': true,
     mask: true,
     'forehead-jewel': true,
     'cross-pendant': true,
@@ -728,20 +736,20 @@
     'deep-set': { kind: 'curve', p0: [369.4, 184.2], p1: [382, 173.9], p2: [394.8, 184.2], startT: 0.02, endT: 0.98, lengthScale: 0.92, fanBias: 0.3, riseBias: 0.22 }
   };
   var FACE_ACCESSORIES = ['glasses', 'rectangular-glasses', 'thin-rectangular-glasses', 'semi-rimless-glasses', 'wireframe-glasses', 'round-rim-glasses', 'safety-goggles', 'tech-visor', 'visor', 'spectacles', 'monocle', 'mask', 'eyepatch'];
-  var DETAIL_ACCESSORIES = ['earrings', 'stud-earrings', 'hoop-earrings', 'hair-clips', 'over-ear-headphones', 'headset-mic', 'wireless-earbuds', 'wired-earbuds', 'chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard', 'student-id-badge', 'backpack-straps', 'messenger-bag', 'circuit-pin', 'collar-pin', 'code-patch', 'study-badge', 'utility-belt', 'hero-cape-clasp', 'forehead-jewel', 'crown', 'halo'];
+  var DETAIL_ACCESSORIES = ['earrings', 'stud-earrings', 'hoop-earrings', 'hair-clips', 'over-ear-headphones', 'headset-mic', 'wireless-earbuds', 'wired-earbuds', 'hearing-aid-left', 'hearing-aids', 'chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard', 'student-id-badge', 'backpack-straps', 'messenger-bag', 'circuit-pin', 'collar-pin', 'code-patch', 'study-badge', 'utility-belt', 'hero-cape-clasp', 'forehead-jewel', 'crown', 'halo'];
   var HEADWEAR_ACCESSORIES = ['headband', 'beanie', 'baseball-cap', 'bucket-hat', 'bandana', 'headwrap', 'draped-scarf', 'hijab', 'turban', 'embroidered-prayer-cap', 'wrapped-dastar'];
   var FACE_ACCESSORY_PRIORITY = ['mask', 'eyepatch', 'tech-visor', 'visor', 'safety-goggles', 'round-rim-glasses', 'semi-rimless-glasses', 'thin-rectangular-glasses', 'wireframe-glasses', 'rectangular-glasses', 'glasses', 'spectacles', 'monocle'];
   var HEAD_ACCESSORY_PRIORITY = ['hijab', 'wrapped-dastar', 'headwrap', 'draped-scarf', 'turban', 'embroidered-prayer-cap', 'beanie', 'baseball-cap', 'bucket-hat', 'bandana', 'crown', 'headband'];
   var EAR_ACCESSORY_PRIORITY = ['hoop-earrings', 'stud-earrings', 'earrings'];
-  var AUDIO_ACCESSORY_PRIORITY = ['headset-mic', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds'];
+  var AUDIO_ACCESSORY_PRIORITY = ['headset-mic', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'hearing-aid-left', 'hearing-aids'];
   var NECK_ACCESSORY_PRIORITY = ['chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard'];
   var BAG_ACCESSORY_PRIORITY = ['backpack-straps', 'messenger-bag'];
   var BODY_BOUND_ACCESSORIES = ['chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard', 'student-id-badge', 'backpack-straps', 'messenger-bag', 'circuit-pin', 'collar-pin', 'code-patch', 'study-badge', 'utility-belt', 'hero-cape-clasp'];
   ACCESSORY_COMPATIBILITY.bodyBoundAccessories = BODY_BOUND_ACCESSORIES.slice();
-  var DETAIL_ACCESSORY_PRIORITY = ['headset-mic', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'hair-clips', 'chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard', 'student-id-badge', 'backpack-straps', 'messenger-bag', 'circuit-pin', 'collar-pin', 'code-patch', 'study-badge', 'utility-belt', 'hero-cape-clasp', 'forehead-jewel', 'halo'];
+  var DETAIL_ACCESSORY_PRIORITY = ['headset-mic', 'over-ear-headphones', 'wireless-earbuds', 'wired-earbuds', 'hearing-aid-left', 'hearing-aids', 'hair-clips', 'chain-necklace', 'delicate-pendant-necklace', 'cross-pendant', 'six-point-star-pendant', 'wheel-pendant', 'sacred-syllable-pendant', 'open-hand-pendant', 'campus-lanyard', 'student-id-badge', 'backpack-straps', 'messenger-bag', 'circuit-pin', 'collar-pin', 'code-patch', 'study-badge', 'utility-belt', 'hero-cape-clasp', 'forehead-jewel', 'halo'];
   var HEADWEAR_FIT_ACCESSORIES = lookupValues(HEADWEAR_ACCESSORIES.concat(['visor', 'crown', 'halo', 'headset-mic', 'over-ear-headphones', 'hair-clips']));
   var FACE_FIT_ACCESSORIES = lookupValues(FACE_ACCESSORIES.concat(['forehead-jewel']));
-  var SIDE_FIT_ACCESSORIES = lookupValues(['earrings', 'stud-earrings', 'hoop-earrings', 'wireless-earbuds', 'wired-earbuds']);
+  var SIDE_FIT_ACCESSORIES = lookupValues(['earrings', 'stud-earrings', 'hoop-earrings', 'wireless-earbuds', 'wired-earbuds', 'hearing-aid-left', 'hearing-aids']);
   var HAIR_CAP_REQUIRED_STYLES = lookupValues([]);
   var PARTIAL_HEAD_COVERAGE_HAIR_STYLES = lookupValues(['bald', 'mohawk', 'none', 'tousled-wispy-fringe']);
   // Per-style vertical nudges keep bangs out of the brow band without pushing updos into the bar.
@@ -973,7 +981,7 @@
   var FINE_TUNE_SCALE_STEP = 0.0025;
   var HISTORY_LIMIT = 200;
   var FINE_TUNE_TARGETS = [
-    { key: 'head', label: 'Head', slots: ['head-shape', 'face-clear', 'head-features'], cx: 400, cy: 188 },
+    { key: 'head', label: 'Head', selectors: ['[data-hero-head-proportions]'], cx: 400, cy: 188 },
     { key: 'hair', label: 'Hair', slots: ['hair', 'hairline', 'hair-root', 'hair-cap'], cx: 400, cy: 166 },
     { key: 'ears', label: 'Ears', slots: ['ear-shape'], cx: 400, cy: 190 },
     { key: 'eyes', label: 'Eyes', slots: ['eye-shape'], selectors: ['[data-hero-eye-catchlights]', '[data-hero-motion="closed-eyelids"]'], cx: 400, cy: 185 },
@@ -1035,7 +1043,7 @@
     // Coverage spans light through deepest tones and varies undertone within
     // each range. These are appearance choices, never race labels.
     skin: ['#f8dfcf', '#f4d0c4', '#e8c8a8', '#ddb08a', '#cf9e82', '#bd8075', '#ad7953', '#9b6042', '#875a50', '#754b39', '#633f2b', '#512d22', '#452a2b', '#35241f', '#291713'],
-    hair: ['#1f140c', '#3d2818', '#6a4830', '#a07050', '#c08555', '#d8b074', '#e8d090', '#704530', '#1a1a1a', '#2e2e2e', '#5e3a2f', '#854a3a', '#b85a3a', '#9a3a2a', '#d8b074', '#7a4a2f', '#2774AE'],
+    hair: ['#1f140c', '#3d2818', '#6a4830', '#a07050', '#c08555', '#d8b074', '#e8d090', '#704530', '#1a1a1a', '#2e2e2e', '#5e3a2f', '#854a3a', '#b85a3a', '#9a3a2a', '#d8b074', '#7a4a2f', '#2774AE', '#b7bdc8', '#eee7dd', '#66418c', '#b74f7e', '#287b7b'],
     eye: ['#1f140c', '#3a2818', '#5a4030', '#3a5a3a', '#3a5a7a', '#5a3a7a', '#7a4a3a', '#2a2a4a'],
     suit: ['#1F6EBD', '#1F8FBD', '#1FBD8F', '#5A1FBD', '#BD1F6E', '#BD8F1F', '#8FBD1F', '#1FBD1F', '#bd2a2a', '#2a4abd', '#222244', '#2a2a2a'],
     cape: ['#15538f', '#8f1515', '#15568f', '#558f15', '#558f15', '#8f8f15', '#5a158f', '#0f0f0f', '#5a5a5a', '#8f4a15', '#15568f', '#3a3a3a'],
@@ -2057,24 +2065,45 @@
     }
   }
 
-  function setOpaqueHatHairClip(svg, enabled) {
+  function setOpaqueHatHairClip(svg, hatOption) {
     var hairClip = svg.querySelector('[data-hero-under-hat-hair-clip]');
     var hairlineClip = svg.querySelector('[data-hero-under-hat-hairline-clip]');
+    var hairRootClip = svg.querySelector('[data-hero-under-hat-hair-root-clip]') || hairClip;
+    var envelope = hatOption && svg.querySelector('[data-hero-hat-envelope="' + hatOption + '"]');
+    svg.querySelectorAll('[data-hero-hat-envelope-ref]').forEach(function (reference) {
+      reference.removeAttribute('transform');
+      if (envelope) reference.setAttribute('href', '#' + envelope.id);
+    });
     var groups = svg.querySelectorAll('[data-hero-slot="hair"], [data-hero-slot="hairline"], [data-hero-slot="hair-root"]');
     for (var i = 0; i < groups.length; i++) groups[i].style.removeProperty('clip-path');
-    if (!enabled || !hairClip || !hairClip.id) return;
-    var hairClipValue = 'url(#' + hairClip.id + ')';
+    if (!hatOption || !hairClip || !hairClip.id) return;
+    var clips = { hair: hairClip, hairline: hairlineClip, 'hair-root': hairRootClip };
     for (var j = 0; j < groups.length; j++) {
       if (groups[j].getAttribute('display') !== 'inline') continue;
-      var slot = groups[j].getAttribute('data-hero-slot');
-      if (slot === 'hairline') {
-        if (hairlineClip && hairlineClip.id) {
-          groups[j].style.setProperty('clip-path', 'url(#' + hairlineClip.id + ')');
-        }
-        continue;
-      }
-      groups[j].style.setProperty('clip-path', hairClipValue);
+      var clip = clips[groups[j].getAttribute('data-hero-slot')];
+      if (clip && clip.id) groups[j].style.setProperty('clip-path', 'url(#' + clip.id + ')');
     }
+    fitOpaqueHatHairClips(svg);
+  }
+
+  function fitOpaqueHatHairClips(svg) {
+    var proportions = svg.querySelector('[data-hero-head-proportions]');
+    var hats = svg.querySelectorAll('[data-hero-slot="accessory"][display="inline"]');
+    var hat = Array.prototype.find.call(hats, function (group) {
+      return !!OPAQUE_HAT_ACCESSORIES[group.getAttribute('data-hero-option')];
+    });
+    if (!proportions || !hat) return;
+    var hatToHead = localSvgMatrix(hat, proportions);
+    svg.querySelectorAll('[data-hero-hat-envelope-ref]').forEach(function (reference) {
+      var slot = reference.getAttribute('data-hero-hat-envelope-ref');
+      // Older exported templates have unlabelled references and retain their
+      // authored clipping. Every current slot has its own independent frame.
+      if (slot !== 'hair' && slot !== 'hairline' && slot !== 'hair-root') return;
+      var hair = svg.querySelector('[data-hero-slot="' + slot + '"][display="inline"]');
+      if (!hair || !hair.style.clipPath) return;
+      var relative = localSvgMatrix(hair, proportions).inverse().multiply(hatToHead);
+      reference.setAttribute('transform', relative.toString());
+    });
   }
 
   function affineFitTransform(fit, centerX, centerY) {
@@ -2182,6 +2211,7 @@
 
   function applyHeadShapeFit(svg, headStyle) {
     var normalized = canonicalChoiceValue('headStyle', headStyle || 'default');
+    fitFaceSurfaceToHead(svg, normalized);
     var fit = HEAD_STYLE_FITS[normalized] || HEAD_STYLE_FITS.default;
     var widthDelta = (fit.scaleX || 1) - 1;
     var heightDelta = (fit.scaleY || 1) - 1;
@@ -2252,6 +2282,26 @@
     applyFitToAccessories(svg, headwearTransform, HEADWEAR_FIT_ACCESSORIES, normalized);
     applyFitToAccessories(svg, faceAccessoryTransform, FACE_FIT_ACCESSORIES, normalized);
     applyFitToAccessories(svg, sideAccessoryTransform, SIDE_FIT_ACCESSORIES, normalized);
+    fitEarsToHeadSurface(svg);
+    fitOpaqueHatHairClips(svg);
+  }
+
+  function fitFaceSurfaceToHead(svg, headStyle) {
+    const surface = svg.querySelector('[data-hero-slot="head-shape"][data-hero-option="' + headStyle + '"] > path');
+    const clip = svg.querySelector('[data-hero-face-surface-clip]');
+    // Share the selected silhouette across lighting, skin details, and cheek shading.
+    // Older exported templates may not contain this fitted surface clip.
+    if (surface && clip) clip.setAttribute('d', surface.getAttribute('d'));
+  }
+
+  function fitEyeReflections(svg, eyeShape) {
+    const eyes = svg.querySelectorAll('[data-hero-slot="eye-shape"][data-hero-option="' + eyeShape + '"] > g[clip-path]');
+    const reflections = svg.querySelectorAll('[data-hero-eye-reflection]');
+    // Reuse each eye's authored aperture so compact and tilted lids contain
+    // the shared catchlights, including after fine tuning.
+    reflections.forEach((reflection, index) => {
+      if (eyes[index]) reflection.setAttribute('clip-path', eyes[index].getAttribute('clip-path'));
+    });
   }
 
   function facialHairFitForMouth(mouthStyle, headStyle, facialHairStyle) {
@@ -2355,7 +2405,7 @@
     };
   }
 
-  function buildEyelashPath(style, family, underFrames) {
+  function buildEyelashPath(style, family, underFrames, tuning) {
     var config = EYELASH_STYLE_GEOMETRY[style];
     var familyGeometry = EYELASH_FAMILY_GEOMETRY[family] || EYELASH_FAMILY_GEOMETRY.almond;
     if (!config) return '';
@@ -2368,15 +2418,19 @@
     for (var i = 0; i < count; i++) {
       var slot = clusterProfile[i];
       var u = Math.max(0, Math.min(1, slot * reach));
-      var sample = lashSampleForFamily(familyGeometry, u);
+      var values = tuning || {};
+      var fan = 1 + (values.spread || 0) * 0.01;
+      var sample = lashSampleForFamily(familyGeometry, clampNumber(u * fan, 0, 1));
       var tuftScale = i % 3 === 0 ? 1.08 : (i % 3 === 1 ? 0.82 : 0.95);
       var taper = (1 - slot * 0.12) * tuftScale;
       var outerBoost = config.outerBoost ? Math.max(0, 1 - slot * 1.6) * config.outerBoost : 0;
       var length = (config.length + outerBoost) * (familyGeometry.lengthScale || 1) * taper * frameLengthScale;
-      var endX = sample.x + sample.direction.x * length;
-      var endY = sample.y + sample.direction.y * length;
-      var controlX = sample.x + sample.direction.x * length * 0.58 + (i % 2 ? 0.12 : -0.12);
-      var controlY = sample.y + sample.direction.y * length * 0.48 - 0.1;
+      var reachX = sample.direction.x * length * (1 + (values.width || 0) * 0.01);
+      var reachY = sample.direction.y * length * (1 + (values.height || 0) * 0.01) + (values.vertical || 0) * 0.035;
+      var endX = sample.x + reachX;
+      var endY = sample.y + reachY;
+      var controlX = sample.x + reachX * 0.58 + (i % 2 ? 0.12 : -0.12);
+      var controlY = sample.y + reachY * 0.48 - 0.1;
       var segment = { sx: sample.x, sy: sample.y, cx: controlX, cy: controlY, ex: endX, ey: endY };
       segments.push(segment, mirrorLashSegment(segment));
     }
@@ -2468,15 +2522,474 @@
 
   function applyFineTuneToSvg(svg, fineTune) {
     var normalized = normalizeFineTuneState(fineTune);
+    var eyeTarget = FINE_TUNE_TARGETS.find(function (target) { return target.key === 'eyes'; });
+    var eyeTransform = fineTuneTransformForTarget(eyeTarget, normalized.eyes);
     for (var i = 0; i < FINE_TUNE_TARGETS.length; i++) {
       var target = FINE_TUNE_TARGETS[i];
       var transform = fineTuneTransformForTarget(target, normalized[target.key]);
+      // Lashes grow from the eyelid. Their own controls reshape the fan below;
+      // the eye's transform carries the roots, including vertical movement.
+      if (target.key === 'eyelashes') transform = eyeTransform;
       var elements = collectFineTuneElements(svg, target);
       for (var e = 0; e < elements.length; e++) {
         setComposedTransform(elements[e], transform);
         if (transform) elements[e].setAttribute('data-hero-fine-tune', target.key);
         else elements[e].removeAttribute('data-hero-fine-tune');
       }
+    }
+    fitEarsToHeadSurface(svg);
+    tuneAttachedEyelashes(svg, normalized.eyelashes);
+    keepHairOnCrown(svg);
+    keepOpaqueHatsAboveEyes(svg);
+    fitOpaqueHatHairClips(svg);
+    fitEyepatchToEye(svg);
+    keepMouthOnFace(svg);
+    keepNoseAboveMouth(svg);
+    fitChinDetails(svg);
+    fitMustacheToUpperLip(svg);
+    counterHeadTuningForBodyAccessories(svg);
+    fitWiredEarbudCables(svg);
+  }
+
+  function localSvgMatrix(node, ancestor) {
+    var matrix = new DOMMatrix();
+    for (var cursor = node; cursor && cursor !== ancestor; cursor = cursor.parentElement) {
+      var transform = cursor.transform && cursor.transform.baseVal.consolidate();
+      if (transform) matrix = domMatrixFromSvg(transform.matrix).multiply(matrix);
+    }
+    return matrix;
+  }
+
+  function domMatrixFromSvg(matrix) {
+    // SVGTransform exposes legacy SVGMatrix in some browsers. Convert before
+    // composition rather than relying on SVGMatrix/DOMMatrix interop.
+    return new DOMMatrix([matrix.a, matrix.b, matrix.c, matrix.d, matrix.e, matrix.f]);
+  }
+
+  function selectedEyeSurfaces(svg) {
+    var eyes = svg.querySelector('[data-hero-slot="eye-shape"][display="inline"]');
+    if (!eyes) return [];
+    var surfaces = eyes.querySelectorAll('[data-hero-eye-surface]');
+    // Cached exported templates predate the semantic aperture hooks.
+    return surfaces.length ? surfaces : eyes.querySelectorAll(':scope > [fill="#ffffff"]');
+  }
+
+  function prependTransformInSvgFrame(node, frame, correction) {
+    var parent = localSvgMatrix(node.parentElement, frame);
+    var local = parent.inverse().multiply(correction).multiply(parent);
+    node.setAttribute('transform', local.toString() + ' ' + (node.getAttribute('transform') || ''));
+  }
+
+  function keepOpaqueHatsAboveEyes(svg) {
+    var frame = svg.querySelector('[data-hero-head-proportions]');
+    var eyes = selectedEyeSurfaces(svg);
+    if (!frame || !eyes.length) return;
+    var eyeBounds = Array.prototype.map.call(eyes, function (eye) { return boundsInSvgFrame(eye, frame); });
+    svg.querySelectorAll('[data-hero-slot="accessory"][display="inline"]').forEach(function (hat) {
+      if (!OPAQUE_HAT_ACCESSORIES[hat.getAttribute('data-hero-option')]) return;
+      var lift = 0;
+      hat.querySelectorAll('path, ellipse, circle, rect').forEach(function (shape) {
+        var matrix = localSvgMatrix(shape, frame);
+        var stroke = Number(shape.getAttribute('stroke-width') || 0) * Math.hypot(matrix.c, matrix.d) / 2;
+        var length = shape.getTotalLength();
+        var steps = Math.max(2, Math.ceil(length / 2));
+        for (var i = 0; i <= steps; i++) {
+          var sample = shape.getPointAtLength(length * i / steps);
+          var point = new DOMPoint(sample.x, sample.y).matrixTransform(matrix);
+          eyeBounds.forEach(function (eye) {
+            if (point.x >= eye.left - stroke && point.x <= eye.right + stroke) {
+              lift = Math.max(lift, point.y + stroke + 1 - eye.top);
+            }
+          });
+        }
+      });
+      // Move the complete hat, including the rim and decoration. Its hair
+      // envelope is fitted next, so lifting the brim cannot strand the hair.
+      if (lift > 0) prependTransformInSvgFrame(hat, frame, new DOMMatrix().translate(0, -lift));
+    });
+  }
+
+  function fitEyepatchToEye(svg) {
+    var patch = svg.querySelector('[data-hero-slot="accessory"][data-hero-option="eyepatch"][display="inline"]');
+    var frame = svg.querySelector('[data-hero-head-proportions]');
+    var surfaces = selectedEyeSurfaces(svg);
+    var eye = Array.prototype.find.call(surfaces, function (surface) {
+      return surface.getAttribute('data-hero-eye-surface') === 'left';
+    }) || surfaces[0];
+    if (!patch || !frame || !eye) return;
+    var cover = patch.querySelector('[data-hero-eye-cover]') || patch.querySelector('path');
+    if (!cover) return;
+    cover.removeAttribute('transform');
+    var aperture = boundsInSvgFrame(eye, frame);
+    var coverBounds = boundsInSvgFrame(cover, frame);
+    var correction = new DOMMatrix().translate(
+      (aperture.left + aperture.right - coverBounds.left - coverBounds.right) / 2,
+      (aperture.top + aperture.bottom - coverBounds.top - coverBounds.bottom) / 2);
+    prependTransformInSvgFrame(patch, frame, correction);
+    fitEyeCoverSize(cover, eye, frame);
+    fitEyepatchStrap(svg, patch, cover);
+  }
+
+  function eyeCoverStrapAnchor(cover, side) {
+    var box = cover.getBBox();
+    var targetX = side === 'left' ? box.x : box.x + box.width;
+    var targetY = box.y + box.height * 0.2;
+    var length = cover.getTotalLength();
+    var steps = Math.ceil(length);
+    var closest;
+    var distance = Infinity;
+    for (var i = 0; i <= steps; i++) {
+      var point = cover.getPointAtLength(length * i / steps);
+      var candidate = Math.hypot(point.x - targetX, point.y - targetY);
+      if (candidate < distance) { closest = point; distance = candidate; }
+    }
+    // A small inset keeps the strap joined to the opaque material after scaling.
+    return new DOMPoint(closest.x + (side === 'left' ? 0.35 : -0.35), closest.y);
+  }
+
+  function fitEyepatchStrap(svg, patch, cover) {
+    var frame = svg.querySelector('[data-hero-head-proportions]');
+    var head = svg.querySelector('[data-hero-slot="head-shape"][display="inline"] > path');
+    var eyes = selectedEyeSurfaces(svg);
+    var openEye = Array.prototype.find.call(eyes, function (eye) { return eye.getAttribute('data-hero-eye-surface') === 'right'; }) || eyes[1];
+    var strap = patch.querySelector('[data-hero-eye-strap]') || Array.prototype.find.call(patch.querySelectorAll('path'), function (path) { return path !== cover; });
+    if (!frame || !head || !openEye || !strap) return;
+    var eyeBounds = boundsInSvgFrame(openEye, frame);
+    var brow = svg.querySelector('[data-hero-slot="eyebrow"][display="inline"]');
+    var foreheadY = eyeBounds.top - 8;
+    if (brow && brow.getBBox().width) foreheadY = Math.min(foreheadY, boundsInSvgFrame(brow, frame).top - 3);
+    var coverToFrame = localSvgMatrix(cover, frame);
+    var left = eyeCoverStrapAnchor(cover, 'left').matrixTransform(coverToFrame);
+    var right = eyeCoverStrapAnchor(cover, 'right').matrixTransform(coverToFrame);
+    var leftTempleX = headEdgeAt(head, left.y - 0.5, 'left') + 0.6;
+    var rightTempleX = headEdgeAt(head, foreheadY + 0.5, 'right') - 0.6;
+    var turnX = right.x + Math.max(0, eyeBounds.left - 3 - right.x) * 0.65;
+    var toStrap = localSvgMatrix(strap.parentElement, frame).inverse();
+    function pointText(x, y) {
+      var point = new DOMPoint(x, y).matrixTransform(toStrap);
+      return fmtTransformNumber(point.x) + ' ' + fmtTransformNumber(point.y);
+    }
+    // Rise beside the covered eye before crossing the forehead. All control
+    // points over the uncovered eye stay above it, so the curve cannot cross it.
+    strap.setAttribute('d', 'M ' + pointText(leftTempleX, left.y - 0.5)
+      + ' C ' + pointText(leftTempleX + 4, left.y - 1.5) + ', ' + pointText(left.x - 3, left.y - 1) + ', ' + pointText(left.x, left.y)
+      + ' M ' + pointText(right.x, right.y)
+      + ' C ' + pointText(turnX, right.y - 2) + ', ' + pointText(turnX, foreheadY + 6) + ', ' + pointText(turnX, foreheadY + 4)
+      + ' C ' + pointText(turnX, foreheadY - 3) + ', '
+      + pointText(rightTempleX - 5, foreheadY - 3) + ', ' + pointText(rightTempleX, foreheadY + 0.5));
+  }
+
+  function fitEyeCoverSize(cover, eye, frame) {
+    var box = cover.getBBox();
+    var center = new DOMPoint(box.x + box.width / 2, box.y + box.height / 2);
+    var toCover = localSvgMatrix(cover, frame).inverse().multiply(localSvgMatrix(eye, frame));
+    var length = eye.getTotalLength();
+    var steps = Math.max(12, Math.ceil(length));
+    var points = [];
+    for (var i = 0; i < steps; i++) {
+      var sample = eye.getPointAtLength(length * i / steps);
+      points.push(new DOMPoint(sample.x, sample.y).matrixTransform(toCover));
+    }
+    // The aperture controls the minimum cover size. Keep the chosen size when
+    // it already fits, and preserve the patch's aspect ratio when enlarging it.
+    function fitsAtFraction(fraction) {
+      return points.every(function (point) {
+        return cover.isPointInFill({ x: center.x + (point.x - center.x) * 1.06 * fraction,
+          y: center.y + (point.y - center.y) * 1.06 * fraction });
+      });
+    }
+    if (fitsAtFraction(1)) return;
+    // The solid cover contains its center. Bisect inward from the eye contour,
+    // then invert that fraction; no arbitrary size cap can leave an eye exposed.
+    var inside = 0;
+    var outside = 1;
+    for (var step = 0; step < 16; step++) {
+      var middle = (inside + outside) / 2;
+      if (fitsAtFraction(middle)) inside = middle;
+      else outside = middle;
+    }
+    cover.setAttribute('transform', new DOMMatrix().translate(center.x, center.y).scale(1 / inside).translate(-center.x, -center.y).toString());
+  }
+
+  function keepHairOnCrown(svg) {
+    var hair = svg.querySelector('[data-hero-slot="hair"][display="inline"]');
+    var head = svg.querySelector('[data-hero-slot="head-shape"][display="inline"] > path');
+    var proportions = svg.querySelector('[data-hero-head-proportions]');
+    if (!hair || !head || !proportions) return;
+    var style = hair.getAttribute('data-hero-option');
+    if (PARTIAL_HEAD_COVERAGE_HAIR_STYLES[style] || style === 'cornrows' || hair.style.clipPath) return;
+    var cap = [];
+    hair.querySelectorAll('path, ellipse, circle').forEach(function (shape) {
+      // Sheen, loose texture and translucent shading are not a scalp cover.
+      var fill = shape.getAttribute('fill') || '';
+      var opacity = Number(shape.getAttribute('opacity') || 1);
+      if (fill.indexOf('hair') === -1 || opacity < 0.8) return;
+      cap.push({ shape: shape, inverse: localSvgMatrix(shape, proportions).inverse() });
+    });
+    if (!cap.length) return;
+    var samples = [];
+    var length = head.getTotalLength();
+    var crownBottom = head.getBBox().y + 24;
+    for (var i = 0; i < 64; i++) {
+      var point = head.getPointAtLength(length * i / 64);
+      if (point.y > crownBottom) continue;
+      samples.push(new DOMPoint(point.x + (point.x < 400 ? 1 : -1), point.y + 0.6));
+    }
+    // A pulled-back cap cannot be lowered/shrunk inside the skull. Find the
+    // smallest correction at the crown, leaving long tails' height unchanged.
+    var correction = new DOMMatrix();
+    for (var step = 0; step <= 28; step++) {
+      var scaleX = 1 + step * 0.006;
+      correction = new DOMMatrix([scaleX, 0, 0, 1, 400 * (1 - scaleX), -step * 0.5]);
+      var inverse = correction.inverse();
+      var covered = samples.every(function (point) {
+        var local = point.matrixTransform(inverse);
+        return cap.some(function (part) { return part.shape.isPointInFill(local.matrixTransform(part.inverse)); });
+      });
+      if (!covered) continue;
+      if (step) {
+        ['hair', 'hairline', 'hair-root'].forEach(function (slot) {
+          var layer = svg.querySelector('[data-hero-slot="' + slot + '"][display="inline"]');
+          if (layer) layer.setAttribute('transform', correction.toString() + ' ' + (layer.getAttribute('transform') || ''));
+        });
+      }
+      return;
+    }
+  }
+
+  function keepMouthOnFace(svg) {
+    var head = svg.querySelector('[data-hero-slot="head-shape"][display="inline"] > path');
+    var proportions = svg.querySelector('[data-hero-head-proportions]');
+    var mouth = svg.querySelector('[data-hero-slot="mouth-style"][display="inline"]');
+    if (!head || !proportions || !mouth) return;
+    var samples = [];
+    mouth.querySelectorAll('path').forEach(function (path) {
+      var matrix = localSvgMatrix(path, proportions);
+      var length = path.getTotalLength();
+      var steps = Math.max(2, Math.ceil(length / 3));
+      for (var i = 0; i <= steps; i++) {
+        var point = path.getPointAtLength(length * i / steps);
+        samples.push(new DOMPoint(point.x, point.y).matrixTransform(matrix));
+      }
+    });
+    // At the lower limit, keep the complete lips inside the jaw. Clipping the
+    // mouth would conceal the overflow by cutting off the smile itself.
+    var hasChinPatch = svg.querySelector('[data-hero-slot="facial-hair"][display="inline"] [data-hero-chin-hair]');
+    var hasChinDimple = svg.querySelector('[data-hero-slot="face-feature"][data-hero-option="chin-dimple"][display="inline"]');
+    // A short chin patch needs some skin below the lips, including when both
+    // controls request the bottom of a compact face.
+    var inset = hasChinPatch ? 6 : (hasChinDimple ? 3 : 0.8);
+    var lift = 0;
+    while (lift < (hasChinPatch ? 20 : 14) && samples.some(function (point) {
+      return !head.isPointInFill({ x: point.x, y: point.y - lift + inset });
+    })) lift += 0.5;
+    if (lift) mouth.setAttribute('transform', 'translate(0 ' + (-lift) + ') ' + (mouth.getAttribute('transform') || ''));
+  }
+
+  function keepNoseAboveMouth(svg) {
+    var nose = svg.querySelector('[data-hero-slot="nose-shape"][display="inline"]');
+    var mouth = svg.querySelector('[data-hero-slot="mouth-style"][display="inline"]');
+    var frame = svg.querySelector('[data-hero-head-proportions]');
+    if (!nose || !mouth || !frame) return;
+    var bounds = boundsInSvgFrame(nose, frame);
+    var upperLip = Infinity;
+    // A smile's corners sit above its center. Measure the actual lip contour
+    // beneath the nose, so high corners do not needlessly shorten the nose.
+    mouth.querySelectorAll('path').forEach(function (path) {
+      var matrix = localSvgMatrix(path, frame);
+      var length = path.getTotalLength();
+      var steps = Math.max(2, Math.ceil(length));
+      for (var i = 0; i <= steps; i++) {
+        var local = path.getPointAtLength(length * i / steps);
+        var point = new DOMPoint(local.x, local.y).matrixTransform(matrix);
+        if (point.x >= bounds.left - 1 && point.x <= bounds.right + 1) upperLip = Math.min(upperLip, point.y);
+      }
+    });
+    var lift = bounds.bottom + 1.5 - upperLip;
+    if (lift > 0) nose.setAttribute('transform', 'translate(0 ' + (-lift) + ') ' + (nose.getAttribute('transform') || ''));
+  }
+
+  function boundsInSvgFrame(node, frame) {
+    var box = node.getBBox();
+    var matrix = localSvgMatrix(node, frame);
+    var corners = [[box.x, box.y], [box.x + box.width, box.y],
+      [box.x, box.y + box.height], [box.x + box.width, box.y + box.height]];
+    var points = corners.map(function (point) { return new DOMPoint(point[0], point[1]).matrixTransform(matrix); });
+    return {
+      left: Math.min.apply(null, points.map(function (point) { return point.x; })),
+      right: Math.max.apply(null, points.map(function (point) { return point.x; })),
+      top: Math.min.apply(null, points.map(function (point) { return point.y; })),
+      bottom: Math.max.apply(null, points.map(function (point) { return point.y; }))
+    };
+  }
+
+  function fitChinDetails(svg) {
+    var details = svg.querySelectorAll('[data-hero-slot="facial-hair"][display="inline"] [data-hero-chin-hair], [data-hero-slot="face-feature"][display="inline"] [data-hero-chin-detail]');
+    details.forEach(function (patch) { fitDetailOnChin(svg, patch); });
+  }
+
+  function fitDetailOnChin(svg, patch) {
+    var head = svg.querySelector('[data-hero-slot="head-shape"][display="inline"] > path');
+    var mouth = svg.querySelector('[data-hero-slot="mouth-style"][display="inline"]');
+    var frame = svg.querySelector('[data-hero-head-proportions]');
+    if (!patch || !head || !mouth || !frame) return;
+    patch.removeAttribute('transform');
+    var bounds = boundsInSvgFrame(patch, frame);
+    var lip = boundsInSvgFrame(mouth, frame);
+    var jaw = head.getBBox();
+    var topLimit = lip.bottom + 0.5;
+    var bottomLimit = jaw.y + jaw.height - 1;
+    var height = Math.min(bounds.bottom - bounds.top, bottomLimit - topLimit);
+    var top = clampNumber(bounds.top, topLimit, bottomLimit - height);
+    var center = (bounds.left + bounds.right) / 2;
+    var scaleY = height / (bounds.bottom - bounds.top);
+    var correction = new DOMMatrix([1, 0, 0, scaleY, 400 - center, top - bounds.top * scaleY]);
+    // Keep the entire patch rather than masking away its lower tip. Width is
+    // bounded by the chin's actual contour, not by a head-style lookup table.
+    var leftEdge = headEdgeAt(head, bottomLimit - 0.5, 'left') + 0.6;
+    var rightEdge = headEdgeAt(head, bottomLimit - 0.5, 'right') - 0.6;
+    var width = Math.min(bounds.right - bounds.left, rightEdge - leftEdge);
+    var scaleX = width / (bounds.right - bounds.left);
+    correction.a = scaleX;
+    correction.e = 400 - center * scaleX;
+    var parent = localSvgMatrix(patch.parentElement, frame);
+    patch.setAttribute('transform', parent.inverse().multiply(correction).multiply(parent).toString());
+  }
+
+  function fitMustacheToUpperLip(svg) {
+    var mustache = svg.querySelector('[data-hero-slot="facial-hair"][display="inline"] [data-hero-mustache]');
+    var mouth = svg.querySelector('[data-hero-slot="mouth-style"][display="inline"]');
+    var frame = svg.querySelector('[data-hero-head-proportions]');
+    if (!mustache || !mouth || !frame) return;
+    mustache.removeAttribute('transform');
+    var hair = boundsInSvgFrame(mustache, frame);
+    var lip = boundsInSvgFrame(mouth, frame);
+    // Independent facial-hair controls reshape the mustache, but its lower
+    // edge stays attached to the upper lip instead of becoming a second mouth.
+    var bottom = clampNumber(hair.bottom, lip.top - 1.5, lip.top + 0.25);
+    var correction = new DOMMatrix().translate(0, bottom - hair.bottom);
+    var parent = localSvgMatrix(mustache.parentElement, frame);
+    mustache.setAttribute('transform', parent.inverse().multiply(correction).multiply(parent).toString());
+  }
+
+  function fitWiredEarbudCables(svg) {
+    var accessory = svg.querySelector('[data-hero-slot="accessory"][data-hero-option="wired-earbuds"][display="inline"]');
+    var neck = svg.querySelector('[data-hero-neck-base]');
+    var outfit = svg.querySelector('[data-hero-slot="outfit-style"][display="inline"]');
+    if (!accessory || !neck) return;
+    var neckBounds = neck.getBBox();
+    // Both garments and the neck are authored in the body surface frame. The
+    // selected garment carries its own tuning as well as the fitted body.
+    var collarFrame = outfit || neck;
+    var toAccessory = localSvgMatrix(accessory, svg).inverse();
+    var collarMatrix = toAccessory.multiply(localSvgMatrix(collarFrame, svg));
+    ['left', 'right'].forEach(function (side) {
+      var bud = accessory.querySelector('[data-hero-ear-attachment="' + side + '"] circle');
+      var cable = accessory.querySelector('[data-hero-earbud-cable="' + side + '"]');
+      if (!bud || !cable) return;
+      var budBounds = bud.getBBox();
+      var start = new DOMPoint(budBounds.x + budBounds.width / 2, budBounds.y + budBounds.height - 0.6)
+        .matrixTransform(localSvgMatrix(bud, accessory));
+      var direction = side === 'left' ? -1 : 1;
+      var end = new DOMPoint(neckBounds.x + neckBounds.width / 2, neckBounds.y + neckBounds.height + 3)
+        .matrixTransform(collarMatrix);
+      var fall = Math.max(12, end.y - start.y);
+      // A soft hanging curve keeps the wire outside the jaw and enters the
+      // collar by three units, leaving no floating end during the small nod.
+      var d = 'M ' + fmtTransformNumber(start.x) + ' ' + fmtTransformNumber(start.y)
+        + ' C ' + fmtTransformNumber(start.x + direction * 1.5) + ' ' + fmtTransformNumber(start.y + fall * 0.58)
+        + ', ' + fmtTransformNumber(end.x + direction * Math.abs(end.x - start.x) * 0.66) + ' ' + fmtTransformNumber(end.y - 2)
+        + ', ' + fmtTransformNumber(end.x) + ' ' + fmtTransformNumber(end.y);
+      cable.querySelectorAll('path').forEach(function (path) { path.setAttribute('d', d); });
+    });
+  }
+
+  function headEdgeAt(surface, y, side) {
+    var inside = 400;
+    var outside = side === 'left' ? 310 : 490;
+    for (var i = 0; i < 12; i++) {
+      var middle = (inside + outside) / 2;
+      if (surface.isPointInFill({ x: middle, y: y })) inside = middle;
+      else outside = middle;
+    }
+    return inside;
+  }
+
+  function fitEarsToHeadSurface(svg) {
+    var head = svg.querySelector('[data-hero-slot="head-shape"][display="inline"] > path');
+    var proportions = svg.querySelector('[data-hero-head-proportions]');
+    var ears = svg.querySelector('[data-hero-slot="ear-shape"][display="inline"]');
+    if (!head || !proportions || !ears) return;
+    // Ear slots are direct children of the proportions layer. Local matrices
+    // also work in detached SVG templates used for choice thumbnails.
+    var earTransform = ears.transform.baseVal.consolidate();
+    var earToHead = earTransform ? earTransform.matrix : new DOMMatrix();
+    ['left', 'right'].forEach(function (side) {
+      var ear = ears.querySelector('[data-hero-face-detail="ear-' + side + '"]');
+      if (!ear) return;
+      ear.removeAttribute('transform');
+      var bounds = ear.getBBox();
+      var innerX = side === 'left' ? bounds.x + bounds.width : bounds.x;
+      var inner = new DOMPoint(innerX, bounds.y + bounds.height / 2).matrixTransform(earToHead);
+      // Maintain a small overlap with the actual cheek contour, not an
+      // approximate width category that leaves narrow heads with floating ears.
+      var anchor = headEdgeAt(head, inner.y, side) + (side === 'left' ? 2 : -2);
+      var correction = side === 'left' ? Math.max(0, anchor - inner.x) : Math.min(0, anchor - inner.x);
+      if (correction) ear.setAttribute('transform', 'translate(' + fmtTransformNumber(correction / earToHead.a) + ' 0)');
+    });
+    fitEarMountedAccessories(svg);
+  }
+
+  function fitEarMountedAccessories(svg) {
+    var proportions = svg.querySelector('[data-hero-head-proportions]');
+    var ears = svg.querySelector('[data-hero-slot="ear-shape"][display="inline"]');
+    var attachments = svg.querySelectorAll('[data-hero-ear-attachment]');
+    attachments.forEach(function (attachment) { attachment.removeAttribute('transform'); });
+    if (!proportions || !ears) return;
+    var reference = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    reference.setAttribute('transform', ears.getAttribute('data-hero-base-transform') || '');
+    var baseMatrix = localSvgMatrix(reference, null);
+    attachments.forEach(function (attachment) {
+      var accessory = attachment.closest('[data-hero-slot="accessory"]');
+      if (!accessory || accessory.getAttribute('display') !== 'inline') return;
+      var side = attachment.getAttribute('data-hero-ear-attachment');
+      var ear = ears.querySelector('[data-hero-face-detail="ear-' + side + '"]');
+      if (!ear) return;
+      var bounds = ear.getBBox();
+      var anchor = new DOMPoint(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+      var original = anchor.matrixTransform(baseMatrix);
+      var fitted = anchor.matrixTransform(localSvgMatrix(ear, proportions));
+      // Follow both relative ear tuning and the final contour correction.
+      // Mirror transforms stay inside the wrapper; device widths stay intact.
+      var moved = new DOMPoint(fitted.x - original.x, fitted.y - original.y);
+      var accessoryParent = localSvgMatrix(attachment.parentElement, proportions);
+      var inverseDirection = new DOMMatrix([
+        accessoryParent.a, accessoryParent.b, accessoryParent.c, accessoryParent.d, 0, 0
+      ]).inverse();
+      var local = moved.matrixTransform(inverseDirection);
+      attachment.setAttribute('transform', 'translate(' + fmtTransformNumber(local.x) + ' ' + fmtTransformNumber(local.y) + ')');
+    });
+  }
+
+  function tuneAttachedEyelashes(svg, tuning) {
+    var groups = svg.querySelectorAll('[data-hero-slot="eyelash-style"]');
+    for (var i = 0; i < groups.length; i++) {
+      var path = groups[i].querySelector('[data-hero-lash-path]');
+      if (!path || !path.hasAttribute('data-hero-lash-family')) continue;
+      var family = path.getAttribute('data-hero-lash-family');
+      var underFrames = path.getAttribute('data-hero-lash-fit') === 'under-frames';
+      path.setAttribute('d', buildEyelashPath(groups[i].getAttribute('data-hero-option'), family, underFrames, tuning));
+    }
+  }
+
+  function counterHeadTuningForBodyAccessories(svg) {
+    var proportions = svg.querySelector('[data-hero-head-proportions]');
+    var transform = proportions && proportions.transform.baseVal.consolidate();
+    if (!transform) return;
+    var inverse = domMatrixFromSvg(transform.matrix).inverse();
+    for (var i = 0; i < BODY_BOUND_ACCESSORIES.length; i++) {
+      var group = svg.querySelector('[data-hero-slot="accessory"][data-hero-option="' + BODY_BOUND_ACCESSORIES[i] + '"]');
+      if (group) group.setAttribute('transform', inverse.toString() + ' ' + (group.getAttribute('transform') || ''));
     }
   }
 
@@ -2790,7 +3303,11 @@
     svg.style.setProperty('--hero-bruin-fur-light', lighten(state.appearance.skin, 0.28));
     svg.style.setProperty('--hero-bruin-fur', state.appearance.skin);
     svg.style.setProperty('--hero-bruin-fur-dark', darken(state.appearance.skin, 0.42));
-    svg.style.setProperty('--hero-bruin-muzzle', mix(lighten(state.appearance.skin, 0.42), '#f1c27d', 0.18));
+    var bruinMuzzle = mix(lighten(state.appearance.skin, 0.42), '#f1c27d', 0.18);
+    svg.style.setProperty('--hero-bruin-muzzle', bruinMuzzle);
+    svg.style.setProperty('--hero-bruin-muzzle-ink', firstContrastColorAgainstAll(
+      ['#1f140c', '#000000'], ['#fff2d4', bruinMuzzle], 3
+    ));
     svg.style.setProperty('--hero-bruin-line', firstContrastColorAgainstAll(['#1f140c', '#2a1609', '#f7ead7', '#ffffff'], [state.appearance.skin], 3));
     var suitLight = lighten(state.outfit.suit, 0.35);
     var suitShadow = darken(state.outfit.suit, 0.55);
@@ -2836,6 +3353,39 @@
   }
 
   function applyToSvg(svg, state) {
+    if (!svg) return;
+    var bounds = svg.getBoundingClientRect();
+    if (svg.isConnected && bounds.width > 0 && bounds.height > 0) return renderAvatarToSvg(svg, state);
+    // Detached or hidden choice templates need layout for group bounds. Measure the
+    // real artwork, then return it to its original owner without a visible flash.
+    var parent = svg.parentNode;
+    var next = svg.nextSibling;
+    var host = document.createElement('div');
+    host.setAttribute('aria-hidden', 'true');
+    host.className = 'hero-avatar-measure-host';
+    var layoutProperties = ['display', 'width', 'height'].map(function (name) {
+      return { name: name, value: svg.style.getPropertyValue(name), priority: svg.style.getPropertyPriority(name) };
+    });
+    var viewBox = svg.viewBox.baseVal;
+    svg.style.setProperty('display', 'block', 'important');
+    svg.style.setProperty('width', viewBox.width + 'px', 'important');
+    svg.style.setProperty('height', viewBox.height + 'px', 'important');
+    document.body.appendChild(host);
+    host.appendChild(svg);
+    try {
+      return renderAvatarToSvg(svg, state);
+    } finally {
+      layoutProperties.forEach(function (property) {
+        if (property.value) svg.style.setProperty(property.name, property.value, property.priority);
+        else svg.style.removeProperty(property.name);
+      });
+      if (parent) parent.insertBefore(svg, next);
+      else svg.remove();
+      host.remove();
+    }
+  }
+
+  function renderAvatarToSvg(svg, state) {
     var heroKind = normalizeHeroKind(state.kind);
     var bodyType = canonicalChoiceValue('bodyType', state.body.type);
     var hairStyle = canonicalChoiceValue('hairStyle', state.appearance.hairStyle);
@@ -2852,13 +3402,14 @@
     var accessories = getAccessories(state.outfit);
     var compositedAccessories = getCompositedAccessories(accessories, hairStyle);
     var fullHairCovering = compositedAccessories.some(function (accessory) { return !!HAIR_COVERING_ACCESSORIES[accessory]; });
-    var opaqueHat = compositedAccessories.some(function (accessory) { return !!OPAQUE_HAT_ACCESSORIES[accessory]; });
+    var opaqueHat = compositedAccessories.find(function (accessory) { return !!OPAQUE_HAT_ACCESSORIES[accessory]; });
     var hidesHair = fullHairCovering;
     var renderedHairStyle = hidesHair ? 'bald' : hairStyle;
     setSlot(svg, 'hair', renderedHairStyle);
     keepHairBehindFaceSurface(svg);
     setSlot(svg, 'eyebrow', state.appearance.eyebrowStyle);
     setSlot(svg, 'eye-shape', eyeShape);
+    fitEyeReflections(svg, eyeShape);
     setSlot(svg, 'ear-shape', earShape);
     setSlot(svg, 'eyelash-style', state.appearance.eyelashStyle || 'none');
     applyEyelashFit(svg, eyeShape, compositedAccessories);
@@ -2877,7 +3428,7 @@
     setSlot(svg, 'facial-hair', state.appearance.facialHair || 'none');
     setSlot(svg, 'mouth-style', mouthStyle);
     setSlot(svg, 'hair-root', hidesHair ? 'none' : renderedHairStyle);
-    setOpaqueHatHairClip(svg, opaqueHat && hairStyle !== 'bald');
+    setOpaqueHatHairClip(svg, hairStyle !== 'bald' ? opaqueHat : null);
     setSlot(svg, 'outfit-style', state.outfit.style || DEFAULTS.outfit.style);
     setMultiSlot(svg, 'accessory', compositedAccessories);
     promoteSelectedWearableLayers(svg, compositedAccessories);
@@ -4337,9 +4888,11 @@
         getAccessories(baseState.outfit),
         baseState.appearance.hairStyle
       );
-      var snapshotOpaqueHat = snapshotAccessories.some(function (accessory) { return !!OPAQUE_HAT_ACCESSORIES[accessory]; });
-      setOpaqueHatHairClip(svg, snapshotOpaqueHat && baseState.appearance.hairStyle !== 'bald');
+      var snapshotOpaqueHat = snapshotAccessories.find(function (accessory) { return !!OPAQUE_HAT_ACCESSORIES[accessory]; });
+      setOpaqueHatHairClip(svg, baseState.appearance.hairStyle !== 'bald' ? snapshotOpaqueHat : null);
       applyVectorEmblem(svg, snapshot.emblemValue);
+      fitFaceSurfaceToHead(svg, baseState.appearance.headStyle || 'default');
+      fitEyeReflections(svg, baseState.appearance.eyeShape || 'round');
     }
 
     function applyChoicePreviewDelta(svg, definition, optionValue, baseState) {
@@ -4352,12 +4905,13 @@
         var accessories = getAccessories(baseState.outfit);
         var compositedAccessories = getCompositedAccessories(accessories, optionValue);
         var fullHairCovering = compositedAccessories.some(function (accessory) { return !!HAIR_COVERING_ACCESSORIES[accessory]; });
-        var opaqueHat = compositedAccessories.some(function (accessory) { return !!OPAQUE_HAT_ACCESSORIES[accessory]; });
+        var opaqueHat = compositedAccessories.find(function (accessory) { return !!OPAQUE_HAT_ACCESSORIES[accessory]; });
         var hidesHair = fullHairCovering;
         var renderedHairStyle = hidesHair ? 'bald' : canonicalChoiceValue('hairStyle', optionValue);
         setSlot(svg, 'hair', renderedHairStyle);
         keepHairBehindFaceSurface(svg);
         setSlot(svg, 'hairline', hidesHair ? 'none' : renderedHairStyle);
+        if (!hidesHair) syncForegroundHairline(svg, renderedHairStyle);
         setSlot(svg, 'hair-root', hidesHair ? 'none' : renderedHairStyle);
         var revealsHairline = compositedAccessories.some(function (accessory) { return !!HAIRLINE_VISIBLE_COVERINGS[accessory]; });
         var normalizedHairStyle = canonicalChoiceValue('hairStyle', optionValue);
@@ -4365,12 +4919,13 @@
           ? null
           : (fullHairCovering && revealsHairline ? 'head-covering' : null);
         setHeadCoveringHairCap(svg, hairCapOption);
-        setOpaqueHatHairClip(svg, opaqueHat && normalizedHairStyle !== 'bald');
+        setOpaqueHatHairClip(svg, normalizedHairStyle !== 'bald' ? opaqueHat : null);
         applyHeadShapeFit(svg, baseState.appearance.headStyle || 'default');
       } else if (definition.key === 'eyebrowStyle') {
         setSlot(svg, 'eyebrow', optionValue);
       } else if (definition.key === 'eyeShape') {
         setSlot(svg, 'eye-shape', canonicalChoiceValue('eyeShape', optionValue));
+        fitEyeReflections(svg, canonicalChoiceValue('eyeShape', optionValue));
         applyEyelashFit(svg, optionValue, getCompositedAccessories(getAccessories(baseState.outfit), baseState.appearance.hairStyle || 'short'));
       } else if (definition.key === 'earShape') {
         setSlot(svg, 'ear-shape', canonicalChoiceValue('earShape', optionValue));
@@ -4412,7 +4967,13 @@
     function choicePreviewTemplateSlots(definition) {
       var slots = {};
       if (!definition || !definition.key) return slots;
-      if (definition.key === 'hairStyle') {
+      if (definition.key === 'heroKind') {
+        // The representative template starts human. Keep the alternate body
+        // layers until the thumbnail's actual hero kind has been applied.
+        slots.mascot = true;
+        slots['mascot-arms'] = true;
+        slots['mascot-paws'] = true;
+      } else if (definition.key === 'hairStyle') {
         slots.hair = true;
         slots.hairline = true;
         slots['hair-root'] = true;
