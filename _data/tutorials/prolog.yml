@@ -1,1318 +1,998 @@
-title: "Prolog Essentials"
-description: "A hands-on introduction to logic programming with Prolog, running entirely in your browser. Learn to think declaratively — define facts, write rules, and let Prolog find the answers."
-
-# Authoring-time Bloom-verb objectives. Not yet rendered to students.
+# Course-aligned adaptation. Source wording is a style reference, not a set of instructions.
+# See docs/prolog-course-alignment.md for provenance, scope, and corrected source simplifications.
+title: Prolog Foundations
+description: 'For programmers new to Prolog: build and trace facts, rules, unification, backtracking,
+  and recursive list relations. A CS 131 practice path in eight steps, about 75–100 minutes.'
 learning_objectives:
-  - "Apply Prolog's facts/rules/queries to express logical relationships."
-  - "Distinguish unification (`=`) from arithmetic evaluation (`is`) — Prolog's #1 misconception for newcomers."
-  - "Trace Prolog's depth-first backtracking by hand to predict which solutions are returned and in what order."
-  - "Use list patterns (`[Head | Tail]`) and recursion to write list-processing predicates."
-  - "Evaluate when a problem is well-suited to declarative logic programming vs. imperative or functional style."
-
+- Apply facts and compound terms to model relationships and query them in several directions.
+- Analyze unification, repeated variables, arity, and anonymous variables.
+- Create rules that join relationships through shared variables.
+- Trace resolution and backtracking to predict answer order and duplicate proofs.
+- Evaluate recursive goal order and explain termination on finite acyclic inputs.
+- Create recursive list relations and compose them in a small recommendation program.
 backend: prolog
-
 require_tests: true
 autosave_type: files
-
 steps:
-
-  # --------------------------------------------------------------------------
-  # STEP 1: FACTS & QUERIES — the declarative mental model
-  # Pedagogy: Establish declarative mindset, multi-directional querying
-  # Research: Fleck 2007 (start with logic), Kumar 2002 (family domain)
-  # Bloom's: Remember / Understand / Apply
-  # --------------------------------------------------------------------------
-  # Pedagogy: PRIMM — Predict before Run (multi-directional queries)
-  - title: "Facts and Queries"
+  # Pedagogy: PRIMM — predict a reverse query, run a worked fact, then modify the database. Sources: Logic-palooza handout pp. 2–20; Homework LOGIC2 A–B.
+  - title: Facts and Queries
     instructions: |
       ### Why this matters
 
-      You already know Python, JavaScript, and C++. In all three, you tell the computer **how** to solve a problem — step by step, with loops, variables, and function calls. Prolog is fundamentally different: you describe **what is true**, and Prolog figures out the answers. This shift from imperative recipes to declarative descriptions is the single most important idea in this tutorial — and the foundation for everything that follows.
+      Suppose we have a family database. We could write a different function for “find children” and “find parents,” or describe the parent relationship once and ask it different questions. Prolog lets us do the latter.
 
       ### 🎯 You will learn to
 
-      - Apply Prolog facts to record relationships in a knowledge base
-      - Analyze query results to see how the same predicate works in multiple directions
+      - Apply facts to record a relationship with a precise argument order.
+      - Analyze the bindings returned by forward and reverse queries.
 
-      ### Facts: Declaring what is true
+      ### The big picture
 
-      A **fact** states something unconditionally:
+      This is the first of two tutorials based on the CS 131 logic-programming lectures, homework, quizzes, and past finals. Allow **75–100 minutes** for these eight steps. You should know variables, function calls, and basic recursion in one language; no Prolog or installation is needed.
+
+      A **knowledge base** contains facts and rules. A **query** asks the inference engine to prove a goal using that knowledge base. Here is one fact:
 
       ```prolog
       parent(tom, bob).
       ```
 
-      This says: *"Tom is a parent of Bob."* Every fact ends with a **period**.
+      Here we define it to mean Tom is a parent of Bob. Prolog does not supply that English meaning; we document the argument order and use it consistently. `parent(bob, tom)` asks a different question. The period ends a clause; `%` starts a comment.
 
-      There is no `return` statement. No variables being assigned. You are simply recording a relationship.
+      `tom` and `bob` are **atoms**: names for specific things. A name beginning with an uppercase letter, such as `Child`, is a **variable** whose value Prolog can discover.
 
-      ### Queries: Asking questions
+      ### Thinking time
 
-      Use the **?-** input to ask Prolog questions:
+      With the starter's single fact, predict `parent(Who, bob)`: does it find `Who = tom`, fail, or complain that `Who` has no value? Write a prediction and one reason in a `%` comment before running it.
 
-      | Query | Meaning | Expected answer |
-      |-------|---------|-----------------|
-      | `parent(tom, bob)` | "Is Tom a parent of Bob?" | `true` |
-      | `parent(tom, X)` | "Who are Tom's children?" | `X = bob` |
-      | `parent(X, bob)` | "Who are Bob's parents?" | `X = tom` |
+      Enter the goal in **Query ?-**, then select **Run**. Type the goal itself; the prompt is already supplied. A final period is optional here. This workspace requests successive answers for you; it does not require the semicolon key used by some Prolog consoles.
 
-      Notice that **the same predicate works in multiple directions**. This is *not* a function with fixed inputs and outputs — it's a *relation* that Prolog can query from any angle.
+      <details>
+      <summary>After running: compare your prediction</summary>
 
-      > **Imperative trap:** In Python, `parent(tom, bob)` would be a function call returning a value. In Prolog, it's a *question* — and the answer is yes/no, plus any variable bindings.
+      The answer is `Who = tom`: matching the second argument let Prolog discover the first. A variable can be a place for an answer, so it need not already have a value.
 
-      ### Your Task
+      </details>
 
-      The editor has one fact. Add two more:
+      Facts are tried from top to bottom. With several matching facts, this workspace displays each answer in that order. A successful query with no variables reports `true`; if its search finishes without a proof, it reports `false`.
 
-      1. `parent(bob, ann).`
-      2. `parent(bob, pat).`
+      Try `parent(ann,tom)` before adding any facts. Failure means this database cannot prove the relationship, not that it has settled who Ann's parents are in the real world. This is the **closed-world assumption** applied to this program's knowledge.
 
-      Then try these queries (one at a time in the **?-** input):
+      ### Your task
 
-      - `parent(tom, bob)` — yes/no question
-      - `parent(tom, X)` — "who" question
-      - `parent(X, ann)` — reverse direction!
-      - `parent(X, Y)` — enumerate all parent relationships
+      Keep the existing fact. Extend the database to say that **Bob is a parent of Ann and of Pat**, with no other parent relationships. Then investigate `parent(bob, Child)`, `parent(Parent, ann)`, and `parent(Parent, Child)`. Explain why one database answers all three.
 
-    default_query: "parent(tom, X)"
+      Use **Test My Work** to check the task. Hints provide increasing help; the knowledge check follows **Next**. Mistakes are useful evidence: compare the relationship you intended with the one your arguments actually describe.
+
+      The course uses SWI-Prolog. This workspace uses Tau Prolog and supports the course features exercised here; implementation-specific extensions and error wording can differ. Program text runs in a browser worker.
+    default_query: parent(tom, X)
     files:
-      - path: "family.pl"
-        content: |
-          % Family database
-          % A fact parent(X, Y) means "X is a parent of Y".
+    - path: family.pl
+      language: prolog
+      content: |
+        % parent(Parent, Child): Parent is a parent of Child.
+        parent(tom, bob).
 
-          parent(tom, bob).
-
-          % TODO: Add two more facts:
-          % parent(bob, ann).
-          % parent(bob, pat).
-    open_file: "family.pl"
-
+        % Add the two relationships described in the task.
+    open_file: family.pl
+    run_file: family.pl
+    tests:
+    - description: The database contains exactly the three specified parent relationships.
+      command: |
+        assert((await __query("findall(pair(P,C), parent(P,C), Pairs), sort(Pairs, Sorted), Sorted == [pair(bob,ann),pair(bob,pat),pair(tom,bob)].")).length === 1, "The database contains exactly the three specified parent relationships.");
+      hints:
+      - title: Direction matters
+        text: Read each fact as “the first person is a parent of the second.”
+      - title: Two new relationships
+        text: Keep Tom’s relationship and add one fact for each of Bob’s children.
+      - title: The fact shape
+        text: Use parent(ParentName, ChildName). with lowercase names and a final period; choose each argument
+          from the task.
     quiz:
-      title: "Step 1 — Knowledge Check"
+      title: Step 1 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
       questions:
-        - question: |
-            Given these facts:
-            ```prolog
-            likes(alice, pizza).
-            likes(bob, pasta).
-            likes(alice, sushi).
-            ```
-            What does the query `likes(alice, X)` return?
-          type: single
-          options:
-            - "`X = pizza` (only the first match)"
-            - "`X = pizza` and `X = sushi` (all matches)"
-            - "`true`"
-            - "Error — X is not defined"
-          correct_index: 1
-          explanation: |
-            Prolog finds **all** facts that match the query pattern. Since Alice likes both pizza and sushi, both are returned. This is fundamentally different from a function call that returns one value.
-
-        - question: |
-            In Python, `parent(tom, bob)` is a function call. In Prolog, it is:
-          type: single
-          options:
-            - "A function call that returns `true` if both arguments match"
-            - "A relationship checked against the knowledge base"
-            - "A variable assignment binding `bob` into `tom`"
-            - "A class constructor producing a `parent` object"
-          correct_index: 1
-          explanation: |
-            Prolog predicates are **relations**, not functions. `parent(tom, bob)` asks: "does the knowledge base contain this relationship?" There is no return value — Prolog either succeeds or fails.
-
+      - type: single
+        difficulty: intermediate
+        question: |
+          With `likes(ren, tacos).` and `likes(mia, tacos).`, what does `likes(Person, tacos)` discover?
+        options:
+        - Only `Person = ren`
+        - '`ren`, then `mia`'
+        - '`Person = tacos`'
+        correct_index: 1
+        option_feedback:
+          0: The first matching fact does not rule out later matches. The workspace keeps asking for answers.
+          2: The variable occupies the first argument. The second argument is already fixed to tacos.
+        explanation: |
+          Each fact provides a proof. The workspace asks for successive proofs and shows the corresponding binding.
+      - type: single
+        difficulty: basic
+        question: |
+          The only known fact about Ren is `outgoing(ren).` The query `outgoing(mia)` fails. What has been established?
+        options:
+        - Mia is not outgoing in the real world.
+        - Mia needs a variable declaration.
+        - This database cannot prove the goal.
+        correct_index: 2
+        option_feedback:
+          0: The knowledge base may be incomplete. Failure reports what can be proved from this program.
+          1: Lowercase mia is an atom, so no variable declaration is involved.
+        explanation: |
+          Under the closed-world assumption, a terminating unsuccessful search is treated as failure. Missing knowledge does not establish a fact about the real world.
     solution:
       files:
-        - path: "family.pl"
-          content: |
-            % Family database
-            % A fact parent(X, Y) means "X is a parent of Y".
-
-            parent(tom, bob).
-            parent(bob, ann).
-            parent(bob, pat).
-          language: "prolog"
-      explanation: |
-        **Why this works:**
-
-        - Each fact is a simple declaration: `parent(bob, ann).` tells Prolog that Bob is a parent of Ann. There is no function call, no return value — just a statement of truth.
-        - The period `.` at the end is mandatory — it terminates every Prolog clause (fact, rule, or query).
-        - Once these facts are in the knowledge base, Prolog can answer queries from **any direction**: `parent(bob, X)` finds Bob's children, `parent(X, ann)` finds Ann's parents, and `parent(X, Y)` lists all parent-child pairs. This multi-directionality is what makes Prolog predicates *relations*, not *functions*.
-
-    tests:
-      - description: "parent(bob, ann) is defined"
-        command: |
-          var answers = __query('parent(bob, ann)');
-          assert(answers.length > 0, 'parent(bob, ann) should be a fact');
-      - description: "parent(bob, pat) is defined"
-        command: |
-          var answers = __query('parent(bob, pat)');
-          assert(answers.length > 0, 'parent(bob, pat) should be a fact');
-      - description: "Bob has exactly two children"
-        command: |
-          var answers = __query('parent(bob, X)');
-          assert(answers.length === 2, 'Bob should have exactly 2 children, got ' + answers.length);
-
-  # --------------------------------------------------------------------------
-  # STEP 2: UNIFICATION — the core mechanism
-  # Pedagogy: Explicit misconception confrontation (= is NOT assignment)
-  # Research: Kumar 2002 (unification misconceptions), PRIMM (predict first)
-  # Bloom's: Understand / Analyze
-  # --------------------------------------------------------------------------
-  # Pedagogy: negative-transfer callout (Python → Prolog: = is not assignment)
-  - title: "Unification: = Is Not Assignment"
-    instructions: |
-      ### Why this matters
-
-      In Python, `X = 5` stores the value 5 in a variable named X. In Prolog, `X = 5` means something completely different — it's bidirectional pattern matching, not assignment. Mis-reading `=` as assignment is the single most common source of confusion when programmers transfer in from imperative languages, and it will silently break any code that uses arithmetic, structures, or recursion. Get this concept right and the rest of Prolog falls into place.
-
-      ### 🎯 You will learn to
-
-      - Analyze whether two Prolog terms unify and what bindings result
-      - Evaluate why `X = 3, X = 4` fails (single-assignment) where Python would simply reassign
-
-      ### Unification: bidirectional pattern matching
-
-      The `=` operator in Prolog asks: *"Can these two terms be made identical?"*
-
-      ```prolog
-      ?- X = 5.          % Yes: X becomes 5
-      ?- 5 = 5.          % Yes: identical
-      ?- 5 = 6.          % No: cannot make 5 equal to 6
-      ?- f(X) = f(3).    % Yes: X becomes 3
-      ?- f(X, b) = f(a, Y).  % Yes: X = a, Y = b
-      ```
-
-      This is called **unification** — the engine of Prolog. It works by matching the *structure* of two terms and finding variable bindings that make them equal.
-
-      ### Variables are NOT mutable boxes
-
-      > **Imperative trap:** In Python, you can write `x = 3` then `x = 4`. In Prolog, once a variable is bound, it cannot be changed:
-
-      ```prolog
-      ?- X = 3, X = 4.   % FAILS! X is already 3, and 3 ≠ 4.
-      ```
-
-      This is called **single assignment** — a variable gets one value per query. If you need a different value, you need a different variable or a different branch of the search.
-
-      ### Unification with structures
-
-      Prolog terms can be nested structures (like trees):
-
-      ```prolog
-      ?- date(Day, march, 2024) = date(15, Month, Year).
-      % Day = 15, Month = march, Year = 2024
-      ```
-
-      Both sides are made identical by binding variables to values. Neither side is "input" or "output" — unification is symmetric.
-
-      ### Your Task
-
-      The file contains several unification queries as facts. For each one, **predict** whether it will succeed or fail, then uncomment it and run it to check.
-
-    default_query: "test_unify"
-    files:
-      - path: "unify.pl"
+      - path: family.pl
+        language: prolog
         content: |
-          % Unification exercises
-          % For each, PREDICT: will it succeed or fail? What are the bindings?
-          % Then uncomment and query: test1, test2, etc.
-
-          % Example: X = hello succeeds with X = hello
-          test_example :- X = hello, write('X = '), write(X), nl.
-
-          % 1. Does this succeed? What is X?
-          test1 :- X = f(a, b), write('X = '), write(X), nl.
-
-          % 2. Does this succeed? What are X and Y?
-          test2 :- f(X, b) = f(a, Y), write('X = '), write(X), write(', Y = '), write(Y), nl.
-
-          % 3. Does this succeed or FAIL?
-          test3 :- a = b, write('This should not print'), nl.
-
-          % 4. Does this succeed or FAIL? (tricky!)
-          test4 :- X = 3, X = 3, write('X = '), write(X), nl.
-
-          % 5. Does this succeed or FAIL?
-          test5 :- X = 3, X = 4, write('This should not print'), nl.
-
-          % Run all tests:
-          test_unify :-
-            write('--- Test 1 ---'), nl, (test1 -> true ; write('FAILED'), nl),
-            write('--- Test 2 ---'), nl, (test2 -> true ; write('FAILED'), nl),
-            write('--- Test 3 ---'), nl, (test3 -> true ; write('FAILED'), nl),
-            write('--- Test 4 ---'), nl, (test4 -> true ; write('FAILED'), nl),
-            write('--- Test 5 ---'), nl, (test5 -> true ; write('FAILED'), nl).
-    open_file: "unify.pl"
-
-    quiz:
-      title: "Step 2 — Knowledge Check"
-      min_score: 0.8
-      questions:
-        - question: |
-            What happens when Prolog processes `X = 3, X = 4`?
-          type: single
-          options:
-            - "X becomes 4 (reassignment, like Python's `X = 4` rebind)"
-            - "X becomes [3, 4] — Prolog collects them into a list"
-            - "It fails — X is already bound to 3"
-            - "Error — variables cannot be used twice"
-          correct_index: 2
-          explanation: |
-            Once X is bound to 3, `X = 4` attempts to unify 3 with 4, which fails. Prolog variables are **single-assignment** within a query. This is the #1 source of confusion for imperative programmers.
-
-        - question: |
-            Does `point(X, 2) = point(1, Y)` succeed? If so, what are X and Y?
-          type: single
-          options:
-            - "Fails — the arguments don't match"
-            - "Succeeds: X = 1, Y = 2"
-            - "Succeeds: X = point(1), Y = point(2)"
-            - "Error — point is not defined"
-          correct_index: 1
-          explanation: |
-            Unification matches corresponding arguments: X unifies with 1, and 2 unifies with Y. Both sides become `point(1, 2)`. Prolog doesn't need `point` to be "defined" — it's just a structure.
-
-        - question: |
-            How does Prolog's `=` differ from Python's `=`?
-          type: single
-          options:
-            - "They are the same — both assign the right side to the left"
-            - "Prolog's `=` is bidirectional pattern matching; Python's is assignment"
-            - "Prolog's `=` only works with numbers and atomic values"
-            - "Prolog's `=` compares without binding, like Python's `==`"
-          correct_index: 1
-          explanation: |
-            Python's `=` always assigns the right side to the left. Prolog's `=` finds bindings that make both sides identical — it works symmetrically. `f(X) = f(3)` and `f(3) = f(X)` both bind X to 3.
-
-    solution:
-      files:
-        - path: "unify.pl"
-          content: |
-            % Unification exercises — all uncommented
-
-            test_example :- X = hello, write('X = '), write(X), nl.
-
-            % 1. Succeeds: X = f(a, b)
-            test1 :- X = f(a, b), write('X = '), write(X), nl.
-
-            % 2. Succeeds: X = a, Y = b
-            test2 :- f(X, b) = f(a, Y), write('X = '), write(X), write(', Y = '), write(Y), nl.
-
-            % 3. FAILS: a and b are different atoms — cannot unify
-            test3 :- a = b, write('This should not print'), nl.
-
-            % 4. Succeeds: X = 3, and 3 = 3 trivially unifies
-            test4 :- X = 3, X = 3, write('X = '), write(X), nl.
-
-            % 5. FAILS: X = 3, then X = 4 tries to unify 3 with 4
-            test5 :- X = 3, X = 4, write('This should not print'), nl.
-
-            test_unify :-
-              write('--- Test 1 ---'), nl, (test1 -> true ; write('FAILED'), nl),
-              write('--- Test 2 ---'), nl, (test2 -> true ; write('FAILED'), nl),
-              write('--- Test 3 ---'), nl, (test3 -> true ; write('FAILED'), nl),
-              write('--- Test 4 ---'), nl, (test4 -> true ; write('FAILED'), nl),
-              write('--- Test 5 ---'), nl, (test5 -> true ; write('FAILED'), nl).
-          language: "prolog"
-      explanation: |
-        **Key insights:**
-
-        - **Test 1:** `X = f(a, b)` succeeds — X is bound to the *structure* `f(a, b)`. Unification works with any term, not just numbers.
-        - **Test 2:** `f(X, b) = f(a, Y)` matches corresponding arguments: X with `a`, `b` with Y. Both sides become `f(a, b)`.
-        - **Test 3 FAILS:** `a = b` tries to make two different atoms identical — impossible. This is the core of unification: it only succeeds when terms *can* be made equal.
-        - **Test 4 SUCCEEDS:** `X = 3, X = 3` — after X is bound to 3, unifying X with 3 again just checks that 3 = 3 (trivially true).
-        - **Test 5 FAILS:** `X = 3, X = 4` — X is bound to 3, so `X = 4` becomes `3 = 4`, which fails. **Variables are single-assignment** — this is the #1 difference from imperative languages.
-
-    tests:
-      - description: "test1 succeeds (X = f(a,b))"
-        command: |
-          var answers = __query('test1');
-          assert(answers.length > 0, 'test1 should succeed');
-      - description: "test3 fails (a cannot unify with b)"
-        command: |
-          var answers = __query('test3');
-          assert(answers.length === 0, 'test3 should fail — a and b do not unify');
-      - description: "test5 fails (X=3 then X=4 is a contradiction)"
-        command: |
-          var answers = __query('test5');
-          assert(answers.length === 0, 'test5 should fail — X cannot be both 3 and 4');
-
-  # --------------------------------------------------------------------------
-  # STEP 3: RULES — composing predicates
-  # Pedagogy: Rules as logical implications, worked example with fading
-  # Research: Fleck 2007 (goal-directed), Wick & Stevenson 2006 (exercise design)
-  # Bloom's: Understand / Apply
-  # --------------------------------------------------------------------------
-  # Pedagogy: worked example with fading (rule definition + apply)
-  - title: "Rules: Deriving New Knowledge"
-    instructions: |
-      ### Why this matters
-
-      Facts let you record what you *already* know. Rules let Prolog *derive* new knowledge you never wrote down — relationships like `grandparent`, `ancestor`, or `sibling` follow logically from the facts you have. This is where Prolog earns its keep over a database: you write the *logic*, and Prolog handles the *search* for matching values. No `if/else`, no loops — just declarative implications.
-
-      ### 🎯 You will learn to
-
-      - Apply the `:-` operator to define rules that compose existing predicates
-      - Analyze how Prolog searches for variable bindings that satisfy a rule's body
-
-      ### Rule syntax
-
-      ```prolog
-      grandparent(X, Z) :- parent(X, Y), parent(Y, Z).
-      ```
-
-      Read `:-` as **"if"** and `,` as **"and"**:
-
-      > *X is a grandparent of Z **if** X is a parent of some Y **and** Y is a parent of Z.*
-
-      The left side is the **head** (what we're defining). The right side is the **body** (the conditions).
-
-      ### How Prolog uses rules
-
-      When you query `grandparent(tom, ann)`, Prolog:
-
-      1. Finds the rule for `grandparent`
-      2. Tries to satisfy the body: find a Y where `parent(tom, Y)` AND `parent(Y, ann)`
-      3. Tries `Y = bob`: is `parent(tom, bob)` true? **Yes.** Is `parent(bob, ann)` true? **Yes.**
-      4. Both conditions met — the query **succeeds**.
-
-      > **Imperative trap:** There is no `if/else`, no loop. Prolog tries all possibilities automatically. You declare the *logic*, and Prolog handles the *search*.
-
-      ### Variables in rules
-
-      Variables in rules (like `X`, `Y`, `Z`) are **universally quantified** — they stand for *any* value that makes the rule work. When Prolog uses a rule, it creates fresh copies of all variables for that specific use.
-
-      ### Your Task
-
-      Define two rules:
-
-      1. **`grandparent(X, Z)`** — as shown above
-      2. **`sibling(X, Y)`** — X and Y are siblings if they share a parent, but are not the same person. Use `X \= Y` for "not equal".
-
-    default_query: "grandparent(tom, X)"
-    files:
-      - path: "family.pl"
-        content: |
-          % Family database
           parent(tom, bob).
           parent(bob, ann).
           parent(bob, pat).
-
-          % Rule: grandparent
-          % TODO: Define grandparent(X, Z) :- ...
-
-
-          % Rule: sibling
-          % Two people are siblings if they share a parent
-          % but are not the same person.
-          % TODO: Define sibling(X, Y) :- ...
-
-    open_file: "family.pl"
-
-    quiz:
-      title: "Step 3 — Knowledge Check"
-      min_score: 0.8
-      questions:
-        - question: |
-            Given `parent(tom, bob)` and `parent(bob, ann)`, what does `grandparent(tom, ann)` do?
-          type: single
-          options:
-            - "Returns `true` because tom and ann are in the database"
-            - "Fails because there is no fact `grandparent(tom, ann)`"
-            - "Succeeds by finding Y = bob that links both parent facts"
-            - "Returns the string 'grandparent'"
-          correct_index: 2
-          explanation: |
-            Even though there is no *fact* `grandparent(tom, ann)`, Prolog uses the *rule* to derive it. It finds Y = bob that satisfies both `parent(tom, bob)` and `parent(bob, ann)`. Rules allow Prolog to answer questions that aren't explicitly stated.
-
-        - question: |
-            If we define `sibling(X, Y) :- parent(P, X), parent(P, Y).` (without `X \= Y`), what happens when we query `sibling(ann, ann)`?
-          type: single
-          options:
-            - "Fails — a person cannot logically be their own sibling"
-            - "Succeeds — bob is a parent of ann for both arguments"
-            - "Error — you can't use the same variable twice in a query"
-            - "Returns `false` with no explanation"
-          correct_index: 1
-          explanation: |
-            Without the `X \= Y` check, ann would be her own sibling (bob is a parent of ann AND ann). This is logically correct but semantically wrong — we need the inequality constraint to exclude self-siblings.
-
-    solution:
-      files:
-        - path: "family.pl"
-          content: |
-            % Family database
-            parent(tom, bob).
-            parent(bob, ann).
-            parent(bob, pat).
-
-            % Rule: grandparent
-            grandparent(X, Z) :- parent(X, Y), parent(Y, Z).
-
-            % Rule: sibling
-            sibling(X, Y) :- parent(P, X), parent(P, Y), X \= Y.
-          language: "prolog"
       explanation: |
-        **Why this works:**
-
-        - **`grandparent(X, Z) :- parent(X, Y), parent(Y, Z).`** — Read as: "X is a grandparent of Z *if* there exists some Y such that X is a parent of Y *and* Y is a parent of Z." The variable Y is an *existential* — Prolog searches for any value that makes both conditions true.
-        - **`sibling(X, Y) :- parent(P, X), parent(P, Y), X \= Y.`** — Two people share a parent P, but `X \= Y` ensures they aren't the same person. Without this check, `sibling(ann, ann)` would incorrectly succeed (bob is a parent of ann AND ann).
-        - **No loops, no `if/else`:** Prolog checks all possibilities automatically via backtracking. When you query `sibling(X, Y)`, Prolog tries every combination of P, X, Y that satisfies all three conditions.
-
-    tests:
-      - description: "grandparent(tom, ann) succeeds"
-        command: |
-          var answers = __query('grandparent(tom, ann)');
-          assert(answers.length > 0, 'grandparent(tom, ann) should succeed');
-      - description: "grandparent(tom, pat) succeeds"
-        command: |
-          var answers = __query('grandparent(tom, pat)');
-          assert(answers.length > 0, 'grandparent(tom, pat) should succeed');
-      - description: "sibling(ann, pat) succeeds"
-        command: |
-          var answers = __query('sibling(ann, pat)');
-          assert(answers.length > 0, 'sibling(ann, pat) should succeed');
-      - description: "sibling(ann, ann) fails (not own sibling)"
-        command: |
-          var answers = __query('sibling(ann, ann)');
-          assert(answers.length === 0, 'sibling(ann, ann) should fail');
-
-  # --------------------------------------------------------------------------
-  # STEP 4: BACKTRACKING — multiple solutions
-  # Pedagogy: Make the search visible, trace the execution
-  # Research: Fleck 2007 (trace facility essential), Fogel 2010 (graphical trace)
-  # Bloom's: Understand / Analyze
-  # --------------------------------------------------------------------------
-  # Pedagogy: PRIMM — Investigate (trace the search to see all solutions)
-  - title: "Backtracking: The Search for Solutions"
+        Each parent fact describes one ordered pair. Querying either argument with a variable changes the question, not the database. Enumerating all pairs checks that the two new facts did not accidentally reverse their arguments or describe extra relationships.
+  # Pedagogy: Variation Theory — contrast repeated and anonymous variables; fade a nested pattern example. Sources: Logic-palooza handout pp. 24–41, 47; Homework LOGIC4; Quiz 4 Q4a.
+  - title: Terms and Unification
     instructions: |
       ### Why this matters
 
-      When Prolog encounters a query, it doesn't just find *one* answer — it systematically searches for *all* answers, exploring every combination of variable bindings. This mechanism, called **backtracking**, is what replaces nested `for` loops, list comprehensions, and explicit search code in imperative languages. Once you can trace backtracking by hand, you can predict exactly which solutions Prolog returns and in what order — a prerequisite for writing correct recursive predicates later.
+      A query can match an entire structured value, not just a name. Once you can track that matching, nested data and repeated variables stop looking like special cases.
 
       ### 🎯 You will learn to
 
-      - Analyze a query trace step by step to predict which solutions Prolog returns and in what order
-      - Apply backtracking to enumerate all combinations of values across multiple predicates
+      - Analyze unification of compound terms and repeated variables.
+      - Apply anonymous variables when individual names do not need to agree.
 
-      ### The search process
+      ### Names, structures, and mappings
 
-      Consider this knowledge base:
+      A **term** can be an atom, a number, a variable, or a compound such as `pet(dog, koda)`. A compound has a **functor** (`pet`) and an **arity** (two arguments). `pet/2` names that functor and arity; `pet/3` has a different shape. A nested term might be `owns(carey, pet(dog, koda))`.
+
+      **Unification** asks whether two terms can be made identical by consistently binding variables. In the Query field, try:
+
       ```prolog
-      food(pizza).
-      food(pasta).
-      food(sushi).
-      drink(water).
-      drink(juice).
-      meal(F, D) :- food(F), drink(D).
+      owns(carey, pet(dog, koda)) = owns(Person, pet(Kind, Name))
       ```
 
-      Query: `meal(X, Y)` — "What are all possible meals?"
+      The mappings are `Person = carey`, `Kind = dog`, and `Name = koda`. No arithmetic or function call happens inside these terms.
 
-      Prolog's search:
-      1. Try `food(pizza)` — success! Now try `drink(water)` — success! **Answer: X=pizza, Y=water**
-      2. **Backtrack** to try next drink: `drink(juice)` — success! **Answer: X=pizza, Y=juice**
-      3. No more drinks. **Backtrack** to try next food: `food(pasta)`, then try drinks again...
-      4. Continue until all combinations are exhausted.
+      An uppercase name or a name beginning with `_` is a variable. Lowercase `x` is an atom. Repeated occurrences of `X` in one clause share a binding. Each plain `_` is a fresh anonymous variable; two occurrences of `_Name` still share one variable. Variables in separate clauses are independent.
 
-      Result: **6 answers** (3 foods x 2 drinks).
+      ### Thinking time
 
-      > **Imperative trap:** In Python, you'd write nested `for` loops. In Prolog, the "looping" happens automatically through backtracking. You never write loop syntax.
+      Predict these two queries separately: `pair(X,X) = pair(dog,cat)` and `pair(_,_) = pair(dog,cat)`. Which can succeed? Record the bindings that would be required, then run both.
 
-      ### Controlling backtracking with `;` (or)
+      <details>
+      <summary>After running: compare repeated and anonymous variables</summary>
 
-      The `;` operator means "or":
-      ```prolog
-      pet(X) :- cat(X) ; dog(X).
-      ```
-      *X is a pet if X is a cat OR X is a dog.*
+      The repeated `X` would have to equal two different atoms, so the first goal fails. Each `_` is independent, allowing the second goal to succeed without reporting a named binding.
 
-      ### Your Task
+      </details>
 
-      The file defines a small meal planning database. Define the `meal/2` predicate, then explore how backtracking produces multiple solutions.
+      ### Your task
 
-      Try these queries:
-      - `meal(X, Y)` — all possible meals
-      - `meal(pizza, Y)` — what can you drink with pizza?
-      - `meal(X, water)` — what food goes with water?
+      The worked fact `pet_name(pet(_, Name), Name).` extracts a name while ignoring the species. A fact with variables describes every instance of its pattern.
 
-    default_query: "meal(X, Y)"
+      Define **`same_species(Pet1, Pet2)`**. A pattern fact is sufficient; derive its structure from the worked example. It should relate two `pet(Species, Name)` terms exactly when their species unify; their names may differ. It must work when a species is unknown, too. Do not enumerate individual dogs and cats.
+
+      Try matching two dogs with different names, a dog and a cat, and `same_species(pet(Kind, ada), pet(cat, max))`. Explain which positions must share a variable and which can vary independently.
+    default_query: pet_name(pet(dog, koda), Name)
     files:
-      - path: "meals.pl"
-        content: |
-          % Foods and drinks
-          food(pizza).
-          food(pasta).
-          food(sushi).
+    - path: /tutorial/terms.pl
+      language: prolog
+      content: |
+        % Worked example: ignore the species, expose the name.
+        pet_name(pet(_, Name), Name).
 
-          drink(water).
-          drink(juice).
-
-          % TODO: Define meal(F, D) - a meal is a food paired with a drink
-          % meal(F, D) :- ...
-
-
-          % Bonus: Define healthy_meal/2 where the food is sushi
-          % and the drink is water.
-          % healthy_meal(F, D) :- ...
-
-    open_file: "meals.pl"
-
+        % Define a pattern relating two pets of the same species.
+    open_file: /tutorial/terms.pl
+    run_file: /tutorial/terms.pl
+    tests:
+    - description: Matching species succeed with different names; different species fail.
+      command: |
+        assert((await __query("same_species(pet(dog,ada),pet(dog,max)), same_species(pet(cat,ada),pet(cat,ada)), \\+ same_species(pet(dog,ada),pet(cat,ada)), \\+ same_species(dog,pet(dog,max)), \\+ same_species(pet(dog,ada),pet(dog)).")).length > 0, "Matching species succeed with different names; different species fail.");
+      hints:
+      - title: The changing feature
+        text: Two pets may have different names and still have the same species.
+      - title: A shared position
+        text: Use the same named variable in the two species positions, and independent variables in the
+          name positions.
+      - title: A nested pattern
+        text: The outer fact has two pet(..., ...) arguments. Make only the species slots share a name.
+    - description: The pattern discovers species in both directions and accepts new species.
+      command: |
+        assert((await __query("findall(K, same_species(pet(K,ada),pet(fox,max)), A), sort(A,AS), AS == [fox], findall(K, same_species(pet(owl,ada),pet(K,max)), B), sort(B,BS), BS == [owl].")).length === 1, "The pattern discovers species in both directions and accepts new species.");
+      hints:
+      - title: A relation can discover
+        text: An unknown species should be bound by the other pet.
+      - title: Keep the rule general
+        text: A fact listing only dog and cat cannot answer questions about a fox or an owl.
+      - title: Matching does the work
+        text: Use variables inside the two pet terms instead of a fixed species or an identity comparison.
     quiz:
-      title: "Step 4 — Knowledge Check"
+      title: Step 2 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
       questions:
-        - question: |
-            How many answers does `meal(X, Y)` produce, given 3 foods and 2 drinks?
-          type: single
-          options:
-            - "2 (one food + one drink)"
-            - "3 (one per food)"
-            - "5 (3 + 2)"
-            - "6 (3 x 2, all combinations)"
-          correct_index: 3
-          explanation: |
-            Prolog tries every combination: each food with each drink. With 3 foods and 2 drinks, that's 3 x 2 = 6 meals. This is like nested for-loops, but Prolog does it automatically through backtracking.
-
-        - question: |
-            In Python, to get all food-drink pairs you'd write:
-            ```python
-            for f in foods:
-                for d in drinks:
-                    print(f, d)
-            ```
-            What is the Prolog equivalent?
-          type: single
-          options:
-            - "`for(food(F), drink(D), print(F, D))` — Prolog's loop construct"
-            - "Define `meal(F, D) :- food(F), drink(D).` and query `meal(X, Y)`"
-            - "`loop(foods, drinks, meal)` — Prolog's built-in iteration"
-            - "You can't enumerate pairs without explicit loops in Prolog"
-          correct_index: 1
-          explanation: |
-            In Prolog, you define the *relationship* (a meal is a food plus a drink), then *query* it. Prolog's backtracking mechanism produces all combinations automatically. No explicit loops needed.
-
+      - type: single
+        difficulty: intermediate
+        question: |
+          What happens when `color(X,X)` is unified with `color(red,blue)`?
+        options:
+        - It succeeds with `X = blue`.
+        - It fails when the bindings conflict.
+        - It returns both atoms as answers.
+        correct_index: 1
+        option_feedback:
+          0: Unification does not overwrite an existing binding.
+          2: These are simultaneous requirements, not alternative proofs.
+        explanation: |
+          The first position requires X to be red, while the second requires the same X to be blue. One variable cannot satisfy both requirements within the same attempted match.
+      - type: single
+        difficulty: intermediate
+        question: |
+          Which pair can unify?
+        options:
+        - '`pet(dog,koda)` and `pet(dog)`'
+        - '`pet(dog,koda)` and `owns(dog,koda)`'
+        - '`pet(dog,koda)` and `pet(Kind,Name)`'
+        correct_index: 2
+        option_feedback:
+          0: 'The number of arguments differs: pet/2 and pet/1 have different shapes.'
+          1: Equal arguments do not compensate for different functor names.
+        explanation: |
+          Matching compound terms require the same functor and arity, followed by compatible arguments.
     solution:
       files:
-        - path: "meals.pl"
-          content: |
-            % Foods and drinks
-            food(pizza).
-            food(pasta).
-            food(sushi).
-
-            drink(water).
-            drink(juice).
-
-            % A meal is a food paired with a drink
-            meal(F, D) :- food(F), drink(D).
-
-            % A healthy meal: sushi with water
-            healthy_meal(F, D) :- meal(F, D), F = sushi, D = water.
-          language: "prolog"
+      - path: /tutorial/terms.pl
+        language: prolog
+        content: |
+          pet_name(pet(_, Name), Name).
+          same_species(pet(Species, _), pet(Species, _)).
       explanation: |
-        **Why this works:**
-
-        - **`meal(F, D) :- food(F), drink(D).`** — A meal is any food-drink combination. Prolog's backtracking systematically tries every food with every drink, producing 3 x 2 = 6 answers. This is equivalent to nested `for` loops in Python, but you never write loop syntax.
-        - **`healthy_meal(F, D)`** adds constraints on top of `meal`: the food must be sushi AND the drink must be water. Only one combination survives.
-        - **Multi-directional use:** `meal(pizza, Y)` finds drinks for pizza, `meal(X, water)` finds foods for water, `meal(X, Y)` finds all pairs. Same predicate, different query directions.
-
-    tests:
-      - description: "meal(pizza, water) succeeds"
-        command: |
-          var answers = __query('meal(pizza, water)');
-          assert(answers.length > 0, 'meal(pizza, water) should succeed');
-      - description: "meal/2 produces 6 combinations"
-        command: |
-          var answers = __query('meal(X, Y)');
-          assert(answers.length === 6, 'Expected 6 meal combinations, got ' + answers.length);
-      - description: "meal works in reverse: meal(X, water) finds 3 foods"
-        command: |
-          var answers = __query('meal(X, water)');
-          assert(answers.length === 3, 'Expected 3 foods with water, got ' + answers.length);
-
-  # --------------------------------------------------------------------------
-  # STEP 5: ARITHMETIC — is/2 vs =
-  # Pedagogy: Explicit misconception (= does NOT evaluate), worked examples
-  # Research: Kumar 2002 (arithmetic misconceptions are common)
-  # Bloom's: Understand / Apply
-  # --------------------------------------------------------------------------
-  # Pedagogy: mistake-based familiarization (= vs is, the arithmetic trap)
-  - title: "Arithmetic: is vs ="
+        The repeated Species variable enforces the shared structure, while each `_` is independent. Unification can bind the species from either side. A ground dog/cat counterexample checks the restriction; queries with unknown and unfamiliar species check that this is a general pattern rather than a list of examples.
+  # Pedagogy: Worked example with fading — derive two-link relationships after studying one-link rules. Sources: Logic-palooza handout pp. 7–15; Homework LOGIC2 B–LOGIC3; S23 final solutions Q5 pp. 11–12.
+  - title: Rules and Shared Variables
     instructions: |
       ### Why this matters
 
-      Arithmetic in Prolog has a critical gotcha that trips up every imperative programmer: `X = 2 + 3` does not compute 5 — it binds X to the *unevaluated structure* `+(2, 3)`. To actually compute, you need the `is/2` operator. Mixing these up produces predicates that silently bind variables to terms instead of numbers, leading to confusing failures further down the chain. Knowing exactly when to use `=` vs `is` is the gate to writing any Prolog program that touches numbers.
+      Facts give us individual relationships. Rules let us derive new relationships without recording every case by hand, and shared variables specify how those facts connect.
 
       ### 🎯 You will learn to
 
-      - Apply `is/2` to evaluate arithmetic expressions and bind the result to a variable
-      - Evaluate when to use `=`, `is`, and `=:=` for the right kind of comparison or assignment
+      - Apply conjunction to connect two relationships through one intermediate value.
+      - Analyze the difference between a rule body and alternative clauses.
 
-      ### The trap: `=` does NOT evaluate
+      ### From facts to rules
 
-      ```prolog
-      ?- X = 2 + 3.
-      % X = 2+3    (NOT 5! It's the structure +(2,3))
-      ```
-
-      Remember: `=` is **unification**. It makes two terms structurally identical. `2 + 3` is a *structure* (like a tree node with `+` as the functor), not a computation.
-
-      ### The solution: `is/2` forces evaluation
+      Consider this worked rule:
 
       ```prolog
-      ?- X is 2 + 3.
-      % X = 5      (evaluates the right side, then unifies)
+      has_child(Person) :- parent(Person, Child).
       ```
 
-      `is` evaluates the arithmetic expression on the **right** side, then unifies the result with the **left** side. The right side must be fully instantiated (no unbound variables).
+      Read `:-` as **“if”**: Person has a child if a matching parent fact exists. The part before `:-` is the **head**; the part after it is the **body**. The body contains goals to prove. The variable `Child` need not appear in the head: finding some matching child is enough.
 
-      ### Comparison operators
+      A comma means **and**, with goals tried left to right. The same variable name connects occurrences within the clause. The engine gives variables fresh identities each time it tries a clause, so separate calls do not share a hidden global `Child`.
 
-      | Operator | Meaning | Example |
-      |----------|---------|---------|
-      | `=:=` | Arithmetic equality | `2+3 =:= 5` succeeds |
-      | `=\=` | Arithmetic inequality | `2+3 =\=  6` succeeds |
-      | `<` | Less than | `3 < 5` succeeds |
-      | `>` | Greater than | `5 > 3` succeeds |
-      | `>=` | Greater or equal | `5 >= 5` succeeds |
-      | `=<` | Less or equal | `3 =< 5` succeeds |
+      Separate clauses offer alternatives. These say someone can play if they like chess **or** they like go:
 
-      Note: `=<` not `<=`! This is a common Prolog syntax surprise.
+      ```prolog
+      can_play(Person) :- likes(Person, chess).
+      can_play(Person) :- likes(Person, go).
+      ```
 
-      ### Your Task
+      A semicolon also expresses alternatives inside a body: `(likes(Person,chess); likes(Person,go))`. Parentheses make the grouping clear. Someone satisfying both alternatives can have two proofs; Prolog does not automatically remove duplicates.
 
-      Define these predicates:
+      ### Thinking time
 
-      1. **`bmi(Height, Weight, BMI)`** — BMI is Weight / Height^2. Use `is` to compute it.
-      2. **`is_overweight(Height, Weight)`** — succeeds if BMI > 25.
-      3. **`abs_diff(X, Y, D)`** — D is the absolute difference between X and Y.
+      The starter defines `has_child/1`. Predict whether `has_child(Person)` will report Bob once or twice. Run it, then connect each reported binding to the parent fact that proves it.
 
-    default_query: "bmi(1.75, 70, BMI)"
+      ### Your task
+
+      Define **`grandparent(Grandparent, Grandchild)`** using `parent/2`. The person connecting the two parent relationships must be the same person. A grandparent is **exactly two parent links away**, not any ancestor.
+
+      The starter's `fail` goal always fails; it is a placeholder to replace. Keep the supplied facts. Try `grandparent(tom, Who)` and the reverse query `grandparent(Who, ann)`. Before testing, explain why Tom should not be his own grandparent and why Bob should not count as Tom's grandchild.
+    default_query: has_child(Person)
     files:
-      - path: "arithmetic.pl"
-        content: |
-          % BMI calculator
-          % bmi(Height, Weight, BMI) - compute BMI = Weight / Height^2
-          % Hint: use ** for exponentiation: Height ** 2
-          % TODO: bmi(Height, Weight, BMI) :- BMI is ...
+    - path: /tutorial/rules.pl
+      language: prolog
+      content: |
+        parent(tom, bob).
+        parent(bob, ann).
+        parent(bob, pat).
+        parent(ann, lena).
 
+        has_child(Person) :- parent(Person, Child).
 
-          % is_overweight(Height, Weight) - succeeds if BMI > 25
-          % TODO: is_overweight(Height, Weight) :- ...
-
-
-          % abs_diff(X, Y, D) - D is the absolute difference |X - Y|
-          % Hint: use two clauses, one for X >= Y and one for X < Y
-          % TODO: abs_diff(X, Y, D) :- ...
-
-    open_file: "arithmetic.pl"
-
+        grandparent(Grandparent, Grandchild) :- fail.
+    open_file: /tutorial/rules.pl
+    run_file: /tutorial/rules.pl
+    tests:
+    - description: Grandparent relates exactly the people two parent links apart, in either direction.
+      command: |
+        assert((await __query("findall(pair(G,C), grandparent(G,C), Pairs), sort(Pairs,S), S == [pair(bob,lena),pair(tom,ann),pair(tom,pat)].")).length === 1, "Grandparent relates exactly the people two parent links apart, in either direction.");
+      hints:
+      - title: Two links, one person
+        text: Name the parent between the grandparent and grandchild.
+      - title: The join matters
+        text: The second argument of the first parent relationship must also be the first argument of the
+          second relationship.
+      - title: Two body goals
+        text: Use two parent/2 goals separated by a comma. The head supplies the two endpoints; one new
+          variable joins them.
+    - description: Ground and reverse queries prove exactly the same two-link relationship.
+      command: |
+        assert((await __query("findall(C,grandparent(tom,C),A), sort(A,AS), AS == [ann,pat], findall(G,grandparent(G,lena),B), sort(B,BS), BS == [bob], once(grandparent(tom,ann)), \\+ grandparent(tom,bob), \\+ grandparent(tom,lena), \\+ grandparent(ann,tom).")).length === 1, "Ground and reverse queries prove exactly the same two-link relationship.");
+      hints:
+      - title: The same relationship
+        text: Knowing one endpoint or both endpoints should only narrow the answers.
+      - title: Exactly two links
+        text: Tom is Bob's parent and Lena's ancestor, but neither pair is a grandparent pair.
+      - title: Shared endpoints
+        text: Connect the endpoints from the head through one intermediate variable, letting unification use any supplied values.
     quiz:
-      title: "Step 5 — Knowledge Check"
+      title: Step 3 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
       questions:
-        - question: |
-            What does `X = 2 + 3` bind X to?
-          type: single
-          options:
-            - "X is bound to 5 (the arithmetic is evaluated)"
-            - "X is bound to the unevaluated structure `2 + 3`"
-            - "An error — you cannot add with `=`"
-            - "X is bound to `true` once the unification succeeds"
-          correct_index: 1
-          explanation: |
-            The `=` operator is **unification**, not evaluation. It makes X structurally identical to `2 + 3`, which is a compound term `+(2, 3)`. To get 5, use `X is 2 + 3`.
-
-        - question: |
-            What happens with `X is Y + 1` when Y is unbound (not yet assigned a value)?
-          type: single
-          options:
-            - "X becomes the symbolic expression `Y + 1`"
-            - "X becomes 1, because unbound Y defaults to 0"
-            - "Instantiation error: Y must be bound first"
-            - "X becomes an unbound variable, the same as Y"
-          correct_index: 2
-          explanation: |
-            The `is` operator requires the right-hand side to be a ground arithmetic expression (all variables must be bound to numbers). If Y is unbound, Prolog throws an instantiation error.
-
+      - type: single
+        difficulty: intermediate
+        question: |
+          For `grandparent(G,C) :- parent(G,P), parent(P,C).`, what is the role of `P`?
+        options:
+        - An intermediate person shared by both goals
+        - A global variable kept for the next query
+        - A second answer returned independently of C
+        correct_index: 0
+        option_feedback:
+          1: Rule variables are local to an attempted clause use, not global state.
+          2: The body must prove both goals with the same P. They do not produce independent final answers.
+        explanation: |
+          P joins the two parent links. Each attempted use of the rule gets its own fresh variables.
+      - type: single
+        difficulty: intermediate
+        question: |
+          A person likes both chess and go. With the two `can_play/1` clauses above, how many proofs does that person have?
+        options:
+        - 'One: later clauses are skipped after success.'
+        - 'Two: either clause can prove the goal.'
+        - 'Zero: “or” excludes people who like both.'
+        correct_index: 1
+        option_feedback:
+          0: Finding one proof does not discard remaining alternatives.
+          2: 'These alternatives are inclusive: both may succeed.'
+        explanation: |
+          Alternative clauses give independent ways to prove the same goal. Both are available during backtracking.
     solution:
       files:
-        - path: "arithmetic.pl"
-          content: |
-            % BMI calculator
-            bmi(Height, Weight, BMI) :- BMI is Weight / (Height ** 2).
+      - path: /tutorial/rules.pl
+        language: prolog
+        content: |
+          parent(tom, bob).
+          parent(bob, ann).
+          parent(bob, pat).
+          parent(ann, lena).
 
-            % is_overweight: succeeds if BMI > 25
-            is_overweight(Height, Weight) :- bmi(Height, Weight, BMI), BMI > 25.
+          has_child(Person) :- parent(Person, Child).
 
-            % abs_diff: absolute difference using two clauses
-            abs_diff(X, Y, D) :- X >= Y, D is X - Y.
-            abs_diff(X, Y, D) :- X < Y, D is Y - X.
-          language: "prolog"
+          grandparent(Grandparent, Grandchild) :-
+              parent(Grandparent, Parent),
+              parent(Parent, Grandchild).
       explanation: |
-        **Why this works:**
-
-        - **`BMI is Weight / (Height ** 2)`** — The `is` operator *evaluates* the arithmetic expression on the right and unifies the result with BMI. Using `=` instead would give you the unevaluated structure `/(Weight, **(Height, 2))` — not a number!
-        - **`is_overweight` composes predicates:** It calls `bmi/3` to compute the BMI, then checks `BMI > 25`. This is the Prolog way of "calling a function then using its result."
-        - **`abs_diff` uses two clauses:** Instead of an `if/else`, Prolog tries the first clause (`X >= Y`). If it fails (because `X < Y`), Prolog backtracks and tries the second clause. Multiple clauses for the same predicate is Prolog's version of pattern matching / case analysis.
-
-    tests:
-      - description: "bmi(1.75, 70, BMI) computes correctly"
-        command: |
-          var answers = __query('bmi(1.75, 70, BMI)');
-          assert(answers.length > 0, 'bmi/3 should succeed');
-          var match = answers[0].match(/[\d.]+/);
-          assert(match, 'Should contain a number');
-          var bmi = parseFloat(match[0]);
-          assert(bmi > 22 && bmi < 23, 'BMI of 1.75m/70kg should be ~22.86, got ' + bmi);
-      - description: "is_overweight(1.70, 80) succeeds (BMI ~27.7)"
-        command: |
-          var answers = __query('is_overweight(1.70, 80)');
-          assert(answers.length > 0, 'is_overweight(1.70, 80) should succeed');
-      - description: "abs_diff(7, 3, D) gives D = 4"
-        command: |
-          var answers = __query('abs_diff(7, 3, D)');
-          assert(answers.length > 0, 'abs_diff(7, 3, D) should succeed');
-          assert(answers[0].indexOf('4') !== -1, 'Expected D = 4, got: ' + answers[0]);
-      - description: "abs_diff(3, 7, D) also gives D = 4"
-        command: |
-          var answers = __query('abs_diff(3, 7, D)');
-          assert(answers.length > 0, 'abs_diff(3, 7, D) should succeed');
-          assert(answers[0].indexOf('4') !== -1, 'Expected D = 4, got: ' + answers[0]);
-
-  # --------------------------------------------------------------------------
-  # STEP 6: LISTS & PATTERN MATCHING
-  # Pedagogy: Head|Tail as destructuring, non-recursive first
-  # Research: Wick & Stevenson 2006 (list exercises), worked examples with fading
-  # Bloom's: Understand / Apply
-  # --------------------------------------------------------------------------
-  # Pedagogy: worked example with fading (pattern matching before recursion)
-  - title: "Lists and Pattern Matching"
+        The Parent variable joins the two relationships, so it must occur in both body goals. Using two unrelated variables would combine any two parent facts. Using only one link would describe a parent, and arbitrary recursion would describe an ancestor rather than exactly a grandparent.
+  # Pedagogy: PRIMM — predict, diagnose a direction bug, trace all proofs including duplicates. Sources: Quiz 4 Q4; Logic-palooza handout pp. 20–42; F23 final solutions Prolog part b p. 29.
+  - title: Resolution and Backtracking
     instructions: |
       ### Why this matters
 
-      Lists are Prolog's fundamental container — almost every nontrivial Prolog program processes them. The `[H|T]` destructuring pattern is your primary tool for working with lists, and unlike Python's slicing or JS array methods, it works *bidirectionally*: the same pattern that decomposes a list can also build one. Mastering head/tail patterns now (without recursion yet) makes the recursive predicates in the next step feel natural instead of magical.
+      A relation can have the right possible answers and still surprise you about which answer appears first. Following the pending goals and variable mappings explains the course's execution-tracing questions.
 
       ### 🎯 You will learn to
 
-      - Apply `[H|T]` patterns to destructure a list into head and tail
-      - Analyze nested patterns like `[X, Y | Rest]` to grab specific positions without writing code
-      ```prolog
-      [a, b, c]        % a list of three atoms
-      [1, 2, 3]        % a list of three numbers
-      []               % the empty list
-      ```
+      - Analyze clause order, goal order, and binding rollback during resolution.
+      - Repair a relation and predict its complete ordered answer sequence.
 
-      But how you *work* with them is very different from Python/JS.
+      ### How a proof is built
 
-      ### Head|Tail decomposition
+      **Resolution** repeatedly takes the leftmost pending goal, tries clauses from top to bottom, and unifies the goal with a clause head. A matching fact discharges that goal. A matching rule replaces it with its body goals, ahead of the remaining work. No pending goals means one complete proof.
 
-      The `[H|T]` pattern splits a list into its first element (head) and the rest (tail):
+      On failure, Prolog **backtracks** to the most recent available alternative and undoes bindings made since that choice. A clause that does not unify is skipped; it does not end the whole search. This is depth-first search through possible proofs.
 
-      ```prolog
-      ?- [H|T] = [a, b, c].
-      % H = a, T = [b, c]
-      ```
+      For example, suppose `parent(tom,bob)`, `parent(tom,mia)`, and `parent(mia,ren)` are the only facts. In `parent(tom,P), parent(P,C)`, the first goal initially binds `P = bob`. If Bob has no child, the second goal fails. Prolog returns to the first goal, tries `P = mia`, and then discovers `C = ren`. The failed attempt's Bob binding does not stick.
 
-      This is Prolog's equivalent of destructuring — but powered by unification:
+      ### Thinking time
 
-      ```prolog
-      ?- [X, Y | Rest] = [1, 2, 3, 4, 5].
-      % X = 1, Y = 2, Rest = [3, 4, 5]
-      ```
+      Read the directed `link/2` facts. On paper, find every place reachable from `a` by **exactly two links**. Work through each possible intermediate place in fact order. Is `d` reached once or twice?
 
-      > **Transfer from Python:** This is similar to Python's `head, *tail = [1, 2, 3]`. But in Prolog, it works *bidirectionally* — you can also build lists this way.
+      Run the starter's `two_hops(a, End)`. Its second goal follows the final link in the wrong direction. A mismatch between your prediction and the output is the bug to diagnose.
 
-      ### Writing list predicates (non-recursive)
+      ### Your task
 
-      ```prolog
-      % first(X, List) - X is the first element of List
-      first(X, [X|_]).
+      Repair **`two_hops(Start, End)`**. Keep the facts in their given order and search the first link before the second link. Report **one answer for each two-link proof**, including duplicates; do not sort or remove duplicates.
 
-      % second(X, List) - X is the second element
-      second(X, [_, X|_]).
-      ```
+      A direct `a`-to-`b` link does not qualify as a two-link route. Compare your repaired program with the trace below after writing your prediction.
 
-      The underscore `_` means "I don't care about this value." Each `_` is independent.
+      <details>
+      <summary>After your repair: the complete two-link trace</summary>
 
-      ### Your Task
+      The query from `a` reports **`d`, `e`, `d`**, in that order. The intermediate `b` leads to `d` and `e`; then the intermediate `c` leads to `d` again. Both proofs ending at `d` count.
 
-      Define these predicates using pattern matching (no recursion needed):
+      </details>
 
-      1. **`head(X, List)`** — X is the first element of List
-      2. **`tail(T, List)`** — T is the tail (everything except the first element)
-      3. **`has_two([_, _])`** — succeeds only if the list has exactly two elements
-      4. **`swap_first_two(List, Swapped)`** — swap the first two elements: `[a,b,c]` becomes `[b,a,c]`
-
-    default_query: "swap_first_two([a, b, c], X)"
+      Finally, swap the two body goals temporarily and predict whether the answer sequence changes. If it stays the same, compare the intermediate choices: could the arrangement of these facts explain that coincidence? Restore the specified goal order before testing. Goal order is an execution decision even when the finite relation has the same possible endpoint pairs.
+    default_query: two_hops(a, End)
     files:
-      - path: "lists.pl"
-        content: |
-          % head(X, List) - X is the first element
-          % TODO: head(X, [... | ...]).
+    - path: /tutorial/search-order.pl
+      language: prolog
+      content: |
+        link(a, b).
+        link(a, c).
+        link(b, d).
+        link(b, e).
+        link(c, d).
+        link(d, f).
 
-
-          % tail(T, List) - T is everything after the first element
-          % TODO: tail(T, [... | ...]).
-
-
-          % has_two(List) - succeeds only if List has exactly 2 elements
-          % Hint: use the pattern [_, _]
-          % TODO: has_two(...).
-
-
-          % swap_first_two(List, Swapped) - swap first two elements
-          % [a, b | Rest] becomes [b, a | Rest]
-          % TODO: swap_first_two([... | ...], [... | ...]).
-
-    open_file: "lists.pl"
-
+        % Intended: a directed path of exactly two links.
+        two_hops(Start, End) :-
+            link(Start, Middle),
+            link(End, Middle).
+    open_file: /tutorial/search-order.pl
+    run_file: /tutorial/search-order.pl
+    tests:
+    - description: Two-link answers from a are d, e, d, preserving proof order and duplicates.
+      command: |
+        assert((await __query("findall(E, two_hops(a,E), Answers), Answers == [d,e,d].")).length === 1, "Two-link answers from a are d, e, d, preserving proof order and duplicates.");
+      hints:
+      - title: Follow an arrow
+        text: Read link(X,Y) as a link going from X to Y.
+      - title: The second starting point
+        text: After finding the intermediate place, the second link must start there.
+      - title: Two linked positions
+        text: Start belongs in the first goal’s first slot; End belongs in the second goal’s second slot.
+          Connect the remaining slots.
+    - description: The repaired relation also handles other starts and reverse queries.
+      command: |
+        assert((await __query("findall(E, two_hops(b,E), A), A == [f], findall(S, two_hops(S,f), B), B == [b,c], \\+ two_hops(f,_), \\+ two_hops(a,b).")).length === 1, "The repaired relation also handles other starts and reverse queries.");
+      hints:
+      - title: Beyond the first example
+        text: The same rule should connect b through d to f.
+      - title: Keep endpoints variable
+        text: Do not hard-code a or an expected answer in the rule.
+      - title: A local connection
+        text: Use the same intermediate variable in both goals, leaving the two endpoint variables from
+          the head unchanged.
     quiz:
-      title: "Step 6 — Knowledge Check"
+      title: Step 4 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
       questions:
-        - question: |
-            What does `[H|T] = [42]` bind H and T to?
-          type: single
-          options:
-            - "H = 42, T = [] (empty list)"
-            - "H = [42], T = []"
-            - "Fails — list must have at least 2 elements"
-            - "H = 42, T = 42"
-          correct_index: 0
-          explanation: |
-            A single-element list `[42]` is really `[42|[]]`. So H unifies with 42 and T unifies with the empty list `[]`. The tail of a one-element list is always `[]`.
-
-        - question: |
-            What does `[_, X | _] = [a, b, c, d]` bind X to?
-          type: single
-          options:
-            - "a"
-            - "b"
-            - "[c, d]"
-            - "[b, c, d]"
-          correct_index: 1
-          explanation: |
-            The first `_` matches `a`, `X` matches `b` (the second element), and the trailing `_` matches the rest `[c, d]`. Each `_` is independent and can match anything.
-
+      - type: single
+        difficulty: intermediate
+        question: |
+          A later goal fails after an earlier goal bound `Place = cafe`. Another earlier choice could bind it to park. What does backtracking do?
+        options:
+        - It preserves cafe and skips the later goal.
+        - It overwrites every variable in the program.
+        - It undoes that choice and tries park.
+        correct_index: 2
+        option_feedback:
+          0: A failed required goal cannot simply be skipped.
+          1: Only bindings made along the abandoned branch are undone.
+        explanation: |
+          Backtracking restores the bindings and pending work associated with the choice point, then explores an alternative.
+      - type: single
+        difficulty: intermediate
+        question: |
+          Given two different successful proofs with the same final binding, what does ordinary answer enumeration show?
+        options:
+        - Both proofs, with a repeated binding
+        - Only one proof, because answers form a set
+        - An error, because bindings must be unique
+        correct_index: 0
+        option_feedback:
+          1: A set is a separate abstraction; ordinary query enumeration does not deduplicate.
+          2: Different proof paths may legitimately produce the same binding.
+        explanation: |
+          Prolog enumerates proofs. Duplicate bindings remain unless the program deliberately collects or filters them.
     solution:
       files:
-        - path: "lists.pl"
-          content: |
-            % head(X, List) - X is the first element
-            head(X, [X|_]).
+      - path: /tutorial/search-order.pl
+        language: prolog
+        content: |
+          link(a, b).
+          link(a, c).
+          link(b, d).
+          link(b, e).
+          link(c, d).
+          link(d, f).
 
-            % tail(T, List) - T is everything after the first element
-            tail(T, [_|T]).
-
-            % has_two(List) - succeeds only if List has exactly 2 elements
-            has_two([_, _]).
-
-            % swap_first_two(List, Swapped) - swap first two elements
-            swap_first_two([A, B | Rest], [B, A | Rest]).
-          language: "prolog"
+          two_hops(Start, End) :-
+              link(Start, Middle),
+              link(Middle, End).
       explanation: |
-        **Why this works:**
-
-        - **`head(X, [X|_]).`** — The pattern `[X|_]` unifies X with the head of the list. The `_` discards the tail. This is pure pattern matching — no code body needed.
-        - **`tail(T, [_|T]).`** — The same variable `T` appears in both the argument and the pattern. Unification makes them equal, so T is bound to the tail.
-        - **`has_two([_, _]).`** — The pattern `[_, _]` only matches lists with *exactly* two elements. One element gives `[_]` (no match), three gives `[_, _, _|_]` (no match).
-        - **`swap_first_two([A, B | Rest], [B, A | Rest]).`** — Destructures the first two elements, then reconstructs with them swapped. `Rest` is shared — the tail stays unchanged. No recursion needed; unification does all the work.
-
-    tests:
-      - description: "head(X, [a, b, c]) gives X = a"
-        command: |
-          var answers = __query('head(X, [a, b, c])');
-          assert(answers.length > 0, 'head/2 should succeed');
-          assert(answers[0].indexOf('a') !== -1, 'Expected X = a, got: ' + answers[0]);
-      - description: "tail(T, [a, b, c]) gives T = [b, c]"
-        command: |
-          var answers = __query('tail(T, [a, b, c])');
-          assert(answers.length > 0, 'tail/2 should succeed');
-          assert(answers[0].indexOf('[b,c]') !== -1, 'Expected T = [b,c], got: ' + answers[0]);
-      - description: "has_two([a, b]) succeeds"
-        command: |
-          var answers = __query('has_two([a, b])');
-          assert(answers.length > 0, 'has_two([a, b]) should succeed');
-      - description: "has_two([a]) fails"
-        command: |
-          var answers = __query('has_two([a])');
-          assert(answers.length === 0, 'has_two([a]) should fail — only 1 element');
-      - description: "swap_first_two([a, b, c], X) gives X = [b, a, c]"
-        command: |
-          var answers = __query('swap_first_two([a, b, c], X)');
-          assert(answers.length > 0, 'swap_first_two should succeed');
-          assert(answers[0].indexOf('[b,a,c]') !== -1, 'Expected [b,a,c], got: ' + answers[0]);
-
-  # --------------------------------------------------------------------------
-  # STEP 7: RECURSIVE LIST PROCESSING
-  # Pedagogy: Worked examples with fading (full -> partial -> write)
-  # Research: Rinderknecht 2014 (recursion pedagogy), sub-goal labeling
-  # Bloom's: Apply / Analyze
-  # --------------------------------------------------------------------------
-  # Pedagogy: worked example with fading (full → partial → blank for recursion)
-  - title: "Recursive List Processing"
+        From a, the first link chooses b. The second link then chooses d and e before the first link advances to c, whose outgoing link reaches d again. From b and c, the intermediate d leads to f. Keeping a shared intermediate variable and the intended direction makes the rule work for these other modes too.
+  # Pedagogy: Mistake-based familiarization — correct a terminating-search defect; retrieve Step 1 querying. Sources: Logic-palooza handout pp. 13–14, 43–44; Homework LOGIC6; S23 final Q5.
+  - title: Recursive Relations and Termination
     instructions: |
       ### Why this matters
 
-      Prolog has no `for` or `while` loops — recursion is the only way to process lists of arbitrary length. Every recursive predicate follows the same skeleton: a *base case* for the empty list and a *recursive case* that strips the head and recurses on the tail. Once you internalize this base-case/recursive-case pattern, you can write `member`, `length`, `append`, `reverse`, `map`, `filter`, and most other list operations almost mechanically.
+      “Exactly two links” is useful for grandparents. “Any positive number of links” needs recursion, and in Prolog the order of recursive work can decide whether the search ever finishes.
 
       ### 🎯 You will learn to
 
-      - Apply the base-case/recursive-case pattern to write recursive list predicates
-      - Create new predicates (`my_last`, `my_append`, `my_reverse`) by following a worked example
+      - Apply a base case and recursive case to define ancestry.
+      - Evaluate whether recursive goals make progress before calling themselves.
 
-      ### The pattern: Base case + Recursive case
+      ### One link or more links
 
-      Every recursive predicate has two clauses:
+      An ancestor is either a direct parent, or a parent of somebody who is an ancestor. Those are two alternative clauses. For this exercise, the family is finite and has no cycles; **a person is not their own ancestor**.
 
-      ```prolog
-      % Sub-goal: Base case — empty list
-      my_length([], 0).
+      The direct-parent case is already written. In the recursive case, consuming one parent link before recurring moves the search down this finite family. The starter instead recurs on the same unconstrained starting person before consuming that link.
 
-      % Sub-goal: Recursive case — strip head, recurse on tail
-      my_length([_|T], N) :- my_length(T, N1), N is N1 + 1.
-      ```
+      ### Thinking time
 
-      > **Transfer from Python:** This is like:
-      > ```python
-      > def my_length(lst):
-      >     if lst == []:       # base case
-      >         return 0
-      >     return 1 + my_length(lst[1:])  # recursive case
-      > ```
+      Predict `ancestor(tom, Person)` in the starter: no answers, some answers followed by unfinished search, or all answers followed by normal completion? Explain which recursive subgoal fails to make progress.
 
-      The key difference: Prolog's version works **in both directions!**
+      Run it. The workspace bounds search so an unfinished proof search reports a limit instead of requiring an endless wait. **Stop** also cancels a running program. A limit is not the same as `false`: the search has not finished establishing whether more answers exist.
 
-      ### Worked example: `my_member/2`
+      The direct clause can produce answers before the bad recursive branch keeps expanding. Seeing a correct early answer does not establish termination.
 
-      ```prolog
-      % Sub-goal: Base case — X is the head of the list
-      my_member(X, [X|_]).
+      ### Your task
 
-      % Sub-goal: Recursive case — X is in the tail
-      my_member(X, [_|T]) :- my_member(X, T).
-      ```
+      Repair **`ancestor/2`** so that a parent goal constrains the intermediate person before recursion. Keep the direct-parent clause first and the supplied facts unchanged. It must find every ancestor–descendant pair reachable by one or more links and terminate on this family, including when there is no match.
 
-      Try `my_member(b, [a, b, c])` — succeeds. Try `my_member(X, [a, b, c])` — returns all elements!
+      Predict the complete answers for `ancestor(tom, Person)`, keeping the direct-parent clause first and exploring parent facts in their given order.
 
-      ### Your Task
+      <details>
+      <summary>After your repair: the complete ancestry trace</summary>
 
-      Using the `my_member` worked example as a model:
+      The answers are **`bob`, `ann`, `pat`, `lena`**, in that order. In a version that chooses a child and then finds that child's descendants, the recursive call for Bob tries its direct-parent clause for both children before descending again. The output follows the proof clauses, not a generic family-tree traversal.
 
-      1. **`my_last(X, List)`** — X is the last element of List
-         - Base case: the last element of a one-element list `[X]` is X
-         - Recursive case: the last element of `[_|T]` is the last element of T
+      </details>
 
-      2. **`my_append(L1, L2, L3)`** — L3 is L1 concatenated with L2
-         - Base case: appending L to `[]` gives L
-         - Recursive case: appending `[H|T1]` to L2 gives `[H|T3]` where T3 is T1 appended to L2
-
-      3. **`my_reverse(List, Reversed)`** — reverse a list
-         - Base case: reverse of `[]` is `[]`
-         - Recursive case: reverse of `[H|T]` is reverse of T appended with `[H]`
-         - *Hint:* use your `my_append` predicate!
-
-    default_query: "my_append([a, b], [c, d], X)"
+      Then try `ancestor(Person, lena)` and `ancestor(pat, Person)`. Explain why “move the recursive clause last” alone would not fix a body that recurs before making progress. With cyclic facts, even the repaired rule would need additional cycle handling.
+    default_query: ancestor(tom, Person)
     files:
-      - path: "recursion.pl"
-        content: |
-          % --- Worked example (provided) ---
+    - path: /tutorial/ancestors.pl
+      language: prolog
+      content: |
+        parent(tom, bob).
+        parent(bob, ann).
+        parent(bob, pat).
+        parent(ann, lena).
 
-          % my_member(X, List) - X is an element of List
-          % Sub-goal: Base case — X is the head
-          my_member(X, [X|_]).
-          % Sub-goal: Recursive case — X is in the tail
-          my_member(X, [_|T]) :- my_member(X, T).
-
-
-          % --- Your turn: follow the same pattern ---
-
-          % my_last(X, List) - X is the last element of List
-          % Sub-goal: Base case — last of a one-element list
-          % TODO: my_last(X, [X]).
-          % Sub-goal: Recursive case — skip head, recurse on tail
-          % TODO: my_last(X, [_|T]) :- my_last(X, T).
-
-
-          % my_append(L1, L2, L3) - L3 is L1 concatenated with L2
-          % Sub-goal: Base case — appending to empty list
-          % TODO: my_append([], L, L).
-          % Sub-goal: Recursive case — move head to result
-          % TODO: my_append([H|T1], L2, [H|T3]) :- my_append(T1, L2, T3).
-
-
-          % my_reverse(List, Reversed) - reverse a list
-          % Sub-goal: Base case — reverse of empty is empty
-          % TODO: my_reverse([], []).
-          % Sub-goal: Recursive case — reverse tail, append head
-          % TODO: my_reverse([H|T], R) :- my_reverse(T, RT), my_append(RT, [H], R).
-
-    open_file: "recursion.pl"
-
+        ancestor(X, Z) :- parent(X, Z).
+        ancestor(X, Z) :- ancestor(X, Y), parent(Y, Z).
+    open_file: /tutorial/ancestors.pl
+    run_file: /tutorial/ancestors.pl
+    tests:
+    - description: All and only ancestor pairs are found, including deeper descendants.
+      command: |
+        assert((await __query("findall(pair(A,D), ancestor(A,D), P), sort(P,S), S == [pair(ann,lena),pair(bob,ann),pair(bob,lena),pair(bob,pat),pair(tom,ann),pair(tom,bob),pair(tom,lena),pair(tom,pat)].")).length === 1, "All and only ancestor pairs are found, including deeper descendants.");
+      hints:
+      - title: The shrinking problem
+        text: Name the link that moves the current ancestor one generation closer to a descendant.
+      - title: Progress before recursion
+        text: Use a parent goal to constrain the intermediate person before asking the recursive ancestry question.
+      - title: Two clause roles
+        text: Keep the one-link clause. In the other clause, arrange parent(..., Intermediate) before ancestor(Intermediate,
+          ...).
+    - description: Answer order follows the specified clauses, and a leaf query terminates.
+      command: |
+        assert((await __query("findall(P, ancestor(tom,P), A), A == [bob,ann,pat,lena], findall(P,ancestor(P,lena),B), sort(B,BS), BS == [ann,bob,tom], once(ancestor(tom,lena)), \\+ ancestor(tom,tom), \\+ ancestor(lena,tom), \\+ ancestor(pat,_).")).length === 1, "Answer order follows the specified clauses, and a leaf query terminates.");
+      hints:
+      - title: Early success is incomplete evidence
+        text: Request the whole answer sequence, not just its first answer.
+      - title: Two different orders
+        text: Both clause order and goal order matter. The direct-parent clause should stay before the recursive
+          clause.
+      - title: The call that changes
+        text: Connect the recursive goal to the intermediate person found by the preceding parent goal; do not repeat the original unconstrained question.
     quiz:
-      title: "Step 7 — Knowledge Check"
+      title: Step 5 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
       questions:
-        - question: |
-            How does `my_member(b, [a, b, c])` succeed?
-          type: single
-          options:
-            - "It checks all elements in parallel and returns any match"
-            - "It recurses down the tail until the head unifies with b"
-            - "It converts the list to a set and checks membership"
-            - "It loops through the list with an integer counter"
-          correct_index: 1
-          explanation: |
-            Prolog tries the first clause: does `b` unify with the head `a`? No. So it tries the second clause, which recurses on the tail `[b, c]`. Now the first clause tries: does `b` unify with `b`? Yes! The query succeeds.
-
-        - question: |
-            What does `my_append(X, Y, [1, 2, 3])` do?
-          type: single
-          options:
-            - "Error — X and Y must be given as input values"
-            - "Returns the single split X = [1,2,3], Y = []"
-            - "Returns ALL ways to split [1,2,3]"
-            - "Returns the single split X = [1], Y = [2, 3]"
-          correct_index: 2
-          explanation: |
-            Because `my_append` is a *relation* (not a function), Prolog can find ALL combinations: X=[], Y=[1,2,3]; X=[1], Y=[2,3]; X=[1,2], Y=[3]; X=[1,2,3], Y=[]. This is the power of multi-directional predicates!
-
+      - type: single
+        difficulty: advanced
+        question: |
+          Why can the starter return an answer and still fail to finish?
+        options:
+        - Every answer permanently binds all rule variables.
+        - A base proof succeeds before a recursive branch diverges.
+        - Prolog refuses to report failure after any success.
+        correct_index: 1
+        option_feedback:
+          0: Variables are fresh for each attempted use of a rule.
+          2: A finite successful search can finish normally after all alternatives are exhausted.
+        explanation: |
+          A depth-first search can encounter complete proofs before it reaches an infinitely expanding branch. Later answers may be inaccessible behind that branch.
+      - type: single
+        difficulty: basic
+        question: |
+          Recall the first step: the database has `parent(tom,bob).` What does `parent(Person,bob)` ask?
+        options:
+        - Who is a parent of Bob?
+        - Who is a child of Bob?
+        - Whether Person was declared earlier
+        correct_index: 0
+        option_feedback:
+          1: Children of Bob would place bob in the first slot.
+          2: Prolog discovers a variable’s binding while proving a query.
+        explanation: |
+          Argument order defines the relation. A variable in the first slot asks for parents of the known child.
     solution:
       files:
-        - path: "recursion.pl"
-          content: |
-            % --- Worked example (provided) ---
+      - path: /tutorial/ancestors.pl
+        language: prolog
+        content: |
+          parent(tom, bob).
+          parent(bob, ann).
+          parent(bob, pat).
+          parent(ann, lena).
 
-            % my_member(X, List) - X is an element of List
-            my_member(X, [X|_]).
-            my_member(X, [_|T]) :- my_member(X, T).
-
-
-            % --- Solutions ---
-
-            % my_last(X, List) - X is the last element of List
-            my_last(X, [X]).
-            my_last(X, [_|T]) :- my_last(X, T).
-
-            % my_append(L1, L2, L3) - L3 is L1 concatenated with L2
-            my_append([], L, L).
-            my_append([H|T1], L2, [H|T3]) :- my_append(T1, L2, T3).
-
-            % my_reverse(List, Reversed) - reverse a list
-            my_reverse([], []).
-            my_reverse([H|T], R) :- my_reverse(T, RT), my_append(RT, [H], R).
-          language: "prolog"
+          ancestor(X, Z) :- parent(X, Z).
+          ancestor(X, Z) :- parent(X, Y), ancestor(Y, Z).
       explanation: |
-        **Why this works:**
-
-        - **`my_last`:** The base case `my_last(X, [X])` says the last element of a one-element list is that element. The recursive case skips the head and recurses on the tail. Each recursive call makes the list one element shorter until only one remains.
-        - **`my_append`:** The base case `my_append([], L, L)` says appending anything to `[]` gives that thing. The recursive case moves the head `H` from L1 to the result, and recurses on the tail. Try `my_append(X, Y, [1,2,3])` — it finds ALL ways to split the list! This is the power of relational programming.
-        - **`my_reverse`:** Reverses the tail first, then appends `[H]` at the end. This is an O(n^2) algorithm (each `my_append` is O(n)), but it clearly shows the recursive structure. A more efficient version uses an accumulator.
-
-    tests:
-      - description: "my_last(c, [a, b, c]) succeeds"
-        command: |
-          var answers = __query('my_last(c, [a, b, c])');
-          assert(answers.length > 0, 'my_last(c, [a,b,c]) should succeed');
-      - description: "my_last(X, [a, b, c]) gives X = c"
-        command: |
-          var answers = __query('my_last(X, [a, b, c])');
-          assert(answers.length > 0, 'my_last/2 should succeed');
-          assert(answers[0].indexOf('c') !== -1, 'Expected X = c, got: ' + answers[0]);
-      - description: "my_append([a, b], [c], X) gives X = [a, b, c]"
-        command: |
-          var answers = __query('my_append([a, b], [c], X)');
-          assert(answers.length > 0, 'my_append should succeed');
-          assert(answers[0].indexOf('[a,b,c]') !== -1, 'Expected [a,b,c], got: ' + answers[0]);
-      - description: "my_append works in reverse: split [1,2,3]"
-        command: |
-          var answers = __query('my_append(X, Y, [1, 2, 3])');
-          assert(answers.length === 4, 'Expected 4 ways to split [1,2,3], got ' + answers.length);
-      - description: "my_reverse([a, b, c], X) gives X = [c, b, a]"
-        command: |
-          var answers = __query('my_reverse([a, b, c], X)');
-          assert(answers.length > 0, 'my_reverse should succeed');
-          assert(answers[0].indexOf('[c,b,a]') !== -1, 'Expected [c,b,a], got: ' + answers[0]);
-
-  # --------------------------------------------------------------------------
-  # STEP 8: PUTTING IT ALL TOGETHER — synthesis
-  # Pedagogy: Integration exercise, minimal scaffolding (faded support)
-  # Research: Ambrose et al. 2010 (component -> integration)
-  # Bloom's: Apply / Create
-  # --------------------------------------------------------------------------
-  # Pedagogy: PRIMM — Make (synthesis with faded scaffolding)
-  - title: "Putting It All Together"
+        The recursive case consumes one parent link before recursing on the intermediate person. On this finite acyclic database that bounds recursion depth. A base case is necessary, but its presence alone does not prevent an earlier or later recursive branch from diverging. The tests check complete enumeration and a no-answer leaf query.
+  # Pedagogy: Variation Theory — contrast element/tail and exact/minimum length patterns. Sources: Logic-palooza handout pp. 46–49; Homework LOGIC4 A.8–A.10; F22 final Q22.
+  - title: List Patterns
     instructions: |
       ### Why this matters
 
-      Individual pieces — facts, rules, arithmetic, lists, recursion — are useful, but real Prolog programs *combine* them. This synthesis step has you compose every concept from the tutorial into a small grade analyzer that looks up data, computes statistics, and answers multi-directional queries. Building one program end-to-end is what consolidates the pieces into a working mental model you can transfer to your own problems.
+      A list is structured data, so the unification rules you already know still apply. Head–tail patterns expose part of that structure without an index or a loop.
 
       ### 🎯 You will learn to
 
-      - Create a multi-predicate Prolog program that composes facts, rules, arithmetic, and recursion
-      - Evaluate when a problem is well-suited to declarative logic programming
+      - Analyze the difference between one element and the remaining list.
+      - Apply a list pattern that selects a position without restricting later elements.
 
-      ### Challenge: Student Grade Analyzer
+      ### One element and the rest
 
-      Build a knowledge base that stores student grades and provides useful queries:
+      `[]` is an empty list. `[chess, uno, go]` is a list of three atoms. Lists can contain numbers or nested lists, too.
 
-      **Facts** (provided):
-      ```prolog
-      student(alice, [88, 92, 75, 95]).
-      student(bob,   [70, 65, 80, 72]).
-      student(carol, [95, 98, 92, 97]).
-      ```
+      The pattern `[Head | Tail]` separates the first element from the remaining list. For `[chess, uno, go]`, `Head = chess` and `Tail = [uno, go]`. For `[chess]`, the tail is `[]`. The empty list cannot match a head–tail pattern.
 
-      Each student has a name and a list of exam scores.
+      `[First, Second | Rest]` requires at least two elements. It differs from `[First, Second]`, which requires exactly two. A variable in one element position can bind to a whole nested list.
 
-      **Your task — define these predicates:**
+      ### Thinking time
 
-      1. **`sum_list(List, Sum)`** — compute the sum of a list of numbers
-         - Base: sum of `[]` is 0
-         - Recursive: sum of `[H|T]` is H plus the sum of T
+      Predict `[Head | Tail] = [[chess,uno],go]`. Is Head `chess` or `[chess,uno]`? Is Tail `go` or `[go]`? Write both bindings, then run the query and check whether the outer list structure stays intact.
 
-      2. **`length_list(List, Len)`** — compute the length of a list
-         - (Same pattern as `my_length` from Step 6)
+      The worked `first_item/2` fact shows how a pattern connects a list and a selected element. Query it with a known list or a known item.
 
-      3. **`average(Name, Avg)`** — a student's average score
-         - Look up the student's scores, compute sum and length, divide
+      ### Your task
 
-      4. **`above_average(Name, Threshold)`** — succeeds if the student's average is above Threshold
+      Define **`second_item(Item, List)`**. A pattern fact is sufficient. It must succeed exactly when List has at least two elements and Item unifies with its second element. Later elements must not be dropped or constrained, and a nested second element must stay intact.
 
-      Then query:
-      - `average(alice, A)` — What is Alice's average?
-      - `above_average(carol, 90)` — Does Carol average above 90?
-      - `above_average(Name, 80)` — Which students average above 80?
-
-    default_query: "average(alice, Avg)"
+      Try lists with zero, one, two, and four elements. Then query `second_item(uno, [chess, X, go])` and explain how the same fact fills a missing list element. We will add recursion next; this task only needs a pattern.
+    default_query: first_item(Item, [[chess,uno],go])
     files:
-      - path: "grades.pl"
-        content: |
-          % Student grade database
-          student(alice, [88, 92, 75, 95]).
-          student(bob,   [70, 65, 80, 72]).
-          student(carol, [95, 98, 92, 97]).
+    - path: /tutorial/list-patterns.pl
+      language: prolog
+      content: |
+        first_item(Item, [Item | _]).
 
-          % sum_list(List, Sum) - sum of all numbers in List
-          % Sub-goal: Base case
-          % TODO: sum_list([], 0).
-          % Sub-goal: Recursive case
-          % TODO: sum_list([H|T], Sum) :- sum_list(T, Rest), Sum is H + Rest.
-
-
-          % length_list(List, Len) - number of elements in List
-          % Sub-goal: Base case
-          % TODO: length_list([], 0).
-          % Sub-goal: Recursive case
-          % TODO: length_list([_|T], Len) :- length_list(T, L1), Len is L1 + 1.
-
-
-          % average(Name, Avg) - compute a student's average score
-          % TODO: average(Name, Avg) :- ...
-
-
-          % above_average(Name, Threshold) - true if average > Threshold
-          % TODO: above_average(Name, Threshold) :- ...
-
-    open_file: "grades.pl"
-
+        % Relate Item to the second element of a list.
+        second_item(Item, List) :- fail.
+    open_file: /tutorial/list-patterns.pl
+    run_file: /tutorial/list-patterns.pl
+    tests:
+    - description: Second-item matching handles short, long, and nested lists without flattening.
+      command: |
+        assert((await __query("findall(X,second_item(X,[a,b]),A), sort(A,AS), AS == [b], findall(X,second_item(X,[a,[b,c],d,e]),B), sort(B,BS), BS == [[b,c]], \\+ second_item(_,[]), \\+ second_item(_,[a]), \\+ second_item(a,[a,b]).")).length === 1, "Second-item matching handles short, long, and nested lists without flattening.");
+      hints:
+      - title: A minimum length
+        text: An empty list and a singleton have no second element.
+      - title: Expose two slots
+        text: A pattern with two element positions before the bar leaves any later elements in the tail.
+      - title: One shared slot
+        text: 'Use second_item(Item, [First, Second | Rest]). as a shape: choose which position should share
+          the head’s Item variable and which positions to ignore.'
+    - description: The relation can also discover an unknown second element.
+      command: |
+        assert((await __query("second_item(uno,[chess,X,go]), X == uno.")).length > 0, "The relation can also discover an unknown second element.");
+      hints:
+      - title: Matching works both ways
+        text: The known item can fill an unknown element in the list.
+      - title: Use a pattern
+        text: No arithmetic or explicit assignment is needed to connect the positions.
+      - title: Reuse the variable
+        text: The item position in the fact’s head and the second list slot need the same variable.
     quiz:
-      title: "Step 8 — Knowledge Check"
+      title: Step 6 — Knowledge Check
       min_score: 0.8
+      shuffle_questions: false
       questions:
-        - question: |
-            To find all students with average above 80, an imperative programmer would write a loop. In Prolog, you:
-          type: single
-          options:
-            - "Write an explicit for-loop iterating over every student"
-            - "Define `above_average(Name, 80)` and let backtracking find each one"
-            - "Build an array of all students and filter it with a predicate"
-            - "Run a `while` loop with a counter walking the student list"
-          correct_index: 1
-          explanation: |
-            You define the *relationship* (what it means to be above average), then query with a variable for Name. Prolog's backtracking finds all students that satisfy the condition. No explicit iteration needed.
-
-        - question: |
-            What makes `above_average(Name, 80)` work for finding ALL qualifying students?
-          type: single
-          options:
-            - "It returns a list containing every qualifying student"
-            - "Prolog backtracks through each `student/2` fact, trying each name"
-            - "It hides an internal loop that walks the database"
-            - "You must call it repeatedly until it stops succeeding"
-          correct_index: 1
-          explanation: |
-            When `average(Name, Avg)` tries to satisfy itself, it looks up `student(Name, Scores)`. Prolog tries each `student` fact through backtracking. For each one where `Avg > 80`, it reports a solution. This is the declarative way to "search" — you describe what you want, and backtracking does the searching.
-
+      - type: single
+        difficulty: intermediate
+        question: |
+          What are the bindings for `[H|T] = [[a,b],c]`?
+        options:
+        - '`H = a`, `T = [b,c]`'
+        - '`H = [a,b]`, `T = c`'
+        - '`H = [a,b]`, `T = [c]`'
+        correct_index: 2
+        option_feedback:
+          0: Head–tail matching removes one outer element, not one innermost value.
+          1: The tail is the remaining list, even when it contains just one element.
+        explanation: |
+          The outer list has two elements. Its first element is itself a list; the remaining outer list contains c.
+      - type: single
+        difficulty: intermediate
+        question: |
+          Which pattern requires at least two elements and permits any remaining tail?
+        options:
+        - '`[A,B]`'
+        - '`[A,B|Rest]`'
+        - '`[A|B]`'
+        correct_index: 1
+        option_feedback:
+          0: Without a tail variable, this pattern requires exactly two elements.
+          2: This pattern requires only one element; B can be the empty list.
+        explanation: |
+          Two element slots before the bar require two elements, while Rest can be any remaining tail.
     solution:
       files:
-        - path: "grades.pl"
-          content: |
-            % Student grade database
-            student(alice, [88, 92, 75, 95]).
-            student(bob,   [70, 65, 80, 72]).
-            student(carol, [95, 98, 92, 97]).
-
-            % sum_list(List, Sum) - sum of all numbers in List
-            sum_list([], 0).
-            sum_list([H|T], Sum) :- sum_list(T, Rest), Sum is H + Rest.
-
-            % length_list(List, Len) - number of elements in List
-            length_list([], 0).
-            length_list([_|T], Len) :- length_list(T, L1), Len is L1 + 1.
-
-            % average(Name, Avg) - compute a student's average score
-            average(Name, Avg) :-
-                student(Name, Scores),
-                sum_list(Scores, Sum),
-                length_list(Scores, Len),
-                Avg is Sum / Len.
-
-            % above_average(Name, Threshold) - true if average > Threshold
-            above_average(Name, Threshold) :-
-                average(Name, Avg),
-                Avg > Threshold.
-          language: "prolog"
+      - path: /tutorial/list-patterns.pl
+        language: prolog
+        content: |
+          first_item(Item, [Item | _]).
+          second_item(Item, [_, Item | _]).
       explanation: |
-        **Why this works:**
+        Sharing Item with the second list slot exposes that element. The first anonymous variable ignores the first element, and the tail variable accepts every remaining element. The empty and singleton lists cannot unify with this structure; a nested second element binds as one term.
+  # Pedagogy: Worked example with fading — complete recursive membership and retrieve termination reasoning. Sources: Logic-palooza handout p. 50; Homework LOGIC5 and LOGIC7 (structural-recursion transfer).
+  - title: Recursive List Relations
+    instructions: |
+      ### Why this matters
 
-        - **`sum_list` and `length_list`** follow the standard recursive list pattern: base case for `[]`, recursive case strips the head and recurses on the tail.
-        - **`average/2` composes predicates:** It looks up the student's scores with `student(Name, Scores)`, computes the sum and length, then divides. This is Prolog's equivalent of calling helper functions — but notice there are no explicit return values. Each predicate *binds* its result to a variable.
-        - **`above_average/2`** computes the average then checks the threshold. When you query `above_average(Name, 80)` with an unbound `Name`, Prolog backtracks through all `student` facts, computing each average and checking the condition. This is the declarative way to "filter" — no loops, no list comprehensions.
-        - **Multi-directional power:** `above_average(carol, 90)` checks one student. `above_average(Name, 80)` finds all students above 80. Same predicate, different query directions.
+      The second-item pattern visits one fixed position. To ask whether a value occurs anywhere, combine head–tail matching with a recursive relation that makes the list smaller.
 
+      ### 🎯 You will learn to
+
+      - Apply structural recursion to enumerate list members.
+      - Analyze why membership can check values or generate them, including duplicates.
+
+      ### Two ways to be a member
+
+      An item is in a list if it matches the head, **or** if it occurs in the tail. The first case is a pattern fact; the second case is a rule.
+
+      The starter supplies the head case. On `[chess,uno,go]`, it can currently discover chess but cannot yet reach later elements. Recursing on the tail gives the same question a smaller list. On a finite list, eventually there is no head to match.
+
+      There is no success fact for membership in `[]`: no item belongs to an empty list. A base case can be success for one relation and failure for another; choose it from the meaning of the relation.
+
+      ### Thinking time
+
+      Once the recursive case is complete, predict `list_member(Game, [uno,chess,uno])`. Does it report uno twice, remove the repeat, or fail because a value repeats? Commit to the full sequence, then compare after your repair.
+
+      ### Your task
+
+      Complete **`list_member(Item, List)`**. It must enumerate each element of a finite list from head to tail, with **one proof per occurrence**. It must also check known values and handle a nested list as one element. Keep the supplied head clause first.
+
+      Try `list_member(uno,[chess,uno])`, `list_member(go,[])`, and `list_member(Item,[[a,b],c])`. Then explain why the recursive call must use the **tail**, rather than the original list or its head.
+
+      The course's `is_member/2` has this same structure. Names can differ while the underlying relation stays the same. Later we will use the library's `member/2` once this mechanism is no longer a black box.
+    default_query: list_member(Item, [uno,chess,uno])
+    files:
+    - path: /tutorial/list-recursion.pl
+      language: prolog
+      content: |
+        list_member(Item, [Item | _]).
+        list_member(Item, [_ | Tail]) :- fail.
+    open_file: /tutorial/list-recursion.pl
+    run_file: /tutorial/list-recursion.pl
     tests:
-      - description: "sum_list([1, 2, 3], S) gives S = 6"
-        command: |
-          var answers = __query('sum_list([1, 2, 3], S)');
-          assert(answers.length > 0, 'sum_list should succeed');
-          assert(answers[0].indexOf('6') !== -1, 'Expected S = 6, got: ' + answers[0]);
-      - description: "length_list([a, b, c], L) gives L = 3"
-        command: |
-          var answers = __query('length_list([a, b, c], L)');
-          assert(answers.length > 0, 'length_list should succeed');
-          assert(answers[0].indexOf('3') !== -1, 'Expected L = 3, got: ' + answers[0]);
-      - description: "average(alice, Avg) computes correctly"
-        command: |
-          var answers = __query('average(alice, Avg)');
-          assert(answers.length > 0, 'average/2 should succeed');
-          var match = answers[0].match(/[\d.]+/);
-          assert(match, 'Should contain a number');
-          var avg = parseFloat(match[0]);
-          assert(avg > 87 && avg < 88, 'Alice average should be 87.5, got ' + avg);
-      - description: "above_average(carol, 90) succeeds"
-        command: |
-          var answers = __query('above_average(carol, 90)');
-          assert(answers.length > 0, 'Carol should average above 90');
-      - description: "above_average(bob, 80) fails"
-        command: |
-          var answers = __query('above_average(bob, 80)');
-          assert(answers.length === 0, 'Bob should NOT average above 80');
-      - description: "above_average(Name, 80) finds alice and carol"
-        command: |
-          var answers = __query('above_average(Name, 80)');
-          assert(answers.length === 2, 'Expected 2 students above 80, got ' + answers.length);
+    - description: Membership enumerates every occurrence in order and preserves nested elements.
+      command: |
+        assert((await __query("findall(X,list_member(X,[uno,chess,uno]),A), A == [uno,chess,uno], findall(X,list_member(X,[[a,b],c]),B), B == [[a,b],c].")).length === 1, "Membership enumerates every occurrence in order and preserves nested elements.");
+      hints:
+      - title: An alternative proof
+        text: If the head is not the desired occurrence, the rest of the list may contain it.
+      - title: A smaller version
+        text: Ask the same membership question about Tail, preserving the requested Item.
+      - title: The recursive argument
+        text: The body needs list_member(..., ...). Its first slot keeps the head’s Item, and its second
+          slot is the smaller list.
+    - description: Empty lists and absent items fail; checking a repeated known item has two proofs.
+      command: |
+        assert((await __query("\\+ list_member(_,[]), \\+ list_member(go,[uno,chess]), findall(ok,list_member(uno,[uno,chess,uno]),P), P == [ok,ok], list_member(last,[first,middle,last]).")).length === 1, "Empty lists and absent items fail; checking a repeated known item has two proofs.");
+      hints:
+      - title: Failure is meaningful
+        text: No clause should claim that every item occurs in an empty list.
+      - title: Keep alternatives
+        text: A matching head does not forbid another occurrence later in the tail.
+      - title: Head case then tail case
+        text: Keep both clauses available. The recursive case discards one list element and preserves the
+          item being sought.
+    quiz:
+      title: Step 7 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      questions:
+      - type: single
+        difficulty: intermediate
+        question: |
+          What should `list_member(Item, [])` do for a finite empty list?
+        options:
+        - Succeed with Item unbound
+        - Fail because no element can match
+        - Create a new list element
+        correct_index: 1
+        option_feedback:
+          0: A success with an unconstrained Item would claim every value belongs to the empty list.
+          2: This query fixes the list to empty; proving membership does not mutate it.
+        explanation: |
+          The relation means Item occurs in the given list. There is no occurrence in an empty list.
+      - type: single
+        difficulty: intermediate
+        question: |
+          How does this recursion avoid the ancestry starter’s termination problem?
+        options:
+        - The recursive goal receives a shorter list.
+        - The Item variable is assigned a new value.
+        - Prolog ignores recursive clauses after a match.
+        correct_index: 0
+        option_feedback:
+          1: The item sought stays the same; progress comes from shrinking the list.
+          2: Recursive alternatives remain available after a match, which allows later occurrences.
+        explanation: |
+          Each recursive call removes one outer list element. That gives a finite bound for the finite input lists used here.
+    solution:
+      files:
+      - path: /tutorial/list-recursion.pl
+        language: prolog
+        content: |
+          list_member(Item, [Item | _]).
+          list_member(Item, [_ | Tail]) :- list_member(Item, Tail).
+      explanation: |
+        The head fact contributes the first occurrence. Backtracking into the recursive clause searches the tail for additional occurrences. There is no empty-list success clause, so an exhausted list ends that branch. This is a relation: it checks a supplied Item or discovers one from a supplied list.
+  # Pedagogy: Independent transfer — integrate earlier schemas; self-explain, test counterexamples, plan spaced recall. Sources: original integration task combining Logic-palooza handout pp. 13–15, 50; Homework LOGIC3 and LOGIC6; F23 final Prolog tracing/list tasks.
+  - title: Family Game Night
+    instructions: |
+      ### Why this matters
+
+      Now use the pieces together. A small recommendation relation needs structured facts, recursive relationships, and membership, but it can still answer several questions without separate search functions.
+
+      ### 🎯 You will learn to
+
+      - Create a relation by composing ancestry and list membership.
+      - Evaluate a solution with missing-answer and extra-answer counterexamples.
+
+      ### Your brief
+
+      Tom is planning a game night. A guest is eligible if they are a **descendant of Tom by one or more parent links**. A game is a match if it appears in **both Tom’s favorites and that guest’s favorites**. Tom is the host, so he is not an eligible guest.
+
+      The starter provides the family, favorite lists, and the two recursive relations you already studied. Define **`game_guest(Guest, Game)`** using those facts and relations. Preserve the supplied data. The rule must work whether Guest, Game, both, or neither is already known. Report every matching guest–game pair; their order is not part of this task.
+
+      ### Thinking time
+
+      Before writing code, list the expected pairs from the data. Which of these belong, and which fail a condition: Tom’s own games, Pat’s go, Bob’s uno, and Zoe’s uno? Explain each decision from the brief rather than from the code you hope to write.
+
+      ### From brief to relation
+
+      Write a `%` comment that names the conditions a pair must satisfy. Then implement them. No new language construct is needed: connect the conditions using shared variables and already-known predicates. This time the editor gives you no partial body to fill in.
+
+      Investigate three modes: `game_guest(Guest, Game)`, `game_guest(bob, Game)`, and `game_guest(Guest, uno)`. A correct definition must also reject pairs that fail one condition. Choose a counterexample that checks eligibility, and a different counterexample that checks a game preference.
+
+      For a final ungraded experiment, give Lena a favorite that Tom also likes. Predict the new answer before running it; then restore the supplied data before testing.
+
+      ### After this session
+
+      Without looking at the code, explain how a query becomes pending goals, how unification creates mappings, and how backtracking revisits choices. Tomorrow, reconstruct membership on a blank page and trace one grandparent query before checking your work.
+
+      Continue with [Prolog Lists and Search](/SEBook/tools/prolog-search-tutorial) for relational list construction, arithmetic, negation, accumulators, and a search task. Take a break between the two sessions; bring back these core relations from memory.
+    default_query: game_guest(Guest, Game)
+    files:
+    - path: /tutorial/game-night.pl
+      language: prolog
+      content: |
+        parent(tom, bob).
+        parent(bob, ann).
+        parent(bob, pat).
+        parent(ann, lena).
+        parent(iris, zoe).
+
+        favorites(tom, [uno, chess]).
+        favorites(bob, [chess, uno]).
+        favorites(ann, [go, uno]).
+        favorites(pat, [go]).
+        favorites(lena, []).
+        favorites(zoe, [uno]).
+
+        ancestor(X, Z) :- parent(X, Z).
+        ancestor(X, Z) :- parent(X, Y), ancestor(Y, Z).
+
+        list_member(Item, [Item | _]).
+        list_member(Item, [_ | Tail]) :- list_member(Item, Tail).
+
+        % Define game_guest(Guest, Game) from the brief.
+        game_guest(Guest, Game) :- fail.
+    open_file: /tutorial/game-night.pl
+    run_file: /tutorial/game-night.pl
+    tests:
+    - description: The relation finds exactly Ann–uno, Bob–chess, and Bob–uno.
+      command: |
+        assert((await __query("findall(pair(P,G),game_guest(P,G),Pairs), sort(Pairs,S), S == [pair(ann,uno),pair(bob,chess),pair(bob,uno)].")).length === 1, "The relation finds exactly Ann\u2013uno, Bob\u2013chess, and Bob\u2013uno.");
+      hints:
+      - title: Two independent requirements
+        text: A guest must be a descendant, and a game must be liked by both guest and host.
+      - title: Connect lists to people
+        text: Retrieve each person’s favorite list before asking whether a shared game occurs in it.
+      - title: The shared game variable
+        text: The head has one Game variable. Both membership goals must constrain that same Game, using
+          different favorite lists.
+    - description: Known-guest and known-game queries work, and unrelated or incompatible pairs fail.
+      command: |
+        assert((await __query("findall(G,game_guest(bob,G),A), sort(A,AS), AS == [chess,uno], findall(P,game_guest(P,uno),B), sort(B,BS), BS == [ann,bob], once(game_guest(bob,chess)), once(game_guest(ann,uno)), \\+ game_guest(tom,uno), \\+ game_guest(pat,go), \\+ game_guest(ann,chess), \\+ game_guest(unknown,uno), \\+ game_guest(zoe,uno), \\+ game_guest(lena,_).")).length === 1, "Known-guest and known-game queries work, and unrelated or incompatible pairs fail.");
+      hints:
+      - title: Check the near misses
+        text: Pat is eligible but go is not shared. Zoe likes uno but belongs to another family. Tom is the host.
+      - title: One rule, several modes
+        text: Keep both head arguments as variables and let the body constrain them.
+      - title: Every condition must hold
+        text: 'Read the body as a conjunction: descendant, host list, guest list, and a membership check
+          in each list.'
+    quiz:
+      title: Step 8 — Knowledge Check
+      min_score: 0.8
+      shuffle_questions: false
+      questions:
+      - type: single
+        difficulty: advanced
+        question: |
+          A proposed solution accepts a descendant’s favorite even when Tom dislikes it. Which test best diagnoses the missing condition?
+        options:
+        - An unknown person requesting uno
+        - Pat requesting go
+        - Tom requesting uno
+        correct_index: 1
+        option_feedback:
+          0: An unknown person chiefly checks eligibility and whether a favorite list exists.
+          2: Tom checks the rule excluding the host, not whether a guest’s game is shared.
+        explanation: |
+          Pat is a descendant and likes go, but Tom does not. This counterexample isolates the missing host-preference check.
+      - type: single
+        difficulty: intermediate
+        question: |
+          Which explanation connects the whole tutorial’s execution model?
+        options:
+        - Rules return arrays; variables index the arrays.
+        - Queries mutate facts; lists hold the changed state.
+        - Goals unify with clauses; backtracking explores proofs.
+        correct_index: 2
+        option_feedback:
+          0: A relation can produce several bindings without returning an array.
+          1: Querying these pure relations does not modify the facts.
+        explanation: |
+          Unification consistently binds variables, resolution expands goals, and backtracking explores alternative proof paths. Relations become useful in several modes when their operational behavior permits those queries.
+    solution:
+      files:
+      - path: /tutorial/game-night.pl
+        language: prolog
+        content: |
+          parent(tom, bob).
+          parent(bob, ann).
+          parent(bob, pat).
+          parent(ann, lena).
+          parent(iris, zoe).
+
+          favorites(tom, [uno, chess]).
+          favorites(bob, [chess, uno]).
+          favorites(ann, [go, uno]).
+          favorites(pat, [go]).
+          favorites(lena, []).
+          favorites(zoe, [uno]).
+
+          ancestor(X, Z) :- parent(X, Z).
+          ancestor(X, Z) :- parent(X, Y), ancestor(Y, Z).
+
+          list_member(Item, [Item | _]).
+          list_member(Item, [_ | Tail]) :- list_member(Item, Tail).
+
+          game_guest(Guest, Game) :-
+              ancestor(tom, Guest),
+              favorites(tom, HostGames),
+              favorites(Guest, GuestGames),
+              list_member(Game, HostGames),
+              list_member(Game, GuestGames).
+      explanation: |
+        The ancestry goal restricts Guest to Tom’s descendants. The two favorites goals fetch distinct lists; using one Game variable in both membership goals requires a shared game. Bob contributes chess and uno; Ann contributes uno; Pat and Lena contribute none. Zoe shares uno with Tom but is outside his descendant relation. Reordering these finite positive goals can be correct because this task specifies the resulting pairs, not their order.

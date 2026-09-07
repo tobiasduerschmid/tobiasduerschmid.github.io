@@ -309,6 +309,10 @@
   description: A request to merge a branch of code into another branch — usually a long-lived integration branch like main or master. Pull requests are the unit of code review on GitHub, GitLab, and similar platforms.
   related: [CI, CD]
 
+- term: Prolog
+  definition: Programming in logic
+  description: A logic programming language in which facts and rules describe relations. Queries use unification and backtracking to search for proofs and discover variable bindings.
+
 - term: PVM
   definition: Python Virtual Machine
   description: The runtime model that executes Python bytecode after source code has been compiled by the Python interpreter.

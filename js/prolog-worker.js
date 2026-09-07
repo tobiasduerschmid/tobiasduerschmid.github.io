@@ -3,12 +3,13 @@
  *
  * Runs Prolog entirely in a background thread using Tau Prolog (ISO Prolog
  * interpreter written in pure JavaScript). Communication with the main thread
- * uses postMessage — no network access after the initial CDN load.
+ * uses postMessage. The engine is a locally pinned Tau Prolog 0.3.4 snapshot.
  *
  * Inbound messages (main → worker):
  *   { type: 'run',      id, path, query }        Consult a .pl file, then run query
  *   { type: 'runProlog',id, code, silent }        Consult a Prolog string directly
  *   { type: 'runCode',  id, code, silent }        Evaluate a JS test assertion snippet
+ *   { type: 'runTest',  id, program, code }      Consult fresh source, then test it
  *   { type: 'write',    id, path, content }       Store a file in the in-memory file map
  *   { type: 'read',     id, path }                Return a stored file's content
  *   { type: 'reset',    id }                      Destroy and recreate the session
@@ -41,7 +42,6 @@ var document = {
 // We capture these and forward them to the main thread as stdout.
 var _writeBuffer = '';
 var _writeSilent = false;
-var _origLog = console.log;
 console.log = function () {
   if (_writeSilent) return;
   var text = Array.prototype.slice.call(arguments).join('');
@@ -57,20 +57,36 @@ function flushWriteBuffer() {
 }
 
 // Tau Prolog — ISO Prolog interpreter in pure JavaScript
-importScripts('/js/vendor/worker-script-integrity.js');
-self.SEBookWorkerScriptIntegrity.importDependency('tauPrologCore');
-self.SEBookWorkerScriptIntegrity.importDependency('tauPrologLists');
+importScripts('/js/vendor/tau-prolog/0.3.4/core.js');
+importScripts('/js/vendor/tau-prolog/0.3.4/lists.js');
 
 var session = null;   // Tau Prolog session
-var files   = {};     // In-memory file map: path → content string
+var files   = Object.create(null); // In-memory file map: path → content string
 var MAX_ANSWERS = 100; // Safety limit on solutions per query
+const MAX_INFERENCES = 100000; // Per answer; the host also enforces a wall-clock bound.
+
+function createSession() {
+  return pl.create(MAX_INFERENCES);
+}
+
+function beginOutput(silent) {
+  _writeBuffer = '';
+  _writeSilent = silent;
+}
+
+function finishRun(id, exitCode) {
+  if (!_writeSilent) flushWriteBuffer();
+  _writeBuffer = '';
+  _writeSilent = false;
+  self.postMessage({ type: 'run_done', id: id, exitCode: exitCode });
+}
 
 // ---- Initialisation ----------------------------------------------------------
 
 self.postMessage({ type: 'loading', message: 'Loading Prolog runtime\u2026' });
 
 try {
-  session = pl.create();
+  session = createSession();
   self.postMessage({ type: 'ready' });
 } catch (err) {
   self.postMessage({ type: 'error', message: 'Tau Prolog init failed: ' + (err.message || err) });
@@ -112,8 +128,19 @@ function formatErr(err) {
 
 /** Consult code into a fresh session, then call onDone(err). */
 function consultProgram(code, onDone) {
-  session = pl.create();
+  session = createSession();
+  // The course uses not/1, a common alias for ISO negation as failure.
+  // Keep this compatibility clause outside the unchanged vendor snapshot.
+  consultSource('not(Goal) :- \\+ Goal.', function (error) {
+    if (error) onDone(error);
+    else consultSource(code, onDone);
+  });
+}
+
+function consultSource(code, onDone) {
   session.consult(code, {
+    // Source such as "ready." is code, never an implicit URL or DOM id.
+    url: false, script: false, file: false,
     success: function () { onDone(null); },
     error:   function (err) { onDone('Consult error: ' + formatErr(err)); }
   });
@@ -174,71 +201,75 @@ function collectAnswers(id, silent, found, count, onDone) {
 
 /** Read a stored .pl file, consult it, then run the given query. */
 function runFile(id, path, query) {
+  beginOutput(false);
   var content = files[path];
   if (content === undefined) {
     self.postMessage({ type: 'stderr', text: 'File not found: ' + path + '\n' });
-    self.postMessage({ type: 'run_done', id: id, exitCode: 1 });
+    finishRun(id, 1);
     return;
   }
 
   consultProgram(content, function (consultErr) {
     if (consultErr) {
       self.postMessage({ type: 'stderr', text: consultErr + '\n' });
-      self.postMessage({ type: 'run_done', id: id, exitCode: 1 });
+      finishRun(id, 1);
       return;
     }
 
     query = (query || '').trim();
     if (!query) {
       self.postMessage({ type: 'stdout', text: 'Program loaded.\n' });
-      self.postMessage({ type: 'run_done', id: id, exitCode: 0 });
+      finishRun(id, 0);
       return;
     }
 
     if (query.charAt(query.length - 1) !== '.') query += '.';
 
     runQuery(id, query, false, function (exitCode) {
-      self.postMessage({ type: 'run_done', id: id, exitCode: exitCode });
+      finishRun(id, exitCode);
     });
   });
 }
 
 /** Consult a Prolog string directly (for setup_commands). */
 function runProlog(id, code, silent) {
+  beginOutput(silent);
   consultProgram(code, function (err) {
     if (err) {
       if (!silent) self.postMessage({ type: 'stderr', text: err + '\n' });
-      self.postMessage({ type: 'run_done', id: id, exitCode: 1 });
+      finishRun(id, 1);
       return;
     }
-    self.postMessage({ type: 'run_done', id: id, exitCode: 0 });
+    finishRun(id, 0);
   });
 }
 
 // ---- Async Test Runner -------------------------------------------------------
 
-/** Wraps Tau Prolog query execution in a Promise with MAX_ANSWERS cutoff. */
+/** Return the complete answer set, or reject if execution cannot finish safely. */
 function __queryAsync(goal) {
   return new Promise(function(resolve, reject) {
+    goal = goal.trim();
     if (goal.charAt(goal.length - 1) !== '.') goal += '.';
     var answers = [];
-    var qErr = null;
 
     session.query(goal, {
       success: function () {
         function nextAnswer() {
-          if (answers.length >= MAX_ANSWERS) {
-            resolve(answers);
-            return;
-          }
           session.answer({
             success: function (answer) {
+              if (answers.length >= MAX_ANSWERS) {
+                reject(new Error('Answer limit exceeded; this query did not finish. Narrow the query or use a bounded goal.'));
+                return;
+              }
               answers.push(pl.format_answer(answer));
               nextAnswer();
             },
             fail: function () { resolve(answers); },
             error: function (err) { reject(new Error(formatErr(err))); },
-            limit: function () { resolve(answers); }
+            limit: function () {
+              reject(new Error('Inference limit reached; this query did not finish. Check the base case and goal order.'));
+            }
           });
         }
         nextAnswer();
@@ -251,10 +282,9 @@ function __queryAsync(goal) {
 /** Wraps Tau Prolog consult execution in a Promise. */
 function __consultAsync(program) {
   return new Promise(function(resolve, reject) {
-    session = pl.create();
-    session.consult(program, {
-      success: function () { resolve(); },
-      error: function (err) { reject(new Error(formatErr(err))); }
+    consultProgram(program, function (error) {
+      if (error) reject(new Error(error));
+      else resolve();
     });
   });
 }
@@ -281,26 +311,28 @@ function runAsyncCode(id, code, silent) {
         return files[path] || '';
       }
     ).then(function() {
-      self.postMessage({ type: 'run_done', id: id, exitCode: 0 });
+      finishRun(id, 0);
     }).catch(function(err) {
       if (!silent) self.postMessage({ type: 'stderr', text: err.message + '\n' });
-      self.postMessage({ type: 'run_done', id: id, exitCode: 1 });
+      finishRun(id, 1);
     });
   } catch (err) {
     if (!silent) self.postMessage({ type: 'stderr', text: err.message + '\n' });
-    self.postMessage({ type: 'run_done', id: id, exitCode: 1 });
+    finishRun(id, 1);
   }
 }
 
 function runCode(id, code, silent) {
+  beginOutput(silent);
   runAsyncCode(id, code, silent);
 }
 
 function runTest(id, program, code) {
+  beginOutput(false);
   consultProgram(program, function (consultErr) {
     if (consultErr) {
       self.postMessage({ type: 'stderr', text: consultErr + '\n' });
-      self.postMessage({ type: 'run_done', id: id, exitCode: 1 });
+      finishRun(id, 1);
       return;
     }
     runAsyncCode(id, code, false);
@@ -311,7 +343,8 @@ function runTest(id, program, code) {
 
 function resetSession(id) {
   try {
-    session = pl.create();
+    beginOutput(false);
+    session = createSession();
     self.postMessage({ type: 'run_done', id: id, exitCode: 0 });
   } catch (err) {
     self.postMessage({ type: 'run_done', id: id, exitCode: 1, error: err.message });

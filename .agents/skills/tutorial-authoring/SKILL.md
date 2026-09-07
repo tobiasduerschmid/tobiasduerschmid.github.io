@@ -603,13 +603,16 @@ exclude_from_index: boolean            # If true, /SEBook/tutorials hides
                                        # and any non-student-facing tutorial.
 
 # === Backend selection ===
-backend: v86 | pyodide | webcontainer | react | haskell | uml-editor | multiple
+backend: v86 | pyodide | webcontainer | react | prolog | haskell | uml-editor | multiple
                                        # default: v86
 
 # v86           — full Linux VM (shell, gcc, git, etc.). Most tutorials.
 # pyodide       — Python in-browser, no shell. Required for `debugger: true`.
 # webcontainer  — Node.js + npm + dev server (StackBlitz). Needs COOP/COEP.
 # react         — React + Vite + live preview iframe + Playwright-compat.
+# prolog        — Single-backend Tau Prolog 0.3.4 worker, locally pinned under
+#                 js/vendor/tau-prolog/0.3.4/. A Query field runs goals against
+#                 the step's run_file. Supports the course not/1 alias for \+/1.
 # haskell       — Haskell in a hidden, sandboxed runtime frame through the
 #                 repository's locally pinned MicroHs WebAssembly runtime.
 #                 Uses the output panel rather than a shell, is single-backend
@@ -943,6 +946,11 @@ steps:
                                              # `node <run_file>` invocation as
                                              # `process.argv.slice(2)`, prolog
                                              # uses it as the goal query.
+    default_query: string                    # prolog only. Initial Query field
+                                             # value on each step load. Write a
+                                             # goal without the ?- prompt; its
+                                             # final period is optional. The
+                                             # field is always shown for Prolog.
     default_args: string                     # webcontainer only. Initial
                                              # value the argv field shows on
                                              # step load. Useful so the first
@@ -1487,6 +1495,10 @@ remote package. Classic workers, whose `importScripts()`
 API has no native SRI parameter, must load any remaining remote scripts through
 `js/vendor/worker-script-integrity.js`; that adapter verifies pinned SHA-256
 bytes before evaluating them, and SQL also supplies a verified Wasm binary.
+Prolog loads the unchanged Tau Prolog 0.3.4 core and lists module from
+`js/vendor/tau-prolog/0.3.4/`, with its upstream license and `SHA256SUMS`.
+Its startup does not request a CDN. Verify that snapshot and the worker's real
+language behavior with `node --test scripts/tests/prolog-worker.test.js`.
 Never add a direct remote `importScripts()` call or a floating CDN version.
 The root `coi-serviceworker.js` adds COOP/COEP to explicitly marked isolated
 document navigations and adds COEP to same-origin dedicated/shared worker main
@@ -1528,17 +1540,17 @@ snapshot-input, or checksum drift.
 
 ### 4.6 Backends — what each supports
 
-| Feature                | v86 | pyodide | webcontainer | browser | react | haskell | uml-editor |
-|------------------------|-----|---------|--------------|---------|-------|---------|------------|
-| Shell terminal         | ✅  | ❌      | ✅           | ❌      | ❌    | ❌      | ❌         |
-| Compiled languages     | ✅  | ❌      | (npm only)   | ❌      | ❌    | ✅      | ❌         |
-| `git`                  | ✅  | mocked  | ✅           | ❌      | ❌    | ❌      | ❌         |
-| Time-travel debugger   | ❌  | ✅      | ❌           | ❌      | ❌    | ❌      | ❌         |
-| Live preview iframe    | ❌  | ❌      | ✅           | ❌      | ✅    | ❌      | ❌         |
-| Playwright tests       | ❌  | ❌      | ❌           | ❌      | ✅    | ❌      | ❌         |
-| UML assertion tests    | ❌  | ❌      | ❌           | ❌      | ❌    | ❌      | ✅         |
-| `pytest`               | ❌  | ✅      | ❌           | ❌      | ❌    | ❌      | ❌         |
-| Linter                 | ✅  | ✅      | ✅           | ✅      | ✅    | ❌      | ❌         |
+| Feature                | v86 | pyodide | webcontainer | browser | react | prolog | haskell | uml-editor |
+|------------------------|-----|---------|--------------|---------|-------|--------|---------|------------|
+| Shell terminal         | ✅  | ❌      | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         |
+| Compiled languages     | ✅  | ❌      | (npm only)   | ❌      | ❌    | ❌     | ✅      | ❌         |
+| `git`                  | ✅  | mocked  | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         |
+| Time-travel debugger   | ❌  | ✅      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         |
+| Live preview iframe    | ❌  | ❌      | ✅           | ❌      | ✅    | ❌     | ❌      | ❌         |
+| Playwright tests       | ❌  | ❌      | ❌           | ❌      | ✅    | ❌     | ❌      | ❌         |
+| UML assertion tests    | ❌  | ❌      | ❌           | ❌      | ❌    | ❌     | ❌      | ✅         |
+| `pytest`               | ❌  | ✅      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         |
+| Linter                 | ✅  | ✅      | ✅           | ✅      | ✅    | ❌     | ❌      | ❌         |
 
 Mixed-backend tutorials support `v86`, `pyodide`, `react`, `webcontainer`,
 and `browser`. They are for author-controlled backend switches between steps,
@@ -1550,6 +1562,27 @@ also pulls xterm into `_loadDependencies` and starts the terminal in
 `start()`; the panel is re-`fit()` each time it becomes visible, because xterm
 measures a hidden container as zero columns. See §3.1 for the authoring
 consequences (per-backend setup commands, no Run button, no v86 prewarm).
+
+`prolog` is a single-backend worker mode. Run consults the step's `run_file`
+(falling back to the active editor file) as source text in a fresh session,
+then executes the Query field. Prolog `files[].path`, `solution.files[].path`,
+`open_file`, and `run_file` accept either workspace-relative paths (`main.pl`)
+or absolute paths below `/tutorial/` (`/tutorial/main.pl`). The constructor
+normalizes these to one relative editor identity without mutating the supplied
+configuration. The two spellings may be mixed across references to the same
+file; paths escaping `/tutorial/` are rejected. This keeps Run, tests, and
+solution application from looking up different editor models or writing
+`/tutorial//tutorial/...` paths. A bare source string such as `ready.` is never
+treated as an implicit URL. Import list predicates explicitly with
+`:- use_module(library(lists)).`. The worker installs the course compatibility
+clause `not(Goal) :- \+ Goal.` before consulting learner code. Core terms,
+unification, backtracking, recursion, arithmetic, negation, cut, and collections
+use the real interpreter. This is a bounded educational environment, not full
+SWI-Prolog: it does not supply SWI-specific constraint libraries, a tracer UI,
+or host file/terminal access. Interactive queries display at most 100 answers;
+each answer has a 100,000-inference budget, with the shared host watchdog and
+Stop/restart path also active. Limits must be reported, not described as proof
+of finite failure. No new persistence keys are used.
 
 `haskell` is deliberately a single-backend mode. A hidden
 `sandbox="allow-scripts"` iframe owns a persistent, serialized MicroHs REPL
@@ -1619,6 +1652,23 @@ under the same prefix family as other tutorial state so the global
   `assert` statements. A workspace-sync failure must render an indeterminate
   result and settle the active test transaction; never leave the test spinner
   or `_testRunInFlight` waiting for a Haskell request that was never sent.
+- **Prolog** (`prolog`): each `tests[].command` is repository-authored JavaScript
+  with `assert(condition, message)`, `await __query(goal)`,
+  `await __consult(source)`, and `__read_file(path)`. Each test starts with a
+  fresh consult of the same `run_file` used by Run, regardless of the selected
+  editor tab. `__query` resolves to the complete list of formatted answers;
+  finite failure resolves to `[]`. Syntax/runtime errors, inference exhaustion,
+  and more than 100 answers reject and fail the grade; they never return a
+  partial list that could masquerade as a passing result. Exactly 100 complete
+  answers are valid. Use bounded Prolog goals that compare terms or complete
+  `findall`/`sort` results, then assert the success count, instead of coupling
+  grades to whitespace in formatted substitutions. Await sequential queries.
+  Legacy un-awaited `__query`/`__consult` commands remain supported by the
+  existing compatibility rewrite; new commands should explicitly await them.
+  Write output is flushed at each completed command, so tests cannot leak
+  buffered text into the next Run. `setup_commands` are consulted Prolog
+  source, but each Run/Test replaces the session: put required program
+  definitions and library imports in the step file.
 - **React DOM assertions** (`react`): a plain `tests[].command` runs inside the
   opaque-origin preview through the broker's private `MessageChannel`. It
   receives `frame`, `code`, `assert`, and `files`; `frame.contentDocument`

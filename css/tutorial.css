@@ -2831,6 +2831,25 @@ html:not(.dark-mode) .tvm-args-input {
   border-color: #0078d4;
 }
 
+/* Prolog goals share the toolbar's readable size and existing theme colors.
+   The flexible width also keeps the Query field usable in narrow workspaces. */
+.tvm-args-input.tvm-prolog-query {
+  display: inline-block;
+  flex: 1 1 180px;
+  min-width: 0;
+  width: auto;
+  font: inherit;
+}
+.tvm-args-label.tvm-prolog-query-label {
+  display: inline-block;
+  font: inherit;
+  white-space: nowrap;
+}
+.tvm-args-input.tvm-prolog-query:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 2px;
+}
+
 /* Stream filter styling */
 .tvm-stream-filter {
   background: #141414;

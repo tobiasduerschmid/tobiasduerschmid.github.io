@@ -614,7 +614,9 @@
       enableGitGutter: !!options.gitGutter && !!options.gitGraph,
     };
 
-    this.steps = steps;
+    this.steps = backend === 'prolog'
+      ? steps.map(this._normalizePrologStep.bind(this))
+      : steps;
     this.setupCommandsByBackend = options.setupCommandsByBackend || {};
     this.setupCommands = mixedBackendMode ? [] : (options.setupCommands || []);
     this._declaredBackends = declaredBackends;
@@ -5998,6 +6000,33 @@
     return raw.map(this._normalizeRunFilename).filter(function (file) { return !!file; });
   };
 
+  // Authored Prolog paths may be workspace-relative or /tutorial/... absolute.
+  // Normalize once so editors, Run, tests, solutions, and save/restore share
+  // the same file identity. Clone specs rather than changing the input config.
+  TutorialCode.prototype._normalizePrologStep = function (step) {
+    var self = this;
+    function normalizePath(path) {
+      var filename = self._normalizeRunFilename(path);
+      if (!filename) throw new Error('Prolog files must be inside /tutorial/: ' + path);
+      return filename;
+    }
+    function normalizeFiles(files) {
+      return files.map(function (file) {
+        return Object.assign({}, file, { path: normalizePath(file.path) });
+      });
+    }
+    var normalized = Object.assign({}, step);
+    if (step.files) normalized.files = normalizeFiles(step.files);
+    if (step.open_file) normalized.open_file = normalizePath(step.open_file);
+    if (step.run_file) normalized.run_file = normalizePath(step.run_file);
+    if (step.solution && step.solution.files) {
+      normalized.solution = Object.assign({}, step.solution, {
+        files: normalizeFiles(step.solution.files),
+      });
+    }
+    return normalized;
+  };
+
   TutorialCode.prototype._syncFilesToBackend = function (filenames) {
     var self = this;
     var unique = [];
@@ -7210,7 +7239,7 @@
       this._filePaneOverrides[filename] = fileSpec.pane;
     }
     if (!this.editorModels[filename]) {
-      var uri = monaco.Uri.parse('file:///' + filename);
+      var uri = monaco.Uri.file('/' + filename.replace(/^\/+/, ''));
       var existing = monaco.editor.getModel(uri);
       if (existing) existing.dispose();
       var model = monaco.editor.createModel(content || '', language, uri);
@@ -11677,19 +11706,18 @@
       var plArgsInp = this.root.querySelector('.tvm-args-input');
       var plArgsLbl = this.root.querySelector('.tvm-args-label');
       if (plArgsInp) {
-        plArgsInp.style.display = 'inline-block';
-        plArgsInp.style.minWidth = '260px';
-        plArgsInp.style.flex = '1';
+        plArgsInp.removeAttribute('style');
+        plArgsInp.classList.add('tvm-prolog-query');
         plArgsInp.placeholder = 'e.g. parent(tom, X)';
         plArgsInp.value = step.default_query || '';
-        plArgsInp.setAttribute('data-original-title', 'Prolog query (without trailing period)');
+        plArgsInp.setAttribute('aria-label', 'Query (Prolog goal)');
+        plArgsInp.setAttribute('data-original-title', 'Query (Prolog goal; trailing period optional)');
         plArgsInp.removeAttribute('title');
       }
       if (plArgsLbl) {
-        plArgsLbl.style.display = 'inline-block';
-        plArgsLbl.textContent = '?-';
-        plArgsLbl.style.fontSize = '16px';
-        plArgsLbl.style.fontWeight = '600';
+        plArgsLbl.removeAttribute('style');
+        plArgsLbl.classList.add('tvm-prolog-query-label');
+        plArgsLbl.textContent = 'Query ?-';
       }
     }
 
@@ -12778,10 +12806,10 @@
     this._showTestPanel('<div class="tvm-test-running"><div class="tvm-test-spinner"></div>Running tests\u2026</div>');
     var results = [];
 
-    // Get the active file content to send with each test
-    var activeFile = this.activeFileName;
-    var program = (activeFile && this.editorModels[activeFile])
-      ? this.editorModels[activeFile].model.getValue() : '';
+    // Match Run's authored entry point even when the learner opens another tab.
+    var programFile = this._stepRunFiles(step)[0] || this.activeFileName;
+    var program = (programFile && this.editorModels[programFile])
+      ? this.editorModels[programFile].model.getValue() : '';
 
     // Sync files first, then run tests sequentially
     var filenames = Object.keys(this.editorModels);
