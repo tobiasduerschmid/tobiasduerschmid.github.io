@@ -1,0 +1,318 @@
+title: "CS 131: Functional Programming and Haskell"
+description: "Reason about purity, recursive data, higher-order functions, types, closures, and immutable updates."
+active: true
+# Sources: intro_to_functional_programming_and_haskell_v10.pptx (slide numbers below),
+# Homework Problems (Public), Fall 2025 Quiz 1 solutions, Fall 2024 midterm solutions.
+# Excluded: Language of the Week slides 35 (APL) and 112 (Go).
+questions:
+  # Sources: lecture slides 5–8; homework HASKELL7 Part A.
+  - id: cs131-functional-purity-effects
+    type: multiple
+    difficulty: intermediate
+    bloom: analyze
+    question: "An integer function always returns the square of its argument. Which additional behaviors would make it impure? Select all that apply."
+    options:
+      - "It appends a record to a shared log."
+      - "It increments a shared call counter."
+      - "It creates a private temporary integer."
+      - "It reads a fixed, immutable constant."
+    correct_indices: [0, 1]
+    option_feedback:
+      0: "Appending changes externally observable state even when the returned number stays the same."
+      1: "A shared counter records that a call occurred; replacing the call by its result would remove that effect."
+      2: "An unobserved local temporary does not change the function's external behavior."
+      3: "An immutable constant cannot vary between calls; reading it does not introduce dependence on changing state."
+    explanation: "Purity requires both a stable result for the same inputs and absence of observable side effects. Deterministic return values alone are insufficient."
+
+  # Source: lecture slide 8.
+  - id: cs131-functional-demand
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    question: |
+      What does this Haskell expression evaluate to?
+
+      ```haskell
+      choose flag x = if flag then 12 else x
+      choose True (head [])
+      ```
+    options:
+      - "It fails while evaluating the argument."
+      - "It returns 12 without evaluating the empty-list head."
+      - "It returns 12 after evaluating the empty-list head."
+    correct_index: 1
+    option_feedback:
+      0: "Haskell does not evaluate every argument before entering a function. This branch never demands the second argument."
+      2: "Evaluating the head of an empty list would fail. The result is possible because that expression is left unevaluated."
+    explanation: "The selected branch returns 12 and does not use `x`. Demand-driven evaluation avoids the failing computation entirely."
+
+  # Sources: lecture slides 25–27; homework HASKELL3.
+  - id: cs131-functional-guard-priority
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    question: |
+      This Haskell function should return 0 for children under 5 and 4 for ages 5–17. What change repairs its behavior?
+
+      ```haskell
+      fare age
+        | age < 18 = 4
+        | age < 5 = 0
+        | otherwise = 9
+      ```
+    options:
+      - "Move the under-5 guard before the under-18 guard."
+      - "Move the otherwise guard before the age guards."
+      - "Replace the under-5 condition with age <= 5."
+    correct_index: 0
+    option_feedback:
+      1: "The `otherwise` condition is true, so placing it first would give every age the adult fare."
+      2: "Changing the boundary cannot help while the earlier under-18 guard already matches every young child."
+    explanation: "Guards select the first matching branch. When conditions overlap, the more specific case must be handled before a broader case that includes it."
+
+  # Sources: lecture slides 44–45, 66–70; homework HASKELL6 and HASKELL9.
+  - id: cs131-functional-recursive-progress
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    question: |
+      On a nonempty finite list, this Haskell function never produces the intended count. Which replacement repairs the recursive branch?
+
+      ```haskell
+      count [] = 0
+      count (x:xs) = 1 + count (x:xs)
+      ```
+    options:
+      - "`1 + count xs`"
+      - "`count xs`"
+      - "`1 + count []`"
+    correct_index: 0
+    option_feedback:
+      1: "This reaches the base case but discards the contribution of every removed element, so it returns zero."
+      2: "This counts only one element regardless of how many remain. The rest of the list must still be processed."
+    explanation: "Count the current head once, then recurse on the shorter tail. The list length decreases toward the empty-list base case."
+
+  # Sources: lecture slides 51–59; homework HASKELL8.
+  - id: cs131-functional-comprehension-product
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    question: |
+      Which list does this Haskell comprehension produce?
+
+      ```haskell
+      [(x,y) | x <- [1,3], y <- [2,4], x < y]
+      ```
+    options:
+      - "`[(1,2),(1,4),(3,4)]`"
+      - "`[(1,2),(3,4)]`"
+      - "`[(1,2),(1,4),(3,2),(3,4)]`"
+    correct_index: 0
+    option_feedback:
+      1: "Separate generators enumerate combinations like nested loops; they do not pair elements by matching positions."
+      2: "The generators produce four candidate pairs, but the condition excludes the pair whose first component is 3 and second is 2."
+    explanation: "For each `x`, the comprehension visits each `y`, retaining only pairs satisfying `x < y`. Generator order also determines result order."
+
+  # Sources: lecture slides 66–71; homework HASKELL9.
+  - id: cs131-functional-pattern-shapes
+    type: multiple
+    difficulty: intermediate
+    bloom: analyze
+    question: "Which Haskell patterns match the value `[[2,5],[8]]`? Select all that apply."
+    options:
+      - "`[a,b]`"
+      - "`(a:rest)`"
+      - "`[[a,b],[c]]`"
+      - "`[[a],[b]]`"
+    correct_indices: [0, 1, 2]
+    option_feedback:
+      0: "The outer list contains exactly two elements; each bound variable can itself hold a list."
+      1: "The outer list is nonempty, so it splits into one head element and a remaining list."
+      2: "The first inner list has two elements and the second has one, exactly matching this nested shape."
+      3: "This pattern requires both inner lists to have exactly one element, but the first inner list has two."
+    explanation: "Patterns describe constructor structure, not just a flattened sequence of values. Here `a` in `(a:rest)` is `[2,5]`, while `rest` is `[[8]]`."
+
+  # Sources: lecture slides 74–76; Fall 2024 midterm, Problem 3 Parts A–C, page 5.
+  - id: cs131-functional-type-variable-relations
+    type: single
+    difficulty: basic
+    bloom: understand
+    question: "What does the Haskell type `pair :: a -> b -> (a,b)` require of the argument types?"
+    options:
+      - "The arguments must have different types."
+      - "The arguments may have the same or different types."
+      - "Both arguments must have the same type."
+    correct_index: 1
+    option_feedback:
+      0: "Different type-variable names permit different types; they do not require them to differ."
+      2: "A repeated variable would impose that equality. Here the two type variables are independent."
+    explanation: "Each type variable tracks a relationship: the first argument's type reappears in the first tuple component, and the second argument's type in the second component."
+
+  # Sources: lecture slides 83–90; Fall 2024 midterm, Problem 3 Part B, page 5.
+  - id: cs131-functional-map-filter-pipeline
+    type: multiple
+    difficulty: intermediate
+    bloom: analyze
+    question: "Given a finite list of strings `names`, which Haskell expressions return the lengths of only the names longer than 3 characters? Select all that apply."
+    options:
+      - "`map length (filter (\\s -> length s > 3) names)`"
+      - "`filter (> 3) (map length names)`"
+      - "`map (\\s -> length s > 3) names`"
+      - "`map length (filter (\\s -> length s < 3) names)`"
+    correct_indices: [0, 1]
+    option_feedback:
+      0: "The predicate retains qualifying strings before the transformation to lengths."
+      1: "Once strings become integer lengths, filtering those integers by the same threshold selects exactly the required results."
+      2: "Mapping the predicate produces a Boolean for every name; it neither removes short names nor returns lengths."
+      3: "The filter keeps names shorter than the threshold, reversing the required condition."
+    explanation: "The selection can happen on strings before transformation, or on their lengths afterward. The predicate must match the values it receives, and the condition must select the same original names."
+
+  # Sources: lecture slides 91–96; Fall 2025 Quiz 1, Problem 4 Part B.
+  - id: cs131-functional-fold-accumulator-order
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    question: "What is the result of the Haskell expression `foldl (\\acc x -> acc - x) 10 [3,2]`?"
+    options:
+      - "`5`"
+      - "`9`"
+      - "`15`"
+    correct_index: 0
+    option_feedback:
+      1: "This groups the subtraction as `10 - (3 - 2)`. A left fold carries the updated accumulator into the next step."
+      2: "The initial value participates in the subtraction; the combining function does not add the elements to it."
+    explanation: "The accumulator moves from 10 to `10 - 3 = 7`, then to `7 - 2 = 5`. With subtraction, regrouping the operations changes the result."
+
+  # Sources: lecture slides 87, 89, 91–93; Fall 2024 midterm, Problem 3 Part C, page 5.
+  - id: cs131-functional-higher-order-type
+    type: single
+    difficulty: advanced
+    bloom: analyze
+    question: |
+      What is the most general Haskell type of `accepted`, given the explicit type of `length` below?
+
+      ```haskell
+      length :: [a] -> Int
+      accepted p xs = length (filter p xs)
+      ```
+    options:
+      - "`(a -> Bool) -> [a] -> Int`"
+      - "`(a -> Bool) -> [a] -> [a]`"
+      - "`(a -> Int) -> [a] -> Int`"
+    correct_index: 0
+    option_feedback:
+      1: "The filtered list is an intermediate value. Applying `length` changes the final result to an integer."
+      2: "The predicate must decide whether to keep each element, so it returns a Boolean rather than a count."
+    explanation: "Trace the pipeline's contracts: `p` tests an element of type `a`, `filter` returns a list of that same element type, and `length` consumes that list and returns `Int`."
+
+  # Sources: lecture slides 102–110.
+  - id: cs131-functional-closure-shadowing
+    type: single
+    difficulty: advanced
+    bloom: analyze
+    question: |
+      What does `make 4 7 10` return in Haskell?
+
+      ```haskell
+      make x y = \x -> x - y
+      ```
+    options:
+      - "`3`, using the lambda argument and captured y."
+      - "`-3`, using both arguments passed to make."
+      - "`6`, using the lambda argument and captured outer x."
+    correct_index: 0
+    option_feedback:
+      1: "The lambda's parameter named `x` shadows the outer `x`; inside the lambda, `x` refers to 10."
+      2: "The lambda's free variable is `y`, whose value is 7. The outer `x` is hidden by the parameter of the same name."
+    explanation: "After `make 4 7`, the returned function behaves like `\\x -> x - 7`. Applying it to 10 produces 3."
+
+  # Sources: lecture slides 113–128; Fall 2024 midterm, Problem 3 Part D, page 6.
+  - id: cs131-functional-currying-versus-application
+    type: single
+    difficulty: basic
+    bloom: understand
+    question: "Which distinction correctly separates currying from partial application?"
+    options:
+      - "Currying reorganizes arguments; partial application fixes some values."
+      - "Currying fixes some values; partial application reorganizes arguments."
+      - "Currying delays every computation; partial application evaluates every argument."
+    correct_index: 0
+    option_feedback:
+      1: "The value-fixing step belongs to partial application. Currying changes a multi-argument function into a sequence of unary functions."
+      2: "These describe neither transformation. Strict or lazy evaluation is a separate issue from how a function accepts arguments."
+    explanation: "Currying represents a multi-argument computation as functions that each take one argument. Partial application supplies fewer arguments than needed for the final result, producing a specialized function."
+
+  # Sources: lecture slides 116–129; Fall 2024 midterm, Problem 3, pages 5–6.
+  - id: cs131-functional-partial-type
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    question: "Given `between :: Int -> Int -> Int -> Bool` and `between low high value = low <= value && value <= high`, what is the type of `between 2 8`?"
+    options:
+      - "`Int -> Bool`"
+      - "`Bool`"
+      - "`Int -> Int -> Bool`"
+    correct_index: 0
+    option_feedback:
+      1: "The bounds are known, but a value to test has not been supplied. The result is still a function."
+      2: "Both bound arguments have already been supplied, leaving only the value parameter."
+    explanation: "Each application consumes one argument from the curried function. Fixing the two bounds yields a predicate that accepts one integer and returns a Boolean."
+
+  # Sources: lecture slides 131–145; Fall 2025 Quiz 1, Problem 4 Parts A–B.
+  - id: cs131-functional-variant-coverage
+    type: multiple
+    difficulty: intermediate
+    bloom: analyze
+    question: |
+      A function must total all scores in this Haskell data structure. Which cases are necessary for a complete recursive solution? Select all that apply.
+
+      ```haskell
+      data Scores = End | Entry Int Scores
+      ```
+    options:
+      - "For End, return zero."
+      - "For Entry, add its score to the total of its remainder."
+      - "For Entry, return its score and ignore its remainder."
+      - "For End, recursively total End again."
+    correct_indices: [0, 1]
+    option_feedback:
+      0: "The empty variant is the base case, and zero is the contribution of an empty sequence."
+      1: "An entry contributes both its local score and every score represented by the recursive field."
+      2: "This loses all scores beyond the first entry. Every recursive field carrying data must contribute."
+      3: "Revisiting the same empty value makes no progress and prevents termination."
+    explanation: "The function mirrors the data definition: one base case for `End`, and one recursive case that processes both fields of `Entry`."
+
+  # Sources: lecture slides 143–148.
+  - id: cs131-functional-persistent-update
+    type: single
+    difficulty: advanced
+    bloom: evaluate
+    question: "A program must retain old versions of an immutable binary search tree. An insertion follows a path of height h. Which update strategy preserves old versions while allocating only proportional to h new nodes?"
+    options:
+      - "Copy the insertion path and share its unchanged subtrees."
+      - "Modify the insertion path and reuse the original root."
+      - "Copy every node before inserting into the copied tree."
+    correct_index: 0
+    option_feedback:
+      1: "Old roots still refer to those path nodes, so mutation would also change an earlier version."
+      2: "A full copy preserves versions but allocates proportional to the entire tree, which can greatly exceed the path height."
+    explanation: "Only nodes whose child references change need replacement. Unchanged immutable subtrees can be shared safely; the old root still reaches the old version."
+
+  # Sources: lecture slides 6–8, 87, 148; homework HASKELL7.
+  - id: cs131-functional-purity-optimization-boundaries
+    type: multiple
+    difficulty: advanced
+    bloom: evaluate
+    question: "A batch calls a pure, terminating function on independent immutable inputs. Which changes preserve its returned results under ordinary value semantics? Select all that apply."
+    options:
+      - "Reuse a prior result for an equal input."
+      - "Evaluate independent calls in another order."
+      - "Skip a call whose value is required in the output."
+      - "Reuse one input's result for every other input."
+    correct_indices: [0, 1]
+    option_feedback:
+      0: "Equal inputs have equal results and there are no side effects to replay, so caching is valid here."
+      1: "No call changes state observed by another; their evaluation order cannot alter these returned values."
+      2: "Purity does not make required values unnecessary. Each needed result must be obtained by computation or a valid reuse."
+      3: "Purity guarantees repeatability for the same input, not equal outputs for different inputs."
+    explanation: "Purity removes dependencies through changing external state. It permits reordering independent work and reusing equal-input results, while preserving all actual data dependencies."

@@ -1,0 +1,91 @@
+title: "CS 131: Language Implementation Flashcards"
+description: "Explain compiler boundaries, construct small grammars and counterexamples, and reason about interpreter state."
+active: true
+cards:
+  # Sources: pl_implementation_palooza.pptx slides 3, 16, 28–31; Homework Problems (Public).docx TOOLS1.
+  - id: syntax-does-not-establish-semantics
+    bloom: understand
+    difficulty: basic
+    question: "A parser accepts `enabled + 1`. The language defines enabled as Boolean and allows + only on integers. Why can parsing succeed while the program is rejected?"
+    answer: "The token sequence has a legal expression shape, but the operand types violate the language's semantic rule. In a statically checked implementation, semantic analysis rejects it after parsing."
+    explanation: "Self-check: separate form from meaning. A grammar can recognize an addition expression without establishing that this particular addition is permitted."
+
+  # Sources: pl_implementation_palooza.pptx slides 10–13; CS131 Fall 25 Quiz 1 Solutions (Public).docx question 1.
+  - id: construct-lexer-priority-examples
+    bloom: create
+    difficulty: advanced
+    question: "A longest-match lexer recognizes the keyword `end` before the identifier rule `[a-z]+`, with earlier rules winning ties. Give one input that tests the tie rule and another that tests why a keyword prefix does not necessarily become a keyword token. Explain the tokens."
+    answer: "One pair is end and endless. For end, both rules match three letters and the earlier keyword rule wins. For endless, the identifier rule matches the whole word and beats the shorter keyword match."
+    explanation: "Self-check: the first example must have equal match lengths; the second must give the identifier a strictly longer match. Rule priority is applied only after comparing lengths."
+
+  # Sources: pl_implementation_palooza.pptx slides 9–16, 31; Homework Problems (Public).docx TOOLS1; CS131 Fall 25 Quiz 1 Solutions (Public).docx question 1.
+  - id: construct-lexical-versus-parse-errors
+    bloom: create
+    difficulty: advanced
+    question: "A language recognizes lowercase identifiers, integer literals, =, and semicolons. Its only statement form is `IDENTIFIER = NUMBER ;`. Give one lexical error and one parsing error whose characters all form valid tokens. Explain the distinction."
+    answer: "One lexical error is n = @;, because no rule recognizes @. One parsing error is n = 2 3;, because both numbers are valid tokens but the grammar requires a semicolon immediately after the first number."
+    explanation: "Self-check: the lexical example must contain an unrecognized character; the parsing example must tokenize completely but violate the required sequence. Equivalent minimal examples are acceptable."
+
+  # Sources: pl_implementation_palooza.pptx slides 18–22; Homework Problems (Public).docx TOOLS2.
+  - id: construct-separated-list-grammar
+    bloom: create
+    difficulty: advanced
+    question: "Write a grammar for an empty list or one or more names separated by commas inside square brackets. Use NAME as a token, quoted punctuation as literal text, `{...}` for repetition, and `[...]` for optional grammar content. Trailing commas must be rejected."
+    answer: |
+      One solution is:
+
+      ```text
+      list = "[" [names] "]" ;
+      names = NAME {"," NAME} ;
+      ```
+
+      It accepts [] and [oak,elm], but not [oak,].
+    explanation: "Self-check: the name sequence must be optional as a whole, and every repeated comma must bring a name with it. Quoted brackets are input punctuation; unquoted brackets express optionality in this notation."
+
+  # Sources: pl_implementation_palooza.pptx slides 23–27.
+  - id: abstract-tree-grouping
+    bloom: analyze
+    difficulty: intermediate
+    question: "Two abstract syntax trees contain the same numbers and + and * operators. One has + at its root; the other has * at its root. Explain why counting matching tokens is insufficient to establish that both represent `(3 + 5) * 2`."
+    answer: "Tree relationships determine grouping. The required expression has multiplication at the root, with the addition of 3 and 5 as one child and 2 as the other. An addition-root tree can group the operations differently and produce a different result."
+    explanation: "Self-check: explain operand relationships, not only the root's name. Abstract syntax can omit the parentheses because the grouping is represented by the tree structure."
+
+  # Sources: pl_implementation_palooza.pptx slides 28–30.
+  - id: semantic-annotations-support-lowering
+    bloom: understand
+    difficulty: intermediate
+    question: "Why is an annotated syntax tree more useful to code generation than a tree containing only identifier spellings and operator symbols? Give two kinds of useful annotations."
+    answer: "Type annotations help select operations with the required semantics. Links from variable uses to their declarations identify the right binding even when different scopes reuse the same name. Scope information is another useful annotation."
+    explanation: "Self-check: connect each annotation to a downstream decision. The goal is to carry established semantic facts forward instead of forcing each later stage to rediscover them."
+
+  # Sources: pl_implementation_palooza.pptx slides 32–36; Homework Problems (Public).docx TOOLS3.
+  - id: compare-two-compiler-extensions
+    bloom: analyze
+    difficulty: advanced
+    question: "A compiler has a shared machine-independent intermediate representation. Compare adding a new source language for an existing processor with adding a new processor for an existing source language. Which side changes, and what must remain compatible?"
+    answer: "A new source language needs a frontend that recognizes and checks it, then lowers its meaning into the shared representation. A new processor needs target-specific code generation and assembly. Both sides must honor the intermediate representation's semantics and format."
+    explanation: "Self-check: distinguish source-language responsibilities from target-instruction responsibilities. Reuse depends on a compatible representation contract, not merely on giving both outputs the same file extension."
+
+  # Sources: pl_implementation_palooza.pptx slide 34; transfer of observable-behavior condition to optimization.
+  - id: optimization-side-effect-counterexample
+    bloom: evaluate
+    difficulty: advanced
+    question: "An optimizer deletes `result = log_message()` because result is never read. The function prints a message and then returns a number. Evaluate the transformation under a language specification where printed messages are observable behavior."
+    answer: "Deleting the whole call is invalid because it removes the printed message. The unused result may be discarded while still executing the call; removing the call would require evidence that it has no required observable effects."
+    explanation: "Self-check: distinguish the returned value from effects of computing it. An optimization must preserve the language's observable behavior even when it operates on a shared intermediate representation."
+
+  # Sources: pl_implementation_palooza.pptx slides 35, 40–42; Homework Problems (Public).docx TOOLS1.
+  - id: link-time-definition-explanation
+    bloom: apply
+    difficulty: intermediate
+    question: "A module compiles successfully after declaring and calling `int measure();`, but building the executable reports an unresolved measure reference. Explain how both outcomes can be consistent and what kind of missing input to the build would resolve the problem."
+    answer: "The declaration supplies enough type information to compile the call. The object file can still refer to an external definition. Linking needs an object module or library that actually defines measure with the expected interface."
+    explanation: "Self-check: adding the same declaration again cannot supply machine code for the function. The missing piece is a compatible definition included in the link."
+
+  # Sources: pl_implementation_palooza.pptx slides 45–48; Homework Problems (Public).docx TOOLS5 A–B.
+  - id: construct-interpreter-state-contract
+    bloom: create
+    difficulty: expert
+    question: "Design a helper contract for executing a conditional body in a toy interpreter whose language has one shared variable environment. State the helper's input state, how it runs statements, and which state changes the caller must observe afterward."
+    answer: "One contract is execute_block(statements, environment): execute the body statements in order using the same environment as the caller. Reads see earlier bindings, assignments update that environment, and the caller sees those updates after the body finishes. A returned updated environment is also valid if the caller uses it consistently."
+    explanation: "Self-check: starting each body with an empty environment is incorrect under this language's contract. The design must preserve earlier bindings, statement order, and updates across the helper boundary. It need not prescribe a particular data structure."

@@ -1,0 +1,104 @@
+title: "CS 131: Functional Programming and Haskell"
+description: "Explain functional models, trace new examples, and build small solutions before revealing the answer."
+active: true
+# Original retrieval prompts based on the main lecture, homework HASKELL sections,
+# Fall 2025 Quiz 1 and Fall 2024 midterm; no Language of the Week content.
+cards:
+  # Sources: lecture slides 6–8; homework HASKELL7.
+  - id: cs131-functional-card-purity
+    difficulty: basic
+    bloom: understand
+    question: "A function returns the same number for the same argument but writes a message to a file. Why is replacing its calls with their numeric results unsafe?"
+    answer: "The file writes are observable effects. Replacing a call by a stored number preserves the return value but removes a write, so the program's behavior changes."
+    explanation: "Check both parts of purity: repeatable results and no observable side effects. Determinism alone does not establish referential transparency."
+
+  # Sources: lecture slide 8; homework HASKELL8 Part A.
+  - id: cs131-functional-card-lazy-demand
+    difficulty: intermediate
+    bloom: apply
+    question: "Why can Haskell evaluate `take 3 [2,4..]` successfully even though the source list is infinite? What result is produced?"
+    answer: "It produces `[2,4,6]`. The consumer demands only three elements, so evaluation never needs to construct the entire infinite list."
+    explanation: "Laziness is about demand, not an assumption that infinite data has already been stored. A consumer requiring the full length would not finish on this source."
+
+  # Sources: lecture slides 44–48, 66–70; homework HASKELL5 Part B and HASKELL6.
+  - id: cs131-functional-card-recursion-contract
+    difficulty: intermediate
+    bloom: analyze
+    question: "A recursive function counts a finite list using `count [] = 0` and `count (x:xs) = count xs`. It terminates but returns the wrong answer. Identify what works and what is missing."
+    answer: "Recursing on the tail makes progress toward the empty-list case. The missing contribution is 1 for the removed head: the recursive branch must return `1 + count xs`."
+    explanation: "A terminating recursive function can still be incorrect. Check the base result, progress toward it, and how each step combines its local contribution with the recursive result."
+
+  # Sources: lecture slides 74–76, 87–90; Fall 2024 midterm, Problem 3 Parts B–C, page 5.
+  - id: cs131-functional-card-map-filter-types
+    difficulty: intermediate
+    bloom: understand
+    question: "Explain why `map` may change a list's element type, while `filter` preserves it. Give one example of each using strings."
+    answer: "`map length` transforms strings into integer lengths. `filter (\\s -> length s > 2)` selects some strings but returns those original string values."
+    explanation: "The contracts express the difference: `map :: (a -> b) -> [a] -> [b]`, while `filter :: (a -> Bool) -> [a] -> [a]`. A predicate decides membership; it is not the output value."
+
+  # Sources: lecture slides 91–96; Fall 2025 Quiz 1, Problem 4 Part B.
+  - id: cs131-functional-card-fold-seed
+    difficulty: intermediate
+    bloom: analyze
+    question: "A list product is implemented as `foldl (*) 0 xs`. Why does it fail on `[2,3]`, and which seed makes it work for both that input and an empty list?"
+    answer: "Zero absorbs every multiplication, so the result stays zero. Use seed 1: the product becomes 6 for `[2,3]`, and the empty product is 1."
+    explanation: "A fold's seed is part of its contract. Choose the identity for the combining operation when the empty case should contribute nothing to the result."
+
+  # Sources: lecture slides 113–129; Fall 2024 midterm, Problem 3 Part D, page 6.
+  - id: cs131-functional-card-curried-type
+    difficulty: intermediate
+    bloom: apply
+    question: "A Haskell function has type `String -> Int -> Bool`. After applying it to one string, what remains? Explain the parentheses implied by its type."
+    answer: "A function of type `Int -> Bool` remains. The full type means `String -> (Int -> Bool)`: take a string and return a function that takes an integer."
+    explanation: "Function types associate to the right, while function application groups to the left. This is why applying arguments one at a time supports partial application."
+
+  # Sources: lecture slides 102–110.
+  - id: cs131-functional-card-closure-environment
+    difficulty: intermediate
+    bloom: apply
+    question: "In Haskell, `offset n = \\x -> x + n`. What must the returned function retain after `offset 6` finishes, and what does applying it to 4 produce?"
+    answer: "It must retain the binding of the free variable `n` to 6 along with its function body. Applying that closure to 4 produces 10."
+    explanation: "The caller supplies `x`; the defining environment supplies `n`. A closure keeps the needed environment available after the outer call has returned."
+
+  # Sources: lecture slides 143–148.
+  - id: cs131-functional-card-sharing-safety
+    difficulty: advanced
+    bloom: evaluate
+    question: "Two versions of an immutable tree share an unchanged subtree. A teammate proposes mutating that subtree to save allocation during the next update. Assess the proposal against the promise that earlier versions remain unchanged."
+    answer: "It breaks the promise: both roots still reach the shared subtree, so both versions would observe the mutation. Copy the affected path and keep shared nodes immutable."
+    explanation: "Structural sharing saves allocation because shared values do not change. Mutation reintroduces dependence between versions and invalidates that reasoning."
+
+  # Sources: lecture slides 44–45, 66–70, 90; homework HASKELL9–10.
+  - id: cs131-functional-card-create-prefix
+    difficulty: advanced
+    bloom: create
+    question: "Write a recursive Haskell function `prefixPositive :: [Int] -> [Int]` that keeps values only until the first nonpositive value. Use pattern matching and no library filtering function. Check `[]`, `[3,2,0,7]`, and `[-1,5]`."
+    answer: |
+      One solution is:
+
+      ```haskell
+      prefixPositive [] = []
+      prefixPositive (x:xs)
+        | x > 0 = x : prefixPositive xs
+        | otherwise = []
+      ```
+
+      The checks produce `[]`, `[3,2]`, and `[]` respectively.
+    explanation: "Self-check: handle empty input, retain a positive head, recurse on the tail, and stop completely at the first nonpositive value. Filtering all positives would wrongly retain 7 after the zero. Equivalent recursive solutions are valid."
+
+  # Sources: lecture slides 131–145; Fall 2025 Quiz 1, Problem 4 Parts A–B.
+  - id: cs131-functional-card-create-variant
+    difficulty: advanced
+    bloom: create
+    question: "Design a Haskell type for a lookup result that is either missing or contains a string. Then write `display :: LookupResult -> String` that returns `unavailable` for missing and the stored string otherwise. Explain how the type avoids a sentinel-string collision."
+    answer: |
+      One solution is:
+
+      ```haskell
+      data LookupResult = Missing | Found String
+      display Missing = "unavailable"
+      display (Found text) = text
+      ```
+
+      `Missing` and `Found "unavailable"` are distinct values even though this display function renders them identically.
+    explanation: "Self-check: represent both variants, place string data only in the successful variant, and handle every constructor. Constructor tags preserve the distinction internally; a display string alone does not. Different names with the same structure are valid."

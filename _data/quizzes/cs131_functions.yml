@@ -1,0 +1,358 @@
+title: "CS 131: Functions"
+description: "Reason about parameter passing, error contracts, closures, and polymorphism."
+active: true
+# Sources: function_palooza_v8.pptx (slide numbers below); Homework Problems
+# (Public), FUNC sections; CS131 Fall 25 Quiz 3; named past-exam solutions.
+# Exclude Language of the Week: slides 3 (Forth), 72 (Lean), 73 (Rust).
+questions:
+  # Source: Functions slide 9; Quiz 3, Problem 1; Final S23 solutions, pp. 13–15.
+  - id: cs131-functions-object-reference
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    question: |
+      Each Python function below receives a fresh built-in list `[3]`. What does the caller's list contain after each call?
+
+      ```python
+      def extend(items):
+          items += [8]
+      def replace(items):
+          items = items + [8]
+      ```
+    options:
+      - "After extend: `[3]`; after replace: `[3]`."
+      - "After extend: `[3]`; after replace: `[3, 8]`."
+      - "After extend: `[3, 8]`; after replace: `[3]`."
+      - "After extend: `[3, 8]`; after replace: `[3, 8]`."
+    correct_index: 2
+    option_feedback:
+      0: "For a built-in list, augmented addition extends the existing object, which the caller still shares."
+      1: "The effects are reversed: list augmented addition mutates, while ordinary addition creates a new list."
+      3: "Ordinary addition creates a new list, and assigning it to the local parameter leaves the caller's binding unchanged."
+    explanation: "For built-in lists, `+=` modifies the shared object in place. `items = items + [8]` instead creates another list and rebinds only the function's local parameter. These operations are not interchangeable when aliases matter."
+
+  # Source: Functions slides 9–13; Quiz 3, Problem 1.
+  - id: cs131-functions-reference-versus-copy-out
+    type: single
+    difficulty: advanced
+    bloom: analyze
+    question: |
+      In this pseudocode, `x` is global and `p` is the parameter. Compare pass-by-reference with value-result (a local copy, copied back on normal return).
+
+      ```text
+      x = 4
+      function change(p):
+          p = 9
+          print(x)
+      change(x)
+      print(x)
+      ```
+
+      What is printed under each strategy?
+    options:
+      - "Reference: `9, 9`; value-result: `4, 9`."
+      - "Reference: `9, 9`; value-result: `9, 9`."
+      - "Reference: `4, 4`; value-result: `4, 9`."
+      - "Reference: `9, 9`; value-result: `4, 4`."
+    correct_index: 0
+    option_feedback:
+      1: "Value-result writes a local copy during the call; the global changes only when that copy is written back."
+      2: "A reference parameter aliases the caller's variable, so assigning through it changes the global immediately."
+      3: "Value-result includes a copy-out step on normal return; ordinary pass-by-value does not."
+    explanation: "Reference exposes each write immediately through the alias. Value-result delays the caller-visible update until return, so observing the caller's variable during the call distinguishes the strategies."
+
+  # Source: Functions slides 10–13.
+  - id: cs131-functions-copy-out-aliasing
+    type: multiple
+    difficulty: advanced
+    bloom: analyze
+    question: |
+      A language copies value-result arguments in at entry and back at normal return, but leaves copy-out order unspecified. `x` starts at `0`; `set_pair(x, x)` assigns `p = 5` and `q = 8` to its two local parameters. Which conclusions follow? Select all that apply.
+    options:
+      - "`x` can finish as `5` if `p` is copied out last."
+      - "`x` can finish as `8` if `q` is copied out last."
+      - "`x` must finish as `8` because `q` was assigned last."
+      - "`x` must finish as `13` because both updates are merged."
+    correct_indices: [0, 1]
+    option_feedback:
+      0: "Both parameters target the same caller variable; copying `p` last overwrites the earlier copy-out."
+      1: "Copying `q` last leaves its local value in the caller's variable."
+      2: "The order of assignments to separate local copies does not specify the later copy-out order."
+      3: "Copy-out is assignment, not a combining operation such as addition."
+    explanation: "Local copies avoid aliasing during the body but can still conflict at copy-out. Since both write to `x`, the last copy-out determines its final value."
+
+  # Source: Functions slides 14–15.
+  - id: cs131-functions-macro-repeated-evaluation
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    question: |
+      In this pseudocode, `next_value()` removes and returns the next number from a queue initially containing `2, 7, 11`. The macro substitutes its argument text at every use.
+
+      ```text
+      macro DOUBLE(e) = e + e
+      function double_value(v) = v + v
+      ```
+
+      Using a fresh queue for each call, how do `DOUBLE(next_value())` and ordinary call-by-value `double_value(next_value())` compare?
+    options:
+      - "Both return `4`; each removes one number."
+      - "Both return `9`; each removes two numbers."
+      - "Macro returns `4`; function returns `9`."
+      - "Macro returns `9`; function returns `4`."
+    correct_index: 3
+    option_feedback:
+      0: "Text substitution duplicates the call to `next_value()`, not its already-computed result."
+      1: "The ordinary function evaluates its argument once and reuses that value for both parameter reads."
+      2: "The repeated evaluation belongs to the macro; call-by-value computes the argument before entering the function."
+    explanation: "The macro expands to two queue-removal calls, producing `2 + 7`. The function receives the single value `2`, then computes `2 + 2`."
+
+  # Source: Functions slides 16–21; Homework FUNC1 A–C.
+  - id: cs131-functions-named-default-contract
+    type: single
+    difficulty: basic
+    bloom: understand
+    question: "A library supports calls such as `connect(timeout=4, retries=2)`. It renames the public parameter `timeout` to `wait` without changing the function body. Why can this break callers?"
+    options:
+      - "Named arguments force every argument to be supplied."
+      - "The parameter name is part of the calling interface."
+      - "Renaming changes the order of positional arguments."
+      - "Named arguments copy the function into each caller."
+    correct_index: 1
+    option_feedback:
+      0: "Named arguments can coexist with omitted parameters that have defaults."
+      2: "The position has not changed; the caller is matching an argument by its old name."
+      3: "Naming arguments determines parameter binding, not code expansion."
+    explanation: "A keyword call refers to the public parameter name. Preserving behavior inside the body is insufficient when the call itself no longer binds successfully."
+
+  # Source: Functions slides 37–43 and 69; Homework FUNC2 C.
+  - id: cs131-functions-optional-outcome
+    type: single
+    difficulty: basic
+    bloom: understand
+    question: "Searching an in-memory collection can normally find an item or find no match. There are no other failure modes, and every integer index is a legitimate result. Which return design represents the contract most directly?"
+    options:
+      - "An optional index: a value or an explicit absence."
+      - "An index with `0` reserved to mean no match."
+      - "An assertion requiring every search to find a match."
+      - "An index plus a separate global success flag."
+    correct_index: 0
+    option_feedback:
+      1: "Reserving a valid index makes a legitimate match indistinguishable from absence."
+      2: "A missing item is permitted by the contract, so it is not evidence of a broken program invariant."
+      3: "A global flag separates the status from its result and can be overwritten by another search."
+    explanation: "An optional combines the successful value and the possibility of absence without stealing a value from the index domain. It fits an expected outcome with one kind of absence."
+
+  # Source: Functions slides 34–43 and 69; Homework FUNC2 A–C.
+  - id: cs131-functions-result-recovery
+    type: multiple
+    difficulty: intermediate
+    bloom: analyze
+    question: "A file loader returns `Success(text)`, `Failure(Missing)`, or `Failure(Denied)`. Missing files should use a default; denied access should be reported. Which statements follow from this result design? Select all that apply."
+    options:
+      - "A caller can choose recovery based on the failure variant."
+      - "An empty file can be represented as `Success(\"\")`."
+      - "An optional text value preserves both failure reasons."
+      - "Returning a failure automatically runs the recovery code."
+    correct_indices: [0, 1]
+    option_feedback:
+      0: "The failure payload retains the distinction required by the recovery policy."
+      1: "Success and failure are separate variants, so empty text need not be an error sentinel."
+      2: "An optional records presence or absence; it cannot by itself distinguish missing from denied."
+      3: "The result communicates an outcome; the caller still needs to inspect or propagate it."
+    explanation: "The result keeps valid data distinct from failures and retains why a failure happened. That enables the caller to implement the stated recovery policy."
+
+  # Source: Functions slides 45–48 and 69; Homework FUNC2.
+  - id: cs131-functions-assertion-boundary
+    type: single
+    difficulty: intermediate
+    bloom: evaluate
+    question: "A program must reject negative ages supplied by users, including when assertions are disabled. It also checks that its private tree structure remains balanced after an update. Which division of checks fits these obligations?"
+    options:
+      - "Use assertions for both the input and tree balance."
+      - "Use assertions for input; silently repair every imbalance."
+      - "Validate input explicitly; assert the internal invariant."
+      - "Accept input; check both conditions only during testing."
+    correct_index: 2
+    option_feedback:
+      0: "User-input rejection is required behavior and must remain active when assertions are disabled."
+      1: "Invalid input is an expected external event; an internal invariant failure instead signals a programming defect to investigate."
+      3: "Tests cannot substitute for validation of values arriving after the program is deployed."
+    explanation: "Required input validation belongs in normal program logic. Assertions can expose violated internal assumptions, such as a balancing algorithm failing to preserve its invariant."
+
+  # Source: Functions slides 52–60; Homework FUNC3 A; Quiz 3, Problem 4.
+  - id: cs131-functions-exception-finally-trace
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    question: |
+      What does this Python code print, in order?
+
+      ```python
+      try:
+          print("start")
+          raise ValueError("bad value")
+          print("work")
+      except ValueError:
+          print("recover")
+      finally:
+          print("clean")
+      print("done")
+      ```
+    options:
+      - "`start, work, recover, clean, done`"
+      - "`start, recover, clean, done`"
+      - "`start, clean, recover, done`"
+      - "`start, recover, done`"
+    correct_index: 1
+    option_feedback:
+      0: "Raising the exception skips the remaining statements in the try body."
+      2: "The matching handler in this construct runs before its finally block."
+      3: "Finally runs when control leaves the construct, including after a handled exception."
+    explanation: "The exception transfers control from the raise to the matching handler. Cleanup follows the handler, and execution continues after the whole try statement."
+
+  # Source: Functions slides 58–65; Homework FUNC3 A; Quiz 3, Problem 4.
+  - id: cs131-functions-exception-cleanup-contract
+    type: multiple
+    difficulty: advanced
+    bloom: evaluate
+    question: "A routine acquires a resource, then calls `process()`, which may throw. Its contract requires releasing the resource on both success and failure while preserving the original failure. Assume cleanup itself succeeds. Which designs meet the contract? Select all that apply."
+    options:
+      - "Place release in a finally block with no return statement."
+      - "Use a scoped resource manager that propagates exceptions."
+      - "Place release directly after the call to `process()`."
+      - "Catch the failure, release, and return a success value."
+    correct_indices: [0, 1]
+    option_feedback:
+      0: "Finally covers both exits; avoiding a return there preserves a pending exception."
+      1: "A scoped resource manager can tie release to scope exit while allowing the original exception to propagate."
+      2: "An exception can jump over ordinary statements following the failing call."
+      3: "Returning success hides the failure and violates the stated reporting contract."
+    explanation: "Cleanup must be attached to the lifetime of the acquired resource, and failure propagation must be preserved. Ordinary sequencing alone does not cover exceptional exits."
+
+  # Source: Functions slides 75–79; Homework FUNC4 C.
+  - id: cs131-functions-injected-behavior
+    type: single
+    difficulty: intermediate
+    bloom: evaluate
+    question: "A report function accepts `emit` and calls it for each output line. Production passes a file writer; a test passes a function that records lines in a list. What makes this design easier to test?"
+    options:
+      - "Passing a function prevents the report from having bugs."
+      - "The test can bypass execution of the report's main logic."
+      - "All passed functions must have identical side effects."
+      - "Output behavior can change without changing report logic."
+    correct_index: 3
+    option_feedback:
+      0: "First-class functions enable substitution; they do not prove the report's calculations correct."
+      1: "The same report logic runs, while the output destination is replaced."
+      2: "The callable contract can be shared even though one implementation writes a file and another records values."
+    explanation: "Treating behavior as a value lets the caller supply a controlled output function. The test can observe generated lines without performing file operations."
+
+  # Source: Functions slides 82–85; Homework FUNC4 A–B.
+  - id: cs131-functions-capture-value-reference
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    question: |
+      In C++, `n` remains alive until both calls finish. What pair of values is produced by `snapshot()` and `live()`?
+
+      ```cpp
+      int n = 3;
+      auto snapshot = [n]() { return n; };
+      auto live = [&n]() { return n; };
+      n = 12;
+      ```
+    options:
+      - "`3` and `12`"
+      - "`12` and `12`"
+      - "`3` and `3`"
+      - "`12` and `3`"
+    correct_index: 0
+    option_feedback:
+      1: "Value capture initializes a separate stored value when the closure is created."
+      2: "Reference capture observes the existing variable, including its later assignment."
+      3: "The capture modes are reversed: `[n]` copies, while `[&n]` refers to the original variable."
+    explanation: "The value-capturing closure retains `3`. The reference-capturing closure reads the still-live `n`, now `12`."
+
+  # Source: Functions slides 82–85; Homework FUNC4 B.
+  - id: cs131-functions-escaping-closure-lifetime
+    type: single
+    difficulty: advanced
+    bloom: analyze
+    question: |
+      This C++ function returns a closure that is called after `make_reader()` returns. What is wrong?
+
+      ```cpp
+      auto make_reader() {
+          int score = 6;
+          return [&score]() { return score; };
+      }
+      ```
+    options:
+      - "The closure is safe because returning it copies `score`."
+      - "The closure cannot be returned because it lacks a name."
+      - "Its reference outlives `score`; calling it has undefined behavior."
+      - "Its reference keeps `score` alive until the closure is destroyed."
+    correct_index: 2
+    option_feedback:
+      0: "Copying the closure preserves its reference capture; it does not change that capture into a value."
+      1: "Anonymous function objects can be returned; the issue is the lifetime of what this one references."
+      3: "A C++ reference capture does not extend the lifetime of the local variable it refers to."
+    explanation: "The automatic local `score` is destroyed on return. Capturing it by value would store the required data in the closure instead of leaving a dangling reference."
+
+  # Source: Functions slides 91–104; Homework FUNC5 B–C; Quiz 3, Problem 5.
+  - id: cs131-functions-bounded-generic-operations
+    type: multiple
+    difficulty: intermediate
+    bloom: analyze
+    question: "A statically checked generic function has type parameter `T` constrained only by `Sized`, which guarantees `size(): Integer`. The language has no dynamic member lookup or implicit conversions. Which operations are justified by that bound? Select all that apply."
+    options:
+      - "Call `size()` on a value of type `T`."
+      - "Compare the returned integer with `10`."
+      - "Call `resize()` because current callers happen to support it."
+      - "Add two values of type `T` because both have a size."
+    correct_indices: [0, 1]
+    option_feedback:
+      0: "The bound explicitly guarantees the size operation for every admissible type."
+      1: "The method's declared result type supports the integer comparison independently of `T`."
+      2: "The generic body must be valid for every type satisfying its declared bound, not just today's callers."
+      3: "Having a size does not imply that values support addition."
+    explanation: "A bound describes the operations available inside the generic body. Extra abilities of particular arguments cannot silently expand that contract."
+
+  # Source: Functions slides 91–93 and 100–108; Homework FUNC5 B and FUNC7;
+  # Final S23 solutions, p. 10; Final F23 solutions, pp. 12–15.
+  - id: cs131-functions-parametric-safety
+    type: single
+    difficulty: basic
+    bloom: understand
+    question: "Why does a typed `Box<T>` help a client more than a box that stores any object and returns the most general object type?"
+    options:
+      - "It selects a different handwritten box for every possible type."
+      - "It preserves the relationship between inserted and returned types."
+      - "It ensures the objects stored inside can never be mutated."
+      - "It discovers the client's intended type from runtime contents."
+    correct_index: 1
+    option_feedback:
+      0: "Parametric code expresses a shared definition using a type parameter; handwritten overloads are a different approach."
+      2: "A type parameter alone places no immutability requirement on the stored objects."
+      3: "The relationship is expressed in the static type, rather than inferred from whichever value happens to be present."
+    explanation: "If a client has `Box<T>`, inserting and retrieving can consistently use `T`. A general-object return loses that relationship and may require a checked cast at use sites."
+
+  # Source: Functions slides 95–109; Homework FUNC5 C, note separating
+  # generic type checking from monomorphization; Quiz 3, Problem 5.
+  - id: cs131-functions-checking-versus-code-generation
+    type: single
+    difficulty: advanced
+    bloom: analyze
+    question: "A compiler checks a generic function once using its declared constraints, then generates a specialized machine-code version for each used type. What does this show?"
+    options:
+      - "Generic type checking requires one shared machine-code version."
+      - "Specialized code means the body was checked only at runtime."
+      - "Each specialization must have been handwritten by the programmer."
+      - "Type-checking rules and code-generation strategy are distinct."
+    correct_index: 3
+    option_feedback:
+      0: "A compiler can validate the common definition first and specialize the already-checked code later."
+      1: "Producing specialized code does not imply deferred or dynamic type checking."
+      2: "Monomorphization generates these versions from the parameterized definition."
+    explanation: "Generic constraints establish which operations are valid. Monomorphization determines how executable code is produced; it can be combined with checking a constrained generic definition."

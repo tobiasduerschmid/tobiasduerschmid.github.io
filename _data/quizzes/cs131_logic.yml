@@ -1,0 +1,342 @@
+title: "CS 131: Logic Programming"
+description: "Reason about relations, unification, search order, negation, and recursive list processing in Prolog."
+active: true
+questions:
+  # Sources: logic_palooza_v6.pptx slides 6–7; Homework Problems (Public).docx LOGIC2 B.1–B.3.
+  - id: relation-argument-contract
+    type: single
+    bloom: understand
+    difficulty: basic
+    question: "A database contains `supplies(north, south)`. A colleague reads this as north supplying south; another reads it as south supplying north. What determines which reading is intended?"
+    options:
+      - "Prolog assigns the actor to the first argument automatically."
+      - "The documented relation and consistently written rules decide."
+      - "The query direction determines the fact's meaning each time."
+      - "Prolog assigns the recipient to the first argument automatically."
+    correct_index: 1
+    option_feedback:
+      0: "Argument positions do not carry built-in roles such as actor or recipient. The program must use a consistent convention."
+      2: "A query asks about an existing relation; it does not redefine what that relation means."
+      3: "The name and argument positions are programmer-defined. Prolog matches the structure without interpreting English roles."
+    explanation: "Facts assert a named relation over ordered arguments. Documenting that supplies(A, B) means A supplies B lets every rule use the same interpretation."
+
+  # Sources: logic_palooza_v6.pptx slides 7, 14–19; Homework Problems (Public).docx LOGIC3 A.1–A.2.
+  - id: shared-intermediate-variable
+    type: single
+    bloom: apply
+    difficulty: intermediate
+    question: |
+      `road(A, B)` means a road leads from A to B. Which rule describes a trip that uses exactly two roads with a shared intermediate stop?
+    options:
+      - "`trip(A, C) :- road(A, B), road(D, C).`"
+      - "`trip(A, C) :- road(A, B), road(C, B).`"
+      - "`trip(A, C) :- road(A, B), road(B, C).`"
+      - "`trip(A, C) :- road(A, C), road(B, C).`"
+    correct_index: 2
+    option_feedback:
+      0: "B and D can be different places. The two roads therefore need not connect."
+      1: "The second road ends at B instead of leaving B for C. Direction is part of the relation."
+      3: "This requires a direct road from A to C and another road into C, rather than a connected two-road trip."
+    explanation: "The repeated B requires the first road's destination to equal the second road's origin. The comma requires both subgoals to hold under the same variable bindings."
+
+  # Sources: logic_palooza_v6.pptx slides 22, 26–30; Homework Problems (Public).docx LOGIC4 A.6–A.7.
+  - id: nested-term-bindings
+    type: single
+    bloom: apply
+    difficulty: intermediate
+    question: "What bindings make `parcel(Owner, box(Color, Owner))` unify with `parcel(lee, box(teal, Recipient))`, starting with no bindings?"
+    options:
+      - "`Owner = lee, Color = teal, Recipient = teal`"
+      - "`Owner = lee, Color = box(teal, lee)`"
+      - "Unification fails because the box contains a variable."
+      - "`Owner = lee, Color = teal, Recipient = lee`"
+    correct_index: 3
+    option_feedback:
+      0: "Recipient corresponds to the repeated Owner, not to Color. Owner already has the binding lee."
+      1: "Color occupies only the first argument inside box. It does not match the whole compound term."
+      2: "Variables may occur inside compound terms. Unification recursively compares the corresponding parts."
+    explanation: "Matching the outer parcel binds Owner to lee. Inside box, Color becomes teal and Recipient must match that same Owner, so Recipient also becomes lee."
+
+  # Sources: logic_palooza_v6.pptx slides 22–26, 35–36; [Final] F22 (Public).pdf p10 question 20.
+  - id: repeated-variable-consistency
+    type: multiple
+    bloom: analyze
+    difficulty: intermediate
+    question: "Which independent unifications succeed with no initial bindings? Select all that apply."
+    options:
+      - "`pair(X, X) = pair(red, red)`"
+      - "`pair(X, X) = pair(red, blue)`"
+      - "`pair(X, X) = pair([red], red)`"
+      - "`pair(X, X) = pair(red, leaf(red))`"
+      - "`pair(X, X) = pair(node(red), node(red))`"
+    correct_indices: [0, 4]
+    option_feedback:
+      0: "Both occurrences can take the same atom red, so the repeated-variable constraint is satisfied."
+      1: "One X cannot be both red and blue in a single successful unification."
+      2: "A one-element list and its element are different terms. X cannot denote both here."
+      3: "X would need to equal both red and leaf(red). An atom and a compound term are different structures."
+      4: "A variable may bind to a whole compound term. Both positions supply the same node(red) term."
+    explanation: "Repeated occurrences of a variable impose equality of the entire corresponding terms, including nested structure. They are not independent wildcards."
+
+  # Sources: logic_palooza_v6.pptx slides 21, 24, 29; [Final] F22 (Public).pdf p10 question 20.
+  - id: respect-existing-bindings
+    type: single
+    bloom: apply
+    difficulty: intermediate
+    question: "During one proof branch, `Place = east` is already established. What happens when Prolog tries to unify `delivery(Place, Item)` with `delivery(west, book)`?"
+    options:
+      - "It fails because east and west differ."
+      - "It succeeds and changes Place to west."
+      - "It succeeds with Place storing both places."
+      - "It succeeds but leaves Item unbound."
+    correct_index: 0
+    option_feedback:
+      1: "Unification must respect bindings already required by the current proof branch; it is not assignment that overwrites them."
+      2: "A variable has one consistent value within a branch, rather than collecting incompatible matches."
+      3: "The mismatch in Place prevents the whole unification from succeeding, regardless of Item."
+    explanation: "Applying the existing binding gives delivery(east, Item). Its first argument cannot match west. A later search alternative may undo a branch's bindings, but this comparison cannot overwrite them."
+
+  # Sources: logic_palooza_v6.pptx slides 15, 18–19, 31; CS131 Fall 25 Quiz 4 (with solutions).docx Problem 4.
+  - id: backtracking-restores-bindings
+    type: single
+    bloom: analyze
+    difficulty: intermediate
+    question: |
+      Prolog tries facts from top to bottom and subgoals from left to right. What does `ready(X)` produce?
+
+      ```prolog
+      candidate(ada). candidate(ben).
+      trained(ben).
+      ready(X) :- candidate(X), trained(X).
+      ```
+    options:
+      - "It fails permanently after trying ada."
+      - "It produces ada, then produces ben."
+      - "It undoes the ada binding and produces ben."
+      - "It produces a list containing ada and ben."
+    correct_index: 2
+    option_feedback:
+      0: "Failure of trained(ada) sends search back to the earlier choice of candidate. Another candidate fact remains."
+      1: "A candidate is not an answer until the trained subgoal also succeeds for that same candidate."
+      3: "The query returns successful bindings individually. It does not implicitly collect candidates into a list."
+    explanation: "The ada branch fails its second subgoal. Backtracking restores the earlier binding state, tries candidate(ben), and then proves trained(ben)."
+
+  # Sources: logic_palooza_v6.pptx slides 13–19; CS131 Fall 25 Quiz 4 (with solutions).docx Problem 4; [Final] F23 (Public).pdf p23 question 8b.
+  - id: proof-order-and-duplicates
+    type: single
+    bloom: analyze
+    difficulty: advanced
+    question: |
+      With top-to-bottom clauses and left-to-right subgoals, what sequence of bindings does `choice(X)` produce when all answers are requested?
+
+      ```prolog
+      route(a, b). route(a, c).
+      route(b, d). route(c, d).
+      choice(X) :- route(a, X).
+      choice(X) :- route(a, Y), route(Y, X).
+      ```
+    options:
+      - "`X = b; X = c; X = d`"
+      - "`X = b; X = c; X = d; X = d`"
+      - "`X = b; X = d; X = c; X = d`"
+      - "`X = d; X = d; X = b; X = c`"
+    correct_index: 1
+    option_feedback:
+      0: "Ordinary Prolog search does not automatically remove equal bindings proved by different paths."
+      2: "All answers from the first choice clause are explored before the second choice clause begins."
+      3: "The direct-route clause is listed before the two-route clause, so its answers appear first."
+    explanation: "The first clause yields b and c. The second reaches d through b and then reaches d through c. Each successful proof can yield an answer, even when the resulting binding is duplicated."
+
+  # Sources: logic_palooza_v6.pptx slides 20, 30–31; [Final] F22 (Public).pdf p11 question 21.
+  - id: unification-within-resolution
+    type: multiple
+    bloom: understand
+    difficulty: basic
+    question: "A query engine matches a goal with a rule head, then tries to prove the rule's body. Which descriptions of its work are correct? Select all that apply."
+    options:
+      - "Matching the head can establish variable bindings."
+      - "Matching the head alone proves every body subgoal."
+      - "Proving the body may require more unifications."
+      - "Failure in the body can trigger another rule choice."
+      - "Unification enumerates the whole proof search tree."
+    correct_indices: [0, 2, 3]
+    option_feedback:
+      0: "The matching step determines substitutions that make the goal and head agree."
+      1: "The head identifies a possible rule; its body still imposes conditions that must be proved."
+      2: "Body subgoals must themselves match facts or rule heads, carrying forward consistent bindings."
+      3: "Resolution includes exploring alternatives after an attempted proof fails."
+      4: "Unification compares terms for a match. Resolution coordinates that operation across subgoals and alternative clauses."
+    explanation: "Unification supplies consistent substitutions for a local match. Resolution uses such matches to expand goals, prove subgoals, and backtrack through alternative proofs."
+
+  # Sources: logic_palooza_v6.pptx slides 11–12; transfer to incomplete-database reasoning.
+  - id: missing-evidence-policy
+    type: single
+    bloom: evaluate
+    difficulty: advanced
+    question: "A maintenance database is known to omit some inspection results. A rule marks a machine safe whenever `not(failed_inspection(Machine))` succeeds. What is the strongest criticism of that safety decision?"
+    options:
+      - "It treats failure to prove danger as evidence of safety."
+      - "It needs an explicit negative inspection fact to grant safety."
+      - "It waits for every machine to have an inspection record."
+      - "It first proves the machine failed, then marks it safe."
+    correct_index: 0
+    option_feedback:
+      1: "Negation as failure does not require an explicit negative fact. An unsuccessful terminating search is enough."
+      2: "The rule does not verify database completeness. Missing records are precisely what can make its conclusion unreliable."
+      3: "If failed_inspection succeeds, its negation fails and this rule does not mark the machine safe."
+    explanation: "Negation as failure reports that a terminating search cannot prove failed_inspection for this machine. An incomplete database does not justify turning that result into a real-world safety guarantee; positive inspection evidence would be needed."
+
+  # Sources: logic_palooza_v6.pptx slides 12, 31–32; [Final] F23 (Public).pdf p24 question 8c.
+  - id: bind-before-negation
+    type: single
+    bloom: analyze
+    difficulty: advanced
+    question: |
+      Why does `free(X)` fail instead of finding ben?
+
+      ```prolog
+      person(ada). person(ben).
+      busy(ada).
+      free(X) :- not(busy(X)), person(X).
+      ```
+    options:
+      - "Negation produces ada, which person then rejects."
+      - "An unbound X makes the person facts unavailable."
+      - "The comma requires busy and person to be the same predicate."
+      - "The unbound busy query succeeds, so its negation fails."
+    correct_index: 3
+    option_feedback:
+      0: "A successful inner proof makes not(busy(X)) fail; it does not export an answer to the next subgoal."
+      1: "person(X) could enumerate both people, but search never reaches it because the earlier subgoal fails."
+      2: "A comma conjoins goals with shared bindings. Their predicate names need not match."
+    explanation: "With X unbound, busy(X) finds ada. Its negation therefore fails before person(X) runs. Writing person(X), not(busy(X)) first generates a concrete person and then checks that person, yielding ben for this finite database."
+
+  # Sources: logic_palooza_v6.pptx slides 8–9, 31–32; [Final] S23 V1 (Public).pdf p11 question 5.
+  - id: left-recursive-search
+    type: single
+    bloom: analyze
+    difficulty: advanced
+    question: |
+      Under Prolog's usual depth-first, left-to-right search, what happens to `reach(a, c)`?
+
+      ```prolog
+      edge(a, b). edge(b, c).
+      reach(X, Y) :- reach(X, Z), edge(Z, Y).
+      reach(X, Y) :- edge(X, Y).
+      ```
+    options:
+      - "It returns false because there is no direct edge."
+      - "It recurses without reaching the later base clause."
+      - "It returns true after automatically trying the base clause."
+      - "It returns true because conjunction ignores subgoal order."
+    correct_index: 1
+    option_feedback:
+      0: "The graph contains a two-edge path. The difficulty is search termination, not the absence of a logical path."
+      2: "Depth-first search does not automatically interrupt an infinite recursive branch to try another clause."
+      3: "Although conjunction is logically commutative, Prolog's operational search order affects whether an answer is reached."
+    explanation: "The first rule immediately calls reach(a, Z) with no progress through an edge. It repeats that choice indefinitely. For a finite acyclic graph, a base clause followed by a rule that traverses edge(X, Z) before reach(Z, Y) avoids this particular loop."
+
+  # Sources: logic_palooza_v6.pptx slides 34–37; Homework Problems (Public).docx LOGIC4 A.8–A.10.
+  - id: list-head-and-tail
+    type: single
+    bloom: apply
+    difficulty: intermediate
+    question: "What does `[First, Second | Rest] = [[oak, elm], pine, birch]` bind?"
+    options:
+      - "`First = oak, Second = elm, Rest = [pine, birch]`"
+      - "`First = [oak, elm], Second = pine, Rest = birch`"
+      - "`First = [oak, elm], Second = pine, Rest = [birch]`"
+      - "`First = [[oak, elm], pine], Second = birch, Rest = []`"
+    correct_index: 2
+    option_feedback:
+      0: "The first element is itself a list. Matching an outer list does not flatten its nested elements."
+      1: "Rest is the remaining list, not its sole element. A one-element tail is still a list."
+      3: "Each named position before the bar matches one outer element; First does not take a two-element prefix."
+    explanation: "The first two outer elements are [oak, elm] and pine. The remaining outer list contains birch, so Rest is [birch]."
+
+  # Sources: logic_palooza_v6.pptx slides 39, 47; Homework Problems (Public).docx LOGIC8 A–B.
+  - id: append-as-a-relation
+    type: multiple
+    bloom: apply
+    difficulty: intermediate
+    question: "Using the usual list relation `append(Prefix, Suffix, Whole)`, which bindings satisfy `append(Prefix, Suffix, [oak, elm])`? Select all that apply."
+    options:
+      - "`Prefix = [], Suffix = [oak, elm]`"
+      - "`Prefix = [oak], Suffix = [elm]`"
+      - "`Prefix = [elm], Suffix = [oak]`"
+      - "`Prefix = [oak, elm], Suffix = []`"
+    correct_indices: [0, 1, 3]
+    option_feedback:
+      0: "An empty prefix is permitted; concatenating it with the full suffix gives Whole."
+      1: "Splitting between the two elements preserves their order when the lists are concatenated."
+      2: "Concatenation preserves sequence. These two lists would produce [elm, oak]."
+      3: "An empty suffix is permitted; the full prefix already equals Whole."
+    explanation: "A relation can be queried for different unknown arguments. A two-element list has three prefix/suffix splits, including both empty-list boundaries."
+
+  # Sources: logic_palooza_v6.pptx slides 38–46; [Final] F23 (Public).pdf pp22–24 question 8.
+  - id: list-filter-overlapping-rules
+    type: single
+    bloom: analyze
+    difficulty: advanced
+    question: |
+      This predicate should remove every occurrence of a ground atom from a finite ground list. Why can `drop_all(a, [a], Out)` also return `Out = [a]`?
+
+      ```prolog
+      drop_all(_, [], []).
+      drop_all(X, [X|Tail], Out) :- drop_all(X, Tail, Out).
+      drop_all(X, [Head|Tail], [Head|Out]) :- drop_all(X, Tail, Out).
+      ```
+    options:
+      - "The keep rule also accepts a head equal to the target."
+      - "The empty-list clause forces every original element back."
+      - "Matching the removal rule mutates the input before retrying."
+      - "The output argument cannot contain fewer items than the input."
+    correct_index: 0
+    option_feedback:
+      1: "The empty-list clause relates an empty input to an empty output. The retained head comes from the recursive keep rule."
+      2: "These pure rules describe relations; matching a list does not mutate it. Alternative proofs can match the original list."
+      3: "A relation may connect lists of different lengths. The undesired answer is caused by an overly permissive rule."
+    explanation: "Both recursive clauses apply when Head equals X. On backtracking, the keep clause yields the unchanged element. Under the stated ground-input contract, requiring Head \\= X before recursing makes the keep and remove cases exclusive."
+
+  # Sources: Homework Problems (Public).docx LOGIC5 A.2; arithmetic is explicitly exercised there.
+  - id: arithmetic-goal-order
+    type: single
+    bloom: apply
+    difficulty: intermediate
+    question: "In ordinary Prolog arithmetic, `is` evaluates its right-hand expression rather than solving equations. Why does `Total is Part + 2, Part = 5` raise an instantiation error?"
+    options:
+      - "The integer 2 must be written as an atom."
+      - "The later equality tries to overwrite Total."
+      - "Arithmetic expressions cannot appear in rule bodies."
+      - "Part has no numeric value when is runs."
+    correct_index: 3
+    option_feedback:
+      0: "The integer literal is valid. The missing input is the value of Part."
+      1: "The error occurs before Part = 5 is reached; Total has not been successfully computed."
+      2: "Rule bodies can evaluate arithmetic, but inputs on the right side of is must already be instantiated."
+    explanation: "Subgoals execute left to right. Binding Part to 5 before evaluating Total is Part + 2 produces Total = 7; the later binding cannot retroactively supply an earlier arithmetic input."
+
+  # Sources: logic_palooza_v6.pptx slide 49; extends its local cut example to explicit answer-preservation criteria.
+  - id: cut-and-query-contract
+    type: multiple
+    bloom: evaluate
+    difficulty: expert
+    question: |
+      A service promises to enumerate every available color. It uses the facts and rule below. Which review comments are justified? Select all that apply.
+
+      ```prolog
+      color(teal). color(amber).
+      available(X) :- color(X), !.
+      ```
+    options:
+      - "The cut makes available(X) omit amber on backtracking."
+      - "Removing the cut restores enumeration for this database."
+      - "The cut makes the underlying color(amber) fact false."
+      - "The query available(amber) can still succeed."
+    correct_indices: [0, 1, 3]
+    option_feedback:
+      0: "Once color(X) selects teal, the cut commits this invocation to that earlier choice."
+      1: "Without the cut, backtracking can revisit color(X) and obtain amber."
+      2: "Cut prunes search alternatives; it does not delete facts or change their logical content."
+      3: "With amber already supplied, color(amber) finds that fact before the cut is reached."
+    explanation: "The cut changes which proofs this invocation can explore. Its acceptability depends on the query contract: returning the first match can be useful, but it violates a promise to enumerate every match."

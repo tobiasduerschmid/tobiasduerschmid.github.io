@@ -1,0 +1,54 @@
+title: "CS 131: Language Paradigms and Design"
+description: "Explain computational models and justify language-design decisions."
+active: true
+cards:
+  # Source: intro_lecture_v2.pptx, slides 20–23, 36–38.
+  - id: paradigms-are-strategies
+    difficulty: basic
+    bloom: understand
+    question: "Why can two programs in the same language exemplify different programming paradigms?"
+    answer: "A paradigm describes how a solution is organized. One program might use explicit state updates, while another composes transformations or delegates work to objects. A language can provide constructs that support several approaches."
+
+  # Source: intro_lecture_v2.pptx, slides 21–22.
+  - id: recast-a-reachability-problem
+    difficulty: intermediate
+    bloom: apply
+    question: "Describe how to express reachability between stations using facts and rules. State a direct case and a recursive case in plain language."
+    answer: "Facts record direct connections. A station is reachable if there is a direct connection, or if a directly connected intermediate station can reach the destination. A query supplies a start or destination and asks for bindings that satisfy the relation."
+    explanation: "Self-check: include both the direct case and the recursive relation. These specify possible routes; the search strategy separately affects termination on cyclic networks."
+
+  # Source: intro_lecture_v2.pptx, slides 23–30.
+  - id: syntax-does-not-determine-semantics
+    difficulty: intermediate
+    bloom: analyze
+    question: "A new language looks like C++. Name two semantic questions that still need answers before porting code that shares mutable objects."
+    answer: "For example: Does assignment copy the object or share it? Does parameter assignment rebind only a local name or change the caller's variable? Other useful questions concern object lifetime and callback capture. Matching syntax does not answer these questions."
+
+  # Source: intro_lecture_v2.pptx, slides 27–29; Homework Problems, PYTHON2.
+  - id: design-a-passing-experiment
+    difficulty: expert
+    bloom: create
+    question: "For records containing only numeric fields, design a two-part experiment to distinguish an independent record copy, sharing the object through a local parameter, and aliasing the caller's variable. Describe the operations and expected observations."
+    answer: |
+      Start each trial with a fresh record containing a known field value.
+
+      1. Change the field through the parameter; inspect the caller's record.
+      2. Rebind the parameter to a different record; inspect the caller's variable.
+
+      A record copy exposes neither change. A local reference to the shared object exposes field mutation only. An alias for the caller's variable exposes both changes.
+    explanation: "Self-check: vary mutation and rebinding separately and reset the input between trials. State that copying is an independent record copy in this model; a record containing nested references would require further probes."
+
+  # Source: intro_lecture_v2.pptx, slides 18, 30, 36–40.
+  - id: evaluate-a-shorter-rewrite
+    difficulty: advanced
+    bloom: evaluate
+    question: "A rewrite halves source length. Give two checks needed before claiming it is a better implementation, and explain what each check establishes."
+    answer: "Check behavior across the required input domain, including boundary cases, to establish equivalence. Then evaluate an actual quality constraint, such as operation count and allocation cost for performance or clarity for the intended maintainers. Fewer characters alone establishes none of these."
+
+  # Source: intro_lecture_v2.pptx, slides 16, 39.
+  - id: design-a-small-rule-language
+    difficulty: expert
+    bloom: create
+    question: "Propose two constructs for a small eligibility-rule language and one invalid rule it should reject. Explain how restricting the language helps analysts."
+    answer: "One design supports field comparisons and conjunction. For example, `age >= 18 and status == eligible` combines two conditions. Reject comparing an age with a date if their domains differ. Named fields and limited operators make the rules inspectable and allow domain checks before evaluation."
+    explanation: "Self-check: specify the meaning of both constructs and an actual invalid case. Other designs count if they suit eligibility rules and explain the benefit of their restrictions."

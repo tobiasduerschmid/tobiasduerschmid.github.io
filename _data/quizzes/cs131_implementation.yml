@@ -1,0 +1,304 @@
+title: "CS 131: Language Implementation"
+description: "Trace source code through lexing, parsing, semantic analysis, translation, linking, and interpretation."
+active: true
+questions:
+  # Sources: pl_implementation_palooza.pptx slides 3, 16, 28.
+  - id: grammar-versus-meaning
+    type: single
+    bloom: understand
+    difficulty: basic
+    question: "A language grammar accepts `text + count`, but its specification permits + only on two numbers. Both variables are declared and have known string and integer types. What explains why acceptance by the grammar is insufficient?"
+    options:
+      - "The lexer must decide which type the plus sign supports."
+      - "The grammar establishes form, while semantic rules restrict meaning."
+      - "The linker must choose a grammar that accepts these types."
+      - "The parser must convert every string token into a numeric token."
+    correct_index: 1
+    option_feedback:
+      0: "Recognizing the + token does not determine whether the operand types are allowed. Type compatibility is a semantic check."
+      2: "Linking connects compiled definitions and references; it does not choose the source language's grammar."
+      3: "Changing token categories would alter the source rather than validate the operation required by the specification."
+    explanation: "Syntactic validity means the construct has an allowed shape. A semantic analyzer can then reject it because a string and an integer do not meet the stated numeric-operand rule."
+
+  # Sources: pl_implementation_palooza.pptx slides 10–13; CS131 Fall 25 Quiz 1 Solutions (Public).docx question 1 answer/rubric.
+  - id: lexer-longest-match
+    type: single
+    bloom: apply
+    difficulty: intermediate
+    question: "A lexer chooses the longest match, breaking ties by earlier rule. Its first rule recognizes the keyword `for`; its second recognizes identifiers as `[a-z]+`. How does it tokenize `forest`?"
+    options:
+      - "The keyword for followed by the identifier est."
+      - "A lexical error because a keyword begins the word."
+      - "One identifier whose text is forest."
+      - "Six identifiers, one for each lowercase letter."
+    correct_index: 2
+    option_feedback:
+      0: "The first rule wins only a tie in match length. The identifier rule matches six characters instead of three."
+      1: "The identifier rule can match the whole word. A keyword prefix does not invalidate a longer identifier."
+      3: "The + repetition matches one or more letters, and longest-match selection takes all six."
+    explanation: "Longest match takes priority over rule order. The whole word forest matches the identifier rule and is longer than for."
+
+  # Sources: pl_implementation_palooza.pptx slide 13; CS131 Fall 25 Quiz 1 Solutions (Public).docx question 1 print-keyword answer.
+  - id: lexer-tie-priority
+    type: single
+    bloom: analyze
+    difficulty: intermediate
+    question: "Under longest-match lexing with earlier-rule tie breaking, `[a-z]+` produces an identifier and appears before the keyword rule for `stop`. The parser expects a STOP token for a stop statement. Why is the source `stop` rejected by the parser?"
+    options:
+      - "The lexer emits an identifier when the two rules tie."
+      - "The lexer emits STOP, but the parser must retokenize it."
+      - "The lexer cannot match text with more than one rule."
+      - "The lexer splits stop into four single-letter identifiers."
+    correct_index: 0
+    option_feedback:
+      1: "The earlier identifier rule wins the equal-length match, so the parser never receives STOP in this setup."
+      2: "Overlapping lexer rules are permitted; the supplied priority rule decides between equal-length matches."
+      3: "The identifier rule matches the whole word, so longest-match selection does not split it into letters."
+    explanation: "Both rules match four characters, so rule order decides the category. Moving the keyword rule before the identifier rule would produce the token the parser expects without changing the grammar."
+
+  # Sources: pl_implementation_palooza.pptx slides 9–14, 31; Homework Problems (Public).docx TOOLS1; CS131 Fall 25 Quiz 1 Solutions (Public).docx question 1.
+  - id: lexical-error-boundary
+    type: single
+    bloom: apply
+    difficulty: intermediate
+    question: "A toy language permits only lowercase-letter identifiers, integer literals, +, =, and semicolons; whitespace is skipped. No token rule accepts @. Which stage first rejects `total = 3 @ 4;`?"
+    options:
+      - "The parser, because it decides which characters exist."
+      - "Semantic analysis, because @ has incompatible operands."
+      - "The linker, because @ lacks a function definition."
+      - "The lexer, because @ cannot begin any token."
+    correct_index: 3
+    option_feedback:
+      0: "The parser checks sequences of tokens. The lexer cannot supply a complete token sequence here."
+      1: "There is no valid @ token or parsed operation to type-check under the stated rules."
+      2: "Linking operates on compiled modules and symbols, long after source characters have been tokenized."
+    explanation: "The explicit token specification makes this a lexical failure. A malformed source sequence containing individually valid tokens would instead be a parsing issue."
+
+  # Sources: pl_implementation_palooza.pptx slides 16, 31; CS131 Fall 25 Quiz 1 Solutions (Public).docx question 1 NUM followed by ID answer.
+  - id: valid-tokens-invalid-sequence
+    type: single
+    bloom: apply
+    difficulty: intermediate
+    question: "A lexer emits identifiers for `[a-z]+` and numbers for `[0-9]+`; adjacent tokens need no whitespace. The only statement form is `IDENTIFIER = NUMBER ;`. What happens to `sum=12pear;`?"
+    options:
+      - "Lexing fails because numbers cannot precede letters."
+      - "Parsing fails because an extra identifier follows the number."
+      - "It is accepted because whitespace is optional between tokens."
+      - "It is accepted with pear treated as a comment on the number."
+    correct_index: 1
+    option_feedback:
+      0: "The stated lexer can emit NUMBER for 12 and IDENTIFIER for pear separately; every character is recognized."
+      2: "Optional whitespace allows adjacent tokens, but it does not allow extra tokens in the statement grammar."
+      3: "No comment rule is specified. pear is an identifier token and must be accounted for by the grammar."
+    explanation: "Tokenization succeeds as IDENTIFIER, =, NUMBER, IDENTIFIER, ;. After NUMBER the grammar requires a semicolon, so the additional identifier causes a parse error."
+
+  # Sources: pl_implementation_palooza.pptx slides 18–22; Homework Problems (Public).docx TOOLS2.
+  - id: grammar-optional-and-repeated
+    type: multiple
+    bloom: apply
+    difficulty: intermediate
+    question: |
+      Here brackets mean optional, braces mean zero or more repetitions, and quoted text is literal. Which calls does this grammar generate? Select all that apply.
+
+      ```text
+      call = "run" "(" [names] ")" ;
+      names = name {"," name} ;
+      name = "oak" | "elm" ;
+      ```
+    options:
+      - "`run()`"
+      - "`run(oak,elm)`"
+      - "`run(oak,)`"
+      - "`run(oak elm)`"
+    correct_indices: [0, 1]
+    option_feedback:
+      0: "The entire names part is optional, so empty parentheses are allowed."
+      1: "The initial name is followed by one repetition containing a comma and another name."
+      2: "Each repetition contains both the comma and its following name. A trailing comma alone does not match."
+      3: "Additional names must occur inside comma-name repetitions; whitespace cannot replace the comma."
+    explanation: "Optionality applies to the whole names sequence. Within a nonempty sequence, every additional name must be preceded by a comma."
+
+  # Sources: pl_implementation_palooza.pptx slides 25–27.
+  - id: precedence-is-structural
+    type: single
+    bloom: analyze
+    difficulty: intermediate
+    question: "An expression grammar uses `expr = expr op expr | NUMBER`, where op may be + or *. Without extra precedence rules, what is the problem with parsing `2 + 4 * 3`?"
+    options:
+      - "A numeric lexer must choose whether + or * runs first."
+      - "The grammar requires multiplication before addition."
+      - "The grammar permits both (2 + 4) * 3 and 2 + (4 * 3)."
+      - "The grammar requires operators to run left to right."
+    correct_index: 2
+    option_feedback:
+      0: "Lexing recognizes tokens; grouping operators into expressions is a parsing responsibility."
+      1: "Mathematical convention is not automatically part of this grammar. A parser needs an explicit way to enforce it."
+      3: "Reading source characters left to right does not make an ambiguous grammar specify left-associative grouping."
+    explanation: "Two expression trees fit the same token sequence and can have different values. Separating additive expressions from multiplicative terms, or using equivalent explicit precedence rules, removes this ambiguity."
+
+  # Sources: pl_implementation_palooza.pptx slides 14, 23–24.
+  - id: abstract-syntax-retains-grouping
+    type: single
+    bloom: understand
+    difficulty: basic
+    question: "A parser builds an abstract syntax tree for `(2 + 4) * 3`. The tree omits literal parenthesis nodes. What must it retain to preserve the expression's meaning?"
+    options:
+      - "An addition subtree used as an operand of multiplication."
+      - "The exact spaces that surround each numeric literal."
+      - "A multiplication subtree used as an operand of addition."
+      - "The source characters in a flat list without grouping."
+    correct_index: 0
+    option_feedback:
+      1: "For this expression, whitespace does not determine evaluation grouping. The tree relationships do."
+      2: "That arrangement would represent 2 + (4 * 3), changing the grouping imposed by the parentheses."
+      3: "A flat sequence without grouping loses the information that the parentheses contributed."
+    explanation: "An abstract tree may discard punctuation after encoding its effect structurally. The addition must be a child of multiplication, so its grouped result is multiplied by 3."
+
+  # Sources: pl_implementation_palooza.pptx slides 28–30; Homework Problems (Public).docx TOOLS1.
+  - id: semantic-analysis-responsibilities
+    type: multiple
+    bloom: analyze
+    difficulty: intermediate
+    question: "In the lecture's statically checked compiler pipeline, which tasks belong to semantic analysis after parsing? Select all that apply."
+    options:
+      - "Connect each variable use to its visible declaration."
+      - "Verify call arguments against the declared parameter types."
+      - "Group consecutive source digits into a numeric token."
+      - "Assign types to expressions in the syntax tree."
+      - "Combine separate object files into one executable."
+    correct_indices: [0, 1, 3]
+    option_feedback:
+      0: "Resolving a name requires declaration and scope information beyond its syntactic shape."
+      1: "Argument compatibility compares the call to a declared signature; grammar alone does not supply that check."
+      2: "Grouping source characters into tokens is the lexer's earlier job."
+      3: "Type annotations record semantic facts needed by later translation stages."
+      4: "Combining object modules and resolving external references is linking."
+    explanation: "Semantic analysis checks and records meaning-related constraints such as types, declarations, and scope. Tokenization and linking operate at different representations and boundaries."
+
+  # Sources: pl_implementation_palooza.pptx slides 32–36; Homework Problems (Public).docx TOOLS3 a,c.
+  - id: retarget-compiler-backend
+    type: single
+    bloom: apply
+    difficulty: intermediate
+    question: "A compiler lowers a source language into a machine-independent intermediate representation. It currently emits instructions for processor A. In the lecture's modular design, what must change to target processor B while preserving the source language and intermediate representation?"
+    options:
+      - "The source lexer and the source parser."
+      - "The grammar and the declaration lookup rules."
+      - "The source parser and its semantic analyzer."
+      - "The target code generator and assembler."
+    correct_index: 3
+    option_feedback:
+      0: "Changing the processor does not change how this source language's characters and grammar are recognized."
+      1: "The source syntax and scope rules remain the same under the stated contract."
+      2: "These components enforce the source language rather than select processor-specific instructions."
+    explanation: "The shared intermediate representation separates source-language concerns from target instructions. Code generation selects the new target's assembly, and its assembler produces the corresponding machine code."
+
+  # Sources: pl_implementation_palooza.pptx slide 36; Homework Problems (Public).docx TOOLS3 b,c.
+  - id: new-language-shared-backend
+    type: single
+    bloom: analyze
+    difficulty: advanced
+    question: "A team adds a second source language to a compiler but keeps its existing target processor. What condition makes reusing the backend reasonable?"
+    options:
+      - "Both languages use the same keyword spellings."
+      - "The new frontend preserves meaning in the shared intermediate form."
+      - "The new language permits exactly the same identifier names."
+      - "The target assembler can infer the new language's scope rules."
+    correct_index: 1
+    option_feedback:
+      0: "Matching surface vocabulary does not guarantee matching types, control flow, or other meaning."
+      2: "Identifier spelling is handled before the backend. Correctly lowering the new language's semantics is what matters."
+      3: "The assembler consumes target assembly; source-level scope information must be handled earlier."
+    explanation: "Backend reuse depends on the intermediate representation's contract. The new lexer, parser, semantic analysis, and lowering must express the new language's behavior in a form the backend already implements correctly."
+
+  # Sources: pl_implementation_palooza.pptx slides 32–34; Homework Problems (Public).docx TOOLS3.
+  - id: shared-optimization-tradeoff
+    type: single
+    bloom: evaluate
+    difficulty: advanced
+    question: "A compiler targets three processors. A team wants to implement a transformation that removes computations whose results are unused and whose execution has no observable effect. Why is its shared intermediate representation a useful place for this transformation?"
+    options:
+      - "It removes the need to preserve each program's behavior."
+      - "It makes every processor use identical machine instructions."
+      - "One analysis can benefit multiple target backends."
+      - "It guarantees that all target-specific optimizations disappear."
+    correct_index: 2
+    option_feedback:
+      0: "Optimization must preserve the required observable behavior at every representation level."
+      1: "The shared form is later lowered into different target instructions; it does not make processor instruction sets identical."
+      3: "Some optimizations still depend on a target's registers, instructions, or costs. Sharing one pass does not eliminate those opportunities."
+    explanation: "A common representation supports reusing semantic analysis and transformations across targets. The stated lack of observable effects is essential: an unused result alone does not justify deleting a computation."
+
+  # Sources: pl_implementation_palooza.pptx slides 6, 35, 40–41; Homework Problems (Public).docx TOOLS1.
+  - id: declaration-versus-link-definition
+    type: single
+    bloom: apply
+    difficulty: intermediate
+    question: "In a conventional separately compiled program, a module declares `int score();` and calls it with the correct signature. No linked object file or library defines score. Where is the missing definition normally discovered?"
+    options:
+      - "At lexing, because score is not a keyword."
+      - "At parsing, because calls require an inline function body."
+      - "At semantic analysis, because a declaration cannot describe a call."
+      - "At linking, when the external reference cannot be resolved."
+    correct_index: 3
+    option_feedback:
+      0: "A function name is ordinarily an identifier token; it need not be a keyword."
+      1: "Separate compilation permits calls to declared functions whose definitions are in other modules."
+      2: "The declaration can provide the signature needed for checking this call. Supplying an actual definition is a separate requirement."
+    explanation: "The compiler can emit an object file containing an unresolved external reference. The linker then needs a matching definition from the supplied modules or libraries."
+
+  # Sources: pl_implementation_palooza.pptx slides 40–42.
+  - id: dynamic-linking-deployment
+    type: multiple
+    bloom: evaluate
+    difficulty: advanced
+    question: "A team replaces copying a library's code into its executable with loading a compatible shared library at runtime. Which consequences follow from this design? Select all that apply."
+    options:
+      - "The executable can omit that library's machine-code body."
+      - "A needed shared library must be available at runtime."
+      - "Any replacement library is safe if its filename matches."
+      - "Some references are resolved when the program is loaded or run."
+    correct_indices: [0, 1, 3]
+    option_feedback:
+      0: "The code can reside in the shared library instead of being copied into this executable."
+      1: "The program now depends on finding a suitable library in its execution environment."
+      2: "A filename does not guarantee compatible function interfaces or behavior. The library still must honor the expected contract."
+      3: "Runtime resolution of at least some library references is the defining distinction here."
+    explanation: "Dynamic linking trades embedding library code for a runtime dependency. It can reduce executable size and share library code, while requiring compatible deployed libraries."
+
+  # Sources: pl_implementation_palooza.pptx slides 45–48; Homework Problems (Public).docx TOOLS5 B.
+  - id: interpreter-state-across-blocks
+    type: single
+    bloom: analyze
+    difficulty: advanced
+    question: "A toy language has one shared variable environment. Its interpreter recursively executes a conditional's body by calling run(body), but run creates a new empty environment every time. Why can the body fail to read a variable set before the conditional?"
+    options:
+      - "The recursive call discards access to the required environment."
+      - "Conditional statements must be translated to machine code first."
+      - "Every nested body must create a fresh set of variable bindings."
+      - "The parser should replace every variable use with its current value."
+    correct_index: 0
+    option_feedback:
+      1: "An interpreter can directly execute conditionals while preserving the language's specified state."
+      2: "Fresh bindings would be a different scoping design. The question specifies one shared variable environment."
+      3: "Runtime values can change, so parsing cannot generally substitute the current value into every use."
+    explanation: "The language's environment is runtime state that must survive entry into this body. Passing the existing environment to the helper preserves the stated semantics, including updates visible after the conditional."
+
+  # Sources: pl_implementation_palooza.pptx slides 4, 6, 37, 44–49; Homework Problems (Public).docx TOOLS4, HASKELL1 A.4–A.5.
+  - id: compilation-and-interpretation-compose
+    type: multiple
+    bloom: understand
+    difficulty: intermediate
+    question: "An implementation translates source into portable bytecode, then executes that bytecode in a software interpreter. Which conclusions are justified? Select all that apply."
+    options:
+      - "Translation and interpretation both occur in this implementation."
+      - "A compatible bytecode interpreter is needed to execute the result."
+      - "The source language can never have a native-code implementation."
+      - "Producing bytecode makes runtime semantic errors impossible."
+    correct_indices: [0, 1]
+    option_feedback:
+      0: "Compiling to an intermediate instruction format and interpreting that format can be successive stages."
+      1: "Portable bytecode is targeted at an execution model implemented by the interpreter, not automatically at the physical processor."
+      2: "An execution strategy describes an implementation. Another implementation could translate the same language to native code."
+      3: "Translation alone does not prove that every execution is error-free; that depends on the language and its checks."
+    explanation: "Compilation and interpretation are compatible implementation techniques. Neither bytecode nor a language's usual implementation strategy fixes every possible way the language can be executed."
