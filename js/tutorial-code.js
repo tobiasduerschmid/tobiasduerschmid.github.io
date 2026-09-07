@@ -7591,14 +7591,22 @@
       }
     }
 
-    // Ensure the active tab is always visible — scroll it into view horizontally
-    // without affecting page-level vertical scroll (block: 'nearest').
-    var activeTab = this.editorTabsEl.querySelector('.tvm-tab.active');
-    if (activeTab) activeTab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
-    if (this.editorTabsElRight) {
-      var activeTabRight = this.editorTabsElRight.querySelector('.tvm-tab.active');
-      if (activeTabRight) activeTabRight.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    // Reveal a selected file within its own strip. scrollIntoView also scrolls
+    // ancestor containers and would move a narrow page away from the lesson.
+    function revealActiveTab(tabStrip) {
+      if (!tabStrip) return;
+      var activeTab = tabStrip.querySelector('.tvm-tab.active');
+      if (!activeTab) return;
+      var stripBounds = tabStrip.getBoundingClientRect();
+      var tabBounds = activeTab.getBoundingClientRect();
+      if (tabBounds.left < stripBounds.left) {
+        tabStrip.scrollLeft += tabBounds.left - stripBounds.left;
+      } else if (tabBounds.right > stripBounds.right) {
+        tabStrip.scrollLeft += tabBounds.right - stripBounds.right;
+      }
     }
+    revealActiveTab(this.editorTabsEl);
+    revealActiveTab(this.editorTabsElRight);
   };
 
   /**
@@ -8359,8 +8367,15 @@
     // Steps with no tests can't be gated by tests — there's nothing to pass.
     // (A quiz, if present, opens via clicking Next, not by gating it.)
     if (!this._stepHasTests(this.steps[idx])) return false;
-    var nextStepUnlocked = !this.requireTests || this.instructorMode || this._stepsUnlocked.has(idx + 1);
-    return !nextStepUnlocked;
+    var canContinue = !this.requireTests || this.instructorMode ||
+      this._stepsPassed.has(idx) || this._stepsUnlocked.has(idx + 1);
+    return !canContinue;
+  };
+
+  TutorialCode.prototype._hasUnpassedQuiz = function (index) {
+    var step = this.steps[index];
+    return !!(!this.disableQuiz && step && step.quiz && step.quiz.questions
+      && step.quiz.questions.length && !this._quizPassed.has(index));
   };
 
   TutorialCode.prototype._broadcastStepState = function () {
@@ -11955,8 +11970,7 @@
     html += this._stepHasTests(step)
       ? this._buildTestButtonHTML(index)
       : '<span></span>';
-    var hasUnpassedQuiz = !this.disableQuiz && step.quiz && step.quiz.questions
-      && step.quiz.questions.length > 0 && !this._quizPassed.has(index);
+    var hasUnpassedQuiz = this._hasUnpassedQuiz(index);
     var hasNextStep = index < this.steps.length - 1;
     var showNext = hasNextStep || hasUnpassedQuiz;
     html += showNext
@@ -13404,7 +13418,10 @@
     }
     if (allPass && this.requireTests) {
       this._stepsPassed.add(stepIndex);
-      this._stepsUnlocked.add(stepIndex + 1);
+      // Next opens the knowledge check; numbered navigation waits for it.
+      if (!this._hasUnpassedQuiz(stepIndex)) {
+        this._stepsUnlocked.add(stepIndex + 1);
+      }
       this._renderStepNav();
       var nextBtn = this.stepControlsEl.querySelector('.tvm-btn-next');
       if (nextBtn) { nextBtn.disabled = false; nextBtn.removeAttribute('title'); }

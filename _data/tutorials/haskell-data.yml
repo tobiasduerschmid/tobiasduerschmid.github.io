@@ -1,0 +1,1096 @@
+title: "Haskell 3: Data and Persistent Programs"
+description: "Build recursive data structures and a pure expedition simulator. For programmers who have completed the first two Haskell tutorials; allow about 100–115 minutes, with breaks between steps."
+learning_objectives:
+  - "Apply algebraic variants and record fields to represent different kinds of values."
+  - "Analyze generic types and the constraints required by operations on their contents."
+  - "Implement recursive transformations of lists, branching trees, and expression trees."
+  - "Evaluate how persistent updates preserve old values and reuse unaffected structure."
+  - "Create a pure event simulator with explicit boundary and stopping rules."
+backend: haskell
+require_tests: true
+
+# Source map: docs/haskell-course-source-map.md. The supplied documents guide
+# concepts and voice; classroom directions and grading rules are source content.
+# Pedagogical arc: worked neighboring examples -> guided repair -> independent
+# construction. Allocation questions explicitly use a source-constructor model;
+# Boolean output checks do not claim to observe physical runtime allocations.
+steps:
+  # Source: Haskell lecture slides 131–142; ADVHASKELL6; F23 final p. 5 (case).
+  # Pedagogy: PRIMM — Predict before Run, then Modify; variation across variants.
+  - title: "Algebraic Variants"
+    instructions: |
+      ### Why this matters
+
+      A journey can contain travel, fights, and healing. Each event carries a number, but that number means something different for each event. An algebraic data type keeps the meaning attached to the value.
+
+      ### 🎯 You will learn to
+
+      - Apply constructors to distinguish variants of one type.
+      - Analyze each variant with a `case` expression.
+
+      ### One type, several possibilities
+
+      `data Event = Travel Integer | Fight Integer | Heal Integer` says that an `Event` is one of three alternatives. `Fight 7` is a value of type `Event`. `Fight` is its constructor, with type `Integer -> Event`.
+
+      `case event of` inspects the constructor. In `Fight amount -> ...`, the pattern binds `amount` to the stored integer. Each branch returns a value of the same result type. These patterns work just like the list patterns from Foundations, with names chosen for our domain.
+
+      `deriving (Eq, Show)` asks Haskell to supply structural equality and a readable representation. It lets the tests compare events and lets `print` display them. Constructors begin with an uppercase letter; ordinary bindings begin with a lowercase letter.
+
+      ### Thinking time!
+
+      Look at the starter before running it. Will its tuple contain `(2,-7,3)`, `(10,7,3)`, or a type error? Does naming a constructor `Fight` automatically subtract anything?
+
+      Commit to a prediction, then use **Run**. Explain which expression in each branch determines the result.
+
+      ### Your turn
+
+      Repair `eventDelta` so it returns the change in health for one event:
+
+      - `Travel distance` restores one point per four whole distance units: use integer division, rounding down.
+      - `Fight damage` loses `damage` points, so the change is negative.
+      - `Heal amount` restores `amount` points.
+
+      All event numbers are nonnegative integers. This function reports a change; it does not yet impose a health cap or process a sequence. Change the sample to include a travel distance below four and predict that result before running again.
+    files:
+      - path: "Main.hs"
+        language: haskell
+        reseed: true
+        content: |
+          module Main where
+
+          data Event = Travel Integer | Fight Integer | Heal Integer
+            deriving (Eq, Show)
+
+          eventDelta :: Event -> Integer
+          eventDelta event = case event of
+            Travel distance -> distance
+            Fight damage -> damage
+            Heal amount -> amount
+
+          main :: IO ()
+          main = print (eventDelta (Travel 10), eventDelta (Fight 7), eventDelta (Heal 3))
+    open_file: "Main.hs"
+    run_file: "Main.hs"
+    tests:
+      - description: "Travel uses whole quarters, including distances below four"
+        command: "map (eventDelta . Travel) [0, 3, 4, 5, 11] == [0, 0, 1, 1, 2]"
+        hints:
+          - text: "The number in a Travel event is a distance, not a number of health points."
+          - text: "Count how many complete groups of four fit in that distance. Integer division keeps the result an Integer."
+          - text: "The Travel branch has the shape `Travel distance -> div distance ...`; choose the group size."
+      - description: "Fights lose health while healing restores it"
+        command: "map eventDelta [Fight 0, Fight 1, Fight 9, Heal 0, Heal 7] == [0, -1, -9, 0, 7]"
+        hints:
+          - text: "An event's constructor carries meaning, but Haskell will not invent the meaning of its number."
+          - text: "A loss is a negative change; a restoration is a positive change."
+          - text: "Keep the two constructor patterns. Write each branch's result using its bound payload and the appropriate sign."
+    quiz:
+      title: "Step 1 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: basic
+          question: "What is the type of the value `Fight 12`?"
+          options: ["`Event`", "`Fight`", "`Integer`", "`Integer -> Event`"]
+          correct_index: 0
+          option_feedback:
+            1: "Fight names a constructor. All three variants produce values of the shared Event type."
+            2: "The integer is a field inside the event; wrapping it with Fight produces an Event."
+            3: "That is the type of the constructor Fight before its integer argument is supplied."
+          explanation: "Applying Fight to an Integer constructs an Event value. A type can have several constructors."
+        - type: single
+          difficulty: intermediate
+          question: "With the repaired function, what does `map eventDelta [Travel 3, Fight 4, Heal 2]` return?"
+          options: ["`[3,-4,2]`", "`[0,4,2]`", "`[0,-4,2]`", "`-2`"]
+          correct_index: 2
+          option_feedback:
+            0: "Three distance units contain no complete group of four. Travel therefore restores zero points."
+            1: "Fight reports a loss, so its contribution is negative."
+            3: "map returns one result per input event. Combining those results into one number would require another operation."
+          explanation: "map preserves the list shape while eventDelta interprets each constructor's payload."
+    solution:
+      files:
+        - path: "Main.hs"
+          language: haskell
+          content: |
+            module Main where
+
+            data Event = Travel Integer | Fight Integer | Heal Integer
+              deriving (Eq, Show)
+
+            eventDelta :: Event -> Integer
+            eventDelta event = case event of
+              Travel distance -> distance `div` 4
+              Fight damage -> negate damage
+              Heal amount -> amount
+
+            main :: IO ()
+            main = print (eventDelta (Travel 10), eventDelta (Fight 7), eventDelta (Heal 3))
+      explanation: |
+        The constructor selects the rule and the pattern gives that rule access to its input. Every branch produces an Integer. The sample now prints `(2,-7,3)`. Separate function equations for the three constructors would describe the same behavior; `case` lets a pattern decision appear inside an expression.
+
+  # Source: Haskell lecture slides 131–135; record update is an explained extension.
+  # Pedagogy: worked neighboring example, PRIMM — Predict, Modify, Investigate.
+  - title: "Records and New Values"
+    instructions: |
+      ### Why this matters
+
+      A tuple can hold a hero's name and health, but remembering which position means what gets old quickly. A record names those fields. Updating a record produces another value, so the original remains available for a before-and-after comparison.
+
+      ### 🎯 You will learn to
+
+      - Apply record construction, field access, and record updates.
+      - Analyze which fields a transformation should preserve.
+
+      ### Named fields
+
+      `Hero {heroName :: String, health :: Integer}` defines the constructor and two field-access functions. For a hero `h`, `health h` reads its health. Both `Hero "Fern" 70` and `Hero {heroName = "Fern", health = 70}` construct the same value.
+
+      The supplied `renameHero` is a worked example. Its expression `hero {heroName = newName}` produces a new record with a different name and the old health. It does not mutate `hero`. The braces describe the fields that change; omitted fields retain their values.
+
+      ### Thinking time!
+
+      The starter attempts to heal Fern by 15 points. Will it print health values `(85,70)`, `(15,70)`, or `(15,15)`? Read the update expression, commit to an answer, then run it.
+
+      ### Your turn
+
+      Repair `healHero amount hero` to add the healing amount to the existing health, stopping at 100. Preserve the name. The original hero must still represent its original values.
+
+      You can express the cap with a guard or with `min x y`, which returns the smaller of two ordered values.
+
+      Assume the original health is between 0 and 100, inclusive, and the amount is nonnegative. Try an ordinary heal, an amount that reaches exactly 100, and an amount that would exceed 100. Explain why using the same hero as the input twice does not apply two cumulative heals.
+    files:
+      - path: "Main.hs"
+        language: haskell
+        reseed: true
+        content: |
+          module Main where
+
+          data Hero = Hero {heroName :: String, health :: Integer}
+            deriving (Eq, Show)
+
+          renameHero :: String -> Hero -> Hero
+          renameHero newName hero = hero {heroName = newName}
+
+          healHero :: Integer -> Hero -> Hero
+          healHero amount hero = hero {health = amount}
+
+          main :: IO ()
+          main = let before = Hero "Fern" 70
+                     after = healHero 15 before
+                 in print (health after, health before)
+    open_file: "Main.hs"
+    run_file: "Main.hs"
+    tests:
+      - description: "Healing adds to existing health and preserves the name and original value"
+        command: 'let hero = Hero "Fern" 70 in healHero 15 hero == Hero "Fern" 85 && hero == Hero "Fern" 70 && healHero 0 (Hero "Stark" 12) == Hero "Stark" 12'
+        hints:
+          - text: "The amount is an increment, not a replacement health value."
+          - text: "Read the health field from the original record before calculating its replacement."
+          - text: "Start from the existing record and update only `health`; the new value should depend on both `amount` and `health hero`."
+      - description: "Healing respects the 100-point cap at and around its boundary"
+        command: 'map (\amount -> health (healHero amount (Hero "Mage" 90))) [9, 10, 11] == [99, 100, 100] && healHero 5 (Hero "Full" 100) == Hero "Full" 100 && health (healHero 1 (Hero "New" 0)) == 1'
+        hints:
+          - text: "An ordinary addition is not enough when the result exceeds the maximum."
+          - text: "Compare the candidate health with the cap after adding the healing amount."
+          - text: "The value assigned to the health field has the shape `min ... (...)`; one argument is the cap and the other is the proposed health."
+    quiz:
+      title: "Step 2 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "Given `h = Hero \"Fern\" 70` and `h2 = healHero 15 h`, what is `health h`?"
+          options: ["`85`", "`70`", "`100`", "A field-access error"]
+          correct_index: 1
+          option_feedback:
+            0: "85 is the health of h2. The update creates a value without changing h."
+            2: "The cap limits the new result; it does not fill either record automatically."
+            3: "The record declaration provides health as a function from Hero to Integer."
+          explanation: "h still refers to the original immutable record. To heal the newer version again, pass h2 explicitly."
+        - type: single
+          difficulty: basic
+          question: "What does `deriving Show` provide for a record whose fields support Show?"
+          options: ["An editable reference to each field", "A comparison ordering for records", "A printable representation of records", "A health validation rule for records"]
+          correct_index: 2
+          option_feedback:
+            0: "Deriving Show does not change immutability or introduce references that can be updated in place."
+            1: "Ordering belongs to Ord. Show concerns converting values into printable text."
+            3: "Validation rules belong in the program's functions; deriving does not infer domain rules from field names."
+          explanation: "Show supplies the representation used by show and print. Eq separately supports equality comparisons."
+    solution:
+      files:
+        - path: "Main.hs"
+          language: haskell
+          content: |
+            module Main where
+
+            data Hero = Hero {heroName :: String, health :: Integer}
+              deriving (Eq, Show)
+
+            renameHero :: String -> Hero -> Hero
+            renameHero newName hero = hero {heroName = newName}
+
+            healHero :: Integer -> Hero -> Hero
+            healHero amount hero = hero {health = min 100 (health hero + amount)}
+
+            main :: IO ()
+            main = let before = Hero "Fern" 70
+                       after = healHero 15 before
+                   in print (health after, health before)
+      explanation: |
+        The update reads the original health, computes a bounded replacement, and preserves the record's other fields. The sample prints `(85,70)`. Constructing a new Hero explicitly from the original name and calculated health would also satisfy the contract.
+
+  # Source: Haskell lecture slides 74–76, 135; ADVHASKELL7; Quiz 1 Q3.
+  # Pedagogy: PRIMM and variation theory — change payload types, preserve rules.
+  - title: "Generic Values and Constraints"
+    instructions: |
+      ### Why this matters
+
+      A reward may be absent or present. Its payload might be a number or a name. A type parameter lets us reuse that structure while still asking the compiler to check which operations make sense for the payload.
+
+      ### 🎯 You will learn to
+
+      - Analyze the relationship between a generic container and its payload type.
+      - Apply an `Ord` constraint when a function compares payloads.
+
+      ### A type with a parameter
+
+      `data Prize a = NoPrize | Prize a` describes a family of types. `Prize 7` can be a `Prize Integer`; `Prize "Crown"` is a `Prize String`. Within one comparison, both inputs and the result must use the same payload type.
+
+      In `bestPrize :: Ord a => Prize a -> Prize a -> Prize a`, `Ord a =>` says that payloads support ordering. It is needed because the function compares payloads. A function that merely wraps or unwraps a value does not need ordering.
+
+      `Eq` supports equality, `Ord` supports ordering, and `Show` supports text representations. These are type classes. A constraint states a requirement; it does not convert one type into another. Numeric operations have requirements too: `Num` supports arithmetic such as addition, while `/` requires `Fractional`.
+
+      ### Thinking time!
+
+      The starter always keeps a present first prize. Predict both printed results before running it. Will the comparison of strings use alphabetical order or their lengths?
+
+      Haskell orders strings lexicographically, comparing characters from the start. For example, `"z" > "alpha"` is true despite `"z"` being shorter.
+
+      ### Your turn
+
+      Repair `bestPrize` to choose the larger present payload. A missing prize loses to any present prize; two missing prizes produce `NoPrize`. Equal payloads may return either equivalent value.
+
+      As a counterpart to `min`, `max x y` returns the larger of two ordered values. A guard can express the same choice.
+
+      Keep the generic signature. The same function must work for integers and strings. Write a one-sentence explanation of why changing the signature to `Prize Integer -> Prize Integer -> Prize Integer` would narrow the contract even if the first sample still worked.
+    files:
+      - path: "Main.hs"
+        language: haskell
+        reseed: true
+        content: |
+          module Main where
+
+          data Prize a = NoPrize | Prize a deriving (Eq, Show)
+
+          bestPrize :: Ord a => Prize a -> Prize a -> Prize a
+          bestPrize NoPrize other = other
+          bestPrize first NoPrize = first
+          bestPrize (Prize x) (Prize y) = Prize x
+
+          main :: IO ()
+          main = do
+            print (bestPrize (Prize 4) (Prize 12) :: Prize Integer)
+            print (bestPrize (Prize "alpha") (Prize "z"))
+    open_file: "Main.hs"
+    run_file: "Main.hs"
+    tests:
+      - description: "Present and absent prizes follow the same rule in either argument position"
+        command: "bestPrize NoPrize NoPrize == (NoPrize :: Prize Integer) && bestPrize NoPrize (Prize (-3)) == Prize (-3) && bestPrize (Prize 0) NoPrize == Prize 0 && bestPrize (Prize 4) (Prize 12) == Prize 12 && bestPrize (Prize 12) (Prize 4) == Prize 12 && bestPrize (Prize 5) (Prize 5) == Prize 5"
+        hints:
+          - text: "A missing prize and a present zero are different cases. Let the constructor decide whether a payload exists."
+          - text: "The remaining case has two actual payloads to compare; neither argument position wins automatically."
+          - text: "In the two-Prize branch, use a comparison or an ordering helper on x and y, then put the chosen value back inside Prize."
+      - description: "The generic function compares strings by their ordering, not length"
+        command: 'bestPrize (Prize "alpha") (Prize "z") == Prize "z" && bestPrize (Prize "Fern") (Prize "Fern") == Prize "Fern" && bestPrize NoPrize (Prize "") == Prize ""'
+        hints:
+          - text: "The type parameter represents any orderable payload, not only numbers."
+          - text: "Use the ordering supplied by the payload type. String length is a different selection rule."
+          - text: "Keep `Ord a =>` and the same `a` in both inputs and the output; the comparison can stay identical for every supported payload type."
+    quiz:
+      title: "Step 3 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "Why does `bestPrize` require `Ord a`?"
+          options: ["It compares two payload values.", "It creates a Prize constructor.", "It may return a missing prize.", "It passes its result to print."]
+          correct_index: 0
+          option_feedback:
+            1: "Constructing a Prize does not require examining or ordering its payload."
+            2: "NoPrize has no payload to compare. The ordering requirement comes from the two-present case."
+            3: "Printing is main's job and uses Show. bestPrize returns a value without printing it."
+          explanation: "Constraints come from operations performed on the type parameter. Comparing payloads requires their ordering operation."
+        - type: single
+          difficulty: intermediate
+          question: "A function `wrap x = Prize x` performs no comparisons. What is its most general type?"
+          options: ["`Ord a => a -> Prize a`", "`a -> Prize b`", "`a -> Prize a`", "`Integer -> Prize Integer`"]
+          correct_index: 2
+          option_feedback:
+            0: "That restriction is unnecessary: wrapping does not use an ordering operation."
+            1: "The payload is the very value supplied as input, so the input and payload types must agree."
+            3: "Nothing in wrap performs an operation specific to Integer. Its payload can have other types."
+          explanation: "The repeated type variable records that wrapping preserves the input's type. No type-class constraint is needed."
+        - type: single
+          difficulty: basic
+          question: "Which signature fits `half x = x / 2` without restricting it to one numeric type?"
+          options: ["`Ord a => a -> a`", "`Eq a => a -> Bool`", "`Show a => a -> String`", "`Fractional a => a -> a`"]
+          correct_index: 3
+          option_feedback:
+            0: "Ordering permits comparisons; it does not supply fractional division."
+            1: "half computes a numeric result rather than testing equality."
+            2: "There is no conversion to text in half."
+          explanation: "The division operator requires Fractional, and the input and result share the same numeric type."
+    solution:
+      files:
+        - path: "Main.hs"
+          language: haskell
+          content: |
+            module Main where
+
+            data Prize a = NoPrize | Prize a deriving (Eq, Show)
+
+            bestPrize :: Ord a => Prize a -> Prize a -> Prize a
+            bestPrize NoPrize other = other
+            bestPrize first NoPrize = first
+            bestPrize (Prize x) (Prize y) = Prize (max x y)
+
+            main :: IO ()
+            main = do
+              print (bestPrize (Prize 4) (Prize 12) :: Prize Integer)
+              print (bestPrize (Prize "alpha") (Prize "z"))
+      explanation: |
+        The constructor cases settle absence before comparing payloads. `max` requires Ord, which is exactly the constraint in the signature. Derived Eq permits comparing Prize values when their payloads support Eq, and derived Show similarly depends on Show for the payload. These instances do not make arbitrary payload types comparable or printable.
+
+  # Source: Haskell lecture slides 143–145; ADVHASKELL5A; generic extension of the list.
+  # Pedagogy: worked example with fading — reverse the direction of a supplied conversion.
+  - title: "Recursive Data Types"
+    instructions: |
+      ### Why this matters
+
+      A trail is either finished or has one stop followed by the rest of the trail. That sentence is already a data definition. Recursive types let the structure of the data tell us the structure of its functions.
+
+      ### 🎯 You will learn to
+
+      - Apply base and recursive cases to a user-defined list.
+      - Create a conversion that preserves values, types, and order.
+
+      ### A trail inside a trail
+
+      `data Trail a = End | Stop a (Trail a)` has a nonrecursive base constructor and a recursive constructor. `Stop "Gate" (Stop "Lake" End)` is a `Trail String` with two stops.
+
+      Read the supplied `toList` as a worked example. `End` becomes the empty built-in list. A `Stop` contributes its value and recursively converts the rest. Its pattern has exactly the fields declared by the constructor.
+
+      ### Thinking time!
+
+      Predict `toList (Stop "Gate" (Stop "Lake" End))`. Then predict the starter's round trip `toList (fromList ["Gate","Lake"])`. Will the two results agree? Run and explain the difference.
+
+      ### Your turn
+
+      Implement `fromList :: [a] -> Trail a`. It must produce one stop for each input value in the original order and finish with `End`. An empty input produces `End`.
+
+      Keep `toList` as the supplied observation function. The exercise is to derive the conversion in the other direction. Test both numbers and strings, and write down how the empty-list pattern corresponds to a constructor with no remaining stops.
+    files:
+      - path: "Main.hs"
+        language: haskell
+        reseed: true
+        content: |
+          module Main where
+
+          data Trail a = End | Stop a (Trail a) deriving (Eq, Show)
+
+          toList :: Trail a -> [a]
+          toList End = []
+          toList (Stop x rest) = x : toList rest
+
+          fromList :: [a] -> Trail a
+          fromList xs = End
+
+          main :: IO ()
+          main = do
+            print (toList (Stop "Gate" (Stop "Lake" End)))
+            print (toList (fromList ["Gate", "Lake"]))
+    open_file: "Main.hs"
+    run_file: "Main.hs"
+    tests:
+      - description: "Empty, single-stop, and longer lists produce the matching trail structure"
+        command: "fromList ([] :: [Integer]) == End && fromList [8] == Stop 8 End && fromList [3, 3, -1] == Stop 3 (Stop 3 (Stop (-1) End))"
+        hints:
+          - text: "Find the input shape that has no work left. It corresponds to the trail's base constructor."
+          - text: "For a nonempty list, keep its head and recursively convert its tail."
+          - text: "Use one equation for `[]` and another for `(x:xs)`. The latter creates a Stop whose remaining-trail field comes from the recursive result."
+      - description: "The conversion preserves strings, repeated values, and their order"
+        command: 'fromList ["Gate", "Lake", "Gate"] == Stop "Gate" (Stop "Lake" (Stop "Gate" End)) && toList (fromList ["", "North"]) == ["", "North"]'
+        hints:
+          - text: "The conversion changes representation, not the sequence of stops."
+          - text: "Do not compare, sort, or deduplicate payloads; the function is generic over their type."
+          - text: "Keep the current head as the outer Stop and recurse only on the input tail. That places each stop before the rest of the trail."
+    quiz:
+      title: "Step 4 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "Why does `fromList :: [a] -> Trail a` need no Eq or Ord constraint?"
+          options: ["Recursive functions ignore types.", "Constructors order their fields.", "The payloads are carried unchanged.", "All payloads become strings first."]
+          correct_index: 2
+          option_feedback:
+            0: "Recursive functions are type-checked like other functions."
+            1: "Field position determines structure, not an ordering comparison between payload values."
+            3: "Converting to text would lose the relationship between the input element type and the result's payload type."
+          explanation: "The function decomposes and reconstructs structure without comparing or transforming payload values."
+        - type: single
+          difficulty: intermediate
+          question: "What is `toList (Stop 4 (Stop 9 End))`?"
+          options: ["`[4,9]`", "`[9,4]`", "`[[4],[9]]`", "`[4,9,0]`"]
+          correct_index: 0
+          option_feedback:
+            1: "The current stop is placed before the recursive conversion of the remaining trail."
+            2: "Each Stop holds one payload, and the result is a flat list of those payloads."
+            3: "End marks absence of another stop. It carries no extra numeric value."
+          explanation: "Each Stop becomes one cons cell in the built-in list; End becomes []."
+    solution:
+      files:
+        - path: "Main.hs"
+          language: haskell
+          content: |
+            module Main where
+
+            data Trail a = End | Stop a (Trail a) deriving (Eq, Show)
+
+            toList :: Trail a -> [a]
+            toList End = []
+            toList (Stop x rest) = x : toList rest
+
+            fromList :: [a] -> Trail a
+            fromList [] = End
+            fromList (x:xs) = Stop x (fromList xs)
+
+            main :: IO ()
+            main = do
+              print (toList (Stop "Gate" (Stop "Lake" End)))
+              print (toList (fromList ["Gate", "Lake"]))
+      explanation: |
+        The input list and output trail have matching recursive structure. Their base cases represent the empty sequence, and their recursive cases pair a current value with the remaining sequence. Both sample lines now print `["Gate","Lake"]`. `foldr Stop End` is another valid implementation of fromList.
+
+  # Source: ADVHASKELL5B; lecture slides 145–148; F23 midterm linked-list problem.
+  # Pedagogy: PRIMM and spaced retrieval — persistence revisits records, types, recursion.
+  - title: "Persistent Trail Updates"
+    instructions: |
+      ### Why this matters
+
+      The party changes its plan, but yesterday's route must stay available. A persistent update returns a new trail while preserving the old value. We can reuse the part after the removed stop because none of its links need to change.
+
+      ### 🎯 You will learn to
+
+      - Create a recursive deletion that preserves the remaining order.
+      - Evaluate which part of an immutable trail needs reconstruction.
+
+      ### An update with a boundary
+
+      Stops use zero-based indices. Removing index 1 from `["Gate","Lake","Tower"]` leaves `["Gate","Tower"]`. At the selected stop, its remaining trail is already the result we want. Before that stop, each retained stop needs a link to the updated remainder.
+
+      Use this source-level model when reasoning about cost: count a new `Stop` for each retained prefix stop reconstructed by a direct recursive algorithm. Removing the first stop can return the existing tail. Removing index 2 rebuilds the two stops before it and can share everything after it. Actual compiler allocations are an implementation detail; our output tests do not measure them.
+
+      ### Thinking time!
+
+      Predict both lists in the starter's printed tuple. Does calling `removeStop` alter `original` even if the return value is discarded? Run it, then connect your answer to the record update from step 2.
+
+      ### Your turn
+
+      Implement `removeStop :: Int -> Trail a -> Trail a`:
+
+      - Remove exactly the stop at the requested zero-based index.
+      - Preserve every other value in its original order.
+      - For a negative index or an index outside the trail, return an equal, unchanged trail.
+
+      The conversions are supplied for inspecting results. Aim to process `End` and `Stop` directly so you can explain where sharing is possible. Equivalent results pass the checks; inspect your own definition to judge the reconstruction cost.
+    files:
+      - path: "Main.hs"
+        language: haskell
+        reseed: true
+        content: |
+          module Main where
+
+          data Trail a = End | Stop a (Trail a) deriving (Eq, Show)
+
+          fromList :: [a] -> Trail a
+          fromList = foldr Stop End
+
+          toList :: Trail a -> [a]
+          toList End = []
+          toList (Stop x rest) = x : toList rest
+
+          removeStop :: Int -> Trail a -> Trail a
+          removeStop index trail = trail
+
+          main :: IO ()
+          main = let original = fromList ["Gate", "Lake", "Tower"]
+                 in print (toList (removeStop 1 original), toList original)
+    open_file: "Main.hs"
+    run_file: "Main.hs"
+    tests:
+      - description: "Deletion removes exactly the indexed stop and preserves the original trail"
+        command: 'let original = fromList ["A", "B", "A", "C"] in removeStop 0 original == fromList ["B", "A", "C"] && removeStop 1 original == fromList ["A", "A", "C"] && removeStop 2 original == fromList ["A", "B", "C"] && removeStop 3 original == fromList ["A", "B", "A"] && original == fromList ["A", "B", "A", "C"]'
+        hints:
+          - text: "This is deletion by position. Equal payloads elsewhere in the trail must stay."
+          - text: "When the index reaches zero, skip this Stop. Before zero, retain the current value and decrease the index for the recursive call."
+          - text: "The nonzero case reconstructs `Stop x (...)`; the recursive call works on the remaining trail with an index one smaller."
+      - description: "Empty trails and invalid indices remain unchanged"
+        command: "removeStop 0 (End :: Trail Integer) == End && removeStop (-1) (fromList [4, 5]) == fromList [4, 5] && removeStop 2 (fromList [4, 5]) == fromList [4, 5] && removeStop 8 (fromList [4, 5]) == fromList [4, 5] && removeStop 0 (fromList [4]) == End"
+        hints:
+          - text: "Check the empty, singleton, and just-outside cases separately."
+          - text: "An empty trail has no stop to remove. A negative index has no valid target."
+          - text: "Place the invalid-index and End cases before the recursive Stop case. Reaching End after retaining a prefix must preserve that prefix."
+    quiz:
+      title: "Step 5 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: advanced
+          question: "A direct persistent deletion removes index 2 from a five-stop trail. In the stated constructor model, how many new Stop nodes does its retained prefix need?"
+          options: ["0", "2", "3", "5"]
+          correct_index: 1
+          option_feedback:
+            0: "Only deleting the first stop can return the old tail immediately. Here two retained prefix links must point toward an updated remainder."
+            2: "The removed Stop is skipped. It is not reconstructed as part of the retained prefix."
+            3: "The unaffected suffix can be reused rather than copied."
+          explanation: "The stops at indices 0 and 1 are reconstructed. The result can reuse the suffix that originally followed index 2."
+        - type: single
+          difficulty: intermediate
+          question: "After `new = removeStop 1 old`, which statement follows from immutability?"
+          options: ["old now has one fewer stop.", "new and old have equal contents.", "old still has its original contents.", "Every node in new must be copied."]
+          correct_index: 2
+          option_feedback:
+            0: "removeStop returns a result. It cannot rewrite the existing value bound to old."
+            1: "A valid removal changes the result's contents even though old remains available."
+            3: "Immutability permits sharing unchanged structure; it does not require a deep copy."
+          explanation: "As with the record update in step 2, the new value and original value can coexist. Unchanged structure can be shared safely."
+        - type: single
+          difficulty: intermediate
+          question: "Why can `removeStop` work on both `Trail Integer` and `Trail String` without an Eq constraint?"
+          options: ["It compares indices, not payloads.", "Strings and integers share a type.", "Eq is supplied by every data type.", "The payloads are converted to Int."]
+          correct_index: 0
+          option_feedback:
+            1: "Integer and String remain distinct types. The generic function can be used at either type."
+            2: "Some types, such as ordinary function types, do not provide equality. A constraint must reflect an operation actually used."
+            3: "Deletion preserves retained payloads without converting them."
+          explanation: "The numeric decisions concern the Int index. The payload type a is merely preserved in retained Stop nodes."
+    solution:
+      files:
+        - path: "Main.hs"
+          language: haskell
+          content: |
+            module Main where
+
+            data Trail a = End | Stop a (Trail a) deriving (Eq, Show)
+
+            fromList :: [a] -> Trail a
+            fromList = foldr Stop End
+
+            toList :: Trail a -> [a]
+            toList End = []
+            toList (Stop x rest) = x : toList rest
+
+            removeStop :: Int -> Trail a -> Trail a
+            removeStop index trail | index < 0 = trail
+            removeStop _ End = End
+            removeStop 0 (Stop _ rest) = rest
+            removeStop index (Stop x rest) = Stop x (removeStop (index - 1) rest)
+
+            main :: IO ()
+            main = let original = fromList ["Gate", "Lake", "Tower"]
+                   in print (toList (removeStop 1 original), toList original)
+      explanation: |
+        The zero case returns the existing suffix. Each earlier recursive case retains one value and connects it to the updated remainder. Reaching End without finding the index reconstructs an equal trail. Negative indices return immediately. No payload comparison is needed, so the type remains unconstrained.
+
+  # Source: Quiz 1 Q4; ADVHASKELL5C; F24 midterm pp. 3–4.
+  # Pedagogy: worked-example fading and interleaving — tree recursion plus a fold.
+  - title: "Branching Data"
+    instructions: |
+      ### Why this matters
+
+      A route can branch into several routes. That changes the recursive question: we need a result from every child, then we combine those results. The same pattern powers document searches and nested menus.
+
+      ### 🎯 You will learn to
+
+      - Analyze the difference between a node's payload and its children.
+      - Combine recursive results across an arbitrary number of children.
+
+      ### Two lists with different jobs
+
+      `Route [a] [Route a]` stores a list of labels at this node and a list of child routes. `NoRoute` represents no node. A `Route [] children` is still a node, and its children may contain labels even though it has none.
+
+      We want to count **labeled nodes**, not labels. A node with three labels contributes one. A node with no labels contributes zero, but its children must still be visited. Assume the input is a finite tree without cycles.
+
+      ### Thinking time!
+
+      The sample root has two labels and three child entries, one of which is `NoRoute`. One child has no labels but leads to a labeled grandchild. Predict the total number of labeled nodes, then predict the starter's output. Run to distinguish its local count from the required whole-tree count.
+
+      ### Your turn
+
+      Repair `countLabeled :: Route a -> Int`. Count every node whose own labels list is nonempty. Do not count `NoRoute`, and do not stop traversing a real node just because its labels list is empty.
+
+      The current-node contribution is already supplied. Decide how to turn the child list into a single additional count. You may use a fold, `map` plus `sum`, or an equivalent recursive helper. Before testing, draw up two tiny examples that distinguish “number of labels” from “number of labeled nodes.”
+    files:
+      - path: "Main.hs"
+        language: haskell
+        reseed: true
+        content: |
+          module Main where
+
+          data Route a = NoRoute | Route [a] [Route a] deriving (Eq, Show)
+
+          countLabeled :: Route a -> Int
+          countLabeled NoRoute = 0
+          countLabeled (Route labels children) =
+            let own = if null labels then 0 else 1
+            in own
+
+          sample :: Route String
+          sample = Route ["Gate", "Start"]
+            [Route [] [Route ["Lake"] []], NoRoute, Route ["Tower"] []]
+
+          main :: IO ()
+          main = print (countLabeled sample)
+    open_file: "Main.hs"
+    run_file: "Main.hs"
+    tests:
+      - description: "The count measures labeled nodes rather than individual labels"
+        command: "countLabeled (NoRoute :: Route Integer) == 0 && countLabeled (Route [] [] :: Route Integer) == 0 && countLabeled (Route [1, 2, 3] []) == 1 && countLabeled (Route [1] [Route [2, 3] [], Route [4] []]) == 3"
+        hints:
+          - text: "A node contributes either zero or one, regardless of how many labels it stores."
+          - text: "Keep the current-node contribution separate from the sum of child contributions."
+          - text: "The result has the shape `own + ...`; the missing value must summarize recursive calls on the children."
+      - description: "Traversal reaches descendants through unlabeled nodes and handles missing children"
+        command: 'countLabeled (Route ["Gate", "Start"] [Route [] [Route ["Lake"] []], NoRoute, Route ["Tower"] []]) == 3 && countLabeled (Route [] [Route [] [Route ["Deep"] []], NoRoute]) == 1 && countLabeled (Route ["Root"] [NoRoute, NoRoute]) == 1'
+        hints:
+          - text: "An unlabeled node does not imply an unlabeled subtree."
+          - text: "Visit its children even when its own contribution is zero. NoRoute is the case with no children to visit."
+          - text: "Apply countLabeled to each child and combine the resulting Int values. Check that the empty child list contributes zero."
+    quiz:
+      title: "Step 6 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "What should `countLabeled (Route [] [Route [\"A\",\"B\"] []])` return?"
+          options: ["0", "1", "2", "3"]
+          correct_index: 1
+          option_feedback:
+            0: "The root contributes zero, but its labeled child must still be visited."
+            2: "The child has two labels but contributes only one labeled node."
+            3: "The function counts labeled nodes, not the sum of nodes and labels."
+          explanation: "There is one labeled node: the child. The empty root payload does not terminate traversal."
+        - type: single
+          difficulty: advanced
+          question: "After `map countLabeled children`, which operation produces the children's combined contribution?"
+          options: ["`length`", "`head`", "`sum`", "`reverse`"]
+          correct_index: 2
+          option_feedback:
+            0: "length counts child entries, even when an entry contributes zero or contains many labeled descendants."
+            1: "head would ignore the remaining children and is undefined on an empty child list."
+            3: "reverse changes order but still returns a list rather than the combined count."
+          explanation: "Each recursive result is already a count for a whole subtree. Summing combines those disjoint subtree counts; sum [] is zero."
+        - type: single
+          difficulty: intermediate
+          question: "Which type fits the children field in `Route [a] [Route a]`?"
+          options: ["`[a]`", "`Route a`", "`[[a]]`", "`[Route a]`"]
+          correct_index: 3
+          option_feedback:
+            0: "That is the type of this node's labels. Each child must itself carry route structure."
+            1: "That would store only one child rather than a list of children."
+            2: "Lists of labels cannot represent each child's further descendants."
+          explanation: "The recursive field is a list of values of the same Route a type, allowing any finite number of children."
+    solution:
+      files:
+        - path: "Main.hs"
+          language: haskell
+          content: |
+            module Main where
+
+            data Route a = NoRoute | Route [a] [Route a] deriving (Eq, Show)
+
+            countLabeled :: Route a -> Int
+            countLabeled NoRoute = 0
+            countLabeled (Route labels children) =
+              let own = if null labels then 0 else 1
+              in own + sum (map countLabeled children)
+
+            sample :: Route String
+            sample = Route ["Gate", "Start"]
+              [Route [] [Route ["Lake"] []], NoRoute, Route ["Tower"] []]
+
+            main :: IO ()
+            main = print (countLabeled sample)
+      explanation: |
+        The node's local contribution and its descendants' contributions are separate. That separation prevents the tempting mistake of pruning an entire subtree when its root has no labels. A fold that recursively counts each child and adds to own would satisfy the same contract. The sample has three labeled nodes.
+
+  # Source: Haskell lecture slides 146–148; appendix 174–178; ADVHASKELL5B.
+  # Pedagogy: PRIMM — investigate a lost-subtree bug, then modify; spaced Ord retrieval.
+  - title: "Persistent Search Trees"
+    instructions: |
+      ### Why this matters
+
+      Keeping old versions need not mean copying an entire tree. In a binary search tree, insertion follows one search path. Rebuilding that path can preserve every unaffected branch.
+
+      ### 🎯 You will learn to
+
+      - Apply ordered comparisons to choose a recursive branch.
+      - Analyze which subtrees an insertion must preserve.
+
+      ### The ordering contract
+
+      `Tip` is an empty tree. `Fork value left right` is a node. Every value in `left` is smaller than `value`, and every value in `right` is larger. This exercise represents a set: inserting an existing value must not add a duplicate. Assume the input already obeys this rule and has no cycles.
+
+      The provided `toAscList` visits left subtree, current value, then right subtree. For a valid search tree this produces ascending order. It is an observation helper, not a request to convert the tree to a list to perform insertion.
+
+      ### Thinking time!
+
+      The starter inserts 5 below a root of 8 by replacing the entire left subtree. Predict which old value disappears. Run, then explain why a correct comparison alone is not enough to preserve a data structure.
+
+      ### Your turn
+
+      Repair `insertKey :: Ord a => a -> SearchTree a -> SearchTree a` to add a value while preserving every old value and the ordering rule. An empty tree becomes a singleton. Inserting an existing value leaves the same set of keys. Revisit both smaller and larger insertions.
+
+      Aim to return the untouched child directly and recursively update only the chosen child. The tests inspect the set of values and order; your explanation should identify the possible sharing. A direct insertion visits a path of height `h` and creates at most `h + 1` nodes. A balanced tree has logarithmic height; a chain can have linear height. Direct insertion does not rebalance the tree.
+    files:
+      - path: "Main.hs"
+        language: haskell
+        reseed: true
+        content: |
+          module Main where
+
+          data SearchTree a = Tip | Fork a (SearchTree a) (SearchTree a)
+            deriving (Eq, Show)
+
+          toAscList :: SearchTree a -> [a]
+          toAscList Tip = []
+          toAscList (Fork x left right) = toAscList left ++ [x] ++ toAscList right
+
+          insertKey :: Ord a => a -> SearchTree a -> SearchTree a
+          insertKey value Tip = Fork value Tip Tip
+          insertKey value (Fork x left right)
+            | value < x = Fork x (Fork value Tip Tip) right
+            | value > x = Fork x left (Fork value Tip Tip)
+            | otherwise = Fork x left right
+
+          sample :: SearchTree Integer
+          sample = Fork 8 (Fork 3 Tip Tip) (Fork 12 Tip Tip)
+
+          main :: IO ()
+          main = print (toAscList (insertKey 5 sample), toAscList sample)
+    open_file: "Main.hs"
+    run_file: "Main.hs"
+    tests:
+      - description: "Insertions preserve every existing key and maintain ascending order"
+        command: "let original = Fork 8 (Fork 3 Tip Tip) (Fork 12 Tip Tip) in toAscList (insertKey 5 original) == [3, 5, 8, 12] && toAscList (insertKey 10 original) == [3, 8, 10, 12] && toAscList (insertKey 1 original) == [1, 3, 8, 12] && toAscList (insertKey 14 original) == [3, 8, 12, 14] && toAscList original == [3, 8, 12]"
+        hints:
+          - text: "Replacing an existing subtree with a singleton discards all the keys that subtree held."
+          - text: "The recursive call should receive the existing child, not Tip, when that child is the search destination."
+          - text: "Rebuild `Fork x ... ...`; one field is the recursively updated child and the other is the original, untouched child."
+      - description: "Empty trees, duplicates, repeated insertion, and string keys obey the set contract"
+        command: 'let original = Fork 8 (Fork 3 Tip Tip) (Fork 12 Tip Tip) in toAscList (insertKey 4 Tip) == [4] && toAscList (insertKey 8 original) == [3, 8, 12] && toAscList (insertKey 3 original) == [3, 8, 12] && toAscList (foldr insertKey Tip [5, 2, 8, 1, 3, 7, 9, 2]) == [1, 2, 3, 5, 7, 8, 9] && toAscList (foldr insertKey Tip ["Lake", "Gate", "Tower", "Gate"]) == ["Gate", "Lake", "Tower"]'
+        hints:
+          - text: "The same insertion rule must work at the root and at every deeper level."
+          - text: "Keep separate cases for an empty tree, a smaller key, a larger key, and an equal key."
+          - text: "Equality should preserve the existing tree value. Only Tip creates a new singleton at the end of a search path."
+    quiz:
+      title: "Step 7 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: advanced
+          question: "In a direct persistent insertion, a new key belongs in the left subtree of the root. Which structure can the result reuse unchanged?"
+          options: ["The whole original tree", "The original right subtree", "Only the original root node", "No original subtree"]
+          correct_index: 1
+          option_feedback:
+            0: "A new key must appear in the result, so at least the affected path must differ."
+            2: "The root must point to the updated left subtree, so its reconstructed value differs. The right child can remain unchanged."
+            3: "Unchanged immutable subtrees can be shared safely between versions."
+          explanation: "Only links along the insertion path need new structure. The untouched right subtree still satisfies the same ordering relationship."
+        - type: single
+          difficulty: intermediate
+          question: "Why is the direct insertion's worst-case time linear for an unbalanced tree with n keys?"
+          options: ["Every insertion deep-copies all nodes.", "Ord compares all pairs of keys.", "A search path can contain n nodes.", "Every key is converted to a list."]
+          correct_index: 2
+          option_feedback:
+            0: "Insertion can share unaffected subtrees. The worst case comes from a long search path."
+            1: "At each visited node, insertion compares the new key with that node's key."
+            3: "The direct algorithm works on constructors; toAscList is only an observation helper."
+          explanation: "The work follows tree height. A chain has height proportional to the number of nodes, while a balanced tree has logarithmic height."
+    solution:
+      files:
+        - path: "Main.hs"
+          language: haskell
+          content: |
+            module Main where
+
+            data SearchTree a = Tip | Fork a (SearchTree a) (SearchTree a)
+              deriving (Eq, Show)
+
+            toAscList :: SearchTree a -> [a]
+            toAscList Tip = []
+            toAscList (Fork x left right) = toAscList left ++ [x] ++ toAscList right
+
+            insertKey :: Ord a => a -> SearchTree a -> SearchTree a
+            insertKey value Tip = Fork value Tip Tip
+            insertKey value (Fork x left right)
+              | value < x = Fork x (insertKey value left) right
+              | value > x = Fork x left (insertKey value right)
+              | otherwise = Fork x left right
+
+            sample :: SearchTree Integer
+            sample = Fork 8 (Fork 3 Tip Tip) (Fork 12 Tip Tip)
+
+            main :: IO ()
+            main = print (toAscList (insertKey 5 sample), toAscList sample)
+      explanation: |
+        The comparisons select one existing subtree. Recursion inserts into it without discarding its contents, and the other subtree is reused. On equality, the function returns an equivalent node without adding a duplicate. The sample prints `([3,5,8,12],[3,8,12])`. Output checks establish the value contract; the definition explains the sharing strategy.
+
+  # Source: S23 final V1 p. 6 expression-tree problem, adapted to evaluation.
+  # Pedagogy: transfer with faded scaffolding — new domain, familiar recursive structure.
+  - title: "Expression Trees"
+    instructions: |
+      ### Why this matters
+
+      The course's language tools manipulate programs as data. Once an expression is a tree, evaluating it becomes another recursive transformation. The tree structure records grouping before evaluation even starts.
+
+      ### 🎯 You will learn to
+
+      - Analyze how constructors represent expression grouping.
+      - Create an evaluator from the meaning of each constructor.
+
+      ### Data that describes a computation
+
+      `Number 3` describes the number three. `Plus left right` describes addition of two expressions, while `Times left right` describes multiplication. For example, `Times (Plus (Number 2) (Number 5)) (Number 4)` represents `(2 + 5) * 4`.
+
+      Constructing a `Plus` value does not itself perform addition. It produces data containing two child expressions. `eval` is the function that assigns that data its numerical meaning. As with the branching routes, assume finite trees without cycles.
+
+      ### Thinking time!
+
+      Before running, predict the correct value of the sample. Now predict what the starter actually prints: it currently follows only the left child of each compound expression. Which part of the expression disappears from that behavior?
+
+      ### Your turn
+
+      Implement `eval :: Expr -> Integer` for every finite expression built from `Number`, `Plus`, and `Times`. A number evaluates to its payload. A compound expression evaluates its child expressions and combines their results using its stated operation.
+
+      Keep the constructors as supplied; choose your own helper structure. Test a number alone, one operation, and nested operations with different grouping. Then explain why adding special cases for the displayed sample would miss the purpose of a recursive evaluator.
+    files:
+      - path: "Main.hs"
+        language: haskell
+        reseed: true
+        content: |
+          module Main where
+
+          data Expr = Number Integer | Plus Expr Expr | Times Expr Expr
+            deriving (Eq, Show)
+
+          eval :: Expr -> Integer
+          eval (Number n) = n
+          eval (Plus left right) = eval left
+          eval (Times left right) = eval left
+
+          sample :: Expr
+          sample = Times (Plus (Number 2) (Number 5)) (Number 4)
+
+          main :: IO ()
+          main = print (eval sample)
+    open_file: "Main.hs"
+    run_file: "Main.hs"
+    tests:
+      - description: "Numbers and each operation have their specified numerical meanings"
+        command: "map (eval . Number) [-5, 0, 8] == [-5, 0, 8] && eval (Plus (Number 3) (Number 7)) == 10 && eval (Times (Number 3) (Number 7)) == 21 && eval (Times (Number 0) (Number 8)) == 0 && eval (Times (Number (-3)) (Number 4)) == (-12)"
+        hints:
+          - text: "The payload of a Number is already a result. The payloads of Plus and Times are still expressions."
+          - text: "Convert both child expressions into numerical results before applying the parent operation."
+          - text: "Each compound branch has the shape `eval left <operation> eval right`; choose the operation from the constructor's meaning."
+      - description: "Nested evaluation respects the grouping represented by the tree"
+        command: "eval (Times (Plus (Number 2) (Number 5)) (Number 4)) == 28 && eval (Plus (Number 2) (Times (Number 5) (Number 4))) == 22 && eval (Times (Plus (Number 1) (Number 2)) (Plus (Number 3) (Number 4))) == 21 && eval (Plus (Times (Number 2) (Number 3)) (Times (Number 4) (Number 5))) == 26"
+        hints:
+          - text: "The same small rule must apply to a child even when that child contains another operation."
+          - text: "Do not assume children are Number constructors. Recursive calls handle any valid child expression."
+          - text: "The parent keeps only the children's evaluated Integer results; recursion determines how those results were produced."
+    quiz:
+      title: "Step 8 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "What is `Plus (Number 3) (Number 4)` before it is passed to eval?"
+          options: ["An Integer equal to 7", "An Expr containing two children", "An IO action that prints 7", "A function awaiting two numbers"]
+          correct_index: 1
+          option_feedback:
+            0: "The constructor records an addition expression. eval is what interprets that structure as arithmetic."
+            2: "The expression value contains no output action. main separately prints eval's result."
+            3: "Both constructor arguments are already supplied, so this is a complete value."
+          explanation: "Constructors build values of the declared data type. Functions such as eval give those values the behavior required by an application."
+        - type: single
+          difficulty: intermediate
+          question: "What is the type of `Times` before either child is supplied?"
+          options: ["`Integer -> Integer -> Integer`", "`(Expr, Expr) -> Expr`", "`Expr -> Integer`", "`Expr -> Expr -> Expr`"]
+          correct_index: 3
+          option_feedback:
+            0: "Times builds expression data; it does not directly multiply numerical arguments."
+            1: "The constructor takes two curried arguments. A single tuple argument would require a tuple field in its declaration."
+            2: "That is eval's type. Times accepts two expression children and constructs an expression."
+          explanation: "The declaration `Times Expr Expr` produces a constructor that takes two Expr arguments and returns an Expr. Constructor application follows the same curried argument rules practiced earlier."
+    solution:
+      files:
+        - path: "Main.hs"
+          language: haskell
+          content: |
+            module Main where
+
+            data Expr = Number Integer | Plus Expr Expr | Times Expr Expr
+              deriving (Eq, Show)
+
+            eval :: Expr -> Integer
+            eval (Number n) = n
+            eval (Plus left right) = eval left + eval right
+            eval (Times left right) = eval left * eval right
+
+            sample :: Expr
+            sample = Times (Plus (Number 2) (Number 5)) (Number 4)
+
+            main :: IO ()
+            main = print (eval sample)
+      explanation: |
+        The evaluator follows the data definition: one base case and one recursive rule per compound constructor. Each parent receives the meaning of its children and combines those meanings. The tree already determines grouping, so the sample evaluates to 28. A later interpreter can reuse this structure while adding constructors and their semantic rules.
+
+  # Source: ADVHASKELL6 expedition events, with new traces and executable boundaries.
+  # Pedagogy: Make — independent integration; retrieval of variants, guards, folds,
+  # immutable state, and lazy stopping. No new language mechanism is introduced.
+  - title: "An Expedition Simulator"
+    instructions: |
+      ### Why this matters
+
+      A game can change over time without mutating a variable. A pure simulator receives the events, carries the current state through them, and returns the result. This is where the separate skills become one program.
+
+      ### 🎯 You will learn to
+
+      - Create a pure simulator from a complete behavioral contract.
+      - Evaluate boundary cases before trusting a successful sample run.
+
+      ### The expedition contract
+
+      Implement `journey :: [Event] -> Integer`. The explorer starts with 100 hit points and cannot exceed 100. Every event carries a nonnegative integer. Process events in list order:
+
+      - With more than 40 hit points, `Fight damage` subtracts the full damage and `Travel distance` restores ``distance `div` 4`` points.
+      - With 40 or fewer hit points, a fight subtracts ``damage `div` 2`` points and travel restores nothing.
+      - `Heal amount` restores that amount in either mode, subject to the 100-point cap.
+      - Determine the mode from the health **before** the event. The resulting health determines the mode for the next event.
+      - If health becomes zero or negative, the journey ends immediately with `-1`. Later healing cannot revive the explorer.
+      - If no events remain, return the remaining health. An empty journey returns 100.
+
+      ### A trace before a program
+
+      On paper, trace `[Fight 60, Travel 40, Heal 1, Fight 3]`. Record the health before each event, the mode for that event, and the resulting health. Commit to your final answer before using **Run**. The starter is a runnable placeholder that currently ignores the events; its output is evidence about the placeholder, not the game's rules.
+
+      ### Your turn
+
+      Write the simulator using the supplied type and entry function. Choose your helpers and recursion or folding strategy. A helper can receive the health that the public function's signature intentionally hides. Preserve `main` as a sample driver, or change its inputs while experimenting.
+
+      Plan examples that distinguish the boundaries: health 40 versus 41, zero versus one remaining point, and healing exactly to versus beyond the cap. After your tests pass, explain why summing `eventDelta` values from step 1 cannot implement this contract: the effect of a fight or travel depends on the state reached so far.
+
+      ### A return visit
+
+      On another day, hide the solution and recreate one small function from this path: a list conversion, a tree traversal, or this simulator. Change the sample data and predict the result before running. That retrieval gives a better check of what stuck than rereading the completed solution.
+    files:
+      - path: "Main.hs"
+        language: haskell
+        reseed: true
+        content: |
+          module Main where
+
+          data Event = Travel Integer | Fight Integer | Heal Integer
+            deriving (Eq, Show)
+
+          journey :: [Event] -> Integer
+          journey events = 100
+
+          main :: IO ()
+          main = print (journey [Fight 60, Travel 40, Heal 1, Fight 3])
+    open_file: "Main.hs"
+    run_file: "Main.hs"
+    tests:
+      - description: "Ordinary events preserve order, use whole travel quarters, and cap healing at 100"
+        command: "journey [] == 100 && journey [Fight 20] == 80 && journey [Fight 20, Travel 3] == 80 && journey [Fight 20, Travel 4] == 81 && journey [Fight 20, Travel 7] == 81 && journey [Fight 20, Heal 19] == 99 && journey [Fight 20, Heal 20] == 100 && journey [Fight 20, Heal 21] == 100 && journey [Fight 20, Travel 100] == 100 && journey [Heal 20, Fight 20] == 80"
+        hints:
+          - text: "The result depends on both the remaining event list and the current health. Decide where those two values live in your program."
+          - text: "Separate the effect of one event from the step that continues through the remaining events. Bound each successful restoration by the maximum health."
+          - text: "A recursive helper can have the shape `go currentHealth remainingEvents`; its empty-list case returns currentHealth, and its nonempty case computes the next health first."
+      - description: "The defensive boundary is inclusive and mode changes take effect on the next event"
+        command: "journey [Fight 59, Travel 4] == 42 && journey [Fight 60, Travel 4] == 40 && journey [Fight 61, Travel 4] == 39 && journey [Fight 60, Fight 3] == 39 && journey [Fight 59, Fight 3] == 38 && journey [Fight 60, Heal 1, Fight 3] == 38 && journey [Fight 60, Travel 40, Heal 1, Fight 3] == 38 && journey [Fight 60, Heal 0, Fight 1] == 40"
+        hints:
+          - text: "Write down the health before each event. That value decides which rule the event uses."
+          - text: "40 belongs to defensive mode. A heal to 41 restores ordinary mode for the following event, while an odd defensive damage amount is rounded down."
+          - text: "Branch on the current health inside the Fight and Travel cases. Do not keep a permanent defensive flag once the explorer has healed above the threshold."
+      - description: "Death ends the journey at zero or below and later healing cannot revive it"
+        command: "journey [Fight 99] == 1 && journey [Fight 100] == (-1) && journey [Fight 101] == (-1) && journey [Fight 100, Heal 100] == (-1) && journey [Fight 60, Fight 79] == 1 && journey [Fight 60, Fight 80] == (-1) && journey [Fight 60, Fight 81, Heal 100] == (-1)"
+        hints:
+          - text: "Check for the end of the expedition when an event's result reaches the death boundary."
+          - text: "Zero is already terminal. Continuing through later events would allow a forbidden revival."
+          - text: "After calculating nextHealth, choose between the terminal result and processing the rest. The terminal branch must not process later healing."
+    quiz:
+      title: "Step 9 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: advanced
+          question: "After `[Fight 60, Heal 1, Fight 3]`, what health should journey return?"
+          options: ["40", "38", "39", "-1"]
+          correct_index: 1
+          option_feedback:
+            0: "Healing from 40 to 41 leaves defensive mode. The next fight therefore subtracts the full three points."
+            2: "The final fight starts at 41, so its damage is not halved. Its result is 38."
+            3: "None of these events takes health to zero or below."
+          explanation: "The states are 100, 40, 41, and 38. Each event reads the mode implied by its starting health."
+        - type: single
+          difficulty: advanced
+          question: "Why would summing independent `eventDelta` results give the wrong simulator?"
+          options: ["Event constructors cannot hold numbers.", "List order is random in Haskell.", "An event's effect depends on prior state.", "Pure functions cannot return new state."]
+          correct_index: 2
+          option_feedback:
+            0: "The supplied constructors explicitly hold Integer values."
+            1: "The list's order is well-defined. The simulator must interpret events in that order."
+            3: "A pure function can accept a state and return a new one. It just does not mutate the original state."
+          explanation: "The same Fight or Travel has a different effect at different health levels. A simulator must carry state and respect the terminal condition."
+        - type: single
+          difficulty: intermediate
+          question: "Two calls to journey receive the same finite event list. What follows from its pure contract?"
+          options: ["They return the same result.", "The second starts at the first result.", "The second consumes no events.", "They update a shared hero record."]
+          correct_index: 0
+          option_feedback:
+            1: "Each journey starts from the specified 100 points; there is no stored result that changes the next call."
+            2: "The function does not mutate or consume the input list, so both calls receive the same data."
+            3: "The simulator's contract has no externally mutable hero state."
+          explanation: "The result is determined by the input and the fixed rules. Repeating the call does not change those rules or the input."
+    solution:
+      files:
+        - path: "Main.hs"
+          language: haskell
+          content: |
+            module Main where
+
+            data Event = Travel Integer | Fight Integer | Heal Integer
+              deriving (Eq, Show)
+
+            journey :: [Event] -> Integer
+            journey events = go 100 events
+              where
+                go hp [] = hp
+                go hp (event:rest) =
+                  let next = case event of
+                        Travel distance ->
+                          if hp <= 40 then hp else min 100 (hp + distance `div` 4)
+                        Fight damage ->
+                          hp - (if hp <= 40 then damage `div` 2 else damage)
+                        Heal amount -> min 100 (hp + amount)
+                  in if next <= 0 then -1 else go next rest
+
+            main :: IO ()
+            main = print (journey [Fight 60, Travel 40, Heal 1, Fight 3])
+      explanation: |
+        The helper carries health explicitly. Each constructor describes one state transition; the recursive call passes the resulting state forward. The mode decision reads hp before the event, and the death check happens before any later event is considered. The sample trace is 100, 40, 40, 41, 38. A fold with an absorbing terminal state can also satisfy the value contract; a plain sum cannot represent its state-dependent effects.

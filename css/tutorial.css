@@ -4016,6 +4016,73 @@ body.tutorial-layout #navnav .navbar-right > #tts-read-btn {
   height: 100%;
 }
 
+/* At high zoom or on a narrow screen, the navbar and pinned panel controls can
+   consume the entire viewport. Let the document carry the vertical scroll;
+   instructional text and quizzes grow with their content. Editors, terminals,
+   and previews retain text-relative working areas and their own content scroll.
+   Screen-only rules leave the dedicated print layout and desktop split intact. */
+@media screen and (max-width: 900px) {
+  html:has(body.tutorial-layout),
+  body.tutorial-layout {
+    height: auto;
+    min-height: 100%;
+    overflow: visible !important;
+  }
+
+  body.tutorial-layout #navnav {
+    position: relative !important;
+    margin-bottom: 0;
+  }
+
+  body.tutorial-layout .tutorial-page {
+    position: static !important;
+    overflow: visible;
+  }
+
+  body.tutorial-layout :is(.tutorial-page .container, #tutorial-container, .tvm-container) {
+    height: auto;
+    overflow: visible;
+  }
+
+  body.tutorial-layout :is(
+    .tvm-instructions-panel, .tvm-steps-view, .tvm-step-content-wrap,
+    .tvm-quiz-panel, .tvm-workspace, .tvm-editor-panel, .tvm-editor-body,
+    .tvm-editor-pane, .tvm-output-panel, .tvm-output-view,
+    .tvm-terminal-panel, .tvm-preview-panel, .tvm-runtime-panels, .tvm-runtime-panel
+  ) {
+    /* Override sizes left by desktop splitter drags when the viewport shrinks. */
+    flex: 0 0 auto !important;
+    height: auto;
+    min-width: 0;
+    overflow: visible;
+  }
+
+  body.tutorial-layout :is(.tvm-editor-body, .tvm-runtime-panels) {
+    flex-direction: column;
+  }
+
+  body.tutorial-layout :is(.tvm-step-content-wrap, .tvm-quiz-panel) {
+    padding-inline: 1em;
+  }
+
+  body.tutorial-layout :is(.tvm-editor-container, .tvm-terminal-container, .tvm-preview-container) {
+    flex: 0 0 auto;
+    height: 24em;
+    min-height: 24em;
+  }
+
+  body.tutorial-layout .tvm-output-container {
+    flex: 0 0 auto;
+    min-height: 8em;
+    overflow-y: visible;
+  }
+
+  /* These dividers resize viewport fractions; natural document flow has none. */
+  body.tutorial-layout :is(.tvm-hsplitter, .tvm-vsplitter, .tvm-editor-pane-divider) {
+    display: none !important;
+  }
+}
+
 
 /* ───────────────────────────────────────────
    Light Mode Overrides  (html:not(.dark-mode))

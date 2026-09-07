@@ -1,0 +1,982 @@
+# Course alignment: CS131 Intro to Functional Programming and Haskell v10,
+# slides 77–129, 162, 167, 169, 171–172, and 181–185; Homework Problems
+# ADVHASKELL1–4 and ADVHASKELL7, plus CTRL2 Part B. Exercises are original.
+# Pedagogical arc: distinguish transformations → bind behavior → compose it →
+# reduce data → reason about demand → choose a pipeline independently.
+title: "Haskell 2: Functions and Laziness"
+description: "An 80–100 minute interactive course for programmers who have completed Haskell 1 or can use lists, tuples, pattern matching, and recursion. Build higher-order functions, trace folds, and make lazy pipelines."
+learning_objectives:
+  - "Apply map and filter according to whether a task transforms or selects values."
+  - "Analyze lambda bindings, lexical scope, and the types of partially applied functions."
+  - "Compose compatible functions while preserving the intended order of operations."
+  - "Apply left and right folds with appropriate accumulator types and base values."
+  - "Analyze which parts of a lazy expression must be evaluated to produce a result."
+  - "Create a tested data-processing pipeline from an input and output contract."
+backend: haskell
+require_tests: true
+
+steps:
+  # Source: lecture slides 78–90; ADVHASKELL1 Part A and ADVHASKELL2 Part B.
+  # Pedagogy: PRIMM — contrast map/filter predictions, then combine known parts.
+  - title: "Map and Filter"
+    instructions: |
+      ### Why this matters
+
+      A lot of list recursion repeats the same walk through the list. Higher-order functions let us name that walk once and supply the part that changes: what to do with each item.
+
+      ### 🎯 You will learn to
+
+      - Analyze the difference between transforming values and selecting values.
+      - Apply `map` and `filter` to a score list without changing the original.
+
+      This is Part II of the Haskell course. You should be comfortable with functions, lists, tuples, and `(x:xs)` patterns. Allow about 80–100 minutes; after Function Composition is a good stopping point.
+
+      ### A Function as an Argument
+
+      A **higher-order function** accepts a function or returns a function. Haskell functions are **first-class values**: we can give them names, pass them around, and return them.
+
+      ```haskell
+      map    :: (a -> b)    -> [a] -> [b]
+      filter :: (a -> Bool) -> [a] -> [a]
+      ```
+
+      `map f` transforms every item with `f`. `filter p` keeps the original items for which predicate `p` returns `True`. Both preserve the order of the items they produce; neither changes the input list.
+
+      Two useful predicates: `even n` returns whether an integer is divisible by 2, and `null xs` returns whether a list is empty. Each returns a Boolean, so either can serve as the decision passed to `filter`.
+
+      ### Thinking Time!
+
+      The first two lines of `main` use the same predicate and the same input. Predict both outputs before selecting **Run**. Does `map even` produce even numbers, Boolean values, or an error?
+
+      After running, explain why one output has four items while the other has two. The function's result means “replacement value” to `map` and “keep this item?” to `filter`.
+
+      ### Your Turn
+
+      Fix `qualifiedScores`. It must keep scores **at least 10**, double each kept score, and return them in their original order. Keep repeated scores. For example, `[9,10,12]` should become `[20,24]`; an empty list should stay empty.
+
+      The named helpers already describe the two decisions. Combine them, then add a boundary example of your own to `main`. Before testing, explain which operation must see the original scores.
+    files:
+      - path: Main.hs
+        language: haskell
+        reseed: true
+        content: |
+          module Main where
+
+          qualifies :: Int -> Bool
+          qualifies score = score >= 10
+
+          doublePoints :: Int -> Int
+          doublePoints score = score * 2
+
+          qualifiedScores :: [Int] -> [Int]
+          qualifiedScores scores = map doublePoints scores
+
+          main :: IO ()
+          main = do
+            print (map even [1,2,3,4])
+            print (filter even [1,2,3,4])
+            print (qualifiedScores [9,10,12])
+    run_file: Main.hs
+    tests:
+      - description: "Only original scores at least 10 are doubled, preserving order and repeats"
+        command: |
+          qualifiedScores [] == [] && qualifiedScores [9,10,11] == [20,22] && qualifiedScores [15,-4,10,15,0] == [30,20,30] && qualifiedScores [1,4,9] == []
+        hints:
+          - title: "Two Different Questions"
+            text: "For each original score, first decide whether it belongs in the result. Only qualifying scores earn doubled points."
+          - title: "The Input to the Transformation"
+            text: "The list given to map should already contain only qualifying scores. The existing predicate expresses the boundary."
+          - title: "Nested Calls"
+            text: "The shape is `map transformation (filter predicate originalScores)`. Match each role to a helper in the file."
+    quiz:
+      title: "Step 1 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "What is `map null [[],[1],[2,3]]`?"
+          options:
+            - "`[True]`"
+            - "`[True,False,False]`"
+            - "`[False,True,True]`"
+          correct_index: 1
+          option_feedback:
+            0: "Map retains every function result, including False. It does not use those results to decide which output items to keep."
+            2: "Null returns True for the empty list and False for each nonempty list. This answer reverses that predicate."
+          explanation: "The three calls to null return True, False, and False. Map can change the element type: here it turns lists into Booleans."
+        - type: single
+          difficulty: intermediate
+          question: "A function should keep every name with more than four letters. Which type must its filter predicate have?"
+          options:
+            - "`String -> String`"
+            - "`String -> Bool`"
+            - "`String -> Int`"
+          correct_index: 1
+          option_feedback:
+            0: "That type describes a string transformation. Filter needs a decision about whether to keep the original string."
+            2: "Length returns a number, but filter still needs that number compared against the cutoff to obtain a Boolean."
+          explanation: "The predicate receives one name and returns a keep-or-drop decision. The output of filter still contains the original names."
+    solution:
+      files:
+        - path: Main.hs
+          language: haskell
+          content: |
+            module Main where
+
+            qualifies :: Int -> Bool
+            qualifies score = score >= 10
+
+            doublePoints :: Int -> Int
+            doublePoints score = score * 2
+
+            qualifiedScores :: [Int] -> [Int]
+            qualifiedScores scores = map doublePoints (filter qualifies scores)
+
+            main :: IO ()
+            main = do
+              print (map even [1,2,3,4])
+              print (filter even [1,2,3,4])
+              print (qualifiedScores [9,10,12])
+      explanation: |
+        Filter applies the cutoff to the original scores. Map then doubles exactly those scores. Reversing the operations would let a score such as 9 qualify after doubling. The predicate, transformation, and traversal have separate responsibilities.
+
+  # Source: lecture slides 102–110 and 171–172; ADVHASKELL3 Part A.
+  # Pedagogy: PRIMM — predict shadowing, investigate captures, then repair a closure.
+  - title: "Lambdas and Lexical Scope"
+    instructions: |
+      ### Why this matters
+
+      Sometimes the behavior passed to `map` is too small to need a separate name. Sometimes that behavior also needs a setting chosen earlier. Lambdas and closures handle both cases.
+
+      ### 🎯 You will learn to
+
+      - Analyze which binding a name refers to inside a lambda.
+      - Create a function that retains the settings supplied when it was created.
+
+      ### Small Functions, Right Where We Need Them
+
+      ```haskell
+      triple x = x * 3
+      -- The same transformation without a function name:
+      -- \x -> x * 3
+      ```
+
+      The backslash introduces a **lambda**, `x` is its parameter, and the expression after `->` is its result. For example, `map (\x -> x * 3) [2,4]` produces `[6,12]`.
+
+      A lambda can also use a name from its surrounding definition. In `makeScorer multiplier bonus = \score -> multiplier * score`, the inner function uses `multiplier` from outside its own parameters. A **closure** keeps a function together with the environment its free names need. A free name is a name used by the function but bound outside its own parameters or local definitions.
+
+      Haskell uses **lexical scope**: the definition's nesting determines those bindings. An inner parameter with the same spelling **shadows** an outer name. Capturing a binding does not force its value immediately; Haskell can evaluate it later when needed.
+
+      ### Thinking Time!
+
+      Predict `scopeProbe 99` from the starter. Does the lambda add 1 to 99 or to 7? Commit to a result, run it, and point to the binder for each occurrence of `outer`.
+
+      ### Your Turn
+
+      Fix `makeScorer` so that `makeScorer multiplier bonus` returns a function computing `multiplier * score + bonus`. For example, the scorer made with `2` and `3` maps `[0,4]` to `[3,11]`.
+
+      Store two differently configured scorers in local names in `main`, then call them on the same score. Explain why creating the second scorer cannot change the first one's settings. Keep `scopeProbe` as a reminder that a repeated name is not necessarily the same binding.
+    files:
+      - path: Main.hs
+        language: haskell
+        reseed: true
+        content: |
+          module Main where
+
+          scopeProbe :: Int -> Int
+          scopeProbe outer = (\outer -> outer + 1) 7
+
+          makeScorer :: Int -> Int -> (Int -> Int)
+          makeScorer multiplier bonus = \score -> multiplier * score
+
+          main :: IO ()
+          main = do
+            print (scopeProbe 99)
+            print (map (makeScorer 2 3) [0,4])
+    run_file: Main.hs
+    tests:
+      - description: "Each scorer uses its own multiplier and bonus for every supplied score"
+        command: |
+          let first = makeScorer 2 3; second = makeScorer 3 2 in map first [0,4,-2] == [3,11,-1] && map second [0,4,-2] == [2,14,-4] && first 4 == 11 && makeScorer 0 (-7) 8 == -7
+        hints:
+          - title: "The Missing Setting"
+            text: "Compare the result for score 0 with the required bonus. Multiplication alone cannot produce a nonzero result for that score."
+          - title: "Names from the Surrounding Definition"
+            text: "The returned function can refer to both multiplier and bonus. They are supplied by makeScorer; only score is supplied later."
+          - title: "The Scoring Rule"
+            text: "Keep the lambda's single score parameter. Its body must combine a scaled score with the other captured setting."
+    quiz:
+      title: "Step 2 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: |
+            What is `choose 40 6 9`?
+
+            ```haskell
+            choose x y = \x -> x + y
+            ```
+          options:
+            - "`46`"
+            - "`15`"
+            - "`49`"
+          correct_index: 1
+          option_feedback:
+            0: "The inner x shadows the first parameter. Applying the returned function to 9 binds its x to 9."
+            2: "The lambda captures y = 6. Its x comes from the later argument 9, not from the outer x = 40."
+          explanation: "The lambda uses its own x = 9 and the surrounding y = 6. The outer x = 40 is unused."
+        - type: single
+          difficulty: intermediate
+          question: |
+            What is the result of this expression?
+
+            ```haskell
+            let bonus = 3
+                addBonus = \x -> x + bonus
+            in let bonus = 100 in addBonus 4
+            ```
+          options:
+            - "`104`"
+            - "`7`"
+            - "A duplicate-binding error"
+          correct_index: 1
+          option_feedback:
+            0: "A caller's local name does not replace a free name's binding in an already defined function."
+            2: "The inner let creates a nested scope, so it may shadow the outer bonus without redefining that outer binding."
+          explanation: "The body of addBonus refers to bonus in its definition's scope, where it is 3. The inner bonus = 100 does not alter that binding."
+    solution:
+      files:
+        - path: Main.hs
+          language: haskell
+          content: |
+            module Main where
+
+            scopeProbe :: Int -> Int
+            scopeProbe outer = (\outer -> outer + 1) 7
+
+            makeScorer :: Int -> Int -> (Int -> Int)
+            makeScorer multiplier bonus = \score -> multiplier * score + bonus
+
+            main :: IO ()
+            main = do
+              print (scopeProbe 99)
+              let regular = makeScorer 2 3
+                  special = makeScorer 3 2
+              print (map regular [0,4])
+              print (map special [0,4])
+              print (regular 4)
+      explanation: |
+        The lambda's free names multiplier and bonus refer to the enclosing makeScorer invocation. Its score comes from a later application. The two scorers retain different immutable bindings, so evaluating special does not update regular. Scope depends on where the function is defined, not on where it is called.
+
+  # Source: lecture slides 113–128; ADVHASKELL4 Parts A–C and ADVHASKELL7.
+  # Pedagogy: contrast curried/tuple types, then repair an operand-order mistake.
+  - title: "Currying and Partial Application"
+    instructions: |
+      ### Why this matters
+
+      A function can be configured now and supplied its data later. Reading the remaining function type tells us exactly which arguments are still missing.
+
+      ### 🎯 You will learn to
+
+      - Analyze the type left after a function receives some of its arguments.
+      - Apply an operator section with the intended operand order.
+
+      ### One Argument at a Time
+
+      These two interfaces calculate the same ticket price, but receive their arguments differently:
+
+      ```haskell
+      ticketCost :: Int -> Int -> Int
+      ticketCost fee count = fee + 4 * count
+
+      pairCost :: (Int, Int) -> Int
+      pairCost (fee, count) = fee + 4 * count
+      ```
+
+      The arrow groups to the right: `Int -> Int -> Int` means `Int -> (Int -> Int)`. Application groups to the left: `ticketCost 2 3` means `(ticketCost 2) 3`. So `ticketCost 2` is a function awaiting a count. This is **partial application**. The curried interface makes it possible; `pairCost` instead expects one complete pair.
+
+      **Currying** represents a multiple-input operation as successive single-argument functions. Haskell's `ticketCost fee count = ...` already has curried form. The built-ins `curry pairCost` and `uncurry ticketCost` convert between these interfaces.
+
+      ### Thinking Time!
+
+      An operator in parentheses is a function: `(+) 2 5` is 7. A **section** fixes an operand: `(* 3)` multiplies its argument by 3, while `(10 -)` subtracts its argument from 10.
+
+      Predict `map (10 -) [2,12]` before running. Are the results `[8,-2]` or `[-8,2]`? Explain which operand is already fixed.
+
+      ### Your Turn
+
+      Fix `discountAll amount scores` to subtract `amount` from **each score**. Keep the order and repeats; do not clamp negative results. For example, discounting `[2,12]` by 10 should produce `[-8,2]`.
+
+      Keep its curried interface so that `discountAll 10` can be reused as a list transformation. One syntax wrinkle: `(-10)` is the number negative ten, not a subtract-ten function. A lambda or the built-in `subtract 10` expresses that function. `subtract amount score` means `score - amount`.
+
+      Add a call that passes `discountAll 3` directly to `map` over a list of score lists. Determine its type before running.
+    files:
+      - path: Main.hs
+        language: haskell
+        reseed: true
+        content: |
+          module Main where
+
+          ticketCost :: Int -> Int -> Int
+          ticketCost fee count = fee + 4 * count
+
+          pairCost :: (Int, Int) -> Int
+          pairCost (fee, count) = fee + 4 * count
+
+          discountAll :: Int -> [Int] -> [Int]
+          discountAll amount scores = map (amount -) scores
+
+          main :: IO ()
+          main = do
+            print (ticketCost 2 3, pairCost (2,3))
+            print (curry pairCost 2 3, uncurry ticketCost (2,3))
+            print (map (10 -) [2,12])
+            print (discountAll 10 [2,12])
+    run_file: Main.hs
+    tests:
+      - description: "A configured discount subtracts from each score without reversing operands"
+        command: |
+          let discount = discountAll 10 in discount [2,12] == [-8,2] && discount [] == [] && discount [10,10,-2] == [0,0,-12] && discountAll 0 [3,-1] == [3,-1] && discountAll (-2) [0,3] == [2,5]
+        hints:
+          - title: "Which Value Loses Points?"
+            text: "A score of 12 discounted by 10 becomes 2. Decide which value belongs before the subtraction sign."
+          - title: "A Transformation Awaiting a Score"
+            text: "Map needs a function from one original score to one discounted score. The amount is already known outside that function."
+          - title: "A Named Operand"
+            text: "Try giving the lambda parameter the name score. Write the arithmetic rule using score and amount in their required roles."
+    quiz:
+      title: "Step 3 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "Given `award :: Int -> Int -> [Int] -> [Int]`, what is the type of `award 2`?"
+          options:
+            - "`(Int, [Int]) -> [Int]`"
+            - "`Int -> [Int] -> [Int]`"
+            - "`[Int] -> [Int]`"
+          correct_index: 1
+          option_feedback:
+            0: "The original curried interface does not turn the remaining arguments into a tuple. Its arrows stay in place."
+            2: "Only one Int argument has been supplied. The second Int argument is still needed before the list argument."
+          explanation: "Applying a function to one argument removes the first input arrow from its type. Award 2 still takes an Int and then a list."
+        - type: single
+          difficulty: intermediate
+          question: "Which function keeps numbers strictly greater than 5?"
+          options:
+            - "`filter (5 >)`"
+            - "`filter (> 5)`"
+            - "`filter (>= 5)`"
+          correct_index: 1
+          option_feedback:
+            0: "This tests 5 > x, keeping numbers below 5. A section retains the operator's operand positions."
+            2: "This also keeps 5. Strictly greater excludes the boundary value itself."
+          explanation: "The section (> 5) is equivalent to a function that takes x and evaluates x > 5."
+    solution:
+      files:
+        - path: Main.hs
+          language: haskell
+          content: |
+            module Main where
+
+            ticketCost :: Int -> Int -> Int
+            ticketCost fee count = fee + 4 * count
+
+            pairCost :: (Int, Int) -> Int
+            pairCost (fee, count) = fee + 4 * count
+
+            discountAll :: Int -> [Int] -> [Int]
+            discountAll amount scores = map (\score -> score - amount) scores
+
+            main :: IO ()
+            main = do
+              print (ticketCost 2 3, pairCost (2,3))
+              print (curry pairCost 2 3, uncurry ticketCost (2,3))
+              print (map (10 -) [2,12])
+              print (discountAll 10 [2,12])
+              print (map (discountAll 3) [[4,7],[1]])
+      explanation: |
+        The lambda captures amount and awaits a score. `discountAll amount = map (subtract amount)` is an equivalent definition. After `discountAll 3`, the remaining type is `[Int] -> [Int]`; mapping that function over `[[Int]]` produces `[[Int]]`.
+
+  # Source: higher-order pipeline tasks in ADVHASKELL1 Part B; composition
+  # notation extends the course's function-composition idea (lecture slide 4).
+  # Pedagogy: mistake-based familiarization — expose an order-sensitive pipeline.
+  - title: "Function Composition"
+    instructions: |
+      ### Why this matters
+
+      Small transformations become more useful when their outputs connect to one another. Composition lets the code show that connection, while types help us check whether the pieces fit.
+
+      ### 🎯 You will learn to
+
+      - Analyze the order of operations in a composed function.
+      - Apply composition and `$` without changing which values qualify.
+
+      ### Functions That Fit Together
+
+      ```haskell
+      countEvens = length . filter even
+      -- countEvens xs means length (filter even xs)
+      ```
+
+      The **composition operator** `(.)` builds a new function: `(f . g) x = f (g x)`. Read the data transformation from the rightmost function toward the left. Its type is `(b -> c) -> (a -> b) -> a -> c`: the output type of `g` must be the input type of `f`.
+
+      The **application operator** `($)` applies a function with very low precedence: `f $ expression` means `f (expression)`. For example, `sum $ map (* 2) [1,2]` means `sum (map (* 2) [1,2])`. A dot connects functions; a dollar applies a function to the value expression that follows. Neither operator makes a program eager.
+
+      Here `sum` adds the numbers in a finite list, with `sum [] = 0`. Another list transformation, `reverse`, puts a finite list's items in reverse order: `reverse [1,2,3]` is `[3,2,1]`.
+
+      ### Thinking Time!
+
+      In the starter, `bonusTotal` adds 3, keeps results at least 10, and sums them. Predict its result for `[8,10,12]`. Does the original score 8 contribute anything? Write the intermediate list after each transformation, then run.
+
+      ### Your Turn
+
+      Repair `bonusTotal`. The rule is: select **original scores at least 10**, add 3 to each selected score, and return their sum. Thus `[8,10,12]` must produce 28. Repeated scores contribute separately, and no qualifying scores means a total of 0.
+
+      Rearrange the existing functions into the needed composition. Then write an equivalent expression in a comment using parentheses, and another using `$`. Explain why changing parentheses for `$` leaves the computation unchanged while changing the order of `map` and `filter` does not.
+    files:
+      - path: Main.hs
+        language: haskell
+        reseed: true
+        content: |
+          module Main where
+
+          countEvens :: [Int] -> Int
+          countEvens = length . filter even
+
+          bonusTotal :: [Int] -> Int
+          bonusTotal = sum . filter (>= 10) . map (+ 3)
+
+          main :: IO ()
+          main = do
+            print (countEvens [1,2,4])
+            print (sum $ map (* 2) [1,2])
+            print (bonusTotal [8,10,12])
+    run_file: Main.hs
+    tests:
+      - description: "The bonus is awarded only after qualification on the original score"
+        command: |
+          bonusTotal [8,10,12] == 28 && bonusTotal [7,8,9,10,11] == 27 && bonusTotal [] == 0 && bonusTotal [0,-5,9] == 0 && bonusTotal [10,10] == 26
+        hints:
+          - title: "The Score Before the Bonus"
+            text: "The eligibility rule mentions the original score. A score of 8 must not earn a bonus that makes it eligible."
+          - title: "The First Function to Receive Data"
+            text: "In f . g, g receives the input. Start at the right edge and follow what each function returns."
+          - title: "A Three-Stage Route"
+            text: "Write a nested version with selection inside transformation inside aggregation. Translate each nesting boundary to composition after the nesting makes sense."
+    quiz:
+      title: "Step 4 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "What does `(reverse . take 2) [1,2,3]` return?"
+          options:
+            - "`[3,2]`"
+            - "`[2,1]`"
+            - "`[3,2,1]`"
+          correct_index: 1
+          option_feedback:
+            0: "That result reverses the whole input before taking two. The composition passes the input to take 2 first."
+            2: "The take 2 stage discards the third item before reverse receives a list."
+          explanation: "The expression is reverse (take 2 [1,2,3]). Taking two gives [1,2], and reversing that gives [2,1]."
+        - type: single
+          difficulty: intermediate
+          question: "Given `f :: String -> Int` and `g :: Int -> Bool`, what is the type of `g . f`?"
+          options:
+            - "`String -> Bool`"
+            - "`Int -> Int`"
+            - "`Bool -> String`"
+          correct_index: 0
+          option_feedback:
+            1: "Int is the intermediate connection between the functions. It is neither the pipeline's starting type nor its result type."
+            2: "Composition does not reverse either function. Data still travels from a String through f and then through g."
+          explanation: "F turns the String input into an Int that g accepts. G returns the final Bool."
+    solution:
+      files:
+        - path: Main.hs
+          language: haskell
+          content: |
+            module Main where
+
+            countEvens :: [Int] -> Int
+            countEvens = length . filter even
+
+            bonusTotal :: [Int] -> Int
+            bonusTotal = sum . map (+ 3) . filter (>= 10)
+
+            main :: IO ()
+            main = do
+              print (countEvens [1,2,4])
+              print (sum $ map (* 2) [1,2])
+              print (bonusTotal [8,10,12])
+              print (sum (map (+ 3) (filter (>= 10) [8,10,12])))
+              print (sum $ map (+ 3) $ filter (>= 10) [8,10,12])
+      explanation: |
+        The filter receives the original list and returns [10,12]. The map returns [13,15], and sum returns 28. The dot form describes a reusable function. The other forms apply those functions to a particular list; their grouping specifies the same dependencies.
+
+  # Source: lecture slides 91–99, 162, and 167; ADVHASKELL1 Part A.3.
+  # Pedagogy: worked example with fading — trace a reducer, derive an invariant.
+  - title: "Left Folds"
+    instructions: |
+      ### Why this matters
+
+      Some list tasks carry a result forward as each item is incorporated. A fold makes that accumulating rule explicit and gives the empty input a deliberate meaning.
+
+      ### 🎯 You will learn to
+
+      - Analyze a left fold by expanding its accumulator updates.
+      - Create a reducer whose accumulator represents the prefix processed so far.
+
+      ### A Result Built from a Prefix
+
+      ```haskell
+      foldl :: (b -> a -> b) -> b -> [a] -> b
+      -- foldl step seed [x,y] = step (step seed x) y
+      ```
+
+      The reducer takes the **accumulator first**, then an item, and returns the next accumulator. Its type `b` can differ from the element type `a`. For example, a fold could consume characters and build an integer count.
+
+      For a concrete sum, `foldl (+) 0 [4,6]` expands to `(0 + 4) + 6`. For an empty list, the result is just the seed `0`. These are equations about grouping; they do not claim that every intermediate value is evaluated immediately.
+
+      ### Thinking Time!
+
+      Predict `foldl (-) 20 [3,2]`. Is it `(20 - 3) - 2`, or `20 - (3 - 2)`? Expand the expression before running the starter. Addition hides this distinction; subtraction exposes it.
+
+      ### Your Turn
+
+      Fix `digitsToNumber` to turn a finite list of decimal digits into its integer value. Inputs contain only digits 0 through 9. `[3,0,7]` means 307, leading zeroes are allowed, and `[]` means 0. The result type is `Integer`, so large results do not wrap like a bounded `Int`.
+
+      Derive the reducer from this invariant: **the accumulator is the number represented by the prefix already consumed**. If that prefix represents 30, what must happen when the next digit is 7? Change the reducer, then write the accumulator values for `[1,0,2]` in a comment before testing.
+
+      Retrieval pause: why does `map` alone not produce this one-number result? Explain using the type of `map` from memory before revisiting Step 1.
+    files:
+      - path: Main.hs
+        language: haskell
+        reseed: true
+        content: |
+          module Main where
+
+          digitsToNumber :: [Integer] -> Integer
+          digitsToNumber = foldl (\acc digit -> acc + digit) 0
+
+          main :: IO ()
+          main = do
+            print (foldl (-) 20 [3,2] :: Int)
+            print (digitsToNumber [3,0,7])
+    run_file: Main.hs
+    tests:
+      - description: "Decimal digits accumulate by place value, including zeroes and large integers"
+        command: |
+          digitsToNumber [] == 0 && digitsToNumber [7] == 7 && digitsToNumber [3,0,7] == 307 && digitsToNumber [0,0,4,2] == 42 && digitsToNumber [1,0,2] == 102 && digitsToNumber [1,2,3,4,5,6,7,8,9,0,1,2,3,4,5,6,7,8,9,0] == 12345678901234567890
+        hints:
+          - title: "The Meaning of the Accumulator"
+            text: "After reading [3,0], the accumulator should be 30, not 3. Treat it as a decimal number already built from the prefix."
+          - title: "Space for the Next Digit"
+            text: "Appending one decimal digit moves every existing digit one place to the left. Then the new digit occupies the units place."
+          - title: "Two Arithmetic Operations"
+            text: "The reducer needs a multiplication on acc followed by an addition of digit. Choose the multiplier from the number system's base."
+    quiz:
+      title: "Step 5 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "Which seed lets `foldl (*) seed` reproduce the number in every one-element list?"
+          options:
+            - "`0`"
+            - "`1`"
+            - "The first list item"
+          correct_index: 1
+          option_feedback:
+            0: "Zero makes every product zero. It is the identity for addition, not multiplication."
+            2: "Using the first item as the seed while also processing it in the list would multiply that item twice."
+          explanation: "One times x is x, so a seed of 1 preserves every single-item product. It also supplies the conventional empty product."
+        - type: single
+          difficulty: intermediate
+          question: "Earlier we used map and filter separately. What is `length (map even [2,3,4])`?"
+          options:
+            - "`2`"
+            - "`3`"
+            - "`1`"
+          correct_index: 1
+          option_feedback:
+            0: "Two input values are even, but map keeps all three Boolean results. Filter even would produce two items."
+            2: "There is one odd value, but the predicate's truth value does not decide list length for map."
+          explanation: "Map produces [True,False,True], which has three items. A reduction should start from the right list transformation."
+    solution:
+      files:
+        - path: Main.hs
+          language: haskell
+          content: |
+            module Main where
+
+            digitsToNumber :: [Integer] -> Integer
+            digitsToNumber = foldl (\acc digit -> acc * 10 + digit) 0
+
+            main :: IO ()
+            main = do
+              print (foldl (-) 20 [3,2] :: Int)
+              print (digitsToNumber [3,0,7])
+              -- For [1,0,2], accumulator values are 0, 1, 10, 102.
+      explanation: |
+        Multiplying the accumulated prefix by 10 shifts its digits one decimal position. Adding the next digit extends that prefix. The seed 0 handles both the empty list and leading zeroes. A recursive helper carrying the same accumulator is an equivalent solution.
+
+  # Source: lecture slides 162, 167, 169, and 181–185; ADVHASKELL1/2 folds.
+  # Pedagogy: Variation Theory — same list/operator, different grouping; transfer
+  # from numeric reduction to a polymorphic list result.
+  - title: "Right Folds"
+    instructions: |
+      ### Why this matters
+
+      Choosing a fold is partly a choice about how results fit together. A right fold exposes the current item and the folded remainder, a shape that often matches recursive list construction.
+
+      ### 🎯 You will learn to
+
+      - Analyze the argument order and grouping of `foldr`.
+      - Apply a fold that combines nested lists while preserving their order.
+
+      ### The Item and the Folded Remainder
+
+      ```haskell
+      foldr :: (a -> b -> b) -> b -> [a] -> b
+      -- foldr step seed [x,y] = step x (step y seed)
+      ```
+
+      Here the reducer takes the **item first**, then the folded remainder. Compare this with `foldl`, whose reducer receives the accumulator first. For `foldr (:) [] [4,6]`, expansion gives `4 : (6 : [])`: the original order is preserved.
+
+      “Right fold” describes this right-associated expression. It does **not** promise that Haskell must evaluate the last item first. The reducer decides what it needs; the next step explores why that matters.
+
+      ### Thinking Time!
+
+      Predict both subtraction results in `main`. Write their parentheses before doing arithmetic. Will changing only `foldl` to `foldr` preserve the result? Run and compare your expansions.
+
+      ### Your Turn
+
+      Fix `stitch` so it combines a finite list of lists into one list, retaining both the outer order and the order inside each list. For example, `[[1,2],[],[3,1]]` becomes `[1,2,3,1]`. Empty inner lists contribute no items; an empty outer list returns `[]`.
+
+      Its polymorphic type `[[a]] -> [a]` means the same function must work for integers, characters, or any other element type. No comparison or arithmetic on the elements is required.
+
+      Use the right-fold expansion to decide how `++` can combine one current sublist with the already stitched remainder. The checks accept equivalent implementations; explain the grouping of your solution rather than guessing which fold name will pass.
+    files:
+      - path: Main.hs
+        language: haskell
+        reseed: true
+        content: |
+          module Main where
+
+          stitch :: [[a]] -> [a]
+          stitch = foldl (\acc part -> part ++ acc) []
+
+          main :: IO ()
+          main = do
+            print (foldl (-) 0 [1,2,3] :: Int)
+            print (foldr (-) 0 [1,2,3] :: Int)
+            print (stitch [[1,2],[],[3,1]] :: [Int])
+    run_file: Main.hs
+    tests:
+      - description: "Stitch preserves outer and inner order for any element type"
+        command: |
+          stitch ([[1,2],[],[3,1]] :: [[Int]]) == [1,2,3,1] && stitch ([] :: [[Int]]) == [] && stitch ([[],[]] :: [[Int]]) == [] && stitch [[True,False],[False]] == [True,False,False] && stitch ["go"," ","team"] == "go team"
+        hints:
+          - title: "Two Orders to Preserve"
+            text: "The items from the first inner list must appear before all items from later inner lists. The starter prepends later lists to the accumulated result."
+          - title: "Current Part, Then Remainder"
+            text: "With foldr, the reducer receives one current sublist followed by the combined remainder. Keep those roles in that order when concatenating."
+          - title: "An Empty Combined Remainder"
+            text: "Expand the shape `foldr combine [] [part1,part2]`. Choose the existing list operation that places every item of part1 before the result for part2."
+    quiz:
+      title: "Step 6 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "Which expression is the expansion of `foldr (-) 10 [3,2]`?"
+          options:
+            - "`(10 - 3) - 2`"
+            - "`3 - (2 - 10)`"
+            - "`(3 - 2) - 10`"
+          correct_index: 1
+          option_feedback:
+            0: "This is the left-fold expansion: seed first, then successive items. Foldr places each item before its folded remainder."
+            2: "Foldr groups the expression to the right. Combining 3 and 2 first changes the subtraction."
+          explanation: "The first reducer call has 3 as its first argument and the fold of [2] as its second. That remainder is 2 - 10."
+        - type: single
+          difficulty: intermediate
+          question: "Why can the same `stitch :: [[a]] -> [a]` work for integer lists and Boolean lists?"
+          options:
+            - "It joins lists without comparing their items."
+            - "Its input lists may freely mix unrelated element types."
+            - "Its type variable permits only numeric items."
+          correct_index: 0
+          option_feedback:
+            1: "Within one call, all the inner lists share the same element type a. Different calls may choose different types."
+            2: "The type variable is not limited to numbers. The same structural operation can join lists of many element types."
+          explanation: "The implementation combines list structure without using arithmetic or Boolean operations on its elements. Its element type can therefore vary between calls."
+    solution:
+      files:
+        - path: Main.hs
+          language: haskell
+          content: |
+            module Main where
+
+            stitch :: [[a]] -> [a]
+            stitch = foldr (++) []
+
+            main :: IO ()
+            main = do
+              print (foldl (-) 0 [1,2,3] :: Int)
+              print (foldr (-) 0 [1,2,3] :: Int)
+              print (stitch [[1,2],[],[3,1]] :: [Int])
+      explanation: |
+        The expansion is `[1,2] ++ ([] ++ ([3,1] ++ []))`, preserving both orders. A recursive `stitch (part:rest) = part ++ stitch rest` with an empty-list base case has the same structure. The subtraction examples give -6 for foldl and 2 for foldr; matching addition results alone would conceal their different grouping.
+
+  # Source: lecture slides 8, 41, 54, and 181; HASKELL8 and CTRL2 Part B.
+  # Pedagogy: PRIMM — finite demand prediction, bounded infinite-list practice,
+  # and spaced retrieval of predicate and fold semantics.
+  - title: "Lazy Lists"
+    instructions: |
+      ### Why this matters
+
+      An unbounded stream can still answer a finite question. To use it safely, we need to reason about what the consumer demands, not just whether the input looks infinite.
+
+      ### 🎯 You will learn to
+
+      - Analyze whether obtaining a result needs an entire list or only a prefix.
+      - Create a bounded selection that works on finite and infinite lists.
+
+      ### Demand Drives Evaluation
+
+      Haskell is **lazy**: it evaluates expressions when their values are needed. `[1..]` describes an unbounded list, while `take 3 [1..]` only needs `[1,2,3]`. Printing the entire unbounded list or computing its length cannot finish.
+
+      A list's first item and its tail are separate demands. `error "message"` raises an exception if its value is demanded. We can deliberately put one in an unused tail to check our reasoning.
+
+      ### Thinking Time!
+
+      Predict `head (7 : error "tail demanded")`. Does it return 7 or raise the exception? Explain which part `head` needs, then run the starter.
+
+      In contrast, `length (7 : error "tail demanded")` needs the tail. Keep that contrast in your notes; the starter runs the bounded example.
+
+      ### Your Turn
+
+      Fix `firstMatches n predicate items`. It must return up to the first `n` matching items in input order. It must stop once it has enough matches, even when the input continues forever. For `n <= 0`, return `[]` without inspecting the input. If a finite input runs out, return the matches found so far.
+
+      For example, `firstMatches 3 even [1..]` should produce `[2,4,6]`. A finite input `[1,2,3]` only has one even item, so requesting three gives `[2]`.
+
+      Decide whether the bound applies before or after selection. Then test a prefix whose unused tail is `error "too far"`. Needing no more matching items should also mean needing no more input.
+
+      ### Folds and Demand
+
+      `foldr (\x rest -> x == 3 || rest) False [1..]` can return `True`: when it reaches 3, `||` needs no remainder. A right fold with `(+)` still needs every item to return a sum. Both `foldl` and its stricter relative `foldl'`, available from `Data.List`, need the end of the list to return a final accumulator. For large finite numeric reductions, `foldl'` helps avoid deferred accumulator arithmetic; strictness does not make an infinite input finish.
+
+      A finite requested output is not a guarantee of termination either: searching `[1..]` for a negative number will never find its first match.
+    files:
+      - path: Main.hs
+        language: haskell
+        reseed: true
+        content: |
+          module Main where
+
+          firstMatches :: Int -> (a -> Bool) -> [a] -> [a]
+          firstMatches n predicate items = take n items
+
+          main :: IO ()
+          main = do
+            print (head (7 : error "tail demanded") :: Int)
+            print (firstMatches 3 even [1..] :: [Integer])
+            print (foldr (\x rest -> x == 3 || rest) False [1..] :: Bool)
+    run_file: Main.hs
+    tests:
+      - description: "Selection returns the requested matching prefix and stops before unused input"
+        command: |
+          firstMatches 3 even ([1..] :: [Integer]) == [2,4,6] && firstMatches 3 even [1,2,3] == [2] && firstMatches 2 even [1,2,4,6] == [2,4] && firstMatches 0 even (error "input demanded" :: [Int]) == [] && firstMatches (-1) even (error "input demanded" :: [Int]) == [] && firstMatches 2 even (2 : 4 : error "tail demanded") == [2,4] && firstMatches 2 null ["go","","team",""] == ["",""]
+        hints:
+          - title: "A Bound on Matches"
+            text: "The requested count describes matching results, not input positions. The first three input numbers contain fewer than three even numbers."
+          - title: "The Consumer of the Selected List"
+            text: "Filter describes which items to keep. Take describes how much of that filtered result is needed. Decide which should receive the other's output."
+          - title: "A Zero Demand"
+            text: "The shape is `take count selectedItems`. Take handles zero and negative counts without demanding selectedItems; let that behavior carry the stopping rule."
+    quiz:
+      title: "Step 7 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "Which expression can produce a complete finite result?"
+          options:
+            - "`take 3 (filter even [1..])`"
+            - "`filter even (reverse [1..])`"
+            - "`take 3 (filter (< 0) [1..])`"
+          correct_index: 0
+          option_feedback:
+            1: "Reverse needs the end of its input before it can produce its first output item. This input has no end."
+            2: "Take limits how many matches are wanted, but the predicate never finds even one negative number in this input."
+          explanation: "The even-number search reaches 2, 4, and 6 after finite work. Take then needs no further input."
+        - type: single
+          difficulty: intermediate
+          question: "What allows a right fold to finish on some infinite lists?"
+          options:
+            - "It first reverses the input list."
+            - "Its reducer can ignore the remainder."
+            - "It always evaluates its seed first."
+          correct_index: 1
+          option_feedback:
+            0: "Reversing an infinite list cannot produce a first item. Foldr expands from the front without reversing its input."
+            2: "The seed may never be reached. A short-circuiting reducer can obtain its result before the base case."
+          explanation: "A reducer such as a short-circuiting Boolean operation may return a result without demanding the folded remainder. A reducer that needs the entire remainder does not get this benefit."
+    solution:
+      files:
+        - path: Main.hs
+          language: haskell
+          content: |
+            module Main where
+
+            firstMatches :: Int -> (a -> Bool) -> [a] -> [a]
+            firstMatches n predicate items = take n (filter predicate items)
+
+            main :: IO ()
+            main = do
+              print (head (7 : error "tail demanded") :: Int)
+              print (firstMatches 3 even [1..] :: [Integer])
+              print (foldr (\x rest -> x == 3 || rest) False [1..] :: Bool)
+              print (firstMatches 2 even (2 : 4 : error "too far"))
+      explanation: |
+        Take consumes only the needed prefix of filter's output. Filter inspects enough input to produce those matches; it does not build an entire intermediate list first. For a nonpositive count, take returns [] without demanding the filtered list. Reversing the order to filter after take would limit input positions and could miss required matches.
+
+  # Source: ADVHASKELL1 pipeline interpretation, ADVHASKELL2 higher-order
+  # reasoning, and ADVHASKELL7 type relationships. The report task is original.
+  # Pedagogy: faded scaffolding — independent mixed transfer and later retrieval.
+  - title: "The Playlist Report"
+    instructions: |
+      ### Why this matters
+
+      A new problem rarely arrives labeled “use filter” or “use a fold.” The next step is to choose operations from the contract and explain how their parts fit together.
+
+      ### 🎯 You will learn to
+
+      - Create a pipeline that selects, transforms, and aggregates structured data.
+      - Evaluate a solution using boundary examples and type relationships.
+
+      ### The Contract
+
+      `playlistReport minimumScore bonus tracks` receives a finite list of `(title, score)` pairs and returns `(selectedTitles, totalPoints)`.
+
+      - Select tracks whose **original score is at least minimumScore**.
+      - Return selected titles in their input order. Repeated titles remain repeated.
+      - Add `bonus` to each selected score and sum those adjusted scores.
+      - With no selected tracks, return `([], 0)`. Scores, cutoffs, and bonuses can be negative.
+
+      ### Thinking Time!
+
+      For a cutoff of 10 and a bonus of 3, predict the report for `[("Intro",8),("Loop",10),("Loop",12)]`. Should the repeated title appear once or twice? Should the score 8 receive a bonus that makes it eligible?
+
+      Write the exact expected pair in a comment. The starter currently returns an empty report; run it to see the gap before implementing your design.
+
+      ### Your Turn
+
+      Implement `playlistReport` using the techniques you can now choose among. The signature and a sample input are provided; the decomposition is yours. A tuple pattern such as `(title, score)` lets a helper access both fields. Alternatively, `fst` and `snd` obtain the first and second components of a pair.
+
+      Before selecting **Test My Work**, add two examples to `main`: one that would expose a wrong cutoff boundary, and one that would expose counting each title only once. Add a short comment explaining the types between your chosen stages and why no input binding changes.
+
+      ### A Later Retrieval Check
+
+      Tomorrow, close these instructions and rebuild the report from its contract. Replace the domain with `(snack, price)` pairs and a maximum-price rule. Explain which parts change and which list-processing patterns stay the same.
+
+      For one final type connection, reason about `twice f x = f (f x)`: the result of the inner `f` is an input to the outer `f`. That relationship forces `f` to consume and produce the same type. The last knowledge check asks you to use that connection.
+    files:
+      - path: Main.hs
+        language: haskell
+        reseed: true
+        content: |
+          module Main where
+
+          playlistReport :: Int -> Int -> [(String, Int)] -> ([String], Int)
+          playlistReport minimumScore bonus tracks = ([], 0)
+
+          main :: IO ()
+          main = print (playlistReport 10 3 [("Intro",8),("Loop",10),("Loop",12)])
+    run_file: Main.hs
+    tests:
+      - description: "Selected titles preserve the cutoff boundary, order, and repeated occurrences"
+        command: |
+          fst (playlistReport 10 3 [("Intro",8),("Loop",10),("Loop",12)]) == ["Loop","Loop"] && fst (playlistReport 5 20 [("last",6),("skip",4),("first",5)]) == ["last","first"] && fst (playlistReport (-2) 0 [("a",-3),("b",-2),("c",0)]) == ["b","c"] && fst (playlistReport 10 0 []) == []
+        hints:
+          - title: "A Decision About the Whole Track"
+            text: "Eligibility depends on the score, but the result still needs each selected title. Keep the pairs together during selection."
+          - title: "The Original Score"
+            text: "A predicate can unpack (title, score) and compare score with minimumScore. Do this before applying any bonus."
+          - title: "Two Views of One Selection"
+            text: "Name the selected list in a let or where binding. One result component can project its titles, while the other can use its scores."
+      - description: "Total points include every selected occurrence and its bonus, including negative values"
+        command: |
+          snd (playlistReport 10 3 [("Intro",8),("Loop",10),("Loop",12)]) == 28 && snd (playlistReport 5 20 [("last",6),("skip",4),("first",5)]) == 51 && snd (playlistReport (-2) (-3) [("a",-3),("b",-2),("c",0)]) == -8 && playlistReport 10 5 [] == ([],0) && playlistReport 10 5 [("skip",9)] == ([],0)
+        hints:
+          - title: "A Bonus for Each Selection"
+            text: "For two selected tracks, the bonus contributes twice. For no selected tracks, it contributes nothing."
+          - title: "Transformation Followed by Aggregation"
+            text: "Either transform selected scores and sum them, or use a fold that accumulates each adjusted score. Both describe the required total."
+          - title: "The Empty Report"
+            text: "Trace your chosen total on an empty selected list. Its base result must be zero; no bonus should be added outside the per-track calculation."
+    quiz:
+      title: "Step 8 — Knowledge Check"
+      min_score: 0.8
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: "Which test best distinguishes an inclusive cutoff from an accidentally strict cutoff?"
+          options:
+            - "A track exactly at the cutoff"
+            - "A track far above the cutoff"
+            - "A track far below the cutoff"
+          correct_index: 0
+          option_feedback:
+            1: "Both > and >= keep a score far above the cutoff, so that example cannot expose this particular error."
+            2: "Both > and >= reject a score far below the cutoff. They disagree at equality."
+          explanation: "At the boundary, >= includes the track and > excludes it. A focused example separates the two candidate rules."
+        - type: single
+          difficulty: advanced
+          question: "Which is the most general type of `applyThen f g x = g (f (f x))`?"
+          options:
+            - "`(a -> b) -> (b -> c) -> a -> c`"
+            - "`(a -> a) -> (a -> b) -> a -> b`"
+            - "`(a -> a) -> (a -> a) -> a -> a`"
+          correct_index: 1
+          option_feedback:
+            0: "The inner result is passed back into the same f. Its result type must therefore match its argument type, rather than being an unrelated b."
+            2: "G is applied only once, so it may change the type. Requiring its output to match its input would be unnecessarily restrictive."
+          explanation: "The repeated f calls require f :: a -> a. G then receives an a and may return a different type b, giving the whole function its final result type."
+        - type: single
+          difficulty: intermediate
+          question: "To get the first two qualifying tracks from an infinite input, which design can finish when those tracks occur after a finite prefix?"
+          options:
+            - "Filter, then take two"
+            - "Sort all tracks, then filter"
+            - "Count all tracks, then take two"
+          correct_index: 0
+          option_feedback:
+            1: "Sorting the entire unbounded input cannot finish before producing a globally ordered result. The contract only needs the first qualifying occurrences."
+            2: "Counting every track requires reaching the end of the input. An unbounded list has no end to reach."
+          explanation: "Filtering can produce matching items incrementally, and take can stop after consuming two. This extends the lazy selection pattern from the previous step."
+    solution:
+      files:
+        - path: Main.hs
+          language: haskell
+          content: |
+            module Main where
+
+            playlistReport :: Int -> Int -> [(String, Int)] -> ([String], Int)
+            playlistReport minimumScore bonus tracks = (titles, total)
+              where
+                selected = filter (\(_, score) -> score >= minimumScore) tracks
+                titles = map fst selected
+                total = sum (map (\(_, score) -> score + bonus) selected)
+
+            main :: IO ()
+            main = do
+              print (playlistReport 10 3 [("Intro",8),("Loop",10),("Loop",12)])
+              print (playlistReport 5 20 [("last",6),("skip",4),("first",5)])
+              print (playlistReport (-2) (-3) [("a",-3),("b",-2),("c",0)])
+      explanation: |
+        Selected has type [(String, Int)]. Projecting fst gives [String]; transforming each selected score gives [Int], which sum reduces to Int. Selection uses the original score, and each occurrence contributes its own bonus. All definitions describe new values; none changes tracks. A single fold returning a pair of accumulators can also satisfy the contract, provided it preserves the specified title order.

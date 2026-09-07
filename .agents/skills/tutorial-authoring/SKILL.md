@@ -548,6 +548,9 @@ remove entries by hand. Things to know:
 - [ ] Open the live tutorial in a browser. Every step's tests pass for
       the intended solution and fail for at least one plausible wrong
       solution.
+- [ ] For a required quiz, code-test success enables Next to open the check
+      while the following numbered step stays locked; only passing the quiz
+      unlocks that step. Check the same progression in detached instructions.
 - [ ] Open the **print view** at `/SEBook/<section>/<slug>-tutorial/print`
       and confirm: instructions render, code blocks have syntax
       highlighting, quiz questions list options with correct ones marked,
@@ -1192,6 +1195,16 @@ Tutorial presentation is stylesheet-owned:
   presentation and initial hidden states; JS may toggle classes or set only
   genuinely computed runtime values such as pane sizes, progress widths,
   pan/zoom transforms, or user-derived CSS custom properties.
+- On screens at or below 900 CSS pixels wide, `css/tutorial.css` uses normal
+  document flow: the navbar, instructions, quizzes, editor, and output remain
+  reachable by scrolling the page. Instruction and quiz regions grow with
+  their content; code and output retain usable minimum work areas. Preserve
+  that reflow at high zoom and at 320 by 256 CSS pixels rather than trapping
+  content below fixed-height chrome. Desktop panes and print keep their
+  separate layout rules.
+- Active file tabs reveal themselves by changing only their own tab strip's
+  horizontal scroll. Avoid `scrollIntoView` here: it can move the document
+  away from the lesson on initial load when the editor is below the fold.
 
 ### 4.2 Page-pair convention
 
@@ -1594,7 +1607,10 @@ cross-origin-isolation service worker for it; MicroHs does not use
 `SharedArrayBuffer` or worker threads. Before each Run, the runtime syncs all
 workspace files, reloads the base environment, imports the module derived from
 `run_file` (or the active `.hs` path), and invokes `:main`. Use `Main.hs` as the
-conventional entry point. Haskell `setup_commands` and `solution.commands` are
+conventional entry point. Author `files[].path`, `solution.files[].path`, and
+`run_file` as workspace-relative paths such as `Main.hs` or `Helpers/Math.hs`;
+the host adds `/tutorial/` when syncing files. Absolute `/tutorial/...` paths
+are not a supported Haskell authoring form. Haskell `setup_commands` and `solution.commands` are
 intentionally unsupported; express setup and solutions through workspace files.
 
 If you add a backend, update this table.
@@ -1745,6 +1761,12 @@ under the same prefix family as other tutorial state so the global
 Failure surfaces inline in `.tvm-test-panel` below the instructions
 (green/red/yellow), with all matching `hints[].condition` hints
 auto-expanded.
+
+Code-test success records `stepsPassed` independently from navigation access.
+`_isNextStepLocked` allows a passed step to open its knowledge check, while
+`_renderTestResults` adds the following step to `stepsUnlocked` only when no
+required quiz remains. Required quizzes unlock it through `_completeQuiz`; popout navigation uses the same host state. Existing saved
+visits and explicit step deep links retain their established access behavior.
 
 ---
 

@@ -182,6 +182,8 @@ topics:
         url: /SEBook/tools/python.html
       - name: Python Tutorial
         url: /SEBook/tools/python-tutorial.html
+      - name: Haskell Learning Path
+        url: /SEBook/tools/haskell.html
       - name: Node.js
         url: /SEBook/tools/nodejs.html
       - name: Node.js Tutorial
