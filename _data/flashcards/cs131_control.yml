@@ -25,46 +25,63 @@ cards:
   - id: cs131-control-card-independent-traversal
     difficulty: advanced
     bloom: create
-    question: "Design the iterator behavior of a reusable `RangeLike(start, stop)` object so that nested loops traverse all ordered pairs of its values. State what the collection stores, what each iterator stores, and what happens when a loop requests an iterator."
-    answer: "The collection stores the range bounds. Each iterator stores its own current position and the stop bound. Each new traversal request returns a fresh iterator initialized to start; asking an iterator for its own iterator returns itself. Advancing one iterator changes only that iterator's position."
-    explanation: "Self-check: for values 1 and 2, nested loops must visit `(1,1)`, `(1,2)`, `(2,1)`, and `(2,2)`. A single position shared by both loops fails this check; copying all elements is unnecessary."
+    question: An immutable text buffer supports independent forward and backward cursors without copying its characters. Design the state of each
+      cursor and explain what must happen when two readers request cursors in opposite directions.
+    answer: The buffer owns the characters. Each cursor refers to the buffer and stores its own current index and direction. A forward cursor begins
+      at the first character and advances toward the end; a backward cursor begins at the last and advances toward the beginning. Advancing either
+      cursor changes only its own state.
+    explanation: 'Self-check: the text is shared while position and direction are per traversal. State what marks each direction exhausted. Neither
+      cursor should store its current position inside the shared buffer.'
 
   # Source: Control slides 51–57; Quiz 4, Problem 2.
   - id: cs131-control-card-generator-progress
     difficulty: intermediate
     bloom: apply
     question: |
-      Predict the two values printed and explain where the generator pauses after each request.
+      Predict the two printed lists and explain why stopping the loop does not reset the generator.
 
       ```python
-      def steps():
-          value = 2
-          yield value
-          value += 3
-          yield value
-      it = steps()
-      print(next(it))
+      def chunks():
+          pending = []
+          for letter in "wxyz":
+              pending.append(letter)
+              if len(pending) == 2:
+                  yield pending
+                  pending = []
+      it = chunks()
+      for chunk in it:
+          print(chunk)
+          break
       print(next(it))
       ```
-    answer: "The values are 2, then 5. The first request runs through initialization to the first yield. The second resumes after that yield, updates the retained local variable, and pauses at the second yield."
-    explanation: "Self-check: execution resumes rather than restarting the body. A third next call would run to the end and signal exhaustion with `StopIteration`."
+    answer: The lists are ["w", "x"], then ["y", "z"]. The first yield suspends before pending is reset. The break exits the consumer's loop, leaving
+      it suspended. The next request resumes after the yield, creates the next list, and accumulates the remaining letters.
+    explanation: 'Self-check: distinguish the consumer''s break from terminating the generator. Retained local state and the saved execution position
+      make the second chunk possible.'
 
   # Source: Control slides 51–58; Homework CTRL2 B;
   # Final F24 solutions, pp. 19 and 22.
   - id: cs131-control-card-lazy-transform
     difficulty: advanced
     bloom: create
-    question: "Write a Python generator `positive_squares(values)` that yields the square of each positive input in order, without first materializing the input or output. It should work when a consumer requests a finite prefix of an unbounded input."
+    question: Write a Python generator `with_previous(values)` that yields overlapping pairs of neighboring inputs without materializing the whole
+      input. Empty and one-item inputs yield nothing. Explain why requesting a finite number of pairs needs only a finite input prefix.
     answer: |
       ```python
-      def positive_squares(values):
-          for value in values:
-              if value > 0:
-                  yield value * value
+      def with_previous(values):
+          source = iter(values)
+          try:
+              previous = next(source)
+          except StopIteration:
+              return
+          for current in source:
+              yield (previous, current)
+              previous = current
       ```
 
-      For `[-2, 0, 3, 1]`, the yielded values are 9 and 1.
-    explanation: "Self-check: preserve order, exclude zero, and produce output incrementally. Laziness does not guarantee every request terminates: an unbounded input with no later positive value can keep the next request searching forever."
+      For [4, 1, 8], it yields (4, 1), then (1, 8). Each additional pair requires one more input value.
+    explanation: 'Self-check: consecutive pairs must overlap, input order must be retained, and only one previous value is kept. Test empty, single-item,
+      and three-item inputs; avoid building an output list.'
 
   # Source: Control slides 65–66 and 98; Homework CTRL6.
   - id: cs131-control-card-concurrency-parallelism
@@ -78,17 +95,26 @@ cards:
   - id: cs131-control-card-lost-update
     difficulty: advanced
     bloom: analyze
-    question: "Two workers each increment a counter initially equal to 10 using separate read, add-one, and write steps. Give an interleaving that leaves 11 instead of 12, then name the unit that synchronization must protect."
-    answer: "Both workers read 10. Each computes 11. One writes 11, then the other writes its own 11, overwriting rather than incorporating the first update. Synchronization must protect the entire read-modify-write, or replace it with an atomic increment."
-    explanation: "Self-check: the explanation must identify the stale read. A lock around just the final write prevents simultaneous writes but still allows both workers to calculate from 10."
+    question: A shared immutable set initially contains {"draft"}. Two workers each read the current set, add their own tag to a local copy, then
+      replace the shared set. Give an interleaving that loses either the "reviewed" tag or the "signed" tag. What whole operation must be synchronized?
+    answer: Both workers can read {"draft"}. One constructs {"draft", "reviewed"}; the other constructs {"draft", "signed"}. If the first writes
+      and then the second writes, reviewed is lost. Synchronize the read, local addition, and replacement as one update, or use an atomic merge
+      operation.
+    explanation: 'Self-check: writing a new immutable set does not make the multi-step update atomic. A lock covering only each final assignment
+      still permits both workers to start from stale state.'
 
   # Source: Control slides 69–74; Homework CTRL5 A/B.
   - id: cs131-control-card-fork-join-dependencies
     difficulty: intermediate
     bloom: evaluate
-    question: "Tasks `left` and `right` independently compute partial results; `combine` needs both. Describe where to start and join the tasks, and explain why joining each immediately after starting it loses the intended benefit."
-    answer: "Start both tasks before waiting for either. Join both before combine reads their results. Starting and immediately joining left before starting right makes right wait for left's completion, so the independent computations cannot overlap."
-    explanation: "Self-check: preserve the true dependency—combine needs both results—without inventing a dependency between the independent producers. The runtime still decides actual parallel scheduling."
+    question: A document pipeline has independent tasks scan_text and extract_images. Search_index needs scan_text only; archive needs search_index
+      and extract_images. Describe a schedule that starts search_index as soon as its input is ready without making it wait unnecessarily for image
+      extraction.
+    answer: Start scan_text and extract_images. Join scan_text, then start search_index while extract_images may still be running. Before archive,
+      join both search_index and extract_images. Waiting for image extraction before starting search_index would impose a dependency the problem
+      does not require.
+    explanation: 'Self-check: every consumer waits for its required producers, and unrelated work can overlap. A join belongs at a dependency boundary
+      rather than automatically after every start.'
 
   # Source: Control slides 84–89; Quiz 4, Problem 3 a.
   - id: cs131-control-card-await-readiness

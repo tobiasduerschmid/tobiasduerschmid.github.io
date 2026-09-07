@@ -43,25 +43,32 @@ questions:
   # Sources: essential_python.pptx, slides 14–16; Homework Problems, PYTHON2–3.
   - id: mutation-then-parameter-rebinding
     type: single
-    difficulty: intermediate
-    bloom: apply
+    difficulty: advanced
+    bloom: analyze
     question: |
       What does this Python code print?
 
       ```python
-      def revise(items):
-          items.append(8)
-          items = [0]
-      data = [3]
-      revise(data)
-      print(data)
+      def route(queue):
+          queue = queue[1:]
+          queue[0].append("ready")
+          queue.append(["new"])
+      batches = [["old"], ["next"]]
+      route(batches)
+      print(batches)
       ```
-    options: ["`[3]`", "`[3, 8]`", "`[0]`"]
+    options:
+      - '`[["old"], ["next"]]`'
+      - '`[["old"], ["next", "ready"]]`'
+      - '`[["next", "ready"], ["new"]]`'
     correct_index: 1
     option_feedback:
-      0: "The parameter initially shares the list, so `append` changes the caller's list."
-      2: "Assigning a new list to the parameter changes only that local binding."
-    explanation: "The append mutates the shared object before the local parameter is rebound. `data` still refers to that mutated object."
+      0: Slicing separates the outer list but keeps its inner lists shared. The append to an inner list
+        remains visible.
+      2: The sliced outer list belongs to the local parameter. Removing the first slot and appending a new
+        slot do not change the caller's outer list.
+    explanation: Rebinding first can still leave reachable objects shared. The slice contains a reference
+      to the original second inner list, so its mutation propagates; changes to the new outer list do not.
 
   # Sources: essential_python.pptx, slide 7; Homework Problems, PYTHON4; F24 midterm, Q4 pp. 7–8.
   - id: shallow-copy-two-level-trace
@@ -73,18 +80,24 @@ questions:
 
       ```python
       from copy import copy
-      original = [[2], [4]]
-      duplicate = copy(original)
-      duplicate[0].append(6)
-      duplicate[1] = [9]
-      print(original)
+      task = {"steps": []}
+      queue = [task, task]
+      preview = copy(queue)
+      preview.pop()
+      preview[0]["steps"].append("check")
+      print(len(queue), queue[0] is queue[1], queue[1]["steps"])
       ```
-    options: ["`[[2], [4]]`", "`[[2, 6], [9]]`", "`[[2, 6], [4]]`"]
+    options:
+      - '`2 False []`'
+      - '`1 True ["check"]`'
+      - '`2 True ["check"]`'
     correct_index: 2
     option_feedback:
-      0: "A shallow copy shares the inner lists, so appending to the first inner list remains visible."
-      1: "The outer lists are separate. Replacing a slot in `duplicate` does not replace that slot in `original`."
-    explanation: "The first operation changes a shared inner object; the second changes a slot in the copied outer list. Track those two levels separately."
+      0: A shallow copy does not split the two references to the shared task. The nested steps list is still
+        shared.
+      1: The pop removes a slot from preview only. The original queue retains both of its slots.
+    explanation: There are two outer lists but only one task object. Both original slots still reach that
+      task and its edited steps list.
 
   # Sources: essential_python.pptx, slide 7; Homework Problems, PYTHON4.
   - id: deep-copy-snapshot
@@ -119,13 +132,29 @@ questions:
     type: single
     difficulty: intermediate
     bloom: apply
-    question: "Two distinct instances of a plain Python class have identical fields. The class inherits directly from `object` and defines no equality method. How do `a == b` and `a is b` evaluate?"
-    options: ["Both are true.", "Equality is true; identity is false.", "Both are false."]
+    question: |
+      What does this Python code print? `Ticket` has no custom equality behavior.
+
+      ```python
+      from copy import copy
+      class Ticket:
+          pass
+      issued = Ticket()
+      issued.code = "R7"
+      replacement = copy(issued)
+      queue = [issued]
+      print(replacement in queue, issued in queue)
+      ```
+    options:
+      - '`True True`'
+      - '`False False`'
+      - '`False True`'
     correct_index: 2
     option_feedback:
-      0: "Separate construction creates separate identities; equal fields do not merge the instances."
-      1: "Field-based equality must be implemented or supplied by a class mechanism; plain `object` does not add it."
-    explanation: "Under the stated class definition, equality uses the default identity-based behavior. A custom `__eq__` can change equality without changing `is`."
+      0: Copying the fields does not give the replacement the original identity or add value-based equality.
+      1: The original object is a member of the list containing that same object.
+    explanation: List membership compares against its elements. For this class, the copied ticket is distinct
+      and does not compare equal to the original; the original ticket matches itself.
 
   # Sources: essential_python.pptx, slide 5; Homework Problems, PYTHON5.
   - id: shared-class-list
@@ -181,17 +210,21 @@ questions:
       What does this Python code print?
 
       ```python
-      def record(value, log=[]):
-          log.append(value)
-          return len(log)
-      print(record(4), record(7))
+      def visit(page, counts={}):
+          counts[page] = counts.get(page, 0) + 1
+          return counts[page]
+      print(visit("help"), visit("help", {}), visit("help"))
       ```
-    options: ["`1 1`", "`1 2`", "`2 2`"]
+    options:
+      - '`1 1 1`'
+      - '`1 1 2`'
+      - '`1 2 3`'
     correct_index: 1
     option_feedback:
-      0: "The default list is created when the function definition executes, rather than anew for each call."
-      2: "Each call returns an integer length immediately. The first returned integer does not change when the list later grows."
-    explanation: "Both calls omit `log` and therefore share the default list. Its lengths at the two return points are 1 and 2."
+      0: The first and third calls reuse the dictionary created with the function definition.
+      2: The middle call supplies its own dictionary, so it does not update the default dictionary.
+    explanation: Omitted and explicit arguments take different sharing paths. The two omitted calls share
+      their counter; the explicit empty dictionary is independent.
 
   # Sources: essential_python.pptx, slide 17; Homework Problems, PYTHON2, PYTHON4.
   - id: sentinel-preserves-explicit-empty-list
@@ -211,57 +244,94 @@ questions:
 
   # Sources: essential_python.pptx, slides 10, 13; Homework Problems, PYTHON4.
   - id: tuple-containing-mutable-list
-    type: multiple
+    type: single
     difficulty: advanced
     bloom: analyze
-    question: "Start each operation independently with Python `pair = ([1], 2)`. Which operations complete without error? Select all that apply."
+    question: |
+      A Python function unpacks a tuple containing a mutable list. What does the caller observe?
+
+      ```python
+      def finish(job):
+          label, notes = job
+          notes.clear()
+          label = "done"
+      job = ("waiting", ["retry"])
+      finish(job)
+      print(job)
+      ```
     options:
-      - "`pair[0].append(3)`"
-      - "`pair[0] = [3]`"
-      - "`pair = ([3], 2)`"
-      - "`pair[1] = 3`"
-    correct_indices: [0, 2]
+      - '`("done", [])`'
+      - '`("waiting", ["retry"])`'
+      - '`("waiting", [])`'
     option_feedback:
-      0: "Tuple immutability leaves the referenced list free to mutate."
-      1: "Replacing a tuple slot attempts to change the tuple itself."
-      2: "Names can be rebound even when the objects they reference are immutable."
-      3: "The tuple's slots cannot be replaced, regardless of whether a slot contains an integer or a list."
-    explanation: "Immutability constrains the tuple's own slots, not all objects reachable from those slots and not the name that refers to the tuple."
+      0: Unpacking creates a separate local label binding. Reassigning it does not replace the tuple's first
+        slot.
+      1: The local notes binding refers to the list stored in the tuple. Clearing that list mutates the
+        shared object.
+    explanation: Tuple immutability protects its slots. Unpacking copies references into local bindings,
+      so a local can mutate the referenced list without replacing a tuple slot.
+    correct_index: 2
 
   # Sources: essential_python.pptx, slide 9; Homework Problems, PYTHON5 A.
   - id: subclass-initialization
     type: single
-    difficulty: intermediate
-    bloom: apply
-    question: "A Python base class initializes `self.name` in `__init__`. A subclass defines an empty `__init__`, then calls an inherited method that reads `self.name`. No other code sets that field. What causes the failure?"
+    difficulty: advanced
+    bloom: analyze
+    question: |
+      This Python subclass does call the base initializer. Why does construction still fail?
+
+      ```python
+      class Encoder:
+          def __init__(self):
+              self.preview = self.encode("x")
+          def encode(self, text):
+              return text
+      class Framed(Encoder):
+          def __init__(self):
+              super().__init__()
+              self.marker = "#"
+          def encode(self, text):
+              return self.marker + text
+      Framed()
+      ```
     options:
-      - "The subclass must redeclare every inherited method."
-      - "The subclass initializer did not run the base initializer."
-      - "Inherited methods cannot read fields on subclass instances."
+      - The base initializer cannot call any instance method.
+      - The override runs before its required field is initialized.
+      - Calling super selects the base implementation of every method.
     correct_index: 1
     option_feedback:
-      0: "Methods remain inherited when a subclass defines an initializer."
-      2: "Inherited methods receive the subclass instance as `self`; the problem is that the expected field was never initialized."
-    explanation: "When a subclass supplies its own initializer, required base initialization must be invoked explicitly, usually with `super().__init__(...)`."
+      0: The method call is legal. The failure comes from a missing attribute read inside the selected override.
+      2: super selects Encoder.__init__, but self still refers to a Framed instance. Its ordinary method
+        call can dispatch to the override.
+    explanation: Initialization order must satisfy the fields used by methods that run during construction.
+      Set marker before calling the base initializer, or avoid calling an overridable method from initialization.
 
   # Sources: essential_python.pptx, slides 12–13; Homework Problems, PYTHON4.
   - id: alias-through-container
-    type: multiple
+    type: single
     difficulty: intermediate
     bloom: analyze
-    question: "Start each operation independently with Python `row = [1]; grid = [row]`. Which operations change the contents observed through `grid`? Select all that apply."
+    question: |
+      What does this Python code print?
+
+      ```python
+      row = [1]
+      active = [row]
+      archived = active.pop()
+      archived.append(2)
+      print(row, active)
+      ```
     options:
-      - "`row.append(2)`"
-      - "`row = [2]`"
-      - "`row[0] = 2`"
-      - "`row = row + [2]`"
-    correct_indices: [0, 2]
+      - '`[1] []`'
+      - '`[1, 2] []`'
+      - '`[1, 2] [[1, 2]]`'
     option_feedback:
-      0: "The grid refers to the list that `append` mutates."
-      1: "Rebinding the local name does not replace the reference stored inside `grid`."
-      2: "Element assignment changes the list already referenced by `grid`."
-      3: "Concatenation creates another list, and the assignment rebinds only `row`."
-    explanation: "The grid stores an object reference, not a live connection to the variable name `row`. Only operations on the original object are visible through that reference."
+      0: pop returns a reference to the removed object, not a copy. archived and row still share the list.
+      2: Removing the outer-list slot is permanent here. Mutating the removed object does not put it back
+        into active.
+    explanation: Container membership and object identity are separate. The outer list becomes empty while
+      row and archived keep the removed object available.
+    correct_index: 1
 
   # Source: essential_python.pptx, slide 12.
   - id: list-operation-costs
@@ -294,3 +364,22 @@ questions:
       1: "Copying the records breaks the required sharing of record updates."
       2: "Reordering the original list changes the caller's order, violating the other requirement."
     explanation: "A shallow copy separates the sequence of references while retaining the referenced records. Copy depth should follow the ownership and sharing contract."
+
+  # Source concepts: essential_python.pptx, slide 7; Homework Problems, PYTHON3–4.
+  # Original transfer task: independently copy nested rows before marking a row.
+  - id: cs131-python-parsons-isolated-row-update
+    type: parsons
+    display: block
+    difficulty: intermediate
+    bloom: apply
+    question: |
+      Arrange the Python lines to implement `mark_first(rows)`. The input is a nonempty list of lists of strings. Return a new nested list with `"checked"` appended to its first row. Every returned row must be independent of the input rows, and the input must remain unchanged. Leave the extra line unused; indentation is supplied.
+    lines:
+      - "def mark_first(rows):"
+      - "    updated = [row.copy() for row in rows]"
+      - "    updated[0].append('checked')"
+      - "    return updated"
+    distractors:
+      - "    updated = rows.copy()"
+    explanation: |
+      Copy the outer list and each row before appending the marker. A copy of only the outer list still shares its rows, so appending through `updated[0]` would also change the input. Copying the strings themselves is unnecessary because strings are immutable.

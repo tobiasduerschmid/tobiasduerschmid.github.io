@@ -25,72 +25,79 @@ questions:
     type: single
     bloom: apply
     difficulty: intermediate
-    question: "A lexer chooses the longest match, breaking ties by earlier rule. Its first rule recognizes the keyword `for`; its second recognizes identifiers as `[a-z]+`. How does it tokenize `forest`?"
+    question: A lexer chooses the longest match and recognizes both `>` and `>=`. It also recognizes integers. Whitespace is skipped. How does it
+      tokenize `>=7>2`?
     options:
-      - "The keyword for followed by the identifier est."
-      - "A lexical error because a keyword begins the word."
-      - "One identifier whose text is forest."
-      - "Six identifiers, one for each lowercase letter."
+    - '`>`, `=`, `7`, `>`, `2`'
+    - '`>=`, `7`, `>=`, `2`'
+    - '`>=`, `7`, `>`, `2`'
+    - A lexical error because operators touch numbers.
     correct_index: 2
     option_feedback:
-      0: "The first rule wins only a tie in match length. The identifier rule matches six characters instead of three."
-      1: "The identifier rule can match the whole word. A keyword prefix does not invalidate a longer identifier."
-      3: "The + repetition matches one or more letters, and longest-match selection takes all six."
-    explanation: "Longest match takes priority over rule order. The whole word forest matches the identifier rule and is longer than for."
+      0: At the first position, >= is the longest recognized token, so it is not split into shorter pieces.
+      1: The second > is not followed by =. Longest matching uses the actual remaining source characters.
+      3: No whitespace requirement was specified; token boundaries can occur between adjacent operators and numbers.
+    explanation: Matching restarts after each token. The first two characters form >=; after the integer 7, only > matches before the next integer.
 
   # Sources: pl_implementation_palooza.pptx slide 13; CS131 Fall 25 Quiz 1 Solutions (Public).docx question 1 print-keyword answer.
   - id: lexer-tie-priority
     type: single
     bloom: analyze
     difficulty: intermediate
-    question: "Under longest-match lexing with earlier-rule tie breaking, `[a-z]+` produces an identifier and appears before the keyword rule for `stop`. The parser expects a STOP token for a stop statement. Why is the source `stop` rejected by the parser?"
+    question: A lexer skips whitespace and has an INTEGER rule `[0-9]+` before a generic LABEL rule `[a-z0-9]+`. It chooses the longest match and
+      uses earlier rules only for ties. What token categories does `24 24b` produce?
     options:
-      - "The lexer emits an identifier when the two rules tie."
-      - "The lexer emits STOP, but the parser must retokenize it."
-      - "The lexer cannot match text with more than one rule."
-      - "The lexer splits stop into four single-letter identifiers."
+    - INTEGER, LABEL
+    - LABEL, LABEL
+    - INTEGER, INTEGER, LABEL
+    - A lexical error at the letter b.
     correct_index: 0
     option_feedback:
-      1: "The earlier identifier rule wins the equal-length match, so the parser never receives STOP in this setup."
-      2: "Overlapping lexer rules are permitted; the supplied priority rule decides between equal-length matches."
-      3: "The identifier rule matches the whole word, so longest-match selection does not split it into letters."
-    explanation: "Both rules match four characters, so rule order decides the category. Moving the keyword rule before the identifier rule would produce the token the parser expects without changing the grammar."
+      1: For 24, both rules match two characters, so the earlier INTEGER rule wins.
+      2: For 24b, LABEL matches three characters and beats the shorter INTEGER match.
+      3: The LABEL rule explicitly permits letters as well as digits.
+    explanation: The first word tests an equal-length tie; the second tests a longer competing match. Rule order chooses INTEGER for 24 but cannot
+      defeat the longer LABEL match for 24b.
 
   # Sources: pl_implementation_palooza.pptx slides 9–14, 31; Homework Problems (Public).docx TOOLS1; CS131 Fall 25 Quiz 1 Solutions (Public).docx question 1.
   - id: lexical-error-boundary
     type: single
     bloom: apply
     difficulty: intermediate
-    question: "A toy language permits only lowercase-letter identifiers, integer literals, +, =, and semicolons; whitespace is skipped. No token rule accepts @. Which stage first rejects `total = 3 @ 4;`?"
+    question: 'A toy language accepts assignments such as `total = 3;`. Its lexer discards # and everything after it on the same line as a comment.
+      Outside comments, no token accepts @. What happens to `total = 3; # @`?'
     options:
-      - "The parser, because it decides which characters exist."
-      - "Semantic analysis, because @ has incompatible operands."
-      - "The linker, because @ lacks a function definition."
-      - "The lexer, because @ cannot begin any token."
+    - Lexing fails whenever @ appears anywhere in a source file.
+    - Parsing fails because the comment follows a semicolon.
+    - Semantic analysis must assign a type to @.
+    - The assignment is accepted; @ is inside ignored comment text.
     correct_index: 3
     option_feedback:
-      0: "The parser checks sequences of tokens. The lexer cannot supply a complete token sequence here."
-      1: "There is no valid @ token or parsed operation to type-check under the stated rules."
-      2: "Linking operates on compiled modules and symbols, long after source characters have been tokenized."
-    explanation: "The explicit token specification makes this a lexical failure. A malformed source sequence containing individually valid tokens would instead be a parsing issue."
+      0: The comment rule consumes @ as part of the comment instead of asking another token rule to recognize it.
+      1: The lexer discards the comment, so it supplies the parser with the valid assignment tokens only.
+      2: The comment text does not become an expression node requiring a type.
+    explanation: 'Lexical context matters. The # rule consumes the rest of the line as ignored text, leaving the same token sequence as total =
+      3;. The same @ outside a comment would fail to begin a token.'
 
   # Sources: pl_implementation_palooza.pptx slides 16, 31; CS131 Fall 25 Quiz 1 Solutions (Public).docx question 1 NUM followed by ID answer.
   - id: valid-tokens-invalid-sequence
     type: single
     bloom: apply
     difficulty: intermediate
-    question: "A lexer emits identifiers for `[a-z]+` and numbers for `[0-9]+`; adjacent tokens need no whitespace. The only statement form is `IDENTIFIER = NUMBER ;`. What happens to `sum=12pear;`?"
+    question: A command language recognizes PUSH, POP, integer tokens, and semicolons. Its grammar allows `PUSH INTEGER ;` or `POP ;`. What happens
+      to `POP 8;`?
     options:
-      - "Lexing fails because numbers cannot precede letters."
-      - "Parsing fails because an extra identifier follows the number."
-      - "It is accepted because whitespace is optional between tokens."
-      - "It is accepted with pear treated as a comment on the number."
+    - Lexing fails because POP cannot be followed by a digit.
+    - Parsing fails because POP takes no integer in this grammar.
+    - It is accepted because every token is individually valid.
+    - Semantic analysis must treat 8 as the count of values to pop.
     correct_index: 1
     option_feedback:
-      0: "The stated lexer can emit NUMBER for 12 and IDENTIFIER for pear separately; every character is recognized."
-      2: "Optional whitespace allows adjacent tokens, but it does not allow extra tokens in the statement grammar."
-      3: "No comment rule is specified. pear is an identifier token and must be accounted for by the grammar."
-    explanation: "Tokenization succeeds as IDENTIFIER, =, NUMBER, IDENTIFIER, ;. After NUMBER the grammar requires a semicolon, so the additional identifier causes a parse error."
+      0: POP and 8 are individually recognized tokens. The invalid relationship between them is grammatical.
+      2: A valid token sequence must also fit a permitted statement production.
+      3: Inventing a count parameter would change the given grammar; no such parameter is defined.
+    explanation: The lexer produces valid tokens, but the POP production requires a semicolon immediately after POP. The extra integer is a parse
+      error even though PUSH would permit it.
 
   # Sources: pl_implementation_palooza.pptx slides 18–22; Homework Problems (Public).docx TOOLS2.
   - id: grammar-optional-and-repeated
@@ -98,61 +105,65 @@ questions:
     bloom: apply
     difficulty: intermediate
     question: |
-      Here brackets mean optional, braces mean zero or more repetitions, and quoted text is literal. Which calls does this grammar generate? Select all that apply.
+      Here brackets mean optional, braces mean zero or more repetitions, and quoted text is literal. Which commands does the grammar generate? Select all that apply.
 
       ```text
-      call = "run" "(" [names] ")" ;
-      names = name {"," name} ;
-      name = "oak" | "elm" ;
+      command = "copy" NAME "to" NAME ["verify"] {"retry" NUMBER} ;
       ```
     options:
-      - "`run()`"
-      - "`run(oak,elm)`"
-      - "`run(oak,)`"
-      - "`run(oak elm)`"
-    correct_indices: [0, 1]
+    - '`copy a to b`'
+    - '`copy a to b verify retry 2 retry 4`'
+    - '`copy a to b retry`'
+    - '`copy a to b verify verify`'
+    correct_indices:
+    - 0
+    - 1
     option_feedback:
-      0: "The entire names part is optional, so empty parentheses are allowed."
-      1: "The initial name is followed by one repetition containing a comma and another name."
-      2: "Each repetition contains both the comma and its following name. A trailing comma alone does not match."
-      3: "Additional names must occur inside comma-name repetitions; whitespace cannot replace the comma."
-    explanation: "Optionality applies to the whole names sequence. Within a nonempty sequence, every additional name must be preceded by a comma."
+      0: Both the verify part and all retry groups may be omitted.
+      1: The command uses verify once and two complete retry-number groups.
+      2: Each retry group requires a following NUMBER; the keyword alone is incomplete.
+      3: Verify is optional once, not a repeated element.
+    explanation: Optionality permits zero or one verify marker. Repetition permits any number of whole retry-number groups, so keywords inside those
+      groups cannot be supplied on their own.
 
   # Sources: pl_implementation_palooza.pptx slides 25–27.
   - id: precedence-is-structural
     type: single
     bloom: analyze
     difficulty: intermediate
-    question: "An expression grammar uses `expr = expr op expr | NUMBER`, where op may be + or *. Without extra precedence rules, what is the problem with parsing `2 + 4 * 3`?"
+    question: A boolean grammar uses `expr = "not" expr | expr "and" expr | BOOL` with no precedence rules. For `not true and false`, what does
+      this grammar permit?
     options:
-      - "A numeric lexer must choose whether + or * runs first."
-      - "The grammar requires multiplication before addition."
-      - "The grammar permits both (2 + 4) * 3 and 2 + (4 * 3)."
-      - "The grammar requires operators to run left to right."
+    - Only `(not true) and false`, yielding false.
+    - Only `not (true and false)`, yielding true.
+    - Both groupings, which produce different boolean values.
+    - No parse, because unary and binary operators cannot mix.
     correct_index: 2
     option_feedback:
-      0: "Lexing recognizes tokens; grouping operators into expressions is a parsing responsibility."
-      1: "Mathematical convention is not automatically part of this grammar. A parser needs an explicit way to enforce it."
-      3: "Reading source characters left to right does not make an ambiguous grammar specify left-associative grouping."
-    explanation: "Two expression trees fit the same token sequence and can have different values. Separating additive expressions from multiplicative terms, or using equivalent explicit precedence rules, removes this ambiguity."
+      0: This grouping is possible, but the recursive expression after not may also span the complete conjunction.
+      1: This grouping is possible, but the left expression of and may also be not true.
+      3: Both productions can be applied in a single derivation. The problem is ambiguity, not a missing parse.
+    explanation: One parse applies not only to true, then combines false and false. Another applies not to the entire false conjunction. Grammar
+      structure or explicit precedence must decide the scope of the unary operator.
 
   # Sources: pl_implementation_palooza.pptx slides 14, 23–24.
   - id: abstract-syntax-retains-grouping
     type: single
     bloom: understand
     difficulty: basic
-    question: "A parser builds an abstract syntax tree for `(2 + 4) * 3`. The tree omits literal parenthesis nodes. What must it retain to preserve the expression's meaning?"
+    question: A parser omits parenthesis and comma tokens from the abstract syntax tree for `trim(join(left, right))`. Which structure must remain?
     options:
-      - "An addition subtree used as an operand of multiplication."
-      - "The exact spaces that surround each numeric literal."
-      - "A multiplication subtree used as an operand of addition."
-      - "The source characters in a flat list without grouping."
+    - A trim call whose argument is the join call.
+    - A flat list containing trim, join, left, and right.
+    - A join call whose first argument is trim(left).
+    - The exact number of spaces around the comma.
     correct_index: 0
     option_feedback:
-      1: "For this expression, whitespace does not determine evaluation grouping. The tree relationships do."
-      2: "That arrangement would represent 2 + (4 * 3), changing the grouping imposed by the parentheses."
-      3: "A flat sequence without grouping loses the information that the parentheses contributed."
-    explanation: "An abstract tree may discard punctuation after encoding its effect structurally. The addition must be a child of multiplication, so its grouped result is multiplied by 3."
+      1: A flat sequence loses which call supplies an argument to which other call.
+      2: That structure represents join(trim(left), right), which can behave differently.
+      3: Whitespace does not replace the nested call and argument relationships.
+    explanation: 'The punctuation establishes nesting: join receives left and right, and its result becomes trim''s single argument. An abstract
+      tree can discard punctuation only after retaining those relationships.'
 
   # Sources: pl_implementation_palooza.pptx slides 28–30; Homework Problems (Public).docx TOOLS1.
   - id: semantic-analysis-responsibilities
@@ -180,36 +191,40 @@ questions:
     type: single
     bloom: apply
     difficulty: intermediate
-    question: "A compiler lowers a source language into a machine-independent intermediate representation. It currently emits instructions for processor A. In the lecture's modular design, what must change to target processor B while preserving the source language and intermediate representation?"
+    question: A compiler migration preserves its validated machine-independent intermediate representation, but generated assembly still uses instructions
+      unavailable on the new processor. Which part must be corrected before assembling for that processor?
     options:
-      - "The source lexer and the source parser."
-      - "The grammar and the declaration lookup rules."
-      - "The source parser and its semantic analyzer."
-      - "The target code generator and assembler."
+    - The source lexer's character recognition rules.
+    - The parser's source-language grammar productions.
+    - The semantic analyzer's variable binding rules.
+    - The backend's selection of target instructions.
     correct_index: 3
     option_feedback:
-      0: "Changing the processor does not change how this source language's characters and grammar are recognized."
-      1: "The source syntax and scope rules remain the same under the stated contract."
-      2: "These components enforce the source language rather than select processor-specific instructions."
-    explanation: "The shared intermediate representation separates source-language concerns from target instructions. Code generation selects the new target's assembly, and its assembler produces the corresponding machine code."
+      0: The validated intermediate form already establishes that this input passed source recognition.
+      1: The source language is unchanged; the failure concerns the instructions emitted afterward.
+      2: Resolving source variable bindings does not replace unsupported target instructions.
+    explanation: The backend maps the shared representation to instructions available on a particular processor. A correct frontend and valid intermediate
+      form do not make an old processor's instruction selection valid for a different one.
 
   # Sources: pl_implementation_palooza.pptx slide 36; Homework Problems (Public).docx TOOLS3 b,c.
   - id: new-language-shared-backend
     type: single
     bloom: analyze
     difficulty: advanced
-    question: "A team adds a second source language to a compiler but keeps its existing target processor. What condition makes reusing the backend reasonable?"
+    question: Two source languages share a backend. One requires integer overflow to raise an error; the other requires wraparound. The intermediate
+      form currently has only a wrapping-add operation. What must the first language's frontend do to reuse that backend correctly?
     options:
-      - "Both languages use the same keyword spellings."
-      - "The new frontend preserves meaning in the shared intermediate form."
-      - "The new language permits exactly the same identifier names."
-      - "The target assembler can infer the new language's scope rules."
+    - Change its addition keyword to match the other language.
+    - Lower checked addition into operations that detect overflow.
+    - Erase integer types so both additions look alike.
+    - Let the assembler infer the source language from variable names.
     correct_index: 1
     option_feedback:
-      0: "Matching surface vocabulary does not guarantee matching types, control flow, or other meaning."
-      2: "Identifier spelling is handled before the backend. Correctly lowering the new language's semantics is what matters."
-      3: "The assembler consumes target assembly; source-level scope information must be handled earlier."
-    explanation: "Backend reuse depends on the intermediate representation's contract. The new lexer, parser, semantic analysis, and lowering must express the new language's behavior in a form the backend already implements correctly."
+      0: Equal token spellings do not reconcile different overflow behavior.
+      2: Discarding the semantic distinction would lose a required error case.
+      3: The assembler implements its input instructions; source-language overflow rules must already be represented.
+    explanation: Backend reuse requires preserving each source language's observable behavior in the intermediate form. If the form can express
+      overflow detection and an error path, the frontend can lower checked addition into those operations; otherwise that form must be extended.
 
   # Sources: pl_implementation_palooza.pptx slides 32–34; Homework Problems (Public).docx TOOLS3.
   - id: shared-optimization-tradeoff
@@ -234,18 +249,20 @@ questions:
     type: single
     bloom: apply
     difficulty: intermediate
-    question: "In a conventional separately compiled program, a module declares `int score();` and calls it with the correct signature. No linked object file or library defines score. Where is the missing definition normally discovered?"
+    question: A caller and a codec module each compile successfully. Linking caller.o with codec.o succeeds in a test build. A release command links
+      only caller.o and reports an unresolved encode reference. What should be corrected first?
     options:
-      - "At lexing, because score is not a keyword."
-      - "At parsing, because calls require an inline function body."
-      - "At semantic analysis, because a declaration cannot describe a call."
-      - "At linking, when the external reference cannot be resolved."
+    - Rename encode in the header so the lexer recognizes it.
+    - Change encode's parameter types until the caller compiles again.
+    - Copy the function declaration into every source-code block.
+    - Include the already compiled codec.o in the release link inputs.
     correct_index: 3
     option_feedback:
-      0: "A function name is ordinarily an identifier token; it need not be a keyword."
-      1: "Separate compilation permits calls to declared functions whose definitions are in other modules."
-      2: "The declaration can provide the signature needed for checking this call. Supplying an actual definition is a separate requirement."
-    explanation: "The compiler can emit an object file containing an unresolved external reference. The linker then needs a matching definition from the supplied modules or libraries."
+      0: The caller already compiles; identifier recognition is not the failing stage.
+      1: The successful combined test build demonstrates that the existing caller and definition can be linked together.
+      2: Additional declarations describe the interface but do not supply the missing object code.
+    explanation: The definition exists and is compatible, as shown by the successful test link. The release build omits its compiled module. Supplying
+      that module repairs the build input set without changing source-level types.
 
   # Sources: pl_implementation_palooza.pptx slides 40–42.
   - id: dynamic-linking-deployment

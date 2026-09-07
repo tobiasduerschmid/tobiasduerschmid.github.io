@@ -7,55 +7,59 @@ questions:
     type: single
     bloom: understand
     difficulty: basic
-    question: "A database contains `supplies(north, south)`. A colleague reads this as north supplying south; another reads it as south supplying north. What determines which reading is intended?"
+    question: A data importer reads columns `(sender, recipient)` and writes facts for a documented relation `receives(Recipient, Sender)`. It currently
+      writes those two columns in their original order. Why can its facts be accepted by Prolog but answer delivery queries incorrectly?
     options:
-      - "Prolog assigns the actor to the first argument automatically."
-      - "The documented relation and consistently written rules decide."
-      - "The query direction determines the fact's meaning each time."
-      - "Prolog assigns the recipient to the first argument automatically."
+    - Prolog automatically reverses argument order for receives.
+    - The facts have legal structure but violate the documented roles.
+    - Prolog changes relation meanings to match each query direction.
+    - Two-argument predicates cannot represent directed relationships.
     correct_index: 1
     option_feedback:
-      0: "Argument positions do not carry built-in roles such as actor or recipient. The program must use a consistent convention."
-      2: "A query asks about an existing relation; it does not redefine what that relation means."
-      3: "The name and argument positions are programmer-defined. Prolog matches the structure without interpreting English roles."
-    explanation: "Facts assert a named relation over ordered arguments. Documenting that supplies(A, B) means A supplies B lets every rule use the same interpretation."
+      0: Predicate names do not tell Prolog which columns to reverse. The importer must apply the documented mapping.
+      2: Queries use the relation's existing argument convention; they do not reinterpret its facts.
+      3: Ordered arguments can represent directed relationships when facts and rules use them consistently.
+    explanation: A structurally valid fact can still encode the wrong intended relationship. The importer must place the recipient column first
+      and the sender column second to honor this relation's contract.
 
   # Sources: logic_palooza_v6.pptx slides 7, 14–19; Homework Problems (Public).docx LOGIC3 A.1–A.2.
   - id: shared-intermediate-variable
     type: single
     bloom: apply
     difficulty: intermediate
-    question: |
-      `road(A, B)` means a road leads from A to B. Which rule describes a trip that uses exactly two roads with a shared intermediate stop?
+    question: '`loaded(Package, Truck)` and `drives(Driver, Truck)` describe deliveries. Which rule finds the driver responsible for a package by
+      requiring both facts to name the same truck?'
     options:
-      - "`trip(A, C) :- road(A, B), road(D, C).`"
-      - "`trip(A, C) :- road(A, B), road(C, B).`"
-      - "`trip(A, C) :- road(A, B), road(B, C).`"
-      - "`trip(A, C) :- road(A, C), road(B, C).`"
+    - '`responsible(P, D) :- loaded(P, T), drives(D, U).`'
+    - '`responsible(P, D) :- loaded(P, T), drives(T, D).`'
+    - '`responsible(P, D) :- loaded(P, T), drives(D, T).`'
+    - '`responsible(P, D) :- loaded(T, P), drives(D, T).`'
     correct_index: 2
     option_feedback:
-      0: "B and D can be different places. The two roads therefore need not connect."
-      1: "The second road ends at B instead of leaving B for C. Direction is part of the relation."
-      3: "This requires a direct road from A to C and another road into C, rather than a connected two-road trip."
-    explanation: "The repeated B requires the first road's destination to equal the second road's origin. The comma requires both subgoals to hold under the same variable bindings."
+      0: Separate T and U variables allow a package's truck and a driver's truck to differ.
+      1: Drives places the driver first and truck second; this subgoal reverses those roles.
+      3: Loaded places the package first and truck second; this subgoal reverses those roles.
+    explanation: The same T appears in the truck position of both different relations. Unification therefore connects a package to a driver through
+      one consistent truck binding.
 
   # Sources: logic_palooza_v6.pptx slides 22, 26–30; Homework Problems (Public).docx LOGIC4 A.6–A.7.
   - id: nested-term-bindings
     type: single
     bloom: apply
     difficulty: intermediate
-    question: "What bindings make `parcel(Owner, box(Color, Owner))` unify with `parcel(lee, box(teal, Recipient))`, starting with no bindings?"
+    question: Starting with no bindings, what makes `batch([parcel(X)|Tail], Tail)` unify with `batch([parcel(red), parcel(blue)], [parcel(blue)])`?
     options:
-      - "`Owner = lee, Color = teal, Recipient = teal`"
-      - "`Owner = lee, Color = box(teal, lee)`"
-      - "Unification fails because the box contains a variable."
-      - "`Owner = lee, Color = teal, Recipient = lee`"
+    - '`X = parcel(red), Tail = [parcel(blue)]`'
+    - '`X = red, Tail = parcel(blue)`'
+    - It fails because a variable cannot name a list tail.
+    - '`X = red, Tail = [parcel(blue)]`'
     correct_index: 3
     option_feedback:
-      0: "Recipient corresponds to the repeated Owner, not to Color. Owner already has the binding lee."
-      1: "Color occupies only the first argument inside box. It does not match the whole compound term."
-      2: "Variables may occur inside compound terms. Unification recursively compares the corresponding parts."
-    explanation: "Matching the outer parcel binds Owner to lee. Inside box, Color becomes teal and Recipient must match that same Owner, so Recipient also becomes lee."
+      0: X is inside the parcel term, so it matches red rather than the complete parcel(red).
+      1: Tail matches the remaining list, not its single element.
+      2: A variable may bind to a whole list, and the repeated Tail is consistent in both positions.
+    explanation: The first list element matches parcel(X), binding X to red. Its remaining list binds Tail to [parcel(blue)], which also matches
+      the second argument of batch.
 
   # Sources: logic_palooza_v6.pptx slides 22–26, 35–36; [Final] F22 (Public).pdf p10 question 20.
   - id: repeated-variable-consistency
@@ -102,24 +106,25 @@ questions:
     bloom: analyze
     difficulty: intermediate
     question: |
-      Prolog tries facts from top to bottom and subgoals from left to right. What does `ready(X)` produce?
+      Prolog tries facts top to bottom and subgoals left to right. What does `usable(P)` produce?
 
       ```prolog
-      candidate(ada). candidate(ben).
-      trained(ben).
-      ready(X) :- candidate(X), trained(X).
+      slot(north, 1). slot(east, 3). slot(west, 4).
+      empty(north). empty(west).
+      usable(P) :- slot(P, Length), Length >= 2, empty(P).
       ```
     options:
-      - "It fails permanently after trying ada."
-      - "It produces ada, then produces ben."
-      - "It undoes the ada binding and produces ben."
-      - "It produces a list containing ada and ben."
+    - It fails permanently when north is too short.
+    - It produces east, then west.
+    - It backtracks past north and east, then produces west.
+    - It changes north's length to 2 and produces north.
     correct_index: 2
     option_feedback:
-      0: "Failure of trained(ada) sends search back to the earlier choice of candidate. Another candidate fact remains."
-      1: "A candidate is not an answer until the trained subgoal also succeeds for that same candidate."
-      3: "The query returns successful bindings individually. It does not implicitly collect candidates into a list."
-    explanation: "The ada branch fails its second subgoal. Backtracking restores the earlier binding state, tries candidate(ben), and then proves trained(ben)."
+      0: Failure of the length comparison permits trying later slot facts.
+      1: East meets the length condition but fails empty(east); every subgoal must succeed.
+      3: The comparison tests a bound numeric value. It does not update the fact or increase the length.
+    explanation: North fails the length check. East passes it but lacks an empty fact. Each failed branch is undone; west satisfies both conditions
+      and becomes the only successful binding.
 
   # Sources: logic_palooza_v6.pptx slides 13–19; CS131 Fall 25 Quiz 4 (with solutions).docx Problem 4; [Final] F23 (Public).pdf p23 question 8b.
   - id: proof-order-and-duplicates
@@ -127,25 +132,26 @@ questions:
     bloom: analyze
     difficulty: advanced
     question: |
-      With top-to-bottom clauses and left-to-right subgoals, what sequence of bindings does `choice(X)` produce when all answers are requested?
+      With top-to-bottom clauses and left-to-right subgoals, what sequence does `readable(D)` produce when all answers are requested?
 
       ```prolog
-      route(a, b). route(a, c).
-      route(b, d). route(c, d).
-      choice(X) :- route(a, X).
-      choice(X) :- route(a, Y), route(Y, X).
+      grant(jo, draft). grant(jo, guide).
+      public(guide). public(index).
+      readable(D) :- grant(jo, D).
+      readable(D) :- public(D).
       ```
     options:
-      - "`X = b; X = c; X = d`"
-      - "`X = b; X = c; X = d; X = d`"
-      - "`X = b; X = d; X = c; X = d`"
-      - "`X = d; X = d; X = b; X = c`"
+    - '`D = draft; D = guide; D = index`'
+    - '`D = draft; D = guide; D = guide; D = index`'
+    - '`D = draft; D = guide; D = index; D = guide`'
+    - '`D = guide; D = index; D = draft; D = guide`'
     correct_index: 1
     option_feedback:
-      0: "Ordinary Prolog search does not automatically remove equal bindings proved by different paths."
-      2: "All answers from the first choice clause are explored before the second choice clause begins."
-      3: "The direct-route clause is listed before the two-route clause, so its answers appear first."
-    explanation: "The first clause yields b and c. The second reaches d through b and then reaches d through c. Each successful proof can yield an answer, even when the resulting binding is duplicated."
+      0: Guide has two successful proofs. Ordinary search does not automatically deduplicate equal bindings.
+      2: The public facts are explored in order, with guide before index.
+      3: The grant clause appears before the public clause, so its answers are explored first.
+    explanation: The grant clause yields draft and guide. The public clause then yields guide and index. Different proofs of guide each produce
+      an answer unless separate deduplication is requested.
 
   # Sources: logic_palooza_v6.pptx slides 20, 30–31; [Final] F22 (Public).pdf p11 question 21.
   - id: unification-within-resolution
@@ -217,24 +223,24 @@ questions:
     bloom: analyze
     difficulty: advanced
     question: |
-      Under Prolog's usual depth-first, left-to-right search, what happens to `reach(a, c)`?
+      Under Prolog's usual depth-first search, what happens to `echo([ding])`?
 
       ```prolog
-      edge(a, b). edge(b, c).
-      reach(X, Y) :- reach(X, Z), edge(Z, Y).
-      reach(X, Y) :- edge(X, Y).
+      echo(Words) :- echo(Prefix), append(Prefix, [ding], Words).
+      echo([]).
       ```
     options:
-      - "It returns false because there is no direct edge."
-      - "It recurses without reaching the later base clause."
-      - "It returns true after automatically trying the base clause."
-      - "It returns true because conjunction ignores subgoal order."
+    - It returns false because ding is not a declared fact.
+    - It recurses indefinitely before reaching echo([]).
+    - It returns true after automatically choosing the empty prefix.
+    - Append shortens the query before echo(Prefix) starts.
     correct_index: 1
     option_feedback:
-      0: "The graph contains a two-edge path. The difficulty is search termination, not the absence of a logical path."
-      2: "Depth-first search does not automatically interrupt an infinite recursive branch to try another clause."
-      3: "Although conjunction is logically commutative, Prolog's operational search order affects whether an answer is reached."
-    explanation: "The first rule immediately calls reach(a, Z) with no progress through an edge. It repeats that choice indefinitely. For a finite acyclic graph, a base clause followed by a rule that traverses edge(X, Z) before reach(Z, Y) avoids this particular loop."
+      0: Ding is an atom in a list; it needs no separate fact declaration to be used in this relation.
+      2: Ordinary depth-first search does not skip a diverging first clause to try the base fact.
+      3: The first subgoal is echo(Prefix). Append is not reached before that recursive search returns.
+    explanation: The first clause invokes echo again without consuming any part of the known list. It therefore repeats the same unconstrained recursive
+      choice. A finite-list recognizer should inspect and remove an input element before recurring.
 
   # Sources: logic_palooza_v6.pptx slides 34–37; Homework Problems (Public).docx LOGIC4 A.8–A.10.
   - id: list-head-and-tail
@@ -279,24 +285,25 @@ questions:
     bloom: analyze
     difficulty: advanced
     question: |
-      This predicate should remove every occurrence of a ground atom from a finite ground list. Why can `drop_all(a, [a], Out)` also return `Out = [a]`?
+      This predicate should turn each ground command go into tick, retaining other commands. Why can `normalize([go], Out)` also return `Out = [go]`?
 
       ```prolog
-      drop_all(_, [], []).
-      drop_all(X, [X|Tail], Out) :- drop_all(X, Tail, Out).
-      drop_all(X, [Head|Tail], [Head|Out]) :- drop_all(X, Tail, Out).
+      normalize([], []).
+      normalize([go|Tail], [tick|Out]) :- normalize(Tail, Out).
+      normalize([Head|Tail], [Head|Out]) :- normalize(Tail, Out).
       ```
     options:
-      - "The keep rule also accepts a head equal to the target."
-      - "The empty-list clause forces every original element back."
-      - "Matching the removal rule mutates the input before retrying."
-      - "The output argument cannot contain fewer items than the input."
+    - The unchanged-head clause also matches go.
+    - Prolog cannot put a literal atom in an output list.
+    - The empty-list clause restores the original command.
+    - Prolog treats go and tick as equal atoms.
     correct_index: 0
     option_feedback:
-      1: "The empty-list clause relates an empty input to an empty output. The retained head comes from the recursive keep rule."
-      2: "These pure rules describe relations; matching a list does not mutate it. Alternative proofs can match the original list."
-      3: "A relation may connect lists of different lengths. The undesired answer is caused by an overly permissive rule."
-    explanation: "Both recursive clauses apply when Head equals X. On backtracking, the keep clause yields the unchanged element. Under the stated ground-input contract, requiring Head \\= X before recursing makes the keep and remove cases exclusive."
+      1: Literal atoms can occur in list patterns and constructed outputs.
+      2: The base clause produces an empty output only for the empty tail; it does not restore earlier input.
+      3: Go and tick are distinct atoms. The extra output comes from a separate successful clause.
+    explanation: The catch-all recursive clause overlaps the special go clause. For ground input, requiring Head to differ from go makes the unchanged-head
+      branch exclusive and prevents an additional incorrect output.
 
   # Sources: Homework Problems (Public).docx LOGIC5 A.2; arithmetic is explicitly exercised there.
   - id: arithmetic-goal-order

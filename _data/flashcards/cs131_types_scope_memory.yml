@@ -42,9 +42,15 @@ cards:
   - id: design-lexical-environments
     difficulty: expert
     bloom: create
-    question: "Propose an environment representation for a lexically scoped interpreter that supports nested functions and block shadowing without exposing unrelated caller locals. Describe lookup in two or three sentences."
-    answer: "Use an environment containing its bindings and a link to its lexical parent. A function retains the environment where it was defined; a call creates a local environment linked to that retained environment, and nested blocks link to their enclosing block. Lookup checks local bindings, then follows lexical-parent links rather than the caller-frame stack."
-    explanation: "Self-check: a caller-only local must stay hidden, inner declarations must shadow outer ones, and a closure must retain the defining environment it needs. Equivalent representations are valid if they preserve all three properties."
+    question: Design an interpreter representation for two callbacks returned by separate calls to the same
+      factory. Each callback must read the argument from its own creating call, even after both calls finish.
+      Describe which environments are shared, which are distinct, and what keeps them alive.
+    answer: Allocate a distinct environment for each factory call and let each returned callback retain
+      its own call environment. Both environments may link to the same enclosing lexical environment. Returning
+      from a call removes its active stack frame, but the callback's retained reference keeps the needed
+      bindings alive.
+    explanation: 'Self-check: creating a second callback must not overwrite the first callback''s captured
+      argument. Shared lexical code and a shared outer environment do not imply shared per-call bindings.'
 
   # Sources: Homework Problems, DATA1; Quiz 2 solutions, Q2(b).
   - id: lifetime-outlasts-visibility

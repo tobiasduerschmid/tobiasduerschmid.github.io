@@ -235,18 +235,20 @@ questions:
     type: single
     difficulty: intermediate
     bloom: evaluate
-    question: "A report function accepts `emit` and calls it for each output line. Production passes a file writer; a test passes a function that records lines in a list. What makes this design easier to test?"
+    question: A reservation function accepts `now` as a callable and compares its result with a booking deadline. Production supplies the system
+      clock; a test supplies a clock fixed at the deadline. What makes this design easier to test?
     options:
-      - "Passing a function prevents the report from having bugs."
-      - "The test can bypass execution of the report's main logic."
-      - "All passed functions must have identical side effects."
-      - "Output behavior can change without changing report logic."
+    - Passing a function prevents invalid booking deadlines.
+    - The fixed clock removes the need to execute reservation logic.
+    - Every supplied clock must return the same instant forever.
+    - The test can exercise an exact time boundary on demand.
     correct_index: 3
     option_feedback:
-      0: "First-class functions enable substitution; they do not prove the report's calculations correct."
-      1: "The same report logic runs, while the output destination is replaced."
-      2: "The callable contract can be shared even though one implementation writes a file and another records values."
-    explanation: "Treating behavior as a value lets the caller supply a controlled output function. The test can observe generated lines without performing file operations."
+      0: A callable parameter enables substitution but does not validate all booking rules.
+      1: Reservation logic still runs; only the source of the current time changes.
+      2: The shared contract supplies a time value. Different clock implementations can produce different sequences of times.
+    explanation: Treating a time source as a value lets a test reach an exact deadline without depending on when the test runs. The same reservation
+      logic executes with either clock.
 
   # Source: Functions slides 82–85; Homework FUNC4 A–B.
   - id: cs131-functions-capture-value-reference
@@ -254,25 +256,28 @@ questions:
     difficulty: intermediate
     bloom: apply
     question: |
-      In C++, `n` remains alive until both calls finish. What pair of values is produced by `snapshot()` and `live()`?
+      In C++, both closures are called before `pending` is destroyed. What sizes do `snapshot()` and `live()` report?
 
       ```cpp
-      int n = 3;
-      auto snapshot = [n]() { return n; };
-      auto live = [&n]() { return n; };
-      n = 12;
+      std::vector<int> pending{4, 9};
+      auto snapshot = [pending]() { return pending.size(); };
+      auto live = [&pending]() { return pending.size(); };
+      pending.erase(pending.begin());
+      pending.push_back(12);
+      pending.push_back(20);
       ```
     options:
-      - "`3` and `12`"
-      - "`12` and `12`"
-      - "`3` and `3`"
-      - "`12` and `3`"
+    - '`2` and `3`'
+    - '`3` and `3`'
+    - '`2` and `2`'
+    - '`3` and `2`'
     correct_index: 0
     option_feedback:
-      1: "Value capture initializes a separate stored value when the closure is created."
-      2: "Reference capture observes the existing variable, including its later assignment."
-      3: "The capture modes are reversed: `[n]` copies, while `[&n]` refers to the original variable."
-    explanation: "The value-capturing closure retains `3`. The reference-capturing closure reads the still-live `n`, now `12`."
+      1: Capturing this vector by value copies the vector, not a reference to its mutable element storage.
+      2: Reference capture observes the original vector after its erase and two insertions.
+      3: The value capture retains its own two-element vector; the reference capture observes three elements.
+    explanation: The value capture owns a separate vector with its original two elements. The reference capture observes the still-live original,
+      whose size changes from two to one to three.
 
   # Source: Functions slides 82–85; Homework FUNC4 B.
   - id: cs131-functions-escaping-closure-lifetime
@@ -280,25 +285,27 @@ questions:
     difficulty: advanced
     bloom: analyze
     question: |
-      This C++ function returns a closure that is called after `make_reader()` returns. What is wrong?
+      The returned C++ closure is called after `make_size_reader()` returns. What is wrong even though its capture uses `[view]`?
 
       ```cpp
-      auto make_reader() {
-          int score = 6;
-          return [&score]() { return score; };
+      auto make_size_reader() {
+          std::string label = "queued";
+          const std::string* view = &label;
+          return [view]() { return view->size(); };
       }
       ```
     options:
-      - "The closure is safe because returning it copies `score`."
-      - "The closure cannot be returned because it lacks a name."
-      - "Its reference outlives `score`; calling it has undefined behavior."
-      - "Its reference keeps `score` alive until the closure is destroyed."
+    - Value capture copies the entire string into the closure.
+    - A pointer cannot be stored in a returned closure.
+    - The copied pointer outlives its target; calling is undefined.
+    - Copying the pointer keeps its target string alive.
     correct_index: 2
     option_feedback:
-      0: "Copying the closure preserves its reference capture; it does not change that capture into a value."
-      1: "Anonymous function objects can be returned; the issue is the lifetime of what this one references."
-      3: "A C++ reference capture does not extend the lifetime of the local variable it refers to."
-    explanation: "The automatic local `score` is destroyed on return. Capturing it by value would store the required data in the closure instead of leaving a dangling reference."
+      0: The captured variable is a pointer. Copying that variable does not copy the string it points to.
+      1: Pointers can be captured, but the referenced object must remain alive when dereferenced.
+      3: An ordinary raw pointer has no ownership behavior and does not extend an automatic local object's lifetime.
+    explanation: The closure keeps a copy of the address while the string at that address is destroyed on return. Capturing label itself by value
+      would retain the string data. Capture mode and ownership of a pointed-to object are different questions.
 
   # Source: Functions slides 91–104; Homework FUNC5 B–C; Quiz 3, Problem 5.
   - id: cs131-functions-bounded-generic-operations
@@ -356,3 +363,51 @@ questions:
       1: "Producing specialized code does not imply deferred or dynamic type checking."
       2: "Monomorphization generates these versions from the parameterized definition."
     explanation: "Generic constraints establish which operations are valid. Monomorphization determines how executable code is produced; it can be combined with checking a constrained generic definition."
+
+  # Source concepts: function_palooza_v8.pptx, slides 9 and 25–27; Homework FUNC1.
+  # Original transfer task: allocate bounded capacity through a reference parameter.
+  - id: cs131-functions-parsons-capacity-allocation
+    type: parsons
+    display: block
+    difficulty: intermediate
+    bloom: apply
+    question: |
+      Arrange the C++ lines to implement `allocate`: grant as much of a request as the remaining capacity permits, reduce the caller's capacity by that grant, and return the granted amount. Both inputs are nonnegative integers. For capacity `4` and request `7`, return `4` and leave capacity `0`. Assume `<algorithm>` is included and `std::min` returns the smaller argument. Leave two extra lines unused.
+    lines:
+      - "int allocate(int& remaining, int requested) {"
+      - "    int granted = std::min(remaining, requested);"
+      - "    remaining -= granted;"
+      - "    return granted;"
+      - "}"
+    distractors:
+      - "int allocate(int remaining, int requested) {"
+      - "    remaining -= requested;"
+    explanation: |
+      Compute the grant from the original capacity, then subtract that grant before returning it. The reference parameter makes the update visible to the caller; a value parameter would change only a local copy. Subtracting the full request can make capacity negative when demand exceeds supply.
+
+  # Source concepts: function_palooza_v8.pptx, slides 75–87; Homework FUNC4.
+  # Original transfer task: a closure reports changes relative to its previous call.
+  - id: cs131-functions-parsons-change-tracker
+    type: parsons
+    display: block
+    difficulty: advanced
+    bloom: analyze
+    question: |
+      Arrange the body of the JavaScript function `trackChange(initial)` shown below. `const track = trackChange(10)` must create a function for which `track(13)` returns `3` and the next call `track(8)` returns `-5`. Each call compares with the preceding reading; separately created trackers must keep independent histories. Leave the extra line unused.
+
+      ```javascript
+      function trackChange(initial) {
+          // Arrange the body here.
+      }
+      ```
+    lines:
+      - "    let previous = initial;"
+      - "    return current => {"
+      - "        const change = current - previous;"
+      - "        previous = current;"
+      - "        return change;"
+      - "    };"
+    distractors:
+      - "        const change = current - initial;"
+    explanation: |
+      Initialize `previous` once per tracker in the enclosing function. The returned closure retains that binding between calls. Compute the difference before updating the stored reading; updating first would make every difference zero. Subtracting `initial` instead would keep comparing with the original baseline and return `-2` on the second call.

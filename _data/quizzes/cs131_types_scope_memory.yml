@@ -110,37 +110,57 @@ questions:
     difficulty: intermediate
     bloom: apply
     question: |
-      Consider this pseudocode. `show` is defined at global scope, and `let`
-      creates a new local binding. What does `caller()` return under lexical
-      scoping, then under dynamic scoping?
+      In this pseudocode, functions may be passed as arguments. `let` creates a local binding. What does `outer()` return under lexical scoping, then under dynamic scoping?
 
       ```text
-      let x = 4
-      function show() { return x }
-      function caller() { let x = 9; return show() }
+      function invoke(action) {
+        let label = "elm"
+        return action()
+      }
+      function outer() {
+        let label = "oak"
+        function read() { return label }
+        return invoke(read)
+      }
       ```
-    options: ["Lexical: 4; dynamic: 9.", "Lexical: 9; dynamic: 4.", "Lexical: 9; dynamic: 9."]
-    correct_index: 0
+    options:
+      - '`elm`, then `oak`'
+      - '`oak`, then `elm`'
+      - '`oak`, then `oak`'
+      - '`elm`, then `elm`'
+    correct_index: 1
     option_feedback:
-      1: "Lexical lookup follows definition nesting; dynamic lookup follows the active calling context."
-      2: "The caller's local binding is not lexically enclosing the definition of `show`."
-    explanation: "Lexically, `show` resolves its free name in the global environment. Dynamically, the most recent active caller binding supplies 9."
+      0: Lexical lookup follows the nested function's definition inside outer; dynamic lookup consults the
+        currently active invoke call first.
+      2: Under dynamic scoping, invoke has the most recent active binding of label when it calls read.
+      3: The lexical parent of read is outer, regardless of which function invokes it.
+    explanation: Passing a function to another function separates its defining context from its calling
+      context. The original outer call is still active, but the two scoping rules choose different label
+      bindings.
 
   # Sources: Homework Problems, TYPING10; F24 midterm Q5 pp. 9–12.
   - id: environment-stack-leaks-caller
     type: single
     difficulty: advanced
     bloom: analyze
-    question: "An interpreter for a lexically scoped language searches every active call frame from newest to oldest for a name. A global function can therefore read a caller's private local variable. What is the underlying error?"
+    question: A lexically scoped interpreter correctly hides caller locals, but two callbacks created by
+      separate calls to `makeLabel` both return the label from the most recent call. The callbacks should
+      retain independent defining bindings. Which implementation error best explains this?
     options:
-      - "It resolves names through call history instead of lexical parents."
-      - "It searches recent block bindings before older block bindings."
-      - "It stores the bindings in dictionaries instead of in arrays."
+      - Both callbacks retain one reused environment that is overwritten on each call.
+      - Each callback retains the distinct environment created for its own call.
+      - Name lookup stops after finding a binding in the defining environment.
+      - The call stack stores return addresses separately from variable bindings.
     correct_index: 0
     option_feedback:
-      1: "Searching inward-to-outward within the correct lexical environment is necessary for shadowing."
-      2: "The data structure's container type does not determine which environments should be visible."
-    explanation: "Separate dynamic call history from lexical environment links. A callee should consult its defining environment and its own nested scopes, according to the language's rules."
+      1: Distinct retained call environments are the needed behavior; they preserve each callback's defining
+        label.
+      2: Using the nearest defining binding follows lexical scope. It does not explain why separate bindings
+        collapse into one.
+      3: Separating return control from variable storage does not by itself make callback environments shared.
+    explanation: Lexical lookup needs the correct environment instance as well as the correct parent relationship.
+      Reusing one mutable frame for different calls can destroy the bindings that escaped closures should
+      retain.
 
   # Sources: Homework Problems, DATA1; Quiz 2 solutions, Q2(b).
   - id: scope-versus-lifetime
@@ -250,16 +270,22 @@ questions:
     type: single
     difficulty: advanced
     bloom: evaluate
-    question: "A collector copies every surviving object during each collection. Almost all of a large heap stays reachable across many collections. What cost should be investigated?"
+    question: A copying collector moves every survivor on each collection. A server keeps a 2 GB immutable
+      index alive while allocating short-lived request objects. A change doubles collection frequency without
+      changing the index. Which cost can now increase even if the index is never edited?
     options:
-      - "Repeatedly moving a large volume of long-lived data."
-      - "Failure to discover cycles disconnected from roots."
-      - "Reclaiming live objects because their fields are immutable."
+      - Repeated copying of the unchanged long-lived index.
+      - Retaining an additional logical index copy after every collection.
+      - Reference-count updates caused by copying each survivor.
+      - No extra work, because only modified survivors need moving.
     correct_index: 0
     option_feedback:
-      1: "A copying collector based on root tracing can discover unreachable cycles."
-      2: "Reachability, rather than mutability, determines which objects this collector retains."
-    explanation: "Copying cost depends on surviving data. A high survival rate can make repeated evacuation expensive; different or generational policies can change the trade-off."
+      1: Relocation preserves one logical object; it does not retain another permanent version after each
+        collection.
+      2: Copying survivors does not imply that the runtime also maintains reference counts.
+      3: The stated collector copies every survivor. An object need not have changed to incur copying work.
+    explanation: The collector's work depends on live data and collection frequency, not just mutation.
+      Separating long-lived data from frequently collected young objects can reduce this copying cost.
 
   # Sources: Homework Problems, DATA3; Quiz 2 solutions, Q4(d).
   - id: moving-collector-reference-repair

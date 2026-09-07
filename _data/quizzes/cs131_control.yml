@@ -169,29 +169,31 @@ questions:
     difficulty: intermediate
     bloom: apply
     question: |
-      Which messages are printed by this Python code?
+      After the next call, which values are in `events`? In Python, creating a generator does not execute its body.
 
       ```python
-      def numbers():
-          print("begin")
-          yield 4
-          print("resume")
-          yield 5
-      stream = numbers()
-      print("ready")
+      events = []
+      def alerts():
+          for level in [0, 2, 3]:
+              events.append(level)
+              if level >= 2:
+                  yield level
+      stream = alerts()
+      events.append("ready")
       next(stream)
       ```
     options:
-      - "`begin`, then `ready`"
-      - "`ready`, then `begin`"
-      - "`ready`, then `begin`, then `resume`"
-      - "`ready` only"
-    correct_index: 1
+    - '`["ready", 0, 2]`'
+    - '`[0, 2, 3, "ready"]`'
+    - '`["ready", 0]`'
+    - '`["ready", 0, 2, 3]`'
+    correct_index: 0
     option_feedback:
-      0: "Calling a Python generator function creates the generator without starting its body."
-      2: "The first yield suspends the generator; reaching the later print needs another request."
-      3: "The explicit next call begins execution and reaches the first print before yielding."
-    explanation: "Generator creation does not run the body. The first next call runs until the first yield, so only `begin` is printed from inside the generator."
+      1: Calling alerts creates a suspended generator; the ready event is appended before its body runs.
+      2: Level 0 does not reach a yield, so the next call continues to level 2.
+      3: The next call pauses at the yield for level 2 before the loop reaches level 3.
+    explanation: The first next request may execute several loop iterations. It records 0, skips its yield condition, records 2, and then suspends
+      with 2 as the yielded value.
 
   # Source: Control slides 39–58; Homework CTRL2 B; Quiz 4, Problem 2.
   - id: cs131-control-lazy-stream-properties
@@ -235,37 +237,43 @@ questions:
     type: single
     difficulty: intermediate
     bloom: evaluate
-    question: "Two independent computations can run on separate worker threads. `start(task)` launches a thread; `join(thread)` blocks until that thread finishes. Which plan permits overlap and guarantees both results are ready before combining them?"
+    question: Tasks decode and checksum independently read an immutable file. Task render needs only decode; task publish needs both render and
+      checksum. Each started task runs on its own worker. Which schedule permits useful overlap while respecting these dependencies?
     options:
-      - "Start both; join both; combine their results."
-      - "Start one; join it; start the other; join it; combine."
-      - "Start both; combine; join both before returning."
-      - "Start both; join one; combine their results."
+    - Start decode and checksum; join decode; start render; join render and checksum; publish.
+    - Start decode; join it; start checksum; join it; start render; join it; publish.
+    - Start decode, checksum, and render together; join all three; publish.
+    - Start decode and checksum; join decode; start render; publish before joining render.
     correct_index: 0
     option_feedback:
-      1: "Waiting for the first task before starting the second serializes the two computations."
-      2: "Combining before completion can read unfinished results."
-      3: "One worker finishing does not guarantee the independent worker has also finished."
-    explanation: "Start the independent work before waiting. Then join every worker whose output the combination needs; overlap is permitted even though actual scheduling depends on the runtime."
+      1: This schedule is safe but forces independent checksum work to wait for decoding, losing the available overlap.
+      2: Render needs the decoded result and cannot safely start before decoding finishes under the stated contract.
+      3: Publish may observe render's incomplete result. Starting a task does not establish its completion.
+    explanation: Checksum can overlap both decoding and rendering. Waiting for decode before starting render satisfies their dependency; joining
+      render and checksum makes both required results available to publish.
 
   # Source: Control slides 75–78; Homework CTRL5 B.
   - id: cs131-control-atomic-update
     type: multiple
     difficulty: advanced
     bloom: evaluate
-    question: "Two workers update the same counter. An increment consists of a read, an addition, and a write; these steps can interleave. Which designs prevent a lost update, assuming every writer follows the chosen design? Select all that apply."
+    question: Two workers add different tags to a shared immutable set by reading it, adding to a local copy, then replacing the shared set. These
+      steps can interleave. Which designs preserve both additions, assuming every writer follows the design? Select all that apply.
     options:
-      - "Protect the complete read-add-write with one shared lock."
-      - "Use one atomic increment operation for each update."
-      - "Lock the read and write separately, unlocking between them."
-      - "Wait for both workers after their unprotected updates."
-    correct_indices: [0, 1]
+    - Lock around the entire read-add-replace operation.
+    - Send additions to one owner that merges them serially.
+    - Lock each replacement but read outside the lock.
+    - Use immutable sets but allow unsynchronized replacements.
+    correct_indices:
+    - 0
+    - 1
     option_feedback:
-      0: "The shared lock prevents another writer from entering the whole update while it is in progress."
-      1: "Atomic increment makes the state change indivisible with respect to the other increments."
-      2: "Another worker can change the counter between the protected read and protected write, leaving a stale value to write back."
-      3: "Waiting establishes completion; it cannot repair an update that was already overwritten."
-    explanation: "The critical operation is the entire read-modify-write. Protecting fragments or waiting afterward does not prevent two workers from basing updates on the same old value."
+      0: The lock keeps one worker from reading a stale version while another update is in progress.
+      1: A single owner can incorporate each addition into the latest set without competing replacements.
+      2: Both workers can still read the same old set before either replacement occurs.
+      3: Each individual set is immutable, but competing replacements of the shared reference can still lose one addition.
+    explanation: Immutability of values does not by itself synchronize updates to a shared reference. The complete read-transform-replace operation
+      must be serialized or performed by an equivalent atomic protocol.
 
   # Source: Control slides 81–89 and 98; Homework CTRL6 i; Quiz 4, Problem 3.
   - id: cs131-control-await-suspension
@@ -349,3 +357,45 @@ questions:
       2: "One thread per task does not impose the requested bound and can add excessive scheduling and memory costs."
       3: "Independent calculations can still conflict when they write a common total."
     explanation: "Separate task count from worker count, and give shared aggregation state a clear owner. The queue and result-transfer mechanism still need their own synchronization guarantees."
+
+  # Source concepts: control_palooza_v7.pptx, slides 51–53; Homework CTRL3.
+  # Original transfer task: stateful prefix totals rather than independent squares.
+  - id: cs131-control-parsons-running-totals
+    type: parsons
+    display: block
+    difficulty: intermediate
+    bloom: apply
+    question: |
+      Arrange the Python lines to implement a lazy generator of running totals for any finite iterable of integers. Consuming `running_totals([4, -1, 2])` must yield `4`, then `3`, then `5`; an empty input yields nothing. Produce each total only when requested. Leave the extra line unused; indentation is supplied.
+    lines:
+      - "def running_totals(values):"
+      - "    total = 0"
+      - "    for value in values:"
+      - "        total += value"
+      - "        yield total"
+    distractors:
+      - "        return total"
+    explanation: |
+      Initialize the accumulated total once, then add the current value before yielding. A yield suspends the generator while preserving its total and loop position for the next request. Yielding before addition would lag one input behind. Replacing `yield` with `return` terminates the function at its first result instead of supplying the sequence.
+
+  # Source concepts: control_palooza_v7.pptx, slides 82–87 and 95; Homework CTRL6.
+  # Original transfer task: dependent asynchronous lookups followed by an object update.
+  - id: cs131-control-parsons-dependent-lookups
+    type: parsons
+    display: block
+    difficulty: intermediate
+    bloom: apply
+    question: |
+      Arrange the JavaScript lines to implement `loadLabel(id)`. `readRecord(id)` returns a promise for a fresh mutable object with a `labelId`. `readLabel(labelId)` returns a promise for a string. Resolve both lookups, attach the string as `record.label`, and return that same record object. Assume both promises fulfill. Leave two extra lines unused.
+    lines:
+      - "async function loadLabel(id) {"
+      - "    const record = await readRecord(id);"
+      - "    const label = await readLabel(record.labelId);"
+      - "    record.label = label;"
+      - "    return record;"
+      - "}"
+    distractors:
+      - "    const record = readRecord(id);"
+      - "    const label = readLabel(record.labelId);"
+    explanation: |
+      The second lookup depends on the first lookup's resolved `labelId`. Await the label before assigning it, then return the updated object. Without the first `await`, `record` holds a promise rather than the requested object. Without the second, the assigned property holds a promise rather than a string; returning the enclosing object does not automatically await promises stored in its properties.

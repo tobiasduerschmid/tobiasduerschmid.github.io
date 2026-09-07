@@ -16,9 +16,12 @@ cards:
   - id: cs131-oop-card-self
     difficulty: intermediate
     bloom: apply
-    question: "A Python class defines `def deposit(self, amount)`. Explain where both arguments come from in `account.deposit(8)`, and rewrite the call using the class name `Account`."
-    answer: "`account` supplies `self`, and 8 supplies `amount`. For this ordinary instance method, the explicit form is `Account.deposit(account, 8)`."
-    explanation: "The receiver connects a shared method definition to one particular object's state. The method's body can therefore operate on many different instances without duplicating its code."
+    question: A Python method `panel.refresh` is stored in a callback list. The variable panel is then rebound to another object before the callback
+      is called. Which object receives refresh, and how does the stored method remember it?
+    answer: The original panel receives the call. Accessing an ordinary instance method produces a bound method that retains both the function and
+      the original receiver. Rebinding the panel name later does not change the receiver stored in that bound method.
+    explanation: 'Self-check: distinguish evaluating panel.refresh now from storing code that would look up panel later. The callback need not receive
+      self as an extra explicit argument.'
 
   # Sources: lecture slides 51–76; Fall 2025 Quiz 4, Problem 1(a, c–e).
   - id: cs131-oop-card-inheritance-dimensions
@@ -50,9 +53,11 @@ cards:
   - id: cs131-oop-card-overriding
     difficulty: intermediate
     bloom: analyze
-    question: "A base class declares virtual `send()`. A derived class adds `send(int priority)` without an override annotation. Why should the author check this before assuming calls through a base reference use the new code?"
-    answer: "The new parameter list defines a different method rather than an override of `send()`. A base-reference call to `send()` still selects the matching base operation unless some actual override exists."
-    explanation: "An explicit override annotation lets a supporting language check the intended relationship. Matching a name alone is insufficient; the relevant method signature must match too."
+    question: A C++ base declares virtual `int count() const`. A derived class defines only `int count()` without const. Why would a call through
+      a const base reference fail to use the new method, and what declaration check would expose the mistake?
+    answer: The new member has a different const qualification and does not override the inherited const member. The call therefore uses the matching
+      base implementation. Marking the proposed member override makes the compiler reject the mismatch; adding const makes its signature match.
+    explanation: 'Self-check: overriding requires a compatible member signature, not just an equal name. The return type is unchanged in this example.'
 
   # Sources: lecture slides 101–104; homework OOP5 Part A.
   - id: cs131-oop-card-diamond

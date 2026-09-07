@@ -14,8 +14,12 @@ cards:
   - id: object-reference-is-not-variable-alias
     difficulty: intermediate
     bloom: analyze
-    question: "Why can a Python function append to the caller's list but fail to replace that list by assigning a new list to its parameter?"
-    answer: "The caller's name and the parameter are separate bindings to the same object. Append changes that shared object. Assignment to the parameter changes only the function's local binding; it does not alias or rebind the caller's variable."
+    question: A Python function receives a dictionary, saves `pending = jobs["pending"]`, then runs `jobs.clear()`
+      and `pending.append("retry")`. The caller also holds a separate reference to the old pending list.
+      What does each caller reference observe?
+    answer: The caller's dictionary becomes empty. Its separate list reference observes the appended retry
+      entry, even though the dictionary no longer contains that list. Clearing the dictionary removes its
+      reference; it does not invalidate the other references to the list.
 
   # Sources: essential_python.pptx, slide 7; Homework Problems, PYTHON4; F24 midterm Q4 pp. 7–8.
   - id: explain-copy-depth
@@ -42,32 +46,46 @@ cards:
   - id: create-safe-optional-list
     difficulty: advanced
     bloom: create
-    question: "Write `add(value, items=None)` so omitted lists are fresh, while supplied lists, including empty ones, are mutated and returned. Give two checks that distinguish those requirements."
-    answer: |
+    question: Write `include_missing(required, selected=None)` in Python. Append each missing required label
+      in order, skip labels already selected, and return the same list when one is supplied. Omitted calls
+      must start fresh. Give checks for repeated labels, an explicit empty list, and independent omitted
+      calls.
+    answer: |-
       ```python
-      def add(value, items=None):
-          if items is None:
-              items = []
-          items.append(value)
-          return items
+      def include_missing(required, selected=None):
+          if selected is None:
+              selected = []
+          for label in required:
+              if label not in selected:
+                  selected.append(label)
+          return selected
       ```
 
-      Check that `add(2)` and `add(5)` return `[2]` and `[5]` independently. Then use `provided = []`: `add(7, provided)` must return the very same object as `provided`, which now contains `[7]`.
-    explanation: "Self-check: a truthiness test would replace an explicitly supplied empty list. Use a sentinel comparison so omission and emptiness stay distinct."
+      Self-checks: `include_missing(["a", "a", "b"], ["b"])` returns `["b", "a"]`. For `supplied = []`, the call `include_missing(["c"], supplied)` returns that same list with `["c"]`. Separate calls with `["a"]` and `["b"]` return `["a"]` and `["b"]` independently.
+    explanation: 'Self-check: a truthiness test would replace an explicitly supplied empty list. Use a sentinel
+      comparison so omission and emptiness stay distinct.'
 
   # Sources: essential_python.pptx, slides 10, 13; Homework Problems, PYTHON4 A.4–A.5.
   - id: immutable-container-mutable-child
     difficulty: intermediate
     bloom: analyze
-    question: "Why can `bundle = ([4],)` allow `bundle[0].append(6)` but reject `bundle[0] = [6]`?"
-    answer: "The append changes the referenced list. The assignment attempts to replace the tuple's reference slot. Tuple immutability forbids slot replacement, but does not make the objects stored in those slots immutable."
+    question: A Python function accepts a tuple of task lists and promises to preserve it. The function
+      creates `working = list(tasks)` and clears one task list through working. Has it kept the promise
+      that all task contents remain unchanged? Explain the copy boundary.
+    answer: No. Converting the outer tuple to a list creates new outer storage but preserves references
+      to the task lists. Clearing an inner list changes contents still reachable through the original tuple.
+      The function needs independent inner lists, or a contract that explicitly permits their mutation.
 
   # Sources: essential_python.pptx, slide 9; Homework Problems, PYTHON5 A.
   - id: explain-missing-base-initialization
     difficulty: intermediate
     bloom: analyze
-    question: "A subclass defines `__init__` and inherits a working method, yet calling that method reports a missing instance attribute. What initialization dependency should be checked first?"
-    answer: "Check whether the inherited method relies on fields created by the base initializer and whether the subclass called that initializer. Defining an initializer does not automatically invoke the base initializer. Usually the subclass needs `super().__init__(...)`."
+    question: A Python base initializer sets `self.limit = 10`. A subclass sets `self.limit = 30` and then
+      calls `super().__init__()`. An inherited method later sees 10. Explain the result and propose an initialization
+      order that preserves the intended limit.
+    answer: Both initializers write the same instance attribute. The base initializer runs last and overwrites
+      30 with 10. Call the base initializer first and then set the specialized limit, or let the base initializer
+      accept the intended limit as an argument.
 
   # Sources: essential_python.pptx, slide 7; Homework Problems, PYTHON4.
   - id: evaluate-copy-policy
@@ -80,13 +98,19 @@ cards:
   - id: create-aliasing-counterexample
     difficulty: advanced
     bloom: create
-    question: "Construct a nested-list example that disproves the claim 'a shallow copy prevents every edit to the copy from affecting the original.' Show one edit that propagates and one that does not."
-    answer: |
+    question: Create two Python lists that initially share a task dictionary. Remove the task from one list,
+      then edit it through the other. Show that removing a reference changes membership without destroying
+      the object or undoing its shared identity.
+    answer: |-
       ```python
-      from copy import copy
-      original = [[1]]
-      other = copy(original)
-      other[0].append(2)  # original becomes [[1, 2]]
-      other[0] = [9]     # original stays [[1, 2]]
+      task = {"done": False}
+      queue = [task]
+      history = queue.copy()
+      queue.clear()
+      history[0]["done"] = True
+      print(queue, task)
       ```
-    explanation: "Self-check: identify the shared child object and the separate outer lists. One edit must mutate the shared child; the other must replace a slot only in the copied outer list."
+
+      This prints `[] {"done": True}`. The queue has no members, but history and task still refer to the same dictionary. Self-check: the example must separate a container edit from an object edit.
+    explanation: 'Self-check: identify the shared child object and the separate outer lists. One edit must
+      mutate the shared child; the other must replace a slot only in the copied outer list.'

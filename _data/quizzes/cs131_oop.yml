@@ -140,16 +140,20 @@ questions:
     type: single
     difficulty: advanced
     bloom: analyze
-    question: "An audited collection overrides `add` to record each insertion. Its inherited `addAll` calls `add` for every value. The base author optimizes `addAll` to write directly to storage. Existing base-class behavior stays the same. What breaks in the derived class?"
+    question: A Python subclass sets `self.prefix` after `super().__init__()` returns; its override of `describe()` reads that prefix. The base
+      constructor originally never called describe. A base update adds `self.describe()` during construction. What newly breaks?
     options:
-      - "Bulk insertions bypass the auditing override."
-      - "Single insertions invoke the audit twice."
-      - "Bulk insertions invoke the audit twice."
+    - The subclass method can read state that is not initialized yet.
+    - Python stops recognizing describe as an instance method.
+    - The base constructor automatically initializes every subclass field.
+    - The new call always bypasses overrides during construction.
     correct_index: 0
     option_feedback:
-      1: "The change is inside `addAll`; direct calls to the overridden `add` still follow their original path."
-      2: "Writing directly to storage eliminates the overridden calls; it does not add a second path through them."
-    explanation: "The subclass relied on an internal base-class call path, not just the public result of `addAll`. A base refactor can therefore preserve base behavior while silently breaking derived behavior."
+      1: The method remains an ordinary instance method; the change is when it is invoked.
+      2: A base constructor does not automatically assign fields introduced by a subclass.
+      3: In Python, self.describe() can dispatch to the subclass override even while the base constructor is running.
+    explanation: The base change introduces a callback into subclass code before the subclass has established its state. Inheritance can create
+      dependencies on base implementation details, including the timing of overridable calls.
 
   # Sources: lecture slides 69–75; homework OOP2 Part B.3.
   - id: cs131-oop-delegation-design
@@ -172,32 +176,40 @@ questions:
     type: single
     difficulty: intermediate
     bloom: apply
-    question: "A C++ base declares `virtual void save()`. A derived class accidentally declares `void save(int mode) override`. What useful feedback does `override` enable?"
+    question: A C++ base declares `virtual int count() const`. A derived class writes `int count() override` and omits const. What does the override
+      annotation help detect?
     options:
-      - "A compile-time error that no matching method is overridden."
-      - "Automatic adaptation of the call to provide a mode value."
-      - "Runtime selection between save overloads using argument values."
-    correct_index: 0
+    - The derived member cannot modify any local variables.
+    - The base class cannot have virtual read operations.
+    - The derived member does not override the const-qualified member.
+    - The derived return type is incompatible with the base return type.
+    correct_index: 2
     option_feedback:
-      1: "The annotation checks an intended override; it does not invent missing arguments or change a base method's signature."
-      2: "Overload selection and overriding are different. The mismatched signature is detected before execution."
-    explanation: "An override must match an appropriate virtual base method. The explicit annotation turns a signature mistake into a compile-time diagnostic instead of silently defining a different method."
+      0: Const qualification constrains modification through the object receiver, not all local variables.
+      1: A member may be both virtual and const-qualified.
+      3: Both return types are int. The mismatch is the member's const qualification.
+    explanation: Const qualification is part of the member signature relevant to overriding. The annotation asks the compiler to verify that a matching
+      inherited virtual member is actually overridden.
 
   # Sources: lecture slides 118–123; Fall 2025 Quiz 4, Problem 1 Part f.
   - id: cs131-oop-static-dynamic-dispatch
     type: single
     difficulty: intermediate
     bloom: apply
-    question: "In C++, Base defines virtual `sound()` and nonvirtual `label()`. Derived defines matching methods of both names. A `Base&` refers to a Derived object. Which implementations do `ref.sound()` and `ref.label()` select?"
+    question: In C++, Base has nonvirtual `summary()` whose body calls virtual `format()`. Derived overrides only format. A `Base& ref` refers to
+      a Derived object. When `ref.summary()` runs, which method bodies execute?
     options:
-      - "Derived sound and Base label."
-      - "Derived sound and Derived label."
-      - "Base sound and Base label."
+    - Base summary, which then calls Derived format.
+    - Base summary, which then calls Base format.
+    - Derived summary, which then calls Derived format.
+    - 'Neither body: a base reference cannot call summary.'
     correct_index: 0
     option_feedback:
-      1: "The nonvirtual method is selected using the reference's static type, even though the underlying object is derived."
-      2: "The virtual method uses the underlying object's dynamic type, so its derived override is selected."
-    explanation: "The same reference can participate in both forms of dispatch. Virtual calls select an override dynamically; nonvirtual calls use the member determined from the static type."
+      1: The call to format inside the base body is still virtual and acts on the Derived object.
+      2: Derived does not define summary. Inheriting its body does not create a separate derived implementation.
+      3: Summary is available in Base's public interface, so a Base reference may call it.
+    explanation: Static selection enters the inherited nonvirtual summary body. That body's virtual call uses the same object receiver and selects
+      Derived's override of format. Dispatch is decided at each call site.
 
   # Sources: lecture slides 107–109, 118, 126.
   - id: cs131-oop-substitution-versus-dispatch
@@ -236,19 +248,24 @@ questions:
     type: multiple
     difficulty: advanced
     bloom: analyze
-    question: "In C++, Scanner and Printer each publicly inherit Device without virtual inheritance. Copier publicly inherits both. Device contains an instance field `serial` and a method `getSerial()`. Which consequences follow? Select all that apply."
+    question: In C++, Scanner and Printer each inherit Device nonvirtually; Copier inherits both. Each Device starts with serial equal to 0. A Copier
+      changes serial to 8 specifically through its Scanner base, then reads serial specifically through its Printer base. Which conclusions follow?
+      Select all that apply.
     options:
-      - "A Copier contains two Device base subobjects."
-      - "An unqualified getSerial call on Copier is ambiguous."
-      - "Both paths automatically share one serial field."
-      - "The compiler automatically chooses the Printer path."
-    correct_indices: [0, 1]
+    - The Printer-side read still returns 0.
+    - The Scanner-side write changes one Device subobject.
+    - Qualifying both paths makes their Device state shared.
+    - The Printer-side read must return 8 because there is one Copier.
+    correct_indices:
+    - 0
+    - 1
     option_feedback:
-      0: "Each nonvirtual inheritance path contributes its own base subobject."
-      1: "The inherited method is reachable through two distinct Device subobjects, so the call needs disambiguation."
-      2: "Sharing the common base requires a different inheritance design; it does not happen automatically here."
-      3: "C++ does not silently resolve this ambiguity by choosing one of these base paths."
-    explanation: "A diamond can duplicate both inherited state and paths to behavior. The programmer must choose an explicit design for which base state and method path should be used."
+      0: The two nonvirtual paths contain different Device subobjects; the Printer one was not modified.
+      1: Selecting the Scanner path chooses which of the two Device subobjects is updated.
+      2: Path qualification resolves which subobject is used. It does not merge the two subobjects.
+      3: A single complete object may contain multiple base subobjects of the same type.
+    explanation: Nonvirtual inheritance duplicates the common base along these two paths. Explicit path selection removes ambiguity but preserves
+      separate state. Sharing a common base requires a different inheritance design.
 
   # Sources: lecture slides 79–81; homework OOP3 Part C.
   - id: cs131-oop-prototype-receiver
@@ -256,23 +273,28 @@ questions:
     difficulty: intermediate
     bloom: apply
     question: |
-      What does the final JavaScript expression return?
+      What pair does the final JavaScript expression produce?
 
       ```javascript
-      const template = { name: "base", greet() { return this.name; } };
-      const member = Object.create(template);
-      member.name = "Mina";
-      member.greet();
+      const cursor = { position: 0, step() { this.position += 1; } };
+      const left = Object.create(cursor);
+      const right = Object.create(cursor);
+      left.step();
+      cursor.position = 6;
+      [left.position, right.position];
       ```
     options:
-      - "The string Mina."
-      - "The string base."
-      - "The value undefined."
+    - '`[1, 6]`'
+    - '`[6, 6]`'
+    - '`[1, 0]`'
+    - '`[7, 6]`'
     correct_index: 0
     option_feedback:
-      1: "The method is found on the prototype, but this call still uses `member` as its receiver."
-      2: "Lookup can find `greet` through the prototype chain; the method need not be an own property."
-    explanation: "Method lookup finds `template.greet`, while the receiver for `member.greet()` is `member`. Its own `name` shadows the prototype's value."
+      1: Calling left.step writes an own position property on left, which later shadows the prototype's value.
+      2: Right has no own position property, so its read sees the prototype's updated value.
+      3: The own value on left is 1. Updating the prototype does not add to or replace that own property.
+    explanation: The inherited method uses left as this. Its assignment creates left's own position value, while right continues to obtain position
+      from the prototype. Updating the prototype therefore changes only the subsequent inherited read.
 
   # Sources: lecture slides 51–76, 107–114; Fall 2025 Quiz 2, Problem 2(a),
   # and Fall 2025 Quiz 4, Problem 1(a–e).
@@ -293,3 +315,24 @@ questions:
       2: "An interface relationship does not establish where method implementations came from."
       3: "Substitution goes from the implementing type to the interface. Other Readable values need not be Sensors."
     explanation: "Separate what the interface relationship establishes from claims about reuse or reverse conversions. Behavioral correctness still requires checking that the implementations honor the interface's promises."
+
+  # Source concepts: oop_palooza_v7.pptx, slides 31–37 and 45; Homework OOP1.
+  # Original transfer task: expose a sorted snapshot without sharing private array storage.
+  - id: cs131-oop-parsons-sorted-snapshot
+    type: parsons
+    display: block
+    difficulty: intermediate
+    bloom: apply
+    question: |
+      A Java object stores sensor readings in a non-null private `int[] readings` field. Arrange the lines for a method that returns an ascending snapshot. Preserve the stored order, and ensure that editing the returned array cannot change the stored readings. `clone()` copies this integer array; `java.util.Arrays.sort` sorts its argument in place. Leave two extra lines unused.
+    lines:
+      - "public int[] sortedReadings() {"
+      - "    int[] snapshot = readings.clone();"
+      - "    java.util.Arrays.sort(snapshot);"
+      - "    return snapshot;"
+      - "}"
+    distractors:
+      - "    int[] snapshot = readings;"
+      - "    return readings;"
+    explanation: |
+      Copy the array before sorting it, then return the copy. Assigning `readings` directly to `snapshot` creates another reference to the private array, so sorting would reorder internal state. Returning `readings` would also expose that state to future caller edits, even if a separate sorted copy had been created. Primitive integer elements need no deeper copying.

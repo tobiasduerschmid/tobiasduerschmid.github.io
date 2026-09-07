@@ -16,25 +16,41 @@ cards:
   - id: cs131-functional-card-lazy-demand
     difficulty: intermediate
     bloom: apply
-    question: "Why can Haskell evaluate `take 3 [2,4..]` successfully even though the source list is infinite? What result is produced?"
-    answer: "It produces `[2,4,6]`. The consumer demands only three elements, so evaluation never needs to construct the entire infinite list."
-    explanation: "Laziness is about demand, not an assumption that infinite data has already been stored. A consumer requiring the full length would not finish on this source."
+    question: Why can Haskell evaluate `head (zip [10..] [False, True])` successfully, and what value does
+      it produce? Identify what the consumer actually demands.
+    answer: It produces `(10, False)`. head needs only the first pair, so zip needs only the first element
+      of each source. Neither the rest of the infinite numeric stream nor the second Boolean is needed.
+    explanation: Demand flows backward from the consumer through the composed operations. An infinite producer
+      is safe when the requested observation needs only a finite part.
 
   # Sources: lecture slides 44–48, 66–70; homework HASKELL5 Part B and HASKELL6.
   - id: cs131-functional-card-recursion-contract
     difficulty: intermediate
     bloom: analyze
-    question: "A recursive function counts a finite list using `count [] = 0` and `count (x:xs) = count xs`. It terminates but returns the wrong answer. Identify what works and what is missing."
-    answer: "Recursing on the tail makes progress toward the empty-list case. The missing contribution is 1 for the removed head: the recursive branch must return `1 + count xs`."
-    explanation: "A terminating recursive function can still be incorrect. Check the base result, progress toward it, and how each step combines its local contribution with the recursive result."
+    question: |
+      This Haskell function should replace each adjacent pair by its sum and keep a final unpaired element. It terminates but loses results. Repair only the recursive branch.
+
+      ```haskell
+      combinePairs [] = []
+      combinePairs [x] = [x]
+      combinePairs (x:y:rest) = combinePairs rest
+      ```
+    answer: 'Use `combinePairs (x:y:rest) = (x + y) : combinePairs rest`. For `[2,5,8]`, the result must
+      be `[7,8]`; for `[]`, it stays `[]`.'
+    explanation: Consuming two values ensures progress but does not account for their contribution. The
+      recursive contract must both shrink the problem and assemble the required output.
 
   # Sources: lecture slides 74–76, 87–90; Fall 2024 midterm, Problem 3 Parts B–C, page 5.
   - id: cs131-functional-card-map-filter-types
     difficulty: intermediate
     bloom: understand
-    question: "Explain why `map` may change a list's element type, while `filter` preserves it. Give one example of each using strings."
-    answer: "`map length` transforms strings into integer lengths. `filter (\\s -> length s > 2)` selects some strings but returns those original string values."
-    explanation: "The contracts express the difference: `map :: (a -> b) -> [a] -> [b]`, while `filter :: (a -> Bool) -> [a] -> [a]`. A predicate decides membership; it is not the output value."
+    question: For Haskell `entries = ["", "go", ""]`, compare `map null entries` with `filter null entries`.
+      Give both results and explain why the same function can play different roles.
+    answer: '`map null entries` returns `[True, False, True]`: each predicate result becomes an output element.
+      `filter null entries` returns `["", ""]`: True selects an original string rather than becoming an
+      output element.'
+    explanation: map uses a function's result as new data; filter uses a Boolean result only to decide whether
+      to retain the original data. The two contracts preserve different information.
 
   # Sources: lecture slides 91–96; Fall 2025 Quiz 1, Problem 4 Part B.
   - id: cs131-functional-card-fold-seed
@@ -56,17 +72,26 @@ cards:
   - id: cs131-functional-card-closure-environment
     difficulty: intermediate
     bloom: apply
-    question: "In Haskell, `offset n = \\x -> x + n`. What must the returned function retain after `offset 6` finishes, and what does applying it to 4 produce?"
-    answer: "It must retain the binding of the free variable `n` to 6 along with its function body. Applying that closure to 4 produces 10."
-    explanation: "The caller supplies `x`; the defining environment supplies `n`. A closure keeps the needed environment available after the outer call has returned."
+    question: In Haskell, `allowed labels = \label -> elem label labels`. After `check = allowed ["draft",
+      "ready"]`, what must check retain, and what do `check "ready"` and `check "sent"` produce?
+    answer: check must retain the allowed labels list along with the predicate body. The results are True
+      and False. Each call supplies a new label while the retained list supplies the membership policy.
+    explanation: The returned function carries the environment required by its free variable labels. It
+      does not need to rerun the outer call or depend on its current caller's bindings.
 
   # Sources: lecture slides 143–148.
   - id: cs131-functional-card-sharing-safety
     difficulty: advanced
     bloom: evaluate
-    question: "Two versions of an immutable tree share an unchanged subtree. A teammate proposes mutating that subtree to save allocation during the next update. Assess the proposal against the promise that earlier versions remain unchanged."
-    answer: "It breaks the promise: both roots still reach the shared subtree, so both versions would observe the mutation. Copy the affected path and keep shared nodes immutable."
-    explanation: "Structural sharing saves allocation because shared values do not change. Mutation reintroduces dependence between versions and invalidates that reasoning."
+    question: An immutable list concatenation copies the left list's cells and shares the right list as
+      its suffix. A caller still holds the original right list. Would mutating the shared suffix through
+      the concatenated result preserve the original inputs? Explain why copying only the prefix does or
+      does not help.
+    answer: No. Both the original right-list reference and the concatenated result reach the same suffix
+      cells. Copying the left prefix does not isolate those cells. Keeping the shared suffix immutable is
+      what preserves the input values.
+    explanation: Copying some structure does not make every reachable object independent. Trace which objects
+      are shared before claiming that an update cannot affect earlier values.
 
   # Sources: lecture slides 44–45, 66–70, 90; homework HASKELL9–10.
   - id: cs131-functional-card-create-prefix

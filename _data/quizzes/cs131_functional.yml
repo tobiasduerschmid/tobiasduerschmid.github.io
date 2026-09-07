@@ -76,21 +76,25 @@ questions:
     difficulty: intermediate
     bloom: analyze
     question: |
-      On a nonempty finite list, this Haskell function never produces the intended count. Which replacement repairs the recursive branch?
+      This Haskell function should keep the first element of each pair, keeping a final unpaired element too. Which replacement makes recursive progress with that contract?
 
       ```haskell
-      count [] = 0
-      count (x:xs) = 1 + count (x:xs)
+      pairLeaders [] = []
+      pairLeaders [x] = [x]
+      pairLeaders (x:y:rest) = x : pairLeaders (x:y:rest)
       ```
     options:
-      - "`1 + count xs`"
-      - "`count xs`"
-      - "`1 + count []`"
+      - '`x : pairLeaders rest`'
+      - '`x : pairLeaders (y:rest)`'
+      - '`pairLeaders rest`'
+      - '`x : pairLeaders [x]`'
     correct_index: 0
     option_feedback:
-      1: "This reaches the base case but discards the contribution of every removed element, so it returns zero."
-      2: "This counts only one element regardless of how many remain. The rest of the list must still be processed."
-    explanation: "Count the current head once, then recurse on the shorter tail. The list length decreases toward the empty-list base case."
+      1: This removes only one element, so it retains the second member of each pair as well.
+      2: The recursion progresses, but discards the first element that the contract requires keeping.
+      3: This stops consulting the remaining input and can duplicate the current head.
+    explanation: Each recursive step consumes one complete pair and keeps its first value. The two base
+      cases cover an empty remainder and a single unpaired value.
 
   # Sources: lecture slides 51–59; homework HASKELL8.
   - id: cs131-functional-comprehension-product
@@ -137,51 +141,69 @@ questions:
     type: single
     difficulty: basic
     bloom: understand
-    question: "What does the Haskell type `pair :: a -> b -> (a,b)` require of the argument types?"
+    question: 'A Haskell function has type `tagAll :: a -> [b] -> [(a,b)]`. Which relationship must hold
+      between its arguments and result?'
     options:
-      - "The arguments must have different types."
-      - "The arguments may have the same or different types."
-      - "Both arguments must have the same type."
+      - The label type must equal the input list's element type.
+      - Every output pair uses the label type and the input element type.
+      - Each output pair may choose an unrelated second-component type.
+      - The result must contain exactly one pair for each input element.
     correct_index: 1
     option_feedback:
-      0: "Different type-variable names permit different types; they do not require them to differ."
-      2: "A repeated variable would impose that equality. Here the two type variables are independent."
-    explanation: "Each type variable tracks a relationship: the first argument's type reappears in the first tuple component, and the second argument's type in the second component."
+      0: Different type variables may be instantiated with different types; a shared label need not have
+        the items' type.
+      2: The same b links the input element type to every second component in the output.
+      3: This signature relates types, but does not state a result-length guarantee.
+    explanation: The repeated type variables express relationships across a list of pairs. The type alone
+      permits, for example, an empty result, so it does not fully specify the function's behavior.
 
   # Sources: lecture slides 83–90; Fall 2024 midterm, Problem 3 Part B, page 5.
   - id: cs131-functional-map-filter-pipeline
     type: multiple
     difficulty: intermediate
     bloom: analyze
-    question: "Given a finite list of strings `names`, which Haskell expressions return the lengths of only the names longer than 3 characters? Select all that apply."
+    question: For a finite Haskell list of strings `entries`, select every expression that returns the last
+      character of each nonempty entry, in order. Empty entries must be skipped. `last []` raises an error.
     options:
-      - "`map length (filter (\\s -> length s > 3) names)`"
-      - "`filter (> 3) (map length names)`"
-      - "`map (\\s -> length s > 3) names`"
-      - "`map length (filter (\\s -> length s < 3) names)`"
-    correct_indices: [0, 1]
+      - '`map last (filter (not . null) entries)`'
+      - '`[last text | text <- entries, not (null text)]`'
+      - '`filter (not . null) (map last entries)`'
+      - '`map last entries`'
+    correct_indices:
+      - 0
+      - 1
     option_feedback:
-      0: "The predicate retains qualifying strings before the transformation to lengths."
-      1: "Once strings become integer lengths, filtering those integers by the same threshold selects exactly the required results."
-      2: "Mapping the predicate produces a Boolean for every name; it neither removes short names nor returns lengths."
-      3: "The filter keeps names shorter than the threshold, reversing the required condition."
-    explanation: "The selection can happen on strings before transformation, or on their lengths afterward. The predicate must match the values it receives, and the condition must select the same original names."
+      0: The filter removes empty strings before last is applied to any retained entry.
+      1: The comprehension checks each entry before producing its last character.
+      2: map last produces characters, so a predicate expecting lists no longer has the required input type.
+      3: Applying last to an empty entry violates the stated input requirement.
+    explanation: The selection establishes the transformation's precondition. After last transforms strings
+      into characters, the original empty-string check is both too late and applied to the wrong type.
 
   # Sources: lecture slides 91–96; Fall 2025 Quiz 1, Problem 4 Part B.
   - id: cs131-functional-fold-accumulator-order
     type: single
     difficulty: intermediate
     bloom: apply
-    question: "What is the result of the Haskell expression `foldl (\\acc x -> acc - x) 10 [3,2]`?"
+    question: |
+      What is the result of this Haskell expression?
+
+      ```haskell
+      foldl (\acc digit -> 10 * acc + digit) 0 [4,0,2]
+      ```
     options:
-      - "`5`"
-      - "`9`"
-      - "`15`"
-    correct_index: 0
+      - '`6`'
+      - '`204`'
+      - '`402`'
+      - '`42`'
+    correct_index: 2
     option_feedback:
-      1: "This groups the subtraction as `10 - (3 - 2)`. A left fold carries the updated accumulator into the next step."
-      2: "The initial value participates in the subtraction; the combining function does not add the elements to it."
-    explanation: "The accumulator moves from 10 to `10 - 3 = 7`, then to `7 - 2 = 5`. With subtraction, regrouping the operations changes the result."
+      0: The reducer does not simply sum digits; it shifts the accumulated value one decimal place each
+        time.
+      1: foldl visits 4, then 0, then 2. Reversing those inputs would encode a different number.
+      3: A zero digit still shifts the accumulator before adding zero; it cannot be skipped.
+    explanation: The accumulator becomes 4, then 40, then 402. A fold's combining function determines how
+      order and each element contribute to the result.
 
   # Sources: lecture slides 87, 89, 91–93; Fall 2024 midterm, Problem 3 Part C, page 5.
   - id: cs131-functional-higher-order-type
@@ -211,20 +233,24 @@ questions:
     difficulty: advanced
     bloom: analyze
     question: |
-      What does `make 4 7 10` return in Haskell?
+      Which list does this Haskell expression produce?
 
       ```haskell
-      make x y = \x -> x - y
+      select labels = \labels -> filter (\label -> label /= "hold") labels
+      select ["saved"] ["hold", "send"]
       ```
     options:
-      - "`3`, using the lambda argument and captured y."
-      - "`-3`, using both arguments passed to make."
-      - "`6`, using the lambda argument and captured outer x."
-    correct_index: 0
+      - '`["saved"]`'
+      - '`["send"]`'
+      - '`["saved", "send"]`'
+      - '`["hold", "send"]`'
+    correct_index: 1
     option_feedback:
-      1: "The lambda's parameter named `x` shadows the outer `x`; inside the lambda, `x` refers to 10."
-      2: "The lambda's free variable is `y`, whose value is 7. The outer `x` is hidden by the parameter of the same name."
-    explanation: "After `make 4 7`, the returned function behaves like `\\x -> x - 7`. Applying it to 10 produces 3."
+      0: The returned lambda's labels parameter shadows the outer parameter; the saved list is not consulted.
+      2: No expression combines the two lists. The filter processes only the inner parameter.
+      3: The predicate removes the hold entry from the list supplied to the returned function.
+    explanation: The inner labels binding determines the list being filtered. The outer argument is unused;
+      lambda creation does not automatically capture every outer parameter.
 
   # Sources: lecture slides 113–128; Fall 2024 midterm, Problem 3 Part D, page 6.
   - id: cs131-functional-currying-versus-application
@@ -264,39 +290,48 @@ questions:
     difficulty: intermediate
     bloom: analyze
     question: |
-      A function must total all scores in this Haskell data structure. Which cases are necessary for a complete recursive solution? Select all that apply.
+      A Haskell function must total the weights of every parcel in a shipment, including nested bundles. Which pieces are required? Select all that apply.
 
       ```haskell
-      data Scores = End | Entry Int Scores
+      data Shipment = Parcel Int | Bundle [Shipment]
       ```
     options:
-      - "For End, return zero."
-      - "For Entry, add its score to the total of its remainder."
-      - "For Entry, return its score and ignore its remainder."
-      - "For End, recursively total End again."
-    correct_indices: [0, 1]
+      - Return the stored weight for a Parcel.
+      - Recursively total each child in a Bundle and add the totals.
+      - Reject a Bundle containing no children as an unmatched variant.
+      - Count one unit for each Bundle without examining its children.
+    correct_indices:
+      - 0
+      - 1
     option_feedback:
-      0: "The empty variant is the base case, and zero is the contribution of an empty sequence."
-      1: "An entry contributes both its local score and every score represented by the recursive field."
-      2: "This loses all scores beyond the first entry. Every recursive field carrying data must contribute."
-      3: "Revisiting the same empty value makes no progress and prevents termination."
-    explanation: "The function mirrors the data definition: one base case for `End`, and one recursive case that processes both fields of `Entry`."
+      0: Parcel is a distinct constructor; its integer contributes directly to the total.
+      1: A bundle may contain further bundles, so each child needs the same recursive treatment.
+      2: Bundle [] is a valid value. Its child weights sum to zero.
+      3: The contract asks for parcel weights, so replacing an entire bundle by one discards its contents.
+    explanation: Match the outer constructor, then follow the recursive structure it contains. A Bundle
+      holds a list of shipments rather than one immediate integer contribution.
 
   # Sources: lecture slides 143–148.
   - id: cs131-functional-persistent-update
     type: single
     difficulty: advanced
     bloom: evaluate
-    question: "A program must retain old versions of an immutable binary search tree. An insertion follows a path of height h. Which update strategy preserves old versions while allocating only proportional to h new nodes?"
+    question: An immutable notebook value contains a linked list of entries plus an immutable settings object.
+      To add a new entry at the front while preserving an undo snapshot, what must be newly allocated?
     options:
-      - "Copy the insertion path and share its unchanged subtrees."
-      - "Modify the insertion path and reuse the original root."
-      - "Copy every node before inserting into the copied tree."
-    correct_index: 0
+      - A fresh copy of every entry and the settings object.
+      - One new entry cell and a notebook wrapper sharing the old values.
+      - Only an updated link inside the old first entry cell.
+      - A copied settings object and a mutated existing notebook wrapper.
+    correct_index: 1
     option_feedback:
-      1: "Old roots still refer to those path nodes, so mutation would also change an earlier version."
-      2: "A full copy preserves versions but allocates proportional to the entire tree, which can greatly exceed the path height."
-    explanation: "Only nodes whose child references change need replacement. Unchanged immutable subtrees can be shared safely; the old root still reaches the old version."
+      0: The existing entries and settings do not change, so immutability makes sharing them safe.
+      2: Changing a cell reachable from the snapshot would alter that old version, and front insertion needs
+        a new cell.
+      3: Mutating the existing wrapper would change the saved notebook value; copying settings does not
+        repair that.
+    explanation: The new list cell points to the unchanged old list. A new wrapper points to that cell and
+      the existing settings, so allocation is independent of the number of saved entries.
 
   # Sources: lecture slides 6–8, 87, 148; homework HASKELL7.
   - id: cs131-functional-purity-optimization-boundaries

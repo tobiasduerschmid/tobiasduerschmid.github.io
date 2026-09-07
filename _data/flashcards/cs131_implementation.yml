@@ -14,9 +14,12 @@ cards:
   - id: construct-lexer-priority-examples
     bloom: create
     difficulty: advanced
-    question: "A longest-match lexer recognizes the keyword `end` before the identifier rule `[a-z]+`, with earlier rules winning ties. Give one input that tests the tie rule and another that tests why a keyword prefix does not necessarily become a keyword token. Explain the tokens."
-    answer: "One pair is end and endless. For end, both rules match three letters and the earlier keyword rule wins. For endless, the identifier rule matches the whole word and beats the shorter keyword match."
-    explanation: "Self-check: the first example must have equal match lengths; the second must give the identifier a strictly longer match. Rule priority is applied only after comparing lengths."
+    question: A longest-match lexer places the literal token `==` before a generic SYMBOL rule `[=<>]+`, with earlier rules winning ties. Give an
+      input that becomes the literal token and an input that becomes one longer SYMBOL. Explain why the first rule does not always win.
+    answer: 'Use == for the equal-length tie: both rules match two characters and the literal rule wins. Use ==< for the longer match: SYMBOL consumes
+      three characters, so it wins before rule order is considered.'
+    explanation: 'Self-check: compare matched lengths before checking priority. This lexer explicitly allows arbitrary nonempty sequences of the
+      three symbol characters.'
 
   # Sources: pl_implementation_palooza.pptx slides 9–16, 31; Homework Problems (Public).docx TOOLS1; CS131 Fall 25 Quiz 1 Solutions (Public).docx question 1.
   - id: construct-lexical-versus-parse-errors
@@ -30,25 +33,31 @@ cards:
   - id: construct-separated-list-grammar
     bloom: create
     difficulty: advanced
-    question: "Write a grammar for an empty list or one or more names separated by commas inside square brackets. Use NAME as a token, quoted punctuation as literal text, `{...}` for repetition, and `[...]` for optional grammar content. Trailing commas must be rejected."
+    question: A tiny command language starts with open, requires one or more `read NAME` actions, then optionally permits one `commit`. Write a
+      grammar using {...} for repetition and [...] for optional content. Reject both an empty action sequence and any read after commit.
     answer: |
       One solution is:
 
       ```text
-      list = "[" [names] "]" ;
-      names = NAME {"," NAME} ;
+      session = "open" read {read} ["commit"] ;
+      read = "read" NAME ;
       ```
 
-      It accepts [] and [oak,elm], but not [oak,].
-    explanation: "Self-check: the name sequence must be optional as a whole, and every repeated comma must bring a name with it. Quoted brackets are input punctuation; unquoted brackets express optionality in this notation."
+      It accepts open read a and open read a read b commit. It rejects open commit and open read a commit read b.
+    explanation: 'Self-check: place one mandatory read before its repetition, and put the optional commit after every read. The fixed order encodes
+      the requirement without a later semantic check.'
 
   # Sources: pl_implementation_palooza.pptx slides 23–27.
   - id: abstract-tree-grouping
     bloom: analyze
     difficulty: intermediate
-    question: "Two abstract syntax trees contain the same numbers and + and * operators. One has + at its root; the other has * at its root. Explain why counting matching tokens is insufficient to establish that both represent `(3 + 5) * 2`."
-    answer: "Tree relationships determine grouping. The required expression has multiplication at the root, with the addition of 3 and 5 as one child and 2 as the other. An addition-root tree can group the operations differently and produce a different result."
-    explanation: "Self-check: explain operand relationships, not only the root's name. Abstract syntax can omit the parentheses because the grouping is represented by the tree structure."
+    question: 'An abstract syntax tree for `choose(flag, 8, 3)` omits commas. The contract is choose(condition, when_true, when_false): return the
+      second argument when the condition is true and the third otherwise. Why must the tree distinguish argument positions? Give a call with the
+      same leaves but different behavior.'
+    answer: 'The tree must retain argument order: the condition, the true-branch value, and the false-branch value play different roles. choose(flag,
+      3, 8) contains the same leaves but swaps which value is chosen for each condition outcome.'
+    explanation: 'Self-check: punctuation may disappear, but the structural relationships it established must remain. A bag of equal leaf values
+      does not establish equal meaning.'
 
   # Sources: pl_implementation_palooza.pptx slides 28–30.
   - id: semantic-annotations-support-lowering
@@ -62,9 +71,14 @@ cards:
   - id: compare-two-compiler-extensions
     bloom: analyze
     difficulty: advanced
-    question: "A compiler has a shared machine-independent intermediate representation. Compare adding a new source language for an existing processor with adding a new processor for an existing source language. Which side changes, and what must remain compatible?"
-    answer: "A new source language needs a frontend that recognizes and checks it, then lowers its meaning into the shared representation. A new processor needs target-specific code generation and assembly. Both sides must honor the intermediate representation's semantics and format."
-    explanation: "Self-check: distinguish source-language responsibilities from target-instruction responsibilities. Reuse depends on a compatible representation contract, not merely on giving both outputs the same file extension."
+    question: A compiler already represents loops and 64-bit integer arithmetic in its intermediate form. Compare adding `repeat n times` syntax
+      with adding arbitrary-precision integer addition, for the same processor. Which can reuse existing loop operations directly, and why can the
+      other not simply reuse one 64-bit addition unchanged?
+    answer: Repeat syntax can lower into the existing loop operations while preserving the required iteration count. Arbitrary-precision addition
+      must also handle values wider than 64 bits; one fixed-width addition would lose that behavior. It needs a correct representation and implementation,
+      such as runtime calls and multiword arithmetic, or a supported intermediate-form extension.
+    explanation: 'Self-check: distinguish a new surface notation from a new semantic capability. Keeping the processor fixed does not guarantee
+      that every language extension can use the old operations without additional lowering or runtime support.'
 
   # Sources: pl_implementation_palooza.pptx slide 34; transfer of observable-behavior condition to optimization.
   - id: optimization-side-effect-counterexample
@@ -78,9 +92,14 @@ cards:
   - id: link-time-definition-explanation
     bloom: apply
     difficulty: intermediate
-    question: "A module compiles successfully after declaring and calling `int measure();`, but building the executable reports an unresolved measure reference. Explain how both outcomes can be consistent and what kind of missing input to the build would resolve the problem."
-    answer: "The declaration supplies enough type information to compile the call. The object file can still refer to an external definition. Linking needs an object module or library that actually defines measure with the expected interface."
-    explanation: "Self-check: adding the same declaration again cannot supply machine code for the function. The missing piece is a compatible definition included in the link."
+    question: A normal checksum implementation and an accelerated one each compile separately, but both define the same externally visible function
+      `checksum`. Linking both into one executable reports a duplicate definition. Why does separate compilation miss this conflict, and how can
+      a build select one implementation?
+    answer: Each compilation checks its own translation unit and can emit a valid definition. The linker then sees that two supplied object modules
+      both claim the same external symbol. The build can link exactly one implementation module for that symbol, while retaining the common declaration
+      used by callers.
+    explanation: 'Self-check: distinguish an incompatible set of definitions from a missing or incorrect declaration. Choosing one implementation
+      is a build decision; changing every caller''s signature is unnecessary.'
 
   # Sources: pl_implementation_palooza.pptx slides 45–48; Homework Problems (Public).docx TOOLS5 A–B.
   - id: construct-interpreter-state-contract

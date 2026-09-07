@@ -6,9 +6,12 @@ cards:
   - id: relation-contract-explanation
     bloom: understand
     difficulty: basic
-    question: "A team stores `depends(build, compile)`. What must its documentation say before someone can safely write rules using depends?"
-    answer: "It must define the meaning of each argument position, such as: depends(A, B) means A requires B. Prolog does not infer this direction from the predicate's English name."
-    explanation: "Self-check: distinguish the ordered relation the team intends from Prolog's structural matching. Swapping arguments generally asks a different question."
+    question: Two teams exchange Prolog facts. One documents `assigned(Person, Task)`; the other documents `assigned(Task, Person)`. Why does using
+      the same predicate name and arity fail to guarantee a compatible exchange, and what must an adapter do?
+    answer: Name and arity describe structural compatibility, not the intended roles of the arguments. An adapter must swap the argument positions
+      when converting between these two conventions, or translate into a new shared relation whose roles both teams document.
+    explanation: 'Self-check: a fact can parse and unify yet describe the wrong real-world relation. The adapter must apply one consistent mapping
+      to facts and the corresponding queries.'
 
   # Sources: logic_palooza_v6.pptx slides 7–8; Homework Problems (Public).docx LOGIC3; [Final] S23 V1 (Public).pdf p11 question 5.
   - id: construct-shared-resource-rule
@@ -29,9 +32,12 @@ cards:
   - id: explain-repeated-variable-failure
     bloom: analyze
     difficulty: intermediate
-    question: "Explain why `record(X, tag(X)) = record(green, tag(blue))` fails. How would replacing the inner X with a fresh Y change the outcome?"
-    answer: "The first arguments bind X to green, so tag(X) becomes tag(green), which cannot match tag(blue). With a fresh Y inside tag, unification succeeds with X = green and Y = blue."
-    explanation: "Self-check: mention both propagation of the first binding and consistency of repeated occurrences. A fresh variable removes an equality constraint; it is not a rename of the whole original X."
+    question: Explain why `[parcel(X), receipt(X)] = [parcel(code(red)), receipt(code(blue))]` fails. What changes if the receipt pattern uses a
+      fresh Y?
+    answer: The parcel match binds X to the entire term code(red). The repeated X would then require receipt(code(red)), which disagrees with receipt(code(blue)).
+      A fresh Y allows X = code(red) and Y = code(blue).
+    explanation: 'Self-check: the repeated variable equates entire compound terms across separate list elements. Replacing one occurrence with a
+      new variable removes that equality requirement.'
 
   # Sources: logic_palooza_v6.pptx slides 18–20, 30–31; [Final] F22 (Public).pdf p11 question 21.
   - id: explain-unification-resolution
@@ -46,15 +52,18 @@ cards:
     bloom: apply
     difficulty: intermediate
     question: |
-      Predict all bindings for `match(X)` in order, and explain why one candidate is skipped.
+      Predict all `(Job, Machine)` pairs produced by `can_run(Job, Machine)` in order. Explain why one candidate job produces no result.
 
       ```prolog
-      candidate(ivy). candidate(omar). candidate(zoe).
-      approved(omar). approved(zoe).
-      match(X) :- candidate(X), approved(X).
+      requires(draw, color). requires(scan, mono).
+      requires(bind, staples).
+      machine(west, mono). machine(east, color).
+      can_run(J, M) :- requires(J, Feature), machine(M, Feature).
       ```
-    answer: "X = omar, then X = zoe. The ivy candidate fails approved(ivy), so Prolog backtracks, undoes that candidate binding, and tries the next candidate."
-    explanation: "Self-check: each answer must satisfy both goals with the same X. The order comes from searching candidate facts before moving to their approval checks."
+    answer: The answers are (draw, east), then (scan, west). For each job, the shared Feature must match a machine's capability. Bind produces no
+      result because neither machine fact supplies staples.
+    explanation: 'Self-check: search chooses a job first, then searches machines for its bound capability. Backtracking restores Feature between
+      jobs; it does not accumulate incompatible capabilities.'
 
   # Sources: logic_palooza_v6.pptx slides 11–12; [Final] F23 (Public).pdf p24 question 8c.
   - id: negation-data-completeness
@@ -67,18 +76,20 @@ cards:
   # Sources: logic_palooza_v6.pptx slides 8–9, 32; [Final] S23 V1 (Public).pdf p11 question 5.
   - id: repair-path-search
     bloom: create
-    difficulty: expert
-    question: "For a finite directed graph with no cycles, write `reachable(A, B)` using `edge(A, B)`. It should find paths of at least one edge from a given A. Include a base clause and explain how your recursive subgoal order makes progress."
+    difficulty: intermediate
+    question: Write a terminating Prolog recognizer `alternating(Words)` for finite ground lists containing zero or more repetitions of the pair
+      tap, rest. It should accept [] and [tap,rest,tap,rest] but reject [tap] and [rest,tap]. Include a base clause and explain the progress measure.
     answer: |
       One solution is:
 
       ```prolog
-      reachable(A, B) :- edge(A, B).
-      reachable(A, B) :- edge(A, Next), reachable(Next, B).
+      alternating([]).
+      alternating([tap, rest | Tail]) :- alternating(Tail).
       ```
 
-      The base clause finds direct edges. The recursive clause chooses an actual outgoing edge before searching from its endpoint.
-    explanation: "Self-check: direct and longer paths must work, the recursive call must advance through an edge, and the termination argument must use the stated finite acyclic graph. On cyclic graphs, this version can revisit nodes indefinitely."
+      Each recursive step matches and consumes a complete two-element pair. The remaining finite list becomes shorter by two.
+    explanation: 'Self-check: reject incomplete or reversed pairs, and explain termination using a strictly shorter ground list. Checking the input
+      pattern before recursion avoids an unconstrained recursive search.'
 
   # Sources: logic_palooza_v6.pptx slides 34–38, 47; Homework Problems (Public).docx LOGIC7 A.2.
   - id: generate-list-prefix-splits
@@ -108,6 +119,10 @@ cards:
   - id: list-filter-counterexample
     bloom: analyze
     difficulty: advanced
-    question: "A removal predicate has one rule that drops a matching head and another that always keeps the head before recurring. Give the smallest ground input that reveals why the keep rule needs a condition when the promise is to remove every target occurrence."
-    answer: "Use target a and input [a]. The drop rule can produce [], but backtracking into the unconditional keep rule can also produce [a]. For ground input, allow keeping the head only when it differs from the target."
-    explanation: "Self-check: request all answers, not just the first successful one. The counterexample must expose an incorrect additional proof, showing why testing only the first answer can hide a relational bug."
+    question: A ground command-list relation has a special recursive clause that converts go to tick and a catch-all recursive clause that copies
+      any head unchanged. Give a smallest input exposing an incorrect extra answer, then state a condition for the catch-all clause that prevents
+      it.
+    answer: Input [go] can yield both [tick] and [go], because the catch-all clause also matches go. Require the catch-all head to differ from go
+      before copying it, so the two cases are exclusive for ground input.
+    explanation: 'Self-check: request all answers rather than only the first successful result. The condition belongs on the branch that retains
+      the original value.'

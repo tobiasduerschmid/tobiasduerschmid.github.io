@@ -9,9 +9,12 @@ cards:
   - id: cs131-functions-card-mutation-rebinding
     difficulty: basic
     bloom: understand
-    question: "In Python, why can a function append to its caller's list but cannot replace the caller's list by assigning a new list to its parameter? Explain using names and objects."
-    answer: "The caller's name and the parameter initially refer to the same object. Append changes that shared object. Assignment changes which object the local parameter names, leaving the caller's binding intact."
-    explanation: "Self-check: distinguish mutation of an object from rebinding of a name. Calling both actions 'changing the parameter' hides the distinction that determines the caller's observation."
+    question: 'A Python helper receives a dictionary representing a cache. It calls `cache.clear()` and then assigns `cache = {"ready": True}`.
+      What does an existing alias held by the caller see, and why?'
+    answer: The alias sees the original dictionary, now empty. clear mutates that shared object. The later assignment points only the local parameter
+      at a different dictionary, so it does not put ready into the original object.
+    explanation: 'Self-check: identify the two dictionaries and distinguish an object mutation from changing the local name. The original object
+      does not recover its previous contents when the local name is rebound.'
 
   # Source: Functions slides 10–13.
   - id: cs131-functions-card-copy-out-conflict
@@ -25,17 +28,13 @@ cards:
   - id: cs131-functions-card-default-interface-design
     difficulty: expert
     bloom: create
-    question: "Design a call syntax for a language whose `resize` function has required `width` and optional `height` and `keep_ratio`. Optional parameters may occur anywhere in its declaration. Show a call that supplies only width, a call supplying width and height, and the binding rule that prevents ambiguity."
-    answer: |
-      One design requires named arguments:
-
-      ```text
-      resize(width: 120)
-      resize(width: 120, height: 80)
-      ```
-
-      Each argument binds to the parameter with the same name. Missing optional parameters use their declared defaults; a missing required name is an error.
-    explanation: "Self-check: both calls must bind uniquely without inspecting argument values or types, and the rule must explain omissions. Other designs, such as explicit omission markers, are acceptable if they also establish a unique binding."
+    question: A library exposes `schedule(job, delay=0)`, used as both `schedule(task, 5)` and `schedule(job=task, delay=5)`. Design a backward-compatible
+      way to add an optional priority and deprecate the name delay in favor of wait. Define what happens if a caller supplies both names.
+    answer: Keep the second positional slot as the delay/wait value. Add priority as a named-only optional argument. Temporarily accept either delay
+      or wait as names for the same slot, but reject a call that supplies both instead of silently choosing one. Existing calls retain their bindings;
+      new calls can use wait and priority.
+    explanation: 'Self-check: preserve both existing call forms, give each supplied value exactly one destination, and specify the conflicting-name
+      case. Supporting an old name during migration is separate from choosing a default value.'
 
   # Source: Functions slides 27 and 34–43; Homework FUNC2.
   - id: cs131-functions-card-error-information
@@ -75,9 +74,12 @@ cards:
   - id: cs131-functions-card-capture-lifetime
     difficulty: intermediate
     bloom: analyze
-    question: "A C++ closure must read a local integer after the factory that created it has returned. The intended behavior is to remember that integer's value at creation. Which capture strategy fits, and why would reference capture be unsafe?"
-    answer: "Capture the integer by value so the closure stores its own copy. Reference capture would refer to the factory's local integer, whose lifetime ends when the factory returns. A reference capture does not extend that lifetime."
-    explanation: "Self-check: justify both the observed value and the lifetime. Capturing a pointer by value would copy only the pointer, so it would not by itself solve the lifetime of a separately referenced object."
+    question: A C++ factory returns a closure that captures a raw pointer to a local `std::vector<int>` by value. The factory then returns, destroying
+      the vector. Explain why value capture is insufficient and propose a capture that lets the closure retain the vector contents.
+    answer: Value capture copies the pointer value, leaving it pointing at a destroyed vector. Capture the vector object itself by value instead,
+      so the closure owns a separate vector whose lifetime lasts with the closure.
+    explanation: 'Self-check: distinguish copying an address from copying the object at that address. The captured variable''s type matters as well
+      as the capture syntax.'
 
   # Source: Functions slides 89–104; Homework FUNC5 A–C.
   - id: cs131-functions-card-polymorphism-distinction
@@ -91,18 +93,21 @@ cards:
   - id: cs131-functions-card-generic-bound
     difficulty: advanced
     bloom: create
-    question: "A statically checked generic function `total_weight(items)` adds the weight of each item. Types need not share a class hierarchy. Specify the smallest useful capability bound and outline the function. Assume weight returns an integer and integer addition is built in."
+    question: A generic `first_expired(items, now)` must return the first item whose deadline is earlier than now, or explicit absence. Items may
+      have unrelated concrete types. State a minimal capability bound and write pseudocode preserving the returned item's type. Integer comparison
+      is built in.
     answer: |
-      Require a capability with a single operation, `weight(): Integer`:
+      Require `deadline(): Integer` on T; return Optional<T>.
 
       ```text
-      function total_weight<T supports weight(): Integer>(items: List<T>):
-          total = 0
+      function first_expired<T supports deadline(): Integer>(items: List<T>, now: Integer): Optional<T>
           for item in items:
-              total = total + item.weight()
-          return total
+              if item.deadline() < now:
+                  return Some(item)
+          return None
       ```
-    explanation: "Self-check: the bound must justify every operation on `T`; it should not demand unrelated methods or a particular concrete class. The empty input must return zero. Syntax may vary; the capability contract is what matters."
+    explanation: 'Self-check: justify deadline access with the bound, retain T in the result, stop at the first qualifying item, and cover an empty
+      list. Equality with now does not count as expired under this contract.'
 
   # Source: Functions slides 95–109; Homework FUNC5 C, explanatory note.
   - id: cs131-functions-card-monomorphization
