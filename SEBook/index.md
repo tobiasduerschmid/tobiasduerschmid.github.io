@@ -4,7 +4,7 @@ layout: sebook
 ---
 
 # Welcome to the SE Book
-The SE Book brings together material for students in software engineering courses, including [CS 35L](/SEBook/CS35L_bookmarks.html) and [CS 130](/SEBook/CS130_bookmarks.html).
+The SE Book brings together material for students in [CS 35L](/SEBook/CS35L_bookmarks.html), [CS 130](/SEBook/CS130_bookmarks.html), and [CS 131](/SEBook/CS131_bookmarks.html).
 
 <section id="sebook-search" aria-labelledby="sebook-search-heading" class="sebook-search">
   <h2 id="sebook-search-heading">Search the SE Book</h2>

@@ -226,3 +226,10 @@ topics:
   - name: Bookmarks
     icon: null
     url: /SEBook/bookmarks.html
+    subtopics:
+      - name: CS 35L Bookmarks
+        url: /SEBook/CS35L_bookmarks.html
+      - name: CS 130 Bookmarks
+        url: /SEBook/CS130_bookmarks.html
+      - name: CS 131 Bookmarks
+        url: /SEBook/CS131_bookmarks.html
