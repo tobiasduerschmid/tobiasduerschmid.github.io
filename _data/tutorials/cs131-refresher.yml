@@ -77,25 +77,25 @@ steps:
       the parameter declaration and the left side of line B:
 
       ```cpp
-      // Version A - pass by value
+      // Version A 
       void modify(Point p) {
           p.x_ = 50;          // line A
           p = Point(20, 30);  // line B
       }
 
-      // Version B - pass by reference
+      // Version B 
       void modify(Point &p) {
           p.x_ = 50;          // line A
           p = Point(20, 30);  // line B
       }
 
-      // Version C - pass by pointer, reassigning the pointer
+      // Version C
       void modify(Point *p) {
           p->x_ = 50;             // line A
           p = new Point(20, 30);  // line B
       }
 
-      // Version D - pass by pointer, writing through the pointer
+      // Version D
       void modify(Point *p) {
           p->x_ = 50;         // line A
           *p = Point(20, 30); // line B
@@ -205,20 +205,20 @@ steps:
               int x_, y_;
           };
 
-          // Version A - by value. Finished for you.
+          // By value. Finished for you.
           // The caller still sees (10, 10) after this returns.
           void modify_by_value(Point p) {
               p.x_ = 50;
               p = Point(20, 30);
           }
 
-          // Version B - by reference.
+          // By reference.
           // Goal: after this returns, the CALLER's point is (20, 30).
-          // You choose how the parameter is bound.
+          // You choose how the parameter is bound (& or *)
           void modify_by_reference(Point p) {
           }
 
-          // Version D - by pointer, written so the caller sees both lines.
+          // By pointer, written so the caller sees both lines.
           // Goal: after this returns, the CALLER's point is (20, 30).
           // The parameter is already a pointer. Do not make it point elsewhere.
           void modify_by_pointer(Point *p) {
@@ -380,7 +380,7 @@ steps:
           option_feedback:
             1: "A by-value parameter is a copy. Replacing it replaces the copy, and the copy is thrown away when the function returns."
             2: "This one can replace the caller's object, but only through `*p`, and it forces the call site to say `resize(&pt)`, which is what the question rules out."
-            3: "`const` is the problem. It makes the alias read-only, so the compiler rejects any assignment to `p` or its members."
+            3: "`const` is the problem. It makes the alias read-only, so the compiler rejects any assignment of `p` or its members."
           explanation: "A non-const reference parameter is an alias for the caller's object, so assigning to it replaces that object. And references need no `&` at the call site."
         - type: multiple
           difficulty: advanced
@@ -503,7 +503,7 @@ steps:
       | C++ | Python | Why |
       |---|---|---|
       | `Point(int x = 0, int y = 0) { ... }` | `def __init__(self, x=0, y=0):` | The constructor has a fixed name, and the object it's working on is an explicit first parameter |
-      | `x_ = x;` | `self.x_ = x` | This assignment creates an instance attribute; assigning to bare `x_` inside the method would create a local variable |
+      | `x_ = x;` | `self.x_ = x` | This assignment creates an instance member variable; assigning to bare `x_` inside the method would create a local variable |
       | `public:` / `private:` | *(nothing)* | In Python, everything is public by default |
 
       ### ✏️ Predict before you run
@@ -606,7 +606,7 @@ steps:
               other.x_ = 99
               assert p.x_ == x, "Changing one Point must not change another Point"
         hints:
-          - text: For this class, assigning through `self` creates an instance attribute on that particular point.
+          - text: For this class, assigning through `self` creates an instance member variable on that particular point.
           - text: "`__init__` gets the object it's building as its first parameter. The two coordinates arrive as the second and third."
             condition: "code_missing: self.x_"
           - text: "Here's the shape. Two assignments, no `return`: `self.x_ = ...` and `self.y_ = ...`"
@@ -649,9 +649,9 @@ steps:
                   f"display() should print the current point ({x}, {y}), got {buf.getvalue()!r}"
         hints:
           - text: Print x_ before y_, separated by a comma. Parentheses and spaces are optional.
-          - text: An f-string is the cleanest way to mix attribute values in with the punctuation.
+          - text: An f-string is the cleanest way to mix member variable values in with the punctuation.
             condition: "code_missing: print("
-          - text: "Here's the shape: `print(f\"({...}, {...})\")`. Fill in the two attributes."
+          - text: "Here's the shape: `print(f\"({...}, {...})\")`. Fill in the two member variables."
             condition: "code_contains: print("
       - description: modify changes x_ to 50 while the caller keeps its original y_
         command: |
@@ -668,7 +668,7 @@ steps:
                   f"After modify(Point({x}, {y})), the caller should see (50, {y}), got {(p.x_, p.y_)}"
         hints:
           - text: This function is supplied in the starter. Trace line A and line B separately, keeping the caller's name in view.
-          - text: An attribute write changes the shared object. Assigning a new Point to the local parameter changes only that local name.
+          - text: An member variable write changes the shared object. Assigning a new Point to the local parameter changes only that local name.
           - text: Try a point whose y coordinate is neither 10 nor 30. Its y coordinate should survive the call.
 
     quiz:
@@ -690,7 +690,7 @@ steps:
             1: "If Python had copied the object, line A would have been hidden too and we'd have seen `(10, 10)`. The 50 got through, so no copy was made."
             2: "An alias would have let line B through too, printing `(20, 30)`. Line B got lost, so `p` isn't a second name for `pt`."
             3: "Writing through a pointer gets both lines across. Line B here reassigns the local name instead of writing into the caller's object."
-          explanation: "Python hands the function a copy of a reference to the object. Attribute writes travel through that reference to the caller's object, but assigning to the parameter only points the function's own name somewhere else. That's exactly what version C did."
+          explanation: "Python hands the function a an object reference to the object, which is like a pointer in C++. member variable writes travel through that object reference to the caller's object, but assigning to the parameter only points the function copy of the object reference somewhere else. That's exactly what version C did."
         - type: single
           difficulty: advanced
           question: |
@@ -705,9 +705,9 @@ steps:
           correct_index: 0
           option_feedback:
             1: "A parameter is a local name bound to the supplied object. Assigning to that name does not rebind the caller's name."
-            2: "An attribute assignment such as `p.x_ = 20` would change the original object. `p = ...` changes which object the local name refers to."
+            2: "An member variable assignment such as `p.x_ = 20` would change the original object. `p = ...` changes which object the local name refers to."
             3: "Constructing a new point does not copy its coordinates into the old point. The two objects remain separate."
-          explanation: "Assignment to `p` rebinds that local name. Python can assign to other scopes with explicit mechanisms such as `global` and `nonlocal`, but those do not turn a parameter into an alias for an arbitrary caller variable."
+          explanation: "Assignment of `p` rebinds the local `p` variable to point to a new object, but does not affect the caller's object reference."
         - type: single
           difficulty: basic
           question: |
@@ -717,14 +717,14 @@ steps:
           options:
             - "Without `self.`, `x_` is just a local that dies at the return"
             - "`self` is a keyword Python requires before every assignment"
-            - "`self.` marks the attribute public, like C++'s `public:` label"
-            - "Python needs it to allocate storage for the attribute in advance"
+            - "`self.` marks the member variable public, like C++'s `public:` label"
+            - "Python needs it to allocate storage for the member variable in advance"
           correct_index: 0
           option_feedback:
-            1: "`self` is an ordinary parameter name, not a keyword, and you only need it when you mean an attribute rather than a local variable."
-            2: "`self.x_` names an attribute on an instance. Python does not use a `public:` declaration to make that attribute accessible."
-            3: "For this ordinary class, assigning to `self.x_` creates the instance attribute. No separate storage declaration is needed."
-          explanation: "Inside this method, `x_ = x` would bind a local variable. `self.x_ = x` instead writes an attribute of the instance passed as `self`. C++ permits an unqualified member name to refer to the current object's member."
+            1: "`self` is an ordinary parameter name, not a keyword, and you only need it when you mean an member variable rather than a local variable."
+            2: "`self.x_` names an member variable on an instance. Python does not use a `public:` declaration to make that member variable accessible."
+            3: "For this ordinary class, assigning to `self.x_` creates the instance member variable. No separate storage declaration is needed."
+          explanation: "Inside this method, `x_ = x` would bind a local variable. In `self.x_ = x, `self` points to the object we operating on, so the assignment modifies the `x_` member variable in that object. C++ permits an unqualified member name to refer to the current object's member."
     solution:
       files:
         - path: "point_lab.py"
@@ -771,27 +771,40 @@ steps:
     instructions: |
       ### Why this matters
 
-      In Homework 0, the Python function changes a point's attribute but cannot
-      replace the caller's variable by assigning to its parameter. Let's try
-      the same distinction with a swap: what changes when we swap attributes,
+      In Homework 0, the `modify()` Python function changes a point's member variable but cannot use assignment to change the caller's original object:
+
+      ```
+      def modify(p):
+          p = Point(20, 30) # does not change the caller's point object
+
+      q = Point(10,10)
+      modify(q)
+      # q still points to point 10, 10
+      ```
+
+      Let's try
+      the same distinction with a swap: what changes when we swap member variables,
       and what changes when we swap local names?
 
       ### 🎯 You will learn to
 
       - Apply the change-it versus reassign-it rule to say which changes survive a call
-      - Explain why rebinding parameters does not swap the caller's variables
+      - Explain why assigning parameters does not swap the caller's variables
 
       ### The rule
 
-      A call binds the function's parameter names to the same objects the caller
-      passed in. Two very different things can happen next:
+      A call to a function copies the argument's values into the paramaters.
+      In Python, all variables and parameters are pointers to objects, also called "object references". 
+      Therefore, during the call the parameters point at the original object(s) being passed in.
+
+      Two very different things can happen next:
 
       - **You change the object.** `p.x_ = 50`, `items.append(3)`, `d["k"] = 1`.
-        You reach through the name to the object itself. The caller is holding
-        that same object, so the caller sees the change.
-      - **You reassign the name.** `p = Point(20, 30)`, `items = []`. You point
-        the function's own name at a different object. The caller's name never
-        moved.
+        You reach through the parameter object reference to the object itself. The caller is holding
+        that same object, so the caller sees the change to the original object.
+      - **You reassign the parameter.** `p = Point(20, 30)`, `items = []`. You point
+        the function's own parameter / variable at a different object. The caller's variable never
+        changes.
 
       ### 🔧 Your task
 
@@ -800,9 +813,9 @@ steps:
       1. `swap_coords(p)` — swap one point's own `x_` and `y_` in place. The
          caller has to see the change without reassigning anything.
       2. `swap_points(a, b)` — write the naive version on purpose: the one you'd
-         write in a language where parameters are aliases for the caller's
-         variables. Reassign `a` and `b` to each other and nothing else. Don't
-         touch their attributes.
+         write the naive version on purpose: the one you’d write if you thought that python parameters worked like C++ references.
+         Reassign `a` and `b` to each other and nothing else. Don't
+         touch their member variables.
 
       Writing the broken one deliberately is the point of this step. The checker
       verifies that `swap_coords` works, that `swap_points` really does attempt
@@ -890,7 +903,7 @@ steps:
               ns['swap_coords'](p)
               assert (p.x_, p.y_) == start, "Swapping the coordinates twice should restore them"
         hints:
-          - text: The caller keeps its own name for the object and never reassigns it, so whatever you do has to happen to the object's attributes.
+          - text: The caller keeps its own name for the object and never reassigns it, so whatever you do has to happen to the object's member variables.
           - text: Writing `p.x_ = p.y_` first throws away the value you still need. Python can assign both at once, from a pair built before either assignment happens.
             condition: "code_missing: ,"
           - text: "Here's the shape. One line, two targets, two sources: `p.x_, p.y_ = ..., ...`"
@@ -937,7 +950,7 @@ steps:
               a, b = ns['Point'](*first), ns['Point'](*second)
               ns['swap_points'](a, b)
               assert (a.x_, a.y_) == first and (b.x_, b.y_) == second, \
-                  "Rebind the local parameters only; do not swap or change the caller's point attributes"
+                  "Rebind the local parameters only; do not swap or change the caller's point member variables"
         hints:
           - text: If this check fails, the function is doing more than reassigning. It's reaching through the names and editing the objects themselves.
           - text: Swapping `a.x_` with `b.x_` changes the shared objects, so the caller does see it. This step wants the version that only moves the local names.
@@ -985,7 +998,7 @@ steps:
             1: "Python never copies the object on a call, so the write lands on the caller's object."
             2: "A C++ by-value parameter is a real copy made by the copy constructor, so the write lands on that copy and is thrown away."
             3: "This has the two languages backwards. Copying is what C++ does when you pass by value, and Python is the one that shares the object."
-          explanation: "Passing by value in C++ copies the object, so the function edits a copy. Python has no such mode. The function always gets a reference to the same object, so attribute writes are shared."
+          explanation: "Passing by value in C++ copies the object, so the function edits a copy. Python has no such mode. The function always gets an object reference to the same object, so member variable writes are shared."
         - type: single
           difficulty: advanced
           question: |
@@ -997,7 +1010,7 @@ steps:
                 a.y_, b.y_ = b.y_, a.y_
             ```
 
-            Does the caller now see `first` and `second` swapped?
+            Does the caller now see `a` and `b` swapped?
           options:
             - "Their coordinates swap; their identities do not"
             - "Their identities swap; their coordinates do not"
@@ -1006,9 +1019,9 @@ steps:
           correct_index: 0
           option_feedback:
             1: "The assignments write into the existing objects. Neither assignment changes which object a caller variable refers to."
-            2: "Attribute assignments change the shared objects, so the caller sees the exchanged coordinates."
+            2: "Member variable assignments change the shared objects, so the caller sees the exchanged coordinates."
             3: "The coordinates change, but object identity stays fixed. Other aliases still refer to the same objects and see their new coordinates."
-          explanation: "Changing attributes reaches the shared objects, so the printed coordinates really do swap. What didn't happen is a swap of the caller's names. `first` still refers to the object it always did. To swap the names you need `first, second = second, first` at the call site."
+          explanation: "Changing member variables reaches the shared objects, so the printed coordinates really do swap."
     solution:
       files:
         - path: "references_lab.py"
@@ -1044,12 +1057,12 @@ steps:
             second.display()
       explanation: |
         `swap_coords` reads both coordinate values before assigning either
-        attribute. Both writes change the shared point, so the caller sees them.
+        member variable. Both writes change the shared point, so the caller sees them.
         A temporary-variable solution works too if it preserves both old values.
 
         `a, b = b, a` really does exchange the local parameter bindings inside
         `swap_points`. It does not change the caller's bindings or either
-        point's attributes. To exchange the caller's variables, the assignment
+        point's member variables. To exchange the caller's variables, the assignment
         must happen in that caller, possibly using a pair returned by a function.
   # =========================================================================
   # STEP 4 — Recursion in C++ (HW0 problem 3a-3b, C++ half)
@@ -1085,7 +1098,7 @@ steps:
       | everything but the first | `arr + 1, n - 1` | `values[1:]` |
       | is there only one item left? | `n == 1` | `len(values) == 1` |
 
-      Here's one way to organize both functions:
+      Here's one way to organize both functions (look at `find_biggest` and `index_of_biggest` on the right):
 
       1. **Base case.** What's the answer when there's exactly one item left?
          Both functions here are guaranteed at least one item, so `n == 1` is a
@@ -2107,7 +2120,7 @@ steps:
           option_feedback:
             1: "Python writes this as `super().method()`, which does the same job as the qualified `Person::method()` call."
             2: "Python supports overriding instance methods in subclasses. Ordinary instance calls look up the method on the object's class."
-            3: "A Python subclass may need to call `super().__init__(...)` to establish attributes expected by inherited methods. That initialization concern remains."
+            3: "A Python subclass may need to call `super().__init__(...)` to establish member variables expected by inherited methods. That initialization concern remains."
           explanation: "Slicing happens because C++ objects have a fixed size and get copied by value. Python names always refer to whole objects and never copy on assignment or on a call, so there's no way to lose the subclass part."
     solution:
       files:
@@ -2246,7 +2259,7 @@ steps:
 
       Open **`linked_list_lab.py`** and finish the class:
 
-      - `Node` stays **nested inside `List`**, with attributes `val` and `next`,
+      - `Node` stays **nested inside `List`**, with member variables `val` and `next`,
         mirroring the C++ layout. A new node stores its supplied value and
         starts with `next = None`.
       - `List.__init__` starts with `self.head = None`.
@@ -2355,7 +2368,7 @@ steps:
           assert node is None, "The last node must point to None"
           assert List().head is None, "Different List instances must have independent heads"
         hints:
-          - text: "Three attribute names matter here, because the checker walks the chain itself: `head` on the list, and `val` and `next` on each node."
+          - text: "Three member variable names matter here, because the checker walks the chain itself: `head` on the list, and `val` and `next` on each node."
           - text: A brand new node's `next` should start out as nothing at all, which is how Python writes `nullptr`.
             condition: "code_contains: pass"
           - text: Order matters in `add_to_front`. Point the new node at the current front before you move the front, or you lose the rest of the chain.
@@ -2463,7 +2476,7 @@ steps:
           options:
             - "Yes; reversing them makes the new node point to itself"
             - "No, both assignments happen before the method returns"
-            - "Yes, swapping them raises an AttributeError on the first call"
+            - "Yes, swapping them raises an member variableError on the first call"
             - "No, Python evaluates both right sides before assigning"
           correct_index: 0
           option_feedback:
@@ -2488,13 +2501,13 @@ steps:
             - "`[5]`"
             - "`[]`"
             - "`[5, 5]`"
-            - "An AttributeError"
+            - "An member variableError"
           correct_index: 0
           option_feedback:
             1: "`b = a` copies a reference, not the object. There's only one list here, and `add_to_front` changes it."
             2: "Only one node was added, and only one list exists, so there's nothing to duplicate."
-            3: "Both names refer to a fully built `List`, so every attribute access works normally."
-          explanation: "Assignment between names never copies an object. `a` and `b` are two names for one list, so a change through either one is visible through both. It's the same shared-object rule from Step 3, one level up from attributes."
+            3: "Both names refer to a fully built `List`, so every member variable access works normally."
+          explanation: "Assignment between names never copies an object. `a` and `b` are two names for one list, so a change through either one is visible through both. It's the same shared-object rule from Step 3, one level up from member variables."
         - type: multiple
           difficulty: advanced
           question: |
@@ -2510,7 +2523,7 @@ steps:
             0: "Python manages these nodes' memory automatically. Python's `del` removes a binding or item; it is not C++'s explicit object deallocation."
             1: "Python has a naming convention for \"please don't touch this\", but nothing enforces it, so everything stays reachable."
             2: "The walk ports over unchanged. `while` exists in both languages and means the same thing."
-            3: "The link ports over as an ordinary attribute holding either another node or `None`. The structure is identical, and only the syntax changes."
+            3: "The link ports over as an ordinary member variable holding either another node or `None`. The structure is identical, and only the syntax changes."
           explanation: "The two things that vanish are both about control that C++ gives you: freeing memory yourself, and enforced access restrictions. The data structure itself, a node holding a value and a link and walked by a loop, survives the translation intact."
         - type: parsons
           difficulty: intermediate
