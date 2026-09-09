@@ -1,6 +1,6 @@
-title: "CS131 Refresher: Parameter Passing, Recursion & Objects"
+title: "CS131 Refresher: Parameter Passing & Recursion"
 description: |
-  This optional refresher reviews parameter passing, recursion, inheritance and polymorphism, linked lists, and basic Python from CS31, CS32, and CS35L. It follows CS131 Homework 0 and assumes you have seen these topics before. Python and C++17 exercises run in the browser, with automatic parameter-passing checks and examples to review. You can continue without passing the tests or answering the knowledge checks correctly.
+  This optional refresher reviews parameter passing, recursion, and basic Python from CS31, CS32, and CS35L. It follows CS131 Homework 0 and assumes you have seen these topics before. Python and C++17 exercises run in the browser, with automatic parameter-passing checks and examples to review. You can continue without passing the tests or answering the knowledge checks correctly.
 # Bloom-verb objectives. Authoring-time metadata for self-audit; the runtime
 # does not render this list.
 learning_objectives:
@@ -9,8 +9,6 @@ learning_objectives:
   - "Apply Python's single parameter passing scheme to say which changes the caller sees and which it doesn't."
   - "Write recursive functions with no loops, using base cases that cover the stated input domain."
   - "Write a recursive function that returns a new list instead of changing the one it was given."
-  - "Explain how virtual dispatch and passing by value or reference affect which C++ method runs."
-  - "Write a linked list class in Python and explain why it needs no destructor."
 
 backend: multiple
 require_tests: false
@@ -27,7 +25,9 @@ steps:
   # =========================================================================
   # STEP 1 — C++ parameter passing (HW0 problem 1a-1d)
   # =========================================================================
-  # Pedagogy: PRIMM — Predict before Run, then Make.
+  # Pedagogy: PRIMM — Predict, Run, Investigate, then Modify one bug at a time.
+  # Mistake-based familiarization: runnable value/reference and pointer bugs
+  # expose different partial outcomes; rerun after each repair to isolate why.
   # Variation Theory: four variants of one call, exactly one critical feature
   # (how the parameter is bound) varies between them, so the difference the
   # student must notice is isolated.
@@ -148,25 +148,40 @@ steps:
       arrow points. <code>*p = ...</code> changes what it points at.</p>
       </details>
 
-      ### 🔧 Now write two of them yourself
+      ### 🔧 Run first, then repair two bugs
 
-      Use **Run** to compile and run the current C++17 program in the browser.
-      The output panel shows compiler messages and anything your program prints.
-      After editing, choose **Run** again to compile the new version. If compilation
-      fails, fix the first reported error and try again.
+      Open **`param_passing.cpp`**. The starter compiles, but two functions
+      don't do what their names promise. Both `modify_by_reference` and
+      `modify_by_pointer` should leave the caller's point at **`(20, 30)`**.
+      `modify_by_value` is a working comparison: it should leave the caller's
+      coordinates unchanged. Keep that function and the `Point` class as they are.
 
-      Open **`param_passing.cpp`**. `modify_by_value` is already written for you
-      as a worked example. Fill in the other two so that **both leave the
-      caller's point at `(20, 30)`**.
+      **1. Run without editing.** Read the function declarations and bodies,
+      then jot down the three output lines you expect. Choose **Run** to
+      compile and execute the C++17 program in the browser. Each call gets a
+      separate `Point(10, 10)` in `main()`. Compare the actual output with
+      both your prediction and the functions' goals. Which function changes
+      nothing for its caller? Which changes only part of its caller's point?
+      Use **Test My Work** to see which goal each function meets so far.
 
-      - `modify_by_reference` — you pick how the parameter is declared.
-      - `modify_by_pointer` — the parameter is already `Point *p`. Reach the
-        caller's object on every assignment. Don't point `p` somewhere else.
+      **2. Repair `modify_by_reference` first.** Its body already assigns the
+      intended coordinates. Explain why those assignments don't reach the
+      caller. Change only its parameter declaration, keeping the call
+      `modify_by_reference(by_reference)` and both body statements intact.
+      Predict which output line will change, then **Run** again and check.
+      Use **Test My Work** again: the value and reference checks should now
+      pass, while the pointer check still fails. One repair doesn't fix both bugs.
 
-      The supplied `main()` creates a separate `Point(10, 10)` for each call
-      and displays the result. Run the starter once, then compare its output with
-      your prediction as you complete the two functions. You can change the
-      starting coordinates in `main()` to try more examples.
+      **3. Repair `modify_by_pointer`.** Keep its `Point *p` parameter and
+      its first assignment. Trace what `p` points to before and after the
+      second assignment. Why does the first assignment reach the caller,
+      while the second doesn't? Replace the second assignment so it updates
+      the existing caller's object without allocating another `Point`.
+      Predict the full output, **Run** again, then use **Test My Work**.
+      Both repaired functions should now leave their caller at `(20, 30)`.
+
+      After each edit, **Run** compiles the new version. If compilation fails,
+      fix the first reported error and try again.
 
       ### Check your work
 
@@ -185,6 +200,10 @@ steps:
       For each assignment, explain whether its left side names a local copy,
       the caller's object, or the local pointer. This reflection is for your own
       review; the automatic checks do not grade your explanation.
+
+      Finally, change the three starting points in `main()` to `Point(-4, 7)`.
+      Predict all three results before running. Explain why the value result
+      changes with the input, while the two repaired results stay the same.
     files:
       - path: "cs131/param_passing.cpp"
         language: "cpp"
@@ -205,23 +224,24 @@ steps:
               int x_, y_;
           };
 
-          // By value. Finished for you.
-          // The caller still sees (10, 10) after this returns.
+          // Working comparison: leave the caller's point unchanged.
           void modify_by_value(Point p) {
               p.x_ = 50;
               p = Point(20, 30);
           }
 
-          // By reference.
-          // Goal: after this returns, the CALLER's point is (20, 30).
-          // You choose how the parameter is bound (& or *)
+          // Bug 1. Goal: leave the CALLER's point at (20, 30).
+          // Run this version before changing it.
           void modify_by_reference(Point p) {
+              p.x_ = 50;
+              p = Point(20, 30);
           }
 
-          // By pointer, written so the caller sees both lines.
-          // Goal: after this returns, the CALLER's point is (20, 30).
-          // The parameter is already a pointer. Do not make it point elsewhere.
+          // Bug 2. Goal: leave the CALLER's point at (20, 30).
+          // Repair this after Bug 1, keeping the pointer parameter.
           void modify_by_pointer(Point *p) {
+              p->x_ = 50;
+              p = new Point(20, 30);
           }
 
           int main() {
@@ -460,18 +480,21 @@ steps:
                 return 0;
             }
       explanation: |
-        Both bodies do exactly what `modify_by_value` does: set `x_`, then
-        replace the whole object. The reference version changes the parameter binding. The pointer
-        version also uses dereferencing so that its assignments reach the object.
+        The starter prints `(10, 10)`, `(10, 10)`, and `(50, 10)`.
+        Its name doesn't make `modify_by_reference` pass by reference:
+        `Point p` still creates a copy. Changing that declaration to `Point &p`
+        fixes the second result without changing the body or the call in `main()`.
 
         `Point &p` makes `p` an alias. There is no second object, so
         `p = Point(20, 30)` really is `pt = Point(20, 30)`.
 
         `Point *p` gives you a copy of an address. Both `p->x_` and `*p` follow
-        that address to the caller's object, so both reach `pt`. The tempting
-        wrong move is `p = new Point(20, 30)`, which only rewrites the address
-        on our piece of paper. That leaves `pt` at `(50, 10)` and leaks the
-        memory we allocated.
+        that address to the caller's object, so both reach `pt`. The starter's
+        `p = new Point(20, 30)` only rewrites the address on our piece of paper.
+        That leaves the caller at `(50, 10)` and leaks the allocated object.
+        Replacing that line with `*p = Point(20, 30)` updates the existing
+        object and removes the unnecessary allocation. The final output is
+        `(10, 10)`, `(20, 30)`, and `(20, 30)`.
 
         Keep versions C and D in mind for the next two steps. Python has exactly
         one parameter passing scheme, and it behaves like one of these four.
@@ -1842,746 +1865,3 @@ steps:
         changes it. That's why `print(x)` still shows `[1, 2, 3, 1, 4]` after the
         call, and it's the same habit functional programming will ask for on
         every data structure, not just lists.
-
-  # =========================================================================
-  # STEP 7 — Inheritance and polymorphism (HW0 problem 4)
-  # =========================================================================
-  # Pedagogy: PRIMM — Predict, then Make (extend the hierarchy).
-  # Also a deliberate interleave: comedy_club takes Person& , so this step
-  # re-tests Step 1's reference semantics inside a new topic.
-  - title: "Virtual Dispatch and Object Slicing"
-    backend: cpp
-    instructions: |
-      ### Why this matters
-
-      In this step we'll explore inheritance and polymorphism using C++.
-      The question is which function body runs when a base-class reference
-      refers to a derived object. Keep the parameter passing rules from Step 1
-      in mind as you work through the calls.
-
-      ### 🎯 You will learn to
-
-      - Trace which version of a function runs when a base-class reference names a derived object
-      - Evaluate how a parameter's declared form changes that choice
-      - Add a new subclass to an existing hierarchy
-
-      ### The comedy club
-
-      Consider the following classes, which represent regular people and people
-      who giggle (a subclass of people) when they attend a comedy club:
-
-      ```cpp
-      class Person {
-      public:
-        Person(const std::string& name) { name_ = name; }
-        void listen_to_joke() { laugh(); }
-        virtual void laugh()  { cout << "haha!\n"; }
-        virtual void heckle() { cout << "that's dumb!\n"; }
-      private:
-        std::string name_;
-      };
-
-      class GigglyPerson : public Person {
-      public:
-        GigglyPerson(const std::string& name) : Person(name) { }
-        virtual void laugh()  { cout << "giggle giggle!\n"; }
-        virtual void heckle() { cout << "that's... giggle... dumb... giggle!\n"; }
-      };
-      ```
-
-      Now consider the following code that uses our classes:
-
-      ```cpp
-      void comedy_club(Person& p) {
-        p.listen_to_joke();
-        p.heckle();
-      }
-
-      int main() {
-        Person p("Leia");
-        comedy_club(p);
-
-        GigglyPerson g("Sanjay");
-        comedy_club(g);
-      }
-      ```
-
-      Notice what `listen_to_joke` is: a **non-virtual** function, defined only
-      on `Person`, that calls `laugh()`. Nobody overrides it. Keep that in mind
-      for the prediction.
-
-      ### ✏️ Predict before you read on
-
-      What will this program print? Why? Don't just compile and run this code.
-      Instead, try to reason out what is printed and why that's the case. If you
-      get a different answer, trace the call that surprised you. Four lines
-      come out, so write all four down before you
-      open the reveal.
-
-      - **(a)** `haha!`, `that's dumb!`, `haha!`, `that's... giggle... dumb... giggle!`
-      - **(b)** `haha!`, `that's dumb!`, `giggle giggle!`, `that's... giggle... dumb... giggle!`
-      - **(c)** `haha!`, `that's dumb!`, `haha!`, `that's dumb!`
-
-      <details>
-      <summary>Reveal</summary>
-      <p><strong>(b).</strong></p>
-      <pre><code>haha!&#10;that's dumb!&#10;giggle giggle!&#10;that's... giggle... dumb... giggle!</code></pre>
-      <p>Line 3 is the interesting one. <code>comedy_club(g)</code> binds the
-      reference <code>p</code> to the <code>GigglyPerson</code> object
-      <code>g</code>. There's no copy and nothing gets sliced off, because
-      <code>p</code> is a reference, which is version B from Step 1.
-      <code>p.listen_to_joke()</code> runs <code>Person</code>'s only copy of
-      that function, and inside it the bare call <code>laugh()</code> means
-      <code>this-&gt;laugh()</code>. <code>this</code> points at a
-      <code>GigglyPerson</code> and <code>laugh</code> is <code>virtual</code>,
-      so the overridden version in <code>GigglyPerson</code> is the one that
-      runs.</p>
-      <p>The non-virtual function didn't need to be overridden. It only needed to
-      call something virtual. This dynamic method dispatch is a key feature of
-      object-oriented programming.</p>
-      </details>
-
-      ### 🔧 Your task
-
-      Open **`comedy_club.cpp`** and add a third kind of audience member:
-      `StonePerson`, who is unimpressed by everything.
-
-      - Inherit publicly from `Person`.
-      - Forward the name to the `Person` constructor in an initializer list.
-        `Person` has no default constructor, so this isn't optional.
-      - Override **both** `laugh` and `heckle`. The joke gets `...silence...`,
-        and the heckle gets something equally deadpan. The exact strings are up
-        to you.
-      - In `main`, send a `StonePerson` through `comedy_club` alongside the
-        other two.
-
-      Predict your program's six output lines, then choose **Run** to compile
-      and run `comedy_club.cpp` as C++17 in the browser. Compare the output with
-      your prediction. This step uses the manual review below; it has no
-      automatic code tests.
-
-      ### Check your work (manual review)
-
-      The first four lines should match the original program. The final two
-      should come from your `StonePerson` overrides, even though `comedy_club`
-      still takes `Person&`. Check that the constructor and both overrides are
-      public, and that the override signatures match `void laugh()` and
-      `void heckle()`. Adding `override` after each signature lets the
-      compiler catch a mismatch when you choose **Run**.
-
-      Now consider replacing `Person& p` with `Person p`. Passing `g` then copies
-      only its `Person` base part into a new `Person` object. This is called
-      **object slicing**. The original `g` stays a `GigglyPerson`, but the local
-      copy prints `haha!` and `that's dumb!`. A reference or pointer can refer to
-      the original derived object without making that copy.
-    files:
-      - path: "cs131/comedy_club.cpp"
-        language: "cpp"
-        content: |
-          #include <iostream>
-          #include <string>
-          using namespace std;
-
-          class Person {
-          public:
-            Person(const std::string& name) { name_ = name; }
-            void listen_to_joke() { laugh(); }
-            virtual void laugh()  { cout << "haha!\n"; }
-            virtual void heckle() { cout << "that's dumb!\n"; }
-          private:
-            std::string name_;
-          };
-
-          class GigglyPerson : public Person {
-          public:
-            GigglyPerson(const std::string& name) : Person(name) { }
-            virtual void laugh()  { cout << "giggle giggle!\n"; }
-            virtual void heckle() { cout << "that's... giggle... dumb... giggle!\n"; }
-          };
-
-          // TODO: add StonePerson here.
-          // Inherit publicly from Person, forward the name to Person's
-          // constructor, and override both laugh() and heckle().
-
-          void comedy_club(Person& p) {
-            p.listen_to_joke();
-            p.heckle();
-          }
-
-          int main() {
-            Person p("Leia");
-            comedy_club(p);
-
-            GigglyPerson g("Sanjay");
-            comedy_club(g);
-
-            // TODO: build a StonePerson and send it to comedy_club too.
-          }
-
-    open_file: "cs131/comedy_club.cpp"
-    run_file: "cs131/comedy_club.cpp"
-
-    quiz:
-      title: "Step 7 — Knowledge Check"
-      min_score: 0.8
-      questions:
-        - type: single
-          difficulty: intermediate
-          question: |
-            `listen_to_joke` is not virtual, and `GigglyPerson` never
-            overrides it. So why does `comedy_club(g)` still print
-            `giggle giggle!`?
-          options:
-            - "`listen_to_joke` calls `laugh()`, which is virtual, on a GigglyPerson"
-            - "Any function called on a derived object dispatches dynamically"
-            - "`GigglyPerson` inherits `listen_to_joke` and recompiles it against its own `laugh`"
-            - "Passing by reference makes every member function behave as if virtual"
-          correct_index: 0
-          option_feedback:
-            1: "Only functions declared `virtual` in the base class are chosen at run time. A non-virtual call is decided at compile time, from the declared type."
-            2: "Inheritance shares one compiled function. It doesn't make a separate copy per subclass. The choice happens at run time, through the virtual call inside it."
-            3: "References do prevent slicing, which is what gives dispatch anything to choose between, but the choosing itself still requires `virtual`."
-          explanation: "The bare `laugh()` inside `listen_to_joke` means `this->laugh()`. `this` points at a `GigglyPerson` and `laugh` is virtual, so the overridden version runs even though the function around it is an ordinary one."
-        - type: single
-          difficulty: advanced
-          question: |
-            Back to Step 1. Someone changes the signature to
-            `void comedy_club(Person p)`, by value instead of by reference.
-            What does `comedy_club(g)` print now?
-          options:
-            - "`haha!` then `that's dumb!`, because the GigglyPerson part is sliced off"
-            - "`giggle giggle!` then `that's... giggle... dumb... giggle!`, unchanged"
-            - "Nothing, because the call no longer compiles"
-            - "`haha!` then `that's... giggle... dumb... giggle!`"
-          correct_index: 0
-          option_feedback:
-            1: "Passing by value builds a `Person`-sized object using `Person`'s copy constructor, so the overrides don't come along."
-            2: "It compiles without complaint, because a `GigglyPerson` is a `Person` and the copy is perfectly legal. That silence is what makes this bug so hard to spot."
-            3: "Both calls are still virtual, but their receiver is now a plain `Person` copy. Neither dispatch can select a `GigglyPerson` override."
-          explanation: "This is object slicing. The copy constructor builds a plain `Person` out of the `Person` part of `g` and throws the rest away. The parameter really is a `Person`, so both virtual calls find `Person`'s bodies."
-        - type: single
-          difficulty: advanced
-          question: |
-            Which parameter types preserve a `GigglyPerson` object for virtual
-            dispatch when it is passed to `comedy_club`? Assume the call and member
-            access use the appropriate reference or pointer syntax.
-          options:
-            - "`Person&` and `Person*` only"
-            - "All three of `Person`, `Person&` and `Person*`"
-            - "`Person*` only, because dispatch needs an address"
-            - "`Person` and `Person&`, but not `Person*`"
-          correct_index: 0
-          option_feedback:
-            1: "Passing by value is exactly the one that can't. It copies a `Person`-shaped object and loses the subclass part before any call happens."
-            2: "A reference can name the original derived object without copying it. A pointer can do the same; dynamic dispatch works through either."
-            3: "This has it backwards. A pointer keeps the real type, and passing by value is the one that destroys it."
-          explanation: "Dynamic dispatch needs the original subclass object to still be there behind the parameter. References and pointers both name it. A by-value parameter is a new, smaller object with no subclass part left to dispatch to."
-        - type: multiple
-          difficulty: advanced
-          question: |
-            Consider each change independently. Which changes prevent the
-            `StonePerson` call in `main` from producing both intended overrides?
-          options:
-            - "Declaring the class as `class StonePerson : Person`"
-            - "Naming the override `void laugh(int volume)`"
-            - "Writing `void laugh() { cout << \"...silence...\\n\"; }` without `virtual`"
-            - "Giving `StonePerson` a constructor that forwards the name to `Person`"
-          correct_indices: [0, 1]
-          option_feedback:
-            0: "A `class` inherits privately unless you say `public`, and a private base means the conversion to `Person&` isn't allowed."
-            1: "Signatures have to match. Adding a parameter defines an unrelated function, so the base version keeps winning the virtual call."
-            2: "An override is virtual whether or not you repeat the keyword. Writing it again is a readability choice, not a behavior change."
-            3: "That's required for the class to compile at all, since `Person` has no default constructor. It enables the overrides rather than blocking them."
-          explanation: "Private inheritance makes this conversion to `Person&` inaccessible, so the call fails to compile. Changing `laugh`'s parameter list instead creates a different function; the inherited `laugh()` still runs. An override remains virtual without repeating the keyword."
-        - type: single
-          difficulty: "advanced"
-          question: |
-            Back to Steps 2 and 3. If you translated this hierarchy to Python,
-            which C++ mechanism would you no longer have to worry about?
-          options:
-            - "Object slicing on assignment or parameter passing"
-            - "Calling a base-class method from a subclass"
-            - "Overriding a method in a subclass"
-            - "Constructing the base part of a subclass instance"
-          correct_index: 0
-          option_feedback:
-            1: "Python writes this as `super().method()`, which does the same job as the qualified `Person::method()` call."
-            2: "Python supports overriding instance methods in subclasses. Ordinary instance calls look up the method on the object's class."
-            3: "A Python subclass may need to call `super().__init__(...)` to establish member variables expected by inherited methods. That initialization concern remains."
-          explanation: "Slicing happens because C++ objects have a fixed size and get copied by value. Python names always refer to whole objects and never copy on assignment or on a call, so there's no way to lose the subclass part."
-    solution:
-      files:
-        - path: "cs131/comedy_club.cpp"
-          language: "cpp"
-          content: |
-            #include <iostream>
-            #include <string>
-            using namespace std;
-
-            class Person {
-            public:
-              Person(const std::string& name) { name_ = name; }
-              void listen_to_joke() { laugh(); }
-              virtual void laugh()  { cout << "haha!\n"; }
-              virtual void heckle() { cout << "that's dumb!\n"; }
-            private:
-              std::string name_;
-            };
-
-            class GigglyPerson : public Person {
-            public:
-              GigglyPerson(const std::string& name) : Person(name) { }
-              virtual void laugh()  { cout << "giggle giggle!\n"; }
-              virtual void heckle() { cout << "that's... giggle... dumb... giggle!\n"; }
-            };
-
-            class StonePerson : public Person {
-            public:
-              StonePerson(const std::string& name) : Person(name) { }
-              virtual void laugh()  { cout << "...silence...\n"; }
-              virtual void heckle() { cout << "i've heard better.\n"; }
-            };
-
-            void comedy_club(Person& p) {
-              p.listen_to_joke();
-              p.heckle();
-            }
-
-            int main() {
-              Person p("Leia");
-              comedy_club(p);
-
-              GigglyPerson g("Sanjay");
-              comedy_club(g);
-
-              StonePerson s("Wren");
-              comedy_club(s);
-            }
-      explanation: |
-        `StonePerson` is `GigglyPerson` with different strings, and that's the
-        point. Adding a third behavior meant changing nothing in `Person` and
-        nothing in `comedy_club`. That's what dynamic method dispatch buys you.
-
-        Two details are easy to miss, and both are about matching. The class
-        header needs `public`, because a `class` inherits privately by default
-        and a private base makes `Person&` unreachable. And each override needs
-        the exact signature of the virtual function it replaces: `void laugh()`,
-        no parameters. A near miss like `void laugh(int)` defines a different function and
-        does not override `laugh()`. Adding `override` catches that mismatch
-        at compile time.
-
-        The initializer list isn't a style choice here. `Person` declares a
-        constructor that takes a name, so it has no default constructor, and the
-        base part can't be built without `: Person(name)`.
-  # =========================================================================
-  # STEP 8 — Linked list in Python (HW0 problem 5)
-  # =========================================================================
-  # Pedagogy: worked example with fading (full C++ source given, Python
-  # written from scratch) + interleaving — the capstone quiz reaches back to
-  # references, recursion, and dispatch.
-  - title: "Linked Lists Without a Destructor"
-    backend: pyodide
-    instructions: |
-      ### Why this matters
-
-      Consider the linked list class below. Translating it to Python brings
-      together classes, object references, and traversal. The chain has the
-      same structure in both languages, but Python manages node memory
-      automatically.
-
-      ### 🎯 You will learn to
-
-      - Write a singly linked list in Python with a nested node class
-      - Explain why this Python linked list needs no manual node cleanup
-
-      ### The C++ original
-
-      ```cpp
-      class List {
-      private:
-        struct Node {
-          Node(int v) { val = v; next = nullptr; }
-          int val;
-          Node *next;
-        };
-
-        Node *head_;
-      public:
-        List() { head_ = nullptr; }
-        ~List() {
-          while (head_ != nullptr) {
-            Node *temp = head_->next;
-            delete head_;
-            head_ = temp;
-          }
-        }
-        void add_to_front(int val) {
-          Node *new_node = new Node(val);
-          new_node->next = head_;
-          head_ = new_node;
-        }
-        void print() {
-          Node *p = head_;
-          while (p) {
-            cout << p->val << endl;
-            p = p->next;
-          }
-        }
-      };
-      ```
-
-      The constructor, insertion, and traversal have Python equivalents.
-      The explicit node cleanup is unnecessary: Python can reclaim nodes when
-      they are no longer reachable. The timing depends on the Python
-      implementation, so we do not rely on immediate collection.
-
-      | C++ | Python |
-      |---|---|
-      | `struct Node { ... };` nested and private | a `class Node:` nested inside `List` |
-      | `Node *head_;` set to `nullptr` | `self.head = None` |
-      | `new Node(val)` | `self.Node(val)` |
-      | `~List()` walking the chain calling `delete` | *nothing at all* |
-
-      ### 🔧 Your task
-
-      Open **`linked_list_lab.py`** and finish the class:
-
-      - `Node` stays **nested inside `List`**, with member variables `val` and `next`,
-        mirroring the C++ layout. A new node stores its supplied value and
-        starts with `next = None`.
-      - `List.__init__` starts with `self.head = None`.
-      - `add_to_front(val)` links a new node in at the front. It returns nothing.
-      - `values()` returns a plain Python list of the values, **front to back**,
-        by walking the chain.
-      - `print_items()` prints one value per line, front to back.
-
-      Both `values()` and `print_items()` must leave the nodes and their links
-      unchanged so the list can be read again.
-
-      Loops are allowed again here. The no-loops requirement applies to the
-      recursion problems. This interactive version adds `values()` so you can
-      inspect the chain and names the printing method `print_items()`; it does
-      the same job as `print()` in Homework 0.
-
-      ### ✏️ Predict before you run
-
-      You add 1, then 2, then 3, each to the front. What does `values()` return,
-      and which end of the chain is `head`?
-
-      <details>
-      <summary>Reveal</summary>
-      <p><code>[3, 2, 1]</code>. Every insertion goes in front of whatever was
-      already there, so the newest item is always <code>head</code> and the list
-      comes out in reverse insertion order. That's why
-      <code>add_to_front</code> is so cheap, and why a stack is the natural
-      thing to build out of one of these.</p>
-      </details>
-
-      ### A Later Review
-
-      After a break, try three small variations without looking at the reveals:
-      explain a pointer reassignment, trace an index returned by recursion, and
-      insert a node into a two-node chain. Use any gap in your explanation to
-      choose the step to revisit. That's all for this refresher!
-    files:
-      - path: "linked_list_lab.py"
-        language: "python"
-        content: |
-          class List:
-              """Python port of the C++ singly linked list."""
-
-              class Node:
-                  def __init__(self, v):
-                      # TODO: a node holds a value and a link to the next node
-                      pass
-
-              def __init__(self):
-                  # TODO: an empty list points at nothing
-                  pass
-
-              def add_to_front(self, val):
-                  # TODO: build a node, link it ahead of the current front,
-                  # then make it the new front
-                  pass
-
-              def values(self):
-                  # TODO: walk the chain and collect the values, front to back
-                  pass
-
-              def print_items(self):
-                  # TODO: print one value per line, front to back
-                  pass
-
-              # No destructor needed - see the quiz below for why.
-
-
-          lst = List()
-          lst.add_to_front(1)
-          lst.add_to_front(2)
-          lst.add_to_front(3)
-          print(lst.values())  # expect [3, 2, 1]
-          lst.print_items()
-
-    open_file: "linked_list_lab.py"
-
-    tests:
-      - description: Each insertion links a new nested Node to the existing chain
-        command: |
-          import io, contextlib
-          path = '/tutorial/linked_list_lab.py'
-          src = open(path).read()
-          ns = {'__name__': '__cs131_check__'}
-          with contextlib.redirect_stdout(io.StringIO()):
-              exec(compile(src, path, 'exec'), ns)
-          List = ns['List']
-          assert isinstance(getattr(List, 'Node', None), type), "List must contain its nested Node class"
-          node = List.Node(-7)
-          assert getattr(node, 'val', None) == -7 and getattr(node, 'next', 'missing') is None, \
-              "Node(v) should store v in val and start with next set to None"
-          lst = List()
-          assert getattr(lst, 'head', 'missing') is None, "A new List must have head set to None"
-          old_nodes = []
-          for value in (0, -7, 12, 12, 5):
-              previous = lst.head
-              assert lst.add_to_front(value) is None, "add_to_front should update the list and return nothing"
-              assert isinstance(lst.head, List.Node) and all(lst.head is not old for old in old_nodes), "Create a new Node for each insertion"
-              assert lst.head.val == value and lst.head.next is previous, \
-                  "The new head must hold the inserted value and link to the previous head"
-              old_nodes.append(lst.head)
-          node = lst.head
-          for expected in reversed(old_nodes):
-              assert node is expected, "Insertion must preserve the existing chain without cycles"
-              node = node.next
-          assert node is None, "The last node must point to None"
-          assert List().head is None, "Different List instances must have independent heads"
-        hints:
-          - text: "Three member variable names matter here, because the checker walks the chain itself: `head` on the list, and `val` and `next` on each node."
-          - text: A brand new node's `next` should start out as nothing at all, which is how Python writes `nullptr`.
-            condition: "code_contains: pass"
-          - text: Order matters in `add_to_front`. Point the new node at the current front before you move the front, or you lose the rest of the chain.
-      - description: values() walks the chain without consuming it, for empty, singleton, and longer lists
-        command: |
-          import io, contextlib
-          path = '/tutorial/linked_list_lab.py'
-          src = open(path).read()
-          ns = {'__name__': '__cs131_check__'}
-          with contextlib.redirect_stdout(io.StringIO()):
-              exec(compile(src, path, 'exec'), ns)
-          List = ns['List']
-          for inserted in ((), (42,), (0, -7, 12, 12, 5)):
-              lst = List()
-              for value in inserted:
-                  lst.add_to_front(value)
-              nodes, node = [], lst.head
-              while node is not None:
-                  assert all(node is not previous for previous in nodes), "The chain contains a cycle; check insertion order"
-                  assert len(nodes) < len(inserted), "The chain contains more nodes than were inserted"
-                  nodes.append(node)
-                  node = node.next
-              links = [(node, node.val, node.next) for node in nodes]
-              expected = list(reversed(inserted))
-              for attempt in range(2):
-                  got = lst.values()
-                  assert isinstance(got, list) and got == expected, f"values() should return {expected}, got {got!r}"
-                  assert lst.head is (nodes[0] if nodes else None), "Reading values must not move the head"
-                  assert all(node.val == value and node.next is following for node, value, following in links), "values() must leave every node and link unchanged"
-              if nodes:
-                  nodes[0].val = 91
-                  assert lst.values() == [91] + expected[1:], "values() must read the node chain's current values"
-        hints:
-          - text: The C++ `print` walked the list with a cursor. Start at the front, do something, move to `next`, stop when there's nothing left. `values` is the same walk with a different body.
-          - text: The empty case should work without a special branch. A walk that starts at `None` just never runs its body.
-          - text: Here's the shape. Start with an empty result list and a cursor at the front. While the cursor isn't `None`, append its value and move the cursor to `next`. Then return the result.
-            condition: "code_contains: pass"
-      - description: print_items() prints current values front to back, one per line, without consuming the list
-        command: |
-          import io, contextlib
-          path = '/tutorial/linked_list_lab.py'
-          src = open(path).read()
-          ns = {'__name__': '__cs131_check__'}
-          with contextlib.redirect_stdout(io.StringIO()):
-              exec(compile(src, path, 'exec'), ns)
-          for inserted in ((), (42,), (0, -7, 12, 12, 5)):
-              lst = ns['List']()
-              for value in inserted:
-                  lst.add_to_front(value)
-              node, seen, nodes = lst.head, set(), []
-              while node is not None:
-                  assert id(node) not in seen, "The chain contains a cycle; check insertion order"
-                  assert len(seen) < len(inserted), "The chain contains more nodes than were inserted"
-                  seen.add(id(node))
-                  nodes.append(node)
-                  node = node.next
-              expected = [str(value) for value in reversed(inserted)]
-              if lst.head is not None:
-                  lst.head.val = 91
-                  expected[0] = '91'
-              original_head = lst.head
-              links = [(node, node.val, node.next) for node in nodes]
-              for attempt in range(2):
-                  buf = io.StringIO()
-                  with contextlib.redirect_stdout(buf):
-                      lst.print_items()
-                  lines = [line.strip() for line in buf.getvalue().splitlines() if line.strip()]
-                  assert lines == expected, f"print_items() should print {expected}, one per line; got {buf.getvalue()!r}"
-                  assert lst.head is original_head, "print_items() must not move the head"
-                  assert all(node.val == value and node.next is following for node, value, following in links), "print_items() must leave every node and link unchanged"
-        hints:
-          - text: The C++ version printed `endl` after every value. Python's `print()` already ends each call with a newline, so one call per node is all you need.
-          - text: You already have a method that produces the values in the right order, so this one can just walk that result and print each item.
-          - text: Keep a separate cursor when walking nodes so reading the list leaves head and each next link unchanged.
-
-    quiz:
-      title: "Step 8 — Knowledge Check"
-      min_score: 0.8
-      questions:
-        - type: single
-          difficulty: intermediate
-          question: |
-            The C++ `List` needs `~List()` to walk the chain calling `delete`.
-            Why does the Python version need nothing like it?
-          options:
-            - "Python automatically manages unreachable node objects"
-            - "Python allocates nodes on the stack, so they die with the function"
-            - "Python's garbage collector runs at exit and frees everything then"
-            - "Nested classes are freed together with the class that contains them"
-          correct_index: 0
-          option_feedback:
-            1: "Python manages the lifetime of these node objects automatically; they are not local C++ stack objects that disappear when a method returns."
-            2: "Python can reclaim unreachable objects during execution, not only at program exit. The exact collection time is implementation-dependent."
-            3: "Nesting just says where the class lives. It has nothing to do with how long the objects made from it stick around."
-          explanation: "The list does not need to call `delete` on its nodes. Python manages their memory and can reclaim them when they are no longer reachable. Code should not depend on immediate collection; another reference to a node can also keep it alive."
-        - type: single
-          difficulty: intermediate
-          question: |
-            Inside `add_to_front`, does the order of these two lines matter?
-
-            ```python
-            new_node.next = self.head
-            self.head = new_node
-            ```
-          options:
-            - "Yes; reversing them makes the new node point to itself"
-            - "No, both assignments happen before the method returns"
-            - "Yes, swapping them raises an member variableError on the first call"
-            - "No, Python evaluates both right sides before assigning"
-          correct_index: 0
-          option_feedback:
-            1: "Both lines do run, but the second one reads a value the first one already overwrote, so the old chain is gone before we can hang on to it."
-            2: "It fails quietly rather than loudly. `self.head` is a perfectly valid node by then, so nothing raises. The list just becomes a one-element loop."
-            3: "That's how assigning a pair works, but these are two separate statements, so the first one's effect is visible to the second."
-          explanation: "The first line saves the old front in `new_node.next`. Reversing the order replaces `self.head` first, so `new_node.next` is assigned the new node itself. The existing chain is no longer reachable through this list."
-        - type: single
-          difficulty: advanced
-          question: |
-            Back to Steps 1 through 3. Two variables refer to the same `List`:
-
-            ```python
-            a = List()
-            b = a
-            b.add_to_front(5)
-            print(a.values())
-            ```
-
-            What is printed?
-          options:
-            - "`[5]`"
-            - "`[]`"
-            - "`[5, 5]`"
-            - "An member variableError"
-          correct_index: 0
-          option_feedback:
-            1: "`b = a` copies a reference, not the object. There's only one list here, and `add_to_front` changes it."
-            2: "Only one node was added, and only one list exists, so there's nothing to duplicate."
-            3: "Both names refer to a fully built `List`, so every member variable access works normally."
-          explanation: "Assignment between names never copies an object. `a` and `b` are two names for one list, so a change through either one is visible through both. It's the same shared-object rule from Step 3, one level up from member variables."
-        - type: multiple
-          difficulty: advanced
-          question: |
-            Which responsibilities from the C++ example do we omit in this ordinary
-            Python translation?
-          options:
-            - "`delete` on each node"
-            - "`private:` hiding `head_` and `Node` from callers"
-            - "The `while` loop that walks the chain"
-            - "`Node *next;` linking one node to the next"
-          correct_indices: [0, 1]
-          option_feedback:
-            0: "Python manages these nodes' memory automatically. Python's `del` removes a binding or item; it is not C++'s explicit object deallocation."
-            1: "Python has a naming convention for \"please don't touch this\", but nothing enforces it, so everything stays reachable."
-            2: "The walk ports over unchanged. `while` exists in both languages and means the same thing."
-            3: "The link ports over as an ordinary member variable holding either another node or `None`. The structure is identical, and only the syntax changes."
-          explanation: "The two things that vanish are both about control that C++ gives you: freeing memory yourself, and enforced access restrictions. The data structure itself, a node holding a value and a link and walked by a loop, survives the translation intact."
-        - type: parsons
-          difficulty: intermediate
-          question: |
-            Put `add_to_front` together so that the existing chain survives.
-          lines:
-            - "def add_to_front(self, val):"
-            - "    new_node = self.Node(val)"
-            - "    new_node.next = self.head"
-            - "    self.head = new_node"
-          distractors:
-            - "    new_node.next = new_node"
-            - "    return self.head"
-    solution:
-      files:
-        - path: "linked_list_lab.py"
-          language: "python"
-          content: |
-            class List:
-                """Python port of the C++ singly linked list."""
-
-                class Node:
-                    def __init__(self, v):
-                        self.val = v
-                        self.next = None
-
-                def __init__(self):
-                    self.head = None
-
-                def add_to_front(self, val):
-                    new_node = self.Node(val)
-                    new_node.next = self.head
-                    self.head = new_node
-
-                def values(self):
-                    result = []
-                    p = self.head
-                    while p is not None:
-                        result.append(p.val)
-                        p = p.next
-                    return result
-
-                def print_items(self):
-                    for val in self.values():
-                        print(val)
-
-                # No destructor needed - see the quiz below for why.
-
-
-            lst = List()
-            lst.add_to_front(1)
-            lst.add_to_front(2)
-            lst.add_to_front(3)
-            print(lst.values())  # expect [3, 2, 1]
-            lst.print_items()
-      explanation: |
-        Line for line, `add_to_front` and the chain walk are the C++ originals
-        with `->` becoming `.` and `nullptr` becoming `None`. The algorithm
-        didn't change, because the algorithm was never the C++-specific part.
-
-        A few key things to note:
-
-        - In Python, everything is public by default. There's no need for the
-          `public` or `private` specifiers, and the `Node` class is nested
-          purely to say where it belongs.
-        - Memory management in Python is done automatically using a garbage
-          collector, so there's no need for explicit memory deallocation as in
-          C++. No `new`, no `delete`, and no destructor is needed.
-        - The nested Node class in Python is defined similarly to how it's done
-          in C++, but we use the conventional `self` parameter name in methods to refer to instance
-          variables or other methods.
-
-        That's the whole refresher in one class: same structure, same traversal,
-        and a completely different answer to who is responsible for the memory.

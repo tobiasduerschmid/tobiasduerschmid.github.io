@@ -59,7 +59,7 @@ test.describe('CS131 browser C++ and Python refresher', () => {
   });
 
   test('all published checks pass and every C++ solution compiles and runs', async ({ page }) => {
-    await expectStepCount(page, 8);
+    await expectStepCount(page, 6);
     for (const [index, step] of steps.entries()) {
       await test.step(step.title, async () => {
         await gotoStep(page, index);
