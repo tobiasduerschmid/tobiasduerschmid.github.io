@@ -550,6 +550,8 @@ steps:
       Run executes the file, including the driver at the bottom; once your
       class is complete, this driver should print `(50, 10)`.
 
+      Reminder: `pass` is a placeholder for an empty function. Replace this with your code.
+
       After each edit, click **Run** again to see the new result. If Python
       reports an error, use the file name and line number in the traceback to
       find the problem, then fix it and rerun. **Clear** clears the output;
@@ -1082,7 +1084,8 @@ steps:
 
       ### 🎯 You will learn to
 
-      - Write a recursive function whose base case covers every permitted input
+      - Write a recursive function that covers every permitted input
+      - Think about the base case and the recursive case 
       - Break an array traversal into "the first item" plus "the rest"
 
       ### Recursion on the Rest of an Array
@@ -1113,19 +1116,19 @@ steps:
       an index into?
 
       - **(a)** The original array, so use it as is
-      - **(b)** The sub-array, so the original index is one higher
-      - **(c)** The sub-array, so the original index is one lower
+      - **(b)** The sub-array starting at `arr+1`, so the original index is one higher
+      - **(c)** The sub-array starting at `arr+1`, so the original index is one lower
 
       This is the classic off-by-one in this exact problem, so it's worth
       deciding before you type.
 
       <details>
       <summary>Reveal</summary>
-      <p><strong>(b).</strong> The recursive call knows nothing about the element
-      you sliced off. Index 2 of <code>arr + 1</code> is index 3 of
-      <code>arr</code>. So every index that comes back from recursion needs
-      <code>+ 1</code> before you can compare it against <code>arr[0]</code> or
-      return it. Compare <code>arr[rest]</code> with <code>arr[0]</code>,
+      <p><strong>(b).</strong> The recursive call knows nothing about 0-th element that you sliced off.
+      If the recursive call returned 2 while processing <code>arr+1</code>, <code>n-1</code> then 
+      that means that the index of the biggest is actually at position 3 when considering 
+      the whole array including the 0-th element.
+      Compare <code>arr[rest]</code> with <code>arr[0]</code>,
       where <code>rest</code> is the adjusted index.</p>
       <p>That's why <code>find_biggest</code> is easier than
       <code>index_of_biggest</code>. Values mean the same thing no matter which
@@ -1237,10 +1240,10 @@ steps:
             `index_of_biggest(arr + 1, n - 1)` returns `0`. What does that
             `0` mean, and what should you do with it?
           options:
-            - "It identifies `arr[1]`; add 1 to translate the index"
-            - "The biggest of the rest is at index 0 of `arr`, so use it as is"
-            - "The rest is empty, so return 0 immediately"
-            - "The biggest of the rest is `arr[0]`, so the answer is already found"
+            - "It identifies `arr[1]`, so you need to add 1 to find the real index"
+            - "The biggest of the rest is at index 0 of `arr`, so use the returned index as is"
+            - "The rest of the array is empty, so return 0 immediately"
+            - "The biggest of the rest is `arr[0]`, so just return 0"
           correct_index: 0
           option_feedback:
             1: "The call was given a different starting address, so the index it returns is counted from `arr + 1`, not from `arr`."
@@ -1329,7 +1332,7 @@ steps:
 
       ### 🎯 You will learn to
 
-      - Turn pointer-and-count recursion into slice-based recursion
+      - Turn pointer-and-count recursion into Python's slice-based recursion
       - Check a recursive algorithm against inputs chosen to break it
 
       ### Slices replace pointer arithmetic
@@ -1357,9 +1360,9 @@ steps:
       largest value, including when values repeat. `index_of_biggest` returns
       its zero-based index; for that function, assume there are no duplicates.
 
-      No loops or comprehensions. You may write recursive helpers, use a slice
-      or an index to describe the remaining input, and compare two candidates
-      with `max`. The traversal must be recursive; a call to `max(values)` or
+      No loops or comprehensions are allowed. You may write recursive helpers, use a slice
+      or an index to describe the remaining input, and compare two candidates `a` and `b`
+      with `max(a, b)`. The traversal must be recursive; a call to `max(values)` or
       `sorted(values)` alone does not meet the task.
 
       ```python
@@ -1388,7 +1391,7 @@ steps:
               """Return the index of the largest value in values.
 
               Assumes at least one item and no duplicates.
-              No loops, no comprehensions.
+              No loops, no comprehensions allowed.
               """
               # TODO
               pass
@@ -1501,8 +1504,7 @@ steps:
         - type: single
           difficulty: intermediate
           question: |
-            Why does `find_biggest` store the recursive result in a variable
-            first, rather than writing this?
+            What is a common issue with this implementation of `find_biggest`, which still passed the tests for Step 5.
 
             ```python
             return find_biggest(values[1:]) if find_biggest(values[1:]) > values[0] else values[0]
