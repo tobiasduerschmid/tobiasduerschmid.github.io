@@ -1610,8 +1610,10 @@ steps:
 
       ### A New List From the Remaining Values
 
+      Imagine we want to write a function that is going to extract some subset of 
+      values from an existing list and construct a new list with those values.
       One approach is to ask whether the first item belongs in the output, then
-      combine that decision with the result for the rest. These operations can
+      combine that value with the recursive result for the rest of the list. These operations can
       help you build a separate list:
 
       ```python
@@ -1622,9 +1624,10 @@ steps:
       ```
 
       Note the difference between `[5] + x` and `x.append(5)`. The first builds
-      a new list and leaves `x` alone. The second changes the list the caller is
-      holding. You may change a new output list while building it; the
-      restriction is that the input list must stay unchanged.
+      a new list with 5 in the front and leaves `x` unchanged. 
+      The second changes the list the caller is holding. 
+      You may never change the original (i.e., treating the list as "immuatable") but instead create a new list with changed values; 
+      the restriction is that the input list must stay unchanged.
 
       ### 🔧 Your task
 
@@ -1632,7 +1635,10 @@ steps:
       a list of values as its first parameter and an item to delete as its
       second. Without changing the values list, and without using loops of any
       kind, your function must return an output list that removes all of the
-      occurrences equal to `item` from the input list. Preserve the order of
+      occurrences equal to `item` from the input list.
+      Do **not** use comprehensions either. Three cases decide the whole function: the list
+      is empty, the first item matches, and the first item doesn't.
+       Preserve the order of
       the remaining values, and return a new list even when the input is empty
       or nothing matches. Recursive helpers are welcome:
 
@@ -1643,8 +1649,7 @@ steps:
       print(x)   # still prints [1, 2, 3, 1, 4]
       ```
 
-      No comprehensions either. Three cases decide the whole function: the list
-      is empty, the first item matches, and the first item doesn't.
+      
 
       ### ✏️ Predict before you run
 
@@ -1654,11 +1659,8 @@ steps:
       <details>
       <summary>Reveal</summary>
       <p>The empty input misses this base case and then fails if the function
-      tries to read <code>values[0]</code>. The singleton input incorrectly
-      returns <code>[7]</code> instead of removing the match.</p>
-      <p>Checking the empty list first handles both cases naturally. A solution
-      can also special-case a singleton, but it still needs to handle empty
-      input and decide whether that last item should be kept.</p>
+      tries to read <code>values[0]</code>. </p>
+      <p>Checking the empty list first in your base case handles both examples from above naturally.</p>
       </details>
     files:
       - path: "del_item_lab.py"
@@ -1775,23 +1777,6 @@ steps:
       title: "Step 6 — Knowledge Check"
       min_score: 0.8
       questions:
-        - type: single
-          difficulty: intermediate
-          question: |
-            A recursive `del_item` skips a matching first item and prepends a kept
-            first item to the recursive result. Which empty-input base case also
-            meets the requirement to return a new list?
-          options:
-            - "`if not values: return []`"
-            - "`if len(values) == 1: return values`"
-            - "`if not values: return values`"
-            - "`if values[0] == item: return []`"
-          correct_index: 0
-          option_feedback:
-            1: "Stopping at one item never looks at that last element, so a match at the end gets returned instead of removed. It also crashes when called with an empty list."
-            2: "This terminates, but for an empty input it returns that same input list. The stated task asks for a new list even in the empty case."
-            3: "This throws away the entire rest of the list the moment it finds a match, instead of removing just that one item."
-          explanation: "`if not values: return []` handles empty input and creates a separate result list. Each nonempty call can then decide whether to include its first item. Returning the input itself would terminate too, but would not meet the new-list requirement."
         - type: multiple
           difficulty: advanced
           question: |
