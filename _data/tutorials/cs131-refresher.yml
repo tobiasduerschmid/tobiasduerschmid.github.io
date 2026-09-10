@@ -1094,8 +1094,8 @@ steps:
   # =========================================================================
   # Pedagogy: generation / productive failure — the student derives the
   # recursive shape in C++ before checking examples, then compares the
-  # same algorithm in Python on Step 5. Manual review also checks that the
-  # solution uses recursion, not only that the example output matches.
+  # same algorithm in Python on Step 5. Automated checks give feedback on
+  # returned answers; self-explanation addresses the recursive structure.
   - title: "Recursion With No Loops Allowed"
     backend: cpp
     instructions: |
@@ -1176,28 +1176,31 @@ steps:
       Choose **Run** to compile and run `recursion.cpp` as C++17 in the browser.
       The supplied `main()` prints the largest value and its index for
       `{-1, 10, 3}`. Replace the placeholder returns as you implement each
-      function, and edit the array in `main()` to try the cases below. Update
+      function, and edit the array in `main()` to try your own examples. Update
       the element count in both calls when you change the array's length.
 
-      This step uses manual review: compare the output with the expected
-      answers and trace your recursive calls. Step 5 has automatic checks for
-      the Python versions; those checks do not grade this C++ implementation.
+      ### Check your work
 
-      ### Check your work (manual review)
+      Choose **Test My Work** to compile and test your current C++ functions.
+      The two checks call each function directly on fresh arrays, so you can
+      fix one function and retest while the other is still unfinished.
 
-      For each input, write the returned value and the returned index:
+      - `find_biggest` is checked on single items, zero and negative values,
+        repeated values, and arrays with the maximum at different positions.
+      - `index_of_biggest` is checked on single items and distinct-value arrays
+        with the maximum at the front, middle, and end.
+      - Both checks include extreme `int` values and calls that use only the
+        first `n` elements of a larger array. Elements beyond `n` don't count.
 
-      | Array | `find_biggest` | `index_of_biggest` |
-      |---|---|---|
-      | `{5}` | `5` | `0` |
-      | `{-5, -2, -9}` | `-2` | `1` |
-      | `{9, 2, 3}` | `9` | `0` |
-      | `{1, 2, 9}` | `9` | `2` |
+      A failure names the input, expected answer, and actual answer. Use that
+      case to trace your function, edit, and choose **Test My Work** again.
+      These checks inspect return values; changing what `main()` prints cannot
+      make an incorrect function pass. You can continue without passing them.
 
-      Check that every recursive call receives a smaller problem, that the base
-      case is checked before recursing, and that an index is measured from the
-      right starting address. For the array `{7, 7, 2}`, `find_biggest` should return `7`;
-      the no-duplicates guarantee applies only to `index_of_biggest`.
+      The automatic checks verify results, not whether the implementation uses
+      recursion. For your own review, explain why every recursive call receives
+      a smaller problem, why the base case is reached before recursing again,
+      and which starting address each returned index is measured from.
     files:
       - path: "cs131/recursion.cpp"
         language: "cpp"
@@ -1227,6 +1230,98 @@ steps:
 
     open_file: "cs131/recursion.cpp"
     run_file: "cs131/recursion.cpp"
+
+    tests:
+      - description: find_biggest returns the largest of the first n elements, including negatives and duplicates
+        command: |
+          #include <iostream>
+          #include <limits>
+          #include <vector>
+          // Call the learner's functions independently of their example driver.
+          #define main cs131_student_main
+          #include "cs131/recursion.cpp"
+          #undef main
+
+          int main() {
+              struct Case { std::vector<int> values; int n; int expected; };
+              const int low = std::numeric_limits<int>::min();
+              const int high = std::numeric_limits<int>::max();
+              const Case cases[] = {
+                  {{5}, 1, 5}, {{-8}, 1, -8}, {{0}, 1, 0},
+                  {{1, 2}, 2, 2}, {{2, 1}, 2, 2},
+                  {{-1, 10, 3}, 3, 10}, {{-5, -2, -9}, 3, -2},
+                  {{9, 2, 3}, 3, 9}, {{1, 2, 9}, 3, 9},
+                  {{7, 7, 2}, 3, 7}, {{2, 7, 7}, 3, 7}, {{-4, -4}, 2, -4},
+                  {{low}, 1, low}, {{low, high}, 2, high}, {{high, low}, 2, high},
+                  {{4, -7, 100}, 2, 4}, {{-7, 4, 100}, 2, 4},
+                  {{-8, -3, -11, 40, -5, -1}, 6, 40}
+              };
+              bool passed = true;
+              for (const auto& example : cases) {
+                  auto values = example.values;
+                  const int got = find_biggest(values.data(), example.n);
+                  if (got != example.expected) {
+                      std::cerr << "find_biggest({";
+                      for (std::size_t i = 0; i < example.values.size(); ++i) {
+                          if (i) std::cerr << ", ";
+                          std::cerr << example.values[i];
+                      }
+                      std::cerr << "}, " << example.n << "): expected " << example.expected
+                                << ", got " << got << ".\n";
+                      passed = false;
+                  }
+              }
+              return passed ? 0 : 1;
+          }
+        hints:
+          - text: For one item, the largest value is already present in the input. No recursive call is needed.
+          - text: If negative inputs fail, check whether you introduced zero as a candidate even when it is not in the array.
+          - text: Combine the answer for a smaller array with the item left out. Only the first n elements belong to this call's input.
+      - description: index_of_biggest returns the maximum's zero-based index within the first n distinct elements
+        command: |
+          #include <iostream>
+          #include <limits>
+          #include <vector>
+          // Call the learner's functions independently of their example driver.
+          #define main cs131_student_main
+          #include "cs131/recursion.cpp"
+          #undef main
+
+          int main() {
+              struct Case { std::vector<int> values; int n; int expected; };
+              const int low = std::numeric_limits<int>::min();
+              const int high = std::numeric_limits<int>::max();
+              const Case cases[] = {
+                  {{5}, 1, 0}, {{-8}, 1, 0}, {{0}, 1, 0},
+                  {{1, 2}, 2, 1}, {{2, 1}, 2, 0},
+                  {{-1, 10, 3}, 3, 1}, {{-5, -2, -9}, 3, 1},
+                  {{9, 2, 3}, 3, 0}, {{1, 2, 9}, 3, 2},
+                  {{low}, 1, 0}, {{low, high}, 2, 1}, {{high, low}, 2, 0},
+                  {{4, -7, 100}, 2, 0}, {{-7, 4, 100}, 2, 1},
+                  {{-8, -3, -11, 40, -5, -1}, 6, 3},
+                  {{-8, -3, -11, -5, 40, -1}, 6, 4}
+              };
+              bool passed = true;
+              for (const auto& example : cases) {
+                  auto values = example.values;
+                  const int got = index_of_biggest(values.data(), example.n);
+                  if (got != example.expected) {
+                      std::cerr << "index_of_biggest({";
+                      for (std::size_t i = 0; i < example.values.size(); ++i) {
+                          if (i) std::cerr << ", ";
+                          std::cerr << example.values[i];
+                      }
+                      std::cerr << "}, " << example.n << "): expected index " << example.expected
+                                << ", got " << got << ".\n";
+                      passed = false;
+                  }
+              }
+              return passed ? 0 : 1;
+          }
+        hints:
+          - text: A one-item array has index zero, regardless of the value stored there.
+          - text: An index returned for a smaller array is relative to the address passed to that call. Translate it before using it in the current array.
+          - text: Compare the values at the two candidate positions, then return the winning position. Keep the element count aligned with the starting address.
 
     quiz:
       title: "Step 4 — Knowledge Check"
