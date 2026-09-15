@@ -1,5 +1,5 @@
 title: "AI & Learning Quiz"
-description: "Recalling what you just learned is the best way to form lasting memory. Use this quiz to test your understanding."
+description: "Retrieving what you just learned can strengthen memory. Use this quiz to check your understanding, then revisit the ideas later."
 active: true
 questions:
   - id: 1
@@ -18,38 +18,38 @@ questions:
     explanation: "**Cognitive offloading** is the use of external tools (like calculators, calendars, or AI) to reduce the mental effort required for a task."
   - id: 2
     difficulty: basic
-    question: "According to research, who benefits more from using AI for technical tasks?"
+    question: "What does research support about prior knowledge and AI assistance?"
     options:
-      - "Absolute novices with no prior experience."
-      - "Students who want to skip the 'desirable difficulties'."
-      - "Skilled developers with strong foundational knowledge."
-      - "Everyone benefits equally regardless of skill level."
+      - "Greater expertise guarantees a larger AI productivity boost."
+      - "Better AI-assisted output demonstrates independent learning."
+      - "Prior knowledge can help users evaluate generated output."
+      - "Novices should avoid AI assistance until they become experts."
     correct_index: 2
     option_feedback:
-      0: "Novices can get help from AI, but they often have less background knowledge for judging whether an answer is correct or appropriate. The benefit depends heavily on being able to guide and verify the output."
-      1: "Skipping productive practice can make the work look easier while weakening learning. AI is most useful when it removes peripheral friction, not when it replaces the reasoning the student is trying to develop."
-      3: "AI support is not equally useful in every learner's hands. People with stronger foundations are usually better able to ask precise questions, detect errors, and adapt the result."
-    explanation: "AI acts as an **amplifier** of existing skill. Developers with stronger foundations can ask more precise questions, catch errors, and adapt the output, so they get a larger productivity boost than novices do."
+      0: "Knowing more can help with verification, but that does not guarantee a larger productivity gain. The Google randomized study did not detect a significant difference in AI's speed benefit by seniority."
+      1: "An improved artifact can result from the tool doing the work. Independent and delayed assessments are needed to check what the learner retained."
+      3: "Novices can benefit from appropriate guidance and worked examples. The important question is whether the assistance supports the skill being learned and whether its content is checked."
+    explanation: "Foundational knowledge can help users guide and check AI, but the size of an AI benefit depends on the task, learner, and instructional design. Research does not establish that experts always gain more than novices."
   - id: 3
     difficulty: intermediate
-    question: "Which of these is an example of 'Beneficial Offloading' for a CS student?"
+    question: "A student is practicing algorithm design and testing. Which use of AI best preserves that practice?"
     options:
-      - "Asking AI to solve the core algorithm of a homework assignment."
-      - "Using AI to generate boilerplate HTML or format dummy data."
+      - "Accepting an AI-written algorithm without working through its design."
+      - "Using AI to format already-designed test data while designing the algorithm."
       - "Letting AI decide the architecture and edge cases of a system."
       - "Copying AI code without understanding how it works."
     correct_index: 1
     option_feedback:
-      0: "The core algorithm is usually the part of the assignment meant to build understanding. Offloading it removes the very practice that makes the concept stick."
+      0: "Accepting the solution without reasoning through it removes the algorithm-design practice targeted here. A worked example can still help when its decisions are studied and followed by practice on a related problem."
       2: "Architecture and edge cases are central design reasoning, not just busywork. AI can help surface possibilities, but the student still needs to make and justify those decisions."
       3: "Copying code without understanding can create a false sense of fluency and hide defects. Beneficial offloading should leave the learner able to explain, test, and revise the result."
-    explanation: "**Beneficial offloading** involves delegating 'extraneous load' (tedious, non-core tasks) to AI so you can focus on the 'intrinsic load' (the actual concepts you need to learn)."
+    explanation: "Formatting already-designed test data can free capacity for the algorithm design and testing being practiced. Whether a task is incidental depends on the learning goal: formatting data or writing HTML could itself be the skill another assignment is meant to teach."
   - id: 4
     difficulty: basic
     question: "What is the 'desirable difficulty' in the context of learning?"
     options:
       - "Any difficulty that makes a student want to give up."
-      - "Difficulties that appear during learning but actually trigger deeper processing."
+      - "Challenges that can slow practice while improving later retention or transfer."
       - "Cognitive load that comes from confusing or poorly written course material."
       - "A state of confusion that has no educational benefit."
     correct_index: 1
