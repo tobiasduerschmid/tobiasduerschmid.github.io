@@ -105,8 +105,7 @@ steps:
       ### ✏️ Predict before you read on
 
       For each version, figure out what will be printed and try to explain why
-      you get that result. Don't just compile and run the code to get answers,
-      but try to understand what's really happening under the hood.
+      you get that result. Try to understand what's really happening under the hood.
 
       Write down all four answers before you open the reveal. Each one is:
 
