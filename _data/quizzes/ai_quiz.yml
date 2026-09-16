@@ -7,15 +7,15 @@ questions:
     question: "What is 'cognitive offloading'?"
     options:
       - "Using AI to generate entire essays to save time."
-      - "Using external tools to reduce cognitive demand for a task."
+      - "Using physical actions or external aids to reduce a task's mental demands."
       - "Turning off your brain while watching educational videos."
       - "A technique to increase memory capacity through brain exercises."
     correct_index: 1
     option_feedback:
-      0: "Generating an entire essay is one possible use of an external tool, but cognitive offloading is broader than AI-written work. The key idea is shifting part of a task's mental demand onto an external aid."
-      2: "Offloading is active use of a tool or representation to reduce a specific mental demand. Passive disengagement does not provide the same support for a task."
+      0: "Generating an entire essay is one possible use of an external tool, but cognitive offloading also includes bodily actions and other external aids that reduce mental demands."
+      2: "Offloading uses bodily actions, tools, or representations to reduce a specific mental demand. Passive disengagement does not provide the same support for a task."
       3: "External tools do not increase biological memory capacity. They reduce what must be held or processed mentally by putting some of the work outside the mind."
-    explanation: "**Cognitive offloading** is the use of external tools (like calculators, calendars, or AI) to reduce the mental effort required for a task."
+    explanation: "**Cognitive offloading** uses physical actions or external aids to reduce a task's mental demands. Examples include counting on your fingers, writing a reminder, and using a calculator or AI tool."
   - id: 2
     difficulty: basic
     question: "What does research support about prior knowledge and AI assistance?"

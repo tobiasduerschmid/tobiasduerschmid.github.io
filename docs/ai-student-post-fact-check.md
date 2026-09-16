@@ -1,5 +1,7 @@
 # Fact check: How Should I Use AI as a College Student?
 
+**Subsequent review:** See the [second deep fact-check](ai-student-post-deep-fact-check.md) for further corrections and the user-requested removal of Kosmyna. Counts and retention statements below describe this earlier review.
+
 Reviewed 15 September 2026. Target: `_posts/2026-03-17-how-should-i-use-ai-as-a-college-student.md`.
 
 ## Scope and method
