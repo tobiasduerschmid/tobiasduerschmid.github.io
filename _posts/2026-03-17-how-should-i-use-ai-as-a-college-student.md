@@ -11,37 +11,27 @@ image_alt_text: "Student working on a computer with a robot sitting next to him.
 
 **Many of my students come to me with this wonderful question: ==*"How can I leverage AI as a tool to supercharge my education without accidentally outsourcing my own intelligence?"*==
 In my opinion, this will fundamentally impact how much the current generation of college students will take out of their educational experience, because AI capabilities are growing at a very fast pace. 
-In Math where within just four years AI has grown from barely passing grade school Math tests to solving the hardest Math problems that the world's leading experts were not able to solve for decades. 
-In the base-case scenario, this growth will continue accross all areas of STEM.
-This implies that every single year the bar that college gradates have to reach to keep up with AI is growing.  
-To help studnets prepaire for this scenario, I decided to write my advice down in a succinct, evidence-based post for everyone.**
-
-But first a **disclaimer**: AI is evolving at rapid speed, and evidence about lasting, independent learning remains limited. What follows is my personal perspective, informed by research reviewed through September 2026. The examples apply that research to study habits; most have not themselves been tested as complete AI learning protocols. Please take this as a guide, not gospel.
-
-One recurring finding matters more than any single prompt trick: **performance is not the same thing as learning**. AI can improve the artifact you submit without improving what you can later do independently {% cite yan2025distinguishing %}. Bastani et al. found that access to a GPT-4 assistant raised high-school students' math practice scores, but students with the relatively unrestricted assistant scored lower than controls on subsequent unaided exams. A tutor designed with learning safeguards largely avoided that harm {% cite BastaniEtAl2025 %}. In a university essay-writing task, Fan et al. found greater improvement in revisions with ChatGPT, without a detectable advantage over comparison conditions on topic-knowledge tests about AI in education and healthcare. Those tests did not measure independent writing skill. Their analysis suggested differences in self-regulated learning processes; it did not establish that those processes caused the outcome {% cite FanEtAl2025 %}. These findings warrant care, but neither study establishes permanent skill loss.
-
-When reading an “AI improves learning” headline, ask what students did with AI, what the comparison group did, and whether students were assessed without that help. A methodological review by Weidlich and colleagues explains why these details matter: a tutoring package may change several instructional activities together, so its results need not isolate the effect of the chatbot alone {% cite Weidlich2025EffectCause %}.
+In Math, within just four years, AI has grown from barely passing grade school math tests to [solving the hardest math problems](https://openai.com/index/navier-stokes-solution/) that the world's leading experts were unsuccessfully trying to solve for decades. 
+My baseline expectation is that this progress [will continue across STEM](https://openai.com/index/an-alien-mind/ "'Based on internal results, I have a strong expectation that this speed of progress could be sustained into recursive self-improvement' - Jakub Pachocki, Chief Scientist at OpenAI"), raising the bar graduates must reach to keep pace with AI every year.
+To help students prepaire for this scenario, I decided to write my advice down in a succinct, evidence-based post for everyone.**
 
 ## Motivation: Build the Skills to Use AI Well
-It's 7:00 PM on a Friday. 
-Your friends want to go watch a movie. 
-But you're sitting here debugging your C++ program that is throwing a cryptic segmentation fault. 
-You have stared at the same `while` loop for twenty minutes, and the temptation to paste the entire file into an LLM with the prompt "`fix this`" is overwhelming. 
-A professional might ask AI for a fix. Why hesitate in a learning exercise?
-Because if diagnosing the fault is the skill you are practicing, accepting a fix without understanding it can remove that practice. Asking for a useful hint or studying an explanation can still help.
+It’s 7:00 PM on a Friday. Your friends want to watch a movie, but you’re stuck resolving a Git merge conflict in your group project. You and a teammate changed the same section of a file. Keeping your version would lose their changes; keeping theirs would lose yours. You’ve spent an hour figuring out how to combine them, and the temptation to paste the conflict into AI and just prompting it “fix this” is overwhelming.
+A professional might just ask AI for a fix. So why should you not just take this tempting short cut? 
+Because skipping the learning phase means you're not growing your skills --- the main goal of education!
 
+State-of-the-art research on real-world tasks shows that ==for hard problems AI, AI is an amplifier of technical skills, not an equalizer== {% cite hitzig2026agentic DORA2025 Paradis2025 Ma2026 Prather2024WideningGap %}.
+Recent research by Google shows that developers with *stronger coding foundations* and *deeper system design experience* achieve a *significantly larger* productivity boost from AI tools {% cite Paradis2025%}.
+In professional settings, AI magnifies the existing strengths of high-performing individuals and teams, while simultaneously amplifying the dysfunctions of struggling ones {% cite DORA2025%}.
+Studies conducted in educational settings show similar results: Experienced developers can use their deep knowledge of fundamentals (algorithms, data structures, and syntax) to anticipate edge cases, rapidly scan and comprehend AI outputs, spot subtle issues, and identify hallucinations to supercharge their workflows {% cite Prather2024WideningGap Ma2026%}.
+Furthermore, Anthropic's analysis of Claude Code usage shows the more domain expertise a person has, the more often the coding session is successful {% cite hitzig2026agentic%}.
+Methodologically, experts engage with GenAI *proactively* to *plan*, *steer*, and *verify*, whereas novices tend to apply it *reactively* merely to bypass immediate roadblocks {% cite Ma2026 Prather2024WideningGap Dohmke2025 ShenTamkin2026 Huang2025 %}.
+Ultimately, **AI enables skilled developers to compound their knowledge and productivity while novices who are not developing these skills fall further and further behind** {% cite LodgeLoble2026%}.
 
-Research suggests that **foundational knowledge can help you guide and check AI**, but it does not establish a universal rule that experts gain more than novices {% cite Ma2026 Prather2024WideningGap %}. Google's randomized developer study estimated an overall speed benefit, but did **not** find a statistically significant difference in that benefit by seniority {% cite Paradis2025 %}. DORA's “amplifier” conclusion concerns organizational practices and outcomes in observational survey data; it is not a causal law about individual expertise {% cite DORA2025 %}.
-
-There are concrete counterexamples to experts always gaining more. In a study of a staggered AI rollout among 5,172 customer-support workers, Brynjolfsson and colleagues estimated about 15% more issues resolved per hour overall, with larger gains among less experienced and lower-performing workers. Those were workplace productivity gains with a specialized assistant, not a direct test of college learning {% cite Brynjolfsson2025AIAtWork %}.
-
-A three-month randomized study of patent lawyers further illustrates why assisted output and independent performance need separate measurements. AI improved assisted drafts; a final editing task that prohibited AI showed a benefit among senior lawyers and no detectable average gain among juniors. This working paper had substantial attrition, no baseline skills test, and uncertain compliance with the no-AI rule; excluding suspected violations weakened the findings. It does not establish average skill erosion among juniors or a universal expertise advantage {% cite Autor2026ExpertisePatentDrafting %}.
-
-Studies of learners and developers identify useful behaviors: planning an approach, checking intermediate results, and questioning generated code {% cite Ma2026 Prather2024WideningGap %}. A separate observational study of experienced professionals describes active steering and verification, but does not compare experts with novices or measure learning {% cite Huang2025 %}. Dohmke and Kalliamvakou likewise advocate retaining judgment and control in their practitioner essay {% cite Dohmke2025 %}. The educational concern is that students may miss opportunities to develop those skills if AI repeatedly does the relevant thinking for them; whether AI widens or narrows skill gaps depends on the task, learner, and support provided {% cite LodgeLoble2026 %}.
-
-My recommendation is that ==**as a college student, your main goal should be to develop skills you can use and evaluate independently**==. Those skills also give you a stronger basis for deciding when AI is helpful.
-AI can make it easy to skip the thinking an assignment is meant to practice {% cite Yan2024promises BastaniEtAl2025 %}.
+This means that ==**as a college student, your main goal should be to maximize your skills**== so that, when you then add AI on top, you amplify a larger base of skills and keep compounding.
+Unfortunately, AI as a technology often incentivizes behavior that reduces skill formation, if used inappropriately {% cite Yan2024promises BastaniEtAl2025 %}. 
 To use an analogy: **Using AI to do the heavy lifting in your coursework is like sending a robot to the gym instead of working out yourself**. 
+
 
 <div class="ai-workout-figure">
   <img class="ai-workout-image" src="{{ '/img/genAI_gym_bw.jpg' | prepend: site.baseurl }}" onmousedown="this.src='{{ '/img/genAI_gym.jpg' | prepend: site.baseurl }}'" onmouseup="this.src='{{ '/img/genAI_gym_bw.jpg' | prepend: site.baseurl }}'" onmouseout="this.src='{{ '/img/genAI_gym_bw.jpg' | prepend: site.baseurl }}'" alt="Student standing relaxed in a gym while watching a robot lift heavy weights. Other students are working out actively in the gym. University buildings in the background.">
@@ -49,6 +39,16 @@ To use an analogy: **Using AI to do the heavy lifting in your coursework is like
     <strong>"Wow, I just discovered this AI that makes my workout so much easier and faster!"</strong>
   </div>
 </div>
+
+
+Just like a physical workout is only effective if it is strenuous enough to challenge your muscles, learning is only effective if it challenges your mind via "desirable difficulties" {% cite bjork2011making bjork2020desirable brown2014MakeItStick%}. Learn more about desirable difficulties and their importance for learning in my previous blog post "[Evidence-Based Study Tips for College Students](/blog/evidence-based-study-tips-for-college-students/)".
+
+On the other hand, if used correctly, AI has the potential to rapidly accelerate the learning journey of students who use AI to remove undesirable difficulties while increasing desirable difficulties {% cite gkintonl2025 Dong2026 %}.
+
+This is the crucial distinction: the problem is not "AI"; the problem is **unstructured answer-seeking**. In a Harvard physics randomized trial, a carefully designed AI tutor produced more than double the median learning gains of an in-class active-learning lesson, in less time, but the system was not just a generic chatbot: it used instructor-crafted prompts, sequential scaffolding, cognitive-load control, accurate worked solutions, and self-pacing {% cite kestin2025 %}. Likewise, ChatGPT-generated math hints produced statistically significant learning gains comparable to human tutor-authored hints in a PLOS ONE study, but 32% of the raw generated hints failed quality checks before a self-consistency procedure reduced the error rate {% cite pardos2024 %}. So the safe takeaway is: use AI as a structured tutor and verifier, not as an unexamined answer machine.
+
+This article is intended to be a guide for students who are trying to elevate their learning journey to be well prepared for a world in which AI is potentially increasingly replacing cognitive work and the bar we need to reach might be rising more and more with every release of more capable models.
+
 
 The gym analogy has limits: **effort alone does not make learning effective**. “Desirable difficulties,” such as retrieval practice and spacing, can improve retention even when practice feels harder. They need to suit your prior knowledge and remain achievable; confusion or prolonged struggle is not automatically useful {% cite bjork2011making bjork2020desirable brown2014MakeItStick deBruinEtAl2023 %}. Learn more in my previous blog post, “[Evidence-Based Study Tips for College Students](/blog/evidence-based-study-tips-for-college-students/)”.
 
@@ -308,4 +308,15 @@ If you cannot yet explain or apply the idea, plan more instruction or practice b
 
 **Summary:** Use AI to support the practice your learning goal requires. Keep responsibility for reasoning and verification, seek enough guidance to make progress, and test what you can do independently after a delay. The goal is both to finish the assignment and to retain skills you can use beyond it.
 
+
+**Disclaimer**: Since AI evolvs quickly, evidence about the impact of AI on learning lags behind by one or two model generations and is also often limited in size or generalizability. This post is my own personal perspective, informed by the best research I couuld find published through September 2026. Futher evidence may change and future models may behave differently.
+
+
 {% include quiz.html id="ai_quiz" %}
+
+# Notes
+
+
+One recurring finding matters more than any single prompt trick: **performance is not the same thing as learning**. AI can improve the artifact you submit without improving what you can later do independently {% cite yan2025distinguishing %}. Bastani et al. found that access to a GPT-4 assistant raised high-school students' math practice scores, but students with the relatively unrestricted assistant scored lower than controls on subsequent unaided exams. A tutor designed with learning safeguards largely avoided that harm {% cite BastaniEtAl2025 %}. In a university essay-writing task, Fan et al. found greater improvement in revisions with ChatGPT, without a detectable advantage over comparison conditions on topic-knowledge tests about AI in education and healthcare. Those tests did not measure independent writing skill. Their analysis suggested differences in self-regulated learning processes; it did not establish that those processes caused the outcome {% cite FanEtAl2025 %}. These findings warrant care, but neither study establishes permanent skill loss.
+
+When reading an “AI improves learning” headline, ask what students did with AI, what the comparison group did, and whether students were assessed without that help. A methodological review by Weidlich and colleagues explains why these details matter: a tutoring package may change several instructional activities together, so its results need not isolate the effect of the chatbot alone {% cite Weidlich2025EffectCause %}.
