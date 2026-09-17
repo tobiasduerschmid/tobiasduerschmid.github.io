@@ -10,8 +10,11 @@ image_alt_text: "Student working on a computer with a robot sitting next to him.
 ---
 
 **Many of my students come to me with this wonderful question: ==*"How can I leverage AI as a tool to supercharge my education without accidentally outsourcing my own intelligence?"*==
-In my opinion, this will fundamentally impact how much the current generation of college students will take out of their educational experience.
-So I decided to write my advice down in a succinct, evidence-based post for everyone.**
+In my opinion, this will fundamentally impact how much the current generation of college students will take out of their educational experience, because AI capabilities are growing at a very fast pace. 
+In Math where within just four years AI has grown from barely passing grade school Math tests to solving the hardest Math problems that the world's leading experts were not able to solve for decades. 
+In the base-case scenario, this growth will continue accross all areas of STEM.
+This implies that every single year the bar that college gradates have to reach to keep up with AI is growing.  
+To help studnets prepaire for this scenario, I decided to write my advice down in a succinct, evidence-based post for everyone.**
 
 But first a **disclaimer**: AI is evolving at rapid speed, and evidence about lasting, independent learning remains limited. What follows is my personal perspective, informed by research reviewed through September 2026. The examples apply that research to study habits; most have not themselves been tested as complete AI learning protocols. Please take this as a guide, not gospel.
 
