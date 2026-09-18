@@ -81,7 +81,7 @@ Conversely, AI can be a massive catalyst for learning if used for *beneficial of
 
 In a recent 12-week quasi-experimental study, researchers explicitly taught university students a "cognitive offload instruction" model. They instructed students to delegate lower-order tasks (like brainstorming basic ideas or checking grammar/syntax) to generative AI, thereby compelling the students to focus their mental energy on higher-order analysis, structural evaluation, and logical coherence. The students who practiced this targeted, beneficial offloading demonstrated significantly greater gains in critical thinking and produced higher-quality work than the control group {% cite HongEtAl2025%}. Similarly, studies show that when AI is used to offload lower-order tasks while students engage in shared metacognitive reflection, academic achievement is significantly enhanced {% cite IqbalEtAl2025%}. 
 
-## Mastering the Interaction: Strategies for Deep Learning
+## Strategies for Deep Learning
 
 While offloading boilerplate is useful, the real value of AI lies in its ability to act as a sophisticated cognitive scaffold. However, how you interact with that scaffold determines whether your skills grow or wither.
 
@@ -143,7 +143,7 @@ Use the AI's questions to inspect your explanation. Its apparent confusion or ag
 **Example Prompt (Python):**
 > "Pretend you are a first-year CS student who is learning inheritance in Python. I will explain it to you. Ask one 'why' or 'how' question when I use undefined jargon or skip a step. Distinguish questions about clarity from claims that my explanation is incorrect, and give me a concrete example to check."
 
-## Strategic Prompting Frameworks
+## Prompting Patterns
 
 The following research-informed approaches can help you specify a useful learning interaction. They offer design ideas, not guarantees that a well-formatted prompt produces durable learning.
 
@@ -282,7 +282,7 @@ As your knowledge grows, adjust the support. The **expertise reversal effect** d
 
 Periodically solve a related problem without AI, and revisit it after a delay. If a formerly manageable task has become difficult, that is a reason to check retention and restore practice; it is not, by itself, proof that AI caused the difficulty. For a skill you aim to perform independently, successful support should help you become less dependent on that support.
 
-## A Quick Rubric for Any AI Interaction
+### A Quick Rubric for Any AI Interaction
 
 Before you use an AI output in your coursework, ask:
 
@@ -328,7 +328,7 @@ Ordinary chatbot access can also support learning in some settings. In a 2026 wo
 This article is intended to be a guide for students who are trying to elevate their learning journey to be well prepared for a world in which AI is potentially increasingly replacing cognitive work and the bar we need to reach might be rising more and more with every release of more capable models.
 
 
-## The Double-Edged Sword of Cognitive Offloading: Beneficial vs. Detrimental Use
+## Cognitive Offloading: Beneficial vs. Detrimental Use
 
 To truly master how you integrate AI into your computer science education, we need to dive into the learning science theory of *cognitive offloading*. 
 
@@ -356,7 +356,7 @@ In a 12-week quasi-experimental study of 240 English majors, Hong et al. combine
 
 Iqbal et al. reported associations among AI use, shared metacognition, cognitive offloading, and an outcome they called “academic achievement.” That outcome was self-reported competence related to sustainable and inclusive education, not observed grades or an independent skill test. Their survey cannot establish that offloading caused learning gains {% cite IqbalEtAl2025 %}.
 
-## Mastering the Interaction: Strategies for Deep Learning
+## Strategies for Deep Learning
 
 AI can provide examples, questions, and feedback that support practice. The strategies below adapt learning principles to chatbot use; most of these exact prompts have not been tested in controlled learning studies. Judge them by what you can explain and do afterward, including without AI.
 
