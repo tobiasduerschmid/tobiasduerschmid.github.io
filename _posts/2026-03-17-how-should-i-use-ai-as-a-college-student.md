@@ -12,7 +12,7 @@ image_alt_text: "Student working on a computer with a robot sitting next to him.
 **Many of my students come to me with this wonderful question: ==*"How can I leverage AI as a tool to supercharge my education without accidentally outsourcing my own intelligence?"*==
 In my opinion, this will fundamentally impact how much the current generation of college students will take out of their educational experience, because AI capabilities are growing at a very fast pace. 
 In Math, within just four years, AI has grown from barely passing grade school math tests to [solving the hardest math problems](https://openai.com/index/navier-stokes-solution/) that the world's leading experts were unsuccessfully trying to solve for decades. 
-My baseline expectation is that this progress [will continue across STEM](https://openai.com/index/an-alien-mind/ "'Based on internal results, I have a strong expectation that this speed of progress could be sustained into recursive self-improvement' - Jakub Pachocki, Chief Scientist at OpenAI"), raising the bar graduates must reach to keep pace with AI every year.
+My baseline expectation is that this progress [will continue across STEM](https://openai.com/index/an-alien-mind/ "'Based on internal results, I have a strong expectation that this speed of progress could be sustained into recursive self-improvement' - Jakub Pachocki, Chief Scientist at OpenAI"), raising the bar on entry-level positions every year. 
 To help students prepaire for this scenario, I decided to write my advice down in a succinct, evidence-based post for everyone.**
 
 ## Motivation: Build the Skills to Use AI Well
@@ -56,8 +56,7 @@ This article is intended to be a guide for students who are trying to elevate th
 
 To truly master how you integrate AI into your computer science education, we need to dive into the learning science theory of *cognitive offloading*. 
 
-**The Research:**
-Cognitive offloading is using external tools to reduce your cognitive demand {% cite RiskoGilbert2016%}. Examples of cognitive offloading include using a calculator to avoid having to do math in your head, setting a calendar reminder to avoid having to remember or constantly think about the deadline, or asking ChatGPT to debug a script. They enable you to get a task done with less cognitive work on your end, which of course sounds very enticing!
+**Cognitive offloading** is using external tools to reduce your cognitive demand {% cite RiskoGilbert2016%}. Examples of cognitive offloading include using a calculator to avoid having to do math in your head, setting a calendar reminder to avoid having to remember or constantly think about the deadline, or asking ChatGPT to debug a script. They enable you to get a task done with less cognitive work on your end, which of course sounds very enticing!
 
 However, whether this offloading helps or harms your education depends entirely on *what* you are offloading. Educational psychologists analyze this through the lens of Cognitive Load Theory (CLT), which divides our mental effort into three categories: *intrinsic load* (the inherent, necessary difficulty of the core concepts you are trying to learn), *extraneous load* (unnecessary distractions or tedious tasks that don't contribute to the core learning goal), and *germane load* (the mental effort that is directly contributing to learning and understanding) {% cite sweller2011cognitive KalyugaPlass2025  %}. 
 
