@@ -50,13 +50,13 @@ steps:
       is itself an expression. `f x y` groups as `(f x) y`; that grouping
       rule does **not** specify which expression Haskell evaluates first.
 
-      ### Thinking time!
+      ### Predict before you Run!
 
       The starter's `nextSquare 3` is meant to square the **next** integer.
-      Will it print `10`, `16`, or a type error? Write down your prediction,
+      Will the programm print a number (if so, which one) or a type error? Think about your prediction,
       then choose **Run**.
 
-      <details markdown="1"><summary>Compare after running</summary>
+      <details markdown="1"><summary>Click for explanation</summary>
 
       It prints `10`: the starter squares `3`, then adds `1`. To square
       the next integer, the addition must be part of the argument.
