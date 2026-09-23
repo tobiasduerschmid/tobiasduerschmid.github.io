@@ -139,10 +139,22 @@ The new facial regressions cover 2,592 nose/mouth configurations, 45 chin-dimple
 All three new face regressions reject the preserved defective source on the intended paint assertions. The freckle test sees a maximum RGB change of 71 inside the old eye paint and zero with the corrected order; its visible-skin positive control still changes by 71. Disabling accessory fitting exposes the original hat/cover defects, and restoring the old crossing strap fails every eyepatch tuning partition on the other-eye visibility assertion. Negative controls run from scratch copies without changing production source.
 
 
-## Current verification
+## Verification of the preceding audit
 
 The complete avatar run passed 132 tests in 14.1 minutes with interactive accessibility checks enabled. After the final strap-only correction, all 25 eye-accessory/art-quality tests and four affected customizer integration tests passed again. The final scoped SE Gym screen and print accessibility suites both passed with zero findings. An earlier screen-audit attempt failed to write its report because the chosen report filename matched the benchmark directory; rerunning with a distinct JSON filename resolved that tooling error.
 
 The final benchmark rerender completed all 2,000 unique states and 2,160 observations, with zero renderer failures or conservative geometry flags. Its source hashes match the final files, stayed unchanged throughout the run, and its 2,000 case IDs match the discovery run exactly. All 39 eyepatch states in that final corpus were independently measured and visually reviewed at native 180px and 600px, alongside the 12 original strap cases: 100% intended-eye coverage and connected strap paint, zero uncovered-eye overlap, and no browser errors.
 
 All 353 regenerated choice previews pass XML parsing, finite-value, unique-ID, local-reference and vector-only checks. The Jekyll build, JavaScript syntax and whitespace checks pass. The built renderer and both affected CSS modules match source byte-for-byte. These results establish the stated benchmark and regression scope; they do not exhaust every possible continuous adjustment or cross-product of traits.
+
+## Protective styles and facial contour refinement
+
+A subsequent pass improves 12 existing options. Cornrows now have scalp channels and curved braid texture; Bantu knots use wrapped, shaded contours; locs and box braids have distinct root construction. High and space buns gain gathering direction and wrapped volume. The embroidered prayer cap follows its curved fabric surface and uses the selected palette. Three single-eyelid styles trace the upper eye aperture, and the two fuller-lip styles meet at a shared contact seam with restrained lower-lip lighting.
+
+The changes preserve saved option values, independent trait selection, fitting hooks, and rear hair layers. Review covered light and dark themes, three contrasting skin/hair palettes, full portraits and thumbnails. These refinements improve the fidelity of existing choices without assigning demographic identities to combinations of traits.
+
+The existing complete-mouth boundary regression exposed an older defect: mouth fitting sampled paths but omitted elliptical lower-lip shadows. At the lower vertical limit, the wide smile's shadow extended outside the jaw. Fitting now includes both authored shape types and moves the complete mouth; it does not clip away the shadow or lips. The original failing case now has no exterior or clipped paint, and the complete 576-configuration mouth-boundary check passes unchanged.
+
+After the fitting correction, all 18 artifact regressions and six customizer checks pass. Fresh scoped SE Gym screen and print accessibility audits also pass with zero findings. All 353 regenerated choice thumbnails pass strict XML parsing, finite-value, unique-ID, local-reference and vector-only validation.
+
+Verification uses a rebuilt temporary mirror because the repository's pinned ArchUML commit (`2c05a5c`) is unavailable; only that mirror substitutes available commit `d4e0f0e`. The production submodule pointer is unchanged, and the served SVG and renderer match the workspace sources.
