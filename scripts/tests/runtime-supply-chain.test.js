@@ -130,6 +130,24 @@ function sourceFilesUnder(relativeDirectory) {
   return files;
 }
 
+test('the Haskell bundle preserves the pinned upstream loader and embedded Wasm bytes', () => {
+  const bundle = read('js/vendor/microhs/mhs-embed.js');
+  const separator = bundle.indexOf('\n');
+  const prelude = bundle.slice(0, separator);
+  const encodedWasm = prelude.match(/atob\("([A-Za-z0-9+/=]+)"\)/)?.[1];
+  assert.ok(encodedWasm, 'the sandboxed Haskell frame needs a self-contained Wasm payload');
+  const sha256 = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
+  assert.equal(sha256(Buffer.from(encodedWasm, 'base64')),
+    '89131e819c615f96a964a78958a6bb5c3a9d42b6c95cdf306f143231c0270919',
+    'embedded Wasm must match MicroHs commit 9e8f923c614c12f14412e63e329de25ff9309c4f');
+  assert.equal(sha256(bundle.slice(separator + 1)),
+    'b8e57dcad9d060f7b4a80654008c08ef1ed4fef9cb5c95bc6201feecc2319770',
+    'the upstream JavaScript loader must remain unmodified');
+  assert.equal(sha256(bundle),
+    '4fcc8fb12f2d5e1b62a483af2073e937f04c20a98d6757045c62d09068528e47',
+    'the complete local bundle must match its reviewed SHA-256');
+});
+
 test('worker dependencies execute only after their pinned SHA-256 digest matches', (t) => {
   const helperPath = path.join(repositoryRoot, 'js/vendor/worker-script-integrity.js');
   const originalXmlHttpRequest = globalThis.XMLHttpRequest;

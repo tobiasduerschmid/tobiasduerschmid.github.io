@@ -57,6 +57,7 @@ const runtimeOutputByteBuffers = {
   stderr: new Uint8Array(1),
 };
 let activeOperation = null;
+let pendingCleanupCommands = [];
 let bootOutput = '';
 let isRuntimeReady = false;
 let hasRuntimeFailed = false;
@@ -346,7 +347,7 @@ function markerFor(label, requestId) {
 }
 
 function commandForMarker(marker) {
-  return 'putStrLn "' + marker + '"';
+  return 'Prelude.putStrLn "' + marker + '"';
 }
 
 function sendInteractiveCommands(commands) {
@@ -358,8 +359,12 @@ function sendInteractiveCommands(commands) {
 
 function startOperation(message, settings) {
   const doneMarker = markerFor('DONE', message.id);
-  const commands = settings.commands
-    .concat(settings.cleanupCommands || [], commandForMarker(doneMarker));
+  // Keep the import through the marker so MicroHs can reuse its translated
+  // environment. Removing it first makes the marker rebuild that environment.
+  // Clean up before the next operation's reload, including after a failed run.
+  const commands = pendingCleanupCommands
+    .concat(settings.commands, commandForMarker(doneMarker));
+  pendingCleanupCommands = settings.cleanupCommands || [];
 
   activeOperation = {
     id: message.id,

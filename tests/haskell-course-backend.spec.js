@@ -179,4 +179,66 @@ main = print (boost (sort [3,1,2 :: Int]))
     await writeSource(page, 'module Course.Scores where\nboost = map (*2)\n', 'Course/Scores.hs');
     await expectProgramOutput(page, '[2,4,6]');
   });
+
+  test('learner definitions cannot shadow the runtime output markers', async ({ page }) => {
+    await writeSource(page, `module Main where
+putStrLn :: Int
+putStrLn = 41
+main = print (Main.putStrLn + 1)
+`);
+    await expectProgramOutput(page, '42');
+    const result = await request(page, {
+      type: 'runTest', path: 'Main.hs', expression: 'Main.putStrLn == 41',
+    });
+    expect(result.exitCode, result.stderr || result.error).toBe(0);
+    expect(result.stdout).toBe('');
+    expect(result.stderr).toBe('');
+  });
+
+  test('switching entry modules isolates definitions between requests', async ({ page }) => {
+    await writeSource(page, 'module First where\nanswer = 1\nmain = print answer\n', 'First.hs');
+    await writeSource(page, 'module Second where\nanswer = 2\nmain = print answer\n', 'Second.hs');
+    for (const [path, answer] of [['First.hs', 1], ['Second.hs', 2], ['First.hs', 1]]) {
+      const result = await request(page, { type: 'run', path });
+      expect(result.exitCode, result.stderr || result.error).toBe(0);
+      expect(result.stdout).toBe(`${answer}\n`);
+      expect(result.stderr).toBe('');
+    }
+  });
+
+  test('completion preserves Unicode output without a final newline and separate stderr', async ({ page }) => {
+    await writeSource(page, `module Main where
+import System.IO (hPutStr, stderr)
+main = do
+  putStr "café λ 🎵"
+  hPutStr stderr "diagnostic λ"
+`);
+    for (let run = 0; run < 2; run += 1) {
+      const result = await request(page, { type: 'run', path: 'Main.hs' });
+      expect(result.exitCode, result.stderr || result.error).toBe(0);
+      expect(result.stdout).toBe('café λ 🎵\n');
+      expect(result.stderr).toBe('diagnostic λ\n');
+    }
+  });
+
+  test('each Run receives its arguments and starts with fresh top-level runtime state', async ({ page }) => {
+    await writeSource(page, `module Main where
+import Data.IORef
+import System.Environment (getArgs)
+import System.IO.Unsafe (unsafePerformIO)
+counter :: IORef Int
+counter = unsafePerformIO (newIORef 0)
+main = do
+  args <- getArgs
+  print args
+  modifyIORef counter (+1)
+  readIORef counter >>= print
+`);
+    for (const arg of ['first', 'second']) {
+      const result = await request(page, { type: 'run', path: 'Main.hs', args: [arg] });
+      expect(result.exitCode, result.stderr || result.error).toBe(0);
+      expect(result.stdout).toBe(`["${arg}"]\n1\n`);
+      expect(result.stderr).toBe('');
+    }
+  });
 });

@@ -1723,7 +1723,13 @@ of finite failure. No new persistence keys are used.
 
 `haskell` is deliberately a single-backend mode. A hidden
 `sandbox="allow-scripts"` iframe owns a persistent, serialized MicroHs REPL
-session and loads the locally pinned, single-threaded WebAssembly runtime. The
+session and loads the locally pinned, single-threaded MicroHs 0.16.6.0
+WebAssembly runtime. Its deserializer speeds up expression translation while each execution
+still reloads fresh module state. The local bundle embeds the unchanged
+upstream Wasm bytes through `Module.wasmBinary`, followed by the unchanged
+upstream JavaScript loader; see `js/vendor/microhs/README.md` for the pinned
+hashes and packaging recipe. Keep it self-contained so the opaque-origin
+frame does not depend on CORS-enabled Wasm fetches. The
 parent page talks to that frame through the Worker-like, namespaced
 `postMessage` proxy in `TutorialCode`; keep the source, origin, and namespace
 checks intact. Do not add Haskell to mixed-backend dispatch or enable the
@@ -1731,7 +1737,13 @@ cross-origin-isolation service worker for it; MicroHs does not use
 `SharedArrayBuffer` or worker threads. Before each Run, the runtime syncs all
 workspace files, reloads the base environment, imports the module derived from
 `run_file` (or the active `.hs` path), and invokes `:main`. Use `Main.hs` as the
-conventional entry point. Author `files[].path`, `solution.files[].path`, and
+conventional entry point. The adapter keeps that import until its completion
+marker has printed, then removes it before the next Run or test reloads the
+environment. This lets the marker reuse MicroHs's translated imports instead
+of rebuilding them, while retaining fresh-file and module-isolation semantics
+for every request, including after errors. Marker output uses
+`Prelude.putStrLn` so learner definitions cannot shadow it. Author
+`files[].path`, `solution.files[].path`, and
 `run_file` as workspace-relative paths such as `Main.hs` or `Helpers/Math.hs`;
 the host adds `/tutorial/` when syncing files. Absolute `/tutorial/...` paths
 are not a supported Haskell authoring form. Haskell `setup_commands` and `solution.commands` are
