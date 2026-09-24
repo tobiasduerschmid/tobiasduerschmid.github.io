@@ -61,31 +61,24 @@ This article is intended to be a guide for students who are trying to elevate th
 
 ## The Double-Edged Sword of Cognitive Offloading: Beneficial vs. Detrimental Use
 
-To truly master how you integrate AI into your computer science education, we need to dive into the learning science theory of *cognitive offloading*. 
+**Cognitive offloading** means using tools to reduce mental effort, whether that's a calculator, a calendar reminder, or AI debugging a script {% cite RiskoGilbert2016 %}.
 
-**Cognitive offloading** is using external tools to reduce your cognitive demand {% cite RiskoGilbert2016%}. Examples of cognitive offloading include using a calculator to avoid having to do math in your head, setting a calendar reminder to avoid having to remember or constantly think about the deadline, or asking ChatGPT to debug a script. They enable you to get a task done with less cognitive work on your end, which of course sounds very enticing!
-
-However, whether this offloading helps or harms your education depends entirely on *what* you are offloading. Educational psychologists analyze this through the lens of Cognitive Load Theory (CLT), which divides our mental effort into three categories: *intrinsic load* (the inherent, necessary difficulty of the core concepts you are trying to learn), *extraneous load* (unnecessary distractions or tedious tasks that don't contribute to the core learning goal), and *germane load* (the mental effort that is directly contributing to learning and understanding) {% cite sweller2011cognitive KalyugaPlass2025  %}. 
-
-Based on this framework, research categorizes AI cognitive offloading into two distinct paths:
+Whether it helps or harms learning depends on *what* you offload. Cognitive Load Theory (CLT) explains why our limited working memory matters: *intrinsic load* comes from the material's complexity relative to your knowledge; *extraneous load* comes from distractions or unnecessary work; and *germane load* describes effort spent building understanding, such as explaining why an algorithm works. Practice builds mental models in long-term memory, letting you recognize familiar patterns without working through every detail from scratch {% cite sweller2011cognitive KalyugaPlass2025 %}.
 
 ### The Bad: Detrimental Offloading (Outsourcing)
-Detrimental offloading occurs when you use AI to bypass the *intrinsic* and *germane* cognitive effort required to build long-term knowledge schemas in your brain {% cite LodgeLoble2026%}. 
-In computer science, this looks like asking an AI to "write a Python script to solve the traveling salesperson problem" when the entire point of the assignment is for you to learn algorithmic optimization. 
+Detrimental offloading means outsourcing the thinking you need to practice {% cite LodgeLoble2026 %}. Asking AI to solve the traveling salesperson problem for you, for example, defeats an assignment meant to teach algorithmic optimization.
 
-When you outsource the intrinsic and/or germane load, you suffer several severe consequences:
-*   **Bypassing Schema Construction:** By letting the AI generate the logic, you skip the "desirable difficulties" necessary to move knowledge from your limited working memory into your long-term procedural memory {% cite deBruinEtAl2023 Duplice2025 %}. 
-A massive randomized experiment of nearly a thousand students using AI to solve math problems found that while their immediate performance was significantly higher, their long-term, durable learning suffered significantly once the AI was removed because they never built the internal neural pathways to solve the problems themselves {% cite BastaniEtAl2025 %}.
-A smaller study conducted by Anthropic researchers shows similar results for coding tasks as well {% cite ShenTamkin2026 %}.
-However, both studies find that these negative learning effects can be fully mitigated by using different usage styles for AI (more on this later).
+Two risks follow:
 
-*   **Metacognitive Laziness:** The frictionless convenience of GenAI powerfully incentivizes "metacognitive laziness"—a state where learners willingly abdicate their self-regulatory responsibilities, such as planning an approach, monitoring their own comprehension, and critically evaluating their work, simply handing those executive functions over to the machine {% cite FanEtAl2025 yan2025distinguishing%}.
+*   **Skipping practice:** When AI generates the logic, you miss opportunities to build reusable mental models through practice {% cite deBruinEtAl2023 Duplice2025 %}. In a randomized experiment involving nearly 1,000 high-school students, unrestricted AI assistance improved math practice scores but reduced subsequent unaided exam scores by 17% compared with no AI. A tutor with learning safeguards largely avoided this harm {% cite BastaniEtAl2025 %}. In a separate experiment with 52 developers learning a new Python library, AI users scored lower on a subsequent knowledge quiz, particularly on debugging questions {% cite ShenTamkin2026 %}.
+
+*   **Metacognitive laziness:** AI's convenience can encourage you to hand over planning, monitoring your understanding, and evaluating your work. A polished answer can therefore conceal gaps in what you can explain or reproduce independently. You still need to judge whether the answer makes sense and meets the assignment's goal {% cite FanEtAl2025 yan2025distinguishing %}.
 
 
 ### The Good: Beneficial Offloading
-On the other hand, **AI can actually support learning** if used for *beneficial offloading*. This occurs when you deliberately delegate *extraneous* cognitive load to the AI, purposefully freeing up your limited working memory to focus entirely on the intrinsic, high-value work of learning {% cite LodgeLoble2026 gkintonl2025  %}. 
+**Beneficial offloading** delegates extraneous work to AI, preserving mental capacity for learning {% cite LodgeLoble2026 gkintonl2025 %}. A syntax check can help when your goal is algorithm design; it can replace needed practice when syntax itself is the learning goal.
 
-In a recent 12-week quasi-experimental study, researchers explicitly taught university students a "cognitive offload instruction" model. They instructed students to delegate lower-order tasks (like brainstorming basic ideas or checking grammar/syntax) to generative AI, thereby compelling the students to focus their mental energy on higher-order analysis, structural evaluation, and logical coherence. The students who practiced this targeted, beneficial offloading demonstrated significantly greater gains in critical thinking and produced higher-quality work than the control group {% cite HongEtAl2025%}. Similarly, studies show that when AI is used to offload lower-order tasks while students engage in shared metacognitive reflection, academic achievement is significantly enhanced {% cite IqbalEtAl2025%}. 
+In a 12-week quasi-experimental study with 240 university students, AI-supported writing instruction combined brainstorming assistance with student critique, revision, and reflection. Students used AI to generate starting points, then examined ideas, strengthened arguments, and reviewed their reasoning. They improved more in critical thinking and essay quality than students receiving traditional instruction {% cite HongEtAl2025 %}. A separate survey linked offloading and shared reflection with stronger self-reported academic outcomes {% cite IqbalEtAl2025 %}.
 
 ## Strategies for Deep Learning
 
