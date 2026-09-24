@@ -76,7 +76,7 @@ However, both studies find that these negative learning effects can be fully mit
 
 
 ### The Good: Beneficial Offloading
-Conversely, AI can be a massive catalyst for learning if used for *beneficial offloading*. This occurs when you deliberately delegate *extraneous* cognitive load to the AI, purposefully freeing up your limited working memory to focus entirely on the intrinsic, high-value work of learning {% cite LodgeLoble2026 gkintonl2025  %}. 
+On the other hand, **AI can actually support learning** if used for *beneficial offloading*. This occurs when you deliberately delegate *extraneous* cognitive load to the AI, purposefully freeing up your limited working memory to focus entirely on the intrinsic, high-value work of learning {% cite LodgeLoble2026 gkintonl2025  %}. 
 
 In a recent 12-week quasi-experimental study, researchers explicitly taught university students a "cognitive offload instruction" model. They instructed students to delegate lower-order tasks (like brainstorming basic ideas or checking grammar/syntax) to generative AI, thereby compelling the students to focus their mental energy on higher-order analysis, structural evaluation, and logical coherence. The students who practiced this targeted, beneficial offloading demonstrated significantly greater gains in critical thinking and produced higher-quality work than the control group {% cite HongEtAl2025%}. Similarly, studies show that when AI is used to offload lower-order tasks while students engage in shared metacognitive reflection, academic achievement is significantly enhanced {% cite IqbalEtAl2025%}. 
 
@@ -211,17 +211,6 @@ Read a section and record its main idea, one example, and one uncertainty in you
 **Example Prompt:**
 > "Here is the passage and my own explanation. Identify one possible gap or misunderstanding and ask me a question about it before suggesting a correction. Point to the relevant passage so I can check your feedback."
 
-### Retrieval Practice, Spacing, and Self-Explanation
-
-**The Research Grounding:**
-Retrieval practice and spacing have substantial evidence behind them {% cite RoedigerKarpicke2006 Cepeda2006 %}. AI can help draft and vary short-answer questions. Check their accuracy, keep a record of missed items, and schedule later practice yourself unless your tool supports reminders. The key is that *you* retrieve the answer before seeing it. Self-explanation is another strong companion technique: a meta-analysis of 64 reports found that prompting learners to explain causal or conceptual relationships produced a moderate learning benefit (overall weighted mean *g* = .55) {% cite BisraEtAl2018SelfExplanation %}.
-
-**How and Why it Works:**
-Ask AI to quiz you, not reassure you. A good quiz prompt uses short-answer or trace-through questions, hides the answer until you attempt, asks for your confidence, and retests missed items in different wording after a delay. For code, predict output, trace relevant values, and explain key decisions. Choose questions that target the concept instead of demanding an explanation of every trivial line. These chatbot uses adapt established techniques; the cited studies did not test these exact AI prompts.
-
-**Example Prompt (Python):**
-> "Quiz me on recursion with 8 short-answer questions. Ask one question at a time and wait for my answer. After each answer, make me rate my confidence from 0 to 100, then give strict feedback. At the end, list the items I missed and ask two new questions that test the same ideas in different wording."
-
 ### Faded Worked Examples
 
 **The Research Grounding:**
@@ -248,19 +237,6 @@ Start by scoring your own draft, solution, or design against the rubric. Then as
 
 **Example Prompt (Programming):**
 > "Here is my solution and the grading rubric. Do not fix the code. Ask me to rate it first on correctness, edge cases, readability, and tests. Check one rating against the code and test evidence. Explain whether that evidence supports or challenges my rating, and suggest one targeted next step if needed."
-
-### Parsons Problems & Explain in Plain English (EiPE)
-
-**The Research Grounding:**
-Parsons problems ask you to arrange code blocks into a solution. Ericson et al. found that learners completed this practice faster than fixing or writing code, without detecting differences in immediate or delayed learning scores or in self-reported cognitive load {% cite Ericson2017 %}.
-
-Explain in Plain English (EiPE) questions ask you to describe what code accomplishes at a higher level than a line-by-line paraphrase. Smith and Zilles studied automated grading of these explanations, not whether the activity improved learning {% cite Smith2024ExplainPurpose %}.
-
-**How and Why it Works:**
-Use Parsons problems to practice sequencing and logic with less code entry. They may still involve syntax and indentation. Use EiPE to reveal what you think a function does, then check your explanation against inputs, outputs, and edge cases. Neither activity alone proves complete understanding.
-
-**Example Prompt (Python):**
-> "Create a Python Parsons problem for implementing a Binary Search. Write a correct solution (about 10 lines). Present the lines to me in SCRAMBLED order, numbered randomly. Include 2 'distractor' lines that look plausible but are logically incorrect. Do NOT show me the correct solution.”
 
 ### The “Generation-Then-Comprehension” Protocol
 
