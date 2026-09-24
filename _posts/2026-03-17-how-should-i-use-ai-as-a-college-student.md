@@ -42,6 +42,13 @@ To use an analogy: **Using AI to do the heavy lifting in your coursework is like
 
 
 Recent research found that **students who used AI for homework performed 17% worse in subsequent tests** {% cite BastaniEtAl2025 %} --- that's the difference between an A and a C+.
+
+A Brown University case from spring 2026 shows the same gap in a real-world teaching setting. Economics professor Roberto Serrano made the midterm of his advanced mathematical economics course (ECON 1170) a take-home exam. The class averaged 96 out of 100, with 40 students reaching perfect scores, while the course's midterm average had historically been 65--80. When Serrano and his graders gave the questions to ChatGPT, it produced the same convoluted proof by contradiction that many students had submitted for a question with a short, direct solution. He then made the final exam in-person. Of the 27 students who dropped the course or skipped the final, 22 had scored a perfect 100 on the midterm. The students who took the in-person final averaged about 49 {% cite BrownDailyHerald2026Serrano InsideHigherEd2026Serrano %}.
+
+An independent statistical analysis of the released scores looked at the 59 students who took both exams: their average fell from 95.7 to 48.8, and a student's take-home midterm score said almost nothing about their in-person final score (correlation ≈ 0.06). Normally, students who do well on one exam of a course also tend to do well on the next. Scores alone cannot prove which students used AI, and the authors examine alternative explanations such as test anxiety and a harder final {% cite TopazBahl2026ExamScores %}.
+
+**Why this matters for you:** a high score earned with AI measures the AI, not you. The grade looked excellent right up to the moment the students had to rely on their own skills, and in exams, interviews, and on the job you eventually have to.
+
 Just like a physical workout is only effective if it is strenuous enough to challenge your muscles, learning is usually most effective when it challenges your mind via "desirable difficulties" {% cite bjork2011making bjork2020desirable brown2014MakeItStick%}. Learn more about desirable difficulties and their importance for learning in my previous blog post "[Evidence-Based Study Tips for College Students](/blog/evidence-based-study-tips-for-college-students/)".
 
 
