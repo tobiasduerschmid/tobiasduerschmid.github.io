@@ -2,9 +2,11 @@
 const { test, expect } = require('@playwright/test');
 const {
   loadTutorialConfig, expectActiveStep, expectStepCount,
-  passCurrentStepTests, expectRenderedStepTests,
+  passCurrentStepTests, expectRenderedStepTests, answerQuizCorrectly,
 } = require('./tutorial-helpers');
+const { a11yCheckpoint } = require('./a11y-helpers');
 
+const A11Y_FEATURE = 'cs131-refresher-tutorial';
 const TUTORIAL_URL = '/SEBook/tools/cs131-refresher-tutorial';
 const BOOT_TIMEOUT = 120_000;
 const config = loadTutorialConfig('cs131-refresher');
@@ -77,6 +79,15 @@ test.describe('CS131 browser C++ and Python refresher', () => {
           await runButton(page).click();
           await expect(output(page)).toContainText('✓ Done', { timeout: 60_000 });
           await expect(output(page)).not.toContainText('Exited with error');
+        }
+        await a11yCheckpoint(page, `CS131 refresher — step ${index + 1} solution ready`, { feature: A11Y_FEATURE });
+        if (step.quiz) {
+          await page.getByRole('button', { name: /^Next →$/ }).click();
+          await expect(page.locator('.tvm-quiz-panel')).toBeVisible();
+          await a11yCheckpoint(page, `CS131 refresher — step ${index + 1} quiz`, { feature: A11Y_FEATURE });
+          await answerQuizCorrectly(page);
+          await expect(page.locator('.tvm-quiz-panel .quiz-results:not(.hidden)')).toBeVisible();
+          await a11yCheckpoint(page, `CS131 refresher — step ${index + 1} quiz results`, { feature: A11Y_FEATURE });
         }
       });
     }

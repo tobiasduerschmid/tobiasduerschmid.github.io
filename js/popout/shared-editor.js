@@ -18,7 +18,7 @@
  *     kind: 'tab' | 'pane',
  *     filename: string?,           // tab only
  *     pane: 'left'|'right'?,       // pane only
- *     els: { status, overlay, editor, filename?, orphan?, close?,
+ *     els: { status, overlay, editor, filename?, orphan?, close?, exit?,
  *            paneName?, tabBar? },
  *   });
  *
@@ -111,8 +111,11 @@
     }
     if (els.filename) els.filename.textContent = filename;
     if (els.close) els.close.addEventListener('click', function () { window.close(); });
+    if (els.exit) els.exit.addEventListener('click', function () { window.close(); });
 
     var editor = null, monacoModel = null;
+    var editorBooting = false;
+    var pendingBootstrap = null;
     var currentVersion = 0;
     var suppressEditEvents = false;
     var refactoringHost = null;
@@ -147,20 +150,24 @@
       });
     }
 
-    function bootMonaco(content, language) {
+    function bootMonaco() {
       loadMonaco(function () {
-        var lang = languageForFile(filename, language);
+        var initial = pendingBootstrap;
+        pendingBootstrap = null;
+        var lang = languageForFile(filename, initial.language);
         var dark = document.documentElement.classList.contains('dark-mode');
-        monacoModel = monaco.editor.createModel(content || '', lang);
+        monacoModel = monaco.editor.createModel(initial.content, lang);
         var options = Object.assign({}, DEFAULT_OPTIONS, {
           model: monacoModel,
           theme: pickTheme(dark),
           ariaLabel: filename + ', ' + (lang || 'code') + ' editor. Press Control F1 (Command F1 on macOS) for accessibility help. Press Escape to release focus to the surrounding page.',
         });
         editor = monaco.editor.create(els.editor, options);
+        window.SebookMonacoFocusExit.attach(editor);
         wireFileEditing();
         wireRefactorings();
         ensureDebuggerAttached();
+        editorBooting = false;
       });
     }
 
@@ -212,7 +219,13 @@
         document.documentElement.classList.toggle('dark-mode', snap.darkMode);
       }
       if (!editor) {
-        bootMonaco(snap.content || '', snap.language || '');
+        // File and state snapshots can both arrive while Monaco is loading.
+        // Keep the newest content but start only one editor bootstrap.
+        pendingBootstrap = { content: snap.content || '', language: snap.language || '' };
+        if (!editorBooting) {
+          editorBooting = true;
+          bootMonaco();
+        }
       } else if (monacoModel.getValue() !== snap.content) {
         suppressEditEvents = true;
         try { monacoModel.setValue(snap.content || ''); }
@@ -269,12 +282,15 @@
   function bootPane(opts) {
     var els = opts.els || {};
     var pane = opts.pane;
+    if (els.exit) els.exit.addEventListener('click', function () { window.close(); });
     if (!pane) {
       if (els.overlay) els.overlay.textContent = 'Invalid popup URL (missing pane).';
       return;
     }
 
     var monacoReady = false;
+    var monacoLoading = false;
+    var pendingLoadCallbacks = [];
     var editor = null;
     var models = {};      // filename -> { model, version }
     var activeFile = null;
@@ -318,15 +334,22 @@
 
     function ensureMonacoLoaded(cb) {
       if (monacoReady) return cb();
+      pendingLoadCallbacks.push(cb);
+      if (monacoLoading) return;
+      monacoLoading = true;
       loadMonaco(function () {
         monacoReady = true;
         var dark = document.documentElement.classList.contains('dark-mode');
         var options = Object.assign({}, DEFAULT_OPTIONS, { theme: pickTheme(dark) });
         editor = monaco.editor.create(els.editor, options);
+        window.SebookMonacoFocusExit.attach(editor);
         wireFileEditing();
         wireRefactorings();
         ensureDebuggerAttached();
-        cb();
+        monacoLoading = false;
+        var callbacks = pendingLoadCallbacks;
+        pendingLoadCallbacks = [];
+        callbacks.forEach(function (callback) { callback(); });
       });
     }
 

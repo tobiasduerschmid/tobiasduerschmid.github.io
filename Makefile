@@ -87,18 +87,13 @@ audit-a11y:
 	npx playwright test tests/wcag22-complete-audit.spec.js tests/wcag22-print-audit.spec.js tests/wcag22-source-implementation-sweep.spec.js tests/accessibility.spec.js
 	@# Run with `WCAG_AUDIT_FULL_SWEEP=1 make audit-a11y` for the full URL sweep.
 
+# Keep this inventory derived from the checkpoints themselves so a newly
+# instrumented feature cannot silently fall outside the interactive audit.
+INTERACTIVE_A11Y_SPECS := $(shell grep -l 'a11yCheckpoint' tests/*.spec.js)
 audit-a11y-interactive:
 	A11Y_INTERACTIVE_CHECKS=1 npx playwright test \
-	  tests/se-gym.spec.js tests/quiz.spec.js \
-	  tests/git-tutorial.spec.js tests/git-advanced-tutorial.spec.js \
-	  tests/python-tutorial.spec.js tests/java-tutorial.spec.js \
-	  tests/c-tutorial.spec.js tests/nodejs-tutorial.spec.js \
-	  tests/react-tutorial.spec.js tests/shell-tutorial.spec.js \
-	  tests/sql-tutorial.spec.js tests/tdd-tutorial.spec.js \
-	  tests/testing-foundations-tutorial.spec.js \
-	  tests/playwright-tutorial.spec.js tests/prolog-tutorial.spec.js \
-	  tests/makefile-tutorial.spec.js \
-	  tests/haskell-backend-demo-tutorial.spec.js
+	  tests/a11y-helpers.spec.js tests/nav-contrast.spec.js \
+	  $(INTERACTIVE_A11Y_SPECS)
 
 # Targeted: full a11y sweep of one tutorial. Runs the all-step test with
 # accessibility assertions at every step and every quiz.

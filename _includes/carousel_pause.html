@@ -20,9 +20,13 @@
     var targetSelector = btn.getAttribute('data-carousel-pause-target');
     var carousel = document.querySelector(targetSelector);
     if (!carousel) return;
+    // Bootstrap's default hover handler resumes cycling on mouseleave. The
+    // shared control owns pausing so keyboard focus cannot move offscreen.
+    carousel.setAttribute('data-pause', 'false');
     var paused = false;
-    btn.addEventListener('click', function () {
-      paused = !paused;
+    function setPaused(nextPaused) {
+      if (paused === nextPaused) return;
+      paused = nextPaused;
       if (window.jQuery) {
         window.jQuery(carousel).carousel(paused ? 'pause' : 'cycle');
       }
@@ -32,6 +36,11 @@
       var label = btn.querySelector('.carousel-pause-btn__label');
       if (icon) icon.textContent = paused ? '▶' : '⏸';
       if (label) label.textContent = paused ? 'Play' : 'Pause';
+    }
+    carousel.addEventListener('focusin', function () { setPaused(true); });
+    carousel.addEventListener('mouseenter', function () { setPaused(true); });
+    btn.addEventListener('click', function () {
+      setPaused(!paused);
     });
   })();
 </script>

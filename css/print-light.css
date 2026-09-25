@@ -65,6 +65,16 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
 }
 
 @media print {
+  html,
+  html.dark-mode {
+    --sebook-button-bg: #fff;
+    --sebook-button-bg-hover: #fff;
+    --sebook-button-text: #111;
+    --sebook-button-border: #767676;
+    --sebook-button-primary-bg: #fff;
+    --sebook-button-primary-text: #111;
+  }
+
   abbr[data-original-title]::after {
     content: " (" attr(data-original-title) ")";
   }
@@ -168,7 +178,12 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
   html.dark-mode h6,
   html.dark-mode .post-title,
   html.dark-mode .page-heading,
+  html.dark-mode .intro-header h1,
+  html.dark-mode .quiz-header h1,
+  html.dark-mode .quiz-header h3,
   html.dark-mode .blog-post-header h1,
+  html.dark-mode .blog-post-content h2,
+  html.dark-mode .blog-post-content h3,
   html.dark-mode body.sebook-layout #main-content h1,
   html.dark-mode body.sebook-layout #main-content h2,
   html.dark-mode body.blog-layout #main-content h1,
@@ -192,8 +207,29 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
   }
 
   html.dark-mode a,
-  html.dark-mode a:visited {
+  html.dark-mode a:visited,
+  html.dark-mode a.citation,
+  html.dark-mode a.citation:visited,
+  html.dark-mode a.citation:hover {
     color: #2774AE !important;
+  }
+
+  html.dark-mode a.citation:hover {
+    background: #fff !important;
+  }
+
+  .inline-language-switcher,
+  html.dark-mode .inline-language-switcher,
+  .inline-language-tabs,
+  html.dark-mode .inline-language-tabs,
+  html.dark-mode .inline-language-tabs button,
+  html.dark-mode .inline-language-tabs button[aria-selected="true"],
+  html.dark-mode .inline-language-tabs button[aria-selected="true"]:hover,
+  html.dark-mode .inline-language-tabs button[aria-selected="true"]:focus {
+    background: #fff !important;
+    color: #111 !important;
+    border-color: #767676 !important;
+    box-shadow: none !important;
   }
 
   html.dark-mode .text-danger,
@@ -279,26 +315,32 @@ html.print-light-mode.dark-mode .sebook-figure__verbose-body .sebook-figure__ver
   html.dark-mode textarea,
   html.dark-mode select,
   html.dark-mode button,
+  html.dark-mode .btn.btn-default.active,
+  html.dark-mode .tvm-btn-prev,
+  html.dark-mode .tvm-btn-next,
+  html.dark-mode .tvm-btn-test,
   html.dark-mode .form-control {
     background: #fff !important;
     border-color: #767676 !important;
     color: #111 !important;
   }
 
-  body.se-gym-page .gym-btn,
-  html.dark-mode body.se-gym-page .gym-btn,
-  html.dark-mode body.se-gym-page .gym-btn.primary,
-  html.dark-mode body.se-gym-page .gym-btn.secondary,
-  html.dark-mode body.se-gym-page .gym-btn.danger,
-  html.dark-mode body.se-gym-page .gym-btn.primary:disabled {
+  /* Gym buttons are also reused by settings and other shared components. */
+  .gym-btn,
+  html.dark-mode .gym-btn,
+  html.dark-mode .gym-btn.primary,
+  html.dark-mode .gym-btn.secondary,
+  html.dark-mode .gym-btn.danger,
+  html.dark-mode .gym-btn.primary:disabled,
+  html.dark-mode .gym-btn.secondary:hover:not(:disabled) {
     background: #fff !important;
     border: 1px solid #767676 !important;
     color: #111 !important;
     box-shadow: none !important;
   }
 
-  body.se-gym-page .gym-btn.primary,
-  body.se-gym-page .gym-btn.danger {
+  .gym-btn.primary,
+  .gym-btn.danger {
     border-color: #2774AE !important;
   }
 

@@ -494,7 +494,7 @@ html.dark-mode .rt-delim {
 .rt-viz-btn-p {
   font-weight: 600;
   border-color: #2774AE;
-  color: #2774AE;
+  color: #1e5c8a;
 }
 
 .rt-viz-counter {
@@ -717,7 +717,7 @@ html.dark-mode .rt-progress {
 
 html.dark-mode .rt-match {
   background: #b8960a;
-  color: #fff;
+  color: #111;
 }
 
 html.dark-mode .rt-result-pass {

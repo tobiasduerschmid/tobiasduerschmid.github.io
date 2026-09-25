@@ -24,7 +24,7 @@
     <span class="stat" id="statusEl" role="status" aria-live="polite">Connecting&hellip;</span>
   </div>
   <div class="wrap">
-    <div class="graph-host">
+    <div class="graph-host" role="region" aria-label="Git graph" aria-hidden="true" tabindex="0" inert>
       <div class="tvm-git-graph-container" id="graphEl"></div>
     </div>
     <div class="overlay" id="overlayEl">Waiting for tutorial&hellip;</div>
@@ -35,6 +35,7 @@
   <script>
   (function () {
     var graphEl = document.getElementById('graphEl');
+    var graphHost = document.querySelector('.graph-host');
     var overlayEl = document.getElementById('overlayEl');
     var statusEl = document.getElementById('statusEl');
 
@@ -50,6 +51,8 @@
 
     function applyHTML(html) {
       graphEl.innerHTML = html || '';
+      graphHost.removeAttribute('inert');
+      graphHost.removeAttribute('aria-hidden');
       client.markConnected();
     }
 

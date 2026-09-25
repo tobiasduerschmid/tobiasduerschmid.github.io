@@ -2,6 +2,22 @@
    would otherwise land behind it (SC 2.4.11 Focus Not Obscured). */
 html { scroll-padding-top: 80px; }
 
+.text-muted { color: #666; }
+html.dark-mode .text-muted { color: #bbb; }
+
+/* Parameter labels must wrap as groups when enlarged text no longer fits. */
+#ParameterPainting .btn-group-justified {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+}
+
+#ParameterPainting .btn-group-justified > .btn-group {
+  display: block;
+  flex: 1 1 8em;
+  width: auto;
+}
+
 /* Global keyboard focus ring. `:focus-visible` only fires for keyboard/
    assistive-tech focus, so mouse clicks stay visually unchanged.
    Tokens come from css/design-tokens.css; the literal hex below is a
@@ -1319,7 +1335,6 @@ html.dark-mode-transition *:after {
 
 .flashcard-card {
 	display: none;
-	animation: fadeIn 0.4s ease;
 	text-align: center;
 	padding: 10px;
 }

@@ -1,5 +1,8 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
+const { a11yCheckpoint } = require('./a11y-helpers');
+
+const A11Y_FEATURE = 'regex-tutorial';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -110,6 +113,7 @@ test.describe('RegEx Tutorial: Basics', () => {
 
   test('page loads with title and zero progress', async ({ page }) => {
     await expect(page).toHaveTitle(/RegEx/i);
+    await a11yCheckpoint(page, 'regex basics — initial exercises', { feature: A11Y_FEATURE });
     // Progress should show "0 / N" where N is the total exercise count
     const label = await page.locator('#rt-progress-label').textContent();
     expect(label).toMatch(/^0 \/ \d+/);
@@ -154,6 +158,7 @@ test.describe('RegEx Tutorial: Basics', () => {
     // Should get either pass or fail — result should be visible
     const result = page.locator(`.rt-result[data-exid="${freeEx.id}"]`);
     await expect(result).toBeVisible();
+    await a11yCheckpoint(page, 'regex basics — free-text feedback', { feature: A11Y_FEATURE });
   });
 
   test('free-text: empty input shows prompt to enter a pattern', async ({
@@ -167,6 +172,7 @@ test.describe('RegEx Tutorial: Basics', () => {
     const text = await result.textContent();
     // Should prompt user to enter something (not say "correct" or show a fail count)
     expect(text.toLowerCase()).toMatch(/enter|type|empty|provide/);
+    await a11yCheckpoint(page, 'regex basics — empty-input prompt', { feature: A11Y_FEATURE });
   });
 
   // ── Exercise Type: Parsons ──────────────────────────────────────────────
@@ -193,6 +199,7 @@ test.describe('RegEx Tutorial: Basics', () => {
 
     // Drop zone should now have 1 fragment
     await expect(drop.locator('.rt-frag')).toHaveCount(1);
+    await a11yCheckpoint(page, 'regex basics — Parsons fragment moved', { feature: A11Y_FEATURE });
     // Bank should have one fewer
     await expect(bank.locator('.rt-frag')).toHaveCount(bankCountBefore - 1);
   });
@@ -244,6 +251,8 @@ test.describe('RegEx Tutorial: Basics', () => {
     const hint = page.locator(`#ex-${fixerWithHint.id} .rt-hint`);
     await expect(hint).toBeAttached();
     await expect(hint.locator('summary')).toBeVisible();
+    await hint.locator('summary').click();
+    await a11yCheckpoint(page, 'regex basics — fixer hint expanded', { feature: A11Y_FEATURE });
   });
 
   // ── Live Feedback ───────────────────────────────────────────────────────
@@ -292,6 +301,7 @@ test.describe('RegEx Tutorial: Basics', () => {
     await typeRegex(page, freeEx.id, '[unclosed');
     const error = page.locator(`.rt-error[data-exid="${freeEx.id}"]`);
     await expect(error).toBeVisible();
+    await a11yCheckpoint(page, 'regex basics — invalid-pattern error', { feature: A11Y_FEATURE });
   });
 
   // ── Progress Tracking ──────────────────────────────────────────────────
@@ -360,6 +370,7 @@ test.describe('RegEx Tutorial: Basics', () => {
     const answerDetails = selfExplain.locator('.rt-se-answer');
     await answerDetails.locator(':scope > summary').click();
     await expect(answerDetails.locator('p')).toBeVisible();
+    await a11yCheckpoint(page, 'regex basics — self-explanation answer revealed', { feature: A11Y_FEATURE });
   });
 
   // ── Failure Feedback ────────────────────────────────────────────────────
@@ -378,6 +389,7 @@ test.describe('RegEx Tutorial: Basics', () => {
     // Should contain some diagnostic text (not just "failed")
     const text = await result.textContent();
     expect(text.length).toBeGreaterThan(20);
+    await a11yCheckpoint(page, 'regex basics — failure guidance', { feature: A11Y_FEATURE });
   });
 
   // ── Visualizer ──────────────────────────────────────────────────────────
@@ -401,6 +413,7 @@ test.describe('RegEx Tutorial: Basics', () => {
     // Step again
     await stepBtn.click();
     await expect(counter).toContainText('2 /');
+    await a11yCheckpoint(page, 'regex basics — visualizer advanced', { feature: A11Y_FEATURE });
 
     // Reset
     await viz.locator('[data-a="reset"]').first().click();
@@ -438,6 +451,7 @@ test.describe('RegEx Tutorial: Basics', () => {
     await typeRegex(page, id, solution);
     await checkAnswer(page, id);
     await expectPass(page, id);
+    await a11yCheckpoint(page, `regex basics — ${id} completed`, { feature: A11Y_FEATURE });
   }
 
   const basicsFreeAndFixerSolutions = [
@@ -479,6 +493,7 @@ test.describe('RegEx Tutorial: Basics', () => {
       }
       await checkAnswer(page, id);
       await expectPass(page, id);
+      await a11yCheckpoint(page, `regex basics — ${id} Parsons completed`, { feature: A11Y_FEATURE });
     });
   }
 });
@@ -498,6 +513,7 @@ test.describe('RegEx Tutorial: Advanced', () => {
 
   test('page loads with title and zero progress', async ({ page }) => {
     await expect(page).toHaveTitle(/RegEx/i);
+    await a11yCheckpoint(page, 'regex advanced — initial exercises', { feature: A11Y_FEATURE });
     const label = await page.locator('#rt-progress-label').textContent();
     expect(label).toMatch(/^0 \/ \d+/);
   });
@@ -529,6 +545,7 @@ test.describe('RegEx Tutorial: Advanced', () => {
     await typeRegex(page, 'greedy-1', '<.*>');
     await checkAnswer(page, 'greedy-1');
     await expectFail(page, 'greedy-1');
+    await a11yCheckpoint(page, 'regex advanced — rejected greedy pattern', { feature: A11Y_FEATURE });
   });
 
   test('lazy <.*?> accepted for Tag Trouble', async ({ page }) => {
@@ -628,6 +645,7 @@ test.describe('RegEx Tutorial: Advanced', () => {
     await typeRegex(page, id, solution);
     await checkAnswer(page, id);
     await expectPass(page, id);
+    await a11yCheckpoint(page, `regex advanced — ${id} completed`, { feature: A11Y_FEATURE });
   }
 
   const advancedSolutions = [

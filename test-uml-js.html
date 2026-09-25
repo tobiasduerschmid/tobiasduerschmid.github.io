@@ -5,11 +5,15 @@ layout: null
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>JS/TS UML Analyzer Test</title>
   <link rel="stylesheet" href="/css/uml-diagram.css">
   <link rel="stylesheet" href="/css/diagnostic-pages.css">
+  <link rel="stylesheet" href="/css/print-light.css">
 </head>
-<body>
+<body class="diagnostic-uml-page diagnostic-uml-analyzer">
+  <a class="skip-link diagnostic-skip-link" href="#main-content">Skip to main content</a>
+  <main id="main-content" tabindex="-1">
   <h1>JS/TS UML Analyzer Tests</h1>
   <p id="load-status" class="status loading">Loading TypeScript compiler...</p>
 
@@ -75,9 +79,9 @@ class Canvas {
       </textarea>
     </div>
     <div class="test-output">
-      <label>Class Diagram Syntax</label>
-      <div id="syntax1" class="test-syntax"></div>
-      <label>Rendered Diagram</label>
+      <h3 id="syntax1-heading">Class Diagram Syntax</h3>
+      <div id="syntax1" class="test-syntax" role="region" aria-labelledby="syntax1-heading" tabindex="0"></div>
+      <h3>Rendered Diagram</h3>
       <div id="diagram1" class="test-diagram"></div>
       <div id="errors1" class="errors"></div>
     </div>
@@ -121,9 +125,9 @@ class UserService {
       </textarea>
     </div>
     <div class="test-output">
-      <label>Class Diagram Syntax</label>
-      <div id="syntax2" class="test-syntax"></div>
-      <label>Rendered Diagram</label>
+      <h3 id="syntax2-heading">Class Diagram Syntax</h3>
+      <div id="syntax2" class="test-syntax" role="region" aria-labelledby="syntax2-heading" tabindex="0"></div>
+      <h3>Rendered Diagram</h3>
       <div id="diagram2" class="test-diagram"></div>
       <div id="errors2" class="errors"></div>
     </div>
@@ -180,9 +184,9 @@ service.processOrder(order);
       </textarea>
     </div>
     <div class="test-output">
-      <label>Sequence Diagram Syntax</label>
-      <div id="syntax3" class="test-syntax"></div>
-      <label>Rendered Diagram</label>
+      <h3 id="syntax3-heading">Sequence Diagram Syntax</h3>
+      <div id="syntax3" class="test-syntax" role="region" aria-labelledby="syntax3-heading" tabindex="0"></div>
+      <h3>Rendered Diagram</h3>
       <div id="diagram3" class="test-diagram"></div>
       <div id="errors3" class="errors"></div>
     </div>
@@ -231,9 +235,9 @@ class Epic extends Task {
       </textarea>
     </div>
     <div class="test-output">
-      <label>Class Diagram Syntax</label>
-      <div id="syntax4" class="test-syntax"></div>
-      <label>Rendered Diagram</label>
+      <h3 id="syntax4-heading">Class Diagram Syntax</h3>
+      <div id="syntax4" class="test-syntax" role="region" aria-labelledby="syntax4-heading" tabindex="0"></div>
+      <h3>Rendered Diagram</h3>
       <div id="diagram4" class="test-diagram"></div>
       <div id="errors4" class="errors"></div>
     </div>
@@ -281,9 +285,9 @@ class Store extends EventEmitter {
       </textarea>
     </div>
     <div class="test-output">
-      <label>Class Diagram Syntax</label>
-      <div id="syntax5" class="test-syntax"></div>
-      <label>Rendered Diagram</label>
+      <h3 id="syntax5-heading">Class Diagram Syntax</h3>
+      <div id="syntax5" class="test-syntax" role="region" aria-labelledby="syntax5-heading" tabindex="0"></div>
+      <h3>Rendered Diagram</h3>
       <div id="diagram5" class="test-diagram"></div>
       <div id="errors5" class="errors"></div>
     </div>
@@ -292,6 +296,7 @@ class Store extends EventEmitter {
   <p class="diagnostic-action-row">
     <button id="run-all" disabled>Run All Tests</button>
   </p>
+  </main>
 
   <!-- Load dependencies -->
   <script src="/js/ArchUML/uml-bundle.js"></script>

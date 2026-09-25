@@ -151,7 +151,7 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 - Service Worker — `coi-serviceworker.js` is registered for COOP/COEP header injection on isolated tutorial workspaces and for the v86 VM asset cache; it stores no per-user data
 - `BroadcastChannel` — channel names `ttsync-<path>-<session>`, `uml-sync-<path>`, and `v86-inbrowser-<n>` (v86 VM networking); messages are in-memory only
 - Third-party processing — the local `@webcontainer/api` wrapper opens StackBlitz's versioned cross-origin headless runtime and passes it WebContainer tutorial workspace files and commands; this boundary and StackBlitz's privacy policy are disclosed on `/cookies/` and in the site-wide notice
-- Cross-origin storage/cookies — third-party frames (including YouTube embeds and StackBlitz's WebContainer runtime) may use storage scoped to their own origins; `/cookies/` directs users to browser site-data controls because this origin cannot inspect or delete it
+- Cross-origin storage/cookies — third-party frames (including StackBlitz's WebContainer runtime) may use storage scoped to their own origins; `/cookies/` directs users to browser site-data controls because this origin cannot inspect or delete it. Portfolio YouTube videos and SlideShare presentations use external links, so those services load only after following a link
 
 **User-facing settings currently represented in `/settings/`:**
 - Dark mode: `dark-mode`

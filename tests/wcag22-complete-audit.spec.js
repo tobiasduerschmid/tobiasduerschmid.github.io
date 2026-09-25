@@ -1,8 +1,9 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default;
-const fs = require('fs');
 const path = require('path');
+const { buildAuditInventory } = require('./wcag-audit-inventory');
+const { writeAuditCheckpoint } = require('./wcag-audit-report');
 
 const ROOT = path.resolve(__dirname, '..');
 const SITE_ROOT = path.join(ROOT, '_site');
@@ -56,77 +57,6 @@ const CONFORMANCE_TARGET = {
   includesCriterionLevels: ['A', 'AA'],
   note: 'WCAG Level AA conformance requires satisfying both Level A and Level AA success criteria.',
 };
-
-function walk(dir) {
-  if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) return walk(full);
-    return entry.isFile() ? [full] : [];
-  });
-}
-
-function urlFromSiteFile(file) {
-  let rel = path.relative(SITE_ROOT, file).split(path.sep).join('/');
-  if (!rel.endsWith('.html')) return null;
-  rel = rel.replace(/index\.html$/, '');
-  return `/${rel}`;
-}
-
-function sourceTutorialUrls() {
-  const urls = new Set();
-  for (const file of walk(path.join(ROOT, 'SEBook'))) {
-    if (!/\.(md|html)$/.test(file)) continue;
-    const text = fs.readFileSync(file, 'utf8');
-    if (!/^layout:\s*tutorial\s*$/m.test(text)) continue;
-    let rel = path.relative(ROOT, file).split(path.sep).join('/');
-    rel = rel.replace(/\.(md|html)$/, '.html');
-    urls.add(`/${rel}`);
-
-    const printPath = rel.replace(/\.html$/, '/print');
-    const printIndex = path.join(SITE_ROOT, `${printPath}/index.html`);
-    const printHtml = path.join(SITE_ROOT, `${printPath}.html`);
-    if (fs.existsSync(printIndex)) {
-      urls.add(`/${printPath}/`);
-    }
-    if (fs.existsSync(printHtml)) {
-      urls.add(`/${printPath}.html`);
-    }
-  }
-  return [...urls].sort();
-}
-
-function allTargetUrls() {
-  const htmlFiles = walk(SITE_ROOT).filter((file) => file.endsWith('.html'));
-  const urls = htmlFiles.map(urlFromSiteFile).filter(Boolean);
-  const tutorialSet = new Set(sourceTutorialUrls());
-  // Info pages bundle the accessibility-relevant reference pages a user
-  // can land on directly: the storage inventory at /cookies/, the keyboard
-  // shortcut reference at /shortcuts/, the abbreviation glossary at /glossary/,
-  // and the user preferences page at /settings/. Each is reachable from the footer.
-  const INFO_PAGE_URLS = new Set([
-    '/cookies/',
-    '/shortcuts/',
-    '/glossary/',
-    '/settings/',
-    '/uml-python-workspace.html',
-  ]);
-  const groups = {
-    home: fs.existsSync(path.join(SITE_ROOT, 'index.html')) ? ['/index.html'] : [],
-    errorPages: urls.filter((url) => url === '/404.html'),
-    infoPages: urls.filter((url) => INFO_PAGE_URLS.has(url)),
-    tutorials: urls.filter((url) => tutorialSet.has(url)),
-    sebook: urls.filter((url) => url.startsWith('/SEBook/') && !tutorialSet.has(url)),
-    seGym: urls.filter((url) => url === '/se-gym/' || url.startsWith('/se-gym/') || url === '/se-gym-stats/' || url.startsWith('/se-gym-stats/')),
-    blog: urls.filter((url) => url === '/blog/' || url.startsWith('/blog/')),
-  };
-  for (const key of Object.keys(groups)) {
-    groups[key].sort();
-    if (URL_FILTER) groups[key] = groups[key].filter((url) => URL_FILTER.test(url));
-    if (MAX_PAGES_PER_FEATURE > 0) groups[key] = groups[key].slice(0, MAX_PAGES_PER_FEATURE);
-  }
-  return groups;
-}
 
 const WCAG_22_AA = [
   ['1.1.1', 'A', 'Non-text Content'],
@@ -200,7 +130,12 @@ const AUDIT_TIMEOUT_MS = parseNonNegativeIntegerEnv('WCAG_AUDIT_TIMEOUT_MS')
 test.setTimeout(AUDIT_TIMEOUT_MS);
 
 test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', async ({ browser }) => {
-  const groups = allTargetUrls();
+  const { groups, inventory } = buildAuditInventory({
+    sourceRoot: ROOT,
+    siteRoot: SITE_ROOT,
+    urlFilter: URL_FILTER,
+    pageLimit: MAX_PAGES_PER_FEATURE,
+  });
   const context = await browser.newContext({
     colorScheme: 'light',
     reducedMotion: 'reduce',
@@ -211,24 +146,67 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
     generatedAt: new Date().toISOString(),
     conformanceTarget: CONFORMANCE_TARGET,
     conformanceResult: null,
-    checkedCriteria: WCAG_22_AA.map(([id, level, name]) => ({
+    manualReviewRequired: true,
+    manualReviewNote: 'Automated DOM/axe checks and source-pattern evidence do not verify every WCAG criterion or every interactive state.',
+    inventory,
+    progress: { status: 'in-progress', plannedPages: inventory.selectedPageCount, completedPages: 0, currentPage: null },
+    criteriaCatalog: WCAG_22_AA.map(([id, level, name]) => ({
       id,
       criterionLevel: level,
       name,
       requiredForConformance: CONFORMANCE_TARGET.label,
     })),
-    groups: {},
+    groups: Object.fromEntries(Object.entries(groups).map(([feature, urls]) => [feature, { pageCount: urls.length, pages: [] }])),
     failures: [],
   };
+  writeAuditCheckpoint(REPORT_PATH, report);
+
+  function finishPage(feature, url, pageRecord, pageStartedAt) {
+    report.groups[feature].pages.push(pageRecord);
+    for (const finding of pageRecord.findings) report.failures.push({ feature, url, ...finding });
+    report.progress.completedPages += 1;
+    report.progress.currentPage = null;
+    writeAuditCheckpoint(REPORT_PATH, report);
+    console.log(`Screen WCAG audit finished: ${feature} ${url} (${Date.now() - pageStartedAt} ms, ${pageRecord.findings.length} finding(s))`);
+  }
+
+  function markPageStage(url, stage) {
+    report.progress.currentPage.stage = stage;
+    writeAuditCheckpoint(REPORT_PATH, report);
+    console.log(`Screen WCAG audit stage: ${url} — ${stage}`);
+  }
 
   for (const [feature, urls] of Object.entries(groups)) {
-    report.groups[feature] = { pageCount: urls.length, pages: [] };
     for (const url of urls) {
+      const pageStartedAt = Date.now();
+      report.progress.currentPage = { feature, url, startedAt: new Date(pageStartedAt).toISOString() };
+      markPageStage(url, 'navigation');
       const pageErrors = [];
       page.removeAllListeners('pageerror');
       page.on('pageerror', (error) => pageErrors.push(String(error && error.message ? error.message : error)));
       await page.setViewportSize({ width: 1280, height: 900 });
-      const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+      let response = null;
+      let navigationError = null;
+      try {
+        response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+      } catch (error) {
+        navigationError = String(error && error.message ? error.message : error);
+      }
+      if (!response || !response.ok()) {
+        const status = response ? response.status() : null;
+        const finding = {
+          criterion: 'audit-navigation',
+          severity: 'fail',
+          message: navigationError || `Page returned HTTP ${status}; accessibility checks could not run.`,
+        };
+        finishPage(feature, url, {
+          url, status,
+          conformance: { target: CONFORMANCE_TARGET.label, status: 'not-determined', automatedAuditStatus: 'incomplete', manualReviewRequired: true },
+          findingCount: 1, findings: [finding], runtimePageErrors: pageErrors,
+          evidence: { navigationError }, criteria: [],
+        }, pageStartedAt);
+        continue;
+      }
       await settleLoadedPage(page);
 
       // Mount deterministic copies of "post-runtime" UI states (e.g.
@@ -241,13 +219,16 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
       await mountRuntimeStateFixtures(page);
 
       // Light-mode DOM audit (custom checks).
+      markPageStage(url, 'light DOM');
       const desktop = await page.evaluate(runDomAudit);
 
       // axe-core, light mode. Run with all WCAG 2.2 AA tags. axe complements
       // our custom checks by covering ARIA validity, list/table/dl markup,
       // language validity, meta-refresh, etc. — areas the custom checker
       // doesn't address.
+      markPageStage(url, 'light axe');
       const axeLight = await runAxeAudit(page);
+      markPageStage(url, 'light explicit axe');
       const explicitAxeLight = await runExplicitAxeRules(page);
 
       // Dark-mode pass — flip the theme and re-run the DOM audit, but keep
@@ -261,7 +242,9 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
       // frames so post-toggle fills are in place before measuring contrast.
       await settleLoadedPage(page);
       await waitForAnimationFrames(page, 6);
+      markPageStage(url, 'dark DOM');
       const darkRaw = await page.evaluate(runDomAudit);
+      markPageStage(url, 'dark axe');
       const axeDark = await runAxeAudit(page);
       // Run the explicit-rules pass in dark mode too: `runAxeAudit` disables
       // `color-contrast` (handled locally), so without this dark-mode contrast
@@ -269,6 +252,7 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
       // post-meta in dark mode flagged by the deep audit. `region` and
       // `scrollable-region-focusable` are theme-independent in principle but
       // some popout/modal scroll containers only appear in one theme.
+      markPageStage(url, 'dark explicit axe');
       const explicitAxeDark = await runExplicitAxeRules(page);
       await page.evaluate(() => document.documentElement.classList.remove('dark-mode'));
       await settleLoadedPage(page);
@@ -293,9 +277,11 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
       // Focus audit — uses real Playwright Tab presses (the previous
       // implementation dispatched synthetic KeyboardEvents, which do NOT
       // move focus in browsers, so the tab walker was effectively a no-op).
+      markPageStage(url, 'keyboard focus');
       const focus = await runFocusAudit(page);
 
       // Mobile / reflow / text-spacing audit at 320px.
+      markPageStage(url, 'mobile reflow');
       await page.setViewportSize({ width: 320, height: 900 });
       await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
       await settleLoadedPage(page);
@@ -337,8 +323,10 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
         status: response ? response.status() : null,
         conformance: {
           target: CONFORMANCE_TARGET.label,
-          status: findings.length ? 'needs-review-or-fix' : 'passes',
-          criteriaEvaluated: WCAG_22_AA.length,
+          status: findings.length ? 'needs-review-or-fix' : 'not-determined',
+          automatedAuditStatus: findings.length ? 'needs-review-or-fix' : 'passes',
+          manualReviewRequired: true,
+          criteriaListed: WCAG_22_AA.length,
           criterionLevelsIncluded: CONFORMANCE_TARGET.includesCriterionLevels,
         },
         findingCount: findings.length,
@@ -348,6 +336,7 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
           ...desktop.evidence,
           postJavascriptDomChecked: true,
           darkModeChecked: true,
+          darkContrastVisualReview: darkRaw.evidence?.contrastVisualReview ?? null,
           axeRulesEvaluated: axeLight.evidence?.rulesEvaluated ?? null,
           axeDarkRulesEvaluated: axeDark.evidence?.rulesEvaluated ?? null,
           explicitAxeRulesEvaluated: explicitAxeLight.evidence?.rulesEvaluated ?? null,
@@ -359,23 +348,21 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
         },
         criteria: buildCriteriaMatrix(findings, desktop.evidence),
       };
-      report.groups[feature].pages.push(pageRecord);
-      for (const finding of findings) {
-        report.failures.push({ feature, url, ...finding });
-      }
+      finishPage(feature, url, pageRecord, pageStartedAt);
     }
   }
 
   report.conformanceResult = {
     target: CONFORMANCE_TARGET.label,
-    status: report.failures.length ? 'needs-review-or-fix' : 'passes',
-    criteriaEvaluatedPerPage: WCAG_22_AA.length,
+    status: report.failures.length ? 'needs-review-or-fix' : 'not-determined',
+    automatedAuditStatus: report.failures.length ? 'needs-review-or-fix' : 'passes',
+    manualReviewRequired: true,
+    criteriaListed: WCAG_22_AA.length,
     criterionLevelsIncluded: CONFORMANCE_TARGET.includesCriterionLevels,
     findingCount: report.failures.length,
   };
-
-  fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
-  fs.writeFileSync(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`);
+  report.progress.status = 'complete';
+  writeAuditCheckpoint(REPORT_PATH, report);
   await context.close();
 
   const summary = Object.entries(report.groups)
@@ -383,13 +370,54 @@ test('WCAG 2.2 AA page audit matrix is complete for requested feature areas', as
     .join(', ');
   console.log(`${CONFORMANCE_TARGET.label} audit report written to ${REPORT_PATH}`);
   console.log(`Scope: ${summary}`);
-  console.log(`Conformance: ${report.conformanceResult.status}`);
+  console.log(`Automated audit: ${report.conformanceResult.automatedAuditStatus}; WCAG conformance: ${report.conformanceResult.status} (manual review required)`);
   console.log(`Findings: ${report.failures.length}`);
 
   expect(
     report.failures,
     report.failures.slice(0, 80).map((f) => `${f.feature} ${f.url} [${f.criterion}] ${f.message}`).join('\n'),
   ).toHaveLength(0);
+});
+
+test('WCAG keyboard audit recognizes functional bypass links and native scroll controls', async ({ page }) => {
+  await page.setContent(`
+    <!doctype html><html lang="en"><head><title>Keyboard audit fixture</title>
+    <style>.scrollbox { width: 120px; height: 30px; overflow: auto; }.filtered { filter: invert(1); }</style></head>
+    <body>
+      <a href="#content">Skip to main content</a>
+      <header><nav><a href="/">Site navigation</a></nav></header>
+      <main id="content" tabindex="-1">
+        <h1>Keyboard audit fixture</h1>
+        <textarea id="native" aria-label="Scrollable source" class="scrollbox">${'line\n'.repeat(30)}</textarea>
+        <div id="reachable" class="scrollbox" tabindex="0">${'long content '.repeat(30)}</div>
+        <div id="unreachable" class="scrollbox">${'long content '.repeat(30)}</div>
+        <p class="filtered">Filtered text needs visual contrast review.</p>
+      </main>
+    </body></html>
+  `);
+  const domAudit = await page.evaluate(runDomAudit);
+  const domFindings = domAudit.findings;
+  const keyboardFindings = domFindings.filter((finding) => finding.criterion === '2.1.1');
+  expect(keyboardFindings.some((finding) => finding.message.includes('#unreachable'))).toBe(true);
+  expect(keyboardFindings.some((finding) => finding.message.includes('#native') || finding.message.includes('#reachable'))).toBe(false);
+  expect(domFindings.filter((finding) => finding.criterion === '2.4.1')).toEqual([]);
+  expect(domAudit.evidence.contrastVisualReview.invertedFilterTextElements).toBeGreaterThan(0);
+
+  const focusFindings = (await runFocusAudit(page)).findings;
+  expect(focusFindings.filter((finding) => finding.criterion === '2.4.1')).toEqual([]);
+});
+
+test('WCAG bypass audit requires a skip link only before repeated page chrome', async ({ page }) => {
+  await page.setContent('<!doctype html><html lang="en"><head><title>All main</title></head><body><main><h1>All main</h1><button>Act</button></main></body></html>');
+  expect((await page.evaluate(runDomAudit)).findings.filter((finding) => finding.criterion === '2.4.1')).toEqual([]);
+  expect((await runFocusAudit(page)).findings.filter((finding) => finding.criterion === '2.4.1')).toEqual([]);
+
+  await page.setContent('<!doctype html><html lang="en"><head><title>Hidden navigation</title><style>header { display: none; }</style></head><body><header><nav><a href="/">Hidden navigation</a></nav></header><main><h1>Content</h1></main></body></html>');
+  expect((await page.evaluate(runDomAudit)).findings.filter((finding) => finding.criterion === '2.4.1')).toEqual([]);
+
+  await page.setContent('<!doctype html><html lang="en"><head><title>Repeated navigation</title></head><body><header><nav><a href="/">Site navigation</a></nav></header><main><h1>Content</h1></main></body></html>');
+  expect((await page.evaluate(runDomAudit)).findings.some((finding) => finding.criterion === '2.4.1')).toBe(true);
+  expect((await runFocusAudit(page)).findings.some((finding) => finding.criterion === '2.4.1')).toBe(true);
 });
 
 async function settleLoadedPage(page) {
@@ -469,7 +497,7 @@ function buildCriteriaMatrix(findings, evidence) {
       criterionLevel: level,
       name,
       requiredForConformance: CONFORMANCE_TARGET.label,
-      status: related.length ? 'needs-review-or-fix' : evidence.notApplicableCriteria?.includes(id) ? 'not-applicable' : 'checked',
+      status: related.length ? 'needs-review-or-fix' : evidence.notApplicableCriteria?.includes(id) ? 'apparently-not-applicable' : 'automated-no-finding',
       findingCount: related.length,
     };
   });
@@ -484,13 +512,19 @@ async function runFocusAudit(page) {
   const limit = 220;
 
   const firstFocusableInfo = await page.evaluate(() => {
+    const main = document.querySelector('main, [role="main"]');
+    const needsBypass = !!main && [...document.querySelectorAll('header, nav, [role="banner"], [role="navigation"]')]
+      .some((el) => !main.contains(el) && (el.compareDocumentPosition(main) & Node.DOCUMENT_POSITION_FOLLOWING)
+        && getComputedStyle(el).visibility !== 'hidden' && el.getClientRects().length > 0);
     const el = document.querySelector(
       'a[href], button, input:not([type="hidden"]), select, textarea, [tabindex]:not([tabindex="-1"])',
     );
     if (!el) return null;
-    return { isSkipLink: el.matches('.skip-link') };
+    const href = el.matches('a[href^="#"]') ? el.getAttribute('href') : null;
+    const target = href && document.getElementById(href.slice(1));
+    return { needsBypass, isSkipLink: !!target && !!target.closest('main, [role="main"]') };
   });
-  if (firstFocusableInfo && !firstFocusableInfo.isSkipLink) {
+  if (firstFocusableInfo?.needsBypass && !firstFocusableInfo.isSkipLink) {
     findings.push({
       criterion: '2.4.1',
       severity: 'fail',
@@ -850,6 +884,7 @@ function runMobileAudit() {
 function runDomAudit() {
   const findings = [];
   const notApplicableCriteria = [];
+  const contrastVisualReview = { invertedFilterTextElements: 0, fsCommandLabTextElements: 0 };
   const interactiveSelector = [
     'a[href]',
     'button',
@@ -874,12 +909,16 @@ function runDomAudit() {
   if (mainCount !== 1) {
     findings.push({ criterion: '1.3.1', severity: 'fail', message: `Expected exactly one main landmark; found ${mainCount}.` });
   }
-  const skip = document.querySelector('a.skip-link[href^="#"]');
-  if (!skip) {
-    findings.push({ criterion: '2.4.1', severity: 'fail', message: 'Skip link is missing.' });
-  } else {
-    const target = document.querySelector(skip.getAttribute('href'));
-    if (!target) findings.push({ criterion: '2.4.1', severity: 'fail', message: `Skip link target ${skip.getAttribute('href')} does not exist.` });
+  const skip = [...document.querySelectorAll('a[href^="#"]')].find((link) => {
+    const target = document.getElementById(link.getAttribute('href').slice(1));
+    return target && target.closest('main, [role="main"]');
+  });
+  const main = document.querySelector('main, [role="main"]');
+  const needsBypass = !!main && [...document.querySelectorAll('header, nav, [role="banner"], [role="navigation"]')]
+    .some((el) => !main.contains(el) && (el.compareDocumentPosition(main) & Node.DOCUMENT_POSITION_FOLLOWING)
+      && getComputedStyle(el).visibility !== 'hidden' && el.getClientRects().length > 0);
+  if (needsBypass && !skip) {
+    findings.push({ criterion: '2.4.1', severity: 'fail', message: 'A skip link to the main content is missing.' });
   }
 
   // Heading structure (1.3.1, 2.4.6, 2.4.3) — top-level <h1> present, no
@@ -1168,7 +1207,9 @@ function runDomAudit() {
   findings.push(...linkUseOfColorFindings());
   findings.push(...scrollableRegionFindings());
 
-  if (!document.querySelector('audio, video')) {
+  // Embedded players can contain media that the parent DOM cannot inspect.
+  // Do not infer non-applicability from the absence of native <audio>/<video>.
+  if (!document.querySelector('audio, video, iframe')) {
     notApplicableCriteria.push('1.2.1', '1.2.2', '1.2.3', '1.2.4', '1.2.5', '1.4.2');
   }
   if (!document.querySelector('form, input, select, textarea')) {
@@ -1189,9 +1230,14 @@ function runDomAudit() {
       mainCount,
       imageCount: document.querySelectorAll('img[src]').length,
       linkedImageCount: document.querySelectorAll('a[href] img[src]').length,
+      embeddedMediaIframeCount: document.querySelectorAll('iframe[src*="youtube"], iframe[src*="vimeo"], iframe[src*="video"]').length,
       interactiveCount: document.querySelectorAll(interactiveSelector).length,
       duplicateIdsObserved: duplicateIds.slice(0, 50),
       notApplicableCriteria,
+      contrastVisualReview: {
+        ...contrastVisualReview,
+        note: 'CSS inversion and the animated command-lab stroke halo require visual contrast review; automated color contrast does not evaluate these text elements.',
+      },
     },
   };
 
@@ -1410,14 +1456,21 @@ function runDomAudit() {
       // render legible italic SVG annotations on top of an animated yellow
       // halo. The audit can't model the stroke-as-backdrop case, so its
       // computed fill-vs-page-bg ratio understates the perceived contrast.
-      // The project paints the stroke deliberately to ensure legibility; skip.
-      if (parent.closest('.fs-command-lab')) continue;
+      // Record these for visual review instead of treating the stroke as a proven pass.
+      if (parent.closest('.fs-command-lab')) {
+        seen.add(parent);
+        contrastVisualReview.fsCommandLabTextElements += 1;
+        continue;
+      }
       // Skip elements under a CSS `filter: invert(...)` ancestor — getComputedStyle
       // reports the *original* fg/bg, not the post-filter perception, so the ratio
-      // would be a false negative or false positive against what the eye sees.
-      // Inversion preserves luminance ratio; the project pattern (Mermaid / ArchUML
-      // / UML) trusts this and themes via filter rather than per-element overrides.
-      if (hasFilterInvertAncestor(parent)) continue;
+      // could be wrong in either direction. Inversion does not generally preserve
+      // luminance or contrast; record these elements for visual review.
+      if (hasFilterInvertAncestor(parent)) {
+        seen.add(parent);
+        contrastVisualReview.invertedFilterTextElements += 1;
+        continue;
+      }
       seen.add(parent);
       const style = getComputedStyle(parent);
       // SVG text uses `fill`, not `color`. Branch on that so SVG glyphs are checked too.
@@ -1460,11 +1513,19 @@ function runDomAudit() {
       if (!normalize(el.textContent || '')) return;
       if (el.closest('.sr-only, .visually-hidden')) return;
       if (!svgElementIsVisible(el)) return;
-      if (hasFilterInvertAncestor(el)) return;
+      if (hasFilterInvertAncestor(el)) {
+        seen.add(el);
+        contrastVisualReview.invertedFilterTextElements += 1;
+        return;
+      }
       // Same exemption as the HTML walker — fs-command-lab paints italic
       // annotation text on top of a dark stroke, which the audit can't
       // model.
-      if (el.closest('.fs-command-lab')) return;
+      if (el.closest('.fs-command-lab')) {
+        seen.add(el);
+        contrastVisualReview.fsCommandLabTextElements += 1;
+        return;
+      }
       seen.add(el);
       const style = getComputedStyle(el);
       const fg = parseColor(style.fill) || parseColor(el.getAttribute('fill') || '');
@@ -1664,6 +1725,9 @@ function runDomAudit() {
       // Element itself is a tab stop?
       const ti = el.getAttribute('tabindex');
       if (ti != null && Number(ti) > -1) continue;
+      // Native controls (such as textareas) can scroll and receive Tab focus
+      // without an explicit tabindex or focusable descendants.
+      if (el.matches(focusableSelector) && ti == null) continue;
       // Any focusable descendant satisfies the rule (axe accepts this).
       if (el.querySelector(focusableSelector)) continue;
       out.push({

@@ -1,29 +1,31 @@
 {%- comment -%}
-Accessible YouTube embed.
+YouTube video reference with an on-page description.
+
+The remote embedded player exposes unnamed controls and invalid ARIA that this
+site cannot repair across origins. Keep playback on YouTube and provide a
+descriptive link here, including in print.
 
 Parameters:
   id                    Required. YouTube video ID.
-  title                 Required. Accessible frame title.
+  title                 Required. Descriptive video-link text.
   description           Required for video-only or synchronized media whose
                         visuals carry information not present in the audio.
   audio_described_url   Optional. Link to an audio-described alternate version.
 
 WCAG notes:
-  - 1.2.1 / 1.2.3 / 1.2.5: adjacent description provides a media alternative
-    for visual content when an authored audio-described version is unavailable.
-  - 1.2.2: cc_load_policy asks YouTube to show captions when they exist.
-  - 4.1.2 / 2.4.1: title gives the iframe an accessible name.
+  - 1.2.1 / 1.2.3: an adequate adjacent description can provide a text
+    alternative for video-only content or synchronized media.
+  - 1.2.5: synchronized media still needs audio description when important
+    visuals are not conveyed by its audio; a text description is not a
+    substitute for this Level AA requirement.
+  - Verify that external videos have synchronized, accurate captions; a link
+    and a short description do not establish the video's conformance.
 {%- endcomment -%}
 
 <figure class="youtube-embed">
-  <div class="embed-responsive embed-responsive-16by9">
-    <iframe
-      title="{{ include.title | escape }}"
-      src="https://www.youtube.com/embed/{{ include.id | escape }}?rel=0&amp;showinfo=0&amp;cc_load_policy=1&amp;cc_lang_pref=en"
-      frameborder="0"
-      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-      allowfullscreen></iframe>
-  </div>
+  <p class="youtube-embed__link">
+    <a href="https://www.youtube.com/watch?v={{ include.id | escape }}">Watch {{ include.title | escape }} on YouTube</a>
+  </p>
   {%- if include.description -%}
   <figcaption class="youtube-embed__description">
     {{ include.description }}

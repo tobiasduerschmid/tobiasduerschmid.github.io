@@ -28,10 +28,12 @@
     <div id="editorRoot"></div>
     <div class="tpp-overlay" id="overlayEl">Waiting for tutorial&hellip;</div>
   </div>
+  <div class="tpp-bar"><button class="tvm-btn" id="exitEditorBtn" type="button">Close window</button></div>
   </main>
 
   <script src="{{ '/js/tutorial-popout-client.js' | relative_url }}"></script>
   <script src="{{ '/js/monaco-sebook-langs.js' | relative_url }}"></script>
+  <script src="{{ '/js/monaco-focus-exit.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-refactorings.js' | relative_url }}"></script>
   <script src="{{ '/js/debugger/sync.js' | relative_url }}"></script>
   <script src="{{ '/js/debugger/editor-attach.js' | relative_url }}"></script>
@@ -46,6 +48,7 @@
         status:   document.getElementById('statusEl'),
         overlay:  document.getElementById('overlayEl'),
         tabBar:   document.getElementById('tabBar'),
+        exit:     document.getElementById('exitEditorBtn'),
         editor:   document.getElementById('editorRoot'),
       },
     });

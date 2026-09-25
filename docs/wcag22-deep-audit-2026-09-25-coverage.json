@@ -1,0 +1,2458 @@
+{
+  "auditDate": "2026-09-25",
+  "target": "WCAG 2.2 Level AA",
+  "conformanceStatus": "not-determined",
+  "manualReviewRequired": true,
+  "method": "Latest completed per-URL screen and print records from immutable local builds, including focused verification after root-cause fixes. Interrupted multi-page runs contribute only fully completed page records. Zero automated findings is not a conformance certification.",
+  "htmlOutputs": 216,
+  "automatedFindings": 0,
+  "verification": {
+    "unitTestsPassed": 246,
+    "finalSqlNameAndExecutionTestsPassed": 2,
+    "finalEditorFocusTestsPassed": 4,
+    "popupBootstrapRegressionsIncludedInUnitTotal": 2,
+    "affectedInteractiveTestsPassed": 451,
+    "supplementalInitialPassed": 141,
+    "supplementalTimingRechecksPassed": 8,
+    "supplementalHaskellRepairVerifiedInAffectedRun": true,
+    "finalHelperFixturesPassed": 9,
+    "carouselRegressionsPassed": 2,
+    "note": "These counts describe distinct runs with overlap; they are not added into a unique-test total. The final helper enhancement was verified by fixtures and representative page/quiz/navigation checks after the 451-test run."
+  },
+  "pages": [
+    {
+      "url": "/",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/404.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/AIH.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/AVA.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-focused-4322-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/CCR.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/QAA.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/CS130.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/CS130_bookmarks.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/CS131_bookmarks.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/CS35L.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-cs35l-completed-checkpoint.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "review-publish-print-10.json"
+      }
+    },
+    {
+      "url": "/SEBook/CS35L_bookmarks.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/all.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "review-all-screen-4323.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "review-publish-print-10.json"
+      }
+    },
+    {
+      "url": "/SEBook/architectural_styles/",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/architectural_styles/layers.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/architectural_styles/pipes_and_filters.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/architectural_styles/pubsub.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/architectural_tactics.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/bookmarks.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designpatterns.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designpatterns/abstract_factory.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designpatterns/adapter.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designpatterns/builder.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designpatterns/command.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designpatterns/composite.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designpatterns/facade.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designpatterns/factory_method.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designpatterns/mediator.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designpatterns/monopoly-state-pattern-uml-homework.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-focused-4322-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "review-publish-print-10.json"
+      }
+    },
+    {
+      "url": "/SEBook/designpatterns/monopoly-state-pattern-uml-homework/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designpatterns/mvc.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designpatterns/null_object.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designpatterns/observer-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/designpatterns/observer-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designpatterns/observer.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designpatterns/singleton.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designpatterns/state.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designpatterns/strategy.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designpatterns/visitor.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designprinciples.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designprinciples/",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designprinciples/information-hiding-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/designprinciples/information-hiding-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designprinciples/informationhiding.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designprinciples/reuse.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designprinciples/soc.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/designprinciples/solid.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/development_practices/",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/development_practices/beacons.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/development_practices/code-comprehension-advanced-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/development_practices/code-comprehension-advanced-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/development_practices/code-comprehension-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/development_practices/code-comprehension-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/development_practices/code_comprehension.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/development_practices/code_smells.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/development_practices/debugging.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/development_practices/defensive-programming-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/development_practices/defensive-programming-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/development_practices/design-by-contract-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/development_practices/design-by-contract-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/development_practices/genAI.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/development_practices/modern_code_review.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/development_practices/promptengineering.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/development_practices/refactoring.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/development_practices/topdown.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/process.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/process/people-and-processes.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/process/scrum.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/process/xp.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/quality_attributes.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/quality_attributes/interoperability.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/quality_attributes/testability.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/requirements.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/software_architecture.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/systems/",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/systems/data_management.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/systems/security.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/testing.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/testing/goodtests.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/testing/tdd-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/testing/tdd-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/testing/tdd.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/testing/test-doubles-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-repairs.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/testing/test-doubles-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/testing/testdoubles.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/testing/testing-foundations-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/testing/testing-foundations-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/testing/testquality.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/c-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/c-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/c.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/code-smells-refactoring-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/code-smells-refactoring-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/cooldown-demo.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/cooldown-demo/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/cs131-refresher-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-repairs.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/cs131-refresher-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/debugger-demo.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/debugger-demo/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/debugger-node-demo.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-repairs.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/debugger-node-demo/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/git-advanced-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/git-advanced-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/git-playground.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/git-playground/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/git-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/git-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/git-visual-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/git-visual-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/git.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/haskell-backend-demo-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/haskell-backend-demo-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/haskell-data-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/haskell-data-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/haskell-functions-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/haskell-functions-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/haskell-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/haskell-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/haskell.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/java-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/java-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/java.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/leftpad-nodejs-lecture.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-repairs.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/leftpad-nodejs-lecture/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/make.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/makefile-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/makefile-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/multi-backend-placeholder-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/multi-backend-placeholder-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/networking.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/nodejs-lecture.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/nodejs-lecture/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/nodejs-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/nodejs-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/nodejs.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/playwright-compat-demo.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-repairs.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/playwright-compat-demo/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/playwright-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-repairs.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/playwright-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/prolog-search-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/prolog-search-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/prolog-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/prolog-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/python-debugging.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/python-debugging/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/python-lecture.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/python-lecture/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/python-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/python-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-carousel-python-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "review-python-print-4323.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/python.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/react-lecture.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/react-lecture/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/react-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/react-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/react.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/regex-tutorial-advanced.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/regex-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/regex.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/shell-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/shell-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/shell.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/solid-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-repairs.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/solid-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/spec-card.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/sql-tutorial.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-editor-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/sql-tutorial/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/uml-class-diagram-python.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/uml-class-diagram-python/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/uml-demo.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-uml-demo-isolation.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/uml-demo/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/uml-editor.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/uml-playground.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/uml-reference.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/uml-sequence-diagram-python.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-repairs.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tools/uml-sequence-diagram-python/print.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/tutorials.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/uml.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/uml_class_diagram.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/uml_component_diagram.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/uml_sequence_diagram.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/uml_state_diagram.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/uml_use_case_diagram.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/SEBook/userstories.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/TOD.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/blog/",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/blog/evidence-based-study-tips-for-college-students/",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/blog/highlight-verification/",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/blog/how-should-i-use-ai-as-a-college-student/",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "review-publish-print-10.json"
+      }
+    },
+    {
+      "url": "/blog/how-should-i-use-ai-as-a-college-student_AI/",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "review-publish-print-10.json"
+      }
+    },
+    {
+      "url": "/blog/quiz-verification/",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/blog/use_ai_draft/",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "review-publish-print-10.json"
+      }
+    },
+    {
+      "url": "/cookies/",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/glossary/",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/haskell-runtime-frame.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-focused-4322-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "review-publish-print-10.json"
+      }
+    },
+    {
+      "url": "/pencilhatching.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-carousel-python-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "review-publish-print-10.json"
+      }
+    },
+    {
+      "url": "/photography.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-carousel-python-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/rosinfer.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-repairs.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/se-gym-stats/",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/se-gym/",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/sebook.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/settings/",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/shortcuts/",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/test-uml-js.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-focused-4322-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/test-uml.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-focused-4322-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/tutorial-debugger-popup.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-focused-4322-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/tutorial-graph-popup.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-focused-4322-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/tutorial-instructions-popup.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-focused-4322-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/tutorial-output-popup.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-focused-4322-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/tutorial-pane-popup.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-editor-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/tutorial-tab-popup.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-editor-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/uml-popup.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-focused-4322-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/uml-python-workspace.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-deep-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-print.json"
+      }
+    },
+    {
+      "url": "/vm/snapshot/",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-focused-4322-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "review-publish-print-10.json"
+      }
+    },
+    {
+      "url": "/writingguide.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-after-giant-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-verified-print-remaining.json"
+      }
+    },
+    {
+      "url": "/writingguide/main.html",
+      "screen": {
+        "automatedFindings": 0,
+        "sourceReport": "wcag22-final-focused-4322-screen.json"
+      },
+      "print": {
+        "automatedFindings": 0,
+        "sourceReport": "review-publish-print-10.json"
+      }
+    }
+  ],
+  "sourceReports": [
+    {
+      "name": "wcag22-deep-screen.json",
+      "sha256": "6558576f513295b3335e295823765672d3a119e9cd721e555669b5c9c47505bd"
+    },
+    {
+      "name": "wcag22-after-giant-screen.json",
+      "sha256": "ed8fdd1e02076b083dd4f4c79db3973764200d7b56d34f296df5ed93d9abb5f5"
+    },
+    {
+      "name": "wcag22-verified-repairs.json",
+      "sha256": "825938b6f94922d125bec44f1cd33c2956ffe825f885524b84e397da1eb5ef67"
+    },
+    {
+      "name": "wcag22-diagnostic-4320-harness-green.json",
+      "sha256": "c05c583f390e349de01d6a11d98ecd68afb18f63e4543dd6e7942b0837ef8f81"
+    },
+    {
+      "name": "wcag22-final-focused-4322-screen.json",
+      "sha256": "d4ea22a0df54cc26641656857ff3a290b6a72f88a66cb95affc7e9d9c07ad6d9"
+    },
+    {
+      "name": "wcag22-final-carousel-python-screen.json",
+      "sha256": "c246dd673ff7690c9716e07fe8854282e37425690a6bd226192e373f57ed5243"
+    },
+    {
+      "name": "wcag22-cs35l-completed-checkpoint.json",
+      "sha256": "2dae2456e5446e365c7097dc117393d08ea3859014d8650a8b7ff1b2aae77585"
+    },
+    {
+      "name": "review-all-screen-4323.json",
+      "sha256": "e2302ad34f491c86bfba30be62665d5a741e585b0e9080526844a21f2fd78cbf"
+    },
+    {
+      "name": "wcag22-final-editor-screen.json",
+      "sha256": "e541b9b94d68f23667e480e91f16809c355edddaaf1e4c197223c33d7b71d232"
+    },
+    {
+      "name": "wcag22-final-print.json",
+      "sha256": "29eb6193ab1c9e4e3d7462801afeebbe9566e93b87ee52ca8551c94902c337bd"
+    },
+    {
+      "name": "wcag22-uml-demo-isolation.json",
+      "sha256": "6fb5e79733e72ee5bf47560c1d8a8cc0bb20e089ec5be6f7d7a9547375f10c9f"
+    },
+    {
+      "name": "wcag22-verified-print-remaining.json",
+      "sha256": "b8d1069569c049e8f5a592df40c9ac6c28fefb0c3695d5438f74a2c4962a1ad9"
+    },
+    {
+      "name": "review-publish-print-10.json",
+      "sha256": "41a5c529b1a02be1264ff575c2572d77ba3fe3082ff38685c7cf5941837a41b7"
+    },
+    {
+      "name": "review-python-print-4323.json",
+      "sha256": "88d6142a8ecd19cfe7064b96daa33554e466f458e9d9c402c1a2d5caab8cce9e"
+    }
+  ]
+}
