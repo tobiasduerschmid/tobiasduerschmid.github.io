@@ -637,13 +637,16 @@
     this._activeRequestedBackend = backend;
     this.requireTests = options.requireTests || false;
     this.requireQuiz = options.requireQuiz !== false;
+    this.allowSkipSteps = options.allowSkipSteps === true;
     this.instructorMode = options.instructorMode || false;
     this.disableQuiz = options.disableQuiz || false;
     this.lectureMode = options.lectureMode || false;
     this.tutorialId = options.tutorialId || 'default';
     this._stepsPassed = new Set();
     this._quizPassed = new Set();
-    this._stepsUnlocked = new Set([0]);   // step 0 is always unlocked
+    this._stepsUnlocked = new Set(this.allowSkipSteps
+      ? this.steps.map(function (_, index) { return index; })
+      : [0]);
     this._stepsVisited = new Set();      // tracks first-time entry
     this.currentStep = -1;
     // autosaveType: falsy = disabled, "files" = save/restore files only (default),
@@ -1183,7 +1186,8 @@
           if (!userAutosaveOn) self.autoSaveEnabled = false; // keep in sync before navbar wires up
           var saved = (hashStep < 0 && self.allowAutosave && userAutosaveOn) ? self._loadSavedProgress() : null;
           if (saved) {
-            if (saved.stepsUnlocked) self._stepsUnlocked = new Set(saved.stepsUnlocked);
+            // An older gated save must not restrict a now freely navigable tutorial.
+            if (saved.stepsUnlocked && !self.allowSkipSteps) self._stepsUnlocked = new Set(saved.stepsUnlocked);
             // Always ensure all steps up to the saved step are unlocked
             // (handles old saves AND incomplete unlock data)
             for (var si = 0; si <= saved.step; si++) self._stepsUnlocked.add(si);

@@ -113,6 +113,11 @@
   description: The in-memory tree representation of an HTML or XML document that scripts manipulate. Browser DOM APIs let JavaScript add, remove, and modify nodes.
   related: [HTML, CSS]
 
+- term: EAFP
+  definition: Easier to Ask Forgiveness than Permission
+  description: A programming style that attempts an operation and handles a specific expected exception if it fails. Keep the protected operation narrow so unrelated failures are not hidden.
+  related: [LBYL]
+
 - term: FTP
   definition: File Transfer Protocol
   description: An application-layer protocol for transferring files between hosts. Modern systems often prefer SSH-based or HTTPS-based transfer mechanisms for encrypted workflows.
@@ -228,6 +233,16 @@
   description: A compact, signed token format used for authentication and information exchange. A JWT is three Base64url-encoded segments — header, payload, and signature — separated by dots.
   related: [OAuth, JSON, API]
 
+- term: LBYL
+  definition: Look Before You Leap
+  description: A programming style that checks whether an operation appears valid before attempting it. External state can change between a check and the operation, so failure handling may still be needed.
+  related: [EAFP]
+
+- term: LEGB
+  definition: Local, Enclosing, Global, Built-in
+  description: The usual order in which Python looks up an unqualified name inside a function. Assignment normally creates a local binding unless a global or nonlocal declaration says otherwise.
+  related: []
+
 - term: LLM
   definition: Large Language Model
   description: A machine-learning model trained on large text and code corpora to predict and generate language, answer questions, summarize, translate, and assist with programming tasks.
@@ -272,6 +287,10 @@
   definition: Open/Closed Principle
   description: The SOLID principle that software entities should be open for extension but closed for modification, so new variants can be added without editing stable existing code.
   related: [SOLID, OOP]
+
+- term: OpenCL
+  definition: Open Computing Language
+  description: An open standard for parallel computation across devices from different vendors. Programs can launch work-items that run a kernel on different portions of the data.
 
 - term: OOP
   definition: Object-Oriented Programming

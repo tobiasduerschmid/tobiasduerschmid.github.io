@@ -1,5 +1,5 @@
-title: "Python Syntax — Write the Code"
-description: "You are given a task description. Write the Python code that accomplishes it."
+title: "Python — Write the Code"
+description: "Recall Python syntax and build small functions and classes with deliberate ownership and copying."
 active: true
 cards:
   - id: 1
@@ -11,7 +11,7 @@ cards:
     difficulty: intermediate
     question: "Perform integer (floor) division of 7 by 2, getting `3` as the result (not `3.5`)."
     answer: "`7 // 2`"
-    explanation: "Python's `/` always returns a float. Use `//` for integer/floor division, which behaves like C++'s `/` for positive integers."
+    explanation: "Division of built-in integers with `/` returns a float. `//` floors the quotient; it agrees with C++ integer division for positive operands but differs when a negative quotient has a fractional part."
   - id: 3
     difficulty: intermediate
     question: "Compute 2 to the power of 10 (should give 1024)."
@@ -57,9 +57,9 @@ cards:
     explanation: "`re.findall()` returns a list of all matches. `\\d+` matches one or more digits. Use raw strings `r'...'` for regex patterns."
   - id: 9
     difficulty: advanced
-    question: "Replace all IP addresses in a string `text` with `\"x.x.x.x\"` using regex."
+    question: "Replace text shaped like four digit groups separated by dots with `\"x.x.x.x\"`. Use a simple regex; validating IPv4 numeric ranges is outside this task."
     answer: "`re.sub(r'\\d+\\.\\d+\\.\\d+\\.\\d+', 'x.x.x.x', text)`"
-    explanation: "`re.sub(pattern, replacement, string)` replaces all matches. This is the Python equivalent of `sed 's/old/new/g'`."
+    explanation: "`re.sub(pattern, replacement, string)` returns a string with each match replaced. The pattern also accepts invalid address values such as 999.999.999.999; shape matching is not address validation."
   - id: 10
     difficulty: expert
     question: "Write a script that prints an error to stderr and exits with code 1 if no command-line argument is provided."
@@ -85,3 +85,99 @@ cards:
           print("Found!")
       ```
     explanation: "`re.search()` returns a match object (truthy) or `None` (falsy). It is the Python equivalent of `grep -q`."
+
+  - id: 13
+    difficulty: intermediate
+    question: |
+      Define `WeatherStation(name, calibration)`. Each instance must keep the
+      supplied calibration object by reference and own a fresh empty `readings`
+      list. Add `record(value)` to append one value to that instance's list.
+    answer: |
+      ```python
+      class WeatherStation:
+          def __init__(self, name, calibration):
+              self.name = name
+              self.calibration = calibration
+              self.readings = []
+
+          def record(self, value):
+              self.readings.append(value)
+      ```
+    explanation: "The constructor deliberately shares the supplied collaborator and constructs independent mutable storage. Putting readings = [] in the class body would create a shared class list instead."
+
+  - id: 14
+    difficulty: intermediate
+    question: |
+      A `Reading` class already initializes `self.temperature` and `self.unit`.
+      Write its `__eq__` method so two Readings compare equal exactly when both
+      fields match. Return `NotImplemented` for an operand that is not a Reading.
+    answer: |
+      ```python
+      def __eq__(self, other):
+          if not isinstance(other, Reading):
+              return NotImplemented
+          return (self.temperature == other.temperature
+                  and self.unit == other.unit)
+      ```
+    explanation: "This defines value equality without changing identity. Returning NotImplemented declines unsupported operands so Python can try comparison fallback; it is different from raising an exception."
+
+  - id: 15
+    difficulty: intermediate
+    question: |
+      Write `record_alert(message, alerts=None)` to append a message and return
+      the list. An omitted argument or explicit None gets a fresh list each
+      call. Any supplied list, including an empty one, must be mutated and
+      returned as the same object.
+    answer: |
+      ```python
+      def record_alert(message, alerts=None):
+          if alerts is None:
+              alerts = []
+          alerts.append(message)
+          return alerts
+      ```
+    explanation: "None marks absence; an empty list does not. Constructing the list inside the call prevents accidental reuse of a mutable default, while supplied lists are deliberately shared with the caller."
+
+  - id: 16
+    difficulty: intermediate
+    question: |
+      `station` is an ordinary WeatherStation whose calibration and readings
+      are mutable member objects. Write `archive_station(station)` to return
+      an independent snapshot of its mutable member state. The supplied
+      objects support standard copying, and repeated member references should
+      stay shared within the snapshot.
+    answer: |
+      ```python
+      import copy
+
+      def archive_station(station):
+          return copy.deepcopy(station)
+      ```
+    explanation: "Assignment would alias the station. A shallow copy would retain its mutable member references. Deepcopy isolates the supported mutable graph while preserving repeated references within that graph; immutable leaves may safely be reused."
+
+  - id: 17
+    difficulty: intermediate
+    question: |
+      Write `with_sample(readings, sample)` for a built-in list. Return a new
+      outer list containing the existing readings followed by sample. Leave
+      the input list unchanged, and keep the existing element objects shared.
+    answer: |
+      ```python
+      def with_sample(readings, sample):
+          return readings + [sample]
+      ```
+    explanation: "Concatenation creates a new outer list while reusing the element references. append or list += would mutate the input instead. A deep copy would unnecessarily change the requested sharing of mutable elements."
+
+  - id: 18
+    difficulty: intermediate
+    question: |
+      A station has a `calibration` member that other stations may share.
+      `Calibration(offset)` creates a fresh calibration object. Write
+      `detach_calibration(station, offset)` to give this station a new
+      calibration, leaving its former calibration object unchanged.
+    answer: |
+      ```python
+      def detach_calibration(station, offset):
+          station.calibration = Calibration(offset)
+      ```
+    explanation: "Replace the member reference on the supplied station. Assigning station = ... would only rebind a local name; changing station.calibration.offset would mutate the old shared collaborator. Other aliases of this same station still see its newly selected member."

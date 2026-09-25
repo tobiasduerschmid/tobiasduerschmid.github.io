@@ -12,9 +12,14 @@
   <link rel="stylesheet" href="{{ '/css/uml-diagram.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/tutorial-print.css' | relative_url }}">
   <link rel="stylesheet" href="{{ '/css/print-light.css' | relative_url }}">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11.16.0/dist/mermaid.min.js"
+          integrity="sha384-T/0lMUdJpd2S1ZHtRiofG3htU3xPCrFVeAQ1UUE2TJwlEJSV5NUwn30kP28n238E"
+          crossorigin="anonymous" defer></script>
+  <script src="{{ '/js/mermaid-theme.js' | relative_url }}" defer></script>
   <script src="{{ '/js/ArchUML/uml-bundle.js' | relative_url }}" defer></script>
   <script src="{{ '/js/uml-auto-describe.js' | relative_url }}" defer></script>
   <script src="{{ '/js/tutorial-inline-markdown.js' | relative_url }}"></script>
+  <script src="{{ '/js/keyboard-shortcut-labels.js' | relative_url }}"></script>
   <script>
     (function () {
       var root = document.documentElement;
@@ -43,9 +48,6 @@
   </div>
 
   <script>
-    if (window.location.search.indexOf('autoprint=1') !== -1) {
-      window.addEventListener('load', function () { window.print(); });
-    }
     function normalizeExampleButtons() {
       document.querySelectorAll('.step button').forEach(function (button, index) {
         if (!button.textContent.trim() && !button.getAttribute('aria-label') && !button.getAttribute('aria-labelledby')) {
@@ -114,16 +116,27 @@
         }
       }
 
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function () {
-          makeScrollableCodeFocusable();
-          renderInlineSummaryMarkdown();
-          renderUmlDiagrams();
+      function initializePrintContent() {
+        document.querySelectorAll('main details').forEach(function (details) {
+          details.open = true;
         });
-      } else {
         makeScrollableCodeFocusable();
         renderInlineSummaryMarkdown();
         renderUmlDiagrams();
+        const diagramsReady = window.SebookMermaid.render(document);
+        if (window.location.search.indexOf('autoprint=1') !== -1) {
+          const printWhenReady = function () {
+            diagramsReady.then(function () { window.print(); });
+          };
+          if (document.readyState === 'complete') printWhenReady();
+          else window.addEventListener('load', printWhenReady, { once: true });
+        }
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializePrintContent);
+      } else {
+        initializePrintContent();
       }
     })();
   </script>

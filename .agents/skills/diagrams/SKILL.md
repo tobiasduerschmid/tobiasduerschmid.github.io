@@ -159,7 +159,7 @@ Every page that contains a mermaid block **must** load both scripts in this orde
 The second script defines `window.SebookMermaid` and immediately calls `mermaid.initialize(...)` with theme variables, font, and colors that mirror the ArchUML palette in [css/uml-diagram.css](../../../css/uml-diagram.css) and [js/ArchUML/uml-bundle.js](../../../js/ArchUML/uml-bundle.js):
 
 - Stroke `#4060a0`, fill `#fdfcf8`, header fill `#d0ddef`, text `#222`, edge `#444`
-- Font: `'Segoe UI', system-ui, -apple-system, sans-serif` at `14px`
+- Font: `'Segoe UI', system-ui, -apple-system, sans-serif`; node and edge labels render at `20px` through `css/uml-diagram.css`
 - Dark mode: SVG `filter: invert(1) hue-rotate(180deg)` (matches the rule ArchUML applies)
 
 **Never call `mermaid.initialize` yourself** — it would override the project palette and produce a diagram that visually disagrees with adjacent ArchUML figures. The whole point of `mermaid-theme.js` is to make every mermaid diagram in the project look like it belongs next to an ArchUML diagram.
@@ -168,8 +168,10 @@ The second script defines `window.SebookMermaid` and immediately calls `mermaid.
 
 Mermaid blocks inside markdown render through `SebookMermaid.render(rootEl)`. Pages that already render markdown after page-load (e.g. tutorials, the popout instructions panel) call this for you — see the call sites in [js/tutorial-code.js](../../../js/tutorial-code.js) (`_renderInlineMermaid`) and [tutorial-instructions-popup.html](../../../tutorial-instructions-popup.html) (`renderContent`). New pages that re-render markdown dynamically must call `SebookMermaid.render(rootEl)` after each `innerHTML` update.
 
-For static markdown (rendered once at build time), no call is needed — the auto-initialize in `mermaid-theme.js` covers blocks that exist on first paint.
+For static SEBook chapters, set `mermaid: true` in front matter. The shared layout loads the scripts and invokes `SebookMermaid.render` on the main content. Course aggregators propagate that flag from embedded chapters and tutorial page stubs. Other static surfaces must invoke the helper after the content exists: initialization configures Mermaid but does not itself render code blocks. The printable tutorial already does this and waits for the returned Promise before automatic printing.
+
+Include `accTitle:` and `accDescr:` in the Mermaid source. The helper exposes the authored description on its accessible image wrapper, while `%% caption: ...` supplies the visible contextual caption and accessible name. Narrow panes preserve the diagram's measured width and allow keyboard scrolling instead of shrinking text. When a diagram is inside a prediction reveal, use `<details markdown="1">` so both live Markdown and the print view's Kramdown parser recognize the fence.
 
 ### What you write as a mermaid author
 
-A `<pre><code class="language-mermaid">…</code></pre>` block (or a fenced ` ```mermaid` block in markdown that converts to that). Keep node and edge labels short — mermaid's HTML labels can wrap, but boxes get sized at 14px font, so very long labels still need `<br/>` breaks or shorter wording. Don't set inline `style:` overrides on individual nodes that conflict with the theme palette (red/green for "good/bad" semantic accents are fine; arbitrary brand colors break the visual unity).
+A `<pre><code class="language-mermaid">…</code></pre>` block (or a fenced ` ```mermaid` block in markdown that converts to that). Keep node and edge labels short; use `<br/>` breaks where they help a label fit at paragraph size. Presentation lives in `css/uml-diagram.css`; do not add inline style overrides to individual nodes. Check the rendered result in light mode, dark mode, narrow panes, and print.

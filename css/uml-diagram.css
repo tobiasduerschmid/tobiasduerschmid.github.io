@@ -144,6 +144,107 @@ html.dark-mode .uml-sym svg {
   filter: invert(1) hue-rotate(180deg);
 }
 
+/* Mermaid presentation stays in this shared diagram module. The renderer
+   supplies each SVG's measured width so a narrow pane scrolls the figure
+   rather than shrinking its labels below the surrounding paragraph size. */
+div.mermaid {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+  padding: 8px 0;
+  overflow-x: auto;
+}
+
+div.mermaid svg {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin: 0 auto;
+}
+
+.sebook-figure--mermaid .mermaid > svg {
+  width: var(--mermaid-intrinsic-width, 100%);
+  max-width: none !important;
+}
+
+div.mermaid:focus-visible {
+  outline: 3px solid #2774ae;
+  outline-offset: 2px;
+}
+
+html.dark-mode div.mermaid:focus-visible {
+  outline-color: #8ecfff;
+}
+
+/* Override Mermaid's SVG-internal 0.75em label rule. These rules also apply
+   while it measures HTML labels, keeping the text inside its node boxes. */
+div.mermaid svg g.label,
+div.mermaid svg g.label foreignObject,
+div.mermaid svg foreignObject,
+div.mermaid svg foreignObject div,
+div.mermaid svg foreignObject span,
+div.mermaid svg foreignObject p {
+  font-size: 20px !important;
+  font-weight: 600;
+  line-height: 1.35;
+  margin: 0;
+}
+
+/* Inherit Mermaid's light-theme label color before applying the dark-mode
+   SVG filter; surrounding tutorial paragraph colors must not leak into it. */
+div.mermaid svg foreignObject p {
+  color: inherit !important;
+}
+
+div.mermaid svg .edgeLabel,
+div.mermaid svg .edgeLabel * {
+  font-size: 20px !important;
+  font-weight: 400 !important;
+  font-style: italic;
+}
+
+div.mermaid svg .node rect,
+div.mermaid svg .node polygon,
+div.mermaid svg .node circle,
+div.mermaid svg .node ellipse,
+div.mermaid svg .node path,
+div.mermaid svg .cluster rect {
+  stroke-width: 1.5px !important;
+  filter: drop-shadow(1.5px 3px 3px rgba(0, 0, 0, 0.35));
+}
+
+div.mermaid svg .flowchart-link,
+div.mermaid svg .messageLine0,
+div.mermaid svg .messageLine1 {
+  stroke-width: 1.4px !important;
+}
+
+html.dark-mode div.mermaid svg {
+  filter: invert(1) hue-rotate(180deg);
+}
+
+html.print-light-mode.dark-mode div.mermaid svg {
+  filter: none;
+}
+
+html.print-light-mode.dark-mode div.mermaid:focus-visible {
+  outline-color: #2774ae;
+}
+
+@media print {
+  div.mermaid {
+    overflow: visible;
+  }
+
+  .sebook-figure--mermaid .mermaid > svg {
+    max-width: 100% !important;
+  }
+
+  html.dark-mode div.mermaid svg {
+    filter: none;
+  }
+}
+
 /* GitGraph fallback messages — must clear 4.5:1 in BOTH modes against the
    page background. The previous inline styles (color:#b00 / color:#888)
    passed in light mode but failed in dark mode (#b00 hits ~2.8:1, #888
