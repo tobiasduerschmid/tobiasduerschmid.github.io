@@ -1,7 +1,7 @@
 ---
 layout: blog-post
 title: "[Draft] How Should I Use AI as a College Student? — A Science-Backed Guide for CS Students"
-date: 2026-03-11
+date: 2026-09-24
 category: "For Students"
 featured: true
 image: "/img/genai.jpg"
@@ -20,13 +20,13 @@ It’s 7:00 PM on a Friday. Your friends want to watch a movie, but you’re stu
 A professional might just ask AI for a fix. So why should you not just take this tempting short cut? 
 Because skipping the learning phase means you're not growing your skills --- the main goal of education!
 
-State-of-the-art research on real-world tasks shows that ==for hard problems AI, AI is an amplifier of technical skills, not an equalizer== {% cite hitzig2026agentic DORA2025 Paradis2025 Ma2026 Prather2024WideningGap %}.
-Recent research by Google shows that developers with *stronger coding foundations* and *deeper system design experience* achieve a *larger* productivity boost from AI tools {% cite Paradis2025%}.
-In professional settings, AI magnifies the existing strengths of high-performing individuals and teams, while simultaneously amplifying the dysfunctions of struggling ones {% cite DORA2025%}.
-Studies conducted in educational settings show similar results: Experienced developers can use their deep knowledge of fundamentals (algorithms, data structures, and syntax) to anticipate edge cases, rapidly scan and comprehend AI outputs, spot subtle issues, and identify hallucinations to supercharge their workflows {% cite Prather2024WideningGap Ma2026%}.
-Furthermore, Anthropic's analysis of Claude Code usage shows the more domain expertise a person has, the more often the coding session is successful {% cite hitzig2026agentic%}.
-Methodologically, experts engage with GenAI *proactively* to *plan*, *steer*, and *verify*, whereas novices tend to apply it *reactively* merely to bypass immediate roadblocks {% cite Ma2026 Prather2024WideningGap Dohmke2025 ShenTamkin2026 Huang2025 %}.
-Ultimately, **AI enables skilled developers to compound their knowledge and productivity while novices who are not developing these skills fall further and further behind** {% cite LodgeLoble2026%}.
+Several studies point to a useful lesson for your degree: ==strong technical skills can help you get more out of AI== {% cite hitzig2026agentic DORA2025 Paradis2025 Ma2026 Prather2024WideningGap %}.
+In Google's study of professional developers, those with *stronger coding foundations* and *more system design experience* gained more speed from AI tools {% cite Paradis2025%}.
+The DORA report describes a similar pattern in teams: AI can strengthen good working habits, but it can also make existing problems worse {% cite DORA2025%}.
+Studies in programming education help explain why fundamentals matter. Learners with stronger foundations could follow generated code, spot mistakes, and recognize cases the AI had missed. Those are the same skills you practice when you trace an algorithm, choose a data structure, or debug an assignment {% cite Prather2024WideningGap Ma2026%}.
+Anthropic also found that people with more knowledge of the task's subject were more likely to succeed in their Claude Code sessions {% cite hitzig2026agentic%}.
+A recurring difference was how people used the tool: more experienced users planned, guided, and checked its work, while beginners more often turned to it simply to get past an obstacle {% cite Ma2026 Prather2024WideningGap Dohmke2025 ShenTamkin2026 %}.
+The concern is that students who keep building these skills will get more value from AI, while those who skip that practice risk falling behind {% cite LodgeLoble2026%}.
 
 This means that ==**as a college student, your main goal should be to maximize your skills**== so that, when you then add AI on top, you amplify a larger base of skills and keep compounding.
 Unfortunately, AI as a technology often incentivizes behavior that reduces skill formation, if used inappropriately {% cite Yan2024promises BastaniEtAl2025 %}. 
@@ -41,55 +41,52 @@ To use an analogy: **Using AI to do the heavy lifting in your coursework is like
 </div>
 
 
-A study on math students found that **students who used AI for homework performed 17% worse in subsequent tests** {% cite BastaniEtAl2025 %} --- that's the difference between an A and a C+.
-Also, a Brown University case (ECON 1170 from Spring 2026) shows similar results in a real-world teaching setting where students performed suspicously well on a take-home exam (the class averaged 96 out of 100, while the course's midterm average had historically been 65--80) with many answers resembling the answers ChatGPT produced for the same test {% cite BrownDailyHerald2026Serrano InsideHigherEd2026Serrano %}. When the professor made the final exam in-person, many students who received a perfect score in the take-home exam dropped the course or skipped the in-person final. Most students who attended the final had significantly worse scores {% cite BrownDailyHerald2026Serrano InsideHigherEd2026Serrano %}.
+A study of high-school math students shows how this can go wrong: unrestricted AI help improved practice scores, but **students later scored 17% lower on an exam without AI than students who had practiced without it** {% cite BastaniEtAl2025 %}. Finishing a problem successfully with AI can leave you unprepared to solve one on your own.
+Reporting on a Brown University economics course describes a similar warning sign. The take-home exam average was 96 out of 100, far above the course's usual midterm averages, and the professor suspected AI use because many answers resembled ChatGPT's {% cite BrownDailyHerald2026Serrano InsideHigherEd2026Serrano %}. When the final moved in person, many students with perfect take-home scores dropped the course or missed the exam; many who took it scored much lower. This was a reported classroom case, so it cannot establish that AI caused the difference {% cite BrownDailyHerald2026Serrano InsideHigherEd2026Serrano %}.
 
-**This matters for you, because a high score earned with AI measures the AI, not you.**
+**This matters for you, because a high score earned with AI can hide gaps in your own understanding.**
 The grade looked excellent right up to the moment the students had to rely on their own skills, and in exams, interviews, and on the job you eventually have to.
 
-Just like a physical workout is only effective if it is strenuous enough to challenge your muscles, learning is usually most effective when it challenges your mind via "desirable difficulties" {% cite bjork2011making bjork2020desirable brown2014MakeItStick%}. Learn more about desirable difficulties and their importance for learning in my previous blog post "[Evidence-Based Study Tips for College Students](/blog/evidence-based-study-tips-for-college-students/)".
+Learning research calls some useful challenges "desirable difficulties": recalling an idea without your notes, for example, can help you remember it later even though it feels harder than rereading. The useful part is the mental practice, rather than frustration for its own sake {% cite bjork2011making bjork2020desirable brown2014MakeItStick%}. Learn more about desirable difficulties and their importance for learning in my previous blog post "[Evidence-Based Study Tips for College Students](/blog/evidence-based-study-tips-for-college-students/)".
 
 
-On the other hand, if used correctly, **AI has the potential to rapidly accelerate the learning journey** of students who use AI to remove undesirable difficulties while increasing desirable difficulties {% cite gkintonl2025 Dong2026 %}.
+Research also points to ways AI can support learning {% cite gkintonl2025 Dong2026 %}. For your coursework, a useful aim is to let AI clear up confusing instructions or explain an unfamiliar term while you keep practicing the reasoning the assignment is meant to teach.
 
 
-This article is intended to be a guide for students who are trying to elevate their learning journey to be well prepared for a world in which AI is potentially increasingly replacing cognitive work and the bar we need to reach might be rising more and more with every release of more capable models.
-
+The remainder of this article is an actionable guide for students who are trying to elevate their learning journey to be well prepared for a world in which AI is potentially increasingly replacing cognitive work and the bar we need to reach might be rising more and more with every release of more capable models.
 
 ## Cognitive Offloading: Beneficial vs. Detrimental Use
 
 **Cognitive offloading** means using tools to reduce mental effort, whether that's a calculator, a calendar reminder, or AI debugging a script {% cite RiskoGilbert2016 %}.
 
-Whether it helps or harms learning depends on *what* you offload. Cognitive Load Theory (CLT) explains why our limited working memory matters: *intrinsic load* comes from the material's complexity relative to your knowledge; *extraneous load* comes from distractions or unnecessary work; and *germane load* describes effort spent building understanding, such as explaining why an algorithm works. Practice builds mental models in long-term memory, letting you recognize familiar patterns without working through every detail from scratch {% cite sweller2011cognitive KalyugaPlass2025 %}.
+Whether it helps or harms learning depends on *what* you offload. Cognitive Load Theory (CLT) starts with a familiar experience: you can only keep so many unfamiliar things in mind at once. When you first learn recursion, tracking calls, variables, and return values can use up that capacity. Confusing instructions add effort without helping you understand recursion. Practice gradually makes familiar patterns easier to recognize, freeing your attention for harder problems {% cite sweller2011cognitive KalyugaPlass2025 %}.
 
 ### The Bad: Detrimental Offloading (Outsourcing)
 Detrimental offloading means outsourcing the thinking you need to practice {% cite LodgeLoble2026 %}. Asking AI to solve the traveling salesperson problem for you, for example, defeats an assignment meant to teach algorithmic optimization.
 
 Two risks follow:
 
-*   **Skipping practice:** When AI generates the logic, you miss opportunities to build reusable mental models through practice {% cite deBruinEtAl2023 Duplice2025 %}. In a randomized experiment involving nearly 1,000 high-school students, unrestricted AI assistance improved math practice scores but reduced subsequent unaided exam scores by 17% compared with no AI. A tutor with learning safeguards largely avoided this harm {% cite BastaniEtAl2025 %}. In a separate experiment with 52 developers learning a new Python library, AI users scored lower on a subsequent knowledge quiz, particularly on debugging questions {% cite ShenTamkin2026 %}.
+*   **Skipping practice:** If AI works out the logic for you, you miss practice recognizing and solving that kind of problem {% cite deBruinEtAl2023 Duplice2025 %}. In the math experiment above, which involved nearly 1,000 students, an AI tutor designed to support learning largely avoided the harm seen with unrestricted AI help {% cite BastaniEtAl2025 %}. In another study, 52 developers learned a new Python library. Those with AI help scored lower on the following quiz, especially on debugging questions {% cite ShenTamkin2026 %}. For a programming assignment, getting code to run is only one check; you also need to understand how to fix it when it breaks.
 
-*   **Metacognitive laziness:** AI's convenience can encourage you to hand over planning, monitoring your understanding, and evaluating your work. A polished answer can therefore conceal gaps in what you can explain or reproduce independently. You still need to judge whether the answer makes sense and meets the assignment's goal {% cite FanEtAl2025 yan2025distinguishing %}.
+*   **Metacognitive laziness:** This means letting AI take over the job of checking your own thinking: deciding how to start, noticing what you do not understand, and judging whether your answer makes sense. Research warns that better work produced with AI does not necessarily mean you have learned more {% cite FanEtAl2025 yan2025distinguishing %}. Before submitting an answer, check whether you can explain the reasoning without reopening the chat.
 
 
 ### The Good: Beneficial Offloading
-**Beneficial offloading** delegates extraneous work to AI, preserving mental capacity for learning {% cite LodgeLoble2026 gkintonl2025 %}. A syntax check can help when your goal is algorithm design; it can replace needed practice when syntax itself is the learning goal.
+**Beneficial offloading** lets AI handle work that is getting in the way of your learning goal, leaving you more attention for the skill you need to practice {% cite LodgeLoble2026 gkintonl2025 %}. A syntax check can help when your goal is algorithm design; it can replace needed practice when syntax itself is the learning goal.
 
-In a 12-week quasi-experimental study with 240 university students, AI-supported writing instruction combined brainstorming assistance with student critique, revision, and reflection. Students used AI to generate starting points, then examined ideas, strengthened arguments, and reviewed their reasoning. They improved more in critical thinking and essay quality than students receiving traditional instruction {% cite HongEtAl2025 %}. A separate survey linked offloading and shared reflection with stronger self-reported academic outcomes {% cite IqbalEtAl2025 %}.
+In a 12-week study with 240 university students, one group used AI to brainstorm, then did the work of questioning ideas, strengthening arguments, and revising their essays. They improved more in critical thinking and writing quality than students taught in the usual way. Because this was not a fully randomized experiment, the difference cannot confidently be credited to AI alone {% cite HongEtAl2025 %}. A separate survey also linked offloading and reflecting together with better academic results reported by students, but a survey cannot show which caused which {% cite IqbalEtAl2025 %}. For your next essay, consider asking AI for possible angles, then choose and defend an argument yourself.
 
-## Strategies for Deep Learning
+## Strategies for Learning Deeply
 
-While offloading boilerplate is useful, the real value of AI lies in its ability to act as a sophisticated cognitive scaffold. However, how you interact with that scaffold determines whether your skills grow or wither.
+AI can give you hints, explanations, and feedback as you learn. The important question is what that help leaves you able to do yourself.
 
 ### The "Attempt First" Pattern
 
 **The Research Grounding:**
 Classic experiments found better memory for words participants generated from cues than for words they read {% cite Slamecka1978 %}. This supports generating relevant answers, but does not establish that every programming task should begin with prolonged unaided struggle. Classroom generation findings also vary with the task and design {% cite Duplice2025 %}.
 
-There is also no established waiting time before seeking AI help. In a working paper with 334 university students, requiring ten minutes of reading before access to a textbook-grounded AI tutor did not show an advantage over allowing access throughout a 25-minute study period. The assessment was immediate, and delaying access also reduced the time available to use AI. This does not identify an optimal waiting time or test every attempt-first strategy {% cite Fischer2025AITutoring %}.
-
 **How and Why it Works:**
-Try a relevant step: predict the output, sketch an approach, or identify what you do not understand. Then seek feedback; the useful work matters more than how many minutes you spend stuck. If you lack the prerequisite knowledge, start with an explanation or worked example and then attempt a related task {% cite bjork2011making bjork2020desirable %}. To check for an illusion of understanding, close the explanation and try again independently.
+Try a relevant step: predict the output, sketch an approach, or identify what you do not understand. Then seek feedback. If you lack the prerequisite knowledge, start with an explanation or worked example and then attempt a related task {% cite bjork2011making bjork2020desirable %}. To check for an illusion of understanding, close the explanation and try again independently.
 
 **Example Prompt (C++):**
 > "I am implementing a Graph Breadth-First Search (BFS) in C++. Here is my partial attempt and a trace of what I expected: [paste code and trace]. It enters an infinite loop. Without rewriting the code, ask me a question that helps me check when I mark nodes as visited."
@@ -143,26 +140,7 @@ Use the AI's questions to inspect your explanation. Its apparent confusion or ag
 
 The following research-informed approaches can help you specify a useful learning interaction. They offer design ideas, not guarantees that a well-formatted prompt produces durable learning.
 
-### The Pedagogical Prompt Framework
-
-**The Research Grounding:**
-Xiao et al. draw on the **Knowledge-Learning-Instruction (KLI) framework** to match the knowledge being learned with suitable instructional activities {% cite xiao2024 %}. Their pedagogical prompting framework helps learners specify the support they want from AI.
-
-**How and Why it Works:**
-The framework has six components: the **AI's Role** (e.g., Socratic Tutor), the **Learner's Level** (e.g., Intro CS), the **Problem Context**, a **Challenge Articulation**, **Guardrails**, and the **Tutoring Protocol**—how you want the AI to teach, such as through worked examples, repeated practice, or self-explanation {% cite xiao2024 %}. These are design suggestions, not a demonstration that every prompt needs all six components. In their study of 22 undergraduate students, scores on the authors' prompting rubric improved across all six components after instruction. There was no control group, and the study did not test gains in programming skill; those outcomes still require further study {% cite xiao2024 %}.
-
-A larger 2026 preprint tested four prompting lessons in an introductory programming course. Among 431 students with complete data out of 979 randomized, practice writing prompts with feedback produced the strongest later prompting-rubric scores. The groups did not differ significantly on the final computer science exam. Better prompting does not by itself demonstrate that students learned more programming, and the large proportion of incomplete records limits this result {% cite Xiao2026PromptingInstruction %}.
-
-Use this prompt skeleton:
-
-> "Act as a [role] for a [learner level] student. I am working on [problem context]. My specific difficulty is [challenge]. Tutoring protocol: use [Socratic questions / faded worked examples / self-explanation / retrieval practice / Parsons problem]. Give one question or hint at a time and wait for my reply. If I need a worked example, explain a similar problem and then leave a step or new problem for me to attempt. Ask me to explain a key decision and help me check it."
-
-Before you trust an AI response, also evaluate the *interaction design*. Name the goal, choose suitable help—questions, hints, or worked examples—and preserve something for you to explain, apply, or check. Include a verification step and later independent practice {% cite xiao2024 FanEtAl2025 pardos2024 %}.
-
 Prompt design can change conversations without producing a detectable learning advantage. In a six-week introductory programming study, adding planning, monitoring, reflection, or deeper-engagement instructions to an already constrained AI tutor did not produce statistically detectable improvements in the preregistered outcomes, including conceptual quiz performance. Exploratory analyses found differences in interactions. The voluntary quiz sample was small; this is a reason to check outcomes, not proof that these supports never help {% cite Barth2026SteeringTutors %}.
-
-**Example Prompt (C++):**
-> "Act as an Intro-level C++ tutor. I am a beginner student struggling with pointer arithmetic. Specifically, I don't understand why adding 1 to a pointer to an array element advances by the size of that element. Assume `sizeof(int)` is 4 bytes in this example. Guardrail: Do not provide the direct mathematical formula. Instead, provide a step-by-step worked example using an array of 5 integers and ask me to predict the address of the third element."
 
 ### Prompt Problems: Practicing Requirement Specification
 
@@ -240,12 +218,10 @@ Start by scoring your own draft, solution, or design against the rubric. Then as
 If you *do* use AI to generate a snippet of code because you are completely stuck, you must never blindly copy-paste it. 
 In Shen and Tamkin's study of 52 developers learning an unfamiliar Python library, the AI-assisted group scored lower on an immediate assessment. The researchers also described usage patterns: a few participants who requested explanations or conceptual help scored better than those who delegated more of the implementation. “Generation-Then-Comprehension” and “Hybrid Code-Explanation” described small groups identified after observing their behavior. Because participants were not randomly assigned to those styles, the findings suggest practices worth testing without proving that explanations eliminate learning costs {% cite ShenTamkin2026 %}.
 
-A 2026 preprint with 220 algorithms students found no detectable exam advantage or disadvantage from homework that included evaluating AI-generated solutions instead of solving the corresponding problems. Both groups still completed substantial conventional problem-solving, and the evaluation and construction tasks used different homework rubrics. This does not establish that critique and solution construction are interchangeable. When algorithm design is your goal, I recommend practicing complete solutions alongside critique {% cite Dickey2026SolvingEvaluating %}.
-
 <div class="action-box" markdown="1">
 #### Actionable Tips:
 * **Explain and check:** If AI supplies code, predict its behavior, explain the key decisions, and test edge cases. Investigate disagreements between its explanation and your mental model; either can be wrong. Then try a related task without the generated solution.
-* **Make a relevant attempt:** Write down an approach, prediction, or specific question before seeking help when you have enough background to start. There is no research-backed minimum number of minutes. If you are missing prerequisites, get an explanation or example and then practice {% cite bjork2011making bjork2020desirable %}.
+* **Make a relevant attempt:** Write down an approach, prediction, or specific question before seeking help when you have enough background to start. If you are missing prerequisites, get an explanation or example and then practice {% cite bjork2011making bjork2020desirable %}.
 </div>
 
 ### Fading the Scaffold: The Goal is Independence
@@ -271,66 +247,8 @@ If you cannot yet explain or apply the idea, plan more instruction or practice b
 **Summary:** Use AI to support the practice your learning goal requires. Keep responsibility for reasoning and verification, seek enough guidance to make progress, and test what you can do independently after a delay. The goal is both to finish the assignment and to retain skills you can use beyond it.
 
 
-**Disclaimer**: Since AI evolvs quickly, evidence about the impact of AI on learning lags behind by one or two model generations and is also often limited in size or generalizability. This post is my own personal perspective, informed by the best research I couuld find published through September 2026. Futher evidence may change and future models may behave differently.
+**Disclaimer**: Since AI evolvs quickly, evidence about the impact of AI on learning lags behind by one or two model generations and is also often limited in size or generalizability. This post is my own personal perspective, informed by the best research I could find published through September 2026. Futher evidence may change and future models may behave differently.
 
 
+## Self-Check Quiz 
 {% include quiz.html id="ai_quiz" %}
-
-# Notes
-
-
-One recurring finding matters more than any single prompt trick: **performance is not the same thing as learning**. AI can improve the artifact you submit without improving what you can later do independently {% cite yan2025distinguishing %}. Bastani et al. found that access to a GPT-4 assistant raised high-school students' math practice scores, but students with the relatively unrestricted assistant scored lower than controls on subsequent unaided exams. A tutor designed with learning safeguards largely avoided that harm {% cite BastaniEtAl2025 %}. In a university essay-writing task, Fan et al. found greater improvement in revisions with ChatGPT, without a detectable advantage over comparison conditions on topic-knowledge tests about AI in education and healthcare. Those tests did not measure independent writing skill. Their analysis suggested differences in self-regulated learning processes; it did not establish that those processes caused the outcome {% cite FanEtAl2025 %}. These findings warrant care, but neither study establishes permanent skill loss.
-
-When reading an “AI improves learning” headline, ask what students did with AI, what the comparison group did, and whether students were assessed without that help. A methodological review by Weidlich and colleagues explains why these details matter: a tutoring package may change several instructional activities together, so its results need not isolate the effect of the chatbot alone {% cite Weidlich2025EffectCause %}.
-
-
-On the other hand, ==if used correctly, AI has the potential to rapidly accelerate the learning journey of students who use AI== to remove undesirable difficulties while increasing desirable difficulties {% cite gkintonl2025 Dong2026 pardos2024  kestin2025%}.
-In a Harvard physics randomized trial, a carefully designed AI tutor produced more than double the median learning gains of an in-class active-learning lesson, in less time {% cite kestin2025 %}. 
-Likewise, ChatGPT-generated math hints produced statistically significant learning gains comparable to human tutor-authored hints in a PLOS ONE study, but 32% of the raw generated hints failed quality checks before a self-consistency procedure reduced the error rate {% cite pardos2024 %}. So the safe takeaway is: use AI as a structured tutor and verifier, not as an unexamined answer machine.
-
-This article is intended to be a guide for students who are trying to elevate their learning journey to be well prepared for a world in which AI is potentially increasingly replacing cognitive work and the bar we need to reach might be rising more and more with every release of more capable models.
-
-
-There is also encouraging evidence for carefully designed AI support. In a Harvard physics randomized trial, a custom AI tutor produced more than double the learning gain calculated from median test scores compared with an in-class active-learning lesson. Students spent a median of 49 minutes with the tutor, compared with an estimated 60 minutes of learning during a 75-minute class. This was an immediate assessment of a particular instructional design, not a test of long-term retention or of generic chatbot use {% cite kestin2025 %}.
-
-In an online experiment with adults, Pardos and Bhandari found significant gains on an immediate, repeated three-question math test with both human-authored help and quality-screened ChatGPT help, with no statistically significant difference between the two. That is not proof that the methods are equivalent in every setting. The AI “hints” were worked solutions, and 32% of the initial generated solutions failed quality checks; a subsequent self-consistency procedure reduced errors {% cite pardos2024 %}. The practical takeaway is to choose support that fits your learning goal and verify its content. A complete worked example can be useful, especially when you lack the knowledge to get started.
-
-Ordinary chatbot access can also support learning in some settings. In a 2026 working paper, 211 undergraduates studied unfamiliar topics with or without AI access; 204 returned about a week later. The AI-access group scored about five percentage points higher on the later knowledge test without AI. This is a positive result over one week at one college, not evidence that every use or prompt helps. Observed differences between students' usage styles were not randomized and cannot establish which style caused better learning {% cite ContractorReyes2026LearningImpact %}.
-
-This article is intended to be a guide for students who are trying to elevate their learning journey to be well prepared for a world in which AI is potentially increasingly replacing cognitive work and the bar we need to reach might be rising more and more with every release of more capable models.
-
-
-## Cognitive Offloading: Beneficial vs. Detrimental Use
-
-To truly master how you integrate AI into your computer science education, we need to dive into the learning science theory of *cognitive offloading*. 
-
-**The Research:**
-Cognitive offloading means using actions or external aids to reduce a task's mental demands {% cite RiskoGilbert2016 %}. Examples include using a calculator, setting a calendar reminder, or—applying the idea to AI—asking a chatbot to help debug a script. These can make a task easier to complete.
-
-Whether offloading helps your education depends on **the learning goal, your prior knowledge, what you delegate, and what you do with the freed capacity** {% cite RiskoGilbert2016 %}. Cognitive Load Theory distinguishes *intrinsic load*—the interacting elements you need to understand, relative to what you already know—from *extraneous load*: demands created by the way a task is presented or carried out that do not help achieve the learning goal. “Germane” processing refers to resources devoted to learning; the cited books do not treat it as a third independent load to add to the other two {% cite sweller2011cognitive KalyugaPlass2025 %}.
-
-For example, generating boilerplate may remove irrelevant work in an algorithms exercise, but writing that same code may be the learning goal in an introductory web course. Tedious work is not necessarily extraneous, and challenging work is not necessarily educational.
-
-With that distinction in mind, it is useful to separate two ways of using AI:
-
-### The Bad: Detrimental Offloading (Outsourcing)
-Offloading can be detrimental when it replaces the practice needed to develop the knowledge or skill you are trying to learn {% cite LodgeLoble2026 %}. In computer science, this might mean accepting an AI solution to the traveling salesperson problem without reasoning about its algorithm when algorithm design is the assignment's purpose.
-
-Two risks deserve attention:
-
-* **Missing opportunities to build understanding:** Bastani et al.'s experiment with nearly a thousand students found worse performance on subsequent unaided math exams after relatively unrestricted AI practice. The study measured short-term outcomes, not long-term retention. The guarded tutor largely mitigated the observed harm but did not establish lasting learning gains {% cite BastaniEtAl2025 %}. A smaller randomized study of developers learning a new Python library also found lower immediate assessment scores in the AI-assisted group. Its analysis of usage styles was exploratory, so it cannot establish that a particular style eliminates the risk {% cite ShenTamkin2026 %}.
-* **Handing over self-monitoring:** Fan et al. use “metacognitive laziness” to interpret patterns in which learners delegate planning, monitoring, or evaluation to AI. This is a proposed account of the observed behavior, not a diagnosis of students' character or a proven causal mechanism. Keep opportunities to judge your own work and check what you understand {% cite FanEtAl2025 yan2025distinguishing %}.
-
-### The Good: Beneficial Offloading
-Offloading can help when it reduces demands that are incidental to the learning goal **and you use the freed resources for relevant learning** {% cite RiskoGilbert2016 LodgeLoble2026 %}.
-
-In a 12-week quasi-experimental study of 240 English majors, Hong et al. combined AI-assisted brainstorming and outlining with critique, peer revision, and reflective journals. Students in that program showed greater critical-thinking gains and higher essay-quality scores than the comparison group. The comparison group followed a similar teaching cycle without AI. Because assignment was not random and the intervention was a structured AI-writing program, the study cannot isolate offloading itself as the cause {% cite HongEtAl2025 %}. Brainstorming and grammar are also learning goals in some courses, so they should not automatically be delegated.
-
-Iqbal et al. reported associations among AI use, shared metacognition, cognitive offloading, and an outcome they called “academic achievement.” That outcome was self-reported competence related to sustainable and inclusive education, not observed grades or an independent skill test. Their survey cannot establish that offloading caused learning gains {% cite IqbalEtAl2025 %}.
-
-## Strategies for Deep Learning
-
-AI can provide examples, questions, and feedback that support practice. The strategies below adapt learning principles to chatbot use; most of these exact prompts have not been tested in controlled learning studies. Judge them by what you can explain and do afterward, including without AI.
-
-
-This is the crucial distinction: the problem is not "AI"; the problem is **unstructured answer-seeking**. In a Harvard physics randomized trial, a carefully designed AI tutor produced more than double the median learning gains of an in-class active-learning lesson, in less time, but the system was not just a generic chatbot: it used instructor-crafted prompts, sequential scaffolding, cognitive-load control, accurate worked solutions, and self-pacing {% cite kestin2025 %}. Likewise, ChatGPT-generated math hints produced statistically significant learning gains comparable to human tutor-authored hints in a PLOS ONE study, but 32% of the raw generated hints failed quality checks before a self-consistency procedure reduced the error rate {% cite pardos2024 %}. So the safe takeaway is: use AI as a structured tutor and verifier, not as an unexamined answer machine.
