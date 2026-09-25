@@ -59,7 +59,7 @@ The remainder of this article is an actionable guide for students who are trying
 
 **Cognitive offloading** means using tools to reduce mental effort, whether that's a calculator, a calendar reminder, or AI debugging a script {% cite RiskoGilbert2016 %}.
 
-Whether it helps or harms learning depends on *what* you offload. Cognitive Load Theory (CLT) starts with a familiar experience: you can only keep so many unfamiliar things in mind at once. When you first learn recursion, tracking calls, variables, and return values can use up that capacity. Confusing instructions add effort without helping you understand recursion. Practice gradually makes familiar patterns easier to recognize, freeing your attention for harder problems {% cite sweller2011cognitive KalyugaPlass2025 %}.
+Whether it helps or harms learning depends on *what* you offload. Cognitive Load Theory (CLT) starts with a familiar experience: your working memory can only hold so many unfamiliar things at once. **Intrinsic load** comes from the ideas you need to understand together, relative to what you already know. When you first learn recursion, tracking calls, variables, and return values can use up that capacity. **Extraneous load** is avoidable effort added by how the material is presented, such as confusing instructions or searching for an explanation. Practice builds reusable mental patterns in long-term memory, so familiar details take less effort to work with. The aim is to reduce avoidable effort and leave room for the thinking that builds those patterns {% cite sweller2011cognitive KalyugaPlass2025 %}.
 
 ### The Bad: Detrimental Offloading (Outsourcing)
 Detrimental offloading means outsourcing the thinking you need to practice {% cite LodgeLoble2026 %}. Asking AI to solve the traveling salesperson problem for you, for example, defeats an assignment meant to teach algorithmic optimization.
@@ -72,9 +72,11 @@ Two risks follow:
 
 
 ### The Good: Beneficial Offloading
-**Beneficial offloading** lets AI handle work that is getting in the way of your learning goal, leaving you more attention for the skill you need to practice {% cite LodgeLoble2026 gkintonl2025 %}. A syntax check can help when your goal is algorithm design; it can replace needed practice when syntax itself is the learning goal.
+**Beneficial offloading** lets AI handle work that is getting in the way of your learning goal, leaving you more attention for the skill you need to practice {% cite LodgeLoble2026 gkintonl2025 %}. A coding agent can help when your goal is algorithm design and you prompt in pseudo-code; it would replace needed practice when syntax itself is the learning goal.
 
-In a 12-week study with 240 university students, one group used AI to brainstorm, then did the work of questioning ideas, strengthening arguments, and revising their essays. They improved more in critical thinking and writing quality than students taught in the usual way. Because this was not a fully randomized experiment, the difference cannot confidently be credited to AI alone {% cite HongEtAl2025 %}. A separate survey also linked offloading and reflecting together with better academic results reported by students, but a survey cannot show which caused which {% cite IqbalEtAl2025 %}. For your next essay, consider asking AI for possible angles, then choose and defend an argument yourself.
+Some research from other disciplines confirms this.
+For example, in a 12-week study with 240 university students, one group used AI to brainstorm, then did the work of questioning ideas, strengthening arguments, and revising their essays. They improved more in critical thinking and writing quality than students taught in the usual way {% cite HongEtAl2025 %}.
+A separate survey also linked offloading and reflecting together with better academic results reported by students {% cite IqbalEtAl2025 %}.
 
 ## Strategies for Learning Deeply
 
@@ -86,7 +88,7 @@ AI can give you hints, explanations, and feedback as you learn. The important qu
 In classic memory experiments, people remembered words better when they worked them out from clues than when they simply read them {% cite Slamecka1978 %}. This gives you a reason to try producing an answer before reading one. The benefit varies across classroom tasks, though; it does not mean you need to stay stuck on a programming problem without help {% cite Duplice2025 %}.
 
 **How and Why it Works:**
-Try a relevant step: predict the output, sketch an approach, or identify what you do not understand. Then seek feedback. If you lack the prerequisite knowledge, start with an explanation or worked example and then attempt a related task {% cite bjork2011making bjork2020desirable %}. To check for an illusion of understanding, close the explanation and try again independently.
+Try a relevant step: predict the output, sketch an approach, or identify what you do not understand. Then seek feedback. If you lack the prerequisite knowledge, start with an explanation or worked example and then attempt a related task {% cite bjork2011making bjork2020desirable %}. CLT helps explain this limit: searching for every next move can overwhelm working memory when the method is unfamiliar. A worked example can free attention for understanding the method {% cite sweller2011cognitive %}. To check for an illusion of understanding, close the explanation and try again independently.
 
 **Example Prompt (C++):**
 > "I am implementing a Graph Breadth-First Search (BFS) in C++. Here is my partial attempt and a trace of what I expected: [paste code and trace]. It enters an infinite loop. Without rewriting the code, ask me a question that helps me check when I mark nodes as visited."
@@ -97,7 +99,7 @@ Try a relevant step: predict the output, sketch an approach, or identify what yo
 In the DBox study, 24 university learners wrote solution steps, received AI feedback and hints, and revealed code gradually. They then solved a similar algorithm problem more accurately without tools than after using their usual study resources, which could include AI. The study tested the whole tool: it could not isolate which feature helped, and did not check whether the benefit lasted or helped with very different problems {% cite Ma2025DBox %}. In a separate Python course, students who chose planning hints did better on assignments. Because they chose the hints themselves, the study cannot show that the hints caused the difference {% cite Phung2025PlanMore %}.
 
 **How and Why it Works:**
-Write a plan, identify a step you cannot justify, and ask for feedback on that step. Then implement and test the solution yourself. If you lack the background to form a plan, study a worked example first. This routine adapts the research; the exact prompt below was not tested.
+Write a plan, identify a step you cannot justify, and ask for feedback on that step. This applies CLT's idea of managing intrinsic load: learn manageable parts before reasoning about how they interact. You still need to put the parts together and explain the complete solution {% cite sweller2011cognitive %}. Then implement and test it yourself. If you lack the background to form a plan, study a worked example first. This routine adapts the research; the exact prompt below was not tested.
 
 **Example Prompt (Programming):**
 > "Here is my plan and the step I am uncertain about: [plan]. Ask me one question that tests whether that step follows. Help me identify a missing case before suggesting a change. Leave the implementation for me to write and test."
@@ -112,7 +114,7 @@ Another study offers some encouragement. Across two terms of introductory progra
 Different questions give you different kinds of practice. Recalling what you studied without looking at your notes is **retrieval practice**. Explaining why a loop terminates asks you to reason through the code. Both can be useful, but a conversation only gives you that practice if you do the remembering or explaining yourself {% cite RoedigerKarpicke2006 BisraEtAl2018SelfExplanation %}.
 
 **How and Why it Works:**
-Ask the tutor to wait while you think and explain. Request a hint when you can make progress with one, or a worked example when you need more guidance. “One hint at a time” is a suggestion you can try; the Pardos and Bhandari study did not test that exact routine. Their research on AI-generated math help also highlights why you need to check the help you receive {% cite pardos2024 %}. Use lecture notes, a textbook, or code tests to check explanations. Asking AI to admit uncertainty does not ensure it will catch its own mistakes.
+Ask the tutor to wait while you think and explain. Request a hint when you can make progress with one, or a worked example when you need more guidance. Applying CLT here means adjusting the challenge to your working-memory capacity: if a question requires juggling several unfamiliar ideas, ask for a simpler example first {% cite sweller2011cognitive %}. “One hint at a time” is a suggestion you can try; the Pardos and Bhandari study did not test that exact routine. Their research on AI-generated math help also highlights why you need to check the help you receive {% cite pardos2024 %}. Use lecture notes, a textbook, or code tests to check explanations. Asking AI to admit uncertainty does not ensure it will catch its own mistakes.
 
 **Example Prompt (Python):**
 > "You are a Python tutor. I understand a single list-comprehension filter but am confused by multiple 'if' conditions. Ask me one question about which elements pass each filter, and wait for my answer. If I cannot explain the next step, show a small worked example and then give me a similar question."
@@ -129,7 +131,7 @@ A study of 96 adults found no clear learning advantage from giving AI a particul
 Some benefits have lasted beyond the study session. In a university psychology course, ChatTutor users scored higher four weeks later than students taught as usual, but did not clearly outperform ordinary ChatGPT users. In a separate school study, ChatTutor did better than ChatGPT on a later test but did not clearly beat studying the material again. Whole classes received the same treatment in the university study, and both studies lost participants, making the results harder to interpret {% cite Makransky2025SenseMaking %}. Whether a tutor helps depends partly on what you would otherwise do with that study time.
 
 **How and Why it Works:**
-Explain a concept in your own words, then answer “why” and “how” questions. The ICAP framework describes learning activities that go beyond repeating supplied information: for example, explaining why a base case stops recursion or working out what happens if it is missing. It predicts benefits from making those connections, but a chatbot conversation does not automatically make you do that thinking {% cite ChiWylie2014ICAP %}.
+Explain a concept in your own words, then answer “why” and “how” questions. The ICAP framework describes learning activities that go beyond repeating supplied information: for example, explaining why a base case stops recursion or working out what happens if it is missing. It predicts benefits from making those connections, but a chatbot conversation does not automatically make you do that thinking {% cite ChiWylie2014ICAP %}. This also fits CLT's focus on building reusable mental patterns: explaining how the steps connect can help you organize knowledge for future problems. Keep the explanation small enough to reason through; useful effort still needs to fit within working memory {% cite sweller2011cognitive %}.
 
 Use the AI's questions to inspect your explanation. Its apparent confusion or agreement is not a reliable verdict on your understanding; verify disputed claims with a trusted source or instructor.
 
@@ -170,7 +172,7 @@ Choose activities that practice the skill you want to retain. Productive challen
 Garcia's review of programming education research describes using ChatGPT to generate several solutions and discuss their differences—for example, comparing a loop with recursion. The review stresses that generated code needs checking and that the evidence is still limited {% cite Garcia2025 %}. The exercise below applies that idea, without promising that it will make you a more flexible problem solver.
 
 **How and Why it Works:**
-Ask for alternatives, then make **your own** prediction about correctness, runtime, memory use, and readability before reading a comparison. Having AI supply both the solutions and the evaluation can remove the reasoning you intended to practice.
+Ask for alternatives, then make **your own** prediction about correctness, runtime, memory use, and readability before reading a comparison. CLT suggests keeping this comparison manageable: if three unfamiliar approaches overload you, begin with two short solutions and compare one feature at a time {% cite sweller2011cognitive %}. Having AI supply both the solutions and the evaluation can remove the reasoning you intended to practice.
 
 **Example Prompt (C++):**
 > "Show three ways to reverse a mutable string in C++: a standard library algorithm, two pointers, and recursion. Let me compare their time and auxiliary-space costs, including the recursion call stack, before you give feedback. Ask me to justify which I would choose for a stated constraint."
@@ -189,7 +191,7 @@ Read a section and record its main idea, one example, and one uncertainty in you
 ### Faded Worked Examples
 
 **The Research Grounding:**
-When a topic is new, a solved example lets you follow the reasoning instead of guessing where to start. A 2023 review combining results from mathematics studies found that worked examples improved performance by a moderate amount. Related research shows that guidance which helps a beginner can become unnecessary as they gain experience {% cite BarbieriEtAl2023WorkedExamples Kalyuga2003 %}.
+When a topic is new, a solved example lets you follow the reasoning instead of guessing where to start. CLT's **worked-example effect** explains why this can help beginners: reducing unnecessary search leaves more working-memory capacity for understanding how the solution works {% cite sweller2011cognitive %}. A 2023 review combining results from mathematics studies found that worked examples improved performance by a moderate amount. Related research shows that guidance which helps a beginner can become unnecessary as they gain experience {% cite BarbieriEtAl2023WorkedExamples Kalyuga2003 %}.
 
 **How and Why it Works:**
 Start with a complete example, then try a similar one with the last step missing. Once you can complete and explain that step, try filling in more steps until you can solve a fresh problem yourself. Adjust the pace to your understanding. The mathematics review supports learning from worked examples overall; it included too few studies of gradually removing steps to tell how much that specific technique helped.
@@ -220,13 +222,13 @@ Anthropic researchers Shen and Tamkin studied 52 developers learning an unfamili
 
 <div class="action-box" markdown="1">
 #### Actionable Tips:
-* **Explain and check:** If AI supplies code, predict its behavior, explain the key decisions, and test edge cases. Investigate disagreements between its explanation and your mental model; either can be wrong. Then try a related task without the generated solution.
+* **Explain and check:** If AI supplies code, predict its behavior, explain the key decisions, and test edge cases. Ask for explanations beside the relevant lines. This applies CLT's **split-attention effect**: keeping related information together reduces the extraneous load of mentally matching a separate explanation to the code {% cite sweller2011cognitive %}. Investigate disagreements between its explanation and your mental model; either can be wrong. Then try a related task without the generated solution.
 * **Make a relevant attempt:** Write down an approach, prediction, or specific question before seeking help when you have enough background to start. If you are missing prerequisites, get an explanation or example and then practice {% cite bjork2011making bjork2020desirable %}.
 </div>
 
 ### Fading the Scaffold: The Goal is Independence
 
-As your knowledge grows, adjust the support. Research calls this the **expertise reversal effect**: detailed guidance that helps when you are new can become unnecessary or get in the way once you know what you are doing {% cite Kalyuga2003 KalyugaPlass2025 %}. A complete recursion trace may help on your first attempt; later, try tracing the calls yourself and ask for feedback only where you are unsure. This research concerns instructional guidance in general, so it does not mean beginners should hand over whole assignments to AI.
+As your knowledge grows, adjust the support. CLT calls this the **expertise reversal effect**: detailed guidance that helps when you are new can become unnecessary or get in the way once you know what you are doing. As familiar patterns take less working-memory capacity, explanations you no longer need can add extraneous load {% cite Kalyuga2003 KalyugaPlass2025 %}. A complete recursion trace may help on your first attempt; later, try tracing the calls yourself and ask for feedback only where you are unsure. This research concerns instructional guidance in general, so it does not mean beginners should hand over whole assignments to AI.
 
 Periodically solve a related problem without AI, and revisit it after a delay. If a formerly manageable task has become difficult, that is a reason to check retention and restore practice; it is not, by itself, proof that AI caused the difficulty. For a skill you aim to perform independently, successful support should help you become less dependent on that support.
 

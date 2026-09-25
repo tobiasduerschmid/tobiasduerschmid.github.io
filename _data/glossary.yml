@@ -59,6 +59,10 @@
   description: A text-based interface where users type commands instead of clicking graphical controls. Shells, Git, package managers, and many developer tools expose CLIs.
   related: [UI, OS]
 
+- term: CLT
+  definition: Cognitive Load Theory
+  description: A theory of learning and instruction based on limited working memory and knowledge stored in long-term memory. Intrinsic load depends on how ideas interact and what the learner already knows; extraneous load comes from avoidable demands of the presentation or activity. Guidance should reduce unnecessary effort and adapt as knowledge grows.
+
 - term: CPU
   definition: Central Processing Unit
   description: The processor that executes machine instructions. CPU speed and workload shape performance for compute-heavy programs.
