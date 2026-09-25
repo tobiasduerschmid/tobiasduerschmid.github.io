@@ -49,3 +49,31 @@ for (const darkMode of [false, true]) {
     }
   });
 }
+
+for (const darkMode of [false, true]) {
+  test(`observer tutorial UML controls remain reachable with text spacing at 320px (${darkMode ? 'dark' : 'light'})`, async ({ page }) => {
+    await page.setViewportSize({ width: 320, height: 256 });
+    await page.goto('/SEBook/designpatterns/observer-tutorial.html');
+    await waitForTutorialReady(page);
+    await page.evaluate((dark) => document.documentElement.classList.toggle('dark-mode', dark), darkMode);
+    await page.addStyleTag({ content: `
+      * { line-height: 1.5 !important; letter-spacing: 0.12em !important; word-spacing: 0.16em !important; }
+      p { margin-bottom: 2em !important; }
+    ` });
+
+    for (const control of [
+      page.getByRole('button', { name: 'UML Diagram' }),
+      page.getByRole('button', { name: 'Class Diagram' }),
+      page.getByRole('button', { name: 'Sequence Diagram' }),
+      page.getByRole('button', { name: /Refresh/ }),
+      page.getByLabel('Diagram accent color').filter({ visible: true }),
+    ]) {
+      await control.scrollIntoViewIfNeeded();
+      await expect(control).toBeInViewport();
+    }
+
+    await expect.poll(() => page.evaluate(() =>
+      document.documentElement.scrollWidth <= window.innerWidth
+    )).toBe(true);
+  });
+}

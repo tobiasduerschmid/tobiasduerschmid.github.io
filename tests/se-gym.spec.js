@@ -2416,11 +2416,11 @@ test.describe('SE Gym - Spaced repetition, Workout of the Day, Topic Mastery', (
   test('stats page counts quiz and flashcard decks with the same id separately', async ({ page, context }) => {
     await setCookie(context, 'analyze-performance', 'true');
     await page.goto(GYM_URL);
-    const seeded = await page.evaluate(() => {
+    await page.evaluate(() => {
       const sharedId = Object.keys(ALL_CARD_DATA.quizzes).find((deckId) => {
         const quiz = ALL_CARD_DATA.quizzes[deckId];
         const flashcards = ALL_CARD_DATA.flashcards[deckId];
-        return quiz && flashcards
+        return quiz && flashcards && !quiz.isMaster && !flashcards.isMaster
           && Array.isArray(quiz.questions) && quiz.questions.length
           && Array.isArray(flashcards.cards) && flashcards.cards.length;
       });
@@ -2450,13 +2450,13 @@ test.describe('SE Gym - Spaced repetition, Workout of the Day, Topic Mastery', (
         last: now,
       };
       localStorage.setItem('se-gym-stats', JSON.stringify(stats));
-      return { quizTitle: quiz.title, flashcardTitle: flashcards.title };
     });
 
     await page.goto(STATS_URL);
     await expect(page.locator('#stat-decks-practiced')).toHaveText('2');
-    await expect(page.locator('#stats-best-decks').getByText(seeded.quizTitle)).toBeVisible();
-    await expect(page.locator('#stats-best-decks').getByText(seeded.flashcardTitle)).toBeVisible();
+    const bestDecks = page.locator('#stats-best-decks');
+    await expect(bestDecks.getByText('Quiz', { exact: true })).toHaveCount(1);
+    await expect(bestDecks.getByText('Flashcards', { exact: true })).toHaveCount(1);
   });
 
   test('stats page normalizes malformed local stats before rendering totals', async ({ page, context }) => {

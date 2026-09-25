@@ -105,13 +105,21 @@ async function waitForTutorialReady(page) {
   await expect(page.locator('.tvm-loading')).toBeHidden({ timeout: BOOT_TIMEOUT });
 }
 
+async function loadDebuggerPracticeStep(page) {
+  await page.evaluate(async () => {
+    const tutorial = window._tutorial;
+    const stepIndex = tutorial.steps.findIndex(step => step.key === 'comprehensions');
+    if (stepIndex < 0) throw new Error('Python comprehensions step is missing');
+    await tutorial.loadStep(stepIndex);
+  });
+}
+
 async function loadDebuggerFile(page, filename, code) {
   await page.goto(TUTORIAL_URL);
   await waitForTutorialReady(page);
+  await loadDebuggerPracticeStep(page);
   await page.evaluate(async ({ filename, code }) => {
     const tutorial = window._tutorial;
-    tutorial.loadStep(5);
-    await new Promise(resolve => setTimeout(resolve, 500));
     tutorial.openFile(filename, code, 'python');
     tutorial._setActiveFile(filename);
 
@@ -172,10 +180,9 @@ async function breakpointPreviewState(page) {
 async function prepareDebuggerAtBreakpoint(page, breakpointLine) {
   await page.goto(TUTORIAL_URL);
   await waitForTutorialReady(page);
+  await loadDebuggerPracticeStep(page);
   await page.evaluate(async ({ code, line }) => {
     const tutorial = window._tutorial;
-    tutorial.loadStep(5);
-    await new Promise(resolve => setTimeout(resolve, 500));
     tutorial.openFile('functions.py', 'def mean(numbers):\n    return sum(numbers) / len(numbers)\n', 'python');
     tutorial.openFile('listcomp.py', code, 'python');
     tutorial._setActiveFile('listcomp.py');
@@ -204,10 +211,9 @@ async function prepareDebuggerAtBreakpoint(page, breakpointLine) {
 async function prepareSingleFileDebuggerAtBreakpoint(page, filename, code, breakpointLine) {
   await page.goto(TUTORIAL_URL);
   await waitForTutorialReady(page);
+  await loadDebuggerPracticeStep(page);
   await page.evaluate(async ({ filename, code, line }) => {
     const tutorial = window._tutorial;
-    tutorial.loadStep(5);
-    await new Promise(resolve => setTimeout(resolve, 500));
     tutorial.openFile(filename, code, 'python');
     tutorial._setActiveFile(filename);
 
@@ -317,10 +323,9 @@ async function waitForDebugComplete(page) {
 async function startDebuggerWithBreakpoints(page, filename, code, breakpointLines) {
   await page.goto(TUTORIAL_URL);
   await waitForTutorialReady(page);
+  await loadDebuggerPracticeStep(page);
   await page.evaluate(async ({ filename, code, lines }) => {
     const tutorial = window._tutorial;
-    tutorial.loadStep(5);
-    await new Promise(resolve => setTimeout(resolve, 500));
     tutorial.openFile(filename, code, 'python');
     tutorial._setActiveFile(filename);
 
@@ -778,10 +783,9 @@ test.describe.serial('Python debugger replay variable edits', () => {
     try {
       await page.goto(TUTORIAL_URL);
       await waitForTutorialReady(page);
+      await loadDebuggerPracticeStep(page);
       await page.evaluate(async (code) => {
         const tutorial = window._tutorial;
-        tutorial.loadStep(5);
-        await new Promise(resolve => setTimeout(resolve, 500));
         tutorial.openFile('listcomp.py', code, 'python');
         tutorial._setActiveFile('listcomp.py');
 
@@ -942,10 +946,9 @@ test.describe.serial('Python debugger replay variable edits', () => {
     try {
       await page.goto(TUTORIAL_URL);
       await waitForTutorialReady(page);
+      await loadDebuggerPracticeStep(page);
       await page.evaluate(async ({ code }) => {
         const tutorial = window._tutorial;
-        tutorial.loadStep(5);
-        await new Promise(resolve => setTimeout(resolve, 500));
         tutorial.openFile('watchpoints.py', code, 'python');
         tutorial._setActiveFile('watchpoints.py');
 
@@ -1249,10 +1252,9 @@ test.describe.serial('Python debugger replay variable edits', () => {
     try {
       await page.goto(TUTORIAL_URL);
       await waitForTutorialReady(page);
+      await loadDebuggerPracticeStep(page);
       await page.evaluate(async ({ code }) => {
         const tutorial = window._tutorial;
-        tutorial.loadStep(5);
-        await new Promise(resolve => setTimeout(resolve, 500));
         tutorial.openFile('live-sync.py', code, 'python');
         tutorial._setActiveFile('live-sync.py');
 
@@ -1413,10 +1415,9 @@ print("after")
 `;
       await page.goto(TUTORIAL_URL);
       await waitForTutorialReady(page);
+      await loadDebuggerPracticeStep(page);
       await page.evaluate(async ({ code }) => {
         const tutorial = window._tutorial;
-        tutorial.loadStep(5);
-        await new Promise(resolve => setTimeout(resolve, 500));
         tutorial.openFile('exception-only.py', code, 'python');
         tutorial._setActiveFile('exception-only.py');
 
@@ -1500,10 +1501,9 @@ print("after")
     try {
       await page.goto(TUTORIAL_URL);
       await waitForTutorialReady(page);
+      await loadDebuggerPracticeStep(page);
       await page.evaluate(async ({ code }) => {
         const tutorial = window._tutorial;
-        tutorial.loadStep(5);
-        await new Promise(resolve => setTimeout(resolve, 500));
         tutorial.openFile('live-watchpoint.py', code, 'python');
         tutorial._setActiveFile('live-watchpoint.py');
 
@@ -1694,10 +1694,9 @@ print("after")
     try {
       await page.goto(TUTORIAL_URL);
       await waitForTutorialReady(page);
+      await loadDebuggerPracticeStep(page);
       await page.evaluate(async ({ code }) => {
         const tutorial = window._tutorial;
-        tutorial.loadStep(5);
-        await new Promise(resolve => setTimeout(resolve, 500));
         tutorial.openFile('live-edit.py', code, 'python');
         tutorial._setActiveFile('live-edit.py');
 

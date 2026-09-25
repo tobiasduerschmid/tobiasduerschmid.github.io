@@ -2052,6 +2052,7 @@ html.dark-mode .tvm-diagram-fullscreen-overlay .tvm-diagram-fs-content svg {
 }
 .tvm-diagram-toolbar {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 4px;
   padding: 3px 8px;
@@ -3129,6 +3130,7 @@ html:not(.dark-mode) .tvm-args-label {
 /* Tab bar at the top of the right bottom panel */
 .tvm-right-tab-bar {
   display: flex;
+  flex-wrap: wrap;
   flex-shrink: 0;
   background: #161618;
   border-bottom: 1px solid #2a2a2e;

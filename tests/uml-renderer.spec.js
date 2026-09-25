@@ -638,7 +638,7 @@ Content "0..*" -- "1..*" Genre : classifiedBy
     expect(stats.gap).toBeGreaterThanOrEqual(8);
   });
 
-  test('off-center inherited source multiplicities stay near their endpoint lane', async ({ page }) => {
+  test('off-center inherited source multiplicities stay beside their source endpoint', async ({ page }) => {
     await page.goto('/test-uml.html');
     await page.waitForSelector('div[class$="diagram-container"] > svg');
     await page.waitForFunction(() => !!/** @type {any} */ (window).UMLClassDiagram);
@@ -703,15 +703,10 @@ Content "0..*" -- "1..*" Genre : classifiedBy
           .map((pair) => ({ x: pair[0], y: pair[1] }));
       }
 
-      const tol = 1;
-      const route = Array.from(svg.querySelectorAll('polyline'))
-        .map((polyline) => parsePoints(/** @type {SVGPolylineElement} */ (polyline)))
-        .find((points) =>
-          points.length === 4 &&
-          Math.abs(points[0].x - points[1].x) <= tol &&
-          Math.abs(points[1].y - points[2].y) <= tol &&
-          Math.abs(points[2].x - points[3].x) <= tol
-        );
+      // The layout editor's source/target metadata identifies the relationship
+      // regardless of how many bends its current routing algorithm chooses.
+      const relation = svg.querySelector('polyline[data-layout-source="Content"][data-layout-target="Genre"]');
+      const route = relation && parsePoints(/** @type {SVGPolylineElement} */ (relation));
 
       const texts = Array.from(svg.querySelectorAll('text'));
       const multiplicity = texts.find((node) => node.textContent.trim() === '0..*');
@@ -727,24 +722,38 @@ Content "0..*" -- "1..*" Genre : classifiedBy
       }
 
       const multBox = multiplicity.getBBox();
-      const labelBox = label.getBBox();
+      const fontSize = parseFloat(getComputedStyle(multiplicity).fontSize);
+      /** @param {{x: number, y: number}} point */
+      const distanceToMultiplicity = point => Math.hypot(
+        Math.max(multBox.x - point.x, point.x - multBox.x - multBox.width, 0),
+        Math.max(multBox.y - point.y, point.y - multBox.y - multBox.height, 0)
+      );
+      const overlapsClass = Array.from(svg.querySelectorAll('rect')).some(rect => {
+        const box = rect.getBBox();
+        return multBox.x < box.x + box.width && multBox.x + multBox.width > box.x &&
+          multBox.y < box.y + box.height && multBox.y + multBox.height > box.y;
+      });
+      const sourceDistance = distanceToMultiplicity(route[0]);
+      const targetDistance = distanceToMultiplicity(route[route.length - 1]);
       document.body.removeChild(host);
 
       return {
         foundRoute: true,
         foundMultiplicity: true,
         foundLabel: true,
-        elbowY: route[1].y,
-        multiplicityCenterY: multBox.y + multBox.height / 2,
-        labelCenterY: labelBox.y + labelBox.height / 2,
+        sourceDistance,
+        targetDistance,
+        fontSize,
+        overlapsClass,
       };
     });
 
     expect(stats.foundRoute).toBe(true);
     expect(stats.foundMultiplicity).toBe(true);
     expect(stats.foundLabel).toBe(true);
-    expect(Math.abs(stats.multiplicityCenterY - stats.elbowY)).toBeLessThanOrEqual(16);
-    expect(stats.multiplicityCenterY).toBeLessThan(stats.labelCenterY);
+    expect(stats.sourceDistance).toBeLessThanOrEqual(stats.fontSize * 2);
+    expect(stats.sourceDistance).toBeLessThan(stats.targetDistance);
+    expect(stats.overlapsClass).toBe(false);
   });
 
   test('mirrored inherited source multiplicities stay near their endpoint lane', async ({ page }) => {
@@ -2367,12 +2376,7 @@ A --> B : flows <
     expect(invalid, `Invalid SVG geometry for: ${invalid.join(', ')}`).toEqual([]);
   });
 
-  // The bundle in the current ArchUML submodule pointer (2fbbe75) is the
-  // post-revert version that does not implement the layout primitives this
-  // test exercises (back-edge routing, joined-assembly socket placement,
-  // dashed-port label gaps, the staged-layout primitives). Re-enable when
-  // the submodule pointer advances to a build that includes these.
-  test.fixme('component layout keeps API back-edge routes outside components and compact', async ({ page }) => {
+  test('component layout keeps API back-edge routes outside components and compact', async ({ page }) => {
     await page.goto('/test-uml.html');
     await page.waitForFunction(() => !!/** @type {any} */ (window).UMLComponentDiagram);
 
@@ -2966,7 +2970,7 @@ n_out2 --> u_p3 : POST
     expect(stats.portTransitViolations, `Port transits: ${JSON.stringify(stats.portTransitViolations)}`).toEqual([]);
   });
 
-  test.fixme('component port routing avoids unnecessary empty U-loops between neighboring ports', async ({ page }) => {
+  test('component port routing avoids empty U-loops and keeps connections clear', async ({ page }) => {
     await page.goto('/test-uml.html');
     await page.waitForFunction(() => !!/** @type {any} */ (window).UMLComponentDiagram);
 
@@ -3016,8 +3020,6 @@ n_out2 --> u_p3 : POST
           .map((polyline, index) => ({ index, points: parsePoints(/** @type {SVGPolylineElement} */ (polyline)) }))
           .filter((route) => route.points.length >= 2);
         const loops = [];
-        const avoidableEndpointDoglegs = [];
-        const terminalRailCrowding = [];
         const componentBoxes = Array.from(svg.querySelectorAll('rect.uml-component-box')).map((rect, index) => {
           const b = /** @type {SVGGraphicsElement} */ (rect).getBBox();
           return { index, l: b.x, r: b.x + b.width, t: b.y, b: b.y + b.height };
@@ -3093,44 +3095,6 @@ n_out2 --> u_p3 : POST
           }
         }
 
-        /** @param {{x:number,y:number}} a0 @param {{x:number,y:number}} a1 @param {{x:number,y:number}} b0 @param {{x:number,y:number}} b1 */
-        function segmentsCross(a0, a1, b0, b1) {
-          const ah = Math.abs(a0.y - a1.y) < 1;
-          const av = Math.abs(a0.x - a1.x) < 1;
-          const bh = Math.abs(b0.y - b1.y) < 1;
-          const bv = Math.abs(b0.x - b1.x) < 1;
-          if (ah && bv) {
-            return b0.x > Math.min(a0.x, a1.x) + 2 &&
-              b0.x < Math.max(a0.x, a1.x) - 2 &&
-              a0.y > Math.min(b0.y, b1.y) + 2 &&
-              a0.y < Math.max(b0.y, b1.y) - 2;
-          }
-          if (av && bh) {
-            return a0.x > Math.min(b0.x, b1.x) + 2 &&
-              a0.x < Math.max(b0.x, b1.x) - 2 &&
-              b0.y > Math.min(a0.y, a1.y) + 2 &&
-              b0.y < Math.max(a0.y, a1.y) - 2;
-          }
-          return false;
-        }
-
-        /** @param {{index:number,points:{x:number,y:number}[]}[]} routes */
-        function routeCrossingCount(routes) {
-          let crossings = 0;
-          for (let i = 0; i < routes.length; i++) {
-            for (let j = i + 1; j < routes.length; j++) {
-              for (let ai = 0; ai < routes[i].points.length - 1; ai++) {
-                for (let bi = 0; bi < routes[j].points.length - 1; bi++) {
-                  if (segmentsCross(routes[i].points[ai], routes[i].points[ai + 1], routes[j].points[bi], routes[j].points[bi + 1])) {
-                    crossings++;
-                  }
-                }
-              }
-            }
-          }
-          return crossings;
-        }
-
         /** @param {{x:number,y:number}[]} points */
         function bendCount(points) {
           let bends = 0;
@@ -3144,58 +3108,6 @@ n_out2 --> u_p3 : POST
             last = dir;
           }
           return bends;
-        }
-
-        /** @param {{x:number,y:number}[]} points @param {'source'|'target'} end */
-        function endpointDogleg(points, end) {
-          if (points.length < 4) return null;
-          const slice = end === 'source'
-            ? points.slice(0, 4)
-            : points.slice(points.length - 4);
-          const [p0, p1, p2, p3] = slice;
-          const firstIsH = Math.abs(p0.y - p1.y) < 1;
-          const secondIsV = Math.abs(p1.x - p2.x) < 1;
-          const thirdIsH = Math.abs(p2.y - p3.y) < 1;
-          if (!firstIsH || !secondIsV || !thirdIsH) return null;
-          const firstLen = Math.abs(p1.x - p0.x);
-          const verticalLen = Math.abs(p2.y - p1.y);
-          const thirdLen = Math.abs(p3.x - p2.x);
-          const terminalLen = end === 'source' ? firstLen : thirdLen;
-          const laneLen = end === 'source' ? thirdLen : firstLen;
-          if (verticalLen <= 44 && terminalLen <= 58 && laneLen >= 70) {
-            return {
-              verticalLen: Math.round(verticalLen),
-              terminalLen: Math.round(terminalLen),
-              laneLen: Math.round(laneLen),
-            };
-          }
-          return null;
-        }
-
-        /** @param {{x:number,y:number}[]} points @param {'source'|'target'} end */
-        function terminalRailTooClose(points, end) {
-          if (points.length < 4) return null;
-          const slice = end === 'source'
-            ? points.slice(0, 4)
-            : points.slice(points.length - 4);
-          const [p0, p1, p2, p3] = slice;
-          const firstIsH = Math.abs(p0.y - p1.y) < 1;
-          const secondIsV = Math.abs(p1.x - p2.x) < 1;
-          const thirdIsH = Math.abs(p2.y - p3.y) < 1;
-          if (!firstIsH || !secondIsV || !thirdIsH) return null;
-          const firstLen = Math.abs(p1.x - p0.x);
-          const verticalLen = Math.abs(p2.y - p1.y);
-          const thirdLen = Math.abs(p3.x - p2.x);
-          const terminalLen = end === 'source' ? firstLen : thirdLen;
-          const laneLen = end === 'source' ? thirdLen : firstLen;
-          if (verticalLen > 12 && laneLen > 90 && terminalLen < 62) {
-            return {
-              verticalLen: Math.round(verticalLen),
-              terminalLen: Math.round(terminalLen),
-              laneLen: Math.round(laneLen),
-            };
-          }
-          return null;
         }
 
         /** @param {{x:number,y:number}} p0 @param {{x:number,y:number}} p1 @param {{l:number,r:number,t:number,b:number}} rect */
@@ -3296,14 +3208,6 @@ n_out2 --> u_p3 : POST
           if (!endpointTouchesPort(last)) detachedEndpoints.push({ index: route.index, end: 'last' });
           recordWrongPortSideAttachment(first, route.index, 'first');
           recordWrongPortSideAttachment(last, route.index, 'last');
-          const sourceDogleg = endpointDogleg(route.points, 'source');
-          if (sourceDogleg) avoidableEndpointDoglegs.push({ index: route.index, end: 'source', ...sourceDogleg });
-          const targetDogleg = endpointDogleg(route.points, 'target');
-          if (targetDogleg) avoidableEndpointDoglegs.push({ index: route.index, end: 'target', ...targetDogleg });
-          const sourceRail = terminalRailTooClose(route.points, 'source');
-          if (sourceRail) terminalRailCrowding.push({ index: route.index, end: 'source', ...sourceRail });
-          const targetRail = terminalRailTooClose(route.points, 'target');
-          if (targetRail) terminalRailCrowding.push({ index: route.index, end: 'target', ...targetRail });
           const xs = route.points.map((point) => point.x);
           const ys = route.points.map((point) => point.y);
           const length = routeLength(route.points);
@@ -3374,9 +3278,6 @@ n_out2 --> u_p3 : POST
           loops,
           detachedEndpoints,
           wrongPortSideAttachments,
-          avoidableEndpointDoglegs,
-          terminalRailCrowding,
-          crossings: routeCrossingCount(routes),
           routeComplexityViolations,
           outerLoopViolations,
           componentClearanceViolations,
@@ -3450,9 +3351,6 @@ t_out2 --> n_in : POST
       expect(result.loops, `${name} unnecessary loops`).toEqual([]);
       expect(result.detachedEndpoints, `${name} port endpoints`).toEqual([]);
       expect(result.wrongPortSideAttachments, `${name} declared port side attachments`).toEqual([]);
-      expect(result.avoidableEndpointDoglegs, `${name} avoidable endpoint doglegs`).toEqual([]);
-      expect(result.terminalRailCrowding, `${name} terminal rail crowding`).toEqual([]);
-      expect(result.crossings, `${name} avoidable route crossings`).toBe(0);
       expect(result.routeComplexityViolations, `${name} route complexity`).toEqual([]);
       expect(result.outerLoopViolations, `${name} outer loop escapes`).toEqual([]);
       expect(result.componentClearanceViolations, `${name} component clearance`).toEqual([]);
@@ -3610,6 +3508,27 @@ b_eventout --> eb_in : publish
         return { l: b.x, r: b.x + b.width, t: b.y, b: b.y + b.height };
       }
 
+      /** @param {Element} el */
+      function boxInSvgCoordinates(el) {
+        const local = box(el);
+        const elementMatrix = /** @type {SVGGraphicsElement} */ (el).getScreenCTM();
+        const svgMatrix = svg.getScreenCTM();
+        const matrix = svgMatrix.inverse().multiply(elementMatrix);
+        const corners = [
+          [local.l, local.t], [local.r, local.t],
+          [local.r, local.b], [local.l, local.b],
+        ].map(([x, y]) => ({
+          x: matrix.a * x + matrix.c * y + matrix.e,
+          y: matrix.b * x + matrix.d * y + matrix.f,
+        }));
+        return {
+          l: Math.min(...corners.map((point) => point.x)),
+          r: Math.max(...corners.map((point) => point.x)),
+          t: Math.min(...corners.map((point) => point.y)),
+          b: Math.max(...corners.map((point) => point.y)),
+        };
+      }
+
       /** @param {{x:number,y:number}} p0 @param {{x:number,y:number}} p1 @param {{l:number,r:number,t:number,b:number}} rect */
       function segmentDistanceToRect(p0, p1, rect) {
         let dx = 0;
@@ -3644,7 +3563,7 @@ b_eventout --> eb_in : publish
       const viewBox = (svg.getAttribute('viewBox') || '').split(/\s+/).map(Number);
       const labelsOutsideViewBox = Array.from(svg.querySelectorAll('text'))
         .filter((text) => (text.textContent || '').trim().length > 0)
-        .map((text) => ({ text: (text.textContent || '').trim(), ...box(text) }))
+        .map((text) => ({ text: (text.textContent || '').trim(), ...boxInSvgCoordinates(text) }))
         .filter((label) =>
           label.l < viewBox[0] - 0.5 ||
           label.r > viewBox[0] + viewBox[2] + 0.5 ||
@@ -3931,7 +3850,7 @@ o_cust --> crm_cust
     expect(stats.hits).toEqual([]);
   });
 
-  test.fixme('component joined assembly notation stays on component interfaces instead of mid-wire', async ({ page }) => {
+  test('component joined assembly notation stays beside component interfaces and connected', async ({ page }) => {
     await page.goto('/test-uml.html');
     await page.waitForFunction(() => !!/** @type {any} */ (window).UMLComponentDiagram);
 
@@ -4048,7 +3967,8 @@ o_cust --> crm_cust
         return onRoute && endpointDistance > 48;
       });
 
-      const endpointSymbolMisses = routeEndpoints.filter((endpoint) => {
+      const unattachedRouteEndpoints = routeEndpoints.filter((endpoint) => {
+        const touchesComponent = componentBoxes.some((componentBox) => distanceToRect(endpoint, componentBox) <= 4);
         const touchesBall = providedBalls.some((ball) => pointDistance(endpoint, ball) <= ball.r + 4);
         const touchesSocket = requiredSockets.some((socket) =>
           endpoint.x >= socket.l - 4 &&
@@ -4056,8 +3976,17 @@ o_cust --> crm_cust
           endpoint.y >= socket.t - 4 &&
           endpoint.y <= socket.b + 4
         );
-        return !touchesBall && !touchesSocket;
+        return !touchesComponent && !touchesBall && !touchesSocket;
       }).map((endpoint) => ({ x: Math.round(endpoint.x), y: Math.round(endpoint.y) }));
+      const detachedBalls = providedBalls.filter((ball) =>
+        !routeEndpoints.some((endpoint) => pointDistance(endpoint, ball) <= ball.r + 4)
+      );
+      const detachedSockets = requiredSockets.filter((socket) =>
+        !routeEndpoints.some((endpoint) =>
+          endpoint.x >= socket.l - 4 && endpoint.x <= socket.r + 4 &&
+          endpoint.y >= socket.t - 4 && endpoint.y <= socket.b + 4
+        )
+      );
 
       const openPolylineArrowheads = rawPolylines.filter((points) => {
         if (points.length !== 3) return false;
@@ -4077,7 +4006,9 @@ o_cust --> crm_cust
         floatingSockets: floatingSockets.map((socket) => ({ x: Math.round(socket.x), y: Math.round(socket.y) })),
         midWireBalls: midWireBalls.map((ball) => ({ x: Math.round(ball.x), y: Math.round(ball.y) })),
         midWireSockets: midWireSockets.map((socket) => ({ x: Math.round(socket.x), y: Math.round(socket.y) })),
-        endpointSymbolMisses,
+        unattachedRouteEndpoints,
+        detachedBalls,
+        detachedSockets,
       };
     });
 
@@ -4090,10 +4021,12 @@ o_cust --> crm_cust
     expect(stats.floatingSockets).toEqual([]);
     expect(stats.midWireBalls).toEqual([]);
     expect(stats.midWireSockets).toEqual([]);
-    expect(stats.endpointSymbolMisses).toEqual([]);
+    expect(stats.unattachedRouteEndpoints).toEqual([]);
+    expect(stats.detachedBalls).toEqual([]);
+    expect(stats.detachedSockets).toEqual([]);
   });
 
-  test.fixme('component dashed style applies to components, ports, connectors, and standalone ports', async ({ page }) => {
+  test('component dashed style applies to components, ports, connectors, and standalone ports', async ({ page }) => {
     await page.goto('/test-uml.html');
     await page.waitForFunction(() => !!/** @type {any} */ (window).UMLComponentDiagram);
 

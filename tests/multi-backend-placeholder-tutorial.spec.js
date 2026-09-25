@@ -40,8 +40,8 @@ async function expectTimedPracticeClock(page) {
 async function goNext(page, stepIndex, opts = {}) {
   const start = Date.now();
   await page.locator('.tvm-btn-next').click();
-  await expectActiveStep(page, stepIndex);
   await expect(page.locator('.tvm-loading')).toBeHidden({ timeout: BOOT_TIMEOUT });
+  await expectActiveStep(page, stepIndex);
   await expectTimedPracticeClock(page);
   const elapsed = Date.now() - start;
   if (opts.maxMs) {
