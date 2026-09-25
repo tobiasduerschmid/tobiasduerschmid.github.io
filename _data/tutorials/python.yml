@@ -26,6 +26,10 @@ require_quiz: false
 allow_skip_steps: true
 autosave_type: files
 
+# Stable lesson identity keeps saved progress attached to concepts when steps move.
+progress_version: 2
+legacy_step_keys: [hello, variables, indentation, functions, type-hints, loops, comprehensions, files, regex, argv, capstone, dataclasses]
+
 # Global setup: add /tutorial to sys.path so imports work across steps
 setup_commands:
   - "import sys; sys.path.insert(0, '/tutorial')"
@@ -42,6 +46,7 @@ steps:
   #   Bloom's level     — Remember / Understand / Evaluate (quiz).
   # --------------------------------------------------------------------------
   - title: "Hello, Python!"
+    key: hello
     instructions: |
       ### Why this matters
 
@@ -65,10 +70,11 @@ steps:
       memory before running it. Later knowledge checks mix earlier concepts
       with the current topic.
 
-      **Returning to an older saved attempt?** The object-model lessons are new.
-      Saved completion marks use step numbers, so an older mark may now label a
-      different lesson. Use the topic titles to revisit the new lessons. Export
-      any work you want to keep from [SE Gym](/se-gym) before resetting progress.
+      **Returning to an older saved attempt?** Your saved file work is preserved,
+      and progress is matched to lesson identity. Completion marks from an older
+      version may need rechecking when their lesson cannot be identified reliably.
+      Use the topic titles to revisit the new object-model lessons; you can also
+      export your work from [SE Gym](/se-gym).
 
       You already write C++ and shell scripts. Here is how Python fits into your toolkit:
 
@@ -250,6 +256,7 @@ steps:
   #   Bloom's level      — Remember / Understand / Analyze (quiz).
   # --------------------------------------------------------------------------
   - title: "Variables, Types & f-Strings"
+    key: variables
     instructions: |
       ### Why this matters
 
@@ -283,7 +290,7 @@ steps:
 
       ### String Quotes: `"..."` and `'...'` Are Interchangeable
 
-      In C++, single quotes and double quotes mean different things: `'A'` is a `char`, while `"Alice"` is a `const char*` (or `std::string`). Mixing them up is a compile error.
+      In C++, single quotes and double quotes mean different things: `'A'` is a `char`, while `"Alice"` is an array of six `const char` elements, including the terminating zero. A string literal often converts to a pointer to its first element, and can initialize a `std::string`; it is not itself a `std::string`.
 
       In Python, **single and double quotes are completely interchangeable** for strings — there is no `char` type:
       ```python
@@ -297,7 +304,7 @@ steps:
       html = '<div class="box">' # single quotes avoid escaping the double quotes
       ```
 
-      In C++ you'd have to escape: `"It\'s easy"` or `"<div class=\"box\">"`. Python lets you pick whichever quote style avoids the clash.
+      C++ also accepts `"It's easy"` without escaping the apostrophe. Embedded double quotes in an ordinary C++ string need escaping, as in `"<div class=\"box\">"`; Python also lets you choose single quotes around that string.
 
       > **Convention:** Most Python style guides (including PEP 8) accept either, but recommend picking one and being consistent. You'll see both in the wild.
 
@@ -314,7 +321,7 @@ steps:
       ### f-Strings — Like C++'s `printf` but Readable
 
       ```python
-      # C++:    printf("Student: %s, GPA: %.1f\n", name, gpa);
+      # C++:    printf("Student: %s, GPA: %.1f\n", name.c_str(), gpa);
       # Python: (note the f prefix and {variable} syntax — same idea as shell's $variable)
       print(f"Student: {name}, GPA: {gpa:.1f}")
       ```
@@ -397,13 +404,15 @@ steps:
       - description: "GPA is formatted to 2 decimal places (3.82)"
         command: |
           output = __run_capture('/tutorial/profile.py')
-          assert '3.82' in output, \
-              f"Expected GPA '3.82' in output, got: {repr(output)}"
+          expected = 'Student: Alice | Year: 2 | Major: Computer Science | GPA: 3.82'
+          assert expected in [line.strip() for line in output.splitlines()], \
+              f"Print the complete profile on one line, with GPA formatted to two decimal places. Got: {repr(output)}"
         hints:
           - text: "The test expects `3.82` but the variable holds `3.819`. F-strings have a way to control how many decimal places a number displays — check the step instructions for the formatting syntax."
             condition: "output_missing: 3.82"
-          - text: "Your output contains `3.82` — the formatting looks right. Is the rest of the output line in the exact expected format?"
+          - text: "Finding `3.82` inside the output is not enough: check that the GPA has exactly two decimal digits and appears after its label on the same profile line."
             condition: "output_contains: 3.82"
+          - text: "Keep all four labeled fields in one f-string, separated as shown in the task. Apply the two-decimal format inside the GPA braces."
       - description: "f-string uses variables, not hard-coded literals"
         command: |
           source = open('/tutorial/profile.py').read()
@@ -459,7 +468,7 @@ steps:
           explanation: |
             f-strings use the `f"..."` prefix and embed expressions with `{expr}`.
             Format specifiers like `:.2f` (two decimal places) go *inside* the braces.
-            The `%` operator (option D) is the old Python 2 way; f-strings are the modern idiom.
+            The `%`-formatting expression uses an older style that remains supported in Python 3; it is not an f-string.
 
         - question: |
             A student runs `x = "5" + 3` in Python and gets a `TypeError`. They say: *"But Python is dynamically typed — it should convert automatically!"*
@@ -499,6 +508,7 @@ steps:
   # STEP 3 — Names, Objects & References
   # Pedagogy: PRIMM — predict rebinding, run a contrast, then repair an announcement.
   - title: "Names, Objects & References"
+    key: references
     instructions: |
       ### Why this matters
 
@@ -529,7 +539,12 @@ steps:
       print(poster)
       ```
 
-      Write your prediction, then try this example in the editor before restoring the starter. `is` asks whether two references reach the **same object**. It first prints `True`; the final lines show the updated title and the old title. Strings are immutable: `+=` computes a string value and changes the binding of `title`; it does not alter the old string that `poster` still refers to. Integers behave similarly when incremented. Mutable objects, introduced with lists, can instead change while keeping their identity.
+      `is` asks whether two references reach the **same object**. Write your prediction, then try this example in the editor before restoring the starter.
+
+      <details markdown="1">
+      <summary>Explain the title update after predicting</summary>
+
+      It first prints `True`; the final lines show the updated title and the old title. Strings are immutable: `+=` computes a string value and changes the binding of `title`; it does not alter the old string that `poster` still refers to. Integers behave similarly when incremented. Mutable objects, introduced with lists, can instead change while keeping their identity.
 
       **After `title += " — Live"`: which reference moved?** In these reference diagrams, square boxes are name bindings, rounded boxes are objects, and arrows are references. Positions do not represent memory addresses. Later diagrams abbreviate string and number values inside their owning objects instead of drawing every leaf object.
 
@@ -541,6 +556,8 @@ steps:
         poster["name:<br/>poster"] --> old("str object<br/>Night Session")
         title["name:<br/>title"] --> fresh("str object<br/>Night Session — Live")
       ```
+
+      </details>
 
       Use `==` for value comparisons such as song names and counts. Python may reuse equal immutable objects, so the identity of separately written equal numbers or strings is not a reliable value test.
 
@@ -720,10 +737,11 @@ steps:
   #   Bloom's level       — Remember / Understand / Evaluate (quiz).
   # --------------------------------------------------------------------------
   - title: "The Indentation Trap"
+    key: indentation
     instructions: |
       ### Why this matters
 
-      Indentation is the single most common stumbling block when C++ programmers write Python. In C++ indentation is cosmetic; in Python, indentation *is* the syntax. Wrong indentation produces an `IndentationError` and confused students who do not know why their previously-fine code is now broken. Confronting this early prevents weeks of frustration.
+      In Python, indentation determines which statements belong to a block. Invalid indentation can prevent a script from running; valid indentation in the wrong place can silently change its behavior. Comparing block ownership with C++ braces helps you diagnose both cases.
 
       ### 🎯 You will learn to
 
@@ -733,7 +751,7 @@ steps:
       ## ⚠️ The Indentation Trap (Negative Transfer from C++)
 
       In C++, indentation is cosmetic — the compiler ignores it, `{}` defines blocks.
-      **In Python, indentation IS the syntax.** Wrong indentation = `IndentationError`.
+      **In Python, indentation is part of the syntax.** Missing or inconsistent indentation can raise `IndentationError`; moving a statement into a different valid block instead changes when it runs.
 
       ```python
       # C++ programmer's instinct (WRONG in Python):
@@ -801,34 +819,48 @@ steps:
         **Why this is correct:**
 
         - **Bug 1 — indentation error:** The original `print(f"Score {score}: A")` was at the same indentation level as `if score >= 90:`, which is an `IndentationError`. The body of an `if` block must be indented one level further. Python uses indentation (4 spaces) instead of `{}` to define blocks — this is the most common negative-transfer mistake from C++.
-        - **Bug 2 — type error:** The original `print("Score " + score + ": B")` fails with `TypeError: can only concatenate str (not "int") to str`. Unlike C++, Python will not silently convert `score` (an `int`) to a string when concatenating. The fix is to use an f-string: `f"Score {score}: B"`, which handles the conversion automatically.
-        - The tests verify that scores 95, 83, and 71 produce the correct letter grades A, B, and C respectively.
+        - **Bug 2 — type error:** The original `print("Score " + score + ": B")` combines strings with an integer and raises `TypeError`. An f-string formats the integer for display, or you can explicitly convert it with `str(score)`. C++ stream insertion can display an integer too, but C++ string concatenation does not generally convert an integer to its decimal text.
+        - The tests check all five scores: 95 earns A, 83 earns B, 71 and 62 earn C, and 55 earns F.
 
     tests:
       - description: "Script runs without errors"
         command: |
           output = __run_capture('/tutorial/grades.py')
+        hints:
+          - text: "Read the exception name and line number. Does Python reject the block structure, or does a running print statement combine incompatible types?"
+          - text: "The print belonging to the if must be one level deeper than that if. Once parsing succeeds, inspect the string and integer operands in the B-grade print."
+          - text: "Align each branch's print with the other branch bodies. For the B message, use an f-string or explicitly convert score to a string."
       - description: "Score 95 is graded 'A'"
         command: |
           output = __run_capture('/tutorial/grades.py')
           assert 'Score 95: A' in output, f"Expected 'Score 95: A', got: {repr(output)}"
         hints:
-          - text: "Think about what range of scores earns an A. What Python construct lets you check multiple conditions in sequence?"
-            condition: "code_missing: elif"
-          - text: "You still have `elif` — good. Python evaluates conditions top-to-bottom and stops at the first match. Does the order of your conditions matter? What happens if you check `>= 70` before `>= 90`?"
-            condition: "code_contains: elif"
+          - text: "Which block should own the print for an A? Compare its indentation with the if above it."
+          - text: "The score thresholds already match the task; repair the misplaced statement without changing those conditions."
+          - text: "Indent the A-grade print one level farther than its if so it belongs to that branch."
       - description: "Score 83 is graded 'B'"
         command: |
           output = __run_capture('/tutorial/grades.py')
           assert 'Score 83: B' in output, f"Expected 'Score 83: B', got: {repr(output)}"
         hints:
-          - text: "Which range does 83 fall into? Do you have a branch that catches that range?"
-      - description: "Score 71 is graded 'C'"
+          - text: "If the script reaches this branch and raises TypeError, inspect the values on either side of +."
+          - text: "score is an integer, while the surrounding message fragments are strings. String concatenation needs string operands."
+          - text: "Either interpolate score in an f-string or explicitly convert it when concatenating the message."
+      - description: "All five scores have exactly one correct grade"
         command: |
+          import re
           output = __run_capture('/tutorial/grades.py')
-          assert 'Score 71: C' in output, f"Expected 'Score 71: C', got: {repr(output)}"
+          records = []
+          for line in output.splitlines():
+              match = re.fullmatch(r'\s*Score\s+(\d+)\s*:\s*([A-F])\s*', line)
+              if match:
+                  records.append((int(match.group(1)), match.group(2)))
+          expected = [(95, 'A'), (83, 'B'), (71, 'C'), (62, 'C'), (55, 'F')]
+          assert sorted(records) == sorted(expected), f"Print one correct grade for each supplied score; got {records}."
         hints:
-          - text: "Which range does 71 fall into? Count your `elif` branches — do you have enough to cover all the grade letters?"
+          - text: "Check every supplied score, including the final value below 60."
+          - text: "Each loop iteration should reach exactly one branch and print its score and grade."
+          - text: "Keep the final else and both C-grade cases; fixing the two starter bugs does not require dropping any scores."
 
     quiz:
       title: "Step 4 — Knowledge Check"
@@ -870,8 +902,8 @@ steps:
             defines where the block ends. This is unlike C++, Java, or JavaScript.
 
         - question: |
-            A student accidentally mixes tabs and spaces for indentation in the same Python file.
-            What will happen when they run it?
+            Inside one `if` block, a student indents the first statement with one tab and the next statement with eight spaces, intending both to be at the same level.
+            What happens when Python parses this inconsistent indentation?
           type: single
           options:
             - "Python auto-converts tabs to spaces and runs fine"
@@ -880,13 +912,13 @@ steps:
             - "Only the lines with tabs produce output"
           correct_index: 2
           option_feedback:
-            0: "Python 3's parser refuses to *guess* whether a tab counts as 1, 4, or 8 spaces, because every guess could change the program's meaning. Auto-conversion would silently re-bind code to a different block — the language designers chose loud failure over silent miscompilation. (Editor settings can enforce a convention, but the parser still won't second-guess what's on disk.)"
+            0: "Python expands tabs to the next multiple-of-eight column, but rejects tab/space mixtures whose meaning depends on the tab width. Matching a tab with eight spaces in the same suite triggers that consistency check."
             1: "Python halts on any indentation inconsistency at parse time, before *any* code runs — there is no partial execution where some blocks are skipped. The runtime never sees a half-broken program; it sees the SyntaxError instead."
             3: "Python parses the whole file before running anything; there is no per-line execution where some lines succeed and others fail. The whole script either parses or doesn't."
           explanation: |
-            Mixing tabs and spaces is a syntax error in Python 3. Python raises `TabError: inconsistent use
-            of tabs and spaces in indentation`. Always use 4 spaces (the universal Python convention) and
-            configure your editor to insert spaces when you press Tab.
+            This snippet raises `TabError`, a subclass of `IndentationError`, before any statement executes.
+            Merely having both tabs and spaces somewhere in a file is not always an error: separate blocks can use different consistent indentation.
+            Prefer four spaces per level throughout the file, and configure your editor to insert spaces when you press Tab.
 
         - question: |
             A teammate argues: *"Python's indentation-as-syntax is worse than C++'s braces because you can't see block boundaries as clearly."*
@@ -917,6 +949,7 @@ steps:
   #   Bloom's level      — Remember / Apply / Analyze (quiz).
   # --------------------------------------------------------------------------
   - title: "Functions"
+    key: functions
     instructions: |
       ### Why this matters
 
@@ -950,7 +983,7 @@ steps:
       ### Default Parameters
 
       A parameter can have a **default value**, used when the caller omits that argument.
-      Default parameters must come *after* required ones — the same rule as in C++.
+      For the ordinary positional parameters used here, parameters with defaults come *after* required ones — the same rule as in C++.
 
       ```python
       def greet(name, greeting="Hello"):
@@ -958,18 +991,40 @@ steps:
 
       greet("Alice")             # → Hello, Alice!   (uses default)
       greet("Bob", "Welcome")    # → Welcome, Bob!   (overrides default)
+      greet("Bob", greeting="Welcome")  # same call using a keyword argument
       ```
+
+      A keyword argument names the parameter receiving the value. After implementing your functions, try `label_score(75, threshold=80)` and compare it with the positional call `label_score(75, 80)`.
+
+      ### Division Before Averaging
+
+      For integers and floats, `/` performs true division: `5 / 2` is `2.5`. `//` performs floor division: `5 // 2` is `2`, and `-5 // 2` is `-3`. C++ integer division truncates toward zero instead. A mean may contain a fraction even when all input numbers are integers, so choose the operator that preserves it.
 
       ### Predict Before You Code
 
-      Before writing any code, predict: what does `mean([4, 8, 15, 16, 23, 42])` return? Do the mental math, write your answer down, then check it after implementing.
+      Before writing any code, predict the mean of `[4, 7]`. Would floor division give the same answer? Write down both results, then check them after implementing.
+
+      ### Keep Script Examples Separate from Imports
+
+      Python executes a module's top-level statements when it first imports that module. A guard lets you keep a demonstration in the file without running it during import:
+
+      ```python
+      # A reusable helper and its demonstration, in greetings.py
+      def welcome(name):
+          return f"Welcome, {name}!"
+
+      if __name__ == '__main__':
+          print(welcome("Sam"))
+      ```
+
+      Running `python3 greetings.py` sets `__name__` to `'__main__'` and prints the greeting. In another file, `import greetings` defines the helper but skips the guarded print; the caller can use `greetings.welcome("Sam")`. No function named `main` runs automatically.
 
       ### Task
 
       Complete two functions in `functions.py`:
 
-      1. `mean(numbers)` — returns the arithmetic mean.
-         *Hint: `sum()` and `len()` are **built-in** Python functions — no `import` needed. Python ships dozens of these ([builtins](https://docs.python.org/3/library/functions.html)) that are always available, similar to how `printf` is always available in C via `<stdio.h>` — except builtins require no `#include` at all.*
+      1. `mean(numbers)` — returns the arithmetic mean of a nonempty list of numbers.
+         *Hint: `sum()` and `len()` are **built-in** Python functions — no `import` is needed. See the [built-in functions reference](https://docs.python.org/3/library/functions.html) for other functions available directly.*
       2. `label_score(score, threshold=50)` — returns `"pass"` if `score >= threshold`, otherwise `"fail"`.
 
       > **What does `pass` mean?** In Python, `pass` is a do-nothing placeholder that makes an otherwise empty function or block body syntactically valid — the same idea as leaving a C++ function body as `{ }`. The starter code uses `pass` to mark every spot you need to fill in. **Replace every `pass` with your real implementation — no `pass` statements should remain in your final solution.**
@@ -1025,8 +1080,8 @@ steps:
         **Why this is correct:**
 
         - **`mean`:** `sum(numbers)` and `len(numbers)` are Python built-ins. In Python 3, `/` always performs **float division** (`sum / len` returns a `float`), so `mean([4, 8, 15, 16, 23, 42])` returns `18.0`, not `18`. The test checks `== 18.0`. This is different from C++ where `int / int` would be integer division.
-        - **`label_score` with default parameter:** `threshold=50` is a default parameter — calling `label_score(75)` uses `50` as the threshold (returns `'pass'`), while `label_score(75, 80)` overrides it with `80` (returns `'fail'`). Default parameters must always come after required parameters in the signature.
-        - **`return` is explicit:** Unlike C++ (which has undefined behavior for missing `return`), Python functions without `return` silently return `None`. You must write `return 'pass'` explicitly.
+        - **`label_score` with default parameter:** `threshold=50` is a default parameter — calling `label_score(75)` uses `50` as the threshold (returns `'pass'`), while `label_score(75, 80)` or `label_score(75, threshold=80)` overrides it with `80` (returns `'fail'`). Among ordinary positional parameters, those with defaults must follow those without defaults.
+        - **`return` is explicit:** A Python function that reaches its end without returning a value returns `None`. In C++, reaching the end of an ordinary non-void, non-`main` function without a return has undefined behavior. Here you need an explicit return for each result.
         - **`def` vs C++:** Python's `def` requires no return type or parameter types — Python infers types dynamically at runtime.
 
     tests:
@@ -1051,11 +1106,13 @@ steps:
             condition: "code_missing: return"
           - text: "You have a return statement — good. Is your function returning the calculated value, or could it be returning `None` in some cases? Try calling it mentally with the test input."
             condition: "code_contains: return"
-      - description: "mean of a single-element list equals that element"
+      - description: "mean handles a single element and fractional results"
         command: |
           g = {}
           exec(open('/tutorial/functions.py').read(), g)
           assert g['mean']([7]) == 7, "mean([7]) should be 7"
+          assert abs(g['mean']([1, 2]) - 1.5) < 1e-9, "mean([1, 2]) should preserve the fraction: 1.5."
+          assert abs(g['mean']([-2, 1]) - (-0.5)) < 1e-9, "The mean of [-2, 1] should be -0.5."
         hints:
           - text: "Does your formula work when the list has only one element? Trace through it with `[7]` as input."
       - description: "label_score(75) returns 'pass' (default threshold)"
@@ -1077,12 +1134,15 @@ steps:
           assert result == 'fail', f"Expected 'fail', got {repr(result)}"
         hints:
           - text: "What should happen when the score is *below* the threshold? Make sure both branches of your logic return a value."
-      - description: "label_score(75, 80) returns 'fail' (custom threshold)"
+      - description: "label_score respects custom thresholds and includes the boundary"
         command: |
           g = {}
           exec(open('/tutorial/functions.py').read(), g)
           result = g['label_score'](75, 80)
           assert result == 'fail', f"Expected 'fail' with threshold=80, got {repr(result)}"
+          for score, threshold, expected in [(49, 50, 'fail'), (50, 50, 'pass'), (79, 80, 'fail'), (80, 80, 'pass')]:
+              assert g['label_score'](score, threshold=threshold) == expected, f"Score {score} at threshold {threshold} should {expected}."
+          assert g['label_score'](50) == 'pass', "A score exactly at the default threshold should pass."
         hints:
           - text: "This call passes *two* arguments. How does Python let a function accept an optional second argument with a default value?"
             condition: "code_missing: threshold"
@@ -1153,7 +1213,7 @@ steps:
             Python uses `//` for integer (floor) division: `30 // 2` → `15`.
 
         - question: |
-            *(Spaced review — Python Execution Model)*
+            *(Review — Python Execution Model)*
 
             A teammate is confused: *"I wrote a Python file with a helper function and some test prints, but when I import it from another file, all the test prints run too."* What should they use to prevent this?
           type: single
@@ -1166,8 +1226,8 @@ steps:
           explanation: |
             Python scripts run top-to-bottom (like Bash). When imported, all top-level code
             executes. `if __name__ == '__main__':` is the standard Python idiom to separate
-            "run as script" code from "importable" code. C++ doesn't have this problem because
-            `#include` only brings in declarations, not executable statements.
+            "run as script" code from "importable" code. C++ `#include` textually inserts a file's contents before compilation;
+            that text is not restricted to declarations. Inclusion and Python module execution are different mechanisms.
 
         - question: |
             **Arrange** the lines to define a function that returns the larger of two numbers, with a default for `b`.
@@ -1190,6 +1250,7 @@ steps:
   # STEP 6 — Lists of References
   # Pedagogy: PRIMM — nested-reference prediction followed by a small reusable builder.
   - title: "Lists of References"
+    key: lists
     instructions: |
       ### Why this matters
 
@@ -1218,7 +1279,12 @@ steps:
       print(opening)
       ```
 
-      Predict whether `sets` shows two changed lists, only one changed list, or two `"Side Stage"` lists. Run this snippet, then explain it: both slots initially refer to the same list, so mutation through either slot is visible through both. Rebinding the name `opening` does not rewrite either slot. Try replacing the rebinding line with `sets[0] = ["Side Stage"]`; predict which slot changes before running again.
+      Predict whether `sets` shows two changed lists, only one changed list, or two `"Side Stage"` lists. Write your prediction and run this snippet before opening the explanation.
+
+      <details markdown="1">
+      <summary>Explain the two list slots after predicting</summary>
+
+      Both slots initially refer to the same list, so mutation through either slot is visible through both. Rebinding the name `opening` does not rewrite either slot.
 
       **After the original snippet:** follow each list slot separately. The two slot arrows end at one object, even though printing the outer list displays that object's contents twice. Values inside the list boxes abbreviate references to strings.
 
@@ -1232,6 +1298,10 @@ steps:
         outer -->|index 1| shared
         opening["name:<br/>opening"] --> fresh("list object<br/>Side Stage")
       ```
+
+      </details>
+
+      Try replacing the rebinding line with `sets[0] = ["Side Stage"]`; predict which slot changes before running again.
 
       ### One Object or Many Elements?
 
@@ -1321,18 +1391,18 @@ steps:
           namespace = {}
           exec(open('/tutorial/reference_lists.py').read(), namespace)
           combine = namespace['combine_tracks']
-          marker = ['editable track']
-          opening, late, encore = [marker, 'Echo'], ['Echo'], [None, 7]
+          marker, late_marker, encore_marker = ['editable opening'], ['editable late'], ['editable encore']
+          opening, late, encore = [marker, 'Echo'], ['Echo', late_marker], [None, 7, encore_marker]
           combined = combine(opening, late, encore)
-          expected = [marker, 'Echo', 'Echo', None, 7]
+          expected = [marker, 'Echo', 'Echo', late_marker, None, 7, encore_marker]
           assert isinstance(combined, list) and combined == expected, 'Combine all tracks in order, preserving duplicates and mixed types.'
-          assert combined[0] is marker, 'Keep the actual track object; do not clone or stringify it.'
-          assert opening == [marker, 'Echo'] and late == ['Echo'] and encore == [None, 7], 'Do not append into an input list.'
+          assert all(actual is supplied for actual, supplied in zip(combined, expected)), 'Keep every supplied track object from all three sets; do not clone or stringify it.'
+          assert opening == [marker, 'Echo'] and late == ['Echo', late_marker] and encore == [None, 7, encore_marker], 'Do not append into an input list.'
           assert combined is not opening and combined is not late and combined is not encore, 'The result needs its own outer list.'
           opening.append('New track')
           assert combined == expected, 'Appending to an input afterward must not add a slot to the combined list.'
           marker.append('remastered')
-          assert combined[0] == ['editable track', 'remastered'], 'The existing mutable track object remains shared.'
+          assert combined[0] == ['editable opening', 'remastered'], 'The existing mutable track object remains shared.'
         hints:
           - text: "The flat list should contain tracks rather than entire input lists. A track can itself be a mutable object."
           - text: "Concatenation creates a new outer list. Extending that list preserves track order and identity without editing the inputs."
@@ -1428,6 +1498,7 @@ steps:
   # STEP 7 — Objects & Member References
   # Pedagogy: PRIMM — worked constructor, shared-collaborator prediction, then ownership repair.
   - title: "Objects & Member References"
+    key: members
     instructions: |
       ### Why this matters
 
@@ -1463,6 +1534,11 @@ steps:
 
       The starter includes the `Artist` class above and a partial `Playlist` class. A correct constructor will receive an `artist` object and store it. Predict what should happen after two playlists receive the same artist and the artist is renamed: both show the new artist name, one does, or neither does?
 
+      Write your prediction before opening the explanation.
+
+      <details markdown="1">
+      <summary>Explain the shared artist after predicting</summary>
+
       Both should see the change, because their `artist` attributes refer to one shared custom object. In contrast, calling `Playlist(...)` twice should create two independent `tracks` lists. A reference member does not decide ownership for you: creating a new list inside `__init__` is an explicit choice to give each playlist its own queue.
 
       **Target state after completing `Playlist` and running the starter's demonstration:** trace `first.artist` and `second.artist`, then trace their `tracks` attributes. Edge labels name the attribute that stores each reference; omitted attributes do not affect this comparison.
@@ -1479,6 +1555,8 @@ steps:
         a -->|tracks| left("list object<br/>Open Water")
         b -->|tracks| right("list object<br/>empty")
       ```
+
+      </details>
 
       ### Task: Shared Artist, Separate Queues
 
@@ -1590,9 +1668,11 @@ steps:
           assert isinstance(first.tracks, list) and first.tracks == [] and second.tracks == [], 'Every new playlist starts with an empty track list.'
           assert first.tracks is not second.tracks, 'Different playlists need separate track lists.'
           track = ['editable recording']
+          other_track = ['another recording']
           first.add_track(track)
           first.add_track(track)
-          assert len(first.tracks) == 2 and first.tracks[0] is track and first.tracks[1] is track, 'Append each supplied object once and preserve duplicates.'
+          first.add_track(other_track)
+          assert len(first.tracks) == 3 and all(actual is supplied for actual, supplied in zip(first.tracks, [track, track, other_track])), 'Append each supplied object once, in call order, preserving duplicates.'
           assert second.tracks == [], 'Adding to one playlist must not change another playlist queue.'
           track.append('live version')
           assert first.tracks[0] == ['editable recording', 'live version'], 'Queued members should retain the original track object.'
@@ -1607,12 +1687,17 @@ steps:
           Artist, Playlist = namespace['Artist'], namespace['Playlist']
           artist = Artist('Tidal')
           first, second = Playlist('Day', artist), Playlist('Night', artist)
+          track = ['Opening']
+          first.add_track(track)
+          queue = first.tracks
           alias = first
           first.rename('Sunrise')
           assert first.name == alias.name == 'Sunrise', 'A rename must update the instance attribute seen through every alias of that playlist.'
           assert second.name == 'Night' and artist.name == 'Tidal', 'Renaming a playlist must not rename another playlist or its artist.'
           Playlist.rename(first, 'Sunset')
           assert first.name == 'Sunset', 'Calling the method through the class should act on the explicitly supplied instance.'
+          assert first.artist is artist, 'Renaming must retain the supplied artist reference.'
+          assert first.tracks is queue and len(queue) == 1 and queue[0] is track, 'Renaming must preserve the existing queue and its track objects.'
         hints:
           - text: "The name belongs to the receiving playlist. The artist's name is a different member on a different object."
           - text: "An assignment to a bare local name ends with the call; an assignment through self persists on the instance."
@@ -1690,6 +1775,7 @@ steps:
   # STEP 8 — Class Objects & Instance Attributes
   # Pedagogy: PRIMM — predict class lookup, then repair shared counter and member ownership.
   - title: "Class Objects & Instance Attributes"
+    key: classes
     instructions: |
       ### Why this matters
 
@@ -1742,7 +1828,12 @@ steps:
       print(badge.color, other.color, StageBadge.color)
       ```
 
-      Predict the three colors, then run the two snippets. For these ordinary data attributes, lookup first checks the instance and then falls back to its class. Assigning `badge.color` creates an instance attribute that **shadows** the class default. The result is `gold green green`; changing the class default affects instances that still fall back to it.
+      Predict the three colors, then run the two snippets before opening the explanation.
+
+      <details markdown="1">
+      <summary>Explain the color lookup after predicting</summary>
+
+      For these ordinary data attributes, lookup first checks the instance and then falls back to its class. Assigning `badge.color` creates an instance attribute that **shadows** the class default. The result is `gold green green`; changing the class default affects instances that still fall back to it.
 
       **After both assignments:** the class relationship stays the same. Only one instance now has its own `color`. This snapshot omits the class-name bindings from the previous diagram.
 
@@ -1756,6 +1847,8 @@ steps:
         a -->|__class__| cls("class object<br/>StageBadge<br/>color: green")
         b -->|__class__| cls
       ```
+
+      </details>
 
       A mutable class attribute has another consequence: `notes = []` in a class body creates one shared list. `self.notes.append(...)` can find that list through fallback lookup and mutate it; it does not create an instance list. Create `self.notes = []` in `__init__` when each instance should own its notes.
 
@@ -1844,9 +1937,11 @@ steps:
           assert isinstance(first.notes, list) and first.notes == [] and second.notes == [], 'Each pass must start with an empty notes list.'
           assert first.notes is not second.notes, 'A class-level list must not become every pass notes list.'
           note = ['Needs microphone']
+          other_note = ['Soundcheck at six']
           first.add_note(note)
           first.add_note(note)
-          assert len(first.notes) == 2 and first.notes[0] is note and first.notes[1] is note, 'Store each supplied note as one object, preserving duplicates.'
+          first.add_note(other_note)
+          assert len(first.notes) == 3 and all(actual is supplied for actual, supplied in zip(first.notes, [note, note, other_note])), 'Append each supplied note in call order, preserving identities and duplicates.'
           assert second.notes == [] and Pass('Gia').notes == [], 'A note must not appear on existing or future unrelated passes.'
         hints:
           - text: "The bug appears when a second pass looks up notes and reaches the same class-level list."
@@ -1945,6 +2040,7 @@ steps:
   # STEP 9 — Aliases, Shallow Copies, and Deep Copies
   # Pedagogy: PRIMM with worked examples, faded practice, and interleaved retrieval.
   - title: "Aliases, Shallow Copies, and Deep Copies"
+    key: copies
     instructions: |
       ### Why this matters
 
@@ -2250,6 +2346,7 @@ steps:
   # STEP 10 — Identity and Value Equality
   # Pedagogy: PRIMM with worked examples, faded practice, and interleaved retrieval.
   - title: "Identity and Value Equality"
+    key: equality
     instructions: |
       ### Why this matters
 
@@ -2362,7 +2459,9 @@ steps:
           ns = runpy.run_path('/tutorial/recording_equality.py')
           Recording = ns['Recording']
           first = Recording("Blue Hour", "Kite")
-          equal = Recording("Blue Hour", "Kite")
+          equal = Recording(''.join(['Blue', ' Hour']), ''.join(['Ki', 'te']))
+          assert first.title == equal.title and first.title is not equal.title, "The title fixture must separate value equality from identity."
+          assert first.artist == equal.artist and first.artist is not equal.artist, "The artist fixture must separate value equality from identity."
           assert first == equal and equal == first, "Separate Recordings with both fields equal must compare equal in either order."
           assert first is not equal, "Value equality must not imply shared identity."
           assert first == first, "A Recording must compare equal to itself."
@@ -2382,6 +2481,10 @@ steps:
           assert recording.__eq__(None) is NotImplemented, "Decline a missing operand with NotImplemented."
           assert recording.__eq__("Signal") is NotImplemented, "A matching title string is not a Recording."
           assert recording.__eq__(42) is NotImplemented, "Check the operand type before accessing its attributes."
+          class CatalogLabel:
+              title = "Signal"
+              artist = "Mira"
+          assert recording.__eq__(CatalogLabel()) is NotImplemented, "Matching attributes do not turn an unrelated object into a Recording."
           assert not (recording == None) and not (recording == "Signal"), "Normal equality should fall back safely for these unsupported operands."
         hints:
           - text: "The other operand may have no title or artist attribute. Decide whether your method supports it before reading either."
@@ -2469,6 +2572,7 @@ steps:
   # STEP 11 — Function Calls and Mutable Defaults
   # Pedagogy: PRIMM with worked examples, faded practice, and interleaved retrieval.
   - title: "Function Calls and Mutable Defaults"
+    key: calls-defaults
     instructions: |
       ### Why this matters
 
@@ -2482,7 +2586,7 @@ steps:
 
       ### Predict Before You Run
 
-      Open `playlist_calls.py`. The first six helpers contrast rebinding with mutation. For each labeled print, predict whether the caller still sees `"Pulse"`, sees an added `"Finale"`, or sees a replaced first track. Pay attention: the three list helpers run on the same list in sequence. Also commit to a prediction for the final guest calls: will the second result contain one name or both names?
+      Open `playlist_calls.py`. Work through the first six helpers in three small groups: string rebinding, the three list operations, then the two Playlist operations. For each labeled print, predict whether the caller still sees `"Pulse"`, sees an added `"Finale"`, or sees a replaced first track. Pay attention: the three list helpers run on the same list in sequence. Finally, predict the guest calls: will the second result contain one name or both names?
 
       Run the file once. For every surprise, locate the object that an assignment or method call actually changes.
 
@@ -2801,6 +2905,7 @@ steps:
   # STEP 12 — Inheritance and Method Dispatch
   # Pedagogy: PRIMM with worked examples, faded practice, and interleaved retrieval.
   - title: "Inheritance and Method Dispatch"
+    key: inheritance
     instructions: |
       ### Why this matters
 
@@ -3099,6 +3204,7 @@ steps:
   #   Bloom's level      — Apply (write hints) / Analyze (runtime vs static).
   # --------------------------------------------------------------------------
   - title: "Type Hints"
+    key: type-hints
     instructions: |
       ### Why this matters
 
@@ -3158,7 +3264,14 @@ steps:
       add("hello", "world")    # ← what does Python do here?
       ```
 
-      Predict first — actually write your prediction down or say it aloud — *then* try it in the editor. Most learners coming from C++ predict that Python rejects the call. Being wrong here is the lesson, not a failure: your C++ instinct is exactly what we are tuning. The answer is illuminating: Python **does not** raise a `TypeError` from the annotation. The `+` between two strings happily concatenates them. The annotation is documentation. The check happens when `mypy` (or your IDE) reads the source — not when Python runs it.
+      Predict first — write your prediction down or say it aloud — *then* try it in the editor. Explain whether any error comes from an annotation or from the operation in the function body.
+
+      <details markdown="1">
+      <summary>Check the annotation prediction</summary>
+
+      Python returns `"helloworld"`: `+` concatenates the two strings. Python does not enforce the annotations. A static checker such as `mypy` would flag the call before execution.
+
+      </details>
 
       ### Task
 
@@ -3166,8 +3279,8 @@ steps:
 
       1. Add hints to `mean(numbers)` so it accepts a `list[float]` and returns a `float`.
       2. Add hints to `label_score(score, threshold=50)` — both parameters are `int`, return is `str`. Remember the order: `name: type = default`.
-      3. Add hints to `first_failing(scores, threshold=50)` — return type is `Optional[int]` (and don't forget `from typing import Optional`).
-      4. **Predict, then run.** At the bottom of the file, uncomment the probe `print(mean(['a', 'b']))`. *Before you run it*, write down what you predict happens — does Python raise an error? If so, where does the error come from (the annotation, or the function body)? Then run, and compare to your prediction. This step is the lesson; do not skip it.
+      3. Add hints to `first_failing(scores, threshold=50)` — `scores` is `list[int]`, `threshold` is `int`, and the return type is `Optional[int]` (import it from `typing`) or the equivalent `int | None`.
+      4. **Predict, then run.** At the bottom of the file, uncomment the probe `print(mean(['a', 'b']))`. *Before you run it*, predict whether an error will come from the annotation or the function body. Run and compare, then **comment the probe out again before Test My Work** so the deliberate exception does not interrupt the checks.
 
     files:
       - path: "typed_grades.py"
@@ -3197,7 +3310,7 @@ steps:
 
           # --- Step 4 (required): predict, then uncomment ---
           # Predict FIRST: does Python raise an error? If so, from where?
-          # Then uncomment and run, and compare to your prediction.
+          # Then uncomment, run, compare, and comment it out before Test My Work.
           # print(mean(['a', 'b']))
         language: "python"
 
@@ -3246,79 +3359,52 @@ steps:
         - **Annotations are stored**, though — you can inspect them: `mean.__annotations__` returns something like `{'numbers': list[float], 'return': <class 'float'>}`.
 
     tests:
-      - description: "mean has type hints (parameter and return)"
+      - description: "Every requested parameter and return annotation describes the intended type"
         command: |
-          source = open('/tutorial/typed_grades.py').read()
-          assert ': list' in source, \
-              "mean's parameter `numbers` should be annotated as `list[...]` — e.g., `numbers: list[float]`"
-          assert '-> float:' in source, \
-              "mean should be annotated to return `float` — use `-> float:`"
+          import runpy
+          from typing import get_type_hints, get_origin, get_args, Optional
+          ns = runpy.run_path('/tutorial/typed_grades.py')
+          expected = {
+              'mean': {'numbers': list[float], 'return': float},
+              'label_score': {'score': int, 'threshold': int, 'return': str},
+              'first_failing': {'scores': list[int], 'threshold': int, 'return': Optional[int]},
+          }
+          for name, annotations in expected.items():
+              actual = get_type_hints(ns[name])
+              for parameter, annotation in annotations.items():
+                  supplied = actual.get(parameter)
+                  same_type = supplied == annotation or (get_origin(supplied) is list and get_origin(annotation) is list and get_args(supplied) == get_args(annotation))
+                  assert same_type, f"{name}: annotate {parameter} as {annotation}; found {supplied}."
         hints:
-          - text: "Use `name: type` for the parameter and `-> type:` for the return value. The arrow `->` goes between the closing paren and the colon."
-            condition: "code_missing: ->"
-          - text: "In Python 3.9+ you can write `list[float]` directly — no `from typing import List` needed."
-            condition: "code_contains: List["
-
-      - description: "label_score has type hints (score, threshold, return)"
+          - text: "Check each function's inputs and possible outputs against the task, one signature at a time."
+          - text: "A container annotation needs its element type too. The first-failing result can also be None."
+          - text: "Use name: type for each parameter and -> type for the return. Optional[int] and int | None describe the same result."
+      - description: "Annotations preserve means and score labels, including fractional and boundary cases"
         command: |
-          source = open('/tutorial/typed_grades.py').read()
-          assert 'score: int' in source, \
-              "label_score's `score` parameter should be annotated `score: int`"
-          assert 'threshold: int' in source, \
-              "label_score's `threshold` parameter should be annotated `threshold: int = 50`"
-          assert '-> str:' in source, \
-              "label_score should be annotated to return `str` — use `-> str:`"
+          import runpy
+          ns = runpy.run_path('/tutorial/typed_grades.py')
+          assert ns['mean']([1.0, 2.0]) == 1.5, "Preserve fractional means."
+          assert ns['mean']([4.0, 8.0, 15.0, 16.0, 23.0, 42.0]) == 18.0
+          for score, threshold, expected in [(49, 50, 'fail'), (50, 50, 'pass'), (79, 80, 'fail'), (80, 80, 'pass')]:
+              assert ns['label_score'](score, threshold) == expected, "A score at the threshold passes."
+          assert ns['label_score'](50) == 'pass', "Keep the default threshold of 50."
         hints:
-          - text: "When a parameter has both a type hint AND a default value, the form is `name: type = default` — e.g., `threshold: int = 50`."
-            condition: "code_contains: threshold=50"
-
-      - description: "first_failing uses Optional for its return type"
+          - text: "This task adds annotations to working functions; their original bodies can stay unchanged."
+          - text: "If the whole file raises TypeError, check whether the deliberate string-input probe is still uncommented."
+          - text: "Restore the probe's comment after the experiment; then check that division and threshold comparisons are unchanged."
+      - description: "first_failing preserves first-match order, custom thresholds, and None"
         command: |
-          source = open('/tutorial/typed_grades.py').read()
-          assert 'Optional' in source, \
-              "first_failing returns either an int or None — use `Optional[int]` (and import it from typing)."
-          assert 'from typing import' in source, \
-              "Add `from typing import Optional` at the top of the file."
+          import runpy
+          ns = runpy.run_path('/tutorial/typed_grades.py')
+          first = ns['first_failing']
+          assert first([90, 30, 20, 70]) == 30, "Return the first failing score, not the smallest."
+          assert first([50, 80]) is None, "A score equal to the threshold passes."
+          assert first([]) is None, "No scores means there is no failing score."
+          assert first([80, 75, 60], threshold=80) == 75, "Use the supplied threshold."
         hints:
-          - text: "`Optional[int]` is shorthand for `int | None`. It must be imported: `from typing import Optional`."
-            condition: "code_missing: Optional"
-
-      - description: "Annotations are real — at least 7 of them across the three functions"
-        command: |
-          import ast
-          src = open('/tutorial/typed_grades.py').read()
-          tree = ast.parse(src)
-          annotated = 0
-          for node in ast.walk(tree):
-              if isinstance(node, ast.FunctionDef):
-                  if node.returns is not None:
-                      annotated += 1
-                  for arg in node.args.args:
-                      if arg.annotation is not None:
-                          annotated += 1
-          assert annotated >= 7, \
-              f"Expected at least 7 type annotations across the three functions; found {annotated}. The three source-match tests above will tell you which function still needs annotations — this test mostly guards against accidentally putting types in docstrings instead of the signature."
-        hints:
-          - text: "Each function needs annotations on every parameter AND on the return type. Three functions × roughly 2–3 annotations each adds up to at least 7."
-
-      - description: "Behavior is unchanged: mean and label_score still work"
-        command: |
-          g = {}
-          exec(open('/tutorial/typed_grades.py').read(), g)
-          assert g['mean']([4, 8, 15, 16, 23, 42]) == 18.0, \
-              "Adding type hints should not change behavior — mean should still return 18.0"
-          assert g['label_score'](75) == 'pass'
-          assert g['label_score'](30) == 'fail'
-
-      - description: "first_failing returns first failing score (or None)"
-        command: |
-          g = {}
-          exec(open('/tutorial/typed_grades.py').read(), g)
-          assert g['first_failing']([90, 80, 30, 70]) == 30, \
-              "first_failing should return the first score strictly below threshold"
-          assert g['first_failing']([100, 90]) is None, \
-              "first_failing should return None when no score is below threshold (matches Optional[int])"
-
+          - text: "Read the original loop in order: which result should stop its search?"
+          - text: "The threshold is exclusive for failing scores, and no match returns None."
+          - text: "Keep the existing loop and default value; attach annotations without replacing its behavior."
     quiz:
       title: "Step 13 — Knowledge Check"
       min_score: 0.8
@@ -3423,6 +3509,7 @@ steps:
             def first_n(items: list[int], n: int) -> list[int]:
                 return items[:n]
             ```
+            Here `items[:n]` makes a new list containing the first n entries.
             What does the call return at **runtime**, and what would `mypy` say at **edit-time**?
           type: single
           options:
@@ -3437,7 +3524,7 @@ steps:
             3: "Python doesn't silently coerce values to match annotations. The list elements stay as floats."
           explanation: |
             Annotations are checked by tools (`mypy`, IDEs), not by the Python interpreter.
-            Runtime: the slice works for any indexable, so you get `[1.5, 2.5]`.
+            Runtime: slicing this list preserves its float elements, giving `[1.5, 2.5]`.
             mypy: `list[float]` is not assignable to `list[int]` — it would flag the call as
             an error. This is exactly why an external type checker exists.
 
@@ -3479,6 +3566,7 @@ steps:
   #   Type Hints         — annotated signatures (per Type Hints convention).
   # --------------------------------------------------------------------------
   - title: "Loops"
+    key: loops
     instructions: |
       ### Why this matters
 
@@ -3531,15 +3619,18 @@ steps:
       ```python
       # C++: for (int i = 0; i < 5; i++) { ... }
       for i in range(5):           # i = 0, 1, 2, 3, 4
+          print(i)
 
       # C++: for (int i = 1; i <= 5; i++) { ... }
       for i in range(1, 6):        # i = 1, 2, 3, 4, 5  (stop is *exclusive*, like C++'s <)
+          print(i)
 
       # C++: for (int i = 0; i < 10; i += 2) { ... }
       for i in range(0, 10, 2):    # i = 0, 2, 4, 6, 8  (optional step argument)
+          print(i)
       ```
 
-      > **Key rule**: `range(start, stop)` always includes `start` and excludes `stop` — exactly like C++'s `i < stop`.
+      > **Key rule**: with its default positive step, `range(start, stop)` starts at `start` and excludes `stop`. It is empty when `start >= stop`, just as an increasing C++ loop may execute zero times.
 
       ### List Operations (`append`, `remove`, `clear`)
 
@@ -3578,9 +3669,11 @@ steps:
 
       ```python
       7 / 2     # 3.5   (float division — different from C++!)
-      7 // 2    # 3     (integer/floor division — like C++'s /)
-      7 % 2     # 1     (modulo — same as C++)
+      7 // 2    # 3     (floor division)
+      7 % 2     # 1     (remainder)
       ```
+
+      For negative integers the languages differ: Python floors toward negative infinity, so `-7 // 2` is `-4` and `-7 % 2` is `1`. C++ integer division truncates toward zero: `-7 / 2` is `-3` and `-7 % 2` is `-1`.
 
       ### Predict Before You Code
 
@@ -3591,7 +3684,7 @@ steps:
       Complete `loops.py`:
 
       1. `running_total(numbers)` — returns a new list where each element is the cumulative sum up to that index.
-         *Example: `running_total([1, 2, 3])` → `[1, 3, 6]`. Use a `for` loop.*
+         *Example: `running_total([1, 2, 3])` → `[1, 3, 6]`. Use a `for` loop. Leave the input unchanged; an empty input returns a new empty list.*
 
     files:
       - path: "loops.py"
@@ -3650,40 +3743,29 @@ steps:
         - **`total += n`:** Adds each element to the running sum before appending.
         - **`result.append(total)`:** `list.append()` is Python's equivalent of `std::vector::push_back()`. Appending `total` (not `n`) gives the cumulative sum at each position.
         - **`result = []`:** Initializes an empty list. `total = 0` is the accumulator. Both must be initialized before the loop.
-        - **`7 / 2` → `3.5`:** Python 3's `/` always gives a `float`. For C++-style integer division, use `//` (`7 // 2` → `3`). This is one of the most common negative-transfer traps from C++.
+        - **`7 / 2` → `3.5`:** For these built-in integers, `/` gives a float. `//` floors the quotient: `7 // 2` is `3`, while `-7 // 2` is `-4`. C++ integer division truncates toward zero instead.
         - The test checks `running_total([1, 2, 3]) == [1, 3, 6]` — after the first iteration: `total = 1`, second: `total = 3`, third: `total = 6`.
 
     tests:
-      - description: "No unfinished 'pass' placeholders remain"
+      - description: "running_total uses a for loop and handles empty, signed, and ordinary inputs"
         command: |
-          import ast
-          src = open('/tutorial/loops.py').read()
-          tree = ast.parse(src)
-          pass_nodes = [n for n in ast.walk(tree) if isinstance(n, ast.Pass)]
-          assert len(pass_nodes) == 0, \
-              f"Remove all 'pass' placeholders — {len(pass_nodes)} pass statement(s) still found in loops.py"
+          import ast, runpy
+          tree = ast.parse(open('/tutorial/loops.py').read())
+          function = next((node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == 'running_total'), None)
+          assert function is not None and any(isinstance(node, ast.For) for node in ast.walk(function)), 'Use a for loop inside running_total.'
+          running_total = runpy.run_path('/tutorial/loops.py')['running_total']
+          for values, expected in [([], []), ([7], [7]), ([0, 0], [0, 0]), ([1, 2, 3], [1, 3, 6]), ([10, -12, 5], [10, -2, 3])]:
+              original = values.copy()
+              result = running_total(values)
+              assert isinstance(result, list) and result == expected, f'For {original}, expected {expected}, got {result!r}.'
+              assert values == original, 'Leave the input list unchanged.'
+              assert result is not values, 'Return a new list, including for an empty input.'
+              again = running_total(values)
+              assert again == expected and again is not result, 'Each call must return a fresh result.'
         hints:
-          - text: "The `pass` keyword is a placeholder. Replace it with the logic described in the task."
-      - description: "running_total([1, 2, 3]) == [1, 3, 6]"
-        command: |
-          g = {}
-          exec(open('/tutorial/loops.py').read(), g)
-          result = g['running_total']([1, 2, 3])
-          assert result == [1, 3, 6], f"Expected [1, 3, 6], got {result}"
-        hints:
-          - text: "A running total means each output element is the sum of all input elements *up to that point*. What do you need to track across iterations?"
-            condition: "code_missing: append"
-          - text: "You're building a result list — good. Trace through your loop with `[1, 2, 3]`: after each iteration, what value gets appended? The expected output is `[1, 3, 6]`."
-            condition: "code_contains: append"
-      - description: "running_total([10, 20]) == [10, 30]"
-        command: |
-          g = {}
-          exec(open('/tutorial/loops.py').read(), g)
-          result = g['running_total']([10, 20])
-          assert result == [10, 30], f"Expected [10, 30], got {result}"
-        hints:
-          - text: "Does your function handle lists of any length? Trace through it with `[10, 20]` — what should each element of the output be?"
-
+          - text: "Track one running sum and a separate result list. Add the current input before recording the sum."
+          - text: "Start both the sum and the result inside the function, before the for loop. Empty input then needs no special indexing."
+          - text: "Inside the loop, update total with the current number, then append total to result."
     quiz:
       title: "Step 14 — Knowledge Check"
       min_score: 0.8
@@ -3731,8 +3813,8 @@ steps:
             2: "Python is happy to mix `int` and `float`; the result is just promoted to `float`. The TypeError pattern shows up for non-numeric mixing (`\"5\" + 3`), not for arithmetic between two numbers."
           explanation: |
             In Python 3, `/` is **always** float division: `6 / 2` → `3.0`.
-            For integer (floor) division like C++, use `//`: `7 // 2` → `3`.
-            This is one of the most common negative-transfer traps from C++.
+            `//` floors: `7 // 2` → `3`, but `-7 // 2` → `-4`.
+            C++ integer division truncates toward zero, giving `-3` for the latter quotient.
 
         - question: |
             What are the values of `a` and `b` after this line?
@@ -3806,6 +3888,7 @@ steps:
   #   Bloom's level      — Apply / Analyze (quiz) + spaced review.
   # --------------------------------------------------------------------------
   - title: "List Comprehensions"
+    key: comprehensions
     instructions: |
       ### Why this matters
 
@@ -3879,8 +3962,8 @@ steps:
 
       1. `above_average(numbers)` — returns a list of numbers **strictly greater than** the mean.
          *Use a list comprehension with a condition.*
-      2. `squares_up_to(n)` — returns `[1, 4, 9, ..., n**2]`.
-         *Use `range()` starting at 1 and `**` for exponentiation in a list comprehension.*
+      2. `squares_up_to(n)` — for a nonnegative integer `n`, returns `[1, 4, 9, ..., n**2]`; `n=0` returns `[]`.
+         *Use `range()` and `**` for exponentiation in a list comprehension that covers 1 through n.*
 
     files:
       - path: "listcomp.py"
@@ -3969,73 +4052,36 @@ steps:
         - **`**` operator check:** The test also uses AST inspection to confirm `squares_up_to` contains a `BinOp` with `Pow` — you must use `**`, not `math.pow()`.
 
     tests:
-      - description: "No unfinished 'pass' placeholders remain"
+      - description: "above_average uses a comprehension and preserves strictly above-mean values in order"
         command: |
-          import ast
-          src = open('/tutorial/listcomp.py').read()
-          tree = ast.parse(src)
-          pass_nodes = [n for n in ast.walk(tree) if isinstance(n, ast.Pass)]
-          assert len(pass_nodes) == 0, \
-              f"Remove all 'pass' placeholders — {len(pass_nodes)} pass statement(s) still found in listcomp.py"
+          import ast, runpy
+          tree = ast.parse(open('/tutorial/listcomp.py').read())
+          function = next((node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == 'above_average'), None)
+          assert function is not None and any(isinstance(node, ast.ListComp) for node in ast.walk(function)), 'Use a list comprehension in above_average.'
+          above_average = runpy.run_path('/tutorial/listcomp.py')['above_average']
+          for values, expected in [([4, 8, 15, 16, 23, 42], [23, 42]), ([2, 4, 6], [6]), ([5, 5], []), ([-3, 1, 1], [1, 1])]:
+              assert above_average(values) == expected, f'For {values}, keep exactly {expected}, including repeated values.'
         hints:
-          - text: "The `pass` keyword is a placeholder. Replace it with the logic described in the task."
-      - description: "above_average returns numbers > mean (not >=)"
+          - text: "Compute the mean, then use it as the filter threshold."
+          - text: "The condition must exclude values equal to the mean without deduplicating the remaining values."
+          - text: "Use the shape [x for x in numbers if x > ...], filling in the computed mean."
+      - description: "squares_up_to uses a comprehension, range(), and ** and covers 1 through n"
         command: |
-          g = {}
-          exec(open('/tutorial/listcomp.py').read(), g)
-          result = g['above_average']([4, 8, 15, 16, 23, 42])
-          expected = [23, 42]
-          assert result == expected, f"Expected {expected}, got {result}"
-          assert g['above_average']([2, 4, 6]) == [6], \
-              "Exclude a number equal to the mean: above_average([2, 4, 6]) should be [6]"
-          assert g['above_average']([5, 5]) == [], \
-              "When every value equals the mean, no value is above it"
+          import ast, runpy
+          tree = ast.parse(open('/tutorial/listcomp.py').read())
+          function = next((node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == 'squares_up_to'), None)
+          assert function is not None, 'Define squares_up_to.'
+          nodes = list(ast.walk(function))
+          assert any(isinstance(node, ast.ListComp) for node in nodes), 'Use a list comprehension in squares_up_to.'
+          assert any(isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == 'range' for node in nodes), 'Use range() to generate the numbers.'
+          assert any(isinstance(node, ast.BinOp) and isinstance(node.op, ast.Pow) for node in nodes), 'Use ** for exponentiation.'
+          squares = runpy.run_path('/tutorial/listcomp.py')['squares_up_to']
+          for n, expected in [(0, []), (1, [1]), (2, [1, 4]), (5, [1, 4, 9, 16, 25]), (7, [1, 4, 9, 16, 25, 36, 49])]:
+              assert squares(n) == expected, f'For n={n}, expected {expected}.'
         hints:
-          - text: "You need to filter a list based on a computed threshold. What value should you compare each number against?"
-            condition: "code_missing: for"
-          - text: "You have a loop — good. The test description says **strictly greater than** (`>`). If you're getting an extra element, check whether you're using `>` or `>=`."
-            condition: "code_contains: for"
-      - description: "above_average uses a list comprehension (not a manual loop)"
-        command: |
-          import ast
-          src = open('/tutorial/listcomp.py').read()
-          tree = ast.parse(src)
-          found = False
-          for node in ast.walk(tree):
-              if isinstance(node, ast.FunctionDef) and node.name == 'above_average':
-                  found = True
-                  has_comp = any(isinstance(n, ast.ListComp) for n in ast.walk(node))
-                  assert has_comp, "above_average should use a list comprehension [x for x in ...]"
-          assert found, "Function 'above_average' not found"
-        hints:
-          - text: "This test checks your code *structure*, not just the output. Python has a compact one-line syntax for building filtered lists — it was introduced in the step instructions."
-      - description: "squares_up_to(5) == [1, 4, 9, 16, 25]"
-        command: |
-          g = {}
-          exec(open('/tutorial/listcomp.py').read(), g)
-          result = g['squares_up_to'](5)
-          assert result == [1, 4, 9, 16, 25], f"Expected [1, 4, 9, 16, 25], got {result}"
-        hints:
-          - text: "You need to generate a sequence of numbers from 1 to n. What Python built-in produces a sequence of integers? Remember, its stop value is *exclusive*."
-            condition: "code_missing: range"
-          - text: "You're using `range` — good. Check the start and stop values: does your range include `n` itself? The first output element should be 1² = 1, not 0² = 0."
-            condition: "code_contains: range"
-      - description: "squares_up_to uses range() and ** operator"
-        command: |
-          import ast
-          src = open('/tutorial/listcomp.py').read()
-          tree = ast.parse(src)
-          found = False
-          for node in ast.walk(tree):
-              if isinstance(node, ast.FunctionDef) and node.name == 'squares_up_to':
-                  found = True
-                  has_pow = any(isinstance(n, ast.BinOp) and isinstance(n.op, ast.Pow)
-                                for n in ast.walk(node))
-                  assert has_pow, "squares_up_to should use ** (exponentiation operator)"
-          assert found, "Function 'squares_up_to' not found"
-        hints:
-          - text: "This test checks which operator you used for squaring. In Python, the exponentiation operator is *not* the same as in C++ or math notation. What does `^` actually do in Python?"
-
+          - text: "Use n to determine the range; a fixed range only works for one input."
+          - text: "range excludes its stop value. Include n, and do not include zero among the values being squared."
+          - text: "Combine an expression using ** with a for clause over range; n=0 should naturally produce an empty list."
     quiz:
       title: "Step 15 — Knowledge Check"
       min_score: 0.8
@@ -4149,6 +4195,7 @@ steps:
   #   Bloom's level      — Understand / Evaluate (quiz) + spaced review.
   # --------------------------------------------------------------------------
   - title: "Reading Files with open() and with"
+    key: files
     instructions: |
       ### Why this matters
 
@@ -4175,8 +4222,9 @@ steps:
 
       ### Reading Files with `open()` and `with`
 
-      In C++ you `fopen`, check for `NULL`, process, and `fclose`. Python's `with` statement
-      handles the close automatically — even if an exception occurs:
+      C-style file handling pairs `fopen` with `fclose`; modern C++ typically uses an
+      `std::ifstream` whose destructor closes the file at scope exit. Python's `with`
+      provides an explicit block for automatic cleanup, including when an exception occurs:
 
       ```python
       # SUB-GOAL: Open the file (with ensures automatic close)
@@ -4184,7 +4232,7 @@ steps:
           # SUB-GOAL: Process each line
           for line in f:
               # SUB-GOAL: Clean and display
-              print(line.strip())   # .strip() removes the trailing newline
+              print(line.strip())   # removes leading and trailing whitespace
       ```
 
       The `with` statement is Python's **resource management** idiom — just like RAII in C++,
@@ -4192,7 +4240,7 @@ steps:
 
       ### Predict Before You Code
 
-      Before writing any code, look at `data.txt` and predict: how many total words does it contain? Then click Run on the starter code and see if your mental count matches.
+      Before writing any code, look at `data.txt` and predict: how many total words does it contain? Record your count, implement the task, then click Run to compare. The unfinished starter does not yet print a count.
 
       ### Task
 
@@ -4255,40 +4303,31 @@ steps:
       explanation: |
         **Why this is correct:**
 
-        - **`with open("data.txt") as f:`** The `with` statement is Python's context manager for resource management — it guarantees the file is closed when the block exits, even if an exception occurs. This is analogous to RAII in C++. Without `with`, you must manually call `f.close()`, and if an exception occurs before that line, the file handle leaks.
-        - **`for line in f:`** Files are directly iterable in Python. Each iteration yields one line including the trailing `\n`. This is memory-efficient — only one line is in memory at a time (important for large files).
+        - **`with open("data.txt") as f:`** The file context manager closes the file when the block exits, even on an exception. This resembles C++ RAII. Without `with` or equivalent cleanup, closure is no longer tied reliably to this block's exit; relying on eventual garbage collection is poor resource management.
+        - **`for line in f:`** Files are directly iterable. A line includes its trailing newline when present. Iteration avoids retaining the entire file; working memory depends on buffering, the longest line, and any results your program retains.
         - **`line.split()`** without arguments splits on any whitespace and discards empty strings, so `len(words)` correctly counts the words per line.
-        - **`total += len(words)`:** Accumulates the count across all lines. The three lines in `data.txt` have 9 + 9 + 6 = 24 words. The test checks for `'Total words: 24'` in the output.
+        - **`total += len(words)`:** Accumulates the count across all lines. The three lines in `data.txt` have 9 + 9 + 6 = 24 words. The checks compare the complete total record, including on empty and mixed-whitespace files.
         - **No `line.strip()` needed here:** `split()` without arguments already handles the trailing `\n` by splitting on all whitespace.
 
     tests:
-      - description: "No unfinished 'pass' placeholders remain"
+      - description: "Counts every word and prints one complete total for ordinary, empty, and mixed-whitespace files"
         command: |
-          import ast
-          src = open('/tutorial/word_count.py').read()
-          tree = ast.parse(src)
-          pass_nodes = [n for n in ast.walk(tree) if isinstance(n, ast.Pass)]
-          assert len(pass_nodes) == 0, \
-              f"Remove all 'pass' placeholders — {len(pass_nodes)} pass statement(s) still found in word_count.py"
+          import os, re
+          from pathlib import Path
+          os.chdir('/tutorial')
+          data = Path('/tutorial/data.txt')
+          original = data.read_text()
+          try:
+              for contents, expected in [(original, 24), ('', 0), ('one  two\tthree\n\n four\n', 4), ('last line has five words', 5)]:
+                  data.write_text(contents)
+                  output = __run_capture('/tutorial/word_count.py')
+                  assert re.fullmatch(r'Total words:\s*' + str(expected) + r'\s*', output.strip()), f'Expected one Total words: {expected} record, got {output!r}.'
+          finally:
+              data.write_text(original)
         hints:
-          - text: "The `pass` keyword is a placeholder. Replace it with the logic described in the task."
-      - description: "Script runs without errors"
-        command: |
-          import os; os.chdir('/tutorial')
-          output = __run_capture('/tutorial/word_count.py')
-      - description: "Output contains 'Total words: 24'"
-        command: |
-          import os; os.chdir('/tutorial')
-          output = __run_capture('/tutorial/word_count.py')
-          # 9 + 9 + 6 = 24 words across the three lines
-          assert 'Total words: 24' in output, \
-              f"Expected 'Total words: 24', got: {repr(output)}"
-        hints:
-          - text: "You need to open a file, process it line by line, and count something. What Python built-in function opens a file for reading?"
-            condition: "code_missing: open("
-          - text: "You still have the `open()` call — good. How do you split a line of text into individual words? What string method breaks text on whitespace?"
-            condition: "code_contains: open("
-
+          - text: "Count words across every line, rather than counting lines or replacing the total each time."
+          - text: "split() without arguments handles repeated spaces, tabs, and newlines; an empty file has zero words."
+          - text: "Initialize total before reading, add len(line.split()) for each line, and print the final count after reading."
     quiz:
       title: "Step 16 — Knowledge Check"
       min_score: 0.8
@@ -4296,7 +4335,7 @@ steps:
       questions:
 
         - question: |
-            A student writes this code and asks why Python is better than C++ for this task:
+            A student writes this code and asks which Python features make it concise:
             ```python
             with open("log.txt") as f:
                 errors = [line for line in f if "ERROR" in line]
@@ -4305,15 +4344,15 @@ steps:
           type: single
           options:
             - "Python runs faster than C++ for file I/O operations"
-            - "`with`, file iteration, and list comprehensions cut this to 3-4 lines vs 20+ in C++"
+            - "`with` closes the file, iteration reads lines, a comprehension filters"
             - "C++ cannot open text files, only binary files"
             - "Python files never need to be closed because the OS does it automatically"
           correct_index: 1
           explanation: |
             This is Python's **scripting sweet spot**: the `with` statement handles resource cleanup,
             files are directly iterable (no manual buffering), and the list comprehension filters in one line.
-            The equivalent C++ code would need `ifstream`, a `while(getline(...))` loop, string search,
-            and explicit `close()` — easily 20+ lines for robust code.
+            C++ can express the same task concisely with `std::ifstream` and `std::getline`;
+            its stream destructor provides automatic cleanup through RAII.
 
         - question: |
             What does `line.strip()` do when reading lines from a file?
@@ -4337,14 +4376,14 @@ steps:
           options:
             - "Both are identical in behavior and memory usage — Python handles buffering automatically regardless of which method you use"
             - "`f.read()` is better because reading the entire file into one string is faster than processing line by line due to fewer I/O calls"
-            - "`for line in f:` is better — constant memory regardless of file size; `f.read()` loads all 2 GB"
+            - "`for line in f:` avoids retaining the whole file; memory depends on the longest line and retained results"
             - "Neither works — Python can't handle files over 1 GB"
           correct_index: 2
           explanation: |
-            `f.read()` loads the **entire** file into a single string in memory. For a 2 GB file, that's
-            2 GB of RAM just for the string. `for line in f:` streams one line at a time — the memory
-            usage stays constant regardless of file size. This is the same principle as C++'s
-            `getline()` in a `while` loop vs reading the whole file with `fstream::read()`.
+            `f.read()` loads the **entire decoded text** into a string, whose memory size can differ
+            from the file's byte size. Iterating lines avoids retaining that whole string, but the
+            longest line, buffering, and saved results still consume memory. Collecting every line
+            into a list loses that advantage. C++'s `std::getline` supports the same streaming approach.
 
         - question: |
             *(Spaced review — Indentation)*
@@ -4439,6 +4478,7 @@ steps:
   #   Bloom's level      — Apply / Analyze (quiz) + spaced review.
   # --------------------------------------------------------------------------
   - title: "Regular Expressions in Python: the re Module"
+    key: regex
     instructions: |
       ### Why this matters
 
@@ -4454,12 +4494,14 @@ steps:
       In the RegEx tutorial you used patterns with `grep -E` and `sed`. Python's built-in
       `re` module gives you the same power inside a script — no subprocess needed:
 
-      | Shell | Python `re` equivalent |
+      | Shell operation | Corresponding Python operation |
       |---|---|
-      | `grep -E 'pattern' file` | `re.findall(r'pattern', text)` |
-      | `grep -c 'pattern' file` | `len(re.findall(r'pattern', text))` |
+      | `grep -E 'pattern' file` (matching lines) | `[line for line in text.splitlines() if re.search(r'pattern', line)]` |
+      | `grep -c 'pattern' file` (count matching lines) | `sum(1 for line in text.splitlines() if re.search(r'pattern', line))` |
       | `sed 's/old/new/g' file` | `re.sub(r'old', 'new', text)` |
       | Test if a match exists | `re.search(r'pattern', text)` |
+
+      `re.findall()` returns **matches**, not whole matching lines: two matches on one line count twice. The table compares operations; regex syntax differs between shell tools and Python, so patterns are not always interchangeable.
 
       ### The three essential functions
 
@@ -4493,9 +4535,9 @@ steps:
 
       Complete `log_parser.py`. The log file is already loaded as a string for you.
 
-      1. Use `re.findall()` to collect all timestamps (HH:MM:SS pattern) and print the count
-      2. Use `re.findall()` to collect every ERROR line and print the count
-      3. Use `re.sub()` to redact all IP addresses with `"x.x.x.x"` and print the redacted log
+      1. Use `re.findall()` to collect all timestamps (HH:MM:SS pattern) and print `Timestamps found: <count>`.
+      2. Use `re.findall()` to collect matches from `ERROR` to the end of its line and print `Errors: <count>`. Count a line once even if ERROR occurs twice.
+      3. Use `re.sub()` to redact all dotted IP addresses with `"x.x.x.x"` and print the full redacted log after the two counts. Preserve other text. Here addresses are four digit groups separated by literal dots; validating IPv4 octet ranges is outside this task.
 
     files:
       - path: "log_parser.py"
@@ -4557,62 +4599,59 @@ steps:
       explanation: |
         **Why this is correct:**
 
-        - **`re.findall(r'\d{2}:\d{2}:\d{2}', text)`:** `\d{2}` matches exactly two digits; the colons are literal. This matches all 6 timestamp entries (`09:23:11`, `09:23:45`, etc.). The test checks for `'Timestamps found: 6'` in the output.
-        - **`re.findall(r'ERROR.*', text)`:** `ERROR` matches the literal word; `.*` matches everything to the end of the line (`.` doesn't match `\n` by default in Python's `re`). This finds the 2 ERROR lines. The test checks for `'Errors: 2'`.
-        - **`re.sub(r'\d+\.\d+\.\d+\.\d+', 'x.x.x.x', text)`:** `\d+` matches one or more digits; `\.` matches a literal dot (unescaped `.` would match any character). This replaces both `192.168.1.42` and `10.0.0.7` with `x.x.x.x`. The tests check that `x.x.x.x` appears in the output and that `192.168.1.42` does not.
+        - **`re.findall(r'\d{2}:\d{2}:\d{2}', text)`:** `\d{2}` matches exactly two digits; the colons are literal. This finds all 6 sample timestamps. Checks compare the complete count record and also use a different log.
+        - **`re.findall(r'ERROR.*', text)`:** `ERROR` matches the literal text; `.*` consumes everything to the end of the line (`.` does not match `\n` by default). This returns 2 sample suffixes starting with ERROR and counts each matching line once.
+        - **`re.sub(r'\d+\.\d+\.\d+\.\d+', 'x.x.x.x', text)`:** `\d+` matches one or more digits; `\.` matches a literal dot. With no replacement limit, every address is redacted. Checks compare the complete redacted log so a second unredacted address or a changed non-IP sequence cannot pass.
         - **Raw strings (`r'...'`):** The `r` prefix keeps backslashes literal. For example, `r'\b'` reaches the regex engine as a word boundary, while `'\b'` is a backspace character. An unrecognized string escape such as `'\d'` keeps its backslash but can trigger a warning; raw strings avoid that ambiguity and double escaping.
         - **`f.read()` vs line-by-line:** This step uses `f.read()` to load the entire file as a string, because `re.findall()` and `re.sub()` operate on a string. This is fine for small log files; for very large files, you'd process line by line.
 
     tests:
-      - description: "Script runs without errors"
-        command: |
-          import os; os.chdir('/tutorial')
-          output = __run_capture('/tutorial/log_parser.py')
-      - description: "Used the re module to parse the log"
+      - description: "Uses the requested re.findall and re.sub operations, including imported aliases"
         command: |
           import ast
-          source = open('/tutorial/log_parser.py').read()
-          tree = ast.parse(source)
-          calls = [n for n in ast.walk(tree) if isinstance(n, ast.Call) and getattr(n.func, 'value', None) and getattr(n.func.value, 'id', None) == 're']
-          assert len(calls) > 0, "You must use the `re` module (e.g. re.findall or re.sub) to parse the log, rather than just printing the expected answers."
+          tree = ast.parse(open('/tutorial/log_parser.py').read())
+          modules, functions = set(), {}
+          for node in ast.walk(tree):
+              if isinstance(node, ast.Import):
+                  modules.update(alias.asname or alias.name for alias in node.names if alias.name == 're')
+              elif isinstance(node, ast.ImportFrom) and node.module == 're':
+                  functions.update({alias.asname or alias.name: alias.name for alias in node.names})
+          used = set()
+          for node in ast.walk(tree):
+              if isinstance(node, ast.Call):
+                  if isinstance(node.func, ast.Name):
+                      used.add(functions.get(node.func.id))
+                  elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in modules:
+                      used.add(node.func.attr)
+          assert {'findall', 'sub'} <= used, 'Use re.findall for extraction and re.sub for redaction; aliases are welcome.'
         hints:
-          - text: "This test checks that you used Python's pattern-matching module, not hardcoded answers. Which module was introduced in the step instructions for finding patterns in text?"
-            condition: "code_missing: import re"
-          - text: "You still have `import re` — good. The test checks for actual function calls on the text. Are you using `re.findall()` or `re.sub()` on the file contents?"
-            condition: "code_contains: import re"
-      - description: "Found all 6 timestamps"
+          - text: "Finding matches and replacing matches are separate operations."
+          - text: "findall returns the extracted matches; sub returns a new string with replacements."
+          - text: "Call both operations on the log text, then print the counts and the returned redacted string."
+      - description: "Reports complete counts and redacts every IP while preserving the rest of each log"
         command: |
-          import os; os.chdir('/tutorial')
-          output = __run_capture('/tutorial/log_parser.py')
-          assert 'Timestamps found: 6' in output, \
-              f"Expected 'Timestamps found: 6' in output, got: {repr(output)}"
+          import os, re
+          from pathlib import Path
+          os.chdir('/tutorial')
+          log = Path('/tutorial/log.txt')
+          original = log.read_text()
+          varied = '12:34:56 INFO peers 1.2.3.4 and 5.6.7.8; marker 1x2x3x4\n12:35:00 ERROR retry ERROR 1.2.3.4\n12:36:00 WARNING id 123-45-67-89\n'
+          try:
+              for contents, timestamps, errors in [(original, 6, 2), (varied, 3, 1), ('INFO no addresses here\n', 0, 0)]:
+                  log.write_text(contents)
+                  output = __run_capture('/tutorial/log_parser.py')
+                  lines = output.splitlines()
+                  assert len(lines) >= 2, 'Print both count records before the redacted log.'
+                  assert re.fullmatch(r'Timestamps found:\s*' + str(timestamps), lines[0].strip()), f'Incorrect timestamp count: {output!r}.'
+                  assert re.fullmatch(r'Errors:\s*' + str(errors), lines[1].strip()), f'Count ERROR lines, including each line only once: {output!r}.'
+                  expected = re.sub(r'\d+\.\d+\.\d+\.\d+', 'x.x.x.x', contents)
+                  assert '\n'.join(lines[2:]).rstrip('\n') == expected.rstrip('\n'), 'Redact every dotted IP and preserve all other log text, including non-IP digit sequences.'
+          finally:
+              log.write_text(original)
         hints:
-          - text: "Timestamps have a repeating pattern: two digits, a colon, two digits, a colon, two digits. Which `re` function finds *all* occurrences of a pattern?"
-            condition: "code_missing: findall"
-          - text: "You're using `findall` — good. Check your pattern: does it match exactly the `HH:MM:SS` format? Remember that `\\d` matches a single digit."
-            condition: "code_contains: findall"
-      - description: "Counted 2 ERROR lines"
-        command: |
-          import os; os.chdir('/tutorial')
-          output = __run_capture('/tutorial/log_parser.py')
-          assert 'Errors: 2' in output, \
-              f"Expected 'Errors: 2' in output, got: {repr(output)}"
-        hints:
-          - text: "How can you count occurrences of a specific word in text? You already used a function to find all pattern matches — the same approach works here."
-      - description: "Redacted IP addresses with re.sub()"
-        command: |
-          import os; os.chdir('/tutorial')
-          output = __run_capture('/tutorial/log_parser.py')
-          assert 'x.x.x.x' in output, \
-              f"Expected 'x.x.x.x' in redacted output, got: {repr(output)}"
-          assert '192.168.1.42' not in output, \
-              "IP address 192.168.1.42 should have been redacted"
-        hints:
-          - text: "You need to *replace* text that matches a pattern, not just find it. Which `re` function substitutes matches with a replacement string?"
-            condition: "code_missing: re.sub"
-          - text: "You're using `re.sub` — good. An IPv4 address is four groups of digits separated by dots. In regex, a plain `.` matches *any* character — how do you match a literal dot?"
-            condition: "code_contains: re.sub"
-
+          - text: "Check the counts separately from the redacted text. A line containing ERROR twice is still one ERROR line."
+          - text: "An unescaped dot matches any character. A literal dot requires an escape in the regex."
+          - text: "Do not limit sub to one replacement; print its complete returned string after the two count records."
     quiz:
       title: "Step 17 — Knowledge Check"
       min_score: 0.8
@@ -4689,7 +4728,7 @@ steps:
         - question: |
             *(Spaced review — List Comprehensions)*
 
-            Which expression produces `['ERROR Connection failed: timeout', 'ERROR Disk usage at 94%']`
+            Which expression keeps the complete ERROR lines, including their timestamps,
             from a variable `lines` containing all log lines as a list of strings?
           type: single
           options:
@@ -4701,8 +4740,8 @@ steps:
           explanation: |
             A list comprehension with a filter: `[line for line in lines if 'ERROR' in line]`.
             This is the same comprehension pattern — `[expr for var in iterable if condition]`.
-            Note: you could also use `re.findall(r'ERROR.*', text)` on the full text string
-            (as you just learned), but the list comprehension works on a list of lines.
+            In contrast, `re.findall(r'ERROR.*', text)` returns only the suffix beginning at
+            ERROR, omitting the timestamp before it. Matching a substring and keeping its whole line differ.
 
         # Pedagogy: delayed retrieval of the object model in a new context.
         - type: single
@@ -4738,6 +4777,7 @@ steps:
   #   Bloom's level      — Apply / Evaluate (quiz) + spaced review.
   # --------------------------------------------------------------------------
   - title: "sys.argv & stderr"
+    key: argv
     has_args: true
     has_stderr: true
     instructions: |
@@ -4860,64 +4900,52 @@ steps:
         - **`print(f"Total words: {total}")`:** Normal output goes to stdout (the default). The test checks stdout for `'Total words: 24'` when `data.txt` is passed. The word count logic is identical to the Reading Files exercise.
 
     tests:
-      - description: "Prints 'Reading: data.txt' to sys.stderr when given data.txt"
+      - description: "Reads the supplied filename and keeps totals on stdout and diagnostics on stderr"
         command: |
-          import sys, io, os; os.chdir('/tutorial')
+          import contextlib, io, os, re, runpy, sys, tempfile
+          from pathlib import Path
+          os.chdir('/tutorial')
           old_argv = sys.argv
-          sys.argv = ['safe_word_count.py', 'data.txt']
-          buf = io.StringIO()
-          old_err = sys.stderr
-          sys.stderr = buf
           try:
-              exec(open('/tutorial/safe_word_count.py').read(), {"__name__": "__main__"})
-          finally:
-              sys.stderr = old_err
-              sys.argv = old_argv
-          assert 'Reading: data.txt' in buf.getvalue(), \
-              f"Expected 'Reading: data.txt' in stderr, got: {repr(buf.getvalue())}"
-        hints:
-          - text: "Status messages should go to a different output stream than normal output. Which stream is for diagnostic messages? How does `print()` let you choose the destination?"
-            condition: "code_missing: sys.stderr"
-          - text: "You're printing to stderr — good. Is the message using the actual filename from the command-line argument, or is it hardcoded?"
-            condition: "code_contains: sys.stderr"
-      - description: "Counts words correctly (Total words: 24)"
-        command: |
-          import sys, os; os.chdir('/tutorial')
-          old_argv = sys.argv
-          sys.argv = ['safe_word_count.py', 'data.txt']
-          try:
-              output = __run_capture('/tutorial/safe_word_count.py')
+              with tempfile.TemporaryDirectory(dir='/tutorial') as directory:
+                  alternate = Path(directory) / 'different words.txt'
+                  for filename, contents, expected in [('data.txt', None, 24), (str(alternate), 'one  two\tthree\n\nfour\n', 4), (str(alternate), '', 0)]:
+                      if contents is not None:
+                          alternate.write_text(contents)
+                      sys.argv = ['safe_word_count.py', filename]
+                      out, err = io.StringIO(), io.StringIO()
+                      with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                          runpy.run_path('/tutorial/safe_word_count.py', run_name='__main__')
+                      assert re.fullmatch(r'Total words:\s*' + str(expected) + r'\s*', out.getvalue().strip()), f'Only the correct total belongs on stdout; got {out.getvalue()!r}.'
+                      assert err.getvalue().strip() == f'Reading: {filename}', f'Report the supplied filename on stderr; got {err.getvalue()!r}.'
           finally:
               sys.argv = old_argv
-          assert 'Total words: 24' in output, \
-              f"Expected 'Total words: 24', got: {repr(output)}"
         hints:
-          - text: "The word-counting logic is the same as the Reading Files exercise — but which file should you open? Where does the filename come from in this version?"
-      - description: "Exits with code 1 and prints error to stderr when no argument given"
+          - text: "The filename comes from sys.argv[1], so reading data.txt unconditionally cannot handle another file."
+          - text: "Count the contents of that filename; empty input has zero words."
+          - text: "Print Reading to stderr and the final Total words record to stdout. Do not print a diagnostic to both streams."
+      - description: "Missing arguments produce an error only on stderr and exit with code 1"
         command: |
-          import sys, io, os; os.chdir('/tutorial')
+          import contextlib, io, runpy, sys
           old_argv = sys.argv
-          sys.argv = ['safe_word_count.py']
-          buf = io.StringIO()
-          old_err = sys.stderr
-          sys.stderr = buf
-          exited = False
+          out, err = io.StringIO(), io.StringIO()
+          exit_code = None
           try:
-              exec(open('/tutorial/safe_word_count.py').read(), {"__name__": "__main__"})
-          except SystemExit as e:
-              exited = (e.code == 1)
+              sys.argv = ['safe_word_count.py']
+              with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                  try:
+                      runpy.run_path('/tutorial/safe_word_count.py', run_name='__main__')
+                  except SystemExit as error:
+                      exit_code = error.code
           finally:
-              sys.stderr = old_err
               sys.argv = old_argv
-          assert exited, "Script should call sys.exit(1) when no argument is given"
-          assert 'Error: no filename given' in buf.getvalue(), \
-              "Expected 'Error: no filename given' in stderr"
+          assert exit_code == 1, 'Exit with code 1 when the filename is missing.'
+          assert err.getvalue().strip() == 'Error: no filename given', 'Print the requested error on stderr.'
+          assert out.getvalue() == '', 'A missing filename must not produce normal output on stdout.'
         hints:
-          - text: "What happens if the user runs your script without providing a filename? You need to detect this case early and exit gracefully. How can you check how many arguments were provided?"
-            condition: "code_missing: sys.exit"
-          - text: "You have an exit call — good. Does the check happen *before* you try to access the filename? And does the error message go to the right output stream?"
-            condition: "code_contains: sys.exit"
-
+          - text: "Check the number of arguments before indexing sys.argv."
+          - text: "Report the missing filename through stderr, then exit before trying to read a file."
+          - text: "Use the no-argument branch to print Error: no filename given and exit with status 1."
     quiz:
       title: "Step 18 — Knowledge Check"
       min_score: 0.8
@@ -5071,12 +5099,13 @@ steps:
   #   Bloom's level      — Create (exercise) / Evaluate + Analyze (quiz).
   # --------------------------------------------------------------------------
   - title: "Capstone: Build a Log Analyzer"
+    key: capstone
     has_args: true
     has_stderr: true
     instructions: |
       ### Why this matters
 
-      You now have all the component skills — functions, file I/O, regex, list comprehensions, and command-line arguments. The hard part of programming is not learning each piece in isolation, but composing them into something that solves a real problem. This capstone is your chance to integrate everything you've learned with no scaffolding telling you what to type.
+      You have practiced functions, file I/O, regex, list comprehensions, and command-line arguments. One small tool below — a set — will let you count distinct addresses. Then this capstone asks you to compose these skills into a complete script.
 
       ### 🎯 You will learn to
 
@@ -5085,8 +5114,21 @@ steps:
 
       ## Putting It All Together
 
-      You now have all the component skills. This capstone integrates them into a single
-      real-world script — with **no scaffolding**. You decide how to structure the code.
+      ### One New Tool: Sets Keep Distinct Values
+
+      A `set` keeps each distinct hashable value once. Strings are hashable, so repeated IP strings are a good fit:
+
+      ```python
+      visitors = ['192.0.2.4', '192.0.2.4', '198.51.100.7']
+      unique_visitors = set(visitors)
+      print(len(visitors))         # 3 observations
+      print(len(unique_visitors))  # 2 distinct addresses
+      ```
+
+      A set does not promise a display order; count its elements instead of depending on that order. Predict the two counts after appending `'192.0.2.4'` to `visitors`, then rebuild the set and run the example. Explain why only the observation count grows.
+
+      Now integrate the practiced components and this set operation into a single
+      script. You decide how to structure the code.
 
       ### Task
 
@@ -5096,10 +5138,10 @@ steps:
 
       1. Accept a filename via `sys.argv[1]`. If missing, print an error to `stderr` and exit with code 1.
       2. Read the file and extract:
-         - The total number of log lines
-         - All unique IP addresses (use `re.findall()` and a `set`)
-         - The number of ERROR lines
-         - The number of WARNING lines
+         - The total number of log lines (an empty file has zero)
+         - All unique dotted IP addresses (use `re.findall()` and a `set`; use the four-digit-group pattern from the regex lesson, without octet-range validation)
+         - The number of lines containing ERROR (count each matching line once)
+         - The number of lines containing WARNING (count each matching line once)
       3. Print a summary report to **stdout** in this exact format:
          ```
          Log Analysis Report
@@ -5171,7 +5213,7 @@ steps:
 
             def print_report(text: str) -> None:
                 """Print the analysis report to stdout."""
-                lines = text.strip().splitlines()
+                lines = text.splitlines()
                 total = len(lines)
                 unique_ips = len(extract_ips(text))
                 errors = count_by_level(text, 'ERROR')
@@ -5192,113 +5234,91 @@ steps:
       explanation: |
         **Why this is correct:**
 
-        - **`parse_args()`:** Validates `sys.argv`, prints an error to `sys.stderr`, and calls `sys.exit(1)` if no argument is given. The test captures `SystemExit` and verifies the exit code is non-zero.
+        - **`parse_args()`:** Validates `sys.argv`, prints an error to `sys.stderr`, and calls `sys.exit(1)` if no argument is given. The check requires status 1 and no normal report on stdout.
         - **`read_log()`:** Prints `"Reading: <filename>"` to `sys.stderr` (the test captures stderr and checks for this). Returns the full file content as a string for regex processing.
-        - **`count_by_level(text, 'ERROR')`:** Uses `re.findall(r'ERROR.*', text)` — `.*` matches to end of line. The log has 2 ERROR and 1 WARNING line. Tests use regex `re.search(r'[Ee]rror.*2', output)` so the label can be `Errors:` or `errors:`.
+        - **`count_by_level(text, 'ERROR')`:** Uses `re.findall(r'ERROR.*', text)` — `.*` consumes the rest of that line, so another ERROR on the same line does not add a match. The sample has 2 ERROR and 1 WARNING line. Checks compare the complete report, including its header.
         - **`extract_ips(text)` with `set(...)`:** `re.findall()` returns all IP matches including duplicates. Wrapping in `set()` removes duplicates. `len(set(...))` is the Pythonic one-liner for counting unique items. The log has 2 unique IPs.
-        - **`total = len(text.strip().splitlines())`:** `splitlines()` splits on newlines and handles the trailing newline correctly (unlike `split('\n')` which would include an empty string). The log has 6 lines.
-        - **Function decomposition:** The capstone explicitly rewards a function-based design — each function has a single responsibility, making it testable and readable.
+        - **`total = len(text.splitlines())`:** `splitlines()` counts lines without adding an extra empty entry for a final newline. An empty string gives an empty list, and internal blank lines still count as lines. The sample has 6 lines.
+        - **Function decomposition:** These helpers give each subtask one responsibility. This is a suggested design, not a grading requirement; another clear structure is also valid.
         - **Type hints on every helper:** Each function carries the annotation pattern from Type Hints (`text: str`, `-> int`, `-> set[str]`, `-> None`). They don't change runtime behavior, but `mypy` would flag a caller that passed the wrong type.
 
     tests:
-      - description: "Script runs without errors when given server.log"
+      - description: "Uses re.findall and a set for unique IP extraction"
         command: |
-          import sys, os; os.chdir('/tutorial')
-          old_argv = sys.argv
-          sys.argv = ['log_analyzer.py', 'server.log']
-          try:
-              output = __run_capture('/tutorial/log_analyzer.py')
-          finally:
-              sys.argv = old_argv
-      - description: "Prints 'Reading: server.log' to stderr"
-        command: |
-          import sys, io, os; os.chdir('/tutorial')
-          old_argv = sys.argv
-          sys.argv = ['log_analyzer.py', 'server.log']
-          buf = io.StringIO()
-          old_err = sys.stderr
-          sys.stderr = buf
-          try:
-              exec(open('/tutorial/log_analyzer.py').read(), {"__name__": "__main__"})
-          finally:
-              sys.stderr = old_err
-              sys.argv = old_argv
-          assert 'Reading: server.log' in buf.getvalue(), \
-              f"Expected 'Reading: server.log' in stderr, got: {repr(buf.getvalue())}"
+          import ast
+          tree = ast.parse(open('/tutorial/log_analyzer.py').read())
+          modules, functions = set(), {}
+          for node in ast.walk(tree):
+              if isinstance(node, ast.Import):
+                  modules.update(alias.asname or alias.name for alias in node.names if alias.name == 're')
+              elif isinstance(node, ast.ImportFrom) and node.module == 're':
+                  functions.update({alias.asname or alias.name: alias.name for alias in node.names})
+          used = set()
+          for node in ast.walk(tree):
+              if isinstance(node, ast.Call):
+                  if isinstance(node.func, ast.Name):
+                      used.add(functions.get(node.func.id))
+                  elif isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name) and node.func.value.id in modules:
+                      used.add(node.func.attr)
+          assert 'findall' in used, 'Use re.findall to extract IP addresses; importing it under an alias is also valid.'
+          set_names = {'set'}
+          for node in ast.walk(tree):
+              if isinstance(node, ast.ImportFrom) and node.module == 'builtins':
+                  set_names.update(alias.asname or alias.name for alias in node.names if alias.name == 'set')
+          assert any(isinstance(node, (ast.Set, ast.SetComp)) or (isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in set_names) for node in ast.walk(tree)), 'Use a set to remove repeated IP addresses.'
         hints:
-          - text: "This follows the same diagnostic-output pattern as the sys.argv & stderr lesson. Where should diagnostic messages go? How did you handle this in the previous step?"
-      - description: "Reports 6 total lines"
+          - text: "Finding addresses can return repeated strings; a set keeps distinct values."
+          - text: "Use the regex extraction operation, then build a set from its matches."
+          - text: "Count the set's elements, rather than the length of the original match list."
+      - description: "Reports complete counts for the supplied file, including repeated IPs and empty logs"
         command: |
-          import sys, os, re; os.chdir('/tutorial')
+          import contextlib, io, os, runpy, sys, tempfile
+          from pathlib import Path
+          os.chdir('/tutorial')
           old_argv = sys.argv
-          sys.argv = ['log_analyzer.py', 'server.log']
+          varied = '10:00:00 INFO peer 1.2.3.4\n10:00:01 ERROR retry ERROR 1.2.3.4\n10:00:02 WARNING peers 5.6.7.8 and 1.2.3.4\n10:00:03 WARNING no address\n'
           try:
-              output = __run_capture('/tutorial/log_analyzer.py')
+              with tempfile.TemporaryDirectory(dir='/tutorial') as directory:
+                  alternate = Path(directory) / 'different server.log'
+                  for filename, contents, counts in [('server.log', None, (6, 2, 2, 1)), (str(alternate), varied, (4, 2, 1, 2)), (str(alternate), 'INFO started\n', (1, 0, 0, 0)), (str(alternate), '\nINFO start\n\n', (3, 0, 0, 0)), (str(alternate), '', (0, 0, 0, 0))]:
+                      if contents is not None:
+                          alternate.write_text(contents)
+                      sys.argv = ['log_analyzer.py', filename]
+                      out, err = io.StringIO(), io.StringIO()
+                      with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                          runpy.run_path('/tutorial/log_analyzer.py', run_name='__main__')
+                      total, unique, errors, warnings = counts
+                      expected = ['Log Analysis Report', '===================', f'Total lines:    {total}', f'Unique IPs:     {unique}', f'Errors:         {errors}', f'Warnings:       {warnings}']
+                      assert out.getvalue().splitlines() == expected, f'Use the requested complete report and exact counts; got {out.getvalue()!r}.'
+                      assert err.getvalue().strip() == f'Reading: {filename}', f'Report the supplied filename on stderr; got {err.getvalue()!r}.'
           finally:
               sys.argv = old_argv
-          assert re.search(r'[Tt]otal.*6', output), \
-              f"Expected total lines '6' in output, got: {repr(output)}"
         hints:
-          - text: "How do you count the lines in a string? Python strings have a method that splits on newlines. Be careful about trailing empty lines."
-      - description: "Reports 2 unique IPs"
+          - text: "Read the filename supplied by the caller; do not always open server.log."
+          - text: "Count lines, distinct IP strings, and lines containing each level. Repeated addresses must not increase the unique count."
+          - text: "Keep the report header and four complete count records on stdout. The Reading diagnostic belongs only on stderr."
+      - description: "Missing filenames produce stderr feedback and exit code 1 without a report"
         command: |
-          import sys, os, re; os.chdir('/tutorial')
+          import contextlib, io, runpy, sys
           old_argv = sys.argv
-          sys.argv = ['log_analyzer.py', 'server.log']
+          out, err = io.StringIO(), io.StringIO()
+          exit_code = None
           try:
-              output = __run_capture('/tutorial/log_analyzer.py')
+              sys.argv = ['log_analyzer.py']
+              with contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+                  try:
+                      runpy.run_path('/tutorial/log_analyzer.py', run_name='__main__')
+                  except SystemExit as error:
+                      exit_code = error.code
           finally:
               sys.argv = old_argv
-          assert re.search(r'[Uu]nique.*IP.*2', output), \
-              f"Expected unique IPs '2' in output, got: {repr(output)}"
+          assert exit_code == 1, 'Exit with code 1 when no filename is provided.'
+          assert err.getvalue().strip(), 'Explain the missing filename on stderr.'
+          assert out.getvalue() == '', 'Do not print a normal report when the filename is missing.'
         hints:
-          - text: "You already wrote a regex for IP addresses in the Regular Expressions lesson. How do you find all matches and then count only the *unique* ones? What Python data structure eliminates duplicates?"
-      - description: "Reports 2 errors"
-        command: |
-          import sys, os, re; os.chdir('/tutorial')
-          old_argv = sys.argv
-          sys.argv = ['log_analyzer.py', 'server.log']
-          try:
-              output = __run_capture('/tutorial/log_analyzer.py')
-          finally:
-              sys.argv = old_argv
-          assert re.search(r'[Ee]rror.*2', output), \
-              f"Expected error count '2' in output, got: {repr(output)}"
-        hints:
-          - text: "You counted errors in the Regular Expressions lesson. The same approach works here — find all occurrences of the error keyword and count them."
-      - description: "Reports 1 warning"
-        command: |
-          import sys, os, re; os.chdir('/tutorial')
-          old_argv = sys.argv
-          sys.argv = ['log_analyzer.py', 'server.log']
-          try:
-              output = __run_capture('/tutorial/log_analyzer.py')
-          finally:
-              sys.argv = old_argv
-          assert re.search(r'[Ww]arning.*1', output), \
-              f"Expected warning count '1' in output, got: {repr(output)}"
-        hints:
-          - text: "Same approach as counting errors — just a different keyword to search for."
-      - description: "Exits with code 1 when no argument given"
-        command: |
-          import sys, io, os; os.chdir('/tutorial')
-          old_argv = sys.argv
-          sys.argv = ['log_analyzer.py']
-          buf = io.StringIO()
-          old_err = sys.stderr
-          sys.stderr = buf
-          exited = False
-          try:
-              exec(open('/tutorial/log_analyzer.py').read(), {"__name__": "__main__"})
-          except SystemExit as e:
-              exited = (e.code == 1)
-          finally:
-              sys.stderr = old_err
-              sys.argv = old_argv
-          assert exited, "Script should call sys.exit(1) when no argument is given"
-          assert len(buf.getvalue().strip()) > 0, \
-              "Expected an error message to be printed to stderr"
-
+          - text: "Validate sys.argv before attempting to read the filename."
+          - text: "A missing argument is an error, so send feedback to stderr."
+          - text: "Exit with status 1 after the error, before entering the normal report path."
     quiz:
       title: "Step 19 — Knowledge Check"
       min_score: 0.8
@@ -5449,6 +5469,7 @@ steps:
   #   Bloom's level      — Apply (write dataclass) / Evaluate (when to use frozen).
   # --------------------------------------------------------------------------
   - title: "Data Classes"
+    key: dataclasses
     instructions: |
       ### Why this matters
 
@@ -5567,7 +5588,7 @@ steps:
       p.x = 99
       ```
 
-      Predict the exception type, then try it. `FrozenInstanceError` is a subclass of `AttributeError`. Its more specific name identifies the frozen-dataclass restriction.
+      Predict the exception type, then try it. Comment the deliberate failing assignment back out before Test My Work. After running, compare: `FrozenInstanceError` is a subclass of `AttributeError`; its more specific name identifies the frozen-dataclass restriction.
 
       ### Task
 
@@ -5578,7 +5599,7 @@ steps:
       3. **TODO 3.** Add a `@property distance_to_origin` that returns `(x**2 + y**2) ** 0.5` annotated `-> float`.
       4. **TODO 4 (independent practice).** Below `Point`, define a *new* frozen dataclass `RGB` with three `int` fields `r`, `g`, `b` and a `@property as_hex` that returns the lowercase 7-character hex string (e.g., `RGB(255, 128, 0).as_hex == '#ff8000'`). Use the f-string format `f'{r:02x}'` (Variables, Types & f-Strings spaced review) for two-digit hex. No further hints — this one is on you.
 
-      *Stretch (optional):* uncomment the mutation probe at the bottom and observe the `FrozenInstanceError`.
+      *Stretch (optional):* uncomment both lines of the mutation probe at the bottom, observe the `FrozenInstanceError`, then comment them back out before Test My Work.
 
     files:
       - path: "geometry.py"
@@ -5610,8 +5631,10 @@ steps:
           # print(a.distance_to_origin)  # 5.0 (computed)
           # print(RGB(255, 128, 0).as_hex)  # '#ff8000'
 
-          # Predict-before-run probe (uncomment after TODO 2):
-          # a.x = 99                     # What exception type does this raise?
+          # Predict-before-run probe (uncomment both lines after TODO 2):
+          # probe = Point(3, 4)
+          # probe.x = 99                 # What exception type does this raise?
+          # Comment the probe back out before Test My Work.
         language: "python"
 
     open_file: "geometry.py"
@@ -5674,139 +5697,61 @@ steps:
         - **`PointManual` stays in the file** as a contrast — it shows what the decorator saved you from writing.
 
     tests:
-      - description: "Point is defined and constructible"
+      - description: "Point and RGB are frozen dataclasses with the requested int fields"
         command: |
           import sys
+          from dataclasses import FrozenInstanceError, is_dataclass
+          from typing import get_type_hints
+          sys.modules.pop('geometry', None)
+          from geometry import Point, RGB
+          for cls, names, values in [(Point, ('x', 'y'), (3, 4)), (RGB, ('r', 'g', 'b'), (255, 128, 0))]:
+              assert is_dataclass(cls) and cls.__dataclass_params__.frozen, f'{cls.__name__} must be a frozen dataclass.'
+              annotations = get_type_hints(cls)
+              assert all(annotations.get(name) is int for name in names), f'Annotate every requested {cls.__name__} field with int.'
+              instance = cls(*values)
+              assert tuple(getattr(instance, name) for name in names) == values, 'Store the supplied field values.'
+              for name in names:
+                  try:
+                      setattr(instance, name, 99)
+                  except FrozenInstanceError:
+                      pass
+                  else:
+                      raise AssertionError(f'Assignment to {name} should raise FrozenInstanceError.')
+        hints:
+          - text: "Define both classes with annotated fields and use the dataclass decorator."
+          - text: "Field types are int; frozen=True controls later field assignment, not runtime type enforcement."
+          - text: "After trying a deliberate mutation probe, comment that probe out before Test My Work."
+      - description: "Point equality compares both fields and distance is a float property for varied coordinates"
+        command: |
+          import inspect, math, sys
+          from typing import get_type_hints
           sys.modules.pop('geometry', None)
           from geometry import Point
-          p = Point(3, 4)
-          assert p.x == 3 and p.y == 4, f"Point(3, 4) should have x=3, y=4; got x={p.x}, y={p.y}"
+          assert Point(3, 4) == Point(3, 4), 'Equal coordinates must compare equal.'
+          assert Point(3, 4) != Point(4, 4) and Point(3, 4) != Point(3, 5), 'Both coordinates participate in equality.'
+          descriptor = inspect.getattr_static(Point, 'distance_to_origin')
+          assert isinstance(descriptor, property), 'Expose distance_to_origin with @property.'
+          assert get_type_hints(descriptor.fget).get('return') is float, 'Annotate the distance return type as float.'
+          for x, y in [(3, 4), (0, 0), (0, -7), (-3, 4), (1, 1), (2, -5)]:
+              distance = Point(x, y).distance_to_origin
+              assert isinstance(distance, float) and math.isclose(distance, math.hypot(x, y), rel_tol=1e-12, abs_tol=1e-12), f'Incorrect distance for Point({x}, {y}): {distance!r}.'
         hints:
-          - text: "You need to define a class called `Point`. Use `@dataclass` so you don't have to write `__init__` by hand."
-            condition: "code_missing: class Point"
-          - text: "Have you imported `dataclass` from the `dataclasses` module? Look at the top of the file."
-            condition: "code_missing: from dataclasses"
-
-      - description: "Point uses @dataclass with frozen=True"
+          - text: "Distance depends on both coordinates and is never negative."
+          - text: "Test an axis point and a non-integral distance, not only the 3-4-5 triangle. Do not round the result."
+          - text: "Square both coordinates, add the squares, and take the square root; keep the -> float annotation and @property."
+      - description: "RGB.as_hex is a property with correct lowercase channels and leading zeroes"
         command: |
-          import sys
-          from dataclasses import is_dataclass
-          sys.modules.pop('geometry', None)
-          from geometry import Point
-          assert is_dataclass(Point) and Point.__dataclass_params__.frozen, \
-              "Point should be a frozen dataclass. Freezing blocks field assignment; eq=True separately provides field equality."
-        hints:
-          - text: "Pass `frozen=True` to the decorator: `@dataclass(frozen=True)`."
-            condition: "code_missing: frozen"
-
-      - description: "Two Points with equal fields compare equal (free __eq__)"
-        command: |
-          import sys
-          sys.modules.pop('geometry', None)
-          from geometry import Point
-          assert Point(3, 4) == Point(3, 4), \
-              "Point(3, 4) should equal Point(3, 4) — @dataclass writes a structural __eq__ for you."
-          assert Point(3, 4) != Point(3, 5), \
-              "Point(3, 4) should NOT equal Point(3, 5)."
-        hints:
-          - text: "If equality is failing, check that you used `@dataclass` — the decorator writes `__eq__` based on field values."
-
-      - description: "Point is immutable: assignment raises FrozenInstanceError"
-        command: |
-          import sys
-          sys.modules.pop('geometry', None)
-          from dataclasses import FrozenInstanceError
-          from geometry import Point
-          p = Point(3, 4)
-          try:
-              p.x = 99
-              raise AssertionError("Expected FrozenInstanceError when assigning to a frozen Point's field, but the assignment succeeded.")
-          except FrozenInstanceError:
-              pass
-        hints:
-          - text: "If `p.x = 99` succeeds silently, your `Point` is not frozen. Add `frozen=True` to the decorator: `@dataclass(frozen=True)`."
-
-      - description: "distance_to_origin uses @property (not a method call)"
-        command: |
-          source = open('/tutorial/geometry.py').read()
-          assert '@property' in source, \
-              "Use @property on distance_to_origin so callers can read it as an attribute (`p.distance_to_origin`, no parens)."
-        hints:
-          - text: "How does the test access `distance_to_origin` — with or without parentheses? That is the clue: with `@property`, no parens; without, you have to call it as a method."
-            condition: "code_missing: @property"
-
-      - description: "Point(3, 4).distance_to_origin == 5.0"
-        command: |
-          import sys
-          sys.modules.pop('geometry', None)
-          from geometry import Point
-          p = Point(3, 4)
-          d = p.distance_to_origin
-          # Read as an attribute, not a method — should be a float, not a bound method
-          assert isinstance(d, float), \
-              f"`p.distance_to_origin` should be a float; got {type(d).__name__}. Did you forget @property?"
-          assert d == 5.0, \
-              f"Expected 5.0 for the 3-4-5 triangle; got {d}"
-        hints:
-          - text: "The classic 3-4-5 triangle: sqrt(3**2 + 4**2) = sqrt(25) = 5.0. Use `**` for exponentiation and `** 0.5` for square root."
-            condition: "code_missing: **"
-
-      - description: "AST check: there is a class with a dataclass decorator"
-        command: |
-          import ast
-          src = open('/tutorial/geometry.py').read()
-          tree = ast.parse(src)
-          found = False
-          for node in ast.walk(tree):
-              if isinstance(node, ast.ClassDef) and node.name == 'Point':
-                  for dec in node.decorator_list:
-                      # @dataclass — Name node
-                      if isinstance(dec, ast.Name) and dec.id == 'dataclass':
-                          found = True
-                      # @dataclass(...) — Call node with func=Name('dataclass')
-                      if isinstance(dec, ast.Call) and isinstance(dec.func, ast.Name) and dec.func.id == 'dataclass':
-                          found = True
-          assert found, "Point should be decorated with @dataclass (or @dataclass(frozen=True))"
-
-      - description: "TODO 4: RGB is defined as a frozen dataclass with int fields r, g, b"
-        command: |
-          import sys
-          sys.modules.pop('geometry', None)
-          from dataclasses import FrozenInstanceError
-          from geometry import RGB
-          c = RGB(255, 128, 0)
-          assert c.r == 255 and c.g == 128 and c.b == 0, \
-              f"RGB(255, 128, 0) should have r=255, g=128, b=0; got r={c.r}, g={c.g}, b={c.b}"
-          # Verify frozen
-          try:
-              c.r = 0
-              raise AssertionError("RGB should be frozen — assignment to .r should raise FrozenInstanceError")
-          except FrozenInstanceError:
-              pass
-        hints:
-          - text: "TODO 4 asks for a *new* dataclass `RGB` separate from `Point`. Same recipe — `@dataclass(frozen=True)` and three annotated `int` fields."
-            condition: "code_missing: class RGB"
-
-      - description: "TODO 4: RGB.as_hex returns the lowercase 7-character hex string"
-        command: |
-          import sys
+          import inspect, sys
           sys.modules.pop('geometry', None)
           from geometry import RGB
-          c = RGB(255, 128, 0)
-          h = c.as_hex
-          assert isinstance(h, str), \
-              f"as_hex should be a str (and a @property, not a method); got {type(h).__name__}. Did you forget @property?"
-          assert h == '#ff8000', \
-              f"RGB(255, 128, 0).as_hex should be '#ff8000'; got {h!r}. Use f'{{self.r:02x}}' for two-digit lowercase hex."
-          # Edge cases — leading zeros and pure black
-          assert RGB(0, 0, 0).as_hex == '#000000', \
-              f"RGB(0, 0, 0).as_hex should be '#000000'; got {RGB(0, 0, 0).as_hex!r}. The :02x spec pads single digits."
-          assert RGB(15, 15, 15).as_hex == '#0f0f0f', \
-              f"RGB(15, 15, 15).as_hex should be '#0f0f0f'; got {RGB(15, 15, 15).as_hex!r}."
+          assert isinstance(inspect.getattr_static(RGB, 'as_hex'), property), 'Expose as_hex with @property.'
+          for values, expected in [((255, 128, 0), '#ff8000'), ((0, 0, 0), '#000000'), ((15, 15, 15), '#0f0f0f'), ((1, 16, 254), '#0110fe')]:
+              result = RGB(*values).as_hex
+              assert result == expected, f'For RGB{values}, expected {expected}, got {result!r}.'
         hints:
-          - text: "f-string format specs: `f'{{x:02x}}'` formats `x` as lowercase hex padded to 2 digits. The full hex string concatenates all three: `f'#{{r:02x}}{{g:02x}}{{b:02x}}'`."
-            condition: "code_missing: 02x"
-
+          - text: "Each channel occupies two lowercase hexadecimal digits, in r, g, b order."
+          - text: "Values below 16 require a leading zero, including zero itself."
+          - text: "Use the :02x format for each channel and place one # before all three."
     quiz:
       title: "Step 20 — Knowledge Check"
       min_score: 0.8

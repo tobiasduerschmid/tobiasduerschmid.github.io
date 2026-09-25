@@ -140,6 +140,28 @@ test('Python learners can skip the final knowledge check without claiming comple
   expect(progress.stepsUnlocked).not.toContain(steps.length);
 });
 
+test('Python final knowledge check records its own pass and finishes review', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto(TUTORIAL_URL);
+  await waitForTutorialReady(page);
+  await page.getByRole('button', {
+    name: `Step ${steps.length}: ${steps.at(-1).title}`, exact: true,
+  }).click();
+  await expectActiveStep(page, steps.length - 1);
+  await page.getByRole('button', { name: /^Next →$/ }).click();
+  await a11yCheckpoint(page, 'Python final knowledge check', { feature: A11Y_FEATURE, darkMode: true });
+  await answerQuizCorrectly(page);
+  const finish = page.getByRole('button', { name: 'Finish Review', exact: true });
+  await expect(finish).toBeVisible();
+  await a11yCheckpoint(page, 'Python final quiz results', { feature: A11Y_FEATURE, darkMode: true });
+  await finish.click();
+  await expect(page.getByRole('heading', { name: 'Review Finished', exact: true })).toBeVisible();
+  const progress = await page.evaluate(() => JSON.parse(localStorage.getItem('tutorial-progress-python')));
+  expect(progress.quizPassed).toEqual([steps.length - 1]);
+  expect(progress.stepsPassed).toEqual([]);
+  expect(progress.stepsUnlocked).not.toContain(steps.length);
+});
+
 // =============================================================================
 // Block 1 – Structure, navigation, run/clear, editor
 // =============================================================================
@@ -354,6 +376,7 @@ test.describe.serial('Python Tutorial — step-by-step', () => {
         await a11yCheckpoint(page, `python tutorial — step ${i + 1} quiz results`, { feature: A11Y_FEATURE, darkMode: true });
         await page.locator('.tvm-quiz-continue-btn').click();
         await expect(page.locator('.tvm-quiz-panel')).toBeHidden({ timeout: 5_000 });
+        await expectActiveStep(page, i + 1);
       });
     }
   }

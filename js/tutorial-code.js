@@ -623,6 +623,15 @@
     this.steps = backend === 'prolog'
       ? steps.map(this._normalizePrologStep.bind(this))
       : steps;
+    this.progressVersion = options.progressVersion || null;
+    this.legacyStepKeys = options.legacyStepKeys || [];
+    this._progressMigrationNotice = '';
+    if (this.progressVersion) {
+      const keys = this.steps.map(step => step.key);
+      if (keys.some(key => typeof key !== 'string' || !key) || new Set(keys).size !== keys.length) {
+        throw new Error('Versioned tutorial progress requires a unique key on every step.');
+      }
+    }
     this.setupCommandsByBackend = options.setupCommandsByBackend || {};
     this.setupCommands = mixedBackendMode ? [] : (options.setupCommands || []);
     this._declaredBackends = declaredBackends;
@@ -1184,8 +1193,12 @@
           var userAutosavePref = localStorage.getItem('tutorial-autosave');
           var userAutosaveOn = userAutosavePref !== 'false';
           if (!userAutosaveOn) self.autoSaveEnabled = false; // keep in sync before navbar wires up
-          var saved = (hashStep < 0 && self.allowAutosave && userAutosaveOn) ? self._loadSavedProgress() : null;
+          var saved = ((hashStep < 0 || self.progressVersion) && self.allowAutosave && userAutosaveOn)
+            ? self._loadSavedProgress() : null;
           if (saved) {
+            // Stable deep links select the destination without discarding saved
+            // completion records when the learner reloads a versioned tutorial.
+            if (hashStep >= 0) saved.step = hashStep;
             // An older gated save must not restrict a now freely navigable tutorial.
             if (saved.stepsUnlocked && !self.allowSkipSteps) self._stepsUnlocked = new Set(saved.stepsUnlocked);
             // Always ensure all steps up to the saved step are unlocked
@@ -10613,6 +10626,79 @@
     return 'tutorial-progress-' + this.tutorialId;
   };
 
+  TutorialCode.prototype._withProgressIdentity = function (data) {
+    if (!this.progressVersion) return data;
+    return Object.assign({}, data, {
+      progressVersion: this.progressVersion,
+      stepKeys: this.steps.map(step => step.key)
+    });
+  };
+
+  // Unversioned previews and the older published tutorial can share one key.
+  // Infer an ordering only from evidence that distinguishes those layouts.
+  TutorialCode.prototype._inferSavedStepKeys = function (data) {
+    const currentKeys = this.steps.map(step => step.key);
+    if (Array.isArray(data.stepKeys) && data.stepKeys.length &&
+        data.stepKeys.every(key => typeof key === 'string' && key) &&
+        new Set(data.stepKeys).size === data.stepKeys.length) return data.stepKeys;
+    if (data.progressVersion !== undefined || data.stepKeys !== undefined || !this.legacyStepKeys.length) return null;
+
+    const legacyLength = this.legacyStepKeys.length;
+    const legacySteps = this.legacyStepKeys.map(key => this.steps.find(step => step.key === key));
+    const legacyFiles = new Set(legacySteps.flatMap(step => (step && step.files || []).map(file => file.path)));
+    const currentFiles = new Set(this.steps.flatMap(step => (step.files || []).map(file => file.path)));
+    const savedFiles = Object.keys(data.files || {}).concat(data.activeFile || []);
+    const hasNewFile = savedFiles.some(name => currentFiles.has(name) && !legacyFiles.has(name));
+    const isNewIndex = index => Number.isInteger(index) && index >= legacyLength && index < currentKeys.length;
+    const hasNewIndex = isNewIndex(data.step) ||
+      ['stepsVisited', 'stepsPassed', 'quizPassed'].some(field =>
+        Array.isArray(data[field]) && data[field].some(isNewIndex));
+    // Older versions could unlock one sentinel beyond their final step.
+    const hasNewUnlock = Array.isArray(data.stepsUnlocked) && data.stepsUnlocked.some(index =>
+      Number.isInteger(index) && index > legacyLength && index <= currentKeys.length);
+    if (hasNewFile || hasNewIndex || hasNewUnlock) return currentKeys;
+
+    const containsActiveFile = step => !!(data.activeFile && step &&
+      (step.files || []).some(file => file.path === data.activeFile));
+    const matchesCurrent = containsActiveFile(this.steps[data.step]);
+    const matchesLegacy = containsActiveFile(legacySteps[data.step]);
+    if (matchesCurrent !== matchesLegacy) return matchesCurrent ? currentKeys : this.legacyStepKeys;
+    return null;
+  };
+
+  /** Remap lesson records without changing or discarding any saved file. */
+  TutorialCode.prototype._remapSavedProgress = function (data) {
+    if (!this.progressVersion) return data;
+    const currentKeys = this.steps.map(step => step.key);
+    const savedKeys = this._inferSavedStepKeys(data);
+    // Ambiguous records are trustworthy only where both layouts name the same
+    // lesson. Never transfer an old pass just because its number is in range.
+    const isUnversioned = data.progressVersion === undefined && data.stepKeys === undefined;
+    const trustedKeys = savedKeys || currentKeys.map((key, index) =>
+      isUnversioned && key === this.legacyStepKeys[index] ? key : null);
+    const remapIndex = index => Number.isInteger(index) && index >= 0
+      ? currentKeys.indexOf(trustedKeys[index]) : -1;
+    const remapped = Object.assign({}, data);
+    ['stepsUnlocked', 'stepsVisited', 'stepsPassed', 'quizPassed'].forEach(field => {
+      const indices = Array.isArray(data[field]) ? data[field] : [];
+      remapped[field] = [...new Set(indices.map(remapIndex).filter(index => index >= 0))];
+    });
+    remapped.step = remapIndex(data.step);
+    if (remapped.step < 0) {
+      const fileMatches = this.steps.map((step, index) => step.open_file === data.activeFile ? index : -1)
+        .filter(index => index >= 0);
+      remapped.step = fileMatches.length === 1 ? fileMatches[0] : 0;
+    }
+    const changedOrder = !savedKeys || savedKeys.length !== currentKeys.length ||
+      savedKeys.some((key, index) => key !== currentKeys[index]);
+    if (!data.stepKeys || changedOrder) {
+      this._progressMigrationNotice = savedKeys
+        ? 'This tutorial has been updated. Your saved code and progress for matching lessons have been preserved. Use the step navigation to explore the added lessons.'
+        : 'This tutorial has been updated. Your saved code has been preserved, but some old completion records could not be matched confidently to lessons. Those lessons need rechecking; you can still choose any lesson and skip optional checks.';
+    }
+    return this._withProgressIdentity(remapped);
+  };
+
   /**
    * Full save: persists step, unlock state, and only files changed from original.
    *
@@ -10662,7 +10748,7 @@
       quizPassed: Array.from(this._quizPassed)
     };
     try {
-      localStorage.setItem(this._storageKey(), JSON.stringify(data));
+      localStorage.setItem(this._storageKey(), JSON.stringify(this._withProgressIdentity(data)));
       return true;
     } catch (e) {
       console.warn('TutorialCode: could not save progress', e);
@@ -10686,7 +10772,7 @@
 
     try {
       var raw = localStorage.getItem(this._storageKey());
-      var data = raw ? JSON.parse(raw) : {};
+      var data = raw ? this._remapSavedProgress(JSON.parse(raw)) : {};
       if (!data.files) data.files = {};
       if (original !== undefined && current === original) {
         delete data.files[filename];
@@ -10695,7 +10781,7 @@
       }
       data.step = this.currentStep;
       data.activeFile = this.activeFileName;
-      localStorage.setItem(this._storageKey(), JSON.stringify(data));
+      localStorage.setItem(this._storageKey(), JSON.stringify(this._withProgressIdentity(data)));
       return true;
     } catch (e) {
       console.warn('TutorialCode: could not save file', e);
@@ -10710,7 +10796,7 @@
     try {
       var raw = localStorage.getItem(this._storageKey());
       if (!raw) return null;
-      var data = JSON.parse(raw);
+      var data = this._remapSavedProgress(JSON.parse(raw));
       if (typeof data.step !== 'number' || data.step < 0 || data.step >= this.steps.length) return null;
       return data;
     } catch (e) {
@@ -12428,6 +12514,10 @@
   TutorialCode.prototype._stepInstructionsHTML = function (step) {
     if (!step) return '';
     var html = this._renderSummaryInlineMarkdown(step.instructionsHTML || this._renderMarkdown(step.instructions || ''));
+    if (this._progressMigrationNotice) {
+      html = '<p role="status" aria-label="Saved progress update">' +
+        this._escapeHtml(this._progressMigrationNotice) + '</p>' + html;
+    }
     return this._autoAbbrHtml(html);
   };
 

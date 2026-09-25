@@ -848,6 +848,10 @@ user_command_listener: string | null   # JS callback name for command events
 # === Autosave / progress / reset ===
 autosave_type: files | commands-and-files | none | false    # default: files
 reset_type:    files | commands                       # default: files
+progress_version: integer | null                     # opt-in stable lesson identity
+legacy_step_keys: [string]                           # original unversioned lesson order
+# Versioned progress requires a unique, stable `key` on EVERY step. Keep keys
+# when editing titles or moving lessons; do not reuse a removed lesson's key.
 # autosave: what is persisted to localStorage between visits.
 #   files                 — current contents of every editor.
 #   commands-and-files    — also replay saved solution commands on restore.
@@ -1794,7 +1798,7 @@ If you add a backend, update this table.
 
 ### 4.7 Autosave / progress storage
 
-Per-tutorial localStorage key: `tutorial-<tutorialId>` →
+Per-tutorial localStorage key: `tutorial-progress-<tutorialId>` →
 
 ```json
 {
@@ -1803,7 +1807,10 @@ Per-tutorial localStorage key: `tutorial-<tutorialId>` →
   "quizPassed": [0],
   "stepsUnlocked": [0, 1, 2],
   "stepsVisited": [0, 1],
-  "files": { "path": "content" }
+  "files": { "example.py": { "content": "...", "language": "python" } },
+  "activeFile": "example.py",
+  "progressVersion": 2,
+  "stepKeys": ["hello", "references", "functions"]
 }
 ```
 
@@ -1812,6 +1819,30 @@ keys. **If you change the persistence schema, also update**:
 `js/tutorial-code.js` (the storage code), the SE Gym import/export UI in
 `se-gym.html`, the storage inventory at `/cookies/` (per
 `cookie-storage-tracker` skill), and this skill.
+
+`progress_version` opts a tutorial into stable lesson identity. The numeric
+fields remain available to SE Gym and existing exports; `stepKeys` records the
+ordered step `key` values that give those numbers meaning. On restore, records
+are mapped by key, so inserted lessons do not inherit unrelated test/quiz passes.
+Deep links select the resume step without discarding restored completion records.
+Tutorials without this option retain the existing numeric behavior.
+
+Python also supplies `legacy_step_keys` for its original 12-step ordering. Before
+versioning, both that ordering and the expanded ordering could produce saves.
+New-only filenames, indices outside the legacy range, or an active file matching
+only one candidate step distinguish them. The legacy one-past-last unlocked
+sentinel is not evidence of the expanded ordering. If neither layout is certain,
+only records whose positions mean the same lesson in both layouts survive;
+resume uses a uniquely matching `open_file`, otherwise the first lesson. All
+file overrides, including unknown filenames, remain in storage. An accessible
+notice appears in the resumed instructions and popout during that visit, explaining
+preservation or the need to recheck uncertain progress. Saving stamps the current
+identity metadata, so reload does not migrate a second time. No check becomes
+mandatory. Python has no legacy timed-practice/cooldown records to migrate;
+reordering other timed tutorials requires separately handling those stores.
+
+SE Gym's import/export preserves each progress object, including this metadata,
+without changing its export envelope. Fresh saves do not show a migration notice.
 
 `TutorialCode.saveProgress()` returns `true` only after `localStorage`
 accepts the complete write and returns `false` when persistence is disabled
