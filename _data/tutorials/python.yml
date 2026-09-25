@@ -522,7 +522,7 @@ steps:
 
       ### Every Value Is an Object
 
-      **Plan for 7–10 minutes.** Every Python object has an identity, a type, and a value. Names refer to objects — including `int`, `float`, `bool`, and `str` objects. There is no separate "primitive variables store values, class variables store references" rule.
+      Every Python object has an identity, a type, and a value. Names refer to objects — including `int`, `float`, `bool`, and `str` objects. There is no separate "primitive variables store values, class variables store references" rule.
 
       `second = first` binds another name to the same object; it does not copy the object. `first = something_else` **rebinds** only `first`. Unlike a C++ reference declaration, a Python name can later refer to a different object, even one of another type. Python manages object allocation; you do not choose stack versus heap allocation with declaration syntax or call `delete`.
 
@@ -1264,7 +1264,7 @@ steps:
 
       ### A List Stores References
 
-      **Plan for 9–12 minutes.** A Python list is a mutable sequence of references to objects. It can be heterogeneous: `["Opening", 25, None]` holds references to a string, an integer, and `None`. A nested list is another object reached through an element, not an automatically embedded copy.
+      A Python list is a mutable sequence of references to objects. It can be heterogeneous: `["Opening", 25, None]` holds references to a string, an integer, and `None`. A nested list is another object reached through an element, not an automatically embedded copy.
 
       CPython, the implementation underlying this tutorial's Python runtime, uses a dynamically allocated array of object references. Its capacity can grow; this is not a C++ array of inline, fixed-type values. The language-level lesson is which objects are shared, independent of the implementation's allocation details.
 
@@ -1512,7 +1512,7 @@ steps:
 
       ### Construction and Method Calls
 
-      **Plan for 9–12 minutes.** An ordinary class groups state with methods that use it:
+      An ordinary class groups state with methods that use it:
 
       ```python
       class Artist:
@@ -1789,7 +1789,7 @@ steps:
 
       ### The Class Is an Object Too
 
-      **Plan for 10–12 minutes.** Executing a `class` statement creates a class object and binds its name. Its body defines class attributes and functions. Calling the class normally creates an instance, then initializes it with `__init__`.
+      Executing a `class` statement creates a class object and binds its name. Its body defines class attributes and functions. Calling the class normally creates an instance, then initializes it with `__init__`.
 
       ```python
       class StageBadge:
