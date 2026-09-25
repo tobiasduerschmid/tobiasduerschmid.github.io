@@ -31,7 +31,7 @@ const A11Y_FEATURE = 'sql-tutorial';
  *           answers the quiz, and advances to the next step.
  */
 
-const TUTORIAL_URL     = '/SEBook/tools/sql-tutorial';
+const TUTORIAL_URL     = '/SEBook/tools/sql-tutorial.html';
 const BOOT_TIMEOUT     = 30_000;
 const TEST_RUN_TIMEOUT = 20_000;
 
@@ -127,6 +127,13 @@ test.describe.serial('SQL Tutorial', () => {
     await expect(tabs.first()).toBeVisible({ timeout: 10_000 });
     expect(await tabs.count()).toBeGreaterThanOrEqual(1);
     await expect(page.locator('.tvm-editor-container')).toBeVisible();
+  });
+
+  test('SQL editor announces its language to assistive technology', async () => {
+    await expect(page.locator('.tvm-tab').filter({ hasText: 'query.sql' })).toBeVisible();
+    const editor = page.locator('.tvm-editor-container .monaco-editor textarea.inputarea').first();
+    await expect(editor).toBeVisible();
+    await expect(editor).toHaveAccessibleName(/\bSQL code editor\b/);
   });
 
   // --- Run / clear ---

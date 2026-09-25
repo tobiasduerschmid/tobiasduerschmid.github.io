@@ -43,16 +43,50 @@ for (const { path, name } of PAGES) {
   });
 }
 
-test('skip-to-main-content link exists and points at #main-content', async ({ page }) => {
-  await page.goto('/');
-  const skipLink = page.locator('a.skip-link');
-  await expect(skipLink).toHaveCount(1);
-  const href = await skipLink.getAttribute('href');
-  expect(href).toBe('#main-content');
-});
+for (const { path, name, nextTabInsideMain } of [
+  { path: '/', name: 'Home' },
+  { path: '/blog/how-should-i-use-ai-as-a-college-student/', name: 'Blog post' },
+  { path: '/SEBook/requirements.html', name: 'SEBook chapter' },
+  { path: '/settings/', name: 'Settings' },
+  { path: '/shortcuts/', name: 'Shortcuts' },
+  // This read-only gallery has no focusable descendants inside main.
+  { path: '/test-uml.html', name: 'UML renderer gallery', nextTabInsideMain: false },
+  { path: '/test-uml-js.html', name: 'JavaScript UML analyzer gallery' },
+]) {
+  test(`${name}: keyboard skip link moves focus into main content`, async ({ page }) => {
+    await page.goto(path);
+    const skipLink = page.getByRole('link', { name: 'Skip to main content' });
+    const main = page.locator('main#main-content');
 
-test('main content landmark has id="main-content"', async ({ page }) => {
-  await page.goto('/');
-  const mainContent = page.locator('#main-content');
-  await expect(mainContent).toHaveCount(1);
+    await page.keyboard.press('Tab');
+    await expect(skipLink).toBeFocused();
+    await expect(skipLink).toHaveAttribute('href', '#main-content');
+    await page.keyboard.press('Enter');
+    await expect(main).toBeFocused();
+
+    if (nextTabInsideMain !== false) {
+      await page.keyboard.press('Tab');
+      expect(await main.evaluate((element) => element.contains(document.activeElement)))
+        .toBe(true);
+    }
+  });
+}
+
+test('pencil gallery keyboard comparison describes the active image in both states', async ({ page }) => {
+  await page.goto('/pencilhatching.html');
+  const comparison = page.locator('#carousel-example-generic .item.active img.ph-compare');
+  await expect(comparison).toHaveAccessibleName(/pencil drawing.*church/i);
+  await expect(comparison).toHaveAttribute('aria-pressed', 'false');
+  const drawingSrc = await comparison.getAttribute('src');
+
+  await comparison.focus();
+  await page.keyboard.down('Enter');
+  await expect(comparison).toHaveAccessibleName(/original photograph.*church/i);
+  await expect(comparison).toHaveAttribute('aria-pressed', 'true');
+  expect(await comparison.getAttribute('src')).not.toBe(drawingSrc);
+
+  await page.keyboard.up('Enter');
+  await expect(comparison).toHaveAccessibleName(/pencil drawing.*church/i);
+  await expect(comparison).toHaveAttribute('aria-pressed', 'false');
+  await expect(comparison).toHaveAttribute('src', drawingSrc);
 });

@@ -529,7 +529,7 @@
   function renderParsonsInput(ex) {
     var h = '<div class="rt-parsons" data-exid="' + ex.id + '">';
     h += '<div class="rt-parsons-label" id="rt-parsons-label-' + ex.id + '">Choose fragments for the answer box. Press, tap, or drag a fragment to move it between the bank and the answer.</div>';
-    h += '<div class="rt-parsons-bank" data-exid="' + ex.id + '" aria-labelledby="rt-parsons-label-' + ex.id + '">';
+    h += '<div class="rt-parsons-bank" role="group" data-exid="' + ex.id + '" aria-labelledby="rt-parsons-label-' + ex.id + '">';
     // Shuffle fragments
     var frags = ex.fragments.slice();
     for (var i = frags.length - 1; i > 0; i--) {

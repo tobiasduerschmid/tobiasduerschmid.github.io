@@ -2,14 +2,17 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VM snapshot harness</title>
 <link rel="stylesheet" href="/css/diagnostic-pages.css">
 </head>
-<body>
-<h2>v86 snapshot harness</h2>
-<p>Boots the tutorial VM with the production config, waits for the shell prompt, then exposes <code>window.__saveState()</code>.</p>
-<p>Status: <span id="status">starting…</span></p>
-<div id="log"></div>
+<body class="diagnostic-vm-page">
+<main>
+  <h1>v86 snapshot harness</h1>
+  <p>Boots the tutorial VM with the production config, waits for the shell prompt, then exposes <code>window.__saveState()</code>.</p>
+  <p>Status: <span id="status" role="status" aria-live="polite" aria-atomic="true">starting…</span></p>
+  <div id="log" role="log" aria-label="VM boot log" aria-live="polite" tabindex="0"></div>
+</main>
 <script src="/assets/v86/libv86.js"></script>
 <script>
 'use strict';

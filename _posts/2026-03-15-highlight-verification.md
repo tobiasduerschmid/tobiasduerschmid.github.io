@@ -18,6 +18,8 @@ permalink: /blog/highlight-verification/
 
 5. Nested with curly quotes: ==”this highlight has quotes”==
 
+Bold text around a highlight with an abbreviation: **==AI in a bold highlight==**
+
 6. Code block exclusion (should NOT be highlighted):
 ```
 ==this should NOT be highlighted in a code block==

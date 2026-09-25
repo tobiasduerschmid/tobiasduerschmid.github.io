@@ -5,11 +5,15 @@ layout: null
 <html lang="en">
 <head>
   <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>UML Renderer Test</title>
   <link rel="stylesheet" href="/css/uml-diagram.css">
   <link rel="stylesheet" href="/css/diagnostic-pages.css">
+  <link rel="stylesheet" href="/css/print-light.css">
 </head>
-<body>
+<body class="diagnostic-uml-page diagnostic-uml-renderer">
+  <a class="skip-link diagnostic-skip-link" href="#main-content">Skip to main content</a>
+  <main id="main-content" tabindex="-1">
   <h1>UML Class Diagram Tests</h1>
 
   <h2>1. Shared-Target Inheritance</h2>
@@ -2549,6 +2553,7 @@ Course "M" == Takes
 @enduml
   </code></pre>
 
+  </main>
   <script src="/js/git-graph.js" defer></script>
   <script src="/js/ArchUML/uml-bundle.js" defer></script>
   <script src="/js/uml-auto-describe.js" defer></script>

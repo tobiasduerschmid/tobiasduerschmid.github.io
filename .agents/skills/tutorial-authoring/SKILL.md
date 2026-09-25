@@ -1347,6 +1347,18 @@ synchronizes with the main tutorial via `BroadcastChannel` (see
 - `tutorial-tab-popup.html` — single code file in Monaco.
 - `tutorial-graph-popup.html` — Git commit graph (SVG).
 
+The tab and pane editor popouts share `js/popout/shared-editor.js`. Both can
+receive more than one initial snapshot before Monaco finishes loading. Their
+bootstrap starts the editor only once: the tab uses the newest pending file
+snapshot, while the pane queues snapshot application until its one editor is
+ready. Keep that guard when changing snapshot or Monaco-loading behavior so
+duplicate editors and stale initial content do not appear.
+
+The graph popout keeps its scroll region inert and out of the accessibility
+tree while the disconnected overlay is present. A graph snapshot or update
+reveals a named, keyboard-focusable region and hides the overlay; keep those
+state changes together when changing the popout's message handling.
+
 Each popout listens for state-snapshot, state-update, and step-change
 messages on the BroadcastChannel and re-renders accordingly.
 
@@ -1511,6 +1523,15 @@ channel.
   its tooltip immediately without a fade so it cannot cover the next focused
   control. Preserve the hover grace period when the pointer is travelling
   from a trigger into its tooltip, and keep Escape dismissal available.
+  `js/monaco-focus-exit.js` supplies the Escape-to-leave-editor behavior
+  promised by the Monaco accessibility labels in both the main tutorial and
+  code popouts. Monaco's suggestion, find, rename, parameter-hint, and snippet
+  interfaces handle Escape first; otherwise focus moves to the next page
+  control. Code popouts place a Close window button after the editor so that
+  focus has a visible destination there.
+  Monaco default syntax languages and accessible language labels share the
+  `BACKEND_EDITOR_LANGUAGES` mapping in `js/tutorial-code.js`; keep both values
+  together when adding a backend so SQL and other editors announce the right language.
   C++, Pyodide, SQL, Prolog, and Java worker messages are bounded RPCs: every
   callback is released by a response, timeout, termination, or `destroy()`.
   Global and per-step setup reject readiness when their command exits nonzero,

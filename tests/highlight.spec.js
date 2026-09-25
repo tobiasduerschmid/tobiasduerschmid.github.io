@@ -52,6 +52,15 @@ test.describe('Highlight Syntax Verification', () => {
     await expect(mark).toBeVisible();
   });
 
+  test('highlight inside bold text can contain generated abbreviation markup', async ({ page }) => {
+    const text = page.getByText('AI in a bold highlight', { exact: true });
+    await expect(text).toBeVisible();
+    // Bold, mark, and abbr nesting is the formatting contract under test.
+    await expect(page.locator('strong > mark').filter({ hasText: /^AI in a bold highlight$/ })).toHaveCount(1);
+    await expect(text.locator('abbr')).toHaveText('AI');
+    await expect(text.locator('abbr')).toHaveAttribute('title', 'Artificial Intelligence');
+  });
+
   test('highlighting is skipped inside code blocks', async ({ page }) => {
     // Check that there is NO mark tag inside pre code
     const codeBlock = page.locator('pre code');
@@ -122,17 +131,4 @@ test.describe('Highlight Syntax on Blog Content with Inline HTML', () => {
     await expect(mark.locator('abbr[title="Artificial Intelligence"]')).toHaveText('AI');
   });
 
-  test('highlight inside bold text can contain generated abbreviation markup', async ({ page }) => {
-    const paragraph = page.locator('.blog-post-content p').filter({
-      hasText: 'AI is an amplifier of technical skills, not an equalizer'
-    }).first();
-
-    await expect(paragraph).not.toContainText('==');
-
-    const mark = paragraph.locator('strong > mark').filter({
-      hasText: 'AI is an amplifier of technical skills, not an equalizer'
-    });
-    await expect(mark).toBeVisible();
-    await expect(mark.locator('abbr[title="Artificial Intelligence"]')).toHaveText('AI');
-  });
 });

@@ -32,10 +32,12 @@
       <button class="tvm-btn ttp-close-btn" id="closeBtn">Close window</button>
     </div>
   </div>
+  <div class="ttp-bar"><button class="tvm-btn" id="exitEditorBtn" type="button">Close window</button></div>
   </main>
 
   <script src="{{ '/js/tutorial-popout-client.js' | relative_url }}"></script>
   <script src="{{ '/js/monaco-sebook-langs.js' | relative_url }}"></script>
+  <script src="{{ '/js/monaco-focus-exit.js' | relative_url }}"></script>
   <script src="{{ '/js/tutorial-refactorings.js' | relative_url }}"></script>
   <script src="{{ '/js/debugger/sync.js' | relative_url }}"></script>
   <script src="{{ '/js/debugger/editor-attach.js' | relative_url }}"></script>
@@ -51,6 +53,7 @@
         overlay:  document.getElementById('overlayEl'),
         orphan:   document.getElementById('orphanEl'),
         close:    document.getElementById('closeBtn'),
+        exit:     document.getElementById('exitEditorBtn'),
         editor:   document.getElementById('editorRoot'),
       },
     });

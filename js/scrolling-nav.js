@@ -69,7 +69,7 @@ $(function () {
   }
 
   // Handle same-page internal links
-  $('a[href*="#"]').not('[href="#"]').not('[href^="http"]').not('[data-toggle="collapse"]').bind('click', function (event) {
+  $('a[href*="#"]').not('[href="#"]').not('[href^="http"]').not('[data-toggle="collapse"]').not('.skip-link').bind('click', function (event) {
     if (location.pathname.replace(/^\//, '') == this.pathname.replace(/^\//, '') && location.hostname == this.hostname) {
       var target = $(this.hash);
       target = target.length ? target : $('[name=' + this.hash.slice(1) + ']');

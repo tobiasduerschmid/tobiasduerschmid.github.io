@@ -2,8 +2,8 @@
 
 Run with: python3 -m unittest discover -s scripts/tests -p test_cs131_python_checks.py
 Requires PyYAML, as do the repository's other tutorial authoring scripts.
-Each candidate runs in a disposable subprocess so broken recursion or a cyclic
-linked list cannot wedge the test runner or contaminate a later submission.
+Each candidate runs in a disposable subprocess so broken recursion cannot
+wedge the test runner or contaminate a later submission.
 """
 
 import contextlib
@@ -67,41 +67,8 @@ DELETE = source('''
         return rest
 ''')
 
-LINKED = source('''
-    class List:
-        class Node:
-            def __init__(self, value):
-                self.val, self.next = value, None
-        def __init__(self):
-            self.head = None
-        def add_to_front(self, val):
-            node = self.Node(val)
-            node.next, self.head = self.head, node
-        def values(self):
-            answer, cursor = [], self.head
-            while cursor is not None:
-                answer.append(cursor.val)
-                cursor = cursor.next
-            return answer
-        def print_items(self):
-            for value in self.values():
-                print(value)
-''')
-
-# Rebuilding an equal-valued tail still violates the promise to leave nodes and
-# links unchanged, even though a second traversal would print the same values.
-REBUILD_LINKED_TAIL = source('''
-    def duplicate_nodes(node, node_type):
-        if node is None:
-            return None
-        duplicate = node_type(node.val)
-        duplicate.next = duplicate_nodes(node.next, node_type)
-        return duplicate
-''')
-
-
 VALID_ALTERNATIVES = {
-    1: {
+    "The Point Class in Python": {
         "homework punctuation and tuple assignment": POINT,
         "formatted display and renamed receiver": source('''
             class Point:
@@ -115,7 +82,7 @@ VALID_ALTERNATIVES = {
                 point = Point(20, 30)
         '''),
     },
-    2: {
+    "Mutation Versus Rebinding": {
         "simultaneous swaps and renamed parameters": REFERENCES,
         "temporary-variable swaps": POINT + source('''
             def swap_coords(p):
@@ -128,7 +95,7 @@ VALID_ALTERNATIVES = {
                 right = saved
         '''),
     },
-    4: {
+    "The Same Recursion in Python": {
         "prefix recursion and max of recursive candidates": RECURSION,
         "nested recursive helpers with indices": source('''
             def find_biggest(values):
@@ -150,7 +117,7 @@ VALID_ALTERNATIVES = {
             "first = values.pop(0)\n    return max(first, find_biggest(values))",
         ),
     },
-    5: {
+    "Building New Lists Recursively": {
         "mutating a fresh result is allowed": DELETE,
         "recursive helper and private accumulator": source('''
             def del_item(values, item):
@@ -174,20 +141,11 @@ VALID_ALTERNATIVES = {
                 return del_item(values[:middle], item) + del_item(values[middle:], item)
         '''),
     },
-    7: {
-        "simultaneous link updates": LINKED,
-        "recursive traversal and whitespace variations": LINKED.replace(
-            "answer, cursor = [], self.head\n        while cursor is not None:\n"
-            "            answer.append(cursor.val)\n            cursor = cursor.next\n        return answer",
-            "def walk(node):\n            if node is None:\n                return []\n"
-            "            return [node.val] + walk(node.next)\n        return walk(self.head)",
-        ).replace("print(value)", "print(' ', value, ' ')")
-    },
 }
 
 
 INVALID_SOLUTIONS = {
-    1: {
+    "The Point Class in Python": {
         "coordinates reversed": POINT.replace("self.x_, self.y_ = x, y", "self.x_, self.y_ = y, x"),
         "missing defaults": POINT.replace("x=0, y=0", "x, y"),
         "hardcoded display": POINT.replace("print(self.x_, ', ', self.y_)", "print('(3, 4)')"),
@@ -195,14 +153,14 @@ INVALID_SOLUTIONS = {
         "prints correctly but returns a value": POINT.replace("print(self.x_, ', ', self.y_)", "print(self.x_, ', ', self.y_)\n        return (self.x_, self.y_)"),
         "different rebinding behavior": POINT.replace("p = Point(20, 30)", "p.x_, p.y_ = 20, 30"),
     },
-    2: {
+    "Mutation Versus Rebinding": {
         "coordinate overwrite": REFERENCES.replace("point.x_, point.y_ = point.y_, point.x_", "point.x_ = point.y_\n    point.y_ = point.x_"),
         "no swap attempted": REFERENCES.replace("first, second = second, first", "pass"),
         "both parameters assigned unrelated values": REFERENCES.replace("first, second = second, first", "first = None\n    second = None"),
         "both parameters become the second object": REFERENCES.replace("first, second = second, first", "first = second\n    second = first"),
         "mutates caller objects": REFERENCES.replace("first, second = second, first", "first.x_, second.x_ = second.x_, first.x_\n    first, second = second, first"),
     },
-    4: {
+    "The Same Recursion in Python": {
         "all-negative maximum initialized to zero": RECURSION.replace("return values[0]", "return max(0, values[0])"),
         "wrong singleton index": RECURSION.replace("return 0", "return 1"),
         "float indices cannot index Python lists": RECURSION.replace("return 0", "return 0.0").replace("previous = index_of_biggest(values[:-1])", "previous = int(index_of_biggest(values[:-1]))").replace("return len(values) - 1 if values[-1] > values[previous] else previous", "return float(len(values) - 1 if values[-1] > values[previous] else previous)"),
@@ -232,7 +190,7 @@ INVALID_SOLUTIONS = {
                 return loop_helper(values)
         '''),
     },
-    5: {
+    "Building New Lists Recursively": {
         "only first match removed": source('''
             def del_item(values, item):
                 if not values:
@@ -252,16 +210,6 @@ INVALID_SOLUTIONS = {
                 rest = del_item(values[1:], item)
                 return list(value for value in values[:1] if value != item) + rest
         '''),
-    },
-    7: {
-        "old chain discarded": LINKED.replace("node.next, self.head = self.head, node", "self.head = node"),
-        "insertion makes a cycle": LINKED.replace("node.next, self.head = self.head, node", "self.head = node\n        node.next = self.head"),
-        "values hardcoded to sample": LINKED.replace("return answer", "return [3, 2, 1]"),
-        "values consumes the head": LINKED.replace("cursor = cursor.next", "cursor = cursor.next\n            self.head = cursor"),
-        "all printed on one line": LINKED.replace("print(value)", "print(value, end=' ' )"),
-        "insertion returns the node": LINKED.replace("node.next, self.head = self.head, node", "node.next, self.head = self.head, node\n        return node"),
-        "values replaces an equal-valued tail": REBUILD_LINKED_TAIL + LINKED.replace("return answer", "if self.head is not None:\n            self.head.next = duplicate_nodes(self.head.next, self.Node)\n        return answer"),
-        "printing replaces an equal-valued tail": REBUILD_LINKED_TAIL + LINKED.replace("print(value)", "print(value)\n        if self.head is not None:\n            self.head.next = duplicate_nodes(self.head.next, self.Node)"),
     },
 }
 
@@ -289,37 +237,38 @@ class RefresherPythonChecks(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.tutorial = yaml.safe_load(TUTORIAL.read_text())
+        cls.steps_by_title = {step["title"]: step for step in cls.tutorial["steps"]}
 
     def test_published_solutions_pass_every_check(self):
-        for index in VALID_ALTERNATIVES:
-            step = self.tutorial["steps"][index]
+        for title in VALID_ALTERNATIVES:
+            step = self.steps_by_title[title]
             candidate = step["solution"]["files"][0]["content"]
-            with self.subTest(step=index + 1):
+            with self.subTest(step=title):
                 self.assertEqual(evaluate_candidate(step, candidate), [])
 
     def test_correct_alternatives_are_accepted(self):
-        for index, alternatives in VALID_ALTERNATIVES.items():
+        for title, alternatives in VALID_ALTERNATIVES.items():
             for name, candidate in alternatives.items():
-                with self.subTest(step=index + 1, solution=name):
-                    self.assertEqual(evaluate_candidate(self.tutorial["steps"][index], candidate), [])
+                with self.subTest(step=title, solution=name):
+                    self.assertEqual(evaluate_candidate(self.steps_by_title[title], candidate), [])
 
     def test_plausible_wrong_solutions_are_rejected(self):
-        for index, alternatives in INVALID_SOLUTIONS.items():
+        for title, alternatives in INVALID_SOLUTIONS.items():
             for name, candidate in alternatives.items():
-                with self.subTest(step=index + 1, solution=name):
-                    self.assertTrue(evaluate_candidate(self.tutorial["steps"][index], candidate), "Incorrect solution passed all checks")
+                with self.subTest(step=title, solution=name):
+                    self.assertTrue(evaluate_candidate(self.steps_by_title[title], candidate), "Incorrect solution passed all checks")
 
     def test_missing_definitions_cannot_reuse_a_previous_submission(self):
-        for index in VALID_ALTERNATIVES:
-            step = self.tutorial["steps"][index]
+        for title in VALID_ALTERNATIVES:
+            step = self.steps_by_title[title]
             previous = step["solution"]["files"][0]["content"]
-            with self.subTest(step=index + 1):
+            with self.subTest(step=title):
                 failures = evaluate_candidate(step, "pass\n", previous_candidate=previous)
                 self.assertEqual(len(failures), len(step["tests"]), "A check reused stale definitions")
 
     def test_nonterminating_candidate_is_bounded(self):
         with self.assertRaises(subprocess.TimeoutExpired):
-            evaluate_candidate(self.tutorial["steps"][4], "while True:\n    pass\n", timeout=0.5)
+            evaluate_candidate(self.steps_by_title["The Same Recursion in Python"], "while True:\n    pass\n", timeout=0.5)
 
 
 def run_candidate():

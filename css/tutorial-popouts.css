@@ -243,6 +243,15 @@ html.dark-mode .tdp-toolbar-host {
   padding: 12px;
 }
 
+.graph-host:focus-visible {
+  outline: 3px solid #2774ae;
+  outline-offset: -3px;
+}
+
+html.dark-mode .graph-host:focus-visible {
+  outline-color: #ffd100;
+}
+
 .graph-host .tvm-git-graph-container {
   width: 100%;
   min-height: 100%;

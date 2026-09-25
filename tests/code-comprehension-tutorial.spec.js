@@ -4,7 +4,9 @@ const {
   expectActiveStep,
   waitForTutorialReady,
 } = require('./tutorial-helpers');
+const { a11yCheckpoint } = require('./a11y-helpers');
 
+const A11Y_FEATURE = 'code-comprehension-tutorial';
 const TUTORIAL_URL = '/SEBook/development_practices/code-comprehension-tutorial?instructor-mode=true';
 const PROGRESS_STORAGE_KEY = 'tutorial-progress-code-comprehension';
 const TIMER_STORAGE_KEY = 'tutorial-time-practice-code-comprehension';
@@ -15,6 +17,7 @@ async function openTimedSprint(page) {
   await waitForTutorialReady(page, { bootTimeout: BOOT_TIMEOUT });
   await page.getByRole('button', { name: /^Step 2: Python Reading Sprint/ }).click();
   await expectActiveStep(page, 1);
+  await a11yCheckpoint(page, 'code comprehension — timed Python sprint', { feature: A11Y_FEATURE });
 }
 
 test.describe('Code comprehension tutorial timed practice', () => {
@@ -24,6 +27,7 @@ test.describe('Code comprehension tutorial timed practice', () => {
 
     await expect(page.locator('#autoSaveLabel')).toBeVisible();
     await expect(page.getByLabel('Auto-save')).toBeChecked();
+    await a11yCheckpoint(page, 'code comprehension — initial step', { feature: A11Y_FEATURE });
     await expect.poll(async () => {
       return page.evaluate((storageKey) => {
         return JSON.parse(localStorage.getItem(storageKey) || 'null')?.step;

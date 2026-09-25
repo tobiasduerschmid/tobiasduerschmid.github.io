@@ -1663,16 +1663,16 @@
         '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class" aria-pressed="' + (this._umlActiveType === 'class' ? 'true' : 'false') + '">Class Diagram</button>' +
         '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence" aria-pressed="' + (this._umlActiveType === 'sequence' ? 'true' : 'false') + '">Sequence Diagram</button>' +
         '<div class="tvm-diagram-zoom-controls">' +
-        '<button class="tvm-diagram-zoom-btn" data-zoom="out" data-original-title="Zoom out">\u2212</button>' +
+        '<button class="tvm-diagram-zoom-btn" data-zoom="out" data-original-title="Zoom out" aria-label="Zoom out">\u2212</button>' +
         '<span class="tvm-diagram-zoom-label">100%</span>' +
         '<button class="tvm-diagram-zoom-btn" data-zoom="in" data-original-title="Zoom in" aria-label="Zoom in">+</button>' +
-        '<button class="tvm-diagram-zoom-btn" data-zoom="reset" data-original-title="Reset zoom">\u2715</button>' +
+        '<button class="tvm-diagram-zoom-btn" data-zoom="reset" data-original-title="Reset zoom" aria-label="Reset zoom">\u2715</button>' +
         '</div>' +
-        '<button class="tvm-diagram-fullscreen-btn" data-original-title="Fullscreen">\u26f6</button>' +
-        '<button class="tvm-diagram-popout-btn" data-original-title="Open in separate window">\u29c9</button>' +
+        '<button class="tvm-diagram-fullscreen-btn" data-original-title="Fullscreen" aria-label="Fullscreen">\u26f6</button>' +
+        '<button class="tvm-diagram-popout-btn" data-original-title="Open in separate window" aria-label="Open in separate window">\u29c9</button>' +
         '<button class="tvm-diagram-refresh-btn" data-original-title="Re-analyze code">\u21bb Refresh</button>' +
         '<label class="tvm-diagram-color-btn" data-original-title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
-        '<button class="tvm-diagram-color-reset-btn" data-original-title="Reset to default color">\u21bb</button>' +
+        '<button class="tvm-diagram-color-reset-btn" data-original-title="Reset to default color" aria-label="Reset to default color">\u21bb</button>' +
         '</div>';
 
       terminalHtml =
@@ -1785,16 +1785,16 @@
           '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class" aria-pressed="' + (this._umlActiveType === 'class' ? 'true' : 'false') + '">Class Diagram</button>' +
           '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence" aria-pressed="' + (this._umlActiveType === 'sequence' ? 'true' : 'false') + '">Sequence Diagram</button>' +
           '<div class="tvm-diagram-zoom-controls">' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="out" data-original-title="Zoom out">\u2212</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="out" data-original-title="Zoom out" aria-label="Zoom out">\u2212</button>' +
           '<span class="tvm-diagram-zoom-label">100%</span>' +
           '<button class="tvm-diagram-zoom-btn" data-zoom="in" data-original-title="Zoom in" aria-label="Zoom in">+</button>' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="reset" data-original-title="Reset zoom">\u2715</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="reset" data-original-title="Reset zoom" aria-label="Reset zoom">\u2715</button>' +
           '</div>' +
-          '<button class="tvm-diagram-fullscreen-btn" data-original-title="Fullscreen">\u26f6</button>' +
-          '<button class="tvm-diagram-popout-btn" data-original-title="Open in separate window">\u29c9</button>' +
+          '<button class="tvm-diagram-fullscreen-btn" data-original-title="Fullscreen" aria-label="Fullscreen">\u26f6</button>' +
+          '<button class="tvm-diagram-popout-btn" data-original-title="Open in separate window" aria-label="Open in separate window">\u29c9</button>' +
           '<button class="tvm-diagram-refresh-btn" data-original-title="Re-analyze code">\u21bb Refresh</button>' +
           '<label class="tvm-diagram-color-btn" data-original-title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
-        '<button class="tvm-diagram-color-reset-btn" data-original-title="Reset to default color">\u21bb</button>' +
+        '<button class="tvm-diagram-color-reset-btn" data-original-title="Reset to default color" aria-label="Reset to default color">\u21bb</button>' +
           '</div>' +
           diagramContentHtml +
           '</div>'
@@ -1824,16 +1824,16 @@
           '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class" aria-pressed="' + (this._umlActiveType === 'class' ? 'true' : 'false') + '">Class Diagram</button>' +
           '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence" aria-pressed="' + (this._umlActiveType === 'sequence' ? 'true' : 'false') + '">Sequence Diagram</button>' +
           '<div class="tvm-diagram-zoom-controls">' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="out" data-original-title="Zoom out">\u2212</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="out" data-original-title="Zoom out" aria-label="Zoom out">\u2212</button>' +
           '<span class="tvm-diagram-zoom-label">100%</span>' +
           '<button class="tvm-diagram-zoom-btn" data-zoom="in" data-original-title="Zoom in" aria-label="Zoom in">+</button>' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="reset" data-original-title="Reset zoom">\u2715</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="reset" data-original-title="Reset zoom" aria-label="Reset zoom">\u2715</button>' +
           '</div>' +
-          '<button class="tvm-diagram-fullscreen-btn" data-original-title="Fullscreen">\u26f6</button>' +
-          '<button class="tvm-diagram-popout-btn" data-original-title="Open in separate window">\u29c9</button>' +
+          '<button class="tvm-diagram-fullscreen-btn" data-original-title="Fullscreen" aria-label="Fullscreen">\u26f6</button>' +
+          '<button class="tvm-diagram-popout-btn" data-original-title="Open in separate window" aria-label="Open in separate window">\u29c9</button>' +
           '<button class="tvm-diagram-refresh-btn" data-original-title="Re-analyze code">\u21bb Refresh</button>' +
           '<label class="tvm-diagram-color-btn" data-original-title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
-        '<button class="tvm-diagram-color-reset-btn" data-original-title="Reset to default color">\u21bb</button>' +
+        '<button class="tvm-diagram-color-reset-btn" data-original-title="Reset to default color" aria-label="Reset to default color">\u21bb</button>' +
           '</div>' +
           diagramContentHtml +
           '</div>'
@@ -1845,16 +1845,16 @@
           '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class" aria-pressed="' + (this._umlActiveType === 'class' ? 'true' : 'false') + '">Class Diagram</button>' +
           '<button class="tvm-diagram-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence" aria-pressed="' + (this._umlActiveType === 'sequence' ? 'true' : 'false') + '">Sequence Diagram</button>' +
           '<div class="tvm-diagram-zoom-controls">' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="out" data-original-title="Zoom out">\u2212</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="out" data-original-title="Zoom out" aria-label="Zoom out">\u2212</button>' +
           '<span class="tvm-diagram-zoom-label">100%</span>' +
           '<button class="tvm-diagram-zoom-btn" data-zoom="in" data-original-title="Zoom in" aria-label="Zoom in">+</button>' +
-          '<button class="tvm-diagram-zoom-btn" data-zoom="reset" data-original-title="Reset zoom">\u2715</button>' +
+          '<button class="tvm-diagram-zoom-btn" data-zoom="reset" data-original-title="Reset zoom" aria-label="Reset zoom">\u2715</button>' +
           '</div>' +
-          '<button class="tvm-diagram-fullscreen-btn" data-original-title="Fullscreen">\u26f6</button>' +
-          '<button class="tvm-diagram-popout-btn" data-original-title="Open in separate window">\u29c9</button>' +
+          '<button class="tvm-diagram-fullscreen-btn" data-original-title="Fullscreen" aria-label="Fullscreen">\u26f6</button>' +
+          '<button class="tvm-diagram-popout-btn" data-original-title="Open in separate window" aria-label="Open in separate window">\u29c9</button>' +
           '<button class="tvm-diagram-refresh-btn" data-original-title="Re-analyze code">\u21bb Refresh</button>' +
           '<label class="tvm-diagram-color-btn" data-original-title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
-          '<button class="tvm-diagram-color-reset-btn" data-original-title="Reset to default color">\u21bb</button>' +
+          '<button class="tvm-diagram-color-reset-btn" data-original-title="Reset to default color" aria-label="Reset to default color">\u21bb</button>' +
           '</div>' +
           diagramContentHtml +
           '</div>'
@@ -1951,14 +1951,14 @@
       '<button class="tvm-diagram-fs-type-btn' + (this._umlActiveType === 'class' ? ' active' : '') + '" data-type="class" aria-pressed="' + (this._umlActiveType === 'class' ? 'true' : 'false') + '">Class Diagram</button>' +
       '<button class="tvm-diagram-fs-type-btn' + (this._umlActiveType === 'sequence' ? ' active' : '') + '" data-type="sequence" aria-pressed="' + (this._umlActiveType === 'sequence' ? 'true' : 'false') + '">Sequence Diagram</button>' +
       '<div class="tvm-diagram-zoom-controls">' +
-      '<button class="tvm-diagram-fs-zoom-btn" data-zoom="out" data-original-title="Zoom out">\u2212</button>' +
+      '<button class="tvm-diagram-fs-zoom-btn" data-zoom="out" data-original-title="Zoom out" aria-label="Zoom out">\u2212</button>' +
       '<span class="tvm-diagram-fs-zoom-label">100%</span>' +
-      '<button class="tvm-diagram-fs-zoom-btn" data-zoom="in" data-original-title="Zoom in">+</button>' +
-      '<button class="tvm-diagram-fs-zoom-btn" data-zoom="reset" data-original-title="Reset zoom">\u2715</button>' +
+      '<button class="tvm-diagram-fs-zoom-btn" data-zoom="in" data-original-title="Zoom in" aria-label="Zoom in">+</button>' +
+      '<button class="tvm-diagram-fs-zoom-btn" data-zoom="reset" data-original-title="Reset zoom" aria-label="Reset zoom">\u2715</button>' +
       '</div>' +
       '<button class="tvm-diagram-fs-close" data-original-title="Exit fullscreen">\u2715 Close</button>' +
       '<label class="tvm-diagram-color-btn" data-original-title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input tvm-diagram-fs-color-input" aria-label="Diagram accent color"></label>' +
-      '<button class="tvm-diagram-color-reset-btn" data-original-title="Reset to default color">\u21bb</button>' +
+      '<button class="tvm-diagram-color-reset-btn" data-original-title="Reset to default color" aria-label="Reset to default color">\u21bb</button>' +
       '</div>' +
       '<div class="tvm-diagram-fs-content"></div>' +
       '</div>' +
@@ -2012,11 +2012,11 @@
           '<button class="tvm-diagram-zoom-btn" data-zoom="in" data-original-title="Zoom in" aria-label="Zoom in">+</button>' +
           '<button class="tvm-diagram-zoom-btn" data-zoom="reset" data-original-title="Reset zoom" aria-label="Reset zoom">✕</button>' +
           '</div>' +
-          '<button class="tvm-diagram-fullscreen-btn" data-original-title="Fullscreen" aria-label="Toggle fullscreen diagram view">⛶</button>' +
-          '<button class="tvm-diagram-popout-btn" data-original-title="Open in separate window" aria-label="Open diagram in separate window">⧉</button>' +
+          '<button class="tvm-diagram-fullscreen-btn" data-original-title="Fullscreen" aria-label="Fullscreen">⛶</button>' +
+          '<button class="tvm-diagram-popout-btn" data-original-title="Open in separate window" aria-label="Open in separate window">⧉</button>' +
           '<button class="tvm-diagram-refresh-btn" data-original-title="Re-analyze code">↻ Refresh</button>' +
           '<label class="tvm-diagram-color-btn" data-original-title="Diagram accent color"><span class="sr-only">Diagram accent color</span><input type="color" class="tvm-diagram-color-input" aria-label="Diagram accent color"></label>' +
-          '<button class="tvm-diagram-color-reset-btn" data-original-title="Reset to default color" aria-label="Reset diagram accent colour to default">↻</button>' +
+          '<button class="tvm-diagram-color-reset-btn" data-original-title="Reset to default color" aria-label="Reset to default color">↻</button>' +
           '</div>' +
           diagramContentHtml +
           '</div>'
@@ -7162,15 +7162,23 @@
   // ---------------------------------------------------------------------------
   // Monaco Editor
   // ---------------------------------------------------------------------------
+  var BACKEND_EDITOR_LANGUAGES = {
+    pyodide: { id: 'python', label: 'Python' },
+    react: { id: 'jsx', label: 'JSX' },
+    browser: { id: 'javascript', label: 'JavaScript' },
+    webcontainer: { id: 'javascript', label: 'JavaScript' },
+    prolog: { id: 'prolog', label: 'Prolog' },
+    java: { id: 'java', label: 'Java' },
+    cpp: { id: 'cpp', label: 'C++' },
+    haskell: { id: 'haskell', label: 'Haskell' },
+    sql: { id: 'sql', label: 'SQL' },
+    v86: { id: 'shell-sebook', label: 'Shell' },
+  };
+
   TutorialCode.prototype._monacoEditorOptions = function (paneAriaLabel) {
+    var language = BACKEND_EDITOR_LANGUAGES[this.config.backend] || BACKEND_EDITOR_LANGUAGES.v86;
     var opts = {
-      language: this.config.backend === 'pyodide' ? 'python' :
-        this.config.backend === 'react' ? 'jsx' :
-          (this.config.backend === 'browser' || this.config.backend === 'webcontainer') ? 'javascript' :
-            this.config.backend === 'prolog' ? 'prolog' :
-              this.config.backend === 'java' ? 'java' :
-                this.config.backend === 'cpp' ? 'cpp' :
-                this.config.backend === 'haskell' ? 'haskell' : 'shell-sebook',
+      language: language.id,
       theme: this._isDarkMode() ? THEMES.dark.monaco : THEMES.light.monaco,
       fontSize: this.config.fontSize,
       fontFamily: "'Fira Code', 'Cascadia Code', Menlo, monospace",
@@ -7204,13 +7212,7 @@
       //    long files isn't molasses.
       ariaLabel:
         (paneAriaLabel ? paneAriaLabel + ', ' : '') +
-        (this.config.backend === 'pyodide' ? 'Python' :
-          this.config.backend === 'react' ? 'JSX' :
-            (this.config.backend === 'browser' || this.config.backend === 'webcontainer') ? 'JavaScript' :
-              this.config.backend === 'prolog' ? 'Prolog' :
-                this.config.backend === 'java' ? 'Java' :
-                  this.config.backend === 'cpp' ? 'C++' :
-                  this.config.backend === 'haskell' ? 'Haskell' : 'Shell') +
+        language.label +
         ' code editor. Press Control F1 (Command F1 on macOS) for accessibility help. Press Escape to release focus to the surrounding page.',
       accessibilitySupport: 'auto',
       accessibilityPageSize: 25,
@@ -7327,6 +7329,7 @@
 
   TutorialCode.prototype._attachEditorCommands = function (editor) {
     var self = this;
+    window.SebookMonacoFocusExit.attach(editor);
     editor.addCommand(
       monaco.KeyMod.CtrlCmd | monaco.KeyCode.KeyS,
       function () { self._saveCurrentFile(); }

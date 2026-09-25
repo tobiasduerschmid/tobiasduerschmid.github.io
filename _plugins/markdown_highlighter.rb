@@ -2,7 +2,11 @@ require 'kramdown'
 require 'json'
 
 module MarkdownHighlighter
-  SKIP_OR_HIGHLIGHT = %r{<(script|code|pre|style)\b.*?>.*?</\1>|(<[^>]+?>)|==(\S(?:.*?\S)?)==}mi.freeze
+  # Highlights are inline. An unmatched equality operator must not pair with
+  # a delimiter after a new line or an HTML block boundary; doing so would
+  # re-parse and escape whole sections of the rendered page.
+  BLOCK_TAGS = 'article|aside|blockquote|body|dd|details|div|dl|dt|figcaption|figure|footer|form|h[1-6]|header|hr|li|main|nav|ol|p|pre|script|section|style|summary|table|tbody|td|tfoot|th|thead|tr|ul'.freeze
+  SKIP_OR_HIGHLIGHT = %r{<(script|code|pre|style)\b.*?>.*?</\1>|(<[^>]+?>)|==((?!</?(?:#{BLOCK_TAGS})\b)\S(?:(?:(?!</?(?:#{BLOCK_TAGS})\b)[^\r\n])*?\S)?)==}mi.freeze
   DESCRIPTION_META = /\b(?:name|property)=["'](?:description|og:description|twitter:description)["']/i.freeze
   JSON_LD_SCRIPT = %r{(<script\b[^>]*\btype=["']application/ld\+json["'][^>]*>)(.*?)(</script>)}mi.freeze
 

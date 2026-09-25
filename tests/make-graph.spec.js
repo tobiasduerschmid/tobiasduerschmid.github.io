@@ -1,12 +1,35 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 const path = require('path');
+const AxeBuilder = require('@axe-core/playwright').default;
 
 async function loadMakeGraph(page) {
   await page.setContent('<main><div id="graph"></div></main>');
   await page.addScriptTag({ path: path.join(__dirname, '..', 'js', 'make-graph.js') });
   await page.waitForFunction(() => !!window.MakeGraph);
 }
+
+test('missing Makefile guidance stays readable in both themes and a narrow pane', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 900 });
+  await page.setContent('<main class="tvm-make-dag-panel"><div id="graph" class="tvm-make-dag-container"></div></main>');
+  await page.addStyleTag({ path: path.join(__dirname, '..', 'css', 'tutorial.css') });
+  await page.addScriptTag({ path: path.join(__dirname, '..', 'js', 'make-graph.js') });
+  await page.evaluate(() => {
+    new window.MakeGraph(document.getElementById('graph'), {
+      dirLabel: '/tutorial/make_project/step1',
+    }).render({ nodes: [], edges: [], makefilePresent: false });
+  });
+
+  const guidance = page.getByRole('status');
+  await expect(guidance).toContainText('No Makefile found');
+  for (const dark of [false, true]) {
+    await page.evaluate((enabled) => document.documentElement.classList.toggle('dark-mode', enabled), dark);
+    const result = await new AxeBuilder({ page }).withRules(['color-contrast']).analyze();
+    expect(result.violations, `Missing Makefile guidance in ${dark ? 'dark' : 'light'} mode`).toEqual([]);
+    expect(await guidance.evaluate((element) => parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(16);
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320);
+  }
+});
 
 test.describe('MakeGraph parser', () => {
   test('treats GNU Make missing-target sentinel mtimes as missing files', async ({ page }) => {

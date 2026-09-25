@@ -6,7 +6,9 @@ const {
   expectActiveStep,
   expectStepCount,
 } = require('./tutorial-helpers');
+const { a11yCheckpoint } = require('./a11y-helpers');
 
+const A11Y_FEATURE = 'multi-backend-placeholder-tutorial';
 const TUTORIAL_URL = '/SEBook/tools/multi-backend-placeholder-tutorial';
 const BOOT_TIMEOUT = 90_000;
 const RUN_TIMEOUT = 30_000;
@@ -40,8 +42,8 @@ async function expectTimedPracticeClock(page) {
 async function goNext(page, stepIndex, opts = {}) {
   const start = Date.now();
   await page.locator('.tvm-btn-next').click();
-  await expectActiveStep(page, stepIndex);
   await expect(page.locator('.tvm-loading')).toBeHidden({ timeout: BOOT_TIMEOUT });
+  await expectActiveStep(page, stepIndex);
   await expectTimedPracticeClock(page);
   const elapsed = Date.now() - start;
   if (opts.maxMs) {
@@ -98,6 +100,7 @@ test.describe.serial('Multi-backend placeholder tutorial', () => {
     expect(steps[5].quiz?.title).toBe('Step 6 — Knowledge Check');
     await expectActiveStep(page, 0);
     await expectTimedPracticeClock(page);
+    await a11yCheckpoint(page, 'multi-backend tutorial — initial timed Python step', { feature: A11Y_FEATURE });
   });
 
   test('python, react, node, react, python, node sequence remains usable', async () => {
@@ -106,30 +109,36 @@ test.describe.serial('Multi-backend placeholder tutorial', () => {
     await clickRun(page);
     await expect(page.locator('.tvm-output-pre'))
       .toContainText('Python placeholder one', { timeout: RUN_TIMEOUT });
+    await a11yCheckpoint(page, 'multi-backend tutorial — Python output', { feature: A11Y_FEATURE });
 
     await goNext(page, 1);
     await expectPreviewRuntime(page, 'React placeholder one');
+    await a11yCheckpoint(page, 'multi-backend tutorial — React preview', { feature: A11Y_FEATURE });
 
     await goNext(page, 2);
     await expectOutputRuntime(page);
     await clickRun(page);
     await expect(page.locator('.tvm-output-pre'))
       .toContainText('Node placeholder one', { timeout: RUN_TIMEOUT });
+    await a11yCheckpoint(page, 'multi-backend tutorial — Node output', { feature: A11Y_FEATURE });
 
     await goNext(page, 3, { maxMs: WARM_SWITCH_TIMEOUT_MS, label: 'second React step' });
     await expectPreviewRuntime(page, 'React placeholder two');
+    await a11yCheckpoint(page, 'multi-backend tutorial — second React preview', { feature: A11Y_FEATURE });
 
     await goNext(page, 4, { maxMs: WARM_SWITCH_TIMEOUT_MS, label: 'second Python step' });
     await expectOutputRuntime(page);
     await clickRun(page);
     await expect(page.locator('.tvm-output-pre'))
       .toContainText('Python placeholder two', { timeout: RUN_TIMEOUT });
+    await a11yCheckpoint(page, 'multi-backend tutorial — second Python output', { feature: A11Y_FEATURE });
 
     await goNext(page, 5, { maxMs: WARM_SWITCH_TIMEOUT_MS, label: 'second Node.js step' });
     await expectOutputRuntime(page);
     await clickRun(page);
     await expect(page.locator('.tvm-output-pre'))
       .toContainText('Node placeholder two', { timeout: RUN_TIMEOUT });
+    await a11yCheckpoint(page, 'multi-backend tutorial — second Node output', { feature: A11Y_FEATURE });
   });
 
   test('timed practice remains active through the final knowledge check and completes when passed', async () => {
@@ -140,11 +149,13 @@ test.describe.serial('Multi-backend placeholder tutorial', () => {
     await expect(page.locator('.tvm-quiz-panel')).toBeVisible({ timeout: 5_000 });
     await expect(page.getByRole('heading', { name: 'Step 6 — Knowledge Check' })).toBeVisible();
     await expectTimedPracticeClock(page);
+    await a11yCheckpoint(page, 'multi-backend tutorial — timed knowledge check', { feature: A11Y_FEATURE });
 
     await answerQuizCorrectly(page);
     await expect(page.locator('.tvm-quiz-panel .quiz-results:not(.hidden)'))
       .toBeVisible({ timeout: 5_000 });
     await expect(page.getByRole('timer', { name: /^Time left / })).toBeHidden();
+    await a11yCheckpoint(page, 'multi-backend tutorial — knowledge check results', { feature: A11Y_FEATURE });
 
     const completed = await page.evaluate((storageKey) => {
       const state = JSON.parse(localStorage.getItem(storageKey) || '{}');
@@ -222,6 +233,7 @@ test.describe.serial('Multi-backend placeholder tutorial', () => {
     await expectActiveStep(page, 4);
     await expect(page.locator('.tvm-timed-practice-lockout')).toBeVisible();
     await expect(page.getByRole('timer', { name: /^Try again in / })).toContainText(/^Try again in /);
+    await a11yCheckpoint(page, 'multi-backend tutorial — timed lockout', { feature: A11Y_FEATURE });
     const lockoutRemaining = await page.evaluate((storageKey) => {
       const state = JSON.parse(localStorage.getItem(storageKey) || '{}');
       return state.steps['4'].lockoutUntil - Date.now();

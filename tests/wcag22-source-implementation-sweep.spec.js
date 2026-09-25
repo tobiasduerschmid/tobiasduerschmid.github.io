@@ -2,19 +2,10 @@
 const { test, expect } = require('@playwright/test');
 const fs = require('fs');
 const path = require('path');
+const { collectAuthoredSourceFiles, findSourceCandidates, SOURCE_DIRECTORIES } = require('./wcag-source-candidates');
 
 const ROOT = path.resolve(__dirname, '..');
 const REPORT_PATH = path.join(ROOT, 'tmp', 'wcag22-source-implementation-sweep.json');
-const SOURCE_EXTENSIONS = new Set(['.css', '.html', '.js', '.json', '.md', '.scss', '.yml']);
-const EXCLUDED_DIRS = new Set([
-  '.git',
-  '.claude',
-  '_site',
-  'node_modules',
-  'playwright-report',
-  'test-results',
-  'tmp',
-]);
 
 const MANUAL_OR_FLOW_CRITERIA = [
   {
@@ -271,67 +262,40 @@ const MANUAL_OR_FLOW_CRITERIA = [
   },
 ];
 
-function walk(dir) {
-  if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-    if (EXCLUDED_DIRS.has(entry.name)) return [];
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) return walk(full);
-    if (!entry.isFile()) return [];
-    return SOURCE_EXTENSIONS.has(path.extname(entry.name)) ? [full] : [];
-  });
-}
-
-function findEvidence(patterns, files) {
-  const needles = patterns.map((pattern) => pattern.toLowerCase());
-  const matches = [];
-  for (const file of files) {
-    const rel = path.relative(ROOT, file);
-    const lines = fs.readFileSync(file, 'utf8').split(/\r?\n/);
-    lines.forEach((line, index) => {
-      const lower = line.toLowerCase();
-      const matched = needles.find((needle) => lower.includes(needle));
-      if (!matched) return;
-      matches.push({
-        file: rel,
-        line: index + 1,
-        pattern: patterns[needles.indexOf(matched)],
-        excerpt: line.trim().slice(0, 220),
-      });
-    });
-  }
-  return matches.slice(0, 40);
-}
-
-test('WCAG 2.2 AA manual criteria have source implementation evidence sweep', async () => {
-  const files = walk(ROOT);
+test('WCAG 2.2 AA manual criteria have authored-source review candidates', async () => {
+  const files = collectAuthoredSourceFiles(ROOT);
   const criteria = MANUAL_OR_FLOW_CRITERIA.map((criterion) => {
-    const evidence = findEvidence(criterion.patterns, files);
+    const candidates = findSourceCandidates(criterion.patterns, files, ROOT);
     return {
       ...criterion,
       manualOrFlowVerificationStillRequired: true,
-      sourceEvidenceStatus: evidence.length ? 'source-evidence-found' : 'no-source-evidence-found',
-      evidence,
+      sourceCandidateStatus: candidates.length ? 'candidate-found' : 'no-candidate-found',
+      candidates,
     };
   });
 
   const report = {
     generatedAt: new Date().toISOString(),
     conformanceTarget: 'WCAG 2.2 AA',
+    interpretation: 'String matches in authored browser source are review candidates, not verification of WCAG criteria. Manual or flow verification is still required.',
     scope: {
       filesScanned: files.length,
       criteriaSwept: criteria.length,
-      excludedDirectories: [...EXCLUDED_DIRS],
-      sourceExtensions: [...SOURCE_EXTENSIONS],
+      sourceDirectories: Object.keys(SOURCE_DIRECTORIES),
+      rootSourceExtensions: ['.html', '.js'],
     },
     criteria,
   };
 
   fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
   fs.writeFileSync(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`);
-  console.log(`WCAG 2.2 source implementation sweep written to ${REPORT_PATH}`);
+  console.log(`WCAG 2.2 authored-source candidate report written to ${REPORT_PATH}`);
   console.log(`Manual/flow criteria swept: ${criteria.length}`);
-  console.log(`No source evidence found: ${criteria.filter((criterion) => criterion.sourceEvidenceStatus === 'no-source-evidence-found').length}`);
+  console.log(`No authored-source candidates found: ${criteria.filter((criterion) => criterion.sourceCandidateStatus === 'no-candidate-found').length}`);
 
-  expect(criteria).toHaveLength(MANUAL_OR_FLOW_CRITERIA.length);
+  // The report must be backed by actual site source, and every candidate path
+  // must come from that restricted authored-source inventory.
+  expect(files).toContain(path.join(ROOT, 'index.html'));
+  const sourceFiles = new Set(files.map((file) => path.relative(ROOT, file).split(path.sep).join('/')));
+  expect(criteria.flatMap((criterion) => criterion.candidates.filter((candidate) => !sourceFiles.has(candidate.file)))).toEqual([]);
 });

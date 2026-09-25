@@ -1,8 +1,9 @@
 // @ts-check
 const { test, expect } = require('@playwright/test');
 const AxeBuilder = require('@axe-core/playwright').default;
-const fs = require('fs');
 const path = require('path');
+const { buildAuditInventory } = require('./wcag-audit-inventory');
+const { writeAuditCheckpoint } = require('./wcag-audit-report');
 
 const ROOT = path.resolve(__dirname, '..');
 const SITE_ROOT = path.join(ROOT, '_site');
@@ -26,7 +27,13 @@ test.describe.configure({ mode: 'serial' });
 test.setTimeout(PRINT_AUDIT_TIMEOUT_MS);
 
 test('print media keeps reachable layouts light, readable, and WCAG 2.2 AA compatible under dark preference', async ({ browser }) => {
-  const groups = allTargetUrlsByFeature();
+  const { groups, inventory } = buildAuditInventory({
+    sourceRoot: ROOT,
+    siteRoot: SITE_ROOT,
+    splitTutorialPrint: true,
+    urlFilter: URL_FILTER,
+    pageLimit: MAX_PAGES_PER_FEATURE,
+  });
   const context = await browser.newContext({
     colorScheme: 'dark',
     reducedMotion: 'reduce',
@@ -39,23 +46,64 @@ test('print media keeps reachable layouts light, readable, and WCAG 2.2 AA compa
     generatedAt: new Date().toISOString(),
     mode: 'print',
     colorSchemePreference: 'dark',
-    groups: {},
+    manualReviewRequired: true,
+    inventory,
+    progress: { status: 'in-progress', plannedPages: inventory.selectedPageCount, completedPages: 0, currentPage: null },
+    groups: Object.fromEntries(Object.entries(groups).map(([feature, urls]) => [feature, { pageCount: urls.length, pages: [] }])),
     failures: [],
   };
+  writeAuditCheckpoint(REPORT_PATH, report);
+
+  function finishPage(feature, url, pageRecord, pageStartedAt) {
+    report.groups[feature].pages.push(pageRecord);
+    for (const finding of pageRecord.findings) report.failures.push({ feature, url, ...finding });
+    report.progress.completedPages += 1;
+    report.progress.currentPage = null;
+    writeAuditCheckpoint(REPORT_PATH, report);
+    console.log(`Print WCAG audit finished: ${feature} ${url} (${Date.now() - pageStartedAt} ms, ${pageRecord.findings.length} finding(s))`);
+  }
+
+  function markPageStage(url, stage) {
+    report.progress.currentPage.stage = stage;
+    writeAuditCheckpoint(REPORT_PATH, report);
+    console.log(`Print WCAG audit stage: ${url} — ${stage}`);
+  }
 
   for (const [feature, urls] of Object.entries(groups)) {
-    report.groups[feature] = { pageCount: urls.length, pages: [] };
     for (const url of urls) {
       const pageStartedAt = Date.now();
-      console.log(`Print WCAG audit: ${feature} ${url}`);
-      const response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+      report.progress.currentPage = { feature, url, startedAt: new Date(pageStartedAt).toISOString() };
+      markPageStage(url, 'navigation');
+      let response = null;
+      let navigationError = null;
+      try {
+        response = await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+      } catch (error) {
+        navigationError = String(error && error.message ? error.message : error);
+      }
+      if (!response || !response.ok()) {
+        const status = response ? response.status() : null;
+        const finding = {
+          criterion: 'audit-navigation',
+          severity: 'fail',
+          message: navigationError || `Page returned HTTP ${status}; print accessibility checks could not run.`,
+        };
+        finishPage(feature, url, {
+          url, status, findingCount: 1, findings: [finding],
+          evidence: { navigationError, printMediaEmulated: false },
+        }, pageStartedAt);
+        continue;
+      }
+      markPageStage(url, 'print settling');
       await settleLoadedPage(page);
       await page.evaluate(() => document.documentElement.classList.add('dark-mode'));
       await page.emulateMedia({ media: 'print', colorScheme: 'dark', reducedMotion: 'reduce' });
       await settleLoadedPage(page);
       await waitForAnimationFrames(page, 4);
 
+      markPageStage(url, 'print DOM');
       const printDom = await page.evaluate(runPrintDomAudit);
+      markPageStage(url, 'print axe');
       const axe = await runAxeAudit(page);
       const findings = [...printDom.findings, ...axe.findings];
       const pageRecord = {
@@ -70,16 +118,12 @@ test('print media keeps reachable layouts light, readable, and WCAG 2.2 AA compa
           darkPreferenceApplied: true,
         },
       };
-      report.groups[feature].pages.push(pageRecord);
-      console.log(`Print WCAG audit finished: ${feature} ${url} (${Date.now() - pageStartedAt} ms, ${findings.length} finding(s))`);
-      for (const finding of findings) {
-        report.failures.push({ feature, url, ...finding });
-      }
+      finishPage(feature, url, pageRecord, pageStartedAt);
     }
   }
 
-  fs.mkdirSync(path.dirname(REPORT_PATH), { recursive: true });
-  fs.writeFileSync(REPORT_PATH, `${JSON.stringify(report, null, 2)}\n`);
+  report.progress.status = 'complete';
+  writeAuditCheckpoint(REPORT_PATH, report);
   await context.close();
 
   const summary = Object.entries(report.groups)
@@ -103,72 +147,6 @@ function parseNonNegativeIntegerEnv(name) {
     throw new Error(`${name} must be a non-negative integer, got ${JSON.stringify(raw)}`);
   }
   return value;
-}
-
-function walk(dir) {
-  if (!fs.existsSync(dir)) return [];
-  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) return walk(full);
-    return entry.isFile() ? [full] : [];
-  });
-}
-
-function urlFromSiteFile(file) {
-  let rel = path.relative(SITE_ROOT, file).split(path.sep).join('/');
-  if (!rel.endsWith('.html')) return null;
-  rel = rel.replace(/index\.html$/, '');
-  return `/${rel}`;
-}
-
-function sourceTutorialUrls() {
-  const urls = new Set();
-  for (const file of walk(path.join(ROOT, 'SEBook'))) {
-    if (!/\.(md|html)$/.test(file)) continue;
-    const text = fs.readFileSync(file, 'utf8');
-    if (!/^layout:\s*tutorial\s*$/m.test(text)) continue;
-    let rel = path.relative(ROOT, file).split(path.sep).join('/');
-    rel = rel.replace(/\.(md|html)$/, '.html');
-    urls.add(`/${rel}`);
-
-    const printPath = rel.replace(/\.html$/, '/print');
-    const printIndex = path.join(SITE_ROOT, `${printPath}/index.html`);
-    const printHtml = path.join(SITE_ROOT, `${printPath}.html`);
-    if (fs.existsSync(printIndex)) urls.add(`/${printPath}/`);
-    if (fs.existsSync(printHtml)) urls.add(`/${printPath}.html`);
-  }
-  return [...urls].sort();
-}
-
-function allTargetUrlsByFeature() {
-  const htmlFiles = walk(SITE_ROOT).filter((file) => file.endsWith('.html'));
-  const urls = htmlFiles.map(urlFromSiteFile).filter(Boolean);
-  const tutorialSet = new Set(sourceTutorialUrls());
-  const INFO_PAGE_URLS = new Set([
-    '/cookies/',
-    '/shortcuts/',
-    '/glossary/',
-    '/settings/',
-    '/uml-python-workspace.html',
-  ]);
-  const groups = {
-    home: fs.existsSync(path.join(SITE_ROOT, 'index.html')) ? ['/index.html'] : [],
-    errorPages: urls.filter((url) => url === '/404.html'),
-    infoPages: urls.filter((url) => INFO_PAGE_URLS.has(url)),
-    tutorials: urls.filter((url) => tutorialSet.has(url) && !url.includes('/print')),
-    tutorialPrint: urls.filter((url) => tutorialSet.has(url) && url.includes('/print')),
-    sebook: urls.filter((url) => url.startsWith('/SEBook/') && !tutorialSet.has(url)),
-    seGym: urls.filter((url) => url === '/se-gym/' || url.startsWith('/se-gym/')),
-    blog: urls.filter((url) => url === '/blog/' || url.startsWith('/blog/')),
-    popouts: urls.filter((url) => /(?:^\/tutorial-.*-popup\.html$|^\/uml-popup\.html$)/.test(url)),
-  };
-
-  for (const key of Object.keys(groups)) {
-    groups[key].sort();
-    if (URL_FILTER) groups[key] = groups[key].filter((url) => URL_FILTER.test(url));
-    if (MAX_PAGES_PER_FEATURE > 0) groups[key] = groups[key].slice(0, MAX_PAGES_PER_FEATURE);
-  }
-  return groups;
 }
 
 async function settleLoadedPage(page) {
