@@ -1,14 +1,16 @@
 title: "Python Essentials: Scripting & Automation"
-description: "A hands-on introduction to Python for students who already know C++ and shell scripting. Build a solid Python mental model by mapping every concept to what you already know — and spotting where the analogies break."
+description: "A hands-on introduction to Python for students who already know C++ and shell scripting. Practice references, member objects, class objects, copying, calls, and inheritance before applying them to scripting and automation. Choose any step and work across several study sessions; tests and knowledge checks are optional practice."
 
 # Authoring-time Bloom-verb objectives. Not yet rendered to students.
 learning_objectives:
-  - "Apply Python's variable, function, and class syntax to write small scripts."
+  - "Analyze how names, list entries, parameters, instance attributes, and class attributes refer to objects."
+  - "Distinguish mutation from rebinding, identity from equality, and shallow from deep copying."
+  - "Create classes with deliberate shared state, independent member objects, and inherited behavior."
   - "Distinguish Python's significant-whitespace rules from C++'s brace-based blocks."
   - "Use Python idioms (f-strings, list comprehensions, `with`-statements, type hints) for readable code."
   - "Read user input via `sys.argv` and write to `stderr` correctly."
   - "Use the `re` module to extract structured information from text."
-  - "Compose a complete log-analysis script using files, regex, and dataclasses."
+  - "Compose a log-analysis script and model values with dataclasses."
 
 backend: pyodide
 linter: true  # live pyflakes diagnostics in the Monaco gutter
@@ -19,7 +21,9 @@ linter: true  # live pyflakes diagnostics in the Monaco gutter
 # at .claude/plans/what-would-be-options-temporal-ritchie.md.
 debugger: true
 
-require_tests: true
+require_tests: false
+require_quiz: false
+allow_skip_steps: true
 autosave_type: files
 
 # Global setup: add /tutorial to sys.path so imports work across steps
@@ -41,31 +45,60 @@ steps:
     instructions: |
       ### Why this matters
 
-      You already write C++ and shell scripts, but Python is the language of choice when you need to get something done fast — process a CSV, call an API, prototype an algorithm. It now ranks among the world's top 5 most widely used languages, which makes learning it a great investment of your time. Before you can write Python idiomatically, you need a feel for how its execution model differs from what you already know.
+      Python is useful for processing text, automating tasks, and prototyping an algorithm. Your C++ and shell experience gives you a head start, but assignment, function calls, and objects follow different rules. We will practice those differences before combining them in scripts.
 
       ### 🎯 You will learn to
 
       - Apply Python's interpreted execution model by running your first script
       - Contrast Python's syntax (no semicolons, no `main()`, indentation-based) with C++ and Bash
 
+      ### A Study Plan
+
+      Choose any numbered step to jump to the topic you want to practice.
+      Tests and knowledge checks are optional; you can skip a check and return
+      later. Skipping does not mark tests or knowledge checks as passed.
+
+      This expanded tutorial is a sequence of short lessons for several sittings,
+      roughly 3–4 hours in total depending on your prior experience. Try these
+      stopping points: **Class Objects & Instance Attributes**, **Inheritance and Method Dispatch**,
+      and **List Comprehensions**. On returning, predict an earlier example from
+      memory before running it. Later knowledge checks mix earlier concepts
+      with the current topic.
+
+      **Returning to an older saved attempt?** The object-model lessons are new.
+      Saved completion marks use step numbers, so an older mark may now label a
+      different lesson. Use the topic titles to revisit the new lessons. Export
+      any work you want to keep from [SE Gym](/se-gym) before resetting progress.
+
       You already write C++ and shell scripts. Here is how Python fits into your toolkit:
 
       | Aspect | C++ | Bash | Python |
       |---|---|---|---|
       | Typing | Static (`int x`) | Untyped strings | **Dynamic** (`x = 5`) |
-      | Memory | Manual (`new`/`delete`) | N/A | Garbage-collected |
+      | Memory | Object lifetimes, RAII, smart pointers | Managed by the shell | Garbage-collected |
       | Run with | Compile → `./app` | `bash script.sh` | `python3 script.py` |
       | Strength | Speed, systems code | Glue commands together | **Rapid prototyping, data, automation** |
 
-      Python is the language of choice when you need to **get something done fast** — process a CSV, call an API, write a test harness, or prototype an algorithm before porting it to C++.
-      Very large systems or systems with high performance requirements are often better implemented in statically typed, compiled languages like C++ or Rust to detect bugs earlier and to improve performance.
-      However, Python has significantly grown in popularity in recent years and is now one of the **top 5 most widely used programming languages** in the world. 
-      In some surveys it even ranks number 1.
-      So **learning Python is a great investment of your time!**
+      Python often coordinates libraries whose intensive work runs in compiled
+      code. Performance depends on the workload and implementation; measure the
+      part of a program that has a concrete speed or latency requirement.
+
+      ### Lecture Connection: OpenCL
+
+      The lecture also introduces **OpenCL (Open Computing Language)**, a
+      separate standard for parallel work across devices, including graphics processors, from different vendors.
+      First released in 2008, it includes a C-based kernel language. Many
+      *work-items* run a kernel, each using a global ID to select its data.
+      For example, a brightness kernel could multiply image sample `i` by a
+      gain only when `i` is within the image bounds. Different work-items handle
+      different samples. This model supports scientific computing and machine
+      learning, but device capabilities and performance still vary.
+      The Python editor here does not execute OpenCL kernels. See the
+      [OpenCL overview](https://www.khronos.org/opencl/) for that separate topic.
 
       ### A Note About Errors
 
-      You will see many error messages in this tutorial. That is completely normal — every programmer, from beginner to expert, spends a large part of their time reading errors and debugging. Error messages are Python telling you **exactly what to fix**. Read them carefully; they are your most useful debugging tool. If you are not stuck at least some of the time, you are not learning.
+      You will see error messages in this tutorial. Programmers use them to locate a failure and investigate its cause. Read the exception name and line number, compare the program with your prediction, and make one change at a time. An error is feedback you can act on; use the hints when you need another starting point.
 
       ### Your First Python Script
 
@@ -91,7 +124,7 @@ steps:
       Hello, CS 35L!
       ```
 
-      Then click **▶ Run** (or press `Ctrl+Enter`) to execute your script and see the output.
+      Then click **▶ Run** (or press <kbd><abbr data-platform-modifier title="Control" data-no-tooltip="true">Ctrl</abbr>+Enter</kbd>) to execute your script and see the output.
 
     files:
       - path: "hello.py"
@@ -149,7 +182,7 @@ steps:
           correct_index: 1
           option_feedback:
             0: "Scripting languages (Python, Ruby, Bash) execute the file top-to-bottom — there is no inferred entry point. The `if __name__ == '__main__'` idiom is a *convention* for when a file is also imported as a module, not a required entry point. The C/C++/Java requirement of a `main()` is a language-design choice, not a property of all languages."
-            2: "CPython does compile each script to `.pyc` bytecode at runtime, but transparently — the programmer never invokes a compiler, no `main()` is generated, and there is no separate build artifact to ship. C++ requires an explicit, ahead-of-time compile step that produces a native binary; Python does not."
+            2: "CPython compiles source to bytecode internally, but it does not generate a main() function. Running a script does not require a separate user-invoked compile-and-link step. Imported modules may cache bytecode in .pyc files."
             3: "There is no production-vs-script Python. Python's grammar accepts an optional `;` to put two statements on one line, but it is never *required*. A teammate insisting otherwise is recalling a different language (likely C, Java, or JavaScript)."
           explanation: |
             Python is an interpreted scripting language. Like Bash, it executes statements from top to bottom.
@@ -166,10 +199,10 @@ steps:
             - "Python is strong at **rapid prototyping**, **automation**, and **data processing**"
           correct_indices: [0,1,3]
           option_feedback:
-            2: "CPython does produce `.pyc` bytecode, but transparently and at runtime — the programmer never invokes a compiler and there is no separate build artifact to ship. C++ requires an explicit, ahead-of-time compile step that produces a native binary; Python does not."
+            2: "CPython compiles source to bytecode internally. Running a script does not require a separate user-invoked compile-and-link step; imported modules may cache bytecode in .pyc files."
           explanation: |
             Python is an **interpreted** language — you run it directly with `python3 script.py` with no separate compile step.
-            Behind the scenes CPython does compile to bytecode (`.pyc`), but this is invisible to the programmer.
+            Behind the scenes CPython compiles source to bytecode and executes it. Imported modules may cache that bytecode in `.pyc` files.
 
         - question: |
             In which scenario is Python a **better** choice than a shell script?
@@ -199,7 +232,7 @@ steps:
           correct_index: 2
           option_feedback:
             0: "Real systems are layered: a slow glue layer driving a fast hot path is the standard pattern (NumPy in Python wraps C; PyTorch wraps CUDA). Choosing C++ for *every* line because the hot path needs it picks the wrong scope for the decision — most code in any project isn't latency-critical."
-            1: "CPython is roughly 30–100× slower than C++ for tight numeric loops; that gap is *intrinsic* to the interpreter, not something hardware closes over time. Real-time latency budgets (sub-millisecond) cannot absorb a 30× constant factor regardless of how fast the CPU gets."
+            1: "Faster hardware does not establish a latency guarantee. Measure the actual workload and choose an implementation whose worst-case behavior meets the requirement."
             3: "Pipes are great for line-oriented text streams, but a 10 GB sensor stream with strict latency needs zero-copy buffer management, fixed-rate scheduling, and concurrency primitives — none of which `cat | awk | grep` provides. Unix tools shine when the data is text and the timing is loose; that's the opposite of this scenario."
           explanation: |
             This is a real-world trade-off. Python's strength is rapid development; C++'s strength is
@@ -239,7 +272,7 @@ steps:
       std::string name = "Alice";
       ```
 
-      In Python, you just *assign*. Python infers the type:
+      In Python, you just *assign*. The object has a type; the name has no fixed declared type:
       ```python
       score = 95        # int
       gpa   = 3.8       # float
@@ -463,7 +496,223 @@ steps:
             You can verify with `type(x)`, which returns `<class 'int'>`.
 
   # --------------------------------------------------------------------------
-  # STEP 3 — The Indentation Trap
+  # STEP 3 — Names, Objects & References
+  # Pedagogy: PRIMM — predict rebinding, run a contrast, then repair an announcement.
+  - title: "Names, Objects & References"
+    instructions: |
+      ### Why this matters
+
+      A Python name does not contain an object the way a C++ value variable does. Following which object each name refers to explains why saving an old title works, why assigning `None` does not destroy someone else's data, and why later list edits can surprise you.
+
+      ### 🎯 You will learn to
+
+      - Analyze the difference between an object and a name bound to it.
+      - Predict how rebinding changes one name while preserving another.
+      - Apply `is None` to represent and check a missing value.
+
+      ### Every Value Is an Object
+
+      **Plan for 7–10 minutes.** Every Python object has an identity, a type, and a value. Names refer to objects — including `int`, `float`, `bool`, and `str` objects. There is no separate "primitive variables store values, class variables store references" rule.
+
+      `second = first` binds another name to the same object; it does not copy the object. `first = something_else` **rebinds** only `first`. Unlike a C++ reference declaration, a Python name can later refer to a different object, even one of another type. Python manages object allocation; you do not choose stack versus heap allocation with declaration syntax or call `delete`.
+
+      ### Predict, Run, Investigate
+
+      What will the two final lines print: two updated titles, two old titles, or one of each?
+
+      ```python
+      title = "Night Session"
+      poster = title
+      print(poster is title)
+      title += " — Live"
+      print(title)
+      print(poster)
+      ```
+
+      Write your prediction, then try this example in the editor before restoring the starter. `is` asks whether two references reach the **same object**. It first prints `True`; the final lines show the updated title and the old title. Strings are immutable: `+=` computes a string value and changes the binding of `title`; it does not alter the old string that `poster` still refers to. Integers behave similarly when incremented. Mutable objects, introduced with lists, can instead change while keeping their identity.
+
+      **After `title += " — Live"`: which reference moved?** In these reference diagrams, square boxes are name bindings, rounded boxes are objects, and arrows are references. Positions do not represent memory addresses. Later diagrams abbreviate string and number values inside their owning objects instead of drawing every leaf object.
+
+      ```mermaid
+      %% caption: Rebinding title leaves the printed poster attached to the original string.
+      flowchart TB
+        accTitle: Two names after string rebinding
+        accDescr: Before the update, title and poster referred to the same Night Session string. After the update, poster still refers to Night Session, while title refers to the new Night Session — Live string.
+        poster["name:<br/>poster"] --> old("str object<br/>Night Session")
+        title["name:<br/>title"] --> fresh("str object<br/>Night Session — Live")
+      ```
+
+      Use `==` for value comparisons such as song names and counts. Python may reuse equal immutable objects, so the identity of separately written equal numbers or strings is not a reliable value test.
+
+      ### Missing Values and Object Lifetime
+
+      `None` is a real, unique Python object representing absence. Write `selected is None` or `selected is not None` to check for it. Its purpose resembles `nullptr`, but it is not an address to dereference.
+
+      Rebinding `title = None` removes that name's reference to the title; a `poster` reference would still keep it reachable. Only when an object becomes unreachable may Python reclaim it. Collection timing is not guaranteed, and debugging tools can retain extra references. Assigning `None` is therefore not a request to destroy an object.
+
+      ### Task: Keep the Printed Announcement
+
+      Restore `reference_names.py` and complete the announcement update using straight-line assignments:
+
+      1. Make `poster_title` refer to the original `title` object; then add `" — Live"` to `title`.
+      2. Make `printed_capacity` refer to the original `capacity` object; then increase `capacity` by 40.
+      3. Set `featured_track` to `None` and set `uses_fallback` to the Boolean indicating that a fallback is needed.
+
+      Keep `initial_title` and `initial_capacity` unchanged. The checks inspect your final variable values and identities, so changing only printed messages does not complete the task. Before running, explain why the poster keeps its old title and capacity, and how `is None` computes the fallback decision.
+    files:
+      - path: reference_names.py
+        language: python
+        content: |
+          initial_title = "Harbor Beats"
+          title = initial_title
+          poster_title = None
+          # Preserve the original title, then update the live title.
+          title = title
+
+          initial_capacity = 320
+          capacity = initial_capacity
+          printed_capacity = None
+          # Preserve the printed capacity, then add 40 live spaces.
+          capacity = capacity
+
+          featured_track = "Unannounced"
+          uses_fallback = False
+          # Represent the missing track and check whether it is missing.
+
+          print("Poster:", poster_title, printed_capacity)
+          print("Live:", title, capacity)
+          print("Use fallback:", uses_fallback)
+    open_file: reference_names.py
+    run_file: reference_names.py
+    solution:
+      files:
+        - path: reference_names.py
+          language: python
+          content: |
+            initial_title = "Harbor Beats"
+            title = initial_title
+            poster_title = title
+            title += " — Live"
+
+            initial_capacity = 320
+            capacity = initial_capacity
+            printed_capacity = capacity
+            capacity += 40
+
+            featured_track = None
+            uses_fallback = featured_track is None
+
+            print("Poster:", poster_title, printed_capacity)
+            print("Live:", title, capacity)
+            print("Use fallback:", uses_fallback)
+      explanation: |
+        The poster names keep references to the original string and integer. Updating `title` and `capacity` rebinds those two names to the new values; it does not mutate the old objects. `featured_track` now refers to the `None` singleton, so its identity check is true. Writing `title = title + " — Live"` and `capacity = capacity + 40` has the same effect here.
+    tests:
+      - description: "The printed title retains the original object while the live title changes"
+        command: |
+          namespace = {}
+          exec(open('/tutorial/reference_names.py').read(), namespace)
+          assert namespace['initial_title'] == 'Harbor Beats', 'Keep the initial title unchanged.'
+          assert namespace['poster_title'] is namespace['initial_title'], 'The poster must retain a reference to the original title object.'
+          assert namespace['title'] == 'Harbor Beats — Live', 'The live title should add the suffix exactly once.'
+          assert namespace['title'] is not namespace['poster_title'], 'The changed string must not be the unchanged poster string.'
+        hints:
+          - text: "The poster should remember the announcement before the live update. Which assignment must happen first?"
+          - text: "Assigning one name to another shares an object; later assigning a new string to one name does not redirect the other name."
+          - text: "First bind `poster_title` to the name holding the old title. Then compute `title + ...` and bind the result to `title`."
+      - description: "Increasing capacity preserves the printed integer value"
+        command: |
+          namespace = {}
+          exec(open('/tutorial/reference_names.py').read(), namespace)
+          assert namespace['initial_capacity'] == 320, 'Keep the original capacity at 320.'
+          assert namespace['printed_capacity'] is namespace['initial_capacity'], 'The printed capacity must retain the original integer object.'
+          assert namespace['capacity'] == 360, 'The live capacity should increase by 40.'
+        hints:
+          - text: "Apply the same before-and-after reasoning as for the title. Integers are objects too."
+          - text: "Save the old binding before the arithmetic update; adding 40 cannot mutate an integer."
+          - text: "The two operations have the shape `printed_capacity = ...`, followed by `capacity = ... + 40`."
+      - description: "A missing track uses None and enables the fallback"
+        command: |
+          namespace = {}
+          exec(open('/tutorial/reference_names.py').read(), namespace)
+          assert namespace['featured_track'] is None, 'Use None itself to represent the missing track, not the string "None".'
+          assert namespace['uses_fallback'] is True, 'The missing-track check should produce the Boolean True.'
+        hints:
+          - text: "A missing value is different from a label describing a missing value."
+          - text: "`None` has no quotes; `is` compares object identity and produces a Boolean."
+          - text: "After updating `featured_track`, the final assignment has the shape `uses_fallback = featured_track is ...`."
+    quiz:
+      title: "Step 3 — Knowledge Check"
+      min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
+      questions:
+        - type: single
+          difficulty: basic
+          question: "After `count = 320; saved = count`, what does `saved` refer to?"
+          options:
+            - "A copied integer object with the same value"
+            - "The same integer object that count refers to"
+            - "The count variable, so it follows later rebinding"
+            - "A raw integer value rather than a Python object"
+          correct_index: 1
+          option_feedback:
+            0: "Assignment adds a binding; it does not request an object copy."
+            2: "A name refers to an object, not to another variable's binding. Rebinding count does not rebind saved."
+            3: "Integers participate in the same object model as strings and class instances."
+          explanation: "Both names initially refer to one integer object. A later `count += 1` binds count to an integer with a different value while saved retains the old value."
+        - type: single
+          difficulty: intermediate
+          question: |
+            What does this print?
+            ```python
+            track = "Signal"
+            saved = track
+            track += " Remix"
+            print(saved, track)
+            ```
+          options:
+            - "Signal Remix Signal Remix"
+            - "Signal Signal"
+            - "Signal Signal Remix"
+            - "Signal Remix Signal"
+          correct_index: 2
+          option_feedback:
+            0: "The existing string is immutable. The new title changes track's binding, not the object saved still reaches."
+            1: "Immutability prevents editing the old string; it does not prevent rebinding track to a new value."
+            3: "The assignment targets track. The saved name is not reassigned."
+          explanation: "saved retains the original string and track refers to the concatenated value. The same `+=` spelling will need fresh analysis for mutable types."
+        - type: single
+          difficulty: intermediate
+          question: "A name is rebound to None. When may Python reclaim the object it previously referred to?"
+          options:
+            - "Immediately, even if another name still refers to it"
+            - "When it is unreachable; collection can happen later"
+            - "Only after the program explicitly calls delete on it"
+            - "Never, because a Python object must live until exit"
+          correct_index: 1
+          option_feedback:
+            0: "Other reachable references keep the old object available. Rebinding one name does not invalidate them."
+            2: "Python manages collection. Removing a name is not a manual object-destruction operation."
+            3: "Unreachable objects may be reclaimed during execution, although the language does not promise immediate collection."
+          explanation: "Reachability determines eligibility for collection. A list, attribute, another name, or even debugger state can still keep an object reachable."
+        - type: single
+          difficulty: basic
+          question: "Which expression directly asks whether `featured` refers to the unique missing-value object?"
+          options:
+            - '`featured == "None"`'
+            - "`featured is None`"
+            - "`type(featured) is str`"
+            - '`featured is ""`'
+          correct_index: 1
+          option_feedback:
+            0: "The string spelling None is ordinary text; it is not the None object."
+            2: "A type check asks what kind of object featured reaches, not whether it is the missing-value singleton."
+            3: "An empty string is still a string value. Use equality to compare text and identity for the None singleton."
+          explanation: "None has one identity, so `is None` is the direct missing-value check."
+
+  # --------------------------------------------------------------------------
+  # STEP 4 — The Indentation Trap
   # Pedagogy:
   #   Negative Transfer  — the single most common mistake from C++ students.
   #   Fixer Upper        — deliberately broken code to diagnose and repair.
@@ -582,7 +831,7 @@ steps:
           - text: "Which range does 71 fall into? Count your `elif` branches — do you have enough to cover all the grade letters?"
 
     quiz:
-      title: "Step 3 — Knowledge Check"
+      title: "Step 4 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -659,11 +908,11 @@ steps:
             convert between them. The key practice: configure your editor to insert 4 spaces for Tab.
 
   # --------------------------------------------------------------------------
-  # STEP 4 — Functions
+  # STEP 5 — Functions
   # Pedagogy:
   #   Transfer Tutor     — C++ function signatures → Python `def`.
   #   Guide-and-Release  — partially-written function to complete.
-  #   Component Skills   — functions isolated from loops (split from old Step 4).
+  #   Component Skills   — functions isolated from loops (split from old Functions).
   #   Fading: Medium     — function signatures given, body needs implementing.
   #   Bloom's level      — Remember / Apply / Analyze (quiz).
   # --------------------------------------------------------------------------
@@ -841,7 +1090,7 @@ steps:
             condition: "code_contains: threshold"
 
     quiz:
-      title: "Step 4 — Knowledge Check"
+      title: "Step 5 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -904,7 +1153,7 @@ steps:
             Python uses `//` for integer (floor) division: `30 // 2` → `15`.
 
         - question: |
-            *(Spaced review — Step 1: Python Execution Model)*
+            *(Spaced review — Python Execution Model)*
 
             A teammate is confused: *"I wrote a Python file with a helper function and some test prints, but when I import it from another file, all the test prints run too."* What should they use to prevent this?
           type: single
@@ -938,11 +1187,1912 @@ steps:
             The distractor `return a, b` would return a tuple, not the max.
 
   # --------------------------------------------------------------------------
-  # STEP 5 — Type Hints: Documentation Tools Can Check
+  # STEP 6 — Lists of References
+  # Pedagogy: PRIMM — nested-reference prediction followed by a small reusable builder.
+  - title: "Lists of References"
+    instructions: |
+      ### Why this matters
+
+      A festival app needs both a list of sets and a flat running order. Confusing those two structures can put an entire set where one track belongs; copying a list can also leave its member objects shared.
+
+      ### 🎯 You will learn to
+
+      - Analyze aliasing through list elements, including nested lists.
+      - Apply indexing, concatenation, `append`, and `extend` to the intended structure.
+      - Evaluate list operations using their time costs.
+
+      ### A List Stores References
+
+      **Plan for 9–12 minutes.** A Python list is a mutable sequence of references to objects. It can be heterogeneous: `["Opening", 25, None]` holds references to a string, an integer, and `None`. A nested list is another object reached through an element, not an automatically embedded copy.
+
+      CPython, the implementation underlying this tutorial's Python runtime, uses a dynamically allocated array of object references. Its capacity can grow; this is not a C++ array of inline, fixed-type values. The language-level lesson is which objects are shared, independent of the implementation's allocation details.
+
+      ### Predict, Run, Investigate
+
+      ```python
+      opening = ["Lantern"]
+      sets = [opening, opening]
+      sets[0].append("Afterglow")
+      opening = ["Side Stage"]
+      print(sets)
+      print(opening)
+      ```
+
+      Predict whether `sets` shows two changed lists, only one changed list, or two `"Side Stage"` lists. Run this snippet, then explain it: both slots initially refer to the same list, so mutation through either slot is visible through both. Rebinding the name `opening` does not rewrite either slot. Try replacing the rebinding line with `sets[0] = ["Side Stage"]`; predict which slot changes before running again.
+
+      **After the original snippet:** follow each list slot separately. The two slot arrows end at one object, even though printing the outer list displays that object's contents twice. Values inside the list boxes abbreviate references to strings.
+
+      ```mermaid
+      %% caption: Rebinding opening leaves both slots of sets pointing to the same changed list.
+      flowchart TB
+        accTitle: A nested list keeps two references to one inner list
+        accDescr: The name sets refers to an outer list. Its index 0 and index 1 both refer to a single inner list containing Lantern and Afterglow. The name opening now refers to a separate list containing Side Stage.
+        sets["name:<br/>sets"] --> outer("list object<br/>two slots")
+        outer -->|index 0| shared("list object<br/>Lantern, Afterglow")
+        outer -->|index 1| shared
+        opening["name:<br/>opening"] --> fresh("list object<br/>Side Stage")
+      ```
+
+      ### One Object or Many Elements?
+
+      | Operation | Effect | CPython time cost |
+      |---|---|---|
+      | `tracks[i]` | Retrieve the reference at index `i` | O(1) |
+      | `len(tracks)` | Read the stored number of elements | O(1) |
+      | `track in tracks`, `track not in tracks` | Search for a matching member | O(n) worst case |
+      | `left + right` | New list containing both sequences' references | O(n + m) |
+      | `tracks.append(value)` | Add one object, even if it is a list | O(1) amortized |
+      | `tracks.extend(more)` | Add each element from `more` | O(m) amortized |
+
+      Here `n` and `m` are the input lengths; the membership bound assumes each equality comparison is O(1). Expensive custom comparisons add their own cost. "Amortized" averages resize work across a sequence of operations: one append can still take O(n). Concatenation makes a new outer list without cloning the objects it references. `append` and `extend` mutate their receiver and return `None`.
+
+      ### Task: Groups and Running Order
+
+      Complete both functions in `reference_lists.py`. Their inputs are three lists of track objects, possibly empty; tracks may be strings or other objects.
+
+      - `group_sets(opening, late, encore)` returns a **new outer list with three elements**, referring to those exact input lists in that order.
+      - `combine_tracks(opening, late, encore)` returns a **new flat list** containing their elements in order, preserving repeated tracks and each element's identity.
+      - Neither function changes any input list. Calling either function again returns a fresh outer list.
+
+      Use the operation table to choose a structure before writing code. `append` is useful for one whole set, and `extend` for its tracks; equivalent correct constructions are accepted. After testing, append a track to an input list and explain why the grouped view updates but the combined list does not gain a new slot.
+    files:
+      - path: reference_lists.py
+        language: python
+        content: |
+          def group_sets(opening, late, encore):
+              # Keep each supplied set as one member of a new list.
+              return []
+
+          def combine_tracks(opening, late, encore):
+              # Build a new running order without changing the supplied sets.
+              return []
+
+          opening = ["Lantern"]
+          late = ["Afterglow", "Lantern"]
+          encore = ["Homeward"]
+          print("Grouped:", group_sets(opening, late, encore))
+          print("Running order:", combine_tracks(opening, late, encore))
+    open_file: reference_lists.py
+    run_file: reference_lists.py
+    solution:
+      files:
+        - path: reference_lists.py
+          language: python
+          content: |
+            def group_sets(opening, late, encore):
+                sets = [opening, late]
+                sets.append(encore)
+                return sets
+
+            def combine_tracks(opening, late, encore):
+                tracks = opening + late
+                tracks.extend(encore)
+                return tracks
+
+            opening = ["Lantern"]
+            late = ["Afterglow", "Lantern"]
+            encore = ["Homeward"]
+            print("Grouped:", group_sets(opening, late, encore))
+            print("Running order:", combine_tracks(opening, late, encore))
+      explanation: |
+        `sets.append(encore)` adds one reference to a whole list. `opening + late` makes a new flat outer list, then `extend` adds each encore element to it. The input lists remain unchanged. Both results still reference existing objects: mutating an input list affects a grouped set, while mutating an individual mutable track can be visible through both views. A single expression `[opening, late, encore]` and concatenation `opening + late + encore` are also correct.
+    tests:
+      - description: "Grouped sets retain the three input-list identities without changing them"
+        command: |
+          namespace = {}
+          exec(open('/tutorial/reference_lists.py').read(), namespace)
+          group = namespace['group_sets']
+          opening, late, encore = ['Dawn'], [], ['Finale']
+          grouped = group(opening, late, encore)
+          assert isinstance(grouped, list) and len(grouped) == 3, 'Return a list of exactly three sets, including empty sets.'
+          assert grouped[0] is opening and grouped[1] is late and grouped[2] is encore, 'Each slot must refer to its supplied set, in order.'
+          assert opening == ['Dawn'] and late == [] and encore == ['Finale'], 'Grouping must not change the input lists.'
+          opening.append('Daybreak')
+          assert grouped[0] == ['Dawn', 'Daybreak'], 'Mutating a supplied set should be visible through its grouped reference.'
+          grouped[0] = ['Replacement']
+          assert opening == ['Dawn', 'Daybreak'], 'Replacing a grouped slot must not replace the original list contents.'
+          assert group(opening, late, encore) is not grouped, 'Each call must create a fresh outer list.'
+        hints:
+          - text: "Count sets, not tracks: even an empty set occupies one outer slot."
+          - text: "Keep the input lists themselves as members. Extending with a set would add its tracks individually."
+          - text: "Start from a list containing two set references, then add the remaining set as one object."
+      - description: "The combined order is flat, preserves duplicates and identities, and leaves inputs untouched"
+        command: |
+          namespace = {}
+          exec(open('/tutorial/reference_lists.py').read(), namespace)
+          combine = namespace['combine_tracks']
+          marker = ['editable track']
+          opening, late, encore = [marker, 'Echo'], ['Echo'], [None, 7]
+          combined = combine(opening, late, encore)
+          expected = [marker, 'Echo', 'Echo', None, 7]
+          assert isinstance(combined, list) and combined == expected, 'Combine all tracks in order, preserving duplicates and mixed types.'
+          assert combined[0] is marker, 'Keep the actual track object; do not clone or stringify it.'
+          assert opening == [marker, 'Echo'] and late == ['Echo'] and encore == [None, 7], 'Do not append into an input list.'
+          assert combined is not opening and combined is not late and combined is not encore, 'The result needs its own outer list.'
+          opening.append('New track')
+          assert combined == expected, 'Appending to an input afterward must not add a slot to the combined list.'
+          marker.append('remastered')
+          assert combined[0] == ['editable track', 'remastered'], 'The existing mutable track object remains shared.'
+        hints:
+          - text: "The flat list should contain tracks rather than entire input lists. A track can itself be a mutable object."
+          - text: "Concatenation creates a new outer list. Extending that list preserves track order and identity without editing the inputs."
+          - text: "Build from `opening + ...`, then extend the result with the remaining sequence before returning it."
+      - description: "Empty sets and repeated calls produce independent outer results"
+        command: |
+          namespace = {}
+          exec(open('/tutorial/reference_lists.py').read(), namespace)
+          group, combine = namespace['group_sets'], namespace['combine_tracks']
+          empty = []
+          grouped = group(empty, empty, empty)
+          assert len(grouped) == 3 and all(item is empty for item in grouped), 'Three empty input sets still require three shared references.'
+          first, second = combine([], [], []), combine([], [], [])
+          assert first == [] and second == [], 'No input tracks should produce an empty running order.'
+          assert first is not second, 'Independent calls must not reuse an outer result list.'
+          single = ['Solo']
+          assert combine([], single, []) == ['Solo'], 'An empty opening or encore must not discard the middle set.'
+        hints:
+          - text: "Empty inputs distinguish the number of sets from the number of tracks."
+          - text: "Construct the result inside each function call so previous results cannot become shared working storage."
+          - text: "With three empty inputs, the grouped shape is `[[], [], []]`, while the combined shape is `[]`; the grouped slots must still hold the supplied lists."
+    quiz:
+      title: "Step 6 — Knowledge Check"
+      min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
+      questions:
+        - type: single
+          difficulty: intermediate
+          question: |
+            What does `sets` contain afterward?
+            ```python
+            setlist = ["Orbit"]
+            sets = [setlist, setlist]
+            sets[0].append("Landing")
+            setlist = ["Launch"]
+            ```
+          options:
+            - '`[["Orbit", "Landing"], ["Orbit", "Landing"]]`'
+            - '`[["Orbit", "Landing"], ["Orbit"]]`'
+            - '`[["Launch"], ["Launch"]]`'
+            - '`[["Orbit"], ["Orbit"]]`'
+          correct_index: 0
+          option_feedback:
+            1: "Both outer slots refer to the same inner list, so a mutation through one is visible through the other."
+            2: "Rebinding setlist changes a name, not the references already stored in sets."
+            3: "append mutates the shared inner list; it does not return an independent edited list."
+          explanation: "The outer list contains the same modified inner list twice. This is the earlier alias-versus-rebinding rule applied to list slots."
+        - type: single
+          difficulty: basic
+          question: "For `tracks = []` and `extra = [\"Pulse\", \"Drift\"]`, what does `tracks` contain after `tracks.append(extra)`?"
+          options:
+            - '`["Pulse", "Drift"]`'
+            - '`[["Pulse", "Drift"]]`'
+            - '`["Pulse"]`'
+            - '`None`'
+          correct_index: 1
+          option_feedback:
+            0: "extend would add both elements individually. append adds its argument as one object."
+            2: "append does not select the first element; it stores the whole extra list as one member."
+            3: "The method call returns None, but the tracks name still refers to the mutated list."
+          explanation: "The result has one element, and that element is the extra list itself."
+        - type: single
+          difficulty: intermediate
+          question: "For a CPython list of n tracks, assume equality checks cost O(1). Which operation has O(n) worst-case search time?"
+          options:
+            - "Reading the first track with tracks[0]"
+            - "Reading the list's size with len(tracks)"
+            - "Checking whether missing_track is in tracks"
+            - "Binding another name with saved = tracks"
+          correct_index: 2
+          option_feedback:
+            0: "Array-style indexed access retrieves one slot directly; it does not search earlier slots."
+            1: "A list maintains its size rather than counting all elements on each len call."
+            3: "Assignment creates a binding to the existing list; it does not traverse or copy its elements."
+          explanation: "A missing membership match may require inspecting every element. `not in` must establish the same absence, so it has the same worst-case cost."
+        - type: single
+          difficulty: intermediate
+          question: "Two lists contain n and m tracks. Which statement correctly describes `left + right`?"
+          options:
+            - "It appends right as one object in O(1) amortized time."
+            - "It clones every track recursively in O(n + m) time."
+            - "It makes a new list of their references in O(n + m) time."
+            - "It modifies left and returns None in O(m) amortized time."
+          correct_index: 2
+          option_feedback:
+            0: "That describes append, not concatenation. Concatenation visits both sequences' elements."
+            1: "The outer list is new, but its elements still refer to the existing track objects."
+            3: "That describes extending left. The + operation leaves both input lists unchanged."
+          explanation: "Concatenation allocates a new outer list and copies n + m references into it."
+
+  # --------------------------------------------------------------------------
+  # STEP 7 — Objects & Member References
+  # Pedagogy: PRIMM — worked constructor, shared-collaborator prediction, then ownership repair.
+  - title: "Objects & Member References"
+    instructions: |
+      ### Why this matters
+
+      Two festival playlists may intentionally share one artist profile while owning separate track queues. Object attributes use the same reference rules as names and list slots; a constructor must make the intended sharing explicit.
+
+      ### 🎯 You will learn to
+
+      - Apply `__init__`, `self`, and instance methods to initialize and change objects.
+      - Analyze references stored in an object's attributes.
+      - Create shared collaborators alongside independently owned member lists.
+
+      ### Construction and Method Calls
+
+      **Plan for 9–12 minutes.** An ordinary class groups state with methods that use it:
+
+      ```python
+      class Artist:
+          def __init__(self, name):
+              self.name = name
+
+          def rename(self, new_name):
+              self.name = new_name
+
+      artist = Artist("Silver Current")
+      artist.rename("Silver Current Trio")
+      ```
+
+      `Artist(...)` creates an instance and calls its `__init__` initializer. Python supplies that instance as the first argument, conventionally named `self`. `artist.rename("...")` supplies `artist` as `self`; for this ordinary method it is equivalent to `Artist.rename(artist, "...")`.
+
+      `self.name = name` stores a reference in an **instance attribute** (a member). A bare `name = ...` inside the method only binds a local name. The object holds a reference to the string; it does not physically embed a mutable string value. Reassigning `self.name` changes that attribute's reference.
+
+      ### Predict the Shared Member
+
+      The starter includes the `Artist` class above and a partial `Playlist` class. A correct constructor will receive an `artist` object and store it. Predict what should happen after two playlists receive the same artist and the artist is renamed: both show the new artist name, one does, or neither does?
+
+      Both should see the change, because their `artist` attributes refer to one shared custom object. In contrast, calling `Playlist(...)` twice should create two independent `tracks` lists. A reference member does not decide ownership for you: creating a new list inside `__init__` is an explicit choice to give each playlist its own queue.
+
+      **Target state after completing `Playlist` and running the starter's demonstration:** trace `first.artist` and `second.artist`, then trace their `tracks` attributes. Edge labels name the attribute that stores each reference; omitted attributes do not affect this comparison.
+
+      ```mermaid
+      %% caption: Sharing an artist does not require sharing the playlists' track queues.
+      flowchart TB
+        accTitle: Two playlists share one artist and have separate queues
+        accDescr: Names first and second refer to separate Playlist objects. Both artist attributes refer to the same Artist object named Silver Current. The first Playlist's tracks attribute refers to a list containing Open Water; the second refers to a different empty list. The separate name artist, omitted here, also refers to that Artist.
+        first["name:<br/>first"] --> a("Playlist object<br/>Afternoon Live")
+        second["name:<br/>second"] --> b("Playlist object<br/>Afterparty")
+        a -->|artist| artist("Artist object<br/>Silver Current")
+        b -->|artist| artist
+        a -->|tracks| left("list object<br/>Open Water")
+        b -->|tracks| right("list object<br/>empty")
+      ```
+
+      ### Task: Shared Artist, Separate Queues
+
+      Complete `Playlist` in `member_playlists.py`:
+
+      - `Playlist(name, artist)` stores `name`, refers to the exact supplied `Artist` object in `artist`, and starts with a fresh empty `tracks` list for every instance.
+      - `add_track(track)` appends the supplied object once, preserving its identity and allowing duplicates.
+      - `rename(new_name)` updates only this playlist's `name`.
+
+      Keep the provided `Artist` behavior. Run the starter once to see the missing behavior, then implement the methods and run the checks. The inputs are ordinary names, Artist objects, and track objects; no validation is required.
+
+      ### Investigate One Reference at a Time
+
+      After the checks pass, create two playlists for the same artist. Add a track to one and rename their artist. Explain why only one queue changes but both artist names change. Finally assign a different `Artist` to one playlist's `artist` attribute: this rebinds one member reference and does not redirect the other playlist's member.
+    files:
+      - path: member_playlists.py
+        language: python
+        content: |
+          class Artist:
+              def __init__(self, name):
+                  self.name = name
+
+              def rename(self, new_name):
+                  self.name = new_name
+
+          class Playlist:
+              def __init__(self, name, artist):
+                  self.name = name
+                  self.artist = None
+                  self.tracks = []
+
+              def add_track(self, track):
+                  # Add the track to this playlist's own queue.
+                  pass
+
+              def rename(self, new_name):
+                  # Change this playlist's stored name.
+                  pass
+
+          artist = Artist("Silver Current")
+          first = Playlist("Afternoon", artist)
+          second = Playlist("Afterparty", artist)
+          first.add_track("Open Water")
+          first.rename("Afternoon Live")
+          print("Shared artist:", first.artist is second.artist is artist)
+          print("Playlists:", first.name, second.name)
+          print("Queues:", first.tracks, second.tracks)
+    open_file: member_playlists.py
+    run_file: member_playlists.py
+    solution:
+      files:
+        - path: member_playlists.py
+          language: python
+          content: |
+            class Artist:
+                def __init__(self, name):
+                    self.name = name
+
+                def rename(self, new_name):
+                    self.name = new_name
+
+            class Playlist:
+                def __init__(self, name, artist):
+                    self.name = name
+                    self.artist = artist
+                    self.tracks = []
+
+                def add_track(self, track):
+                    self.tracks.append(track)
+
+                def rename(self, new_name):
+                    self.name = new_name
+
+            artist = Artist("Silver Current")
+            first = Playlist("Afternoon", artist)
+            second = Playlist("Afterparty", artist)
+            first.add_track("Open Water")
+            first.rename("Afternoon Live")
+            print("Shared artist:", first.artist is second.artist is artist)
+            print("Playlists:", first.name, second.name)
+            print("Queues:", first.tracks, second.tracks)
+      explanation: |
+        Each initializer call creates a new tracks list while retaining the supplied artist reference. The methods receive the target instance as self, so assigning self.name or mutating self.tracks affects that playlist. Sharing the artist is deliberate: future artist edits appear through every reference to that object. Rebinding one playlist's artist attribute changes only that attribute.
+    tests:
+      - description: "Playlists share the supplied artist while a member rebind affects only its owner"
+        command: |
+          namespace = {}
+          exec(open('/tutorial/member_playlists.py').read(), namespace)
+          Artist, Playlist = namespace['Artist'], namespace['Playlist']
+          artist = Artist('North Channel')
+          first, second = Playlist('Morning', artist), Playlist('Evening', artist)
+          assert first.artist is artist and second.artist is artist, 'Retain the supplied Artist object rather than copying it or storing only its name.'
+          artist.rename('North Channel Quartet')
+          assert first.artist.name == second.artist.name == 'North Channel Quartet', 'Both member references should observe a rename of their shared artist.'
+          replacement = Artist('South Channel')
+          first.artist = replacement
+          assert first.artist is replacement and second.artist is artist, 'Rebinding one member must leave the other member pointing to the original artist.'
+        hints:
+          - text: "The constructor is handed a useful object. The task asks the playlists to share that object."
+          - text: "Store the parameter as an attribute reference; creating another Artist would create a separate identity."
+          - text: "Inside the initializer, the assignment has the shape `self.artist = ...`, with the supplied collaborator on the right."
+      - description: "Track queues are per-instance lists that preserve track identity and duplicate entries"
+        command: |
+          namespace = {}
+          exec(open('/tutorial/member_playlists.py').read(), namespace)
+          Artist, Playlist = namespace['Artist'], namespace['Playlist']
+          artist = Artist('Estuary')
+          first, second = Playlist('Warmup', artist), Playlist('Headliner', artist)
+          assert isinstance(first.tracks, list) and first.tracks == [] and second.tracks == [], 'Every new playlist starts with an empty track list.'
+          assert first.tracks is not second.tracks, 'Different playlists need separate track lists.'
+          track = ['editable recording']
+          first.add_track(track)
+          first.add_track(track)
+          assert len(first.tracks) == 2 and first.tracks[0] is track and first.tracks[1] is track, 'Append each supplied object once and preserve duplicates.'
+          assert second.tracks == [], 'Adding to one playlist must not change another playlist queue.'
+          track.append('live version')
+          assert first.tracks[0] == ['editable recording', 'live version'], 'Queued members should retain the original track object.'
+        hints:
+          - text: "The artist is intentionally shared, but each playlist needs its own queue."
+          - text: "Create the empty list when each instance is initialized, then mutate the list reached through self.tracks."
+          - text: "The method needs one list operation on `self.tracks`, adding `track` as one member rather than its individual elements."
+      - description: "Renaming changes the receiver and works through either ordinary method-call form"
+        command: |
+          namespace = {}
+          exec(open('/tutorial/member_playlists.py').read(), namespace)
+          Artist, Playlist = namespace['Artist'], namespace['Playlist']
+          artist = Artist('Tidal')
+          first, second = Playlist('Day', artist), Playlist('Night', artist)
+          alias = first
+          first.rename('Sunrise')
+          assert first.name == alias.name == 'Sunrise', 'A rename must update the instance attribute seen through every alias of that playlist.'
+          assert second.name == 'Night' and artist.name == 'Tidal', 'Renaming a playlist must not rename another playlist or its artist.'
+          Playlist.rename(first, 'Sunset')
+          assert first.name == 'Sunset', 'Calling the method through the class should act on the explicitly supplied instance.'
+        hints:
+          - text: "The name belongs to the receiving playlist. The artist's name is a different member on a different object."
+          - text: "An assignment to a bare local name ends with the call; an assignment through self persists on the instance."
+          - text: "The method body should assign the provided replacement to `self.name`, keeping the supplied parameter as the value source."
+    quiz:
+      title: "Step 7 — Knowledge Check"
+      min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
+      questions:
+        - type: single
+          difficulty: basic
+          question: "For the ordinary Artist class in this step, which call is equivalent to `artist.rename(\"Delta\")`?"
+          options:
+            - '`Artist.rename("Delta", artist)`'
+            - '`Artist.rename(artist, "Delta")`'
+            - '`Artist.rename("Delta")`'
+            - '`artist.rename(artist, "Delta")`'
+          correct_index: 1
+          option_feedback:
+            0: "The receiving instance is the first parameter, conventionally named self."
+            2: "Calling the function through the class requires supplying the receiving instance explicitly."
+            3: "The instance-call form already supplies self, so adding artist again supplies an extra argument."
+          explanation: "The bound instance method automatically passes artist as the first argument. The ordinary class-call form supplies it explicitly."
+        - type: single
+          difficulty: intermediate
+          question: "Two playlists retain the same Artist object. One executes `first.artist.name = \"Delta\"`. What changes?"
+          options:
+            - "Only the artist name visible through first changes."
+            - "Both playlists now observe the changed artist name."
+            - "Both playlist names change along with the artist name."
+            - "A new Artist replaces the member on first only."
+          correct_index: 1
+          option_feedback:
+            0: "Both artist attributes reach one object. The nested assignment changes that shared object's name."
+            2: "Playlist.name and Artist.name are separate attributes on different objects. Sharing one does not link the others."
+            3: "The assignment targets the existing artist's name attribute; it does not assign a new value to first.artist."
+          explanation: "Following `first.artist` reaches the shared Artist, and assigning its name is visible through every reference to that Artist."
+        - type: single
+          difficulty: intermediate
+          question: "A rename method executes only `name = new_name`. Why does the playlist keep its old name?"
+          options:
+            - "Strings cannot be used as object attributes."
+            - "An initializer must be called after each method."
+            - "The assignment changes a local binding, not self.name."
+            - "The method must return the string to change its type."
+          correct_index: 2
+          option_feedback:
+            0: "Strings are valid attribute values; immutability does not prevent changing which string an attribute references."
+            1: "Initialization is not required after each update. Methods can directly change instance attributes."
+            3: "Returning a value and updating an attribute are different effects. The attribute must be assigned on the receiver."
+          explanation: "`self.name = new_name` changes the instance member. A bare name assignment creates or rebinds a local name in the method."
+        - type: single
+          difficulty: intermediate
+          question: |
+            Recall the earlier binding rule. After this code, what does the playlist's artist member refer to?
+            ```python
+            artist = Artist("Low Tide")
+            playlist = Playlist("Morning", artist)
+            artist = Artist("High Tide")
+            ```
+          options:
+            - "The original Low Tide Artist object"
+            - "The replacement High Tide Artist object"
+            - "None, because the original name was rebound"
+            - "A copy made when the artist name changed"
+          correct_index: 0
+          option_feedback:
+            1: "Rebinding a local name does not rewrite references already stored in attributes."
+            2: "The playlist's member keeps the original object reachable even after this name changes."
+            3: "Neither a name assignment nor the constructor's reference assignment implicitly copies an Artist."
+          explanation: "The name artist and the member playlist.artist are separate bindings. Changing one leaves the other intact."
+
+  # --------------------------------------------------------------------------
+  # STEP 8 — Class Objects & Instance Attributes
+  # Pedagogy: PRIMM — predict class lookup, then repair shared counter and member ownership.
+  - title: "Class Objects & Instance Attributes"
+    instructions: |
+      ### Why this matters
+
+      A pass issuer needs one shared numbering sequence, but each pass needs its own notes. Python stores both class state and instance state on objects; placing a list in the wrong namespace can quietly share every attendee's notes.
+
+      ### 🎯 You will learn to
+
+      - Analyze a class as a callable object with attributes and methods.
+      - Distinguish class attribute lookup, instance shadowing, and shared mutation.
+      - Create a shared counter alongside per-instance serials and lists.
+
+      ### The Class Is an Object Too
+
+      **Plan for 10–12 minutes.** Executing a `class` statement creates a class object and binds its name. Its body defines class attributes and functions. Calling the class normally creates an instance, then initializes it with `__init__`.
+
+      ```python
+      class StageBadge:
+          color = "blue"
+
+      BadgeMaker = StageBadge
+      badge = BadgeMaker()
+      print(BadgeMaker is StageBadge)       # True: two names, one class
+      print(type(badge) is StageBadge)      # True: instance's class
+      print(type(StageBadge) is type)       # True: this class's class
+      ```
+
+      The final statement describes this ordinary class: `type` is the built-in class used to create it. Class objects can be assigned to names, passed as arguments, and called through aliases just like other callable objects.
+
+      **After the first snippet:** distinguish the two names for the class from the name for its instance. The `__class__` arrow shows which class the instance belongs to; it does not mean the instance contains a copy of the class.
+
+      ```mermaid
+      %% caption: A class alias refers to the class object; calling it produces a separate instance.
+      flowchart TB
+        accTitle: Names for a class object and one of its instances
+        accDescr: The name badge refers to a StageBadge instance. That instance's class is the StageBadge class object. Both names StageBadge and BadgeMaker refer to that same class object, whose color attribute is blue.
+        badge["name:<br/>badge"] --> instance("StageBadge instance<br/>no own color")
+        instance -->|__class__| cls("class object<br/>StageBadge<br/>color: blue")
+        className["name:<br/>StageBadge"] --> cls
+        alias["name:<br/>BadgeMaker"] --> cls
+      ```
+
+      ### Predict Attribute Lookup
+
+      Continue the example:
+
+      ```python
+      other = StageBadge()
+      badge.color = "gold"
+      StageBadge.color = "green"
+      print(badge.color, other.color, StageBadge.color)
+      ```
+
+      Predict the three colors, then run the two snippets. For these ordinary data attributes, lookup first checks the instance and then falls back to its class. Assigning `badge.color` creates an instance attribute that **shadows** the class default. The result is `gold green green`; changing the class default affects instances that still fall back to it.
+
+      **After both assignments:** the class relationship stays the same. Only one instance now has its own `color`. This snapshot omits the class-name bindings from the previous diagram.
+
+      ```mermaid
+      %% caption: An instance's own color hides the class default without changing it for other instances.
+      flowchart TB
+        accTitle: Instance shadowing alongside a shared class default
+        accDescr: Name badge refers to an instance with its own color gold. Name other refers to a separate instance without its own color. Both have the StageBadge class object as their class; the class color is green. Reading badge.color finds gold locally, while other.color falls back to green.
+        badge["name:<br/>badge"] --> a("StageBadge instance<br/>own color: gold")
+        other["name:<br/>other"] --> b("StageBadge instance<br/>no own color")
+        a -->|__class__| cls("class object<br/>StageBadge<br/>color: green")
+        b -->|__class__| cls
+      ```
+
+      A mutable class attribute has another consequence: `notes = []` in a class body creates one shared list. `self.notes.append(...)` can find that list through fallback lookup and mutate it; it does not create an instance list. Create `self.notes = []` in `__init__` when each instance should own its notes.
+
+      ### Task: One Issuer, Independent Passes
+
+      Repair `BackstagePass` in `class_passes.py`:
+
+      - `created` is a class counter starting at zero. Each new pass increases it by one and keeps the resulting number as its own `serial`, so serials begin at 1 and older serials never change.
+      - `holder` stores the supplied name. Every pass owns a fresh empty `notes` list. `add_note(note)` appends one supplied object and preserves repeated notes.
+      - `access = "general"` remains a class default. An instance may override `access`; other instances continue following changes to the class default.
+      - Bind `PassMaker` to the same class object as `BackstagePass`, so either name constructs passes in the same sequence.
+
+      The starter runs but has ownership and counter bugs. Use **Test My Work** to observe the effects, then repair the class. Methods may use the class name or `type(self)` for the counter; either is correct for this exercise, which does not involve subclasses. Explain why a shared integer counter is useful but a shared notes list is not.
+    files:
+      - path: class_passes.py
+        language: python
+        content: |
+          class BackstagePass:
+              created = 0
+              access = "general"
+              notes = []
+
+              def __init__(self, holder):
+                  self.holder = holder
+                  self.created += 1
+                  self.serial = self.created
+
+              def add_note(self, note):
+                  self.notes.append(note)
+
+          PassMaker = None
+          print("Factory aliases the class:", PassMaker is BackstagePass)
+          print("The class is an instance of type:", type(BackstagePass) is type)
+    open_file: class_passes.py
+    run_file: class_passes.py
+    solution:
+      files:
+        - path: class_passes.py
+          language: python
+          content: |
+            class BackstagePass:
+                created = 0
+                access = "general"
+
+                def __init__(self, holder):
+                    self.holder = holder
+                    BackstagePass.created += 1
+                    self.serial = BackstagePass.created
+                    self.notes = []
+
+                def add_note(self, note):
+                    self.notes.append(note)
+
+            PassMaker = BackstagePass
+            print("Factory aliases the class:", PassMaker is BackstagePass)
+            print("The class is an instance of type:", type(BackstagePass) is type)
+      explanation: |
+        The class owns one created binding. Incrementing it rebinds the class attribute to the next integer, while each instance serial retains its assigned integer. The starter's self.created increment instead assigned an instance attribute, shadowing the class counter. Initializing self.notes on each construction prevents shared-list mutation. Leaving access on the class lets ordinary instances follow that default until an instance explicitly overrides it. PassMaker and BackstagePass refer to the same callable class object.
+    tests:
+      - description: "Both class names share one increasing counter and keep each issued serial stable"
+        command: |
+          namespace = {}
+          exec(open('/tutorial/class_passes.py').read(), namespace)
+          Pass, maker = namespace['BackstagePass'], namespace['PassMaker']
+          assert maker is Pass, 'PassMaker must refer to the same class object, not an instance or wrapper function.'
+          assert type(Pass) is type and Pass.created == 0, 'Use an ordinary class with its shared counter initially at zero.'
+          first = Pass('Ari')
+          second = maker('Bo')
+          third = Pass('Cy')
+          assert [first.serial, second.serial, third.serial] == [1, 2, 3], 'Both constructor names must allocate consecutive serials beginning at 1.'
+          assert Pass.created == 3, 'Update the counter on the class object, not separately on each instance.'
+          assert type(first) is Pass and type(second) is Pass, 'Calling either class name must create BackstagePass instances.'
+          assert first.holder == 'Ari' and second.holder == 'Bo' and third.holder == 'Cy', 'Each instance must retain its supplied holder.'
+          maker('Dee')
+          assert first.serial == 1 and second.serial == 2 and third.serial == 3 and Pass.created == 4, 'Later construction must advance the counter without rewriting old serials.'
+        hints:
+          - text: "Which object should own the number of all passes, and which object should own one issued number?"
+          - text: "An augmented assignment through self can create an instance attribute. Update the class attribute, then store its current value as this instance's serial."
+          - text: "The initializer needs a class-counter increment followed by `self.serial = ...`; separately bind the factory name to the class object itself."
+      - description: "Each pass owns notes while retaining the actual appended note objects"
+        command: |
+          namespace = {}
+          exec(open('/tutorial/class_passes.py').read(), namespace)
+          Pass = namespace['BackstagePass']
+          first, second = Pass('Em'), Pass('Flo')
+          assert isinstance(first.notes, list) and first.notes == [] and second.notes == [], 'Each pass must start with an empty notes list.'
+          assert first.notes is not second.notes, 'A class-level list must not become every pass notes list.'
+          note = ['Needs microphone']
+          first.add_note(note)
+          first.add_note(note)
+          assert len(first.notes) == 2 and first.notes[0] is note and first.notes[1] is note, 'Store each supplied note as one object, preserving duplicates.'
+          assert second.notes == [] and Pass('Gia').notes == [], 'A note must not appear on existing or future unrelated passes.'
+        hints:
+          - text: "The bug appears when a second pass looks up notes and reaches the same class-level list."
+          - text: "Each initializer call should allocate and assign its own list before add_note is used."
+          - text: "Put an empty-list assignment on `self.notes` inside `__init__`; keep adding one note through the receiver's list."
+      - description: "Class defaults update unshadowed instances without replacing a personal override"
+        command: |
+          namespace = {}
+          exec(open('/tutorial/class_passes.py').read(), namespace)
+          Pass = namespace['BackstagePass']
+          first, second = Pass('Hal'), Pass('Ira')
+          assert first.access == second.access == Pass.access == 'general', 'New passes should read the shared general-access default.'
+          first.access = 'crew'
+          Pass.access = 'guest'
+          assert first.access == 'crew', 'An instance override should shadow later changes to the class default.'
+          assert second.access == 'guest' and Pass('Jae').access == 'guest', 'Unshadowed existing and new instances should follow the changed class default.'
+          assert Pass.access == 'guest', 'An instance override must not overwrite the class default.'
+        hints:
+          - text: "The shared access value is a default, not a value to stamp onto every instance at construction."
+          - text: "Keep access on the class. An instance should acquire its own access attribute only when explicitly overridden."
+          - text: "The initializer needs holder, serial, and notes assignments; leave access to normal fallback lookup."
+    quiz:
+      title: "Step 8 — Knowledge Check"
+      min_score: 0.8
+      shuffle_questions: false
+      shuffle_options: true
+      questions:
+        - type: single
+          difficulty: basic
+          question: "For an ordinary class `Ticket` and `make = Ticket`, what is `make`?"
+          options:
+            - "A separate class with a copy of Ticket's attributes"
+            - "A new Ticket instance waiting to be initialized"
+            - "Another name for the same callable class object"
+            - "A function that creates a different class on each call"
+          correct_index: 2
+          option_feedback:
+            0: "Assignment does not duplicate a class any more than it duplicates a list."
+            1: "An instance is created by calling the class, using parentheses. This assignment just binds a name."
+            3: "No wrapper function is defined here; make directly refers to the existing class object."
+          explanation: "Class names obey the same binding rules as other names. `make is Ticket` is true, and `make(...)` calls that class."
+        - type: single
+          difficulty: intermediate
+          question: |
+            What does this print?
+            ```python
+            class Booth:
+                label = "Public"
+            first = Booth()
+            second = Booth()
+            first.label = "Crew"
+            Booth.label = "Guest"
+            print(first.label, second.label)
+            ```
+          options:
+            - "Guest Guest"
+            - "Crew Public"
+            - "Crew Guest"
+            - "Public Guest"
+          correct_index: 2
+          option_feedback:
+            0: "first has its own label attribute, which shadows the class attribute."
+            1: "second has no label of its own, so it sees the class's current value rather than a construction-time copy."
+            3: "Assigning first.label succeeds and creates an instance override; it is not ignored."
+          explanation: "first reads its own Crew attribute, while second falls back to the updated Guest class default."
+        - type: single
+          difficulty: intermediate
+          question: "Why does `self.created += 1` fail to advance an ordinary integer class counter for all instances?"
+          options:
+            - "It mutates the shared integer, so old serials change."
+            - "It creates an instance binding that shadows the counter."
+            - "It changes the class counter but never stores a serial."
+            - "It skips the addition because class attributes are frozen."
+          correct_index: 1
+          option_feedback:
+            0: "Integers are immutable. The augmented assignment computes an integer value and assigns it through self."
+            2: "The assignment target is the instance, even when reading the old value used class fallback."
+            3: "Class attributes can be reassigned. The problem is which object receives the assignment."
+          explanation: "The read may find created on the class, but the write targets self.created. Update the class attribute explicitly to maintain the shared sequence."
+        - type: single
+          difficulty: intermediate
+          question: "A class defines `notes = []`, and its method calls `self.notes.append(note)`. Why can another instance see that note?"
+          options:
+            - "Every Python list operation copies data into all instances."
+            - "Lookup can reach the class list, which append then mutates."
+            - "The method rebinds every instance's notes attribute at once."
+            - "The argument becomes a class object when passed to append."
+          correct_index: 1
+          option_feedback:
+            0: "The change is visible only to references reaching the same mutable list, not to every list."
+            2: "append changes the list reached by lookup; it does not assign new notes attributes."
+            3: "Passing a reference does not change an object's type. The shared receiver list is what matters."
+          explanation: "Create self.notes inside __init__ for independent lists. Keep class-level mutable state only when sharing it is intentional."
+
+  # --------------------------------------------------------------------------
+  # STEP 9 — Aliases, Shallow Copies, and Deep Copies
+  # Pedagogy: PRIMM with worked examples, faded practice, and interleaved retrieval.
+  - title: "Aliases, Shallow Copies, and Deep Copies"
+    instructions: |
+      ### Why this matters
+
+      A rehearsal plan should not accidentally change the live show. Deciding what to copy means deciding which objects should stay shared, including objects reached through attributes or list slots.
+
+      ### 🎯 You will learn to
+
+      - Analyze which changes cross an alias, a shallow copy, or a deep copy.
+      - Apply the same copying rules to nested lists and objects with member objects.
+      - Explain why a deep copy can preserve sharing inside its own object graph.
+
+      ### Predict Before You Run
+
+      Open `copy_studio.py`. The first example starts with **two references to one inner list**, then makes an alias, a shallow copy, and a deep copy. Before running, choose a prediction: appending `"Orbit"` through `shallow[0]` changes (a) only `shallow`, (b) `lineup`, `alias`, and `shallow`, or (c) all four outer lists, including `deep`.
+
+      Run the file. Explain why **both slots** in the original show the added track. Here, `is` asks whether two expressions refer to the very same object; the next step explores that operator in more detail.
+
+      <details markdown="1">
+      <summary>Explain the shared inner list</summary>
+
+      The alias is the original outer list. The shallow copy has a new outer list, but its slots refer to the original inner list. Both slots in each list still reach that one inner list, so both display `["Pulse", "Orbit"]`. The deep copy has its own inner list and still displays `[["Pulse"], ["Pulse"]]`.
+
+      **After appending through `shallow[0]`:** compare the outer lists before following their slots. Each arrow labeled "slots 0 and 1" abbreviates two references with the same destination. String values are abbreviated inside the inner list.
+
+      ```mermaid
+      %% caption: A shallow copy separates the outer list while keeping its member references shared.
+      flowchart TB
+        accTitle: Alias and shallow copy share one mutable inner list
+        accDescr: Names lineup and alias both refer to the original outer list. Name shallow refers to a different outer list. Slots 0 and 1 in each outer list all refer to one inner list containing Pulse and Orbit.
+        lineup["name:<br/>lineup"] --> original("original list object")
+        alias["name:<br/>alias"] --> original
+        shallow["name:<br/>shallow"] --> copied("new list object")
+        original -->|slots 0 and 1| shared("inner list object<br/>Pulse, Orbit")
+        copied -->|slots 0 and 1| shared
+      ```
+
+      ```mermaid
+      %% caption: Deep copying separates mutable state while preserving repeated references inside the copy.
+      flowchart TB
+        accTitle: The deep copy preserves internal sharing
+        accDescr: Name deep refers to a third outer list. Both its index 0 and index 1 refer to one new inner list containing only Pulse. Neither list is one of the mutable objects in the preceding alias and shallow-copy diagram.
+        deep["name:<br/>deep"] --> outer("new outer list object")
+        outer -->|index 0| inner("new inner list object<br/>Pulse")
+        outer -->|index 1| inner
+      ```
+
+      </details>
+
+      ### The Copying Boundary
+
+      `import copy` makes Python's copying module available.
+
+      | Operation | Outer object | Referenced member objects |
+      |---|---|---|
+      | `alias = original` | The same object | The same objects |
+      | `copy.copy(original)` | A new ordinary object or list | Existing references are reused |
+      | `copy.deepcopy(original)` | A new ordinary object or list | Supported nested state is copied recursively |
+
+      Inspect the second worked example. `Show` has a `Mixer` member object. `rehearsal.mixer.level = 7` reaches the mixer that `live` also uses. In contrast, `rehearsal.title = "Soundcheck"` changes an attribute **on the copied Show**. It does not change `live.title`. Predict the live and archived mixer levels, then compare with Run.
+
+      Deep copying remembers the objects it has already copied. Because `live.mixer` and `live.backup` refer to one mixer, `archive.mixer` and `archive.backup` refer to **one new mixer**, too. It preserves that relationship inside the copy. Immutable leaves such as strings may be reused safely; a deep copy does not promise a distinct identity for every reachable value. Some special objects customize copying or cannot be copied.
+
+      ### Modify, Then Make
+
+      First, change only `rehearsal.mixer.level = 7` to `rehearsal.mixer = Mixer(7)`. Predict whether the live mix still changes. Run, explain the difference between replacing a member reference and mutating its referent, then restore the line.
+
+      Complete `versions(original)`. It must return a three-element list containing, in order:
+
+      1. The original object itself.
+      2. A distinct shallow copy that shares the original's referenced members.
+      3. A deep copy whose mutable member state is independent of the original, while preserving repeated references within the copied graph.
+
+      The same function must work for the supplied `Show` objects and for nested lists, including an empty list. It must not change its input. The first binding is provided; choose the remaining boundaries yourself. Use **Test My Work** to check your choices, then explain which later edits each version would expose to the caller.
+    files:
+      - path: "copy_studio.py"
+        language: "python"
+        content: |
+          import copy
+
+          # Worked example: two slots refer to one inner list.
+          opening = ["Pulse"]
+          lineup = [opening, opening]
+          alias = lineup
+          shallow = copy.copy(lineup)
+          deep = copy.deepcopy(lineup)
+          shallow[0].append("Orbit")
+          print("Original:", lineup)
+          print("Alias:", alias)
+          print("Deep:", deep)
+          print("Deep keeps shared inner list:", deep[0] is deep[1])
+
+
+          class Mixer:
+              def __init__(self, level):
+                  self.level = level
+
+
+          class Show:
+              def __init__(self, title, mixer):
+                  self.title = title
+                  self.mixer = mixer
+                  self.backup = mixer
+
+
+          # Worked example: an ordinary object has another object as a member.
+          live = Show("Night Stage", Mixer(4))
+          live_alias = live
+          rehearsal = copy.copy(live)
+          archive = copy.deepcopy(live)
+          rehearsal.mixer.level = 7
+          rehearsal.title = "Soundcheck"
+          print("Live:", live.title, live.mixer.level)
+          print("Alias level:", live_alias.mixer.level)
+          print("Archive:", archive.title, archive.mixer.level)
+          def versions(original):
+              """Return [the original, a shallow copy, a deep copy]."""
+              shared = original
+              # TODO: choose the two different copying boundaries.
+              return [shared, original, original]
+    open_file: "copy_studio.py"
+    run_file: "copy_studio.py"
+    solution:
+      files:
+        - path: "copy_studio.py"
+          language: "python"
+          content: |
+            import copy
+
+            # Worked example: two slots refer to one inner list.
+            opening = ["Pulse"]
+            lineup = [opening, opening]
+            alias = lineup
+            shallow = copy.copy(lineup)
+            deep = copy.deepcopy(lineup)
+            shallow[0].append("Orbit")
+            print("Original:", lineup)
+            print("Alias:", alias)
+            print("Deep:", deep)
+            print("Deep keeps shared inner list:", deep[0] is deep[1])
+
+
+            class Mixer:
+                def __init__(self, level):
+                    self.level = level
+
+
+            class Show:
+                def __init__(self, title, mixer):
+                    self.title = title
+                    self.mixer = mixer
+                    self.backup = mixer
+
+
+            # Worked example: an ordinary object has another object as a member.
+            live = Show("Night Stage", Mixer(4))
+            live_alias = live
+            rehearsal = copy.copy(live)
+            archive = copy.deepcopy(live)
+            rehearsal.mixer.level = 7
+            rehearsal.title = "Soundcheck"
+            print("Live:", live.title, live.mixer.level)
+            print("Alias level:", live_alias.mixer.level)
+            print("Archive:", archive.title, archive.mixer.level)
+            def versions(original):
+                """Return [the original, a shallow copy, a deep copy]."""
+                shared = original
+                shallow = copy.copy(original)
+                independent = copy.deepcopy(original)
+                return [shared, shallow, independent]
+      explanation: |
+        Assignment keeps the original object. `copy.copy` creates a new outer object and keeps references to its members. `copy.deepcopy` recursively copies supported mutable state with a memo of already copied objects, preserving internal aliases.
+
+        These rules apply to both list slots and ordinary instance attributes. Rebinding an attribute of a shallow copy stays local to that copy; mutating its shared mixer crosses the copying boundary. Shared immutable strings are safe because their contents cannot be mutated.
+    tests:
+      - description: "Nested-list copies have the requested identities and mutation boundaries"
+        command: |
+          import runpy
+          ns = runpy.run_path('/tutorial/copy_studio.py')
+          original = [["Neon"], ["Dawn"]]
+          result = ns['versions'](original)
+          assert isinstance(result, list) and len(result) == 3, "Return a list containing three versions."
+          shared, shallow, deep = result
+          assert original == [["Neon"], ["Dawn"]], "Creating versions must leave the original unchanged."
+          assert shared is original, "The shared version must be the original itself."
+          assert shallow is not original and deep is not original and deep is not shallow, "Both copies need distinct outer identities."
+          assert shallow == original and deep == original, "Both copies must start with the original values."
+          assert shallow[0] is original[0] and shallow[1] is original[1], "A shallow copy must keep both inner-list references."
+          shallow[0].append("Echo")
+          assert original == [["Neon", "Echo"], ["Dawn"]], "The shallow copy must expose nested mutations to the original."
+          assert deep == [["Neon"], ["Dawn"]], "The deep copy must isolate nested mutable state."
+          deep[1].append("Finale")
+          assert original[1] == ["Dawn"], "Editing the deep copy must not change the original."
+          shallow.append(["New stage"])
+          assert len(original) == 2, "Changing the shallow outer list must not change the original outer list."
+        hints:
+          - text: "Trace the outer list separately from the inner lists. Which identity should each version retain?"
+          - text: "Assignment and the copy module offer three different boundaries. A new outer list can still contain old references."
+          - text: "Keep `shared = original`; create one new outer object with shared members and another with independently copied mutable members, then return those three names in the required order."
+      - description: "Ordinary objects copy their member references at the requested depth"
+        command: |
+          import runpy
+          ns = runpy.run_path('/tutorial/copy_studio.py')
+          original = ns['Show']("Rooftop", ns['Mixer'](3))
+          shared, shallow, deep = ns['versions'](original)
+          assert shared is original, "The shared Show must be the original."
+          assert shallow is not original and deep is not original and deep is not shallow, "Create two distinct Show copies."
+          assert shallow.title == "Rooftop" and deep.title == "Rooftop", "Copies must preserve the title."
+          assert original.mixer.level == 3 and shallow.mixer.level == 3 and deep.mixer.level == 3, "Copying must preserve the initial mixer level."
+          assert shallow.mixer is original.mixer and shallow.backup is original.backup, "Shallow copies share member objects."
+          assert deep.mixer is not original.mixer and deep.backup is deep.mixer, "Deep copying must isolate the mixer and preserve its internal alias."
+          shallow.title = "Preview"
+          shallow.mixer.level = 9
+          assert original.title == "Rooftop" and original.mixer.level == 9, "Attribute rebinding and member mutation affect different objects."
+          assert deep.title == "Rooftop" and deep.mixer.level == 3, "The deep Show must remain unchanged."
+          deep.mixer.level = 1
+          assert original.mixer.level == 9, "Deep-copy member edits must stay independent."
+        hints:
+          - text: "The Show and its Mixer are separate objects. Identify which one owns the attribute being assigned."
+          - text: "Copying only the Show preserves its mixer reference. Copying the object graph needs the recursive copying operation."
+          - text: "Use the same `versions(original)` operations for a Show as for a list. Do not manually rebuild just the known Show fields."
+      - description: "Copies handle empty lists and preserve repeated references inside a deep copy"
+        command: |
+          import runpy
+          ns = runpy.run_path('/tutorial/copy_studio.py')
+          original = []
+          shared, shallow, deep = ns['versions'](original)
+          assert shared is original and shallow == [] and deep == [], "An empty input still has three versions."
+          assert shallow is not original and deep is not original and deep is not shallow, "Empty copies must still be separate outer lists."
+          repeated = ["Interlude"]
+          original = [repeated, repeated]
+          shared, shallow, deep = ns['versions'](original)
+          assert shallow[0] is repeated and shallow[1] is repeated, "Both shallow slots must retain the original reference."
+          assert deep[0] is deep[1] and deep[0] is not repeated, "The deep copy needs one new inner list shared by both slots."
+          deep[0].append("Reprise")
+          assert deep[1] == ["Interlude", "Reprise"] and repeated == ["Interlude"], "Preserve sharing inside the copy without leaking changes to the source."
+        hints:
+          - text: "Separate independence from duplication: two slots that shared one list before should still share one list within the deep copy."
+          - text: "Let one deep-copy operation traverse the whole input so its memo can recognize repeated references."
+          - text: "Copy the complete `original` once for each copying depth, rather than separately copying each slot."
+    quiz:
+      title: "Step 9 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: "single"
+          question: |
+            After `second = copy.copy(first)`, both Shows use the same mixer. What does `second.mixer.level = 2` change?
+          options:
+            - "Only the second Show sees level 2."
+            - "Both Shows see mixer level 2."
+            - "Both Shows become the same object."
+            - "Neither Show sees mixer level 2."
+          correct_index: 1
+          option_feedback:
+            0: "The assignment targets the shared Mixer, not an attribute slot on the copied Show."
+            2: "The outer Shows stay distinct even though one member is shared."
+            3: "The shared Mixer is mutable, so its level changes."
+          explanation: "A shallow copy has independent outer attributes but references the original member objects."
+        - type: "single"
+          question: |
+            `source = [group, group]` refers twice to one mutable list. After `saved = copy.deepcopy(source)`, which identity statement is guaranteed for this ordinary list graph?
+          options:
+            - "`saved[0] is group` is true."
+            - "`saved[0] is saved[1]` is true."
+            - "`saved is source` is true."
+            - "`saved[0] is saved[1]` is false."
+          correct_index: 1
+          option_feedback:
+            0: "The mutable group is copied, so the saved list is separate from the source group."
+            2: "Deep copying creates a separate outer list."
+            3: "Deep copying remembers that the two original slots reached the same object."
+          explanation: "The copied graph preserves the repeated reference, pointing both slots at one new inner list."
+        - type: "single"
+          question: |
+            A Show has a string title. Why can a deep copy safely reuse that title string?
+          options:
+            - "Strings are mutable only through aliases."
+            - "Strings belong to the original class object."
+            - "Strings cannot have their contents mutated."
+            - "Strings are copied whenever they are read."
+          correct_index: 2
+          option_feedback:
+            0: "An alias does not make an immutable object mutable."
+            1: "The title is an instance attribute reference; the class does not own that particular title."
+            3: "Reading a reference does not automatically copy its referent."
+          explanation: "Sharing an immutable string cannot expose in-place content edits. Rebinding a copied Show’s title changes only that Show’s attribute."
+        - type: "single"
+          question: |
+            Recall the class-object step: `Show.count` is a class attribute, while each Show has its own `title`. Which operation changes shared class state?
+          options:
+            - "`show.title = \"Late Set\"`"
+            - "`alias = show`"
+            - "`show = None`"
+            - "`Show.count = Show.count + 1`"
+          correct_index: 3
+          option_feedback:
+            0: "This updates an attribute on one instance."
+            1: "This adds another name for an instance without changing its class."
+            2: "This rebinds a local name; the class attribute stays unchanged."
+          explanation: "The `Show.` target names the class object’s attribute. Instance attributes and local bindings have different owners."
+
+  # --------------------------------------------------------------------------
+  # STEP 10 — Identity and Value Equality
+  # Pedagogy: PRIMM with worked examples, faded practice, and interleaved retrieval.
+  - title: "Identity and Value Equality"
+    instructions: |
+      ### Why this matters
+
+      A music catalog may load the same recording into two separate objects. Deduplicating by title and artist asks a different question from checking whether two names reach the exact same object.
+
+      ### 🎯 You will learn to
+
+      - Distinguish object identity from a class's definition of equal values.
+      - Implement `__eq__` with an explicit policy for unsupported operands.
+      - Choose identity checks for shared objects and the `None` singleton.
+
+      ### Predict Before You Run
+
+      In `recording_equality.py`, two `GuestPass` objects both say `"Balcony"`. Predict the two Booleans on the **Separate passes** line: `True True`, `True False`, or `False False`. Then predict the **Alias** line and run the file.
+
+      <details>
+      <summary>Explain the default comparison</summary>
+
+      The separate objects print `False False`. This ordinary class inherits the default equality behavior from `object`; matching attributes do not automatically define value equality. The alias line prints `True True` because both names reach one instance.
+
+      </details>
+
+      ### A Comparison Contract
+
+      `left is right` always checks **identity**. A class cannot overload `is`. `left == right` uses the objects' equality behavior, which classes can define with the special method `__eq__`. Lists and strings already have useful value comparisons; ordinary classes need a policy when the default does not fit.
+
+      Here is a separate worked example of that policy:
+
+      ```python
+      class Seat:
+          def __init__(self, code):
+              self.code = code
+
+          def __eq__(self, other):
+              if not isinstance(other, Seat):
+                  return NotImplemented
+              return self.code == other.code
+      ```
+
+      `isinstance(other, Seat)` checks whether the other object is a Seat instance. The type check prevents attribute access on an incompatible object. `NotImplemented` is a special return value telling Python that this method does not handle that operand type; Python can try the other operand's comparison. If neither handles equality, it falls back to identity. Do not confuse this return value with raising an exception.
+
+      `None` is a singleton object used to represent a missing value. Check `value is None` or `value is not None`, because the question is whether this is that singleton, independent of any custom equality method. Use `==` for string or numeric values; implementation choices about reusing immutable objects must not determine your program's answer.
+
+      ### Modify, Then Make
+
+      First, give `GuestPass` the same comparison policy as `Seat`, using its `label`. Predict which printed Boolean changes and which stays the same, then run it. This experiment is not graded.
+
+      Complete `Recording.__eq__` in the provided class:
+
+      - Two Recordings are equal exactly when **both** their `title` and `artist` values match.
+      - Comparing the same object still gives equality.
+      - For a non-Recording operand, the method returns `NotImplemented` instead of reading attributes that may not exist.
+      - Comparing objects must not change either recording.
+
+      The Boolean operator `and` requires both conditions to hold. Try equal titles with different artists, then different titles with the same artist. Finally, make an alias and explain why `is` still distinguishes that alias from a separately constructed equal Recording.
+    files:
+      - path: "recording_equality.py"
+        language: "python"
+        content: |
+          class GuestPass:
+              def __init__(self, label):
+                  self.label = label
+
+
+          first = GuestPass("Balcony")
+          second = GuestPass("Balcony")
+          alias = first
+          print("Separate passes:", first == second, first is second)
+          print("Alias:", first == alias, first is alias)
+          class Recording:
+              def __init__(self, title, artist):
+                  self.title = title
+                  self.artist = artist
+              def __eq__(self, other):
+                  # TODO: compare Recording values and decline unsupported operands.
+                  return self is other
+    open_file: "recording_equality.py"
+    run_file: "recording_equality.py"
+    solution:
+      files:
+        - path: "recording_equality.py"
+          language: "python"
+          content: |
+            class GuestPass:
+                def __init__(self, label):
+                    self.label = label
+
+
+            first = GuestPass("Balcony")
+            second = GuestPass("Balcony")
+            alias = first
+            print("Separate passes:", first == second, first is second)
+            print("Alias:", first == alias, first is alias)
+            class Recording:
+                def __init__(self, title, artist):
+                    self.title = title
+                    self.artist = artist
+                def __eq__(self, other):
+                    if not isinstance(other, Recording):
+                        return NotImplemented
+                    return self.title == other.title and self.artist == other.artist
+      explanation: |
+        The type guard lets unsupported operands participate in Python's comparison fallback. For two Recordings, comparing both required fields defines the catalog's value policy.
+
+        Equal values do not merge objects. Two independently constructed equal Recordings still have distinct identities, while an alias retains the same identity. Comparing a value with `None` therefore uses `is None` and does not depend on this equality policy.
+    tests:
+      - description: "Recording equality uses both title and artist without merging identities"
+        command: |
+          import runpy
+          ns = runpy.run_path('/tutorial/recording_equality.py')
+          Recording = ns['Recording']
+          first = Recording("Blue Hour", "Kite")
+          equal = Recording("Blue Hour", "Kite")
+          assert first == equal and equal == first, "Separate Recordings with both fields equal must compare equal in either order."
+          assert first is not equal, "Value equality must not imply shared identity."
+          assert first == first, "A Recording must compare equal to itself."
+          assert not (first == Recording("Blue Hour", "Drift")), "Matching titles alone are not sufficient."
+          assert not (first == Recording("Night Bus", "Kite")), "Matching artists alone are not sufficient."
+          assert (first.title, first.artist) == ("Blue Hour", "Kite"), "Comparison must leave the first Recording unchanged."
+          assert (equal.title, equal.artist) == ("Blue Hour", "Kite"), "Comparison must leave the other Recording unchanged."
+        hints:
+          - text: "Decide what makes two catalog entries equal without asking whether they occupy the same identity."
+          - text: "Once the other operand is a Recording, compare both public fields and combine the two Boolean results."
+          - text: "The final return has the shape `return <title comparison> and <artist comparison>`."
+      - description: "Unsupported operands return NotImplemented and compare safely"
+        command: |
+          import runpy
+          ns = runpy.run_path('/tutorial/recording_equality.py')
+          recording = ns['Recording']("Signal", "Mira")
+          assert recording.__eq__(None) is NotImplemented, "Decline a missing operand with NotImplemented."
+          assert recording.__eq__("Signal") is NotImplemented, "A matching title string is not a Recording."
+          assert recording.__eq__(42) is NotImplemented, "Check the operand type before accessing its attributes."
+          assert not (recording == None) and not (recording == "Signal"), "Normal equality should fall back safely for these unsupported operands."
+        hints:
+          - text: "The other operand may have no title or artist attribute. Decide whether your method supports it before reading either."
+          - text: "Use a type guard and Python’s special comparison return value to decline an unsupported operand."
+          - text: "Before the field comparisons, add `if <other is not a Recording>:` followed by the decline return value."
+      - description: "Equality follows current values, including empty field values"
+        command: |
+          import runpy
+          ns = runpy.run_path('/tutorial/recording_equality.py')
+          Recording = ns['Recording']
+          first = Recording("", "")
+          second = Recording("", "")
+          assert first == second, "Empty strings are valid equal field values."
+          second.artist = "Unknown"
+          assert not (first == second), "Changing one required field must change the comparison result."
+          first.artist = "Unknown"
+          assert first == second and first is not second, "Restored matching values give equality without changing identity."
+        hints:
+          - text: "Equality depends on the two current fields, not whether those strings are nonempty."
+          - text: "Compare field values directly. Truthiness and cached comparison answers lose required cases."
+          - text: "Read `self.<field>` and `other.<field>` inside the method on every comparison."
+    quiz:
+      title: "Step 10 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: "single"
+          question: |
+            Two separately constructed Recordings have equal title and artist values, and the completed `__eq__` method. What does `print(left == right, left is right)` show?
+          options:
+            - "`True True`"
+            - "`False False`"
+            - "`True False`"
+            - "`False True`"
+          correct_index: 2
+          option_feedback:
+            0: "Value equality does not combine the two independently constructed objects."
+            1: "The custom comparison now recognizes matching values."
+            3: "Separate instances cannot share identity merely because a comparison method exists."
+          explanation: "`==` uses the Recording value policy; `is` still checks object identity."
+        - type: "single"
+          question: |
+            Why should this `__eq__` method return `NotImplemented` for a non-Recording operand?
+          options:
+            - "It asks Python to try comparison fallback."
+            - "It makes the two operands compare equal."
+            - "It signals that every comparison must raise."
+            - "It converts the operand into a Recording."
+          correct_index: 0
+          option_feedback:
+            1: "The return value declines the operation; it is not a successful equality result."
+            2: "NotImplemented is returned here, not raised as an exception."
+            3: "A comparison fallback does not perform that conversion."
+          explanation: "The unsupported operand may supply its own comparison. If neither operand handles equality, Python falls back to identity."
+        - type: "single"
+          question: |
+            A missing selected track is represented by `None`. Which condition checks exactly that case without consulting a custom equality method?
+          options:
+            - "`selected == None`"
+            - "`not selected`"
+            - "`selected is None`"
+            - "`selected == \"None\"`"
+          correct_index: 2
+          option_feedback:
+            0: "`==` can consult the selected object’s equality behavior."
+            1: "Truthiness also treats values such as an empty list or empty string as false."
+            3: "The string \"None\" is a text value, not the missing-value singleton."
+          explanation: "`is None` identifies the singleton directly, regardless of any overloaded equality operation."
+        - type: "single"
+          question: |
+            Recall copying: two separate nested lists compare equal. What can you conclude about whether their inner lists are shared?
+          options:
+            - "Every equal inner list has the same identity."
+            - "No equal inner list can have shared identity."
+            - "Equality alone does not establish sharing."
+            - "The outer lists must be one shared object."
+          correct_index: 2
+          option_feedback:
+            0: "Value comparison can succeed for independently constructed inner lists."
+            1: "Equal containers can also hold references to the same inner list."
+            3: "Separate outer lists can hold equal values."
+          explanation: "Use identity checks or reason through the assignments and copying operations to determine sharing."
+
+  # --------------------------------------------------------------------------
+  # STEP 11 — Function Calls and Mutable Defaults
+  # Pedagogy: PRIMM with worked examples, faded practice, and interleaved retrieval.
+  - title: "Function Calls and Mutable Defaults"
+    instructions: |
+      ### Why this matters
+
+      A helper can unexpectedly change a caller's playlist, or silently fail to change it at all. The same reference model explains both outcomes and why a default guest list can retain names between calls.
+
+      ### 🎯 You will learn to
+
+      - Predict which parameter operations change objects visible to a caller.
+      - Create an independent result while preserving an input object's member state.
+      - Repair mutable defaults while respecting an explicitly supplied empty list.
+
+      ### Predict Before You Run
+
+      Open `playlist_calls.py`. The first six helpers contrast rebinding with mutation. For each labeled print, predict whether the caller still sees `"Pulse"`, sees an added `"Finale"`, or sees a replaced first track. Pay attention: the three list helpers run on the same list in sequence. Also commit to a prediction for the final guest calls: will the second result contain one name or both names?
+
+      Run the file once. For every surprise, locate the object that an assignment or method call actually changes.
+
+      ### One Rule for Every Argument
+
+      On a call, each parameter becomes a **local name bound to the argument object**. Python does not automatically copy that object. This is often called *call by sharing* or *pass by assignment*.
+
+      | Helper's operation | What changes | Visible through the caller's existing reference? |
+      |---|---|---|
+      | `title = "Remix: " + title` | Local name now refers to a new string value | No |
+      | `tracks = tracks + ["Finale"]` | Local name now refers to a new outer list | No |
+      | `tracks.append("Finale")` | Existing list gains a slot | Yes |
+      | `tracks[0] = "Overture"` | Existing list's first slot is replaced | Yes |
+      | `playlist = Playlist(["Finale"])` | Local name now refers to a new Playlist | No |
+      | `playlist.tracks.append("Finale")` | The referenced member list changes | Yes |
+
+      In C++, a reference parameter can alias a caller's variable. A Python parameter has its **own binding**: assigning a new object to it does not retarget the caller's name. Mutating an object shared by those bindings can still affect the caller. Return a new object when the caller should choose whether to replace its own binding.
+
+      **Pause inside `extend_locally`, just after its assignment:** the caller and the function have separate names, even though both are spelled `tracks`. At function entry both referred to the original list; only the local binding moves after concatenation.
+
+      ```mermaid
+      %% caption: Rebinding a parameter changes the function's local name, leaving the caller's binding intact.
+      flowchart TB
+        accTitle: Caller and local parameter after list concatenation
+        accDescr: The caller's tracks name still refers to the original list containing Pulse. Inside extend_locally, the parameter tracks now refers to a new list containing Pulse and Finale. The original list was not mutated.
+        caller["caller name:<br/>tracks"] --> original("original list object<br/>Pulse")
+        local["local parameter:<br/>tracks"] --> fresh("new list object<br/>Pulse, Finale")
+      ```
+
+      <details>
+      <summary>Check the six predictions</summary>
+
+      The string stays `Pulse`. List rebinding leaves `["Pulse"]`; appending then produces `["Pulse", "Finale"]`; replacing the first slot produces `["Overture", "Finale"]`. Object rebinding leaves the caller's Playlist with `["Pulse"]`; mutating its member then produces `["Pulse", "Finale"]`.
+
+      </details>
+
+      ### A Default Is Also a Stored Reference
+
+      Compare your guest-call prediction with the final two output lines. In the starter, `guests=[]` is evaluated **once when the `def` statement executes**, and the function keeps a reference to that list. Each call omitting `guests` binds its parameter to the same object. Mutation therefore survives between calls. Dictionaries, sets, and ordinary mutable objects can cause the same problem.
+
+      Here is the repair pattern in a separate helper:
+
+      ```python
+      def add_cue(cue, cues=None):
+          if cues is None:
+              cues = []
+          cues.append(cue)
+          return cues
+      ```
+
+      The immutable `None` singleton marks a missing list. Construction inside the function creates a fresh list for that call. An **explicitly supplied empty list is still the caller's list**: `if not cues` would wrongly replace it because empty lists are false in a Boolean context. Check identity with `None` instead.
+
+      ### Modify, Then Make
+
+      First, change the member-mutation helper to assign a new list to `playlist.tracks`. Predict whether the caller sees that change even though the parameter itself was never rebound. Run and explain which object owns the changed attribute, then restore the helper.
+
+      Complete two small functions:
+
+      1. `preview_track(playlist, title)` returns a **new Playlist with a separate tracks list**, containing the original track strings in order followed by `title`. It must leave the input Playlist and its list unchanged, including when that list is empty.
+      2. `register_guest(name, guests=None)` appends `name` and returns the resulting list. An omitted argument or explicit `None` starts a fresh list every call. A supplied list, **even `[]`**, must be mutated and returned as the very same object.
+
+      The first function asks you to choose a copying boundary. The second asks you to choose when sharing is intentional. After testing, compare their contracts: one protects the caller's state; the other deliberately changes caller-supplied state.
+    files:
+      - path: "playlist_calls.py"
+        language: "python"
+        content: |
+          class Playlist:
+              def __init__(self, tracks):
+                  self.tracks = tracks
+
+
+          def rename_locally(title):
+              title = "Remix: " + title
+
+
+          def extend_locally(tracks):
+              tracks = tracks + ["Finale"]
+
+
+          def append_shared(tracks):
+              tracks.append("Finale")
+
+
+          def replace_first(tracks):
+              tracks[0] = "Overture"
+
+
+          def replace_playlist(playlist):
+              playlist = Playlist(["Finale"])
+
+
+          def edit_member(playlist):
+              playlist.tracks.append("Finale")
+
+
+          title = "Pulse"
+          rename_locally(title)
+          print("String rebinding:", title)
+          tracks = ["Pulse"]
+          extend_locally(tracks)
+          print("List rebinding:", tracks)
+          append_shared(tracks)
+          print("List append:", tracks)
+          replace_first(tracks)
+          print("Item replacement:", tracks)
+          show = Playlist(["Pulse"])
+          replace_playlist(show)
+          print("Object rebinding:", show.tracks)
+          edit_member(show)
+          print("Member mutation:", show.tracks)
+          def preview_track(playlist, title):
+              """Return an independent Playlist with title added; keep playlist unchanged."""
+              # TODO: preserve the caller's tracks while preparing a preview.
+              return playlist
+
+
+          def register_guest(name, guests=[]):
+              """Append to a supplied guest list, or start a fresh one when omitted."""
+              # TODO: repair unintended sharing between calls that omit guests.
+              guests.append(name)
+              return guests
+
+
+          print("First guest call:", register_guest("Ari"))
+          print("Second guest call:", register_guest("Sol"))
+    open_file: "playlist_calls.py"
+    run_file: "playlist_calls.py"
+    solution:
+      files:
+        - path: "playlist_calls.py"
+          language: "python"
+          content: |
+            class Playlist:
+                def __init__(self, tracks):
+                    self.tracks = tracks
+
+
+            def rename_locally(title):
+                title = "Remix: " + title
+
+
+            def extend_locally(tracks):
+                tracks = tracks + ["Finale"]
+
+
+            def append_shared(tracks):
+                tracks.append("Finale")
+
+
+            def replace_first(tracks):
+                tracks[0] = "Overture"
+
+
+            def replace_playlist(playlist):
+                playlist = Playlist(["Finale"])
+
+
+            def edit_member(playlist):
+                playlist.tracks.append("Finale")
+
+
+            title = "Pulse"
+            rename_locally(title)
+            print("String rebinding:", title)
+            tracks = ["Pulse"]
+            extend_locally(tracks)
+            print("List rebinding:", tracks)
+            append_shared(tracks)
+            print("List append:", tracks)
+            replace_first(tracks)
+            print("Item replacement:", tracks)
+            show = Playlist(["Pulse"])
+            replace_playlist(show)
+            print("Object rebinding:", show.tracks)
+            edit_member(show)
+            print("Member mutation:", show.tracks)
+            def preview_track(playlist, title):
+                """Return an independent Playlist with title added; keep playlist unchanged."""
+                return Playlist(playlist.tracks + [title])
+
+
+            def register_guest(name, guests=None):
+                """Append to a supplied guest list, or start a fresh one when omitted."""
+                if guests is None:
+                    guests = []
+                guests.append(name)
+                return guests
+
+
+            print("First guest call:", register_guest("Ari"))
+            print("Second guest call:", register_guest("Sol"))
+      explanation: |
+        List concatenation in `preview_track` creates a new outer list; constructing a Playlist around it also creates a new outer object. Sharing immutable track strings is safe. Returning that result gives the caller control over its own binding.
+
+        `register_guest` replaces only the missing-value sentinel. Every missing argument gets a fresh list, while a supplied empty or populated list retains its identity and receives the appended name. The identity test keeps “missing” distinct from “empty.”
+    tests:
+      - description: "Preview returns independent playlist and track-list state without editing the source"
+        command: |
+          import runpy
+          ns = runpy.run_path('/tutorial/playlist_calls.py')
+          source = ns['Playlist'](["Signal", "Drift"])
+          original_tracks = source.tracks
+          preview = ns['preview_track'](source, "Afterglow")
+          assert isinstance(preview, ns['Playlist']) and preview is not source, "Return a new Playlist object."
+          assert preview.tracks == ["Signal", "Drift", "Afterglow"], "The preview must preserve track order and add the requested title."
+          assert source.tracks is original_tracks and source.tracks == ["Signal", "Drift"], "Leave the source object and its member list unchanged."
+          assert preview.tracks is not source.tracks, "The preview needs a separate tracks list."
+          preview.tracks[0] = "Opening"
+          assert source.tracks == ["Signal", "Drift"], "Later preview edits must not reach the source list."
+          empty = ns['Playlist']([])
+          empty_preview = ns['preview_track'](empty, "First Track")
+          assert empty_preview is not empty and empty_preview.tracks == ["First Track"] and empty.tracks == [], "Handle an empty source without changing it."
+        hints:
+          - text: "There are two mutable objects to protect: the Playlist and the list stored in its tracks attribute."
+          - text: "A new Playlist alone is insufficient if it receives the old list. Form a new track list before constructing the result."
+          - text: "Return a Playlist built from `<existing tracks> + <one-element list>`; the caller’s original binding need not change."
+      - description: "Omitted or None guest lists are fresh on every call"
+        command: |
+          import runpy
+          ns = runpy.run_path('/tutorial/playlist_calls.py')
+          register = ns['register_guest']
+          first = register("Lena")
+          second = register("Noor")
+          assert first == ["Lena"] and second == ["Noor"], "Omitted guest lists must not retain names from other calls."
+          assert first is not second, "Each omitted list must be a new object."
+          explicit_none = register("Pax", None)
+          assert explicit_none == ["Pax"] and explicit_none is not first and explicit_none is not second, "Explicit None also requests a fresh list."
+          first.append("Guest")
+          assert second == ["Noor"] and explicit_none == ["Pax"], "Newly created lists must remain independent."
+        hints:
+          - text: "Ask when the default expression executes: when the function is defined, or whenever it is called?"
+          - text: "Use a missing-value sentinel in the signature and allocate a list inside the function only for that sentinel."
+          - text: "The function needs a branch shaped like `if guests is <missing marker>: guests = <fresh list>` before appending."
+      - description: "Supplied guest lists, including empty ones, are mutated and returned by identity"
+        command: |
+          import runpy
+          ns = runpy.run_path('/tutorial/playlist_calls.py')
+          register = ns['register_guest']
+          empty = []
+          returned = register("Kai", empty)
+          assert returned is empty and empty == ["Kai"], "A supplied empty list must keep its identity and receive the guest."
+          existing = ["Uma"]
+          returned = register("Ivo", existing)
+          assert returned is existing and existing == ["Uma", "Ivo"], "Preserve existing names and return the supplied list."
+          returned = register("Ivo", existing)
+          assert returned is existing and existing == ["Uma", "Ivo", "Ivo"], "Append each request, including a repeated name."
+          fresh = register("Solo")
+          assert fresh == ["Solo"] and existing == ["Uma", "Ivo", "Ivo"], "Explicit lists must not become future defaults."
+        hints:
+          - text: "An empty list can still belong to the caller. The contract distinguishes a missing list from an empty one."
+          - text: "A truthiness check treats None and [] alike. An identity check against the sentinel keeps them distinct."
+          - text: "Only replace the parameter in the missing-value branch; otherwise append to the supplied list and return that same list."
+    quiz:
+      title: "Step 11 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: "single"
+          question: |
+            A helper executes `items = items + ["Encore"]`. The caller passed a list but ignores the return value. Why is its list unchanged?
+          options:
+            - "The parameter has a separate local binding."
+            - "Python copied the input list at the call."
+            - "Lists become immutable inside functions."
+            - "The new list replaces every caller alias."
+          correct_index: 0
+          option_feedback:
+            1: "The call initially shares the input object. The + operation creates the new outer list."
+            2: "Lists remain mutable; an append would affect the shared list."
+            3: "Rebinding the parameter does not retarget names in the caller."
+          explanation: "The new list is bound only to the local parameter. The caller’s name still reaches the original."
+        - type: "single"
+          question: |
+            Two names refer to one Playlist. A helper assigns `playlist.tracks = ["Intro"]`. What do those caller names observe?
+          options:
+            - "Only the helper sees the replacement list."
+            - "Both see the Playlist’s new tracks list."
+            - "Each receives a separate copied Playlist."
+            - "Neither can access the Playlist afterward."
+          correct_index: 1
+          option_feedback:
+            0: "This targets an attribute on the shared Playlist, not the parameter binding."
+            2: "Attribute assignment does not copy the containing object."
+            3: "Both names still refer to the same valid Playlist."
+          explanation: "The parameter and caller names share the Playlist object, whose tracks attribute now refers to the replacement list."
+        - type: "single"
+          question: |
+            Why does `if not guests: guests = []` break the register_guest contract?
+          options:
+            - "It replaces a caller-owned empty list."
+            - "It treats every populated list as missing."
+            - "It cannot create a list inside a function."
+            - "It changes the global None singleton."
+          correct_index: 0
+          option_feedback:
+            1: "Populated lists are truthy, so they do not enter this branch."
+            2: "Constructing a list inside the function is valid; the branch condition is too broad."
+            3: "Local assignment cannot mutate None."
+          explanation: "The contract requires retaining any supplied list. Only None means a new list is needed."
+        - type: "single"
+          question: |
+            Recall shallow copies and equality: a preview must allow independent replacement of track-list slots, whose contents are strings. What is sufficient?
+          options:
+            - "Share both the Playlist and its list."
+            - "Copy the Playlist but keep the same list."
+            - "Use a new Playlist with a new outer list."
+            - "Reuse the Playlist after checking ==."
+          correct_index: 2
+          option_feedback:
+            0: "Slot changes would be visible through the shared list."
+            1: "The member list would still be shared despite the new outer object."
+            3: "A value comparison does not change ownership or copying boundaries."
+          explanation: "Separate mutable Playlist and list objects isolate those edits. Immutable strings can safely remain shared."
+
+  # --------------------------------------------------------------------------
+  # STEP 12 — Inheritance and Method Dispatch
+  # Pedagogy: PRIMM with worked examples, faded practice, and interleaved retrieval.
+  - title: "Inheritance and Method Dispatch"
+    instructions: |
+      ### Why this matters
+
+      A streamed set can reuse stage preparation while changing how its sound and announcement work. Inheritance is easier to reason about when you follow one instance through initialization, inherited methods, and overrides.
+
+      ### 🎯 You will learn to
+
+      - Distinguish an inherited initializer from an overridden initializer that calls `super()`.
+      - Trace an inherited method's call to an override on the same instance.
+      - Extend a base method while preserving its effects on instance state.
+
+      ### Predict Before You Run
+
+      Open `festival_inheritance.py`. `RehearsalSet` declares no initializer; `BassSet` supplies one. Predict whether `RehearsalSet("Afternoon")` succeeds, and whether `bass.prepare()` reports only `acoustic` or also includes `bass 4`. Read the call inside `prepare()` before running.
+
+      Run and compare. The `pass` statement means “do nothing”; it gives the empty RehearsalSet body valid syntax.
+
+      ### Initialization Follows Method Lookup
+
+      `class BassSet(StageSet):` defines a subclass. `RehearsalSet` has no `__init__`, so it inherits `StageSet.__init__`. `BassSet` overrides `__init__`; Python runs that method and does **not** automatically run a separate base initializer first. Its explicit `super().__init__(title)` initializes the same BassSet instance's `title` and fresh `cues` list before it adds `level`.
+
+      Removing that call would leave the attributes that the base initializer establishes missing. Python does not provide a second, independently initialized “base object” for this example.
+
+      ### An Inherited Method Can Call an Override
+
+      The inherited `prepare()` method receives the BassSet instance as `self`. Its `self.sound()` lookup therefore finds `BassSet.sound`, even though the calling code was written inside StageSet. This runtime choice is called **dynamic dispatch**.
+
+      Inside `BassSet.sound`, `super().sound()` selects the base implementation in this single-inheritance example. It still acts on the **same BassSet instance**. More generally, `super()` continues lookup after the current class in Python's method-resolution order; it does not construct a parent instance.
+
+      <details>
+      <summary>Check the initialization and dispatch predictions</summary>
+
+      RehearsalSet succeeds through its inherited initializer and prepares `Afternoon: acoustic`. BassSet prepares `Midnight: acoustic + bass 4`. The inherited method records that complete cue in `bass.cues`; both base and subclass behavior operate on that one instance.
+
+      </details>
+
+      ### Modify, Then Make
+
+      First, change `bass.title` after construction and call `bass.prepare()` again. Predict which title the inherited method will read and whether the cue list grows. This checks that methods read the instance's current state rather than a snapshot taken at construction.
+
+      Complete `StreamSet` using the supplied StageSet base:
+
+      - `StreamSet(title, platform)` initializes the inherited title and a fresh, empty cues list, then stores `platform`. Use `super().__init__` to reuse the base initialization.
+      - `sound()` returns `"stream"`. Calling the inherited `prepare()` must therefore return `"<title>: stream"` and append that cue to this instance's list.
+      - `announce()` extends the base announcement with `" on <platform>"`, preserving the base method's effect of appending `"announced"` to **this same instance's** cues. Use `super().announce()` to reuse that behavior.
+
+      For example, a set titled `"Sunrise"` on `"Campus Radio"` announces `"Sunrise is next on Campus Radio"`. A second set must have its own cues list. After **Test My Work**, explain how the same-instance rule connects inheritance to the earlier member-object and mutable-default lessons.
+    files:
+      - path: "festival_inheritance.py"
+        language: "python"
+        content: |
+          class StageSet:
+              def __init__(self, title):
+                  self.title = title
+                  self.cues = []
+
+              def sound(self):
+                  return "acoustic"
+
+              def prepare(self):
+                  cue = self.title + ": " + self.sound()
+                  self.cues.append(cue)
+                  return cue
+
+              def announce(self):
+                  self.cues.append("announced")
+                  return self.title + " is next"
+
+
+          class RehearsalSet(StageSet):
+              pass
+
+
+          class BassSet(StageSet):
+              def __init__(self, title, level):
+                  super().__init__(title)
+                  self.level = level
+
+              def sound(self):
+                  return super().sound() + " + bass " + str(self.level)
+
+
+          rehearsal = RehearsalSet("Afternoon")
+          bass = BassSet("Midnight", 4)
+          print("Inherited initializer:", rehearsal.prepare())
+          print("Inherited method, overridden sound:", bass.prepare())
+          print("One instance owns the cues:", bass.cues)
+          class StreamSet(StageSet):
+              def __init__(self, title, platform):
+                  # TODO: establish the inherited state and remember the platform.
+                  self.platform = platform
+
+              def sound(self):
+                  # TODO: report this set's sound.
+                  return ""
+
+              def announce(self):
+                  # TODO: extend the base announcement and preserve its effect.
+                  return ""
+    open_file: "festival_inheritance.py"
+    run_file: "festival_inheritance.py"
+    solution:
+      files:
+        - path: "festival_inheritance.py"
+          language: "python"
+          content: |
+            class StageSet:
+                def __init__(self, title):
+                    self.title = title
+                    self.cues = []
+
+                def sound(self):
+                    return "acoustic"
+
+                def prepare(self):
+                    cue = self.title + ": " + self.sound()
+                    self.cues.append(cue)
+                    return cue
+
+                def announce(self):
+                    self.cues.append("announced")
+                    return self.title + " is next"
+
+
+            class RehearsalSet(StageSet):
+                pass
+
+
+            class BassSet(StageSet):
+                def __init__(self, title, level):
+                    super().__init__(title)
+                    self.level = level
+
+                def sound(self):
+                    return super().sound() + " + bass " + str(self.level)
+
+
+            rehearsal = RehearsalSet("Afternoon")
+            bass = BassSet("Midnight", 4)
+            print("Inherited initializer:", rehearsal.prepare())
+            print("Inherited method, overridden sound:", bass.prepare())
+            print("One instance owns the cues:", bass.cues)
+            class StreamSet(StageSet):
+                def __init__(self, title, platform):
+                    super().__init__(title)
+                    self.platform = platform
+
+                def sound(self):
+                    return "stream"
+
+                def announce(self):
+                    base_message = super().announce()
+                    return base_message + " on " + self.platform
+      explanation: |
+        The explicit superclass initializer establishes the state expected by inherited methods. Each execution creates a fresh cues list, so one set's preparation never contaminates another set.
+
+        The inherited `prepare` method calls `self.sound()`, which resolves to StreamSet's override for this object. The `super().announce()` call deliberately selects the base announcement, but it still receives the same StreamSet instance and appends to that instance's cues before the subclass extends the returned message.
+    tests:
+      - description: "StreamSet initializes inherited state and keeps cue lists independent"
+        command: |
+          import runpy
+          ns = runpy.run_path('/tutorial/festival_inheritance.py')
+          StreamSet = ns['StreamSet']
+          first = StreamSet("Sunrise", "Campus Radio")
+          second = StreamSet("Nightfall", "Festival Feed")
+          assert isinstance(first, ns['StageSet']), "StreamSet must retain its StageSet relationship."
+          assert first.title == "Sunrise" and first.platform == "Campus Radio", "Initialize inherited title and supplied platform."
+          assert second.title == "Nightfall" and second.platform == "Festival Feed", "Use each instance’s constructor arguments."
+          assert first.cues == [] and second.cues == [] and first.cues is not second.cues, "Every set needs its own initially empty cues list."
+          first.cues.append("line check")
+          assert second.cues == [], "One set’s cues must not leak into another."
+        hints:
+          - text: "An override replaces the inherited initializer. Which attributes does StageSet’s initializer establish?"
+          - text: "Reuse the superclass initializer on the current instance before storing the subclass-specific platform."
+          - text: "The initializer has two jobs in order: `super().__init__(<title argument>)`, then remember `<platform argument>` on self."
+      - description: "Preparation dispatches to the stream override and uses current instance state"
+        command: |
+          import runpy
+          ns = runpy.run_path('/tutorial/festival_inheritance.py')
+          stream = ns['StreamSet']("North Stage", "Live Feed")
+          assert stream.sound() == "stream", "StreamSet must report its stream sound."
+          assert stream.prepare() == "North Stage: stream", "The inherited preparation must use the subclass sound."
+          assert stream.cues == ["North Stage: stream"], "Record the preparation cue on this instance."
+          stream.title = "South Stage"
+          assert stream.prepare() == "South Stage: stream", "Preparation must read the current title."
+          assert stream.cues == ["North Stage: stream", "South Stage: stream"], "Each preparation must append one cue in order."
+        hints:
+          - text: "Follow self from the inherited prepare method into its sound call. It is still the StreamSet instance."
+          - text: "The base method already assembles and records the cue. Supply only the subclass sound behavior it calls."
+          - text: "Give StreamSet a `sound(self)` method returning its specified sound string; let the existing preparation call find it."
+      - description: "Announcements extend the base result and retain its effect on the same object"
+        command: |
+          import runpy
+          ns = runpy.run_path('/tutorial/festival_inheritance.py')
+          stream = ns['StreamSet']("Sunrise", "Campus Radio")
+          original_cues = stream.cues
+          assert stream.announce() == "Sunrise is next on Campus Radio", "Extend the base announcement with the platform."
+          assert stream.cues is original_cues and original_cues == ["announced"], "The base method must affect this instance’s existing cues list."
+          stream.title = "Moonrise"
+          stream.platform = "Festival Feed"
+          assert stream.announce() == "Moonrise is next on Festival Feed", "Use the instance’s current title and platform."
+          assert original_cues == ["announced", "announced"], "Each announcement preserves exactly one base announcement effect."
+        hints:
+          - text: "The base method does two things: returns text and records an announcement. Extending only the text loses required behavior."
+          - text: "Call the superclass implementation on this instance and extend its returned message."
+          - text: "Store the result of `super().announce()` in a local name, then return that message plus the platform suffix."
+      - description: "StreamSet uses super in the two methods that explicitly require delegation"
+        command: |
+          import ast
+          import runpy
+          from pathlib import Path
+          ns = runpy.run_path('/tutorial/festival_inheritance.py')
+          tree = ast.parse(Path('/tutorial/festival_inheritance.py').read_text())
+          stream_classes = [node for node in tree.body if isinstance(node, ast.ClassDef) and node.name == 'StreamSet']
+          assert stream_classes, "Keep the supplied StreamSet class."
+          methods = {node.name: node for node in stream_classes[0].body if isinstance(node, ast.FunctionDef)}
+          for method_name in ('__init__', 'announce'):
+              assert method_name in methods, f"Complete StreamSet.{method_name}."
+              super_calls = [node for node in ast.walk(methods[method_name]) if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == 'super']
+              assert super_calls, f"The task asks StreamSet.{method_name} to reuse the base method through super(), rather than duplicating its body."
+        hints:
+          - text: "Both required methods extend existing behavior. Reusing that behavior keeps future base-method changes visible to the subclass."
+          - text: "Use super inside the initializer and announcement method to obtain the appropriate superclass implementation."
+          - text: "Each method can call the corresponding method directly on `super()` or store the super proxy in a local name first."
+    quiz:
+      title: "Step 12 — Knowledge Check"
+      min_score: 0.8
+      shuffle: true
+      questions:
+        - type: "single"
+          question: |
+            `class QuietSet(StageSet): pass` defines no initializer. What happens when `QuietSet("Dusk")` is called?
+          options:
+            - "It inherits StageSet’s initializer."
+            - "It creates an object without any title."
+            - "It must define an empty initializer first."
+            - "It automatically runs every initializer twice."
+          correct_index: 0
+          option_feedback:
+            1: "Method lookup finds the inherited initializer, which assigns the title."
+            2: "A subclass can inherit an initializer just as it inherits other methods."
+            3: "There is one selected initializer call, not an automatic pair of calls."
+          explanation: "Without an override, the inherited initializer establishes the instance state."
+        - type: "single"
+          question: |
+            Why does StageSet’s `prepare()` call StreamSet’s `sound()` for a StreamSet object?
+          options:
+            - "The inherited method keeps the same self."
+            - "Inheritance copies sound into every instance."
+            - "The base class permanently becomes StreamSet."
+            - "The call always starts on a new base object."
+          correct_index: 0
+          option_feedback:
+            1: "Methods are found through attribute lookup; their code is not copied into each instance."
+            2: "Calling a method does not change the base class object."
+            3: "No new base instance is created by this call."
+          explanation: "`self` is the StreamSet instance, so `self.sound()` selects its override at runtime."
+        - type: "single"
+          question: |
+            Within StreamSet, what does `super().announce()` operate on?
+          options:
+            - "A newly constructed StageSet object."
+            - "A shallow copy of the current StreamSet."
+            - "The same current StreamSet instance."
+            - "The StageSet class object instead of self."
+          correct_index: 2
+          option_feedback:
+            0: "super continues method lookup; it does not construct an instance."
+            1: "No copying operation occurs in this method call."
+            3: "An ordinary bound instance method still receives the instance as self."
+          explanation: "The base implementation sees the same title and cues attributes as the subclass."
+        - type: "single"
+          question: |
+            Recall member objects and defaults: why does `self.cues = []` inside the initializer give each new set its own list?
+          options:
+            - "Every attribute assignment copies its value."
+            - "The list expression runs for each initialization."
+            - "All empty lists have the same identity."
+            - "Only subclass methods can share list objects."
+          correct_index: 1
+          option_feedback:
+            0: "Assignment binds a reference; it does not perform a copy."
+            2: "Each evaluated list display creates a fresh list."
+            3: "Sharing depends on references, not whether the method is inherited."
+          explanation: "Per-call list construction differs from a list default evaluated once when def executes or a mutable class attribute shared by instances."
+
+  # --------------------------------------------------------------------------
+  # STEP 13 — Type Hints: Documentation Tools Can Check
   # Pedagogy:
   #   Transfer Tutor     — C++ static types → Python optional annotations.
   #   Component Skills   — annotation syntax isolated; no new logic to write.
-  #   Worked Example     — recycle Step 4 functions; add hints incrementally.
+  #   Worked Example     — recycle Functions functions; add hints incrementally.
   #   Variation Theory   — function body held constant; only annotations vary.
   #   Desirable Difficulty — predict-before-run on a deliberately mistyped call.
   #   Negative Transfer  — Python annotations are NOT enforced at runtime (unlike C++).
@@ -1012,7 +3162,7 @@ steps:
 
       ### Task
 
-      Complete `typed_grades.py`. The functions are recycled from Step 4 — your job is to **add type hints** without changing any of the logic.
+      Complete `typed_grades.py`. The functions are recycled from Functions — your job is to **add type hints** without changing any of the logic.
 
       1. Add hints to `mean(numbers)` so it accepts a `list[float]` and returns a `float`.
       2. Add hints to `label_score(score, threshold=50)` — both parameters are `int`, return is `str`. Remember the order: `name: type = default`.
@@ -1170,7 +3320,7 @@ steps:
               "first_failing should return None when no score is below threshold (matches Optional[int])"
 
     quiz:
-      title: "Step 5 — Knowledge Check"
+      title: "Step 13 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1249,7 +3399,7 @@ steps:
             still has its own opinions about what operations are legal between which types.
 
         - question: |
-            *(Spaced review — Step 4: Functions)*
+            *(Spaced review — Functions)*
 
             Which function signature correctly combines type hints with a default parameter?
           type: single
@@ -1291,16 +3441,42 @@ steps:
             mypy: `list[float]` is not assignable to `list[int]` — it would flag the call as
             an error. This is exactly why an external type checker exists.
 
+        # Pedagogy: delayed retrieval of the object model in a new context.
+        - type: single
+          difficulty: intermediate
+          question: |
+            What does this print?
+            ```python
+            def add_encore(songs: list[str]) -> None:
+                songs.append("Encore")
+
+            original = ["Opening"]
+            alias = original
+            add_encore(alias)
+            print(original)
+            ```
+          options:
+          - "`['Opening']`"
+          - "`['Opening', 'Encore']`"
+          - '`None`'
+          - '`TypeError`'
+          correct_index: 1
+          option_feedback:
+            0: The annotation does not copy the argument. The parameter and both caller names refer to one list.
+            2: '`-> None` describes the return value; it does not replace the caller’s list.'
+            3: A list of strings supports append. Type hints add no runtime barrier to mutation.
+          explanation: The function mutates the shared list. Annotations change neither argument binding nor object ownership.
+
   # --------------------------------------------------------------------------
-  # STEP 6 — Loops
+  # STEP 14 — Loops
   # Pedagogy:
   #   Transfer Tutor     — C++ for loops → Python for/range/enumerate.
-  #   Component Skills   — loops isolated from functions (split from old Step 4).
+  #   Component Skills   — loops isolated from functions (split from old Functions).
   #   Negative Transfer  — exponentiation (** vs ^), integer division (/ vs //).
   #   Fading: Medium     — function signature + skeleton given, fill in loop body.
-  #   Spaced Review      — quiz includes a function question (Step 4 review).
+  #   Spaced Review      — quiz includes a function question (Functions review).
   #   Bloom's level      — Remember / Apply (quiz) + spaced review.
-  #   Type Hints         — annotated signatures (per Step 5 convention).
+  #   Type Hints         — annotated signatures (per Type Hints convention).
   # --------------------------------------------------------------------------
   - title: "Loops"
     instructions: |
@@ -1509,7 +3685,7 @@ steps:
           - text: "Does your function handle lists of any length? Trace through it with `[10, 20]` — what should each element of the output be?"
 
     quiz:
-      title: "Step 6 — Knowledge Check"
+      title: "Step 14 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1576,7 +3752,7 @@ steps:
             split each `(index, value)` pair into two loop variables.
 
         - question: |
-            *(Spaced review — Step 4: Functions)*
+            *(Spaced review — Functions)*
 
             What does this function return when called as `compute(10)`?
             ```python
@@ -1593,16 +3769,40 @@ steps:
           explanation: |
             `power=2` is a default parameter, so `compute(10)` uses `power=2`.
             `10 ** 2` is `100` (the `**` operator is exponentiation, not multiplication).
-            This combines two concepts: default parameters (Step 4) and the `**` operator (this step).
+            This combines two concepts: default parameters (Functions) and the `**` operator (this step).
+
+        # Pedagogy: delayed retrieval of the object model in a new context.
+        - type: single
+          difficulty: intermediate
+          question: |
+            What does this print after the loop?
+            ```python
+            queues = [["intro"], ["solo"]]
+            for queue in queues:
+                queue.append("end")
+                queue = []
+            print(queues)
+            ```
+          options:
+          - '`[[], []]`'
+          - "`[['intro'], ['solo']]`"
+          - "`[['intro', 'end'], ['solo', 'end']]`"
+          - "`[['intro', 'end'], []]`"
+          correct_index: 2
+          option_feedback:
+            0: Assigning to the loop variable does not assign to an entry in queues.
+            1: The loop variable refers to each actual inner list, so append changes those lists.
+            3: Rebinding the loop variable leaves both outer-list entries untouched, including the last one.
+          explanation: Each append mutates an inner list. Each queue = [] only rebinds the local name queue.
 
   # --------------------------------------------------------------------------
-  # STEP 7 — List Comprehensions
+  # STEP 15 — List Comprehensions
   # Pedagogy:
   #   Beacon             — list comprehension as a recognisable Python pattern.
   #   Generation Effect   — challenge presented BEFORE the explanation.
   #   Guide-and-Release  — complete functions using the comprehension pattern.
   #   Fading: Less       — function signatures given, no hints in body.
-  #   Spaced Review      — quiz includes f-string (Step 2) and function (Step 4) review.
+  #   Spaced Review      — quiz includes f-string (Variables, Types & f-Strings) and function (Functions) review.
   #   Bloom's level      — Apply / Analyze (quiz) + spaced review.
   # --------------------------------------------------------------------------
   - title: "List Comprehensions"
@@ -1704,7 +3904,7 @@ steps:
           print(f"Squares to 5:  {squares_up_to(5)}")
         language: "python"
 
-      # Reference: completed in Step 4 and annotated in Step 5. Shown here so
+      # Reference: completed in Functions and annotated in Type Hints. Shown here so
       # `from functions import mean` has a visible source — the tab is read-only
       # context for the import above.
       - path: "functions.py"
@@ -1786,6 +3986,10 @@ steps:
           result = g['above_average']([4, 8, 15, 16, 23, 42])
           expected = [23, 42]
           assert result == expected, f"Expected {expected}, got {result}"
+          assert g['above_average']([2, 4, 6]) == [6], \
+              "Exclude a number equal to the mean: above_average([2, 4, 6]) should be [6]"
+          assert g['above_average']([5, 5]) == [], \
+              "When every value equals the mean, no value is above it"
         hints:
           - text: "You need to filter a list based on a computed threshold. What value should you compare each number against?"
             condition: "code_missing: for"
@@ -1833,7 +4037,7 @@ steps:
           - text: "This test checks which operator you used for squaring. In Python, the exponentiation operator is *not* the same as in C++ or math notation. What does `^` actually do in Python?"
 
     quiz:
-      title: "Step 7 — Knowledge Check"
+      title: "Step 15 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -1891,7 +4095,7 @@ steps:
             The comprehension equivalent is `[name.upper() for name in ["Alice", "Bob", "Charlie"] if len(name) > 3]`.
 
         - question: |
-            *(Spaced review — Step 2: f-Strings)*
+            *(Spaced review — f-Strings)*
 
             What does this expression produce?
             ```python
@@ -1910,14 +4114,38 @@ steps:
             function calls like `len(items)` and `sum(items)`. This is one of their great strengths
             over C++'s `printf` — you get the full power of Python expressions inline.
 
+        # Pedagogy: delayed retrieval of the object model in a new context.
+        - type: single
+          difficulty: advanced
+          question: |
+            What does the final line print?
+            ```python
+            original = [["Opening"], ["Finale"]]
+            selected = [songs for songs in original]
+            selected[0].append("Encore")
+            selected.append(["Afterparty"])
+            print(len(original), original[0])
+            ```
+          options:
+          - "`2 ['Opening']`"
+          - "`3 ['Opening', 'Encore']`"
+          - "`2 ['Opening', 'Encore']`"
+          - "`3 ['Opening']`"
+          correct_index: 2
+          option_feedback:
+            0: The comprehension creates an outer list but reuses the inner list references.
+            1: Appending to selected changes only that separate outer list.
+            3: Outer-list growth is independent, while the selected inner lists are still shared.
+          explanation: The expression songs returns each original inner object. This comprehension behaves like a shallow outer copy, so its append and its nested append affect different objects.
+
   # --------------------------------------------------------------------------
-  # STEP 8 — Reading Files with open() and with
+  # STEP 16 — Reading Files with open() and with
   # Pedagogy:
   #   Transfer Tutor     — C++ file I/O → Python `open()` + `with`.
   #   Lay of the Land    — Python's "batteries included" stdlib.
   #   Sub-Goal Labels    — worked example annotated with sub-goals.
   #   Fading: Less       — skeleton provided, fewer inline hints.
-  #   Spaced Review      — quiz includes indentation (Step 3) and loop (Step 5).
+  #   Spaced Review      — quiz includes indentation (The Indentation Trap) and loop (Loops).
   #   Bloom's level      — Understand / Evaluate (quiz) + spaced review.
   # --------------------------------------------------------------------------
   - title: "Reading Files with open() and with"
@@ -2062,7 +4290,7 @@ steps:
             condition: "code_contains: open("
 
     quiz:
-      title: "Step 8 — Knowledge Check"
+      title: "Step 16 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2119,7 +4347,7 @@ steps:
             `getline()` in a `while` loop vs reading the whole file with `fstream::read()`.
 
         - question: |
-            *(Spaced review — Step 3: Indentation)*
+            *(Spaced review — Indentation)*
 
             What is wrong with this code?
             ```python
@@ -2137,10 +4365,10 @@ steps:
           explanation: |
             The `with` statement opens an indented block (note the `:`). Everything inside
             that block must be indented — including the `for` loop. This is the same
-            indentation rule from Step 3: a colon `:` starts a block that must be indented.
+            indentation rule: a colon `:` starts a block that must be indented.
 
         - question: |
-            *(Spaced review — Step 2: String Quotes)*
+            *(Spaced review — String Quotes)*
 
             A student writes this Python code and gets a `SyntaxError`. Why?
             ```python
@@ -2176,12 +4404,38 @@ steps:
             The `print` is outside both blocks (no indentation) because it runs after the file is processed.
             The distractor `f.close()` is unnecessary — `with` handles closing automatically.
 
+        # Pedagogy: delayed retrieval of the object model in a new context.
+        - type: single
+          difficulty: intermediate
+          question: |
+            A file-processing helper should create a fresh result when none is
+            supplied, and extend the exact list when the caller supplies one.
+            Which condition belongs in the blank?
+            ```python
+            def collect_label(label, result=None):
+                if ____:
+                    result = []
+                result.append(label)
+                return result
+            ```
+          options:
+          - '`not result`'
+          - '`result == []`'
+          - '`result is None`'
+          - '`result is not None`'
+          correct_index: 2
+          option_feedback:
+            0: An explicitly supplied empty list is falsey too. This would replace the caller’s list instead of extending it.
+            1: An empty list is a valid supplied destination. None is the sentinel for a missing destination.
+            3: This discards supplied destinations and leaves the missing destination as None.
+          explanation: Identity with None distinguishes an omitted destination from an empty but caller-owned list. Construct the fresh list inside the function body.
+
   # --------------------------------------------------------------------------
-  # STEP 9 — Regular Expressions in Python: the re module
+  # STEP 17 — Regular Expressions in Python: the re module
   # Pedagogy:
   #   Transfer Tutor     — bridges the RegEx tutorial (grep/sed) to Python re.
   #   Fading: Minimal    — only first task is partially done; rest is independent.
-  #   Spaced Review      — quiz includes list comprehension (Step 6) and types (Step 2).
+  #   Spaced Review      — quiz includes list comprehension (Loops) and types (Variables, Types & f-Strings).
   #   Bloom's level      — Apply / Analyze (quiz) + spaced review.
   # --------------------------------------------------------------------------
   - title: "Regular Expressions in Python: the re Module"
@@ -2306,7 +4560,7 @@ steps:
         - **`re.findall(r'\d{2}:\d{2}:\d{2}', text)`:** `\d{2}` matches exactly two digits; the colons are literal. This matches all 6 timestamp entries (`09:23:11`, `09:23:45`, etc.). The test checks for `'Timestamps found: 6'` in the output.
         - **`re.findall(r'ERROR.*', text)`:** `ERROR` matches the literal word; `.*` matches everything to the end of the line (`.` doesn't match `\n` by default in Python's `re`). This finds the 2 ERROR lines. The test checks for `'Errors: 2'`.
         - **`re.sub(r'\d+\.\d+\.\d+\.\d+', 'x.x.x.x', text)`:** `\d+` matches one or more digits; `\.` matches a literal dot (unescaped `.` would match any character). This replaces both `192.168.1.42` and `10.0.0.7` with `x.x.x.x`. The tests check that `x.x.x.x` appears in the output and that `192.168.1.42` does not.
-        - **Raw strings (`r'...'`):** The `r` prefix prevents Python from interpreting backslashes before `re` sees them. `r'\d+'` passes the two-character sequence `\d` to the regex engine; without `r`, `'\d'` would be just `'d'`.
+        - **Raw strings (`r'...'`):** The `r` prefix keeps backslashes literal. For example, `r'\b'` reaches the regex engine as a word boundary, while `'\b'` is a backspace character. An unrecognized string escape such as `'\d'` keeps its backslash but can trigger a warning; raw strings avoid that ambiguity and double escaping.
         - **`f.read()` vs line-by-line:** This step uses `f.read()` to load the entire file as a string, because `re.findall()` and `re.sub()` operate on a string. This is fine for small log files; for very large files, you'd process line by line.
 
     tests:
@@ -2360,7 +4614,7 @@ steps:
             condition: "code_contains: re.sub"
 
     quiz:
-      title: "Step 9 — Knowledge Check"
+      title: "Step 17 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2408,10 +4662,10 @@ steps:
             - "Raw strings automatically escape special regex characters like `.` and `*`"
           correct_index: 1
           explanation: |
-            In a regular string, `'\d'` is just `'d'` (Python drops the unrecognised escape).
-            In a raw string `r'\d'`, the backslash is preserved literally, so `re` receives the
-            two-character sequence `\d` and interprets it as "any digit". Using raw strings avoids
-            double-escaping (`'\\d+'`) and matches the pattern you see in `grep` or `sed`.
+            Both `r'\d+'` and `'\\d+'` give the regex engine the same pattern.
+            Raw strings avoid doubling each backslash. Recognized string escapes
+            such as `'\b'` are processed before the regex engine sees them, whereas
+            `r'\b'` preserves the regex word-boundary notation.
 
         - question: |
             **Analyze** this code. What does `results` contain after execution?
@@ -2433,7 +4687,7 @@ steps:
             email addresses. This combines `\w+` (word chars), literal `@`, and escaped `.`.
 
         - question: |
-            *(Spaced review — Step 6: List Comprehensions)*
+            *(Spaced review — List Comprehensions)*
 
             Which expression produces `['ERROR Connection failed: timeout', 'ERROR Disk usage at 94%']`
             from a variable `lines` containing all log lines as a list of strings?
@@ -2446,17 +4700,41 @@ steps:
           correct_index: 0
           explanation: |
             A list comprehension with a filter: `[line for line in lines if 'ERROR' in line]`.
-            This is the same pattern from Step 6 — `[expr for var in iterable if condition]`.
+            This is the same comprehension pattern — `[expr for var in iterable if condition]`.
             Note: you could also use `re.findall(r'ERROR.*', text)` on the full text string
             (as you just learned), but the list comprehension works on a list of lines.
 
+        # Pedagogy: delayed retrieval of the object model in a new context.
+        - type: single
+          difficulty: intermediate
+          question: |
+            What does this print?
+            ```python
+            import re
+            codes = re.findall(r"S\d+", "S12 then S34")
+            label = codes[0]
+            label += "!"
+            print(codes[0], label)
+            ```
+          options:
+          - '`S12! S12!`'
+          - '`S12 S12!`'
+          - '`S12 S12`'
+          - '`TypeError`'
+          correct_index: 1
+          option_feedback:
+            0: Strings are immutable. Changing label’s binding does not replace the list entry.
+            2: The concatenation changes which string label refers to, even though the old string remains unchanged.
+            3: String concatenation is allowed; modifying an existing string’s characters in place is not.
+          explanation: The list entry keeps its reference to the matched string. The local name label is rebound to the concatenated value.
+
   # --------------------------------------------------------------------------
-  # STEP 10 — sys.argv & stderr
+  # STEP 18 — sys.argv & stderr
   # Pedagogy:
   #   Transfer Tutor     — C argc/argv → sys.argv; std::cerr → sys.stderr.
   #   Fading: Minimal    — task description only, minimal starter code.
   #   Sub-Goal Labels    — worked example with sub-goals.
-  #   Spaced Review      — quiz includes functions (Step 4) and file I/O (Step 7).
+  #   Spaced Review      — quiz includes functions (Functions) and file I/O (Reading Files).
   #   Bloom's level      — Apply / Evaluate (quiz) + spaced review.
   # --------------------------------------------------------------------------
   - title: "sys.argv & stderr"
@@ -2579,7 +4857,7 @@ steps:
         - **`print(..., file=sys.stderr)`:** The `file=` keyword argument redirects the print to `sys.stderr` instead of `sys.stdout`. This is Python's equivalent of C++'s `std::cerr` and Bash's `echo "error" >&2`. Mixing error messages into stdout would corrupt pipelines.
         - **`sys.exit(1)`:** Terminates the process with exit code 1 — the Unix convention for failure. The test captures this as a `SystemExit` exception.
         - **`print(f"Reading: {filename}", file=sys.stderr)`:** Diagnostic/progress messages go to stderr. The test captures stderr separately and checks for `'Reading: data.txt'`.
-        - **`print(f"Total words: {total}")`:** Normal output goes to stdout (the default). The test checks stdout for `'Total words: 24'` when `data.txt` is passed. The word count logic is identical to Step 7.
+        - **`print(f"Total words: {total}")`:** Normal output goes to stdout (the default). The test checks stdout for `'Total words: 24'` when `data.txt` is passed. The word count logic is identical to the Reading Files exercise.
 
     tests:
       - description: "Prints 'Reading: data.txt' to sys.stderr when given data.txt"
@@ -2614,7 +4892,7 @@ steps:
           assert 'Total words: 24' in output, \
               f"Expected 'Total words: 24', got: {repr(output)}"
         hints:
-          - text: "The word-counting logic is the same as Step 7 — but which file should you open? Where does the filename come from in this version?"
+          - text: "The word-counting logic is the same as the Reading Files exercise — but which file should you open? Where does the filename come from in this version?"
       - description: "Exits with code 1 and prints error to stderr when no argument given"
         command: |
           import sys, io, os; os.chdir('/tutorial')
@@ -2627,7 +4905,7 @@ steps:
           try:
               exec(open('/tutorial/safe_word_count.py').read(), {"__name__": "__main__"})
           except SystemExit as e:
-              exited = (e.code != 0)
+              exited = (e.code == 1)
           finally:
               sys.stderr = old_err
               sys.argv = old_argv
@@ -2641,7 +4919,7 @@ steps:
             condition: "code_contains: sys.exit"
 
     quiz:
-      title: "Step 10 — Knowledge Check"
+      title: "Step 18 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -2708,7 +4986,7 @@ steps:
             Approach B "works" but violates the Unix convention of separating output from diagnostics.
 
         - question: |
-            *(Spaced review — Step 5: Loops)*
+            *(Spaced review — Loops)*
 
             A student writes this code to print each word with its position number. What is wrong?
             ```python
@@ -2730,7 +5008,7 @@ steps:
             the index and the value. This is a common negative transfer trap from C++.
 
         - question: |
-            *(Spaced review — Step 7: File I/O)*
+            *(Spaced review — Reading Files)*
 
             What happens if you forget the `with` keyword and write `f = open("data.txt")` instead?
           type: single
@@ -2747,7 +5025,7 @@ steps:
             in C. The `with` statement guarantees cleanup via Python's context manager protocol.
 
         - question: |
-            *(Spaced review — Step 2: String Quotes)*
+            *(Spaced review — String Quotes)*
 
             In C++, `'A'` is a `char` and `"Alice"` is a string — they are different types. What is the equivalent distinction in Python?
           type: single
@@ -2763,8 +5041,28 @@ steps:
             e.g., `"It's easy"` or `'<div class="box">'`. This is a key difference from C++
             where mixing up `'x'` and `"x"` is a compile error.
 
+        # Pedagogy: delayed retrieval of the object model in a new context.
+        - type: single
+          difficulty: intermediate
+          question: |
+            A script repeatedly reads the last filename in a Python list of n
+            filenames. A teammate proposes copying the list first to make indexing
+            faster. Assume the usual CPython list implementation. Which cost analysis
+            supports your decision?
+          options:
+          - Indexing is O(n); copying makes it O(1).
+          - Indexing is O(1); copying costs O(n).
+          - Both indexing and copying cost O(1).
+          - Both indexing and copying cost O(n).
+          correct_index: 1
+          option_feedback:
+            0: A list is an array of references, so it can address an indexed entry directly.
+            2: A shallow copy still has to copy n entry references.
+            3: Linear traversal is needed for membership search, not for a known valid index.
+          explanation: Direct indexing is already constant time. Copying the outer list adds linear work without improving that operation.
+
   # --------------------------------------------------------------------------
-  # STEP 11 — Capstone: Build a Log Analyzer
+  # STEP 19 — Capstone: Build a Log Analyzer
   # Pedagogy:
   #   Integration        — combines ALL component skills from Steps 1-9.
   #   Fading: None       — only requirements given, no scaffolding.
@@ -2900,7 +5198,7 @@ steps:
         - **`extract_ips(text)` with `set(...)`:** `re.findall()` returns all IP matches including duplicates. Wrapping in `set()` removes duplicates. `len(set(...))` is the Pythonic one-liner for counting unique items. The log has 2 unique IPs.
         - **`total = len(text.strip().splitlines())`:** `splitlines()` splits on newlines and handles the trailing newline correctly (unlike `split('\n')` which would include an empty string). The log has 6 lines.
         - **Function decomposition:** The capstone explicitly rewards a function-based design — each function has a single responsibility, making it testable and readable.
-        - **Type hints on every helper:** Each function carries the annotation pattern from Step 5 (`text: str`, `-> int`, `-> set[str]`, `-> None`). They don't change runtime behavior, but `mypy` would flag a caller that passed the wrong type.
+        - **Type hints on every helper:** Each function carries the annotation pattern from Type Hints (`text: str`, `-> int`, `-> set[str]`, `-> None`). They don't change runtime behavior, but `mypy` would flag a caller that passed the wrong type.
 
     tests:
       - description: "Script runs without errors when given server.log"
@@ -2928,7 +5226,7 @@ steps:
           assert 'Reading: server.log' in buf.getvalue(), \
               f"Expected 'Reading: server.log' in stderr, got: {repr(buf.getvalue())}"
         hints:
-          - text: "This follows the same pattern as Step 9. Where should diagnostic messages go? How did you handle this in the previous step?"
+          - text: "This follows the same diagnostic-output pattern as the sys.argv & stderr lesson. Where should diagnostic messages go? How did you handle this in the previous step?"
       - description: "Reports 6 total lines"
         command: |
           import sys, os, re; os.chdir('/tutorial')
@@ -2954,7 +5252,7 @@ steps:
           assert re.search(r'[Uu]nique.*IP.*2', output), \
               f"Expected unique IPs '2' in output, got: {repr(output)}"
         hints:
-          - text: "You already wrote a regex for IP addresses in Step 8. How do you find all matches and then count only the *unique* ones? What Python data structure eliminates duplicates?"
+          - text: "You already wrote a regex for IP addresses in the Regular Expressions lesson. How do you find all matches and then count only the *unique* ones? What Python data structure eliminates duplicates?"
       - description: "Reports 2 errors"
         command: |
           import sys, os, re; os.chdir('/tutorial')
@@ -2967,7 +5265,7 @@ steps:
           assert re.search(r'[Ee]rror.*2', output), \
               f"Expected error count '2' in output, got: {repr(output)}"
         hints:
-          - text: "You counted errors in Step 8. The same approach works here — find all occurrences of the error keyword and count them."
+          - text: "You counted errors in the Regular Expressions lesson. The same approach works here — find all occurrences of the error keyword and count them."
       - description: "Reports 1 warning"
         command: |
           import sys, os, re; os.chdir('/tutorial')
@@ -2993,7 +5291,7 @@ steps:
           try:
               exec(open('/tutorial/log_analyzer.py').read(), {"__name__": "__main__"})
           except SystemExit as e:
-              exited = (e.code != 0)
+              exited = (e.code == 1)
           finally:
               sys.stderr = old_err
               sys.argv = old_argv
@@ -3002,7 +5300,7 @@ steps:
               "Expected an error message to be printed to stderr"
 
     quiz:
-      title: "Step 11 — Knowledge Check"
+      title: "Step 19 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -3073,7 +5371,7 @@ steps:
             act as documentation.
 
         - question: |
-            *(Spaced review — Step 5: Loops)*
+            *(Spaced review — Loops)*
 
             You need to process a list of log lines and print each line's number alongside it (starting from 1). Which approach is most Pythonic?
           type: single
@@ -3092,7 +5390,7 @@ steps:
             manual indexing. The `start=1` parameter avoids the `+1` hack.
 
         - question: |
-            *(Spaced review — Step 8: Regular Expressions)*
+            *(Spaced review — Regular Expressions)*
 
             A log analyzer needs to extract all timestamps matching the pattern `2024-01-15 14:30:22` from a log string. Which `re` call is correct?
           type: single
@@ -3108,34 +5406,64 @@ steps:
             checks the start of the string. `re.split()` splits the string AT the pattern,
             returning the parts between matches, not the matches themselves.
 
+        # Pedagogy: delayed retrieval of the object model in a new context.
+        - type: single
+          difficulty: advanced
+          question: |
+            A report groups messages in an instance attribute:
+            ```python
+            class Report:
+                def __init__(self):
+                    self.messages = []
+
+            import copy
+            live = Report()
+            live.messages.append("ready")
+            saved = copy.copy(live)
+            live.messages.append("finished")
+            ```
+            The saved report must keep an independent snapshot of these strings.
+            Which single change achieves that?
+          options:
+          - Replace the copy with `saved = live`.
+          - Replace the copy with `saved = copy.deepcopy(live)`.
+          - Move `messages = []` into the class body.
+          - Add a type hint to `self.messages`.
+          correct_index: 1
+          option_feedback:
+            0: Assignment would share the Report itself, as well as its member list.
+            2: A class attribute would share one messages list across instances and would not make a snapshot.
+            3: Type hints document a value’s expected type; they do not copy the object.
+          explanation: For this ordinary object containing a list of strings, deepcopy makes an independent report and member list. A shallow report copy still refers to the live report’s list.
+
   # --------------------------------------------------------------------------
-  # STEP 12 — Data Classes: Structs with Auto-Generated Plumbing
+  # STEP 20 — Data Classes: Structs with Auto-Generated Plumbing
   # Pedagogy:
   #   Generation Effect  — see hand-written boilerplate first; feel the pain.
   #   Worked Example     — fade across @dataclass → frozen=True → @property.
   #   Variation Theory   — fields held constant; only the decorator level varies.
   #   Negative Transfer  — @property is NOT a private modifier (Java/C# habit).
   #   Desirable Difficulty — predict-before-run on FrozenInstanceError.
-  #   Spaced Review      — quiz revisits Step 7 list comprehensions in OO context.
-  #   Type Hints         — uses Step 5 annotation pattern on fields and properties.
+  #   Spaced Review      — quiz revisits List Comprehensions list comprehensions in OO context.
+  #   Type Hints         — uses Type Hints annotation pattern on fields and properties.
   #   Bloom's level      — Apply (write dataclass) / Evaluate (when to use frozen).
   # --------------------------------------------------------------------------
   - title: "Data Classes"
     instructions: |
       ### Why this matters
 
-      Plain Python classes force you to write `__init__`, `__eq__`, and `__repr__` by hand — boilerplate you would never write in C++ for a simple `struct`. `@dataclass` generates that plumbing automatically, `frozen=True` gives you immutability for free, and `@property` lets you compute attributes on the fly. Together, these turn data modeling in Python from tedious to elegant.
+      You have already written initializers and value comparisons for ordinary classes. `@dataclass` generates these common methods for data holders. Its instances still follow the same reference rules: `frozen=True` prevents ordinary field assignment, but does not freeze objects stored in those fields.
 
       ### 🎯 You will learn to
 
       - Create value-object classes using `@dataclass` to eliminate `__init__` / `__eq__` / `__repr__` boilerplate
-      - Apply `frozen=True` to make dataclass instances immutable
+      - Analyze the difference between frozen fields and immutable member objects
       - Create computed attributes with `@property`
       - Evaluate when each tool is the right choice
 
       ## A Bridge from C++ Structs
 
-      In C++ you would describe a 2D point with a `struct` — a small data holder, often with auto-generated comparison via `operator==` and printing via `operator<<`.
+      In C++ you might describe a 2D point with a `struct` and define its comparison behavior explicitly:
 
       ```cpp
       struct Point {
@@ -3156,11 +5484,11 @@ steps:
           y: int
       ```
 
-      That tiny declaration is roughly equivalent to a 10-line hand-written class. It uses the type hints from Step 5 (`x: int`) — that's how `@dataclass` knows what fields exist and what their types are.
+      That tiny declaration is roughly equivalent to a 10-line hand-written class. It uses the type hints from Type Hints (`x: int`) — that's how `@dataclass` knows what fields exist and what their types are.
 
       ### `frozen=True`: Immutability as a Design Tool
 
-      Add `frozen=True` and instances become **immutable** — like declaring all fields `const` in the C++ struct above. Trying to assign raises `FrozenInstanceError`:
+      Add `frozen=True` and ordinary field assignment is blocked. With immutable integer fields, this gives our point stable contents. Trying to assign raises `FrozenInstanceError`:
 
       ```python
       @dataclass(frozen=True)
@@ -3172,16 +5500,41 @@ steps:
       p.x = 99       # ❌ FrozenInstanceError — Point is immutable
       ```
 
-      Immutability is not just a defensive habit — it makes value-object equality safe (two `Point(3, 4)` instances compare equal) and makes the instance hashable (so you can put it in a `set` or use it as a `dict` key).
+      The default `eq=True` generates value equality whether or not the class is
+      frozen. With `eq=True` and `frozen=True`, dataclasses also generate a hash
+      method; using it requires every participating field to be hashable.
+      Integer fields qualify, so these points can be set members or dictionary keys.
 
-      ### Value Objects vs. Reference Objects
+      **Member-object review:** a frozen field can still refer to a mutable list.
 
-      The distinction underneath all of this:
+      ```python
+      @dataclass(frozen=True)
+      class SetList:
+          songs: list[str]
 
-      - A **value object** *is* its fields. Two `Point(3, 4)` instances are interchangeable, the same way two copies of the number `5` are interchangeable. Coordinates, money amounts, dates, RGB colors all fit this pattern. Value objects belong in `set`s, work as `dict` keys, and benefit from `frozen=True`.
-      - A **reference object** has *identity* that survives equal contents. A database connection, a logger, a shopping cart, a file handle — even two with identical fields are not interchangeable. Reference objects need a regular class (or a non-frozen dataclass) because their internal state changes over time.
+      songs = ["Intro"]
+      show = SetList(songs)
+      songs.append("Finale")       # show.songs now contains both titles
+      show.songs.append("Encore")  # mutates the same list; allowed
+      ```
 
-      `frozen=True` is the design tool that says *"this is a value object."* Asking *"is the answer to `a == b` based on contents alone?"* is the test: yes → value object → frozen dataclass; no → reference object → regular class.
+      Assigning a different list to `show.songs` would be blocked. Mutating the
+      referenced list is allowed, and hashing this `SetList` fails because a
+      list is unhashable. Freezing the outer object is not a deep freeze.
+
+      ### Value Equality and Identity
+
+      All Python instances have identity and are accessed through references.
+      A **value object** is a design choice: two values with equal fields can
+      stand for the same domain value, while still being distinct objects.
+      A coordinate is a good example. A connection or a live audio channel
+      usually needs identity because two separate resources are not interchangeable.
+
+      `@dataclass` uses field equality by default. Use `eq=False` when a
+      dataclass should retain its inherited comparison behavior (identity for
+      a direct subclass of `object`). `frozen=True` controls field assignment;
+      it does not choose between equality and identity. `is` always checks
+      identity, just as it did in the earlier ordinary-class lesson.
 
       ### `@property`: a Method That Looks Like an Attribute
 
@@ -3214,7 +5567,7 @@ steps:
       p.x = 99
       ```
 
-      Predict the exception type, then try it. If you guess `AttributeError`, you are pattern-matching from the *"property without a setter"* idiom — close, but `frozen=True` raises a different exception precisely because it does something different under the hood. Being half-right is informative; the actual exception name reveals the mechanism.
+      Predict the exception type, then try it. `FrozenInstanceError` is a subclass of `AttributeError`. Its more specific name identifies the frozen-dataclass restriction.
 
       ### Task
 
@@ -3223,7 +5576,7 @@ steps:
       1. **TODO 1.** Define `Point` using `@dataclass` (no kwargs yet) with two `int` fields `x` and `y`.
       2. **TODO 2.** Change to `@dataclass(frozen=True)` so `Point` is immutable.
       3. **TODO 3.** Add a `@property distance_to_origin` that returns `(x**2 + y**2) ** 0.5` annotated `-> float`.
-      4. **TODO 4 (independent practice).** Below `Point`, define a *new* frozen dataclass `RGB` with three `int` fields `r`, `g`, `b` and a `@property as_hex` that returns the lowercase 7-character hex string (e.g., `RGB(255, 128, 0).as_hex == '#ff8000'`). Use the f-string format `f'{r:02x}'` (Step 2 spaced review) for two-digit hex. No further hints — this one is on you.
+      4. **TODO 4 (independent practice).** Below `Point`, define a *new* frozen dataclass `RGB` with three `int` fields `r`, `g`, `b` and a `@property as_hex` that returns the lowercase 7-character hex string (e.g., `RGB(255, 128, 0).as_hex == '#ff8000'`). Use the f-string format `f'{r:02x}'` (Variables, Types & f-Strings spaced review) for two-digit hex. No further hints — this one is on you.
 
       *Stretch (optional):* uncomment the mutation probe at the bottom and observe the `FrozenInstanceError`.
 
@@ -3313,11 +5666,11 @@ steps:
         **Why this is correct:**
 
         - **`@dataclass(frozen=True)`** writes three dunder methods for you: `__init__` (so `Point(3, 4)` works), `__eq__` (so `Point(3, 4) == Point(3, 4)` is `True`), and `__repr__` (so `print(p)` shows `Point(x=3, y=4)`). With `frozen=True` it also makes `Point` **hashable** and prevents assignment to fields after construction.
-        - **`x: int` / `y: int`** are not just documentation — `@dataclass` reads these type hints (Step 5) to figure out what fields the class has. Without the annotations, `@dataclass` would not know to generate `__init__`.
-        - **`frozen=True`** makes mutation raise `FrozenInstanceError`. The contract is: *"once constructed, a `Point` value never changes."* This is exactly what makes value-object equality safe and what makes the instance hashable.
+        - **`x: int` / `y: int`** are not just documentation — `@dataclass` reads these type hints (Type Hints) to figure out what fields the class has. Without the annotations, `@dataclass` would not know to generate `__init__`.
+        - **`frozen=True`** blocks ordinary field assignment with `FrozenInstanceError`. These points hold immutable integers, so their contents stay stable and their generated hash works. A frozen dataclass with a list field would still allow mutation of that member list.
         - **`@property`** turns `distance_to_origin` into a *read-as-attribute* method. The test reads `p.distance_to_origin` (no parens). Without `@property`, that expression would evaluate to a *bound method object*, not a number — a confusing error mode.
-        - **`RGB.as_hex`** reuses every pattern from `Point` — frozen dataclass, typed `int` fields, `@property` returning a typed string. The f-string spec `f'{r:02x}'` (Step 2 spaced review) formats an int as a two-digit lowercase hex value. Same recipe, different field types and different return type — that's the point of this independent task.
-        - **Mutable defaults are forbidden.** If you ever try `events: list = []`, Python rejects the class with `ValueError: mutable default <class 'list'> is not allowed`. Use a tuple, or `field(default_factory=list)` if you really need a list.
+        - **`RGB.as_hex`** reuses every pattern from `Point` — frozen dataclass, typed `int` fields, `@property` returning a typed string. The f-string spec `f'{r:02x}'` (Variables, Types & f-Strings spaced review) formats an int as a two-digit lowercase hex value. Same recipe, different field types and different return type — that's the point of this independent task.
+        - **Dataclass defaults have an extra safeguard.** A dataclass rejects an unhashable field default such as `events: list = []`. `field(default_factory=list)` creates a list for each new instance. Ordinary classes and functions have no such safeguard; their shared defaults still need deliberate handling.
         - **`PointManual` stays in the file** as a contrast — it shows what the decorator saved you from writing.
 
     tests:
@@ -3336,10 +5689,12 @@ steps:
 
       - description: "Point uses @dataclass with frozen=True"
         command: |
-          source = open('/tutorial/geometry.py').read()
-          collapsed = source.replace(' ', '')
-          assert '@dataclass(frozen=True)' in collapsed, \
-              "Use @dataclass(frozen=True) on Point — frozen makes Point immutable, hashable, and gives safe value-object equality."
+          import sys
+          from dataclasses import is_dataclass
+          sys.modules.pop('geometry', None)
+          from geometry import Point
+          assert is_dataclass(Point) and Point.__dataclass_params__.frozen, \
+              "Point should be a frozen dataclass. Freezing blocks field assignment; eq=True separately provides field equality."
         hints:
           - text: "Pass `frozen=True` to the decorator: `@dataclass(frozen=True)`."
             condition: "code_missing: frozen"
@@ -3453,7 +5808,7 @@ steps:
             condition: "code_missing: 02x"
 
     quiz:
-      title: "Step 12 — Knowledge Check"
+      title: "Step 20 — Knowledge Check"
       min_score: 0.8
       shuffle: true
       questions:
@@ -3469,12 +5824,12 @@ steps:
           correct_index: 0
           option_feedback:
             1: "`__del__` is for destructors (rare in Python — garbage collection handles it). `@dataclass` doesn't write either of these. `__repr__`, not `__str__`, is what `@dataclass` generates."
-            2: "Close — but `__hash__` is **only** generated when you also pass `frozen=True` (or `eq=False`). By default, a non-frozen dataclass is unhashable to discourage using mutable objects as dict keys."
+            2: "With the default `eq=True`, a non-frozen dataclass is unhashable. Adding `frozen=True` normally generates a hash method, while `eq=False` leaves the inherited hash behavior alone."
             3: "These aren't related. `@dataclass` focuses on the standard data-holder boilerplate: construction, equality, and string representation."
           explanation: |
             `@dataclass` writes `__init__` (so you can write `Point(3, 4)`), `__eq__` (structural
             equality based on fields), and `__repr__` (a readable string like `Point(x=3, y=4)`).
-            `__hash__` is generated only with `frozen=True` (or `eq=False`).
+            With the defaults, `__hash__` is disabled; `eq=True, frozen=True` normally generates it, while `eq=False` leaves it unchanged.
 
         - question: |
             Given:
@@ -3491,19 +5846,20 @@ steps:
           type: single
           options:
             - "It silently succeeds — `frozen=True` only affects equality, not assignment"
-            - "It raises `AttributeError` — the field is read-only because it has no setter"
+            - "It succeeds — only assigning a list to the field would be blocked"
             - "`FrozenInstanceError` — frozen dataclasses block `__setattr__`"
             - "It raises `TypeError` — `99` is not declared `int` in this context"
           correct_index: 2
           option_feedback:
-            0: "`frozen=True` is specifically about preventing mutation — that's its whole purpose. Equality is generated by `eq=True` (the default), separately."
-            1: "`AttributeError` is what you get from `@property` without a setter, or from accessing a missing attribute. Frozen dataclasses raise their own dedicated exception."
-            3: "Type annotations are not enforced at runtime (Step 5). The assignment fails because the class is frozen, not because of any type check."
+            0: "`frozen=True` prevents ordinary field assignment. Equality is generated by `eq=True` (the default), separately."
+            1: "The frozen restriction applies to field assignment regardless of the assigned value's type. It is separate from the mutability of the object stored in a field."
+            3: "Type annotations are not enforced at runtime (Type Hints). The assignment fails because the class is frozen, not because of any type check."
           explanation: |
             `@dataclass(frozen=True)` overrides `__setattr__` to raise `FrozenInstanceError`
-            on any attempt to assign to a field. This is what gives you immutability — and
-            it's also why frozen dataclasses are hashable (immutable values can be safely
-            put into sets and dict keys).
+            on ordinary field assignment. The exception subclasses `AttributeError`.
+            The integer fields in this example also support hashing; a mutable member
+            such as a list would not become immutable or hashable just because its
+            containing dataclass is frozen.
 
         - question: |
             Which of these statements about `@property` are **true**? *(Select all that apply.)*
@@ -3524,7 +5880,7 @@ steps:
             And it is a descriptor, not `__getattr__`.
 
         - question: |
-            *(Spaced review — Step 7: List Comprehensions)*
+            *(Spaced review — List Comprehensions)*
 
             What is `points[2]` after this line?
             ```python
@@ -3557,7 +5913,7 @@ steps:
             - "A logger object that buffers messages and flushes them periodically"
           correct_index: 1
           option_feedback:
-            0: "Shopping carts mutate over time — adding/removing items requires assignment to fields or methods that change state. A frozen dataclass would block all of that."
+            0: "A cart needs deliberate mutable state. Freezing a field that refers to a list would still allow changes to that list, so frozen fields alone do not express an immutable cart."
             2: "Connections have *identity* (this specific socket) and *changing internal state* (buffer, transaction). They are reference objects, not value objects. Frozen dataclasses fit values where two with equal fields are interchangeable — connections aren't."
             3: "Loggers buffer messages — internal state changes constantly. Also, two loggers with equal configuration aren't interchangeable; they have identity."
           explanation: |
@@ -3568,7 +5924,7 @@ steps:
             objects — use a regular class.
 
         - question: |
-            *(Spaced review — Step 5: Type Hints)*
+            *(Spaced review — Type Hints)*
 
             Given:
             ```python
@@ -3586,12 +5942,68 @@ steps:
             - "Runtime: depends on whether `frozen=True` is set."
           correct_index: 1
           option_feedback:
-            0: "Type annotations on dataclass fields are not enforced by Python at runtime — same rule as Step 5. The annotations only tell `@dataclass` what to put in the auto-generated `__init__` signature; they do not gate the values."
+            0: "Type annotations on dataclass fields are not enforced by Python at runtime — same rule as Type Hints. The annotations only tell `@dataclass` what to put in the auto-generated `__init__` signature; they do not gate the values."
             2: "Python does not coerce floats to ints in dataclass construction — `p.x` stays `3.5`. The annotation is documentation, not a converter."
-            3: "`frozen=True` controls *post-construction mutation*, not what types the constructor accepts. Annotations are inert at runtime regardless of `frozen`."
+            3: "`frozen=True` controls ordinary field assignment, not what types the constructor accepts. Annotations do not enforce types at runtime regardless of `frozen`."
           explanation: |
-            This is Step 5's lesson applied inside `@dataclass`: the field annotations
+            This is the Type Hints lesson applied inside `@dataclass`: the field annotations
             (`x: int`) are read by the decorator to wire up `__init__`, but Python never
             enforces them at runtime. `Point(3.5, 4.5)` constructs cleanly; `mypy` would
             flag it. The runtime-vs-static distinction is the *same rule everywhere*
-            annotations appear — function signatures (Step 5) or dataclass fields (here).
+            annotations appear — function signatures (Type Hints) or dataclass fields (here).
+
+        # Pedagogy: delayed retrieval of the object model in a new context.
+        - type: single
+          difficulty: intermediate
+          question: |
+            What does this print?
+            ```python
+            from dataclasses import dataclass
+
+            @dataclass
+            class Ticket:
+                seat: str
+
+            first = Ticket("B7")
+            second = Ticket("B7")
+            alias = first
+            print(first == second, first is second, alias is first)
+            ```
+          options:
+          - '`False False True`'
+          - '`True True True`'
+          - '`True False True`'
+          - '`False True False`'
+          correct_index: 2
+          option_feedback:
+            0: The generated __eq__ compares field values, unlike identity equality inherited by an ordinary class.
+            1: Equal fields do not merge two constructed instances into one object.
+            3: The two constructor calls create separate instances; assignment to alias creates no new instance.
+          explanation: Dataclasses generate value equality by default. Construction and assignment still follow the object-reference rules from ordinary classes.
+        - type: single
+          difficulty: advanced
+          question: |
+            What does this print?
+            ```python
+            from dataclasses import dataclass
+
+            @dataclass(frozen=True)
+            class Show:
+                songs: list[str]
+
+            names = ["Opening"]
+            show = Show(names)
+            names.append("Finale")
+            print(show.songs)
+            ```
+          options:
+          - "`['Opening']`"
+          - "`['Opening', 'Finale']`"
+          - '`FrozenInstanceError`'
+          - '`TypeError`'
+          correct_index: 1
+          option_feedback:
+            0: Construction stores the supplied list reference; it does not make a copy.
+            2: The code mutates the member list, without assigning to the frozen songs field.
+            3: The annotation permits this list, and annotations do not add runtime checks anyway.
+          explanation: Frozen fields prevent ordinary rebinding of the field. They do not recursively freeze the objects those fields reference.

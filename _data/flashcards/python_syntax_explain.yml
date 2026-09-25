@@ -1,5 +1,5 @@
-title: "Python Syntax — What Does This Code Do?"
-description: "You are shown Python code. Explain what it does and what it returns or prints."
+title: "Python — Explain the Code"
+description: "Predict Python results and explain the bindings, shared objects, and language rules behind them."
 active: true
 cards:
   - id: 1
@@ -22,7 +22,7 @@ cards:
       7 / 2
       7 // 2
       ```
-    answer: "`7 / 2` → `3.5` (float division — always returns a float in Python 3). `7 // 2` → `3` (floor/integer division — like C++'s `/` for positive ints)."
+    answer: "`7 / 2` → `3.5`; division of built-in integers produces a float. `7 // 2` → `3`; floor division rounds down. For negative integers, Python flooring differs from C++ truncation: `-7 // 2` is `-4`."
   - id: 3
     difficulty: basic
     question: |
@@ -31,7 +31,7 @@ cards:
       ```python
       x = "5" + 3
       ```
-    answer: "Raises `TypeError: can only concatenate str to str`. Python is **strongly typed** — it refuses to implicitly convert between `str` and `int`. Fix: `int(\"5\") + 3` → `8` or `\"5\" + str(3)` → `\"53\"`."
+    answer: "Raises `TypeError`: this addition cannot concatenate a string and an integer. Choose the intended operation explicitly: `int(\"5\") + 3` → `8` or `\"5\" + str(3)` → `\"53\"`. Dynamic typing does not promise automatic conversion."
   - id: 4
     difficulty: basic
     question: |
@@ -91,7 +91,7 @@ cards:
       import re
       clean = re.sub(r'\d+\.\d+\.\d+\.\d+', 'x.x.x.x', text)
       ```
-    answer: "Replaces all IPv4 addresses in `text` with `'x.x.x.x'`. `re.sub(pattern, replacement, string)` is the Python equivalent of `sed 's/old/new/g'`."
+    answer: "Replaces each match of four digit groups separated by dots with `'x.x.x.x'`. This simple pattern can redact address-shaped text but does not validate IPv4 ranges; it would also match `999.999.999.999`. `re.sub` returns the changed string."
   - id: 10
     difficulty: advanced
     question: |
@@ -123,3 +123,104 @@ cards:
       filename = sys.argv[1]
       ```
     answer: "Gets the first command-line argument. `sys.argv[0]` is the script name itself (like C's `argv[0]`). If no argument is provided, this raises an `IndexError`."
+
+  - id: 13
+    difficulty: intermediate
+    question: |
+      Predict the output. Which objects change, and which names are rebound?
+      ```python
+      samples = 1024
+      archived = samples
+      samples += 1
+      samples = None
+      print(archived, samples is None)
+      ```
+    answer: "Prints `1024 True`. Integers are immutable objects. Incrementing samples binds that name to a different integer; assigning None rebinds it again. archived still refers to the original integer, so that object remains reachable."
+
+  - id: 14
+    difficulty: advanced
+    question: |
+      Predict the output and distinguish attribute assignment from member mutation.
+      ```python
+      class WeatherLog:
+          zone = "north"
+          alerts = []
+
+      first = WeatherLog()
+      second = WeatherLog()
+      first.zone = "roof"
+      WeatherLog.zone = "south"
+      first.alerts.append("rain")
+      print(first.zone, second.zone, second.alerts)
+      ```
+    answer: "Prints `roof south ['rain']`. first.zone shadows the class default; second still looks up the current class value. Neither instance owns an alerts attribute, so both find and share the class list. append mutates that list rather than creating an instance attribute."
+
+  - id: 15
+    difficulty: advanced
+    question: |
+      Predict the output. Why do the two copied slots still refer to the same inner list?
+      ```python
+      import copy
+      samples = [5]
+      live = [samples, samples]
+      saved = copy.deepcopy(live)
+      saved[0].append(8)
+      print(live, saved, saved[0] is saved[1])
+      ```
+    answer: "Prints `[[5], [5]] [[5, 8], [5, 8]] True`. Deepcopy creates one independent inner list and remembers that both original slots referred to it. The copied graph preserves that sharing without sharing its mutable samples with live."
+
+  - id: 16
+    difficulty: advanced
+    question: |
+      Predict the output. Does the super call operate on a second object?
+      ```python
+      class Counter:
+          def __init__(self):
+              self.total = 0
+          def tick(self):
+              self.total += 1
+          def sample(self):
+              self.tick()
+
+      class RainCounter(Counter):
+          def tick(self):
+              super().tick()
+              self.total += 2
+
+      rain = RainCounter()
+      rain.sample()
+      print(rain.total)
+      ```
+    answer: "Prints `3`. RainCounter inherits the initializer. The inherited sample method receives the RainCounter instance and dispatches to its tick override. super().tick() changes the same instance by 1, then the override adds 2; no second Counter is constructed."
+
+  - id: 17
+    difficulty: advanced
+    question: |
+      Predict the output. How does choosing one copy operation or two affect sharing?
+      ```python
+      import copy
+
+      samples = [6]
+      together = copy.deepcopy([samples, samples])
+      apart = [copy.deepcopy(samples), copy.deepcopy(samples)]
+      print(together[0] is together[1], apart[0] is apart[1])
+      ```
+    answer: "Prints `True False`. One deepcopy operation remembers objects already copied, so together preserves the two references to one copied list. The two independent calls use separate copy tracking and produce separate lists for apart. All of these copied inner lists are independent of samples."
+
+  - id: 18
+    difficulty: advanced
+    question: |
+      Predict the output. Does using None as the default prohibit all sharing?
+      ```python
+      class SampleBatch:
+          def __init__(self, readings=None):
+              self.readings = [] if readings is None else readings
+
+      supplied = []
+      first = SampleBatch(supplied)
+      second = SampleBatch(supplied)
+      third = SampleBatch()
+      first.readings.append(6)
+      print(second.readings, third.readings)
+      ```
+    answer: "Prints `[6] []`. The None default prevents accidental reuse of an omitted list argument. This constructor deliberately keeps any supplied list, so the first two batches share supplied. The third batch creates its own list. To forbid that deliberate sharing too, the constructor would need a different ownership contract and an appropriate copy."

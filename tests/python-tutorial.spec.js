@@ -12,7 +12,7 @@ const { a11yCheckpoint } = require('./a11y-helpers');
 
 // Feature key for `A11Y_INTERACTIVE_FEATURES`. With the flag enabled
 // (`A11Y_INTERACTIVE_CHECKS=1`) this spec runs an axe pass at every step's
-// post-solution state and at every quiz gate. With the env var omitted the
+// post-solution state and at every knowledge check. With the env var omitted the
 // checkpoints below are no-ops.
 const A11Y_FEATURE = 'python-tutorial';
 
@@ -68,6 +68,77 @@ async function passCurrentStepTestsPython(page, timeout = TEST_RUN_TIMEOUT) {
   await page.locator('.tvm-btn-test').click();
   await expect(page.locator('.tvm-test-summary')).toContainText(/All \d+ tests passed!/, { timeout });
 }
+
+test('Python learners can skip to unvisited steps and resume drafts without recording passes', async ({ page }) => {
+  test.setTimeout(120_000);
+  const errors = [];
+  page.on('pageerror', error => errors.push(error.message));
+  // Restore an earlier gated save: the tutorial's current navigation policy
+  // must also apply to learners returning with only their first step unlocked.
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('tutorial-progress-python')) {
+      localStorage.setItem('tutorial-progress-python', JSON.stringify({
+        step: 0, stepsUnlocked: [0], stepsVisited: [0],
+        stepsPassed: [], quizPassed: [], files: {},
+      }));
+    }
+  });
+  await page.goto(TUTORIAL_URL);
+  await waitForTutorialReady(page);
+  const targetIndex = steps.findIndex(step => step.title === 'Loops');
+  const target = page.getByRole('button', { name: `Step ${targetIndex + 1}: Loops`, exact: true });
+  await expect(target).toBeEnabled();
+  await target.focus();
+  await page.keyboard.press('Enter');
+  await expectActiveStep(page, targetIndex);
+  await expect(page.getByRole('button', { name: /Test My Work/ })).toBeEnabled();
+  const draft = steps[targetIndex].files[0].content + '\n# My saved loop practice\n';
+  await setEditorContent(page, draft);
+  await page.getByRole('button', { name: /^Next →$/ }).click();
+  const skip = page.getByRole('button', { name: 'Skip Knowledge Check', exact: true });
+  await expect(skip).toBeVisible();
+  await a11yCheckpoint(page, 'Python optional knowledge check', { feature: A11Y_FEATURE });
+  await skip.click();
+  await expectActiveStep(page, targetIndex + 1);
+  await target.click();
+  await expectActiveStep(page, targetIndex);
+  await expect.poll(() => page.evaluate(() => {
+    const saved = JSON.parse(localStorage.getItem('tutorial-progress-python'));
+    return saved?.files?.['loops.py']?.content;
+  })).toBe(draft);
+
+  // Reopen without a deep-link hash so the saved resume position is exercised.
+  await page.goto(TUTORIAL_URL);
+  await waitForTutorialReady(page);
+  await expectActiveStep(page, targetIndex);
+  await expect.poll(() => page.evaluate(() =>
+    window.monaco.editor.getEditors()[0].getModel().getValue())).toBe(draft);
+  await expect(page.getByRole('button', {
+    name: `Step ${steps.length}: ${steps.at(-1).title}`, exact: true,
+  })).toBeEnabled();
+  const progress = await page.evaluate(() => JSON.parse(localStorage.getItem('tutorial-progress-python')));
+  expect(progress.stepsPassed).toEqual([]);
+  expect(progress.quizPassed).toEqual([]);
+  expect(errors).toEqual([]);
+});
+
+test('Python learners can skip the final knowledge check without claiming completion', async ({ page }) => {
+  test.setTimeout(120_000);
+  await page.goto(TUTORIAL_URL);
+  await waitForTutorialReady(page);
+  await page.getByRole('button', {
+    name: `Step ${steps.length}: ${steps.at(-1).title}`, exact: true,
+  }).click();
+  await expectActiveStep(page, steps.length - 1);
+  await page.getByRole('button', { name: /^Next →$/ }).click();
+  await page.getByRole('button', { name: 'Skip Knowledge Check', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Review Finished', exact: true })).toBeVisible();
+  await expect(page.getByText('Tutorial complete — great job!', { exact: true })).toBeHidden();
+  const progress = await page.evaluate(() => JSON.parse(localStorage.getItem('tutorial-progress-python')));
+  expect(progress.stepsPassed).toEqual([]);
+  expect(progress.quizPassed).toEqual([]);
+  expect(progress.stepsUnlocked).not.toContain(steps.length);
+});
 
 // =============================================================================
 // Block 1 – Structure, navigation, run/clear, editor
@@ -162,7 +233,7 @@ test.describe.serial('Python Tutorial', () => {
     expect(after).toContain('# added comment');
   });
 
-  // --- Quiz flow (also unlocks step 2 for the navigation test) ---
+  // --- Optional quiz flow ---
 
   test('quiz flow: passing step 1 → next → quiz → continue advances to step 2', async () => {
     await passCurrentStepTestsPython(page, TEST_RUN_TIMEOUT);
@@ -222,7 +293,7 @@ test.describe.serial('Python Tutorial', () => {
     await expect(page.locator('.tvm-quiz-panel')).toBeHidden();
   });
 
-  // --- Navigation (step 2 is now unlocked) ---
+  // --- Navigation ---
 
   test('step buttons navigate between unlocked steps; prev button navigates back', async () => {
     const stepButtons = page.locator('.tvm-step-btn');
@@ -273,10 +344,10 @@ test.describe.serial('Python Tutorial — step-by-step', () => {
     }
 
     if (step.quiz?.questions?.length > 0 && !isLast) {
-      test(`step ${i + 1} "${step.title}": quiz gate — advances to step ${i + 2}`, async () => {
+      test(`step ${i + 1} "${step.title}": knowledge check — advances to step ${i + 2}`, async () => {
         await page.locator('.tvm-btn-next').click();
         await expect(page.locator('.tvm-quiz-panel')).toBeVisible({ timeout: 5_000 });
-        await a11yCheckpoint(page, `python tutorial — step ${i + 1} quiz gate (first question)`, { feature: A11Y_FEATURE, darkMode: true });
+        await a11yCheckpoint(page, `python tutorial — step ${i + 1} knowledge check (first question)`, { feature: A11Y_FEATURE, darkMode: true });
         await answerQuizCorrectly(page);
         await expect(page.locator('.tvm-quiz-panel .quiz-results:not(.hidden)')).toBeVisible();
         await expect(page.locator('.tvm-quiz-continue-btn')).toBeVisible();

@@ -736,6 +736,10 @@
   })();
   </script>
 
+  {% if page.mermaid %}
+  {% include mermaid-content.html %}
+  {% endif %}
+
   <!-- Bundled UML diagram renderer -->
   <script src="{{ '/js/ArchUML/uml-bundle.js' | relative_url }}" defer></script>
   <!-- Verbal aria-label generator (parses the spec for screen-reader text alternatives) -->

@@ -323,6 +323,9 @@ Step `tests:` provide diagnostic feedback and gate advancement only when
 running or passing tests and can skip knowledge checks or continue with a low
 score. Keep `min_score: 0.8` as the diagnostic pass threshold. Skipping or
 continuing after a low score must never record a passed test or quiz.
+For direct access to any numbered step, also set `allow_skip_steps: true`.
+This opt-in navigation policy leaves tests and quizzes available and preserves
+their actual pass records, including when restoring an older gated save.
 Tests have two
 opposite failure modes you must defend against simultaneously:
 
@@ -491,6 +494,8 @@ students are confused" reports.
 - [ ] **Progression policy is deliberate.** Self-directed review may use
       `require_tests: false` and `require_quiz: false`; verify skipped checks
       stay unpassed, including after reload and in the instructions popout.
+      Use `allow_skip_steps: true` when learners should also be able to jump
+      directly to any numbered step; verify older saves keep that access.
 - [ ] **Solutions live in `solution:`, not in `instructions:`.**
 - [ ] **Hints are multi-layered** (≥3 layers for non-trivial tests),
       with `condition:` where useful, and **never reveal the literal
@@ -709,6 +714,14 @@ require_quiz: boolean                  # Default true. Set false to keep quizzes
                                        # TutorialCode backends and the shared
                                        # instructions popout. Print views label
                                        # min_score as an optional practice target.
+allow_skip_steps: boolean              # Default false. TutorialCode only: make
+                                       # every numbered step selectable from the
+                                       # start, including in instruction popouts
+                                       # and after restoring older saved progress.
+                                       # Does not mark tests or quizzes passed.
+                                       # Pair with require_tests: false and
+                                       # require_quiz: false for optional practice
+                                       # through both numbered steps and Next.
                                        # When required, passing code tests enables
                                        # Next to open the quiz, but the following
                                        # numbered step stays locked until the
@@ -1220,17 +1233,45 @@ help ladder** that responds to the student's actual mistake.
 
 ### 4.1 Layouts
 
+Tutorial, instruction-popout, and print layouts load
+`js/keyboard-shortcut-labels.js`. In instruction Markdown, use
+`<kbd><abbr data-platform-modifier title="Control" data-no-tooltip="true">Ctrl</abbr>+Enter</kbd>`
+for a platform-aware primary-modifier hint. The helper shows `⌘` with the
+expansion `Command` on Apple platforms, including dynamically inserted steps;
+other platforms retain `Ctrl`. This changes labels only, not key bindings.
+
 - **`_layouts/tutorial.html`** (~700 lines) — the live, interactive layout.
   Wires `TutorialCode` (from `js/tutorial-code.js`), injects the parsed YAML
   config as JSON, sets up the navbar (Reset, Solution in instructor mode,
   Print, Read Aloud, Dark mode toggle), and instantiates the Monaco editor
   + chosen backend.
-- **`_layouts/print-tutorial.html`** (~900 lines) — the static, printable
+- **`_layouts/print-tutorial.html`** — the static, printable
   view. Renders every step's instructions, files (Rouge-highlighted),
   quizzes (with correct answers visibly marked), and solutions (hidden
   unless `?instructor-mode=true` is in the URL). The Print button on the
   live tutorial redirects to `<live-permalink>/print?autoprint=1` (preserving
   `?instructor-mode=true` if set).
+
+Both layouts load pinned Mermaid 11.16.0 followed by `js/mermaid-theme.js`.
+Use `SebookMermaid.render(root)` after Markdown is in the DOM; do not initialize
+Mermaid separately or override the shared palette. This helper returns a
+Promise that settles after rendering. The print layout renders its static
+fences on `DOMContentLoaded`, opens its instructional disclosures, and awaits
+that Promise before `autoprint=1` opens the print dialog. Live prediction
+reveals remain closed. Its existing `print-light-mode` policy also applies
+to the diagrams.
+
+For Mermaid instruction fences, a leading `%% caption: ...` line becomes a
+visible figure caption and the image's accessible name. Add `accTitle:` and
+`accDescr:` after the diagram directive to describe its structure and meaning;
+the helper preserves Mermaid's description on the outer image role so assistive
+technology can reach it. Keep a useful prose explanation next to the figure.
+When a fence is inside a disclosure, write `<details markdown="1">` so the
+print view's Kramdown parser processes its Markdown as well as the live view.
+The image wrapper becomes keyboard focusable when it overflows horizontally;
+a resize observer updates this after resizing, printing, or opening a reveal.
+Its rendered SVG exposes the measured width through `--mermaid-intrinsic-width`
+for the shared diagram stylesheet.
 
 Tutorial presentation is stylesheet-owned:
 

@@ -1,5 +1,5 @@
 title: "Python Concepts Quiz"
-description: "Test your deeper understanding of Python's design choices, paradigm differences from C++, and when to use which tool."
+description: "Practice Python's object model and scripting idioms: distinguish shared state, copying, equality, call behavior, and method dispatch."
 active: true
 questions:
   - id: 1
@@ -21,14 +21,14 @@ questions:
       3: |
         Both Python and JavaScript names can be rebound to values of different types; the difference
         here is coercion between incompatible values.
-    explanation: "Dynamic typing means types are checked at runtime, not compile time. Strong typing means no implicit coercion between incompatible types: Python raises `TypeError` on `\"5\" + 3`, while JavaScript's weak typing silently coerces to `\"53\"`. That refusal is a feature — it prevents a class of silent bugs that plague weakly-typed code."
+    explanation: "Here Python rejects mixed string-and-integer addition, while JavaScript converts the integer to text. Strong and weak typing are broad labels, not a claim that Python never converts types: numeric operations can combine an int and a float. Dynamic typing concerns checking operations at runtime; it does not promise automatic conversion."
 
   - id: 2
     difficulty: basic
-    question: "In C++, `'A'` is a `char` and `\"Alice\"` is a `const char*` — they are fundamentally different types. A C++ student writes `name = 'Alice'` in Python and worries they've created a character array instead of a string. Are they right?"
+    question: "In C++, `'A'` is a character literal and `\"Alice\"` is a string literal. A student writes `name = 'Alice'` in Python. Does the single-quote spelling produce a different type from `\"Alice\"`?"
     options:
       - "Yes — Python's single quotes create a character array, just like C++'s `char[]`"
-      - "No — Python has no `char` type; single and double quotes both create identical `str` objects."
+      - "No — both quote styles produce `str` values."
       - "No — single quotes create byte strings, while double quotes create Unicode strings"
       - "Yes — while both work, single-quoted strings are immutable and double-quoted strings are mutable"
     correct_index: 1
@@ -41,7 +41,7 @@ questions:
         both create Unicode `str` values.
       3: |
         Python strings are immutable regardless of whether single or double quotes were used.
-    explanation: "Python has no `char` type — one of the cleanest simplifications over C++. `'Alice'` and `\"Alice\"` produce identical `str` objects, so the choice is purely about avoiding backslash escaping: double quotes when the string contains an apostrophe (`\"It's easy\"`), single quotes when it contains double quotes (`'<div class=\"box\">'`). PEP 8 accepts either style but recommends consistency."
+    explanation: "Python has no separate char type. These two spellings produce equal string values; that is not a guarantee of object identity. Choose a quote style that makes embedded quotation marks easy to read."
 
   - id: 3
     difficulty: intermediate
@@ -62,7 +62,7 @@ questions:
       3: |
         Python did not round the result up; `/` produced a floating-point quotient, while `//` is the
         operator for integer floor division.
-    explanation: "Python 3's `/` ALWAYS returns a float, unlike C++ where `int / int` truncates to an `int`. Use `//` for floor division, which returns an `int` when both operands are `int`. This was an intentional Python 3 change to prevent bugs where integer division silently truncated results."
+    explanation: "For built-in integers, `/` produces a float and `//` produces the floor of the quotient as an int. Unlike C++ integer division, flooring rounds toward negative infinity: `-7 // 2` is `-4`, not `-3`. Other numeric types may define their own division results."
 
   - id: 4
     difficulty: advanced
@@ -83,7 +83,7 @@ questions:
       3: |
         `with` is the standard Python abstraction for `try/finally` cleanup, and it keeps the resource
         protocol local and readable.
-    explanation: "Forgetting `f.close()` can leave file handles open: the GC will eventually close the file, but 'eventually' may be too late — especially in long-running servers or when writing. The `with` statement is Python's RAII equivalent: `with open('file') as f:` guarantees `f.close()` runs when the block exits, even on exception. Always use `with` for files, database connections, and locks."
+    explanation: "Do not rely on garbage-collection timing to release a file. `with open('file') as f:` closes it when the block exits, including when an exception unwinds the block. Other context managers define their own exit behavior; for example, a database context may manage a transaction without closing the connection."
 
   - id: 5
     difficulty: intermediate
@@ -104,11 +104,11 @@ questions:
       3: |
         A regex pattern language can mean more than the literal characters typed, so it is not
         interchangeable with substring search.
-    explanation: "For a fixed literal like 'ERROR', `text.count('ERROR')` is simpler and faster. `re.findall()` earns its overhead only when the target is a **pattern** — 'any sequence of digits' (`r'\\d+'`), an IP address, a timestamp in `HH:MM:SS` format. Use the simplest tool that works."
+    explanation: "For a fixed literal like 'ERROR', `text.count('ERROR')` directly expresses the task and avoids regex machinery. `re.findall()` supports **patterns**, such as 'any sequence of digits' (`r'\\d+'`) or a timestamp shape in `HH:MM:SS` format. Use the simplest tool that works."
 
   - id: 6
     difficulty: advanced
-    question: "A script needs to report both results (to stdout) and diagnostics (to stderr). A student puts everything in `print()`. Why is this problematic in a pipeline like `python script.py > results.txt`?"
+    question: "A script needs to report both results (to stdout) and diagnostics (to stderr). A student puts everything in `print()`. Why is this problematic with output redirection such as `python script.py > results.txt`?"
     options:
       - "It is not problematic — `print()` already separates output and errors"
       - "`print()` writes to stdout, contaminating `results.txt`; use `file=sys.stderr`."
@@ -134,7 +134,7 @@ questions:
       ```python
       result = [x**2 for x in range(1000000) if x % 2 == 0]
       ```
-      Their teammate says: "This creates a huge list in memory. Use a **generator expression** instead." What would the generator version look like, and why is it better?
+      The program only needs one pass through these values. Their teammate says: "Use a **generator expression** to avoid storing them all." What would the generator version look like, and why does it use less memory here?
     options:
       - "Replace `[]` with `()`: `(x**2 for x in range(1000000) if x % 2 == 0)` — values produced lazily."
       - "Use `list()` around the comprehension to make it a generator"
@@ -154,9 +154,9 @@ questions:
     explanation: "Replacing `[...]` with `(...)` creates a generator expression. It produces values one at a time using constant memory, instead of building the 500,000-element list upfront. When you only need to iterate once and don't need to store the full collection, generators are dramatically more memory-efficient."
 
   - id: 8
-    difficulty: expert
+    difficulty: intermediate
     question: |
-      Does this code have a bug?
+      Each call that omits `items` should start with an empty list. Why does this implementation violate that contract?
       ```python
       def add_item(item, items=[]):
           items.append(item)
@@ -209,3 +209,503 @@ questions:
     distractors:
       - "passing = scores.filter(s >= 70)"
     explanation: "List comprehensions use the form `[expr for var in iterable if condition]`. Python lists have no `.filter()` method — that distractor is borrowed from JavaScript. The f-string in the print statement automatically converts the list to its string representation."
+
+  # Retrieval moves from bindings to shared members, then revisits both in calls and inheritance.
+  - id: 11
+    type: single
+    difficulty: intermediate
+    question: |
+      What does this weather-station label update print?
+      ```python
+      label = "Coastal"
+      archived = label
+      label += " Station"
+      label = None
+      print(archived, label is None)
+      ```
+    options:
+      - "`Coastal Station True`"
+      - "`Coastal True`"
+      - "`None True`"
+      - "`Coastal False`"
+    correct_index: 1
+    option_feedback:
+      0: "String concatenation rebinds label; the string reached by archived is unchanged."
+      2: "Rebinding one name to None does not redirect the other name or destroy its reachable object."
+      3: "The final assignment does bind label to the None singleton."
+    explanation: "archived keeps the original immutable string. Each later assignment changes only label's binding; all of these values, including None, are objects."
+
+  - id: 12
+    type: single
+    difficulty: intermediate
+    question: |
+      What does this print?
+      ```python
+      hourly = [18, 20]
+      reports = [hourly, hourly]
+      reports[0][1] = 22
+      hourly = [99]
+      print(reports)
+      ```
+    options:
+      - "`[[18, 22], [18, 20]]`"
+      - "`[[99], [99]]`"
+      - "`[[18, 22], [18, 22]]`"
+      - "`[[18, 20], [18, 20]]`"
+    correct_index: 2
+    option_feedback:
+      0: "Both outer slots refer to one inner list, so the indexed mutation appears through both."
+      1: "Rebinding hourly does not replace references already stored in reports."
+      3: "Replacing an element mutates a list; lists do not have the immutability rule that strings have."
+    explanation: "The outer list stores the same inner-list reference twice. Mutation changes that shared inner object, while rebinding hourly changes only a name."
+
+  - id: 13
+    type: single
+    difficulty: intermediate
+    question: |
+      Two instruments share a calibration object. What does this print?
+      ```python
+      class Calibration:
+          def __init__(self, offset):
+              self.offset = offset
+
+      class Instrument:
+          def __init__(self, calibration):
+              self.calibration = calibration
+
+      calibration = Calibration(1)
+      west = Instrument(calibration)
+      east = Instrument(calibration)
+      west.calibration.offset = 4
+      west.calibration = Calibration(9)
+      print(west.calibration.offset, east.calibration.offset)
+      ```
+    options:
+      - "`9 9`"
+      - "`9 1`"
+      - "`4 4`"
+      - "`9 4`"
+    correct_index: 3
+    option_feedback:
+      0: "Replacing west's member reference does not replace east's member reference."
+      1: "The earlier offset assignment mutated the original shared Calibration, so east sees 4."
+      2: "The final assignment gives west a reference to a newly constructed Calibration."
+    explanation: "The nested assignment changes the shared member object. The later assignment replaces one instrument's member reference, leaving the other instrument attached to the original calibration."
+
+  - id: 14
+    type: single
+    difficulty: advanced
+    question: |
+      What does this print?
+      ```python
+      class Gauge:
+          issued = 0
+          def __init__(self):
+              Gauge.issued += 1
+              self.serial = Gauge.issued
+
+      Factory = Gauge
+      first = Factory()
+      second = Gauge()
+      first.issued = 50
+      print(first.serial, second.serial, Gauge.issued, first.issued)
+      ```
+    options:
+      - "`1 2 2 50`"
+      - "`1 2 50 50`"
+      - "`1 1 1 50`"
+      - "`2 2 2 50`"
+    correct_index: 0
+    option_feedback:
+      1: "Assigning first.issued creates an instance attribute; it does not overwrite the class counter."
+      2: "Factory and Gauge name the same class object, so both constructions advance one counter."
+      3: "Each serial retains its assigned integer. A later class-counter increment does not rebind an older serial."
+    explanation: "The class owns the shared issued counter. Each instance owns its serial, and first later acquires an issued attribute that shadows the class attribute."
+
+  - id: 15
+    type: single
+    difficulty: advanced
+    question: |
+      What does this print?
+      ```python
+      import copy
+      measurements = [12]
+      live = [measurements, measurements]
+      shallow = copy.copy(live)
+      saved = copy.deepcopy(live)
+      shallow[0].append(15)
+      print(live[1], saved[0], saved[0] is saved[1])
+      ```
+    options:
+      - "`[12] [12] False`"
+      - "`[12, 15] [12, 15] True`"
+      - "`[12, 15] [12] True`"
+      - "`[12, 15] [12] False`"
+    correct_index: 2
+    option_feedback:
+      0: "A shallow outer copy still refers to the original inner list, so that list changes."
+      1: "The deep copy has its own mutable inner list; the source mutation does not reach it."
+      3: "Deepcopy remembers repeated references: both saved slots reach one new inner list."
+    explanation: "A shallow copy preserves original member references. A deep copy isolates this mutable list graph while preserving the sharing relationship inside the copied graph."
+
+  - id: 16
+    type: single
+    difficulty: intermediate
+    question: |
+      A Reading class defines `__eq__` to compare temperature and unit, returning
+      `NotImplemented` for other types. Two separately constructed Readings have
+      matching fields. Which result must hold?
+    options:
+      - "Equality is true, and identity is true."
+      - "Equality is true, and identity is false."
+      - "Equality is false, and identity is false."
+      - "Equality is false, and identity is true."
+    correct_index: 1
+    option_feedback:
+      0: "An equality method does not merge separate objects into one identity."
+      2: "The stated comparison policy considers both matching fields equal."
+      3: "Separate construction creates separate instances, and the comparison policy recognizes their equal values."
+    explanation: "`==` uses the comparison policy; `is` checks identity. A plain class inheriting object's default comparison would not become value-equal merely because its fields matched."
+
+  - id: 17
+    type: single
+    difficulty: advanced
+    question: |
+      What does this print?
+      ```python
+      def revise(values):
+          values[0] = 30
+          values = values + [40]
+          values.append(50)
+
+      readings = [10, 20]
+      revise(readings)
+      print(readings)
+      ```
+    options:
+      - "`[10, 20]`"
+      - "`[30, 20, 40, 50]`"
+      - "`[30, 20, 50]`"
+      - "`[30, 20]`"
+    correct_index: 3
+    option_feedback:
+      0: "The first assignment changes a slot in the actual caller-supplied list."
+      1: "Concatenation creates a new list and rebinds only the local parameter."
+      2: "After rebinding, append operates on the new local list rather than the caller's original list."
+    explanation: "The parameter initially shares the caller's object. The slot replacement is visible to the caller; operations after local rebinding affect a different list."
+
+  - id: 18
+    type: single
+    difficulty: advanced
+    question: |
+      This function must append to and return a supplied list, even when it is
+      empty. Only an omitted argument or `None` should request a new list.
+      Which replacement condition fixes the contract?
+      ```python
+      def record_alert(alert, alerts=None):
+          if not alerts:
+              alerts = []
+          alerts.append(alert)
+          return alerts
+      ```
+    options:
+      - "`alerts is None`"
+      - "`alerts == []`"
+      - "`len(alerts) == 0`"
+      - "`alerts is not None`"
+    correct_index: 0
+    option_feedback:
+      1: "An empty list is a valid destination supplied by the caller; replacing it loses the requested identity."
+      2: "None has no length, and emptiness would still be the wrong condition for a supplied list."
+      3: "This replaces supplied lists while leaving the missing value as None, which has no append method."
+    explanation: "The None singleton distinguishes absence from an empty destination. Create the new list inside the call; a list used as a default would instead be created when the def statement executes."
+
+  - id: 19
+    type: single
+    difficulty: intermediate
+    question: |
+      What does this print?
+      ```python
+      class Sensor:
+          def __init__(self):
+              print("base")
+
+      class Passive(Sensor):
+          pass
+
+      class Active(Sensor):
+          def __init__(self):
+              print("active")
+
+      Passive()
+      Active()
+      ```
+    options:
+      - "`base`, then `base`, then `active`"
+      - "`active` only"
+      - "`base`, then `active`"
+      - "`base` only"
+    correct_index: 2
+    option_feedback:
+      0: "An overriding initializer does not automatically run a separate base initializer first."
+      1: "Passive inherits Sensor.__init__, so its construction does print base."
+      3: "Active overrides __init__, and its own initializer still executes."
+    explanation: "A subclass without its own initializer inherits one. A subclass that overrides it must explicitly call super().__init__ when it needs the base initialization."
+
+  - id: 20
+    type: single
+    difficulty: advanced
+    question: |
+      What does this print?
+      ```python
+      class Sensor:
+          def label(self):
+              return "reading"
+          def report(self):
+              return self.label()
+
+      class WindSensor(Sensor):
+          def label(self):
+              return super().label() + " wind"
+
+      sensor = WindSensor()
+      print(sensor.report())
+      ```
+    options:
+      - "`reading`"
+      - "`reading wind`"
+      - "`wind`"
+      - "`RecursionError`"
+    correct_index: 1
+    option_feedback:
+      0: "The inherited report method still receives the WindSensor instance; self.label finds its override."
+      2: "The override includes the result of the base label method before adding its suffix."
+      3: "super continues lookup after WindSensor rather than calling the same override again."
+    explanation: "Inherited methods and super calls operate on the same instance. In this single-inheritance example, dynamic dispatch selects WindSensor.label, and super selects Sensor.label."
+
+  - id: 21
+    type: single
+    difficulty: intermediate
+    question: |
+      A CPython list holds n readings, and a second list holds m readings.
+      Assume each equality comparison costs O(1). Which cost comparison is correct?
+    options:
+      - "Indexing: O(n); missing membership: O(1); concatenation: O(m)."
+      - "Indexing: O(1); missing membership: O(1); concatenation: O(1)."
+      - "Indexing: O(n); missing membership: O(n); concatenation: O(1)."
+      - "Indexing: O(1); missing membership: O(n); concatenation: O(n + m)."
+    correct_index: 3
+    option_feedback:
+      0: "Array-style indexing reaches a slot directly, whereas establishing that a value is absent may visit every slot."
+      1: "A membership search can inspect all n values; a new concatenated list needs n + m references."
+      2: "Indexed access does not traverse earlier slots, and concatenation must populate its new outer list."
+    explanation: "CPython lists use an array of references. Concatenation differs from append, which adds one object in amortized O(1), and extend, which adds m references in amortized O(m)."
+
+  - id: 22
+    type: single
+    difficulty: basic
+    question: |
+      An OpenCL kernel converts many temperature samples in parallel.
+      What role does a work-item's global ID play?
+    options:
+      - "It selects which sample that work-item handles."
+      - "It gives every sample the same numeric value."
+      - "It chooses the Python class used for each sample."
+      - "It guarantees equal speed on every supported device."
+    correct_index: 0
+    option_feedback:
+      1: "The ID identifies work; the kernel still computes a result from its own input sample."
+      2: "OpenCL is a separate parallel-computing standard, not Python's object-allocation mechanism."
+      3: "Portable programming interfaces do not guarantee identical device capabilities or performance."
+    explanation: "A kernel can use its global ID as an index, check that it is within the data bounds, and process that sample. Different work-items handle different indices."
+
+  # Later practice combines ownership decisions with the earlier reference model.
+  - id: 23
+    type: single
+    difficulty: advanced
+    question: |
+      An ordinary `station` object has a mutable `calibration` member and a
+      `readings` list of immutable numbers. Create a separate station whose
+      readings list can change independently, but whose calibration stays shared.
+      Assume `import copy` and standard copying behavior. Which implementation
+      meets all three requirements?
+    options:
+      - "Deep-copy the station and both of its mutable members."
+      - "Shallow-copy the station and leave its members shared."
+      - "Shallow-copy the station, then copy its readings list."
+      - "Alias the station, then replace its readings with a copy."
+    correct_index: 2
+    option_feedback:
+      0: "Deep copying would also duplicate the mutable calibration, but this contract deliberately keeps that collaborator shared."
+      1: "A shallow object copy creates a new station but initially shares its readings list as well as its calibration."
+      3: "Assignment aliases the original station. Replacing draft.readings would therefore replace the original station's member too."
+    explanation: "Choose copying depth from the required ownership. A shallow station copy preserves the calibration reference; replacing just its readings member with a new list makes those two lists independent. Sharing their immutable numbers is safe."
+
+  - id: 24
+    type: single
+    difficulty: advanced
+    question: |
+      What does this print after the name used in the default expression is rebound?
+      ```python
+      pending = []
+
+      def collect(value, bucket=pending):
+          bucket.append(value)
+          return bucket
+
+      pending = []
+      first = collect(4)
+      second = collect(8, pending)
+      print(first, second, first is pending)
+      ```
+    options:
+      - "`[4, 8] [4, 8] True`"
+      - "`[4] [8] False`"
+      - "`[4] [8] True`"
+      - "`[4, 8] [] False`"
+    correct_index: 1
+    option_feedback:
+      0: "The default keeps the list selected when def ran; it does not look up the new pending binding on each call."
+      2: "The two lists hold different contents here, and first refers to the old default list rather than the new pending list."
+      3: "Passing pending explicitly overrides the default, so the second call appends to the new list."
+    explanation: "A default expression can be a name, not just a literal. Evaluating pending at definition time stores its current list as the default. Rebinding pending later does not redirect that stored reference."
+
+  - id: 25
+    type: single
+    difficulty: advanced
+    question: |
+      What does this print when a class object is passed to a function?
+      ```python
+      class Probe:
+          limit = 30
+
+      def configure(factory):
+          factory.limit = 40
+          factory = None
+
+      Factory = Probe
+      sensor = Factory()
+      configure(Factory)
+      print(Factory is Probe, sensor.limit)
+      ```
+    options:
+      - "`False 40`"
+      - "`True 30`"
+      - "`False 30`"
+      - "`True 40`"
+    correct_index: 3
+    option_feedback:
+      0: "Assigning None to the local parameter does not change the caller's Factory binding."
+      1: "The assignment to factory.limit changes the shared class object; this instance has no limit attribute that would shadow it."
+      2: "The local rebinding leaves Factory alone, while the earlier attribute assignment does change the class reached through it."
+    explanation: "Classes participate in the same reference rules as other objects. Factory and Probe refer to one class; configure mutates that class and then rebinds only its local parameter. The existing instance looks up the class's current limit."
+
+  - id: 26
+    type: single
+    difficulty: intermediate
+    question: |
+      What does this print after append and extend build different list structures?
+      ```python
+      samples = [3, 5]
+      grouped = []
+      flat = []
+      grouped.append(samples)
+      flat.extend(samples)
+      samples.append(7)
+      print(grouped, flat)
+      ```
+    options:
+      - "`[[3, 5, 7]] [3, 5]`"
+      - "`[[3, 5, 7]] [3, 5, 7]`"
+      - "`[[3, 5]] [3, 5]`"
+      - "`[3, 5, 7] [[3, 5]]`"
+    correct_index: 0
+    option_feedback:
+      1: "extend copies the current element references into flat; it does not keep flat linked to future changes in samples."
+      2: "append stores a reference to the samples list itself, so grouped still reaches that list after its mutation."
+      3: "append adds one object, whereas extend adds each element from the iterable."
+    explanation: "grouped holds one reference to a mutable list. flat holds references to the two integer elements present when extend ran. Appending another sample changes the shared inner list but does not add a slot to flat."
+
+  - id: 27
+    type: single
+    difficulty: advanced
+    question: |
+      What does this print? Here both arguments are built-in lists.
+      ```python
+      def grow_in_place(values):
+          values += [9]
+
+      def grow_locally(values):
+          values = values + [9]
+
+      first = [2]
+      second = [2]
+      grow_in_place(first)
+      grow_locally(second)
+      print(first, second)
+      ```
+    options:
+      - "`[2] [2]`"
+      - "`[2, 9] [2, 9]`"
+      - "`[2, 9] [2]`"
+      - "`[2] [2, 9]`"
+    correct_index: 2
+    option_feedback:
+      0: "A built-in list's += extends that existing list, so the caller sees its mutation."
+      1: "List + creates a new list. Assigning it to the local parameter does not replace the caller's binding."
+      3: "The in-place operation changes the shared list; the explicit concatenation followed by local assignment does not."
+    explanation: "Augmented assignment is type-dependent. Built-in list += mutates the list and keeps that object, whereas list + creates a new outer list. This differs from immutable strings, whose += must rebind to a result string."
+
+  - id: 28
+    type: single
+    difficulty: intermediate
+    question: |
+      Reading inherits the default object equality behavior. What does this print?
+      ```python
+      import copy
+
+      class Reading:
+          def __init__(self, value):
+              self.value = value
+
+      original = Reading(12)
+      alias = original
+      duplicate = copy.copy(original)
+      print(original == alias, original == duplicate,
+            original.value == duplicate.value)
+      ```
+    options:
+      - "`True True True`"
+      - "`True False True`"
+      - "`False False True`"
+      - "`True False False`"
+    correct_index: 1
+    option_feedback:
+      0: "Matching fields do not automatically define value equality for an ordinary class."
+      2: "alias and original refer to the very same object, so the inherited equality behavior considers them equal."
+      3: "Object identity does not alter the copied numeric member value: both values are 12."
+    explanation: "The shallow copy is a distinct Reading with the same value member. This class has no custom __eq__, so its two separate instances do not compare equal just because their fields match. Their integer members still compare by numeric value."
+
+  - id: 29
+    type: single
+    difficulty: advanced
+    question: |
+      What remains visible through this shallow snapshot?
+      ```python
+      readings = [[10], [20]]
+      snapshot = readings.copy()
+      readings[0] = [99]
+      readings[1].append(21)
+      print(snapshot)
+      ```
+    options:
+      - "`[[99], [20, 21]]`"
+      - "`[[10], [20]]`"
+      - "`[[99], [20]]`"
+      - "`[[10], [20, 21]]`"
+    correct_index: 3
+    option_feedback:
+      0: "The two outer lists have separate slots. Replacing a slot in readings does not replace the corresponding slot in snapshot."
+      1: "The second inner list remains shared, so its append is visible through snapshot too."
+      2: "Slot replacement stays local to one outer list, while mutation of a shared inner list is visible from both."
+    explanation: "A shallow snapshot preserves its own outer sequence of references, not independent copies of the objects they reach. The old first inner list remains reachable from snapshot; the second inner list is still shared and changes."
