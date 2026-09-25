@@ -341,7 +341,7 @@ info_nav_title: "Browser storage"
   </table>
   <p class="cookies-prefix-note">
     <em>Prefixes:</em>
-    <code>tutorial-progress-&lt;id&gt;</code> &mdash; saved code &amp; current step &middot;
+    <code>tutorial-progress-&lt;id&gt;</code> &mdash; saved code, current step, completion records, and lesson identities used to match progress after tutorial updates &middot;
     <code>tutorial-editor-split-&lt;id&gt;</code> &mdash; split-pane editor on/off &middot;
     <code>tutorial-cooldown-&lt;id&gt;</code> &mdash; per-step "Test My Work" cooldown end times &middot;
     <code>tutorial-time-practice-&lt;id&gt;</code> &mdash; timed-practice deadlines and lockout windows &middot;
@@ -726,7 +726,7 @@ info_nav_title: "Browser storage"
 
   // -------- Render dynamic per-tutorial keys --------
   var DYNAMIC_PREFIXES = [
-    { prefix: 'tutorial-progress-',                       label: 'Saved tutorial progress (code &amp; current step)' },
+    { prefix: 'tutorial-progress-',                       label: 'Saved tutorial work (code, current lesson, completion records &amp; lesson identities)' },
     { prefix: 'tutorial-editor-split-',                   label: 'Tutorial split-pane editor preference' },
     { prefix: 'tutorial-cooldown-',                       label: '"Test My Work" cooldown end times (per step)' },
     { prefix: 'tutorial-time-practice-',                  label: 'Timed-practice deadlines and lockout windows' },

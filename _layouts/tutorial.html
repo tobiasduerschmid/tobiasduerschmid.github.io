@@ -403,6 +403,8 @@
         backend:      '{{ tutorial_backend }}',
         tutorialId:   '{{ page.tutorial }}',
         steps:        config.steps,
+        progressVersion: config.progress_version || null,
+        legacyStepKeys: config.legacy_step_keys || [],
         setupCommands: config.setup_commands || [],
         setupCommandsByBackend: config.setup_commands_by_backend || {},
         requireTests: config.require_tests || false,
