@@ -1,0 +1,1043 @@
+/*
+ * Render stage for the SE Book teaser video.
+ *
+ * Every rule here describes one 1920×1080 video frame, so fixed pixel
+ * geometry is intentional — this is not a responsive page and it never ships
+ * with the site. The video is always dark; every text color below clears
+ * 4.5:1 against --bg (WCAG 1.4.3 also covers text drawn into video frames).
+ *
+ * Elements that animate in start hidden via .is-staged; stage.js owns all
+ * motion (Web Animations on opacity / translate / scale / filter).
+ */
+
+html,
+body {
+  margin: 0;
+  background: #000;
+}
+
+/* ?fit preview mode: stage.js scales the stage to the viewport. */
+body.is-fit {
+  overflow: hidden;
+}
+
+.stage {
+  --bg: #060b16;
+  --panel: #0c1627;
+  --panel-deep: #070e1b;
+  --panel-line: rgba(139, 184, 232, 0.26);
+  --text: #f4f8ff;
+  --text-muted: #a9c1da;
+  --blue: #4da3ff;
+  --blue-soft: #8bb8e8;
+  --blue-deep: #2774ae;
+  --gold: #ffd100;
+  --green: #3ddc84;
+  --red: #ff5c6c;
+  --amber: #ffb547;
+  --font-display: 'Inter', 'Helvetica Neue', Arial, sans-serif;
+  --font-mono: 'Fira Code', Menlo, Consolas, monospace;
+  --ease-shadow: 0 40px 90px rgba(0, 0, 0, 0.5);
+
+  position: relative;
+  width: 1920px;
+  height: 1080px;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-display);
+  font-kerning: normal;
+  -webkit-font-smoothing: antialiased;
+  transform-origin: 0 0;
+}
+
+.layer {
+  position: absolute;
+  inset: 0;
+}
+
+.is-staged {
+  opacity: 0;
+}
+
+/* ---------------------------------------------------------------- */
+/* Background: two drifting brand glows over a dot grid              */
+/* ---------------------------------------------------------------- */
+
+.bg-glow {
+  position: absolute;
+  border-radius: 50%;
+}
+
+.bg-glow--blue {
+  left: -520px;
+  top: -700px;
+  width: 1600px;
+  height: 1600px;
+  background: radial-gradient(circle, rgba(39, 116, 174, 0.62) 0%, rgba(39, 116, 174, 0.2) 36%, rgba(39, 116, 174, 0) 68%);
+}
+
+.bg-glow--gold {
+  left: 1080px;
+  top: 380px;
+  width: 1300px;
+  height: 1300px;
+  background: radial-gradient(circle, rgba(255, 209, 0, 0.2) 0%, rgba(255, 209, 0, 0.07) 38%, rgba(255, 209, 0, 0) 66%);
+}
+
+.bg-grid {
+  position: absolute;
+  inset: -112px;
+  background-image: radial-gradient(rgba(169, 193, 218, 0.2) 1.8px, transparent 2.4px);
+  background-size: 56px 56px;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 45%, #000 20%, transparent 72%);
+  mask-image: radial-gradient(ellipse at 50% 45%, #000 20%, transparent 72%);
+}
+
+.bg-vignette {
+  background: radial-gradient(ellipse at 50% 50%, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.5) 100%);
+}
+
+/* ---------------------------------------------------------------- */
+/* Brand watermark (every scene but the end card)                    */
+/* ---------------------------------------------------------------- */
+
+.brand {
+  position: absolute;
+  left: 72px;
+  top: 56px;
+}
+
+.brand-name {
+  font-weight: 800;
+  font-size: 36px;
+  letter-spacing: -0.02em;
+}
+
+.brand-bar,
+.cta-bar {
+  background: linear-gradient(90deg, var(--blue-deep) 0 58%, var(--gold) 58% 100%);
+}
+
+.brand-bar {
+  width: 76px;
+  height: 7px;
+  margin-top: 8px;
+  border-radius: 4px;
+}
+
+/* ---------------------------------------------------------------- */
+/* Kinetic type: each word rises out of its own clipping mask        */
+/* ---------------------------------------------------------------- */
+
+.kinetic {
+  margin: 0;
+}
+
+.word-mask {
+  display: inline-block;
+  overflow: hidden;
+  padding: 0.08em 0.05em 0.18em;
+  margin: -0.08em -0.05em -0.18em;
+  vertical-align: top;
+}
+
+/* Words wait below their mask until revealParts() lifts them in. */
+.word {
+  display: inline-block;
+  translate: 0 125%;
+}
+
+.is-accent {
+  color: var(--gold);
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+/* Fira Code's programming ligatures merge `--` and `??` into single glyphs;
+   keep code and commands literal. */
+.code-line,
+.window-label,
+.window-url,
+.line-counter,
+.tests-cmd,
+.test-name,
+.git-label,
+.git-tag-text,
+.uml-stereotype,
+.term-line,
+.cta-url {
+  font-variant-ligatures: none;
+}
+
+.is-centered {
+  position: absolute;
+  left: 0;
+  right: 0;
+  text-align: center;
+}
+
+/* Strokes drawn on by fx.draw (pathLength is normalised to 1). */
+.is-drawn {
+  stroke-dasharray: 1 2;
+  stroke-dashoffset: 1;
+}
+
+/* ---------------------------------------------------------------- */
+/* Scene: prompt — an AI chat box writes an app                      */
+/* ---------------------------------------------------------------- */
+
+.prompt-headline {
+  top: 118px;
+  font-weight: 900;
+  font-size: 118px;
+  line-height: 1.05;
+  letter-spacing: -0.035em;
+}
+
+.prompt-box {
+  position: absolute;
+  left: 460px;
+  top: 292px;
+  width: 1000px;
+  height: 112px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  padding: 0 20px 0 36px;
+  border-radius: 56px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 2px solid rgba(139, 184, 232, 0.4);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.prompt-spark {
+  width: 46px;
+  height: 46px;
+  flex: none;
+  fill: var(--gold);
+}
+
+.prompt-text {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  font-weight: 500;
+  font-size: 50px;
+  white-space: pre;
+}
+
+.prompt-caret {
+  width: 4px;
+  height: 58px;
+  margin-left: 4px;
+  border-radius: 2px;
+  background: var(--gold);
+}
+
+.prompt-send {
+  width: 74px;
+  height: 74px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+.prompt-send svg {
+  width: 38px;
+  height: 38px;
+  fill: none;
+  stroke: var(--bg);
+  stroke-width: 3.2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* The editor persists from the prompt scene into the chaos scene. */
+.editor {
+  position: absolute;
+  left: 410px;
+  top: 446px;
+  width: 1100px;
+  height: 572px;
+}
+
+.editor-shake,
+.editor-window {
+  position: absolute;
+  inset: 0;
+}
+
+.window {
+  box-sizing: border-box;
+  border-radius: 28px;
+  overflow: hidden;
+  background: linear-gradient(165deg, rgba(20, 34, 58, 0.96), rgba(8, 15, 28, 0.96));
+  border: 1.5px solid var(--panel-line);
+  box-shadow: var(--ease-shadow), inset 0 1px 0 rgba(255, 255, 255, 0.07);
+}
+
+.window-bar {
+  position: relative;
+  height: 76px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 30px;
+  border-bottom: 1.5px solid rgba(139, 184, 232, 0.16);
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.window-dot {
+  width: 17px;
+  height: 17px;
+  border-radius: 50%;
+}
+
+.window-dot:nth-child(1) { background: #ff6b6b; }
+.window-dot:nth-child(2) { background: #ffc24b; }
+.window-dot:nth-child(3) { background: #4ddb8a; }
+
+.window-label {
+  position: absolute;
+  left: 150px;
+  right: 30px;
+  top: 0;
+  height: 76px;
+  line-height: 76px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 27px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.window-body {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 76px;
+  bottom: 0;
+  overflow: hidden;
+}
+
+/* The head and tail views of the file overlap; stage.js crossfades them. */
+.editor-view {
+  position: absolute;
+  inset: 0;
+  padding: 22px 40px;
+}
+
+.code-line {
+  height: 46px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 30px;
+  line-height: 46px;
+  white-space: pre;
+  color: #dbe7f5;
+}
+
+.code-line-no {
+  display: inline-block;
+  width: 58px;
+  color: #5d7896;
+}
+
+.tok-kw { color: #7cb8ff; }
+.tok-str { color: #9be5b4; }
+.tok-dec { color: var(--amber); }
+.tok-com { color: #8a9fb8; font-style: italic; }
+.tok-fn { color: #ffe27a; }
+.tok-num { color: #ffb4c0; }
+
+.editor-alarm {
+  background: linear-gradient(180deg, rgba(255, 92, 108, 0.26), rgba(255, 92, 108, 0.12));
+  box-shadow: inset 0 0 0 3px rgba(255, 92, 108, 0.7);
+  border-radius: 28px;
+}
+
+.line-counter {
+  position: absolute;
+  right: 28px;
+  bottom: 26px;
+  padding: 12px 26px;
+  border-radius: 999px;
+  background: rgba(6, 11, 22, 0.92);
+  border: 2px solid rgba(255, 209, 0, 0.55);
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 34px;
+  color: var(--gold);
+}
+
+/* ---------------------------------------------------------------- */
+/* Scene: chaos — notifications pile onto the editor                 */
+/* ---------------------------------------------------------------- */
+
+.toast-stack {
+  position: absolute;
+  left: 1000px;
+  top: 330px;
+  width: 800px;
+}
+
+.toast {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 122px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 0 34px 0 26px;
+  border-radius: 26px;
+  background: #121d31;
+  border: 2px solid rgba(139, 184, 232, 0.3);
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.6);
+}
+
+.toast:nth-child(1) { top: 0; }
+.toast:nth-child(2) { top: 148px; }
+.toast:nth-child(3) { top: 296px; }
+
+.toast-icon {
+  width: 70px;
+  height: 70px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.toast-icon svg {
+  width: 38px;
+  height: 38px;
+  fill: none;
+  stroke: var(--bg);
+  stroke-width: 4.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.toast-icon--fail,
+.toast-icon--down { background: var(--red); }
+.toast-icon--conflict { background: var(--amber); }
+
+.toast-text {
+  font-weight: 700;
+  font-size: 46px;
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+/* ---------------------------------------------------------------- */
+/* Scene: reframe                                                    */
+/* ---------------------------------------------------------------- */
+
+.reframe-a {
+  top: 318px;
+  font-weight: 800;
+  font-size: 86px;
+  letter-spacing: -0.025em;
+  color: var(--text-muted);
+}
+
+.reframe-b {
+  top: 450px;
+  margin: 0 auto;
+  max-width: 1560px;
+  font-weight: 900;
+  font-size: 130px;
+  line-height: 1.07;
+  letter-spacing: -0.04em;
+  text-wrap: balance;
+}
+
+.reframe-underline {
+  position: absolute;
+  overflow: visible;
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 12;
+  stroke-linecap: round;
+}
+
+/* ---------------------------------------------------------------- */
+/* Skill montage: title + subline on the left, visual in the window   */
+/* ---------------------------------------------------------------- */
+
+.skill-copy {
+  position: absolute;
+  left: 150px;
+  top: 540px;
+  width: 770px;
+  transform: translateY(-50%);
+}
+
+.skill-title {
+  margin: 0;
+  font-weight: 900;
+  font-size: 136px;
+  line-height: 1;
+  letter-spacing: -0.045em;
+}
+
+.skill-sub {
+  margin: 34px 0 0;
+  font-weight: 600;
+  font-size: 50px;
+  line-height: 1.25;
+  color: var(--text-muted);
+}
+
+.skill-card {
+  position: absolute;
+  left: 1000px;
+  top: 200px;
+  width: 780px;
+  height: 680px;
+}
+
+.skill-visual {
+  position: absolute;
+  inset: 0;
+}
+
+/* Git graph */
+.git-graph {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.git-line {
+  fill: none;
+  stroke-width: 13;
+  stroke-linecap: round;
+}
+
+.git-line--main { stroke: var(--blue); }
+.git-line--feature { stroke: var(--gold); }
+.git-line--fix { stroke: var(--green); }
+
+.git-commit {
+  fill: var(--panel-deep);
+  stroke-width: 9;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.git-commit--main { stroke: var(--blue); }
+.git-commit--feature { stroke: var(--gold); }
+.git-commit--fix { stroke: var(--green); }
+
+.git-commit--merge-fix {
+  fill: var(--green);
+  stroke: var(--text);
+}
+
+.git-commit--merge-feature {
+  fill: var(--gold);
+  stroke: var(--text);
+}
+
+.git-ring {
+  fill: none;
+  stroke-width: 5;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.git-ring--fix { stroke: var(--green); }
+.git-ring--feature { stroke: var(--gold); }
+
+.git-label {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 32px;
+}
+
+.git-label--main { fill: var(--blue-soft); }
+.git-label--feature { fill: var(--gold); }
+.git-label--fix { fill: var(--green); }
+
+.git-tag {
+  transform-box: fill-box;
+  transform-origin: 50% 100%;
+}
+
+.git-tag-pill {
+  fill: var(--gold);
+}
+
+.git-tag-text {
+  font-family: var(--font-mono);
+  font-weight: 600;
+  font-size: 28px;
+  fill: var(--bg);
+}
+
+/* Test runner */
+.tests {
+  position: absolute;
+  inset: 34px 40px;
+}
+
+.tests-cmd {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 30px;
+  color: var(--text-muted);
+}
+
+.test-row {
+  position: relative;
+  height: 84px;
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  padding: 0 26px;
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.test-row:first-of-type {
+  margin-top: 26px;
+}
+
+.test-badge {
+  position: relative;
+  width: 52px;
+  height: 52px;
+  flex: none;
+}
+
+.test-state {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.test-state svg {
+  width: 28px;
+  height: 28px;
+  fill: none;
+  stroke: var(--bg);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.test-state--fail { background: var(--red); }
+.test-state--pass { background: var(--green); }
+
+.test-name {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 32px;
+}
+
+.test-word {
+  position: relative;
+  width: 92px;
+  height: 40px;
+  font-weight: 800;
+  font-size: 30px;
+  letter-spacing: 0.04em;
+}
+
+.test-word span {
+  position: absolute;
+  right: 0;
+  top: 0;
+}
+
+.test-word--fail { color: var(--red); }
+.test-word--pass { color: var(--green); }
+
+.tests-summary {
+  margin-top: 30px;
+  display: flex;
+  align-items: center;
+  gap: 26px;
+}
+
+.tests-bar {
+  flex: 1;
+  height: 16px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.tests-bar-fill {
+  height: 100%;
+  border-radius: 8px;
+  background: var(--green);
+  transform-origin: 0 50%;
+  scale: 0 1;
+}
+
+.tests-result {
+  font-weight: 800;
+  font-size: 34px;
+  color: var(--green);
+}
+
+/* UML (Observer pattern) */
+.uml-edges {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.uml-edge {
+  fill: none;
+  stroke: var(--blue-soft);
+  stroke-width: 4;
+}
+
+.uml-edge--realize {
+  stroke-dasharray: 14 10;
+}
+
+.uml-head {
+  fill: var(--panel-deep);
+  stroke: var(--blue-soft);
+  stroke-width: 4;
+  stroke-linejoin: round;
+}
+
+.uml-head--open {
+  fill: none;
+}
+
+.uml-signal {
+  fill: var(--gold);
+}
+
+.uml-class {
+  position: absolute;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border-radius: 14px;
+  background: #12213a;
+  border: 3px solid var(--blue-soft);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+}
+
+.uml-class--interface {
+  border-color: var(--gold);
+}
+
+.uml-stereotype {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 24px;
+  color: var(--gold);
+}
+
+.uml-name {
+  font-weight: 800;
+  font-size: 34px;
+}
+
+/* Architecture */
+.arch-links {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.arch-link {
+  fill: none;
+  stroke: rgba(139, 184, 232, 0.55);
+  stroke-width: 5;
+  stroke-linecap: round;
+}
+
+.arch-node {
+  position: absolute;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  background: #12213a;
+  border: 3px solid var(--blue-soft);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+  font-weight: 800;
+  font-size: 30px;
+}
+
+.arch-node--service {
+  border-color: var(--blue);
+}
+
+.arch-node--db {
+  border-radius: 62px / 26px;
+  border-color: var(--gold);
+}
+
+.arch-packet {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 22px;
+  height: 22px;
+  margin: -11px 0 0 -11px;
+  border-radius: 50%;
+  background: var(--gold);
+  box-shadow: 0 0 22px rgba(255, 209, 0, 0.8);
+}
+
+.arch-badge {
+  position: absolute;
+  padding: 6px 18px;
+  border-radius: 999px;
+  background: var(--blue);
+  color: var(--bg);
+  font-weight: 900;
+  font-size: 30px;
+}
+
+/* Scrum board */
+.board-col {
+  position: absolute;
+  top: 32px;
+  bottom: 118px;
+  width: 226px;
+  box-sizing: border-box;
+  padding-top: 18px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.04);
+  text-align: center;
+  font-weight: 800;
+  font-size: 30px;
+  color: var(--text-muted);
+}
+
+.board-card {
+  position: absolute;
+  width: 198px;
+  height: 84px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 18px;
+  border-radius: 16px;
+  background: #1a2b47;
+  border: 2px solid rgba(139, 184, 232, 0.35);
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.45);
+  font-weight: 700;
+  font-size: 29px;
+}
+
+.board-card::before {
+  content: '';
+  width: 10px;
+  height: 52px;
+  flex: none;
+  border-radius: 5px;
+  background: var(--blue);
+}
+
+.board-card--gold::before { background: var(--gold); }
+.board-card--green::before { background: var(--green); }
+
+.board-pr {
+  position: absolute;
+  left: 40px;
+  right: 40px;
+  bottom: 26px;
+  height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 24px;
+  box-sizing: border-box;
+  border-radius: 18px;
+  background: rgba(61, 220, 132, 0.12);
+  border: 2px solid rgba(61, 220, 132, 0.6);
+  font-weight: 700;
+  font-size: 30px;
+}
+
+.board-pr-check {
+  width: 44px;
+  height: 44px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--green);
+}
+
+.board-pr-check svg {
+  width: 24px;
+  height: 24px;
+  fill: none;
+  stroke: var(--bg);
+  stroke-width: 5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.board-pr-state {
+  margin-left: auto;
+  color: var(--green);
+  font-weight: 800;
+}
+
+/* ---------------------------------------------------------------- */
+/* Scene: tutorials — the window becomes a browser with a terminal    */
+/* ---------------------------------------------------------------- */
+
+.tutorials-copy {
+  position: absolute;
+  left: 150px;
+  top: 540px;
+  width: 780px;
+  transform: translateY(-50%);
+}
+
+.tutorials-line {
+  position: relative;
+  font-weight: 900;
+  font-size: 104px;
+  line-height: 1.04;
+  letter-spacing: -0.04em;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18px;
+  margin-top: 48px;
+}
+
+.chip {
+  padding: 14px 30px;
+  border-radius: 999px;
+  background: rgba(77, 163, 255, 0.12);
+  border: 2px solid rgba(139, 184, 232, 0.5);
+  font-weight: 600;
+  font-size: 38px;
+  white-space: nowrap;
+}
+
+.window-url {
+  position: absolute;
+  left: 150px;
+  right: 30px;
+  top: 14px;
+  height: 48px;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 0 22px;
+  border-radius: 24px;
+  background: rgba(0, 0, 0, 0.35);
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 25px;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.window-url svg {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  fill: none;
+  stroke: var(--green);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.terminal {
+  position: absolute;
+  inset: 0;
+  padding: 30px 36px;
+  background: #03070f;
+}
+
+.term-line {
+  min-height: 54px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 31px;
+  line-height: 54px;
+  white-space: pre;
+  color: #dbe7f5;
+}
+
+.term-prompt { color: var(--green); }
+.term-path { color: var(--blue); }
+.term-hit { color: var(--gold); }
+
+.term-caret {
+  display: inline-block;
+  width: 16px;
+  height: 34px;
+  margin-left: 2px;
+  vertical-align: -6px;
+  background: var(--text);
+}
+
+/* ---------------------------------------------------------------- */
+/* Scene: cta — end card                                             */
+/* ---------------------------------------------------------------- */
+
+.cta-logo {
+  top: 262px;
+  font-weight: 900;
+  font-size: 236px;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.cta-bar {
+  position: absolute;
+  left: 770px;
+  top: 548px;
+  width: 380px;
+  height: 16px;
+  border-radius: 8px;
+}
+
+.cta-tagline {
+  top: 616px;
+  font-weight: 800;
+  font-size: 80px;
+  letter-spacing: -0.03em;
+}
+
+.cta-url {
+  top: 780px;
+  font-family: var(--font-mono);
+  font-weight: 500;
+  font-size: 38px;
+  color: var(--blue-soft);
+}

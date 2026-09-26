@@ -2190,6 +2190,89 @@ body.tutorial-layout :is(small, .small) {
 }
 
 /* ---------------------------------------------------------------- */
+/* SE Book homepage teaser video (_includes/sebook-teaser.html)      */
+/* ---------------------------------------------------------------- */
+
+.sebook-teaser {
+  max-width: 900px;
+  margin: 1.6em auto 0;
+}
+
+.sebook-teaser-video {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 16 / 9;
+  border-radius: 12px;
+  /* The video's own backdrop, in both themes, so the box matches the poster. */
+  background: #060b16;
+  box-shadow: var(--sebook-shadow);
+}
+
+.sebook-teaser-video:focus-visible {
+  outline: var(--focus-width, 3px) solid var(--focus-color, #FFD100);
+  outline-offset: var(--focus-offset, 2px);
+}
+
+/* Audio description + transcript: one quiet toggle under the video. The
+   summary keeps the site-wide `details summary` color and hover underline
+   (_sass/_base.scss) but drops the bold; its size stays at the site's
+   readable minimum for controls. */
+.sebook-teaser-extras {
+  margin: 0.6em 0 0;
+}
+
+.sebook-teaser-extras > summary {
+  padding: 0.3em 0;
+  font-weight: 400;
+}
+
+.sebook-teaser-extras > summary:focus-visible {
+  outline: var(--focus-width, 3px) solid var(--focus-color, #FFD100);
+  outline-offset: var(--focus-offset, 2px);
+  border-radius: 4px;
+}
+
+.sebook-teaser-label {
+  margin: 1em 0 0.5em;
+  font-weight: 700;
+}
+
+.sebook-teaser-scenes {
+  margin: 0 0 1em;
+  padding: 0;
+  list-style: none;
+}
+
+.sebook-teaser-scenes > li + li {
+  margin-top: 0.9em;
+}
+
+.sebook-teaser-time {
+  margin-right: 0.35em;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  color: var(--sebook-blue);
+}
+
+.sebook-teaser-visual,
+.sebook-teaser-sound {
+  display: block;
+}
+
+.sebook-teaser-sound {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* A promo video has nothing to offer on paper. */
+@media print {
+  .sebook-teaser {
+    display: none;
+  }
+}
+
+/* ---------------------------------------------------------------- */
 /* SE Book homepage search                                           */
 /* ---------------------------------------------------------------- */
 

@@ -183,7 +183,7 @@ When surfacing, include: which criterion is violated, where (file + line), what 
 | Adding a new color | Run a contrast check (≥ 4.5:1 text, ≥ 3:1 UI/large text) in both light and dark mode. Pair with shape/icon/text if it conveys state. |
 | Adding a new image or icon | Decide: meaningful → `alt="..."` / `<title>` / `aria-label`; decorative → `alt=""` / `aria-hidden="true"`. |
 | Adding a diagram (Mermaid / ArchUML / UML) | Add a caption or surrounding prose that conveys the same information for non-visual users. See [`good-diagrams/SKILL.md`](../good-diagrams/SKILL.md) and [`diagrams/SKILL.md`](../diagrams/SKILL.md). |
-| Adding a video or audio clip | Provide captions (`<track kind="captions">`) and a transcript. No autoplay with audio. |
+| Adding a video or audio clip | Provide captions (`<track kind="captions">`) and a transcript. No autoplay (the audit fails any `autoplay` attribute). If a video has sound but its visuals carry information the audio doesn't (e.g. music under on-screen text), 1.2.5 also requires an audio-described version — the audit only checks that captions exist. See `_includes/sebook-teaser.html`. |
 | Adding a form | Real `<label>` for every control. Errors in text, not just color. Use `autocomplete` for common fields. Don't use placeholder as label. |
 | Adding a modal / dialog | Trap focus inside while open, restore focus to trigger on close. Esc closes. `role="dialog"` + `aria-labelledby`. |
 | Adding a tooltip / popover | Trigger on focus, not just hover. Dismissible with Esc, persistent, hoverable (1.4.13). |
