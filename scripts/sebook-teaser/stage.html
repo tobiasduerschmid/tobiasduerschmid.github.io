@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>SE Book teaser — render stage</title>
+  <!-- Render stage for the SE Book teaser video; not part of the site build
+       (excluded in _config.yml). Serve the repo root and open
+       /scripts/sebook-teaser/stage.html?play to preview, or run render.js. -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@500;600&family=Inter:wght@500;600;700;800;900&display=block">
+  <link rel="stylesheet" href="stage.css">
+</head>
+<body>
+  <div class="stage" id="stage" aria-hidden="true"></div>
+  <script src="/node_modules/js-yaml/dist/js-yaml.min.js"></script>
+  <script src="stage.js"></script>
+</body>
+</html>

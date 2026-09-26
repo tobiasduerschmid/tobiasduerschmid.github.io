@@ -1,0 +1,63 @@
+{%- comment -%}
+  Teaser video for the SE Book landing page (/SEBook/).
+
+  Everything here comes from _data/sebook_teaser.yml, which also drives the
+  videos, soundtrack, and captions (scripts/sebook-teaser/render.js).
+  Accessibility contract (WCAG 2.2 AA), kept visually quiet under one toggle:
+    - 1.2.2: both cuts carry a captions track (music cues; plus narration in
+      the described cut).
+    - 1.2.3 / 1.2.5: the audio-described cut narrates the on-screen text,
+      and the transcript describes every scene, its text, and its music.
+    - 1.4.2 / 2.2.2: nothing autoplays (the a11y audit fails any autoplaying
+      media); preload="none" keeps the page light until someone presses play.
+{%- endcomment -%}
+{%- assign teaser = site.data.sebook_teaser -%}
+{%- assign teaser_video = teaser.video | relative_url -%}
+{%- assign described_video = teaser.described_video | relative_url -%}
+<div class="sebook-teaser">
+  <video
+    class="sebook-teaser-video"
+    controls
+    playsinline
+    preload="none"
+    width="{{ teaser.width }}"
+    height="{{ teaser.height }}"
+    poster="{{ teaser.poster | relative_url }}"
+    aria-label="{{ teaser.title }}">
+    <source src="{{ teaser_video }}" type="video/mp4">
+    <track kind="captions" src="{{ teaser.captions | relative_url }}" srclang="en" label="English">
+    <p>Your browser can't play this video. <a href="{{ teaser_video }}">Download the teaser video</a> or read its transcript.</p>
+  </video>
+
+  <details class="sebook-teaser-extras">
+    <summary>Audio description and transcript</summary>
+    <p class="sebook-teaser-label">Audio-described version: a narrator reads the on-screen text over the music.</p>
+    <video
+      class="sebook-teaser-video"
+      controls
+      playsinline
+      preload="none"
+      width="{{ teaser.width }}"
+      height="{{ teaser.height }}"
+      poster="{{ teaser.poster | relative_url }}"
+      aria-label="{{ teaser.title }}, with audio description">
+      <source src="{{ described_video }}" type="video/mp4">
+      <track kind="captions" src="{{ teaser.described_captions | relative_url }}" srclang="en" label="English">
+      <p>Your browser can't play this video. <a href="{{ described_video }}">Download the audio-described teaser video</a>.</p>
+    </video>
+
+    <p class="sebook-teaser-label">Transcript and visual description</p>
+    <ol class="sebook-teaser-scenes">
+      {%- for scene in teaser.scenes %}
+      <li>
+        <span class="sebook-teaser-time">0:{{ scene.start | floor | prepend: '0' | slice: -2, 2 }}</span>
+        <span class="sebook-teaser-onscreen">On screen: {% for line in scene.on_screen %}“{{ line | remove: '*' }}”{% unless forloop.last %}, {% endunless %}{% endfor %}</span>
+        <span class="sebook-teaser-visual">{{ scene.description }}</span>
+        {%- if scene.sound %}
+        <span class="sebook-teaser-sound">Music: {{ scene.sound | remove: '[' | remove: ']' }}</span>
+        {%- endif %}
+      </li>
+      {%- endfor %}
+    </ol>
+  </details>
+</div>

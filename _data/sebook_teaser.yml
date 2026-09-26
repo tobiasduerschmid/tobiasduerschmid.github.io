@@ -1,0 +1,168 @@
+# Storyboard for the 20-second teaser video on the SE Book landing page (/SEBook/).
+#
+# This file is the single source of truth for the teaser's words and timing:
+#   - scripts/sebook-teaser/stage.js draws each scene's `on_screen` text into
+#     the video, and scripts/sebook-teaser/audio/ scores the instrumental
+#     soundtrack against the scene times (re-render everything with
+#     `node scripts/sebook-teaser/render.js`);
+#   - render.js also writes both captions files: `sound` lines caption the
+#     music, and `narration` is spoken over the music in the audio-described
+#     cut (WCAG 1.2.5), which the page offers next to the instrumental video;
+#   - _includes/sebook-teaser.html prints `on_screen`, `description`, and
+#     `sound` as the on-page transcript (WCAG 1.2.1 / 1.2.3).
+# Editing text or timing here updates the transcript on the next Jekyll build,
+# but the videos and captions only after a re-render — keep them in step.
+#
+# `*text*` marks words the video highlights in gold; the transcript drops the
+# asterisks. Each scene `id` names its builder in stage.js (which documents
+# where each `on_screen` entry is drawn) and its section in soundtrack.js.
+# Times are in seconds; scene boundaries sit on the 120 BPM beat grid.
+# `narration_at` defaults to 0.1 s after the scene starts; render.js stops
+# with an error if one narration line would run into the next.
+
+title: The SE Book in 20 seconds   # the video's accessible name
+video: /assets/video/sebook-teaser.mp4
+captions: /assets/video/sebook-teaser.vtt
+described_video: /assets/video/sebook-teaser-described.mp4
+described_captions: /assets/video/sebook-teaser-described.vtt
+poster: /assets/video/sebook-teaser-poster.jpg
+width: 1920
+height: 1080
+fps: 30
+duration: 20
+poster_time: 7.6
+
+audio:
+  tempo: 120        # beats per minute
+  loudness: -16     # integrated loudness target (LUFS) for both cuts
+  voice: Samantha   # macOS `say` voice that narrates the audio-described cut
+  voice_rate: 230   # words per minute: brisk, like screen-reader speech
+
+scenes:
+  - id: prompt
+    start: 0
+    end: 2.5
+    on_screen:
+      - "*AI* can write the code."
+      - build me an app
+      - "+1,284 lines"
+    description: >-
+      A chat box types a request, and generated code streams into an editor
+      while a line counter climbs.
+    sound: "[Soft synth music; harp notes rise as the request is typed]"
+    narration: AI can write the code.
+    narration_at: 0.2
+
+  - id: chaos
+    start: 2.5
+    end: 5
+    on_screen:
+      - 14 tests failing
+      - Merge conflict in app.py
+      - Prod is down 💀
+    description: >-
+      Error notifications slam onto the editor one after another, and the
+      editor jolts with each one.
+    sound: "[Driving beat with a harsh chord stab on each alert, then the music winds down like a stopped tape]"
+    narration: Tests failing, merge conflict, prod is down.
+    narration_at: 2.75
+
+  - id: reframe
+    start: 5
+    end: 8
+    on_screen:
+      - The code was the easy part.
+      - Software engineering is *everything else.*
+    description: >-
+      The editor and notifications fall away. Two lines of text remain, and
+      “everything else” gets a gold underline.
+    sound: "[Deep bass hit; airy synths build to a drum roll]"
+    narration: The code was the easy part, software engineering is everything else.
+    narration_at: 5.2
+
+  - id: git
+    start: 8
+    end: 9.5
+    on_screen:
+      - Git
+      - branch · merge · ship
+    description: >-
+      A Git history draws itself: a green fix branch dips below the blue main
+      line and a gold feature branch arcs above it; both merge back, and the
+      last commit is tagged v1.0.
+    sound: "[Upbeat electronic music drops in, with a whoosh at each cut]"
+    narration: Git.
+    narration_at: 8.45
+
+  - id: testing
+    start: 9.5
+    end: 11
+    on_screen:
+      - Testing
+      - red → green → refactor
+    description: >-
+      Four failing tests, marked with red crosses, flip one by one to passing
+      tests with green check marks.
+    narration: Testing.
+
+  - id: design
+    start: 11
+    end: 12.5
+    on_screen:
+      - Design patterns
+      - code that bends, not breaks
+    description: >-
+      UML class boxes snap together into the Observer pattern: a Subject
+      notifies an Observer interface that two alert classes implement.
+    narration: Design patterns.
+
+  - id: architecture
+    start: 12.5
+    end: 14
+    on_screen:
+      - Architecture
+      - systems that scale
+    description: >-
+      Requests flow from a client through an API to a service, which scales
+      out to three copies, and on to a database.
+    narration: Architecture.
+
+  - id: teamwork
+    start: 14
+    end: 15.5
+    on_screen:
+      - Teamwork
+      - user stories · Scrum · code review
+    description: >-
+      Story cards slide across a Scrum board from To Do to Done, and a pull
+      request gets approved.
+    narration: Teamwork.
+
+  - id: tutorials
+    start: 15.5
+    end: 18
+    on_screen:
+      - Interactive tutorials.
+      - "*Zero setup.*"
+      - Linux terminal
+      - time-travel debugger
+      - live UML diagrams
+    description: >-
+      The editor window becomes a browser running a Linux terminal, which
+      finds the TODO the AI left in the code, runs the tests, and pushes the
+      fix, while three feature tags pop in.
+    sound: "[The beat continues and builds]"
+    narration: Interactive tutorials, zero setup.
+    narration_at: 15.6
+
+  - id: cta
+    start: 18
+    end: 20
+    on_screen:
+      - SE Book
+      - From coder to *engineer*.
+      - tobiasduerschmid.github.io/SEBook
+    description: The SE Book logo appears with its tagline and web address.
+    sound: "[Final bass hit; a bright chord rings out]"
+    narration: The SE Book, from coder to engineer.
+    narration_at: 17.95

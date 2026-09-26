@@ -115,6 +115,9 @@ exclude:
   - tmp
   - test-results
   - playwright-report
+  # Render source for the SE Book teaser video; only the rendered files in
+  # assets/video/ ship with the site.
+  - scripts/sebook-teaser
 
 # Build settings
 strongdown: kramdown
