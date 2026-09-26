@@ -1,4 +1,4 @@
-.PHONY: init-submodules install build test-build test-check prod check test clean run test-run run-hero-fast pdf latex all vm-setup vm-build vm-snapshot audit-a11y audit-a11y-interactive audit-a11y-tutorial audit-a11y-gym audit-a11y-quiz
+.PHONY: init-submodules install hero-choice-previews build test-build test-check prod check test clean run test-run run-hero-fast pdf latex all vm-setup vm-build vm-snapshot audit-a11y audit-a11y-interactive audit-a11y-tutorial audit-a11y-gym audit-a11y-quiz
 
 JEKYLL_PORT ?= $(shell ruby -e 'require "socket"; port = 4000; loop do; begin; TCPServer.new("127.0.0.1", port).close; puts port; break; rescue Errno::EADDRINUSE; port += 1; rescue Errno::EACCES, Errno::EPERM; puts port; break; end; end')
 
@@ -13,13 +13,14 @@ install: init-submodules
 	pipenv sync
 	@# Optional PDF CLI tools are checked with platform-specific guidance by `make pdf`.
 
-build:
+hero-choice-previews:
 	if [ "$$JEKYLL_ENV" = "production" ]; then node scripts/build_se_gym_hero_choice_previews.js; fi
+
+build: hero-choice-previews
 	bundle exec jekyll build --incremental
 
-test-build:
+test-build: hero-choice-previews
 	bundle exec jekyll clean
-	if [ "$$JEKYLL_ENV" = "production" ]; then node scripts/build_se_gym_hero_choice_previews.js; fi
 	bundle exec jekyll build
 
 prod:
@@ -46,7 +47,7 @@ run: check
 test-run: test-check
 	bundle exec jekyll serve --skip-initial-build --no-watch --port $(JEKYLL_PORT)
 
-run-hero-fast:
+run-hero-fast: hero-choice-previews
 	bundle exec jekyll serve --incremental --port $(JEKYLL_PORT)
 
 pdf:

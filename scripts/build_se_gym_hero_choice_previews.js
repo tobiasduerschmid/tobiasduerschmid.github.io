@@ -1,6 +1,7 @@
 // @ts-check
 const fs = require('fs');
 const path = require('path');
+const { createHash } = require('node:crypto');
 const { chromium } = require('playwright');
 
 const ROOT = path.resolve(__dirname, '..');
@@ -10,7 +11,7 @@ const OUT_DIR = path.join(ROOT, 'assets', 'se-gym-hero-choice-previews');
 const TEMP_OUT_DIR = `${OUT_DIR}.building`;
 const BACKUP_OUT_DIR = `${OUT_DIR}.previous`;
 const VARIANT = 'choice-preview';
-const REPRESENTATIVE_PREVIEW_SKIN = '#291713';
+const REPRESENTATIVE_PREVIEW_SKIN = '#FFD100';
 const REPRESENTATIVE_PREVIEW_HAIR = '#1f140c';
 
 function assertVectorPureHeroSource(svg) {
@@ -409,8 +410,10 @@ async function main() {
   /** @type {Record<string, Record<string, string>>} */
   const assets = {};
   for (const preview of previews) {
-    const file = `${slug(preview.key)}-${slug(preview.value)}.svg`;
-    fs.writeFileSync(path.join(TEMP_OUT_DIR, file), `${preview.svg}\n`);
+    const markup = `${preview.svg}\n`;
+    const hash = createHash('sha256').update(markup).digest('hex').slice(0, 12);
+    const file = `${slug(preview.key)}-${slug(preview.value)}-${hash}.svg`;
+    fs.writeFileSync(path.join(TEMP_OUT_DIR, file), markup);
     if (!assets[preview.key]) assets[preview.key] = {};
     assets[preview.key][preview.value] = file;
   }

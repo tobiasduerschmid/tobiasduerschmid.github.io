@@ -743,8 +743,9 @@
       transform: translate(-50%, -50%);
       box-shadow: 0 0 0 0.12em rgba(255, 255, 255, 0.68);
     }
-    .hero-cust-choice-preview .se-gym-hero-svg,
-    .hero-cust-choice-preview .se-gym-hero-choice-preview-img {
+    /* Override the shared responsive height:auto rule so tall crops fit the frame. */
+    #hero-customizer-modal .hero-cust-choice-preview .se-gym-hero-svg,
+    #hero-customizer-modal .hero-cust-choice-preview .se-gym-hero-choice-preview-img {
       width: 100%;
       height: 100%;
       display: block;

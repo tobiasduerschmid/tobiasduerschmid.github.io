@@ -795,9 +795,14 @@ layout: sebook
   <script src="{{ '/js/ArchUML/uml-bundle.js' | relative_url }}" defer></script>
   <!-- Verbal aria-label generator (parses live SE Gym diagrams as the user types) -->
   <script src="{{ '/js/uml-auto-describe.js' | relative_url }}" defer></script>
-  {% if site.gym_hero_animation %}
-  <!-- Hero avatar customizer (load + save + modal) -->
-  <script src="{{ '/js/se-gym-hero-avatar.js' | relative_url }}" defer></script>
+  {% if site.gym_hero_animation and jekyll.environment == 'production' %}
+  {% assign hero_choice_manifest = site.static_files | where: 'path', '/assets/se-gym-hero-choice-previews/manifest.js' | first %}
+  {% if hero_choice_manifest %}
+  <script>
+    window.SEGymHeroChoicePreviewBaseUrl = {{ '/assets/se-gym-hero-choice-previews/' | relative_url | jsonify }};
+  </script>
+  <script src="{{ hero_choice_manifest.path | relative_url }}?v={{ site.time | date: '%s' }}" defer></script>
+  {% endif %}
   {% endif %}
 
   {% include se-gym-feature-flags.html %}

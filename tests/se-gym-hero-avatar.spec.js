@@ -462,6 +462,9 @@ async function measureForegroundCrown(hairline, hairStyle) {
 test.describe('SE Gym Hero Avatar Customizer', () => {
   test.beforeEach(async ({ page }) => {
     await clearState(page);
+    // Exercise the live fallback when the optional pre-rendered manifest is unavailable.
+    // Real asset loading is covered by se-gym-hero-prerendered-previews.spec.js.
+    await page.route('**/assets/se-gym-hero-choice-previews/manifest.js*', (route) => route.abort());
   });
 
   test('Customize button is hidden until Personal Gym is activated', async ({ page }) => {
@@ -1081,6 +1084,47 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     expect(hairCrop.hairFullyInside, `long hair should fit inside the preview frame ${hairCrop.viewBox}`).toBe(true);
   });
 
+  test('Hair preview frames contain complete styles at desktop, tablet, and mobile widths', async ({ page }) => {
+    await useDefaultSavedHero(page);
+    await page.goto(GYM_URL);
+    await activatePersonalGym(page);
+    await page.getByRole('button', { name: 'Customize Hero' }).click();
+
+    const choices = [
+      { name: 'Choose Hair style: Long and flowing', option: 'long', slots: ['hair', 'hairline', 'hair-root'] },
+      { name: 'Choose Hair style: High bun', option: 'bun', slots: ['hair', 'hairline', 'hair-root'] },
+      { name: 'Choose Hair style: Afro', option: 'afro', slots: ['hair', 'hairline', 'hair-root'] },
+      { name: 'Choose Facial hair: Sideburns', option: 'sideburns', slots: ['facial-hair'] },
+    ];
+
+    // Cover both sides of the responsive media rule as well as a phone.
+    for (const width of [1101, 1100, 390]) {
+      await page.setViewportSize({ width, height: 900 });
+      for (const choice of choices) {
+        const svg = await choicePreviewSvg(page, choice.name);
+        const framing = await svg.evaluate((node, { option, slots }) => {
+          const frame = node.closest('.hero-cust-choice-preview').getBoundingClientRect();
+          const features = slots.flatMap((slot) => Array.from(node.querySelectorAll(
+            `[data-hero-slot="${slot}"][data-hero-option="${option}"]`
+          ))).filter((feature) => !feature.closest('[display="none"]'));
+          const bounds = [node, ...features].map((feature) => ({
+            part: feature.getAttribute('data-hero-slot') || 'thumbnail',
+            rect: feature.getBoundingClientRect(),
+          })).filter(({ rect }) => rect.width > 0 && rect.height > 0);
+          return {
+            visibleParts: bounds.length,
+            clippedParts: bounds.filter(({ rect }) =>
+              rect.left < frame.left - 0.5 || rect.top < frame.top - 0.5 ||
+              rect.right > frame.right + 0.5 || rect.bottom > frame.bottom + 0.5
+            ).map(({ part }) => part),
+          };
+        }, choice);
+        expect(framing.visibleParts, `${choice.name} should show its represented feature`).toBeGreaterThan(1);
+        expect.soft(framing.clippedParts, `${choice.name} should fit its frame at ${width}px`).toEqual([]);
+      }
+    }
+  });
+
   test('Choice thumbnails render visible options first and defer offscreen options until requested', async ({ page }) => {
     await useDefaultSavedHero(page);
     await page.goto(GYM_URL);
@@ -1185,7 +1229,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
 
     for (const color of [previewColors.top, previewColors.bottom]) {
       expect(contrastRatio('#1f140c', color), `representative dark hair should remain visible on ${color}`).toBeGreaterThanOrEqual(3);
-      expect(contrastRatio('#291713', color), `representative deep skin should remain visible on ${color}`).toBeGreaterThanOrEqual(3);
+      expect(contrastRatio('#ffd100', color), `representative yellow skin should remain visible on ${color}`).toBeGreaterThanOrEqual(3);
     }
     expect(contrastRatio('#e9ecf2', previewColors.border)).toBeGreaterThanOrEqual(3);
     expect(previewColors.backgroundImage).toContain('linear-gradient');
@@ -1740,7 +1784,7 @@ test.describe('SE Gym Hero Avatar Customizer', () => {
     const representativeHairColor = await longHairPreview.evaluate((svg) =>
       getComputedStyle(svg).getPropertyValue('--hero-hair').trim().toLowerCase()
     );
-    expect(representativeSkinColor).toBe('#291713');
+    expect(representativeSkinColor).toBe('#ffd100');
     expect(representativeHairColor).toBe('#1f140c');
 
     await setColorInput(page, '#hero-cust-hair-color', '#123456');

@@ -39,8 +39,13 @@ jobs:
       - name: Install Node dependencies
         run: npm ci
 
-      - name: Install Playwright browser for static UML rendering
+      - name: Install Playwright browser for static rendering
         run: npx playwright install --with-deps chromium
+
+      - name: Pre-render hero choice previews
+        run: make hero-choice-previews
+        env:
+          JEKYLL_ENV: production
 
       - name: Build with Jekyll
         run: bundle exec jekyll build --strict_front_matter

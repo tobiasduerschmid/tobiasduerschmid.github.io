@@ -4,7 +4,7 @@ plugins:
   - jekyll-scholar
 
 env: production
-asset_version: "20260503-syntax-highlighting"
+asset_version: "20260926-hero-choice-previews"
 
 # Feature flags
 personal_gym: true
