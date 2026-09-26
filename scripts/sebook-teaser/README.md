@@ -14,10 +14,11 @@ audio-described cut, and the page prints `on_screen`, `description`, and
 
 | File | Role |
 | --- | --- |
-| `stage.html`, `stage.css`, `stage.js` | 1920×1080 motion graphics with a deterministic `seek(t)` clock; also emits timed sound cues |
+| `stage.html`, `stage.css`, `stage.js` | 1920×1080 motion graphics with a deterministic `seek(t)` clock: a camera layer (push-ins, impact punches), a whip-panned strip of panels for the middle act, and timed sound cues |
 | `audio/soundtrack.js` (+ `instruments.js`, `dsp.js`) | Synthesised instrumental score, arranged against the scenes and cues |
 | `audio/narration.js` | Narration for the audio-described cut (macOS `say`) |
 | `captions.js` | WebVTT captions for both cuts |
+| `blend-frames.swift` | Motion blur and film grain: averages each frame's sub-frames (`motion_blur` in the storyboard; 6 sub-frames across a 180° shutter) and lays a fixed, seeded grain over the result |
 | `check-flashes.swift` | WCAG 2.3.1 flash screen; a failure stops the render |
 | `encode-mp4.swift` | H.264 + AAC encoding with AVFoundation (no ffmpeg needed) |
 | `render.js` | Runs the whole pipeline |
@@ -36,7 +37,9 @@ Start the `sebook-teaser-stage` server from `.claude/launch.json` (or run
 node scripts/sebook-teaser/render.js
 ```
 
-It takes about four minutes and needs macOS with Xcode Command Line Tools
+It takes about three minutes on a 10-core Mac (four headless browsers share
+3,600 sub-frame screenshots; the work files need roughly 4 GB of temporary
+disk) and needs macOS with Xcode Command Line Tools
 (`swift`), the `Samantha` voice for `say`, Playwright's Chromium
 (`npx playwright install chromium`), and network access for Google Fonts. Add
 `--frames-dir DIR` to keep the PNG frames and WAV mixes for inspection. The

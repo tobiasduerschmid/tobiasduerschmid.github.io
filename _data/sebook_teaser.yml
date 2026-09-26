@@ -32,6 +32,14 @@ fps: 30
 duration: 20
 poster_time: 7.6
 
+# Motion blur: each frame averages `samples` sub-frames spread over `shutter`
+# of the frame interval (0.5 = the film-standard 180° shutter). `grain` is the
+# film grain's amplitude in 8-bit levels (0 turns it off).
+motion_blur:
+  samples: 6
+  shutter: 0.5
+  grain: 3
+
 audio:
   tempo: 120        # beats per minute
   loudness: -16     # integrated loudness target (LUFS) for both cuts
@@ -57,15 +65,16 @@ scenes:
     start: 2.5
     end: 5
     on_screen:
-      - 14 tests failing
+      - 14 undetected bugs
       - Merge conflict in app.py
       - Prod is down 💀
     description: >-
-      Error notifications slam onto the editor one after another, and the
-      editor jolts with each one.
+      Error notifications slam onto the editor one after another. The editor
+      jolts with each one, its frame glows red, and red squiggles underline
+      the broken code.
     sound: "[Driving beat with a harsh chord stab on each alert, then the music winds down like a stopped tape]"
-    narration: Tests failing, merge conflict, prod is down.
-    narration_at: 2.75
+    narration: Undetected bugs, merge conflict, prod is down.
+    narration_at: 2.5
 
   - id: reframe
     start: 5
@@ -78,21 +87,22 @@ scenes:
       “everything else” gets a gold underline.
     sound: "[Deep bass hit; airy synths build to a drum roll]"
     narration: The code was the easy part, software engineering is everything else.
-    narration_at: 5.2
+    narration_at: 5.25
 
   - id: git
     start: 8
     end: 9.5
     on_screen:
       - Git
-      - branch · merge · ship
+      - branch · merge · push
     description: >-
-      A Git history draws itself: a green fix branch dips below the blue main
-      line and a gold feature branch arcs above it; both merge back, and the
-      last commit is tagged v1.0.
+      The view whips sideways to a new panel for each skill. First, a Git
+      history draws itself: a green fix branch dips below the blue main line
+      and a gold feature branch arcs above it; both merge back, and the last
+      commit is tagged v1.0.
     sound: "[Upbeat electronic music drops in, with a whoosh at each cut]"
     narration: Git.
-    narration_at: 8.45
+    narration_at: 8.55
 
   - id: testing
     start: 9.5
@@ -148,9 +158,9 @@ scenes:
       - time-travel debugger
       - live UML diagrams
     description: >-
-      The editor window becomes a browser running a Linux terminal, which
-      finds the TODO the AI left in the code, runs the tests, and pushes the
-      fix, while three feature tags pop in.
+      A browser window runs a Linux terminal that finds the TODO the AI left
+      in the code, runs the tests, and pushes the fix, while three feature
+      tags pop in.
     sound: "[The beat continues and builds]"
     narration: Interactive tutorials, zero setup.
     narration_at: 15.6
@@ -162,7 +172,9 @@ scenes:
       - SE Book
       - From coder to *engineer*.
       - tobiasduerschmid.github.io/SEBook
-    description: The SE Book logo appears with its tagline and web address.
+    description: >-
+      The SE Book logo appears in a soft blue glow, a gold glint runs across
+      its letters, and its tagline and web address follow.
     sound: "[Final bass hit; a bright chord rings out]"
     narration: The SE Book, from coder to engineer.
     narration_at: 17.95

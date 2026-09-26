@@ -11,10 +11,15 @@
  *                          cut, pass) — see audio/soundtrack.js
  *
  * All motion is Web Animations API tweens that are created paused and posed
- * by setting currentTime, plus a few per-frame updaters (typing, counters,
- * packets) that are pure functions of t. Any frame therefore renders the same
- * no matter the order frames are requested in — which is what lets render.js
- * screenshot frame-exact PNGs.
+ * by setting currentTime, plus per-frame updaters (typing, counters, the
+ * camera, the whip-pan strip) that are pure functions of t. Any frame
+ * therefore renders the same no matter the order frames are requested in —
+ * which is what lets render.js capture sub-frames for motion blur.
+ *
+ * Structure: Act 1 (prompt, chaos) plays in screen space. Act 2 (reframe,
+ * the five skills, tutorials) is one horizontal strip of full-frame panels
+ * that the camera whip-pans across on each cut. Act 3 is the end card. A
+ * camera layer adds slow push-ins and impact punches over all three.
  *
  * Preview (serve the repo root, e.g. `python3 -m http.server`):
  *   stage.html?play&fit   real-time loop, scaled to the window
@@ -36,6 +41,13 @@
     back: 'cubic-bezier(0.34, 1.56, 0.64, 1)', // slight overshoot for "pop" arrivals
     linear: 'linear',
   };
+
+  const FRAME_WIDTH = 1920;
+  const WHIP_DURATION = 0.36;        // seconds a whip pan takes; its midpoint is the cut
+  const WHIP_BLUR_PER_PX_S = 0.0019; // directional blur (px σ) per px/s of pan speed
+  const WHIP_BLUR_MAX = 42;
+  const GRID_PARALLAX = 0.2;         // background grid pans at 20% of the strip's speed
+  const GLOW_PARALLAX = 0.04;
 
   // ------------------------------------------------------------------
   // Timeline
@@ -80,6 +92,8 @@
   const clamp = (value, lo, hi) => Math.min(hi, Math.max(lo, value));
   const progress = (t, at, duration) => clamp((t - at) / duration, 0, 1);
   const easeOutCubic = (p) => 1 - Math.pow(1 - p, 3);
+  const easeInOutSine = (p) => -(Math.cos(Math.PI * p) - 1) / 2;
+  const easeInOutQuart = (p) => (p < 0.5 ? 8 * p ** 4 : 1 - (-2 * p + 2) ** 4 / 2);
 
   const fx = {
     rise(node, at, { distance = 70, duration = 0.7 } = {}) {
@@ -130,6 +144,9 @@
     spark: 'M12 1C12.6 7.4 16.6 11.4 23 12C16.6 12.6 12.6 16.6 12 23C11.4 16.6 7.4 12.6 1 12C7.4 11.4 11.4 7.4 12 1Z',
     send: 'M12 19V5M5.5 11.5L12 5l6.5 6.5',
     cross: 'M7 7l10 10M17 7L7 17',
+    bug: 'M12 9a4.5 4.5 0 0 1 4.5 4.5V16a4.5 4.5 0 0 1-9 0v-2.5A4.5 4.5 0 0 1 12 9zM9.6 9.4a2.4 2.4 0 0 1 4.8 0'
+      + 'M10.4 7.2 8.6 4.6M13.6 7.2l1.8-2.6M12 13.2v7M7.6 12 4.4 10.2M7.5 15.4H3.8M7.9 18.6l-3.2 1.9'
+      + 'M16.4 12l3.2-1.8M16.5 15.4h3.7M16.1 18.6l3.2 1.9',
     bang: 'M12 5v9M12 18.6v.1',
     down: 'M12 4v15M5.5 12.5L12 19l6.5-6.5',
     check: 'M5 12.5l4.6 4.6L19 7.5',
@@ -163,6 +180,7 @@
   /**
    * Builds a line of text whose words (or characters) each sit in a clipping
    * mask so they can rise into view. Returns the line and its moving parts.
+   * Lines with the .is-set class show their words from the start.
    */
   function kinetic(text, className, { split = 'words' } = {}) {
     const line = el('div', `kinetic ${className}`);
@@ -207,10 +225,11 @@
   }
 
   /** Text caret: solid while typing, then blinking once per second until `hideAt`. */
-  function caretBlink(caret, typingEnd, hideAt = Infinity) {
+  function caretBlink(caret, typingStart, typingEnd, hideAt = Infinity) {
     onFrame((t) => {
-      const idle = t - typingEnd;
-      const visible = t < hideAt && (idle < 0 || idle % 1 < 0.5);
+      const typing = t >= typingStart && t < typingEnd;
+      const idle = t < typingStart ? t : t - typingEnd;
+      const visible = t < hideAt && (typing || idle % 1 < 0.5);
       caret.style.opacity = visible ? '1' : '0';
     });
   }
@@ -252,6 +271,11 @@
   // high-contrast pattern WCAG 2.3.1 flash testing flags.
   const CODE_HEAD = { from: 0, to: 10 };
   const CODE_TAIL = { from: 14, to: 24 };
+  // Lines (1-based) and tokens the IDE flags once the alerts start.
+  const CODE_ERRORS = [
+    { line: 16, token: 'filter_by' },
+    { line: 23, token: 'total' },
+  ];
 
   const PYTHON_TOKEN = /(?<com>#.*$)|(?<str>"[^"]*")|(?<dec>@[\w.]+)|(?<kw>\b(?:from|import|def|return|for|in)\b)|(?<num>\b\d+\b)|(?<fn>\b[A-Za-z_]\w*(?=\())/g;
 
@@ -266,6 +290,23 @@
     }
     if (cursor < source.length) fragment.append(source.slice(cursor));
     return fragment;
+  }
+
+  /** Wraps the last occurrence of `token` inside `line` in a span with `className`. */
+  function markToken(line, token, className) {
+    const walker = document.createTreeWalker(line, NodeFilter.SHOW_TEXT);
+    let found = null;
+    while (walker.nextNode()) {
+      if (walker.currentNode.textContent.includes(token)) found = walker.currentNode;
+    }
+    if (!found) throw new Error(`markToken: "${token}" is not in this code line.`);
+    const start = found.textContent.lastIndexOf(token);
+    const tokenNode = found.splitText(start);
+    tokenNode.splitText(token.length);
+    const mark = el('span', className);
+    tokenNode.replaceWith(mark);
+    mark.append(tokenNode);
+    return mark;
   }
 
   function windowChrome(className, labelText) {
@@ -316,10 +357,69 @@
   }
 
   // ------------------------------------------------------------------
+  // The strip: Act 2's panels, whip-panned on each cut
+  // ------------------------------------------------------------------
+
+  /**
+   * Appends the next full-frame panel to the strip. Every panel after the
+   * first adds a whip pan centred on its scene's start (the beat-synced cut).
+   */
+  function stripPanel(ctx, scene) {
+    const { strip } = ctx;
+    const index = strip.panels.length;
+    const panel = el('div', `panel panel--${scene.id}`);
+    panel.style.left = `${index * FRAME_WIDTH}px`;
+    strip.node.append(panel);
+    strip.panels.push(panel);
+    if (index > 0) strip.whips.push(scene.start);
+    return panel;
+  }
+
+  /** Pans the strip, smears it horizontally while it moves fast, and drives the background parallax. */
+  function animateStrip(ctx, duration) {
+    const { strip, whipBlur, grid, glowParallax } = ctx;
+    const offsetAt = (t) => -FRAME_WIDTH * strip.whips.reduce(
+      (sum, cut) => sum + easeInOutQuart(progress(t, cut - WHIP_DURATION / 2, WHIP_DURATION)), 0);
+    onFrame((t) => {
+      const x = offsetAt(t);
+      const speed = Math.abs(offsetAt(t + 0.002) - offsetAt(t - 0.002)) / 0.004;
+      const sigma = Math.min(WHIP_BLUR_MAX, speed * WHIP_BLUR_PER_PX_S);
+      strip.node.style.translate = `${x.toFixed(2)}px 0`;
+      if (sigma > 0.5) {
+        whipBlur.setAttribute('stdDeviation', `${sigma.toFixed(1)} 0`);
+        strip.node.classList.add('is-whipping');
+      } else {
+        strip.node.classList.remove('is-whipping');
+      }
+      const drift = t / duration;
+      grid.style.backgroundPosition = `${(-112 * drift + GRID_PARALLAX * x).toFixed(1)}px ${(-56 * drift).toFixed(1)}px`;
+      glowParallax.style.translate = `${(GLOW_PARALLAX * x).toFixed(1)}px 0`;
+    });
+  }
+
+  /**
+   * Camera: a slow push-in through each act plus a decaying punch-in on
+   * the big hits (the drop into the montage, the logo).
+   */
+  function animateCamera(ctx, acts, punches) {
+    onFrame((t) => {
+      let scale = 1;
+      for (const act of acts) {
+        if (t >= act.start && t < act.end) scale += act.push * easeInOutSine(progress(t, act.start, act.end - act.start));
+      }
+      for (const at of punches) {
+        const p = (t - at) / 0.6;
+        if (p >= 0 && p < 1) scale += 0.03 * (1 - easeOutCubic(p));
+      }
+      ctx.layer.style.scale = scale.toFixed(4);
+    });
+  }
+
+  // ------------------------------------------------------------------
   // Scene builders — one per storyboard scene id. Each receives its scene
   // (start/end/on_screen) and the shared context, and schedules its own
   // entrances and exits. Elements that carry across scenes (the editor, the
-  // skill window) live on ctx and are handed over explicitly.
+  // strip) live on ctx and are handed over explicitly.
   // ------------------------------------------------------------------
 
   /** on_screen: [headline, typed prompt, line counter] */
@@ -329,10 +429,11 @@
 
     const headline = kinetic(headlineText, 'prompt-headline is-centered');
     ctx.layer.append(headline.node);
-    revealParts(headline.parts, t0 + 0.02, 0.07);
+    revealParts(headline.parts, t0 + 0.05, 0.07);
     fx.exitUp(headline.node, scene.end - 0.1);
 
-    const box = el('div', 'prompt-box is-staged');
+    // Cold open: the empty chat box and its blinking caret are on screen from frame one.
+    const box = el('div', 'prompt-box');
     const typed = el('span', 'prompt-typed');
     const caret = el('span', 'prompt-caret');
     const text = el('div', 'prompt-text');
@@ -341,10 +442,10 @@
     send.append(icon('send'));
     box.append(icon('spark', 'prompt-spark'), text, send);
     ctx.layer.append(box);
-    fx.rise(box, t0 + 0.02, { distance: 40, duration: 0.5 });
     // 19 characters per second puts the send press on the second beat.
-    const typingEnd = typewriter(typed, promptText, t0 + 0.2, 19, 'keystroke');
-    caretBlink(caret, typingEnd, typingEnd + 0.2);
+    const typingStart = t0 + 0.2;
+    const typingEnd = typewriter(typed, promptText, typingStart, 19, 'keystroke');
+    caretBlink(caret, typingStart, typingEnd, typingEnd + 0.2);
     tween(send, [{ scale: 1 }, { scale: 0.8 }, { scale: 1 }], typingEnd + 0.02, 0.3, EASE.inOut);
     cue('submit', typingEnd + 0.02);
     fx.exitUp(box, scene.end - 0.05);
@@ -366,6 +467,7 @@
     const head = codeView(CODE_HEAD);
     const tail = codeView(CODE_TAIL);
     tail.view.classList.add('is-staged');
+    const errors = CODE_ERRORS.map(({ line, token }) => markToken(tail.lines[line - 1 - CODE_TAIL.from], token, 'squiggle'));
     const alarm = el('div', 'editor-alarm layer is-staged');
     const counter = el('div', 'line-counter is-staged');
     shake.append(windowParts.node, alarm, counter);
@@ -381,7 +483,7 @@
     fx.pop(counter, streamStart + 0.1, { from: 0.6 });
     countUp(counter, counterText, streamStart + 0.1, 0.95);
 
-    ctx.editor = { node: editor, shake, alarm, head: head.view, tail: tail.view };
+    ctx.editor = { node: editor, shake, alarm, errors, head: head.view, tail: tail.view };
   }
 
   /** on_screen: the three notifications, top to bottom. */
@@ -391,9 +493,8 @@
     tween(editor.node, { translate: '0 -150px' }, t0, 0.55, EASE.inOut);
     fx.fadeOut(editor.head, t0 + 0.02, 0.3);
     fx.fadeIn(editor.tail, t0 + 0.02, 0.3);
-    fx.fadeIn(editor.alarm, t0 + 0.35, 0.3);
 
-    const icons = [['toast-icon--fail', 'cross'], ['toast-icon--conflict', 'bang'], ['toast-icon--down', 'down']];
+    const icons = [['toast-icon--bug', 'bug'], ['toast-icon--conflict', 'bang'], ['toast-icon--down', 'down']];
     const stack = el('div', 'toast-stack');
     scene.on_screen.forEach((message, index) => {
       const toast = el('div', 'toast is-staged');
@@ -409,6 +510,14 @@
         { opacity: 1, translate: '0 0', rotate: '0deg' },
       ], lands - 0.12, 0.5, EASE.back);
       cue('alert', lands);
+      if (index === 0) {
+        // The first alert lights the editor up: red frame and error squiggles.
+        fx.fadeIn(editor.alarm, lands - 0.05, 0.3);
+        editor.errors.forEach((mark, i) => tween(mark, [
+          { textDecorationColor: 'rgba(255, 92, 108, 0)' },
+          { textDecorationColor: 'rgba(255, 92, 108, 1)' },
+        ], lands + i * 0.08, 0.25, EASE.inOut));
+      }
       // One damped nudge per impact — a jittery multi-reversal shake would
       // make every glyph edge flicker (WCAG 2.3.1).
       tween(editor.shake, [
@@ -417,26 +526,33 @@
         { translate: '0 0' },
       ], lands - 0.04, 0.4, EASE.linear);
     });
-    ctx.layer.append(stack);
+    // The editor and its notifications collapse as one. Sharing a wrapper also
+    // keeps the code inside the cards' frosted glass: an animated filter or
+    // opacity on the stack alone would be Chrome's backdrop root and leave
+    // the glass nothing to blur.
+    const group = el('div', 'layer');
+    editor.node.replaceWith(group);
+    group.append(editor.node, stack);
 
     const collapseAt = scene.end - 0.45;
-    fx.blurAway(editor.node, collapseAt, { duration: 0.42 });
-    fx.blurAway(stack, collapseAt - 0.02, { duration: 0.42 });
+    fx.blurAway(group, collapseAt, { duration: 0.42 });
     cue('collapse', collapseAt);
   }
 
-  /** on_screen: [setup line, punchline]; *accent* words get a drawn underline. */
+  /** Panel 0 of the strip. on_screen: [setup line, punchline]; *accent* words get a drawn underline. */
   function buildReframe(scene, ctx) {
     const [setupText, punchText] = scene.on_screen;
     const t0 = scene.start;
+    const panel = stripPanel(ctx, scene);
 
     const setup = kinetic(setupText, 'reframe-a is-centered');
     const punch = kinetic(punchText, 'reframe-b is-centered');
-    ctx.layer.append(setup.node, punch.node);
+    panel.append(setup.node, punch.node);
     revealParts(setup.parts, t0 + 0.1, 0.05);
     revealParts(punch.parts, t0 + 0.95, 0.07);
 
-    // One underline per text row the accent words occupy.
+    // One underline per text row the accent words occupy. The panel sits at
+    // the stage origin while scenes build, so stage coordinates are panel ones.
     const rows = new Map();
     for (const part of punch.parts.filter((p) => p.classList.contains('is-accent'))) {
       const box = stageRect(part.parentElement, ctx.stage);
@@ -447,7 +563,6 @@
       row.bottom = Math.max(row.bottom, box.top + box.height);
       rows.set(key, row);
     }
-    const underlines = [];
     for (const row of rows.values()) {
       const width = row.right - row.left;
       const art = svg('svg', {
@@ -463,64 +578,39 @@
         d: `M 8 26 Q ${width * 0.45} 8 ${width - 8} 18`,
       });
       art.append(stroke);
-      ctx.layer.append(art);
+      panel.append(art);
       fx.draw(stroke, t0 + 1.5, 0.45, EASE.out);
-      underlines.push(art);
     }
-    if (underlines.length) cue('underline', t0 + 1.5);
-
-    const exitAt = scene.end - 0.26;
-    fx.exitUp(setup.node, exitAt);
-    fx.exitUp(punch.node, exitAt + 0.03);
-    underlines.forEach((art) => fx.exitUp(art, exitAt + 0.03));
+    if (rows.size) cue('underline', t0 + 1.5);
   }
 
   const SKILL_COPY_WIDTH = 770;
 
-  /** The window the skill visuals play in; created by the first skill scene. */
-  function skillWindow(ctx, at) {
-    if (!ctx.skillWindow) {
-      const chrome = windowChrome('skill-card is-staged');
-      ctx.layer.append(chrome.node);
-      fx.rise(chrome.node, at, { distance: 110, duration: 0.65 });
-      ctx.skillWindow = chrome;
-    }
-    return ctx.skillWindow;
-  }
-
   /**
-   * Shared layout of the skill montage. on_screen: [title, subline]. The
-   * window label and the visual swap per scene; the window itself persists.
+   * Shared layout of the five skill panels. on_screen: [title, subline].
+   * Each panel whips in fully formed; once it lands, the subline settles and
+   * the window's visual plays (buildVisual gets the landing time).
    */
   function skillScene(scene, ctx, windowLabel, buildVisual) {
     const [titleText, subText] = scene.on_screen;
-    const t0 = scene.start;
-    const exitAt = scene.end - 0.24;
-    cue('cut', t0);
+    const landed = scene.start + WHIP_DURATION / 2;
+    cue('cut', scene.start);
+    const panel = stripPanel(ctx, scene);
 
     const copy = el('div', 'skill-copy');
-    const title = kinetic(titleText, 'skill-title');
+    const title = kinetic(titleText, 'skill-title is-set');
     const sub = el('p', 'skill-sub is-staged');
     sub.append(...listLine(subText));
     copy.append(title.node, sub);
-    ctx.layer.append(copy);
+    panel.append(copy);
     fitWords(title, SKILL_COPY_WIDTH);
-    revealParts(title.parts, t0 + 0.02, 0.06, 0.55);
-    fx.rise(sub, t0 + 0.12, { distance: 40, duration: 0.5 });
-    fx.exitUp(title.node, exitAt);
-    fx.exitUp(sub, exitAt + 0.02);
+    fx.rise(sub, landed - 0.06, { distance: 26, duration: 0.45 });
 
-    const chrome = skillWindow(ctx, t0);
-    const label = el('div', 'window-label is-staged', windowLabel);
-    chrome.bar.append(label);
-    fx.fadeIn(label, t0, 0.2);
-    fx.fadeOut(label, scene.end - 0.12, 0.12);
-
-    const visual = el('div', `skill-visual skill-visual--${scene.id} is-staged`);
+    const chrome = windowChrome('skill-card', windowLabel);
+    panel.append(chrome.node);
+    const visual = el('div', `skill-visual skill-visual--${scene.id}`);
     chrome.body.append(visual);
-    fx.rise(visual, t0 + 0.02, { distance: 50, duration: 0.45 });
-    buildVisual(visual, t0);
-    fx.exitUp(visual, exitAt + 0.02, { distance: 50, duration: 0.22 });
+    buildVisual(visual, landed);
   }
 
   /**
@@ -552,9 +642,9 @@
       // A fix branch dips below main and a feature branch arcs above it;
       // both merge back before the release tag lands on the last commit.
       const lines = [
-        { kind: 'main', d: 'M 56 320 H 730', at: 0.04, duration: 0.5 },
-        { kind: 'fix', d: 'M 110 320 C 110 400 140 446 190 446 C 240 446 270 400 270 320', at: 0.14, duration: 0.32 },
-        { kind: 'feature', d: 'M 270 320 C 270 240 310 190 370 190 H 470 C 530 190 570 240 570 320', at: 0.44, duration: 0.46 },
+        { kind: 'main', d: 'M 56 320 H 730', at: 0, duration: 0.42 },
+        { kind: 'fix', d: 'M 110 320 C 110 400 140 446 190 446 C 240 446 270 400 270 320', at: 0.1, duration: 0.28 },
+        { kind: 'feature', d: 'M 270 320 C 270 240 310 190 370 190 H 470 C 530 190 570 240 570 320', at: 0.36, duration: 0.4 },
       ];
       for (const line of lines) {
         const path = svg('path', { class: `git-line git-line--${line.kind} is-drawn is-staged`, d: line.d });
@@ -563,34 +653,34 @@
       }
 
       const merges = [
-        { kind: 'fix', x: 270, at: 0.44 },
-        { kind: 'feature', x: 570, at: 0.9 },
+        { kind: 'fix', x: 270, at: 0.36 },
+        { kind: 'feature', x: 570, at: 0.74 },
       ];
       for (const merge of merges) {
         const ring = svg('circle', { class: `git-ring git-ring--${merge.kind} is-staged`, cx: merge.x, cy: 320, r: 27 });
         art.append(ring);
-        tween(ring, [{ opacity: 0.95, scale: 1 }, { opacity: 0, scale: 2.3 }], t0 + merge.at + 0.04, 0.5, EASE.out);
+        tween(ring, [{ opacity: 0.95, scale: 1 }, { opacity: 0, scale: 2.3 }], t0 + merge.at + 0.04, 0.45, EASE.out);
       }
 
       const commits = [
-        { x: 110, y: 320, kind: 'main', at: 0.08 },
-        { x: 190, y: 446, kind: 'fix', at: 0.3 },
-        { x: 270, y: 320, kind: 'merge-fix', at: 0.44 },
-        { x: 390, y: 190, kind: 'feature', at: 0.62 },
-        { x: 470, y: 190, kind: 'feature', at: 0.72 },
-        { x: 570, y: 320, kind: 'merge-feature', at: 0.9 },
-        { x: 690, y: 320, kind: 'main', at: 1.0 },
+        { x: 110, y: 320, kind: 'main', at: 0.04 },
+        { x: 190, y: 446, kind: 'fix', at: 0.22 },
+        { x: 270, y: 320, kind: 'merge-fix', at: 0.36 },
+        { x: 390, y: 190, kind: 'feature', at: 0.5 },
+        { x: 470, y: 190, kind: 'feature', at: 0.58 },
+        { x: 570, y: 320, kind: 'merge-feature', at: 0.74 },
+        { x: 690, y: 320, kind: 'main', at: 0.82 },
       ];
       for (const commit of commits) {
         const dot = svg('circle', { class: `git-commit git-commit--${commit.kind} is-staged`, cx: commit.x, cy: commit.y, r: 26 });
         art.append(dot);
-        fx.pop(dot, t0 + commit.at, { from: 0, duration: 0.42 });
+        fx.pop(dot, t0 + commit.at, { from: 0, duration: 0.38 });
       }
 
       const labels = [
-        { kind: 'main', text: 'main', x: 600, y: 392, at: 0.2 },
-        { kind: 'fix', text: 'fix', x: 238, y: 510, at: 0.34 },
-        { kind: 'feature', text: 'feature', x: 358, y: 146, at: 0.58 },
+        { kind: 'main', text: 'main', x: 600, y: 392, at: 0.12 },
+        { kind: 'fix', text: 'fix', x: 238, y: 510, at: 0.26 },
+        { kind: 'feature', text: 'feature', x: 358, y: 146, at: 0.46 },
       ];
       for (const label of labels) {
         const text = svg('text', { class: `git-label git-label--${label.kind} is-staged`, x: label.x, y: label.y });
@@ -608,7 +698,7 @@
       tagText.textContent = 'v1.0';
       tag.append(tagText);
       art.append(tag);
-      fx.pop(tag, t0 + 1.06, { from: 0.3, duration: 0.4 });
+      fx.pop(tag, t0 + 0.86, { from: 0.3, duration: 0.35 });
       visual.append(art);
     });
   }
@@ -634,7 +724,7 @@
         tests.append(row);
 
         // Tests turn green on consecutive 16th notes (120 BPM).
-        const flipAt = t0 + 0.25 + index * 0.125;
+        const flipAt = t0 + 0.07 + index * 0.125;
         tween(fail, { opacity: 0, scale: 0.4 }, flipAt, 0.16, EASE.in);
         fx.fadeOut(failWord, flipAt, 0.12);
         fx.pop(pass, flipAt + 0.06, { from: 0.3, duration: 0.4 });
@@ -649,8 +739,8 @@
       const result = el('div', 'tests-result is-staged', '4 passed');
       summary.append(bar, result);
       tests.append(summary);
-      tween(fill, [{ scale: '0 1' }, { scale: '1 1' }], t0 + 0.3, 0.72, EASE.inOut);
-      fx.pop(result, t0 + 0.96, { from: 0.5, duration: 0.4 });
+      tween(fill, [{ scale: '0 1' }, { scale: '1 1' }], t0 + 0.12, 0.62, EASE.inOut);
+      fx.pop(result, t0 + 0.72, { from: 0.5, duration: 0.4 });
       visual.append(tests);
     });
   }
@@ -664,18 +754,18 @@
       const realizeRight = svg('path', { class: 'uml-edge uml-edge--realize is-staged', d: 'M 640 386 V 300 H 525 V 238' });
       const triangle = svg('path', { class: 'uml-head is-staged', d: 'M 525 216 L 507 240 L 543 240 Z' });
       edges.append(association, openHead, realizeLeft, realizeRight, triangle);
-      fx.draw(association, t0 + 0.55, 0.3);
-      fx.fadeIn(openHead, t0 + 0.8, 0.12);
-      fx.fadeIn(realizeLeft, t0 + 0.6, 0.25);
-      fx.fadeIn(realizeRight, t0 + 0.66, 0.25);
-      fx.fadeIn(triangle, t0 + 0.78, 0.15);
+      fx.draw(association, t0 + 0.44, 0.26);
+      fx.fadeIn(openHead, t0 + 0.66, 0.12);
+      fx.fadeIn(realizeLeft, t0 + 0.48, 0.22);
+      fx.fadeIn(realizeRight, t0 + 0.54, 0.22);
+      fx.fadeIn(triangle, t0 + 0.64, 0.15);
       visual.append(edges);
 
       const classes = [
-        { name: 'Subject', left: 24, top: 88, width: 250, height: 124, at: 0.1 },
-        { name: 'Observer', stereotype: '«interface»', left: 380, top: 88, width: 290, height: 128, at: 0.2 },
-        { name: 'EmailAlert', left: 245, top: 386, width: 250, height: 110, at: 0.34 },
-        { name: 'PushAlert', left: 515, top: 386, width: 250, height: 110, at: 0.44 },
+        { name: 'Subject', left: 24, top: 88, width: 250, height: 124, at: 0.02 },
+        { name: 'Observer', stereotype: '«interface»', left: 380, top: 88, width: 290, height: 128, at: 0.1 },
+        { name: 'EmailAlert', left: 245, top: 386, width: 250, height: 110, at: 0.22 },
+        { name: 'PushAlert', left: 515, top: 386, width: 250, height: 110, at: 0.3 },
       ];
       for (const spec of classes) {
         const box = el('div', `uml-class${spec.stereotype ? ' uml-class--interface' : ''} is-staged`);
@@ -685,14 +775,14 @@
         if (spec.stereotype) box.append(el('div', 'uml-stereotype', spec.stereotype));
         box.append(el('div', 'uml-name', spec.name));
         visual.append(box);
-        fx.pop(box, t0 + spec.at, { from: 0.5, duration: 0.45 });
+        fx.pop(box, t0 + spec.at, { from: 0.5, duration: 0.42 });
       }
 
       // notify(): a signal travels Subject → Observer → both implementations.
       const routes = [
-        { points: [[274, 150], [380, 150]], at: 0.84, duration: 0.18 },
-        { points: [[525, 216], [525, 300], [370, 300], [370, 386]], at: 1.0, duration: 0.24 },
-        { points: [[525, 216], [525, 300], [640, 300], [640, 386]], at: 1.0, duration: 0.24 },
+        { points: [[274, 150], [380, 150]], at: 0.7, duration: 0.16 },
+        { points: [[525, 216], [525, 300], [370, 300], [370, 386]], at: 0.86, duration: 0.22 },
+        { points: [[525, 216], [525, 300], [640, 300], [640, 386]], at: 0.86, duration: 0.22 },
       ];
       for (const route of routes) {
         const signal = svg('circle', { class: 'uml-signal', r: 11 });
@@ -740,7 +830,7 @@
       const api = node('API', 'api');
       const replicas = [node('Service', 'service', 'service'), node('Service', 'service', 'service'), node('Service', 'service', 'service')];
       const db = node('DB', 'db', 'db');
-      [client, api, replicas[1], db].forEach((box, index) => fx.pop(box, t0 + 0.06 + index * 0.07, { from: 0.5 }));
+      [client, api, replicas[1], db].forEach((box, index) => fx.pop(box, t0 + index * 0.06, { from: 0.5 }));
 
       const link = (d) => svg('path', { class: 'arch-link is-drawn is-staged', d });
       const curve = (x1, y1, x2, y2) => {
@@ -757,10 +847,10 @@
         link(curve(right('service'), MID + offset, spots.db.left, MID)),
       ]);
       links.append(...straight, ...fans);
-      straight.forEach((path, index) => fx.draw(path, t0 + 0.3 + index * 0.06, 0.22));
+      straight.forEach((path, index) => fx.draw(path, t0 + 0.2 + index * 0.06, 0.22));
 
       // Scale out: the service clones itself one lane above and below.
-      const scaleOutAt = t0 + 0.58;
+      const scaleOutAt = t0 + 0.48;
       const [upper, , lower] = replicas;
       tween(upper, [{ opacity: 1, translate: '0 0' }, { opacity: 1, translate: `0 ${-LANE}px` }], scaleOutAt, 0.36, EASE.out);
       tween(lower, [{ opacity: 1, translate: '0 0' }, { opacity: 1, translate: `0 ${LANE}px` }], scaleOutAt, 0.36, EASE.out);
@@ -778,7 +868,7 @@
       for (let k = 0; k < 4; k++) {
         const packet = el('div', 'arch-packet');
         visual.append(packet);
-        const start = t0 + 0.42 + k * 0.17;
+        const start = t0 + 0.32 + k * 0.17;
         onFrame((t) => {
           const elapsed = t - start;
           const trip = Math.max(0, Math.floor(elapsed / cycle));
@@ -805,20 +895,20 @@
         visual.append(column);
       });
       const slot = (column, row) => `${columnX[column] + 14}px ${96 + row * 96}px`;
-      // moves: [column, row, seconds after scene start]
+      // moves: [column, row, seconds after the panel lands]
       const cards = [
-        { title: 'Login', tag: 'blue', moves: [[1, 0, 0.14], [2, 0, 0.46]] },
-        { title: 'Search', tag: 'gold', moves: [[1, 0, 0.5], [2, 1, 0.82]] },
-        { title: 'Checkout', tag: 'green', moves: [[1, 0, 0.86]] },
-        { title: 'Profile', tag: 'blue', moves: [[0, 0, 0.9]] },
+        { title: 'Login', tag: 'blue', moves: [[1, 0, 0.04], [2, 0, 0.32]] },
+        { title: 'Search', tag: 'gold', moves: [[1, 0, 0.36], [2, 1, 0.62]] },
+        { title: 'Checkout', tag: 'green', moves: [[1, 0, 0.66]] },
+        { title: 'Profile', tag: 'blue', moves: [[0, 0, 0.7]] },
       ];
       cards.forEach((spec, index) => {
         const card = el('div', `board-card board-card--${spec.tag}`, spec.title);
         card.style.translate = slot(0, index);
         visual.append(card);
         for (const [column, row, at] of spec.moves) {
-          tween(card, { translate: slot(column, row) }, t0 + at, 0.3, EASE.out);
-          tween(card, [{ rotate: '0deg' }, { rotate: '4deg', offset: 0.4 }, { rotate: '0deg' }], t0 + at, 0.3, EASE.inOut);
+          tween(card, { translate: slot(column, row) }, t0 + at, 0.28, EASE.out);
+          tween(card, [{ rotate: '0deg' }, { rotate: '4deg', offset: 0.4 }, { rotate: '0deg' }], t0 + at, 0.28, EASE.inOut);
         }
       });
 
@@ -827,41 +917,36 @@
       check.append(icon('check'));
       pr.append(check, el('span', '', 'PR #42 · code review'), el('span', 'board-pr-state', 'Approved'));
       visual.append(pr);
-      fx.pop(pr, t0 + 0.98, { from: 0.7, duration: 0.4 });
+      fx.pop(pr, t0 + 0.82, { from: 0.7, duration: 0.36 });
     });
   }
 
-  /** on_screen: [headline, *accent* line, …feature chips] */
+  /** Last panel of the strip. on_screen: [headline, *accent* line, …feature chips] */
   function buildTutorials(scene, ctx) {
     const [lineOne, lineTwo, ...chipTexts] = scene.on_screen;
-    const t0 = scene.start;
-    const exitAt = scene.end - 0.26;
-    cue('cut', t0);
+    const landed = scene.start + WHIP_DURATION / 2;
+    cue('cut', scene.start);
+    const panel = stripPanel(ctx, scene);
 
     const copy = el('div', 'tutorials-copy');
-    const first = kinetic(lineOne, 'tutorials-line');
+    const first = kinetic(lineOne, 'tutorials-line is-set');
     const second = kinetic(lineTwo, 'tutorials-line');
     const chips = el('div', 'chips');
     const chipNodes = chipTexts.map((text) => el('span', 'chip is-staged', text));
     chips.append(...chipNodes);
     copy.append(first.node, second.node, chips);
-    ctx.layer.append(copy);
-    revealParts(first.parts, t0 + 0.04, 0.07);
-    revealParts(second.parts, t0 + 0.3, 0.07);
-    chipNodes.forEach((chip, index) => fx.pop(chip, t0 + 0.62 + index * 0.14, { from: 0.6 }));
-    fx.exitUp(copy, exitAt);
+    panel.append(copy);
+    revealParts(second.parts, landed + 0.02, 0.07);
+    chipNodes.forEach((chip, index) => fx.pop(chip, landed + 0.34 + index * 0.12, { from: 0.6 }));
 
-    // The skill window turns into a browser tab running a real terminal.
-    const chrome = skillWindow(ctx, t0);
-    const url = el('div', 'window-url is-staged');
+    // A browser tab running a real terminal: find the AI's TODO, prove the fix, ship it.
+    const chrome = windowChrome('skill-card');
+    const url = el('div', 'window-url');
     url.append(icon('lock'), document.createTextNode('tobiasduerschmid.github.io/SEBook'));
     chrome.bar.append(url);
-    fx.fadeIn(url, t0, 0.25);
-
-    const terminal = el('div', 'terminal is-staged');
+    const terminal = el('div', 'terminal');
     chrome.body.append(terminal);
-    fx.fadeIn(terminal, t0 + 0.02, 0.25);
-    // Find the AI's TODO, prove the fix, ship it.
+    panel.append(chrome.node);
     const promptLine = (at, command = '') => {
       const line = el('div', 'term-line is-staged');
       const typed = el('span');
@@ -876,7 +961,7 @@
       terminal.append(line);
       fx.fadeIn(line, at, 0.08);
     };
-    const grep = promptLine(t0 + 0.14, 'grep -n TODO app.py');
+    const grep = promptLine(landed + 0.06, 'grep -n TODO app.py');
     outputLine(['22:    # ', el('span', 'term-hit', 'TODO'), ': payments??'], grep.done + 0.06);
     const test = promptLine(grep.done + 0.2, 'pytest -q');
     outputLine([el('span', 'term-prompt', '4 passed'), ' in 0.42s'], test.done + 0.08);
@@ -885,9 +970,9 @@
     const idle = promptLine(push.done + 0.16);
     const caret = el('span', 'term-caret');
     idle.line.append(caret);
-    caretBlink(caret, push.done + 0.16);
+    caretBlink(caret, push.done + 0.16, push.done + 0.16);
 
-    tween(chrome.node, { opacity: 0, scale: 0.92, filter: 'blur(12px)' }, exitAt, 0.36, EASE.in);
+    fx.blurAway(panel, scene.end - 0.26, { duration: 0.36, scale: 0.94 });
   }
 
   /** on_screen: [logo, tagline, web address] — the end card holds to the last frame. */
@@ -899,12 +984,25 @@
     tween(ctx.glows.blue, { translate: '520px 460px', scale: 0.85 }, t0, 1.4, EASE.inOut);
     tween(ctx.glows.gold, { translate: '-380px -310px', scale: 0.8 }, t0, 1.4, EASE.inOut);
 
+    // A soft bloom behind the logo that flares on the hit and settles.
+    const bloom = el('div', 'cta-bloom is-staged');
+    ctx.layer.append(bloom);
+    tween(bloom, [
+      { opacity: 0, scale: 0.6 },
+      { opacity: 1, scale: 1.08, offset: 0.25 },
+      { opacity: 0.62, scale: 1 },
+    ], t0 + 0.05, 1.4, EASE.out);
+
     const logo = kinetic(logoText, 'cta-logo is-centered', { split: 'chars' });
     const bar = el('div', 'cta-bar is-staged');
     const tagline = kinetic(taglineText, 'cta-tagline is-centered');
     const url = el('div', 'kinetic cta-url is-centered is-staged', urlText);
     ctx.layer.append(logo.node, bar, tagline.node, url);
     revealParts(logo.parts, t0 + 0.12, 0.045, 0.7);
+    // A gold glint travels across the settled letters.
+    logo.parts.forEach((part, index) => tween(part, [
+      { color: '#f4f8ff' }, { color: '#ffe27a', offset: 0.45 }, { color: '#f4f8ff' },
+    ], t0 + 1.05 + index * 0.05, 0.42, EASE.inOut));
     tween(bar, [{ opacity: 1, scale: '0 1' }, { opacity: 1, scale: '1 1' }], t0 + 0.5, 0.55, EASE.out);
     revealParts(tagline.parts, t0 + 0.62, 0.07);
     fx.rise(url, t0 + 0.98, { distance: 30, duration: 0.5 });
@@ -924,25 +1022,34 @@
   };
 
   // ------------------------------------------------------------------
-  // Background + brand chrome (lives for the whole video)
+  // Backdrop, lens, and brand chrome (live for the whole video)
   // ------------------------------------------------------------------
 
-  function buildBackdrop(ctx, duration) {
+  function buildBackdrop(ctx) {
+    const glowParallax = el('div', 'layer bg-parallax');
     const blue = el('div', 'bg-glow bg-glow--blue');
     const gold = el('div', 'bg-glow bg-glow--gold');
-    const grid = el('div', 'bg-grid');
+    glowParallax.append(blue, gold);
+    const grid = el('div', 'layer bg-grid');
     const vignette = el('div', 'layer bg-vignette');
-    ctx.stage.append(blue, gold, grid, vignette);
+    ctx.stage.append(glowParallax, grid, vignette);
     tween(blue, [{ translate: '0 0' }, { translate: '240px 150px' }], 0, 17.8, EASE.inOut);
     tween(gold, [{ translate: '0 0' }, { translate: '-200px -120px' }], 0, 17.8, EASE.inOut);
-    tween(grid, [{ translate: '0 0' }, { translate: '-112px -56px' }], 0, duration, EASE.linear);
-    ctx.glows = { blue, gold };
+    Object.assign(ctx, { glows: { blue, gold }, glowParallax, grid });
+  }
 
-    const brand = el('div', 'brand is-staged');
+  /** The whip-pan blur filter and the brand watermark. (Film grain is added by blend-frames.swift.) */
+  function buildLens(ctx) {
+    const defs = svg('svg', { class: 'stage-defs', width: 0, height: 0, 'aria-hidden': 'true' });
+    const whip = svg('filter', { id: 'whip-blur', x: '-5%', y: '0%', width: '110%', height: '100%' });
+    const whipBlur = svg('feGaussianBlur', { stdDeviation: '0 0' });
+    whip.append(whipBlur);
+    defs.append(whip);
+
+    const brand = el('div', 'brand');
     brand.append(el('div', 'brand-name', 'SE Book'), el('div', 'brand-bar'));
-    ctx.stage.append(brand);
-    fx.fadeIn(brand, 0.25, 0.4);
-    ctx.brand = brand;
+    ctx.stage.append(defs, brand);
+    Object.assign(ctx, { whipBlur, brand });
   }
 
   // ------------------------------------------------------------------
@@ -970,20 +1077,39 @@
     requestAnimationFrame(frame);
   }
 
+  function sceneStart(storyboard, id) {
+    const scene = storyboard.scenes.find((s) => s.id === id);
+    if (!scene) throw new Error(`stage.js needs a "${id}" scene in the storyboard.`);
+    return scene.start;
+  }
+
   async function boot() {
     const storyboard = await loadStoryboard();
     await Promise.all(FONT_FACES.map((font) => document.fonts.load(font)));
     await document.fonts.ready;
 
     const stage = document.getElementById('stage');
-    const ctx = { stage, layer: el('div', 'layer') };
-    buildBackdrop(ctx, storyboard.duration);
+    const ctx = { stage, layer: el('div', 'layer camera') };
+    ctx.strip = { node: el('div', 'strip'), panels: [], whips: [] };
+    buildBackdrop(ctx);
     stage.append(ctx.layer);
+    ctx.layer.append(ctx.strip.node);
+    buildLens(ctx);
     for (const scene of storyboard.scenes) {
       const build = BUILDERS[scene.id];
       if (!build) throw new Error(`stage.js has no builder for storyboard scene "${scene.id}".`);
       build(scene, ctx);
     }
+
+    const reframe = sceneStart(storyboard, 'reframe');
+    const drop = sceneStart(storyboard, 'git');
+    const endCard = sceneStart(storyboard, 'cta');
+    animateStrip(ctx, storyboard.duration);
+    animateCamera(ctx, [
+      { start: 0, end: reframe, push: 0.03 },
+      { start: reframe, end: endCard, push: 0.02 },
+      { start: endCard, end: storyboard.duration, push: 0.04 },
+    ], [drop, endCard]);
     seek(0);
 
     const params = new URLSearchParams(window.location.search);

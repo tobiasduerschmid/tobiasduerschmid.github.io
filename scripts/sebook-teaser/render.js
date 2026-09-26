@@ -14,9 +14,11 @@
  *   poster              JPEG of the frame at poster_time
  *
  * Pipeline: serve the repo root on loopback → open stage.html in headless
- * Chromium → seek + screenshot every frame and read the stage's sound cues →
- * screen the frames for flashing (check-flashes.swift, WCAG 2.3.1; a failure
- * stops the render) → score the soundtrack against the cues
+ * Chromium → screenshot several sub-frames per frame across the storyboard's
+ * `motion_blur` shutter and average them into motion-blurred frames
+ * (blend-frames.swift) → read the stage's sound cues → screen the frames for
+ * flashing (check-flashes.swift, WCAG 2.3.1; a failure stops the render) →
+ * score the soundtrack against the cues
  * (audio/soundtrack.js) and voice the narration (audio/narration.js) →
  * encode both cuts with encode-mp4.swift.
  *
@@ -45,10 +47,13 @@ const STORYBOARD_FILE = path.join(ROOT, '_data', 'sebook_teaser.yml');
 const STAGE_URL_PATH = '/scripts/sebook-teaser/stage.html';
 const ENCODER = path.join(__dirname, 'encode-mp4.swift');
 const FLASH_CHECK = path.join(__dirname, 'check-flashes.swift');
-// At 2 Mbit/s VideoToolbox's H.264 is visually lossless at page size and only
-// shows faint halos at 1:1 in the busiest (shaking) frames; 20 s ≈ 4.7 MB.
+const BLENDER = path.join(__dirname, 'blend-frames.swift');
+// At 2 Mbit/s VideoToolbox's H.264 is visually lossless even at 1:1, film
+// grain included; 20 s ≈ 5.3 MB.
 const VIDEO_BITS_PER_SECOND = 2_000_000;
 const POSTER_JPEG_QUALITY = 82;
+// Headless browsers capturing sub-frames side by side (each is one busy core).
+const CAPTURE_WORKERS = Math.max(1, Math.min(4, Math.floor(os.cpus().length / 2)));
 
 function parseArgs(argv) {
   const args = { framesDir: null };
@@ -65,46 +70,83 @@ function repoFile(urlPath) {
 }
 
 function prepareWorkDir(requested) {
-  if (!requested) return fs.mkdtempSync(path.join(os.tmpdir(), 'sebook-teaser-'));
-  fs.mkdirSync(requested, { recursive: true });
-  for (const name of fs.readdirSync(requested)) {
-    if (/^frame-\d+\.png$/.test(name)) fs.rmSync(path.join(requested, name));
+  const workDir = requested || fs.mkdtempSync(path.join(os.tmpdir(), 'sebook-teaser-'));
+  fs.mkdirSync(workDir, { recursive: true });
+  for (const name of fs.readdirSync(workDir)) {
+    if (/^frame-\d+\.png$/.test(name)) fs.rmSync(path.join(workDir, name));
   }
-  return requested;
+  fs.rmSync(path.join(workDir, 'sub'), { recursive: true, force: true });
+  fs.mkdirSync(path.join(workDir, 'sub'));
+  return workDir;
 }
 
-async function captureFrames(page, { fps, duration }, framesDir) {
-  const frameCount = Math.round(fps * duration);
-  for (let index = 0; index < frameCount; index++) {
-    await page.evaluate((t) => window.teaser.seek(t), index / fps);
-    await page.screenshot({ path: path.join(framesDir, `frame-${String(index).padStart(5, '0')}.png`) });
-    if (index % fps === 0) process.stdout.write(`\r  captured ${index}/${frameCount} frames`);
+/**
+ * Screenshots `samples` sub-frames for each frame in [from, to), spread
+ * evenly across `shutter` of the frame interval and centred on the frame's
+ * time, into `subDir`. Uses Chrome's own capture (CDP), about twice as fast
+ * as page.screenshot() — there are thousands of shots.
+ */
+async function captureSubFrames(page, { fps, motion_blur: { samples, shutter } }, subDir, from, to, onFrame) {
+  const cdp = await page.context().newCDPSession(page);
+  for (let frame = from; frame < to; frame++) {
+    for (let sample = 0; sample < samples; sample++) {
+      const offset = ((sample + 0.5) / samples - 0.5) * shutter;
+      await page.evaluate((t) => window.teaser.seek(t), Math.max(0, (frame + offset) / fps));
+      const { data } = await cdp.send('Page.captureScreenshot', { format: 'png', optimizeForSpeed: true });
+      fs.writeFileSync(path.join(subDir, `sub-${String(frame).padStart(5, '0')}-${sample}.png`), Buffer.from(data, 'base64'));
+    }
+    onFrame();
   }
-  process.stdout.write(`\r  captured ${frameCount}/${frameCount} frames\n`);
+  await cdp.detach();
 }
 
-/** Screenshots every frame and the poster; returns the stage's sound cues. */
-async function renderPicture(storyboard, framesDir) {
-  const server = await startLocalSiteServer({ rootDirectory: ROOT });
+async function openStage(storyboard, baseUrl) {
   const browser = await chromium.launch();
-  try {
-    const page = await browser.newPage({
-      viewport: { width: storyboard.width, height: storyboard.height },
-      deviceScaleFactor: 1,
-    });
-    const pageErrors = [];
-    page.on('pageerror', (error) => pageErrors.push(error));
-    await page.goto(`${server.baseUrl}${STAGE_URL_PATH}`);
-    await page.evaluate(() => window.teaser.ready);
-    await captureFrames(page, storyboard, framesDir);
+  const page = await browser.newPage({
+    viewport: { width: storyboard.width, height: storyboard.height },
+    deviceScaleFactor: 1,
+  });
+  const pageErrors = [];
+  page.on('pageerror', (error) => pageErrors.push(error));
+  await page.goto(`${baseUrl}${STAGE_URL_PATH}`);
+  await page.evaluate(() => window.teaser.ready);
+  return { browser, page, pageErrors };
+}
 
+/**
+ * Captures the sub-frames — split into contiguous chunks across several
+ * headless browsers, since the stage is deterministic — and the poster.
+ * Returns the stage's sound cues.
+ */
+async function renderPicture(storyboard, workDir) {
+  const server = await startLocalSiteServer({ rootDirectory: ROOT });
+  const frameCount = Math.round(storyboard.fps * storyboard.duration);
+  const chunk = Math.ceil(frameCount / CAPTURE_WORKERS);
+  const stages = [];
+  let captured = 0;
+  const onFrame = () => {
+    captured += 1;
+    if (captured % storyboard.fps === 0 || captured === frameCount) {
+      process.stdout.write(`\r  captured ${captured}/${frameCount} frames × ${storyboard.motion_blur.samples} sub-frames`);
+    }
+  };
+  try {
+    await Promise.all(Array.from({ length: CAPTURE_WORKERS }, async (_, worker) => {
+      const stage = await openStage(storyboard, server.baseUrl);
+      stages.push(stage);
+      const from = worker * chunk;
+      await captureSubFrames(stage.page, storyboard, path.join(workDir, 'sub'), from, Math.min(frameCount, from + chunk), onFrame);
+    }));
+    process.stdout.write('\n');
+    const errors = stages.flatMap((stage) => stage.pageErrors);
+    if (errors.length) throw errors[0];
+
+    const { page } = stages[0];
     await page.evaluate((t) => window.teaser.seek(t), storyboard.poster_time);
     await page.screenshot({ path: repoFile(storyboard.poster), type: 'jpeg', quality: POSTER_JPEG_QUALITY });
-    const cues = await page.evaluate(() => window.teaser.cues);
-    if (pageErrors.length) throw pageErrors[0];
-    return cues;
+    return await page.evaluate(() => window.teaser.cues);
   } finally {
-    await browser.close();
+    await Promise.all(stages.map((stage) => stage.browser.close()));
     await server.close();
   }
 }
@@ -139,6 +181,10 @@ async function main() {
 
   console.log(`Rendering ${storyboard.duration} s at ${storyboard.fps} fps (work files in ${workDir})`);
   const cues = await renderPicture(storyboard, workDir);
+  const { samples, grain } = storyboard.motion_blur;
+  execFileSync('swift', ['-O', BLENDER, path.join(workDir, 'sub'), String(samples), String(grain), workDir], {
+    stdio: 'inherit',
+  });
   execFileSync('swift', ['-O', FLASH_CHECK, workDir, String(storyboard.fps)], { stdio: 'inherit' });
   const narrationLines = renderSound(storyboard, cues, workDir);
   encode(workDir, storyboard.fps, path.join(workDir, 'instrumental.wav'), repoFile(storyboard.video));
