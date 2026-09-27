@@ -34,7 +34,7 @@
               %} {% assign heading_text = heading_and_content[1] | split: '</h2>' | first | replace: '</h2' , '' |
               strip_html | strip %} {% if heading_text != "" and heading_attrs contains 'id="' %} {% assign heading_id =
               heading_attrs | split: 'id="' | last | split: '"' | first %} {% assign heading_text_short = heading_text |
-              split: ':' | first %} <li><a class="page-scroll"
+              split: ':' | first %} <li{% if heading_id == 'references' %} class="blog-references-nav"{% endif %}><a class="page-scroll"
                 href="#{{ heading_id }}">{{ heading_text_short }}</a></li>
               {% endif %}
               {% endif %}

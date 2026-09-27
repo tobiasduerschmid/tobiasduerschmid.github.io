@@ -39,6 +39,16 @@ layout: blog
               <span class="slider round"></span>
             </label>
           </div>
+          {% if content contains 'class="citation"' %}
+          <div class="toggle-control-row">
+            <label class="toggle-label" id="citationToggleLabel" for="citationToggle">Show citations</label>
+            <label class="switch">
+              <span class="sr-only">Show citations</span>
+              <input type="checkbox" id="citationToggle" aria-labelledby="citationToggleLabel" checked>
+              <span class="slider round"></span>
+            </label>
+          </div>
+          {% endif %}
           <div class="toggle-control-row">
             <span class="toggle-label">Read Aloud</span>
             <label class="switch">
@@ -79,6 +89,7 @@ layout: blog
   </div>
 </section>
 
+<script src="{{ '/js/blog-citation-spacing.js' | relative_url }}"></script>
 <script>
   (function () {
     function setCookie(name, value, days) {
@@ -104,6 +115,7 @@ layout: blog
       const highlightToggle = document.getElementById('highlightToggle');
       const darkModeToggle = document.getElementById('darkModeToggle');
       const readAloudToggle = document.getElementById('readAloudToggle');
+      const citationToggle = document.getElementById('citationToggle');
       const container = document.getElementById('togglesContainer');
 
       if (!article || !highlightToggle || !darkModeToggle || !container) return;
@@ -168,6 +180,18 @@ layout: blog
           document.documentElement.classList.remove('highlights-transition');
         }, 300);
       });
+
+      // --- Blog citations and references ---
+      if (citationToggle) {
+        citationToggle.checked = getCookie('blog-show-citations') !== 'false';
+        document.documentElement.classList.toggle('blog-citations-disabled', !citationToggle.checked);
+        citationToggle.addEventListener('change', function () {
+          document.documentElement.classList.toggle('blog-citations-disabled', !this.checked);
+          setCookie('blog-show-citations', this.checked, 365);
+          // Hiding the References link can change the fixed navbar's height.
+          window.dispatchEvent(new Event('resize'));
+        });
+      }
 
       // --- Read Aloud Toggle Logic ---
       const savedReadAloud = getCookie('read-aloud');

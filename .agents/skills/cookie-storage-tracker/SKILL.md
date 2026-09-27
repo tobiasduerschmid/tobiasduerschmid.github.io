@@ -117,8 +117,8 @@ If you skipped any of these, go back and do them — the cookies page is a priva
 
 This is a snapshot to help you spot duplicates and pick the right category — **`cookies.html` is the source of truth**, not this list.
 
-**Cookies (18):**
-- `dark-mode`, `show-highlights`, `highlights` (alias on blog index), `read-aloud`, `uml-accent-color`, `more-confetti`
+**Cookies (19):**
+- `dark-mode`, `show-highlights`, `highlights` (alias on blog index), `blog-show-citations`, `read-aloud`, `uml-accent-color`, `more-confetti`
 - `se-bookmarks`, `se-bookmarks-active`
 - `se-gym`, `se-gym-active`, `se-gym-timed-practice`, `se-gym-timer-mode`, `se-gym-timer-total-minutes`, `se-gym-timer-seconds-per-question`, `analyze-performance`, `se-gym-show-difficulty`, `se-gym-show-workout-hero`, `se-gym-active-difficulties`
 
@@ -156,6 +156,7 @@ This is a snapshot to help you spot duplicates and pick the right category — *
 **User-facing settings currently represented in `/settings/`:**
 - Dark mode: `dark-mode`
 - Text highlights: `show-highlights` plus legacy alias `highlights`
+- Blog inline citations and References section: `blog-show-citations`
 - Reduced motion override: `prefersReducedMotion`
 - Glossary abbreviation underlines: `abbr-underlines`
 - Read-aloud controls and voice: `read-aloud`, `tts-voice-name`

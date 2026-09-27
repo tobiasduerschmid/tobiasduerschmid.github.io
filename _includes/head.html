@@ -8,10 +8,12 @@
       var nameEQ = "show-highlights=";
       var darkEQ = "dark-mode=";
       var confettiEQ = "more-confetti=";
+      var blogCitationsEQ = "blog-show-citations=";
       var ca = document.cookie.split(';');
       var show = true;
       var dark = false;
       var moreConfetti = true;
+      var blogCitations = true;
       for (var i = 0; i < ca.length; i++) {
         var c = ca[i];
         while (c.charAt(0) == ' ') c = c.substring(1, c.length);
@@ -24,6 +26,9 @@
         if (c.indexOf(confettiEQ) == 0) {
           moreConfetti = c.substring(confettiEQ.length, c.length) !== 'false';
         }
+        if (c.indexOf(blogCitationsEQ) == 0) {
+          blogCitations = c.substring(blogCitationsEQ.length) !== 'false';
+        }
       }
       if (!show) {
         document.documentElement.classList.add('highlights-disabled');
@@ -33,6 +38,9 @@
       }
       if (moreConfetti) {
         document.documentElement.classList.add('more-confetti-enabled');
+      }
+      if (!blogCitations) {
+        document.documentElement.classList.add('blog-citations-disabled');
       }
       try {
         if (localStorage.getItem('abbr-underlines') === 'false') {

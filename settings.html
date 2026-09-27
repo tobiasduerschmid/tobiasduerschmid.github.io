@@ -69,6 +69,26 @@ info_nav_title: "My Settings"
 
         <div class="setting-row">
           <div>
+            <label class="setting-name" id="setting-blog-citations-label" for="setting-blog-citations">Show blog citations</label>
+            <p class="setting-description">
+              Show inline citations and the References section in blog posts.
+              On by default. Uses the <code>blog-show-citations</code> cookie.
+            </p>
+          </div>
+          <div class="setting-control">
+            <div class="setting-toggle-row">
+              <label class="switch">
+                <span class="sr-only">Show blog citations</span>
+                <input type="checkbox" id="setting-blog-citations" aria-labelledby="setting-blog-citations-label" data-setting="blogCitations" data-status-target="setting-blog-citations-status">
+                <span class="slider round"></span>
+              </label>
+              <span class="setting-toggle-status" id="setting-blog-citations-status" aria-hidden="true"></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-row">
+          <div>
             <p class="setting-name">Reduced motion</p>
             <p class="setting-description">
               Some pages use small animations (fades, slides, transitions).
@@ -789,6 +809,7 @@ info_nav_title: "My Settings"
     var highlights = readCookie('show-highlights');
     if (highlights === null) highlights = readCookie('highlights');
     setCheckbox('setting-highlights', highlights !== 'false');
+    setCheckbox('setting-blog-citations', readCookie('blog-show-citations') !== 'false');
 
     setCheckbox('setting-read-aloud', readCookie('read-aloud') === 'true');
     setCheckbox('setting-bookmarks', readCookie('se-bookmarks-active') === 'true');
@@ -861,6 +882,10 @@ info_nav_title: "My Settings"
       writeCookie('highlights', target.checked ? 'true' : 'false');
       document.documentElement.classList.toggle('highlights-disabled', !target.checked);
       announce('Highlight setting saved.');
+    } else if (setting === 'blogCitations') {
+      writeCookie('blog-show-citations', target.checked ? 'true' : 'false');
+      document.documentElement.classList.toggle('blog-citations-disabled', !target.checked);
+      announce('Blog citation setting saved.');
     } else if (setting === 'readAloud') {
       writeCookie('read-aloud', target.checked ? 'true' : 'false');
       document.documentElement.classList.toggle('read-aloud-enabled', target.checked);

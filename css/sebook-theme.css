@@ -1408,6 +1408,13 @@ body.sebook-layout #tts-read-btn {
   border-bottom-color: #003B5C;
 }
 
+/* The reading preference applies in both themes and in print. */
+html.blog-citations-disabled body.blog-layout .citation,
+html.blog-citations-disabled body.blog-layout .blog-bibliography,
+html.blog-citations-disabled body.blog-layout .blog-references-nav {
+  display: none;
+}
+
 .blog-post-item {
   padding: var(--sp-lg, 16px);
   margin-bottom: var(--sp-xl, 24px);
