@@ -86,9 +86,10 @@ AI can give you hints, explanations, and feedback as you learn. The important qu
 ### Socratic Interaction: AI as a Tutor, Not an Oracle
 
 **The Research Grounding:**
-AI tutors can ask you to think through a problem before showing an answer. Researchers tested approaches such as “Lead-and-Reveal,” where learners explain the next step before seeing generated code. They found no clear learning advantage over the alternatives they tested {% cite Kazemitabaar2025 %}.
-
-Another study offers some encouragement. Across two terms of introductory programming, lab sections tried different AI tools. Students using a tutor that asked one question at a time and guided them back to their own reasoning improved more on supervised quizzes taken soon afterward than students without AI. The later exams did not show a clear overall advantage {% cite Tran2026PacingMastery %}. Try using questions to practice explaining a solution, then check again a few days later whether you can solve a similar problem yourself.
+AI tutors can ask you to think through a problem before showing an answer.
+A recent study offers some insights into this.
+Across two terms of introductory programming, lab sections tried different AI tools. Students using a tutor that asked one question at a time and guided them back to their own reasoning improved more on supervised quizzes taken soon afterward than students without AI. The later exams did not show a clear overall advantage {% cite Tran2026PacingMastery %}.
+Try using questions to practice explaining a solution, then check again a few days later whether you can solve a similar problem yourself.
 
 Different questions give you different kinds of practice. Recalling what you studied without looking at your notes is **retrieval practice**. Explaining why a loop terminates asks you to reason through the code. Both can be useful, but a conversation only gives you that practice if you do the remembering or explaining yourself {% cite RoedigerKarpicke2006 BisraEtAl2018SelfExplanation %}.
 
@@ -128,7 +129,7 @@ Imagine explaining inheritance to a classmate who keeps asking “why?”.
 Researcher propose using AI in that role: its questions can prompt you to explain ideas and notice gaps {% cite tomisu2025 %}.
 The study from 2024 tried this with 40 people new to algorithms. When the AI asked “why” and “how” questions and gave feedback on their teaching, more of the conversation focused on developing understanding than with a simpler version {% cite Jin2024TeachAI %}.
 
-Some benefits have lasted beyond the study session. 
+Some benefits have lasted beyond the study session.
 In a university psychology course, users of a similar system (ChatTutor) scored higher four weeks later than students taught as usual, but did not clearly outperform ordinary ChatGPT users. In a separate school study, ChatTutor did better than ChatGPT on a later test but did not clearly beat studying the material again {% cite Makransky2025SenseMaking %}.
 
 **How and Why it Works:**
@@ -143,7 +144,7 @@ Use the AI's questions to inspect your explanation. Its apparent confusion or ag
 
 The following research-informed approaches can help you specify a useful learning interaction.
 
-In a six-week introductory programming study, researchers gave an AI tutor extra instructions to get students planning, checking their understanding, and reflecting. These changed some conversations, but did not clearly improve the main measures of success, including a quiz on programming concepts {% cite Barth2026SteeringTutors %}. Judge your own prompts by what you can explain or solve afterward, as well as by how helpful the chat feels.
+Judge your own prompts by what you can explain or solve afterward, as well as by how helpful the chat feels.
 
 
 ### The “Generation-Then-Comprehension” Protocol
@@ -194,7 +195,7 @@ Ask for alternatives, then make **your own** prediction about correctness, runti
 ### Read, Make Your Own Notes, Then Clarify
 
 **The Research Grounding:**
-In a study of 344 students aged 14–15, students assigned to take notes understood and remembered more three days later than those assigned to use AI alone. Combining notes with AI also beat AI alone on comprehension and questions about stated facts, but did not clearly help students recall more without prompts {% cite Kreijkes2026NotesReading %}. Keep making your own notes when studying with AI.
+In a study of 344 students aged 14–15, students assigned to take notes understood and remembered more three days later than those assigned to use AI alone {% cite Kreijkes2026NotesReading %}. Keep making your own notes when studying with AI.
 
 **How and Why it Works:**
 Read a section and record its main idea, one example, and one uncertainty in your own words. Ask AI about the specific uncertainty, check its response against the source, and revise your notes yourself. Later, close the tools and reconstruct the explanation.
@@ -216,7 +217,7 @@ Start with a complete example, then try a similar one with the last step missing
 ### Rubric-First Feedback Loop
 
 **The Research Grounding:**
-In a recent writing study, students made stronger essay revisions with AI, but did not show a clear advantage on tests of their knowledge of the topic {% cite FanEtAl2025 %}. Reviews by other researchers found that assessing your own work can strengthen your belief in your ability {% cite PanaderoJonssonBotella2017SelfAssessment %}.
+Reviews found that assessing your own work can strengthen your belief in your ability {% cite PanaderoJonssonBotella2017SelfAssessment %}.
 
 Feeling confident is a reason to check, too. In one of Fernandes and colleagues' reasoning experiments, adults with AI answered more questions correctly. Yet both groups—with and without AI—thought they had answered about four more questions correctly out of twenty than they actually had {% cite Fernandes2026PerformanceMetacognition %}. When preparing for an exam, compare your predicted score with your actual score on practice questions.
 
