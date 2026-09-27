@@ -1,0 +1,35 @@
+{%- comment -%}
+  Full-width landing banner for the SE Book home page (/SEBook/): the book's
+  title, pitch, and calls to action beside the teaser video.
+
+  _layouts/sebook.html renders it above the sidebar and main content when a
+  page sets `hero: sebook-hero.html` in its front matter (the banner then
+  replaces the layout's standard page header). It is dark in both site
+  themes; styles live in css/sebook-theme.css under "SE Book landing hero".
+{%- endcomment -%}
+<section class="sebook-hero" aria-labelledby="sebook-hero-title">
+  <div class="sebook-hero-inner">
+    <div class="sebook-hero-copy">
+      <h1 id="sebook-hero-title" class="sebook-hero-title">The SE Book</h1>
+      <p class="sebook-hero-tagline">From coder to <span class="sebook-hero-accent">engineer</span>.</p>
+      <p class="sebook-hero-lede">
+        Git, testing, design patterns, architecture, and teamwork: everything
+        software engineering adds to the code, with hands-on tutorials that
+        run right in your browser.
+      </p>
+      <div class="sebook-hero-actions">
+        <a class="sebook-hero-button sebook-hero-button--primary" href="#table-of-contents">Browse the chapters</a>
+        <a class="sebook-hero-button sebook-hero-button--secondary" href="{{ '/SEBook/tutorials' | relative_url }}">Try a tutorial</a>
+      </div>
+      <p class="sebook-hero-courses">
+        The SE Book brings together material for students in
+        <a href="{{ '/SEBook/CS35L_bookmarks.html' | relative_url }}">CS&nbsp;35L</a>,
+        <a href="{{ '/SEBook/CS130_bookmarks.html' | relative_url }}">CS&nbsp;130</a>, and
+        <a href="{{ '/SEBook/CS131_bookmarks.html' | relative_url }}">CS&nbsp;131</a>.
+      </p>
+    </div>
+    <div class="sebook-hero-media">
+      {% include sebook-teaser.html %}
+    </div>
+  </div>
+</section>

@@ -2217,12 +2217,245 @@ body.tutorial-layout :is(small, .small) {
 }
 
 /* ---------------------------------------------------------------- */
-/* SE Book homepage teaser video (_includes/sebook-teaser.html)      */
+/* SE Book landing hero (_includes/sebook-hero.html) and its teaser  */
+/* video (_includes/sebook-teaser.html)                              */
 /* ---------------------------------------------------------------- */
 
-.sebook-teaser {
-  max-width: 900px;
-  margin: 1.6em auto 0;
+/* The banner is dark in both site themes, like the video it frames, so
+   its colors are fixed rather than theme tokens. Site-wide dark mode paints
+   every heading and link gold (css/portfolio.css); the hero pins its own
+   colors against that, including :visited and :hover. */
+
+/* The layout renders the banner as the wrapper's first flex item; wrapping
+   gives it a full-width row above the sidebar and main content. */
+#sebook-content-wrapper.has-hero {
+  flex-wrap: wrap;
+}
+
+.sebook-hero {
+  --sebook-hero-text: #f4f8ff;
+  --sebook-hero-muted: #c3d0e0;
+  --sebook-hero-link: #b9d9eb;
+  --focus-color: var(--sebook-gold);
+  position: relative;
+  isolation: isolate;
+  flex: 0 0 100%;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--sebook-hero-muted);
+  background:
+    radial-gradient(ellipse 55% 80% at 4% 0%, rgba(39, 116, 174, 0.42), transparent 70%),
+    radial-gradient(ellipse 45% 65% at 100% 100%, rgba(255, 209, 0, 0.12), transparent 70%),
+    linear-gradient(180deg, #0a1426, #060b16);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Decoration: a dot grid that fades toward the bottom, and a scatter of
+   small stars. The stars sit in the top and bottom padding and the side
+   gutters, so none lands on text at any width. */
+.sebook-hero::before,
+.sebook-hero::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+}
+
+.sebook-hero::before {
+  background-image: radial-gradient(rgba(255, 255, 255, 0.08) 1.2px, transparent 1.7px);
+  background-size: 32px 32px;
+  -webkit-mask-image: linear-gradient(180deg, #000 15%, transparent 95%);
+  mask-image: linear-gradient(180deg, #000 15%, transparent 95%);
+}
+
+.sebook-hero::after {
+  background:
+    radial-gradient(circle at 16% 34px, #fff 0 1.2px, rgba(185, 217, 235, 0.45) 2px, transparent 6px),
+    radial-gradient(circle at 31% 16px, #fff 0 0.8px, transparent 3px),
+    radial-gradient(circle at 52% 28px, #fff 0 1.4px, rgba(185, 217, 235, 0.5) 2.2px, transparent 7px),
+    radial-gradient(circle at 74% 12px, #fff 0 0.9px, transparent 3px),
+    radial-gradient(circle at 92% 38px, #fff 0 1.3px, rgba(185, 217, 235, 0.45) 2px, transparent 6px),
+    radial-gradient(circle at 99% 58%, #fff 0 0.9px, transparent 3px),
+    radial-gradient(circle at 1% 46%, #fff 0 1px, rgba(185, 217, 235, 0.4) 1.6px, transparent 5px),
+    radial-gradient(circle at 9% calc(100% - 16px), #fff 0 0.9px, transparent 3px),
+    radial-gradient(circle at 41% calc(100% - 24px), #fff 0 1px, rgba(185, 217, 235, 0.4) 1.6px, transparent 5px),
+    radial-gradient(circle at 83% calc(100% - 14px), #fff 0 0.8px, transparent 3px);
+}
+
+.sebook-hero-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 40px;
+  max-width: 1680px;
+  margin: 0 auto;
+  /* Top room for the fixed "Menu" button on narrow screens. */
+  padding: 72px 24px 44px;
+}
+
+@media (min-width: 960px) {
+  .sebook-hero-inner {
+    grid-template-columns: minmax(300px, min(40%, 480px)) minmax(0, 1fr);
+    align-items: center;
+    gap: 48px;
+    padding: 72px 40px 56px;
+  }
+}
+
+/* From here the sidebar sits beside the content and the "Menu" button is
+   gone, so the banner can use its full proportions. */
+@media (min-width: 1101px) {
+  .sebook-hero-inner {
+    grid-template-columns: minmax(300px, min(34%, 480px)) minmax(0, 1fr);
+    gap: 64px;
+    padding: 64px 56px 60px;
+  }
+}
+
+.sebook-hero .sebook-hero-title {
+  margin: 0;
+  font-size: clamp(2.6em, 1em + 3.2vw, 4.2em);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -0.02em;
+  color: var(--sebook-hero-text);
+}
+
+html.dark-mode .sebook-hero .sebook-hero-title {
+  color: var(--sebook-hero-text) !important;
+}
+
+/* The tagline and lede are larger than paragraph size, so they must
+   outrank the readability baseline above, `body.sebook-layout :is(p, …)`,
+   whose :is() list makes it (0,3,1). */
+body.sebook-layout .sebook-hero-copy p.sebook-hero-tagline {
+  margin: 0.3em 0 0;
+  font-size: clamp(1.45em, 1.1em + 1vw, 1.9em);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--sebook-hero-text);
+}
+
+.sebook-hero-accent {
+  color: var(--sebook-gold);
+}
+
+body.sebook-layout .sebook-hero-copy p.sebook-hero-lede {
+  max-width: 34em;
+  margin: 1em 0 0;
+  font-size: 1.1em;
+  line-height: 1.6;
+}
+
+.sebook-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 1.8em;
+}
+
+.sebook-hero .sebook-hero-button,
+.sebook-hero .sebook-hero-button:visited {
+  display: inline-flex;
+  flex: 0 1 auto;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 0.5em 1.6em;
+  border: 2px solid transparent;
+  border-radius: var(--radius-pill, 999px);
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  text-decoration: none;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.sebook-hero .sebook-hero-button:focus-visible {
+  outline: var(--focus-width, 3px) solid var(--focus-color);
+  outline-offset: 3px;
+}
+
+.sebook-hero .sebook-hero-button--primary,
+.sebook-hero .sebook-hero-button--primary:visited {
+  background: var(--sebook-gold);
+  border-color: var(--sebook-gold);
+  color: var(--sebook-on-gold);
+  box-shadow: 0 10px 28px rgba(255, 209, 0, 0.2);
+}
+
+.sebook-hero .sebook-hero-button--primary:hover,
+.sebook-hero .sebook-hero-button--primary:focus-visible {
+  background: #ffe24d;
+  border-color: #ffe24d;
+  color: var(--sebook-on-gold);
+  box-shadow: 0 12px 32px rgba(255, 209, 0, 0.32);
+}
+
+.sebook-hero .sebook-hero-button--secondary,
+.sebook-hero .sebook-hero-button--secondary:visited {
+  background: transparent;
+  border-color: rgba(244, 248, 255, 0.72);
+  color: var(--sebook-hero-text);
+}
+
+.sebook-hero .sebook-hero-button--secondary:hover,
+.sebook-hero .sebook-hero-button--secondary:focus-visible {
+  background: rgba(244, 248, 255, 0.12);
+  border-color: var(--sebook-hero-text);
+  color: var(--sebook-hero-text);
+}
+
+.sebook-hero-courses {
+  margin: 1.8em 0 0;
+}
+
+.sebook-hero .sebook-hero-courses a,
+.sebook-hero .sebook-hero-courses a:visited {
+  color: var(--sebook-hero-link);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.sebook-hero .sebook-hero-courses a:hover {
+  color: var(--sebook-hero-text);
+  background: transparent;
+}
+
+.sebook-hero .sebook-hero-courses a:focus-visible {
+  outline: var(--focus-width, 3px) solid var(--focus-color);
+  outline-offset: 2px;
+}
+
+/* The video column: a hatched disc and a blue glow sit behind the frame,
+   echoing the video's own backdrop. */
+.sebook-hero-media {
+  position: relative;
+  min-width: 0;
+}
+
+.sebook-hero-media::before {
+  content: '';
+  position: absolute;
+  top: -44px;
+  right: -52px;
+  z-index: -1;
+  width: 240px;
+  height: 240px;
+  border-radius: 50%;
+  background: repeating-linear-gradient(135deg, rgba(255, 255, 255, 0.14) 0 1.5px, transparent 1.5px 11px);
+  pointer-events: none;
+}
+
+.sebook-hero-media::after {
+  content: '';
+  position: absolute;
+  inset: 10% 6% 0;
+  z-index: -1;
+  background: radial-gradient(closest-side, rgba(39, 116, 174, 0.5), transparent);
+  filter: blur(48px);
+  pointer-events: none;
 }
 
 .sebook-teaser-video {
@@ -2230,10 +2463,12 @@ body.tutorial-layout :is(small, .small) {
   width: 100%;
   height: auto;
   aspect-ratio: 16 / 9;
-  border-radius: 12px;
-  /* The video's own backdrop, in both themes, so the box matches the poster. */
+  border-radius: 16px;
+  /* The video's own backdrop, so the frame matches the poster. */
   background: #060b16;
-  box-shadow: var(--sebook-shadow);
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    0 28px 70px rgba(0, 0, 0, 0.55);
 }
 
 .sebook-teaser-video:focus-visible {
@@ -2241,15 +2476,15 @@ body.tutorial-layout :is(small, .small) {
   outline-offset: var(--focus-offset, 2px);
 }
 
-/* Audio description + transcript: one quiet toggle under the video. The
-   summary keeps the site-wide `details summary` color and hover underline
-   (_sass/_base.scss) but drops the bold; its size stays at the site's
-   readable minimum for controls. */
+/* Audio description + transcript: one quiet toggle under the video. */
 .sebook-teaser-extras {
-  margin: 0.6em 0 0;
+  margin: 0.8em 0 0;
 }
 
 .sebook-teaser-extras > summary {
+  /* list-item brings back the disclosure arrow that Bootstrap's
+     `summary { display: block }` removes. */
+  display: list-item;
   padding: 0.3em 0;
   font-weight: 400;
 }
@@ -2279,7 +2514,6 @@ body.tutorial-layout :is(small, .small) {
   margin-right: 0.35em;
   font-family: var(--font-mono);
   font-weight: 700;
-  color: var(--sebook-blue);
 }
 
 .sebook-teaser-visual,
@@ -2288,14 +2522,88 @@ body.tutorial-layout :is(small, .small) {
 }
 
 .sebook-teaser-sound {
-  color: var(--color-text-muted);
   font-style: italic;
 }
 
-/* A promo video has nothing to offer on paper. */
+/* The teaser's text colors on the dark banner (the site-wide `details
+   summary` rule would otherwise pick its theme blue). */
+.sebook-hero .sebook-teaser-extras > summary {
+  color: var(--sebook-hero-link);
+}
+
+.sebook-hero .sebook-teaser-extras > summary:hover {
+  color: var(--sebook-hero-text);
+}
+
+.sebook-hero .sebook-teaser-label {
+  color: var(--sebook-hero-text);
+}
+
+.sebook-hero .sebook-teaser-time {
+  color: var(--sebook-hero-link);
+}
+
+.sebook-hero .sebook-teaser-sound {
+  color: #a9b8cc;
+}
+
+@media screen and (max-width: 640px) {
+  .sebook-hero-inner {
+    gap: 32px;
+    padding: 68px 16px 36px;
+  }
+
+  .sebook-hero .sebook-hero-button,
+  .sebook-hero .sebook-hero-button:visited {
+    flex: 1 1 auto;
+  }
+
+  .sebook-hero-media::before {
+    width: 160px;
+    height: 160px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sebook-hero .sebook-hero-button {
+    transition: none;
+  }
+}
+
+/* On paper: the title and pitch in plain print colors; the video and
+   the buttons have nothing to offer there. */
 @media print {
-  .sebook-teaser {
+  .sebook-hero {
+    border: 0;
+    background: none;
+    color: #111;
+  }
+
+  .sebook-hero::before,
+  .sebook-hero::after,
+  .sebook-hero-actions,
+  .sebook-hero-media {
     display: none;
+  }
+
+  .sebook-hero-inner {
+    display: block;
+    padding: 0 0 1em;
+  }
+
+  .sebook-hero .sebook-hero-title,
+  html.dark-mode .sebook-hero .sebook-hero-title,
+  body.sebook-layout .sebook-hero-copy p.sebook-hero-tagline {
+    color: #17324d !important;
+  }
+
+  .sebook-hero-accent {
+    color: inherit;
+  }
+
+  .sebook-hero .sebook-hero-courses a,
+  .sebook-hero .sebook-hero-courses a:visited {
+    color: #2774AE !important;
   }
 }
 

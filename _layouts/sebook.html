@@ -45,7 +45,12 @@
     </nav>
 
 
-    <div id="sebook-content-wrapper">
+    <div id="sebook-content-wrapper"{% if page.hero %} class="has-hero"{% endif %}>
+      {%- if page.hero %}
+      <!-- Full-width landing banner (front matter `hero:`); replaces the page header -->
+      {% include {{ page.hero }} %}
+      {%- endif %}
+
       <!-- Mobile Sidebar Toggle -->
       <button id="sidebar-toggle" type="button"
         aria-label="Menu: show table of contents" aria-expanded="false" aria-controls="sidebar">
@@ -59,7 +64,7 @@
 
       <!-- Main Content -->
       <main id="main-content" tabindex="-1">
-        {% include header_project.html title=page.title %}
+        {% unless page.hero %}{% include header_project.html title=page.title %}{% endunless %}
 
         <!-- Toggles -->
         <div class="highlight-toggle-container is-hidden" id="togglesContainer">

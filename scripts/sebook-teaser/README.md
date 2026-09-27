@@ -1,8 +1,9 @@
 # SE Book teaser video
 
-Render source for the 20-second teaser on the SE Book landing page (`/SEBook/`,
-included via `_includes/sebook-teaser.html`). The published files live in
-`assets/video/`; this folder is excluded from the Jekyll build.
+Render source for the 20-second teaser in the SE Book landing banner
+(`/SEBook/`: `_includes/sebook-hero.html` embeds `_includes/sebook-teaser.html`).
+The published files live in `assets/video/`; this folder is excluded from the
+Jekyll build.
 
 ## One script, many outputs
 

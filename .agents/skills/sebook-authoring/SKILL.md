@@ -129,6 +129,8 @@ Page-furniture includes, used in this order at the end of most chapters:
 
 …where the data lives at `_data/flashcards/state.yml` and `_data/quizzes/state.yml`. See [`quiz-format`](../quiz-format/SKILL.md) for the YAML schema.
 
+**Landing banner (`hero:`)** — front matter `hero: sebook-hero.html` makes the layout render that include as a full-width banner above the sidebar and main content, and skip the standard `header_project.html` title header (so the page's first `<h1>` comes from the banner). Only the SE Book home page (`SEBook/index.md`) uses it. The banner lives outside `<main>`, so it is a labelled `<section>` region, and the page's content should still open with a `# ` heading so the top nav keeps an entry. Chapters should not set `hero:`.
+
 **Bibliography** — write `{% cite Gamma1995 %}` citations inline anywhere; the layout auto-appends the References section. See the dedicated section below for entry conventions and the gating rule.
 
 **UML diagrams** — embed via the shared container; the bundled renderer ([`_layouts/sebook.html` lines 739–773](../../../_layouts/sebook.html)) picks them up and re-renders on dark-mode toggle:

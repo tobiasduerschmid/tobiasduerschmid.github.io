@@ -4,7 +4,7 @@ plugins:
   - jekyll-scholar
 
 env: production
-asset_version: "20260926-hero-choice-previews"
+asset_version: "20260927-sebook-landing-hero"
 
 # Feature flags
 personal_gym: true
