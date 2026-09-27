@@ -82,10 +82,27 @@ A separate survey also linked offloading and reflecting together with better aca
 
 AI can give you hints, explanations, and feedback as you learn. The important question is what that help leaves you able to do yourself.
 
+
+### Socratic Interaction: AI as a Tutor, Not an Oracle
+
+**The Research Grounding:**
+AI tutors can ask you to think through a problem before showing an answer. Researchers tested approaches such as “Lead-and-Reveal,” where learners explain the next step before seeing generated code. They found no clear learning advantage over the alternatives they tested {% cite Kazemitabaar2025 %}.
+
+Another study offers some encouragement. Across two terms of introductory programming, lab sections tried different AI tools. Students using a tutor that asked one question at a time and guided them back to their own reasoning improved more on supervised quizzes taken soon afterward than students without AI. The later exams did not show a clear overall advantage {% cite Tran2026PacingMastery %}. Try using questions to practice explaining a solution, then check again a few days later whether you can solve a similar problem yourself.
+
+Different questions give you different kinds of practice. Recalling what you studied without looking at your notes is **retrieval practice**. Explaining why a loop terminates asks you to reason through the code. Both can be useful, but a conversation only gives you that practice if you do the remembering or explaining yourself {% cite RoedigerKarpicke2006 BisraEtAl2018SelfExplanation %}.
+
+**How and Why it Works:**
+Ask the tutor to wait while you think and explain. Request a hint when you can make progress with one, or a worked example when you need more guidance. Applying CLT here means adjusting the challenge to your working-memory capacity: if a question requires juggling several unfamiliar ideas, ask for a simpler example first {% cite sweller2011cognitive %}. Pardos and Bhandari's research on AI-generated math help also highlights why you need to check the help you receive {% cite pardos2024 %}. Use lecture notes, a textbook, or code tests to check explanations. Asking AI to admit uncertainty does not ensure it will catch its own mistakes.
+
+**Example Prompt (Python):**
+> "You are a Python tutor. I understand a single list-comprehension filter but am confused by multiple 'if' conditions. Ask me one question about which elements pass each filter, and wait for my answer. If I cannot explain the next step, show a small worked example and then give me a similar question."
+
+
 ### The "Attempt First" Pattern
 
 **The Research Grounding:**
-In classic memory experiments, people remembered words better when they worked them out from clues than when they simply read them {% cite Slamecka1978 %}. This gives you a reason to try producing an answer before reading one.
+In classic memory experiments, people remembered words better when they worked them out from clues than when they simply read them {% cite Slamecka1978 %}. This gives you a reason to try producing an answer yourself before askign AI for help.
 
 **How and Why it Works:**
 Try a relevant step: predict the output, sketch an approach, or identify what you do not understand. Then seek feedback. If you lack the prerequisite knowledge, start with an explanation or worked example and then attempt a related task {% cite bjork2011making bjork2020desirable %}. CLT helps explain this limit: searching for every next move can overwhelm working memory when the method is unfamiliar. A worked example can free attention for understanding the method {% cite sweller2011cognitive %}. To check for an illusion of understanding, close the explanation and try again independently.
@@ -104,31 +121,15 @@ Write a plan, identify a step you cannot justify, and ask for feedback on that s
 **Example Prompt (Programming):**
 > "Here is my plan and the step I am uncertain about: [plan]. Ask me one question that tests whether that step follows. Help me identify a missing case before suggesting a change. Leave the implementation for me to write and test."
 
-### Socratic Interaction: AI as a Tutor, Not an Oracle
-
-**The Research Grounding:**
-AI tutors can ask you to think through a problem before showing an answer. Kazemitabaar and colleagues tested approaches such as “Lead-and-Reveal,” where learners explain the next step before seeing generated code. They found no clear learning advantage over the alternatives they tested {% cite Kazemitabaar2025 %}.
-
-Another study offers some encouragement. Across two terms of introductory programming, lab sections tried different AI tools. Students using a tutor that asked one question at a time and guided them back to their own reasoning improved more on supervised quizzes taken soon afterward than students without AI. The later exams did not show a clear overall advantage {% cite Tran2026PacingMastery %}. Try using questions to practice explaining a solution, then check again a few days later whether you can solve a similar problem yourself.
-
-Different questions give you different kinds of practice. Recalling what you studied without looking at your notes is **retrieval practice**. Explaining why a loop terminates asks you to reason through the code. Both can be useful, but a conversation only gives you that practice if you do the remembering or explaining yourself {% cite RoedigerKarpicke2006 BisraEtAl2018SelfExplanation %}.
-
-**How and Why it Works:**
-Ask the tutor to wait while you think and explain. Request a hint when you can make progress with one, or a worked example when you need more guidance. Applying CLT here means adjusting the challenge to your working-memory capacity: if a question requires juggling several unfamiliar ideas, ask for a simpler example first {% cite sweller2011cognitive %}. Pardos and Bhandari's research on AI-generated math help also highlights why you need to check the help you receive {% cite pardos2024 %}. Use lecture notes, a textbook, or code tests to check explanations. Asking AI to admit uncertainty does not ensure it will catch its own mistakes.
-
-**Example Prompt (Python):**
-> "You are a Python tutor. I understand a single list-comprehension filter but am confused by multiple 'if' conditions. Ask me one question about which elements pass each filter, and wait for my answer. If I cannot explain the next step, show a small worked example and then give me a similar question."
-
 ### The "Teach-Back" Method (AI as a Teachable Novice)
 
 **The Research Grounding:**
-Imagine explaining inheritance to a classmate who keeps asking “why?” Tomisu and colleagues' “Cognitive Mirror” proposes using AI in that role: its questions can prompt you to explain ideas and notice gaps {% cite tomisu2025 %}.
+Imagine explaining inheritance to a classmate who keeps asking “why?”. 
+Researcher propose using AI in that role: its questions can prompt you to explain ideas and notice gaps {% cite tomisu2025 %}.
+The study from 2024 tried this with 40 people new to algorithms. When the AI asked “why” and “how” questions and gave feedback on their teaching, more of the conversation focused on developing understanding than with a simpler version {% cite Jin2024TeachAI %}.
 
-The TeachYou study tried this with 40 people new to algorithms. When the AI asked “why” and “how” questions and gave feedback on their teaching, more of the conversation focused on developing understanding than with a simpler version {% cite Jin2024TeachAI %}.
-
-A study of 96 adults explaining an economics concept found no clear learning advantage from giving AI a particular role. Having AI act as a beginner, peer, or challenger changed the conversation and participants' impressions, but did not clearly change their test scores {% cite Xu2026WhoYouExplainTo %}.
-
-Some benefits have lasted beyond the study session. In a university psychology course, ChatTutor users scored higher four weeks later than students taught as usual, but did not clearly outperform ordinary ChatGPT users. In a separate school study, ChatTutor did better than ChatGPT on a later test but did not clearly beat studying the material again {% cite Makransky2025SenseMaking %}.
+Some benefits have lasted beyond the study session. 
+In a university psychology course, users of a similar system (ChatTutor) scored higher four weeks later than students taught as usual, but did not clearly outperform ordinary ChatGPT users. In a separate school study, ChatTutor did better than ChatGPT on a later test but did not clearly beat studying the material again {% cite Makransky2025SenseMaking %}.
 
 **How and Why it Works:**
 Explain a concept in your own words, then answer “why” and “how” questions. The ICAP framework describes learning activities that go beyond repeating supplied information: for example, explaining why a base case stops recursion or working out what happens if it is missing. It predicts benefits from making those connections {% cite ChiWylie2014ICAP %}. This also fits CLT's focus on building reusable mental patterns: explaining how the steps connect can help you organize knowledge for future problems. Keep the explanation small enough to reason through; useful effort still needs to fit within working memory {% cite sweller2011cognitive %}.
@@ -143,6 +144,18 @@ Use the AI's questions to inspect your explanation. Its apparent confusion or ag
 The following research-informed approaches can help you specify a useful learning interaction.
 
 In a six-week introductory programming study, researchers gave an AI tutor extra instructions to get students planning, checking their understanding, and reflecting. These changed some conversations, but did not clearly improve the main measures of success, including a quiz on programming concepts {% cite Barth2026SteeringTutors %}. Judge your own prompts by what you can explain or solve afterward, as well as by how helpful the chat feels.
+
+
+### The “Generation-Then-Comprehension” Protocol
+
+If you *do* use AI to generate a snippet of code because you are completely stuck, you must never blindly copy-paste it. 
+Anthropic researchers Shen and Tamkin studied 52 developers learning an unfamiliar Python library. Those with AI help scored lower on the test immediately afterward. Within that group, some who sought explanations or help understanding concepts scored better than those who handed over more coding. The researchers called two observed patterns “Generation-Then-Comprehension” and “Hybrid Code-Explanation” {% cite ShenTamkin2026 %}. If you use generated code, understanding and checking it is still your work to do.
+
+<div class="action-box" markdown="1">
+#### Actionable Tips:
+* **Explain and check:** If AI supplies code, predict its behavior, explain the key decisions, and test edge cases. Ask for explanations beside the relevant lines. This applies CLT's **split-attention effect**: keeping related information together reduces the extraneous load of mentally matching a separate explanation to the code {% cite sweller2011cognitive %}. Investigate disagreements between its explanation and your mental model; either can be wrong. Then try a related task without the generated solution.
+* **Make a relevant attempt:** Write down an approach, prediction, or specific question before seeking help when you have enough background to start. If you are missing prerequisites, get an explanation or example and then practice {% cite bjork2011making bjork2020desirable %}.
+</div>
 
 ### Prompt Problems: Practicing Requirement Specification
 
@@ -165,6 +178,7 @@ This activity gives you practice describing behavior precisely and checking case
 ### Study Patterns That Preserve Useful Practice
 
 Choose activities that practice the skill you want to retain. Productive challenge can help, but making a task harder is not an end in itself.
+
 
 ### The Alternative Approaches Pattern
 
@@ -202,7 +216,7 @@ Start with a complete example, then try a similar one with the last step missing
 ### Rubric-First Feedback Loop
 
 **The Research Grounding:**
-In Fan and colleagues' writing study, students made stronger essay revisions with AI, but did not show a clear advantage on tests of their knowledge of the topic {% cite FanEtAl2025 %}. Reviews by Panadero and colleagues found that assessing your own work can strengthen your belief in your ability {% cite PanaderoJonssonBotella2017SelfAssessment %}.
+In a recent writing study, students made stronger essay revisions with AI, but did not show a clear advantage on tests of their knowledge of the topic {% cite FanEtAl2025 %}. Reviews by other researchers found that assessing your own work can strengthen your belief in your ability {% cite PanaderoJonssonBotella2017SelfAssessment %}.
 
 Feeling confident is a reason to check, too. In one of Fernandes and colleagues' reasoning experiments, adults with AI answered more questions correctly. Yet both groups—with and without AI—thought they had answered about four more questions correctly out of twenty than they actually had {% cite Fernandes2026PerformanceMetacognition %}. When preparing for an exam, compare your predicted score with your actual score on practice questions.
 
@@ -215,16 +229,6 @@ Start by scoring your own draft, solution, or design against the rubric. Then as
 **Example Prompt (Programming):**
 > "Here is my solution and the grading rubric. Do not fix the code. Ask me to rate it first on correctness, edge cases, readability, and tests. Check one rating against the code and test evidence. Explain whether that evidence supports or challenges my rating, and suggest one targeted next step if needed."
 
-### The “Generation-Then-Comprehension” Protocol
-
-If you *do* use AI to generate a snippet of code because you are completely stuck, you must never blindly copy-paste it. 
-Anthropic researchers Shen and Tamkin studied 52 developers learning an unfamiliar Python library. Those with AI help scored lower on the test immediately afterward. Within that group, some who sought explanations or help understanding concepts scored better than those who handed over more coding. The researchers called two observed patterns “Generation-Then-Comprehension” and “Hybrid Code-Explanation” {% cite ShenTamkin2026 %}. If you use generated code, understanding and checking it is still your work to do.
-
-<div class="action-box" markdown="1">
-#### Actionable Tips:
-* **Explain and check:** If AI supplies code, predict its behavior, explain the key decisions, and test edge cases. Ask for explanations beside the relevant lines. This applies CLT's **split-attention effect**: keeping related information together reduces the extraneous load of mentally matching a separate explanation to the code {% cite sweller2011cognitive %}. Investigate disagreements between its explanation and your mental model; either can be wrong. Then try a related task without the generated solution.
-* **Make a relevant attempt:** Write down an approach, prediction, or specific question before seeking help when you have enough background to start. If you are missing prerequisites, get an explanation or example and then practice {% cite bjork2011making bjork2020desirable %}.
-</div>
 
 ### Fading the Scaffold: The Goal is Independence
 
