@@ -25,3 +25,7 @@ The complete site's content is based on a json/xml file per section (e.g., ```co
 ## Dependencies
 
 Datafolio uses [Jekyll](http://jekyllrb.com/), [Bootstrap](http://getbootstrap.com/), [Bootswatch](http://bootswatch.com/) themes, [spin.js](http://fgnass.github.io/spin.js/), and [blueimp-gallery](https://github.com/blueimp/Bootstrap-Image-Gallery).
+
+## License
+
+Tobias Dürschmid expressly reserves the use of this repository's content for text and data mining, including training or fine-tuning AI models, pursuant to Article 4(3) of Directive (EU) 2019/790. See [LICENSE](LICENSE) for the scope; third-party components keep their own licenses.

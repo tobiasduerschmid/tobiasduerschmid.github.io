@@ -1,0 +1,48 @@
+---
+layout: null
+---
+# AI training opt-out
+#
+# Search engines and fetches a person asks for may crawl this site; crawlers
+# that collect AI training data may not. The author reserves text and data
+# mining, including AI training, under Article 4(3) of Directive (EU)
+# 2019/790. /.well-known/tdmrep.json and every page's <meta> tags declare the
+# same reservation, and the Content-Usage rule below repeats it in the IETF
+# AI Preferences format (draft-ietf-aipref-attach).
+#
+# Training crawler tokens are tracked at
+# https://github.com/ai-robots-txt/ai.robots.txt
+
+User-agent: GPTBot                        # OpenAI
+User-agent: ClaudeBot                     # Anthropic
+User-agent: anthropic-ai                  # Anthropic (legacy token)
+User-agent: Google-Extended               # Google Gemini; not Google Search
+User-agent: Applebot-Extended             # Apple Intelligence; not Apple search
+User-agent: Amazonbot                     # Amazon; not Amzn-SearchBot
+User-agent: meta-externalagent            # Meta
+User-agent: FacebookBot                   # Meta
+User-agent: Bytespider                    # ByteDance
+User-agent: TikTokSpider                  # ByteDance
+User-agent: MistralAI-Training            # Mistral AI
+User-agent: cohere-training-data-crawler  # Cohere
+User-agent: DeepSeekBot                   # DeepSeek
+User-agent: QwenBot                       # Alibaba
+User-agent: ERNIEBot                      # Baidu
+User-agent: PanguBot                      # Huawei
+User-agent: KimiBot                       # Moonshot AI
+User-agent: AI2Bot                        # Allen Institute for AI
+User-agent: Ai2Bot-Dolma                  # Allen Institute for AI
+User-agent: CCBot                         # Common Crawl, a common training corpus
+User-agent: webzio-extended               # Webz.io, resold as training data
+User-agent: Timpibot                      # Timpi
+User-agent: ICC-Crawler                   # NICT
+User-agent: Cotoyogi                      # ROIS
+User-agent: img2dataset                   # image dataset builder
+User-agent: LAIONDownloader               # LAION
+Disallow: /
+
+User-agent: *
+Allow: /
+Content-Usage: train-ai=n
+
+Sitemap: {{ "/sitemap.xml" | absolute_url }}

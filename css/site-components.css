@@ -141,6 +141,15 @@ html.dark-mode .blog-entry-rule {
   margin: 8px 0;
 }
 
+/* AI training opt-out notice: fine print that stays readable. The capped
+   measure wraps the centered sentence into short lines. Color is inherited
+   from the footer, so dark mode and print need no overrides. */
+.footer-ai-notice {
+  max-width: 70ch;
+  margin: 8px auto 0;
+  font-size: 0.9em;
+}
+
 .carousel-list {
   width: 100%;
 }
