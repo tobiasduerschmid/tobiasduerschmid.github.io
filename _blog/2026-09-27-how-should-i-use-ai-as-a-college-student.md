@@ -1,7 +1,7 @@
 ---
 layout: blog-post
-title: "[Draft] How Should I Use AI as a College Student? — A Science-Backed Guide for CS Students"
-date: 2026-09-24
+title: "How Should I Use AI as a College Student? — A Science-Backed Guide for CS Students"
+date: 2026-09-26
 category: "For Students"
 featured: true
 image: "/img/genai.jpg"
