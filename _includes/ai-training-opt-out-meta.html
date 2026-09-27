@@ -1,0 +1,21 @@
+{%- comment -%}
+  AI training opt-out for this page, declared in its <head>. Pages built on
+  head.html get it from there; pages with their own <head> (print views,
+  popouts, runtime frames) include this file directly.
+  tests/ai-training-opt-out.spec.js checks that every built page has it.
+
+  - tdm-reservation: W3C TDM Reservation Protocol, the machine-readable
+    opt-out that Article 4(3) of Directive (EU) 2019/790 asks for.
+  - robots noai, noimageai: the widespread "do not train on this" convention.
+  - robots noarchive: the training opt-out that Bing (Microsoft) and Amazonbot
+    document. Bing also leaves noarchive pages out of Copilot answers. Do not
+    add nocache as well: Bing treats the pair as nocache, which still permits
+    training on titles and snippets.
+  - dcterms.rights: the same reservation in plain language.
+
+  Site-wide counterparts: /robots.txt and /.well-known/tdmrep.json.
+{%- endcomment -%}
+{%- capture ai_training_opt_out_notice -%}{% include ai-training-opt-out-notice.txt %}{%- endcapture %}
+<meta name="tdm-reservation" content="1">
+<meta name="robots" content="noai, noimageai, noarchive">
+<meta name="dcterms.rights" content="{{ ai_training_opt_out_notice | strip | escape }}">

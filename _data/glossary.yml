@@ -122,6 +122,10 @@
   description: A programming style that attempts an operation and handles a specific expected exception if it fails. Keep the protected operation narrow so unrelated failures are not hidden.
   related: [LBYL]
 
+- term: EU
+  definition: European Union
+  description: A political and economic union of European member states. EU directives set shared rules, such as the copyright rules for text and data mining, that each member state implements in national law.
+
 - term: FTP
   definition: File Transfer Protocol
   description: An application-layer protocol for transferring files between hosts. Modern systems often prefer SSH-based or HTTPS-based transfer mechanisms for encrypted workflows.

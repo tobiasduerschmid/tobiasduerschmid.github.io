@@ -1,0 +1,8 @@
+{%- comment -%}
+  The AI training opt-out in plain language: an express reservation of text
+  and data mining rights. The site footer, every page's <head>
+  (ai-training-opt-out-meta.html), and the RSS feed all render this sentence,
+  so keep it plain text and escape it for the context that embeds it.
+  LICENSE states the same reservation for the repository; keep them in step.
+{%- endcomment -%}
+{{ site.author.name | default: site.author }} expressly reserves the use of this site's content for text and data mining, including training or fine-tuning AI models, pursuant to Article 4(3) of Directive (EU) 2019/790. Any such use requires prior written permission.

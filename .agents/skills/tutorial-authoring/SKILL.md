@@ -1347,6 +1347,11 @@ synchronizes with the main tutorial via `BroadcastChannel` (see
 - `tutorial-tab-popup.html` — single code file in Monaco.
 - `tutorial-graph-popup.html` — Git commit graph (SVG).
 
+Popouts and the print layout have their own `<head>`, so each includes
+`_includes/ai-training-opt-out-meta.html` (the site-wide AI training opt-out)
+right after its `<title>`. A new popout must include it too;
+`tests/ai-training-opt-out.spec.js` fails for any built page without it.
+
 The tab and pane editor popouts share `js/popout/shared-editor.js`. Both can
 receive more than one initial snapshot before Monaco finishes loading. Their
 bootstrap starts the editor only once: the tab uses the newest pending file

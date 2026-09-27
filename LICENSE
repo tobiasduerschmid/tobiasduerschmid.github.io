@@ -1,0 +1,22 @@
+AI training opt-out: reservation of text and data mining rights
+
+Copyright (c) Tobias Dürschmid
+
+Tobias Dürschmid expressly reserves the use of the content of this repository
+for text and data mining, including training or fine-tuning AI models,
+pursuant to Article 4(3) of Directive (EU) 2019/790. Any such use requires
+prior written permission.
+
+The reservation covers the original content of this repository and of the
+website built from it, https://tobiasduerschmid.github.io: book chapters,
+tutorials, quizzes, flashcards and the other data under _data/, blog posts,
+code, diagrams, and images. Third-party components keep their own licenses,
+for example the libraries under js/vendor/, the js/ArchUML submodule,
+Bootstrap, and the Datafolio site template this site started from.
+
+This file grants no license. Copyright law and GitHub's Terms of Service
+govern every other use of this repository's content.
+
+The website states the same reservation in machine-readable form: in each
+page's <meta> tags (W3C TDM Reservation Protocol), in /.well-known/tdmrep.json,
+and in /robots.txt.

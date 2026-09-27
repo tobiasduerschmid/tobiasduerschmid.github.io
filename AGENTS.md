@@ -51,6 +51,10 @@ JavaScript may still toggle state classes and set values that are genuinely comp
 
 Every browser-facing stylesheet change must keep the base, `html.dark-mode`, and `@media print` behavior coherent. Print pages are always light mode, regardless of the user's saved theme; load `css/print-light.css` after page-specific styles whenever a layout adds styles after the shared head.
 
+## AI training opt-out — every page declares it
+
+The site opts all of its content out of text and data mining, including AI training. Every HTML page the build emits must carry that reservation in its `<head>`. Pages built on `_includes/head.html` get it automatically. A page with its own `<head>` (popouts, print layouts, runtime frames, diagnostic pages) must add `{% include ai-training-opt-out-meta.html %}`; a file without front matter needs an empty `---` / `---` block first so Liquid runs. [`tests/ai-training-opt-out.spec.js`](./tests/ai-training-opt-out.spec.js) checks every built page. The same reservation lives in [`robots.txt`](./robots.txt), [`.well-known/tdmrep.json`](./.well-known/tdmrep.json), the footer notice ([`_includes/ai-training-opt-out-notice.txt`](./_includes/ai-training-opt-out-notice.txt)), and the repository's [`LICENSE`](./LICENSE).
+
 ## Project skills
 
 The project keeps a set of detailed, evidence-based playbooks in [`.agents/skills/`](./.agents/skills/). Claude Code auto-loads these via its skill mechanism, but other agents must read them explicitly when their triggers apply. **Before starting work that matches a trigger below, read the corresponding `SKILL.md` in full.**
