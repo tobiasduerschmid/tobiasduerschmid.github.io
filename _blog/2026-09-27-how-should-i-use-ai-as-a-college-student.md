@@ -41,8 +41,9 @@ To use an analogy: **Using AI to do the heavy lifting in your coursework is like
 </div>
 
 
-A study of high-school math students shows how this can go wrong: unrestricted AI help improved practice scores, but **students later scored 17% lower on an exam without AI than students who had practiced without it** {% cite BastaniEtAl2025 %}. Finishing a problem successfully with AI can leave you unprepared to solve one on your own.
-Reporting on a Brown University economics course describes a similar warning sign. The take-home exam average was 96 out of 100, far above the course's usual midterm averages, and the professor suspected AI use because many answers resembled ChatGPT's {% cite BrownDailyHerald2026Serrano InsideHigherEd2026Serrano %}. When the final moved in person, many students with perfect take-home scores dropped the course or missed the exam; many who took it scored much lower {% cite BrownDailyHerald2026Serrano InsideHigherEd2026Serrano %}.
+A study on math students found that **students who used AI for homework performed 17% worse in subsequent tests** {% cite BastaniEtAl2025 %} --- that's the difference between an A and a C+.
+Reporting on a Brown University economics course describes a similar warning sign. The take-home exam average was 96 out of 100, far above the course's usual midterm averages, and the professor suspected AI use because many answers resembled ChatGPT's {% cite BrownDailyHerald2026Serrano InsideHigherEd2026Serrano %}. When the final moved in person, many students with perfect take-home scores dropped the course or didn't show up to the exam. 
+Most studnets who took it scored much lower {% cite BrownDailyHerald2026Serrano InsideHigherEd2026Serrano %}.
 
 **This matters for you, because a high score earned with AI can hide gaps in your own understanding.**
 The grade looked excellent right up to the moment the students had to rely on their own skills, and in exams, interviews, and on the job you eventually have to.
@@ -52,27 +53,29 @@ Learning research calls some useful challenges "desirable difficulties": recalli
 
 Research also points to ways AI can support learning {% cite gkintonl2025 Dong2026 %}. For your coursework, a useful aim is to let AI clear up confusing instructions or explain an unfamiliar term while you keep practicing the reasoning the assignment is meant to teach.
 
-
-The remainder of this article is an actionable guide for students who are trying to elevate their learning journey to be well prepared for a world in which AI is potentially increasingly replacing cognitive work and the bar we need to reach might be rising more and more with every release of more capable models.
-
 ## Cognitive Offloading: Beneficial vs. Detrimental Use
+Before diving into the actionable tips, I think it is useful to understand the theory behind what makes you learn effectively.
+Whether it helps or harms learning depends on *what* you offload. Cognitive Load Theory (CLT) differentiates different kinds of cognitive load: *instrinsic* and *extranous* with a total cap of how much combined load you can keep in your brain at a time {% cite sweller2011cognitive %}.
+
+**Intrinsic load** is the cognitive effort that actually helps you learn. It comes from the ideas you need to understand together, relative to what you already know. When you first learn recursion, tracking calls, variables, and return values are the intrinsic load that makes your mental muscle grow. 
+
+**Extraneous load** is avoidable effort added by how the material is presented, such as confusing instructions, searching for an explanation, challenges of installing required packages, or debugging a rare bug in your local step that prevents you from working on the actual homework problem.  
 
 **Cognitive offloading** means using tools to reduce mental effort, whether that's a calculator, a calendar reminder, or AI debugging a script {% cite RiskoGilbert2016 %}.
-
-Whether it helps or harms learning depends on *what* you offload. Cognitive Load Theory (CLT) starts with a familiar experience: your working memory can only hold so many unfamiliar things at once. **Intrinsic load** comes from the ideas you need to understand together, relative to what you already know. When you first learn recursion, tracking calls, variables, and return values can use up that capacity. **Extraneous load** is avoidable effort added by how the material is presented, such as confusing instructions or searching for an explanation. Practice builds reusable mental patterns in long-term memory, so familiar details take less effort to work with. The aim is to reduce avoidable effort and leave room for the thinking that builds those patterns {% cite sweller2011cognitive KalyugaPlass2025 %}.
+==Your aim should be to reduce extraneous load while keeping intrinsic load high. {% cite sweller2011cognitive KalyugaPlass2025 %}==.
 
 ### The Bad: Detrimental Offloading (Outsourcing)
-Detrimental offloading means outsourcing the thinking you need to practice {% cite LodgeLoble2026 %}. Asking AI to solve the traveling salesperson problem for you, for example, defeats an assignment meant to teach algorithmic optimization.
+Detrimental offloading means outsourcing the thinking you need to practice, i.e., intrinsic load {% cite LodgeLoble2026 %}. Asking AI to solve the traveling salesperson problem for you, for example, defeats an assignment meant to teach algorithmic optimization.
 
 Two risks follow:
 
-*   **Skipping practice:** If AI works out the logic for you, you miss practice recognizing and solving that kind of problem {% cite deBruinEtAl2023 Duplice2025 %}. In the math experiment above, which involved nearly 1,000 students, an AI tutor designed to support learning largely avoided the harm seen with unrestricted AI help {% cite BastaniEtAl2025 %}. In another study, 52 developers learned a new Python library. Those with AI help scored lower on the following quiz, especially on debugging questions {% cite ShenTamkin2026 %}. For a programming assignment, getting code to run is only one check; you also need to understand how to fix it when it breaks.
+*   **Skipping practice:** If AI works out the logic for you, you miss practice recognizing and solving that kind of problem {% cite deBruinEtAl2023 Duplice2025 %}. In the math experiment above, which involved nearly 1,000 students, the unrestricted use of AI resulted in 17% worse final grades {% cite BastaniEtAl2025 %}. In another study, 52 developers learned a new Python library. Those with AI help scored lower on the following quiz, especially on debugging questions {% cite ShenTamkin2026 %}. For a programming assignment, getting code to run is only one check; you also need to understand how to fix it when it breaks.
 
 *   **Metacognitive laziness:** This means letting AI take over the job of checking your own thinking: deciding how to start, noticing what you do not understand, and judging whether your answer makes sense. Research warns that better work produced with AI does not necessarily mean you have learned more {% cite FanEtAl2025 yan2025distinguishing %}. Before submitting an answer, check whether you can explain the reasoning without reopening the chat.
 
 
 ### The Good: Beneficial Offloading
-**Beneficial offloading** lets AI handle work that is getting in the way of your learning goal, leaving you more attention for the skill you need to practice {% cite LodgeLoble2026 gkintonl2025 %}. A coding agent can help when your goal is algorithm design and you prompt in pseudo-code; it would replace needed practice when syntax itself is the learning goal.
+**Beneficial offloading** lets AI handle  extranous load, i.e., work that is getting in the way of your learning goal to leave you more attention for the skill you need to practice {% cite LodgeLoble2026 gkintonl2025 %}. A coding agent can help when your goal is algorithm design and you prompt in pseudo-code; it would replace needed practice when syntax itself is the learning goal.
 
 Some research from other disciplines confirms this.
 For example, in a 12-week study with 240 university students, one group used AI to brainstorm, then did the work of questioning ideas, strengthening arguments, and revising their essays. They improved more in critical thinking and writing quality than students taught in the usual way {% cite HongEtAl2025 %}.
