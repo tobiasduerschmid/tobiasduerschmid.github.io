@@ -1410,6 +1410,7 @@ body.sebook-layout #tts-read-btn {
 
 /* The reading preference applies in both themes and in print. */
 html.blog-citations-disabled body.blog-layout .citation,
+html.blog-citations-disabled body.blog-layout .blog-citation-spacing,
 html.blog-citations-disabled body.blog-layout .blog-bibliography,
 html.blog-citations-disabled body.blog-layout .blog-references-nav {
   display: none;
