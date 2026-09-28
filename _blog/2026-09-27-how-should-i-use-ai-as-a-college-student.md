@@ -13,7 +13,7 @@ image_alt_text: "Student working on a computer with a robot sitting next to him.
 In my opinion, this will fundamentally impact how much the current generation of college students will take out of their educational experience, because AI capabilities are growing at a very fast pace. 
 In Math, within just four years, AI has grown from barely passing grade school math tests to [solving the hardest math problems](https://openai.com/index/navier-stokes-solution/) that the world's leading experts were unsuccessfully trying to solve for decades. 
 My baseline expectation is that this progress [will continue across STEM](https://openai.com/index/an-alien-mind/ "'Based on internal results, I have a strong expectation that this speed of progress could be sustained into recursive self-improvement' - Jakub Pachocki, Chief Scientist at OpenAI"), raising the bar on entry-level positions every year. 
-To help students prepaire for this scenario, I decided to write my advice down in a succinct, evidence-based post for everyone.**
+To help students prepare for this scenario, I decided to write my advice down in a succinct, evidence-based post for everyone.**
 
 ## Motivation: Build the Skills to Use AI Well
 It’s 7:00 PM on a Friday. Your friends want to watch a movie, but you’re stuck resolving a Git merge conflict in your group project. You and a teammate changed the same section of a file. Keeping your version would lose their changes; keeping theirs would lose yours. You’ve spent an hour figuring out how to combine them, and the temptation to paste the conflict into AI and just prompting it “fix this” is overwhelming.
@@ -43,7 +43,7 @@ To use an analogy: **Using AI to do the heavy lifting in your coursework is like
 
 A study on math students found that **students who used AI for homework performed 17% worse in subsequent tests** {% cite BastaniEtAl2025 %} --- that's the difference between an A and a C+.
 Reporting on a Brown University economics course describes a similar warning sign. The take-home exam average was 96 out of 100, far above the course's usual midterm averages, and the professor suspected AI use because many answers resembled ChatGPT's {% cite BrownDailyHerald2026Serrano InsideHigherEd2026Serrano %}. When the final moved in person, many students with perfect take-home scores dropped the course or didn't show up to the exam. 
-Most studnets who took it scored much lower {% cite BrownDailyHerald2026Serrano InsideHigherEd2026Serrano %}.
+Most students who took it scored much lower {% cite BrownDailyHerald2026Serrano InsideHigherEd2026Serrano %}.
 
 **This matters for you, because a high score earned with AI can hide gaps in your own understanding.**
 The grade looked excellent right up to the moment the students had to rely on their own skills, and in exams, interviews, and on the job you eventually have to.
@@ -55,7 +55,7 @@ Research also points to ways AI can support learning {% cite gkintonl2025 Dong20
 
 ## Cognitive Offloading: Beneficial vs. Detrimental Use
 Before diving into the actionable tips, I think it is useful to understand the theory behind what makes you learn effectively.
-Whether it helps or harms learning depends on *what* you offload. Cognitive Load Theory (CLT) differentiates different kinds of cognitive load: *instrinsic* and *extranous* with a total cap of how much combined load you can keep in your brain at a time {% cite sweller2011cognitive %}.
+Whether AI helps or harms learning depends on *what* you offload. Cognitive Load Theory (CLT) differentiates different kinds of cognitive load: *intrinsic* and *extraneous* with a total cap of how much combined load you can keep in your brain at a time {% cite sweller2011cognitive %}.
 
 **Intrinsic load** is the cognitive effort that actually helps you learn. It comes from the ideas you need to understand together, relative to what you already know. When you first learn recursion, tracking calls, variables, and return values are the intrinsic load that makes your mental muscle grow. 
 
@@ -75,7 +75,7 @@ Two risks follow:
 
 
 ### The Good: Beneficial Offloading
-**Beneficial offloading** lets AI handle  extranous load, i.e., work that is getting in the way of your learning goal to leave you more attention for the skill you need to practice {% cite LodgeLoble2026 gkintonl2025 %}. A coding agent can help when your goal is algorithm design and you prompt in pseudo-code; it would replace needed practice when syntax itself is the learning goal.
+**Beneficial offloading** lets AI handle extraneous load, i.e., work that is getting in the way of your learning goal to leave you more attention for the skill you need to practice {% cite LodgeLoble2026 gkintonl2025 %}. A coding agent can help when your goal is algorithm design and you prompt in pseudo-code; it would replace needed practice when syntax itself is the learning goal.
 
 Some research from other disciplines confirms this.
 For example, in a 12-week study with 240 university students, one group used AI to brainstorm, then did the work of questioning ideas, strengthening arguments, and revising their essays. They improved more in critical thinking and writing quality than students taught in the usual way {% cite HongEtAl2025 %}.
@@ -97,7 +97,7 @@ Try using questions to practice explaining a solution, then check again a few da
 Different questions give you different kinds of practice. Recalling what you studied without looking at your notes is **retrieval practice**. Explaining why a loop terminates asks you to reason through the code. Both can be useful, but a conversation only gives you that practice if you do the remembering or explaining yourself {% cite RoedigerKarpicke2006 BisraEtAl2018SelfExplanation %}.
 
 **How and Why it Works:**
-Ask the tutor to wait while you think and explain. Request a hint when you can make progress with one, or a worked example when you need more guidance. Applying CLT here means adjusting the challenge to your working-memory capacity: if a question requires juggling several unfamiliar ideas, ask for a simpler example first {% cite sweller2011cognitive %}. Pardos and Bhandari's research on AI-generated math help also highlights why you need to check the help you receive {% cite pardos2024 %}. Use lecture notes, a textbook, or code tests to check explanations. Asking AI to admit uncertainty does not ensure it will catch its own mistakes.
+Ask the tutor to wait while you think and explain. Request a hint when you can't make progress without one, or a worked example when you need more guidance. Applying CLT here means adjusting the challenge to your working-memory capacity: if a question requires juggling several unfamiliar ideas, ask for a simpler example first {% cite sweller2011cognitive %}. Pardos and Bhandari's research on AI-generated math help also highlights why you need to check the help you receive {% cite pardos2024 %}. Use lecture notes, a textbook, or code tests to check explanations. Asking AI to admit uncertainty does not ensure it will catch its own mistakes.
 
 **Example Prompt (Python):**
 > "You are a Python tutor. I understand a single list-comprehension filter but am confused by multiple 'if' conditions. Ask me one question about which elements pass each filter, and wait for my answer. If I cannot explain the next step, show a small worked example and then give me a similar question."
@@ -106,7 +106,7 @@ Ask the tutor to wait while you think and explain. Request a hint when you can m
 ### The "Attempt First" Pattern
 
 **The Research Grounding:**
-In classic memory experiments, people remembered words better when they worked them out from clues than when they simply read them {% cite Slamecka1978 %}. This gives you a reason to try producing an answer yourself before askign AI for help.
+In classic memory experiments, people remembered words better when they worked them out from clues than when they simply read them {% cite Slamecka1978 %}. This gives you a reason to try producing an answer yourself before asking AI for help.
 
 **How and Why it Works:**
 Try a relevant step: predict the output, sketch an approach, or identify what you do not understand. Then seek feedback. If you lack the prerequisite knowledge, start with an explanation or worked example and then attempt a related task {% cite bjork2011making bjork2020desirable %}. CLT helps explain this limit: searching for every next move can overwhelm working memory when the method is unfamiliar. A worked example can free attention for understanding the method {% cite sweller2011cognitive %}. To check for an illusion of understanding, close the explanation and try again independently.
@@ -129,11 +129,11 @@ Write a plan, identify a step you cannot justify, and ask for feedback on that s
 
 **The Research Grounding:**
 Imagine explaining inheritance to a classmate who keeps asking “why?”. 
-Researcher propose using AI in that role: its questions can prompt you to explain ideas and notice gaps {% cite tomisu2025 %}.
+Researchers propose using AI in that role: its questions can prompt you to explain ideas and notice gaps {% cite tomisu2025 %}.
 The study from 2024 tried this with 40 people new to algorithms. When the AI asked “why” and “how” questions and gave feedback on their teaching, more of the conversation focused on developing understanding than with a simpler version {% cite Jin2024TeachAI %}.
 
 Some benefits have lasted beyond the study session.
-In a university psychology course, users of a similar system (ChatTutor) scored higher four weeks later than students taught as usual, but did not clearly outperform ordinary ChatGPT users. In a separate school study, ChatTutor did better than ChatGPT on a later test but did not clearly beat studying the material again {% cite Makransky2025SenseMaking %}.
+In a university psychology course, users of a similar system (ChatTutor) scored higher four weeks later than students taught as usual, but did not clearly outperform ordinary ChatGPT users. In a separate school study, students using ChatTutor did better than those using ChatGPT on a later test but did not clearly beat studying the material again {% cite Makransky2025SenseMaking %}.
 
 **How and Why it Works:**
 Explain a concept in your own words, then answer “why” and “how” questions. The ICAP framework describes learning activities that go beyond repeating supplied information: for example, explaining why a base case stops recursion or working out what happens if it is missing. It predicts benefits from making those connections {% cite ChiWylie2014ICAP %}. This also fits CLT's focus on building reusable mental patterns: explaining how the steps connect can help you organize knowledge for future problems. Keep the explanation small enough to reason through; useful effort still needs to fit within working memory {% cite sweller2011cognitive %}.
@@ -159,24 +159,6 @@ Anthropic researchers Shen and Tamkin studied 52 developers learning an unfamili
 #### Actionable Tips:
 * **Explain and check:** If AI supplies code, predict its behavior, explain the key decisions, and test edge cases. Ask for explanations beside the relevant lines. This applies CLT's **split-attention effect**: keeping related information together reduces the extraneous load of mentally matching a separate explanation to the code {% cite sweller2011cognitive %}. Investigate disagreements between its explanation and your mental model; either can be wrong. Then try a related task without the generated solution.
 * **Make a relevant attempt:** Write down an approach, prediction, or specific question before seeking help when you have enough background to start. If you are missing prerequisites, get an explanation or example and then practice {% cite bjork2011making bjork2020desirable %}.
-</div>
-
-### Prompt Problems: Practicing Requirement Specification
-
-**The Research Grounding:**
-Denny and colleagues propose **“Prompt Problems”** as a programming exercise: look at example inputs and outputs, describe in your own words what the program should do, and test whether AI-generated code follows your description. This gives you a concrete way to practice turning examples into precise requirements {% cite denny2024prompt %}.
-
-**How and Why it Works:**
-This activity gives you practice describing behavior precisely and checking cases. It complements writing and debugging code when those are also learning goals. Copying a complete specification into a chatbot skips the specification work.
-
-**Example Activity (Python):**
-> "Given a table of employees and a target summary table, first write your own specification: which rows count, how groups are combined, what happens with missing values, and how results are ordered. Create example and boundary cases. Then ask AI to implement your specification, test its output, and revise any ambiguous requirements."
-
-<div class="action-box" markdown="1">
-#### Use AI for:
-* **Personalized feedback:** Ask for comments on a specific attempt and learning goal, then check the comments. Research reviews describe the promise of tailored help, while warning that AI feedback can be inaccurate and needs careful use {% cite Vorobyeva2025PersonalizedLearningThroughAI %}.
-* **Adaptive scaffolding:** Request the amount of guidance you need to take the next step, and reduce it as you become more capable.
-* **Worked examples and practice:** Study an explanation, complete missing steps, and then solve a related problem independently.
 </div>
 
 ### Study Patterns That Preserve Useful Practice
