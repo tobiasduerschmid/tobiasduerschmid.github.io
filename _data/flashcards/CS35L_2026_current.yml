@@ -4,6 +4,7 @@ active: true
 decks:
   - user_stories
   - study_tips
+other:
   - shell
   - shell_commands_reference
   - shell_pipes
