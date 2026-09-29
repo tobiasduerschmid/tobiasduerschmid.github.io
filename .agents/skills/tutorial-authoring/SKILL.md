@@ -1701,17 +1701,35 @@ URLs. The complete installed Alpine runtime closure must match
 update. Repositories and generated file metadata remain live inputs, so the
 rootfs is not claimed to be byte-for-byte reproducible.
 
-The v86 VM includes `mandoc` and the matching GNU coreutils manual pages,
-including `man date`, `man echo`, and `man chmod` (also `man 1 date`). The
-`/usr/local/bin/man` launcher delegates to `/usr/bin/man -c`, printing into
-terminal scrollback or a pipe. The VM shell has no controlling terminal, so
+The v86 VM includes `mandoc` and version-matched manuals for coreutils, Bash,
+grep, sed, gawk (`man awk` also works), findutils, diffutils, Git, and Make.
+`man [` uses the coreutils `test` manual, which documents bracket syntax.
+Git includes its command, configuration, and guide pages, so both
+`man git-commit` and `git help gitignore` work. Section selectors such as
+`man 1 date` and `man 5 gitignore` are supported. The
+`/usr/local/bin/man` launcher delegates to `/usr/bin/man -c -T ascii`, printing
+into terminal scrollback or a pipe. ASCII output keeps punctuation readable
+through the VM serial display, which handles bytes individually; default
+UTF-8 output would show broken bullets in pages such as `git status --help`.
+The VM shell has no controlling terminal, so
 mandoc's normal pager setup would stop its process group before displaying a
 page. Keep this launcher when rebuilding the VM; changing `PAGER` alone does
 not bypass that job-control setup.
-The coreutils pages stay compressed; the larger Info-format copy is removed
-because the VM has no Info reader. This is coreutils documentation, not a full
-Linux manual collection: other tools may have no installed manual page. For
-Bash builtins such as `echo`, `help echo` describes the shell implementation.
+Upstream pages stay compressed; unused Info manuals and Bash HTML/ancillary
+documentation are removed. Shell-only commands (`cd`, `set`, `export`, `local`,
+`return`, `exit`, `source`, `read`, `shift`, `break`, `continue`, `help`, `type`) have
+small preformatted `cat1/<command>.0` pages generated from the installed Bash
+`help -m` during the build. They are compressed by the initrd archive rather
+than individually because mandoc does not discover gzipped cat pages without
+an index. For commands shared with coreutils, such as `echo`, `help echo`
+describes the Bash implementation while `man echo` describes GNU coreutils.
+This remains a curated command collection, not all Linux manuals; in
+particular, do not install GCC documentation for the VM TinyCC wrapper.
+After staging the external `bzImage`, the build removes the redundant guest
+`/boot` kernel, initramfs, map, and config. These are not used by v86 direct
+kernel boot and can otherwise fill the guest RAM disk during extraction,
+silently omitting later command binaries. Snapshot generation rejects the
+kernel's `Initramfs unpacking failed:` diagnostic even if a shell appears.
 
 `vm/build-rootfs.sh` stages and validates both boot artifacts before replacing
 the published pair. A successful rebuild deliberately deletes the old v86

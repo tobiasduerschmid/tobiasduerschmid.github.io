@@ -95,7 +95,10 @@ function writeReleaseMetadata() {
       { timeout: 90_000 }
     );
 
-    const err = await page.evaluate(() => window.__vmError);
+    // Linux may reach a shell after partially unpacking a full RAM disk.
+    // Never publish that incomplete filesystem as a successful snapshot.
+    const err = await page.evaluate(() => window.__vmError ||
+      window.__bootBuf().split('\n').find(line => line.includes('Initramfs unpacking failed:')));
     if (err) throw new Error(`VM did not boot: ${err}`);
 
     console.log('[snapshot] VM booted, calling save_state()…');

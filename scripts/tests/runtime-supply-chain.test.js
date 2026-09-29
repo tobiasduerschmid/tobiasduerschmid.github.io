@@ -485,8 +485,21 @@ test('VM regeneration and deployed snapshots match their pinned compatibility in
     assert.equal(installedPackages.get(packageName), values[variableName],
       `deployed rootfs package ${packageName} must match ${variableName}`);
   }
-  assert.equal(installedPackages.get('coreutils-doc'), values.APK_COREUTILS_VERSION,
-    'deployed Coreutils manuals must match the installed command version');
+  const pinnedDocumentationPackages = {
+    APK_BASH_VERSION: 'bash-doc',
+    APK_COREUTILS_VERSION: 'coreutils-doc',
+    APK_DIFFUTILS_VERSION: 'diffutils-doc',
+    APK_FINDUTILS_VERSION: 'findutils-doc',
+    APK_GREP_VERSION: 'grep-doc',
+    APK_SED_VERSION: 'sed-doc',
+    APK_GAWK_VERSION: 'gawk-doc',
+    APK_GIT_VERSION: 'git-doc',
+    APK_MAKE_VERSION: 'make-doc',
+  };
+  for (const [variableName, packageName] of Object.entries(pinnedDocumentationPackages)) {
+    assert.equal(installedPackages.get(packageName), values[variableName],
+      `deployed ${packageName} manuals must match the installed command version`);
+  }
 
   const kernelVersion = values.APK_LINUX_VIRT_VERSION.replace(/-r\d+$/, '');
   const kernelRelease = `${kernelVersion}-0-virt`;

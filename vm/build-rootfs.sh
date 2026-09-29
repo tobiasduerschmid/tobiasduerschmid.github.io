@@ -43,15 +43,23 @@ docker run --rm --platform linux/386 \
     echo "[1/4] Installing packages..."
     apk add --no-cache \
         "bash=$APK_BASH_VERSION" \
+        "bash-doc=$APK_BASH_VERSION" \
         "coreutils=$APK_COREUTILS_VERSION" \
         "coreutils-doc=$APK_COREUTILS_VERSION" \
         "diffutils=$APK_DIFFUTILS_VERSION" \
+        "diffutils-doc=$APK_DIFFUTILS_VERSION" \
         "findutils=$APK_FINDUTILS_VERSION" \
+        "findutils-doc=$APK_FINDUTILS_VERSION" \
         "grep=$APK_GREP_VERSION" \
+        "grep-doc=$APK_GREP_VERSION" \
         "sed=$APK_SED_VERSION" \
+        "sed-doc=$APK_SED_VERSION" \
         "gawk=$APK_GAWK_VERSION" \
+        "gawk-doc=$APK_GAWK_VERSION" \
         "git=$APK_GIT_VERSION" \
+        "git-doc=$APK_GIT_VERSION" \
         "make=$APK_MAKE_VERSION" \
+        "make-doc=$APK_MAKE_VERSION" \
         "nano=$APK_NANO_VERSION" \
         "less=$APK_LESS_VERSION" \
         "mandoc=$APK_MANDOC_VERSION" \
@@ -59,15 +67,26 @@ docker run --rm --platform linux/386 \
         "tree=$APK_TREE_VERSION" \
         "musl-dev=$APK_MUSL_DEV_VERSION"
 
-    # Keep the compressed coreutils man pages (including date, echo, chmod).
-    # mandoc reads them directly without groff, Perl, or a man-db index.
-    # The larger Info manual has no reader in this VM, so omit that copy.
-    rm -f /usr/share/info/coreutils.info*
+    # Keep compressed manuals, including Git command/configuration/guide pages.
+    # Info has no reader in this VM; Bash HTML and ancillary docs duplicate
+    # material available through man bash. Neither belongs in the download.
+    rm -rf /usr/share/info /usr/share/doc/bash
+
+    # Shell-only commands have no standalone upstream man pages. Reuse the
+    # installed Bash help as preformatted cat pages, compressed by the initrd.
+    # mandoc discovers cat1/name.0 directly (but not name.0.gz without an index).
+    mkdir -p /usr/share/man/cat1
+    for builtin in cd set export local return exit source read shift break continue help type; do
+        bash -c "help -m $builtin" > "/usr/share/man/cat1/$builtin.0"
+    done
+    # The test manual also documents its bracket spelling.
+    ln -sf test.1.gz "/usr/share/man/man1/[.1.gz"
 
     # Alpine package/app-link details can vary; tutorials and tests use the
     # portable command name `awk`, so guarantee it exists when gawk is present.
     if [ -x /usr/bin/gawk ]; then
         ln -sf /usr/bin/gawk /usr/bin/awk
+        ln -sf gawk.1.gz /usr/share/man/man1/awk.1.gz
     fi
 
     # Build TCC (Tiny C Compiler) from source — not in Alpine repos for 386
@@ -182,6 +201,11 @@ MOTD
     rm -rf /lib/modules
     mv /tmp/keep_modules/lib/modules /lib/
     rm -rf /tmp/keep_modules
+
+    # v86 loads the staged bzImage directly. The installed kernel, initramfs,
+    # map, and config under /boot are redundant in the guest filesystem and
+    # can exhaust its RAM-disk capacity before all command binaries unpack.
+    rm -rf /boot
 
     echo "[4/4] Creating cpio archive..."
 
