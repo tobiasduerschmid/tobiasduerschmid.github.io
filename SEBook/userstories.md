@@ -119,7 +119,7 @@ If stories violate the Independent criterion, you can improve them using these t
 > * **Given** I have received a message, **When** I click the "Reply" button and submit my response, **Then** the reply is sent to the original sender.
 > * **Given** the reply has been received, **When** the original sender views the message, **Then** it is displayed as a reply to the original message.
 
-* **Negotiable:** Yes. Neither story dictates a specific UI or technology.
+* **Negotiable:** Yes. Neither story dictates a messaging protocol, database, or service boundary.
 * **Valuable:** Yes. Communication features are clearly valuable to users.
 * **Estimable:** Difficult. Because both stories share the "send" capability, whichever story is implemented second has unpredictable effort—parts of it may already be done, making estimates unreliable.
 * **Small:** Yes. Each story is a manageable chunk of work that fits within a sprint.
@@ -167,16 +167,16 @@ This criterion matters for several fundamental reasons:
 
 **How to Evaluate It**
 To determine if a user story is negotiable, ask:
-1. **Does this story dictate a specific technology or design decision?** Words like "MongoDB", "HTTPS", "REST API", or "dropdown menu" in a story are red flags that it has left the space of requirements and entered the space of design.
-2. **Could the development team solve this problem using a completely different technology or layout, and would the user still be happy?** If the answer is yes, the story is negotiable. If the answer is no, the story is over-constrained.
-3. **Does the story include UI details?** Embedding user interface specifics (e.g., "a print dialog with a printer list") introduces premature assumptions before the team fully understands the business goals {% cite cohn2004user %}.
+1. **Does this story dictate a specific technology or design decision?** References to "MongoDB", "HTTPS", "REST API", or "microservice" invite a check: is that technology required by an existing constraint, or is it merely a proposed implementation?
+2. **Does the story allow different technical designs that satisfy the same user need?** If it rules out otherwise suitable solutions by mandating a particular database, framework, or service boundary without a necessary constraint, it is over-constrained.
+3. **Does the story prescribe internal implementation steps?** Requiring a particular algorithm, class structure, or sequence of service calls can lock in technical decisions before the team fully understands the business goals {% cite cohn2004user %}.
 
 **How to Improve It**
 If a story violates the Negotiable criterion, you can improve it using these techniques:
 * **Focus on the "Why":** Use "So that" clauses to clarify the underlying goal, which allows the team to negotiate the "How".
 * **Specify What, Not How:** Replace technology-specific language with the user need it serves. Instead of "use HTTPS", write "keep data I send and receive confidential".
-* **Define Acceptance Criteria, Not Steps:** Define the outcomes that must be true, rather than the specific UI clicks or database queries required.
-* **Keep the UI Out as Long as Possible:** Avoid embedding interface details into stories early in the project {% cite cohn2004user %}. Focus on what the user needs to accomplish, not the specific controls they will use.
+* **Define Acceptance Criteria, Not Implementation Steps:** Define the outcomes that must be true, rather than the database queries, method calls, or service interactions used to produce them.
+* **Leave Technical Design Open:** Keep choices about databases, frameworks, algorithms, and service boundaries open while the team clarifies the user need {% cite cohn2004user %}. Document genuine technical constraints separately so the team knows which choices are fixed and which remain negotiable.
 
 ### Examples of Stories Violating the Negotiable Criterion
 
@@ -192,23 +192,23 @@ If a story violates the Negotiable criterion, you can improve it using these tec
 * **Why it violates Negotiable:** Specifying "MongoDB" is a design decision. The user does not care where the data lives. The engineering team might realize that a relational SQL database or local browser caching is a much better fit for the application’s architecture.
 * **How to fix it:** *"**As a** subscriber, **I want** the system to remember my profile settings **so that** I don’t have to re-enter them every time I log in."*
 
-**Example 2: The UI-Specific Story**
-> *"**As a** student, **I want to** select my courses from a dropdown menu **so that** I can register for the upcoming semester."*
-> * **Given** I am on the registration page, **When** I select a course from the dropdown menu and click "Register", **Then** the course is added to my schedule.
+**Example 2: The Architecture-Specific Story**
+> *"**As a** student, **I want to** register for courses through a separate registration microservice **so that** I can secure a place in my chosen classes for the upcoming semester."*
+> * **Given** I am eligible to enroll in a course with an available seat, **When** I request registration, **Then** I am enrolled in the course and it appears in my schedule.
 
-* **Independent:** Yes. Course registration does not depend on other stories.
+* **Independent:** Yes, assuming the course catalog and student accounts already exist and no other pending story is needed to support enrollment.
 * **Valuable:** Yes. Registering for courses is clearly valuable to the student.
-* **Estimable:** Yes. Building a course selection feature is well-understood work.
-* **Small:** Yes. This is a single, focused feature.
-* **Testable:** Yes. You can verify that selecting a course adds it to the schedule.
-* **Why it violates Negotiable:** "Dropdown menu" is a specific UI design decision. The user’s actual need is to select courses, which could be achieved through many different interfaces—a search bar, a visual schedule builder, a drag-and-drop interface, or even a conversational assistant. By prescribing the dropdown, the story constrains the design team before they have explored the problem space {% cite cohn2004user %}.
-* **How to fix it:** *"**As a** student, **I want to** select courses for the upcoming semester **so that** I can register for my classes."* Similarly, specifying protocols (e.g., "use HTTPS"), frameworks (e.g., "built with React"), or architectural patterns (e.g., "using microservices") are all design decisions that constrain the solution space.
+* **Estimable:** Yes, assuming the team understands the enrollment rules and the existing system it must integrate with.
+* **Small:** Yes, if the scope is limited to enrolling in one available course and fits within an iteration.
+* **Testable:** Yes. You can verify that an eligible student's registration results in enrollment and an updated schedule.
+* **Why it violates Negotiable:** Requiring a "separate registration microservice" chooses an architecture before the team has evaluated the alternatives. The student's need is to secure a place in a course. A module in the existing application or a separately deployed service could both meet that need. Without an established technical constraint requiring a separate service, the story should leave that decision to design discussions {% cite cohn2004user %}.
+* **How to fix it:** *"**As a** student, **I want to** register for courses with available seats **so that** I can secure a place in my chosen classes for the upcoming semester."* Keep the acceptance criterion about successful enrollment; decide service boundaries, communication protocols, and frameworks during technical design.
 
 > **Quick Check:** *"**As a** restaurant owner, **I want** customers to scan a QR code at their table to view the menu on their phone **so that** I don't have to print physical menus."*
 >
 > Does this story satisfy the Negotiable criterion?
 >
-> <details><summary><strong>Reveal Answer</strong></summary> No. "Scan a QR code" prescribes a specific solution. The owner's actual need is for customers to access the menu without physical copies — this could be achieved via QR codes, NFC tags, a URL, a dedicated app, or a table-mounted tablet. A negotiable version: <i>"As a restaurant owner, I want customers to access the menu digitally at their table so that I can eliminate printed menus."</i> </details>
+> <details><summary><strong>Reveal Answer</strong></summary> No, unless an established constraint requires QR codes. "Scan a QR code" makes a technical decision about how customers access the digital menu. The owner's actual need is for customers to access the menu without physical copies; a QR code, a web address, or a table-mounted tablet could each serve that goal. A negotiable version: <i>"As a restaurant owner, I want customers to access the menu digitally at their table so that I can eliminate printed menus."</i> </details>
 
 ### What to do when the user *really needs* the specific technology?
 Sometimes the required solution does indeed have to conform to the specific technology that the customer is using in their organization. 
@@ -251,7 +251,7 @@ If stories violate the Valuable criterion, you can improve them using these tech
 > * **Given** the search results are displayed, **When** the travel agent selects a flight from the list, **Then** the booking page for that flight is shown.
 
 * **Independent:** Yes. Searching for flights does not depend on other stories.
-* **Negotiable:** Yes. The story does not prescribe any specific technology, UI layout, or data source—the team is free to decide how to build the search.
+* **Negotiable:** Yes. The story does not prescribe a search algorithm, database, or integration protocol—the team is free to decide how to build the search.
 * **Estimable:** Yes. Building a flight search with results display is well-understood work with clear scope.
 * **Small:** Yes. A single search-and-display feature fits within a sprint.
 * **Testable:** Yes. The given acceptance criteria can be translated into an unambiguous test with concrete steps and clear testing criteria.
@@ -373,7 +373,7 @@ The approach to fixing a story that violates the Small criterion depends on whet
 > * **Given** I have selected a flight, hotel, and rental car, **When** I click "Book", **Then** all reservations are confirmed and I receive a booking confirmation email.
 
 * **Independent:** Yes. Planning a vacation does not overlap with other stories.
-* **Negotiable:** Yes. The specific features and UI are open to discussion.
+* **Negotiable:** Yes. Service boundaries and the implementation of booking integrations are open to discussion.
 * **Valuable:** Yes. End-to-end vacation planning is clearly valuable to travelers.
 * **Estimable:** Partially. A developer can give a rough order-of-magnitude estimate ("several months"), but the hidden complexity within this epic makes the estimate too unreliable for sprint planning. Violations of Small often cause violations of Estimable, since epics contain hidden complexity {% cite cohn2004user %}.
 * **Testable:** Yes. Acceptance criteria can be written, though they would need to be much more detailed once the epic is broken into smaller stories.
@@ -385,7 +385,7 @@ The approach to fixing a story that violates the Small criterion depends on whet
 > * **Given** I am viewing a community service entry on my resume, **When** I change the date field and click "Save", **Then** the updated date is displayed on my resume.
 
 * **Independent:** Yes. Editing a single date field does not depend on other stories.
-* **Negotiable:** Yes. The exact editing interaction is open to discussion.
+* **Negotiable:** Yes. The storage and update mechanisms are open to discussion.
 * **Valuable:** Yes. Correcting resume data is valuable to the user.
 * **Estimable:** Yes. Editing a single field is trivially estimable.
 * **Testable:** Yes. Clear pass/fail criteria can be written.
@@ -432,7 +432,7 @@ Below are two user stories that are not testable but still satisfy (most) other 
 > * **Given** the landing page is deployed, **When** a visitor from the 18-24 demographic views it, **Then** the design looks **gorgeous and modern**.
 
 * **Independent:** Yes. It doesn't inherently rely on other features being built first.
-* **Negotiable:** Yes. The exact layout and tech used to build it are open to discussion.
+* **Negotiable:** Yes. The framework and rendering approach used to build the page are open to discussion.
 * **Valuable:** Yes. A landing page to attract a younger demographic provides clear business value.
 * **Estimable:** Yes. Generally, a frontend developer can estimate the effort to build a standard landing page independent of what specific definition of "gorgeous and modern" is used. 
 * **Small:** Yes. Building a single landing page easily fits within a single sprint.
@@ -644,7 +644,7 @@ In a controlled experiment with 118 undergraduate students, Dalpiaz and Sturm co
 - **Ambiguity**: Ambiguity manifests across lexical, syntactic, semantic, and pragmatic levels {% cite amna2022ambiguity %}. When analyzed collectively, vague stories often lead to severe cross-story defects, including logical conflicts and missing dependencies {% cite amna2022ambiguity %}.
 
 ## Process Anti-Patterns
-- **Story Smells**: Common "smells" include *Goldplating* (adding unplanned features), *UI Detail Too Soon* (constraining design before understanding goals), and *Thinking Too Far Ahead* (exhaustive detailing long before implementation) {% cite cohn2004user %}.
+- **Story Smells**: Watch for adding unplanned features, committing to technical design decisions before understanding the user's goal, and detailing work long before implementation {% cite cohn2004user %}. For example, prescribing a database, framework, or service boundary without a necessary constraint can close off suitable solutions prematurely.
 
 ## Automation and LLMs
 Recent advancements in Large Language Models (LLMs) have introduced new capabilities for requirement engineering:
