@@ -1,0 +1,4 @@
+#!/bin/sh
+# The VM shell has no controlling terminal. mandoc's pager setup would stop
+# its process group, so print into scrollback (or the caller's pipe) instead.
+exec /usr/bin/man -c "$@"

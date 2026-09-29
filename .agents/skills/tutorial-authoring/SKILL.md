@@ -1701,6 +1701,18 @@ URLs. The complete installed Alpine runtime closure must match
 update. Repositories and generated file metadata remain live inputs, so the
 rootfs is not claimed to be byte-for-byte reproducible.
 
+The v86 VM includes `mandoc` and the matching GNU coreutils manual pages,
+including `man date`, `man echo`, and `man chmod` (also `man 1 date`). The
+`/usr/local/bin/man` launcher delegates to `/usr/bin/man -c`, printing into
+terminal scrollback or a pipe. The VM shell has no controlling terminal, so
+mandoc's normal pager setup would stop its process group before displaying a
+page. Keep this launcher when rebuilding the VM; changing `PAGER` alone does
+not bypass that job-control setup.
+The coreutils pages stay compressed; the larger Info-format copy is removed
+because the VM has no Info reader. This is coreutils documentation, not a full
+Linux manual collection: other tools may have no installed manual page. For
+Bash builtins such as `echo`, `help echo` describes the shell implementation.
+
 `vm/build-rootfs.sh` stages and validates both boot artifacts before replacing
 the published pair. A successful rebuild deliberately deletes the old v86
 save-state and its manifests because a snapshot embeds the kernel, initrd,

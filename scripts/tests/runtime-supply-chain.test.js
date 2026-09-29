@@ -475,6 +475,7 @@ test('VM regeneration and deployed snapshots match their pinned compatibility in
     APK_MAKE_VERSION: 'make',
     APK_NANO_VERSION: 'nano',
     APK_LESS_VERSION: 'less',
+    APK_MANDOC_VERSION: 'mandoc',
     APK_FILE_VERSION: 'file',
     APK_TREE_VERSION: 'tree',
     APK_MUSL_DEV_VERSION: 'musl-dev',
@@ -484,6 +485,8 @@ test('VM regeneration and deployed snapshots match their pinned compatibility in
     assert.equal(installedPackages.get(packageName), values[variableName],
       `deployed rootfs package ${packageName} must match ${variableName}`);
   }
+  assert.equal(installedPackages.get('coreutils-doc'), values.APK_COREUTILS_VERSION,
+    'deployed Coreutils manuals must match the installed command version');
 
   const kernelVersion = values.APK_LINUX_VIRT_VERSION.replace(/-r\d+$/, '');
   const kernelRelease = `${kernelVersion}-0-virt`;

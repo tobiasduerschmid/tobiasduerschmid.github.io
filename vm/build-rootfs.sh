@@ -44,6 +44,7 @@ docker run --rm --platform linux/386 \
     apk add --no-cache \
         "bash=$APK_BASH_VERSION" \
         "coreutils=$APK_COREUTILS_VERSION" \
+        "coreutils-doc=$APK_COREUTILS_VERSION" \
         "diffutils=$APK_DIFFUTILS_VERSION" \
         "findutils=$APK_FINDUTILS_VERSION" \
         "grep=$APK_GREP_VERSION" \
@@ -53,9 +54,15 @@ docker run --rm --platform linux/386 \
         "make=$APK_MAKE_VERSION" \
         "nano=$APK_NANO_VERSION" \
         "less=$APK_LESS_VERSION" \
+        "mandoc=$APK_MANDOC_VERSION" \
         "file=$APK_FILE_VERSION" \
         "tree=$APK_TREE_VERSION" \
         "musl-dev=$APK_MUSL_DEV_VERSION"
+
+    # Keep the compressed coreutils man pages (including date, echo, chmod).
+    # mandoc reads them directly without groff, Perl, or a man-db index.
+    # The larger Info manual has no reader in this VM, so omit that copy.
+    rm -f /usr/share/info/coreutils.info*
 
     # Alpine package/app-link details can vary; tutorials and tests use the
     # portable command name `awk`, so guarantee it exists when gawk is present.
@@ -104,6 +111,10 @@ docker run --rm --platform linux/386 \
     # gcc wrapper that delegates to tcc
     cp /overlay/gcc /usr/bin/gcc
     chmod +x /usr/bin/gcc
+
+    # Avoid mandoc job-control setup on the VM serial console.
+    cp /overlay/man /usr/local/bin/man
+    chmod +x /usr/local/bin/man
 
     # gg-daemon: in-VM RPC server for tutorial-code.js sync queries.
     # See vm/overlay/gg-daemon for protocol details.
