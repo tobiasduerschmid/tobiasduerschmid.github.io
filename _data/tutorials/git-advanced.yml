@@ -412,17 +412,12 @@ steps:
     - question: Reflog is **local only**. Which of these destroys your reflog and the rescue path with it? (Select all that apply)
       type: multiple
       options:
-      - '`rm -rf .git` (or deleting the whole clone directory)'
-      - A fresh `git clone` of the same repo from the remote
-      - '`git push --force` to a remote'
-      - Default reflog expiry once the configured retention window passes without activity
+          ["Deleting the original .git directory or the whole original clone","Cloning the same remote into a separate new directory while keeping the original clone","git push --force to a remote","Expiring the relevant local reflog entries with git reflog expire"]
       correct_indices:
-      - 0
-      - 1
-      - 3
+        [0,3]
       option_feedback:
-        2: This answer confuses remote history with local reflog; force-pushing rewrites the *remote* branch but leaves your local `.git/logs/` (and its rescue path) untouched.
-      explanation: Reflog lives in `.git/logs/`. Destroying `.git/` takes the reflog with it. A fresh `git clone` starts with an empty reflog of *that* clone. Default expiry is configurable via `gc.reflogExpire`. A `git push --force` rewrites the remote's *branch* but doesn't touch your local reflog — your local rescue path is still intact.
+          {"1":"A separate clone has its own reflog and does not delete the original clone or its reflog.","2":"Force-push changes remote refs; it does not delete the local reflog."}
+      explanation: "Reflogs are local. Deleting the original repository removes its reflogs, and expiry can remove the entries you need. A new clone does not copy those entries, but it also does not destroy the original. Recovering an old commit still requires its object to exist; reflog expiry and object pruning are separate operations."
 - title: Relative Commit Addresses & Git's Object Database
   view: git_graph
   instructions: |
@@ -533,7 +528,7 @@ steps:
     | **Transfer objects/refs** | `fetch`, `push`, `pull` | Local/remote object/ref sets change |
 
     Most everyday commands combine categories (e.g., `commit` creates a
-    commit object **and** moves a branch ref **and** clears the index).
+    commit object **and** moves a branch ref **and** leaves the index matching the new commit).
     The point isn't that operations are pure — it's that *no operation
     rewrites existing commit objects*. Whenever a later step feels
     confusing, ask: *what objects is this creating? what refs is it
@@ -1319,7 +1314,7 @@ steps:
         1: This answer rejects cherry-pick's other canonical use case (surgical extraction from a partial branch).
         3: This answer rejects another canonical use case; cherry-picking the same fix into multiple maintenance branches is standard practice.
       explanation: For integrating many commits, use `git merge` or `git rebase` — cherry-picking 50 commits by hand is laborious and loses merge base information, which complicates future merges. Cherry-pick is surgical — reserve it for one or a few commits.
-    - question: 'Mid-cherry-pick, a conflict pauses Git. You realize you need to check something on another branch first. Which sequence safely preserves your conflict-resolution progress so far?'
+    - question: "Mid-cherry-pick, a conflict pauses Git. You are willing to discard your partial conflict-resolution edits and restart the pick later. Which sequence cancels the operation so you can work on another branch?"
       options:
       - '`git stash` — stashes work across branches, including mid-cherry-pick state'
       - '`git cherry-pick --abort`, switch, do the other task, then re-run the pick.'
@@ -1330,7 +1325,7 @@ steps:
         0: This answer assumes stash captures Git's internal cherry-pick state (CHERRY_PICK_HEAD, conflicted index); it doesn't.
         2: This answer assumes Git tolerates mid-cherry-pick switches; it doesn't, the index is in an unmergeable state.
         3: This answer corrupts the cherry-pick state by inserting a foreign commit into its in-progress flow.
-      explanation: You cannot cleanly stash or switch with an in-progress cherry-pick — Git's internal state (MERGE_MSG, CHERRY_PICK_HEAD, conflicted index) is not stash-compatible. Abort, switch, do the other task, come back, and re-start the cherry-pick. The abort is cheap and restores a clean state.
+      explanation: "git cherry-pick --abort returns to the state before the cherry-pick sequence and discards partial conflict-resolution edits. After switching back later, rerun the pick and resolve again. If you need to preserve partial edits, save a separate copy before aborting; abort itself does not preserve them."
     - question: Put in order the commands that resolve a conflicted cherry-pick end-to-end.
       type: parsons
       display: block
@@ -3988,16 +3983,11 @@ steps:
       explanation: 'After `git submodule update`, submodules are in detached HEAD at the pinned SHA (because that''s what the outer tree specified — no branch context). Any commit you make there is anchored to nothing. Fix: `git switch -c <branch>` inside the submodule **before** committing. Same detached-HEAD pattern as Step 1, encountered in a submodule setting.'
     - question: 'You ran `git rebase main` inside a submodule and rewrote three of its commits. The outer repo''s `git status` says `modified: vendor/math-utils (new commits)`. Is anything wrong with this?'
       options:
-      - No issue — rebase inside a submodule is business as usual
-      - The outer pin still points at unfindable pre-rebase SHAs.
-      - Git prevents rebase inside submodules to protect the outer pin
-      - Rebase deletes the submodule from the outer repo's tree
-      correct_index: 1
+            ["Not necessarily: verify remote availability of the intended pin","The old commits are necessarily unfindable as soon as rebase finishes","Git forbids rebasing in submodules","Rebase deletes the submodule from the outer repository"]
+      correct_index: 0
       option_feedback:
-        0: This answer ignores that the outer repo may still pin pre-rebase SHAs that need pushing for teammates' historical clones to work.
-        2: This answer assumes Git blocks rebase in submodules; it doesn't.
-        3: This answer invents destructive semantics; rebase doesn't delete repos.
-      explanation: 'A submodule is a real Git repo — rebase works there exactly as in Step 8/9. The complication is that the outer repo may still pin the pre-rebase SHAs; if those weren''t pushed, teammates checking out old outer-repo commits will fail to fetch them (`fatal: reference is not a tree`). Same cardinal rule: rebase only unpushed/local history.'
+          {"1":"Rebase creates new commits; it does not immediately erase the old ones. Old pins can remain available in the submodule or on its remote.","2":"A submodule is a Git repository and permits rebase.","3":"Rebase does not remove the outer gitlink."}
+      explanation: "The status says only that the checked-out submodule commit differs from the recorded gitlink. Verify that every pinned commit teammates need is available from the submodule remote. Commit the new pin in the outer repository when the new revision is intended. Rebase alone does not make the old SHA unfindable."
     - question: The full "publish a submodule change" ceremony. Put the six required commands in order. Distractors are verb-variants that break one or more of the ceremony's causal invariants.
       type: parsons
       display: block
@@ -4435,16 +4425,13 @@ steps:
         0: This answer is the old "either creates or moves, never both" simplification; most operations *do* both, the real invariant is that existing commits aren't rewritten.
         2: This answer abandons the underlying invariant for rote learning; the schema is what makes Git predictable.
         3: This answer mistakes per-command behavior for a remote-config sensitivity that doesn't exist.
-      explanation: 'This is the load-bearing invariant from Step 3 cashed in across all 15 steps. Branch creation moves a ref. Commit creates an object + moves a ref + clears the index. Rebase creates a *series* of new objects + moves a ref. Cherry-pick creates one new object + moves a ref. Squash-merge creates one new object + moves a ref. Even the "destructive" commands (reset, rebase drop) only move refs — the old objects remain in `.git/objects` and reflog keeps their addresses. If you internalize *immutability of existing commits*, nothing in Git is mysterious.'
+      explanation: "This is the load-bearing invariant from Step 3 cashed in across all 15 steps. Branch creation moves a ref. Commit creates an object + moves a ref + leaves the index matching the new commit. Rebase creates a *series* of new objects + moves a ref. Cherry-pick creates one new object + moves a ref. git merge --squash prepares the combined index/worktree result; the subsequent git commit creates a commit and moves a ref. History-rewriting operations leave old commits available until retention and pruning remove them; reflogs can help find those commits. Working-tree changes discarded by reset --hard are a separate risk. If you internalize *immutability of existing commits*, nothing in Git is mysterious."
     - question: 'A junior teammate says: "Destructive Git commands like rebase and reset are too dangerous to use; I''ll stick with merge and revert only." Evaluate this position.'
       options:
-      - Correct — rebase and reset should be avoided by anyone who isn't a Git expert
-      - Partly right on shared branches; on local/unpushed branches reflog makes them safe
-      - Incorrect — there is no difference between local and shared branches
-      - Incorrect — reflog auto-recovers destructive operations immediately in all cases
+        ["Correct — rebase and reset should be avoided by anyone who isn't a Git expert","Shared-history risks differ; local use still needs backups of uncommitted work","Incorrect — there is no difference between local and shared branches","Incorrect — reflog auto-recovers destructive operations immediately in all cases"]
       correct_index: 1
       option_feedback:
         0: This answer absolutizes a context-dependent rule; rebase/reset are routine on local branches.
         2: This answer denies the very local/shared distinction that resolves the safety question.
         3: This answer overstates reflog's reach; it works within retention windows on local repos, not as a universal undo.
-      explanation: 'Conditional knowledge is the mark of an expert (Ambrose et al. 2010). The cardinal rule is not "rebase = bad" — it is "rebase rewrites history, which is dangerous on shared branches and safe on local ones." The junior''s heuristic is safer *and* less effective; teaching them *when* each tool is appropriate is the goal. The same tool, on the same commits, is either routine or catastrophic depending on one thing — has this history been pushed and pulled by others? This is the single most important distinction the advanced tutorial taught.'
+      explanation: "Rebase and reset are useful when their effects fit the task. Rewriting history that others use requires coordination. Local reflogs can help recover recent commits while their objects still exist, but do not back up never-committed working-tree edits discarded by reset --hard. Inspect status and save work before destructive operations even on an unpushed branch."

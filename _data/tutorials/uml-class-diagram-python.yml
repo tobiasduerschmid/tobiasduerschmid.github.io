@@ -512,7 +512,7 @@ steps:
             `-` means **private** — only accessible within the class itself. In Python, this maps to the double-underscore prefix (`__`), which triggers name mangling.
 
         - question: |
-            A Python method named `_calculate_tax` would appear in UML with which visibility marker?
+            In this tutorial's renderer, a Python method named `_calculate_tax` appears with which UML visibility marker?
           type: single
           options:
             - "`+` (public)"
@@ -576,7 +576,7 @@ steps:
 
       Python is dynamically typed — you can write `def get_price(self)` without ever specifying that it returns a `float`. This flexibility is convenient, but it hides the **contracts** between components. Another developer reading your code has to trace through the logic to figure out what types flow where.
 
-      UML does not allow this ambiguity. Every attribute must show its type, and every method must show its parameter types and return type.
+      For this detailed design exercise, show attribute, parameter, and return types to make the contracts explicit. UML permits diagrams to omit these details when a higher-level view is more useful.
 
       ### UML Type Notation
 
@@ -775,7 +775,7 @@ steps:
       questions:
 
         - question: |
-            Why does UML require explicit types on all attributes and methods?
+            Why do we add explicit attribute, parameter, and return types in this detailed design exercise?
           type: single
           options:
             - "Because UML only works with statically typed languages"
@@ -784,7 +784,7 @@ steps:
             - "Because Python requires type hints to run"
           correct_index: 2
           explanation: |
-            UML forces explicit types to document the **contracts** — what data flows between components and in what form. This is a design decision that improves communication, regardless of whether the language enforces it.
+            Explicit types document the **contracts** — what data flows between components and in what form. This is a design decision that improves communication, regardless of whether the language enforces it.
 
         - question: |
             How does the UML notation `+ apply_discount(percent: float): float` map to Python?
@@ -1359,7 +1359,7 @@ steps:
 
       ### Why this matters
 
-      "Has-a" is not a single relationship — it is a family. A `Car` *has* an `Engine` (built into it; scrapped with it). A `Team` *has* `Player`s (traded between teams; outlive the team). Both are has-a, but the lifecycle implications are radically different, and good designers make that distinction explicit. UML gives you two diamonds (filled vs. hollow) to encode the difference, and Python encodes it through *where the part is created*.
+      "Has-a" is not a single relationship — it is a family. A `Car` *has* an `Engine` (built into it; scrapped with it). A `Team` *has* `Player`s (traded between teams; outlive the team). Both are has-a, but the lifecycle implications are radically different, and good designers make that distinction explicit. UML gives you two diamonds (filled vs. hollow) to encode the difference, and this tutorial's renderer uses *where the part is created* as a heuristic. Ownership is a design contract; Python construction syntax alone does not enforce it.
 
       ### 🎯 You will learn to
 
@@ -1383,9 +1383,9 @@ steps:
       | **Symbol** | <span class="uml-sym" data-diagram="class" data-sym="*--"></span> filled diamond | <span class="uml-sym" data-diagram="class" data-sym="o--"></span> hollow diamond |
       | **Ownership** | Whole **owns** the part exclusively (no sharing) | Whole **references** the part (can be shared) |
       | **Lifecycle** | Part is destroyed with the whole | Part survives independently |
-      | **Python pattern** | Part created **inside** `__init__` | Part **passed in** from outside |
+      | **Renderer heuristic used here** | Part created **inside** the whole | Part **passed in** from outside |
 
-      > **Honest caveat.** Composition has sharp semantics in the UML spec: a part belongs to **exactly one** composite at a time, and is deleted with it. **Aggregation, however, is deliberately fuzzy** — the UML 2 specification calls its semantics "intentionally informal". For this tutorial we'll use the common textbook interpretation (conceptual whole-part relationship).
+      > **Honest caveat.** Composition has sharp semantics in the UML spec: a part belongs to **at most one** composite at a time, and is deleted with it unless detached first. UML does not prescribe where or in what order the objects are created. **Aggregation, however, is deliberately fuzzy** — the UML 2 specification calls its semantics "intentionally informal". For this tutorial we'll use the common textbook interpretation (conceptual whole-part relationship).
       > **Aggregation is a domain decision, not a code decision.** Whether a relationship is aggregation or plain association cannot be read reliably from code alone — it depends on the *meaning* of the domain. Is a professor a part of a department or does a department merely know some professors? That answer comes from domain knowledge, not from Python syntax. This tutorial's live diagram uses heuristics, which works well as a learning scaffold — but in the real world, rely on domain knowledge rather than on tools to infer it.
 
       ### The File System Metaphor
@@ -1544,7 +1544,7 @@ steps:
                 print(f"CS has {len(cs.professors)} professors")
           language: python
       explanation: |
-        The critical difference is **where the object is created**:
+        The lifecycle contract is the semantic difference; the renderer recognizes the following construction patterns in this example:
 
         - **Composition:** `add_department` creates `Department(dept_name)` *inside* the method. The University controls the lifecycle — departments cannot exist without a university.
         - **Aggregation:** `add_professor` receives a `Professor` that was created *outside*. The Department only holds a reference — the professor existed before and survives after.
@@ -1566,7 +1566,7 @@ steps:
           assert uni.departments[0].name == 'CS', \
               "The created department should have the name 'CS'"
         hints:
-          - text: "Composition means the whole *creates* the part. What does that mean for where `Department(...)` appears?"
+          - text: "This exercise models ownership by having the whole create the part. Where should `Department(...)` appear to match the target?"
             condition: "default"
           - text: "The method signature is `add_department(self, dept_name: str)` — `dept_name` is a string, not a Department. So something has to turn it into one."
             condition: "code_missing: Department("
@@ -1625,7 +1625,7 @@ steps:
             - "Inheritance (hollow triangle)"
           correct_index: 2
           explanation: |
-            This is **composition** (filled diamond). The engine is created *inside* the car and its lifecycle is bound to the car. If the car is destroyed, the engine is too. The key indicator: the part is created internally, not passed in.
+            This is **composition** (filled diamond). The engine is created *inside* the car and its lifecycle is bound to the car. If the car is destroyed, the engine is too. The decisive premise is exclusive ownership and deletion with the car. Internal construction is only a clue; constructor injection can also transfer ownership.
 
         - question: |
             A `Team` holds references to `Player` objects that were created outside the team. Players can be traded to other teams. What UML relationship is this?
@@ -1640,7 +1640,7 @@ steps:
             This is **aggregation** (hollow diamond). Players exist independently of any team — they were created outside, passed in, and can move to another team. The team holds a reference but does not control the player's lifecycle.
 
         - question: |
-            What Python code pattern signals **composition**?
+            Which Python code pattern does **this tutorial's renderer** use as a heuristic for composition?
           type: single
           options:
             - "`def __init__(self, part: Part)` — receiving the part as a parameter"
@@ -1649,7 +1649,7 @@ steps:
             - "`import Part` — importing the part's module"
           correct_index: 2
           explanation: |
-            Composition means the whole **creates** the part internally: `self.part = Part(...)`. The part's lifecycle is tied to the whole. Aggregation means the part is **passed in** from outside: `def __init__(self, part: Part)`.
+            The renderer uses internal creation (`self.part = Part(...)`) as a composition heuristic, and an externally supplied part as an aggregation heuristic. UML composition itself is about exclusive ownership and deletion, not construction syntax: an injected part can become owned, and an internally created object can later be shared or detached.
 
 
   # --------------------------------------------------------------------------
@@ -2552,7 +2552,7 @@ steps:
             A filled diamond means **composition** — the whole exclusively owns the part, and the part is destroyed when the whole is destroyed. A hollow diamond would mean aggregation (independent lifecycle).
 
         - question: |
-            A `Course` class stores `self.instructor: Instructor = instructor` where the instructor is passed in from outside. Why is this an **association** rather than composition?
+            A `Course` class stores `self.instructor: Instructor = instructor` where the instructor is passed in from outside and continues to exist independently when a course is deleted. Why is this an **association** rather than composition?
           type: single
           options:
             - "Because Course and Instructor are in different files"
@@ -2561,7 +2561,7 @@ steps:
             - "Because there is no multiplicity notation"
           correct_index: 1
           explanation: |
-            The `Instructor` exists independently — it was created outside of `Course` and passed in. Deleting a course does not delete the instructor. This is a reference, not ownership, so it is an **association** (plain arrow) rather than composition (filled diamond).
+            The stem explicitly says that the `Instructor` exists independently. Passing an object into a constructor alone would not establish that lifecycle rule. Deleting a course does not delete the instructor. This is a reference, not ownership, so it is an **association** (plain arrow) rather than composition (filled diamond).
 
         - question: |
             What does italic text on a class name in a UML diagram indicate?

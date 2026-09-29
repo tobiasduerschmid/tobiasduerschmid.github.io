@@ -97,16 +97,16 @@ cards:
         return <input value={value} onChange={e => onChange(e.target.value)} />;
       }
       ```
-    explanation: "This is **lifting state up** — state lives in the parent, child notifies parent via callback prop. This is the standard React pattern for two-way data binding."
+    explanation: "This is lifting state up with one-way data flow: the parent passes the value down; the child sends change notifications through a callback. The parent remains the source of truth."
   - id: 12
     difficulty: intermediate
     question: "Use `className` (not `class`) to apply the CSS class `app-title` to an `<h1>` element in JSX."
     answer: '`<h1 className="app-title">My App</h1>`'
-    explanation: "`class` is a reserved JavaScript keyword (for ES6 classes). JSX uses `className` instead, which maps to the DOM property `element.className`."
+    explanation: "React uses the DOM-style prop name `className`. A string `class` attribute is valid JSX and modern React passes it through, but development mode warns to use the canonical `className` prop."
 
   - id: 13
     difficulty: advanced
-    question: "Write a `useEffect` that calls `fetchPosts()` once when a component mounts, storing the result in a `posts` state variable. Assume `fetchPosts()` returns a Promise that resolves to an array."
+    question: "Write a `useEffect` that calls `fetchPosts()` on mount in production, storing the result in a `posts` state variable. Assume `fetchPosts()` returns a Promise that resolves to an array."
     answer: |
       ```jsx
       const [posts, setPosts] = useState([]);
@@ -115,11 +115,11 @@ cards:
         fetchPosts().then(data => setPosts(data));
       }, []);
       ```
-    explanation: "The empty dependency array `[]` means 'run once after the initial render, then never again' — exactly what 'on mount' means. `useState([])` initializes with an empty array so the list renders safely before data arrives."
+    explanation: "The empty dependency array means this effect runs on mount and not on ordinary re-renders. Development Strict Mode adds a setup/cleanup cycle; a later remount also runs it again. useState([]) lets the component render an empty list before the data arrives. A production fetch also needs error handling and protection against obsolete results."
 
   - id: 14
     difficulty: advanced
-    question: "Write a counter that increments correctly even if the button is clicked many times rapidly. Use the functional update pattern."
+    question: "Write a counter component whose +1 button uses the functional state updater form."
     answer: |
       ```jsx
       const [count, setCount] = useState(0);
@@ -130,7 +130,7 @@ cards:
 
       return <button onClick={handleClick}>{count}</button>;
       ```
-    explanation: "`prev => prev + 1` asks React for the guaranteed latest value at update time, preventing stale reads if multiple events are batched. Note `onClick={handleClick}` — passing the function reference, not calling it (`handleClick()` would trigger on every render)."
+    explanation: "An updater receives the latest pending value. This avoids stale values in delayed callbacks or multiple updates in one handler. Separate intentional clicks are handled separately; a single synchronous increment per click does not require an updater to avoid lost rapid clicks."
 
   - id: 15
     difficulty: advanced

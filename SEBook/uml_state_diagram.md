@@ -4,7 +4,7 @@ layout: sebook
 ---
 
 <div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
-[*] --> Created : Order Placed by Customer
+[*] --> Created
 Created --> Paid : payment_received
 Paid --> Shipped : item_dispatched
 Shipped --> Delivered : delivery_confirmed
@@ -52,7 +52,7 @@ To manage cognitive load, we will break down the state machine into its smallest
 A **State** represents a condition or situation during the life of an object during which it satisfies some condition, performs some activity, or waits for some event.
 * **Initial State** <span class="uml-sym" data-diagram="state" data-sym="[*]"></span>: The starting point of the machine, represented by a solid black circle.
 * **Regular State** <span class="uml-sym" data-diagram="state" data-sym="regular"></span>: Represented by a rectangle with rounded corners.
-* **Final State** <span class="uml-sym" data-diagram="state" data-sym="final"></span>: The end of the machine's lifecycle, represented by a solid black circle surrounded by a hollow circle (a bullseye).
+* **Final State** <span class="uml-sym" data-diagram="state" data-sym="final"></span>: Completion of the enclosing region, represented by a solid black circle surrounded by a hollow circle (a bullseye). When all top-level regions complete, the state-machine behavior completes; this does not itself destroy the context object.
 
 ### 2.2 Transitions
 A **Transition** is a directed relationship between two states. It signifies that an object in the first state will enter the second state when a specified event occurs and specified conditions are satisfied. 
@@ -70,10 +70,10 @@ States can have **internal activities** that execute at specific points during t
 
 - **`entry /`** --- An action that executes every time the state is entered.
 - **`exit /`** --- An action that executes every time the state is exited.
-- **`do /`** --- An ongoing activity that runs while the object is in this state.
+- **`do /`** --- An activity that starts after entry, may complete while the state remains active, and is aborted if still running when the state exits.
 
 <div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
-[*] --> Idle : powerOn()
+[*] --> Idle
 Idle --> Processing : requestReceived / logRequest()
 Processing --> Idle : complete
 Processing --> [*] : fatalError / shutDown()
@@ -116,7 +116,7 @@ To see how these pieces fit together, let's model the core power and combat syst
 When the suit is powered on, it enters an *Idle* state. If its sensors detect a threat, it shifts into *Combat Mode*, deploying repulsors. However, if the suit's arc reactor drops below 5% power, it must immediately override all systems and enter *Emergency Power* mode to preserve life support, regardless of whether a threat is present.
 
 <div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
-[*] --> Idle : powerOn()
+[*] --> Idle
 Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()
 CombatMode --> Idle : threatNeutralized / retractWeapons()
 CombatMode --> EmergencyPower : [powerLevel &lt; 5%] / rerouteToLifeSupport()
@@ -143,7 +143,7 @@ The exosuit above introduces the syntax. Now let's see state machines applied to
 **Scenario:** A track player has distinct states that determine how it responds to the same button press. Pressing play does nothing when you are *already* playing — but it transitions correctly from `Paused` or `Idle`. This context-dependence is exactly what state machines model.
 
 <div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
-[*] --> Idle : appLaunch()
+[*] --> Idle
 Idle --> Buffering : playTrack(trackId)
 Buffering --> Playing : bufferReady
 Buffering --> Idle : loadError / showErrorMessage()
@@ -167,7 +167,7 @@ Playing --> Idle : stopButton
 **Scenario:** A pull request moves through a well-defined set of states from creation to merge or closure. Guards prevent premature merging — merging broken code has real consequences in a real system.
 
 <div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
-[*] --> Open : createPR()
+[*] --> Open
 Open --> ChangesRequested : reviewSubmitted [hasRejection]
 ChangesRequested --> Open : pushNewCommit
 Open --> Approved : reviewSubmitted [allApproved] / notifyAuthor()
@@ -192,7 +192,7 @@ Closed --> [*]
 **Scenario:** Once placed, an order moves through a sequence of states from the restaurant's kitchen to the customer's door. Unlike the PR lifecycle, this flow is mostly linear — the diagram below shows the simplest case where the only cancellation path fires when the restaurant declines a freshly placed order. (A production system would also model customer-initiated cancellation from `Confirmed` and `Preparing`; we omit those arrows here to keep the happy path readable, but see the *Self-Correction* exercise below.)
 
 <div class="uml-class-diagram-container" data-uml-type="state" data-uml-spec='@startuml
-[*] --> Placed : submitOrder()
+[*] --> Placed
 Placed --> Confirmed : restaurantAccepts()
 Placed --> Cancelled : restaurantDeclines() / refundPayment()
 Confirmed --> Preparing : kitchenStart()
@@ -217,7 +217,7 @@ Cancelled --> [*]
 | # | Mistake | Fix |
 |---|---|---|
 | 1 | **Conflating event and guard** — writing `powerLow` as a state or as a guard instead of as an event trigger | An *event* is something that happens externally (`powerLow()` was received); a *guard* is a condition evaluated when the event fires (`[battery < 5%]`). The label syntax is `Event [Guard] / Effect` — in that order. |
-| 2 | **No initial state** — forgetting the solid black circle and entry transition | Every state machine must have a clear starting point. Omit it and the diagram is ambiguous about how the object begins its life. |
+| 2 | **No initial state** — forgetting the solid black circle and entry transition | For these simple machines, show the default starting point. UML permits at most one initial pseudostate per region; regions entered through other explicit paths need not have one. |
 | 3 | **Dangling states** — states that cannot be reached or cannot be left | Trace every state: is there a path from the initial transition to it? Is there a way out (or is it a final state)? Both directions must be answered. |
 | 4 | **Overlapping guards** — two transitions on the same event with guards that can be simultaneously true | Guards on the same event must be mutually exclusive (e.g., `[x > 0]` and `[x <= 0]`). Otherwise the machine is non-deterministic. |
 | 5 | **Using a state machine for something that is not stateful** — modeling a sequence of steps with no branching based on past events | If the object reacts the same way to the same input regardless of history, it does not need a state machine — use an activity or sequence diagram instead. |

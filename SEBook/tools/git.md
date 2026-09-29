@@ -211,7 +211,7 @@ Once you hold that picture, every Git command fits in one of two buckets:
 
 > **Every Git command either (a) creates new snapshots and moves a pointer to them, or (b) only moves pointers. It never edits an existing snapshot in place.**
 
-The (a) bucket is **additive** — safe on shared branches, because nothing anyone already has changes. The (b) bucket is more interesting: *moving pointers backward* (e.g. `git reset --hard`) effectively discards work, and some commands in bucket (a) create new snapshots that *replace* older ones (e.g. `git commit --amend`, `git rebase`). Collectively these are the commands that **rewrite history** — safe locally, dangerous after you've pushed. Throughout this page every such command carries an **⚠️ rewrites history** callout at first mention.
+The (a) bucket is **additive** — safe on shared branches, because nothing anyone already has changes. The (b) bucket is more interesting: *moving pointers backward* (e.g. `git reset --hard`) effectively discards work, and some commands in bucket (a) create new snapshots that *replace* older ones (e.g. `git commit --amend`, `git rebase`). Collectively these are the commands that **rewrite history** — easier to recover locally, disruptive after others have based work on them. Throughout this page every such command carries an **⚠️ rewrites history** callout at first mention.
 
 *Why* Git can work this way — the content-addressed hash machinery that makes snapshots cheap and tamper-evident — is covered in the optional **🔧 Under the Hood** callouts scattered throughout this page. For now, the pointer-and-snapshot picture is enough.
 
@@ -1543,7 +1543,7 @@ The commands in this section either **create new commit objects with new hashes*
 
 > ⚠️ **Never rewrite a branch that has been pushed to a shared remote.** The new commits *look* the same to you but have different hashes, so collaborators' clones still reference the old hashes — a recipe for conflicts, duplicate patches, and lost work.
 
-All of the operations below create new commit objects or move pointers backward. They are **safe on local, unpushed commits** and **dangerous on anything that has been pushed**. When in doubt, use `git revert` (additive — see [Undoing Committed Work](#undoing-committed-work)) instead.
+All of the operations below create new commit objects or move pointers backward. They require extra care when others have based work on the history you rewrite. Even locally, `reset --hard` can discard uncommitted edits that reflogs do not preserve. When in doubt, use `git revert` (additive — see [Undoing Committed Work](#undoing-committed-work)) instead.
 
 ## Rebasing a Branch
 
@@ -1557,7 +1557,7 @@ Three concrete situations where people reach for `rebase`:
 2. **Keeping a linear log.** Some teams prefer `git log --oneline` on `main` to read as a single chain of features rather than a braided mess of merges. Rebasing feature branches before merging keeps the line straight.
 3. **Squashing WIP commits.** Interactive rebase (`-i`) lets you combine, reorder, reword, or drop commits — handy when you have "fix typo" and "oops forgot semicolon" commits you don't want in the permanent record.
 
-The cost: because replayed commits have *different hashes* from the originals, rebasing a branch you've already pushed breaks everyone else's clone of it. That's why rebase is safe locally and dangerous after pushing — the same rule that governs every other "rewrites history" operation.
+The cost: because replayed commits have *different hashes* from the originals, rebasing a branch you've already pushed breaks everyone else's clone of it. That is why rebasing shared history requires coordination. Even with local history, save uncommitted work before using destructive operations.
 
 <div data-git-command-lab role="region" aria-label="Interactive commit-graph demo: git rebase replays the feature branch's unique commits onto main's current tip as new commits with new SHAs.">
 <script type="application/json">
@@ -2161,7 +2161,7 @@ The rule of thumb: **`reset` for private mistakes, `revert` for public mistakes.
 
 ## Resetting a Branch (`git reset`)
 
-> ⚠️ **Rewrites history.** Only safe on local, unpushed commits.
+> ⚠️ **Rewrites history.** Coordinate before rewriting shared commits, and save uncommitted work before using destructive reset modes.
 
 `git reset <sha>` moves the current branch pointer to `<sha>`, effectively **discarding** every commit between the old tip and `<sha>`. Those commits become unreachable from any branch and are eventually garbage-collected (though [reflog](#the-safety-net-git-reflog) can recover them within the retention window).
 

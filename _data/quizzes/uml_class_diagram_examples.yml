@@ -96,7 +96,7 @@ questions:
         Aggregation uses a hollow diamond. A filled diamond is the composition notation.
       3: |
         Inheritance uses a hollow triangle arrowhead. The diamond notation is about ownership, not subclassing.
-    explanation: "**The filled diamond (<span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"*--\"></span>) represents Composition — strong ownership where the part's lifecycle is controlled by the whole.** In this model, the Engine cannot exist without its Car."
+    explanation: "**The filled diamond (<span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"*--\"></span>) represents Composition — strong ownership where the part's lifecycle is controlled by the whole.** A part can belong to at most one composite at a time and is deleted with its whole unless detached first; composition does not prescribe where the part is created."
 
   - id: 5
     difficulty: intermediate
@@ -131,7 +131,7 @@ questions:
       - "A Customer must have at least one Order."
       - "A Customer can have zero or more Orders."
       - "An Order can belong to zero or more Customers."
-      - "There are no constraints on the number of Orders."
+      - "The diagram leaves the number of Orders unspecified."
     correct_index: 1
     option_feedback:
       0: |

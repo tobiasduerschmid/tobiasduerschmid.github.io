@@ -42,7 +42,7 @@ cards:
     bloom: understand
     question: "What is each Scrum accountability — Product Owner, Developers, Scrum Master — responsible for, in one phrase each?"
     answer: "**Product Owner** — maximize the value of the product (own the *what*). **Developers** — build the Increment to the Definition of Done (own the *how*). **Scrum Master** — establish Scrum and remove impediments to the team (own the *process*)."
-    explanation: "Notice the partition: *what*, *how*, and *process*. The three accountabilities are intentionally non-overlapping — that's why the Guide does not let the Scrum Master also order the backlog, or the Product Owner also decide implementation details."
+    explanation: "Notice the partition: *what*, *how*, and *process*. The Product Owner remains accountable for backlog ordering but may delegate the work, including to someone who also serves as Scrum Master. Developers decide how to turn selected work into an Increment. Distinguish accountability from who performs a task."
 
   - id: 7
     difficulty: basic

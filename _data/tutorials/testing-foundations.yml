@@ -660,21 +660,21 @@ steps:
             Functions inside must also start with `test_`.
 
         - question: |
-            A spec reads: *"A discount applies for orders of strictly more than $50 and up to $500 inclusive."*
+            A function accepts **whole-dollar integer order amounts only**. Its spec reads: *"A discount applies for orders of strictly more than $50 and up to $500 inclusive."*
 
             Which four values are the **most important** boundaries to test?
           type: single
           options:
-            - "$0, $50, $100, $500 — round numbers at each end of the range"
-            - "$50, $51, $500, $501 — one on each side of each boundary (just-below and just-above)"
-            - "$1, $25, $250, $1000 — one sample from each quartile to get wide coverage"
-            - "$49.99, $50.01, $499.99, $500.01 — cents around each boundary to check decimal precision"
+          - $0, $50, $100, $500 — round numbers at each end of the range
+          - $50, $51, $500, $501 — the two integer values straddling each eligibility boundary
+          - $1, $25, $250, $1000 — one sample from each quartile to get wide coverage
+          - $49.99, $50.01, $499.99, $500.01 — cents around each boundary to check decimal precision
           correct_index: 1
           option_feedback:
-            0: "$0 and $100 sit deep inside the *no-discount* and *yes-discount* partitions — they don't pin down where the boundaries are. The spec defines the discount cutoffs at $50 (`>` flips) and $500 (`≤` flips); your boundary tests must straddle those exact values."
-            1: "Correct. $50/$51 straddles the `> $50` flip and $500/$501 straddles the `≤ $500` flip — one just-below and one at-or-just-above each boundary, which is exactly where `>` vs `>=` bugs surface."
-            2: "This is \"spread your bets across the input range\" — useful for a smoke test, useless for catching off-by-one bugs. Off-by-one bugs *only* manifest at the boundary itself; quartile samples will all behave correctly even when the comparison operator is wrong."
-            3: "Decimal-precision boundaries are a separate class of bug (and rarely the dominant risk for whole-dollar specs). The *primary* off-by-one risk is `> vs >=` and `<= vs <`, which lives at the integer boundary. Test 50/51 and 500/501 first; reach for cents only if the spec actually distinguishes them."
+            0: $0 and $100 sit deep inside the *no-discount* and *yes-discount* partitions — they don't pin down where the boundaries are. The spec defines the discount cutoffs at $50 (`>` flips) and $500 (`≤` flips); your boundary tests must straddle those exact values.
+            1: Correct. $50/$51 straddles the `> $50` flip and $500/$501 straddles the `≤ $500` flip — one just-below and one at-or-just-above each boundary, which is exactly where `>` vs `>=` bugs surface.
+            2: This is "spread your bets across the input range" — useful for a smoke test, useless for catching off-by-one bugs. Off-by-one bugs *only* manifest at the boundary itself; quartile samples will all behave correctly even when the comparison operator is wrong.
+            3: These cent-valued inputs are outside this question's integer domain. For a cents-based API, use adjacent cent values instead, including the exact cutoff values.
           explanation: |
             Test *just on each side* of every boundary: 50/51 (where `> 50` flips) and 500/501
             (where `≤ 500` flips). Catches the canonical off-by-one (`>= 50` vs `> 50`).
@@ -718,19 +718,19 @@ steps:
             budget on the *boundaries between* partitions, not the middles.
 
         - question: |
-            **(Spaced review — Step 1)** Recall the bug in `streak_badge`: `days > 100` instead of `days >= 100`. Classify this bug.
+            **(Spaced review — Step 1)** Recall the bug in `streak_badge`: `days > 100` instead of `days >= 100`. Which is the **most specific supported** classification of this bug?
           type: single
           options:
-            - "A type error — `days` should be a float but is being compared as an integer"
-            - "A boundary bug — it fails only at one exact value on a partition edge"
-            - "A logic error — the wrong branch of the `if` statement is being taken"
-            - "A regression — the function worked correctly before someone introduced the bug"
+          - A type error — `days` should be a float but is being compared as an integer
+          - A boundary bug — it fails only at one exact value on a partition edge
+          - A logic error — the wrong branch of the `if` statement is being taken
+          - A regression — the function worked correctly before someone introduced the bug
           correct_index: 1
           option_feedback:
-            0: "The type is not the issue here: `days` is compared as an integer in both the spec (`>= 100`) and the buggy code (`> 100`). The bug is in the comparison operator."
-            1: "Correct. The bug only surfaces at exactly `days == 100` — the single boundary value where the `> 100` operator gives the wrong answer. That one-specific-value signature is the definition of a boundary bug."
-            2: "It's tempting to call any wrong-`if` bug a logic error, but that's too coarse. Boundary bug is the more precise classification: this bug only manifests at *one specific value* (100), which is the diagnostic signature of a `>` vs `>=` mistake. That precision is what *this* step is about."
-            3: "*Regression* describes how a bug enters a codebase (re-introducing something previously fixed), not what kind of bug it is. The bug here might or might not be a regression — but its *type* is a boundary bug."
+            0: 'The type is not the issue here: `days` is compared as an integer in both the spec (`>= 100`) and the buggy code (`> 100`). The bug is in the comparison operator.'
+            1: Correct. The bug only surfaces at exactly `days == 100` — the single boundary value where the `> 100` operator gives the wrong answer. That one-specific-value signature is the definition of a boundary bug.
+            2: 'This is also a logic error, but boundary bug is more specific: only the equality case at 100 changes behavior.'
+            3: A regression is a loss of previously working behavior; it need not be a recurrence of a previously fixed bug. The stem gives no version history, so it does not establish a regression.
           explanation: |
             Boundary bugs manifest only at the exact value where partitions meet.
             `days > 100` works for 101, 150, 365 — but fails at 100 itself. This is exactly

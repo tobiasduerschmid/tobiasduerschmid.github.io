@@ -110,7 +110,7 @@ The **pipe** `|` works like a logical OR: `cat|dog` matches either "cat" or "dog
 When you combine multiple regex features, patterns become expressive:
 - `gr[ae]y` — character class for the spelling variant.
 - `\d{2}:\d{2}` — two digits, a colon, two digits (time format).
-- `^(0[1-9]|1[0-2])/(0[1-9]|[12]\d|3[01])$` — a month/day format validator. (It accepts impossible combinations like `02/30` and `04/31`; properly validating month-specific day limits — let alone leap years — is beyond what regex alone can express, and is one of the classic limits of regex pattern matching.)
+- `^(0[1-9]|1[0-2])/(0[1-9]|[12]\d|3[01])$` — a month/day format validator. (It accepts impossible combinations like `02/30` and `04/31`; month-specific limits and leap-year rules can be encoded in a much more complex pattern, but a date parser is usually clearer and easier to maintain.)
 
 Start simple and add complexity only when tests demand it.
 

@@ -42,22 +42,11 @@ questions:
       System.out.println(x.equals(y));
       ```
     options:
-      - "true, true — autoboxing reuses the same object"
-      - "false, true — boxed `200` is two heap objects"
-      - "Compile error — == cannot be applied to Integer"
-      - "true, false — == compares values for boxed integers"
+        ["true, true — autoboxing always reuses the same object","The first line may be true or false; the second is always true","Compile error — == cannot be applied to Integer","true, false — == compares values for boxed integers"]
     correct_index: 1
     option_feedback:
-      0: |
-        Autoboxing reuses some boxed integers, but not all of them. The standard cache covers small
-        values such as `-128` through `127`, not `200`.
-      2: |
-        `==` can be applied to `Integer` references. The dangerous part is that it compares object
-        identity rather than numeric value.
-      3: |
-        `==` does not generally compare boxed integer values. `.equals()` gives the numeric value
-        comparison here.
-    explanation: "Java caches `Integer` objects only for values −128 to 127. Outside that range, autoboxing `200` calls `Integer.valueOf(200)`, which allocates a new object each time, so `x` and `y` are distinct objects: `==` returns `false` while `.equals()` returns `true`. Always use `.equals()` for wrapper types."
+        {"0":"Java guarantees caching for -128 through 127 and permits additional cached values; 200 is not guaranteed to share an object.","2":"Both operands are Integer references, so == is legal and compares identity.","3":"Both wrappers contain 200, so equals returns true regardless of object identity."}
+    explanation: "Java guarantees cached Integer values from -128 to 127 and allows a wider cache. Autoboxed 200 values may therefore share an object or be distinct. The first output depends on that cache; x.equals(y) is true in either case. Use equals for numeric value equality between wrappers."
 
   - id: 3
     difficulty: intermediate
@@ -97,10 +86,7 @@ questions:
       ```
       You suggest changing `Integer sum` to `int sum`. What is the precise reason?
     options:
-      - "There is no meaningful difference — the JIT compiler optimizes the boxing away"
-      - "`sum += i` boxes into a new `Integer` each iteration — a million heap allocations."
-      - "Integer is 64-bit but int is 32-bit, so int is faster for addition"
-      - "Integer does not support the `+=` compound operator"
+        ["There is never any difference because the JIT always eliminates boxing","Each update unboxes and reboxes; int avoids that work and potential allocations","Integer is 64-bit but int is 32-bit","Integer does not support the += compound operator"]
     correct_index: 1
     option_feedback:
       0: |
@@ -112,7 +98,7 @@ questions:
       3: |
         The compound operator is legal with `Integer` because Java unboxes and reboxes. That automatic
         conversion is exactly the cost being avoided.
-    explanation: "On an `Integer`, `sum += i` expands to `sum = Integer.valueOf(sum.intValue() + i)` — two method calls and one heap allocation per iteration. In a million-iteration loop that is a million short-lived objects and enormous garbage-collector pressure, which primitive `int` avoids entirely. Use `int` for accumulators, counters, and any variable never placed in a generic container."
+    explanation: "On an Integer, sum += i performs the equivalent of sum = Integer.valueOf(sum.intValue() + i). Primitive int avoids those boxing conversions and potential allocations. Caching and JIT optimization mean there is no fixed allocation count; measure performance in context."
 
   - id: 5
     difficulty: advanced
@@ -181,7 +167,7 @@ questions:
       3: |
         Generics parameterize types; they do not by themselves define a shared method contract for
         unrelated classes.
-    explanation: "Interfaces define a contract for unrelated classes that share behavior but no state — exactly the case for `Dog`, `Car`, and `Printer`, mirroring Java's own `java.io.Serializable`. An abstract class fits only when related classes also share fields and concrete methods; if these three shared, say, a `createdAt` field and a `log()` implementation, an abstract class would be appropriate."
+    explanation: "Interfaces define a contract for unrelated classes that share behavior but no state — exactly the case for `Dog`, `Car`, and `Printer`, using a custom interface declaring `serialize()`. Java's `java.io.Serializable` is a marker interface and declares no such method. An abstract class fits only when related classes also share fields and concrete methods; if these three shared, say, a `createdAt` field and a `log()` implementation, an abstract class would be appropriate."
 
   - id: 8
     difficulty: advanced
@@ -307,7 +293,7 @@ questions:
   - id: 13
     difficulty: advanced
     question: |
-      In a Java constructor, where must `super(args)` appear, and what happens if you omit it?
+      In Java 17, where must `super(args)` appear, and what happens if you omit it?
     options:
       - "Anywhere in the constructor — Java inserts it last if omitted"
       - "First statement; Java implicitly inserts `super()` if omitted, failing without a no-arg parent."
@@ -324,7 +310,7 @@ questions:
       3: |
         A superclass constructor is always invoked. If no explicit call is written, Java tries to insert
         `super()`, which can fail if no no-arg constructor exists.
-    explanation: "Java requires `super(...)` or `this(...)` to be the first statement of a constructor, so the parent is fully constructed before subclass code runs. Omitting it makes Java insert a no-arg `super()`; if the parent defines only parameterized constructors, that implicit call fails and you get a compile error. C++ expresses the same ordering through initializer lists: `Car(args) : Vehicle(make, year) { }`."
+    explanation: "Java 17 requires `super(...)` or `this(...)` to be the first statement of a constructor, so the parent is fully constructed before subclass code runs. Omitting it makes Java insert a no-arg `super()`; if the parent defines only parameterized constructors, that implicit call fails and you get a compile error. C++ expresses the same ordering through initializer lists: `Car(args) : Vehicle(make, year) { }`."
 
   - id: 14
     difficulty: intermediate
@@ -425,18 +411,9 @@ questions:
 
   - id: 18
     difficulty: expert
-    question: |
-      You're designing a `Course` class. It needs:
-      - A way for other classes to enroll/drop students without knowing the internal storage
-      - Fast O(1) lookup for `isEnrolled(String name)`
-      - No duplicate enrollments
-
-      Which two decisions together best achieve these goals?
+    question: "You're designing a Course class. It needs:\n- An enroll/drop API that hides storage\n- Expected O(1) lookup for isEnrolled(String name)\n- At most one enrollment per name (names are unique keys in this exercise)\n\nWhich design achieves these goals?"
     options:
-      - "Use a `List<Student>` internally; expose it via `getStudents()` so callers can call `.contains()`"
-      - "Define an `Enrollable` interface (`enroll`/`drop`/`isEnrolled`) backed by an internal `LinkedHashSet<Student>`"
-      - "Use `HashMap<String, Student>` internally; make all fields `public` since that simplifies the API"
-      - "Use `ArrayList<Student>` internally and expose a `getStudents()` getter returning the full list"
+            ["Use a List<Student> internally; expose it via getStudents() so callers can call contains()","An Enrollable API backed by a private HashMap<String, Student> keyed by name","Use HashMap<String, Student> internally; make all fields public","Use ArrayList<Student> internally and expose the full list"]
     correct_index: 1
     option_feedback:
       0: |
@@ -448,4 +425,4 @@ questions:
       3: |
         Returning the full `ArrayList` makes callers depend on the internal collection and gives linear
         lookup plus manual duplicate checks.
-    explanation: "The `Enrollable` interface decouples the contract from the implementation, so callers depend on behavior rather than on how students are stored (information hiding). `LinkedHashSet<Student>` gives O(1) `contains()`, automatic deduplication, and insertion-order iteration — all three requirements at once — where `ArrayList` would need O(n) duplicate checks and exposing `getStudents()` would leak the storage decision."
+    explanation: "The interface hides storage. A private HashMap<String, Student> supports expected O(1) containsKey(name) and one entry per name; enroll can reject an existing key. A Set<Student> alone does not provide lookup by a String name without an additional equality contract or index."

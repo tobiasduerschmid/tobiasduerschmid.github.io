@@ -230,19 +230,21 @@ questions:
   - id: 16
     difficulty: intermediate
     type: multiple
-    question: "Which of these git commands might create major challenges in team projects? Select all that apply."
+    question: Which commands can rewrite existing commits or forcibly replace remote branch history, creating coordination problems when applied to work teammates share? Select all that apply.
     options:
-      - "`git rebase -i`"
-      - "`git cherry-pick`"
-      - "`git revert`"
-      - "`git push -f`"
-    correct_indices: [0, 3]
+    - '`git rebase -i`'
+    - '`git cherry-pick`'
+    - '`git revert`'
+    - '`git push -f`'
+    correct_indices:
+    - 0
+    - 3
     option_feedback:
-      0: "Interactive rebase can rewrite commit history. That is useful on private branches, but dangerous once other teammates may have based work on the same commits."
-      1: "Cherry-pick can create duplicate changes or conflicts if used carelessly, but it does not inherently rewrite existing shared history. The major team risk in this question is history rewriting."
-      2: "Revert adds a new commit that undoes earlier changes while preserving the branch history. That property makes it much safer for shared branches than rewriting commands."
-      3: "A force push can replace the remote branch history with local history. On a shared branch, that can discard or strand teammates' commits."
-    explanation: "Commands that rewrite history, such as force pushing (`git push -f`) or interactive rebasing (`git rebase -i`), replace the branch's existing sequence of commits with a different sequence. If applied to shared branches, they can hide or orphan teammates' commits and cause serious repository coordination problems."
+      0: Interactive rebase can rewrite commit history. That is useful on private branches, but dangerous once other teammates may have based work on the same commits.
+      1: Cherry-pick can create duplicate changes or conflicts if used carelessly, but it does not inherently rewrite existing shared history. The major team risk in this question is history rewriting.
+      2: Revert adds a new commit that undoes earlier changes while preserving the branch history. That property makes it much safer for shared branches than rewriting commands.
+      3: A force push can replace the remote branch history with local history. On a shared branch, that can discard or strand teammates' commits.
+    explanation: Commands that rewrite history, such as force pushing (`git push -f`) or interactive rebasing (`git rebase -i`), replace the branch's existing sequence of commits with a different sequence. If applied to shared branches, they can hide or orphan teammates' commits and cause serious repository coordination problems.
 
   - id: 17
     difficulty: intermediate

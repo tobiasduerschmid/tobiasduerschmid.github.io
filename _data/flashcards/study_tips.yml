@@ -20,7 +20,7 @@ cards:
   - id: 4
     difficulty: basic
     question: "Define 'Spaced Practice' (Spacing)."
-    answer: "Spreading out study sessions over increasing intervals of time."
+    answer: "Spreading study sessions across time, with gaps between them rather than one massed session. The gaps may be equal or varied; they do not have to increase."
     explanation: "Spacing allows for some forgetting to occur, which makes the subsequent retrieval more effortful and effective for **durable memory**."
   - id: 5
     difficulty: basic

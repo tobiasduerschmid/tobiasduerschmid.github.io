@@ -365,7 +365,7 @@ Applied mindlessly, SoC *creates* complexity instead of managing it:
 * **Single-variant systems.** If there will only ever be one UI and one database for all time, some of the seams are wasted ceremony.
 * **Premature abstraction.** Splitting `Game` into seven interfaces before you know the domain will usually split along the *wrong* lines. Wait until change pressure tells you where the joints actually are.
 * **Performance-critical inner loops.** Sometimes the indirection between concerns has measurable cost. In a hot loop, you may deliberately fuse concerns for speed (and comment *loudly* about why).
-* **Artificial splits.** If two "concerns" always change together, they are really one concern with a misleading name. Splitting them doubles the cost of every change.
+* **Artificial splits.** If two "concerns" always change together, they are really one concern with a misleading name. Splitting them can add coordination and maintenance overhead to each change.
 
 The SE maxim applies: **the right number of abstractions is the smallest number that lets the system change gracefully.** Beyond that, every extra layer is tax.
 

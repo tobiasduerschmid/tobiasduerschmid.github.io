@@ -29,8 +29,8 @@ cards:
   - id: 5
     difficulty: basic
     question: "Define **primary key** and **foreign key** in one sentence each. What is the critical difference?"
-    answer: "A **primary key** is a column (or combination of columns) that **uniquely identifies a row within a table**. A **foreign key** is a column whose values must match some row's primary key **in another table**, keeping cross-table references valid. Primary keys are about *intra-table* uniqueness; foreign keys are about *inter-table* referential integrity."
-    explanation: "A single table has exactly one primary key but can have many foreign keys (each referencing a different parent table)."
+    answer: "A primary key is a column or column set chosen to uniquely identify each row. A foreign key constrains referencing columns to match an eligible unique key in the referenced table, subject to NULL rules. The referenced table may be the same table."
+    explanation: "SQL permits at most one primary-key constraint per table, including a composite key, and may allow no declared primary key. A table can have multiple foreign keys, including self-references or several references to the same parent."
 
   - id: 6
     difficulty: intermediate
@@ -53,14 +53,14 @@ cards:
   - id: 9
     difficulty: basic
     question: "What is a **transaction**?"
-    answer: "A **sequence of database operations treated as a single atomic unit of work.** Either all of the operations are applied (the transaction **commits**) or none of them are (it is **rolled back**). From outside, a transaction looks instantaneous — intermediate states are invisible to other transactions."
+    answer: "A transaction groups database operations into an atomic unit: its writes commit together or are rolled back together. What concurrent transactions can observe depends on the isolation level; serializable isolation gives an effect equivalent to a serial execution."
     explanation: "Transactions are the DBMS's primary tool for giving the application simple correctness guarantees in the face of crashes and concurrency."
 
   - id: 10
     difficulty: basic
     question: "What do **`COMMIT`** and **`ROLLBACK`** do?"
-    answer: "`COMMIT` tells the DBMS to make all the transaction's changes permanent and visible. `ROLLBACK` tells it to discard all of the transaction's changes, leaving the database exactly as it was before the transaction started. A crash before `COMMIT` is equivalent to `ROLLBACK`."
-    explanation: "This 'all or nothing at commit time' is the mechanism behind the Atomicity and Consistency guarantees of ACID."
+    answer: "COMMIT completes the transaction so its database changes persist under the durability contract. ROLLBACK discards that transaction’s uncommitted changes; it does not undo other transactions or external side effects. Recovery discards uncommitted database changes after a crash."
+    explanation: "The all-or-nothing guarantee applies to the transaction’s database effects. Sequences and other DBMS-specific operations can have different rollback rules; an external email or payment is not automatically undone."
 
   - id: 11
     difficulty: basic
@@ -106,9 +106,9 @@ cards:
 
   - id: 20
     difficulty: advanced
-    question: "What is wrong with the claim that ATMs 'have all three' of CAP? What do ATMs actually demonstrate?"
-    answer: "ATMs are **AP with eventual consistency**, not a system that defies CAP. During a WAN outage to the bank, many ATMs continue to allow withdrawals up to a *cached daily limit*, and the resulting transactions are reconciled once the link returns — sometimes producing *temporary overdrafts* that the bank absorbs. ATMs demonstrate a **deliberate Availability-over-Consistency** business choice: staying open is worth occasional post-hoc reconciliation cost."
-    explanation: "ATMs are the motivating *counterexample* for CAP, not its exception. Banks explicitly accept the inconsistency because availability is more valuable than perfect correctness at withdrawal time."
+    question: "An ATM allows bounded withdrawals from cached balances while disconnected, then reconciles later. Which CAP choice does this illustrate?"
+    answer: "For these withdrawal requests, the policy prioritizes availability over consistency during the partition. A different ATM policy could refuse disconnected withdrawals to preserve consistency."
+    explanation: "CAP applies to the specified behavior during a partition. Neither private networks nor a bank application label guarantees all three properties; real operating policies differ."
 
   - id: 21
     difficulty: advanced
@@ -136,6 +136,6 @@ cards:
 
   - id: 25
     difficulty: advanced
-    question: "Give the scenario-to-property mapping for CAP choices: for each application below, which property is primary?"
-    answer: "(a) *Never double-spend money* → **Consistency (CP)**. (b) *Stale reads are fine; a 500 error is expensive* → **Availability (AP)**. (c) *Globally distributed service must survive transcontinental network failures* → **Partition Tolerance** (mandatory, combine with CP or AP as the application allows). (d) *ATM dispensing cash during a bank-link outage* → **Availability (AP)** with later reconciliation."
-    explanation: "This mapping is the real payoff of CAP: a vocabulary for *picking* the right database for a requirement, not a Venn diagram to memorize."
+    question: "Which CAP property does each requirement prioritize? (a) Reads must reflect the latest completed write, even if some requests must fail during a partition. (b) Stale reads are acceptable but requests must keep succeeding. (c) Replicas must tolerate a failed intercontinental link. (d) An ATM must keep accepting bounded withdrawals while disconnected from its bank."
+    answer: "(a) Consistency: prefer CP for the specified read contract. (b) Availability: prefer AP for the specified service contract. (c) Partition tolerance: still choose how to trade consistency against availability. (d) Availability during the outage, with an explicit offline limit and reconciliation policy."
+    explanation: "CAP names a consistency/availability trade-off during partitions. It does not by itself provide transaction isolation, idempotent payments, or all application invariants."

@@ -208,10 +208,10 @@ questions:
     difficulty: intermediate
     type: single
     question: |
-      The State and Strategy patterns have identical UML class diagrams. What is the key difference between them?
+      The State and Strategy patterns can have nearly identical UML class diagrams. What is the key difference between them?
     options:
       - "State uses interfaces; Strategy uses abstract classes"
-      - "State transitions internally; Strategy is picked by the client"
+      - "State models lifecycle behavior; Strategy varies an algorithm"
       - "State is a behavioral pattern; Strategy is a structural pattern"
       - "There is no meaningful difference — they are the same pattern with different names"
     correct_index: 1
@@ -222,7 +222,7 @@ questions:
         Both State and Strategy are behavioral patterns in the GoF classification. Their distinction is intent, not category.
       3: |
         The class diagrams can match, but the runtime story differs. State objects transition as the context changes; strategies are selected as interchangeable algorithms.
-    explanation: "Same structure, different **intent**. In State, the concrete implementations transition between each other based on internal logic — the client does not choose which state is active. In Strategy, the client explicitly selects the algorithm and there are no automatic transitions."
+    explanation: "Similar structure, different **intent**. State varies behavior with a context's lifecycle state; transitions can be controlled by the context or its states. Strategy varies the algorithm used for a task. Clients often configure a strategy, but the location of the selection code alone does not define the pattern."
 
   - id: 12
     difficulty: advanced

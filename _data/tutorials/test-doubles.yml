@@ -1551,7 +1551,7 @@ steps:
       |---|---|
       | **Proves** | The SUT calls `ledger.credit` once with the right arguments — the same contract Step 3's hand-rolled spy verified. |
       | **Does not prove** | That the real `RewardLedger` actually has a `credit` method with that signature. A vanilla `Mock()` accepts any attribute name, any signature, silently. Test D's `side_effect = ConnectionError` proves nothing about the real `QuestApiClient`'s exception classes either — just that the SUT handles *that* class. |
-      | **Remaining risk** | Signature drift. If a teammate renames `credit` to `award` or changes its signature to `(user_id, gold, reason)`, this test stays green while production breaks. **Complementary check:** `autospec=True` (Step 5) enforces the real signature; mypy or pyright catches typos like `assrt_called_once_with` at edit time. |
+      | **Remaining risk** | Signature drift. If a teammate renames `credit` to `award` or changes its signature to `(user_id, gold, reason)`, this test stays green while production breaks. **Complementary check:** `autospec=True` (Step 5) enforces the real signature; static tools may help, but Mock’s dynamic attributes limit what they can prove. Default Mock also guards common assertion-name typos. |
 
       🔭 **Coming in Step 5:** `Mock` can also play the third role — **Mock Object** in Meszaros' strict sense (behavior verification). To see it cleanly, we need one more idea: `patch()`, and *where* in the namespace to patch. That's the #1 Python-mocking pitfall.
 
@@ -1853,30 +1853,20 @@ steps:
             collaborator to do, not by what looks shorter.
 
         - question: |
-            A teammate writes:
-            ```python
-            ledger.credit.assrt_called_once_with("u1", 100)   # typo
-            ```
-            and the test passes. What actually happened?
+            A teammate calls `ledger.credit.assrt_called_once_with("u1", 100)` on a default Python 3.13 `Mock`. What happens?
           type: single
           options:
-            - "Mock corrected the typo internally and called the right assert method"
-            - "Mock auto-created a child mock and called *it* — no assertion ran"
-            - "Mock raised an `AttributeError` and pytest caught it as a passing test"
-            - "Python's interpreter detected the typo and warned via stderr"
+          - Mock corrects the spelling and checks the recorded call.
+          - Mock raises AttributeError because assrt is a guarded assertion-like prefix.
+          - Mock silently creates this assertion-like attribute and the test passes.
+          - Python rejects the source code as a SyntaxError.
           correct_index: 1
           option_feedback:
-            0: "Mock has no auto-correct mechanism. It also has no idea you intended `assert_called_once_with` — to Mock, `assrt_called_once_with` is just another attribute name to auto-create."
-            1: "Right. This is the **typo trap** — one of the most dangerous Mock pitfalls. Every attribute access on a vanilla Mock returns a new child Mock; calling `.assrt_called_once_with(...)` on that child just records *another* call, returns a new Mock, and produces no assertion. The test silently passes regardless of behavior. Step 5 introduces `autospec=True` as one defense (it restricts attribute access to the real object's interface)."
-            2: "There's no `AttributeError` because Mock auto-creates attributes. That's the whole problem — the failure mode is *silent*."
-            3: "Python doesn't warn about typo'd method names — to the language, `assrt_called_once_with` is a perfectly valid attribute name. Static analyzers (mypy, pylint) might flag it; the runtime won't."
+            0: Mock does not autocorrect method names. Use assert_called_once_with to perform the assertion.
+            2: Default Mock guards several common assertion misspellings, including assrt. Other arbitrary attribute names can still create child mocks.
+            3: The attribute name is valid Python syntax. Mock rejects the lookup at runtime.
           explanation: |
-            **The typo trap.** Mock's auto-attribute behavior — convenient for
-            quickly stubbing nested attribute chains — also silently swallows
-            typos in `assert_*` method names. The test passes; the assertion
-            never ran. Step 5's `autospec=True` is one defense; using mypy or
-            calling `assert_called_once_with` (no underscore typo) carefully
-            is another.
+            In Python 3.13, default Mock rejects unknown attributes with assertion-like prefixes, including `assrt`, unless that guard is explicitly disabled with `unsafe=True` on that mock. This catches the typo; it does not prove the intended assertion was written or that all possible typos are caught.
 
         - question: |
             **(Spaced review — TDD)** During the **Red-Green-Refactor** cycle, when do you typically introduce a Mock?
@@ -1995,24 +1985,24 @@ steps:
       |---|---|---|
       | Setup | `with patch("X") as m:` | `with patch("X", autospec=True) as m:` |
       | What `m(wrong_args)` does | Silently records the call | Raises `TypeError` because the real function's signature is enforced |
-      | What `m.assrt_called_once_with(...)` (typo) does | Silently auto-creates an attribute, returns yet another Mock | Same in current Mock — `autospec` defends primarily against *call-signature drift*, not assertion-method typos. Use linters / mypy for the typo defense. |
+      | What `m.assrt_called_once_with(...)` (typo) does | Raises `AttributeError` under the default assertion-prefix guard | Also rejects this unknown assertion attribute; autospec adds signature checks, not a universal spelling checker |
       | When you'd want it | Quick exploratory test where signature isn't a concern | **Default-safe habit** for any patched callable — catches signature drift the moment a teammate's refactor breaks the contract |
 
       The pedagogical takeaway: **`autospec=True` is a design guardrail.** It says "make this Mock as strict as the real thing it's replacing." Without it, your test silently accepts calls that the real function would reject — until production catches it for you, which is the worst place to find out.
 
       <details markdown="1"><summary>📖 Behavior verification — the third kind</summary>
 
-      Steps 2 and 3 used **state verification**: stubs feed inputs, the test asserts on the SUT's return value or on the spy's recorded list. The SUT's *internal call sequence* was incidental.
+      Step 2 used **state verification** of the SUT's return value. Step 3 used a spy for **procedural behavior verification**: the test inspected recorded interactions after execution. The SUT's uncontracted internal call sequence was incidental.
 
       `test_celebrate_milestone_sends_push` (after you fix the patch target) is different. The SUT returns `None`. Nothing in its observable state changes. The *call itself* is the entire contract. We assert that `mock_send` was called once with specific arguments. That's **[behavior verification](http://xunitpatterns.com/Behavior%20Verification.html)** (Meszaros).
 
-      A `Mock` configured with call assertions is, in Meszaros' strict sense, a **[Mock Object](http://xunitpatterns.com/Mock%20Object.html)**. The role isn't "what class did you instantiate" — it's "what does the test verify, and how?"
+      Here the Python `Mock` plays the **[Spy](http://xunitpatterns.com/Test%20Spy.html)** role: the test inspects a recorded call after execution. An expectation-based Mock Object is configured with expectations before execution. The role depends on how verification happens, not the Python class name.
 
       | Role | What the test verifies | Verification kind |
       |---|---|---|
       | [Stub](http://xunitpatterns.com/Test%20Stub.html) | The SUT's return value (driven by canned indirect inputs) | [State](http://xunitpatterns.com/State%20Verification.html) |
-      | [Spy](http://xunitpatterns.com/Test%20Spy.html) | The recorded call list, after the fact | [State](http://xunitpatterns.com/State%20Verification.html) (of the spy) |
-      | [Mock Object](http://xunitpatterns.com/Mock%20Object.html) | The interaction itself, often with strict expectations | **[Behavior](http://xunitpatterns.com/Behavior%20Verification.html)** |
+      | [Spy](http://xunitpatterns.com/Test%20Spy.html) | The recorded call list, after the fact | Procedural [behavior](http://xunitpatterns.com/Behavior%20Verification.html) verification |
+      | [Mock Object](http://xunitpatterns.com/Mock%20Object.html) | Interactions compared with expectations configured before execution | Expected-interaction [behavior](http://xunitpatterns.com/Behavior%20Verification.html) verification |
       </details>
 
       <details markdown="1"><summary>🌍 The same idea in another language</summary>
@@ -2032,27 +2022,27 @@ steps:
 
       <details markdown="1"><summary>📖 `spec`, `spec_set`, `autospec`, `seal` — four progressively-stricter guardrails</summary>
 
-      Python's `unittest.mock` offers a small family of guardrails that *all* solve the same broad problem (a vanilla `Mock()` accepts every attribute access and every call), but at different levels of strictness:
+      Python's `unittest.mock` offers a small family of guardrails that *all* solve the same broad problem (a vanilla `Mock()` accepts arbitrary calls and many dynamic attribute names, while guarding common assertion-name typos), but at different levels of strictness:
 
       | Guardrail | What it restricts | Catches |
       |---|---|---|
       | `Mock(spec=Foo)` | Attribute *access* — `mock.bogus_method` raises `AttributeError` | Calls to methods the real class doesn't have |
       | `Mock(spec_set=Foo)` | Attribute access AND attribute *assignment* — `mock.new_attr = 5` also fails | The above, plus tests that accidentally add bogus state to the mock |
-      | `patch(..., autospec=True)` / `create_autospec(Foo)` | All of the above, *plus* call-signature enforcement | Calls with the wrong number/types of arguments — signature drift |
+      | `patch(..., autospec=True)` / `create_autospec(Foo)` | Attributes from the spec and call-signature enforcement; add `spec_set=True` to restrict assignment too | Missing or extra arguments and invalid keyword names; does not check annotated types |
       | `mock.seal(m)` | Stops further auto-attribute creation on an *existing* Mock tree from that point onward | Late additions of bogus attributes after partial configuration |
 
       Use `autospec` (or `create_autospec`) as the default for patched callables. Reach for `spec_set` when you want strict attribute control without paying the cost of full signature inspection. Reach for `seal` when you've configured a Mock with a few legitimate attributes and want everything *else* on it to fail loudly.
 
-      None of these are silver bullets — they catch signature and attribute drift, not assertion-method typos. For typos, mypy/pyright and linters are still the right answer.
+      Default Mock also guards common assertion-name misspellings. Static tools and review can help, but dynamic attributes mean a type checker does not guarantee that every typo is detected. None of these safeguards proves that the test checks the right behavior.
       </details>
 
       <details markdown="1"><summary>🧠 The typo trap and `autospec` — the precise truth</summary>
 
-      A common claim: "autospec catches typos like `assrt_called_once_with`." Half-true. Here's the precise picture.
+      A default Mock already catches the specific typo `assrt_called_once_with`: in Python 3.13, unknown names beginning with common assertion-like prefixes raise `AttributeError`.
 
-      `autospec=True` constrains the Mock to the *spec of the patched object* — its arguments, its attributes (if it's a class), its method signatures. **For attribute access**, autospec does restrict the Mock to attributes the real object has — but `assert_*` methods are part of the *Mock's* interface, not the real object's. So `mock.assrt_called_once_with` may or may not be caught depending on Python version and exact patching shape.
+      `autospec=True` constrains attributes and call signatures using the patched object. It does not enforce argument type annotations. The assertion-prefix guard is a separate safeguard; `unsafe=True` on a mock disables that guard and should not be used to hide assertion typos.
 
-      **The reliable defense against `assrt_called_once_with` typos:** mypy or pylint, not autospec. Don't rely on autospec for typo prevention.
+      **For assertion typos:** keep the default guard enabled, spell the intended assertion correctly, and check that a wrong call actually fails the test. Static tools can supplement this, but Mock's dynamic attributes limit what they can prove.
 
       **The reliable defense against signature drift** (calling `send_push("u1")` when the real function needs `send_push("u1", "msg")`): **autospec catches this immediately**. That's the use case worth the keystrokes.
       </details>
@@ -2318,21 +2308,18 @@ steps:
             What does **`autospec=True`** primarily defend against?
           type: single
           options:
-            - "Typos in `assert_*` method names like `assrt_called_once_with`"
-            - "Calling the patched function with the wrong number or types of arguments"
-            - "Slow tests — autospec speeds up Mock construction"
-            - "Forgetting to call `mock.reset_mock()` between tests"
+          - Typos in `assert_*` method names like `assrt_called_once_with`
+          - Calling the patched function with arguments that violate its signature
+          - Slow tests — autospec speeds up Mock construction
+          - Forgetting to call `mock.reset_mock()` between tests
           correct_index: 1
           option_feedback:
-            0: "Half-myth. `autospec` constrains the Mock to the *real object's* attributes; `assert_*` methods are part of *Mock's* interface, not the real function's. Whether autospec catches `assrt_called_once_with` depends on subtle interactions in different Python versions. The reliable typo defense is mypy/pylint."
-            1: "Right. With `autospec=True`, the Mock's `__call__` enforces the patched function's signature. `mock_send(\"u1\")` for a function that needs `(user_id, message)` raises TypeError immediately. This catches signature-drift bugs that a loose Mock would silently accept."
-            2: "Autospec is *slower* than a loose Mock (it inspects the real object's signature on construction). The benefit is correctness, not speed."
-            3: "`reset_mock` and autospec are independent concerns. Autospec is about call signatures; `reset_mock` is about clearing recorded state between assertions."
+            0: Default Mock already guards common assertion-like misspellings such as assrt. Autospec primarily adds the real callable's signature; it is not a universal spelling checker.
+            1: Right. With `autospec=True`, the Mock's `__call__` enforces the patched function's signature. `mock_send("u1")` for a function that needs `(user_id, message)` raises TypeError immediately. This catches signature-drift bugs that a loose Mock would silently accept.
+            2: Autospec is *slower* than a loose Mock (it inspects the real object's signature on construction). The benefit is correctness, not speed.
+            3: '`reset_mock` and autospec are independent concerns. Autospec is about call signatures; `reset_mock` is about clearing recorded state between assertions.'
           explanation: |
-            `autospec=True` is the **default-safe habit for patched callables**:
-            it makes the mock as strict as the real thing it's replacing.
-            Signature drift (the most common refactoring bug) gets caught
-            immediately. Use it unless you have a reason not to.
+            Autospec enforces call signatures: missing required arguments, unexpected keywords, or too many positional arguments raise TypeError. It does not enforce annotated argument types, and spec_set must be requested separately to forbid assigning unknown attributes.
 
         - question: |
             What's the relationship between **[Test Double](http://xunitpatterns.com/Test%20Double.html)** (the umbrella name) and Stub / Spy / Mock / Fake / Dummy?
@@ -2356,26 +2343,20 @@ steps:
             for the full taxonomy.
 
         - question: |
-            **(Spaced review — Step 4)** A `Mock` is patched in for the SUT's collaborator. The test asserts `mock.method.assert_called_once_with("u1", 100)`. What **role** is this Mock playing?
+            Under this tutorial's role-based vocabulary, a test calls `mock.method.assert_called_once_with("u1", 100)` **after** exercising the SUT. What role is the double playing?
           type: single
           options:
-            - "Stub — the collaborator returns a Mock object"
-            - "Spy — the test asserts on what the SUT *did* (the recorded call), inspecting after the fact"
-            - "Mock Object — the test sets a strict expectation on the call"
-            - "Either Spy or Mock Object — `unittest.mock` blurs the line"
-          correct_index: 3
+          - Stub — the collaborator returns a Mock object
+          - Spy — it inspects the recorded call after execution.
+          - Mock Object — the test sets a strict expectation on the call
+          - Either Spy or Mock Object — `unittest.mock` blurs the line
+          correct_index: 1
           option_feedback:
-            0: "Stub provides canned input *to* the SUT. This test isn't using the Mock to feed an answer in — it's verifying a call went out. Wrong direction."
-            1: "Defensible. The `assert_called_*` style is post-execution inspection of recorded calls, which is closer to a Spy. (Some authors put `assert_called_*` cleanly in the Spy camp.)"
-            2: "Also defensible. The single-call expectation `assert_called_once_with(...)` IS a strict expectation on a specific interaction — Meszaros' Mock Object territory. (Some authors put `assert_called_*` in the Mock Object camp.)"
-            3: "Right. The boundary depends on whether the expectation is configured up-front (Mock Object) or inspected after the fact via `assert_called_*` (Spy-leaning) — fuzzier in `unittest.mock` than in Meszaros' original taxonomy because the same Mock class can do either. Step 4's lesson — \"the role isn't determined by the class\" — applies again here."
+            0: A stub supplies indirect inputs. This example inspects a recorded indirect output.
+            2: A Mock Object in this taxonomy is configured with expectations before execution. This test instead checks recorded calls afterward.
+            3: 'The Python class can serve different roles, but this use is specified: recorded calls are inspected after execution, which is the Spy role.'
           explanation: |
-            `unittest.mock` blurs the Spy/Mock-Object line that Meszaros drew
-            crisply. Both are forms of *behavior verification*; they differ
-            mainly in whether the expectation is set up-front (mockist style)
-            or read after-the-fact (spy style). For your day-to-day work:
-            don't worry too much about which side of the line you're on —
-            worry about whether the test actually verifies the contract.
+            The class is unittest.mock.Mock; the role in this test is Spy. Role depends on how the double is used, not its class name. Both spies and expectation-based Mock Objects support behavior verification, using different verification styles.
 
         - question: |
             **(Spaced review — Steps 1 & 2)** In Step 1 you injected `clock=datetime.datetime` as a constructor parameter (Dependency Injection). In this step you patched `"quest_service.send_push"` via `unittest.mock.patch`. When is each technique the right choice?
@@ -2402,23 +2383,20 @@ steps:
             are *roles*; DI and `patch()` are *delivery vehicles* for those roles.
 
         - question: |
-            **(Spaced review — Step 4 typo trap)** What's the **most reliable defense** against typos like `mock.assrt_called_once_with(...)` silently passing?
+            Which statement correctly distinguishes Mock's safeguards in current Python?
           type: single
           options:
-            - "Always use `autospec=True`"
-            - "Run a static type checker (mypy / pyright) or linter"
-            - "Memorize the spelling of every `assert_*` method"
-            - "Use `Mock(spec_set=True)` — it makes Mock immutable"
+          - Autospec checks annotated argument types as well as argument names.
+          - Mock guards common assert typos; autospec checks signatures; spec_set restricts reads and writes.
+          - Static type checking guarantees every misspelled attribute on a dynamic Mock will be rejected.
+          - spec_set prevents assigning unknown attributes but allows reading them.
           correct_index: 1
           option_feedback:
-            0: "Autospec primarily catches *call-signature drift* — wrong number/types of arguments to the patched callable. Whether it catches typos in `assert_*` methods is version-dependent and not reliable. Don't lean on autospec for this."
-            1: "Right. mypy / pyright understand Mock's typing and flag the missing attribute on `Mock`. pylint catches the typo statically. Code review catches what tooling misses. This combination is robust — autospec adds defense-in-depth but isn't sufficient on its own."
-            2: "Memorization is fragile and doesn't help when you're tired or rushed. Static tooling is what scales — let the computer remember the right spelling."
-            3: "`spec_set=True` blocks setting *new* attributes (so `m.foo = ...` would fail). It doesn't reliably block reading nonexistent attributes (so `m.assrt_called_once_with(...)` may still slip through depending on the spec). Use mypy/pyright."
+            0: Autospec checks how arguments bind to a signature, not whether values match type annotations.
+            2: Mock supports dynamic attributes, so a checker may treat an unknown attribute as Any. Tooling is useful but cannot guarantee detection of every typo.
+            3: spec_set rejects both reads and writes of attributes absent from the supplied specification.
           explanation: |
-            Static tooling > runtime defense for spelling. mypy / pyright
-            understand `unittest.mock`'s type stubs and catch typos like
-            `assrt_called_once_with` at edit time, before the test ever runs.
+            These safeguards address different errors. The default assertion-prefix guard catches assrt_called_once_with; autospec catches calls that violate a signature; spec_set limits attribute access and assignment. None replaces checking that the test actually asserts the required behavior.
 
 
   # --------------------------------------------------------------------------

@@ -29,7 +29,7 @@ cards:
   - id: 5
     difficulty: basic
     question: "What does the design principle **Keep Versions of Your Dependencies Fixed** mean, and how do you do it?"
-    answer: "Pin every dependency (direct *and* transitive) to specific versions so that a clean install at any point in the future resolves identically. Tools: Pipenv `Pipfile.lock`, npm `package-lock.json`, pnpm/yarn lockfiles, Maven `pom.xml`, Cargo `Cargo.lock`."
+    answer: "Pin every dependency (direct *and* transitive) to specific versions so that a clean install at any point in the future resolves identically. Tools: Pipenv `Pipfile.lock`, npm `package-lock.json`, pnpm/yarn lockfiles, Cargo `Cargo.lock`."
     explanation: "Defense against silent upstream drift. The `urllib3` 2.0.0 → `requests` → `docker` incident dramatized this: a transitive major-version release broke unrelated, untouched projects overnight."
 
   - id: 6
@@ -58,8 +58,8 @@ cards:
 
   - id: 10
     difficulty: intermediate
-    question: "Why did Ariane 5 self-destruct 37 seconds after launch on June 4, 1996?"
-    answer: "The Inertial Reference System software was reused **as-is from Ariane 4**, where it had run flawlessly for years. It stored horizontal velocity in a **16-bit integer** for performance reasons. Ariane 5 was bigger and faster: within seconds of launch, horizontal velocity exceeded what a 16-bit integer can hold, the conversion overflowed, both primary and backup SRIs faulted identically, and the rocket interpreted the resulting nonsense as a course deviation and self-destructed. Loss: roughly $370 million."
+    question: "How did reused software contribute to the Ariane 5 failure on June 4, 1996?"
+    answer: "An alignment calculation reused from Ariane 4 converted a horizontal-bias value to a **16-bit signed integer**. Ariane 5's different trajectory exceeded the assumed range. The unprotected conversion halted both inertial reference systems; diagnostic data was interpreted as flight data, leading to breakup and self-destruction."
     explanation: "The canonical internal-reuse failure. The code was correct in Ariane 4's context and incorrect in Ariane 5's context — an *implicit assumption* about velocity range was violated."
 
   - id: 11
@@ -82,15 +82,15 @@ cards:
 
   - id: 14
     difficulty: intermediate
-    question: "What does the research on design alternatives tell us about how many to generate?"
-    answer: "Producing **more design options leads to better final designs**. In one study, Team A produced 1 design, Team B produced 3, and Team C produced 5; expert reviewers ranked Team C's selected design highest. The reason is that broad search beats first-idea fixation."
-    explanation: "Follow-up work found that just *prompting* less-experienced designers to consider alternatives produced measurably better designs. The discipline is to **generate broadly, evaluate narrowly**."
+    question: "What practical habit does research on design alternatives support, and what does it not establish?"
+    answer: "Generate several plausible alternatives and evaluate them against requirements and trade-offs. Tofan, Galster, and Avgeriou's 2013 survey associated better self-reported decisions with more alternatives; it did not establish that every extra option improves quality or identify a universally optimal number."
+    explanation: "The survey asked architects about past decisions. It did not experimentally test prompting novice designers. Considering alternatives is a useful practice, not a guarantee of a better result."
 
   - id: 15
     difficulty: intermediate
     question: "What are the four steps of the *rational decision process* for design?"
     answer: "(1) **Identify** your requirements — what matters? (2) **Generate** many design alternatives. (3) **Evaluate** how well each alternative meets the requirements. (4) **Consider trade-offs and make a decision.**"
-    explanation: "Explicitly walking through these four steps measurably improves design quality, especially for early-career engineers. The act of writing it down externalizes reasoning that intuition alone usually skips."
+    explanation: "Writing down requirements, alternatives, and trade-offs makes the reasoning available for review. These four steps are a practical framework, not a guarantee of improved design quality."
 
   - id: 16
     difficulty: advanced

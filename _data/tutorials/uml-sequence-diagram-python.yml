@@ -329,23 +329,24 @@ steps:
     instructions: |
       ### Why this matters
 
-      Most useful methods *give something back* — a count, a status, a result — and the diagram has to show those returns without burying the reader in noise. UML draws a dashed return arrow only when the returned value carries information the reader cares about, so you need to recognise the two precise conditions that trigger one. Get this right and your diagrams stay readable; miss it and either important data disappears or trivial returns clutter the picture.
+      Most useful methods *give something back* — a count, a status, a result — and the diagram has to show those returns without burying the reader in noise. UML permits return arrows when they help explain an interaction. This tutorial's analyzer uses specific rules to decide which ones to draw; those are renderer conventions, not requirements of UML. Get this right and your diagrams stay readable; miss it and either important data disappears or trivial returns clutter the picture.
 
       ### 🎯 You will learn to
 
       - Analyze when a return message appears on a sequence diagram (and when it does not)
       - Apply Python type annotations and assignments to produce a dashed return arrow
 
-      ### The Two Rules for Return Arrows
+      ### Return Arrows in This Tutorial
 
       A **return message** is drawn as a **dashed arrow with an open arrowhead** (⇠). It points *back* from the callee to the caller, at the moment the method finishes.
 
-      But here is the catch — sequence diagrams do **not** draw a return arrow for every call. That would be noise. Instead, two things must be true:
+      The analyzer omits some returns to reduce clutter. For a visible return in this tutorial, these conditions must hold:
 
       1. The method has a **non-`None` return type** (annotate it: `-> int`, `-> str`, etc.)
       2. The caller **captures** the return value in a variable (`count = bot.get_count()`)
+      3. The caller and callee are **different lifelines**; the analyzer omits separate return arrows for self-calls.
 
-      If you just write `bot.send("hi")` and ignore any return, no dashed arrow appears — because "the call finished and came back" is already implied by the activation box ending. UML only shows returns when they carry **information the reader cares about**.
+      If you just write `bot.send("hi")` and ignore any return, no dashed arrow appears — because "the call finished and came back" is already implied by the activation box ending. A hand-authored UML diagram can show an uncaptured return or a self-call return when that information matters.
 
       ### Example — With and Without Capture
 
@@ -489,7 +490,7 @@ steps:
           assert ret is not None and isinstance(ret, ast.Name) and ret.id == 'int', \
               "Keep the `-> int` return type annotation on get_member_count — without it, the diagram won't draw the return arrow"
         hints:
-          - text: "Which of the *two rules* for return arrows lives on the method signature itself? That's the one you need to preserve."
+          - text: "Which renderer condition for return arrows lives on the method signature itself? That's the one you need to preserve."
             condition: "default"
           - text: "Leave the method signature alone: `def get_member_count(self) -> int:`. The return type annotation is what makes the dashed return arrow show up."
             condition: "default"
@@ -510,7 +511,7 @@ steps:
           assert captured, \
               "Assign the result of bot.get_member_count() to a variable — e.g. `count = bot.get_member_count()`. Without an assignment, no return arrow appears."
         hints:
-          - text: "Right now the starter code *calls* get_member_count but throws the result away. Which of the two rules for return arrows is violated?"
+          - text: "Right now the starter code *calls* get_member_count but throws the result away. Which renderer condition for return arrows is violated?"
             condition: "default"
           - text: "Capture the result in a variable: `count = bot.get_member_count()`. The assignment is what makes the return arrow appear."
             condition: "default"
@@ -919,7 +920,7 @@ steps:
             - "5 — two call arrows and two return arrows"
           correct_index: 0
           explanation: |
-            Trick question — and a useful one. The current analyzer draws return arrows **only across different lifelines**. A self-call returning to itself visibly starts and ends via the nested activation box, so no separate dashed arrow is drawn. This is why Step 2's return-arrow examples always had the caller and callee on *different* lifelines. The "two rules" from Step 2 still hold, but there is a third, implicit rule: "caller ≠ callee."
+            Step 2's renderer rule applies: this analyzer draws separate return arrows **only across different lifelines**. The self-call still returns, but its nested activation ends without a dashed arrow. This is a display convention of the analyzer, not a prohibition in UML.
 
 
   # --------------------------------------------------------------------------
@@ -1704,7 +1705,7 @@ steps:
           assert captured_names, \
               "run_digest must capture channel.get_subscriber_count() in a variable — e.g. `count = channel.get_subscriber_count()`. Without the assignment, no dashed return arrow appears."
         hints:
-          - text: "Which of Step 2's two rules for return arrows is the one you have to enforce in *your* code (the caller), not in the method signature (the callee)?"
+          - text: "Which of Step 2's renderer conditions for return arrows is the one you have to enforce in *your* code (the caller), not in the method signature (the callee)?"
             condition: "default"
           - text: "The first line of `run_digest` should capture the count: `count = channel.get_subscriber_count()`."
             condition: "default"

@@ -217,7 +217,7 @@ Two failure modes dominate C memory bugs, and they pull in opposite directions:
 | **Memory leak** | You `malloc`'d and never `free`'d | Long-running programs grow without bound; the OS eventually kills them | Forgot to free, or freed on the happy path but not on every error path |
 | **Segmentation fault** | You accessed memory you don't own | Program crashes immediately with "segfault" | Used a pointer after `free`, dereferenced `NULL`, or walked off the end of a buffer |
 
-The discipline is: **allocate as late as you can, free as early as you can, and never touch the memory after `free`.** Setting the pointer to `NULL` immediately after `free` is a cheap defensive habit — a subsequent accidental dereference fails loudly with a segfault instead of silently corrupting whatever was in that memory next.
+The discipline is: **allocate as late as you can, free as early as you can, and never touch the memory after `free`.** Setting the pointer to `NULL` immediately after `free` is a cheap defensive habit — `free(NULL)` is safe, but dereferencing NULL is still undefined behavior and is not guaranteed to crash. Other aliases to the freed allocation also remain invalid.
 
 > **Why not just let the OS clean up at program exit?** That works for short-lived command-line programs, but a long-running server or daemon that leaks even a few bytes per request will exhaust memory after enough requests. Leaks also confuse memory profilers and obscure other bugs. Discipline pays.
 
@@ -228,7 +228,7 @@ C++ programmers using RAII (constructors / destructors, `std::unique_ptr`, `std:
 C has no `string` type. A "string" is a `char` array whose last byte is the null terminator `'\0'`:
 
 ```c
-char  letter = 'a';      // single character — single quotes, ASCII value 97
+char  letter = 'a';      // C character constant has type int; converted to char here
 char* word   = "hello";  // string literal — double quotes, points to 'h','e','l','l','o','\0'
 ```
 
@@ -353,16 +353,16 @@ The `fopen` you call in your source has the same signature everywhere. The libc 
 
 ## When to Choose C Over C++
 
-C++ is a strict superset of *most* of C, so it's tempting to ask "why not always use C++?" Three reasons to deliberately drop to C:
+C++ supports many C programming idioms, so it's tempting to ask "why not always use C++?" Three reasons to deliberately drop to C:
 
 ### Smaller, More Predictable Binaries
 
-C executables are smaller because C doesn't pull in the C++ runtime support: no virtual function tables, no exception unwinding tables, no implicit constructor/destructor code, no name-mangled symbols. For an embedded firmware image that has to fit in 64 KB of flash, this matters. (Our own in-browser C tutorial uses the *Tiny C Compiler* — TCC — instead of GCC for exactly this reason; the full GCC binary is too large to ship inside a virtual machine running in your browser tab.)
+C can be a practical choice for a constrained compiler or runtime. C++ features such as exception handling and runtime libraries can add space costs when used, but equivalent C++ code is not inherently larger than C code: the features, compiler, libraries and build settings determine the result. For a firmware image with a fixed flash budget, measure the actual binary. (Our own in-browser C tutorial uses the *Tiny C Compiler* — TCC — instead of GCC for exactly this reason; the full GCC binary is too large to ship inside a virtual machine running in your browser tab.)
 
-C also makes execution-time behavior more predictable. A C function call is *just* a jump to an address. A C++ virtual function call goes through a vtable lookup that the compiler usually can't devirtualize. A C++ statement inside a `try` block has an implicit edge to the matching `catch` handler — meaning *every* line of code inside the `try` is potentially a branch point. That's fine for application code, but it's a problem for:
+Language subsets can make program analysis more manageable. Potentially throwing operations add exceptional control-flow paths; virtual calls may have several possible targets, though compilers and analysis tools can sometimes resolve them statically. Not every statement inside a `try` block can throw. C also has indirect calls through function pointers and operations with variable cost, so language choice alone does not establish predictability. Consider:
 
-- **Aerospace and medical devices.** NASA's coding standards for flight software restrict C++ to a subset that excludes exceptions and most polymorphism, precisely so that automated verification tools can reason about the program's control flow. If you can't reach the device to debug it (because the device is on Mars, or inside a patient), you really want a small, analyzable program.
-- **Hard real-time systems.** A C function has a tight, predictable upper bound on its runtime. A C++ function that may throw, may call into a virtual override, or may invoke an allocator with hidden behavior can blow that bound.
+- **Safety-critical firmware.** A particular project may restrict its language features to match its verification tools and qualification requirements. For example, a hypothetical project could prohibit exceptions and virtual dispatch to reduce the paths and targets its analysis must handle. Such choices depend on the project and its verification requirements.
+- **Hard real-time systems.** Neither C nor C++ automatically gives a function a bounded execution time. Loops, recursion, allocation, blocking calls, dispatch and the target hardware all matter. Establishing a worst-case bound requires restrictions and analysis of the actual program.
 
 ### Library Interface to Other Languages
 
@@ -375,9 +375,9 @@ This is the killer feature. Almost every mainstream language can call C function
 - Go: `cgo`
 - Ruby, R, Lua, OCaml, Haskell, Swift, ...
 
-So if you write a high-performance routine — a numerical solver, a cryptographic primitive, an image filter — and you expose it with a C ABI, *everyone* can use it. The same routine in C++ would expose name-mangled symbols that change between compilers and standard-library versions, and would force callers to deal with C++ runtime initialization.
+So if you write a high-performance routine — a numerical solver, a cryptographic primitive, an image filter — and you expose it with a C ABI, *everyone* can use it. A C++ implementation can expose the same C-compatible interface using an `extern "C"` wrapper and C-compatible types. Exposing a C++-specific ABI directly makes callers deal with compiler, library and runtime compatibility; using a C ABI does not require writing the implementation in C.
 
-The one language that famously *cannot* call into C is **JavaScript running in a browser**. This is not a technical limitation — it's a deliberate security boundary. Browser JavaScript runs inside a sandbox precisely so that a malicious page cannot access your filesystem, your camera, or arbitrary memory. C has *unrestricted* access to all of those. If browser JavaScript could call into native C code, the entire sandbox guarantee would evaporate. (WebAssembly is the modern workaround: you compile C to a sandboxed bytecode that the browser runs in the same isolated environment as JavaScript.)
+The one language that famously *cannot* call into C is **JavaScript running in a browser**. This is not a technical limitation — it's a deliberate security boundary. Browser JavaScript runs inside a sandbox precisely so that a malicious page cannot access your filesystem, your camera, or arbitrary memory. Native code can call host APIs subject to the process's operating-system permissions; the C language itself does not grant unrestricted access. If browser JavaScript could call into native C code, the entire sandbox guarantee would evaporate. (WebAssembly is the modern workaround: you compile C to a sandboxed bytecode that the browser runs in the same isolated environment as JavaScript.)
 
 ## goto, Reconsidered
 

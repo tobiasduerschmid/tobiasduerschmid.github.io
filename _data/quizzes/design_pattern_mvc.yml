@@ -120,7 +120,7 @@ questions:
         The model in classic MVC is blind to input devices. It does not know about clicks, mouse events, or HTTP requests — it only exposes domain operations. Translating raw input into a domain call is the controller's job.
       3: |
         The view does delegate input to a controller, but the controller updates the *model*, not the view. The view re-renders by reading the model in response to a notification, not by being handed a pre-built screen.
-    explanation: "**The controller receives input and updates the model; the model then notifies subscribed views, which query the model and redraw.** Classic MVC has a clear input → state → presentation flow. The **controller** translates the raw user event into a domain operation on the **model**. Mutating the model fires an Observer notification, which prompts each registered **view** to query the model for the data it needs and re-render. The view never receives input directly, and the model never knows about input devices."
+    explanation: "**The controller receives input and updates the model; the model then notifies subscribed views, which query the model and redraw.** Classic MVC has a clear input → state → presentation flow. The **controller** translates the raw user event into a domain operation on the **model**. Mutating the model fires an Observer notification, which prompts each registered **view** to query the model for the data it needs and re-render. The view or UI event system may receive the physical event and delegate input handling to the controller; the model remains independent of input devices."
 
   - id: 7
     difficulty: advanced

@@ -32,21 +32,21 @@ questions:
 
       **Test B** (white-box): `assert discount._tier_lookup_table["premium"] == 0.10`
 
-      Which test is more likely to survive a refactoring that preserves user-visible behavior, and what does that tell you about how to choose between black-box and white-box tests?
+      Which test is more likely to survive a refactoring that preserves user-visible behavior, and what does that tell you about coupling assertions to implementation details?
     options:
-      - "Test B — it pins down the exact implementation, which gives the most precise failure signal when the discount logic changes in any way."
-      - "Test A — it asserts at the spec boundary, so any implementation that gives premium customers a 10% discount keeps it green."
-      - "Both — they test the same business rule and are equally robust to refactoring; the only difference is which layer they target."
-      - "Neither — both will break under any refactoring of the discount module, because both test the same logic that refactoring would touch."
+    - Test B — it pins down the exact implementation, which gives the most precise failure signal when the discount logic changes in any way.
+    - Test A — it asserts at the spec boundary, so any implementation that gives premium customers a 10% discount keeps it green.
+    - Both — they test the same business rule and are equally robust to refactoring; the only difference is which layer they target.
+    - Neither — both will break under any refactoring of the discount module, because both test the same logic that refactoring would touch.
     correct_index: 1
     option_feedback:
       0: |
         Pinning the implementation is precisely what makes Test B brittle. Renaming `_tier_lookup_table`, swapping it for a rule engine, or moving the lookup to config all break it while the user still sees a 10% discount — a precise signal about the wrong thing.
-      2: |
-        They look alike but couple to different things. The black-box test breaks only when premium customers stop getting their discount; the white-box one breaks on internal renames. That gap is the whole point.
+      2: Both relate to the same rule, but Test B also depends on a particular private table. White-box input selection does not itself require that coupling.
       3: |
         The black-box test survives any refactoring that preserves "premium → 10% off $100 = $10". Calling both equally brittle treats coupling-to-spec and coupling-to-implementation as the same risk.
-    explanation: "Black-box tests assert at the spec boundary, so any conforming implementation keeps them green — they survive refactoring. White-box tests pin internal mechanisms and break when those mechanisms change even though behavior is preserved. The healthy ratio is many black-box tests for behavior, plus a few white-box tests for known implementation-specific risks (an off-by-one in a private helper, a defensive branch the spec doesn't enumerate)."
+    explanation: |
+      Test A asserts the promised discount; Test B also pins a private representation. Black-box and white-box describe how tests are derived: from the specification or from the implementation. A white-box test can choose inputs to cover branches and still assert through the public API. It is the assertion on a private table, not white-box reasoning itself, that makes Test B brittle.
 
   - id: 3
     difficulty: intermediate
@@ -54,19 +54,19 @@ questions:
     question: |
       You are about to test the behavior: *'when a user clicks "Save" in the profile editor, their changes persist and show up on next page load.'* Which level of the testing pyramid is the natural primary home for this test?
     options:
-      - "**Unit test** — mock the database and assert `save_profile` was called with the right arguments, since the unit is the smallest scope where the save logic lives."
-      - "**Integration test** — exercise the save endpoint against a real (or in-memory) database and assert that subsequent reads return the new values."
-      - "**System test** — open a real browser, click Save, reload the page, and assert the UI shows the new value end-to-end through every layer."
-      - "**No test needed** — the framework's ORM handles persistence and is itself well-tested, so application code does not need an additional test."
-    correct_index: 1
+    - '**Unit test** — mock the database and assert `save_profile` was called with the right arguments, since the unit is the smallest scope where the save logic lives.'
+    - '**Integration test** — exercise the save endpoint against a real (or in-memory) database and assert that subsequent reads return the new values.'
+    - '**System test** — open a real browser, click Save, reload the page, and assert the UI shows the new value end-to-end through every layer.'
+    - '**No test needed** — the framework''s ORM handles persistence and is itself well-tested, so application code does not need an additional test.'
+    correct_index: 2
     option_feedback:
       0: |
         Mocking the database stubs out the very thing under test — *does the data actually persist?* A unit test on `save_profile` can check input validation or business logic, but a mock cannot confirm a real round-trip to storage.
-      2: |
-        A browser test verifies this too, but at higher cost — slower, flakier, harder to debug. Integration sits at the right level: it exercises the real persistence layer without driving a browser.
       3: |
         Persistence is a behavior the framework *participates in*, not one it lets you skip verifying. Misconfigured transactions, wrong boundaries, and migration drift all produce real persistence bugs in code that uses a well-tested ORM.
-    explanation: "Match the test level to the behavior. Persistence is inherently cross-module — application code, ORM, and database all have to cooperate — so an integration test that writes and reads back exercises that cooperation directly and cheaply. Reserve system/E2E tests for flows that genuinely need the deployed environment, like login or checkout."
+      1: This checks endpoint/database cooperation, but not whether clicking Save sends the request or reloading renders the saved value. Those UI steps are explicit parts of the stated behavior.
+    explanation: |
+      The stated behavior spans the browser, save request, storage, and subsequent page rendering, so the system test checks the whole contract. Complement it with faster unit and integration tests for narrower rules; an endpoint/database test alone does not verify the click-and-reload flow.
 
   - id: 4
     difficulty: advanced
@@ -94,21 +94,23 @@ questions:
     question: |
       A reviewer says: *'White-box testing is just an outdated form of testing — the only modern style is black-box.'* Which of the following are valid counter-arguments? (Select all that apply.)
     options:
-      - "White-box tests can intentionally exercise defensive branches, error paths, and edge cases that the spec doesn't enumerate — these are real implementation risks the spec is silent about."
-      - "Coverage tools, which are white-box by nature, remain useful as navigational maps for finding code that hasn't been exercised at all by the black-box suite."
-      - "Black-box tests cannot detect issues the spec is silent on (e.g. a race condition in a private cache); a white-box test that exercises the cache logic directly can surface them."
-      - "Property-based testing makes white-box testing obsolete — generating thousands of inputs around the spec gives the same coverage signal that white-box ever provided, but at the spec layer."
-    correct_indices: [0, 1, 2]
+    - White-box tests can intentionally exercise defensive branches, error paths, and edge cases that the spec doesn't enumerate — these are real implementation risks the spec is silent about.
+    - Coverage tools, which are white-box by nature, remain useful as navigational maps for finding code that hasn't been exercised at all by the black-box suite.
+    - Knowing the private cache design can help select inputs or schedules that reveal a race, while assertions still check the public contract.
+    - Property-based testing makes white-box testing obsolete — generating thousands of inputs around the spec gives the same coverage signal that white-box ever provided, but at the spec layer.
+    correct_indices:
+    - 0
+    - 1
+    - 2
     option_feedback:
       0: |
         This is a valid counter the answer should include: white-box tests reach risks the public spec never names, such as defensive paths and edge-case branches.
       1: |
         Worth selecting: coverage is itself a white-box signal, showing which code the black-box suite hasn't exercised. It doesn't prove correctness, but it stays useful as navigation.
-      2: |
-        A valid counter to include: some failures live in implementation choices the spec is silent on (a race in a private cache), and a white-box test can target that risk directly.
-      3: |
-        Property-based testing varies inputs at the spec boundary; it does not reach private paths the spec never mentions. The two operate at different layers, so one cannot make the other obsolete.
-    explanation: "Black-box and white-box are complementary lenses, not rival methodologies. Black-box tests survive refactoring and pin behavior at the spec boundary; white-box tests catch implementation-specific risks the spec doesn't enumerate. Coverage tools, mutation testing, and property-based testing all draw on white-box intuitions even in modern suites — the mature view is *both, in the right proportion*."
+      2: Implementation knowledge can target the risky interleaving. The resulting test may still assert public behavior; a black-box test can also reveal the same failure if it reaches that interleaving.
+      3: Property-based testing is compatible with either specification-derived or implementation-informed test design. It does not automatically exercise every branch or schedule.
+    explanation: |
+      Black-box and white-box are complementary ways to derive tests, not different API layers. White-box analysis and coverage can reveal untested branches; black-box design starts from the contract. Either can assert public behavior. Property-based testing can use either approach and is not inherently white-box.
 
   - id: 6
     difficulty: advanced

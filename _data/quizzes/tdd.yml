@@ -126,13 +126,13 @@ questions:
         claim, paired with a reported development-time cost.
       1: |
         This result is important because it separates the value of small, regular steps from the slogan
-        "test first." The rhythm is the mechanism learners need to notice.
+        "test first." The reported association does not establish a universal causal mechanism.
       2: |
         No empirical study claims a universal productivity doubling. Industrial case studies report a defect-density reduction with an *initial cost* in development time; productivity claims that simple are sales pitches, not findings.
       3: |
         The Refactor step is where much of TDD's design value appears. Skipping it turns the cycle into
         test-first coding rather than test-driven design.
-    explanation: "The three findings together form the modern position on TDD: it can sharply reduce defects, the mechanism is the rhythm of small steps rather than the test-first ritual, and the design payoff depends on actually doing the Refactor step that engineers tend to skip. 'TDD doubles productivity' is a slogan; the real story is more nuanced and more useful to teach."
+    explanation: "The three findings together form the modern position on TDD: it can sharply reduce defects, small and regular steps were associated with better outcomes in the cited study, and the design payoff depends on actually doing the Refactor step that engineers tend to skip. 'TDD doubles productivity' is a slogan; the real story is more nuanced and more useful to teach."
 
   - id: 7
     difficulty: intermediate
@@ -160,16 +160,15 @@ questions:
     question: |
       A team wants to TDD an image-recognition model. They write `assert classify(cat_image) == "cat"` and another `assert classify(dog_image) == "dog"`. The model passes both but ships with poor accuracy on noisy inputs. What is the structural problem with their TDD approach here?
     options:
-      - "The team should add more test cases — `cat_image_2`, `cat_image_3`, etc. — until the binary pass/fail count of examples is high enough that overall accuracy is implicitly tested."
-      - "ML quality is a distribution, not pass/fail — binary unit-test oracles can't capture the goal. Use a statistical evaluation harness with held-out test sets."
-      - "The team should use a Mock instead of a real model so the test runs faster and more examples can be added per CI cycle to drive quality up."
-      - "The team needs a different ML framework that supports TDD natively — modern frameworks can express binary oracles on aggregate metrics if you configure them correctly."
+    - The team should add more test cases — `cat_image_2`, `cat_image_3`, etc. — until the binary pass/fail count of examples is high enough that overall accuracy is implicitly tested.
+    - Two examples do not establish accuracy on noisy inputs. Evaluate a representative held-out set with explicit aggregate-metric thresholds.
+    - The team should use a Mock instead of a real model so the test runs faster and more examples can be added per CI cycle to drive quality up.
+    - The team needs a different ML framework that supports TDD natively — modern frameworks can express binary oracles on aggregate metrics if you configure them correctly.
     correct_index: 1
     option_feedback:
-      0: |
-        Adding examples one at a time scales poorly and still produces a binary oracle on each one. The model's actual quality is the *distribution* of behavior across inputs — that's the property that needs measuring.
+      0: More examples help only if their selection and expected results support the intended evaluation. A pair of hand-picked examples is not evidence of population accuracy.
       2: |
         Mocking the model would let the test pass with no real recognition behavior. TDD on a Mock would teach the team nothing about the real system's quality.
-      3: |
-        The limit is structural to TDD's pass/fail oracle, not a framework feature. No ML framework changes the fact that classification quality is statistical rather than binary.
-    explanation: "TDD's pass/fail oracle is one of its limits — the chapter explicitly names non-binary outcomes (AI, image recognition) as a case where TDD struggles. The mature pattern is a held-out evaluation set with thresholds on aggregate metrics (accuracy, F1, calibration), monitored over time. Specific input/output examples still have a place (regression tests for known failures), but they cannot substitute for the statistical evaluation the real quality goal demands."
+      3: Aggregate metrics can already be compared with pass/fail thresholds without a special TDD framework. The missing ingredient is a representative evaluation design, not a framework capability.
+    explanation: |
+      Statistical quality can be checked with a binary assertion such as `accuracy >= required_accuracy`, using a representative held-out dataset and accounting for uncertainty. Keep known-failure regression cases too. The error here is treating two passing examples as evidence of generalization, not the use of a pass/fail result.

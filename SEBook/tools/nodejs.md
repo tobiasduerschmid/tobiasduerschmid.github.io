@@ -20,7 +20,7 @@ let count = 0;       // A variable that can be reassigned
 const name = "UCLA"; // A constant that cannot be reassigned
 ```
 
-> **Never use `var`** — it has function-scoped hoisting rules that violate the block-scope behavior you learned in C++ and Python. Always prefer `let` or `const`.
+> **Never use `var`** — it is scoped to its containing function rather than an ordinary block. `let` and `const` are block-scoped; ordinary Python `if` and `for` statements do not introduce a scope. Always prefer `let` or `const`.
 
 ## What is Node.js? (Taking off the Training Wheels)
 Historically, JavaScript was trapped inside the web browser. It was strictly a front-end language used to make websites interactive. 
@@ -107,12 +107,12 @@ JavaScript has TWO equality operators. **Only ever use `===`:**
 console.log(1 == "1");    // true  ← DANGEROUS SURPRISE
 console.log(0 == false);  // true  ← DANGEROUS SURPRISE
 
-// RIGHT: === checks value AND type (behaves like == in Python and C++)
+// RIGHT: === compares without implicit type coercion
 console.log(1 === "1");   // false ← correct
 console.log(0 === false); // false ← correct
 ```
 
-This is **negative transfer**: your `==` intuition from C++ and Python is correct — but JavaScript's `==` does something different. Use `===` and it matches your expectation.
+Language equality rules differ: Python and C++ also permit some mixed-type equalities (for example, `0 == false` in C++, and `0 == False` in Python). JavaScript strict equality avoids implicit conversion; prefer `===` unless coercion is intentional.
 
 ## JavaScript's Two "Nothings": `null` vs `undefined`
 
@@ -139,10 +139,10 @@ console.log(typeof student); // "object" (a famous JS bug that can never be fixe
 
 ## Control Flow Syntax
 
-JavaScript's control flow looks like C++ (braces required), not Python (no colons/indentation):
+JavaScript's control flow looks like C++ (braces delimit blocks), not Python (no colons/indentation):
 
 ```javascript
-// if/else — braces required (no colons like Python, no elif — use else if)
+// if/else — use braces for blocks (no colons like Python, no elif — use else if)
 if (score >= 90) {
     console.log("A");
 } else if (score >= 60) {
@@ -404,7 +404,7 @@ console.log(x);  // 20 — surprised?
 
 ### 2. Always Use `===` (Strict Equality), Never `==`
 
-JavaScript's `==` performs implicit type coercion, producing dangerous surprises. `===` checks both value AND type — matching the behavior you expect from C++ and Python.
+JavaScript's `==` performs implicit type coercion, producing dangerous surprises. `===` compares without implicit type conversion. Python and C++ have their own mixed-type equality rules, so do not treat them as identical.
 
 ```javascript
 // ✓ Strict equality — no surprises

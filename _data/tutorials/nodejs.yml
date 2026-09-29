@@ -62,10 +62,10 @@ steps:
 
       ### Quick Syntax Reference: Control Flow
 
-      JavaScript's control flow looks like C++ (braces required), not Python (no colons/indentation):
+      JavaScript's control flow looks like C++ (braces delimit blocks), not Python (no colons/indentation):
 
       ```javascript
-      // if/else — braces required (unlike Python's colon + indentation)
+      // if/else — use braces for blocks (unlike Python's colon + indentation)
       if (score >= 90) {
           console.log("A");
       } else if (score >= 60) {
@@ -171,7 +171,7 @@ steps:
           - title: "Python-style `if`"
             text: "Drop the colon. Where does the condition go, and what wraps the body?"
             condition: "code_matches: /^\\s*if\\s+[^(\\n]+:\\s*$/m"
-          - text: "JavaScript `if` needs parentheses around the condition and braces around the body."
+          - text: "JavaScript `if` needs parentheses around the condition; use braces to group its body statements."
             condition: "code_missing: if"
       - description: "Loop prints all three languages"
         command: "assert(output.includes('C++') && output.includes('Python') && output.includes('JavaScript'), 'Use a for...of loop to print each language in the array')"
@@ -266,7 +266,7 @@ steps:
       However, it also masks bugs that result from incorrect assignments.
       Use immutable bindings (`const` in JS, `final` in Java, `const` in C++) when declaring constants that are not expected to change.
 
-      > **Avoid using `var`** — it has "hoisting" scoping rules that violate everything you know from C++ and Python. Always use `let` or `const`.
+      > **Avoid using `var`** — it is function-scoped, while `let` and `const` are block-scoped. Ordinary Python `if` and `for` statements do not create a separate scope. Always use `let` or `const`.
 
       ### Template Literals (like Python's f-strings)
 
@@ -285,12 +285,12 @@ steps:
       console.log(1 == "1");    // true  ← DANGEROUS SURPRISE
       console.log(0 == false);  // true  ← DANGEROUS SURPRISE
 
-      // AS EXPECTED: === checks value AND type (behaves like == in Python and C++)
+      // AS EXPECTED: === compares without implicit type coercion
       console.log(1 === "1");   // false ← correct
       console.log(0 === false); // false ← correct
       ```
 
-      This is **negative transfer**: your existing `==` intuition from C++ and Python does not transfer to JavaScript. Use `===` and it matches your expectation.
+      Equality rules differ across languages. Python and C++ also allow some mixed-type equalities, such as zero equaling false. JavaScript strict equality avoids implicit conversion; prefer `===` unless coercion is intentional.
 
       > **Debugging tip:** When a comparison behaves unexpectedly, use `typeof` to check what type a value actually is: `console.log(typeof myVar)` prints `"string"`, `"number"`, `"boolean"`, `"undefined"`, or `"object"`. This is your first debugging tool for type-related surprises.
 
@@ -456,14 +456,14 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "Why does `1 == '1'` evaluate to `true` in JavaScript, when the same comparison in Python or C++ would be `false`?"
+        - question: "Why does `1 == '1'` evaluate to `true` in JavaScript, while `1 === '1'` evaluates to `false`?"
           options:
             - "JavaScript's `==` coerces the string `'1'` to the number `1` before comparing"
             - "The string `'1'` and number `1` are actually the same type in JavaScript's type system"
             - "This is a known bug in older JavaScript engines that has since been patched in ES6"
             - "`==` in JavaScript compares memory addresses, which happen to be equal for small values"
           correct_index: 0
-          explanation: "JavaScript's == performs *implicit type coercion* — it converts values to a common type before comparing. This creates traps: `0 == false`, `'' == false`, `null == undefined`. The === operator skips coercion and requires both value AND type to match, behaving exactly like == in Python and C++. Always use ===. Why the other options are wrong: strings and numbers are NOT the same type (B) — `typeof '1'` is `'string'`, `typeof 1` is `'number'`. This is not a patched bug (C) — `==` coercion is by design and will never change. And `==` compares values, not memory addresses (D) — that misconception comes from Java/C++ reference equality."
+          explanation: "Loose equality converts the string '1' to a number for this comparison. Strict equality does not convert operands and returns false for different types. Python and C++ have their own mixed-type comparison rules: for example, `0 == False` in Python and `0 == false` in C++ are true. Do not equate their `==` with JavaScript's `===`."
 
         - question: "A student writes `let MAX_RETRY = 3` but never reassigns it in 200 lines of code. Why is `const MAX_RETRY = 3` a better choice?"
           options:
@@ -485,21 +485,21 @@ steps:
 
         - question: "The tutorial says to avoid `var` and always use `let` or `const`. Why?"
           options:
-            - "`var` is slower than `let` and `const` because V8 cannot optimize hoisted declarations"
-            - "`var` ignores block scope and hoists declarations, violating the scoping rules from C++ and Python"
-            - "`var` was removed from JavaScript in ES6, so it causes syntax errors in modern Node.js versions"
-            - "`var` and `let` are identical in behavior — the advice is purely a coding style preference"
+            - "`var` is slower because V8 cannot optimize declarations that are hoisted."
+            - "`var` is function-scoped; `let` and `const` respect ordinary block boundaries."
+            - "`var` was removed in ES6, so modern Node.js rejects it as a syntax error."
+            - "`var` and `let` behave identically, making the choice purely stylistic."
           correct_index: 1
-          explanation: "In C++ and Python, a variable declared inside a `for` or `if` block stays inside that block. `var` violates this — it leaks out of blocks and can be used before its declaration line (hoisting). `let` and `const` restore the block-scoping behavior you expect. This is why modern JavaScript linters flag every use of `var`."
+          explanation: "`var` is function-scoped and hoisted; ordinary block boundaries do not contain it. `let` and `const` are block-scoped, like C++ local declarations. Python ordinary `if` and `for` blocks do not introduce a scope, so that part of the Python model does not transfer to JavaScript."
 
-        - question: "Your teammate's Discord bot code has `if (userRole == 'admin')` and it works in all their tests. Should you flag this in code review? Why or why not?"
+        - question: "A Discord bot requires `userRole` to be the string `'admin'`, but checks `userRole == 'admin'`. Why flag this in code review?"
           options:
-            - "No — both sides are strings so `==` and `===` behave identically, and there is no risk to flag"
-            - "Yes — `==` hides reliance on coercion; if `userRole` later becomes a number, the check silently breaks."
-            - "Yes — `==` is measurably slower than `===` at runtime due to the type coercion step, which impacts performance"
-            - "No — `==` and `===` are identical for same-type operands, and linters will only flag cross-type comparisons"
+            - "Do not flag it: passing the current tests proves that userRole can only be a string."
+            - "Flag it: an array like ['admin'] also passes loose equality, violating the string contract."
+            - "Flag it: loose equality allows any nonzero numeric role to compare equal to 'admin'."
+            - "Do not flag it: loose equality rejects all operands whose types differ from the string."
           correct_index: 1
-          explanation: "When both operands are already the same type, `==` and `===` produce the same result. But using `===` consistently prevents future bugs when types change (e.g., role becomes a number). This is a defensive coding practice — the code review should flag it as a latent risk, not a current bug."
+          explanation: "Prefer `===` when the contract requires the string 'admin'. The shown comparison does not become true for a numeric role: converting 'admin' to a number produces NaN. A concrete coercion risk is an array such as ['admin'], which loosely equals 'admin' but is not the required string. Validate the input type at the boundary."
 
 
   # --------------------------------------------------------------------------
@@ -727,14 +727,14 @@ steps:
           correct_index: 1
           explanation: "A first-class value is one that can be used anywhere any other value can: stored in a variable, passed as an argument, returned from a function, placed in an array. This is why `numbers.filter(n => n > 2)` works — you pass a function just like you'd pass a number. This is the key to callbacks and the Express route handlers you will write in Step 5."
 
-        - question: "In Python, `sorted(items, key=lambda x: x['grade'])` sorts by grade. Which JavaScript expression is the direct equivalent?"
+        - question: "In Python, `items.sort(key=lambda x: x['grade'])` sorts the list in place by grade. Which JavaScript expression also sorts `items` in place by grade?"
           options:
             - "`items.sort(key = x => x.grade)`"
             - "`items.sort((a, b) => a.grade - b.grade)`"
             - "`items.sort(function key(x) { return x.grade; })`"
             - "`items.sort(by='grade')`"
           correct_index: 1
-          explanation: "JavaScript's `sort` takes a **comparator** function `(a, b) => ...` that returns negative (a before b), zero (equal), or positive (b before a). The Python `key=` and JS comparator are both callbacks — functions passed to another function."
+          explanation: "`items.sort((a, b) => a.grade - b.grade)` mutates the array into ascending grade order. Its callback compares a pair of elements. Python `list.sort(key=...)` also mutates the list, while `sorted(items, key=...)` would create a new list."
 
         - question: "What does `[1, 2, 3, 4, 5].filter(n => n > 3)` return?"
           options:
@@ -1121,8 +1121,8 @@ steps:
             - "console.log(avg.toFixed(1));"
           distractors:
             - "const grades = students.filter(({ grade }) => grade);"
-            - "const sum = grades.reduce((acc, g) => acc + g);"
-          explanation: "`.map()` with destructuring extracts just the grades. `.reduce()` sums them — the `0` initial value is critical because without it, `.reduce()` uses the first element as the initial accumulator (which happens to work for non-empty arrays but throws a TypeError on empty arrays — a silent bug waiting to happen). `.filter()` selects elements, not transforms — wrong method for extracting grades."
+            - "const sum = grades.reduce((acc, g) => acc + g, 1);"
+          explanation: "Destructuring extracts each grade; `.map()` builds the numeric grade array. `.reduce(..., 0)` sums it, then divide by its nonzero length. An initial accumulator of 1 adds an unwanted point. Omitting the initial accumulator would work for this nonempty array, but would throw on an empty array; an empty average also needs a separate policy."
 
         - question: "A student writes `const result = students.filter(s => s.grade >= 60).map(s => s.name)`. What does this expression produce?"
           options:
@@ -1310,7 +1310,7 @@ steps:
             - "A constructor that creates and configures a new Express route object for the path"
             - "A middleware function that modifies the global Express application configuration"
           correct_index: 1
-          explanation: "The arrow function is a callback — the same pattern you used with `.filter()` in Step 3. You provide the function; Express calls it at the right time (when an HTTP GET request arrives at '/'). The `req` and `res` arguments are passed by Express, just like `.filter()` passes each array element to your callback. Why the other options are wrong: the function does NOT run when the file loads (A) — it runs later, when a request arrives (that is the whole point of callbacks). It is not a constructor (C) — constructors create objects with `new`. And middleware (D) is a different concept — middleware runs on ALL requests before route handlers."
+          explanation: "The arrow function is a callback: Express invokes it when a matching GET request reaches this route. A route handler is a kind of middleware. Middleware runs according to its mount path, HTTP method if restricted, registration order, and whether earlier handlers pass control onward."
 
         - question: "What do `req` and `res` represent in an Express route handler?"
           options:
@@ -1382,13 +1382,13 @@ steps:
 
       ```javascript
       app.get('/students', (req, res) => {
-          const passing = req.query.passing;   // "true" (always a string!)
+          const passing = req.query.passing;   // "true" for this URL
           const sort    = req.query.sort;       // "name"
           // Use these to filter/sort your data
       });
       ```
 
-      > ⚠️ **Step 2 connection:** `req.query.passing` is always a **string** — even if the URL says `?passing=true`, the value is the string `"true"`, NOT the boolean `true`. Use `=== 'true'` to compare (not `== true`).
+      > ⚠️ **Step 2 connection:** with `?passing=true`, the parsed value is the string `"true"`, not the boolean `true`. Missing parameters are undefined, and repeated or structured parameters can produce other shapes depending on the parser; validate untrusted input. Use `=== 'true'` to compare (not `== true`).
 
       ### 2. Route Parameters (`req.params`)
 
@@ -1410,7 +1410,7 @@ steps:
 
       ### 3. POST with Request Body (`req.body`)
 
-      **GET** requests data and puts parameters in the URL (visible to everyone). **POST** sends data hidden inside the request "body" — used for creating/modifying data or sending sensitive information.
+      **GET** retrieves data, often with parameters in the URL. **POST** submits data for processing, often in a request body. A body keeps data out of the URL but does not encrypt it; use HTTPS for sensitive data. URLs and bodies are both protected in transit by HTTPS, though URLs may additionally appear in history and logs.
 
       ```javascript
       // Tell Express to parse incoming JSON bodies
@@ -1426,7 +1426,7 @@ steps:
 
       | Request shape | GET + Query Params | GET + Route Params | POST + Body |
       |---|---|---|---|
-      | **Data in** | URL: `?key=value` | URL: `/path/:param` | Request body (hidden) |
+      | **Data in** | URL: `?key=value` | URL: `/path/:param` | Request body |
       | **Use for** | Filtering, searching | Identifying ONE resource | Creating/modifying data |
       | **Example** | `/students?passing=true` | `/students/3` | `POST /students` with JSON |
 
@@ -1565,7 +1565,7 @@ steps:
             });
           language: "javascript"
       explanation: |
-        **Route 1 — Query params:** `req.query.passing` is always a string, so we compare with `=== 'true'` (not `== true`). When the condition matches, `.filter()` from Step 3 selects only passing students.
+        **Route 1 — Query params:** For the illustrated URL, `req.query.passing` is a string, so we compare with `=== 'true'` (not `== true`). When the condition matches, `.filter()` from Step 3 selects only passing students.
 
         **Route 2 — Route params:** `req.params.id` is a string. We use `Number()` to convert it and `===` for strict comparison — applying the Step 2 lesson about type coercion. `.find()` returns the first matching element (or `undefined`).
 
@@ -1653,7 +1653,7 @@ steps:
             - "When the server is running on HTTPS instead of HTTP, since POST is required for encryption"
             - "POST and GET are interchangeable — the distinction is purely a cosmetic convention"
           correct_index: 1
-          explanation: "GET is for *reading* data — parameters are visible in the URL. POST is for *sending* data that creates or modifies resources — data is hidden in the request body. GET requests can also be bookmarked and cached; POST cannot. These are HTTP conventions used by every web API."
+          explanation: "Use POST for submitting data for processing or creating resources. A request body keeps form data out of the URL; it does not encrypt it, so sensitive data still needs HTTPS. POST responses can be cached when the HTTP caching requirements are explicitly satisfied; GET is the usual retrieval method."
 
         - question: "In `app.get('/students', (req, res) => { ... })`, if a student writes `app.get('/students', handler())` with parentheses on `handler`, what goes wrong?"
           options:
@@ -1676,12 +1676,12 @@ steps:
 
         - question: "A Twitch-like streaming API has `req.query.maxViewers` as the string `'500'`. A developer writes `if (stream.viewers < req.query.maxViewers)`. Will this comparison work correctly?"
           options:
-            - "Yes — JavaScript automatically converts the string to a number for the `<` comparison"
-            - "It works via coercion, but it is fragile — convert explicitly with `Number(...)`"
-            - "No — comparing a number to a string always returns `false` in JavaScript"
-            - "No — this will throw a TypeError at runtime"
+            - "No — JavaScript always compares these operands alphabetically."
+            - "It works for '500'; validate and convert the query value before using it."
+            - "No — comparing a number with a string always throws a TypeError."
+            - "Yes — every possible query string becomes a valid numeric limit."
           correct_index: 1
-          explanation: "JavaScript's `<` operator does coerce strings to numbers for comparison, so `50 < '500'` works. But this relies on implicit coercion — the same trap from Step 2. Explicit conversion with `Number(req.query.maxViewers)` makes the intent clear and prevents subtle bugs when the value isn't a clean number (e.g., `'500px'` coerces to `NaN`)."
+          explanation: "For numeric `stream.viewers` and the string '500', `<` performs numeric conversion. `Number('500')` also produces 500, but `Number('500px')` produces NaN; conversion alone does not validate input. Check the query value's shape and permitted syntax, convert it, and reject non-finite or out-of-range limits."
 
   # --------------------------------------------------------------------------
   # STEP 7: The Express Router
@@ -1954,14 +1954,14 @@ steps:
           correct_index: 1
           explanation: "Routes on a router are *relative* to the mount path. `app.use('/api/books', router)` prepends `/api/books` to every route on that router. So `router.get('/:id')` becomes `/api/books/:id`."
 
-        - question: "A student forgets `module.exports = router` in `studentRoutes.js` but writes correct routes. When they send `GET /api/students`, they get `Cannot GET /api/students`. Why?"
+        - question: "A student forgets `module.exports = router` in `studentRoutes.js`, then calls `app.use('/api/students', require('./studentRoutes'))` in a real Express app. What happens during startup?"
           options:
-            - "The routes are syntactically invalid without the export statement at the bottom"
-            - "Without `module.exports`, `require()` returns `{}` and `app.use()` mounts nothing."
-            - "Express requires a special `registerRouter()` call instead of `module.exports`"
-            - "The missing export causes a runtime crash in `app.js` before the server starts"
-          correct_index: 1
-          explanation: "Without `module.exports = router`, `require('./studentRoutes')` returns `{}` (an empty object). `app.use('/api/students', {})` silently mounts nothing. The server starts fine but no routes are registered, so every request gets 404. This is a common debugging scenario — the error is silent."
+            - "The route declarations become syntactically invalid."
+            - "Express silently mounts no routes and starts normally."
+            - "Express automatically discovers the unexported router."
+            - "Express throws because the imported empty object is not middleware."
+          correct_index: 3
+          explanation: "CommonJS returns the default empty exports object when the module never exports its router. Express requires middleware functions or routers, so `app.use('/api/students', {})` throws a TypeError. Export the router before mounting it; a missing export does not silently cause a later 404."
 
         - question: "In a route handler, how do you access a query parameter `?sort=name` vs. a URL parameter `/students/42`?"
           options:
@@ -2246,7 +2246,7 @@ steps:
             - "sendEmail waits in the Task Queue until the for-loop finishes and the call stack empties"
             - "The for-loop is paused mid-iteration so the Event Loop can execute sendEmail first"
           correct_index: 2
-          explanation: "setTimeout's delay is a *minimum* delay, not a guaranteed time. The Event Loop only dequeues callbacks when the call stack is completely empty. The 10-million-iteration for-loop occupies the call stack the entire time — the Chef is busy. Why the other options are wrong: `sendEmail` does NOT run immediately (A) — the 0ms delay means 'as soon as possible', not 'now'. Node.js does NOT put `setTimeout` on a separate thread (B) — it is single-threaded; the callback waits in the Task Queue. And the Event Loop never pauses a for-loop mid-iteration (D) — synchronous code always runs to completion."
+          explanation: "The synchronous loop keeps the call stack busy, so the timer callback cannot run until the loop finishes and control returns to the event loop. A zero delay schedules a timer; it does not interrupt running JavaScript."
 
         - question: "What is the output order of this code?\n```javascript\nconsole.log('A');\nsetTimeout(() => console.log('B'), 0);\nconsole.log('C');\n```"
           options:
@@ -3059,12 +3059,12 @@ steps:
 
         - question: "Review this route. Identify ALL the problems:\n```javascript\napp.get('/students', (req, res) => {\n    const data = fs.readFileSync('students.json', 'utf8');\n    const students = JSON.parse(data);\n    const passing = students.filter(s => s.grade == 60);\n    res.json(passing);\n});\n```"
           options:
-            - "No problems — this is a correct, production-ready Express route handler"
-            - "Only one problem: the `==` loose comparison should be `===` for strict equality"
-            - "Three: `readFileSync` blocks; `== 60` should be `>= 60` with `===`; no `try`/`catch`"
-            - "`readFileSync` is acceptable for small files; the only real issue is the missing error handling"
+            - "No problems — this is a correct, production-ready Express route handler."
+            - "Only loose equality is a problem; reading synchronously cannot delay other requests."
+            - "The file read blocks the event loop, and the passing filter should use grade >= 60."
+            - "The only problem is that Express cannot catch synchronous route errors."
           correct_index: 2
-          explanation: "[Steps 2, 8, 9] (1) `readFileSync` blocks the server. (2) `== 60` should be `>= 60` with `===`. (3) No `try`/`catch` — the server crashes if the file is missing."
+          explanation: "`readFileSync` blocks the event loop while the file is read. To select passing grades, use `s.grade >= 60`; there is no additional `===` in that comparison. Express catches synchronous exceptions thrown by a route handler and forwards them to error handling. Add an appropriate error response policy, but a missing local try/catch does not by itself crash this server."
 
   # --------------------------------------------------------------------------
   # STEP 11: You Made It! — Summary & Celebration (no tasks, no tests)

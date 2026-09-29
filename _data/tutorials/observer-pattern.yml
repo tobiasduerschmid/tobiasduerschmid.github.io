@@ -1713,7 +1713,7 @@ steps:
             - "The code is always shorter and simpler"
           correct_indices: [0, 1, 2]
           explanation: |
-            The first three are genuine advantages. However, the code is **not** always shorter — the Observer version has more classes and lines of code. The benefit is **flexibility and maintainability**, not brevity. Look at the UML diagrams: the Observer version has more boxes, but the arrows tell a cleaner story.
+            Adding observers without modifying the subject, changing subscriptions at runtime, and developing and testing each side independently are advantages. However, the code is **not** always shorter — the Observer version has more classes and lines of code. The benefit is **flexibility and maintainability**, not brevity. Look at the UML diagrams: the Observer version has more boxes, but the arrows tell a cleaner story.
 
         - question: |
             A teammate says: *"Why do we need abstract classes? I can just call display methods directly — it is simpler."* What is the best response?
@@ -2236,19 +2236,19 @@ steps:
         - question: |
             *(Comprehensive review)*
 
-            Rank these three architectures from **most** to **least** coupled:
+            Which comparison of these architectures' dependencies is accurate?
             (A) WeatherStation directly calls all display `.show()` methods
             (B) WeatherStation uses Observer with Pull model (`update(subject)`)
             (C) WeatherStation uses Observer with Push model (`update(temp, humidity, pressure)`)
           type: single
           options:
-            - "A > B > C (A most coupled, C least coupled)"
-            - "C > B > A (C most coupled, A least coupled)"
-            - "A > C > B (direct calls most coupled, then Push, then Pull)"
-            - "B > A > C (Pull most coupled, then direct, then Push)"
+            - "A depends on concrete displays; B adds a subject-query dependency; C adds a payload-format dependency"
+            - "A depends on concrete displays; B needs no subject API; C needs no agreed payload format"
+            - "A depends only on abstract observers; B adds a subject-query dependency; C adds no data-format dependency"
+            - "A has no concrete-display dependency; B depends on pushed payloads; C queries the subject for data"
           correct_index: 0
           explanation: |
-            **(A)** is the most coupled — the station knows every concrete display by name. **(B) Pull** is less coupled — the station only knows the Observer interface, but observers hold a reference back to the subject. **(C) Push** is the least coupled — observers receive data directly and need no reference to the subject at all. However, Push has its own trade-off: the subject must anticipate what data observers need.
+            In **A**, the station knows concrete displays. In **B**, the station knows the Observer interface and observers depend on the subject's query interface. In **C**, observers instead depend on the pushed payload format. There is no universal total ordering of coupling: changing the query API and changing the payload affect different designs.
 
         - question: |
             *(Comprehensive review)*
@@ -2262,7 +2262,7 @@ steps:
             - "The pattern guarantees observers are notified in a specific order"
           correct_indices: [0, 1, 2]
           explanation: |
-            The first three are all documented consequences. **Loose coupling** is the primary benefit. **Dynamic relationships** enable runtime flexibility. **Unexpected cascading updates** are the main drawback — observer A's update can trigger subject B, which notifies observer C, creating hard-to-trace chains. The pattern does **not** guarantee notification order — that is implementation-dependent.
+            These consequences concern coupling, dynamic relationships, and cascading updates. **Loose coupling** is the primary benefit. **Dynamic relationships** enable runtime flexibility. **Unexpected cascading updates** are the main drawback — observer A's update can trigger subject B, which notifies observer C, creating hard-to-trace chains. The pattern does **not** guarantee notification order — that is implementation-dependent.
 
 
   # --------------------------------------------------------------------------

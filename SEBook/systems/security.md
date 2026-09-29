@@ -69,21 +69,21 @@ A login handler that builds its query by string concatenation looks innocent:
 
 ```python
 name = get_user_input("username")
-pass = get_user_input("userpassword")
+password = get_user_input("userpassword")
 sql = ('SELECT * FROM Users '
        'WHERE Name = "' + name + '" '
-       'AND Pass = "' + pass + '"')
+       'AND Pass = "' + password + '"')
 user = db.execute_query(sql)
 login(user) if user else retry()
 ```
 
-For a normal login (`name = "Tobias"`, `pass = "password1234"`), the database sees:
+For a normal login (`name = "Tobias"`, `password = "password1234"`), the database sees:
 
 ```sql
 SELECT * FROM Users WHERE Name = "Tobias" AND Pass = "password1234"
 ```
 
-— and returns the matching user (if any). But the user controls the *contents* of `name` and `pass`, and through string concatenation that means the user partially controls the *query itself*. An attacker submits:
+— and returns the matching user (if any). But the user controls the *contents* of `name` and `password`, and through string concatenation that means the user partially controls the *query itself*. An attacker submits:
 
 * **Username:** `Tobias`
 * **Password:** `" or ""="`
@@ -94,7 +94,7 @@ SELECT * FROM Users WHERE Name = "Tobias" AND Pass = "password1234"
 SELECT * FROM Users WHERE Name = "Tobias" AND Pass = "" or ""=""
 ```
 
-`""=""` is unconditionally true, so the predicate reduces to `Name = "Tobias"` — and the attacker is logged in as Tobias *without knowing the password*. With more sophisticated payloads the attacker can read other tables, modify or delete data, and (under some configurations) execute commands on the database server.
+In a dialect accepting these double-quoted string literals, `""=""` is unconditionally true. Because `AND` binds more tightly than `OR`, the entire predicate is true for every row. The query can return all users; a vulnerable application that accepts the first match may authenticate the attacker as that user without a password. Standard SQL uses single quotes for string literals. With more sophisticated payloads the attacker can read other tables, modify or delete data, and (under some configurations) execute commands on the database server.
 
 ### Why SQL Injection Matters
 
@@ -114,11 +114,11 @@ Almost every modern database driver supports **parameterized queries**: the deve
 
 ```python
 name = get_user_input("username")
-pass = get_user_input("userpassword")
+password = get_user_input("userpassword")
 sql = ('SELECT * FROM Users '
        'WHERE Name = @0 '
        'AND Pass = @1')
-user = db.execute_query(sql, name, pass)
+user = db.execute_query(sql, name, password)
 login(user) if user else retry()
 ```
 
@@ -191,7 +191,7 @@ Symmetric ciphers are fast and well-suited to bulk data — disk encryption, fil
 * The **public key** is published — anyone may have it.
 * The **private key** is kept secret by the owner — and *only* by the owner.
 
-A message encrypted with one key of the pair can only be decrypted by the *other* key of the pair. From this single asymmetry, two crucial protocols fall out: **encryption to a recipient** and **digital signatures**.
+Public-key encryption uses the recipient's public key to encrypt and private key to decrypt. Digital signatures instead use algorithm-specific signing and verification operations. A signature is not generally encryption run in reverse.
 
 ### Encrypting a Message to Bob
 
@@ -199,16 +199,16 @@ To send Bob a private message, Alice encrypts it with **Bob's public key**. Anyo
 
 ### Digital Signatures
 
-The reverse direction is just as useful. If Alice encrypts a document with her **own private key**, anyone can decrypt it (with her public key) — so the document is *not* secret. But because *only Alice* has her private key, the fact that the document decrypts cleanly with her public key proves *she* must have produced it. That proof is what a **digital signature** is.
+A **digital signature** lets a holder of a private signing key authenticate a document. The verifier uses the corresponding public key, whose association with the claimed signer must also be trusted. Signatures provide evidence of authenticity and integrity, not confidentiality.
 
-In practice nobody encrypts the entire document — that would be slow and wasteful, since the goal is authenticity rather than secrecy. Instead, the signer:
+A typical signing process:
 
-1. Computes a **cryptographic hash** of the document (a short, fixed-length, collision-resistant fingerprint — SHA-256, for example).
-2. Encrypts the *hash* with her private key. That encrypted hash is the signature.
+1. Processes the document using a **cryptographic hash**, producing a fixed-size digest or hash-derived representation.
+2. Applies the signature algorithm with the private signing key to produce a signature.
 
-Verification reverses the steps: anyone with the document, the signature, and the signer's public key can decrypt the signature, recompute the hash from the document, and check that the two hashes match. If they do, the document has not been altered *and* it really came from the holder of the matching private key.
+Verification uses the document, signature, and authenticated public key to check the algorithm's verification relation. For secure schemes, a valid signature is evidence that the document was signed by the matching private-key holder and has not been altered. Algorithms such as EdDSA do not decrypt a signature to recover a document hash.
 
-> **Why hash before signing?** Public-key operations are roughly three orders of magnitude slower than hashing per byte, so signing a 1 MB document directly would be slow. Hashing first reduces every document to a 32-byte digest; the public-key operation then runs over those 32 bytes regardless of original document size. As a bonus, the hash's collision-resistance means an attacker cannot forge a different document with the same signature.
+> **Why hash before signing?** Hashing supports arbitrary-size documents while the expensive public-key operations use a bounded-size representation. A SHA-256 digest is 32 bytes, but RSA signing also uses encoding and padding to its modulus size; the RSA operation is not simply encryption of 32 bytes. Collision resistance makes finding two useful documents with the same digest computationally infeasible; it does not mean collisions are mathematically impossible.
 
 # Authentication
 
@@ -265,7 +265,7 @@ The session ID is stored client-side in a **cookie** that the browser automatica
 
 * `HttpOnly` — the cookie is *not* readable from JavaScript. A successful XSS attack therefore cannot exfiltrate the raw session ID.
 * `Secure` — the cookie is only sent over HTTPS. It cannot be sniffed off plain-HTTP networks.
-* `SameSite=Strict` (or `Lax`) — the cookie is not attached to cross-site requests. This is the primary defense against **cross-site request forgery (CSRF)**, where a malicious page tries to issue an authenticated request from the victim's browser.
+* `SameSite=Strict` restricts cross-site cookie sending; `Lax` still permits cookies on some top-level navigations using safe methods such as GET. SameSite helps defend against **cross-site request forgery (CSRF)**, where a malicious page tries to issue an authenticated request from the victim's browser.
 
 **Trade-offs.**
 
@@ -292,7 +292,7 @@ Client -> Server : Request + JWT
 Server --> Client : Reply
 @enduml</code></pre>
 
-The client attaches the JWT to every subsequent request — typically in an `Authorization: Bearer <jwt>` header, or in a cookie. The server verifies the signature *with its own key* and trusts the claims inside without any database lookup. There is no server-side session store to consult — the JWT *is* the session, and the signature is what makes it forgery-proof.
+The client attaches the JWT to every subsequent request — typically in an `Authorization: Bearer <jwt>` header, or in a cookie. The server verifies the signature *with its own key* and trusts the claims inside without any database lookup. There is no server-side session store to consult — a validated JWT carries the claims. Forgery resistance depends on a secure algorithm, protected signing keys, and correct validation of the signature and claims (including issuer, audience, and expiry).
 
 **Trade-offs.**
 
@@ -399,7 +399,7 @@ Different threat models warrant different defenses. A consumer mobile app and a 
 
 A widely circulated photograph shows an emergency telephone whose buttons are blocked by an aluminum foil cover with cutouts for "9" and "1" — meant to enforce *"only 9-1-1 can be dialed"*. Two things are wrong with the design:
 
-* **Wrong threat model.** Any phone number that contains only the digits 9 and 1 (e.g. `911-1119`) can still be dialed. The cover assumed attackers would only press one digit at a time.
+* **Wrong threat model.** A person who can remove the cover can use the remaining keys. The design must account for plausible physical tampering, not just cooperative dialing.
 * **Larger-than-expected attack surface.** The foil itself can be pushed sideways or torn, exposing the buttons underneath.
 
 The lesson generalizes: a defense that doesn't *match the actual threat model* and doesn't account for the *real attack surface* fails for both reasons. Always do the four-question pass on the *system as deployed*, not the system as drawn on the whiteboard.
@@ -413,7 +413,7 @@ The lesson generalizes: a defense that doesn't *match the actual threat model* a
 * The **CIA triad** classifies security goals into three properties: **Confidentiality** (only authorized users can read), **Integrity** (only authorized users can modify), and **Availability** (the system serves legitimate clients when needed). Every breach is a violation of one or more of these.
 * **SQL injection (SQLi)** treats user-supplied strings as SQL code by string-concatenating them into queries. The fix is **prepared statements / parameterized queries**, which let the database parse the SQL once and bind values separately. Don't roll your own escaping.
 * **Cross-site scripting (XSS)** treats user-supplied strings as HTML/JavaScript by interpolating them into pages. The fix is **output encoding** in the templating layer, defended in depth by a strict **Content Security Policy** and `HttpOnly` cookies for session credentials.
-* **Symmetric encryption (AES)** uses one shared key — fast, but suffers from the key-distribution problem. **Public-key cryptography (RSA)** uses a public/private key pair, enabling private messaging *and* digital signatures without prior shared secrets. **Digital signatures** are produced by encrypting the *hash* of a document with the signer's private key.
+* **Symmetric encryption (AES)** uses one shared key — fast, but suffers from the key-distribution problem. **Public-key cryptography (RSA)** uses a public/private key pair, enabling private messaging *and* digital signatures without prior shared secrets. **Digital signatures** use a signing algorithm and private key; verification uses the document, signature, and authenticated public key.
 * **Authentication** must avoid sending the password on every request. **Session cookies** delegate to a server-side store and need `HttpOnly` + `Secure` + `SameSite`. **JWTs** are signed, stateless tokens — easier to scale across services, harder to revoke, and dangerous if stored in `localStorage` (XSS readable).
 * Three security design principles dominate application code: **Zero Trust** (validate every input, regardless of source), **Open Design** (security rests on key secrecy, not algorithm secrecy — public scrutiny improves designs), and **Principle of Least Privilege** (every component holds only the permissions its job requires, shrinking the blast radius of any compromise).
 * A **security plan** answers four questions: what are you defending (security model), who is attacking and why (threat model), where is the system exposed (attack surface), and what mechanisms prevent compromise (protection mechanisms). A defense built without a matching threat model fails — the foil-and-emergency-phone is the canonical illustration.

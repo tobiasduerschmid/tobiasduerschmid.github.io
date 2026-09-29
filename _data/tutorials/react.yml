@@ -94,7 +94,7 @@ steps:
       .greeting { color: #e45b45; font-size: 24px; }
       ```
 
-      In React, you attach a CSS class with the `className` prop (not `class` — that is a reserved JavaScript keyword):
+      In React, the canonical prop for a CSS class is `className` (modern React accepts a string `class` attribute but warns in development):
 
       ```jsx
       <h1 className="greeting">Hello!</h1>
@@ -381,7 +381,7 @@ steps:
           language: "jsx"
       explanation: |
         - **Bug 1 — `style` must be a JS object, not a string:** The original `style="background: color;"` is an HTML attribute string. In JSX, `style` takes a JavaScript object: `style={{ background: color }}`. Because `color` is a **dynamic prop**, it stays as an inline style. The test checks that at least 2 spans have a background color applied via `element.style.background`.
-        - **Bug 2 — `class` → `className`:** The original `<h1 class="...">` uses an HTML attribute name. `class` is a reserved keyword in JavaScript, so JSX uses `className`.
+        - **Bug 2 — `class` → `className`:** The original `<h1 class="...">` uses an HTML attribute name. React uses the DOM-style name `className`. A string `class` attribute is valid JSX and passes through to the DOM, but produces a development warning.
         - **Bug 3 — multiple root elements need a wrapper:** The original `App` returned two siblings without a wrapper. Wrap siblings in a `<>...</>` Fragment.
         - **Third Badge added:** The test checks `spans.length >= 3`.
 
@@ -402,9 +402,9 @@ steps:
         command: |
           var withoutClassName = code.replace(/className=/g, '');
           assert(!withoutClassName.includes(' class='),
-            'Fix the <h1> tag: use className="..." instead of class="..." (class is a reserved JS keyword)');
+            'Fix the <h1> tag: use className="..." instead of class="..." (className is the canonical React prop)');
         hints:
-          - text: "`class` is reserved in JS. Which attribute name does JSX use?"
+          - text: "Which canonical React prop names an HTML CSS class?"
             condition: "code_contains: class="
       - description: "Three or more Badge spans are rendered"
         command: |
@@ -442,16 +442,15 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "Why does React use `className` instead of `class` for CSS classes?"
+        - question: "Which prop name is the canonical React API for an HTML CSS class?"
           type: single
           options:
-            - "React invented its own HTML attribute names to distinguish itself from plain HTML"
-            - "`class` is a reserved word in JavaScript, so JSX uses `className` to avoid the conflict"
-            - "React's virtual DOM uses a different internal representation where `class` has a different meaning"
-            - "`className` is faster for the browser to process than `class`"
+            - "`cssClass`, which React converts to an HTML class"
+            - "`className`, matching the DOM property convention"
+            - "`style`, which accepts CSS class names"
+            - "`classList`, which accepts a JavaScript array"
           correct_index: 1
-          explanation: |
-            JSX is JavaScript, and `class` is a reserved keyword in JavaScript (used for ES6 classes). Using `class` inside JSX would cause a syntax error. `className` maps directly to the DOM property `element.className`, so it works identically at runtime.
+          explanation: "Use `className` for CSS classes in React. Although `class` is a JavaScript keyword, it is accepted as a JSX attribute name. Modern React warns about a string `class` attribute but passes it to the DOM; it is not a JSX syntax error."
 
         - question: "Why must JSX components return a **single** root element?"
           type: single
@@ -487,7 +486,7 @@ steps:
           explanation: |
             React uses the capitalization of a JSX tag to decide: lowercase → HTML element (passes to the browser's DOM), uppercase → React component (calls your function). `<card />` silently becomes an unknown HTML element. The fix: rename to `Card` and use `<Card />`.
 
-        - question: "Which of these are **correct** JSX? (Select all that apply)"
+        - question: "Which snippets follow the canonical React DOM prop names and JSX syntax? (Select all that apply)"
           type: multiple
           options:
             - "`<img src={url} alt='logo' />`"
@@ -497,8 +496,7 @@ steps:
           correct_indices:
             - 0
             - 2
-          explanation: |
-            `<img ... />` is correct — self-closing tags are required in JSX. `<p>{expression}</p>` is correct — any JS expression works inside `{}`. `class` is a JS reserved word; use `className`. Browser event handlers use camelCase in JSX: `onClick`, not `onclick`.
+          explanation: "The self-closing image and the paragraph expression follow the conventions. Use `className` for CSS classes and `onClick` for a click handler. Modern React accepts a string `class` attribute with a warning, but it is not the canonical prop name; lowercase `onclick` does not register the React event handler."
 
   # --------------------------------------------------------------------------
   # STEP 3: Props — Parameterizing Components
@@ -761,16 +759,15 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "Inside a component, you have `function Card({ title }) { title = 'New'; ... }`. What is wrong with this?"
+        - question: "Inside a component, what does `function Card({ title }) { title = 'New'; ... }` change?"
           type: single
           options:
-            - "Nothing — props can be freely reassigned inside the component"
-            - "Props are read-only — mutating them breaks React's one-way data flow"
-            - "You must use `this.title` to access props in function components"
-            - "The destructuring syntax `{ title }` is invalid — you must write `props.title`"
-          correct_index: 1
-          explanation: |
-            Props are **immutable** inside a component. Mutating them would corrupt the parent's data and break the predictable top-down data flow that React relies on. If a component needs to change a value, it should use `useState` (local state) or call a function passed as a prop from the parent.
+            - "Only the local parameter binding; the parent's title is unchanged."
+            - "The title property in the parent's props object."
+            - "Every Card component's shared title state."
+            - "Nothing, because destructured parameters cannot be reassigned."
+          correct_index: 0
+          explanation: "Destructuring creates a local binding. Assigning `title = 'New'` rebinds that local name; it does not mutate the props object or the parent's string. Mutating an object reached through props, such as `user.name = 'New'`, is different and can alter shared data. Prefer a distinct local name when deriving display text."
 
         - question: "Which of these is the correct way to pass a **number** prop to a component?"
           type: single
@@ -783,20 +780,15 @@ steps:
           explanation: |
             String literals can be passed directly: `label="Hello"`. All other values — numbers, booleans, objects, arrays, functions — must be wrapped in `{}`: `price={99.99}`, `active={true}`, `items={[1, 2, 3]}`. Without `{}`, React would interpret `99.99` as a malformed attribute, not a number.
 
-        - question: |
-            **Analyze** this: `<Card title="React" />` and `<Card title={"React"} />` produce the same result. When would they differ?
+        - question: "`<Card title=\"React\" />` and `<Card title={\"React\"} />` supply the same string. How must you pass the current value of the JavaScript expression `user.name`?"
           type: single
           options:
-            - "They never differ — both syntaxes are always identical"
-            - "They differ for strings — quotes produce a string, braces produce a symbol"
-            - "Same for string literals, but `{}` is required for any JS expression"
-            - "`{}` is faster because it skips string parsing"
-          correct_index: 2
-          explanation: |
-            For plain string values, both are equivalent. But `{}` is required for any JS expression:
-            `title={user.name}`, `title={isAdmin ? 'Admin' : 'User'}`, `title={getTitle()}`.
-            Only string literals can use the quote syntax. This is a common source of confusion
-            for beginners who try `price=99.99` (without braces) and get unexpected results.
+            - "Write `title=\"user.name\"`; quotes evaluate the property access."
+            - "Write `title={user.name}`; braces evaluate the expression."
+            - "Write `title=user.name`; expressions need no delimiters."
+            - "Write `title={\"user.name\"}`; the quoted string is a property lookup."
+          correct_index: 1
+          explanation: "Quotes pass a literal string. Braces allow an expression, so `title={user.name}` passes the current property value. The two original string-literal examples remain equivalent; the requirement changes when the value must come from an expression."
 
         - question: |
             A `ProductCard` receives `price` as a prop and renders `${price.toFixed(2)}`. What happens if the parent passes `price={undefined}`?
@@ -859,7 +851,7 @@ steps:
       In C++, a class stores data in member variables that persist across method calls. In React, calling your component function is like constructing a fresh object each time — local variables are **reset on every render**.
 
       ```jsx
-      // BROKEN — count is reset to 0 every time the button is clicked
+      // BROKEN — mutation does not request a render; count resets whenever React renders
       function Counter() {
         let count = 0;                         // ← destroyed on each re-render
         return <button onClick={() => count++}>{count}</button>;
@@ -923,7 +915,7 @@ steps:
       ### Rules of Hooks (important!)
 
       1. **Only call hooks at the top level** — never inside `if`, `for`, or nested functions
-      2. **Only call hooks from React components** — not from regular JS functions
+      2. **Only call hooks from React function components or custom hooks** — not from regular JS functions
 
       ---
 
@@ -1077,7 +1069,7 @@ steps:
             text: "`const state = useState(0)` gives you an array — you'd need `state[0]`, `state[1]`. Destructure into `[count, setCount]`."
             condition: "code_matches: const\\s+state\\s*=\\s*React\\.useState"
           - title: "`count++` doesn't re-render"
-            text: "React only re-renders when you call the setter. Which function do you need instead?"
+            text: "A plain variable mutation does not request a render. Which state setter do you need instead?"
             condition: "code_matches: useState[\\s\\S]*count\\s*(\\+\\+|=\\s*count\\s*\\+\\s*1)"
           - title: "Hooks can't live inside `if`"
             text: "React tracks hooks by call order. Where must `useState` always live?"
@@ -1133,13 +1125,12 @@ steps:
         - question: "Why doesn't `let count = 0; count++;` cause the UI to update in React?"
           type: single
           options:
-            - "You must use `var` instead of `let` to make React track the variable"
-            - "Only a `useState` setter triggers a re-render — React can't see plain mutations"
-            - "Arrow functions prevent React from seeing variable assignments"
-            - "React automatically batches all updates, so `count++` is delayed by 500ms"
+            - "Use var instead of let so React tracks the variable."
+            - "Use a state setter to request a render; a plain local mutation does not."
+            - "Arrow functions prevent React from seeing variable assignments."
+            - "React delays every plain-variable change by 500 ms."
           correct_index: 1
-          explanation: |
-            React knows nothing about your local variables. The only way to trigger a re-render is to call a **state setter** from `useState`. React's model: setter called → new state value → component function re-executed with new value → DOM diffed and patched. A bare `count++` is invisible to React.
+          explanation: "Mutating a local variable does not tell React to render. A state setter can request a render while preserving state between renders. Components can also render because a parent renders or context changes; useState is not the only possible trigger."
 
         - question: "What is wrong with this code? `if (isLoggedIn) { const [user, setUser] = React.useState(null); }`"
           type: single
@@ -1194,13 +1185,10 @@ steps:
           explanation: |
             (a) Showing different data for different users = **props** — the parent passes `name` to the card.
             (b) Tracking clicks that change over time = **state** (`useState`) — clicks are user-initiated changes.
-            (c) `class` vs `className` = **JSX rules** — JSX uses `className` because `class` is reserved in JS.
+            (c) `class` vs `className` = **JSX rules** — `className` is the canonical React DOM prop; using a string `class` attribute produces a development warning.
             This question forces you to discriminate between the three concepts rather than recall one in isolation.
 
-        - question: |
-            *(Spaced review — Step 2: JSX)*
-
-            A student's component renders but looks wrong: the heading has no CSS class applied, clicking does nothing, and the image tag causes a syntax error. Which combination of JSX rules is being violated?
+        - question: "A component has three diagnostics: a warning recommends `className`, a click handler does nothing, and an image tag causes a syntax error. Which combination accounts for them?"
           type: single
           options:
             - "Using `class` instead of `className`, `onclick` instead of `onClick`, and `<img>` without self-closing `/>`"
@@ -1208,11 +1196,7 @@ steps:
             - "Forgetting to wrap JSX in a Fragment, using an inline style string, and missing a `key` prop"
             - "Using lowercase component name, returning multiple root elements, and missing curly braces around a variable"
           correct_index: 0
-          explanation: |
-            Three different JSX rules from Step 2: (1) `class` → `className` (reserved keyword),
-            (2) `onclick` → `onClick` (camelCase event handlers), (3) `<img>` → `<img />` (self-closing
-            tags required in JSX). This question tests whether you can *diagnose* which rules apply
-            to specific symptoms — not just recall the rules in isolation.
+          explanation: "Use the canonical React prop `className` to remove the class warning, `onClick` to register the event handler, and a self-closing `<img />` in JSX. A string `class` attribute itself still reaches the DOM in modern React; it does not explain absent styling."
 
   # --------------------------------------------------------------------------
   # STEP 5: Lists & Keys — Rendering Collections
@@ -1460,13 +1444,7 @@ steps:
             - "Call a callback prop from the parent: `onToggle(task.id)` — let the parent update the data and pass new props down"
             - "Use `document.getElementById` to update the checkbox directly in the DOM"
           correct_index: 2
-          explanation: |
-            Props are **read-only** — mutating them breaks one-way data flow (option A).
-            Duplicating props into state (option B) creates a sync risk — the two copies diverge.
-            Direct DOM manipulation (option D) bypasses React entirely.
-            The correct pattern: the child calls a **callback prop** (`onToggle`), the parent updates
-            state, and React re-renders with new props. This combines props (Step 3), state (Step 4),
-            and one-way data flow into a single decision.
+          explanation: "Mutating `task.done` changes shared props. Duplicating it in local state creates a synchronization risk; direct DOM manipulation bypasses React state. Instead, call the callback prop `onToggle(task.id)`, let the parent update its state, and receive new props."
 
         - question: |
             **Arrange** the lines to render a playlist using `.map()` with stable keys.
@@ -1531,7 +1509,8 @@ steps:
       const [visibleTasks, setVisibleTasks] = React.useState(tasks);
       // Bug: if you add a task to allTasks, visibleTasks is stale!
 
-      // GOOD — one state variable; visibleTasks is computed fresh every render
+      // GOOD — store the source tasks and filter; derive the visible list
+      const [allTasks, setAllTasks] = React.useState(tasks);
       const [filter, setFilter] = React.useState('all');
       const visibleTasks = allTasks.filter(t => filter === 'all' || t.status === filter);
       ```
@@ -2739,10 +2718,7 @@ steps:
             0: "Ternary requires both branches: `condition ? trueValue : falseValue`. A one-branch ternary is a syntax error — use `&&` when you only need the truthy case."
             2: "`if` is a statement, not an expression. JSX `{}` braces only accept expressions. Use `&&` or a ternary for conditional rendering."
             3: "React has no built-in `visible` prop — unknown props are passed to the DOM element and ignored (or cause a warning). Use `&&` to conditionally render the element."
-          explanation: |
-            `&&` short-circuit is the correct pattern for show/hide. Use `.filter()` with `item.id === product.id`
-            to check membership by ID rather than object reference (reference equality on objects is unreliable
-            after state updates create new arrays — `[...cart, product]` creates a new array, so `cart.includes(product)` may fail).
+          explanation: "The boolean test followed by `&&` conditionally renders the label. An ID-based lookup works even when equivalent products are represented by different objects. Creating a new array with `[...cart, product]` is only a shallow copy: it preserves element references and does not itself make `includes(product)` fail."
 
         # ---- Comprehensive review: Steps 1-7 ----
         - question: |
@@ -2751,15 +2727,12 @@ steps:
             A teammate suggests using `document.getElementById('counter').textContent = newCount` inside a React component to update the display. What happens?
           type: single
           options:
-            - "It works perfectly — directly updating the DOM is the fastest way to change text"
-            - "It works initially, but React overwrites the change on the next re-render — React owns the DOM"
-            - "React throws an error preventing any direct DOM access inside components"
-            - "The DOM update persists because React never touches elements it did not create"
+            - "It reliably synchronizes React state with the DOM."
+            - "It bypasses state; a later DOM update may overwrite it."
+            - "React always throws as soon as any DOM API is called."
+            - "React never touches any DOM element after mounting it."
           correct_index: 1
-          explanation: |
-            React's declarative model means React owns the DOM. When state changes, React re-renders the
-            component and replaces the DOM content with what the JSX describes. Any manual DOM changes
-            are overwritten. This is why you update **state**, not the DOM — React handles the DOM for you.
+          explanation: "Direct mutation can leave the real DOM out of sync with React. A later commit may overwrite it, but an unchanged JSX value need not cause React to touch that DOM node on the next render. Update state so React owns the synchronization."
 
         - question: |
             *(Comprehensive review — Step 2: JSX)*

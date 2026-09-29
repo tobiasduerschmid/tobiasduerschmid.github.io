@@ -99,7 +99,7 @@ int n = count;    // NullPointerException! Can't unbox null.
 **Trap 2 — Boxing in loops is slow:**
 
 ```java
-// BAD — creates a new Integer object on every iteration
+// BAD — unboxes and reboxes on every iteration; can allocate wrappers
 Integer sum = 0;
 for (int i = 0; i < 1_000_000; i++) {
     sum += i;  // unbox sum, add i, box result — every iteration!
@@ -133,7 +133,7 @@ System.out.println(a == b);  // true — but only because both point to the inte
 
 Do **not** rely on this. Always use `.equals()` for string comparison.
 
-**The Integer cache trap:** Java caches `Integer` objects for values −128 to 127, making `==` accidentally work for small numbers:
+**The Integer cache trap:** Java guarantees cached `Integer` objects for values −128 to 127 and permits a wider cache, making `==` accidentally work for small numbers:
 
 ```java
 Integer x = 127;
@@ -142,7 +142,7 @@ System.out.println(x == y);     // true (cached — same object)
 
 Integer p = 128;
 Integer q = 128;
-System.out.println(p == q);     // false (not cached — different objects)
+System.out.println(p == q);     // not guaranteed: false unless 128 is also cached
 System.out.println(p.equals(q)); // true (always use .equals())
 ```
 
@@ -318,7 +318,7 @@ public class Car extends Vehicle {
     private int numDoors;
 
     public Car(String make, int year, int numDoors) {
-        super(make, year);  // MUST call parent constructor first — like C++ initializer lists
+        super(make, year);  // Java 17: call parent constructor first — like C++ initializer lists
         this.numDoors = numDoors;
     }
 
@@ -349,7 +349,7 @@ for (Vehicle v : fleet) {
 **Key differences from C++:**
 - Java methods are **virtual by default** — no `virtual` keyword needed
 - `@Override` annotation is optional but the compiler validates it catches typos
-- `super(args)` must be the **first statement** in a constructor (C++ uses initializer lists)
+- Under Java 17 rules, `super(args)` must be the **first statement** in a constructor. Java 25 and later permit a restricted prologue before it. (C++ uses initializer lists.)
 
 **When to use interface vs abstract class:**
 
@@ -496,7 +496,7 @@ for (Map.Entry<String, Integer> entry : scores.entrySet()) {
 }
 ```
 
-> **⚠ NullPointerException trap:** `HashMap.get(key)` returns `null` for missing keys. If you assign the result directly to a primitive (`int val = map.get("missing")`), auto-unboxing `null` throws `NullPointerException`. Always use `containsKey()` first, or `getOrDefault()`.
+> **⚠ NullPointerException trap:** `HashMap.get(key)` returns `null` for missing keys. If you assign the result directly to a primitive (`int val = map.get("missing")`), auto-unboxing `null` throws `NullPointerException`. For a map with non-null values, use `containsKey()` first or `getOrDefault()`. Neither handles an explicitly stored null automatically; check that value before unboxing.
 
 **Declare as the interface type** — this lets you swap implementations without changing callers:
 
@@ -632,7 +632,7 @@ public double balance;
 int sum = 0;
 for (int score : scores) { sum += score; }
 
-// ✗ Boxing every iteration — slower and allocates garbage
+// ✗ Boxing every iteration — potential allocation and conversion overhead
 Integer sum = 0;
 for (int score : scores) { sum += score; }  // boxes sum on every iteration
 ```

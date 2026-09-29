@@ -20,7 +20,7 @@ cards:
       ```
       Fix it in **one line**, defaulting to `0` for missing students.
     answer: "`int g = grades.getOrDefault(studentId, 0);`"
-    explanation: "`HashMap.get()` returns `null` for missing keys. Auto-unboxing `null` to `int` throws NPE. `getOrDefault(key, fallback)` returns the value if present, or the fallback safely — no null, no NPE. Alternatively: `grades.containsKey(studentId) ? grades.get(studentId) : 0`, but `getOrDefault` is more idiomatic."
+    explanation: "`HashMap.get()` returns `null` for missing keys. Auto-unboxing `null` to `int` throws NPE. `getOrDefault(key, fallback)` returns the value if present, or the fallback for an absent key. An explicitly stored null still returns null and would fail during unboxing; assume this grades map stores only non-null Integer values. Alternatively: `grades.containsKey(studentId) ? grades.get(studentId) : 0`, but `getOrDefault` is more idiomatic."
 
   - id: 3
     difficulty: advanced
@@ -171,7 +171,7 @@ cards:
           public String makeSound() { return "Woof!"; }
       }
       ```
-    explanation: "`super(name)` must be the first statement — it runs the parent constructor before any Dog-specific code. Because `name` is `private` in `Animal`, `Dog` cannot access it directly — it uses `getName()`. The `abstract` keyword on `makeSound()` forces every concrete subclass to provide an implementation."
+    explanation: "Under Java 17 constructor rules, `super(name)` must be the first statement — it runs the parent constructor before any Dog-specific code. Because `name` is `private` in `Animal`, `Dog` cannot access it directly — it uses `getName()`. The `abstract` keyword on `makeSound()` forces every concrete subclass to provide an implementation."
 
   - id: 7
     difficulty: intermediate
@@ -302,28 +302,8 @@ cards:
 
   - id: 12
     difficulty: advanced
-    question: |
-      You need to store course enrollments. Two options:
-      - `List<Student>` with a manual duplicate check in `enroll()`
-      - `LinkedHashSet<Student>` that handles duplicates automatically
-
-      Implement `enroll(Student s)` using each approach, then state which is preferable and why.
-    answer: |
-      ```java
-      // Option A: List — manual duplicate check
-      private List<Student> students = new ArrayList<>();
-      public void enroll(Student s) {
-          if (!students.contains(s)) students.add(s);
-      }
-
-      // Option B: LinkedHashSet — automatic deduplication, insertion order preserved
-      private LinkedHashSet<Student> students = new LinkedHashSet<>();
-      public void enroll(Student s) {
-          students.add(s);   // ignored if already present — no check needed
-      }
-      ```
-
-      **Option B is preferable.** `LinkedHashSet.add()` is O(1) and the "no duplicates" invariant is **enforced by the type** — you cannot accidentally skip the check. `List.contains()` is O(n) and the invariant is only enforced if every `enroll()` caller remembers to check. Choose a collection whose contract matches your invariant.
+    question: "You need to store course enrollments. Two options:\n- `List<Student>` with a manual duplicate check in `enroll()`\n- `LinkedHashSet<Student>` that handles duplicates automatically\n\nImplement `enroll(Student s)` using each approach, then state which is preferable and why.\n\nAssume Student.equals and hashCode consistently identify the same unique enrollment ID."
+    answer: "```java\n// Option A: List — manual duplicate check\nprivate List<Student> students = new ArrayList<>();\npublic void enroll(Student s) {\n    if (!students.contains(s)) students.add(s);\n}\n\n// Option B: LinkedHashSet — automatic deduplication, insertion order preserved\nprivate LinkedHashSet<Student> students = new LinkedHashSet<>();\npublic void enroll(Student s) {\n    students.add(s);   // ignored if already present — no check needed\n}\n```\n\n**Option B is preferable.** `LinkedHashSet.add()` is expected O(1) with well-distributed hashes and the \"no duplicates\" invariant is **enforced by the type** — you cannot accidentally skip the check. `List.contains()` is O(n) and the invariant is only enforced if every path that changes the list preserves it. Choose a collection whose contract matches your invariant.\n"
     explanation: "Choosing the right collection encodes intent. `Set` means 'unique elements' — the type enforces the invariant. `List` means 'ordered sequence with possible duplicates' — you must enforce uniqueness manually, which is fragile. `LinkedHashSet` adds insertion-order iteration over plain `HashSet`."
 
   - id: 13
@@ -373,7 +353,7 @@ cards:
           List<String> getRoster();
       }
       ```
-    explanation: "`enroll()` throws a checked exception because a full course is an external condition the caller should handle. `drop()` returns `boolean` because dropping a non-existent student is a non-exceptional expected case. `getRoster()` returns `List<String>` (names) rather than exposing `Student` objects or a concrete collection type — this hides both the internal `Student` type and the storage decision from consumers of the interface."
+    explanation: "`enroll()` throws a checked exception because a full course is an external condition the caller should handle. `drop()` returns `boolean` because dropping a non-existent student is a non-exceptional expected case. `getRoster()` returns `List<String>` (names) rather than exposing `Student` objects or a concrete collection type — this hides the storage decision and does not expose stored Student objects through the roster. Student remains part of the public contract because enroll accepts it."
 
   - id: 15
     difficulty: advanced
@@ -386,9 +366,9 @@ cards:
       }
       ```
     answer: |
-      **Issue:** `total++` expands to `total = Integer.valueOf(total.intValue() + 1)` — an **object allocation on every iteration** for an `Integer` that is immediately discarded.
+      **Issue:** `total++` expands to `total = Integer.valueOf(total.intValue() + 1)` — unboxing and reboxing on each increment, potentially creating a short-lived wrapper object.
 
-      **Root cause:** `Integer` is a wrapper (heap object). Using it as an accumulator creates one new object per loop iteration, generating garbage-collector pressure.
+      **Root cause:** `Integer` is a wrapper (heap object). Using it as an accumulator adds boxing conversions and can generate garbage-collector pressure. Cached values and JIT optimization affect the actual allocation count.
 
       ```java
       // Corrected — use primitive int for the counter

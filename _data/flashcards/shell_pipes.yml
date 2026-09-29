@@ -6,7 +6,7 @@ cards:
     difficulty: intermediate
     question: "You want to count how many lines in `server.log` contain the word 'ERROR'."
     answer: "`grep 'ERROR' server.log | wc -l`"
-    explanation: "`grep` filters and prints only the matching lines; `wc -l` counts them. Without the pipe you would have to save a temp file and count it separately."
+    explanation: "`grep` filters and prints only the matching lines; `wc -l` counts them. An equivalent single-command solution is `grep -c 'ERROR' server.log`; the pipeline demonstrates composing a filter with a counter."
 
   - id: 2
     difficulty: advanced
@@ -23,8 +23,8 @@ cards:
   - id: 4
     difficulty: advanced
     question: "List all running processes and show only those belonging to user `tobias`."
-    answer: "`ps aux | grep tobias`"
-    explanation: "`ps aux` prints every running process with its owner; piping to `grep tobias` filters to lines that contain that username."
+    answer: "`ps aux | awk '$1 == \"tobias\"'`"
+    explanation: "`ps aux` prints every running process with its owner; `awk` selects rows whose first field (the owner) is exactly `tobias`. A plain `grep tobias` would also match other users' command arguments."
 
   - id: 5
     difficulty: advanced
@@ -34,7 +34,7 @@ cards:
 
   - id: 6
     difficulty: advanced
-    question: "List the 5 largest files in the current directory, with the biggest first, showing only their names."
+    question: "Assume the current directory contains only regular files with no newlines in their names. List up to 5 largest non-hidden files, with the biggest first, showing only their names."
     answer: "`ls -S | head -5`"
     explanation: "`ls -S` sorts directory entries by file size (largest first); `head -5` keeps only the first 5 lines of that output."
 
@@ -52,19 +52,19 @@ cards:
 
   - id: 9
     difficulty: intermediate
-    question: "Count the total number of files (not directories) inside the current directory tree."
+    question: "Count regular files inside the current directory tree. Assume filenames contain no newlines."
     answer: "`find . -type f | wc -l`"
     explanation: "`find . -type f` recursively lists every regular file, one per line; `wc -l` counts those lines."
 
   - id: 10
     difficulty: advanced
-    question: "Show the 10 most recently modified files in the current directory, newest first."
+    question: "Assume the current directory contains only regular files with no newlines in their names. Show up to 10 most recently modified non-hidden files, newest first."
     answer: "`ls -t | head -10`"
     explanation: "`ls -t` sorts directory entries by modification time (newest first); `head -10` keeps only the first 10 lines of that output."
 
   - id: 11
     difficulty: advanced
-    question: "Extract the second column from comma-separated `data.csv`, sort the values, and print only the unique ones."
+    question: "Assume comma-separated `data.csv` has at least two fields per line and no quoted commas or embedded newlines. Extract its second column, sort the values, and print only the unique ones."
     answer: "`cut -d',' -f2 data.csv | sort | uniq`"
     explanation: "`cut -d','` splits each line on commas; `-f2` keeps the second field; `sort` brings duplicates together; `uniq` removes consecutive duplicates."
 

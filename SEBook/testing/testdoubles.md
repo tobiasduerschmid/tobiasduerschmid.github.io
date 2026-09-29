@@ -56,7 +56,7 @@ class Spy {
 }
 class MockObject {
   expects indirect outputs
-  verify DURING execution
+  expectations configured BEFORE
 }
 Dummy --|> TestDouble
 Stub --|> TestDouble
@@ -65,7 +65,7 @@ Spy --|> TestDouble
 MockObject --|> TestDouble
 @enduml'></div>
 
-The three with the most subtle distinctions are Stub, Spy, and Mock — covered in depth below. *Dummies* (objects passed but never used — a parameter required by a signature you don't care about) and *Fakes* (working implementations with shortcuts unsuitable for production — for example, an in-memory database) are simpler but worth knowing exist. The three core kinds differ along two axes: *which direction of data flow they control* (indirect input vs. indirect output) and *when verification happens* (after the fact vs. during execution).
+The three with the most subtle distinctions are Stub, Spy, and Mock — covered in depth below. *Dummies* (objects passed but never used — a parameter required by a signature you don't care about) and *Fakes* (working implementations with shortcuts unsuitable for production — for example, an in-memory database) are simpler but worth knowing exist. The three core kinds differ in *which direction of data flow they control* (indirect input vs. indirect output) and *how verification is expressed* (procedural assertions on recorded calls vs. expectations configured before execution).
 
 Keep this map in mind as you read: each section below deepens one of the three branches.
 
@@ -121,7 +121,7 @@ The interesting test-design move with a spy is rarely *writing* it (a class with
 
 ## Mock Object
 
-A **Mock Object** {% cite meszaros2007xunit %}, like a Test Spy, acts as an observation point to verify the indirect outputs of the SUT. However, a Mock Object operates using a fundamentally different paradigm known as **expected behavior specification**. Instead of waiting until after the SUT executes to verify the outputs procedurally, a Mock Object is configured *before* the SUT is exercised with the exact method calls and arguments it should expect to receive. The Mock Object essentially acts as an active verification engine during the execution phase. As the SUT executes and calls the Mock Object, the mock dynamically compares the actual arguments received against its programmed expectations. If an unexpected call occurs, or if the arguments do not match, the Mock Object fails the test immediately.
+A **Mock Object** {% cite meszaros2007xunit %}, like a Test Spy, acts as an observation point to verify the indirect outputs of the SUT. However, a Mock Object operates using a fundamentally different paradigm known as **expected behavior specification**. Instead of waiting until after the SUT executes to verify the outputs procedurally, a Mock Object is configured *before* the SUT is exercised with the exact method calls and arguments it should expect to receive. The Mock Object essentially acts as an active verification engine during the execution phase. As the SUT executes and calls the Mock Object, the mock dynamically compares the actual arguments received against its programmed expectations. An unexpected call or mismatched arguments can fail immediately. A separate verification after execution detects expected calls that never occurred; no call site exists at which to detect an absent call.
 
 Fowler's distinction between *classical* and *mockist* testing styles {% cite fowler2007MocksArentStubs %} maps onto this difference: classical tests prefer real collaborators and observe the SUT's *state*; mockist tests specify the *interactions* between the SUT and its collaborators up front. Neither style is universally correct. Mocks fit best when the interaction *is* the contract — "the payment gateway must be charged exactly once for the order total" — and worst when they merely freeze the implementation's current call shape.
 

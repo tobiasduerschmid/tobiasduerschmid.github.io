@@ -19,12 +19,12 @@
       sampleText: 'Scores: 42 points, code A7 rejected, player 3 scored 100, item99 skipped.',
       solution: '\\b\\d+\\b',
       tests: [
-        { input: '42', shouldMatch: true, label: 'standalone number' },
+        { input: '42', shouldMatch: true, expectedMatches: ["42"], label: 'standalone number' },
         { input: 'A7', shouldMatch: false, label: 'letter+digit — should NOT match whole thing' },
-        { input: '100', shouldMatch: true, label: 'another standalone number' }
+        { input: '100', shouldMatch: true, expectedMatches: ["100"], label: 'another standalone number' }
       ],
       hiddenTests: [
-        { input: '0', shouldMatch: true },
+        { input: '0', shouldMatch: true, expectedMatches: ["0"] },
         { input: 'x', shouldMatch: false }
       ]
     },
@@ -36,13 +36,13 @@
       sampleText: null,
       solution: '^\\w+@\\w+\\.[a-zA-Z]+$',
       tests: [
-        { input: 'user@example.com', shouldMatch: true, label: 'valid email shape' },
-        { input: 'test@host.org', shouldMatch: true, label: 'another valid shape' },
+        { input: 'user@example.com', shouldMatch: true, expectedMatches: ["user@example.com"], label: 'valid email shape' },
+        { input: 'test@host.org', shouldMatch: true, expectedMatches: ["test@host.org"], label: 'another valid shape' },
         { input: 'no-at-sign.com', shouldMatch: false, label: 'missing @ — should NOT match' },
         { input: '@host.com', shouldMatch: false, label: 'missing username — should NOT match' }
       ],
       hiddenTests: [
-        { input: 'a@b.c', shouldMatch: true },
+        { input: 'a@b.c', shouldMatch: true, expectedMatches: ["a@b.c"] },
         { input: 'user@.com', shouldMatch: false },
         { input: 'user@host', shouldMatch: false }
       ]
@@ -51,19 +51,19 @@
       id: 'review-3', type: 'fixer',
       section: 'Warm-Up Review',
       title: 'Review: Fix the Year Matcher',
-      goal: 'This regex should match exactly 4-digit years (like 2024) as standalone numbers. But it matches "20" inside "2024" and accepts "12345". Fix it.',
+      goal: 'This regex should match exactly 4-digit years (like 2024) as standalone numbers. But it accepts both "20" and "12345". Fix it.',
       sampleText: null,
       brokenRegex: '\\d+',
       solution: '\\b\\d{4}\\b',
       hint: 'You need to constrain the length to exactly 4 digits AND ensure they stand alone (not part of a longer number).',
       tests: [
-        { input: '2024', shouldMatch: true, label: '4-digit year' },
-        { input: '1999', shouldMatch: true, label: 'another year' },
+        { input: '2024', shouldMatch: true, expectedMatches: ["2024"], label: '4-digit year' },
+        { input: '1999', shouldMatch: true, expectedMatches: ["1999"], label: 'another year' },
         { input: '12345', shouldMatch: false, label: '5 digits — should NOT match' },
         { input: '99', shouldMatch: false, label: '2 digits — should NOT match' }
       ],
       hiddenTests: [
-        { input: '0001', shouldMatch: true },
+        { input: '0001', shouldMatch: true, expectedMatches: ["0001"] },
         { input: '123', shouldMatch: false }
       ]
     },
@@ -78,13 +78,13 @@
       solution: '<.*?>',
       showVisualizer: true,
       tests: [
-        { input: '<b>', shouldMatch: true, label: 'opening tag' },
-        { input: '</b>', shouldMatch: true, label: 'closing tag' },
-        { input: '<b>bold</b>', shouldMatch: true, matchCount: 2, label: 'two separate tags, not one big match' },
+        { input: '<b>', shouldMatch: true, expectedMatches: ["<b>"], label: 'opening tag' },
+        { input: '</b>', shouldMatch: true, expectedMatches: ["</b>"], label: 'closing tag' },
+        { input: '<b>bold</b>', shouldMatch: true, expectedMatches: ["<b>","</b>"], matchCount: 2, label: 'two separate tags, not one big match' },
         { input: 'bold', shouldMatch: false, label: 'plain text — should NOT match' }
       ],
       hiddenTests: [
-        { input: '<i>', shouldMatch: true },
+        { input: '<i>', shouldMatch: true, expectedMatches: ["<i>"] },
         { input: 'text', shouldMatch: false }
       ]
     },
@@ -96,12 +96,12 @@
       sampleText: 'He said "hello" and she replied "goodbye" before they both whispered "see you later" softly.',
       solution: '".*?"',
       tests: [
-        { input: '"hello"', shouldMatch: true, label: 'quoted string' },
-        { input: '"hello" and "goodbye"', shouldMatch: true, matchCount: 2, label: 'two quoted strings matched separately' },
+        { input: '"hello"', shouldMatch: true, expectedMatches: ["\"hello\""], label: 'quoted string' },
+        { input: '"hello" and "goodbye"', shouldMatch: true, expectedMatches: ["\"hello\"","\"goodbye\""], matchCount: 2, label: 'two quoted strings matched separately' },
         { input: 'no quotes here', shouldMatch: false, label: 'no quotes — should NOT match' }
       ],
       hiddenTests: [
-        { input: '""', shouldMatch: true },
+        { input: '""', shouldMatch: true, expectedMatches: ["\"\""] },
         { input: 'no quotes', shouldMatch: false }
       ]
     },
@@ -115,12 +115,12 @@
       sampleText: 'The crowd chanted: na nana nanana nananana! A banana has na but also nan. Just na alone is not enough.',
       solution: '(na){2,}',
       tests: [
-        { input: 'nana', shouldMatch: true, label: '2 repetitions' },
-        { input: 'nanana', shouldMatch: true, label: '3 repetitions' },
+        { input: 'nana', shouldMatch: true, expectedMatches: ["nana"], label: '2 repetitions' },
+        { input: 'nanana', shouldMatch: true, expectedMatches: ["nanana"], label: '3 repetitions' },
         { input: 'na', shouldMatch: false, label: 'only 1 — should NOT match' }
       ],
       hiddenTests: [
-        { input: 'nananana', shouldMatch: true },
+        { input: 'nananana', shouldMatch: true, expectedMatches: ["nananana"] },
         { input: 'nan', shouldMatch: false }
       ]
     },
@@ -134,13 +134,13 @@
       solution: '^[A-Z]{3}$',
       hint: 'You need to specify exactly 3 letters, and use anchors to prevent partial matching.',
       tests: [
-        { input: 'LAX', shouldMatch: true, label: '3 uppercase letters' },
-        { input: 'JFK', shouldMatch: true, label: 'another valid code' },
+        { input: 'LAX', shouldMatch: true, expectedMatches: ["LAX"], label: '3 uppercase letters' },
+        { input: 'JFK', shouldMatch: true, expectedMatches: ["JFK"], label: 'another valid code' },
         { input: 'LA', shouldMatch: false, label: 'only 2 letters — should NOT match' },
         { input: 'ABCD', shouldMatch: false, label: '4 letters — should NOT match' }
       ],
       hiddenTests: [
-        { input: 'SFO', shouldMatch: true },
+        { input: 'SFO', shouldMatch: true, expectedMatches: ["SFO"] },
         { input: 'lax', shouldMatch: false },
         { input: 'A', shouldMatch: false }
       ]
@@ -155,12 +155,12 @@
       solution: '\\[(?<level>\\w+)\\]\\s+(?<code>\\d+)',
       requiredGroups: ['level', 'code'],
       tests: [
-        { input: '[ERROR] 404 Not Found', shouldMatch: true, namedGroups: { level: 'ERROR', code: '404' }, label: '"level" captures "ERROR", "code" captures "404"' },
-        { input: '[WARN] 301 Moved', shouldMatch: true, namedGroups: { level: 'WARN', code: '301' }, label: '"level" captures "WARN", "code" captures "301"' },
+        { input: '[ERROR] 404 Not Found', shouldMatch: true, expectedMatches: ["[ERROR] 404"], namedGroups: { level: 'ERROR', code: '404' }, label: '"level" captures "ERROR", "code" captures "404"' },
+        { input: '[WARN] 301 Moved', shouldMatch: true, expectedMatches: ["[WARN] 301"], namedGroups: { level: 'WARN', code: '301' }, label: '"level" captures "WARN", "code" captures "301"' },
         { input: 'ERROR 404', shouldMatch: false, label: 'missing brackets — should NOT match' }
       ],
       hiddenTests: [
-        { input: '[INFO] 200 OK', shouldMatch: true, namedGroups: { level: 'INFO', code: '200' } },
+        { input: '[INFO] 200 OK', shouldMatch: true, expectedMatches: ["[INFO] 200"], namedGroups: { level: 'INFO', code: '200' } },
         { input: '[] 500', shouldMatch: false }
       ]
     },
@@ -173,13 +173,13 @@
       solution: '^(?<user>\\w+)@(?<domain>\\w+\\.[a-zA-Z]+)$',
       requiredGroups: ['user', 'domain'],
       tests: [
-        { input: 'alice@example.com', shouldMatch: true, namedGroups: { user: 'alice', domain: 'example.com' }, label: '"user" captures "alice", "domain" captures "example.com"' },
-        { input: 'bob@host.org', shouldMatch: true, namedGroups: { user: 'bob', domain: 'host.org' }, label: '"user" captures "bob", "domain" captures "host.org"' },
+        { input: 'alice@example.com', shouldMatch: true, expectedMatches: ["alice@example.com"], namedGroups: { user: 'alice', domain: 'example.com' }, label: '"user" captures "alice", "domain" captures "example.com"' },
+        { input: 'bob@host.org', shouldMatch: true, expectedMatches: ["bob@host.org"], namedGroups: { user: 'bob', domain: 'host.org' }, label: '"user" captures "bob", "domain" captures "host.org"' },
         { input: 'no-at-sign.com', shouldMatch: false, label: 'missing @ — should NOT match' },
         { input: '@host.com', shouldMatch: false, label: 'missing username — should NOT match' }
       ],
       hiddenTests: [
-        { input: 'a@b.c', shouldMatch: true, namedGroups: { user: 'a', domain: 'b.c' } },
+        { input: 'a@b.c', shouldMatch: true, expectedMatches: ["a@b.c"], namedGroups: { user: 'a', domain: 'b.c' } },
         { input: 'user@host', shouldMatch: false }
       ]
     },
@@ -192,13 +192,13 @@
       solution: '^(?<year>\\d{4})-(?<month>\\d{2})-(?<day>\\d{2})$',
       requiredGroups: ['year', 'month', 'day'],
       tests: [
-        { input: '2026-04-01', shouldMatch: true, namedGroups: { year: '2026', month: '04', day: '01' }, label: 'groups capture year, month, day' },
-        { input: '1999-12-31', shouldMatch: true, namedGroups: { year: '1999', month: '12', day: '31' }, label: 'another valid date' },
+        { input: '2026-04-01', shouldMatch: true, expectedMatches: ["2026-04-01"], namedGroups: { year: '2026', month: '04', day: '01' }, label: 'groups capture year, month, day' },
+        { input: '1999-12-31', shouldMatch: true, expectedMatches: ["1999-12-31"], namedGroups: { year: '1999', month: '12', day: '31' }, label: 'another valid date' },
         { input: '26-04-01', shouldMatch: false, label: '2-digit year — should NOT match' },
         { input: '2026/04/01', shouldMatch: false, label: 'wrong separator — should NOT match' }
       ],
       hiddenTests: [
-        { input: '0000-00-00', shouldMatch: true, namedGroups: { year: '0000', month: '00', day: '00' } },
+        { input: '0000-00-00', shouldMatch: true, expectedMatches: ["0000-00-00"], namedGroups: { year: '0000', month: '00', day: '00' } },
         { input: '2026-1-1', shouldMatch: false }
       ]
     },
@@ -208,16 +208,18 @@
       id: 'look-1', type: 'free',
       section: 'Lookaheads & Lookbehinds',
       title: 'Dollar Amounts',
-      goal: 'Match the numeric amount after a <code>$</code> sign — but do NOT include the <code>$</code> in the match. Hint: Use a positive lookbehind.',
+      goal: 'Match the numeric amount after a <code>$</code> sign: one or more digits, optionally followed by a decimal point and digits. Do NOT include the <code>$</code>. Hint: Use a positive lookbehind.',
       sampleText: 'Prices: \$25, €30, \$100, £50, \$7.99, ¥500, \$0.50, and €12.50 have been on sale for 30 days.',
-      solution: '(?<=\\$)[\\d.]+',
+      solution: '(?<=\\$)\\d+(?:\\.\\d+)?',
       tests: [
-        { input: '$25', shouldMatch: true, firstMatch: '25', label: 'match "25" only — not "$25"' },
+        { input: '$25', shouldMatch: true, expectedMatches: ["25"], firstMatch: '25', label: 'match "25" only — not "$25"' },
         { input: '€30', shouldMatch: false, label: 'euro — should NOT match' },
         { input: '£50', shouldMatch: false, label: 'pound — should NOT match' }
       ],
       hiddenTests: [
-        { input: '$0', shouldMatch: true },
+        { input: '$0', shouldMatch: true, expectedMatches: ["0"] },
+        { input: '$7.99', shouldMatch: true, expectedMatches: ["7.99"] },
+        { input: '$.', shouldMatch: false },
         { input: '100', shouldMatch: false }
       ]
     },
@@ -229,13 +231,13 @@
       sampleText: null,
       solution: '^(?=.*\\d)(?=.*[A-Z]).+$',
       tests: [
-        { input: 'Hello1', shouldMatch: true, label: 'uppercase + digit' },
+        { input: 'Hello1', shouldMatch: true, expectedMatches: ["Hello1"], label: 'uppercase + digit' },
         { input: 'hello1', shouldMatch: false, label: 'no uppercase — should NOT match' },
         { input: 'HELLO', shouldMatch: false, label: 'no digit — should NOT match' },
-        { input: 'H1', shouldMatch: true, label: 'minimal valid' }
+        { input: 'H1', shouldMatch: true, expectedMatches: ["H1"], label: 'minimal valid' }
       ],
       hiddenTests: [
-        { input: 'aB3cD', shouldMatch: true },
+        { input: 'aB3cD', shouldMatch: true, expectedMatches: ["aB3cD"] },
         { input: '12345', shouldMatch: false },
         { input: 'abcde', shouldMatch: false }
       ]
@@ -250,16 +252,16 @@
       sampleText: null,
       solution: '^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$',
       tests: [
-        { input: '#FFF', shouldMatch: true, label: '3-digit hex' },
-        { input: '#1A2B3C', shouldMatch: true, label: '6-digit hex' },
+        { input: '#FFF', shouldMatch: true, expectedMatches: ["#FFF"], label: '3-digit hex' },
+        { input: '#1A2B3C', shouldMatch: true, expectedMatches: ["#1A2B3C"], label: '6-digit hex' },
         { input: '#GGG', shouldMatch: false, label: 'invalid hex chars — should NOT match' },
         { input: '#12', shouldMatch: false, label: 'only 2 digits — should NOT match' },
         { input: '123456', shouldMatch: false, label: 'missing # — should NOT match' }
       ],
       hiddenTests: [
-        { input: '#abcdef', shouldMatch: true },
+        { input: '#abcdef', shouldMatch: true, expectedMatches: ["#abcdef"] },
         { input: '#1234', shouldMatch: false },
-        { input: '#AABBCC', shouldMatch: true },
+        { input: '#AABBCC', shouldMatch: true, expectedMatches: ["#AABBCC"] },
         { input: 'FFF', shouldMatch: false }
       ]
     },
@@ -271,14 +273,14 @@
       sampleText: null,
       solution: '^[A-Z]\\d{9}$',
       tests: [
-        { input: 'A123456789', shouldMatch: true, label: 'valid ID' },
-        { input: 'B000000001', shouldMatch: true, label: 'another valid ID' },
+        { input: 'A123456789', shouldMatch: true, expectedMatches: ["A123456789"], label: 'valid ID' },
+        { input: 'B000000001', shouldMatch: true, expectedMatches: ["B000000001"], label: 'another valid ID' },
         { input: 'a123456789', shouldMatch: false, label: 'lowercase letter — should NOT match' },
         { input: 'AB12345678', shouldMatch: false, label: 'two letters — should NOT match' },
         { input: 'A12345', shouldMatch: false, label: 'too few digits — should NOT match' }
       ],
       hiddenTests: [
-        { input: 'Z999999999', shouldMatch: true },
+        { input: 'Z999999999', shouldMatch: true, expectedMatches: ["Z999999999"] },
         { input: '1234567890', shouldMatch: false },
         { input: 'A1234567890', shouldMatch: false }
       ]
@@ -291,14 +293,14 @@
       sampleText: 'Items: $19.99 widget, $5 sticker, €12.50 imported, $100.00 premium, $0.99 candy, 50 cents.',
       solution: '\\$\\d+(\\.\\d{2})?',
       tests: [
-        { input: '$19.99', shouldMatch: true, label: 'dollars and cents' },
-        { input: '$5', shouldMatch: true, label: 'whole dollars' },
+        { input: '$19.99', shouldMatch: true, expectedMatches: ["$19.99"], label: 'dollars and cents' },
+        { input: '$5', shouldMatch: true, expectedMatches: ["$5"], label: 'whole dollars' },
         { input: '€12.50', shouldMatch: false, label: 'euro — should NOT match' },
         { input: '50', shouldMatch: false, label: 'plain number — should NOT match' }
       ],
       hiddenTests: [
-        { input: '$0.99', shouldMatch: true },
-        { input: '$100.00', shouldMatch: true },
+        { input: '$0.99', shouldMatch: true, expectedMatches: ["$0.99"] },
+        { input: '$100.00', shouldMatch: true, expectedMatches: ["$100.00"] },
         { input: 'free', shouldMatch: false }
       ]
     },
@@ -312,13 +314,13 @@
       solution: '(?<=ERROR: )\\w+',
       hint: 'The .+ is greedy and consumes everything. You want only the first word (\\w+) after "ERROR: ". A lookbehind can check for "ERROR: " without including it in the match.',
       tests: [
-        { input: 'ERROR: timeout', shouldMatch: true, firstMatch: 'timeout', label: 'match "timeout" only — not "ERROR: timeout"' },
-        { input: 'ERROR: connection refused', shouldMatch: true, firstMatch: 'connection', label: 'match first word only' },
+        { input: 'ERROR: timeout', shouldMatch: true, expectedMatches: ["timeout"], firstMatch: 'timeout', label: 'match "timeout" only — not "ERROR: timeout"' },
+        { input: 'ERROR: connection refused', shouldMatch: true, expectedMatches: ["connection"], firstMatch: 'connection', label: 'match first word only' },
         { input: 'INFO: all good', shouldMatch: false, label: 'INFO line — should NOT match' },
         { input: 'WARNING: low memory', shouldMatch: false, label: 'WARNING line — should NOT match' }
       ],
       hiddenTests: [
-        { input: 'ERROR: null', shouldMatch: true },
+        { input: 'ERROR: null', shouldMatch: true, expectedMatches: ["null"] },
         { input: 'ERRORS: none', shouldMatch: false }
       ]
     }
@@ -400,10 +402,10 @@
     return re.test(input);
   }
 
-  // Extended test: supports firstMatch (exact text of first match), matchCount, and namedGroups
+  // Extended test: supports expectedMatches, firstMatch, matchCount, and namedGroups
   function checkSingleTest(pattern, t) {
     var re = tryCompile(pattern, 'g');
-    if (!re || re.error) return !t.shouldMatch;
+    if (!re || re.error) return false;
     re.lastIndex = 0;
     var matches = [], firstExec = null, m, safety = 0;
     while ((m = re.exec(t.input)) !== null) {
@@ -414,6 +416,8 @@
     }
     var matched = matches.length > 0;
     if (matched !== t.shouldMatch) return false;
+    if (t.expectedMatches && (matches.length !== t.expectedMatches.length ||
+      !matches.every(function (text, index) { return text === t.expectedMatches[index]; }))) return false;
     if (matched && t.firstMatch !== undefined && matches[0] !== t.firstMatch) return false;
     if (matched && t.matchCount !== undefined && matches.length !== t.matchCount) return false;
     if (matched && t.namedGroups && firstExec) {
@@ -718,12 +722,13 @@
 
   function getFailureHint(ex, pattern) {
     // Check visible tests for specific failure patterns to give targeted guidance
-    var falsePositives = 0, falseNegatives = 0;
+    var falsePositives = 0, falseNegatives = 0, wrongExtractions = 0;
     for (var i = 0; i < ex.tests.length; i++) {
       var t = ex.tests[i];
       var matched = testRegex(pattern, t.input);
       if (matched && !t.shouldMatch) falsePositives++;
       if (!matched && t.shouldMatch) falseNegatives++;
+      if (matched && t.shouldMatch && !checkSingleTest(pattern, t)) wrongExtractions++;
     }
     if (falsePositives > 0 && falseNegatives === 0) {
       return 'Your pattern is matching text it shouldn\'t. Check the failing tests — what is your regex accepting that it should reject?';
@@ -732,6 +737,7 @@
     } else if (falsePositives > 0 && falseNegatives > 0) {
       return 'Some matches are wrong and some are missing. Review the failing tests: what does your pattern match that it shouldn\'t, and what does it miss?';
     }
+    if (wrongExtractions > 0) return 'Your pattern finds a match, but extracts the wrong text or number of matches. Compare the highlighted text with the exercise goal.';
     return 'Check the test cases with <strong>&#10007;</strong> marks and think about what your pattern is doing differently than expected.';
   }
 
@@ -750,7 +756,7 @@
     'group-5': { q: 'How could you use the named groups year/month/day after matching?', a: 'In JavaScript, match.groups.year, match.groups.month, and match.groups.day give you direct access to each part by name — no need to remember that the year is group 1, month is group 2, etc. This makes code that processes the match much more readable.' },
     'look-1': { q: 'Why use a lookbehind instead of just including \\$ in the pattern?', a: 'A lookbehind checks that $ precedes the match but doesn\'t include it in the result. If you used \\$[\\d.]+, the match would be "$25" (with the dollar sign). Lookbehinds let you extract just the number.' },
     'look-2': { q: 'How do chained lookaheads work together at the same position?', a: 'Each lookahead independently checks a condition from the same starting position (like a logical AND). (?=.*\\d) verifies a digit exists somewhere, (?=.*[A-Z]) verifies an uppercase letter exists. Neither consumes characters, so the string pointer stays at the start for the next check.' },
-    'integrate-1': { q: 'Why is the alternation (|) inside a group, and why does the 6-digit option come first?', a: 'The group (...) contains the alternation so that ^ and $ still anchor the whole pattern. The 6-digit option comes first because regex tries alternatives left-to-right — if 3-digit came first, "AABBCC" would match only "AAB" (the first 3 hex chars).' },
+    'integrate-1': { q: 'Why is the alternation (|) inside a group, and why does the 6-digit option come first?', a: 'The group (...) contains the alternation so that ^ and $ still anchor the whole pattern. Either alternative order works here: the trailing $ forces the whole string to match, so after a 3-digit attempt fails at $, the engine can try the 6-digit alternative.' },
     'integrate-2': { q: 'Which regex features did you combine, and why was each necessary?', a: 'Anchors (^$) to validate the full string, a character class ([A-Z]) for exactly one uppercase letter, a metacharacter (\\d) for digits, and a quantifier ({9}) for exactly 9 repetitions. Remove any one and the validation breaks.' },
     'integrate-3': { q: 'Why did you group the decimal part and make it optional?', a: 'The decimal part (.XX) is a multi-character unit — the dot and two digits must appear together or not at all. Grouping with (...) treats them as a single unit, and ? makes the whole group optional.' },
     'integrate-4': { q: 'What is the difference between using a lookbehind here versus including "ERROR: " in the match?', a: 'A lookbehind asserts that "ERROR: " precedes the current position without consuming it — so the match result is just the word (e.g., "timeout"), not "ERROR: timeout". This is useful when you want to extract data after a known prefix.' }

@@ -60,7 +60,7 @@ cards:
     difficulty: advanced
     question: "You write `try: do_thing(); except: pass` and tell your team *'this is fault-tolerant.'* Why is this misleading?"
     answer: "A bare `except: pass` is the opposite of fault-tolerant — it **swallows every error silently** (including ones that leave the system in a partially-updated, inconsistent state) and gives no signal that anything went wrong. Real fault tolerance is *selective* handling of *known* failure modes with deliberate recovery and observability (logs, metrics, alerts, compensating transactions)."
-    explanation: "Bare-except patterns hide the bug *and* leave invariants violated. For a `transfer(from, to, amount)` that's debited the source but failed to credit the destination, *not crashing* is much worse than crashing — the crash would have prevented the half-done transaction; the swallow leaves money missing. The right pattern for monetary operations is an atomic transaction (both updates or neither); the right pattern for handled errors elsewhere is a narrowly-typed `except SpecificError:` with a log line and a recovery path."
+    explanation: "Bare-except patterns hide the bug *and* leave invariants violated. For a `transfer(from, to, amount)` that's debited the source but failed to credit the destination, *not crashing* is much worse than crashing — raising an exception alone would not undo the debit either. Swallowing the failure hides the partial update; preventing it requires atomicity and rollback. The right pattern for monetary operations is an atomic transaction (both updates or neither); the right pattern for handled errors elsewhere is a narrowly-typed `except SpecificError:` with a log line and a recovery path."
 
   - id: 11
     difficulty: intermediate

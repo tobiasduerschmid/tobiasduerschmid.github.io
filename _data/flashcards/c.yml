@@ -114,7 +114,7 @@ cards:
       matrix[i * cols + j] = 42;
 
       free(matrix);
-      matrix = NULL;        // defensive — turns accidental reuse into a fast segfault
+      matrix = NULL;        // makes another free(matrix) safe; dereferencing NULL is still undefined
       ```
 
       `sizeof(int)` is needed because `malloc` takes a byte count, not an element count. Forgetting it (`malloc(rows * cols)`) would allocate only one byte per element, and the index expression would walk into unrelated memory.
@@ -149,7 +149,7 @@ cards:
     answer: |
       libc is the C standard library. It provides a **portable API** (`fopen`, `malloc`, `printf`, `strlen`, …) that your C program calls.
 
-      Inside libc, those functions ultimately invoke **system calls** — privileged operations the kernel performs on behalf of user-space programs. The system-call ABI is different on every operating system (the `open` syscall on Linux takes different arguments than the equivalent on Windows).
+      Some libc operations invoke **system calls** — privileged operations the kernel performs on behalf of user-space programs. The system-call ABI is different on every operating system (the `open` syscall on Linux takes different arguments than the equivalent on Windows).
 
       libc papers over those differences. The result: your `fopen` call compiles into different machine code on Linux vs. macOS vs. Windows, but your *source* is identical. libc is the layer that makes C source portable across operating systems.
 
@@ -183,9 +183,9 @@ cards:
     question: |
       Name two distinct production scenarios where you would deliberately choose C over C++, and explain *why* each scenario favors C.
     answer: |
-      **1. Aerospace / medical / safety-critical firmware.** NASA's coding rules restrict flight software to a subset that excludes exceptions and most polymorphism, because hidden control-flow edges (every `try` block, every virtual call) make it harder for automated verification tools to prove the program meets its specification. C's smaller, more predictable control-flow graph buys you analyzability.
+      **1. Firmware with a project-mandated C toolchain or restricted language subset.** A project may choose C to fit its available compiler, qualification evidence and analysis tools. Potentially throwing operations and virtual dispatch can add paths or targets to analyze, so a particular project may restrict them. C still needs coding rules and analysis; it does not automatically guarantee simple control flow or bounded runtime.
 
-      **2. Cross-language library.** If you write a high-performance routine that callers in Python, Java, Rust, and Go all need to use, exposing a C ABI is the lingua franca. C symbols are unmangled, so every language's foreign-function interface can bind to them directly. A C++ library forces every caller to deal with mangled names, ABI versions, and runtime initialization.
+      **2. Cross-language library.** If you write a high-performance routine that callers in Python, Java, Rust, and Go all need to use, exposing a C ABI is the lingua franca. A C-compatible interface avoids exposing C++-specific types and ABI details to callers. C++ can also provide an extern "C" wrapper with C-compatible types, so this is an interface-design reason rather than a requirement to implement the whole library in C.
 
       Either reason can justify the discipline cost of manual memory management.
 
@@ -194,9 +194,9 @@ cards:
     question: |
       Almost every major language (Python, Java, C#, Rust, Go, Ruby) supports calling into a C library. **Browser JavaScript** does not — and this is not an accident. What is the design rationale?
     answer: |
-      Browser JavaScript runs inside a **security sandbox** that prevents pages from touching your filesystem, hardware, or arbitrary memory. C has *unrestricted* access to all of those.
+      Browser JavaScript runs inside a **security sandbox** that prevents pages from touching your filesystem, hardware, or arbitrary memory. Native code can call host APIs subject to the process's operating-system permissions; its language does not grant unrestricted access.
 
-      If browser JavaScript could call native C functions on your machine, a malicious page could read your private files, drive attached devices, or execute arbitrary code — the entire sandbox guarantee would evaporate.
+      If browser JavaScript could call native C functions on your machine, a malicious page could reach capabilities outside the browser sandbox, limited by the host process's permissions. The browser therefore does not expose arbitrary host-library calls to pages.
 
       **The modern workaround is WebAssembly**: you compile C source to Wasm bytecode, which the browser runs in *the same sandbox* as JavaScript. Wasm has no syscall access by default — it can only see what the page explicitly hands it. You keep the performance of C without breaking the browser's security model.
 

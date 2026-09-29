@@ -308,7 +308,7 @@ steps:
 
       ### The Integer Cache Trap
 
-      Java caches `Integer` objects for values -128 to 127. This means `==` on boxed integers **sometimes works and sometimes doesn't**:
+      Java guarantees caching for `Integer` values -128 to 127 and permits a wider cache. This means `==` on boxed integers **sometimes works and sometimes doesn't**:
 
       ```java
       Integer x = 127;
@@ -317,7 +317,7 @@ steps:
 
       Integer p = 128;
       Integer q = 128;
-      System.out.println(p == q);     // false (not cached — different objects!)
+      System.out.println(p == q);     // false unless the JVM also caches 128
       System.out.println(p.equals(q)); // true (value equality)
       ```
 
@@ -362,7 +362,7 @@ steps:
                   String name2 = new String("Bob");
                   System.out.println("Found Bob: " + findStudent(name1, name2));
 
-                  // Bug 3: Integer comparison (200 is outside the cache range!)
+                  // Bug 3: Integer comparison (200 is outside the guaranteed cache range)
                   Integer courseA = 200;
                   Integer courseB = 200;
                   System.out.println("Same course: " + sameCourse(courseA, courseB));
@@ -405,7 +405,7 @@ steps:
         Both methods needed `==` replaced with `.equals()`:
 
         - **`findStudent`:** `new String("Alice")` creates a fresh object each time, so `==` returns `false` even though the content is identical. `.equals()` compares the characters.
-        - **`sameCourse`:** Java caches `Integer` values -128 to 127, so `==` works for small numbers *by accident*. For 200, it fails. `.equals()` always compares values.
+        - **`sameCourse`:** Java caches `Integer` values -128 to 127, so `==` works for small numbers *by accident*. For 200, identity equality is not guaranteed. `.equals()` always compares values.
 
         **The golden rule:** Use `==` for primitives (`int`, `double`, `char`, `boolean`). Use `.equals()` for everything else.
 
@@ -440,7 +440,7 @@ steps:
               }
           }
         hints:
-          - text: "Integer values > 127 are NOT cached. Use .equals() instead of == for Integer comparison"
+          - text: "Integer values > 127 are not guaranteed to be cached. Use .equals() instead of == for Integer comparison"
             condition: "code_contains: a == b"
 
     quiz:
@@ -458,21 +458,16 @@ steps:
           option_feedback:
             0: "Java's `==` is hardwired to reference identity for *every* object, including String — the class CANNOT change this, which is why `.equals()` is a separate method. C++ (`operator==` overloading) and Python (`__eq__`) made the opposite design choice and let `==` compare contents; Java did not."
             2: "Java's `==` for objects is a low-level pointer comparison the compiler emits directly — there is no method call for the class to override. Languages where `==` *does* dispatch to a value-equality method (Python, Ruby) work differently from Java in this regard."
-            3: "Hash codes can collide (two unequal objects can hash the same), so `==` can't be a hash comparison or it would lie. Hash codes are used by `HashMap` *after* an `.equals()` check, never as a substitute for it."
+            3: "Hash codes can collide (two unequal objects can hash the same), so `==` can't be a hash comparison or it would lie. HashMap uses a hash to locate candidate entries, then compares keys (including equals when needed); matching hashes do not establish equality."
           explanation: "In Java, `==` on objects always checks reference identity — whether two variables point to the same object. Use `.equals()` for value comparison."
         - question: "`Integer x = 100; Integer y = 100; System.out.println(x == y);` prints `true`. What happens if you change 100 to 200?"
           options:
-            - "Still prints true — integers are always compared by value"
-            - "Prints false — Java only caches Integer objects for -128 to 127"
-            - "Compile error — you can't use == on Integer"
-            - "Throws NullPointerException"
+                ["Always true — boxed integers use value comparison","Either true or false — Integer caching may extend to 200","Compile error — == is illegal for Integer","It throws NullPointerException"]
           correct_index: 1
           option_feedback:
-            0: "Even though `Integer x = 100` *looks* like a primitive assignment, autoboxing creates an `Integer` *object* — and `==` on objects is reference identity, not value comparison. The fact that 100 happens to work is the `IntegerCache` returning the same cached object for both; outside −128..127 the same code returns `false` because two distinct `Integer` objects are created."
-            2: "Both `int` and `Integer` accept `==`; the compiler is permissive. Java's `==` is *type-specific*: between two primitives it compares values, between two objects it compares references, and between an `int` and an `Integer` it auto-unboxes the wrapper to do a value comparison. The hazard is when both operands are `Integer` and the comparison silently uses reference equality."
-            3: "NullPointerException happens on auto-unboxing of `null`, not on `Integer == Integer` between non-null wrappers. Both `x` and `y` are valid objects — the comparison just doesn't do what beginners expect."
-          explanation: "Java caches Integer objects for -128 to 127 (the Integer cache). Outside this range, `new` objects are created, so `==` returns false. This is why you must always use `.equals()` for wrapper types."
-        - question: "In Python, `'hello' == 'hello'` compares values. Which Java expression achieves the same thing?"
+              {"0":"Integer == Integer compares references, not numeric values. A cache can make references identical, but values above 127 are not guaranteed to be cached.","2":"The comparison is legal and tests reference identity.","3":"Both wrappers are non-null, and reference comparison does not unbox them."}
+          explanation: "The mandatory cache includes -128 through 127; implementations may cache additional values. For 200, reference equality is not portable. equals compares the numeric values regardless of caching."
+        - question: "In Java, which expression uses the standard equality method to compare the character content of two strings, as Python's == does?"
           options:
             - "`\"hello\" == \"hello\"`"
             - "`\"hello\".equals(\"hello\")`"
@@ -569,7 +564,7 @@ steps:
 
       **Trap 2: Performance in loops**
       ```java
-      // BAD — creates millions of Integer objects
+      // BAD — repeatedly unboxes and reboxes; can allocate many wrappers
       Integer sum = 0;
       for (int i = 0; i < 1_000_000; i++) {
           sum += i;  // unbox sum, add i, box result — every iteration!
@@ -665,7 +660,7 @@ steps:
             }
           language: "java"
       explanation: |
-        Notice how the enhanced for loop `for (int val : list)` automatically **unboxes** each `Integer` to `int`. We use a primitive `int` for `sum` to avoid creating a new `Integer` object on every iteration.
+        Notice how the enhanced for loop `for (int val : list)` automatically **unboxes** each `Integer` to `int`. We use a primitive `int` for `sum` to avoid boxing conversions and potential wrapper allocations on every iteration.
 
         The `countAbove` method takes `ArrayList<Integer>` (not `ArrayList<int>`) because Java generics require wrapper types. The `int threshold` parameter stays primitive since it's not in a generic context.
 
@@ -736,14 +731,11 @@ steps:
             2: "The compiler can't see runtime nullness — it sees `Integer → int` and quietly inserts the auto-unbox call. The error is unboxing-at-runtime, not type-mismatch-at-compile-time."
             3: "Primitive `int` cannot hold null at all (it's not a reference type). The runtime crashes *before* the assignment to `y`, during the unbox attempt."
           explanation: "Auto-unboxing calls `.intValue()` on the Integer object. If the object is null, this throws NullPointerException. This is a common production bug."
-        - question: "Why is `Integer sum = 0;` in a loop slower than `int sum = 0;`?"
+        - question: "What extra work can accumulating into Integer sum incur compared with int sum in a loop?"
           options:
-            - "Integer uses more memory because each instance is 64-bit"
-            - "Each `sum += i` unboxes, adds, and re-boxes a new Integer"
-            - "Integer arithmetic falls back on BigDecimal internally"
-            - "There is no measurable performance difference"
+              ["Integer uses more memory because each instance is 64-bit","Unboxing and reboxing may allocate temporary wrappers","Integer arithmetic falls back on BigDecimal internally","There is no measurable performance difference"]
           correct_index: 1
-          explanation: "Auto-boxing/unboxing creates temporary wrapper objects on every iteration. With `int`, the operation is pure arithmetic on the stack — no object allocation."
+          explanation: "Each Integer update unboxes and reboxes. This can create temporary objects, although caching and JIT optimization affect allocations and timing. Using int avoids those conversions and potential allocations."
         - question: "You need to check if two `Integer` variables hold the same value. Which approach is always correct?"
           options:
             - "`a == b` — works for all integer values"
@@ -1742,7 +1734,7 @@ steps:
       }
       ```
 
-      > **`super` vs C++:** Java uses `super(args)` as the first line of a constructor to call the parent constructor. C++ uses initializer lists: `Car(...) : Vehicle(make, year) { }`.
+      > **`super` vs C++:** The Java version used here requires `super(args)` as the first statement of a constructor to call the parent constructor. C++ uses initializer lists: `Car(...) : Vehicle(make, year) { }`.
 
       > **Note:** In real Java, each class would be in its own file. We combine them here to focus on the inheritance concepts without file-switching overhead.
 

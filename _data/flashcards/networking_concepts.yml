@@ -45,7 +45,7 @@ cards:
   - id: 10
     difficulty: basic
     question: "What does it mean that HTTP is **stateless**?"
-    answer: "Each HTTP request is **independent** — the server does not remember any information about previous requests from the same client. Every request must contain all the information the server needs to respond. Web apps use cookies/sessions to maintain state across requests."
+    answer: "HTTP is stateless: the protocol does not require a conversation history to interpret a request. Applications can still retain data and session state; cookies or bearer tokens identify the relevant context on subsequent requests."
 
   - id: 11
     difficulty: basic

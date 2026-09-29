@@ -128,7 +128,7 @@ steps:
       | `SELECT * FROM students` | `students` |
       | `SELECT name, gpa FROM students` | `students[['name','gpa']]` |
 
-      Two things that differ from a Python list: (1) rows come back in *no guaranteed order* — there is no "row 0"; if order matters, ask for it with `ORDER BY` (Step 3). (2) Every row has exactly the declared columns and types — values can be `NULL`, but a column cannot disappear.
+      Two things that differ from a Python list: (1) rows come back in *no guaranteed order* — there is no "row 0"; if order matters, ask for it with `ORDER BY` (Step 3). (2) Every row has the declared columns — values can be `NULL`, but a column cannot disappear. Ordinary SQLite tables use type affinity rather than strict type enforcement.
 
       </details>
 
@@ -224,17 +224,13 @@ steps:
             What is the most important difference they are missing?
           type: single
           options:
-            - "SQL tables are stored on disk; Python lists live in memory"
-            - "SQL tables enforce a rigid schema; rows have no guaranteed order"
-            - "Rows are accessed by 1-based index instead of 0-based"
-            - "Python lists can hold more data than SQL tables"
+            - "SQL tables always live on disk; Python lists always live in memory."
+            - "SQL tables have declared columns; row order needs an explicit ORDER BY."
+            - "SQL tables use one-based positions; Python lists use zero-based positions."
+            - "SQL tables remove all duplicates; Python lists retain duplicate values."
           correct_index: 1
-          option_feedback:
-            0: "Disk vs. memory is incidental — modern Python streams from disk and SQL can run in-memory. The deeper gap is that SQL rows have no positional access at all."
-            2: "There's no `students[0]` in SQL. Rows aren't indexed by position — you identify them by content (`WHERE`). 1-based vs 0-based isn't the issue; *no* positional access is."
-            3: "Capacity isn't the difference. Both can hold large data. The conceptual gap is that a SQL table is a *set* (no order, schema-enforced), not a list."
-          explanation: |
-            SQL tables have a **rigid schema** (fixed columns and types) and **no guaranteed row order** — there is no `students[0]`. Storage location is incidental; the indexing distractor is the misconception this step is built to dismantle.
+          option_feedback: {"0": "SQL databases can be in memory. Storage location is not the essential distinction.", "2": "A SQL row has no implicit positional index. Identify rows by values and request an ordering when needed.", "3": "SQL permits duplicate rows unless a constraint prevents them; query results are bags by default."}
+          explanation: "SQL tables declare their columns and have no guaranteed row order. Ordinary SQLite tables use flexible typing: a declared type determines affinity rather than strictly limiting every stored value. STRICT tables enforce additional type rules. A Python dictionary can also vary its keys from row to row."
 
         - question: |
             Without an `ORDER BY` clause, in what order does SQL return rows?
@@ -249,8 +245,7 @@ steps:
             0: "Insertion order isn't guaranteed. Small tables may happen to come back that way, but the engine is free to return rows in any order it likes."
             1: "The primary key *uniquely identifies* rows; it doesn't dictate result-set order. SQLite, Postgres, MySQL — none guarantee PK order without `ORDER BY`."
             2: "There's no default-alphabetical rule. Result order depends on storage layout, indexes, and the query planner — not on column types or names."
-          explanation: |
-            A SQL table is a **set**, not a list. Without `ORDER BY`, order depends on storage and query plan — never rely on it.
+          explanation: "SQL results are unordered multisets (bags) unless ORDER BY requests an order. Duplicates may appear, and neither insertion order nor primary-key order is guaranteed by this query."
 
         - question: |
             In Python you write `students[0]` to get the first student. What is the SQL equivalent?
@@ -296,11 +291,10 @@ steps:
             0: "Set theory wants `{CS, CS, Math}` to collapse to `{CS, Math}`. SQL is a *multiset* — duplicates stick around unless you ask for them to be removed with `DISTINCT`."
             2: "Optimizers don't silently change the row count. `SELECT major` always returns one row per source row; deduplication requires explicit `DISTINCT`."
             3: "No ambiguity — every row contributes its own `major` value to the projection. The grouping rule (Step 4) only applies once `GROUP BY` enters the picture."
-          explanation: |
-            SQL tables are **multisets** (bags), not sets. `SELECT major FROM students` returns one row per source row, including all duplicates. To collapse duplicates, write `SELECT DISTINCT major FROM students`. To count distinct majors, write `SELECT COUNT(DISTINCT major) FROM students` — `COUNT(*)` would return 9 (the row count), not 4.
+          explanation: "SQL query results are multisets (bags): SELECT major returns all 9 rows, including duplicates. SELECT DISTINCT major returns the four distinct results in this dataset, including NULL. COUNT(DISTINCT major) instead returns 3 because COUNT ignores NULL; COUNT(*) returns 9."
 
         - question: |
-            Two teammates need every column from `students` for a debugging session. **Alice** writes:
+            Two teammates implement a production JSON export whose contract is to expose only the five current columns from `students`. **Alice** writes:
 
             ```sql
             SELECT * FROM students;
@@ -320,12 +314,8 @@ steps:
             - "Tie — both forms are equivalent; SQL's optimizer flattens any difference"
             - "Alice's — fewer characters means smaller network payloads and faster execution"
           correct_index: 1
-          option_feedback:
-            0: "*That's the bug, not the feature.* Alice's code starts returning `phone_number` and later `ssn` to every caller. If any caller wasn't expecting them — log files, JSON exports, downstream services — Alice has just created a privacy incident."
-            2: "Optimizers can't read your *intent*. Both queries have identical execution plans *today*, but they have very different consequences when the schema evolves. Choose explicit columns at write time."
-            3: "Network payload differences are negligible compared to the maintenance and security cost. Production codebases ban `SELECT *` from non-exploratory code precisely because of the schema-evolution risk."
-          explanation: |
-            **`SELECT *` is fine for *exploration* and dangerous in *production*.** When the schema changes, Alice's downstream code starts receiving columns it never asked for — most commonly leaking PII (`ssn`, `phone_number`) into logs/exports, but also breaking code that expects a specific column count. Bob's explicit list is **self-documenting** (it says exactly what the caller depends on) and **change-isolating** (a new column doesn't silently propagate). The trade-off — three extra seconds of typing — is what makes seasoned engineers refuse `SELECT *` in code review every time.
+          option_feedback: {"0": "Automatically including new fields violates the export contract and may expose private information.", "2": "Equivalent output today does not guarantee equivalent output after adding columns.", "3": "Shorter SQL text does not justify returning unrequested fields; result data usually dominates payload size."}
+          explanation: "Under this export contract, Bob's explicit column list preserves the promised output when the schema grows. SELECT * would silently expose new fields. SELECT * can be appropriate for exploration or an intentionally open-ended result; the problem here is the fixed export contract."
 
   # --------------------------------------------------------------------------
   # STEP 2: JOIN — combining rows from two tables
@@ -368,7 +358,7 @@ steps:
       JOIN majors AS m ON s.major = m.code;
       ```
 
-      - **Aliases (`AS s`, `AS m`)** — required as soon as two tables are in play, and required for self-joins.
+      - **Aliases (`AS s`, `AS m`)** — recommended for readable joins; distinct aliases let you refer to separate instances in a self-join.
       - **`ON`** — the predicate that says *how* the two tables line up. Evaluated per pair.
       - **Match-only** — rows where `ON` is TRUE for both sides survive; the rest are dropped. Blue Bella (NULL major) and Bio (no students) both drop out.
 
@@ -608,7 +598,7 @@ steps:
       Two syntax traps for Python/JS developers:
 
       - **Single quotes for strings.** `'CS'`, not `"CS"`. Double quotes quote *identifiers* in SQL.
-      - **Single `=` for equality.** `=`, not `==`. `WHERE major == 'CS'` is a syntax error.
+      - **Single `=` for portable equality.** SQLite also accepts `==`, but use standard SQL `=`. Neither operator tests for missing values; use `IS NULL`.
 
       ### NULL and Three-Valued Logic — the biggest trap
 
@@ -655,7 +645,7 @@ steps:
 
       A `SELECT` is roughly `.filter().map().sort()` chained — but declarative.
 
-      pandas' `NaN` behaves closer to SQL (`df[df['col'] != 'CS']` excludes NaN). The idiomatic test is `df['col'].isna()` ≡ `col IS NULL`.
+      pandas missing-value behavior depends on the dtype: ordinary `NaN != 'CS'` is True, while nullable `pd.NA` propagates an unknown result. Use `df['col'].isna()` to test missingness, analogous to `col IS NULL`.
 
       </details>
 
@@ -796,8 +786,7 @@ steps:
           explanation: |
             In SQL's Three-Valued Logic, `NULL != 'Active'` evaluates to **UNKNOWN** — not TRUE. `WHERE` only keeps rows where the predicate is TRUE. UNKNOWN rows are silently discarded. To include NULL rows, write: `WHERE status != 'Active' OR status IS NULL`.
 
-        - question: |
-            Which expression correctly tests whether a column value is missing (NULL)?
+        - question: "Which portable SQL expression correctly tests whether a column value is missing (NULL)?"
           type: single
           options:
             - "`WHERE credits = NULL`"
@@ -805,15 +794,10 @@ steps:
             - "`WHERE credits IS NULL`"
             - "`WHERE ISNULL(credits) = 1`"
           correct_index: 2
-          option_feedback:
-            0: "`= NULL` evaluates to UNKNOWN — never TRUE. SQL has a special operator for this case precisely because `=` doesn't work on NULL."
-            1: "`==` is not valid SQL — it borrows from C-family languages. SQL uses single `=` for equality, and even then `IS NULL` for NULL tests."
-            3: "Some dialects offer `ISNULL()` (and Oracle has `NVL()`), but they're non-standard extensions. `IS NULL` is the portable answer."
-          explanation: |
-            `NULL = NULL` evaluates to UNKNOWN, not TRUE — so `WHERE credits = NULL` never matches any row. The only portable, standard-SQL way to test for NULL is `IS NULL`. `== NULL` is not valid SQL syntax (SQL uses `=`, not `==`). `ISNULL()` is a non-standard extension.
+          option_feedback: {"0": "Equality with NULL produces UNKNOWN, so it does not select missing values.", "1": "SQLite accepts == as equality, but == NULL still produces UNKNOWN. Use IS NULL.", "3": "ISNULL() differs across dialects and is not the portable predicate. Use IS NULL."}
+          explanation: "Use IS NULL. Both = NULL and SQLite's == NULL evaluate to UNKNOWN, not TRUE. Standard SQL uses = for ordinary equality; SQLite additionally supports ==."
 
-        - question: |
-            In SQL's logical execution order, the `SELECT` clause is written first. When is it actually evaluated?
+        - question: "In the logical evaluation model that includes all these clauses, where does SELECT occur?"
           type: single
           options:
             - "First — it defines what data to retrieve"
@@ -821,12 +805,8 @@ steps:
             - "Fifth — after FROM, WHERE, GROUP BY, and HAVING"
             - "Last — after ORDER BY and LIMIT"
           correct_index: 2
-          option_feedback:
-            0: "Reading order is misleading. SELECT is *written* first but logically runs after the row-filtering and grouping clauses."
-            1: "FROM identifies the source, but WHERE filters before SELECT projects. Otherwise, an alias used in SELECT couldn't reference filtered-out rows."
-            3: "ORDER BY runs *after* SELECT (so it can refer to SELECT's aliases). LIMIT is the absolute last step."
-          explanation: |
-            `SELECT` is evaluated **fifth**: FROM -> WHERE -> GROUP BY -> HAVING -> **SELECT** -> ORDER BY -> LIMIT. This is why an alias defined in `SELECT` cannot be used in `WHERE` — the alias doesn't exist until after `WHERE` has already filtered the rows.
+          option_feedback: {"0": "Written order and logical evaluation order differ.", "1": "Filtering and grouping precede projection in this logical model.", "3": "ORDER BY follows SELECT; LIMIT follows ordering."}
+          explanation: "The logical model is FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY → LIMIT. This describes semantics, not the optimizer's physical plan. Avoid SELECT aliases in WHERE for portable SQL; SQLite permits that alias reference as an extension."
 
         - question: |
             What does `SELECT name, gpa FROM students` do?
@@ -859,7 +839,7 @@ steps:
             The logical execution order is FROM -> WHERE -> SELECT -> ORDER BY. `HAVING` filters *groups* (after GROUP BY), not individual rows. `SORT BY` is not valid SQL — use `ORDER BY`. The distractor `HAVING` is a common confusion point; it only applies after `GROUP BY`.
 
         - question: |
-            A student writes two queries. Which one is more likely to produce unexpected results in production, and why?
+            An export must return only id and name for every non-admin user, including users whose role is unknown (NULL). Which query violates that contract, and why?
 
             **Query A:** `SELECT * FROM users WHERE role != 'admin'`
             **Query B:** `SELECT id, name FROM users WHERE role != 'admin' OR role IS NULL`
@@ -899,7 +879,7 @@ steps:
 
       ### Logical execution order
 
-      SQL clauses do **not** run top-to-bottom as written:
+      SQL has the following **logical evaluation order**. The optimizer can choose a different physical execution plan:
 
       ```
       1. FROM      — which tables to read
@@ -911,7 +891,7 @@ steps:
       7. LIMIT     — truncate
       ```
 
-      This explains (a) why you cannot use a `SELECT` alias inside `WHERE` — the alias does not exist yet — and (b) why `WHERE` cannot contain an aggregate — the groups do not exist yet. Keep this list visible while you work the task — even experienced developers reference it.
+      This explains why a same-level aggregate belongs in `HAVING`, after grouping. For portable SQL, do not use a `SELECT` alias in `WHERE`; SQLite permits this as an extension despite the logical order. Keep this list visible while you work the task — even experienced developers reference it.
 
       ### GROUP BY syntax
 
@@ -927,7 +907,7 @@ steps:
 
       ### The GROUP BY rule
 
-      Every column in `SELECT` must either (1) appear in `GROUP BY`, or (2) be wrapped in an aggregate (`COUNT`, `AVG`, `SUM`, `MIN`, `MAX`).
+      For the queries in this tutorial, make every selected column either (1) appear in `GROUP BY`, or (2) occur inside an aggregate (`COUNT`, `AVG`, `SUM`, `MIN`, `MAX`). Some systems also allow columns functionally dependent on grouping keys; SQLite permits bare columns with different semantics.
 
       ```sql
       -- WRONG: name is neither grouped nor aggregated
@@ -1166,7 +1146,7 @@ steps:
             `WHERE` cannot hold aggregates — the count does not exist yet when WHERE runs. `HAVING` filters *after* grouping.
 
         - question: |
-            **Arrange** the steps in the order the database *actually executes* them, for this query:
+            **Arrange** the steps in their logical evaluation order, for this query:
             ```sql
             SELECT major, COUNT(*) AS n FROM students
             WHERE year > 1 GROUP BY major HAVING COUNT(*) >= 2 ORDER BY n DESC;
@@ -1183,7 +1163,7 @@ steps:
             - "SELECT first, then filter rows in WHERE"
             - "ORDER BY runs before HAVING"
           explanation: |
-            SELECT is written first but evaluated fifth. This is why aliases defined in SELECT cannot be used in WHERE, and why aggregates in WHERE always fail.
+            SELECT is written first but logically evaluated fifth. Same-level aggregates cannot appear in WHERE. For portable SQL, avoid SELECT aliases in WHERE; SQLite supports them as an extension. This ordering describes query semantics, not the physical execution plan.
 
         - question: |
             *[Review from Step 3]* A table has a nullable `status` column. Which query correctly finds all rows where status is either `'inactive'` or unknown?
@@ -1234,15 +1214,15 @@ steps:
       );
       ```
 
-      - `PRIMARY KEY` = unique + non-null + indexed.
+      - `PRIMARY KEY` identifies a row. In standard SQL its columns are unique and non-null.
       - `NOT NULL` = required.
       - Types: `INTEGER`, `REAL`, `TEXT`, `BLOB`.
 
-      **SQLite quirk:** standard SQL makes `PRIMARY KEY` imply `NOT NULL`; SQLite does not. Add `NOT NULL` explicitly if portability matters.
+      **SQLite quirk:** ordinary non-integer primary keys can accept NULL unless explicitly constrained. `INTEGER PRIMARY KEY` (used here), STRICT tables, and WITHOUT ROWID tables enforce non-null primary-key values. An `INTEGER PRIMARY KEY` uses the rowid rather than creating a separate index.
 
       ### INSERT INTO
 
-      **`INSERT INTO` is *row insertion*** — it adds new rows that must conform to the schema's types and constraints.
+      **`INSERT INTO` is *row insertion*** — it adds new rows subject to the declared constraints. Ordinary SQLite tables can store values outside a column's declared type; use STRICT tables or explicit checks when type enforcement is required.
 
       ```sql
       INSERT INTO books (id, title, author, pages) VALUES
@@ -1430,8 +1410,7 @@ steps:
       shuffle: true
       questions:
 
-        - question: |
-            What does `PRIMARY KEY` guarantee about a column's values?
+        - question: "Under the standard SQL definition, what does PRIMARY KEY guarantee about its column values?"
           type: single
           options:
             - "Values are sorted in ascending order"
@@ -1439,12 +1418,8 @@ steps:
             - "Each value is unique and non-null across all rows"
             - "The column is indexed for faster lookups only"
           correct_index: 2
-          option_feedback:
-            0: "Storage may *happen* to keep PK rows ordered (B-tree indexes do this), but logically there's no sort guarantee. Result-set order still requires `ORDER BY`."
-            1: "PRIMARY KEY can be on any type — INTEGER, TEXT, BLOB. The constraint is uniqueness, not the column type."
-            3: "An implicit index *is* created, but that's a side effect. The defining contract is uniqueness + non-null, which is what 'identifying every row' requires."
-          explanation: |
-            `PRIMARY KEY` enforces two things: uniqueness (no two rows share the same value) and non-nullability. It also creates an implicit index, but its core purpose is to uniquely identify every row.
+          option_feedback: {"0": "A primary key identifies rows; ORDER BY is still required to guarantee result ordering.", "1": "A primary key can use a text type. Uniqueness and non-nullability define its contract.", "3": "Fast lookup alone is not the definition. In SQLite an INTEGER PRIMARY KEY uses the rowid without a separate index."}
+          explanation: "Standard SQL primary keys are unique and non-null. SQLite has a compatibility exception for ordinary non-integer primary keys unless NOT NULL is specified; INTEGER PRIMARY KEY, STRICT, and WITHOUT ROWID tables enforce non-null keys. Index implementation is separate from the logical contract."
 
         - question: |
             What happens if you `INSERT INTO` a row but omit a column declared `NOT NULL` with no default?
@@ -1482,8 +1457,7 @@ steps:
           explanation: |
             A **semantic error** is a query that is grammatically correct SQL but references something that doesn't exist (wrong column name, wrong table). A syntax error violates grammar (wrong clause order, missing parentheses). A logical error is when the query runs but returns the wrong answer.
 
-        - question: |
-            You need to store a library's book collection. Each book has a title, author, year published, and an optional page count. Which schema is best?
+        - question: "A library requires a unique book ID, a title, an author, numeric year comparisons, and an optional page count. Which declared schema best expresses these requirements?"
           type: single
           options:
             - "`CREATE TABLE books (title TEXT, author TEXT, year INTEGER, pages INTEGER)`"
@@ -1491,10 +1465,7 @@ steps:
             - "`CREATE TABLE books (id INTEGER PRIMARY KEY, title TEXT NOT NULL, author TEXT NOT NULL, year TEXT, pages TEXT)`"
             - "`CREATE TABLE books (book_data TEXT)`"
           correct_index: 1
-          option_feedback:
-            0: "Missing a `PRIMARY KEY` — without one there's no guaranteed way to uniquely identify each book, making updates and deletes ambiguous."
-            2: "Storing `year` as `TEXT` instead of `INTEGER` loses type safety — you can't sort or range-query correctly, and the column accepts non-year strings."
-            3: "Storing all data in a single `TEXT` column gives up all schema enforcement: no types, no `NOT NULL` constraints, and no ability to query individual fields."
+          option_feedback: {"0": "This omits the required unique book ID and the NOT NULL constraints for title and author.", "2": "INTEGER expresses the intended numeric representation. Ordinary SQLite typing is flexible, so neither declaration alone rejects every invalid year; use stricter constraints when needed.", "3": "One unstructured field does not directly express the separate required fields or numeric year comparisons."}
           explanation: |
             The best schema has a `PRIMARY KEY` for unique identification, `NOT NULL` on required fields (title, author), appropriate types (`INTEGER` for year, not `TEXT`), and leaves optional fields (`pages`) nullable.
 
@@ -1528,7 +1499,7 @@ steps:
             - "SORT BY"
             - "FILTER"
           explanation: |
-            The logical execution order is FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY. This is why you cannot use a SELECT alias in WHERE (the alias doesn't exist yet) and why WHERE cannot use aggregate functions (groups don't exist yet). `SORT BY` is not valid SQL (use `ORDER BY`); `FILTER` is not a standalone clause.
+            The logical evaluation order is FROM → WHERE → GROUP BY → HAVING → SELECT → ORDER BY. Same-level aggregates belong after grouping, not in WHERE. Portable SQL does not use SELECT aliases in WHERE, although SQLite allows this extension. The optimizer may choose a different physical plan. `SORT BY` is not valid SQL (use `ORDER BY`); `FILTER` is not a standalone clause.
 
   # --------------------------------------------------------------------------
   # STEP 6: UPDATE + DELETE + DROP TABLE — modifying and removing data
@@ -1556,11 +1527,11 @@ steps:
 
       ### UPDATE, DELETE, DROP
 
-      All three are *destructive* — they change the database state, in irreversible ways without a backup.
+      All three change database state. SQLite can roll them back inside an explicit, uncommitted transaction; after commit, recovery requires an appropriate backup or recovery mechanism.
 
       - **`UPDATE` modifies values in existing rows.** Scoped by `WHERE`.
       - **`DELETE` removes rows.** Scoped by `WHERE`. Schema stays.
-      - **`DROP TABLE` removes the table itself** — data *and* schema. No undo.
+      - **`DROP TABLE` removes the table itself** — data *and* schema. In SQLite it can still be rolled back before its transaction commits.
 
       ```sql
       UPDATE students SET gpa = 3.95 WHERE name = 'Mango';
@@ -1742,15 +1713,12 @@ steps:
             What is the result?
           type: single
           options:
-            - "The orders table is removed from the database"
-            - "All rows are deleted but the table structure remains"
-            - "An error — DELETE requires a WHERE clause"
-            - "Only rows matching the implicit WHERE TRUE condition are deleted"
+            - "The orders table is removed from the database."
+            - "All rows are deleted but the table structure remains."
+            - "An error occurs because DELETE requires a WHERE clause."
+            - "Only the rows returned by the preceding SELECT are deleted."
           correct_index: 1
-          option_feedback:
-            0: "DELETE removes *rows*, not the table itself. To remove the schema too, use DROP TABLE."
-            2: "SQL doesn't require WHERE on DELETE — that's *exactly* what makes this footgun dangerous. The query runs cleanly and empties the table."
-            3: "There's no implicit WHERE TRUE concept — DELETE without WHERE just deletes everything by design. The framing in this option implies a safety net that doesn't exist."
+          option_feedback: {"0": "DELETE removes rows. DROP TABLE removes the table structure.", "2": "A WHERE clause is optional. Omitting it selects every row for deletion.", "3": "A preceding SELECT does not restrict a later DELETE. Put the predicate in the DELETE itself."}
           explanation: |
             `DELETE FROM orders` without a `WHERE` deletes every row but leaves the table schema intact. The table still exists — it is just empty. To remove the schema too, use `DROP TABLE orders`. SQL does not require a `WHERE` clause on `DELETE`, which makes this mistake easy to make in production.
 
@@ -1779,12 +1747,8 @@ steps:
             - "Add `ORDER BY` to the UPDATE so the order is deterministic"
             - "Change WHERE to WHERE TRUE so every row is visible"
           correct_index: 1
-          option_feedback:
-            0: "By the time you check the UI, the change is committed. The whole point is to preview *before* the destructive action."
-            2: "ORDER BY on UPDATE doesn't preview anything — and it's not even standard. The point is to verify *which rows* are affected, not what order they're processed in."
-            3: "WHERE TRUE matches *every* row — the opposite of safe. You want to verify the *specific* rows the UPDATE will hit."
-          explanation: |
-            Running `SELECT ... WHERE ...` with the same predicate lets you *see* exactly which rows the UPDATE will touch — before the change is permanent. This is the claim/preview/confirm trail the task demonstrated.
+          option_feedback: {"0": "In autocommit mode the change is already committed. An explicit transaction can allow rollback, but previewing first still helps catch an incorrect predicate.", "2": "ORDER BY does not preview affected rows and is not a portable UPDATE feature.", "3": "WHERE TRUE selects every row, not just the intended target."}
+          explanation: "Preview the intended predicate with SELECT, then perform the change in an appropriate transaction and verify before committing. Concurrent changes can occur between statements, so a preview alone is not a transaction or concurrency guarantee."
 
         - question: |
             After running `DROP TABLE courses`, what happens if you run `SELECT * FROM courses`?
@@ -1795,10 +1759,7 @@ steps:
             - "It returns NULL for every column"
             - "It returns the data that was in the table before the DROP"
           correct_index: 1
-          option_feedback:
-            0: "Empty result requires the schema to still exist (so columns are known). DROP removes the schema too — there's nothing to project."
-            2: "NULL implies columns existing but values being unknown. After DROP, the columns themselves don't exist."
-            3: "DROP doesn't soft-delete or version data. The table is gone; old data isn't recoverable from SQL alone."
+          option_feedback: {"0": "DROP removes the schema as well as rows, so the immediately following query cannot find the table.", "2": "There are no columns to project after DROP; this is an error, not a row of NULLs.", "3": "SELECT immediately after DROP fails. In SQLite, rolling back an uncommitted transaction containing the DROP can restore the table."}
           explanation: |
             `DROP TABLE` removes both the data **and the schema**. The table no longer exists in the database at all, so any query referencing it fails with an error. Compare this with `DELETE FROM courses` (no WHERE), which removes all rows but keeps the table structure intact — `SELECT * FROM courses` would return an empty result set, not an error.
 
@@ -1841,10 +1802,7 @@ steps:
             - "`DELETE FROM students WHERE major != 'CS'`"
             - "`DELETE FROM students WHERE major`"
           correct_index: 1
-          option_feedback:
-            0: "`= NULL` evaluates to UNKNOWN, never TRUE. The DELETE would run but match no rows — silently doing nothing, exactly the trap that motivates `IS NULL`."
-            2: "`!= 'CS'` would *also* drop NULL rows by 3VL — but it would *also* delete every non-CS student with a known major. Way too broad."
-            3: "Bare `WHERE major` (without an operator) treats `major` as a boolean — implicit conversion that's not portable. It's not what you want for NULL semantics."
+          option_feedback: {"0": "Equality with NULL produces UNKNOWN and selects no rows for deletion.", "2": "This deletes known non-CS majors. NULL != CS is UNKNOWN, so the NULL-major rows remain.", "3": "A bare column predicate does not test for NULL and has dialect-specific conversions."}
           explanation: |
             `= NULL` always evaluates to UNKNOWN and matches no rows — the delete would silently do nothing. Only `IS NULL` tests for unknown values.
 
@@ -1902,7 +1860,7 @@ steps:
 
       ### Plan, then type
 
-      In `final.sql`, sketch the clauses in **execution order** as a comment, then write the query. Naming the constructs you'll need is the highest-leverage habit for aggregation queries.
+      In `final.sql`, sketch the clauses in **logical evaluation order** as a comment, then write the query. Naming the constructs you'll need is the highest-leverage habit for aggregation queries.
 
       One query. No `SELECT *`. Run before you celebrate.
 
@@ -1921,7 +1879,7 @@ steps:
 
       <details markdown="1"><summary>⚠️ Open after you've committed to all three answers</summary>
 
-      Two majors qualify: **CS** (Mango 3.9, Bananito 3.7, Coconick 3.4 → year≥2 count is 3, avg ≈ 3.67) and **Math** (Watermelina 3.6, Grapenzo 3.5 → year≥2 count is 2, avg = 3.55). Engineering and the NULL-major student fail one filter each. Sorted highest-first: CS, then Math.
+      Two majors qualify: **CS** (Mango 3.9, Bananito 3.7, Coconick 3.4 → year≥2 count is 3, avg ≈ 3.67) and **Math** (Watermelina 3.6, Grapenzo 3.5 → year≥2 count is 2, avg = 3.55). Physics and the NULL-major student fail one filter each. Sorted highest-first: CS, then Math.
 
       If your prediction matched, great — your mental model of the data + the filters + the ordering is solid. If it didn't, *that's the lesson*: pin down which step (counting / filtering / sorting / averaging) was wrong before you debug the SQL. The query is downstream of the model.
 
@@ -1931,7 +1889,7 @@ steps:
       - path: "final.sql"
         content: |
           -- Capstone: one query that combines everything from Steps 1–6.
-          -- Plan first as a comment in execution order:
+          -- Plan first as a comment in logical evaluation order:
           --   FROM ... → JOIN ... → WHERE ... → GROUP BY ... → HAVING ...
           --   → SELECT ... → ORDER BY ...
           -- Expected output: 2 rows, columns major | department | advisor | avg_gpa | n
@@ -2144,7 +2102,7 @@ steps:
             If a column is neither grouped nor aggregated, multiple row values collapse into one group with no rule for which to return. Standard SQL rejects this; SQLite picks arbitrarily — silent corruption, not a feature.
 
         - question: |
-            **Arrange** the clauses of your capstone query in the order the database *actually executes* them.
+            **Arrange** the clauses of your capstone query in their logical evaluation order.
           type: parsons
           lines:
             - "FROM students JOIN majors"

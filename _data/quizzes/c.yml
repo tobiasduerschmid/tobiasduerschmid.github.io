@@ -7,22 +7,19 @@ questions:
     difficulty: basic
     question: "In C, what is the difference between `'a'` and `\"a\"`?"
     options:
-      - "They are identical — both create a `char` value, and C uses single and double quotes interchangeably like Python."
-      - "`'a'` is a single `char` (ASCII 97); `\"a\"` is a two-byte `char` array — `a` plus the null terminator."
-      - "`'a'` is a `char`. `\"a\"` is a Unicode string object — C's only built-in string type."
-      - "`'a'` is a one-character pointer. `\"a\"` is a `char` array of one byte; both end with no terminator."
+          ["They are identical — both create a `char` value, and C uses single and double quotes interchangeably like Python.","'a' is an int character constant; \"a\" is a two-byte char array containing a and the null terminator.","`'a'` is a `char`. `\"a\"` is a Unicode string object — C's only built-in string type.","`'a'` is a one-character pointer. `\"a\"` is a `char` array of one byte; both end with no terminator."]
     correct_index: 1
     option_feedback:
       0: |
         Python lets you swap quote styles freely, but C distinguishes them: single quotes produce a
-        single `char`, double quotes produce a null-terminated `char` array.
+        character constant of type `int`, double quotes produce a null-terminated `char` array.
       2: |
         C has no built-in string object — `"a"` is just memory containing the byte `'a'` followed by
         `'\0'`. String functions in `<string.h>` walk that array until they hit the terminator.
       3: |
         Every C string literal ends with the null byte `'\0'`. Library functions like `strlen` and
         `strcmp` rely on it; without the terminator they would read past the array.
-    explanation: "**`'a'` is a single `char`; `\"a\"` is a two-byte `char` array — the letter plus the null terminator `'\\0'`.** This distinction is enforced by the type system: passing `'a'` to a function expecting `char*` is a type error, and the string-library functions in `<string.h>` rely on the trailing `'\\0'` to know where the string ends."
+    explanation: "**`'a'` has type `int` in C (unlike C++);  `\"a\"` is a two-byte `char` array — the letter plus the null terminator `'\\0'`.** This distinction is enforced by the type system: passing `'a'` to a function expecting `char*` is a type error, and the string-library functions in `<string.h>` rely on the trailing `'\\0'` to know where the string ends."
 
   - id: 2
     difficulty: basic
@@ -78,7 +75,7 @@ questions:
     option_feedback:
       0: |
         `safe_divide` writes the quotient through the pointer; passing `NULL` would cause it to
-        dereference a null pointer and segfault.
+        dereference a null pointer, which is undefined behavior and may segfault.
       1: |
         Ignoring the return value of an error-coded C function defeats the entire convention. On
         division by zero `z` is left uninitialized and the `printf` reads garbage.
@@ -107,7 +104,7 @@ questions:
       3: |
         `free` does not modify the pointer variable or zero the released memory. The pointer keeps
         pointing at the (now invalid) address — which is exactly what makes use-after-free dangerous.
-    explanation: "**Use-after-free and double-free are both undefined behavior — they can crash, corrupt other allocations, or appear to work and fail later.** A common defensive habit is to write `free(arr); arr = NULL;` after every free. Subsequent writes through a `NULL` pointer fail loudly with a segfault instead of silently corrupting whatever the allocator handed to the next caller."
+    explanation: "**Use-after-free and double-free are both undefined behavior — they can crash, corrupt other allocations, or appear to work and fail later.** A common defensive habit is to write `free(arr); arr = NULL;` after every free. `free(NULL)` is safe, but dereferencing NULL is still undefined behavior and is not guaranteed to crash. Setting one pointer to NULL also does not invalidate other aliases to the freed allocation."
 
   - id: 6
     difficulty: basic
@@ -153,12 +150,9 @@ questions:
 
   - id: 8
     difficulty: expert
-    question: "NASA's coding standards for flight software permit C and a restricted subset of C++ — explicitly forbidding exceptions and most polymorphism. What is the strongest pedagogical reason for that restriction?"
+    question: "A safety-critical project permits C and a restricted C++ subset that excludes exceptions and virtual dispatch. What verification rationale could justify those explicit project rules?"
     options:
-      - "Exceptions and virtual calls hide control-flow edges from automated verification tools."
-      - "C++ compilers produce slower executables than C compilers; aerospace code has tight performance budgets."
-      - "C++ source files are larger than C source files and would exceed the storage capacity of flight computers."
-      - "C++ is a younger language with fewer mature compilers, so NASA's tooling cannot build it reliably."
+        ["Restricting exceptional paths and possible dispatch targets can simplify control-flow analysis.","C++ compilers produce slower executables than C compilers; aerospace code has tight performance budgets.","C++ source files are larger than C source files and would exceed the storage capacity of flight computers.","C++ has no mature compilers, so the project's tooling cannot build it reliably."]
     correct_index: 0
     option_feedback:
       1: |
@@ -170,16 +164,13 @@ questions:
       3: |
         C++ has been mature for decades and has multiple production-grade compilers. The restriction
         is about the language's *semantics*, not the compilers' maturity.
-    explanation: "**Polymorphism and exceptions introduce hidden control-flow edges that automated verification can't easily reason about — and you cannot debug a Mars rover.** Every line of code inside a `try` block has an implicit edge to a `catch` handler; every virtual call may dispatch to any subclass override. Tools that prove safety properties have to reason about all of those edges; banning them keeps the control-flow graph small and analyzable."
+    explanation: "This is a hypothetical project constraint, not a claim about all NASA software. Potentially throwing operations add exceptional control-flow paths, and a virtual call may have several possible targets depending on the object type. Restricting those features can simplify a particular analysis toolchain. Not every statement can throw; virtual targets can sometimes be resolved statically. C also needs restrictions and analysis: function pointers, unbounded loops and allocation can complicate control flow and timing."
 
   - id: 9
     difficulty: expert
     question: "Almost every mainstream language can call into a C library — Python, Java, C#, Rust, Go, Ruby — but **browser JavaScript cannot directly call C functions on the user's machine**. What is the strongest reason?"
     options:
-      - "JavaScript has no foreign-function interface — its language specification omits the feature entirely."
-      - "The browser sandbox blocks native code; C would give pages unrestricted access to files and hardware."
-      - "C functions return data in a binary layout that JavaScript engines cannot decode."
-      - "JavaScript is interpreted and C is compiled, and interpreters cannot make function calls into compiled code."
+        ["JavaScript has no foreign-function interface — its language specification omits the feature entirely.","The browser sandbox denies pages arbitrary access to host-native libraries and their capabilities.","C functions return data in a binary layout that JavaScript engines cannot decode.","JavaScript is interpreted and C is compiled, and interpreters cannot make function calls into compiled code."]
     correct_index: 1
     option_feedback:
       0: |
@@ -191,7 +182,7 @@ questions:
       3: |
         Interpreters routinely call into compiled native code — every JavaScript engine itself does
         this constantly. The browser blocks JS→C calls by design, not because it can't make them.
-    explanation: "**Browser JavaScript is sandboxed precisely so a page cannot touch the filesystem, hardware, or memory outside the engine — and C has unrestricted access to all of those.** WebAssembly is the modern workaround: C compiled to Wasm runs in the *same* sandbox as JavaScript, with no privileged hardware access. The sandbox is not a limitation of the language but a deliberate security boundary."
+    explanation: "Browser JavaScript cannot load and call arbitrary native libraries installed on the host. Such libraries could expose host-process capabilities beyond the page's browser sandbox, subject to operating-system permissions. C compiled to WebAssembly instead runs within the browser sandbox and receives only capabilities that the host environment exposes. This boundary is a browser-platform policy, not a difference between interpreted and compiled languages."
 
   - id: 10
     difficulty: advanced

@@ -84,7 +84,7 @@ cards:
     difficulty: basic
     question: "In TDD, you've just gotten a test to **Green** with the simplest passing code. What is the *very next* step, and what rule constrains what you may do during it?"
     answer: "**Refactor**: remove duplication and clarify intent while the suite stays green. The rule: you may change the *design* but not the *behavior* — any change that breaks a test is rejected, the next behavior change goes in a new Red."
-    explanation: "Kent Beck's original TDD emphasizes tiny steps and refactoring after green. The quality and productivity gains come less from test-first ordering than from **fine granularity and uniform rhythm**. Skipping Refactor is where most of TDD's long-term value evaporates."
+    explanation: "Kent Beck's original TDD emphasizes tiny steps and refactoring after green. One observational study associated better quality and productivity with **fine granularity and uniform rhythm**, rather than test-first ordering alone. Skipping Refactor is where most of TDD's long-term value evaporates."
 
   - id: 15
     difficulty: advanced

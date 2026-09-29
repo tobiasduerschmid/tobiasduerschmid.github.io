@@ -25,7 +25,7 @@ questions:
   
   - id: 2
     difficulty: intermediate
-    question: "What specific whitespace character MUST be used to indent the command/recipe lines in a Makefile rule?"
+    question: "With the default recipe prefix, what specific whitespace character must be used to indent the command/recipe lines in a Makefile rule?"
     options: 
       - "Exactly two spaces" 
       - "Exactly four spaces" 
@@ -86,7 +86,7 @@ questions:
 
   - id: 5
     difficulty: advanced
-    question: "If a user runs the `make` command in their terminal without specifying a target, what will `make` do?" 
+    question: "Assume no `.DEFAULT_GOAL` override and that the first target is an ordinary explicit target (not a special or pattern target). If a user runs `make` without specifying a target, what will `make` do?"
     options: 
       - "It will search for a target named `all` and build it." 
       - "It will evaluate the dependency graph and build the target with the most prerequisites." 

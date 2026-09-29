@@ -8,11 +8,11 @@ questions:
     question: >
       What does the **solid black circle** represent in a state machine diagram?
 
-      <div data-uml-type="state" data-uml-spec="[*] --> Idle : powerOn()&#10;Idle --> Active : start()"></div>
+      <div data-uml-type="state" data-uml-spec="[*] --> Idle&#10;Idle --> Active : start()"></div>
     options:
       - "A regular state named 'Start'."
       - "The initial pseudostate — the entry point of the state machine."
-      - "The final state — the end of the object's lifecycle."
+      - "A final state — completion of its enclosing region."
       - "A choice point for conditional branching."
     correct_index: 1
     option_feedback:
@@ -52,7 +52,7 @@ questions:
     question: >
       In this diagram, what happens if `threatDetected` occurs but `sysCheckOK` is **false**?
 
-      <div data-uml-type="state" data-uml-spec="[*] --> Idle : powerOn()&#10;Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()&#10;CombatMode --> Idle : threatNeutralized / retractWeapons()"></div>
+      <div data-uml-type="state" data-uml-spec="[*] --> Idle&#10;Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()&#10;CombatMode --> Idle : threatNeutralized / retractWeapons()"></div>
     options:
       - "The system transitions to CombatMode anyway, but without calling deployUI()."
       - "The system remains in the Idle state — the transition does not fire."
@@ -101,11 +101,11 @@ questions:
     question: >
       What does the symbol ◎ (a filled circle inside a hollow circle) represent?
 
-      <div data-uml-type="state" data-uml-spec="[*] --> Active : create()&#10;Active --> [*] : destroy()"></div>
+      <div data-uml-type="state" data-uml-spec="[*] --> Active&#10;Active --> [*] : destroy()"></div>
     options:
       - "The initial pseudostate — where the state machine starts."
       - "A history state — remembers the last active substate."
-      - "The final state — the end of the object's lifecycle."
+      - "A final state — completion of its enclosing region."
       - "A choice pseudostate — a conditional branch point."
     correct_index: 2
     option_feedback:
@@ -115,7 +115,7 @@ questions:
         A history pseudostate is a different symbol used with composite states to remember a prior substate. The bullseye means the lifecycle path is complete.
       3: |
         Choice branching is usually shown with a diamond. The bullseye is not a decision point.
-    explanation: "**The bullseye ◎ (<span class='uml-sym' data-diagram='state' data-sym='final'></span>) is the final state, marking the end of the object's lifecycle.** Do not confuse it with the initial pseudostate — a plain solid black circle ● — which marks where the machine begins."
+    explanation: "**The bullseye ◎ (<span class='uml-sym' data-diagram='state' data-sym='final'></span>) is the final state, marking completion of its enclosing region.** Do not confuse it with the initial pseudostate — a plain solid black circle ● — which marks where the machine begins."
 
   - id: 6
     difficulty: intermediate
@@ -165,7 +165,7 @@ questions:
     question: >
       Look at this diagram. What is the **effect** that executes when transitioning from CombatMode to Idle?
 
-      <div data-uml-type="state" data-uml-spec="[*] --> Idle : powerOn()&#10;Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()&#10;CombatMode --> Idle : threatNeutralized / retractWeapons()&#10;CombatMode --> EmergencyPower : powerCritical / rerouteToLifeSupport()&#10;EmergencyPower --> [*] : manualOverride()"></div>
+      <div data-uml-type="state" data-uml-spec="[*] --> Idle&#10;Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()&#10;CombatMode --> Idle : threatNeutralized / retractWeapons()&#10;CombatMode --> EmergencyPower : powerCritical / rerouteToLifeSupport()&#10;EmergencyPower --> [*] : manualOverride()"></div>
     options:
       - "`threatNeutralized`"
       - "`deployUI()`"
@@ -187,7 +187,7 @@ questions:
     question: >
       How many **states** (not counting the initial pseudostate or final state) are in this diagram?
 
-      <div data-uml-type="state" data-uml-spec="[*] --> Created : orderPlaced&#10;Created --> Paid : paymentReceived&#10;Paid --> Shipped : itemDispatched&#10;Shipped --> Delivered : deliveryConfirmed&#10;Created --> Cancelled : customerCancels&#10;Delivered --> [*]&#10;Cancelled --> [*]"></div>
+      <div data-uml-type="state" data-uml-spec="[*] --> Created&#10;Created --> Paid : paymentReceived&#10;Paid --> Shipped : itemDispatched&#10;Shipped --> Delivered : deliveryConfirmed&#10;Created --> Cancelled : customerCancels&#10;Delivered --> [*]&#10;Cancelled --> [*]"></div>
     options:
       - "3"
       - "4"
@@ -201,7 +201,7 @@ questions:
         There are four states along the delivered path only if `Cancelled` is ignored. `Cancelled` is also a regular state.
       3: |
         The initial pseudostate and final state markers are not regular states. Counting them inflates the answer.
-    explanation: "**There are 5 regular states: Created, Paid, Shipped, Delivered, and Cancelled.** The solid black circle and the bullseyes are pseudostates, not regular states, so they are excluded from the count."
+    explanation: "**There are 5 regular states: Created, Paid, Shipped, Delivered, and Cancelled.** The solid black circle is an initial pseudostate. The bullseyes are final states (a special kind of state); the question explicitly excludes both symbols from the count."
 
   - id: 10
     difficulty: intermediate
@@ -209,7 +209,7 @@ questions:
     question: >
       In this diagram, which transition has **both** a guard condition and an effect?
 
-      <div data-uml-type="state" data-uml-spec="[*] --> Idle : powerOn()&#10;Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()&#10;CombatMode --> Idle : threatNeutralized / retractWeapons()&#10;CombatMode --> EmergencyPower : powerCritical / rerouteToLifeSupport()"></div>
+      <div data-uml-type="state" data-uml-spec="[*] --> Idle&#10;Idle --> CombatMode : threatDetected [sysCheckOK] / deployUI()&#10;CombatMode --> Idle : threatNeutralized / retractWeapons()&#10;CombatMode --> EmergencyPower : powerCritical / rerouteToLifeSupport()"></div>
     options:
       - "Idle to CombatMode"
       - "CombatMode to Idle"
@@ -235,11 +235,11 @@ questions:
       - "It can have multiple outgoing transitions."
       - "Its outgoing transition should have no event trigger."
       - "It is a regular state where the object can remain indefinitely."
-      - "Each state machine or region has exactly one of them."
+      - "A region can have at most one initial pseudostate."
     correct_indices: [0, 2, 4]
     option_feedback:
       0: |
-        The initial pseudostate marks where execution enters the state machine or region. Omitting it makes the start ambiguous.
+        The initial pseudostate marks default entry to a region. Other explicitly modeled entry paths can enter a region without using an initial pseudostate.
       1: |
         The initial pseudostate is not a branching point. It should have a single outgoing transition into the first state for that region.
       2: |
@@ -247,8 +247,8 @@ questions:
       3: |
         The object does not wait in the initial pseudostate. It immediately follows the initial transition into a regular state.
       4: |
-        UML regions have their own entry point. That is why the rule is stated per state machine or per region.
-    explanation: "**The initial pseudostate (<span class=\"uml-sym\" data-diagram=\"state\" data-sym=\"[*]\"></span>) marks the entry point and has exactly one trigger-free outgoing transition.** It is not a regular state — the object passes straight through it into the first real state, one such entry point per region."
+        UML permits at most one initial pseudostate per region. It is used for default entry, rather than being mandatory in every region.
+    explanation: "**The initial pseudostate (<span class=\"uml-sym\" data-diagram=\"state\" data-sym=\"[*]\"></span>) marks default entry and has at most one outgoing transition, without a trigger or guard.** It is not a regular state — the object passes straight through it into the first real state, at most one such default entry point per region."
 
   - id: 12
     difficulty: advanced
@@ -256,7 +256,7 @@ questions:
     question: >
       What is the difference between an `entry/` internal activity and an effect on a transition (`/ action`)?
 
-      <div data-uml-type="state" data-uml-spec="@startuml&#10;[*] --> Connecting : connect()&#10;Connecting : entry/ showSpinner()&#10;Connecting : exit/ hideSpinner()&#10;Connecting --> Connected : handshakeOK / logSuccess()&#10;Connecting --> Error : timeout / logError()&#10;@enduml"></div>
+      <div data-uml-type="state" data-uml-spec="@startuml&#10;[*] --> Connecting&#10;Connecting : entry/ showSpinner()&#10;Connecting : exit/ hideSpinner()&#10;Connecting --> Connected : handshakeOK / logSuccess()&#10;Connecting --> Error : timeout / logError()&#10;@enduml"></div>
     options:
       - "There is no difference; they are the same thing."
       - "`entry/` fires on every entry into the state; an effect fires only on one transition."
@@ -278,10 +278,10 @@ questions:
     question: >
       Does every state machine diagram need a **final state**?
 
-      <div data-uml-type="state" data-uml-spec="@startuml&#10;[*] --> Listening : start()&#10;Listening --> Processing : requestReceived&#10;Processing --> Listening : requestHandled&#10;@enduml"></div>
+      <div data-uml-type="state" data-uml-spec="@startuml&#10;[*] --> Listening&#10;Listening --> Processing : requestReceived&#10;Processing --> Listening : requestHandled&#10;@enduml"></div>
     options:
       - "Yes — every state machine must have both an initial and a final state."
-      - "No — a final state is only needed if the object's lifecycle can actually end."
+      - "No — it marks region completion; some machines run indefinitely."
       - "No — state machines never have final states."
       - "Yes — but only if the state machine has more than 3 states."
     correct_index: 1
@@ -292,4 +292,4 @@ questions:
         State machines can have final states when the lifecycle has a meaningful end, such as an order being closed or canceled.
       3: |
         The number of states does not decide whether a final state is needed. The lifecycle semantics do.
-    explanation: "**A final state is needed only if the object's lifecycle can actually end.** An initial pseudostate is always required, but indefinitely-running objects (servers, controllers) have none, while orders or transactions — which terminate — do."
+    explanation: "**A final state marks completion of its enclosing region.** A machine that runs indefinitely need not have one. An initial pseudostate marks default entry, with at most one per region; it is not mandatory when entry is modeled another way. Completing a state machine does not itself destroy its context object."

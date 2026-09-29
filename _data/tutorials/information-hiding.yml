@@ -671,7 +671,7 @@ steps:
           question: |
             Suppose a teammate proposes a smaller fix for the Step 1 `WatchHistory`
             leak: keep storage as `list[dict]`, but have `recent()` return
-            `tuple(self._history)` (an immutable copy). They argue: "Now nobody
+            `tuple(self._history)` (a tuple containing the same dictionary objects). They argue: "Now nobody
             can mutate it — the secret is hidden." Are they right, in Parnas's sense?
           options:
             - "Yes — fields are private and the return is immutable, so nothing leaks."
@@ -680,11 +680,11 @@ steps:
             - "No — Python tuples are not really immutable; you can still mutate them with `__setitem__`."
           correct_index: 1
           option_feedback:
-            0: "A real improvement, but only for *mutation* leaks. Clients can still write code that depends on the *shape* of each element. Changing the element type still ripples."
+            0: "The tuple prevents replacing its entries, but the dictionaries are still shared and mutable. Clients can also depend on each dictionary's shape; changing the element type still ripples."
             2: "Immutability prevents accidental mutation. Information hiding is the *broader* discipline of choosing **which design decisions clients may depend on**. Element shape is one of those decisions."
             3: "Python tuples are immutable in the sense that matters here — `t[0] = ...` raises `TypeError`, and `tuple` has no `__setitem__`. But this isn't the issue with the design."
           explanation: |
-            Returning an immutable copy plugs the **mutation** leak, but it doesn't hide the **element type**. If `recent()` returns `tuple[dict, ...]`, clients still depend on each entry being a `dict` with specific keys — changing it to a `WatchedShow` dataclass still breaks them. That is exactly why your `Playlist` refactor did **two** things, not one: a frozen `Track` dataclass *and* a public surface of domain methods. Together they hide both the mutation channel and the element shape. Information hiding is about which **decisions** are visible, not just which **writes** are prevented.
+            The tuple prevents adding or replacing entries through that tuple, but it does **not** plug every mutation leak: `recent()[0]["title"] = "changed"` still mutates a shared dictionary. It also exposes the **element type**. If `recent()` returns `tuple[dict, ...]`, clients still depend on each entry being a `dict` with specific keys — changing it to a `WatchedShow` dataclass still breaks them. That is exactly why your `Playlist` refactor did **two** things, not one: a frozen `Track` dataclass *and* a public surface of domain methods. The frozen domain object prevents edits to its scalar fields, while the domain methods hide the storage layout. Its public fields remain an intentional part of the contract. Information hiding is about which **decisions** are visible, not just which **writes** are prevented.
 
         - type: multiple
           question: |
@@ -697,10 +697,9 @@ steps:
           correct_indices: [0, 2]
           optional_indices: [1]
           option_feedback:
-            1: "Adding an *optional* field with a default value is absorbed; clients ignore it. But if you give it no default, callers of `Track(...)` must pass it — and `Playlist.add` calls `Track(...)`. So it's a 'sometimes yes, sometimes no' — we've marked it as optional credit."
             3: "Renaming a *public* method on Playlist by definition breaks every client that calls it. That is the opposite of an absorbed change — you have changed the contract."
           explanation: |
-            The shape of "what changes are local" follows directly from the contract you exposed. Internal storage choice is hidden, so (1) is absorbed. New domain methods are *additive*, so (3) is absorbed. Renaming a method on the contract is a contract change, so (4) ripples. Adding fields *can* be local — but it depends on whether you preserve the constructor signature (defaults vs. required), which is why (2) is partial credit.
+            Internal storage choice is hidden, so switching to a dictionary is absorbed. Adding a domain method is additive. Renaming `top_tracks` breaks callers. Adding `release_year` can be compatible if it has a default, but a new required constructor argument can break construction sites. Because that option omits the default, selecting or omitting it is accepted; this is not partial credit.
 
         - type: single
           question: |
@@ -2330,12 +2329,12 @@ steps:
             - "Tests don't need a real database — they construct events in Python and run instantly."
             - "Two engineers can work in parallel: one builds the SQLite implementation, one builds the client features, both against `InMemoryEventDirectory`."
             - "Future readers see two implementations and learn the Protocol is what the contract really is — not whatever SQLite happens to do."
-            - "It lets you ship the product to customers who don't have SQLite installed."
+            - "It makes the production SQLite implementation execute its queries faster."
           correct_indices: [0, 1, 2]
           option_feedback:
-            3: "SQLite ships with Python's standard library — no install needed. This isn't a real win and you shouldn't reach for it as the justification. The other three reasons are the real ones."
+            3: "A separate in-memory implementation helps tests and design work; it does not optimize the SQL executed by the production implementation."
           explanation: |
-            Information hiding pays in three currencies, all visible here: **testability** (1), **parallel work** (2), and **comprehensibility** (3) — Parnas's original three benefits in the 1972 paper. The fourth option sounds plausible but isn't actually true.
+            Information hiding pays in three currencies, all visible here: **testability**, **parallel work**, and **comprehensibility**. The claim that the in-memory implementation makes SQLite faster is not a benefit.
 
         - type: single
           question: |
@@ -2844,7 +2843,7 @@ steps:
           option_feedback:
             3: "Renaming a method on the Protocol is a **contract change** — every implementation must update, and every caller of `provider.like(...)` must update. That ripples. It's the same lesson as Step 2's quiz: renaming a public method on the contract is the opposite of an absorbed change."
           explanation: |
-            Three of these are absorbed by the refactor; the fourth (renaming `like` to `favorite`) is a contract change and ripples. **A/B-testing two implementations of the same provider at once** is the test (2) — and it's only possible because the wiring layer hands out provider *instances*, not provider *strings*. That kind of flexibility is one of the quietest big wins of polymorphism-behind-a-Protocol.
+            Adding a provider, swapping implementations, and A/B-testing implementations are absorbed; renaming `like` to `favorite` changes the contract and ripples. **A/B-testing two implementations of the same provider at once** is supported — and it's only possible because the wiring layer hands out provider *instances*, not provider *strings*. That kind of flexibility is one of the quietest big wins of polymorphism-behind-a-Protocol.
 
         - type: single
           difficulty: intermediate
@@ -3259,12 +3258,13 @@ steps:
             - "Over-specification leak — `assign_court` reveals a score scale."
             - "Persistence leak — a database is exposed."
             - "Exhaustive-alternatives leak — `assign_court` enumerates the court-provider list inline."
-          correct_indices: [0, 3]
+          correct_indices: [0]
           option_feedback:
-            1: "No score or numeric scale is exposed. The leaks are *shape* and *exhaustive-list* — not algorithmic."
+            1: "No score or numeric scale is exposed. The demonstrated leak is the internal representation."
             2: "No storage technology appears."
+            3: "Single Choice allows one module to own the exhaustive alternatives. No duplicated provider list is shown here."
           explanation: |
-            **Two leaks at once** — the realistic case. `matches()` is Step 2's representation leak; `assign_court` is Step 6's Single Choice violation. The fix needs *both* routines: a frozen `Match` dataclass with domain methods *and* a `CourtProvider(Protocol)` injected at construction. **Real codebases mix leak types.** Classification matters as much as the fix because each leak type has a different routine attached to it.
+            `matches()` leaks its mutable internal representation. The court-provider list appears in only one module here, so this snippet alone does not demonstrate a Single Choice violation. That principle permits one module to own the alternatives; duplicated lists in other modules would be evidence of a violation. A domain interface can still be useful if court behavior needs to vary independently.
 
     solution:
       files:
@@ -3594,7 +3594,7 @@ steps:
             **The honest answer**: not every direct dependency should be hidden. Information hiding is a maintenance investment that pays back when (a) there are multiple callers, and (b) the hidden decision is plausibly volatile. A 25-line cron script has neither property. Forcing it through `EventDirectory` would mean:
 
             1. The future reader of the cron script has to chase a Protocol they don't need.
-            2. If `EventDirectory` ever grows new methods, this script breaks even though its needs are unchanged.
+            2. Adding methods to `EventDirectory` does not by itself break a client that only calls `find_in`; implementations must satisfy any newly required methods.
             3. The Protocol stops being "things that look like a directory" and starts being "things that satisfy the union of every consumer's needs."
 
             The Step 7 calibration (Snippet 5) and the chapter's *When NOT to apply* section are exactly about this. **The right number of abstractions is the smallest number that lets the system change gracefully.** Below that number, you're under-engineered; above it, you tax every reader. Both extremes are bugs.
@@ -3634,11 +3634,11 @@ steps:
             - `ui.py` renders the map and reservation button.
             - `composition_root.py` wires today's concrete gateway into the app.
 
-            The vendor replaces its REST API with GraphQL. The domain fields returned by `ScooterGateway` stay the same.
+            The vendor replaces its REST API with GraphQL. You add a new `GraphQLScooterGateway` class in `scooters.py` and replace the currently wired REST gateway with it. The domain fields returned by `ScooterGateway` stay the same.
 
             **Which files need to be edited?** (Select all that apply.)
           options:
-            - "`scooters.py` — add or replace the concrete gateway implementation that knows the vendor protocol."
+            - "`scooters.py` — add the concrete GraphQL gateway implementation that knows the vendor protocol."
             - "`composition_root.py` — wire the app to the new concrete gateway."
             - "`trip_planner.py` — route choice must change because GraphQL is a different query language."
             - "`pricing.py` — student discounts must change because vendor transport changed."

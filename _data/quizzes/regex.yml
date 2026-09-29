@@ -25,7 +25,7 @@ questions:
   
   - id: 2 
     difficulty: advanced
-    question: "A developer writes a regex to parse a log file: `^.*error.*$`. They notice that while it works, it runs much slower than expected on very long log lines. What underlying behavior of the `.*` token is causing this inefficiency?" 
+    question: "Using a backtracking regex engine, a developer writes a regex to parse a log file: `^.*error.*$`. They notice that while it works, it runs much slower than expected on very long log lines. What underlying behavior of the `.*` token is causing this inefficiency?"
     options: 
       - "The engine evaluates the string character-by-character from the end of the line backwards."
       - "`.*` is greedy: it swallows the whole line, then backtracks character by character to find 'error'."
@@ -67,7 +67,7 @@ questions:
   
   - id: 4
     difficulty: advanced
-    question: "You are given the regex `(?P<year>\\d{4})-(?P<month>\\d{2})-(?P<day>\\d{2})` and apply it to the string `2026-04-01`. After a successful match, which of the following correctly describes how you can access the captured month value?"
+    question: "In Python, you are given the regex `(?P<year>\\d{4})-(?P<month>\\d{2})-(?P<day>\\d{2})` and apply it to the string `2026-04-01`. After a successful match, which of the following correctly describes how you can access the captured month value?"
     options:
       - "Only by its positional index (e.g., group 2), because named groups are just syntactic sugar that the engine discards."
       - "Only by its name (e.g., `match.group('month')`), because named groups replace positional indexing."
@@ -88,7 +88,7 @@ questions:
 
   - id: 5
     difficulty: intermediate
-    question: "When writing a complex regex to extract phone numbers, you use parentheses `(...)` to group the area code so you can apply a `?` quantifier. However, you also want to extract the area code by name for later use in your code. What is the best approach?"
+    question: "In JavaScript, when writing a complex regex to extract phone numbers, you use parentheses `(...)` to group the area code so you can apply a `?` quantifier. However, you also want to extract the area code by name for later use in your code. What is the best approach?"
     options:
       - "Use a lookahead instead of parentheses."
       - "Remove the parentheses and apply the `?` to the whole pattern."
@@ -264,7 +264,7 @@ questions:
 
   - id: 13
     difficulty: advanced
-    question: "**Arrange** the regex fragments to extract the protocol (matching only `http` or `https`) and domain from a URL like `https://www.example.com/path`. Use a capturing group for the domain."
+    question: "**Arrange** the regex fragments to extract the protocol (matching only `http` or `https`) and hostname from a simple URL with no credentials, port, query, or fragment from a URL like `https://www.example.com/path`. Use a capturing group for the domain."
     type: parsons
     display: inline
     lines:

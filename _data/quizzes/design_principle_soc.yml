@@ -212,7 +212,7 @@ questions:
       3: |
         SRP does not forbid extracting classes. It asks whether the extracted responsibility has its own
         reason to change.
-    explanation: "A split is only valuable if the separated pieces change **independently**, for different reasons, on different timelines. If they always change together, the boundary is a fiction that doubles maintenance cost with no benefit. This is the 'premature abstraction' trap — SoC is a *direction*, not a target score on a file-count metric."
+    explanation: "A split is only valuable if the separated pieces change **independently**, for different reasons, on different timelines. If they always change together, the boundary is a fiction that adds coordination and maintenance overhead with no benefit. This is the 'premature abstraction' trap — SoC is a *direction*, not a target score on a file-count metric."
 
   - id: 10
     difficulty: intermediate

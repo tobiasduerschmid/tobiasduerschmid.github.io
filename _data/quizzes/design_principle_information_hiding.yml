@@ -79,7 +79,7 @@ questions:
       3: |
         Visibility modifiers are useful but insufficient. Public signatures, exceptions, data formats,
         and protocols can all leak hidden decisions.
-    explanation: "`private` controls access to fields, but the *public method signatures* expose `PayPalClient`, `PayPalAccount`, and `PayPalCharge`. Every caller of `checkout` now compiles against PayPal. The fix is to introduce a `PaymentGateway` abstraction that exposes only neutral types like `PaymentDetails` and `ChargeResult`."
+    explanation: "`private` controls access to fields, but the *public method signatures* expose `PayPalAccount` and `PayPalCharge`. The private `PayPalClient` field is hidden, but those public types still leak the vendor. Every caller of `checkout` now compiles against PayPal. The fix is to introduce a `PaymentGateway` abstraction that exposes only neutral types like `PaymentDetails` and `ChargeResult`."
 
   - id: 4
     difficulty: basic
@@ -226,7 +226,7 @@ questions:
       Two modules in your codebase both depend on the assumption "phone numbers are stored as exactly 10 digits, no separators." There is no shared constant, no shared validator — just two pieces of code that happen to assume the same thing. What is this?
     options:
       - "Healthy duplication that improves performance"
-      - "Semantic coupling — a hidden dependency no compiler or analyzer can detect"
+      - "Semantic coupling — a shared assumption that ordinary type checking may not reveal"
       - "Strict syntactic coupling, easy to detect with `grep`"
       - "An example of good Information Hiding because the assumption is implicit"
     correct_index: 1
@@ -240,7 +240,7 @@ questions:
       3: |
         Implicit assumptions are the opposite of good information hiding. The rule should live behind
         one explicit normalization or value-object boundary.
-    explanation: "Semantic coupling is the dangerous cousin of syntactic coupling: tools cannot see it, but if you change the assumption in one place, the other silently breaks. Information Hiding fights it by ensuring that the assumption (here, a `PhoneNumber` value object or a single normalization function) lives in exactly one module."
+    explanation: "Semantic coupling is the dangerous cousin of syntactic coupling: ordinary type checking may not reveal it, and changing the assumption in one place can silently break the other. Targeted tests or analysis can still detect particular cases. Information Hiding fights it by ensuring that the assumption (here, a `PhoneNumber` value object or a single normalization function) lives in exactly one module."
 
   - id: 11
     difficulty: intermediate

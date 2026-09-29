@@ -204,7 +204,7 @@ questions:
         Sketching three methods first invites Big Upfront Design and large steps. TDD favors one tiny behavior at a time so each Red→Green→Refactor turn takes minutes, not hours.
       3: |
         Confirming a green starting point is fine practice but it isn't the *Red* step. *Red* is a new failing test that names the next behavior — production code comes *after*, in *Green*.
-    explanation: "Robert C. Martin's (\"Uncle Bob's\") *Three Rules of TDD* say you may not write production code except to make a failing unit test pass, and you may not write more of a test than is sufficient to fail (failing to compile counts). So the Red step is the smallest test that names the next behavior, written before the code. The productivity gain comes from *fine granularity and uniform rhythm*, not from test-first ordering as a slogan."
+    explanation: "Robert C. Martin's (\"Uncle Bob's\") *Three Rules of TDD* say you may not write production code except to make a failing unit test pass, and you may not write more of a test than is sufficient to fail (failing to compile counts). So the Red step is the smallest test that names the next behavior, written before the code. Fine granularity and uniform rhythm were associated with better outcomes in one observational study; that is not proof of a universal causal effect."
 
   - id: 9
     difficulty: advanced

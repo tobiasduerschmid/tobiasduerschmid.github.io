@@ -62,52 +62,33 @@ questions:
         Some game data must never be lost. A missed podium finish or a vanished cosmetic purchase would
         corrupt the player's persistent progress, and there is no later message that reconstructs it.
       3: |
-        HTTP is request-response and runs over TCP — it is poorly suited to 60-Hz position broadcasts. The
+        HTTP uses request-response semantics; HTTP/1.1 and HTTP/2 use TCP, while HTTP/3 uses QUIC over UDP. The
         transport choice should match each data type's tolerance for loss, not default to one application protocol.
     explanation: "Position updates and progression events have opposite requirements. Car positions arrive at 60 Hz as absolute coordinates — a missed snapshot is replaced within ~17 ms, so UDP is ideal — but a lost lap completion or purchase would corrupt persistent state and needs reliable, ordered delivery plus application-level transaction safeguards. This is the same hybrid pattern used for live stock-trading platforms: UDP for the high-frequency stream of values that supersede each other, TCP for durable events whose bytes must arrive intact and in order."
 
   - id: 4
     difficulty: intermediate
-    question: "You are building a **cloud file storage service** similar to Dropbox or Google Drive. A user clicks 'Upload' on a 200 MB folder of design files. The folder must arrive at the server **bit-for-bit identical** so that other devices syncing the same folder see the exact same files. Which transport protocol should carry the upload?"
+    question: "You are building a cloud file storage service. A 200 MB upload must arrive intact and in order. Choosing between TCP and raw UDP, with no custom reliability layer, which transport supplies the needed delivery mechanisms?"
     options:
-      - "UDP — to maximize raw upload speed for large folders."
-      - "TCP — every byte must arrive correctly and in the right order."
-      - "UDP — the sync client can detect missing chunks and re-request them later."
-      - "It depends — use UDP for small files (<10 MB) and TCP for larger ones."
+      - "Raw UDP — it automatically retransmits corrupt or missing chunks."
+      - "TCP — it supplies ordered delivery, retransmission, and error detection."
+      - "Raw UDP — its checksum also restores any lost data."
+      - "Either — both transports guarantee delivery and order."
     correct_index: 1
-    option_feedback:
-      0: |
-        Faster transfer is irrelevant if the file arrives corrupted. A storage service's core promise is that
-        what was uploaded is exactly what comes down again on every other device.
-      2: |
-        Detecting and re-requesting missing chunks on top of UDP is essentially rebuilding TCP — and getting
-        the details (timeouts, sequence numbers, congestion handling) wrong, when the OS already provides
-        them for free.
-      3: |
-        File size doesn't change the requirement. A 5 MB photo and a 500 MB video both need byte-perfect
-        delivery for the sync invariant to hold.
-    explanation: "The storage service's core invariant is byte-for-byte fidelity, and a single flipped bit in a `.psd` or `.docx` can corrupt it silently — discovered only when the user reopens the file later. TCP's retransmission, ordering, and checksums prevent this, and the handshake/ACK overhead is negligible next to a 200 MB payload, which is why every major cloud-sync product uses TCP, typically over HTTPS."
+    option_feedback: {"0": "Raw UDP does not retransmit lost data.", "2": "A checksum detects some corruption; it cannot restore missing data.", "3": "TCP and UDP provide different delivery contracts."}
+    explanation: "TCP supplies ordered delivery, retransmission, and checksums, making it a suitable transport without inventing a reliability layer over raw UDP. Checksums are not an absolute guarantee against every corruption; end-to-end file hashes can verify fidelity. Reliable protocols over UDP, such as QUIC used by HTTP/3, are another valid design. The keyed choice is TCP versus raw UDP for this upload."
 
   - id: 5
     difficulty: intermediate
     question: "A startup is launching an **online concert ticketing platform**. Fans browse upcoming shows, **pay** with a credit card, and receive a unique QR-code ticket. The platform must prevent **two fans buying the same seat**, and it must keep an **immutable record** of every sale for tax and refunds. Should the backend be **client-server** or **peer-to-peer**?"
     options:
-      - "Peer-to-peer — fans and venues can negotiate seats directly, avoiding platform fees."
-      - "Client-server — only a central server can serialize seat inventory and own the audit trail."
-      - "Peer-to-peer — eliminates the cost of running backend infrastructure."
-      - "It doesn't matter — both architectures work equally well for marketplaces."
+      - "Peer-to-peer — fans and venues can negotiate independently without coordinating reservations."
+      - "Client-server — an authoritative service can coordinate inventory and record sales."
+      - "Peer-to-peer — no coordination or backend resources are needed."
+      - "It does not matter — independent booking decisions cannot conflict."
     correct_index: 1
-    option_feedback:
-      0: |
-        Direct peer-to-peer negotiation cannot enforce the no-double-booking rule across the whole platform.
-        Without a single coordinator, two peers can each independently decide to sell the same seat.
-      2: |
-        Saving on infrastructure cost still leaves the platform with no way to record sales authoritatively
-        or process refunds. The product depends on a central authority that pure P2P does not provide.
-      3: |
-        The architecture matters because the requirements include central inventory, central payment
-        processing, and a tamper-resistant audit trail — features client-server provides and pure P2P does not.
-    explanation: "The platform must serialize seat reservations, process payments, and own the audit trail — and a central server is the only place to lock inventory, record each transaction once, and resolve disputes against an authoritative record. Pure P2P would let two buyers commit to the same seat independently with nowhere to enforce payment finality. This is the same pattern any multi-sided marketplace (Uber, Airbnb, eBay) relies on."
+    option_feedback: {"0": "Uncoordinated peers can both sell the same seat. A distributed alternative needs an explicit agreement and transaction protocol.", "2": "Removing dedicated servers does not remove the need for coordination, durable records, or payment processing.", "3": "The architecture must explain who authorizes a booking and how concurrent requests avoid double-booking."}
+    explanation: "Client-server is a straightforward fit: an authoritative service coordinates seat reservations, payment processing, and an audit trail. A single physical server is not the only possible design; replicated services or peer protocols can coordinate through consensus and transactions. Merely connecting peers without such coordination does not enforce the booking invariant."
 
   - id: 6
     difficulty: intermediate
@@ -175,7 +156,7 @@ questions:
   - id: 9
     difficulty: intermediate
     type: multiple
-    question: "For which of the following would **TCP** be the better choice over UDP? (Select all that apply)"
+    question: "Comparing TCP with raw UDP, with no additional reliability protocol, which tasks need TCP's reliable ordered byte stream more than low-latency loss tolerance? (Select all that apply)"
     options:
       - "Submitting an order request where the complete request and confirmation response must arrive intact and in order"
       - "A two-way video call where participants need sub-second audio and video"
@@ -200,4 +181,4 @@ questions:
       3: |
         A software update must arrive byte-for-byte intact — a single corrupted byte can break installation
         or fail the package's signature verification.
-    explanation: "Order submissions, emails, and software downloads all need byte-perfect, ordered delivery, which is exactly what TCP provides. The order system also needs application-level transaction safety, but the transport must still deliver the request and confirmation bytes intact; a corrupted email body or attachment renders as gibberish, and a single corrupted byte can break a software install. The two-way video call is the UDP case — keeping the current conversation moving matters more than waiting for stale media packets."
+    explanation: "Orders, emails, and software downloads require complete ordered data. Raw UDP does not provide retransmission or ordering; TCP does. A protocol such as QUIC can add reliability over UDP, so an HTTPS download does not necessarily use TCP. TCP checksums are not cryptographic integrity proofs: software packages still need cryptographic verification. Interactive media often prefers newer packets over waiting for missing stale packets."

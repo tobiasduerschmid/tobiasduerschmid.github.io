@@ -866,7 +866,7 @@ steps:
       ### Task 3: Discard working directory changes
 
       Now let's throw away the change entirely and restore the file to its
-      last committed version:
+      index version (which still matches the last commit in this example):
 
       ```bash
       git restore hero_registry.py
@@ -935,10 +935,10 @@ steps:
             - "`git rm --cached config.py`"
           correct_index: 1
           option_feedback:
-            0: "Without `--staged`, `git restore` operates on the *working directory*, overwriting your file with the last committed version — your edits would be **gone**. The `--staged` flag is what redirects the operation to the staging area instead. Same command name, very different effect."
+            0: "Without `--staged`, `git restore` operates on the *working directory*, overwriting it with the staged version — only later unstaged edits would be lost. The `--staged` flag is what redirects the operation to the staging area instead. Same command name, very different effect."
             2: "`--hard` doesn't surgically unstage one file; it discards every uncommitted change in the entire working directory and staging area. Loud, irreversible, and not what the question asked for."
             3: "`git rm --cached` removes the file from Git's tracking entirely (and stages a deletion), as if you had never added it. That's a different operation — used for files that should never have been tracked (like `.env`), not for routine unstaging."
-          explanation: "`git restore --staged <file>` unstages the file — it moves it off the post editor back to the working directory. Your edits are **preserved**. Without `--staged`, `git restore` would discard the edits entirely."
+          explanation: "`git restore --staged <file>` unstages the file — it moves it off the post editor back to the working directory. Your edits are **preserved**. Without `--staged`, `git restore` copies the index to the working tree; staged edits remain."
 
         - question: "You edited `main.py`, `test_main.py`, and `debug.log` in one sitting. Your next commit should contain only the test file. Which Git feature makes this possible without reverting the other edits?"
           options:
@@ -949,14 +949,14 @@ steps:
           correct_index: 1
           explanation: "The staging area lets you **cherry-pick** which edits form the next commit while keeping other in-progress work safe in the working directory — the defining advantage of the two-step add/commit flow."
 
-        - question: "You run `git restore hero_registry.py` (without `--staged`). What happens to your unsaved edits?"
+        - question: "You edit a tracked file after staging it, then run git restore hero_registry.py without --staged. What happens to those later, unstaged edits?"
           options:
             - "They are moved to the staging area for review"
             - "They are saved to a temporary location automatically"
             - "They are permanently discarded — there is no undo"
             - "They are committed as a 'WIP' commit"
           correct_index: 2
-          explanation: "`git restore <file>` replaces the working directory version with the last committed version. Because the changes were never committed, Git has **no record** of them — they are gone permanently with no way to recover them."
+          explanation: "By default, git restore <file> copies the index version into the working tree. It discards edits made after staging but preserves the staged version. Git does not record never-staged edits, so do not rely on Git to recover them."
 
         - question: "Which statements about `git reset --hard` are true? (Select all that apply)"
           type: multiple
@@ -1187,12 +1187,12 @@ steps:
 
         - question: "You ran `git add .` and accidentally staged `app.py`, `style.css`, AND `secrets.env`. You only want `app.py` in this commit. What is the correct recovery sequence?"
           options:
-            - "`git restore secrets.env` then `git restore style.css` — removes both files from staging and discards their edits"
+            - "`git restore secrets.env` then `git restore style.css` — restores both working files from the index without unstaging them"
             - "`git restore --staged secrets.env` then `git restore --staged style.css` — unstages both without losing edits"
             - "`git reset --hard` — resets everything and you start the staging over cleanly"
             - "`git add app.py` again — Git deduplicates and only stages `app.py`"
           correct_index: 1
-          explanation: "`git restore --staged <file>` is the surgical undo for `git add`: it moves a file off the staging area without touching your working-directory edits. After running it for both unwanted files, only `app.py` remains staged — ready for a clean, focused commit. `git restore` (without `--staged`) would permanently discard the edits, which is not what you want here."
+          explanation: "`git restore --staged <file>` is the surgical undo for `git add`: it moves a file off the staging area without touching your working-directory edits. After running it for both unwanted files, only `app.py` remains staged — ready for a clean, focused commit. `git restore` (without `--staged`) would restore working files from the index and leave those files staged, so it would not accomplish the requested unstaging."
 
         - question: "Is a Git commit better described as a 'backup diff' or a 'permanent snapshot'?"
           options:
@@ -1215,15 +1215,12 @@ steps:
         - question: "Why should the `.gitignore` file itself be committed to the repository? (Select all that apply)"
           type: multiple
           options:
-            - "All contributors automatically get the same ignore rules"
-            - "It prevents secrets from being checked in on any team member's machine"
-            - "It makes `.gitignore` patterns apply to all future clones of the project"
-            - "It removes ignored files from everyone's filesystem"
+              ["All contributors receive the same project ignore patterns","It reduces accidental addition of matching untracked secret files","Future clones receive those project ignore patterns","It removes ignored files from everyone's filesystem"]
           correct_indices:
             - 0
             - 1
             - 2
-          explanation: "Committing `.gitignore` shares the ignore rules with the whole team and every future clone. This prevents accidental secret commits by anyone and keeps the repo free of generated/OS clutter. It does **not** delete files from anyone's filesystem."
+          explanation: "Committing .gitignore shares project ignore patterns. These reduce accidental additions of matching untracked files, but do not protect already tracked secrets or prevent git add -f. Ignore rules are not a security boundary; rotate any credential that was exposed."
 
   # --------------------------------------------------------------------------
   # STEP 7: Inspecting history — git log, git diff HEAD, git show
@@ -1373,7 +1370,7 @@ steps:
 
         - question: "You staged `config.py` and `app.py`. You then realize `config.py` contains a half-finished change that shouldn't be in this commit. You want to keep your edits to `config.py` in the working directory. What do you run?"
           options:
-            - "`git restore config.py` — discards the edits and unstages"
+            - "`git restore config.py` — copies the index to the working file and leaves it staged"
             - "`git restore --staged config.py` — unstages, keeps edits"
             - "`git reset --hard` — resets both files to the last commit"
             - "`git commit --exclude config.py` — commits only app.py"
@@ -2153,14 +2150,14 @@ steps:
           correct_index: 1
           explanation: "Git finds the **common ancestor** (the commit where the two branches diverged), then compares both branch tips against it. This three-point comparison lets Git automatically combine non-overlapping changes and flag conflicts only where the same lines were changed."
 
-        - question: "After merging `feature-team-up`, you run `git branch -d feature-team-up`. The command succeeds. What does the `-d` flag's success **guarantee**?"
+        - question: "After an ordinary merge, git branch -d feature-team-up succeeds. Assume feature-team-up has no upstream configured. What does this guarantee?"
           options:
             - "The branch has been deleted from the remote repository as well"
             - "Every commit on that branch is already reachable from the current branch"
             - "The branch contained no merge conflicts when it was created"
             - "The branch pointer file will be recreated automatically on the next `git push`"
           correct_index: 1
-          explanation: "`-d` (lowercase) is a **safety flag**: Git only deletes the branch if its commits are already reachable from the current branch — meaning the branch is fully merged. If you try `git branch -d` on a branch with unmerged commits, Git refuses with a warning. `-D` (uppercase) force-deletes regardless. This is why `git branch -d` after a confirmed merge is safe cleanup — it cannot accidentally discard unmerged work."
+          explanation: "Without a configured upstream, -d requires the branch tip to be reachable from HEAD. If an upstream is configured, Git checks that upstream instead, so deletion can succeed even if the branch is not merged into the current branch. -D bypasses the merged check."
 
         - question: "Which statements about merging are correct? (Select all that apply)"
           type: multiple
@@ -2329,14 +2326,11 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "What is the **root cause** of a merge conflict in Git?"
+        - question: "In an ordinary text merge, why might Git report a content conflict?"
           options:
-            - "One branch has more commits than the other"
-            - "Two branches modified the same lines of the same file"
-            - "The feature branch was not created from the latest commit"
-            - "The commit messages on the two branches are identical"
+              ["One branch has more commits than the other","Both branches make incompatible edits to an overlapping region","The feature branch is not based on the latest commit","Both branches have identical commit messages"]
           correct_index: 1
-          explanation: "A conflict occurs when Git cannot automatically reconcile two changes because they touch the **exact same lines** in a file. If different lines were changed, Git merges them silently without any conflict."
+          explanation: "Git asks for resolution when it cannot reconcile changes automatically. Incompatible edits to an overlapping region are one cause; modify/delete and rename conflicts are other kinds. Identical edits can merge cleanly, while nearby changes may conflict even when their line numbers differ."
 
         - question: "You're on `main` with two modified files you haven't committed yet. Your lead asks you to start work on `update-recruit` immediately. What should you do **first**, and why does the order matter?"
           options:
@@ -2356,7 +2350,7 @@ steps:
           correct_index: 1
           explanation: "To create a conflict, both branches must have **diverging changes** to the same lines. If you merge without making a competing change on main, Git will just fast-forward. Making a different edit to the same lines on main sets up a true three-way conflict."
 
-        - question: "Which scenarios will **definitely cause** a merge conflict? (Select all that apply)"
+        - question: "Assume the default text merge driver and no custom resolution rules. Which scenarios can cause a merge conflict? (Select all that apply)"
           type: multiple
           options:
             - "Branch A adds a new function at the end of a file; Branch B also adds a different function at the end"
@@ -2364,9 +2358,8 @@ steps:
             - "Branch A adds a new file; Branch B modifies an existing different file"
             - "Branch A and Branch B both change the same function's body in different ways"
           correct_indices:
-            - 1
-            - 3
-          explanation: "Conflicts happen when the **same lines** are changed differently on two branches. Adding different content at the same location (both adding to end of file) can also conflict if they overlap. Adding different files or editing completely separate files never conflicts."
+              [0,1,3]
+          explanation: "Different additions at the same location, different replacements of the same line, and overlapping edits inside a function can conflict. Merely editing the same function is not enough to guarantee a conflict: non-overlapping edits may merge cleanly. Independent changes to different paths normally merge cleanly."
 
   # --------------------------------------------------------------------------
   # STEP 11: Resolving a merge conflict
@@ -2698,12 +2691,9 @@ steps:
 
         - question: "Your team frequently has merge conflicts. A teammate suggests: 'Let's all work on one branch to avoid conflicts.' Evaluate this suggestion."
           options:
-            - "Good idea — one branch eliminates conflicts entirely"
-            - "Bad idea — it kills branch isolation and lets developers overwrite each other's work"
-            - "Good idea — but only if the team has fewer than 5 people"
-            - "Bad idea — Git doesn't allow multiple people to push to the same branch"
+              ["Good idea — one branch eliminates conflicts entirely","It does not eliminate conflicts between concurrent changes in separate clones","Good idea — but only if the team has fewer than 5 people","Bad idea — Git doesn't allow multiple people to push to the same branch"]
           correct_index: 1
-          explanation: "Merge conflicts are a feature, not a bug — they prevent silent data loss. Working on one branch means no isolation: any commit immediately affects everyone, broken code blocks the whole team, and parallel feature development becomes impossible. The real fix is to merge *more often* (keep branches short-lived) and communicate about who's editing which files."
+          explanation: "A shared branch does not prevent concurrent work: each clone can create commits independently, and integrating them can still conflict. Trunk-based development is a valid workflow with small frequent integrations and suitable checks; feature branches provide separate integration points. Choose a workflow for the team, and reduce conflict risk through short-lived changes and communication."
 
   # --------------------------------------------------------------------------
   # STEP 12: Safe undo with git revert
@@ -3724,7 +3714,7 @@ steps:
             - "git pull"
           explanation: "The local workflow is **edit → stage → commit**. `git push` uploads to a remote and is a separate step that happens *after* committing. `git pull` downloads remote changes — it is not part of the local save workflow. A commit is permanent in the local repository regardless of whether you ever push."
 
-        - question: "A teammate always commits directly to `main` without creating feature branches. Which professional best practice does this violate, and what does the team lose?"
+        - question: "Your team requires feature branches and pull-request review before integration. A teammate always commits directly to `main` without creating feature branches. Which professional best practice does this violate, and what does the team lose?"
           options:
             - "Nothing — committing to `main` is standard for solo projects and small teams"
             - "Isolation — changes land on the shared branch with no review window, blocking teammates"
@@ -3746,7 +3736,7 @@ steps:
             - 3
           explanation: "`git push -f` rewrites shared history and breaks every teammate who already pulled — the opposite of a best practice on shared branches. The other three were explicitly taught throughout this tutorial: descriptive messages (Step 2), `.gitignore` first (Step 6), and safe undo with `git revert` (Step 12)."
 
-        - question: "After running `git push -u origin main`, a teammate clones the repository and makes two commits. You run `git pull`. What does `git pull` actually do under the hood?"
+        - question: "Assume pull is configured to merge rather than rebase. After running `git push -u origin main`, a teammate clones the repository and makes two commits. You run `git pull`. What does `git pull` actually do under the hood?"
           options:
             - "It downloads the remote repository and replaces your local files"
             - "It runs `git fetch` (download new commits) followed by `git merge` (integrate them into your current branch)"

@@ -58,9 +58,9 @@ cards:
 
   - id: 10
     difficulty: expert
-    question: "Dashboard: coverage 92% (up from 88%), mutation score steady at 80%, escaped-bug count doubled in three months. Diagnose."
-    answer: "Coverage rose without oracle strength — new tests *execute* new code without *checking* it. The static mutation score with rising coverage and rising escapes is the tell: new tests are not killing new mutants."
-    explanation: "Tying release gates or performance metrics to coverage creates pressure for execution without verification — exactly the failure mode here. The remedy is to weight mutation/seeded-fault scores or to peer-review oracle strength on each new test, and to keep asking whether the suite would fail if the system broke in a way users care about."
+    question: 'Dashboard: coverage 92% (up from 88%), mutation score steady at 80%, escaped-bug count doubled in three months. Diagnose.'
+    answer: The dashboard warrants investigation, but does not identify one cause. Check missing scenarios and weak oracles, changes in the mutant population, release volume, and the kinds of bugs that escaped.
+    explanation: Coverage and mutation scores are normalized percentages. An unchanged 80% can represent more killed mutants if the denominator grew. A doubled raw bug count can also reflect more releases. Inspect those denominators and concrete escaped bugs before choosing a remedy.
 
   - id: 11
     difficulty: expert

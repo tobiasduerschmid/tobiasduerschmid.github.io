@@ -61,7 +61,7 @@ questions:
   - id: 4
     difficulty: advanced
     question: |
-      **Arrange** the fragments to display only the non-comment, non-blank lines from `config.txt`, sorted alphabetically.
+      **Arrange** the fragments to display lines from `config.txt` that are neither empty nor start with `#`, sorted alphabetically.
     type: parsons
     display: inline
     lines:
@@ -78,7 +78,7 @@ questions:
   - id: 5
     difficulty: intermediate
     question: |
-      **Arrange** the fragments to count how many `.txt` files are in the current directory.
+      **Arrange** the fragments to count how many non-hidden `.txt` files are in the current directory. Assume every matching directory entry is a regular file and filenames contain no newlines.
     type: parsons
     display: inline
     lines:

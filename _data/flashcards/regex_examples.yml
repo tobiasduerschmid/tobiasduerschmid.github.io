@@ -4,7 +4,7 @@ active: true
 cards:  
   - id: 1  
     difficulty: advanced
-    question: "Write a regex to validate a standard email address (e.g., user@domain.com)."  
+    question: "Write a regex to recognize the simplified email shape used in this chapter (e.g., user@domain.com), without attempting complete email-address validation."
     answer: "`^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$`"  
     explanation: "This matches a sequence of alphanumeric characters and allowed symbols for the username, followed by an '@', a domain name, and a 2+ character top-level domain."  
   
@@ -22,7 +22,7 @@ cards:
   
   - id: 4  
     difficulty: expert
-    question: "Write a regex to validate a strong password (at least 8 characters, containing at least one uppercase letter, one lowercase letter, and one number)."  
+    question: "Write a regex to validate this password-format exercise: ASCII letters and digits only, at least 8 characters, containing at least one uppercase letter, one lowercase letter, and one digit."
     answer: "`^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)[a-zA-Z\\d]{8,}$`"  
     explanation: "Uses positive lookaheads `(?=...)` to scan ahead and guarantee the presence of a lowercase, uppercase, and digit before matching a string of 8 or more valid characters."  
   
@@ -34,7 +34,7 @@ cards:
   
   - id: 6  
     difficulty: advanced
-    question: "Write a regex to extract the domain name from a URL, ignoring the protocol and 'www' (e.g., extracting 'example.com' from 'https://www.example.com/page')."  
+    question: "Write a regex to extract the hostname from a simple URL containing only an optional http(s) protocol, a hostname, and an optional slash-prefixed path; ignore a leading 'www' (e.g., extracting 'example.com' from 'https://www.example.com/page')."
     answer: "`^(https?:\\/\\/)?(www\\.)?(?<domain>[^\\/]+)`"
     explanation: "The groups `(...)` make the 'http(s)://' and 'www.' optional. The named group `(?<domain>...)` matches all characters up to the first forward slash, accessible via `match.groups.domain`."
   
@@ -52,9 +52,9 @@ cards:
   
   - id: 9  
     difficulty: advanced
-    question: "Write a regex to match an opening or closing HTML tag."  
-    answer: "`<\\/?[a-zA-Z][\\s\\S]*>`"
-    explanation: "Matches the opening `<`, an optional `/` for closing tags, a starting letter (upper or lowercase), and then any characters (including newlines) until the closing `>`."  
+    question: "Write a regex to match individual opening or closing tags in simplified HTML with no `>` characters inside attribute values."
+    answer: "`<\\/?[a-zA-Z][^>]*>`"
+    explanation: "Matches the opening `<`, an optional `/` for closing tags, a starting letter (upper or lowercase), and then characters other than `>` until the next closing `>`. Use an HTML parser for arbitrary HTML, including quoted attribute values containing `>`."
   
   - id: 10  
     difficulty: intermediate

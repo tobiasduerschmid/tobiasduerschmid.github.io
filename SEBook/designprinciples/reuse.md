@@ -123,13 +123,13 @@ request() got an unexpected keyword argument 'chunked'
 
 The lesson: **a package update you did not ask for can still break you**, because your dependencies' dependencies may auto-resolve to a newer, incompatible version.
 
-The defense is to **pin your dependencies**. Almost every package manager supports this through a lock file or virtual environment:
+The defense is to **pin your dependencies**. Use a lockfile or a fully pinned resolved dependency set; a virtual environment alone only isolates installed packages:
 
 | Language | Tool & file                                |
 |----------|--------------------------------------------|
-| Python   | Pipenv → `Pipfile` and `Pipfile.lock`; `pip` → `requirements.txt`; Poetry → `pyproject.toml` |
+| Python   | Pipenv → `Pipfile.lock`; pip → fully pinned direct and transitive requirements; Poetry → `poetry.lock` |
 | Node.js  | npm → `package-lock.json`; pnpm/yarn lockfiles |
-| Java     | Maven → `pom.xml`; Gradle → `gradle.lockfile` |
+| Java     | Maven → explicitly pin resolved dependency versions in the POM (not a lockfile); Gradle → `gradle.lockfile` |
 | Rust     | Cargo → `Cargo.lock`                       |
 
 A Python `Pipfile` example:
@@ -213,15 +213,15 @@ Internal reuse looks easier on the surface — you wrote the code, you can read 
 
 ### The Ariane 5 Disaster
 
-On June 4, 1996, the maiden flight of the European Space Agency's **Ariane 5** rocket lifted off — and self-destructed **37 seconds later**, taking roughly **$370 million** in payload with it.
+On June 4, 1996, the maiden flight of the European Space Agency's **Ariane 5** rocket lifted off — and broke up and triggered self-destruction about **39 seconds after the main-engine ignition sequence began**, taking roughly **$370 million** in payload with it.
 
 > **Pause and predict.** The flight-control software had run flawlessly on the earlier Ariane 4 rocket for years. What's your hypothesis for why the *same software* destroyed Ariane 5? Take a guess before reading on.
 
 The cause? Software reuse done badly.
 
-The **Inertial Reference System (SRI)** had been reused directly from Ariane 4, where it had worked perfectly for years. It stored the rocket's horizontal velocity in a **16-bit integer**, a choice originally made for performance reasons under Ariane 4's flight profile.
+The **Inertial Reference System (SRI)** had been reused directly from Ariane 4, where it had worked perfectly for years. Its alignment software converted an internal horizontal-bias value, related to horizontal velocity, from a 64-bit floating-point number to a **16-bit signed integer**.
 
-But Ariane 5 was a bigger, faster rocket. Within seconds of launch, its horizontal velocity exceeded the maximum a 16-bit integer can hold. The conversion overflowed, the SRI faulted, the backup SRI (running the same code) faulted identically, and the rocket interpreted the resulting nonsense as a course deviation. It self-destructed.
+Ariane 5's different trajectory pushed that alignment value beyond the assumed range. The unprotected conversion halted both SRIs. The flight computer interpreted diagnostic data as flight data, commanded extreme nozzle deflections, and the resulting breakup triggered self-destruction.
 
 The **[ESA Inquiry Board's Recommendation R5](https://www.esa.int/Newsroom/Press_Releases/Ariane_501_-_Presentation_of_Inquiry_Board_report)** captured the design lesson in one sentence:
 
@@ -284,15 +284,9 @@ The lecture closes with a broader point: reuse decisions are *one kind* of desig
 
 ### Habit 1: Think of Many Design Alternatives
 
-In a classic study, researchers asked three teams to design the same system *(Petre, 2009)*:
+[Petre (2009)](https://oro.open.ac.uk/25994/1/p233-petre.pdf) describes expert designers maintaining alternatives, juxtaposing representations, and exploring possibilities. These observations support considering more than the first idea; they do not establish a fixed number of alternatives that guarantees a better design.
 
-* Team A produced **one** detailed design.
-* Team B produced **three** options.
-* Team C produced **five** options.
-
-When experts ranked the designs, Team C's selected design was the best, Team B's was second, and Team A's was last. The point isn't "more options always wins." The point is that *generating alternatives broadens the search space*, and broad search produces better solutions than the first idea you had.
-
-In follow-up work, *Tofan et al. (2013)* found that simply prompting designers to **consider other alternatives** caused less-experienced designers to produce noticeably better designs.
+[Tofan, Galster, and Avgeriou (2013)](https://www.cs.rug.nl/~paris/papers/ECSA13a.pdf) surveyed 43 architects about 86 past decisions. Decisions participants judged good were associated with considering more alternatives than those they judged bad. This was a retrospective survey, not an experiment testing prompts for novice designers, so it does not establish that increasing the option count caused the better outcomes.
 
 Practical rule: when you have a "good" design, **try to think of a better one** — and a *different* one. The purpose of idea generation is to *broaden up*; you narrow down later in evaluation.
 
@@ -313,14 +307,16 @@ Caveat: be aware when the simpler problem is **so fundamentally different** that
 
 ### Habit 4: Use a Rational Decision Process
 
-*Tang, Aleti, Burge, and van Vliet (2008)* found that an explicit, four-step decision process produces measurably better designs — especially for early-career engineers:
+*Tang, Tran, Han, and van Vliet (2008)* compared two groups among 20 designers performing a user-interface design task. The group given explicit design-reasoning guidance produced higher-scoring designs, with a larger reported benefit for inexperienced designers. This limited experiment supports making reasoning explicit; it does not establish that any four-step checklist guarantees improvement.
+
+A practical decision process is:
 
 1. **Identify your requirements.** What matters?
 2. **Think of many design alternatives.**
 3. **Evaluate** how well each alternative meets the requirements.
 4. **Consider the trade-offs and make a decision.**
 
-This sounds obvious, and it is. But the research shows that simply *writing it down* leads to better outcomes than relying on intuition alone.
+Writing these considerations down makes the reasoning available for review. The quality of the result still depends on the requirements, alternatives, evidence, and judgments used.
 
 ### Habit 5: Document Decisions with a Design Doc
 
@@ -352,10 +348,10 @@ A typical Design Doc has four parts:
   2. **Update regularly** for security and bug fixes — but expect API-breaking changes.
   3. **Strive for fewer dependencies** — every one is a risk (left-pad, eslint-scope).
   4. Prefer **well-maintained, popular** modules — but **fit to your context** beats popularity.
-* **Internal reuse principle:** *Identify violated assumptions.* Ariane 5 reused Ariane 4's flight software without re-checking a 16-bit integer assumption — and destroyed a $370M rocket in 37 seconds.
+* **Internal reuse principle:** *Identify violated assumptions.* Ariane 5 reused Ariane 4's flight software without re-checking a 16-bit integer assumption — and contributed to the loss of the launcher shortly after launch.
 * **Libraries vs. Frameworks:** frameworks invert control (Hollywood Principle) and are harder to walk away from.
 * **General design decisions:**
-  * Generate many alternatives; broad search beats first-idea fixation.
+  * Generate plausible alternatives, then evaluate their fit to requirements and trade-offs.
   * Delay decisions that need more information.
   * Solve simpler problems first.
   * Use a rational, four-step decision process.
@@ -370,7 +366,7 @@ A typical Design Doc has four parts:
 * David Haney. *"[NPM & left-pad: Have We Forgotten How To Program?](https://www.davidhaney.io/npm-left-pad-have-we-forgotten-how-to-program/)"* 2016.
 * ESLint blog. *"[Postmortem for Malicious Package Publishes](https://eslint.org/blog/2018/07/postmortem-for-malicious-package-publishes/)"*. 2018.
 * Marian Petre. *"Insights from Expert Software Design Practice"*. ESEC/FSE 2009.
-* Antony Tang et al. *"Design Reasoning Improves Software Design Quality"*. QoSA 2008.
+* Antony Tang, Minh H. Tran, Jun Han, and Hans van Vliet. *"[Design Reasoning Improves Software Design Quality](https://research.vu.nl/en/publications/design-reasoning-improves-software-design-quality)"*. QoSA 2008.
 * Dan Tofan, Matthias Galster, Paris Avgeriou. *"Difficulty of Architectural Decisions — A Survey with Professional Architects"*. ECSA 2013.
 * Xu, An, Thung, et al. *"Why reinventing the wheels? An empirical study on library reuse and re-implementation"*. Empirical Software Engineering, 2020.
 * Malte Ubl. *"[Design Docs at Google](https://www.industrialempathy.com/posts/design-docs-at-google/)"*. Industrial Empathy blog.

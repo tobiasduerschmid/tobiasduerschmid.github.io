@@ -5,8 +5,7 @@ questions:
   - id: 1
     difficulty: intermediate
     type: single
-    question: |
-      A flight-booking service executes a transaction that (1) debits a passenger's credit card and (2) writes a "seat reserved" row. The server crashes between the two steps. On restart, the card shows a charge but no seat is reserved. **Which ACID property did the system fail to provide?**
+    question: "A flight-booking service executes one database transaction that (1) debits a passenger’s stored credit balance and (2) writes a seat-reservation row in the same database. It crashes before commit, between the two writes. After recovery, only the debit persists. Which ACID property failed?"
     options:
       - "Atomicity — the transaction should be all-or-nothing."
       - "Isolation — two concurrent bookings must not see each other's half-finished state."
@@ -19,7 +18,7 @@ questions:
       2: |
         Durability protects a transaction after commit has been acknowledged. Here the problem is that
         only part of an uncommitted unit persisted.
-    explanation: "Atomicity guarantees a transaction is indivisible: either every step is applied, or none are. A half-applied state (debit ✓, reservation ✗) after a crash is the textbook symptom of missing atomicity."
+    explanation: "Atomicity requires all writes within this database transaction to commit together or be discarded together. An external credit-card gateway would not automatically participate in that transaction; coordinating an external payment is a separate problem."
 
   - id: 2
     difficulty: intermediate
@@ -138,21 +137,14 @@ questions:
   - id: 8
     difficulty: advanced
     type: single
-    question: |
-      ATMs are sometimes presented as an example of "having all three of C, A, and P." What is the **more accurate** characterization of how ATMs actually behave?
+    question: "During a network partition, an ATM continues authorizing bounded withdrawals from a cached balance and reconciles them later. Which CAP trade-off does this policy illustrate?"
     options:
-      - "AP with eventual consistency — the ATM dispenses up to a cached limit during a WAN outage and reconciles later."
-      - "They are CP — if an ATM cannot reach the bank, it refuses every withdrawal until connectivity returns."
-      - "They are CA — banks use private networks, so partitions never occur."
+      - "Availability over consistency: allow stale decisions and reconcile later."
+      - "Consistency over availability: refuse withdrawals until communication returns."
+      - "Consistency and availability: a private network makes partitions impossible."
     correct_index: 0
-    option_feedback:
-      1: |
-        Some ATMs may refuse some operations, but the classic CAP example is limited offline
-        availability with later reconciliation, not strict refusal of every withdrawal.
-      2: |
-        Private networks can still partition. CAP is about the possibility of communication failure, not
-        whether the network is public.
-    explanation: "ATMs are the *motivating counterexample* for CAP, not a system that defies it. In practice, banks chose availability: a disconnected ATM keeps dispensing cash up to a cached daily limit, and the resulting transactions are reconciled with the central ledger after the partition heals. That occasionally lets a customer overdraw — but staying open is worth the reconciliation cost. This is textbook AP with eventual consistency."
+    option_feedback: {"1": "Refusal is a possible policy, but the scenario explicitly continues serving withdrawals.", "2": "Private networks can fail too. Cached decisions can differ from the latest account state."}
+    explanation: "This stated policy prioritizes availability of withdrawals over linearizable account-state decisions during a partition. An ATM that refuses offline withdrawals makes a different choice. CAP does not classify every real ATM as AP."
 
   - id: 9
     difficulty: advanced
@@ -179,9 +171,9 @@ questions:
     question: |
       You are building a social-media-style news feed: billions of posts, heavy write volume, lots of horizontal scaling, and a few seconds of staleness in someone's feed is acceptable. **Which data-store family is typically the best fit, and why?**
     options:
-      - "Relational (ACID RDBMS) — the ACID guarantees are essential for any user-facing system."
-      - "Graph — because social data is naturally graph-shaped, graph databases are always the best choice."
-      - "Wide-column or document NoSQL — flexible schemas, horizontal scale, eventual consistency."
+      - "Relational only: ACID is mandatory for every user-facing workload."
+      - "Graph only: social data requires a graph database for every workload."
+      - "A wide-column or document store configured for the stated workload."
     correct_index: 2
     option_feedback:
       0: |
@@ -191,7 +183,7 @@ questions:
         Social data can be graph-shaped, but a news feed’s primary workload is high-volume writes and
         reads at scale. Graph databases are not automatically the primary store for every social
         feature.
-    explanation: "News-feed workloads prioritize *availability and horizontal scale* over cross-row ACID transactions, and short-term staleness is tolerable — the sweet spot of wide-column (Cassandra, HBase) and document (MongoDB) systems. Graph databases are great for relationship-centric *queries* (friends-of-friends, fraud rings) but are not typically the primary store for high-volume feeds. RDBMSs can be forced to scale but sacrifice much of their ACID advantage when sharded across nodes."
+    explanation: "A wide-column or document store can fit a high-volume feed when its data model, access patterns, and consistency settings match the workload. NoSQL does not imply eventual consistency: HBase normally provides strong consistency, and MongoDB supports transactions and configurable read/write concerns. Relational systems can also scale horizontally while retaining transactions; evaluate specific systems rather than treating the family label as a guarantee."
 
   - id: 11
     difficulty: intermediate
@@ -250,20 +242,14 @@ questions:
   - id: 13
     difficulty: intermediate
     type: single
-    question: |
-      Consider the query *"For each course, list the course ID and the number of students enrolled."* Which sequence of relational-algebra operations implements it?
+    question: "For every course offering, including offerings with zero enrollments, list its course ID, quarter, and enrolled-student count. An offering is identified by (course_id, quarter), as in the chapter. Which sequence implements this?"
     options:
-      - "**Selection** on `Enrollment`, then **Projection** of `course_id` and `student_id`."
-      - "**Join** `Course` and `Enrollment` on `course_id`, then **Group-By** `course_id` with `COUNT(student_id)`."
-      - "**Projection** of `course_id` on `Course`, then **Selection** for rows where a student is enrolled."
+      - "Select enrollments, then project course_id and student_id."
+      - "Left join on the offering key; group by it and count student_id."
+      - "Inner join on course_id only, then count all joined rows."
     correct_index: 1
-    option_feedback:
-      0: |
-        Selection filters rows and projection chooses columns. Neither operation counts enrollments per
-        course.
-      2: |
-        Projection alone would list course IDs, but it would not connect enrollments or compute counts.
-    explanation: "Counting enrollments per course requires combining the two tables (**Join** on `course_id`), then aggregating (**Group-By** on `course_id` with `COUNT`). Selection alone filters rows but does not aggregate; Projection alone drops columns but does not count. The pattern — join to combine, group-by to aggregate, optional selection for filters — covers a large fraction of analytical SQL queries."
+    option_feedback: {"0": "Projection and selection do not create a count or preserve offerings with no enrollments.", "2": "An inner join omits zero-enrollment offerings, and joining only on ID mixes different quarters."}
+    explanation: "Start from Course and LEFT JOIN Enrollment on the complete offering key (course ID and quarter). Group by that key and COUNT the non-null student_id, so an unmatched offering has count zero. This follows the chapter’s composite-key and outer-join examples."
 
   - id: 14
     difficulty: intermediate

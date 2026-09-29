@@ -155,7 +155,7 @@ CREATE TABLE Course (
 
 ## Foreign Keys: Keeping References Consistent
 
-A **foreign key** is a column (or set of columns) in one table whose values are required to match a primary key in another table. Foreign keys are how tables are *linked*: they express "this row refers to *that* row over there".
+A **foreign key** is a column (or set of columns) whose non-null values must match an eligible unique key in a referenced table, often its primary key. The referenced table may be the same table. Foreign keys are how tables are *linked*: they express "this row refers to *that* row over there".
 
 In `IsEnrolled`, `uid` is a foreign key into `Student(uid)` — every row in `IsEnrolled` must refer to an existing student. Likewise, `(course_id, quarter)` is a foreign key into `Course(id, quarter)`.
 
@@ -179,7 +179,7 @@ Students frequently confuse these. The cleanest way to see the difference is to 
 | Role | What it means | Example from `IsEnrolled` |
 |---|---|---|
 | **Primary key** | Uniquely identifies *this* table's rows. No two rows share it. | `(uid, course_id, quarter)` — no student is enrolled twice in the same course+quarter |
-| **Foreign key** | Must match the primary key of *another* table. Ensures the reference is valid. | `uid` must equal some `Student.uid` |
+| **Foreign key** | Non-null values must match an eligible unique key in the referenced table (which may be the same table). | `uid` must equal some `Student.uid` |
 
 The *same column* (`uid`) plays *both* roles in `IsEnrolled`: it is part of the primary key (it helps identify this row) *and* it is a foreign key (it refers to a row of `Student`). Roles describe the column's job, not its name.
 
@@ -484,7 +484,7 @@ The real pedagogical value of CAP is not the Venn diagram — it's giving you vo
 | "We serve globally; an intercontinental link outage must not bring the system down." | **Partition tolerance** (mandatory, not optional) → pair with C or A |
 | "We write ATM withdrawals; ATMs must keep working during a WAN outage to the bank." | **Availability** → AP, with later reconciliation |
 
-The ATM case is worth pausing on. ATMs are often presented in slides as the "all three properties" motivating example, because ATMs seem to show you the correct balance, always let you withdraw, and work anywhere. In reality, ATMs are **AP with eventual consistency**: during a WAN outage to the bank, many ATMs continue to allow withdrawals up to a cached daily limit, and the resulting transactions are reconciled (sometimes producing temporary overdrafts) once connectivity returns. ATMs are the motivating *counterexample* — they show you why CAP is a real trade-off, not a system that defies it.
+The ATM example depends on its operating policy. **If** an ATM continues approving withdrawals from cached balances during a network partition, it prioritizes availability for those requests and reconciles later. **If** it refuses withdrawals until it can contact the authoritative bank service, it prioritizes consistency for those requests. CAP characterizes these choices; it does not classify every real ATM as AP.
 
 ---
 

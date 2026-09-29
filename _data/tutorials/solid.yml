@@ -75,8 +75,8 @@ steps:
       Before you touch the code, look at `_format_grade()` on line 105. It is a private helper. **Predict which of these will happen when you change it:**
 
       - **(A)** Only `generate_report()` is affected — `_format_grade()` is used there.
-      - **(B)** Only `calculate_gpa()` is affected — `_format_grade()` is used there.
-      - **(C)** Both `generate_report()` and `calculate_gpa()` change together, whether you want them to or not.
+      - **(B)** Only `calculate_gpa()` is affected — the display helper changes the arithmetic.
+      - **(C)** `get_grade_summary()`, `generate_report()`, and `send_grade_notification()` all change together.
       - **(D)** Nothing else is affected — it's a private method, so changes stay local.
 
       Hold your prediction. You'll check it in the quiz.
@@ -142,7 +142,7 @@ steps:
               # ── Grade Calculation ──────────────────────────────────────
               def _format_grade(self, grade: str) -> str:
                   """Shared helper: formats a grade for display.
-                  Used by BOTH calculate_gpa() and generate_report().
+                  Used by get_grade_summary(), generate_report(), and send_grade_notification().
                   WARNING: changing this affects multiple features!"""
                   return f"{grade} ({self._grade_weights[grade]:.1f})"
 
@@ -440,7 +440,7 @@ steps:
           options:
             - "Only `generate_report()` was affected by the change"
             - "Only `calculate_gpa()` was affected by the change"
-            - "Three features rippled: `generate_report`, `calculate_gpa`, `send_grade_notification`"
+            - "Three features rippled: `generate_report`, `get_grade_summary`, `send_grade_notification`"
             - "Nothing else was affected — a private helper change stays local to the class"
           correct_index: 2
           explanation: |
@@ -1950,11 +1950,11 @@ steps:
           options:
             - "They must read and understand hundreds of lines of unrelated channel code to find the right place to insert their branch"
             - "A typo or indentation error in the new branch could break an existing channel that was previously working"
-            - "Testing requires running the entire method, since all channels share a single code path and cannot be tested independently"
+            - "Each channel can be tested by choosing its input, but isolating its dependencies is harder when all channel logic shares one method"
             - "Performance will degrade significantly because each new elif adds runtime overhead to every notification"
           correct_indices: [0, 1, 2]
           explanation: |
-            The first three are real consequences of the if/elif design — they all trace to the same root cause: **all channel logic is stuffed into one method**. Reading hundreds of lines to add a feature is painful. Editing shared code risks breaking stuff. And you can't test one channel without loading all the others. Option 4 confuses *design* problems with *performance* problems — adding an elif adds essentially no runtime cost at typical scale, so a junior dev shouldn't reach for it as their reason to refactor. OCP is about **maintainability and safety**, not raw speed.
+            The risks concern navigating shared code, changing existing branches, and isolating channel dependencies. Branches can still be tested separately using appropriate inputs. Significant performance degradation is not implied merely by adding one branch; that claim would need measurement. OCP is about **maintainability and safety**, not raw speed.
 
         - question: |
             The Open/Closed Principle says a module should be **"open for extension, closed for modification."**
@@ -2639,7 +2639,7 @@ steps:
       questions:
 
         - question: |
-            **Arrange** the code blocks to construct a polymorphic notification system following OCP. Drag the blocks into the correct order.
+            **Arrange** the code blocks to construct a polymorphic notification system following OCP. Place the import first, then the abstract channel, the concrete email channel, and finally the router. Keep each class body together, with `name` before `deliver` in `EmailChannel`.
           type: parsons
           lines:
             - "from abc import ABC, abstractmethod"
@@ -2648,6 +2648,7 @@ steps:
             - "    def deliver(self, user, message):"
             - "        ..."
             - "class EmailChannel(NotificationChannel):"
+            - "    name = 'email'"
             - "    def deliver(self, user, message):"
             - "        print(f\"[EMAIL] {user}: {message}\")"
             - "class NotificationRouter:"
@@ -2691,12 +2692,12 @@ steps:
           type: multiple
           options:
             - "Each format can be unit-tested independently without loading unrelated format logic"
-            - "New formats can be added without risking regressions in existing, tested formats"
+            - "New formats can be added without editing existing format implementations, reducing regression risk"
             - "The ReportExporter class is shorter and easier to understand because it only handles dispatch, not serialization details"
             - "The polymorphic design uses less memory because abstract classes are more efficient than if/elif chains"
           correct_indices: [0, 1, 2]
           explanation: |
-            The first three are real benefits. Each format is independently testable, new formats can't break existing ones, and the exporter is cleaner because it just dispatches. The fourth is a myth — polymorphism doesn't inherently save memory, and in Python the difference is negligible. OCP is about **maintainability and safety**, not performance.
+            The benefits are independent testing, fewer edits to existing formats, and simpler dispatch. Integration or shared-contract changes can still introduce regressions. Polymorphism does not inherently save memory. OCP is about **maintainability and safety**, not performance.
   # --------------------------------------------------------------------------
   # STEP 6 — LSP Part 1: Feel the Broken Contract
   # Pedagogy:
@@ -3456,7 +3457,7 @@ steps:
             - "They replace the need for unit tests entirely"
           correct_indices: [0, 1, 2]
           explanation: |
-            The first three capture the value of **Design-by-Contract**: executable, documenting, and diagnostic. The fourth is wrong — assertions complement unit tests, they don't replace them. Unit tests verify specific inputs; contract assertions verify *every* call. Using both gives you deep coverage.
+            Assertions can make a contract executable, document expected behavior, and identify a broken clause. They complement unit tests. They check only executions that reach them, and Python can disable them with optimization (`-O`), so they are not a guarantee that every call is validated.
 
   # --------------------------------------------------------------------------
   # STEP 7 — LSP Part 2: Split the Hierarchy (Refactor & Transfer)
@@ -3557,7 +3558,7 @@ steps:
           ...
       ```
 
-      **The structural insight:** `GiftCardProcessor` used to *lie* about refunds. After the split, it *literally cannot be passed* to a function that needs refunds — a type checker or a simple `isinstance()` check catches the misuse at the boundary, not deep inside business logic after money has already moved.
+      **The structural insight:** `GiftCardProcessor` used to *lie* about refunds. After the split, a static type checker can reject passing it to a function that requires refunds. Python does not enforce annotations at runtime; an explicit `isinstance()` check can enforce the boundary when needed.
 
       </details>
 
@@ -4164,13 +4165,13 @@ steps:
             After splitting `PaymentProcessor` into `PaymentProcessor` (base) and `RefundableProcessor` (extends base with `refund`), `checkout_with_refund()` is typed to accept `list[RefundableProcessor]`. What does this give us that the old design did not?
           type: multiple
           options:
-            - "Misuse is caught at the function boundary — a GiftCardProcessor literally cannot be passed"
-            - "Every processor in the list is guaranteed to have a working refund() method"
+            - "A static type checker can flag passing a GiftCardProcessor to this annotated function"
+            - "The annotation states that every processor must support refund(); implementations must still honor its behavior"
             - "The refund contract is honestly scoped to the processors that can honor it"
             - "It prevents anyone from ever using GiftCardProcessor for payments"
           correct_indices: [0, 1, 2]
           explanation: |
-            The first three are the core wins. `GiftCardProcessor` can still be used for *payments* (option 4 is wrong) — it just cannot be used anywhere `refund()` is required, because it no longer claims to support it. The type signature of the function makes this explicit at the boundary.
+            The narrower contract makes refund capability explicit and lets a static checker flag incompatible callers. `GiftCardProcessor` still supports payments. Annotations alone do not stop an incompatible runtime call, and behavioral correctness still needs implementation and contract tests.
 
         - question: |
             In the media player refactor, `LiveStreamPlayer` ended up with **no** `seek()` or `get_duration()` methods — not even stubs that raise. Why is removing them entirely better than keeping stubs that raise `NotImplementedError`?
@@ -4182,7 +4183,7 @@ steps:
             - "It reduces the line count of the file"
           correct_index: 1
           explanation: |
-            The whole point of LSP is **honesty about capabilities**. A `seek()` that raises is a lie dressed as a method. Removing it moves the check from runtime (where it crashes *after* some work has already started) to load time (where `isinstance(player, SeekablePlayer)` returns False and the code goes down the non-seekable branch). Static type checkers like mypy can enforce this at CI time.
+            The whole point of LSP is **honesty about capabilities**. A `seek()` that raises is a lie dressed as a method. Removing it lets a static type checker reject incompatible uses. An explicit `isinstance(player, SeekablePlayer)` capability check runs at runtime and can choose the non-seekable branch before calling `seek()`. Merely loading the class does not perform that check.
 
         - question: |
             Which of the following subclass behaviors would violate LSP? Select all that apply.
@@ -4194,10 +4195,10 @@ steps:
             - "Overriding a method so it runs faster than the parent's version"
           correct_indices: [0, 2]
           explanation: |
-            - **New exceptions** (option 1): violates LSP — callers don't expect them.
-            - **Weaker preconditions** (option 2): LSP-compliant — accepting *more* is always safe.
-            - **Weaker postconditions** (option 3): violates LSP — you promised more than you're delivering.
-            - **Faster** (option 4): LSP-compliant — performance improvements don't change the contract.
+            - **New exceptions**: violates LSP — callers don't expect them.
+            - **Weaker preconditions**: LSP-compliant — accepting *more* is always safe.
+            - **Weaker postconditions**: violates LSP — you promised more than you're delivering.
+            - **Faster**: LSP-compliant — performance improvements don't change the contract.
 
         - question: |
             You see this structure in a legacy codebase:
@@ -8501,9 +8502,9 @@ steps:
             - "A production payment system with five tightly coupled classes. You introduce abstractions so unit tests can run without hitting Stripe"
           correct_indices: [0, 1]
           explanation: |
-            **Over-engineering examples (options A and B):** one-shot scripts and trivial utilities don't benefit from abstractions — you'll throw them away or never modify them. Writing ABCs for a disposable migration is pure ceremony.
+            **Over-engineering examples:** one-shot scripts and trivial utilities don't benefit from abstractions — you'll throw them away or never modify them. Writing ABCs for a disposable migration is pure ceremony.
 
-            **Legitimate SOLID applications (options C and D):** multiple actors (option C) is SRP's textbook trigger. Unit-testable payment logic (option D) is DIP's textbook payoff.
+            **Legitimate SOLID applications:** the class shared by three teams has multiple actors, SRP's textbook trigger. Unit-testable payment logic is DIP's textbook payoff.
 
             The judgment is always: *does the domain complexity justify the indirection?* For a one-hour script, no. For a payment system that runs for years, absolutely.
 

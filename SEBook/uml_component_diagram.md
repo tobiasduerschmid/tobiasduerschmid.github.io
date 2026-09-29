@@ -119,7 +119,7 @@ Reading this diagram: `PaymentService` has an incoming port `processPayment` (wh
 
 - **Assembly Connector** <span class="uml-sym" data-diagram="component" data-sym="-->"></span> Joins a **required** interface (socket, §2.2) on one component to a matching **provided** interface (ball) on another — see §4 for the ball-and-socket "snap". This is the canonical way to wire two components together in UML. In a simplified diagram (no ball-and-socket drawn), authors often use a plain solid arrow between components or ports as shorthand for the same idea.
 - **Delegation Connector** A connector inside a *composite* component that forwards an external port to a port on an internal sub-component (used in white-box views, not shown in this chapter).
-- **Dependency** <span class="uml-sym" data-diagram="component" data-sym="..>"></span> A dashed arrow indicating a weaker "uses" or "depends on" relationship — *not* a connector in the strict UML sense, but commonly drawn on component diagrams for cross-cutting uses.
+- **Dependency** <span class="uml-sym" data-diagram="component" data-sym="..>"></span> A dashed arrow indicating a "uses" or "depends on" relationship — *not* a connector in the strict UML sense, but commonly drawn on component diagrams for cross-cutting uses.
 - **Plain Link** <span class="uml-sym" data-diagram="component" data-sym="--"></span> An undirected association between components.
 
 > **Quick Check (Retrieval Practice):** Without looking back, name the two types of interfaces in component diagrams and their visual symbols. What is the difference between a provided and required interface?
@@ -240,7 +240,7 @@ Students sometimes confuse when to use which diagram. Here is a comparison:
 
 ## 6. Dependencies Between Components
 
-Like class diagrams, component diagrams can show **dependency** relationships using dashed arrows. A dependency means one component *uses* another but does not have a strong structural coupling.
+Like class diagrams, component diagrams can show **dependency** relationships using dashed arrows. A dependency means one component *uses* or relies on another. Unlike an assembly connector, it does not explicitly connect a required interface to a provided interface; it does not by itself measure coupling strength or architectural importance.
 
 <div class="uml-class-diagram-container" data-uml-type="component" data-uml-spec='@startuml
 component OrderService
@@ -368,7 +368,7 @@ BuildService ..> SlackNotifier : build status
 
 1. **Primary connectors (solid arrows):** The core data flow — GitHub triggers builds, builds push artifacts, builds trigger deployments. These are the main communication pathways of the pipeline.
 2. **Dependency (dashed arrow, `BuildService ..> SlackNotifier`):** Slack is a *cross-cutting concern* — the build reports status, but Slack is not part of the core build pipeline. A dashed arrow signals "I use this, but it is not a primary architectural interface." If Slack is down, the pipeline still builds and deploys.
-3. **Ports vs. no ports:** `SlackNotifier` has a `portin`, but `BuildService` reaches it via a dependency arrow without a named port. This is intentional — the Slack integration is loose, not a structured interface contract. The diagram communicates that informality.
+3. **Ports vs. no ports:** `SlackNotifier` has a `portin`, but `BuildService` reaches it via a dependency arrow without a named port. This is a modeling choice: the diagram records a dependency without showing the required/provided interface connection. It does not imply that the integration lacks a contract.
 4. **The whole pipeline in 30 seconds:** Push → build → artifact + deploy → notify. A new engineer can read the complete CI/CD flow from this diagram without opening a YAML config file. That is the core value proposition of component diagrams.
 
 ---

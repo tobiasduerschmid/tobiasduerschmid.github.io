@@ -358,6 +358,16 @@ Concrete heuristics:
 Pair every test with **multi-layered hints** (see §3.3) so a failing student
 gets graduated help, not a wall.
 
+The legacy regex tutorials in `js/regex-tutorial.js` and
+`js/regex-tutorial-advanced.js` define their exercises in JavaScript rather
+than tutorial YAML. Their test cases use `shouldMatch` for presence and
+`expectedMatches` for the ordered full-match strings an extraction task
+requires. The advanced tutorial also supports `matchCount`, `firstMatch`,
+and `namedGroups`. Use extraction expectations when the task specifies
+individual matches or their boundaries; a boolean match alone cannot verify
+those requirements. Live test indicators and final grading must apply the
+same expectations while accepting equivalent regex patterns.
+
 ### Multi-layered hints
 
 Hints are the project's primary way to keep students unstuck without giving

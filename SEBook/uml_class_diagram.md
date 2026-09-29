@@ -197,7 +197,7 @@ When neither end of an association is annotated with an arrowhead or X mark, nav
 
 Here are the four navigability combinations, each with an example:
 
-**Unidirectional (one arrowhead):** Only one class holds a reference.
+**One direction specified (one arrowhead):** Navigation toward the arrowhead is specified; an unmarked reverse direction remains unspecified.
 
 <div class="uml-class-diagram-container" data-uml-type="class" data-uml-spec='@startuml
 layout horizontal
@@ -207,7 +207,7 @@ class Politician
 Vote --> Politician
 @enduml'></div>
 
-`Vote` holds a reference to `Politician`, but `Politician` does not know about individual `Vote` objects.
+`Vote` can navigate to `Politician`. This notation alone does not say whether `Politician` can navigate back to individual `Vote` objects; an X at the reverse end would explicitly mark it non-navigable.
 
 **Bidirectional (arrowheads on both ends):** Both classes hold a reference to each other.
 
@@ -262,7 +262,7 @@ University "1" o-- "*" Professor
 
 #### Composition ("Is-Made-Up-Of")
 
-A strict relationship where the parts *cannot* exist without the whole. If you destroy a House, the Rooms inside it are also destroyed. A part may belong to **only one** composite at a time (exclusive ownership), and the composite has sole responsibility for the lifetime of its parts.
+A relationship with exclusive composite ownership: deleting the whole deletes its current parts. A part may belong to **at most one** composite at a time and may be detached before deletion, if the model allows it. UML does not prescribe where or in what order these objects are created. In this House/Room model, deleting a house deletes its rooms.
 * **UML Symbol:** <span class="uml-sym" data-diagram="class" data-sym="*--"></span> A solid line with a **filled diamond** at the "whole" end.
 * Per the UML spec, the multiplicity on the composite end must be `1` or `0..1`.
 

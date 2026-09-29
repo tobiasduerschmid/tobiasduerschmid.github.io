@@ -118,7 +118,7 @@ function LikeButton() {
 When new state depends on the old state, always pass a function to the setter instead of the current value. This avoids **stale closure** bugs, where a callback captures an outdated snapshot of the variable:
 
 ```jsx
-// Risky — `likes` captured at render time; concurrent updates can drop clicks
+// Use an updater for multiple queued increments or delayed callbacks
 setLikes(likes + 1);
 
 // Safe — React passes the guaranteed latest value as `prev`
@@ -338,7 +338,7 @@ const visibleTasks = tasks.filter(t => filter === 'all' || t.status === filter);
 ```
 
 **3. Never mutate state — always create new arrays and objects.**
-React detects changes by *reference*. `array.push()` returns the same reference, so React skips the re-render. Spread into a new array instead.
+React compares state values with `Object.is`. `array.push()` mutates the existing array and returns its new length. Passing the same mutated array to a setter can skip a re-render; passing the return value would replace the array state with a number. Spread into a new array instead.
 ```jsx
 // Bad — mutates in place, React sees no change
 items.push(newItem);

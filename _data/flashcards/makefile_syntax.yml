@@ -10,7 +10,7 @@ cards:
 
   - id: 2
     difficulty: intermediate
-    question: "What specific whitespace character MUST be used to indent the command/recipe lines in a Makefile rule?"
+    question: "What specific whitespace character must be used with the default recipe prefix to indent the command/recipe lines in a Makefile rule?"
     answer: "A Tab character"  
     explanation: "If you use spaces instead of a Tab, `make` will throw an error (often 'missing separator')."  
 

@@ -131,7 +131,7 @@ questions:
     question: "HTTP is described as a 'stateless' protocol. What does this mean?"
     options:
       - "The server discards all data from memory after each request."
-      - "Each request is independent — the server keeps no memory of prior requests."
+      - "HTTP interprets requests independently; applications can add session state."
       - "HTTP connections are never encrypted."
       - "HTTP can only transfer plain text, not binary content like images."
     correct_index: 1

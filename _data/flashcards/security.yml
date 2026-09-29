@@ -10,15 +10,15 @@ cards:
 
   - id: 2
     difficulty: basic
-    question: "A laptop containing unencrypted patient health records is stolen. **Which CIA property is violated?**"
-    answer: "**Confidentiality** — sensitive data is now accessible to whoever holds the laptop, who is not an authorized user. Integrity and Availability are not affected on the original system."
+    question: "A stolen laptop contains an unencrypted copy of patient records; intact records remain available on the hospital’s server. Which CIA property is directly at risk from disclosure?"
+    answer: "Confidentiality: an unauthorized holder may read the laptop’s copy. The stated intact server copy means this example does not establish loss of hospital-wide availability or modification of the records."
     explanation: "Disk encryption (e.g., FileVault, BitLocker, LUKS) is the standard countermeasure: a stolen disk reveals only ciphertext that the attacker cannot decrypt without the key."
 
   - id: 3
     difficulty: intermediate
     question: "A ransomware attack encrypts the only copy of a database. **Which CIA properties are violated?**"
-    answer: "**Integrity** — the on-disk bytes have been overwritten with attacker-controlled ciphertext, an unauthorized modification. **Availability** — the legitimate users can no longer read their data. (Pure ransomware does not violate Confidentiality; modern 'double-extortion' ransomware that *also* exfiltrates would add a confidentiality violation.)"
-    explanation: "The standard countermeasures are *backups* (restore from before the attack) and *least-privilege filesystem permissions* (so a single compromised process can't rewrite everything)."
+    answer: "Integrity is violated by unauthorized encryption of the stored bytes. Availability is violated because legitimate users cannot read the only copy. Those facts alone do not establish whether sensitive information was disclosed; ransomware can also cause a confidentiality breach."
+    explanation: "Restore from protected backups and restrict write privileges to limit damage. Lack of reported exfiltration is not proof that attacker-controlled code never accessed plaintext."
 
   - id: 4
     difficulty: basic
@@ -65,26 +65,26 @@ cards:
   - id: 11
     difficulty: intermediate
     question: "Define **public-key (asymmetric) cryptography**, and explain how it solves the key-distribution problem."
-    answer: "**Public-key cryptography** generates a *pair* of mathematically linked keys: a **public key** that anyone may have, and a **private key** kept secret by the owner. A message encrypted with one key of the pair can only be decrypted by the *other* key. To send Alice a private message, Bob encrypts with **Alice's public key** — only her private key can decrypt it. No prior shared secret is needed; Alice's public key can be published freely."
-    explanation: "RSA, ECC (elliptic-curve), and Diffie-Hellman are the standard families. Public-key operations are slow per byte, so they are typically used to *negotiate a symmetric key* that does the bulk encryption — the design at the heart of TLS."
+    answer: "Public-key cryptography uses mathematically related public and private keys. For public-key encryption, encrypt to the recipient’s public key and decrypt with the matching private key. Signature schemes instead use a private signing key and a public verification key. Do not assume either key encrypts what the other decrypts."
+    explanation: "Use an authenticated public key to avoid substituting an attacker’s key. Public-key encryption, digital signatures, and key agreement are distinct operations; protocols can combine them with fast symmetric encryption."
 
   - id: 12
     difficulty: basic
     question: "Alice wants to send Bob a private message using public-key cryptography. **Which key does she use to encrypt?**"
     answer: "**Bob's public key.** Anyone may have it, so Alice can use it without prior secret sharing — but only Bob's matching *private* key (which only Bob holds) can decrypt the resulting ciphertext."
-    explanation: "Common confusion: students reach for *Alice's* private key by analogy with signatures. That direction (encrypt with one's own private key) is what produces a **signature**, not a private message — anyone with Alice's public key could decrypt it, so the contents are not secret."
+    explanation: "The recipient’s public encryption key is used for confidentiality. The sender’s private signing key is used for authentication and integrity; a signature is not private-key encryption of the message."
 
   - id: 13
     difficulty: intermediate
     question: "What is a **digital signature**, and how does it work?"
-    answer: "A **digital signature** proves that a document was produced by the holder of a particular private key, and that the document has not been altered. The signer (1) computes a cryptographic hash of the document (SHA-256, e.g.); (2) encrypts the *hash* with their *private* key — that encrypted hash is the signature. To verify, anyone with the document, the signature, and the signer's *public* key decrypts the signature, recomputes the hash from the document, and checks the two match."
-    explanation: "Signatures provide *integrity and authenticity* — they do **not** provide confidentiality (the document is sent in the clear next to its signature). For both confidentiality and authenticity, encrypt-then-sign or sign-then-encrypt — there are subtle ordering issues; libraries like `libsodium` handle this for you."
+    answer: "A signature is computed from a message and a private signing key. Verification uses the message, signature, and matching public key to check integrity and authorship by the key holder. The signing algorithm commonly hashes the message internally; verification does not generally decrypt a hash."
+    explanation: "Signatures do not hide message contents. Use a vetted protocol when confidentiality and authenticity are both required; RSA, ECDSA, and EdDSA have different signing and verification procedures."
 
   - id: 14
     difficulty: intermediate
-    question: "**Why** do digital signature schemes hash the document first, instead of encrypting the whole document with the private key?"
-    answer: "**Performance.** Public-key operations are roughly three orders of magnitude slower per byte than a fast hash like SHA-256. Hashing reduces every document — regardless of size — to a fixed-length digest (32 bytes for SHA-256), so the slow public-key operation runs over those 32 bytes instead of the whole document. The hash's collision-resistance also means an attacker cannot construct a *different* document with the same hash and therefore the same signature."
-    explanation: "Without hashing, signing a 1 GB file would require running RSA over a gigabyte of data. With hashing, RSA still runs over 32 bytes — independent of the file's size."
+    question: "Why do practical signature schemes hash message data?"
+    answer: "Hashing handles arbitrary-size messages efficiently while the public-key operations work with a bounded-size representation. Collision resistance helps prevent substituting another message with the same representation. Exact hashing and encoding rules depend on the signature scheme."
+    explanation: "A SHA-256 digest is 32 bytes, but an RSA signature operation uses an encoded integer sized for the RSA modulus. It is inaccurate to describe it as encrypting just 32 bytes or to define all signatures as encryption."
 
   - id: 15
     difficulty: basic
@@ -95,13 +95,13 @@ cards:
   - id: 16
     difficulty: advanced
     question: "How does **session-based authentication** (with a session cookie) work, and what are the three cookie flags that harden it?"
-    answer: "After successful login, the server generates a random opaque **session ID** mapping to the user, stores it in a server-side session store, and returns it to the client in a cookie. The browser automatically attaches the cookie to every subsequent request to the same domain. Three hardening flags: **`HttpOnly`** (cookie not readable from JavaScript), **`Secure`** (cookie only sent over HTTPS), **`SameSite=Strict`** or **`Lax`** (cookie not attached to cross-site requests, defending against CSRF)."
-    explanation: "Sessions are stateful (the server keeps a session store) but easy to revoke — invalidate the row in the store and the session is dead immediately."
+    answer: "After login, the server stores an opaque session ID mapped to the user and sends it as a cookie. HttpOnly blocks JavaScript access to the cookie; Secure restricts transport to secure connections; SameSite restricts cross-site attachment. Strict and Lax differ: Lax permits safe top-level cross-site navigations."
+    explanation: "Sessions can be revoked in the server store. SameSite helps against CSRF, but it does not stop requests issued by XSS already running in the trusted origin."
 
   - id: 17
     difficulty: intermediate
     question: "What is a **JSON Web Token (JWT)**, and how does it differ from a session cookie?"
-    answer: "A **JWT** is a small encoded JSON document — typically `{ sub: <user-id>, exp: <expiry>, … }` — **digitally signed by the server's key**. The client attaches it to every request (in an `Authorization: Bearer …` header or in a cookie). The server verifies the signature with its own key and trusts the claims **without consulting any database**. Unlike a session cookie, there is no server-side session store; the JWT *is* the session, and the signature is what makes it forgery-proof."
+    answer: "In a common authentication design, a server issues a signed JWT containing claims such as subject and expiry. The client sends it with later requests. A verifier checks the signature with the appropriate key and validates issuer, audience, expiry, and other required claims. This can avoid a session-store lookup, but applications may still consult server-side state for revocation or authorization. Forgery resistance depends on the algorithm, key protection, and correct validation."
     explanation: "Statelessness is the JWT win (no shared session store; easier horizontal scaling). The price is harder revocation — without a session store, a stolen JWT remains usable until its `exp` time."
 
   - id: 18
@@ -114,7 +114,7 @@ cards:
     difficulty: advanced
     question: "Does the **`HttpOnly`** cookie flag fully protect a session against XSS? Explain."
     answer: "**No.** `HttpOnly` prevents JavaScript from *reading* the cookie, so a successful XSS attack cannot directly *exfiltrate* the session token. But the script can still *use* the session: any `fetch('/api/...', { credentials: 'include' })` call will have the cookie attached automatically by the browser, so the attacker rides the session in the victim's browser without ever touching the raw token. This is sometimes called *session-riding*."
-    explanation: "`HttpOnly` is valuable but not sufficient. Defense in depth: prevent XSS in the first place (output encoding), add a strict CSP, set `SameSite=Strict` on session cookies, and require fresh authentication for sensitive actions (transfer money, change password)."
+    explanation: "HttpOnly limits direct token theft but does not stop authenticated requests by same-origin malicious code. Prevent XSS through context-appropriate output encoding and a strict CSP. SameSite helps against cross-site request forgery; it does not block session-riding by an XSS payload in the trusted origin."
 
   - id: 20
     difficulty: basic
@@ -162,7 +162,7 @@ cards:
     difficulty: advanced
     question: "**Why are session cookies still vulnerable to XSS** even when `HttpOnly` is set?"
     answer: "Because XSS gives the attacker code execution *inside the trusted page's origin*. Even though the script cannot read the cookie (thanks to `HttpOnly`), it can still issue authenticated `fetch` requests through the browser — the browser will attach the cookie automatically. So the attacker rides the session in the victim's browser without ever touching the raw token. This is sometimes called *session-riding*."
-    explanation: "The right framing: `HttpOnly` prevents *theft* of the session ID, not *use* of the session. Defense in depth — strict CSP, output encoding, `SameSite=Strict` — is what prevents XSS from being weaponized in the first place."
+    explanation: "HttpOnly limits direct token theft but does not stop authenticated requests by same-origin malicious code. Prevent XSS through context-appropriate output encoding and a strict CSP. SameSite helps against cross-site request forgery; it does not block session-riding by an XSS payload in the trusted origin."
 
   - id: 28
     difficulty: advanced

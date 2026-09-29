@@ -14,16 +14,16 @@ cards:
     question: "What do the **initial pseudostate** and **final state** look like?"
     answer: "Initial = solid black circle. Final = solid circle inside a hollow circle (bullseye)."
     explanation: >
-      The **initial pseudostate** (<span class="uml-sym" data-diagram="state" data-sym="[*]"></span>) is the entry point — it must have exactly one outgoing transition with no event trigger. The **final state** (◎) indicates the object's lifecycle has ended.
+      The **initial pseudostate** (<span class="uml-sym" data-diagram="state" data-sym="[*]"></span>) is the entry point — it may have at most one outgoing transition, with no trigger or guard. The **final state** (◎) indicates that its enclosing region has completed; it does not itself destroy the context object.
 
-      <div data-uml-type="state" data-uml-spec="[*] --> Active : create()&#10;Active --> [*] : destroy()"></div>
+      <div data-uml-type="state" data-uml-spec="[*] --> Active&#10;Active --> [*] : destroy()"></div>
 
   - id: 3
     difficulty: intermediate
     question: "What happens when a transition's **guard condition** evaluates to false?"
-    answer: "The transition does **not** fire; the object remains in its current state."
+    answer: "That transition does **not** fire. Another enabled transition may still be taken."
     explanation: >
-      A guard acts as a gatekeeper. Even if the triggering event occurs, the transition is only taken if the guard is true. If false, the event is effectively ignored and the object stays put.
+      A guard acts as a gatekeeper. Even if the triggering event occurs, the transition is only taken if the guard is true. If false, this transition is disabled. The object stays put only if no other enabled transition handles the event.
 
   - id: 4
     difficulty: intermediate
@@ -44,11 +44,11 @@ cards:
     question: "What are the three types of **internal activities** a state can have?"
     answer: "`entry /` (runs on entering), `exit /` (runs on leaving), `do /` (runs while in the state)."
     explanation: >
-      Internal activities execute at specific points: **entry/** runs every time the state is entered (regardless of which transition was taken), **exit/** runs every time the state is exited, and **do/** runs continuously while the object remains in that state. These are different from transition effects, which only execute during a specific transition.
+      Internal activities execute at specific points: **entry/** runs every time the state is entered (regardless of which transition was taken), **exit/** runs every time the state is exited, and **do/** starts after entry and may finish while the state remains active; if still running when the state exits, it is aborted. These are different from transition effects, which only execute during a specific transition.
 
   - id: 7
     difficulty: intermediate
     question: "Does a state machine always need a **final state**?"
-    answer: "No. A state machine always needs an **initial** pseudostate, but a final state is only needed if the object's lifecycle can end."
+    answer: "No. Final states mark region completion. Initial pseudostates mark default entry, with at most one per region; other explicit entry paths are possible."
     explanation: >
-      Many real-world objects run indefinitely (e.g., a server, a hardware controller). Their state machines have an initial state but no final state. An order, on the other hand, has a clear end-of-life (delivered, canceled), so it needs a final state.
+      Many real-world objects run indefinitely (e.g., a server, a hardware controller). Their state machines have an initial state but no final state. An order workflow can use a final state to mark completion after delivery or cancellation without implying that the stored order object is destroyed.

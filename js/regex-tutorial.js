@@ -20,14 +20,14 @@
       fragments: ['p', 'r', 'i', 'n', 't'],
       solution: 'print',
       tests: [
-        { input: 'print this', shouldMatch: true, label: 'contains "print"' },
-        { input: 'sprint away', shouldMatch: true, label: '"print" inside "sprint"' },
+        { input: 'print this', shouldMatch: true, expectedMatches: ["print"], label: 'contains "print"' },
+        { input: 'sprint away', shouldMatch: true, expectedMatches: ["print"], label: '"print" inside "sprint"' },
         { input: 'no match here', shouldMatch: false, label: 'no "print"' },
         { input: 'a priori', shouldMatch: false, label: 'has "pri" but not "print"' }
       ],
       hiddenTests: [
         { input: 'PRINT', shouldMatch: false },
-        { input: 'printer', shouldMatch: true }
+        { input: 'printer', shouldMatch: true, expectedMatches: ["print"] }
       ]
     },
     {
@@ -38,12 +38,12 @@
       sampleText: 'System log: error in module A. No error found in module B. Warning: terror alert is not an error. Error handling improved.',
       solution: 'error',
       tests: [
-        { input: 'error occurred', shouldMatch: true, label: 'contains "error"' },
+        { input: 'error occurred', shouldMatch: true, expectedMatches: ["error"], label: 'contains "error"' },
         { input: 'all clear', shouldMatch: false, label: 'no "error"' },
         { input: 'Error', shouldMatch: false, label: 'capital E — should NOT match (case sensitive)' }
       ],
       hiddenTests: [
-        { input: 'terror', shouldMatch: true },
+        { input: 'terror', shouldMatch: true, expectedMatches: ["error"] },
         { input: 'ERROR', shouldMatch: false }
       ]
     },
@@ -58,12 +58,12 @@
       fragments: ['[', 'a', 'e', 'i', 'o', 'u', ']'],
       solution: '[aeiou]',
       tests: [
-        { input: 'hello', shouldMatch: true, label: 'has vowels' },
+        { input: 'hello', shouldMatch: true, expectedMatches: ["e","o"], label: 'has vowels' },
         { input: 'xyz', shouldMatch: false, label: 'no vowels' },
         { input: 'HELLO', shouldMatch: false, label: 'uppercase — should NOT match' }
       ],
       hiddenTests: [
-        { input: 'aeiou', shouldMatch: true },
+        { input: 'aeiou', shouldMatch: true, expectedMatches: ["a","e","i","o","u"] },
         { input: 'bcdfg', shouldMatch: false }
       ]
     },
@@ -75,12 +75,12 @@
       sampleText: 'Score: 42 points! Time remaining: 3:30. Player #7 wins $100.',
       solution: '[^a-zA-Z]',
       tests: [
-        { input: '123', shouldMatch: true, label: 'all digits — should match' },
+        { input: '123', shouldMatch: true, expectedMatches: ["1","2","3"], label: 'all digits — should match' },
         { input: 'abc', shouldMatch: false, label: 'all letters — should NOT match' },
-        { input: 'hi!', shouldMatch: true, label: 'has punctuation — should match' }
+        { input: 'hi!', shouldMatch: true, expectedMatches: ["!"], label: 'has punctuation — should match' }
       ],
       hiddenTests: [
-        { input: ' ', shouldMatch: true },
+        { input: ' ', shouldMatch: true, expectedMatches: [" "] },
         { input: 'ABCdef', shouldMatch: false }
       ]
     },
@@ -94,12 +94,12 @@
       sampleText: 'Invoice #8842: 3 items at $15 each, total $45. Tax ID: 9021-XB. Ref code: A1B2C3.',
       solution: '\\d',
       tests: [
-        { input: 'Room 101', shouldMatch: true, label: 'contains digits' },
+        { input: 'Room 101', shouldMatch: true, expectedMatches: ["1","0","1"], label: 'contains digits' },
         { input: 'hello', shouldMatch: false, label: 'no digits' },
-        { input: '42!', shouldMatch: true, label: 'digits with punctuation' }
+        { input: '42!', shouldMatch: true, expectedMatches: ["4","2"], label: 'digits with punctuation' }
       ],
       hiddenTests: [
-        { input: '0', shouldMatch: true },
+        { input: '0', shouldMatch: true, expectedMatches: ["0"] },
         { input: 'abc', shouldMatch: false }
       ]
     },
@@ -111,13 +111,13 @@
       sampleText: 'Files: report.pdf, data.csv, photo.jpg, README, notes.txt, archive.tar.gz, config.yaml',
       solution: '\\.[a-z]+',
       tests: [
-        { input: '.txt', shouldMatch: true, label: 'dot + letters' },
+        { input: '.txt', shouldMatch: true, expectedMatches: [".txt"], label: 'dot + letters' },
         { input: 'txt', shouldMatch: false, label: 'no dot — should NOT match' },
-        { input: '.a', shouldMatch: true, label: 'single-letter extension' }
+        { input: '.a', shouldMatch: true, expectedMatches: [".a"], label: 'single-letter extension' }
       ],
       hiddenTests: [
         { input: '.PDF', shouldMatch: false },
-        { input: '.json', shouldMatch: true }
+        { input: '.json', shouldMatch: true, expectedMatches: [".json"] }
       ]
     },
 
@@ -130,14 +130,14 @@
       sampleText: null,
       solution: '^\\d+$',
       tests: [
-        { input: '12345', shouldMatch: true, label: 'all digits — should match' },
+        { input: '12345', shouldMatch: true, expectedMatches: ["12345"], label: 'all digits — should match' },
         { input: 'abc', shouldMatch: false, label: 'all letters — should NOT match' },
         { input: '123abc', shouldMatch: false, label: 'mixed — should NOT match' },
         { input: '', shouldMatch: false, label: 'empty — should NOT match' }
       ],
       hiddenTests: [
         { input: ' 42 ', shouldMatch: false },
-        { input: '007', shouldMatch: true }
+        { input: '007', shouldMatch: true, expectedMatches: ["007"] }
       ]
     },
     {
@@ -149,14 +149,14 @@
       fragments: ['^', '\\d', '+', '$'],
       solution: '^\\d+$',
       tests: [
-        { input: '12345', shouldMatch: true, label: 'all digits' },
+        { input: '12345', shouldMatch: true, expectedMatches: ["12345"], label: 'all digits' },
         { input: '123abc', shouldMatch: false, label: 'mixed — should NOT match' },
         { input: '', shouldMatch: false, label: 'empty — should NOT match' },
-        { input: '007', shouldMatch: true, label: 'leading zeros OK' }
+        { input: '007', shouldMatch: true, expectedMatches: ["007"], label: 'leading zeros OK' }
       ],
       hiddenTests: [
         { input: ' 123', shouldMatch: false },
-        { input: '42', shouldMatch: true }
+        { input: '42', shouldMatch: true, expectedMatches: ["42"] }
       ]
     },
     {
@@ -168,12 +168,12 @@
       solution: '\\bgo\\b',
       showVisualizer: true,
       tests: [
-        { input: "let's go", shouldMatch: true, label: '"go" as a word' },
+        { input: "let's go", shouldMatch: true, expectedMatches: ["go"], label: '"go" as a word' },
         { input: 'goal', shouldMatch: false, label: '"goal" — should NOT match' },
         { input: 'cargo', shouldMatch: false, label: '"cargo" — should NOT match' }
       ],
       hiddenTests: [
-        { input: 'go', shouldMatch: true },
+        { input: 'go', shouldMatch: true, expectedMatches: ["go"] },
         { input: 'Go!', shouldMatch: false },
         { input: 'ongoing', shouldMatch: false }
       ]
@@ -188,14 +188,14 @@
       solution: '^[a-zA-Z0-9]+$',
       hint: 'Without anchors, the regex finds "admin" as a substring match and considers it a success — ignoring the rest.',
       tests: [
-        { input: 'admin', shouldMatch: true, label: 'valid username' },
-        { input: 'user123', shouldMatch: true, label: 'alphanumeric' },
+        { input: 'admin', shouldMatch: true, expectedMatches: ["admin"], label: 'valid username' },
+        { input: 'user123', shouldMatch: true, expectedMatches: ["user123"], label: 'alphanumeric' },
         { input: 'admin!@#', shouldMatch: false, label: 'special chars — should NOT match' },
         { input: '', shouldMatch: false, label: 'empty — should NOT match' }
       ],
       hiddenTests: [
         { input: 'hello world', shouldMatch: false },
-        { input: 'Test', shouldMatch: true }
+        { input: 'Test', shouldMatch: true, expectedMatches: ["Test"] }
       ]
     },
 
@@ -208,12 +208,12 @@
       sampleText: 'Locations: New York 10001, Los Angeles 90210, Chicago 60601, apt 42, serial 1234567, code 999.',
       solution: '\\b\\d{5}\\b',
       tests: [
-        { input: '90210', shouldMatch: true, label: 'exactly 5 digits' },
+        { input: '90210', shouldMatch: true, expectedMatches: ["90210"], label: 'exactly 5 digits' },
         { input: '123', shouldMatch: false, label: '3 digits — too short' },
         { input: '1234567', shouldMatch: false, label: '7 digits — too long' }
       ],
       hiddenTests: [
-        { input: '00000', shouldMatch: true },
+        { input: '00000', shouldMatch: true, expectedMatches: ["00000"] },
         { input: '12 34', shouldMatch: false }
       ]
     },
@@ -221,17 +221,17 @@
       id: 'quant-2', type: 'free',
       section: 'Quantifiers',
       title: 'Star vs. Plus',
-      goal: 'Match strings that start with one or more <code>a</code> followed by a <code>b</code>. Notice: <code>a*b</code> would also match a lone <code>b</code> — but <code>a+b</code> requires at least one <code>a</code>.',
+      goal: 'Match sequences of one or more <code>a</code> followed by a <code>b</code>. Notice: <code>a*b</code> would also match a lone <code>b</code> — but <code>a+b</code> requires at least one <code>a</code>.',
       sampleText: 'Test: ab, aab, aaab, b, xb, aaa, aaaab.',
       solution: 'a+b',
       tests: [
-        { input: 'ab', shouldMatch: true, label: 'one a + b' },
-        { input: 'aaab', shouldMatch: true, label: 'multiple a\'s + b' },
+        { input: 'ab', shouldMatch: true, expectedMatches: ["ab"], label: 'one a + b' },
+        { input: 'aaab', shouldMatch: true, expectedMatches: ["aaab"], label: 'multiple a\'s + b' },
         { input: 'b', shouldMatch: false, label: 'lone b — should NOT match (need at least one a)' },
         { input: 'aaa', shouldMatch: false, label: 'no b — should NOT match' }
       ],
       hiddenTests: [
-        { input: 'aab', shouldMatch: true },
+        { input: 'aab', shouldMatch: true, expectedMatches: ["aab"] },
         { input: 'bb', shouldMatch: false }
       ]
     },
@@ -243,13 +243,13 @@
       sampleText: 'Upload your file here. Multiple files are supported. The file manager shows all files in the current directory.',
       solution: 'files?',
       tests: [
-        { input: 'file', shouldMatch: true, label: 'singular' },
-        { input: 'files', shouldMatch: true, label: 'plural' },
+        { input: 'file', shouldMatch: true, expectedMatches: ["file"], label: 'singular' },
+        { input: 'files', shouldMatch: true, expectedMatches: ["files"], label: 'plural' },
         { input: 'fil', shouldMatch: false, label: 'too short — should NOT match' }
       ],
       hiddenTests: [
-        { input: 'profile', shouldMatch: true },
-        { input: 'filed', shouldMatch: true }
+        { input: 'profile', shouldMatch: true, expectedMatches: ["file"] },
+        { input: 'filed', shouldMatch: true, expectedMatches: ["file"] }
       ]
     },
 
@@ -262,13 +262,13 @@
       sampleText: 'The grey sky turned dark gray by evening. Is it grey or gray? The greyhound ran across the gravel path, its grey fur blending into gray fog.',
       solution: 'gr[ae]y',
       tests: [
-        { input: 'grey', shouldMatch: true, label: 'British spelling' },
-        { input: 'gray', shouldMatch: true, label: 'American spelling' },
+        { input: 'grey', shouldMatch: true, expectedMatches: ["grey"], label: 'British spelling' },
+        { input: 'gray', shouldMatch: true, expectedMatches: ["gray"], label: 'American spelling' },
         { input: 'gravy', shouldMatch: false, label: '"gravy" — should NOT match' }
       ],
       hiddenTests: [
         { input: 'gry', shouldMatch: false },
-        { input: 'greyhound', shouldMatch: true }
+        { input: 'greyhound', shouldMatch: true, expectedMatches: ["grey"] }
       ]
     },
     {
@@ -279,12 +279,12 @@
       sampleText: 'Schedule: standup at 09:30, lunch at 12:00, review at 15:45. Note: 9:5 is not valid format.',
       solution: '\\d{2}:\\d{2}',
       tests: [
-        { input: '09:30', shouldMatch: true, label: 'valid time' },
-        { input: '12:00', shouldMatch: true, label: 'noon' },
+        { input: '09:30', shouldMatch: true, expectedMatches: ["09:30"], label: 'valid time' },
+        { input: '12:00', shouldMatch: true, expectedMatches: ["12:00"], label: 'noon' },
         { input: '9:30', shouldMatch: false, label: 'single-digit hour — should NOT match' }
       ],
       hiddenTests: [
-        { input: '23:59', shouldMatch: true },
+        { input: '23:59', shouldMatch: true, expectedMatches: ["23:59"] },
         { input: 'ab:cd', shouldMatch: false },
         { input: '09:3', shouldMatch: false }
       ]
@@ -299,13 +299,13 @@
       solution: '^(0[1-9]|1[0-2])/(0[1-9]|[12]\\d|3[01])$',
       hint: 'The current pattern accepts any two digits for month and day. You need to restrict the ranges, and add anchors.',
       tests: [
-        { input: '03/15', shouldMatch: true, label: 'valid date' },
-        { input: '12/25', shouldMatch: true, label: 'December 25' },
+        { input: '03/15', shouldMatch: true, expectedMatches: ["03/15"], label: 'valid date' },
+        { input: '12/25', shouldMatch: true, expectedMatches: ["12/25"], label: 'December 25' },
         { input: '99/99', shouldMatch: false, label: 'invalid — should NOT match' },
         { input: '00/15', shouldMatch: false, label: 'month 00 — should NOT match' }
       ],
       hiddenTests: [
-        { input: '01/01', shouldMatch: true },
+        { input: '01/01', shouldMatch: true, expectedMatches: ["01/01"] },
         { input: '13/01', shouldMatch: false },
         { input: '12/32', shouldMatch: false }
       ]
@@ -361,7 +361,7 @@
   }
 
   function findMatches(regex, text) {
-    if (!regex || regex.error || !text) return [];
+    if (!regex || regex.error || text === null || text === undefined) return [];
     var matches = [], m, safety = 0;
     regex.lastIndex = 0;
     while ((m = regex.exec(text)) !== null) {
@@ -377,6 +377,16 @@
     if (!re || re.error) return false;
     re.lastIndex = 0;
     return re.test(input);
+  }
+
+  // Check the extracted text, not only whether any match exists.
+  function checkSingleTest(pattern, test) {
+    var regex = tryCompile(pattern, 'g');
+    if (!regex || regex.error) return false;
+    var matches = findMatches(regex, test.input).map(function (match) { return match.text; });
+    if ((matches.length > 0) !== test.shouldMatch) return false;
+    return !test.expectedMatches || (matches.length === test.expectedMatches.length &&
+      matches.every(function (text, index) { return text === test.expectedMatches[index]; }));
   }
 
   // ── HTML Helpers ───────────────────────────────────────────────────────────
@@ -636,8 +646,7 @@
       var t = ex.tests[i], el = testEls[i];
       if (!el) continue;
       if (!pattern) { el.className = 'rt-test'; el.querySelector('.rt-test-icon').innerHTML = '&#9679;'; continue; }
-      var matches = testRegex(pattern, t.input);
-      var ok = (matches === t.shouldMatch);
+      var ok = checkSingleTest(pattern, t);
       el.className = 'rt-test ' + (ok ? 'rt-test-pass' : 'rt-test-fail');
       el.querySelector('.rt-test-icon').innerHTML = ok ? '&#10003;' : '&#10007;';
     }
@@ -664,12 +673,13 @@
 
   function getFailureHint(ex, pattern) {
     // Check visible tests for specific failure patterns to give targeted guidance
-    var falsePositives = 0, falseNegatives = 0;
+    var falsePositives = 0, falseNegatives = 0, wrongExtractions = 0;
     for (var i = 0; i < ex.tests.length; i++) {
       var t = ex.tests[i];
       var matched = testRegex(pattern, t.input);
       if (matched && !t.shouldMatch) falsePositives++;
       if (!matched && t.shouldMatch) falseNegatives++;
+      if (matched && t.shouldMatch && !checkSingleTest(pattern, t)) wrongExtractions++;
     }
     if (falsePositives > 0 && falseNegatives === 0) {
       return 'Your pattern is matching text it shouldn\'t. Check the failing tests — what is your regex accepting that it should reject?';
@@ -678,6 +688,7 @@
     } else if (falsePositives > 0 && falseNegatives > 0) {
       return 'Some matches are wrong and some are missing. Review the failing tests: what does your pattern match that it shouldn\'t, and what does it miss?';
     }
+    if (wrongExtractions > 0) return 'Your pattern finds a match, but extracts the wrong text or number of matches. Compare the highlighted text with the exercise goal.';
     return 'Check the test cases with <strong>&#10007;</strong> marks and think about what your pattern is doing differently than expected.';
   }
 
@@ -686,10 +697,10 @@
   var SELF_EXPLANATIONS = {
     'literal-1': { q: 'Why does this pattern also match "print" inside "sprint"?', a: 'Literal patterns match anywhere in the string — they don\'t care about word boundaries. The engine scans left to right and finds the substring "print" wherever it appears.' },
     'literal-2': { q: 'Why does your regex match "error" inside "terror" but not "Error"?', a: 'Literal matching is case-sensitive by default. The lowercase "error" appears as a substring in "terror", but "Error" with a capital E is a different character sequence.' },
-    'charclass-1': { q: 'What would happen if you added A-Z inside the brackets?', a: 'The character class [aeiouAEIOU] would also match uppercase vowels. Character classes match any single character listed inside the brackets.' },
-    'charclass-2': { q: 'Why does [^a-zA-Z] match spaces and digits, not just punctuation?', a: 'The negated class [^a-zA-Z] matches any character that is NOT a letter — that includes digits, spaces, punctuation, and any other non-letter character.' },
+    'charclass-1': { q: 'What would happen if you added AEIOU inside the brackets?', a: 'The character class [aeiouAEIOU] would also match uppercase vowels. Character classes match any single character listed inside the brackets.' },
+    'charclass-2': { q: 'Why does [^a-zA-Z] match spaces and digits, not just punctuation?', a: 'The negated class [^a-zA-Z] matches any character outside the ASCII letter ranges a–z and A–Z — including digits, spaces, punctuation, and letters such as é.' },
     'meta-character-1': { q: 'What is the difference between \\d and [0-9]?', a: 'They are functionally equivalent — \\d is a shorthand for the character class [0-9]. Meta characters exist for convenience so you don\'t have to write the full class every time.' },
-    'meta-character-2': { q: 'Why do we need \\. instead of just . to match a literal dot?', a: 'The dot . is a metacharacter (wildcard) that matches ANY character. To match an actual period, you must escape it with a backslash, telling the engine to treat it literally.' },
+    'meta-character-2': { q: 'Why do we need \\. instead of just . to match a literal dot?', a: 'The dot . is a metacharacter (wildcard) that matches any character except line terminators by default. To match an actual period, you must escape it with a backslash, telling the engine to treat it literally.' },
     'anchor-0': { q: 'Why did \\d+ fail to reject "123abc"?', a: 'Without anchors, the regex engine looks for a matching substring anywhere in the input. It found "123" inside "123abc" and reported success — it doesn\'t care about the rest of the string. Anchors (^ and $) force the match to span the entire input.' },
     'anchor-1': { q: 'What would happen without the ^ and $ anchors?', a: 'Without anchors, \\d+ would match any sequence of digits anywhere in a string — "abc123def" would match on the "123" substring. Anchors force the entire string to consist of digits.' },
     'anchor-2': { q: 'Why does \\b reject "go" inside "cargo" but accept "go" after punctuation?', a: '\\b matches the boundary between a word character (\\w) and a non-word character. In "cargo", both sides of "go" are word characters. After punctuation or at string edges, there\'s a word/non-word boundary.' },
@@ -734,7 +745,7 @@
     var all = ex.tests.concat(ex.hiddenTests || []);
     var fails = 0;
     for (var i = 0; i < all.length; i++) {
-      if (testRegex(pattern, all[i].input) !== all[i].shouldMatch) fails++;
+      if (!checkSingleTest(pattern, all[i])) fails++;
     }
 
     if (fails === 0) {

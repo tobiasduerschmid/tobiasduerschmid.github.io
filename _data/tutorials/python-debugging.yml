@@ -836,8 +836,8 @@ steps:
             ) -> list[Position] | None:
                 steps_used = len(path) - 1
 
-                # Goal check FIRST — reaching the goal is terminal and valid
-                # regardless of how many steps it took.
+                # The preceding recursion never expands beyond the budget.
+                # Accept a goal reached exactly at that budget.
                 if current == goal:
                     return path.copy()
 
@@ -859,7 +859,7 @@ steps:
       explanation: |
         Swap the order of the two checks at the top of `_dfs` so the goal check runs first. When the recursion lands on the goal cell with `steps_used == max_steps`, we now correctly return the path instead of bailing out one step too soon.
 
-        Why goal-first is preferred over the alternative (loosening the cutoff to `>` or to `> max_steps if current != goal`): reaching the goal is a **terminal valid state**. Treating it that way reads more clearly than special-casing the cutoff condition. The two are functionally equivalent in this maze, but the goal-first version generalizes better — for any future cutoff predicate, the goal acceptance still works.
+        An alternative correct fix keeps the cutoff first and changes it to `steps_used > max_steps`. It rejects over-budget calls before checking for success, so it also accepts exactly-budget paths. The goal-first version shown here avoids expanding non-goal cells that have already used the whole budget. Both versions must preserve the upper-bound contract; accepting a goal is not permission to exceed the budget.
 
         Common wrong fixes (and why they're wrong):
 
@@ -912,21 +912,19 @@ steps:
             text: "Restore the row containing `\"#S..#..G#\"`. The maze is the *spec*: a 10-step path from S to G must be findable when `max_steps=10`. The bug is in the pathfinder's check ordering, not the maze geometry."
             condition: "code_missing: \"#S..#..G#\""
 
-      - description: "Workaround guard — both checks present"
+      - description: Budget boundary holds on a second maze
         command: |
-          source = open('/tutorial/pathfinder.py').read()
-          assert 'current == goal' in source, "The goal check shouldn't be removed — without it, the function never returns a path."
-          assert 'steps_used >= max_steps' in source or 'len(path) - 1 >= max_steps' in source, \
-              "Don't remove the cutoff entirely — `test_path_rejected_when_battery_too_small` would fail."
+          from pathfinder import find_path
+          from maze_data import TINY_MAZE
+
+          assert find_path(TINY_MAZE, max_steps=1) is None, "Reject paths longer than the budget."
+          for budget in (2, 3):
+              path = find_path(TINY_MAZE, max_steps=budget)
+              assert path is not None, f"Accept the two-move path with budget {budget}."
+              assert len(path) - 1 == 2, "Return the actual two-move path."
         hints:
-          - title: "Layer 1 — orientation"
-            text: "Both checks are in the spec. The goal check is *how the function returns a valid path*; the cutoff is *how the function rejects over-budget paths*. Removing either breaks the spec. The fix is **reorder them**, not delete one."
-          - title: "Layer 2 — recovery"
-            text: "Re-add whichever check you removed. The two should be: `if current == goal: return path.copy()` (FIRST) and `if steps_used >= max_steps: return None` (SECOND). Both stay; only the order changes."
-            condition: "code_missing: current == goal"
-          - title: "Layer 3 — concept"
-            text: "This is the **Workaround antipattern**: deleting code to silence a test. From the lecture: the fix should *correct the fault*, not delete the constraint. Removing the cutoff makes one test pass and breaks the other — you traded one bug for a worse one."
-            condition: "code_missing: max_steps"
+        - title: Check both sides of the boundary
+          text: 'The tiny maze needs two moves: budget 1 must reject it, while budgets 2 and 3 must accept it. Either goal-first with >= or cutoff-first with > can satisfy this contract.'
 
     quiz:
       title: "Step 3 — Knowledge Check"
@@ -951,20 +949,20 @@ steps:
             The root cause is the *order* of the two early checks in `_dfs`. Reordering them is a one-line, minimal change that addresses the cause directly. Every other option here is a workaround: it makes the symptom disappear without fixing the underlying logic.
 
         - question: |
-            A student fixes `_dfs` by loosening the cutoff to `steps_used > max_steps` instead of swapping the check order. The `test_path_found_when_battery_limit_is_exact` test now passes. Is this a correct fix?
+            A student changes the cutoff to `steps_used > max_steps` and keeps it **before** the goal check. Does this correctly enforce the path-length budget?
           type: single
           options:
-            - "Yes — it works for this case, so it is correct"
-            - "No — it accepts over-budget paths, breaking the rejection test"
-            - "Yes — `>` and `>=` are interchangeable in boundary checks"
-            - "No — we should have used `<` instead"
-          correct_index: 1
+          - Yes — it accepts exact-budget goals and rejects over-budget calls.
+          - No — it accepts paths with `max_steps + 1` moves.
+          - Yes — `>` and `>=` are interchangeable in all boundary checks.
+          - No — the cutoff must reject paths shorter than the budget.
+          correct_index: 0
           option_feedback:
-            0: "Making one test pass is not the same as fixing the bug. `steps_used > max_steps` means the cutoff fires only when `steps_used` *exceeds* the budget — so a path of length `max_steps + 1` would be accepted. Try the `test_path_rejected_when_battery_too_small` test with this 'fix' applied."
-            2: "`>` and `>=` differ at exactly the boundary value — the very value this bug is about. `steps_used >= max_steps` rejects `steps_used == max_steps`; `steps_used > max_steps` accepts it. They are not interchangeable when the boundary case is the target."
-            3: "`steps_used < max_steps` inverts the cutoff entirely, accepting any path that used *fewer* steps than the budget and rejecting everything at or above. That would reject even the small-maze two-step path."
+            1: An over-budget call returns None at the first check, before it can accept the goal. Trace a call with steps_used == max_steps + 1.
+            2: The operators differ at equality. That difference is precisely why this alternative accepts an exact-budget goal.
+            3: Shorter paths are allowed. The budget is an upper bound, not a required minimum.
           explanation: |
-            The root-cause fix is **check ordering** — goal first, cutoff second — not loosening the comparator. Loosening `>=` to `>` makes the exact-budget test pass but breaks the under-budget-rejection test, because a path one step over budget is now accepted. A fix that passes the newly-passing test while breaking a previously-passing test is a **regression**, not a fix. This is exactly why Verify means rerunning the *whole* suite.
+            This is a valid alternative fix. With the cutoff first, `>` rejects every over-budget call and lets an exact-budget goal reach the success check. Goal-first with `>=` also works here and avoids exploring one extra level from non-goal cells at the budget. Run the full suite to check both acceptance and rejection boundaries.
 
         - question: |
             *True or false:* Once you've fixed the boundary bug in `_dfs`, you can verify the fix is correct by rerunning **only** `test_path_found_when_battery_limit_is_exact` (the previously failing test).
@@ -2796,4 +2794,4 @@ steps:
             2: "Function parameter scoping is normal — local in scope, separate per call. The trap is *only* with mutable default values, because the default object is created once."
             3: "Python doesn't intern empty lists. `[] is []` returns False (try it). Default mutable args is a separate, well-documented Python footgun."
           explanation: |
-            **Default argument values are evaluated once, at function-definition time.** The `items=[]` creates one list, bound to the function as its default. Every call that uses the default reuses *that same list*. The fix is `def add_to(items=None): items = items or []` (or `if items is None: items = []`). This is one of Python's top-5 gotchas — the time-travel debugger's *aliasing badge* (Step 2) lights up on this exact pattern.
+            **Default argument values are evaluated once, at function-definition time.** The `items=[]` creates one list, bound to the function as its default. Every call that uses the default reuses *that same list*. Use `def add_to(items=None):` and initialize with `if items is None: items = []`. Unlike `items = items or []`, the explicit None check preserves a caller-provided empty list. This is one of Python's top-5 gotchas — the time-travel debugger's *aliasing badge* (Step 2) lights up on this exact pattern.

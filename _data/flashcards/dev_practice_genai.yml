@@ -5,38 +5,38 @@ cards:
   - id: 1
     difficulty: basic
     question: "What does it mean to call an LLM a *statistical parrot*?"
-    answer: "An LLM does not understand code in a human sense — it predicts the **most likely next token** based on statistical patterns in its training data. It mimics fluent code without grounding in formal logic, real-world facts, or the existence of the APIs it references."
+    answer: "An LLM does not understand code in a human sense — it estimates a **distribution over next tokens** from the supplied context and learned patterns. Fluent output alone does not guarantee logical validity, factual accuracy, or that an API exists."
     explanation: "This framing explains hallucinations (plausible-looking but fabricated APIs), outdated patterns (repeated from training data), and confident-but-wrong outputs. Linguistic plausibility is not factual correctness."
 
   - id: 2
     difficulty: intermediate
-    question: "Why is GenAI's productivity boost (21–50%) smaller than the **compiler revolution** (10x)?"
-    answer: "Compilers automated **accidental complexity** — repetitive mechanical translation from high-level intent to machine instructions. GenAI helps with parts of accidental complexity too but does not yet automate **essential complexity** — understanding requirements, choosing data structures, navigating trade-offs, integrating with real systems. Most of an engineer's work still lives in essential complexity."
-    explanation: "The accidental-vs-essential distinction predicts exactly this ceiling: tools that automate mechanical work give big one-time gains; tools that touch judgment-heavy work give smaller, slower gains."
+    question: Why can faster AI code generation produce a smaller improvement in end-to-end engineering productivity?
+    answer: Compilers automated **accidental complexity** — repetitive mechanical translation from high-level intent to machine instructions. GenAI can assist with both mechanical work and **essential complexity**, but generating code does not eliminate the need to resolve it — understanding requirements, choosing data structures, navigating trade-offs, integrating with real systems. Most of an engineer's work still lives in essential complexity.
+    explanation: The accidental-versus-essential distinction helps identify which work a tool addresses. It does not establish a fixed productivity ceiling or a universal percentage gain; those require measurements in a specified setting.
 
   - id: 3
     difficulty: basic
     question: "Name the three stages of LLM development."
-    answer: "**Pre-training:** building a base foundation model by training on vast amounts of public code/text to predict the most likely next token. **Post-training:** fine-tuning on labeled data and applying **RLHF** (Reinforcement Learning from Human Feedback), where developers rank outputs by readability and correctness. **Inference:** prompting the model to produce a typically **non-deterministic** sequence of answer tokens."
+    answer: "**Pre-training:** building a base foundation model by training on large text/code datasets to predict next-token probabilities. **Post-training:** fine-tuning on labeled data and applying **RLHF** (Reinforcement Learning from Human Feedback), where developers rank outputs by readability and correctness. **Inference:** prompting the model to produce a typically **non-deterministic** sequence of answer tokens."
     explanation: "Each stage shapes the model's behavior. Pre-training determines what it 'knows.' Post-training (especially RLHF) calibrates what it produces in response to instructions. Inference parameters (temperature, top-p) control how deterministic the output is."
 
   - id: 4
     difficulty: intermediate
     question: "What is the **illusion of AI productivity**, and how do you avoid being fooled by it?"
     answer: "Generation speed *feels* like productivity, but if the output is subtly wrong, debugging can dwarf the time saved. Avoid the illusion by measuring productivity *end-to-end* (features shipped per week with acceptable defect and security rates), not by characters generated per minute."
-    explanation: "A controlled study of experienced developers on real open-source work found they believed AI was speeding them up (estimating roughly 20% gains) while measured throughput was about 19% slower. Generation is visible and fast; debugging is invisible and slow."
+    explanation: "METR’s early-2025 randomized study of 16 experienced developers on 246 tasks in familiar open-source repositories found that AI access increased completion time by 19%, while developers estimated a speedup. This result describes that study setting and tool generation, not every developer or current tool. Generation is visible and fast; debugging is invisible and slow."
 
   - id: 5
     difficulty: intermediate
-    question: "Why do AI-generated codebases tend to have higher **security vulnerability** rates?"
+    question: "What security risk did studies of AI-generated code in **security-sensitive scenarios** illustrate?"
     answer: "Roughly 40% of Copilot suggestions in *security-sensitive CWE-specific scenarios* have been found to contain vulnerabilities. The AI pattern-matches on training data that mixes secure and insecure examples. Compounding the bug rate, developers with AI assistants often write less secure code while being *more confident* it is secure — a calibration failure."
     explanation: "The 40% figure is scoped to security-sensitive prompts, not all generated code, but plausible-looking vulnerable patterns appear well beyond that benchmark. Mitigations: explicit security review of every AI block, static-analysis in the loop, extra scrutiny on SQL, deserialization, auth, and never treating AI confidence as evidence of safety."
 
   - id: 6
     difficulty: basic
-    question: "What is **cognitive offloading**, and why is it harmful for junior engineers?"
-    answer: "Cognitive offloading is using AI to *replace* thinking — pasting the prompt, copying the answer, moving on without engaging the material. It minimizes learning, prevents skill formation, and leaves the developer unable to debug or explain the code later. For juniors especially, it kneecaps the foundational understanding their career depends on."
-    explanation: "The opposite is **conceptual inquiry**: asking the AI to *explain* a concept, *compare* implementations, or *argue* trade-offs. This preserves cognitive engagement and exercises continual-learning ability — the skill humans retain over AI."
+    question: What is **cognitive offloading**, and when can it undermine programming skill formation?
+    answer: Cognitive offloading uses external aids to reduce internal processing demands, such as notes, reminders, or AI assistance. It can undermine learning when it replaces the reasoning, retrieval, or practice the learner needs to develop.
+    explanation: 'Offloading is not inherently harmful: external aids can free attention for the important part of a task. For skill formation, preserve active work on the target skill and check understanding independently of the aid.'
 
   - id: 7
     difficulty: basic
@@ -54,7 +54,7 @@ cards:
     difficulty: intermediate
     question: "What is **Test-Driven Generation (TDG)**, and what are its five steps?"
     answer: "**(1)** Prompt the AI to generate **tests** for a given specification. **(2)** Carefully **review the tests** to check they are an adequate specification of the problem. **(3)** Prompt the AI to generate the **implementation** for those tests. **(4)** Prompt the AI to **refactor** the code. **(5)** **Review the implementation** to check for overfitting."
-    explanation: "The review step (2) is where TDG earns its quality: if the tests are right, satisfying them produces correct code. Skipping review means satisfying broken tests. A remediation loop that feeds failing-test stack traces back to the LLM improves correctness even further."
+    explanation: "The review step (2) is where TDG earns its quality: reviewed tests provide evidence about the cases and properties they cover; passing them does not prove correctness for untested behavior. Skipping review means satisfying broken tests. A remediation loop that feeds failing-test stack traces back to the LLM improves correctness even further."
 
   - id: 10
     difficulty: advanced

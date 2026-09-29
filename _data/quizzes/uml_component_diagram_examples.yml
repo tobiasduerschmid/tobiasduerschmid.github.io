@@ -64,7 +64,7 @@ questions:
         Abstractness is a classifier property, not the purpose of a port. Ports describe where communication enters or leaves the component.
       3: |
         Multiplicity or deployment notation would be used for instance counts. Ports organize interaction surfaces, not how many component instances exist.
-    explanation: "**Ports are named interaction points on a component's boundary that organize its interfaces into logical groups.** An incoming port (`portin`) receives requests on the left edge; an outgoing port (`portout`) sends requests on the right edge."
+    explanation: "**Ports are named interaction points on a component's boundary that organize its interfaces into logical groups.** This renderer places `portin` on the left and `portout` on the right. Those are drawing conventions, not a UML rule that port position determines communication direction."
 
   - id: 4
     difficulty: intermediate
@@ -106,7 +106,7 @@ questions:
         Generalization uses a hollow triangle arrowhead. A dashed dependency arrow does not mean inheritance.
       3: |
         A dashed arrow is directed from the dependent element toward what it uses. It does not by itself mean two-way communication.
-    explanation: "**A dashed arrow (<span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"..>\"></span>) is a dependency — a weaker 'uses' relationship (e.g., logging, metrics), the same notation as in class diagrams.** Solid arrows (<span class=\"uml-sym\" data-diagram=\"class\" data-sym=\"-->\"></span>) are assembly connectors for the primary communication pathways."
+    explanation: "**A dashed arrow is a dependency: one component uses or depends on another.** An assembly connector instead connects a required interface to a provided interface. Either relationship can concern a central service or an auxiliary one; its importance does not determine the notation."
 
   - id: 6
     difficulty: intermediate

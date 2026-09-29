@@ -103,6 +103,41 @@ async function getExerciseData(page) {
 // ═══════════════════════════════════════════════════════════════════════════
 
 test.describe('RegEx Tutorial: Basics', () => {
+  for (const [id, tooPermissive, valid] of [
+    ['anchor-0', '^\\d*$', '^\\d+$'],
+    ['anchor-3', '^[a-zA-Z0-9]*$', '^[a-zA-Z0-9]+$'],
+  ]) {
+    test(`nonempty validator rejects an empty match in live and final feedback: ${id}`, async ({ page }) => {
+      const exercise = page.locator(`#ex-${id}`);
+      const input = exercise.getByRole('textbox');
+      // Test rows have no semantic role; their authored label identifies the visible case.
+      const emptyCase = exercise.locator('.rt-test').filter({ hasText: 'empty — should NOT match' });
+      await input.fill(tooPermissive);
+      await expect(emptyCase).toContainText('✗');
+      await exercise.getByRole('button', { name: 'Check Answer', exact: true }).click();
+      await expect(exercise.getByRole('status')).toContainText('Not quite');
+      await input.fill(valid);
+      await expect(emptyCase).toContainText('✓');
+      await exercise.getByRole('button', { name: 'Check Answer', exact: true }).click();
+      await expect(exercise.getByRole('status')).toContainText('Correct');
+    });
+  }
+
+  test('extraction grading rejects grouped digits and accepts an equivalent individual-digit pattern', async ({ page }) => {
+    // Authored exercise IDs also identify the public navigation anchors.
+    const exercise = page.locator('#ex-meta-character-1');
+    const input = page.getByRole('textbox', { name: 'Regular expression for Digit Detector', exact: true });
+    await input.fill('\\d+');
+    await exercise.getByRole('button', { name: 'Check Answer', exact: true }).click();
+    await expect(exercise.getByRole('status')).toContainText('Not quite');
+    await expect(input).toHaveAttribute('aria-invalid', 'true');
+    await input.fill('[0-9]');
+    await exercise.getByRole('button', { name: 'Check Answer', exact: true }).click();
+    await expect(exercise.getByRole('status')).toContainText('Correct');
+    await expect(input).toHaveAttribute('aria-invalid', 'false');
+    await a11yCheckpoint(page, 'regex basics — extraction feedback', { feature: A11Y_FEATURE });
+  });
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/SEBook/tools/regex-tutorial.html');
     await clearProgress(page);
@@ -503,6 +538,19 @@ test.describe('RegEx Tutorial: Basics', () => {
 // ═══════════════════════════════════════════════════════════════════════════
 
 test.describe('RegEx Tutorial: Advanced', () => {
+  test('extraction grading requires quoted spans and accepts an equivalent lazy pattern', async ({ page }) => {
+    const exercise = page.locator('#ex-greedy-2');
+    const input = page.getByRole('textbox', { name: 'Regular expression for Quoted Strings', exact: true });
+    // This returns two matches but includes unquoted separator text in the second.
+    await input.fill('[^"]*".*?"');
+    await exercise.getByRole('button', { name: 'Check Answer', exact: true }).click();
+    await expect(exercise.getByRole('status')).toContainText('Not quite');
+    await input.fill('"[^\\n]*?"');
+    await exercise.getByRole('button', { name: 'Check Answer', exact: true }).click();
+    await expect(exercise.getByRole('status')).toContainText('Correct');
+    await a11yCheckpoint(page, 'regex advanced — extraction feedback', { feature: A11Y_FEATURE });
+  });
+
   test.beforeEach(async ({ page }) => {
     await page.goto('/SEBook/tools/regex-tutorial-advanced.html');
     await clearProgress(page);
@@ -587,15 +635,22 @@ test.describe('RegEx Tutorial: Advanced', () => {
   test('lookbehind correctly excludes $ from match', async ({ page }) => {
     const card = page.locator('#ex-look-1');
     if ((await card.count()) === 0) return;
-    await typeRegex(page, 'look-1', '(?<=\\$)[\\d.]+');
+    await typeRegex(page, 'look-1', '(?<=\\$)\\d+(?:\\.\\d+)?');
     await checkAnswer(page, 'look-1');
     await expectPass(page, 'look-1');
+  });
+
+  test('dollar extraction rejects a bare dot as a numeric amount', async ({ page }) => {
+    const exercise = page.locator('#ex-look-1');
+    await exercise.getByRole('textbox').fill('(?<=\\$)[\\d.]+');
+    await exercise.getByRole('button', { name: 'Check Answer', exact: true }).click();
+    await expect(exercise.getByRole('status')).toContainText('Not quite');
   });
 
   test('including $ in match rejected', async ({ page }) => {
     const card = page.locator('#ex-look-1');
     if ((await card.count()) === 0) return;
-    await typeRegex(page, 'look-1', '\\$[\\d.]+');
+    await typeRegex(page, 'look-1', '\\$\\d+(?:\\.\\d+)?');
     await checkAnswer(page, 'look-1');
     await expectFail(page, 'look-1');
   });
@@ -656,7 +711,7 @@ test.describe('RegEx Tutorial: Advanced', () => {
     ['greedy-2', '".*?"'],
     ['group-1', '(na){2,}'],
     ['group-2', '^[A-Z]{3}$'],
-    ['look-1', '(?<=\\$)[\\d.]+'],
+    ['look-1', '(?<=\\$)\\d+(?:\\.\\d+)?'],
     ['look-2', '^(?=.*\\d)(?=.*[A-Z]).+$'],
     ['integrate-1', '^#([a-fA-F0-9]{6}|[a-fA-F0-9]{3})$'],
     ['integrate-2', '^[A-Z]\\d{9}$'],

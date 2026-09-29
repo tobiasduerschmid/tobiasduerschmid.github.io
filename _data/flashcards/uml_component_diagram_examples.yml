@@ -21,7 +21,7 @@ cards:
     question: "What is a **port** in a component diagram?"
     answer: "A named interaction point on a component's boundary, shown as a small square."
     explanation: >
-      Ports organize a component's interfaces into logical groups. **portin** (incoming, left edge) receives requests; **portout** (outgoing, right edge) sends them — making clear which side handles which communication.
+      Ports organize a component's interfaces into logical groups. This renderer uses **portin** for a left-side incoming port and **portout** for a right-side outgoing port. UML itself does not assign communication direction from the side of the component on which a port is drawn.
 
   - id: 4
     difficulty: intermediate
@@ -42,4 +42,4 @@ cards:
     question: "How is a **dependency** shown between components?"
     answer: "A **dashed arrow** from the dependent component to the component it depends on."
     explanation: >
-      This is the same notation as class diagram dependencies (<span class="uml-sym" data-diagram="class" data-sym="..>"></span>). Use it for weaker, auxiliary relationships (e.g., logging, metrics) rather than core architectural connections. Assembly connectors (<span class="uml-sym" data-diagram="class" data-sym="-->"></span>) are used for primary communication pathways.
+      This is the same notation as class diagram dependencies (<span class="uml-sym" data-diagram="class" data-sym="..>"></span>). It expresses dependence, while an assembly connector explicitly connects required and provided interfaces. Logging can use an assembly connector, and a central service can be shown as a dependency; architectural importance does not determine the relationship kind.

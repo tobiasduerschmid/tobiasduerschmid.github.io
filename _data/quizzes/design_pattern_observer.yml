@@ -6,7 +6,7 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      A stock market dashboard updates 50 UI widgets whenever the price feed changes (1,000 updates/second). The team uses the **Push model**, sending the full price data to every observer on every update. What is the most significant problem with this approach?
+      A stock market dashboard updates 50 UI widgets whenever the price feed changes (1,000 updates/second). The team uses the **Push model**, serializing and sending the full price data to every observer on every update, although each widget uses only a small subset. What is the most significant problem with this approach?
     options:
       - "The Push model violates the Open/Closed Principle"
       - "Observers receive much data they don't need, throttling updates"
@@ -142,7 +142,7 @@ questions:
     difficulty: advanced
     type: single
     question: |
-      A spreadsheet cell observes three different data-source subjects. When any source changes, the cell must recompute. What does the cell's `update()` operation need that a single-subject design would not?
+      A spreadsheet cell observes three different data-source subjects. When a source changes, the cell must query only that changed source before recomputing. What does the cell's `update()` operation need that a single-subject design would not?
     options:
       - "A way to identify which subject changed, e.g. `update(Subject*)`"
       - "A separate `notify()` method for each subject it observes"
@@ -156,7 +156,7 @@ questions:
         Observer lists are kept by the *subject*, not by the observing cell. The cell needs to discriminate among its incoming notifications, not maintain its own dispatch tables.
       3: |
         Nothing in the pattern restricts an observer to a single subject. The SEBook explicitly cites the spreadsheet-cell case as a motivating example for multi-subject observers.
-    explanation: "With several subjects, `update()` must identify *which* one changed — typically by passing the subject as a parameter, `update(Subject* changedSubject)`, so the observer can query the right source. A pure push style with no subject identity in the signature cannot distinguish sources. The SEBook flags this under GoF Implementation issue #2 (observing multiple subjects)."
+    explanation: "For the requirement to query only the changed source, `update()` must identify *which* one changed — typically by passing the subject as a parameter, `update(Subject* changedSubject)`, so the observer can query the right source. A pure push style with no subject identity in the signature cannot distinguish sources. The SEBook flags this under GoF Implementation issue #2 (observing multiple subjects)."
 
   - id: 9
     difficulty: advanced

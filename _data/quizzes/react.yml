@@ -29,16 +29,16 @@ questions:
       3: |
         A named function would still mutate a throwaway local; the fix is to put persistent UI data in
         state.
-    explanation: "Unlike a C++ member variable, a component function is re-invoked on every render, so each `let count = 0` starts fresh and any mutation is discarded. `useState` stores the value in React's own data structure that survives across renders, and calling its setter is the only thing that signals a re-render."
+    explanation: "Unlike a C++ member variable, a component function is re-invoked on every render, so each `let count = 0` starts fresh and any mutation is discarded. `useState` stores the value in React's own data structure that survives across renders, and calling its setter can request a re-render. Parent renders and context changes can also cause a component to render."
 
   - id: 2
     difficulty: advanced
     question: "A student stores the full filtered list in state alongside the unfiltered list: `const [allTasks, setAllTasks] = useState(tasks)` and `const [filteredTasks, setFilteredTasks] = useState(tasks)`. What design problem does this create?"
     options:
       - "This is correct — having both lists in state makes the component faster"
-      - "Storing derived data violates minimal state — only the filter string is real state."
+      - "The filtered copy is redundant; keep changing tasks and the filter as source state."
       - "This is correct — React requires all displayed data to be in state"
-      - "The only problem is naming — `filteredTasks` should be called `visibleTasks`"
+      - "The only problem is naming — filteredTasks should be called visibleTasks"
     correct_index: 1
     option_feedback:
       0: |
@@ -177,12 +177,11 @@ questions:
     distractors:
       - "    const [filtered, setFiltered] = useState(items);"
       - "    <input onChange={e => query = e.target.value} />"
-    explanation: "Only the query is state; the filtered list is derived from `items` and `query` (minimal state), and the controlled `<input>` binds `value` to state while updating through `setQuery`. The `useState(items)` distractor stores `filtered` as a second, drift-prone copy; the `query = e.target.value` distractor mutates the variable directly and so never signals a re-render."
+    explanation: "Only the query is state; the filtered list is derived from `items` and `query` (minimal state), and the controlled `<input>` binds `value` to state while updating through `setQuery`. The `useState(items)` distractor stores `filtered` as a second, drift-prone copy; the `query = e.target.value` distractor attempts to reassign a `const` binding and throws a TypeError instead of requesting a state update."
 
   - id: 9
     difficulty: advanced
-    question: |
-      **Arrange** the lines to create a custom React hook that fetches data from an API on mount.
+    question: "**Arrange** the lines to fetch data on mount and again when the `url` prop changes, storing the result in state."
     type: parsons
     lines:
       - "function useFetch(url) {"
@@ -299,7 +298,7 @@ questions:
       **(a)** Product names don't update when different data is passed in
       **(b)** A like counter always shows 0
       **(c)** Deleting the 2nd item in a list causes the 3rd item's checkbox to jump to the 2nd position
-      **(d)** A `<div class="header">` renders but has no CSS styling
+      **(d)** A `<div class="header">` produces a warning recommending `className`
     options:
       - "(a) state, (b) props, (c) keys, (d) JSX rules"
       - "(a) props, (b) state, (c) keys, (d) JSX rules"
@@ -315,7 +314,7 @@ questions:
         fails to update.
       3: |
         JSX rules explain `className`, but they do not explain persistent counters or sibling data flow.
-    explanation: "Each symptom maps to one concept: data not updating when passed in is a **props** issue; a counter stuck at 0 means values aren't in **state** (bare `let` instead of `useState`); state attaching to the wrong row after a delete is an index-**key** issue; and a `class` attribute with no effect is **JSX** (`class` → `className`)."
+    explanation: "Each symptom maps to one concept: data not updating when passed in is a **props** issue; a counter stuck at 0 means values aren't in **state** (bare `let` instead of `useState`); state attaching to the wrong row after a delete is an index-**key** issue; and a warning about `class` is a **JSX/React DOM convention** (`class` → `className`). Modern React still passes a string `class` attribute to the DOM, so that warning alone does not explain missing styling."
 
   - id: 15
     difficulty: advanced
@@ -353,27 +352,26 @@ questions:
     distractors:
       - "    count = count + 1;"
       - "      <button onClick={handleClick()}>+</button>"
-    explanation: "The functional form `setCount(prev => prev + 1)` asks React for the latest state at update time, so batched clicks don't read a stale value. The `count = count + 1` distractor reassigns a local variable and never re-renders; the `onClick={handleClick()}` distractor calls the handler during render instead of registering it, which fires the setter on every render until React halts it with a \"Too many re-renders\" error."
+    explanation: "The functional form `setCount(prev => prev + 1)` uses the latest pending state. It matters for multiple queued updates or delayed callbacks; React handles separate intentional clicks separately. The `count = count + 1` distractor attempts to reassign a `const` binding and throws a TypeError. Calling `handleClick()` during render causes a render loop instead of registering the handler."
 
   - id: 17
     difficulty: advanced
-    question: |
-      **Arrange** the lines to build a component that fetches user data when it mounts or when `userId` changes, and shows a loading message while waiting.
+    question: "**Arrange** the lines to fetch user data on mount and when `userId` changes. At the start of each effect, reset to a loading message; ignore results from obsolete effects. Assume successful responses."
     type: parsons
     lines:
       - "function UserProfile({ userId }) {"
       - "  const [user, setUser] = useState(null);"
       - "  useEffect(() => {"
+      - "    let ignore = false; setUser(null);"
       - "    fetch(`/api/users/${userId}`)"
       - "      .then(res => res.json())"
-      - "      .then(data => setUser(data));"
+      - "      .then(data => { if (!ignore) setUser(data); });"
+      - "    return () => { ignore = true; };"
       - "  }, [userId]);"
-      - "  if (user === null) {"
-      - "    return <p>Loading...</p>;"
-      - "  }"
+      - "  if (user === null) return <p>Loading...</p>;"
       - "  return <h2>{user.name}</h2>;"
       - "}"
     distractors:
       - "  }, []);"
       - "    .then(data => setUser(fetch(data)));"
-    explanation: "The `[userId]` dependency array re-runs the fetch whenever the prop changes, and the `user === null` guard shows a loading message until the response arrives. The `[]` distractor fetches only on mount, leaving stale data when `userId` changes; the `setUser(fetch(data))` distractor stores a Promise in state instead of the already-parsed JSON."
+    explanation: "The effect resets `user` to null when it starts, so the loading message appears during that request. Cleanup marks the old effect obsolete, preventing an earlier response from overwriting a newer one. `[userId]` reruns the effect when the prop changes; `[]` would miss those changes. Error handling is omitted under the successful-response assumption."

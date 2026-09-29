@@ -48,7 +48,7 @@ cards:
     difficulty: basic
     question: "What is the conventional purpose of the `CFLAGS` variable in a C Makefile?"
     answer: "To store flags and options passed to the C compiler (e.g., warnings and optimizations)."  
-    explanation: "Common values include `-Wall` (enable all warnings), `-Wextra` (extra warnings), `-g` (include debugging symbols), or `-O2` (optimize for speed)."  
+    explanation: "Common values include `-Wall` (enable a useful collection of warnings, not every warning), `-Wextra` (extra warnings), `-g` (include debugging symbols), or `-O2` (optimize for speed)."
 
   - id: 9
     difficulty: intermediate

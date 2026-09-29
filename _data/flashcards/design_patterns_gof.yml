@@ -9,8 +9,8 @@ cards:
     explanation: "The Subject maintains a dynamic list of Observers and calls their `update()` method when its state changes. This avoids polling and avoids hardcoding the subject to specific dependents."
   - id: 2
     difficulty: intermediate
-    question: "Observer: Push vs. Pull model—which has tighter coupling?"
-    answer: "The **Pull model**, because observers must hold a reference back to the subject and know its interface well enough to query for specific data."
+    question: "Observer: which variant requires observers to know the subject's query interface?"
+    answer: "The **Pull model** adds that dependency. Push instead couples observers to the event payload format; neither variant is universally less coupled."
     explanation: "Push: subject sends all data in `update()`. Pull: subject sends minimal notification, observers query back. A hybrid approach—pushing the event type, letting observers decide whether to pull—is most common in practice."
   - id: 3
     difficulty: intermediate
@@ -30,8 +30,8 @@ cards:
   - id: 6
     difficulty: intermediate
     question: "How does **State** differ from **Strategy**?"
-    answer: "State: behavior changes *implicitly* via internal transitions. Strategy: behavior is *explicitly* selected by the client. State objects transition between each other; strategies do not."
-    explanation: "They have identical UML structures but different intents. If implementations transition between each other based on internal logic, it's State. If the client selects at configuration time, it's Strategy."
+    answer: "State varies behavior with lifecycle state; Strategy supplies an interchangeable algorithm. Who selects an implementation is a useful clue, not an absolute rule."
+    explanation: "Their UML structures can look alike. State transitions are usually managed by the context or its state objects; clients often configure strategies. Distinguish the patterns by the problem and intent, not selection syntax alone."
   - id: 7
     difficulty: advanced
     question: "State pattern: who should define state transitions?"

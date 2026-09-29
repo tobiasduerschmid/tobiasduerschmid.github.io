@@ -140,7 +140,7 @@ steps:
       explanation: |
         - **Line 1 (`#!/bin/bash`):** The shebang tells the OS to use Bash as the
           interpreter. Without it, the OS might guess wrong.
-        - **Line 2 (`set -e`):** Exits the script immediately if any command fails,
+        - **Line 2 (`set -e`):** Exits after an unhandled command failure (with shell-context exceptions),
           preventing silent cascading errors.
         - **`echo "Good morning!"`:** Prints a literal string. The test checks for
           the word "morning" (case-insensitive).
@@ -187,10 +187,10 @@ steps:
           options:
             - "Enables strict variable quoting rules"
             - "Sets the script's encoding to UTF-8"
-            - "Exits the script when any command returns non-zero"
+            - "Exits on failures outside exempt contexts"
             - "Enables extended glob patterns"
           correct_index: 2
-          explanation: "By default, Bash continues executing even after a command fails. `set -e` (exit on error) stops the script the moment any command returns a non-zero exit code, preventing a cascade of confusing failures. We'll cover its edge cases in later steps."
+          explanation: "By default, Bash continues executing even after a command fails. `set -e` (exit on error) exits after a failing simple command outside exceptions such as if conditions, most &&/|| contexts, and non-final pipeline commands, preventing a cascade of confusing failures. We'll cover its edge cases in later steps."
 
         - question: "Which statements about `$(...)` command substitution are true? (Select all that apply)"
           type: multiple
@@ -726,7 +726,7 @@ steps:
             - "`set -e` catches the non-zero exit code from `cd` and the script exits immediately"
             - "The shebang line prevents `cd` errors from being fatal"
           correct_index: 2
-          explanation: "`set -e` exits the script when any command returns a non-zero exit code. Since `cd /nonexistent` fails, the script stops immediately — which is exactly the safety net behavior we learned in Hello, Shell!."
+          explanation: "`set -e` exits after this failing standalone command. It has exceptions for conditions and other shell contexts. Since `cd /nonexistent` fails, the script stops immediately — which is exactly the safety net behavior we learned in Hello, Shell!."
 
         - question: "In the pipeline `grep 'ERROR' server_log.txt | wc -l`, what does the `|` operator do?"
           options:
@@ -1353,14 +1353,14 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "You write `for f in *.log; do wc -l $f; done`. One of the log files is named `error log.txt` (with a space). What happens when the loop processes it?"
+        - question: "You write `for f in *.log; do wc -l $f; done`. One of the log files is named `error log.log` (with a space). What happens when the loop processes it?"
           options:
-            - "`wc` correctly counts the lines in `error log.txt`"
+            - "`wc` correctly counts the lines in `error log.log`"
             - "Word-splitting on the space passes `error` and `log.txt` as two arguments"
             - "Bash automatically handles spaces in filenames when iterating with `for`"
             - "The loop silently skips any filenames that contain spaces"
           correct_index: 1
-          explanation: "Without quotes, `$f` undergoes **word-splitting** on IFS characters (space, tab, newline). `wc - l error log.txt` becomes two arguments. The fix is always `\"$f\"`. This is the exact same quoting rule from the Variables step — it applies everywhere variables are used."
+          explanation: "Without quotes, `$f` undergoes **word-splitting** on IFS characters (space, tab, newline). `wc - l error log.log` becomes two arguments. The fix is always `\"$f\"`. This is the exact same quoting rule from the Variables step — it applies everywhere variables are used."
 
         - question: "In a `for f in *.sh` loop, when does the shell substitute `*.sh`?"
           options:

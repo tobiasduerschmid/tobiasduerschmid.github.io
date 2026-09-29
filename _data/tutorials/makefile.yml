@@ -400,9 +400,9 @@ steps:
           correct_index: 1
           option_feedback:
             0: "The substitution only fires on lines that *match the pattern*. 2 leading spaces ≠ 4 leading spaces — sed leaves those lines alone, and Make still rejects the indentation."
-            2: "Sed doesn't error when the pattern doesn't match — it just doesn't substitute. No-match-means-no-change is sed's default mode (use the `q` flag to make it complain)."
+            2: "Sed doesn't error when the pattern doesn't match — it just doesn't substitute. No-match-means-no-change is sed's default mode (`q` quits sed; it does not report an unmatched substitution)."
             3: "Sed's substitute does *replacement*, not multiplication. Without a match, no change."
-          explanation: "The pattern `^    ` (four leading spaces) is *literally* four spaces. If the editor used a different indentation width, the pattern doesn't match. Two fixes: (1) widen the regex to `^ +` (one or more leading spaces), or (2) use a more robust tool like `expand --tabs=4 -i Makefile | sed 's/^    /\\t/'`. The general lesson: a fix tied to a specific indentation width is brittle — better to detect the actual leading whitespace and replace it with a Tab regardless of count."
+          explanation: "The pattern `^    ` (four leading spaces) is *literally* four spaces. If the editor used a different indentation width, the pattern doesn't match. For this GNU sed example, change the pattern to `^  ` (two spaces), or use `^  *` to match one or more leading spaces in basic regular-expression syntax. Inspect the recipe lines before applying a replacement; not every indented line is a recipe. The general lesson: a fix tied to a specific indentation width is brittle — better to detect the actual leading whitespace and replace it with a Tab regardless of count."
 
   # --------------------------------------------------------------------------
   # STEP 3: The "DRY" Refactor — Variables
@@ -778,7 +778,7 @@ steps:
         - **`$^` (all prerequisites):** In the `app` rule, `$^` expands to `main.o math.o io.o` — all the files listed in `$(OBJS)`. This replaces the repetitive `main.o math.o io.o` in the recipe.
         - **`$@` (target name):** In the `app` rule, `$@` expands to `app`. In the pattern rule when building `math.o`, `$@` expands to `math.o`.
         - **`$<` (first prerequisite):** In the pattern rule, `$<` expands to the `.c` file (e.g., `math.c`). Using `$<` instead of `$^` compiles only the single matching source file.
-        - **Pattern rule `%.o: %.c`:** The `%` wildcard matches any filename stem. This single rule replaces all three explicit `.o` rules. Adding `newfile.c` to `OBJS` is all that's needed — no new explicit rule required.
+        - **Pattern rule `%.o: %.c`:** The `%` wildcard matches any filename stem. This single rule replaces all three explicit `.o` rules. Adding `newfile.o` to `OBJS` is all that's needed — no new explicit rule required.
 
     tests:
       - description: "Defined OBJS variable"
@@ -861,7 +861,7 @@ steps:
             - 3
           option_feedback:
             1: "That's the *whole point* of pattern rules — adding a new `.c` file means *just* dropping it into `OBJS`. The pattern rule auto-handles compilation."
-          explanation: "The pattern rule `%.o: %.c` handles **any** `.c`→`.o` compilation automatically. Adding `newfile.c` to `OBJS` is all you need — no new rule required. `$^` gives all prerequisites (all `.o` files for the app rule), and `$<` gives the first prerequisite (the `.c` file for each pattern match)."
+          explanation: "The pattern rule `%.o: %.c` handles **any** `.c`→`.o` compilation automatically. Adding `newfile.o` to `OBJS` is all you need — no new rule required. `$^` gives all prerequisites (all `.o` files for the app rule), and `$<` gives the first prerequisite (the `.c` file for each pattern match)."
 
         - question: "You use `%.o: %.c` and `$(CC) $(CFLAGS) -c $< -o $@`. You get `makefile:10: *** missing separator. Stop.` What is the most likely cause?"
           options:
@@ -1210,11 +1210,10 @@ steps:
           option_feedback:
             0: "Make is terse — it doesn't print success banners. If it has nothing to do, it says so explicitly with the 'up to date' message."
             2: "If no target argument is given, Make uses the *first* target in the Makefile. There's an explicit error for true 'no target available' situations, but that's not this scenario."
-            3: "That message appears for `make all` if a default `all:` target is *missing*. With a defined target like `app:`, Make's no-op message is 'is up to date'."
+            3: "A missing all target produces a no-rule error. A Nothing-to-be-done message can appear for a defined all target with no recipe and up-to-date prerequisites. With a defined target like `app:`, Make's no-op message is 'is up to date'."
           explanation: "When all targets are newer than their prerequisites, Make prints `make: 'app' is up to date` and does nothing. This is the incremental build in action — skipping all work when nothing needs rebuilding."
 
-        - question: |
-            You're about to run `make install` on a project you're unfamiliar with. You want to see what it'll *do* before it actually does it. Which command answers that?
+        - question: "You want to preview the ordinary recipe commands for make install in a Makefile you have already inspected and trust. Which command normally prints them instead of executing them?"
           options:
             - "`make --check install` — Make has a built-in safety mode for checking commands"
             - "`make -n install` — print the recipe lines without executing them"
@@ -1225,7 +1224,7 @@ steps:
             0: "There's no `--check` flag. `-n` (or `--dry-run` / `--just-print`) is the actual flag."
             2: "`--read-only` isn't a Make flag. The dry-run flag is `-n`."
             3: "Make explicitly supports preview via `-n`. The whole point is to *not* have to hope."
-          explanation: "`make -n` (also spelled `--dry-run` or `--just-print`) prints the recipe Make *would* run without executing it. This is the safest way to check unfamiliar Makefiles before they touch your filesystem. Habit: when in doubt, `-n` first."
+          explanation: "make -n install normally prints recipes without executing them. It is a preview tool, not a sandbox: make can still evaluate shell functions, execute recipes prefixed with +, and run recursive make commands. Inspect unfamiliar Makefiles before invoking make, even with -n."
 
         - question: |
             You ran `make` and a target rebuilt that you didn't expect to. You want to know *why* — which prerequisite tripped the rebuild. Which flag tells you?
@@ -1439,7 +1438,7 @@ steps:
           option_feedback:
             0: "`.PHONY` doesn't change build speed — it changes *whether* a target is considered up-to-date. Performance comes from incremental rebuilding (Step 5)."
             2: "Make has no encryption features. The file is plain text and parsed by Make's grammar, no obfuscation."
-            3: "Sadly no — there's no Make directive that fixes the Tab Trap. `.PHONY` is about target names, not indentation."
+            3: "`.PHONY` affects target names, not indentation. GNU Make can change the recipe prefix with `.RECIPEPREFIX`, but this tutorial uses the default Tab prefix."
           explanation: "`.PHONY` tells Make to ignore any files on disk with the same name as the target. This ensures that commands like `make clean` always run, even if a file named `clean` happens to exist."
 
         - question: "What happens if a target name (like `test`) matches a directory name in your project, but is NOT declared `.PHONY`?"
@@ -1562,7 +1561,7 @@ steps:
 
       | Flag | What it does | Reach for it when… |
       |---|---|---|
-      | `make -n` (or `--dry-run`) | Prints recipes without running them | About to run an unfamiliar / risky `make` command |
+      | `make -n` (or `--dry-run`) | Normally prints recipes; shell functions and recursive/+ recipes can still run | Preview an inspected, trusted Makefile |
       | `make --trace` | Runs and prints *which prerequisite* triggered each recipe | A target rebuilt and you don't know why |
       | `make -p` | Dumps Make's internal database — every rule, variable, and pattern it knows about | Wondering "is there an implicit rule fighting mine?" |
       | `make --warn-undefined-variables` | Warns when an undefined variable is referenced (typo catcher) | Tracking down a typo like `$(CFLAS)` instead of `$(CFLAGS)` |
@@ -1699,7 +1698,7 @@ steps:
           option_feedback:
             1: "That's what you'd do *without* the pattern rule. The whole point of `%.o: %.c` (Step 4) is that one rule handles every source file — explicit per-file rules are now redundant."
             2: "`make clean` deletes build artifacts; it doesn't scan for source files. Make doesn't auto-discover anything — it builds exactly the dependency graph you write."
-            3: "Then `app` would depend on a `.c` file, and the link step (`$(CC) $(CFLAGS) $^ -o $@`) would try to link a `.c` file directly. The link step expects `.o` files; compilation goes through OBJS."
+            3: "Then `app` would depend on a `.c` file, and the link step (`$(CC) $(CFLAGS) $^ -o $@`) would try to link a `.c` file directly. The compiler driver can compile that `.c` file during the link command, but it then recompiles it whenever app relinks. Listing parser.o uses the intended separate incremental-compilation rule."
           explanation: "Add `parser.o` to `OBJS` — that's it. The pattern rule `%.o: %.c` handles compilation, the `app:` rule sees `parser.o` as a prerequisite via `$(OBJS)`, and the automatic variable `$^` feeds it to the linker. This is what scalability looks like — the design from Step 4 pays off here."
 
         - question: |

@@ -142,7 +142,7 @@ steps:
 
       **The general pattern.** Code-first writes a function and *then* asks "what should it do?" Test-first writes a behavioral commitment and *then* asks "what's the simplest code that delivers that?" The first habit lets implementation choices smuggle themselves into your sense of what the spec was. The second prevents that — the spec is on disk, in code, before any implementation can pollute it. (Janzen & Saiedian's ICSE 2007 study of 230+ programmers: even programmers who tried test-first once kept reverting to code-first afterward; the habit is *that* sticky. Naming it here, so you can notice it in yourself, is half the work.)
 
-      So you might still resist test-first today. Notice the resistance. The goal of these seven cycles is to give you the *felt experience* of small-step rhythm — after which you'll be choosing test-first because it works, not because we said so. (And per Fucci et al. 2017: even if you sometimes write the code an instant before the test, the *granularity* and *rhythm* are where TDD's measured benefits come from. So don't worry about being a purist; worry about being incremental.)
+      So you might still resist test-first today. Notice the resistance. The goal of these seven cycles is to give you the *felt experience* of small-step rhythm — after which you'll be choosing test-first because it works, not because we said so. (And per Fucci et al. 2017: even if you sometimes write the code an instant before the test, fine granularity and regular rhythm were associated with better outcomes in that study. So don't worry about being a purist; worry about being incremental.)
       </details>
 
       ## The shape of every pytest test
@@ -1684,15 +1684,15 @@ steps:
             You replaced the hardcoded branches with a `for` loop and ran pytest. All four tests passed. What did the test suite just do for you that you would otherwise have had to do manually?
           type: single
           options:
-            - "Nothing — passing tests do not provide any information beyond what manual inspection of the new code would have"
-            - "It verified that the new structure preserves behavior on all four cases in one second"
-            - "It rewrote your code to be more efficient — the suite optimises the implementation as a side effect of being run"
-            - "It logged the change so a future code reviewer can audit it — the suite acts as a versioned history of refactor decisions"
+          - Nothing — passing tests do not provide any information beyond what manual inspection of the new code would have
+          - It checked that the three old cases still pass and the new repeated-singles case now passes.
+          - It rewrote your code to be more efficient — the suite optimises the implementation as a side effect of being run
+          - It logged the change so a future code reviewer can audit it — the suite acts as a versioned history of refactor decisions
           correct_index: 1
           option_feedback:
-            0: "Manual inspection scales to one developer reviewing a few lines once. Automated tests scale to *every change forever*, by *every* developer, with no fatigue. The measurable industrial benefit of TDD (Microsoft/IBM: 39–91% defect reduction) comes specifically from this asymmetry — humans can't replicate the per-change verification cost the suite absorbs for free."
-            2: "Tests don't change your code. They run it and observe the result. (You may be confusing the test suite with mutation testing tools or auto-formatters — those are *different* tools running *outside* the suite.)"
-            3: "Git history logs changes. The test suite *enforces* behavior. Conflating the two means you lose the live regression-catching property — a log doesn't fail a build when you break something; a test does."
+            0: Automated tests repeat the same checks after each change. Industrial case studies found lower defect density, but did not isolate this comparison with manual inspection as its cause.
+            2: Tests don't change your code. They run it and observe the result. (You may be confusing the test suite with mutation testing tools or auto-formatters — those are *different* tools running *outside* the suite.)
+            3: Git history logs changes. The test suite *enforces* behavior. Conflating the two means you lose the live regression-catching property — a log doesn't fail a build when you break something; a test does.
           explanation: |
             *Tests enable change.* The four passing test results are not just "tests passed" —
             they are "the empty case still works, single 1 still works, single 5 still
@@ -3362,21 +3362,17 @@ steps:
             The "one Dragon Blast for any number of 1s ≥ 3" bug was sitting in your code from cycle 5 onward — *three cycles*. Why did no previous test catch it?
           type: single
           options:
-            - "pytest's collection algorithm has a known issue with bugs that span multiple cycles, so it deferred reporting"
-            - "Every prior test used at most three of a face; the bug only surfaces at count ≥ 6"
-            - "The bug only manifests on Tuesdays, and the previous test runs happened on other days"
-            - "Cycle 5's `if counts[1] >= 3:` is correct — there was no bug; cycle 7 changed the requirement"
+          - pytest's collection algorithm has a known issue with bugs that span multiple cycles, so it deferred reporting
+          - Every prior test used fewer than six of a face; the bug surfaces when a second triple should score.
+          - The bug only manifests on Tuesdays, and the previous test runs happened on other days
+          - Cycle 5's `if counts[1] >= 3:` is correct — there was no bug; cycle 7 changed the requirement
           correct_index: 1
           option_feedback:
-            0: "There is no such pytest issue. Bugs aren't \"deferred\" by the collection algorithm — they exist or don't based on whether a test exercises the buggy input. The reason this bug hid for four cycles is *purely about which inputs got tested*, not about pytest internals."
-            2: "Bugs are deterministic functions of input, not of date. (Time-dependent bugs do exist — e.g., daylight savings — but the cycle-7 bug isn't one of them; it depends only on the dice list.)"
-            3: "Cycle 7 didn't change the rule. The spec was \"three 1s = one Dragon Blast, leftovers score as singles\" all along. The bug is that for six 1s, the *cycle-5 code* emits 1 Blast + 3 Flames, when the spec says 2 Blasts + 0 Flames. The defect was always there; only cycle 7's test surfaced it."
+            0: There is no such pytest issue. Bugs aren't "deferred" by the collection algorithm — they exist or don't based on whether a test exercises the buggy input. The reason this bug hid for three cycles is *purely about which inputs got tested*, not about pytest internals.
+            2: Bugs are deterministic functions of input, not of date. (Time-dependent bugs do exist — e.g., daylight savings — but the cycle-7 bug isn't one of them; it depends only on the dice list.)
+            3: Cycle 7 didn't change the rule. The spec was "three 1s = one Dragon Blast, leftovers score as singles" all along. The bug is that for six 1s, the *cycle-5 code* emits 1 Blast + 3 Flames, when the spec says 2 Blasts + 0 Flames. The defect was always there; only cycle 7's test surfaced it.
           explanation: |
-            Boundary thinking. Every previous combo test gave the rule *exactly* `count`
-            dice. The bug was on the boundary where `counts[X] >= 2 * count`. Without a test
-            on that boundary, the code would have shipped wrong — and the developer would
-            have been completely confident in it. This is exactly the kind of failure mode
-            empirical TDD studies report.
+            The earlier tests included exactly three and, in the leftover guardrail, four of a face. None reached six, where a second combo is required. The suite exercised the code but did not yet distinguish one-shot triple scoring from repeated-combo scoring.
 
         - question: |
             What is the **most defensible** general lesson from cycle 7 about test-suite design?
@@ -3399,24 +3395,20 @@ steps:
             boundary" input — and a healthy suite probes each.
 
         - question: |
-            Cycle 5's bonus leftover guardrail (`[1, 1, 1, 1, 5]`) still passes after cycle 7's refactor. Why? Be precise.
+            Cycle 5's bonus leftover guardrail (`[1, 1, 1, 1, 5]`) still passes after cycle 7's bug fix. Why? Be precise.
           type: single
           options:
-            - "Because pytest skips guardrail tests after they pass once — they are stored as cached green results"
-            - "For `counts[1] = 4`, the old `-= 3` and new `%= 3` both leave 1 — they only differ at `counts[1] >= 6`"
-            - "Because the leftover test is parameterized, and pytest reruns parameterized tests with looser tolerances"
-            - "Because the leftover test has been deleted by the cycle 7 refactor — the green count went down, not up"
+          - Because pytest skips guardrail tests after they pass once — they are stored as cached green results
+          - For `counts[1] = 4`, the old `-= 3` and new `%= 3` both leave 1 — they only differ at `counts[1] >= 6`
+          - Because the leftover test is parameterized, and pytest reruns parameterized tests with looser tolerances
+          - Because the leftover test has been deleted by the cycle 7 refactor — the green count went down, not up
           correct_index: 1
           option_feedback:
-            0: "Pytest doesn't cache test results between runs. Every `pytest` invocation re-executes every selected test from scratch. Made-up framework behavior — the explanation needs to come from the code's semantics."
-            2: "Pytest doesn't loosen tolerances for parametrized tests. Each parameter row runs the same assertion logic. The reason the guardrail still passes is *mathematical* (the two operations agree on 4), not framework-related."
-            3: "Refactors don't delete tests — that would defeat the safety net. The green count *increased* because cycle 7 added a new passing test. The code is what gets restructured during refactoring; the tests remain as guards."
+            0: Pytest doesn't cache test results between runs. Every `pytest` invocation re-executes every selected test from scratch. Made-up framework behavior — the explanation needs to come from the code's semantics.
+            2: Pytest doesn't loosen tolerances for parametrized tests. Each parameter row runs the same assertion logic. The reason the guardrail still passes is *mathematical* (the two operations agree on 4), not framework-related.
+            3: Refactors don't delete tests — that would defeat the safety net. The green count *increased* because cycle 7 added a new passing test. The code is what gets restructured during refactoring; the tests remain as guards.
           explanation: |
-            This is a subtle but important point: a refactor does not have to *change every
-            output*. The two implementations of `apply` produce the same answer for any
-            input where the old answer was correct — and only the new answer is correct
-            where the old was wrong. That is what makes the cycle-7 fix a *generalisation*
-            rather than a *replacement*.
+            This is a behavior-changing bug fix: it preserves the previously correct four-of-a-kind result and corrects the six-of-a-kind result. Refactoring, by contrast, preserves observable behavior. The earlier extraction into ComboRule was a refactor; replacing one-shot combo scoring with repeated combo scoring changes behavior.
 
         - question: |
             A teammate looks at cycle 7's fix and says: *"This bug only existed because we extracted ComboRule. If we'd kept the inline `if counts[1] >= 3:` from cycle 5, we wouldn't have had this issue."* Are they right?
@@ -3430,7 +3422,7 @@ steps:
           option_feedback:
             0: "Trace the cycle-5 inline code on six 1s by hand: `if counts[1] >= 3: ... counts[1] -= 3` runs once, leaves 3, then SingleRule emits 3 Flames. The same defect existed before the refactor, just in a different file. The algorithm needed a loop over complete triples; the abstraction did not create that bug."
             2: "Python doesn't rewrite `if` statements; that's invented language behavior. (And version-blame is a common dodge for design questions — the language is rarely the actual culprit.) The bug is in the *algorithm*, which Python executes faithfully on every version."
-            3: "Counter doesn't re-order operations. (Made-up implementation detail, again.) The actual lesson here is that abstractions don't introduce algorithmic bugs — they at most *relocate* them. The fix has to be in the algorithm, no matter where the algorithm lives."
+            3: "Counter doesn't re-order operations. (Made-up implementation detail, again.) In this example, the extraction preserved the same one-shot algorithm, so the defect predates the abstraction. The fix has to be in the algorithm, no matter where the algorithm lives."
           explanation: |
             The bug is the algorithm's bug, not the abstraction's. Whether the `if`/`-=`
             sits in `score()` or in `ComboRule.apply` makes no difference to its behavior.
@@ -3721,17 +3713,17 @@ steps:
             FizzBuzz's `multiple of 15` test most directly parallels which Dragon-Dice cycle — and why?
           type: single
           options:
-            - "Cycle 5 (Triple 1s) — both are *design-breaking tests*: previous code cannot be locally tweaked"
-            - "Cycle 1 (Empty roll). Both are the simplest case anyone could write."
-            - "Cycle 4 (Repeated singles). Both are about handling duplicates of the same input."
-            - "Cycle 6 (Goblin Swarm). Both are about adding a second example that reveals an abstraction."
+          - Cycle 5 (Triple 1s) — both introduce an overlapping rule that must take precedence over simpler cases.
+          - Cycle 1 (Empty roll). Both are the simplest case anyone could write.
+          - Cycle 4 (Repeated singles). Both are about handling duplicates of the same input.
+          - Cycle 6 (Goblin Swarm). Both are about adding a second example that reveals an abstraction.
           correct_index: 0
           option_feedback:
-            1: "Cycle 1 was the *simplest* case (the empty input), not a structural pivot. FizzBuzz's empty-list test (`fizzbuzz(0) == []`) is the cycle-1 parallel — but `multiple of 15` is structurally hard, not trivially simple. The match here is on *structural pressure*, not on \"first cycle of the tutorial.\""
-            2: "Cycle 4 is about generalizing per-input handling into a loop — a refactor, not a structural pivot. The new test (`[1, 1]`) is satisfiable by either a third hardcoded branch *or* a loop. FizzBuzz's `multiple of 15` test cannot be satisfied by either of the two prior conditional shapes; it forces a re-ordering. Different kind of design moment."
-            3: "Cycle 6 (Goblin Swarm) is about *abstraction discovery* — the second example reveals the right shape for a refactor. FizzBuzz's `multiple of 15` isn't about extracting a `Rule` object; it's about the previous code being structurally unable to produce the right answer at all. Structural pivot, not abstraction extraction."
+            1: The empty-roll case has no overlapping rules. Multiples of 15 satisfy both the multiple-of-3 and multiple-of-5 rules, so the combined case needs explicit handling.
+            2: Repeated singles extend the number of scored items. Multiples of 15 instead require combining or prioritizing rules that overlap on the same input.
+            3: The common feature here is overlapping rules, not necessarily extracting an abstraction. A leading `% 15 == 0` branch is a valid local fix.
           explanation: |
-            Cycle 5 is the right parallel. The signature of a design-breaking test: previous cycles produced code that looks correct, but the *new* test cannot be satisfied by a local edit — the structure has to change. For Dragon Dice that meant moving from per-die iteration to count-then-emit. For FizzBuzz that meant either reordering the conditionals (so `% 15` is checked first) or switching to a compositional string builder. Either way, the existing structure had to accept a behavior the previous tests didn't anticipate. **That feeling — "I can't tweak this; I have to restructure" — is a TDD rhythm invariant, not a Dragon-Dice quirk.**
+            The parallel is rule precedence: a triple must score before its dice are consumed as singles, and a multiple of 15 must produce FizzBuzz rather than just Fizz or Buzz. A leading combined-case branch or a compositional string builder can both work. This example does not prove that a structural redesign is necessary.
 
         - question: |
             A teammate, who has never done TDD, pushes back: *"FizzBuzz is just trivia — the real work is the algorithm. Why did you spend 12 minutes on the cycles instead of 30 seconds typing the obvious solution?"* Pick the strongest reply.
@@ -3888,7 +3880,7 @@ steps:
       | Same studies | **15–35% longer** initial development; offset by reduced debugging |
       | Erdogmus et al. (2005) | Test-first students wrote **more tests** AND were **more productive** per test |
       | Janzen & Saiedian (ICSE 2007) | Even programmers who *resisted* test-first adopted it more after exposure — the **Residual Effect** |
-      | Fucci et al. (2017) | TDD's benefit comes from **granularity + uniformity**, not strict test-first ordering — your seven tiny cycles embody both |
+      | Fucci et al. (2017) | Better outcomes were associated with **granularity + uniformity** in an observational study; sequencing showed no important influence |
 
       Caveat: mixed for solo programmers on short tasks. Strongest in team settings, with CI, on long-lived systems.
       </details>

@@ -29,7 +29,7 @@ cards:
   - id: 5
     difficulty: advanced
     question: "When is splitting a class into two INCORRECT from an SRP perspective?"
-    answer: "When both parts always change together, for the same reason, driven by the same actor. Then there is really **one** axis of change, and the split is artificial abstraction that doubles maintenance cost."
+    answer: "When both parts always change together, for the same reason, driven by the same actor. Then there is really **one** axis of change, and the split is artificial abstraction that adds coordination and maintenance overhead."
     explanation: "SRP is diagnosed by *who triggers the change*, not by line count, public-method count, or file count. If the 'two' concerns never move apart, they are one concern wearing two names."
 
   - id: 6
@@ -58,9 +58,9 @@ cards:
 
   - id: 10
     difficulty: advanced
-    question: "Why did Java's `Stack extends Vector` become the textbook legacy LSP mistake?"
-    answer: "`Vector` exposes random-access methods (`get(i)`, `insertElementAt`). A `Stack` inheriting these breaks strict LIFO behavior — clients can reach past the top, violating the invariant any stack client relies on."
-    explanation: "This is the price of careless inheritance in a widely-used standard library: `Stack` objects leak the Vector API forever, and every serious Java shop prefers `Deque` today."
+    question: "What is the design problem with Java's `Stack extends Vector`, and is it necessarily an LSP violation?"
+    answer: "`Stack` inherits random-access operations from `Vector`, so its API does not enforce stack-only access. This is inappropriate inheritance for a strict stack abstraction; it does not by itself show a violation of the **Vector** contract, which is the contract relevant to LSP substitution."
+    explanation: "Java recommends `Deque` for stack operations. To demonstrate an LSP violation, show a subtype breaking behavior promised to clients of its parent, such as rejecting an input the parent accepts."
 
   - id: 11
     difficulty: expert

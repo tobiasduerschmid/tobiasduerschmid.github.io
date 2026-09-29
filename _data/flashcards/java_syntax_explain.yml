@@ -32,13 +32,13 @@ cards:
 
       Integer p = 128;
       Integer q = 128;
-      System.out.println(p == q);   // false
+      System.out.println(p == q);   // may be false or true
       ```
-      The only change is 127 → 128. What mechanism in the JVM causes this flip, and why is this dangerous in production code?
+      The only change is 127 → 128. Why is the second output no longer guaranteed, and why is relying on it dangerous?
     answer: |
-      Java pre-creates and caches `Integer` objects for values **−128 to 127** at JVM startup. Autoboxing `Integer x = 127` hands back the *same cached object* every time, so `x == y` is `true` (same reference).
+      Java guarantees cached `Integer` objects for values **−128 to 127** and permits caching a wider range. Autoboxing `Integer x = 127` hands back the *same cached object* every time, so `x == y` is `true` (same reference).
 
-      Outside the cache range, `Integer.valueOf(128)` creates a **new heap object** each call. `p` and `q` point to different objects — `==` returns `false`.
+      If 128 is outside the configured cache, `p` and `q` are distinct and `==` returns `false`. A wider cache can make it return `true`; neither result is portable for 128.
 
       **Why dangerous:** Tests usually use small values (IDs, counts) that fall in the cache range. `==` appears to work. In production, large IDs or counts fall outside the cache and `==` silently returns `false`. The fix is always `.equals()` for wrapper types.
 
@@ -81,7 +81,7 @@ cards:
       ```java
       sum = Integer.valueOf(sum.intValue() + i);
       ```
-      That is two method calls and **one new `Integer` object allocation** per iteration — one million short-lived objects in total, generating garbage-collector pressure.
+      That is unboxing and reboxing on every iteration, with potential allocations and garbage-collector pressure. Cached values and JIT optimization mean the allocation count is not fixed.
 
       Version B performs pure stack arithmetic — no objects created, no method calls.
 
@@ -168,24 +168,7 @@ cards:
       System.out.println(s.getArea());
       ```
       Explain what `@Override` buys you here. Give an example of the specific bug it prevents.
-    answer: |
-      `@Override` instructs the compiler to **verify that the annotated method actually overrides something** in the parent class or interface.
-
-      Without it, a typo silently creates a new method instead of overriding:
-
-      ```java
-      // Without @Override — compiles, but never called polymorphically
-      public double getArae() { return Math.PI * radius * radius; }  // typo!
-      ```
-
-      With `@Override`:
-      ```java
-      @Override
-      public double getArae() { ... }  // COMPILE ERROR: method does not override
-      ```
-
-      It also catches the case where an interface method is renamed — the override becomes a dead method silently if `@Override` is absent.
-
+    answer: "@Override asks the compiler to verify that a method overrides a superclass method or implements an interface method.\n\nIn this exact example, renaming getArea to getArae would fail to compile even without @Override: a concrete Circle must implement Shape.getArea. The annotation adds a direct diagnostic at the mistaken declaration.\n\nA typo can compile silently when the intended method already has an inherited implementation (for example, a concrete superclass method or an interface default method). The inherited behavior then runs instead of the intended override. @Override catches that typo too."
   - id: 8
     difficulty: advanced
     question: |
@@ -205,9 +188,9 @@ cards:
           public String describe() { return getMake() + " Car"; }
       }
       ```
-      Why must `super(make)` be the **first** statement in `Car`'s constructor? What would happen if it were moved after `getMake()`?
+      In Java 17, why must `super(make)` be the **first** statement in `Car`'s constructor? What would happen if it were moved after `getMake()`?
     answer: |
-      Java requires the parent's constructor to run **before any subclass code**, because the subclass may depend on state initialized by the parent. If `super()` is not the first statement, a partially-constructed `Vehicle` could be accessed.
+      Java 17 requires the explicit parent-constructor call to be the first constructor statement, because the subclass may depend on state initialized by the parent. If `super()` is not the first statement, a partially-constructed `Vehicle` could be accessed.
 
       If you tried to move `super(make)` below a `getMake()` call:
       ```java

@@ -46,7 +46,7 @@ cards:
 
   - id: 8
     difficulty: basic
-    question: "True or false: 'If I make all my fields and methods `private`, I have followed the Information Hiding principle.'"
+    question: "True or false: 'If I make all my fields `private`, I have followed the Information Hiding principle.'"
     answer: "**False.** Visibility modifiers are one *language tool* for enforcing hiding. The principle is broader: even with all-`private` fields, you can leak the secret through your **interface** — for example, by returning a vendor-specific type like `PayPalCharge` from a public method."
     explanation: "Information Hiding decides *what* to hide; encapsulation and visibility modifiers help *enforce* the choice. You can have one without the other in either direction."
 
@@ -59,7 +59,7 @@ cards:
   - id: 10
     difficulty: intermediate
     question: "Distinguish **syntactic** and **semantic** coupling. Why is the second one more dangerous?"
-    answer: "**Syntactic coupling**: module A imports/calls/names types from B (the compiler can see it). **Semantic coupling**: A and B share an unspoken assumption (e.g., 'phone numbers are 10-digit strings without formatting'); changing the assumption in one silently breaks the other. Semantic coupling is more dangerous because tools can't detect it."
+    answer: "**Syntactic coupling**: module A imports/calls/names types from B (the compiler can see it). **Semantic coupling**: A and B share an unspoken assumption (e.g., 'phone numbers are 10-digit strings without formatting'); changing the assumption in one silently breaks the other. Semantic coupling is more dangerous because ordinary type checking may not reveal the shared assumption; targeted tests or analysis can still detect particular cases."
     explanation: "Information Hiding fights both kinds, but semantic coupling only goes away when the shared assumption itself lives in exactly one module."
 
   - id: 11

@@ -30,13 +30,13 @@ cards:
     difficulty: basic
     question: "What metacharacter is used to match any single digit?"
     answer: "`\\d`"
-    explanation: "In ASCII-only engines (such as POSIX tools and JavaScript), `\\d` is equivalent to `[0-9]`. In Unicode-aware engines like Python 3 (the default mode), `\\d` matches any Unicode digit — including non-ASCII digits like Devanagari `९` — so use `[0-9]` explicitly when you only want ASCII digits."
+    explanation: "In ASCII-only engines (such as JavaScript), `\\d` is equivalent to `[0-9]`. In Unicode-aware engines like Python 3 (the default mode), `\\d` matches any Unicode digit — including non-ASCII digits like Devanagari `९` — so use `[0-9]` explicitly when you only want ASCII digits. POSIX BRE/ERE do not define `\\d`; use `[0-9]` or `[[:digit:]]` with those tools."
 
   - id: 6  
     difficulty: basic
     question: "What meta character is used to match any 'word' character (alphanumeric plus underscore)?"  
     answer: "`\\w`"  
-    explanation: "This is the direct equivalent of the character class `[a-zA-Z0-9_]`."  
+    explanation: "In JavaScript without case-insensitive Unicode matching, this is equivalent to `[a-zA-Z0-9_]`. Python 3 also includes Unicode alphanumeric characters by default."
 
   - id: 7  
     difficulty: basic
@@ -84,4 +84,4 @@ cards:
     difficulty: advanced
     question: "What is the syntax used to create a Named Group?"
     answer: "`(?<name>pattern)` (or `(?P<name>pattern)` in Python)"
-    explanation: "A named group lets you assign a meaningful label to the match, so you can access it by name (e.g., `match.groups.name`) instead of just a numbered index."
+    explanation: "A named group lets you assign a meaningful label to the match, so you can access it by name (e.g., `match.groups.name` in JavaScript or `match.group('name')` in Python) instead of just a numbered index."

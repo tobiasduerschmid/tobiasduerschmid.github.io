@@ -41,14 +41,14 @@ cards:
   - id: 7
     difficulty: intermediate
     question: "How does TDD produce **'living documentation'** and increase the **bus factor**?"
-    answer: "Tests are continuously executed, so they remain an always-accurate spec of behavior — unlike prose docs that rot. New team members learn the system from tests; original authors can leave without taking the spec with them."
+    answer: "Regularly executed tests document the examples and properties they actually check. They can help new team members learn the contract, but incomplete or incorrect tests are not an always-accurate specification."
     explanation: "This is one of TDD's understated benefits. Conventional documentation describes intended behavior; TDD tests describe verified behavior. The gap matters most precisely when it matters most — when authors are gone and the system has drifted from the docs everyone assumed were accurate."
 
   - id: 8
     difficulty: intermediate
     question: "Critique: *'TDD is a complete methodology — every line of every system should be test-first.'* Name at least three contexts where TDD as the *sole* methodology is a poor fit."
-    answer: "(1) **Non-incremental architectures** (distributed systems, ACID databases). (2) **Non-binary outcomes** (ML, image recognition — confidence intervals, not pass/fail). (3) **Non-functional properties** (security, performance, reliability — need risk-driven design)."
-    explanation: "TDD is exceptional for managing technical debt and evolving local design under known requirements. It's weaker — and sometimes harmful — when used as a complete methodology. The mature stance is to *pair* TDD with risk-driven design for NFRs, with high-level architectural work for non-incremental systems, and with separate quality activities (property tests, statistical evaluation) for non-binary outcomes."
+    answer: "(1) **Non-incremental architectures** (distributed systems, ACID databases). (2) **Statistical outcomes** (ML, image recognition — representative held-out evaluation and uncertainty estimates, with explicit acceptance thresholds). (3) **Non-functional properties** (security, performance, reliability — need risk-driven design)."
+    explanation: "TDD is exceptional for managing technical debt and evolving local design under known requirements. It's weaker — and sometimes harmful — when used as a complete methodology. The mature stance is to *pair* TDD with risk-driven design for NFRs, with high-level architectural work for non-incremental systems, and with complementary quality activities (property tests, statistical evaluation) when a few example-based unit tests are insufficient."
 
   - id: 9
     difficulty: advanced

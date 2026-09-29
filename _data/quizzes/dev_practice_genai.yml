@@ -6,21 +6,19 @@ questions:
     difficulty: intermediate
     type: single
     question: |
-      Compilers (1960s) delivered a 10x productivity gain. Current research estimates GenAI delivers 21%–50%. What is the most accurate explanation for the gap?
+      Compilers automate translation from a high-level program to machine code. Why can faster AI code generation still produce a much smaller improvement in end-to-end engineering productivity?
     options:
-      - "Compilers ran faster than today's LLMs."
-      - "Compilers automated accidental complexity; GenAI doesn't yet touch essential complexity."
-      - "GenAI is being measured wrong — once measured correctly it also delivers 10x."
-      - "Compilers and GenAI have the same productivity effect; the difference is purely marketing."
+    - Compilers ran faster than today's LLMs.
+    - Faster generation still leaves requirements, integration, review, and debugging work to account for.
+    - GenAI is being measured wrong — once measured correctly it also delivers 10x.
+    - Compilers and GenAI have the same productivity effect; the difference is purely marketing.
     correct_index: 1
     option_feedback:
-      0: |
-        Compilers were vastly slower than LLMs (compilation took hours on 1960s hardware). Execution speed of the *tool* is not what produces engineering productivity. The compiler's leverage came from what it automated, not how fast it ran.
-      2: |
-        The 21–50% range is the consistent finding across multiple controlled studies — not a measurement artifact. Treating it as undercounted overstates current AI capability and underestimates the work that essential complexity still demands.
-      3: |
-        Compilers eliminated whole categories of repetitive translation work that previously consumed half a developer's day. GenAI's reduction is real but smaller in scope. The asymmetry is well-documented, not marketing.
-    explanation: "**Compilers automated *accidental* complexity (translating high-level intent into machine instructions) — a near-pure mechanical task. GenAI helps with parts of that but leaves *essential* complexity (understanding requirements, choosing data structures, navigating trade-offs, integrating with messy real systems) largely intact.** This is why productivity gains plateau where genuine engineering judgment is needed, and why systems-thinking and requirements skills remain decisive even with AI assistance."
+      0: Tool execution speed and engineering productivity measure different things. Faster generation may leave requirements, integration, review, and debugging work unchanged.
+      2: AI productivity estimates depend on the task, developer, tool version, and measurement. A universal 10x gain is not established by generation speed.
+      3: The tools automate different activities. Compare total time and delivered quality in a specified setting; neither an identical effect nor a universal gap follows from the tool categories alone.
+    explanation: |
+      Translation removes some mechanical work, while delivering a feature also requires understanding requirements, resolving trade-offs, integrating changes, and verifying behavior. Faster generation alone does not establish an end-to-end productivity gain. Quantitative comparisons must specify the study, task population, tools, and metric.
 
   - id: 2
     difficulty: intermediate
@@ -145,7 +143,7 @@ questions:
         Some hallucinations *are* references to deleted libraries, but most are fabricated names that never existed. The mechanism is the same — token prediction without verification — but framing it as 'old version' understates the breadth of the problem.
       3: |
         The model has no network connection during inference. Hallucination is a property of the model's generation process, not of any external lookup.
-    explanation: "**Hallucinations come from how LLMs work: they predict the *most likely next token* given prior context, without any grounding in real-world facts. A plausible-looking import like `datafetcher_v2` is *linguistically* plausible — but linguistic plausibility is not factual existence.** This is the 'statistical parrot' framing: the model produces sequences that look like correct code without any knowledge of whether the code is correct. Tools like retrieval-augmented generation and IDE integrations help by grounding suggestions in real codebases, but the underlying risk remains."
+    explanation: "**Hallucinations come from how LLMs work: they generate tokens from a learned probability distribution given prior context, which does not by itself verify factual claims. A plausible-looking import like `datafetcher_v2` is *linguistically* plausible — but linguistic plausibility is not factual existence.** This is the 'statistical parrot' framing: the model can produce sequences that look correct without a reliable check that the referenced APIs exist or behave as claimed. Tools like retrieval-augmented generation and IDE integrations help by grounding suggestions in real codebases, but the underlying risk remains."
 
   - id: 8
     difficulty: basic

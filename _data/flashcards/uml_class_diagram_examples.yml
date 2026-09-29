@@ -29,7 +29,7 @@ cards:
       <div data-uml-type="class" data-uml-spec="class Building&#10;class Room&#10;class Library&#10;class Book&#10;Building *-- Room&#10;Library o-- Book"></div>
     answer: "The first is **Composition** (strong), the second is **Aggregation** (weak)."
     explanation: >
-      A filled diamond (<span class="uml-sym" data-diagram="class" data-sym="*--"></span>) is **Composition**, meaning the parts cannot exist without the whole. A hollow diamond (<span class="uml-sym" data-diagram="class" data-sym="o--"></span>) is **Aggregation**.
+      A filled diamond (<span class="uml-sym" data-diagram="class" data-sym="*--"></span>) is **Composition**, meaning a part belongs to at most one composite at a time and is deleted with that whole unless detached first. A hollow diamond (<span class="uml-sym" data-diagram="class" data-sym="o--"></span>) is **Aggregation**.
 
   - id: 4
     difficulty: advanced
@@ -71,7 +71,7 @@ cards:
     question: "How do you indicate an **abstract class** in UML?"
     answer: "By *italicizing* the class name, or adding `{abstract}`."
     explanation: >
-      An abstract class cannot be instantiated directly. Abstract operations (methods with no implementation) are also shown in italics. Subclasses must provide concrete implementations.
+      An abstract class cannot be instantiated directly. Abstract operations (methods with no implementation) are also shown in italics. Concrete subclasses must provide or inherit implementations of all remaining abstract operations; an abstract subclass may leave them abstract.
 
       <div data-uml-type="class" data-uml-spec="abstract class Shape {&#10;  {abstract} +draw(): void&#10;}&#10;class Circle {&#10;  +draw(): void&#10;}&#10;Circle --|> Shape"></div>
 
@@ -85,8 +85,8 @@ cards:
   - id: 10
     difficulty: basic
     question: "What does a **navigable association** (<span class='uml-sym' data-diagram='class' data-sym='-->'></span>) indicate?"
-    answer: "The class at the **tail** holds a reference to the class at the **arrowhead**. Only one direction is navigable."
+    answer: "The class at the **tail** holds a reference to the class at the **arrowhead**. The arrow specifies navigation toward the arrowhead; the unmarked reverse direction remains unspecified."
     explanation: >
-      A plain association (<span class="uml-sym" data-diagram="class" data-sym="--"></span>) has **unspecified** navigability per UML 2.5 — not "bidirectional by default." An arrowhead makes it unidirectional: in code, the tail class has a field of the head class's type. This is a design-level detail — omit it in early domain models.
+      A plain association (<span class="uml-sym" data-diagram="class" data-sym="--"></span>) has **unspecified** navigability per UML 2.5 — not "bidirectional by default." An arrowhead establishes that direction of navigation; an X at the opposite end would explicitly rule out reverse navigation. In a typical design model, the tail class has a field of the head class's type. This is a design-level detail — omit it in early domain models.
 
       <div data-uml-type="class" data-uml-spec="class Employee&#10;class Boss&#10;Employee --> Boss"></div>

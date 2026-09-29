@@ -72,7 +72,7 @@ cards:
     difficulty: intermediate
     question: "Why must Agile teams invest in **technical excellence** even though working software is the primary measure of progress?"
     answer: "Working software measures *current* output; technical excellence determines *future* output. A team that ships fast but accumulates technical debt will eventually slow to a crawl as every change costs more than the last. Agile's iteration model only works if each iteration is approximately as fast and safe as the previous — which requires continuous design attention."
-    explanation: "This is why the 12th Agile principle says 'continuous attention to technical excellence and good design enhances agility.' Skipping refactoring, ignoring code smells, or letting tests degrade trades a few weeks of velocity for years of pain. Healthy Agile teams treat REFACTOR (in TDD), refactoring sprints, and architecture work as non-optional."
+    explanation: "This is why the 9th Agile principle says 'continuous attention to technical excellence and good design enhances agility.' Skipping refactoring, ignoring code smells, or letting tests degrade trades a few weeks of velocity for years of pain. Healthy Agile teams treat REFACTOR (in TDD), refactoring sprints, and architecture work as non-optional."
 
   - id: 13
     difficulty: basic

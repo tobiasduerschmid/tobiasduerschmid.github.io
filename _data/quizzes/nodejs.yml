@@ -68,7 +68,7 @@ questions:
       3: |
         `==` and `===` agree only while operands stay the same type, so tests can miss the future
         mismatch.
-    explanation: "The danger isn't that `==` fails now — it's that it hides a fragile assumption. When requirements change (e.g., a user ID becomes a string UUID instead of a number), `==` silently coerces and produces wrong results with no error. `===` fails loudly when types diverge, catching the bug before it reaches production."
+    explanation: "`==` may convert operands before comparing them; `===` returns false when their types differ. Neither operator automatically reports a type mismatch as an error. Use explicit input validation and conversion when strings are expected, then compare with `===`."
 
   - id: 4
     difficulty: advanced
@@ -122,7 +122,7 @@ questions:
         `let` and `const` are block-scoped; the confusing legacy behavior belongs to `var`.
       3: |
         The loop is not macro-expanded; the observed lifetime follows JavaScript's `var` scoping rule.
-    explanation: "`var` hoists to the enclosing function scope and ignores block boundaries (`if`, `for`, `while`), so it survives past the loop's closing brace — one of JavaScript's most confusing legacy features. `let` and `const` use block scope, matching the behavior C++ and Python lead you to expect. Always prefer `let` or `const`."
+    explanation: "`var` is function-scoped rather than block-scoped, so a binding declared in an ordinary loop remains available afterward. `let` and `const` use block scope, like C++. Python differs: ordinary `if` and `for` blocks do not create a new local scope. Prefer `let` or `const` for explicit block boundaries in JavaScript."
 
   - id: 6
     difficulty: intermediate
@@ -194,7 +194,7 @@ questions:
     distractors:
       - "        fs.readFileSync(path);"
       - "    finally { return data; }"
-    explanation: "`async/await` with `fs.promises.readFile` reads without blocking, and the `try/catch` handles both file-not-found and invalid-JSON errors. The `readFileSync` distractor blocks the Event Loop — the cardinal sin in Node.js. The `finally { return data; }` distractor would override the return value from both `try` and `catch`, a subtle bug since a `return` in `finally` wins."
+    explanation: "`async/await` with `fs.promises.readFile` reads without blocking, and the `try/catch` handles both file-not-found and invalid-JSON errors. The `readFileSync` distractor blocks the Event Loop — the cardinal sin in Node.js. The `finally { return data; }` distractor tries to read `data` outside the `try` block where it was declared, so it throws a ReferenceError and replaces the earlier completion. A return from `finally` would also override an earlier return if its expression could be evaluated."
 
   - id: 9
     difficulty: intermediate
@@ -256,25 +256,15 @@ questions:
 
   - id: 12
     difficulty: advanced
-    question: |
-      A Discord bot fetches a user's message count from an API. The API returns `"42"` (a string). The bot checks `if (count == 42)` to award a badge. What are ALL the problems?
+    question: "An API promises that message counts are numbers, but returns `\"42\"`. The bot uses `if (count == 42)`. Which diagnosis best explains what this check misses?"
     options:
-      - "Only one problem: `==` should be `===`"
-      - "`==` coerces the string and hides a type mismatch that breaks at other thresholds"
-      - "No problems — `==` correctly handles string-to-number comparison"
-      - "The only problem is that the API should return a number, not a string"
+      - "The comparison rejects the string because its type differs."
+      - "The comparison coerces the string, concealing a violated API contract."
+      - "The comparison validates that the original response is a number."
+      - "The comparison converts the stored count permanently to a number."
     correct_index: 1
-    option_feedback:
-      0: |
-        The dangerous part is not merely using the wrong operator; the operator hides an API type
-        mismatch that should be made explicit.
-      2: |
-        `==` makes this example pass by accident, which is exactly why the bug can survive until a less
-        friendly value appears.
-      3: |
-        Even if the API should return a number, client code still needs explicit conversion or strict
-        comparison at the boundary.
-    explanation: "`==` coerces the string `\"42\"` to the number `42`, so the check passes by accident while hiding a type mismatch `===` would catch. The accidental success is exactly what lets the bug survive until a less friendly value (like a threshold of `0`) appears. `Number(count) === 42` makes the conversion explicit and the comparison strict."
+    option_feedback: {"0": "Loose equality coerces this string to a number, so the comparison is true.", "2": "A successful loose comparison does not establish the original type. Validate the contract or explicitly parse and validate a string-valued API.", "3": "Comparison does not reassign count; it remains a string."}
+    explanation: "For the supplied string '42', loose equality returns true. If the API contract permits numeric strings, explicitly validate and convert them before comparing; if it requires numbers, reject strings. Changing only the numeric threshold does not itself make loose equality fail. The risk is accepting inputs outside the intended contract without noticing."
 
   - id: 13
     difficulty: intermediate
@@ -424,12 +414,12 @@ questions:
       - "router.get('/students/:id', async (req, res) => {"
       - "    const roster = await fetchRoster();"
       - "    const student = roster.find(s => s.id === Number(req.params.id));"
-      - "    if (!student) { return res.json({ error: 'Not found' }); }"
+      - "    if (!student) { return res.status(404).json({ error: 'Not found' }); }"
       - "    res.json(student);"
       - "});"
     distractors:
       - "    const student = roster.filter(s => s.id === req.params.id);"
-      - "    if (student === null) { return res.json({ error: 'Not found' }); }"
+      - "    if (student === null) { return res.status(404).json({ error: 'Not found' }); }"
     explanation: "`.find()` returns the first match or `undefined`, so `!student` is the right guard — it catches both `undefined` and `null`. The `.filter()` distractor returns an array, not a single object, and the `=== null` distractor misses `undefined`, which is what `.find()` actually produces. Note `Number(req.params.id)` converts the string route param to match the numeric `id` under `===`."
 
   - id: 20
@@ -485,5 +475,5 @@ questions:
       - "console.log(city);"
     distractors:
       - "const city = user.profile.address.city || 'Unknown';"
-      - "const city = user?.profile?.address?.city != null ? city : 'Unknown';"
-    explanation: "When `address` is `null`, `address?.city` returns `undefined` instead of throwing, and `??` supplies the default only for `null`/`undefined`. The `||` distractor would also replace `0` and empty strings with the default — wrong when those are valid values. The ternary distractor references `city` before it is defined."
+      - "const city = user?.profile?.address?.city ?? city;"
+    explanation: "When `address` is null, `address?.city` returns undefined and `??` supplies 'Unknown'. Directly accessing `.city` on null throws. The self-referencing default `?? city` is evaluated for this missing value and reads the new `const city` before initialization, causing a ReferenceError."

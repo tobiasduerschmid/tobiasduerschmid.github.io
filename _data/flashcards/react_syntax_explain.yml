@@ -131,7 +131,7 @@ cards:
         document.title = 'Hello!';
       }, []);
       ```
-    answer: "Runs a **side effect** once after the component first mounts. The empty array `[]` is the *dependency array* — it tells React 'don't re-run this when anything changes'. Common uses: fetching initial data, setting up subscriptions, updating `document.title`."
+    answer: "Runs an effect after mounting. With an empty dependency array, ordinary re-renders do not re-run it. In development Strict Mode, React performs an extra setup/cleanup cycle to check cleanup behavior; remounting also runs the effect again."
 
   - id: 14
     difficulty: advanced

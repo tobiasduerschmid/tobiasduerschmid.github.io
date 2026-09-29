@@ -14,8 +14,8 @@ cards:
   - id: 2
     difficulty: intermediate
     question: "Check if a variable `userInput` (which might be a string) equals the number `42`, without being tricked by type coercion."
-    answer: "`userInput === 42` or `Number(userInput) === 42`"
-    explanation: "Always use `===` (strict equality). `==` would coerce `\"42\"` to `42`, silently masking a type mismatch."
+    answer: "`userInput === 42`"
+    explanation: "Strict equality checks the value and type without implicit conversion. The string '42' therefore does not match. If numeric strings are permitted by a different input contract, validate and convert them explicitly before comparing."
   - id: 3
     difficulty: basic
     question: "Create a string that says `Hello, Alice! Score: 95` using variables `name = \"Alice\"` and `score = 95`, with interpolation."
@@ -58,7 +58,7 @@ cards:
       ```javascript
       async function loadUser() {
           try {
-              const res = await fetch('/api/user');
+              const res = await fetch('https://example.com/api/user');
               const data = await res.json();
               console.log(data);
           } catch (err) {

@@ -204,7 +204,7 @@ end note
 * **The Bird/Ostrich Problem:** `Ostrich` inherits `fly()` from `Bird` but overrides it to do nothing or throw an exception. This is a classic *Refused Bequest* code smell. **Fix:** Extract a `FlyingBird` interface rather than forcing `Ostrich` to inherit behaviors it shouldn't have. Avoid overriding non-abstract methods.
 
 **Broader Engineering Applications:**
-LSP is the foundation for safe polymorphism. It empowers the Open/Closed Principle (OCP) by ensuring new subclasses can be plugged in seamlessly without requiring clients to perform defensive type-checking (`instanceof` or long `if/else` chains). Violating LSP leads to architectural pollution and legacy bugs (like Java's `Stack` extending `Vector`, mistakenly exposing random-access array methods that break strict LIFO stack behavior).
+LSP is the foundation for safe polymorphism. It empowers the Open/Closed Principle (OCP) by ensuring new subclasses can be plugged in seamlessly without requiring clients to perform defensive type-checking (`instanceof` or long `if/else` chains). Violating LSP breaks clients written against the parent contract. A related but distinct inheritance problem is Java's `Stack` extending `Vector`: it exposes random-access operations, so its API does not enforce stack-only access. That API-design problem does not by itself violate the Vector contract; Java recommends `Deque` for stack operations.
 
 ## Interface Segregation Principle (ISP)
 

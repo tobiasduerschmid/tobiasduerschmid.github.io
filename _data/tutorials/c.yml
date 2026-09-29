@@ -92,7 +92,7 @@ steps:
 
       The answer is **(b)**. C's `printf` writes exactly the bytes you give it — no implicit newline, no implicit flush rule based on string content. Lines 3 and 4 would collapse: `Just you, raw memory, and a compiler.Let's go.` This is the C++→C trap to lock in early: in C, **every `\n` is something *you* explicitly wrote**. Coming from `cout << x << endl;` it's easy to forget that `endl` was doing two things — newline *and* flush — and that `printf` does neither for you automatically.
 
-      Why does this matter? Forgetting `\n` is the #1 reason "my program ran but I didn't see any output" — output sits in stdout's line-buffer, never flushed before the program exits, vanished. We'll meet `fflush(stdout)` properly in Step 3 when we mix `printf` with `scanf`.
+      Why does this matter? Forgetting `\n` is the #1 reason "my program ran but I didn't see any output" — output may remain buffered while the program runs. Normal return from main flushes streams; a crash or abnormal termination may lose buffered output. We'll meet `fflush(stdout)` properly in Step 3 when we mix `printf` with `scanf`.
 
       </details>
 
@@ -321,7 +321,7 @@ steps:
             3: "Truncating to integer is `%.0f` (or use `%d` if it's already an int)."
           explanation: "`.2f` means 'show exactly 2 decimal places.' The value is rounded to 3.14."
 
-        - question: "You want to print a literal `%` character. Which format string is correct?"
+        - question: "You want to print a literal `%` character. Which call prints it using an escape in the format string, with no conversion argument?"
           options:
             - "printf(\"%\");"
             - "printf(\"%%\");"
@@ -332,7 +332,7 @@ steps:
             0: "A bare `%` is a partial format specifier — undefined behavior. printf expects a conversion character to follow."
             2: "Backslash escapes are for C *string literals* (`\\n`, `\\t`). printf format specifiers escape `%` differently."
             3: "Technically this works (`%c` prints the char `'%'`), but it's an awkward workaround when `%%` is the idiomatic answer."
-          explanation: "Since `%` starts a conversion specifier, the only way to print a literal `%` in printf is `%%`. Using `\\%` is not valid in C's printf (unlike some other languages)."
+          explanation: "Since `%` starts a conversion specifier, the escape for a literal `%` within the format string is `%%`; `printf(\"%c\", '%')` also works by supplying a character argument. Using `\\%` is not valid in C's printf (unlike some other languages)."
 
         - question: "What happens if you use the wrong specifier, like `printf(\"%d\", 3.14)`?"
           options:
@@ -562,7 +562,7 @@ steps:
           explanation: "fgets reads at most `size - 1` characters, reserving the last byte for `\\0`. So `fgets(buf, 20, stdin)` reads at most 19 characters. This is what makes it safe — unlike scanf, it respects the buffer boundary."
 
         - question: |
-            **Arrange** the lines to safely read a *city name* (max 30 chars), strip its trailing newline, and print it back as `City: <name>`. The pattern is the same as `input_lab.c` — but you must transfer it to a new buffer name, a new size, and a different output format.
+            **Arrange** the lines to read a *city name* of at most 29 characters into a 30-byte buffer. Assume `fgets` succeeds. Then strip its trailing newline, and print it back as `City: <name>`. The pattern is the same as `input_lab.c` — but you must transfer it to a new buffer name, a new size, and a different output format.
           type: parsons
           lines:
             - "char city[30];"
@@ -574,7 +574,7 @@ steps:
             - "scanf(\"%s\", city);"
             - "gets(city);"
             - "char city[1000];"
-          explanation: "Declare a buffer with a sensible bound (30 chars covers most real city names — bigger isn't always better; oversized buffers waste stack and don't fix the safety issue), prompt, read safely with `fgets` (which limits input to `sizeof(city) - 1` chars), strip the trailing newline that `fgets` includes, then print with the format the question asked for. `scanf(\"%s\")` and `gets()` are both unsafe — `gets` was removed from the C standard entirely because it cannot be used safely. `char city[1000]` would also work but it's not a *fix* — even a 1000-char buffer can be overflowed; the right defense is fgets-with-sizeof, not just larger buffers."
+          explanation: "Declare a buffer with a sensible bound (30 bytes: at most 29 characters plus the terminator), prompt, read safely with `fgets` (which limits input to `sizeof(city) - 1` chars), strip the trailing newline that `fgets` includes, then print with the format the question asked for. `scanf(\"%s\")` and `gets()` are both unsafe — `gets` was removed from the C standard entirely because it cannot be used safely. `char city[1000]` would also be safe with this fgets call, but it does not meet the requested 30-byte-buffer constraint."
 
         - question: "What does `printf(\"%05d\", 42)` print?"
           options:
@@ -1321,7 +1321,7 @@ steps:
       3. *Who borrows?* → After `b = a`, you have *two* borrowers of the same memory.
       4. *What's mutable?* → Both can mutate. Neither can tell the other "I'm mutating now."
 
-      In C++, a copy constructor would deep-copy the buffer. In C, you write that yourself: a `buffer_clone(const Buffer *src)` function that `malloc`s a new array and `memcpy`s the contents. C makes the work explicit because the compiler refuses to guess your ownership intent.
+      In C++, an explicitly written copy constructor could deep-copy the buffer; the default copy constructor also copies a raw pointer shallowly. In C, you write that yourself: a `buffer_clone(const Buffer *src)` function that `malloc`s a new array and `memcpy`s the contents. C makes the work explicit because the compiler refuses to guess your ownership intent.
 
       </details>
 
@@ -1483,9 +1483,9 @@ steps:
           correct_index: 1
           option_feedback:
             0: "C *does* allow it (and structs *are* copied by value when you do). The reason to avoid it is cost + the inability to mutate the caller's struct."
-            2: "Pointers happen to be smaller (8 bytes vs. however large the struct is), but speed isn't the *reason* — it's a side effect. The bigger reason is enabling mutation."
+            2: "Pointers are often smaller than a large struct (4 bytes in this tutorial VM), but speed isn't the *reason* — it's a side effect. The bigger reason is enabling mutation."
             3: "C does allow returning structs by value (it works fine, just copies them). The pointer pattern is about *parameter* passing, not return values."
-          explanation: "C passes everything by value. Passing a 200-byte struct copies all 200 bytes onto the stack. A pointer is just 8 bytes and lets the function modify the original. C has no references — pointers are the only option for 'pass by reference' behavior."
+          explanation: "C passes everything by value. Passing a 200-byte struct copies all 200 bytes onto the stack. A pointer is 4 bytes in this tutorial VM (commonly 8 on 64-bit systems) and lets the function modify the original. C has no references — pointers are the only option for 'pass by reference' behavior."
 
         - question: "Given `Character *c = &hero;`, which syntax accesses the `name` field?"
           options:
@@ -1556,7 +1556,7 @@ steps:
       ### 🎯 You will learn to
 
       - Apply the tagged-union pattern (enum tag + anonymous union) to represent a value that can hold one of N variants.
-      - Analyze why `sizeof(union)` equals the size of its largest member, and predict which member is valid at any moment.
+      - Analyze why `sizeof(union)` must be at least the size of its largest member, and predict which member is valid at any moment.
       - Distinguish C tagged unions from C++ `std::variant` — and explain which guarantees the compiler does *not* give you in C.
 
       ### Motivating example: a single attack slot, three element types
@@ -1571,7 +1571,7 @@ steps:
       };
       ```
 
-      This is exactly the trade-off unions make: **all members share the same memory.** The size of a union equals the size of its *largest* member.
+      This is exactly the trade-off unions make: **all members share the same memory.** The size of a union is at least the size of its *largest* member; alignment may add padding.
 
       ```c
       union Value {
@@ -1582,7 +1582,7 @@ steps:
       // sizeof(union Value) == 8 (size of largest member)
       ```
 
-      At any moment, only **one member is valid**. Writing to `val.d` overwrites whatever was in `val.i`. Reading a member you didn't last write to is undefined behavior — the Pokemon equivalent of "asking the Fire attack what its splash radius is."
+      At any moment, only **one member is valid**. Writing to `val.d` overwrites whatever was in `val.i`. In C, reading a different member reinterprets the stored bytes instead of converting the value; it can produce a trap representation. Tagged-union code should read the member identified by its tag.
 
       ### ✏️ Predict before you read on
 
@@ -1597,12 +1597,12 @@ steps:
 
       - (a) `42.000000` — C converts the int to a double on read.
       - (b) `0.000000` — the unwritten upper bytes are zero, so the double is well-defined.
-      - (c) An unpredictable garbage float — C reinterprets the raw bytes; the upper 4 bytes are whatever was on the stack.
+      - (c) A representation-dependent result, possibly a trap value — C reinterprets the stored bytes.
       - (d) Compile error — the compiler rejects mismatched member access.
 
       <details markdown="1"><summary>⚠️ Open after you've committed to a letter</summary>
 
-      The answer is **(c)**. C does **no conversion** between union members — it reinterprets the same bytes through whichever type you ask for. The lower 4 bytes hold the int `42`; the upper 4 bytes hold whatever was on the stack before `v` was declared. Read as a double, that bit pattern is meaningless.
+      The answer is **(c)**. C does **no conversion** between union members — it reinterprets the same bytes through whichever type you ask for. The bytes written through `i` hold the representation of `42`; bytes outside that member are unspecified. Interpreting them as a double does not perform a numeric conversion, and the result can be a trap representation.
 
       Why does this matter? Because the union *itself* doesn't know which member is currently valid. There's no runtime check, no compiler warning. The discipline is on you — and that discipline is what the **tagged union** pattern below formalizes.
 
@@ -1755,7 +1755,7 @@ steps:
       min_score: 0.8
       shuffle: true
       questions:
-        - question: "A union with an `int` (4 bytes), `double` (8 bytes), and `char[4]` (4 bytes). What is `sizeof` this union?"
+        - question: "A union with an `int` (4 bytes), `double` (8 bytes), and `char[4]` (4 bytes). What is the minimum possible `sizeof` this union?"
           options:
             - "4 bytes (smallest member)"
             - "8 bytes (largest member)"
@@ -1765,21 +1765,18 @@ steps:
           option_feedback:
             0: "Smaller than the largest member would mean some members couldn't fit — defeating the purpose. The union must hold any one member."
             2: "That's a *struct*, where every member has its own memory. A union shares one memory region across all members."
-            3: "Compiler-dependent in extreme cases (alignment padding), but the essential rule — `sizeof(union) == sizeof(largest member)` — is C standard."
-          explanation: "A union's size equals its largest member. All members share the same starting address in memory, so the union must be large enough to hold any one of them. Here, `double` at 8 bytes is largest."
+            3: "Padding can affect the exact size. The C standard guarantees enough space for the largest member, so the minimum here is 8 bytes."
+          explanation: "A union's size is at least the size of its largest member; alignment may add padding. All members share the same starting address in memory, so the union must be large enough to hold any one of them. Here, `double` at 8 bytes is largest."
 
         - question: "What happens if you write to `val.i` and then read `val.d` (without writing to `val.d` first)?"
           options:
-            - "You get 0.0 — the union zero-fills unread members"
-            - "You get the integer value silently converted to a double"
-            - "Undefined behavior — the bytes are reinterpreted as a `double`"
-            - "The compiler rejects reads from non-last-written union members"
+                ["You get 0.0 — the union zero-fills unread members","You get the integer value silently converted to a double","The bytes are reinterpreted as double, possibly a trap value","The compiler rejects reads from non-last-written union members"]
           correct_index: 2
           option_feedback:
-            0: "There's no zero-initialization on type-punned reads. The bytes you wrote as an int are still there; reading them as a double gives a meaningless float."
-            1: "C does NO conversion when reading a different union member. It reinterprets raw bytes — the bit pattern of an int isn't a valid double's bit pattern."
+            0: "There's no zero-initialization on type-punned reads. Reading the stored representation as a double does not convert the numeric value and may produce a trap representation."
+            1: "C does NO conversion when reading a different union member. It reinterprets raw bytes — this is not a numeric conversion, and the resulting representation may be a trap representation."
             3: "The compiler can't tell which member was 'last written' — that's runtime state. Without runtime checks, there's nothing to prevent you from reading the wrong member."
-          explanation: "Only the last-written member is valid. Reading a different member reinterprets the raw bytes as a different type — the result is unpredictable. This is why tagged unions use an explicit type tag."
+          explanation: "C permits reading another union member to reinterpret its object representation. The result depends on representations and may be a trap representation; it does not preserve the original numeric value. This is why tagged unions use an explicit type tag."
 
         - question: |
             **Arrange** the lines to create a tagged union for a `Shape` that can be a circle (with radius) or rectangle (with width and height), and print the area.
@@ -1822,7 +1819,7 @@ steps:
             What's the most accurate description of what this code does?
           options:
             - "It prints all three fields side-by-side, which is more informative than the tag-based version"
-            - "It compiles, but reading the other two members is undefined behavior — two fields print garbage"
+            - "It compiles, but interpreting all members can give meaningless values or undefined behavior"
             - "It refuses to compile because a union allows only one access at a time"
             - "It works correctly only when the tag is set to TYPE_INT"
           correct_index: 1
@@ -1830,7 +1827,7 @@ steps:
             0: "Reading union members you didn't write doesn't give 'all three values' — it reinterprets the same bytes through three types. Two of the three readings are nonsense."
             2: "The compiler can't tell which member was last written — that's runtime state. It accepts the code; the bug is at run time, not compile time."
             3: "The bug isn't tag-specific. Whatever the tag says, two of the three accesses still read bytes that were last written under a different type."
-          explanation: "Without the tag-based dispatch, `print_value` reads ALL three union members — but only one was ever validly written. The other two reads reinterpret raw bytes through the wrong type, which is undefined behavior. This is *exactly* what the tag is for: it tells you which member is currently meaningful, so you only read that one. Skipping the tag dispatch defeats the entire pattern."
+          explanation: "Without the tag-based dispatch, `print_value` reads ALL three union members — but only one was ever validly written. Other reads reinterpret the bytes; a trap representation or passing a non-terminated character array to `%s` can cause undefined behavior. This is *exactly* what the tag is for: it tells you which member is currently meaningful, so you only read that one. Skipping the tag dispatch defeats the entire pattern."
 
   # --------------------------------------------------------------------------
   # STEP 8: Function Pointers — Callbacks in C
@@ -2361,7 +2358,7 @@ steps:
             }
           language: "c"
       explanation: |
-        - **Bug 1 & 2 — Array Decay:** When an array is passed to a function, it decays to a pointer. `sizeof(arr)` returns the pointer size (8 bytes), not the array size. The fix: always pass the array length as a separate parameter. This is a universal C idiom — virtually every C function that takes an array also takes its length.
+        - **Bug 1 & 2 — Array Decay:** When an array is passed to a function, it decays to a pointer. `sizeof(arr)` returns the pointer size (4 bytes in this 32-bit tutorial VM; commonly 8 on 64-bit systems), not the array size. The fix: always pass the array length as a separate parameter. This is a universal C idiom — virtually every C function that takes an array also takes its length.
         - **Bug 3 — Pass-by-Value:** `allocate(int *ptr, ...)` receives a *copy* of the pointer. Assigning `ptr = malloc(...)` only modifies the local copy — the caller's `heap_data` stays NULL. The fix: pass a pointer-to-pointer (`int **ptr`) and dereference with `*ptr = malloc(...)`. This is how C simulates "output parameters."
         - **`(*ptr)[i]`:** Parentheses are needed because `[]` binds tighter than `*`. Without them, `*ptr[i]` would mean "dereference the pointer at index i" — a different operation.
 
@@ -2391,7 +2388,7 @@ steps:
             0: "Arrays are NOT copied. (If they were, every C function call with a million-element array would be ruinously expensive.) C decays the array to a pointer instead."
             2: "C has no references — that's a C++ feature. The decayed pointer is the closest C gets, but there's no `&` reference syntax."
             3: "Inlining is a compiler optimization, unrelated to argument-passing semantics. Even with inlining, the language-level rule is decay-to-pointer."
-          explanation: "Array decay is one of C's most important rules. `void f(int arr[])` is identical to `void f(int *arr)` — both receive a pointer. `sizeof(arr)` inside the function returns the pointer size (8 bytes), not the array size. You must pass the length separately."
+          explanation: "Array decay is one of C's most important rules. `void f(int arr[])` is identical to `void f(int *arr)` — both receive a pointer. `sizeof(arr)` inside the function returns the pointer size (4 bytes in this 32-bit tutorial VM; commonly 8 on 64-bit systems), not the array size. You must pass the length separately."
 
         - question: "A function `void resize(int *p, int new_size)` calls `p = realloc(p, new_size * sizeof(int))` inside. After `resize(data, 100)` returns, what is `data` in the caller?"
           options:
@@ -2418,7 +2415,7 @@ steps:
           distractors:
             - "    int len = sizeof(arr) / sizeof(arr[0]);"
             - "void double_array(int arr[100]) {"
-          explanation: "The function must accept `len` as a parameter because `sizeof(arr)` would return 8 (pointer size) due to array decay. The distractor `sizeof(arr) / sizeof(arr[0])` is the classic bug this step teaches. `int arr[100]` in a parameter is misleading — it's still just a pointer."
+          explanation: "The function must accept `len` as a parameter because `sizeof(arr)` would return the pointer size rather than the array size due to array decay. The distractor `sizeof(arr) / sizeof(arr[0])` is the classic bug this step teaches. `int arr[100]` in a parameter is misleading — it's still just a pointer."
 
         - question: "After `free(p)`, what state is the pointer `p` in (using the pointer lifecycle model)?"
           options:
@@ -3097,7 +3094,7 @@ steps:
           explanation: "Save `curr->next` into a temp variable BEFORE freeing `curr`. Then advance to the saved `next`. The distractor `curr = curr->next` after `free(curr)` is a use-after-free bug — the most common mistake. `free(next)` would free the wrong node."
 
         - question: |
-            **Arrange** the lines to create a node, insert it at the tail of a linked list, and update the tail pointer.
+            **Arrange** the lines to create a node, insert it at the tail of a non-empty linked list, and update the tail pointer. Assume allocation succeeds.
           type: parsons
           lines:
             - "Node *new_node = malloc(sizeof(Node));"

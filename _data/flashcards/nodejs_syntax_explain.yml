@@ -96,7 +96,7 @@ cards:
 
       ```javascript
       async function getData() {
-          const result = await fetch('/api/data');
+          const result = await fetch('https://example.com/api/data');
           return result.json();
       }
       ```

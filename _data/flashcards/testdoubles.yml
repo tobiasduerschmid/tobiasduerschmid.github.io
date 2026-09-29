@@ -17,8 +17,8 @@ cards:
   - id: 3
     difficulty: intermediate
     question: "Name all five kinds of test double in the standard taxonomy and what each one is for."
-    answer: "**Dummy** — fills a parameter, never used. **Fake** — working implementation with shortcuts (in-memory DB). **Stub** — returns canned values. **Spy** — records calls for after-the-fact assertion. **Mock** — pre-programmed expectations, fails *during* execution."
-    explanation: "The five live on two axes: which direction of data flow they control (input vs output) and when verification happens (after vs during). Knowing the full taxonomy keeps you from reaching for a Mock when a Stub or Spy is closer to what you actually need."
+    answer: "**Dummy** — fills a parameter, never used. **Fake** — working implementation with shortcuts (in-memory DB). **Stub** — returns canned values. **Spy** — records calls for after-the-fact assertion. **Mock** — expectations configured before execution; verifies unexpected calls and missing expected calls."
+    explanation: "The five live on two axes: which direction of data flow they control (input vs output) and how verification is expressed (recorded calls inspected afterward vs expectations configured beforehand). Knowing the full taxonomy keeps you from reaching for a Mock when a Stub or Spy is closer to what you actually need."
 
   - id: 4
     difficulty: intermediate
@@ -29,8 +29,8 @@ cards:
   - id: 5
     difficulty: intermediate
     question: "Compare **Spy** and **Mock**: when does failure occur, and what style of test does each produce?"
-    answer: "**Spy** records calls quietly; test asserts on the recording *after* the SUT runs (*procedural verification*). **Mock** is pre-programmed with expectations; fails *during* the SUT's execution if a call doesn't match (*expected behavior specification*)."
-    explanation: "Spy-based tests put assertions in the test method, so the reader sees what is verified next to the act step; Mock-based tests push expectations into setup. Spies are friendlier when you can't predict all attributes of the interaction up front; mocks fail faster, at the call site, when you can specify the contract precisely."
+    answer: "**Spy** records calls quietly; test asserts on the recording *after* the SUT runs (*procedural verification*). **Mock** has expectations configured beforehand. It may reject unexpected calls during execution; missing expected calls are checked afterward (*expected behavior specification*)."
+    explanation: "Spy-based tests put assertions in the test method, so the reader sees what is verified next to the act step; Mock-based tests push expectations into setup. Spies are friendlier when you can't predict all attributes of the interaction up front; expectation-based mocks can fail at the call site for unexpected calls, but still need a later verification for expected calls that never happened."
 
   - id: 6
     difficulty: advanced
@@ -60,7 +60,7 @@ cards:
     difficulty: advanced
     question: "Sketch the **procedural verification** lifecycle of a Spy-based test in four steps."
     answer: "(1) Install the **Spy** in place of the DOC. (2) **Exercise** the SUT. (3) Retrieve recorded calls from the Spy. (4) Use ordinary assertions to compare recorded vs expected values."
-    explanation: "This is the chapter's four-step lifecycle. The contrast with mocks is the *placement of the verification*: spies make it explicit in the test body (visible, flexible, late); mocks make it implicit in setup (terse, strict, early). Both are valid; each suits a different shape of test."
+    explanation: "This is the chapter's four-step lifecycle. The contrast with mocks is the *placement of the verification*: spies make it explicit in the test body (visible, flexible, late); mocks configure expectations in setup, then verify interactions during or after execution. Both are valid; each suits a different shape of test."
 
   - id: 11
     difficulty: advanced
@@ -77,8 +77,8 @@ cards:
       ```
 
       Classify each `Mock()` instance by the role it actually plays.
-    answer: "`user_repo` acts as a **Stub** (returns canned `User`, no call assertion). `email_service` is on the **Spy / Mock Object** boundary: the test verifies an outbound call after execution with `assert_called_once_with`, so the important classification is behavior verification, not the `Mock()` class name."
-    explanation: "Mock libraries blur the taxonomy — `unittest.mock.Mock` plays every role, so naming the role each instance plays is what keeps the test honest. Rule of thumb: configured return values → Stub; post-execution call assertions → Spy-style behavior verification; up-front strict expectations → Mock Object. A single object can even combine roles within one test."
+    answer: '`user_repo` acts as a **Stub** (returns a canned User). `email_service` acts as a **Spy**: the test inspects its recorded call after execution with assert_called_once_with.'
+    explanation: Classify the use, not the class name. Configured return values serve the Stub role; post-execution call assertions serve the Spy role; expectations configured before exercising the SUT serve the Mock Object role. The same framework can support several roles.
 
   - id: 12
     difficulty: advanced

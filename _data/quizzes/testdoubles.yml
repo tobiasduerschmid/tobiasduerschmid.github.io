@@ -75,12 +75,12 @@ questions:
     correct_index: 1
     option_feedback:
       0: |
-        Failing at the exact call site is a *Mock* property — Mocks compare during execution. Spies fail later, at assertion time. If pinpoint failure location matters most, a Mock fits better than a Spy.
+        An expectation-based Mock can reject an unexpected call during execution. A missing expected call cannot be detected until verification afterward. Spies inspect recorded calls afterward too; the distinction is how expectations and assertions are expressed.
       2: |
         A short, fixed call sequence is a textbook fit for a Mock with strict expectations — the contract is precise and the cost of strictness is low. Spies pay off when the call shape is harder to specify up front.
       3: |
         Pushing expectations into setup is a stylistic feature of Mocks. Spies move assertions into the test body, which is the opposite trade-off — visible and flexible, not terse and strict.
-    explanation: "Spies and Mocks both observe indirect outputs but differ in *when* and *how strictly* they verify. Spies record everything and let the test method assert flexibly afterward — ideal when the SUT's call pattern is data-dependent or when you want assertions richer than literal matchers. Mocks specify the contract up front and fail at the moment of divergence — ideal when the call sequence is precise and short."
+    explanation: "Spies and Mocks both observe indirect outputs but differ in *when* and *how strictly* they verify. Spies record everything and let the test method assert flexibly afterward — ideal when the SUT's call pattern is data-dependent or when you want assertions richer than literal matchers. Mocks specify expectations up front, can reject unexpected calls during execution, and verify missing expected calls afterward. Strict ordering is a configuration choice, not an inherent property of every mock."
 
   - id: 5
     difficulty: advanced
@@ -103,21 +103,19 @@ questions:
           repo.mark_paid.assert_called_once_with(42)
       ```
 
-      What's the strongest critique?
+      Which is a valid concern to investigate when reviewing this test?
     options:
-      - "The test is fine — verifying every collaboration is a thorough way to confirm the controller did each part of its job for a successful checkout."
-      - "The test asserts on *every* collaboration, freezing the controller's internal wiring — any refactor that reorders or reroutes calls breaks the test even when behavior is preserved."
-      - "The test should use real implementations of `repo`, `gateway`, and `emailer` instead of mocks — interaction assertions on real objects are more meaningful than on test doubles."
-      - "The test needs a `setUp` method to share the three mock objects across tests in this file — the duplicated setup is the structural problem to fix first."
+    - The test is fine — verifying every collaboration is a thorough way to confirm the controller did each part of its job for a successful checkout.
+    - It may pin collaborator details beyond the contract; separate call assertions do not constrain the order between different methods.
+    - The test should use real implementations of `repo`, `gateway`, and `emailer` instead of mocks — interaction assertions on real objects are more meaningful than on test doubles.
+    - The test needs a `setUp` method to share the three mock objects across tests in this file — the duplicated setup is the structural problem to fix first.
     correct_index: 1
     option_feedback:
-      0: |
-        Verifying every collaboration is exactly what makes the test brittle. The test is now a copy of the controller's body translated into assertions — it locks down the implementation rather than the behavior.
-      2: |
-        Real implementations for everything would turn this into an end-to-end test, a different artifact with different tradeoffs. The structural problem here — over-specifying the controller's collaboration sequence — would still be present with real DOCs.
-      3: |
-        Sharing setup would tidy the syntax but would not address the core problem: the test asserts on *how* the controller works rather than *what* the controller guarantees.
-    explanation: "This is an *over-mocked test*: it mirrors the SUT's body line-for-line and breaks under any internal refactor. The fix is to assert on the outcomes the contract specifies — `repo.mark_paid(42)` may be one, but `find_cart`, `charge`, and `emailer.send` are usually *implementation choices*. Reserve interaction assertions for the cases where the interaction itself is the behavior."
+      0: Interaction checks are appropriate when the interaction is the contract. Review which of these calls are required externally and which merely reflect the current implementation.
+      2: Real dependencies may be useful in integration tests, but they do not by themselves repair assertions that over-specify a contract.
+      3: Sharing mocks across tests risks leaking state. It does not decide which interactions this test should require.
+    explanation: |
+      The code checks the count and arguments of each method independently. Reordering those method calls does not fail these assertions. The review question is whether each exact interaction is contractual: payment and receipt delivery may be real requirements, while a particular cart-lookup or persistence mechanism may be replaceable. Keep required interactions and remove only constraints outside the contract.
 
   - id: 6
     difficulty: advanced
@@ -155,12 +153,12 @@ questions:
       assert gateway.recorded_calls[0].amount == 2000
       ```
 
-      The team is migrating to a Mock-based assertion library and wants to express the *same* contract. Which Mock-style assertion captures the same behavior without strengthening or weakening it?
+      In this example, the gateway interface is `charge(*, amount)` with no other arguments. The team is migrating to a Mock-based assertion library and wants to express the *same* contract. Which Mock-style assertion captures the same behavior without strengthening or weakening it?
     options:
-      - "`gateway.charge.assert_called()` — assert that `charge` was called at least once during the SUT's execution."
-      - "`gateway.mock_calls == [call.charge(amount=2000)]` — assert that the gateway received exactly one call total: `charge` with `amount=2000`."
-      - "`gateway.charge.assert_called_with(amount=2000)` — assert that the *most recent* call to `charge` had `amount=2000`, with no constraint on the total number of calls."
-      - "`gateway.charge.assert_not_called()` — assert that `charge` was never called, which is the negation of the original Spy's count-of-one assertion."
+    - '`gateway.charge.assert_called()` — assert that `charge` was called at least once during the SUT''s execution.'
+    - '`assert gateway.mock_calls == [call.charge(amount=2000)]` — assert that the gateway received exactly one call total: `charge` with `amount=2000`.'
+    - '`gateway.charge.assert_called_with(amount=2000)` — assert that the *most recent* call to `charge` had `amount=2000`, with no constraint on the total number of calls.'
+    - '`gateway.charge.assert_not_called()` — assert that `charge` was never called, which is the negation of the original Spy''s count-of-one assertion.'
     correct_index: 1
     option_feedback:
       0: |
@@ -169,7 +167,7 @@ questions:
         `assert_called_with()` only checks the *most recent* call. The Spy test required exactly one call total; allowing multiple `charge` calls where only the last matches would weaken the contract substantively.
       3: |
         `assert_not_called()` flips the assertion — the original Spy code requires that `charge` *was* called once with the right amount. This would invert the test, not preserve it.
-    explanation: "Translating between Spy-style and Mock-style assertions is a place tests quietly drift in strength. The parent `mock_calls` list preserves all three claims the Spy made: one gateway call total, method `charge`, and amount `2000`. The cousins (`assert_called_with`, `assert_called`, and method-only `assert_called_once_with`) look similar but encode different contracts. When migrating, audit each translation: a test should make the *same* claim before and after, no more and no less."
+    explanation: 'Translating between Spy-style and Mock-style assertions is a place tests quietly drift in strength. The parent `mock_calls` list preserves all three claims the Spy made: one gateway call total, method `charge`, and amount `2000`. The cousins (`assert_called_with`, `assert_called`, and method-only `assert_called_once_with`) look similar but encode different contracts. When migrating, audit each translation: a test should make the *same* claim before and after, no more and no less.'
 
   - id: 8
     difficulty: advanced

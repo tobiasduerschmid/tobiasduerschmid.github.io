@@ -25,7 +25,7 @@ cards:
     question: "What is the difference between an `opt` fragment and an `alt` fragment?"
     answer: "`opt` = if (no else). `alt` = if-else with multiple branches."
     explanation: >
-      An **`opt`** fragment has a single guard condition — messages execute only if the guard is true (like an `if` without `else`). An **`alt`** fragment has two or more regions separated by dashed lines, each with its own guard — exactly one region executes (like `if-else` or `switch`).
+      An **`opt`** fragment has a single guard condition — messages execute only if the guard is true (like an `if` without `else`). An **`alt`** fragment has two or more regions separated by dashed lines, each with its own guard — at most one region executes. If no guard is true and there is no `else` region, none executes.
 
   - id: 4
     difficulty: basic

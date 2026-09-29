@@ -80,7 +80,7 @@ questions:
       3: |
         SRP does have something to say: if the split does not isolate an independent reason to change,
         it may be needless abstraction.
-    explanation: "SRP is about *axes of change*, not file count. If three classes always move together for the same reason, they serve **one** actor — and splitting them doubles maintenance cost with no benefit. This is premature separation: wait for the second actor to appear before extracting."
+    explanation: "SRP is about *axes of change*, not file count. If three classes always move together for the same reason, they serve **one** actor — and splitting them adds coordination and maintenance overhead with no benefit. This is premature separation: wait for the second actor to appear before extracting."
 
   - id: 4
     difficulty: intermediate
@@ -112,7 +112,7 @@ questions:
       According to Liskov's Design-by-Contract formulation, a subclass method must:
     options:
       - "Strengthen preconditions and strengthen postconditions relative to the parent"
-      - "Weaken preconditions, strengthen postconditions, and preserve invariants"
+      - "Keep or weaken preconditions, keep or strengthen postconditions, and preserve invariants"
       - "Override every non-abstract method of its parent"
       - "Throw checked exceptions for all invalid inputs the parent accepted"
     correct_index: 1
@@ -195,7 +195,7 @@ questions:
       3: |
         The example uses `Object` and runtime checks; generics do not automatically save a subtype that
         changes the parent’s accepted inputs.
-    explanation: "`Queue.enqueue` accepts any non-null `Object`; `StringQueue.enqueue` narrows that to `String`. A client holding a `Queue` reference that was in fact a `StringQueue` will throw at runtime on previously-legal calls — **strengthened precondition**, the most common LSP violation in practice. This is exactly why Java's `Stack extends Vector` is cited in the chapter as a legacy LSP mistake."
+    explanation: "`Queue.enqueue` accepts any non-null `Object`; `StringQueue.enqueue` narrows that to `String`. A client holding a `Queue` reference that was in fact a `StringQueue` will throw at runtime on previously-legal calls — **strengthened precondition**, the most common LSP violation in practice. Matching method signatures alone does not preserve the parent's accepted inputs."
 
   - id: 8
     difficulty: advanced
