@@ -2,6 +2,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
 
+  {% if page.url == '/se-gym/' %}
+  <script>
+    if (new URLSearchParams(window.location.search).get('plain') === 'true') {
+      document.documentElement.classList.add('se-gym-plain');
+    }
+  </script>
+  {% endif %}
+
   <!-- Early display-preference initialization to prevent blinking -->
   <script>
     (function () {
@@ -256,6 +264,9 @@
   <link rel="stylesheet" href="{{ "/css/tutorial-uml-editor.css" | prepend: site.baseurl }}?v={{ asset_version }}">
   {% if page.url == '/se-gym/' or page.url == '/se-gym-stats/' or page.layout == 'sebook-combined' %}
   <link rel="stylesheet" href="{{ "/css/se-gym.css" | prepend: site.baseurl }}?v={{ asset_version }}">
+  {% if page.url == '/se-gym/' %}
+  <link rel="stylesheet" href="{{ '/css/se-gym-plain.css' | relative_url }}?v={{ asset_version }}">
+  {% endif %}
   {% if page.url == '/se-gym-stats/' %}
   <link rel="stylesheet" href="{{ "/css/se-gym-stats.css" | prepend: site.baseurl }}?v={{ asset_version }}">
   {% endif %}

@@ -1,0 +1,70 @@
+/* ?plain=true keeps only the selected workout, in light, dark, and print views.
+ * The root class is set in the head so page chrome never flashes on load.
+ * Colors and type continue to come from the shared quiz and theme modules.
+ */
+html.se-gym-plain #navnav,
+html.se-gym-plain #sidebar,
+html.se-gym-plain #sidebar-toggle,
+html.se-gym-plain #togglesContainer,
+html.se-gym-plain #gym-entrance,
+html.se-gym-plain .workout-header-row,
+html.se-gym-plain #timed-practice-status,
+html.se-gym-plain .workout-progress-bar,
+html.se-gym-plain .workout-hero-visual,
+html.se-gym-plain .workout-results-hero,
+html.se-gym-plain #workout-back-btn,
+html.se-gym-plain #workout-challenge-btn,
+html.se-gym-plain footer,
+html.se-gym-plain .privacy-notice-region,
+html.se-gym-plain #tts-bar,
+html.se-gym-plain .site-confetti-layer,
+html.se-gym-plain .gym-emoji-host {
+  display: none !important;
+}
+
+/* Retain the page heading for assistive technology without a visible banner. */
+html.se-gym-plain .intro-header {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+html.se-gym-plain body.se-gym-page {
+  padding-top: 0;
+}
+
+html.se-gym-plain #sebook-content-wrapper {
+  margin-top: 0 !important;
+  min-height: 100vh;
+}
+
+html.se-gym-plain body.se-gym-page #main-content,
+html.se-gym-plain body.se-gym-page #main-content > .container {
+  padding: 0;
+}
+
+html.se-gym-plain body.se-gym-page #se-gym-app {
+  max-width: 860px;
+  padding: 12px;
+}
+
+html.se-gym-plain #workout-card-area .workout-quiz-card {
+  margin: 0;
+}
+
+@media print {
+  html.se-gym-plain #sebook-content-wrapper {
+    min-height: 0;
+  }
+
+  html.se-gym-plain body.se-gym-page #se-gym-app {
+    padding: 0;
+  }
+}

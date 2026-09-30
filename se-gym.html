@@ -18,6 +18,7 @@ layout: sebook
   </div>
 
   <div id="se-gym-app">
+    <p id="plain-quiz-status" class="workout-quiz-card is-hidden" role="status"></p>
 
     <!-- ==================== LIBRARY VIEW ==================== -->
     <div id="gym-entrance">
@@ -969,6 +970,7 @@ layout: sebook
       var lastTimedPracticeDrawCount = 0;
       var WORKOUT_PROGRESS_KEY = 'se-gym-workout-progress';
       var WORKOUT_PROGRESS_VERSION = 1;
+      var isPlainView = document.documentElement.classList.contains('se-gym-plain');
 
       // Must be initialized BEFORE getRequestedWorkoutEntries() is called below,
       // because that function reads requestedQuestionKeys.length.
@@ -1046,8 +1048,11 @@ layout: sebook
         values.forEach(function (value) {
           String(value || '').split(',').forEach(function (part) {
             var id = part.trim();
+            if (type === 'quiz' && !Object.prototype.hasOwnProperty.call(dataById, id)) {
+              id = id.replace(/-/g, '_');
+            }
             var key = type + ':' + id;
-            if (!id || seen[key] || !dataById[id]) return;
+            if (!id || seen[key] || !Object.prototype.hasOwnProperty.call(dataById, id)) return;
             seen[key] = true;
             entries.push({ type: type, id: id });
           });
@@ -1264,7 +1269,7 @@ layout: sebook
 
       function syncWorkoutHeroVisibility() {
         if (!workoutView) return;
-        workoutView.classList.toggle('workout-hero-enabled', isWorkoutHeroPreferred());
+        workoutView.classList.toggle('workout-hero-enabled', !isPlainView && isWorkoutHeroPreferred());
       }
 
       function restartWorkoutHeroAnimations() {
@@ -1326,6 +1331,7 @@ layout: sebook
 
       function startWorkoutTimer(cardCount) {
         stopWorkoutTimer(true);
+        if (isPlainView) return;
         var durationSeconds = getTimedPracticeDurationSeconds(cardCount);
         if (!PersonalGym.isTimedPractice() || durationSeconds <= 0) return;
         workoutTimerExpired = false;
@@ -1739,7 +1745,7 @@ layout: sebook
         // per-deck, daily, review — pass replaceSaved to stay always available;
         // the saveWorkoutProgress(0) below then overwrites the slot so the new
         // session cleanly replaces the old checkpoint.
-        if (!challengeTarget && !options.replaceSaved && updateSavedWorkoutResume()) {
+        if (!isPlainView && !challengeTarget && !options.replaceSaved && updateSavedWorkoutResume()) {
           announceGymStatus('Resume or discard the saved workout before starting a new one.');
           return false;
         }
@@ -1978,7 +1984,7 @@ layout: sebook
       }
 
       function canCheckpointWorkout() {
-        return PersonalGym.isPersonalGymActive() && workoutCards && workoutCards.length > 0 && !challengeTarget
+        return !isPlainView && PersonalGym.isPersonalGymActive() && workoutCards && workoutCards.length > 0 && !challengeTarget
           && (!workoutIsReview || workoutReviewQueue.length > 0);
       }
 
@@ -2022,6 +2028,7 @@ layout: sebook
       }
 
       function clearWorkoutProgress() {
+        if (isPlainView) return;
         try { localStorage.removeItem(WORKOUT_PROGRESS_KEY); } catch (e) { /* localStorage unavailable */ }
         updateSavedWorkoutResume();
       }
@@ -2506,7 +2513,7 @@ layout: sebook
         var gym = Array.isArray(sourceGym) ? sourceGym : PersonalGym.getGym();
         var cards = [];
         var seenQuestions = {};
-        var active = PersonalGym.getActiveDifficulties();
+        var active = isPlainView ? DIFFICULTY_LEVELS : PersonalGym.getActiveDifficulties();
         var hasSelection = false;
 
         function isAllowedDifficulty(data) {
@@ -2574,7 +2581,7 @@ layout: sebook
         cards = orderCardsByPracticeRecency(cards);
 
         var maxCards = getMaxCardsValue();
-        if (!hasSelection && cards.length > maxCards) {
+        if (!isPlainView && !hasSelection && cards.length > maxCards) {
           cards = cards.slice(0, maxCards);
         }
 
@@ -2585,11 +2592,12 @@ layout: sebook
         var sourceGym = options && Array.isArray(options.sourceGym) ? options.sourceGym : null;
         var requireActive = !(options && options.requireActive === false);
         if (requireActive && !PersonalGym.isPersonalGymActive()) return;
-        saveTimedPracticeSettingsFromInputs();
+        if (!isPlainView) saveTimedPracticeSettingsFromInputs();
         challengeTarget = null;
         var cards = buildWorkoutCards(sourceGym);
         if (!cards.length) {
-          announceGymStatus('No cards match your current gym and difficulty filter.');
+          if (isPlainView) showPlainQuizStatus('No questions are available for this quiz. Check the quiz name in the URL.');
+          else announceGymStatus('No cards match your current gym and difficulty filter.');
           return;
         }
         beginWorkout(cards, { replaceSaved: !!(options && options.replaceSaved) });
@@ -3558,7 +3566,29 @@ layout: sebook
         return div.innerHTML.replace(/"/g, '&quot;');
       }
 
+      function showPlainQuizStatus(message) {
+        var status = document.getElementById('plain-quiz-status');
+        status.textContent = message;
+        showElement(status);
+      }
+
+      function setPlainQuizTitle() {
+        var quizTitles = requestedWorkoutEntries.filter(function (entry) {
+          return entry.type === 'quiz';
+        }).map(function (entry) { return ALL_CARD_DATA.quizzes[entry.id].title; });
+        var title = quizTitles.join(', ') || 'Quiz';
+        document.title = title + ' – SE Gym';
+        document.querySelector('.intro-header h1').textContent = title;
+      }
+
       function startRequestedWorkout() {
+        if (isPlainView) setPlainQuizTitle();
+        if (isPlainView && !requestedWorkoutEntries.length) {
+          showPlainQuizStatus(new URLSearchParams(window.location.search).get('quiz')
+            ? 'Quiz not found. Check the quiz name in the URL.'
+            : 'Choose a quiz with the quiz parameter, for example ?plain=true&quiz=user-stories.');
+          return;
+        }
         if (!requestedWorkoutEntries.length) return;
         startWorkout({ sourceGym: requestedWorkoutEntries.slice(), requireActive: false });
       }
