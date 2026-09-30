@@ -121,7 +121,6 @@ test.describe('v86 terminal background sync', () => {
     });
 
     expect(result.calls.length).toBe(2);
-    expect(result.calls[0]).toContain('__gg_prompt');
     expect(result.calls[1]).toContain('gitgraph_state');
     expect(result.hookInstalled).toBe(true);
   });

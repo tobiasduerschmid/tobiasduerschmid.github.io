@@ -1711,6 +1711,22 @@ URLs. The complete installed Alpine runtime closure must match
 update. Repositories and generated file metadata remain live inputs, so the
 rootfs is not claimed to be byte-for-byte reproducible.
 
+The guest `/init` remains PID 1 and supervises an interactive login shell.
+Exiting that shell, including through `set -e` enabled by sourcing a learner's
+script, starts a fresh shell without discarding the guest filesystem or
+panicking the kernel. Shell-local learner variables and options reset normally.
+`tutorial-code.js` installs its environment/history settings, command-recording
+hook, current listener, Git prompt hook, and authored `step_dir` in ordered
+`/etc/profile.d/tutorial-*.sh` files, which Alpine reloads for each login shell.
+Each update atomically replaces one file and sources it in the current shell;
+initial setup, clock synchronization, terminal sizing, and learner commands are
+not replayed on shell restart. Persist only runtime-owned shell initialization
+there; tutorial setup commands may have destructive or non-idempotent effects.
+This image upgrade also invalidates older initial/step VM reset caches through
+`V86_SNAPSHOT_CACHE_VERSION`, including cold-boot caches without an asset
+validator, so restoring a cache cannot bring back the old PID 1 learner shell.
+Saved learner source and tutorial progress remain in their existing stores.
+
 The v86 VM includes `mandoc` and version-matched manuals for coreutils, Bash,
 grep, sed, gawk (`man awk` also works), findutils, diffutils, Git, and Make.
 `man [` uses the coreutils `test` manual, which documents bracket syntax.

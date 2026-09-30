@@ -142,6 +142,17 @@
     return new TextDecoder('utf-8').decode(bytes);
   }
 
+  // Login shells reload runtime-owned hooks after init restarts the learner's
+  // shell. Keep the serial command on one line so its history marker covers
+  // the whole update; .new files are excluded from /etc/profile's *.sh glob.
+  function installShellProfile(name, commands) {
+    const profile = '/etc/profile.d/tutorial-' + name + '.sh';
+    const temporary = shellQuote(profile + '.new');
+    return 'printf %s ' + shellQuote(b64EncodeUtf8(commands + '\n')) +
+      ' | base64 -d > ' + temporary + ' && mv ' + temporary + ' ' + shellQuote(profile) +
+      ' && . ' + shellQuote(profile);
+  }
+
   function tutorialShellBatch(commands) {
     return (commands || [])
       .map(function (cmd) { return String(cmd).replace(/^git /, 'git --no-pager '); })
@@ -458,7 +469,9 @@
     });
   }
 
-  var V86_SNAPSHOT_CACHE_VERSION = 5;
+  // Version 6 excludes snapshots where the learner shell was PID 1, including
+  // cold-boot caches whose identity has no downloaded snapshot asset validator.
+  var V86_SNAPSHOT_CACHE_VERSION = 6;
   var V86_SILENT_COMMAND_TIMEOUT_MS = 240000;
   // Instructor solution batches can contain multi-command Git workflows; keep
   // applySolution() pending until those scripts have a real chance to finish.
@@ -3794,14 +3807,15 @@
     var hostEpoch = Math.floor(Date.now() / 1000);
     var clockSync = 'date -u -s @' + hostEpoch + ' >/dev/null 2>&1 || ' +
       'date -s @' + hostEpoch + ' >/dev/null 2>&1 || true';
-    var initParts = [startDir,
-                     'export LANG=C.UTF-8',
-                     'export LESSCHARSET=utf-8',
-                     'export HISTCONTROL=ignoreboth',
-                     'export HISTIGNORE=' + histIgnore,
+    var shellSession = [startDir,
+                        'export LANG=C.UTF-8',
+                        'export LESSCHARSET=utf-8',
+                        'export HISTCONTROL=ignoreboth',
+                        'export HISTIGNORE=' + histIgnore,
+                        userCmdHook].join('\n');
+    var initParts = [installShellProfile('00-session', shellSession),
                      clockSync,
-                     'stty cols ' + cols + ' rows ' + rows,
-                     userCmdHook];
+                     'stty cols ' + cols + ' rows ' + rows];
     function runInteractiveInit(extraCommands) {
       var parts = initParts.slice();
       if (extraCommands && extraCommands.length) parts = parts.concat(extraCommands);
@@ -4312,7 +4326,8 @@
         return self._restartWebContainerShell(cwd);
       });
     }
-    return this._runSilent('[ "$(pwd)" = ' + shellQuote(step.step_dir) + ' ] || cd ' + shellQuote(step.step_dir));
+    return this._runSilent(installShellProfile('30-step-dir',
+      '[ "$(pwd)" = ' + shellQuote(step.step_dir) + ' ] || cd ' + shellQuote(step.step_dir)));
   };
 
   TutorialCode.prototype._probeRPCDaemon = function () {
@@ -13998,7 +14013,7 @@
           '__gg_prompt() { __gg_dump; }; ' +
           'case ";$PROMPT_COMMAND;" in *";__gg_prompt;"*) ;; *) PROMPT_COMMAND="__gg_prompt${PROMPT_COMMAND:+;$PROMPT_COMMAND}";; esac';
       }
-      return self._runSilent(hookCmd).then(function () {
+      return self._runSilent(installShellProfile('20-git-graph', hookCmd)).then(function () {
         self._gitGraphHookInstalled = true;
         self._gitGraphHookMode = mode;
       });
@@ -14031,9 +14046,8 @@
     var listener = (step && step.user_command_listener) || this.userCommandListener || '';
     if (listener === this._activeUserCmdListener) return Promise.resolve();
     this._activeUserCmdListener = listener;
-    // Escape the listener for embedding inside a double-quoted bash assignment
-    var esc = String(listener).replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\$/g, '\\$').replace(/`/g, '\\`');
-    return this._runSilent('__USER_CMD_LISTENER="' + esc + '"; __LAST_HISTCMD=""');
+    return this._runSilent(installShellProfile('10-listener',
+      '__USER_CMD_LISTENER=' + shellQuote(listener) + '; __LAST_HISTCMD=""'));
   };
 
   // ---------------------------------------------------------------------------

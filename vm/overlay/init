@@ -80,11 +80,14 @@ cd /tutorial 2>/dev/null || cd /root
 
 cat /etc/motd > /dev/ttyS0 2>/dev/null
 
-# Start shell on serial console
-# Use exec so the shell becomes PID 1 (must never exit)
-log "starting $SHELL_BIN"
-exec "$SHELL_BIN" --login < /dev/ttyS0 > /dev/ttyS0 2>&1
-
-# If exec failed, hang forever
-log "ERROR: exec failed"
-while true; do sleep 1000; done
+# Keep init as PID 1: learner commands (including a sourced `set -e`) may
+# exit the interactive shell. Restart only that child, preserving the VM's
+# mounted filesystems and background services.
+while true; do
+    log "starting $SHELL_BIN"
+    "$SHELL_BIN" -l -i < /dev/ttyS0 > /dev/ttyS0 2>&1
+    shell_status=$?
+    echo "Shell exited (status $shell_status). Starting a new shell; your files are unchanged." > /dev/ttyS0
+    # Avoid a busy loop if the shell cannot start.
+    sleep 1
+done

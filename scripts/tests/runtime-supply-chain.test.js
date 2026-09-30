@@ -447,7 +447,12 @@ test('VM regeneration and deployed snapshots match their pinned compatibility in
     fs.readFileSync(path.join(repositoryRoot, 'vm/dist/rootfs.cpio.gz')),
   );
   const installedDatabasePath = 'lib/apk/db/installed';
-  const rootfs = inspectNewcArchive(rootfsBytes, new Set([installedDatabasePath]));
+  const rootfs = inspectNewcArchive(rootfsBytes, new Set([installedDatabasePath, 'init']));
+  assert.deepEqual(
+    rootfs.capturedFiles.get('init'),
+    fs.readFileSync(path.join(repositoryRoot, 'vm/overlay/init')),
+    'deployed /init must match vm/overlay/init; rebuild the rootfs and snapshot after init changes',
+  );
   const installedDatabase = rootfs.capturedFiles.get(installedDatabasePath);
   assert.ok(installedDatabase, 'VM rootfs must contain Alpine installed-package metadata');
   assert.equal(rootfs.names.has('expected-apk-runtime.lock'), false,
