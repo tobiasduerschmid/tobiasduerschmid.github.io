@@ -12,7 +12,7 @@ topics:
         url: /SEBook/tools/haskell-functions-tutorial
       - name: "Haskell 3: Data and Persistent Programs"
         url: /SEBook/tools/haskell-data-tutorial
-  - name: Prolog Foundations
+  - name: "Prolog: Queries to Programs"
     icon: null
     url: /SEBook/tools/prolog-tutorial
     subtopics:

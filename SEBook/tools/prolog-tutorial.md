@@ -1,6 +1,6 @@
 ---
 layout: tutorial
-title: "Prolog Foundations"
+title: "Prolog: Queries to Programs"
 tutorial: prolog
 permalink: /SEBook/tools/prolog-tutorial
 ---

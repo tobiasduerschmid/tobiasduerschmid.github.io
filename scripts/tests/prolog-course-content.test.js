@@ -50,16 +50,16 @@ async function grade(step, files) {
 
 for (const [key, tutorial] of Object.entries(tutorials)) {
   for (const [index, step] of tutorial.steps.entries()) {
-    test(`${key} step ${index + 1}: the intended solution passes every published gate`, async () => {
-      assert.ok(step.tests?.length > 0, 'each authored exercise must have a gate');
-      assert.ok(step.solution?.files?.length > 0, 'each gate must have an instructor solution');
+    test(`${key} step ${index + 1}: the intended solution passes every published check`, async () => {
+      assert.ok(step.tests?.length > 0, 'each authored exercise must have a diagnostic check');
+      assert.ok(step.solution?.files?.length > 0, 'each exercise must have an instructor solution');
       const results = await grade(step, exerciseFiles(step, true));
       assert.ok(results.every(result => result.passed), JSON.stringify(results.filter(result => !result.passed), null, 2));
     });
 
     test(`${key} step ${index + 1}: the incomplete starter cannot pass the exercise`, async () => {
       const results = await grade(step, exerciseFiles(step, false));
-      assert.ok(results.some(result => !result.passed), 'the starter must require meaningful work before progression');
+      assert.ok(results.some(result => !result.passed), 'the starter must require meaningful work before earning a pass');
     });
   }
 }
@@ -79,32 +79,306 @@ async function gradeProgram(key, predicate, program) {
   return grade(step, new Map([[workspacePath(step.run_file), program]]));
 }
 
-const familyFacts = 'parent(tom,bob). parent(bob,ann). parent(bob,pat). parent(ann,lena).';
+const schedule = `
+  scheduled(puzzles,morning). scheduled(robots,noon). scheduled(music,evening).
+  closed_slot(morning). cancelled(music).
+`;
+const audioFormats = `
+  recorded_format(rain,audio(44100,stereo)). recorded_format(bell,audio(48000,mono)).
+  recorded_format(bell,audio(44100,stereo)). recorded_format(hum,audio(22050,mono)).
+  device_format(headphones,audio(44100,stereo)). device_format(speaker,audio(48000,mono)).
+  device_format(phone,audio(22050,mono)).
+  device_format(mono_speaker,audio(44100,mono)).
+`;
+const soundPacks = `
+  includes(release,readme). includes(release,pads). includes(release,beats).
+  includes(beats,noise). includes(beats,kick). includes(pads,noise). includes(noise,hiss).
+`;
+const prerequisites = `
+  prerequisite(intro, structures).
+  prerequisite(structures, systems).
+  prerequisite(structures, discrete).
+  prerequisite(systems, languages).
+  track_goal(software,languages). track_goal(theory,discrete).
+  needed_for(Course,Track) :- track_goal(Track,Target), needed_before(Course,Target).
+`;
+const routeMap = `
+  path(gate,cafe). path(gate,stage). path(gate,gallery).
+  path(cafe,garden). path(stage,garden). path(gallery,garden). path(garden,exit).
+  closed(stage).
+`;
 
-test('the grandparent gate accepts a child-first join and rejects unrelated intermediate people', async () => {
-  const valid = await gradeProgram('prolog', 'grandparent', familyFacts + '\ngrandparent(G,C) :- parent(P,C), parent(G,P).');
-  assert.ok(valid.every(result => result.passed), JSON.stringify(valid));
-  const wrong = await gradeProgram('prolog', 'grandparent', familyFacts + '\ngrandparent(G,C) :- parent(G,_), parent(_,C).');
-  assert.ok(wrong.some(result => !result.passed), 'two unrelated parent facts are not a grandparent proof');
-});
+const replacementCandidates = [
+  {
+    name: 'fact checks accept the specified relationships in another order', predicate: 'cue', passes: true,
+    program: 'cue(hum,right). cue(bell,left). cue(rain,left). cue(bell,right).',
+  },
+  {
+    name: 'fact checks reject duplicated proofs even when the relationship set is correct', predicate: 'cue', passes: false,
+    program: 'cue(rain,left). cue(bell,right). cue(bell,left). cue(hum,right). cue(bell,left).',
+  },
+  {
+    name: 'unification accepts format matching in the rule body', predicate: 'same_format', passes: true,
+    program: 'same_format(clip(_,First),clip(_,Second)) :- First = audio(Rate,Channels), Second = audio(Rate,Channels).',
+  },
+  {
+    name: 'unification rejects requiring identical clip names', predicate: 'same_format', passes: false,
+    program: 'same_format(clip(Name,audio(R,C)),clip(Name,audio(R,C))).',
+  },
+  {
+    name: 'unification rejects ignoring the sample rate', predicate: 'same_format', passes: false,
+    program: 'same_format(clip(_,audio(_,C)),clip(_,audio(_,C))).',
+  },
+  {
+    name: 'joined rules accept device-first lookup', predicate: 'playable_on', passes: true,
+    program: audioFormats + '\nplayable_on(C,D) :- device_format(D,F), recorded_format(C,F).',
+  },
+  {
+    name: 'joined rules reject independently chosen formats', predicate: 'playable_on', passes: false,
+    program: audioFormats + '\nplayable_on(C,D) :- device_format(D,_), recorded_format(C,_).',
+  },
+  {
+    name: 'joined rules reject matching rates while ignoring channel layouts', predicate: 'playable_on', passes: false,
+    program: audioFormats + '\nplayable_on(C,D) :- device_format(D,audio(R,_)), recorded_format(C,audio(R,_)).',
+  },
+  {
+    name: 'proof-order checks accept an equivalent helper decomposition', predicate: 'two_layers', passes: true,
+    program: soundPacks + '\ntwo_layers(P,I) :- includes(P,M), next_layer(M,I). next_layer(M,I) :- includes(M,I).',
+  },
+  {
+    name: 'proof-order checks reject reversed body order despite the same relation', predicate: 'two_layers', passes: false,
+    program: soundPacks + '\ntwo_layers(P,I) :- includes(M,I), includes(P,M).',
+  },
+  {
+    name: 'proof-order checks reject retaining only the first proof', predicate: 'two_layers', passes: false,
+    program: soundPacks + '\ntwo_layers(P,I) :- includes(P,M), includes(M,I), !.',
+  },
+  {
+    name: 'ground negation accepts independently ordered exclusions', predicate: 'available', passes: true,
+    program: schedule + '\navailable(D) :- scheduled(D,S), not(cancelled(D)), not(closed_slot(S)).',
+  },
+  {
+    name: 'ground negation accepts repeated proofs of the same eligible demo', predicate: 'available', passes: true,
+    program: schedule + `
+      available(D) :- scheduled(D,S), not(cancelled(D)), not(closed_slot(S)).
+      available(D) :- scheduled(D,S), not(cancelled(D)), not(closed_slot(S)).
+    `,
+  },
+  {
+    name: 'ground negation rejects filtering before candidate generation', predicate: 'available', passes: false,
+    program: schedule + '\navailable(D) :- not(closed_slot(S)), not(cancelled(D)), scheduled(D,S).',
+  },
+  {
+    name: 'ground negation rejects checking a demo instead of its slot', predicate: 'available', passes: false,
+    program: schedule + '\navailable(D) :- scheduled(D,_), not(cancelled(D)), not(closed_slot(D)).',
+  },
+  {
+    name: 'recursive reachability accepts recursion toward the source', predicate: 'needed_before', passes: true,
+    program: prerequisites + `
+      needed_before(A,B) :- prerequisite(A,B).
+      needed_before(A,B) :- prerequisite(Middle,B), needed_before(A,Middle).
+    `,
+  },
+  {
+    name: 'recursive reachability rejects a two-edge-only shortcut', predicate: 'needed_before', passes: false,
+    program: prerequisites + `
+      needed_before(A,B) :- prerequisite(A,B).
+      needed_before(A,B) :- prerequisite(A,Middle), prerequisite(Middle,B).
+    `,
+  },
+  {
+    name: 'track prerequisites accept repeated proofs of a required course', predicate: 'needed_for', passes: true,
+    program: prerequisites + `
+      needed_before(A,B) :- prerequisite(A,B).
+      needed_before(A,B) :- prerequisite(A,Middle), needed_before(Middle,B).
+      needed_for(Course,Track) :- track_goal(Track,Target), needed_before(Course,Target).
+    `,
+  },
+  {
+    name: 'list patterns accept separate head-tail decomposition', predicate: 'first_two', passes: true,
+    program: `
+      first_two([A|Tail], A, B) :- Tail = [B|_].
+      drop_two([_|Tail], Rest) :- Tail = [_|Rest].
+    `,
+  },
+  {
+    name: 'list patterns accept redundant proofs when only the matched values are specified', predicate: 'first_two', passes: true,
+    program: `
+      first_two([A,B|_], A, B).
+      first_two([A,B|_], A, B).
+      drop_two([_,_|Rest], Rest).
+      drop_two([_,_|Rest], Rest).
+    `,
+  },
+  {
+    name: 'list patterns reject keeping the second item in the remainder', predicate: 'drop_two', passes: false,
+    program: `
+      first_two([A,B|_], A, B).
+      drop_two([_|Rest], Rest).
+    `,
+  },
+  {
+    name: 'list patterns reject a later pair even when the correct pair is also produced', predicate: 'first_two', passes: false,
+    program: `
+      first_two([A,B|_], A, B).
+      first_two([_|Tail], A, B) :- first_two(Tail, A, B).
+      drop_two([_,_|Rest], Rest).
+    `,
+  },
+  {
+    name: 'list patterns reject extra suffixes alongside the correct remainder', predicate: 'drop_two', passes: false,
+    program: `
+      first_two([A,B|_], A, B).
+      drop_two([_,_|Rest], Rest).
+      drop_two([_|Tail], Rest) :- drop_two(Tail, Rest).
+    `,
+  },
+  {
+    name: 'list construction accepts append-based pair construction', predicate: 'double_each', passes: true,
+    program: `
+      :- use_module(library(lists)).
+      double_each([], []).
+      double_each([X|Xs], Result) :- double_each(Xs, Rest), append([X,X], Rest, Result).
+    `,
+  },
+  {
+    name: 'list construction rejects duplicating the whole list', predicate: 'double_each', passes: false,
+    program: ':- use_module(library(lists)). double_each(List,Result) :- append(List,List,Result).',
+  },
+  {
+    name: 'positional removal accepts a split-based relation', predicate: 'claim_badge', passes: true,
+    program: `
+      :- use_module(library(lists)).
+      offered(leaf). offered(stone).
+      claim_badge(Input, ticket(Item), Output) :-
+        append(Prefix, [Item|Tail], Input), offered(Item), append(Prefix, Tail, Output).
+    `,
+  },
+  {
+    name: 'positional removal rejects an implicit otherwise that loses later proofs', predicate: 'claim_badge', passes: false,
+    program: `
+      offered(leaf). offered(stone).
+      claim_badge([Item|Tail],ticket(Item),Tail) :- offered(Item).
+      claim_badge([Head|Tail],Ticket,[Head|Rest]) :- not(offered(Head)), claim_badge(Tail,Ticket,Rest).
+    `,
+  },
+  {
+    name: 'positional removal rejects the unchanged list from empty-base success', predicate: 'claim_badge', passes: false,
+    program: `
+      offered(leaf). offered(stone).
+      claim_badge([],none,[]).
+      claim_badge([Item|Tail],ticket(Item),Tail) :- offered(Item).
+      claim_badge([Head|Tail],Ticket,[Head|Rest]) :- claim_badge(Tail,Ticket,Rest).
+    `,
+  },
+  {
+    name: 'positional removal rejects awarding an unoffered badge', predicate: 'claim_badge', passes: false,
+    program: `
+      offered(leaf). offered(stone).
+      claim_badge([Item|Tail],ticket(Item),Tail).
+      claim_badge([Head|Tail],Ticket,[Head|Rest]) :- claim_badge(Tail,Ticket,Rest).
+    `,
+  },
+  {
+    name: 'adjacent-run checks accept equality in the clause body', predicate: 'collapse', passes: true,
+    program: String.raw`
+      collapse([], []).
+      collapse([X], [X]).
+      collapse([X,Y|Tail], Result) :- X = Y, collapse([Y|Tail], Result).
+      collapse([X,Y|Tail], [X|Rest]) :- X \= Y, collapse([Y|Tail], Rest).
+    `,
+  },
+  {
+    name: 'adjacent-run checks reject globally sorted deduplication', predicate: 'collapse', passes: false,
+    program: ':- use_module(library(lists)). collapse(Input,Output) :- sort(Input,Output).',
+  },
+  {
+    name: 'adjacent-run checks reject overlapping equal and unequal cases', predicate: 'collapse', passes: false,
+    program: `
+      collapse([], []).
+      collapse([X], [X]).
+      collapse([X,X|Tail], Result) :- collapse([X|Tail], Result).
+      collapse([X,Y|Tail], [X|Rest]) :- collapse([Y|Tail], Rest).
+    `,
+  },
+  {
+    name: 'accumulator checks accept an equivalent library-based relation', predicate: 'reverse_into', passes: true,
+    program: `
+      :- use_module(library(lists)).
+      reverse_list(List,Result) :- reverse_into(List,[],Result).
+      reverse_into(List,Accumulator,Result) :- reverse(List,Reversed), append(Reversed,Accumulator,Result).
+    `,
+  },
+  {
+    name: 'accumulator checks reject discarding a nonempty suffix', predicate: 'reverse_into', passes: false,
+    program: ':- use_module(library(lists)). reverse_list(L,R) :- reverse(L,R). reverse_into(L,_,R) :- reverse(L,R).',
+  },
+  {
+    name: 'interleaving accepts swapping list roles on each recursive call', predicate: 'weave', passes: true,
+    program: 'weave([],Ys,Ys). weave([X|Xs],Ys,[X|Rest]) :- weave(Ys,Xs,Rest).',
+  },
+  {
+    name: 'interleaving rejects overlapping empty cases that duplicate proofs', predicate: 'weave', passes: false,
+    program: `
+      weave([],Ys,Ys).
+      weave(Xs,[],Xs).
+      weave([X|Xs],[Y|Ys],[X,Y|Rest]) :- weave(Xs,Ys,Rest).
+    `,
+  },
+  {
+    name: 'interleaving rejects discarding an unmatched suffix', predicate: 'weave', passes: false,
+    program: `
+      weave([],_,[]).
+      weave([_|_],[],[]).
+      weave([X|Xs],[Y|Ys],[X,Y|Rest]) :- weave(Xs,Ys,Rest).
+    `,
+  },
+  {
+    name: 'last-occurrence checks accept a deterministic membership branch', predicate: 'keep_last', passes: true,
+    program: `
+      :- use_module(library(lists)).
+      keep_last([],[]).
+      keep_last([H|T],Result) :- keep_last(T,Rest), (member(H,T) -> Result = Rest ; Result = [H|Rest]).
+    `,
+  },
+  {
+    name: 'last-occurrence checks reject sorted unique values', predicate: 'keep_last', passes: false,
+    program: ':- use_module(library(lists)). keep_last(Input,Output) :- sort(Input,Output).',
+  },
+  {
+    name: 'open-route checks accept complete-route filtering after a bounded path search', predicate: 'open_route', passes: true,
+    program: routeMap + `
+      open_route(A,B,Stops) :- route(A,B,Stops), all_open(Stops).
+      route(A,B,[B]) :- path(A,B).
+      route(A,B,[M|Rest]) :- path(A,M), route(M,B,Rest).
+      all_open([]).
+      all_open([H|T]) :- not(closed(H)), all_open(T).
+    `,
+  },
+  {
+    name: 'open-route checks reject checking only the destination for closure', predicate: 'open_route', passes: false,
+    program: routeMap + `
+      open_route(A,B,Stops) :- route(A,B,Stops), not(closed(B)).
+      route(A,B,[B]) :- path(A,B).
+      route(A,B,[M|Rest]) :- path(A,M), route(M,B,Rest).
+    `,
+  },
+  {
+    name: 'open-route checks accept repeated proofs without adding a different route', predicate: 'open_route', passes: true,
+    program: routeMap + `
+      open_route(A,B,[B]) :- path(A,B), not(closed(B)).
+      open_route(A,B,[B]) :- path(A,B), not(closed(B)).
+      open_route(A,B,[M|Rest]) :- path(A,M), not(closed(M)), open_route(M,B,Rest).
+    `,
+  },
+];
 
-test('the species gate rejects equality of entire pets and hardcoded known species', async () => {
-  for (const program of [
-    'same_species(Pet, Pet).',
-    'same_species(pet(dog,_), pet(dog,_)). same_species(pet(cat,_), pet(cat,_)).',
-  ]) {
-    const results = await gradeProgram('prolog', 'same_species', program);
-    assert.ok(results.some(result => !result.passed), `reject the incomplete relation: ${program}`);
-  }
-});
-
-test('the recursive membership gate rejects a cut that silently discards later proofs', async () => {
-  const results = await gradeProgram('prolog', 'list_member', `
-    list_member(Item, [Item|_]) :- !.
-    list_member(Item, [_|Tail]) :- list_member(Item, Tail).
-  `);
-  assert.ok(results.some(result => !result.passed), 'membership must retain each occurrence, including duplicates');
-});
+for (const candidate of replacementCandidates) {
+  test('the replacement ' + candidate.name, async () => {
+    const results = await gradeProgram('prolog', candidate.predicate, candidate.program);
+    assert.equal(results.every(result => result.passed), candidate.passes, JSON.stringify(results, null, 2));
+  });
+}
 
 test('the count gate accepts a tail accumulator and rejects exclusion of the exact limit', async () => {
   const valid = await gradeProgram('prolog-search', 'count_short', `
@@ -148,36 +422,6 @@ test('the interleave gate accepts append-based construction and rejects a droppe
     interleave([X|Xs], [Y|Ys], [X,Y|Rest]) :- interleave(Xs, Ys, Rest).
   `);
   assert.ok(wrong.some(result => !result.passed), 'unequal inputs must retain all unmatched elements');
-});
-
-async function gradeGameGuestCandidate(eligibilityGoal) {
-  const step = stepForPredicate('prolog', 'game_guest');
-  const files = exerciseFiles(step, false);
-  const entry = workspacePath(step.run_file);
-  const starter = files.get(entry);
-  // Reuse the authored knowledge base, including the unrelated family. Only
-  // replace the learner's inert placeholder; its variable names/spacing vary.
-  const placeholder = /^game_guest\([^)]*\)\s*:-\s*fail\s*\./m;
-  assert.match(starter, placeholder, 'the candidate fixture needs the game_guest starter placeholder');
-  files.set(entry, starter.replace(placeholder, `
-    game_guest(Guest, Game) :-
-        favorites(Guest, GuestGames),
-        list_member(Game, GuestGames),
-        favorites(tom, HostGames),
-        list_member(Game, HostGames),
-        ${eligibilityGoal}.
-  `));
-  return grade(step, files);
-}
-
-test('the game-night gate accepts shared-game checks before the descendant check', async () => {
-  const results = await gradeGameGuestCandidate('ancestor(tom, Guest)');
-  assert.ok(results.every(result => result.passed), JSON.stringify(results));
-});
-
-test('the game-night gate rejects treating every child as a descendant of the host', async () => {
-  const results = await gradeGameGuestCandidate('parent(_, Guest)');
-  assert.ok(results.some(result => !result.passed), 'an unrelated child sharing a favorite game is still ineligible');
 });
 
 test('the duration gate rejects a fixed limit that ignores the query argument', async () => {

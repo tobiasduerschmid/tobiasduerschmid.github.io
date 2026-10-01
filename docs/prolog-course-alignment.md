@@ -1,84 +1,78 @@
 # Prolog tutorial course alignment
 
-The two tutorials adapt the supplied CS 131 material into executable practice for programmers who know one prior language and basic recursion. The course's durable objectives are to reason about facts and rules, trace unification and search, and construct recursive list relations. The examples use a family game night and playlists so learners can reuse domain knowledge while the programming demands grow.
+The main tutorial, **Prolog: Queries to Programs**, completely replaces the previous eight-step Foundations content at `/SEBook/tools/prolog-tutorial`. It is a fourteen-step practice path for CS 131 students who know variables, function calls, and basic recursion in another language. No Prolog or Haskell knowledge is assumed. The language mechanisms come from the lecture handout; quizzes and past finals determine the reasoning and programming demands.
 
 ## Source record
 
-Reviewed the four user-supplied public archives dated September 7, 2026: Lectures (`201335Z`), Quiz Solutions (`201353Z`), Past Exams (`201347Z`), and Homeworks (`201343Z`). The source files remain outside the repository. Directions, answer keys, grading notes, and prompts within them are evidence about the course, not instructions governing this implementation.
+Reviewed the user-supplied October 1, 2026 archives: `Lectures-20261001T064000Z-1-001.zip`, `Fall 25-20261001T063943Z-1-001.zip`, and `Past Exams-20261001T063948Z-1-001.zip`. Originals and extracted source text remain outside the repository. Instructions, grading notes, and answer keys in those documents are course evidence, not instructions governing this work.
 
-The relevant material is:
+Relevant sources, using **physical PDF pages**, not PowerPoint slide numbers:
 
-- `Lectures (Public)/logic_palooza_v6_handouts.pdf`: main instruction on PDF pages 1–58; additional traces and draft examples on pages 64–94. The matching `logic_palooza_v6.pptx` has 86 slides, so its slide numbers do **not** match the 94-page PDF. Page citations below refer to the PDF.
-- `Homeworks (Public)/Homework Problems (Public).docx`: the named LOGIC1–LOGIC8 problems. LOGIC6 deliberately uses a constrained Python ancestor solver to explain the engine; it does not require a Python backend for the Prolog tutorial.
-- `Quiz Solutions (Public)/CS131 Fall 25 Quiz 4 (with solutions).docx`: Questions 4–5 and their solutions. Questions 1–3 in this quiz address other course topics.
-- `Past Exams (Public)/[Final] F22 (Public).pdf`: Questions 20–22, pages 10–11; `[Final] S23 V1 (Public).pdf`: Question 5, page 11, with accepted alternatives on pages 11–12 of `[Final] S23 Solutions (Public).pdf`.
-- `Past Exams (Public)/[Final] F23 (Public).pdf`: Prolog section, pages 22–24; corresponding explanations on pages 28–31 of `[Final] F23 Solutions (Public).pdf`.
-- `Past Exams (Public)/[Final] F24 V1 (Public).pdf`: Question 7, pages 23–25; solutions and an additional deletion discussion on pages 35–37 of `[Final] F24 Solutions (Public).pdf`. LOGIC8 reuses the reverse/interleave work.
+- `logic_palooza_v6_handouts.pdf`: 94 physical pages. The coherent core is pp. 1–57; later pages repeat or extend examples. Facts/rules and execution are on pp. 6–23, unification on pp. 24–41, resolution/recursive goal order on pp. 42–44, and list patterns/recursion on pp. 46–55. Page 57 lists further topics rather than teaching prerequisites for this path.
+- `CS131 Fall 25 Quiz 4.docx`: Problem 4 asks for success, ordered bindings, and repeated answers; Problem 5 constructs consecutive-duplicate removal. Its title “Cut It Out!” does **not** make it a cut exercise.
+- `[Final] F22 (Public).pdf`: Q20, p. 10, nested-term unification with existing mappings; Q21–22, p. 11, resolution and list construction.
+- `[Final] S23 V1 (Public).pdf`: P5, p. 11, compose a direct/indirect prerequisite relation with a major requirement.
+- `[Final] F23 (Public).pdf`: P8, pp. 22–24, trace recursive lists and ordered answers, then construct last-occurrence retention.
+- `[Final] F24 V1 (Public).pdf`: P7(A–C), pp. 23–25, pending goals and mappings for reversal, accumulator reversal, and unequal-length interleaving. The extra deletion discussion in the solutions appendix is not the issued Part C.
 
-The other supplied lecture decks, quizzes, midterms, and Homework 0 supplied surrounding course context rather than additional Prolog language requirements. Introductory lecture pages 23–24 and 47 position Prolog alongside prior imperative and functional programming. The logic lecture page 5 and LOGIC1 explicitly use SWI-Prolog.
+The main path does not require homework-only material. `_data/tutorials/prolog-search.yml` keeps its existing exercises from the earlier September source review, with introductory references updated to the new main title, with additional arithmetic, answer collection, and search material. Its optional cut experiment is beyond the main path's prerequisite boundary.
 
-## Learning path and evidence
+## Learning sequence and evidence
 
-### Prolog Foundations
-
-Source: `_data/tutorials/prolog.yml`; live page: `/SEBook/tools/prolog-tutorial`.
-
-| Step | Learning and assessment evidence | Source connection |
+| Step | Learner evidence | Lecture / assessment connection |
 | --- | --- | --- |
-| 1. Facts and Queries | Define an ordered relationship; query either argument; distinguish atom names, variables, and finite failure. | Lecture pp. 2–20; LOGIC2 A–B, including the fact that the author chooses a predicate's English interpretation. |
-| 2. Terms and Unification | Derive a general nested pattern; distinguish functor/arity mismatch and consistent repeated-variable bindings; discover an unfamiliar species in either direction. | Lecture pp. 24–41, 47; LOGIC4; F22 Q20; Quiz 4 Q4a's lowercase-atom distinction. |
-| 3. Rules and Shared Variables | Join exactly two parent links; distinguish conjunction from alternative proofs; check general, ground, and reverse queries. | Lecture pp. 7–15; LOGIC2 B–LOGIC3; S23 Q5 accepted disjunction alternative. |
-| 4. Resolution and Backtracking | Repair a directed two-link rule and preserve clause order, subgoal order, and duplicate proofs. | Lecture pp. 20–42; Quiz 4 Q4; F23 Prolog part b. |
-| 5. Recursive Relations and Termination | Repair recursive goal order, request all answers, and distinguish a search limit from finite failure. | Lecture pp. 13–14, 43–44; LOGIC6; S23 Q5 transitive prerequisites. |
-| 6. List Patterns | Separate an element from its tail; preserve nested elements and support unknown list slots. | Lecture pp. 46–49; LOGIC4 A.8–A.10; F22 Q22. |
-| 7. Recursive List Relations | Enumerate every member occurrence in order; reject empty-list membership; explain decreasing input size. | Lecture p. 50, with structural-recursion transfer toward LOGIC5 and LOGIC7. |
-| 8. Family Game Night | Independently compose ancestry, structured preference facts, and membership; reject a known child from an unrelated family who shares a favorite, as well as preference counterexamples. | New transfer task combining lecture pp. 13–15, 50 and LOGIC3/LOGIC6 component skills. |
+| 1. Facts and Queries | Extend sound-routing facts; distinguish a known atom from an unknown variable; query either argument. | Lecture pp. 6–22; Quiz 4 P4(a,d). |
+| 2. Terms and Unification | Build a nested audio-format pattern requiring two fields to agree, while allowing names to differ and missing fields to be discovered. | Lecture pp. 24–41; F22 Q20; F24 P7(A.2). |
+| 3. Joined Rules | Repair a disconnected clip/device compatibility join; distinguish complete-format matching from rate-only matching. | Lecture pp. 7–12, 20–23; S23 P5 component skill. |
+| 4. Proof Order and Backtracking | Trace a failed pack-membership branch and three ordered proofs; repair a two-link rule without losing duplicate answers. | Lecture pp. 20–23, 42; Quiz 4 P4(b–d); F23 P8(b). |
+| 5. Ground Negation | Join a demo to its slot, then apply distinct slot-closure and cancellation checks; explain why reversing generation and negation fails. | Lecture pp. 16–19; F23 P8(c). Ground non-unifiability is explained before later use. |
+| 6. Recursive Relations | Complete an edge-first path relation and join it to a program-track target; reject wrong directions, unrelated branches, and zero-edge paths. | Lecture pp. 13–14, 42–44; S23 P5. |
+| 7. List Patterns | Decompose a structured badge; extract two elements or the tail after two elements, including nested values and short-list boundaries. | Lecture pp. 46–49; F22 Q22; F23 P8(a). |
+| 8. Recursive List Construction | Trace a worked frame-building relation, then double each input position by connecting output tails. | Lecture pp. 48, 50–54; F23 P8(a); F24 P7(C) component skill. |
+| 9. Removal and Extra Answers | Choose every eligible reward position, issue its compound ticket, and retain the corresponding queue; distinguish equal results from distinct proofs. | Lecture pp. 22, 42, 51–54; F23 recursive-output/proof reasoning. |
+| 10. Adjacent Runs | Design four disjoint list cases for a media-player log; preserve a later replay after another track. | Lecture pp. 47–54; Quiz 4 P5. |
+| 11. Accumulator State | Expand a reversal query with an already-ground wrong output into two pending goals; then trace and repair a nested accumulator, including a caller-supplied suffix. | Lecture pp. 42, 48–55; F24 P7(A–B). |
+| 12. Uneven Interleaving | Independently combine two queues, preserving either remainder and avoiding duplicate both-empty proofs. | Lecture pp. 47–54; F24 P7(C). |
+| 13. Last Occurrences | Independently retain recent searches by suffix membership and ground negation; distinguish this policy from adjacent-run compression. | Lecture pp. 16–19, 48–55; F23 P8(c). |
+| 14. Open Route Challenge | Independently combine reachability, ground exclusions, and constructed route lists; trace a rejected branch and explain finite search. | Lecture pp. 9–10, 16–23, 42–44, 48–54; integration toward S23 P5 and F24 P7. |
 
-### Prolog Lists and Search
+The selected-response checks target Apply, Analyze, and Evaluate. Genuine creation occurs in the editor when learners design clauses from a contract, especially steps 12–14. Five Parsons questions reconstruct a specified execution sequence; they avoid treating logically interchangeable clause orders as one arbitrary correct ordering. Other activities include prediction, handwritten goal/binding traces, code repair, faded completion, independent programming, and counterexample selection.
 
-Source: `_data/tutorials/prolog-search.yml`; live page: `/SEBook/tools/prolog-search-tutorial`.
+## Different examples, transferable mechanisms
 
-| Step | Learning and assessment evidence | Source connection |
-| --- | --- | --- |
-| 1. Append as a Relation | Construct and check concatenations; enumerate all finite splits, including empty boundaries. | Lecture p. 55; LOGIC7 A.2; F24 Q7 A's use of append. |
-| 2. One Removal, Several Answers | Remove exactly one occurrence; reason about alternative removals and backward queries. | Lecture pp. 51–54, 77–94; F24 solutions appendix pp. 36–37, with corrected complete-answer semantics. |
-| 3. Arithmetic and Bound Inputs | Distinguish term construction from evaluation; bind inputs before `is`; include the exact comparison boundary. | Lecture pp. 7–12; LOGIC5 ordered insertion and accumulator arithmetic. |
-| 4. A Recursive Count | Integrate structural recursion, numeric comparisons, repeated values, and the zero case. | Adaptation of LOGIC5's count and insertion components; the threshold-counting task is new. |
-| 5. Negation After Generation | Generate ground candidates before failure-based exclusion; filter a played list. | Lecture pp. 16–19; F23 duplicate-removal task using `not(member(...))`. |
-| 6. Collected Answers and Duplicates | Choose between proof sequences, distinct values, and totals; handle no answers. | Quiz 4 Q4 and F23 duplicate handling; lecture p. 55 supplies sort and sum. `findall/3` is an explicitly taught support tool added by this tutorial. |
-| 7. Reversal With an Accumulator | Derive a helper invariant and preserve behavior while avoiding repeated append. | LOGIC8 B; F24 Q7 B. |
-| 8. Interleaving Unequal Lists | Independently integrate two lists and retain either unmatched suffix. | LOGIC8 C; F24 Q7 C. |
-| 9. A Finite Playlist Search | Generate all six arrangements and apply ground constraints; check both missing and extra solutions. | New transfer task built from the preceding skills and lecture p. 55's permutation predicate. The optional scoped-cut experiment corresponds to lecture p. 57's further topics. |
+Novelty was checked against the actual handout, rather than obtained by renaming the lecture's people. The early sequence uses sound routes, nested two-field formats, complete-format device capabilities, and shared audio-pack contents with interleaved fact order. Later examples change the decision and representation as well as the nouns: two separate exclusion domains, reachability filtered by a target relation, compound records within lists, per-element framing and duplication, and eligible-position selection returning a ticket plus a residual queue.
 
-The runtime supports the constructs used in the course's sorted insertion, repeated-value generation, and adjacent-duplicate exercises, but those exact exercises are not separate tutorial steps. The Python logic-engine implementation assignment is represented by tracing and explaining the actual Prolog engine. Full Haskell language instruction remains outside this Prolog path.
+The final route task adds open-checkpoint filtering and a constructed path output. It does not merely rename the lecture's ancestor relation. Adjacent compression, accumulator reversal, interleaving, and last-occurrence retention intentionally preserve **assessment task families**. Their taught mechanisms transfer to the exams; students still have to reason about unfamiliar data and contracts. These are not claims that the underlying algorithms are novel.
 
-## Pedagogical decisions
+## Prerequisite and correctness boundaries
 
-Foundations takes approximately 75–100 minutes; Lists and Search takes approximately 100–115 minutes, with an explicit break after its fifth step. These are author estimates, not measured completion times. Splitting the path prevents facts, recursive proof search, list construction, arithmetic modes, negation, and collection semantics from becoming one long novice session.
+- Ground negation is explicitly taught before use. `not(Goal)` means failure to find a proof under finite search, not generation of the complement of a relation.
+- `\=` appears in the assessments; step 5 explains “cannot unify now” and its safe ground-atom use. It is not treated as a deferred inequality constraint.
+- No cut, arithmetic evaluation, constraint solving, cyclic graph search, Haskell translation, or answer-collection syntax is required. `findall/3`, `sort/2`, and identity checks inside test commands belong to the harness, not student prerequisites.
+- Accumulators are introduced through an explicit invariant and call-state table. The exam supplies a Haskell algorithm, but this tutorial derives the same reasoning from already taught recursion and list construction.
+- Every exercise states its relevant input mode and boundaries. Graph exercises use finite acyclic facts; list tasks use finite proper lists, with ground atoms where negation/inequality requires them. The route task requires a known open starting point and checks every entered checkpoint.
+- The lecture's unrestricted deletion clauses can produce an unchanged answer. The reward task deliberately exposes that flaw, then requires exactly one eligible position to be claimed.
+- Both unrestricted empty-side interleaving clauses match two empty inputs. Step 12 explicitly requires one proof and teaches disjoint cases; it does not quietly reject the lecture/exam skeleton without explanation.
+- Step 13 supplies `contains_once/2` with disjoint ground cases. It avoids multiplying proof counts for repeated values, and explicitly disclaims enumeration with an unbound item. Last-occurrence output order is not sorting or first-occurrence order.
+- Head unification is only the beginning of a proof. The worked reversal trace demonstrates a later subgoal failing even though the recursive head initially matches the proposed output.
 
-The design follows the project's pedagogical-advisor, cs-tutorial-design, tutorial-authoring, and quiz-format skills. Worked examples introduce each mechanism; partially supplied relations then give way to independent composition. Prediction prompts require a concrete binding, answer sequence, or failure hypothesis. Explicit prediction answers in Foundations use native disclosure elements so learners can commit before revealing them. These disclosures are optional self-regulation supports, not enforced prediction gates.
+## Feedback, pacing, and saved work
 
-Later knowledge checks retrieve earlier variable/query and termination concepts. Counterexamples distinguish a missing condition from missing syntax. The source's conversational questions and familiar domains remain, while discouraging flourishes and irrelevant exam-administration language are omitted. Quiz feedback explains the reasoning behind plausible wrong answers and avoids answer-position references.
+The planning estimate is 100–120 minutes for a prepared refresher audience, divided into steps 1–4, 5–9, and 10–14. This is not measured completion time; students needing more recursive-tracing practice may take longer. Numbered navigation, code checks, and knowledge checks are optional, allowing review of a particular exam skill. Worked examples fade into partial programs and finally contract-only tasks. Every behavioral check has three graduated hints, and model programs are separate instructor reveals.
 
-Gates inspect the published relation contract. Exact proof order and multiplicity are required where the task names them, especially Foundations steps 4 and 7. Otherwise the gates compare complete sets of results and accept alternate goal order, helper names, or equivalent implementations. Suggested strategies such as pattern facts guide learning; they are not represented as source-code enforcement. Solutions live in instructor reveals, with graduated hints preceding them.
+Checks enforce the declared behavior, not exact source spelling. Order and proof counts are tested when the task requires them; otherwise checks compare complete distinct outputs. Alternatives with helper predicates, equivalent patterns, or different body order are accepted where they satisfy the contract. Specific near-miss implementations test for overly permissive grading.
 
-Passing code and quizzes provide evidence about these tasks; they do not establish lasting learning or guarantee pedagogical perfection. Delayed reconstruction prompts encourage a later retrieval attempt. Learner observation would still be needed to validate pacing and transfer.
+`progress_version: 2`, new `v2-*` lesson keys, and new `prolog-v2/` file paths prevent old Foundations code or completion marks from being mistaken for new work. The eight old positional steps map to retired legacy keys. Existing saved files remain available, but old pass credit does not unlock or mark the replacement lessons complete. No new storage family or runtime feature is introduced.
 
-## Source clarifications preserved in the tutorial
+Passing automated checks is formative evidence, not proof of durable learning or exam readiness. Predictions and written explanations remain learner activities rather than automatically graded reasoning. The final instructions ask learners to reconstruct a relation later from a blank file and then attempt a past-paper problem independently.
 
-- The resolution pseudocode on lecture page 42 returns immediately after a failed clause match. Actual resolution tries the remaining clauses; Foundations makes that explicit.
-- The lecture's three-clause deletion relation includes empty-list success and an unrestricted recursive clause. It can return the unchanged input as well as one-occurrence deletions. The F24 appendix discusses multiple deleted occurrences but omits the unchanged answer. Lists and Search states an exact-one-removal contract and rejects that extra result.
-- `sort/2` removes duplicates. This matters when totals count repeated requests; sorting before summing can change the required result. See the [SWI-Prolog sort reference](https://www.swi-prolog.org/pldoc/man?predicate=sort/2).
-- Negation is failure of the current goal, not generation of its complement. `\=` tests whether terms can unify now; unbound arguments require care. See [SWI-Prolog's comparison and unification reference](https://www.swi-prolog.org/pldoc/man?section=compare).
-- Cut prunes choices associated with its current predicate invocation, rather than disabling all backtracking. The optional experiment preserves caller alternatives. See the [SWI-Prolog cut reference](https://www.swi-prolog.org/pldoc/man?predicate=!/0).
-- `permutation/2` includes the original order. Haskell-to-Prolog analogies explain structure but do not imply a single result, identical query modes, or identical control flow. The lecture's `cons`/`nil` discussion is an illustrative list encoding, not the literal list representation used by every implementation.
+## Verification
 
-## Engine and course scope
+The existing locally pinned Tau Prolog worker executes the authored programs. This is compatibility with the exercised course features, not a claim of complete SWI-Prolog support. Inference exhaustion and output limits are incomplete execution, never evidence that a goal is false.
 
-The existing backend uses locally pinned **Tau Prolog 0.3.4** core and lists code in a browser worker. It was extended instead of adding a second Prolog engine. It supports the course constructs exercised here: nested terms and list patterns; unification, identity and non-unifiability; facts and recursive clauses; conjunction/disjunction; ordered backtracking; arithmetic evaluation and comparisons; the taught list library predicates; and cut. A small course compatibility predicate supplies `not(Goal)` through `\+ Goal`. Advanced starter files explicitly import `library(lists)`.
+- `scripts/tests/prolog-worker.test.js`: language/runtime behavior.
+- `scripts/tests/prolog-course-content.test.js`: every intended solution and incomplete starter in both Prolog tutorials, plus independent correct approaches and wrong-program counterexamples.
+- `tests/prolog-tutorial.spec.js`: all editor checks and knowledge checks, optional main-path navigation, unchanged extension gates, accessible keyboard interaction for Parsons, and legacy-draft migration without inherited pass credit.
+- `scripts/audit_mcq_tells.py`: answer-length and formatting clues, supplemented by manual key, misconception-feedback, and prerequisites review.
 
-This is course-feature compatibility, not a complete SWI-Prolog implementation claim. No requirement was found in the supplied material for constraint-logic extensions, tabling, grammar rules, dynamic database management, host filesystem access, or a native tracer interface, and this tutorial does not promise those facilities. Error wording and implementation-specific behavior may differ from the course's SWI environment.
-
-Interactive execution is bounded at 100 displayed answers and 100,000 inferences per answer, with a host timeout and Stop/restart recovery. Reaching a bound means the search is incomplete, not that remaining answers are false. Grading rejects answer truncation and inference exhaustion instead of accepting partial evidence.
-
-Executable checks live in `scripts/tests/prolog-worker.test.js`, `scripts/tests/prolog-course-content.test.js`, and `tests/prolog-tutorial.spec.js`. They cover language behavior, intended solutions, incomplete starters, selected alternate correct approaches, common wrong approaches, and the browser flow. The quiz wording audit is `scripts/audit_mcq_tells.py`. Report the checks actually run and their results in the change handoff; this document describes their purpose, not a permanent guarantee that every future revision passes them.
+Browser verification uses an isolated build with committed runtime files, so concurrent unrelated runtime edits cannot conceal a dependency. Validation results belong in the change handoff; the checks listed here describe their purpose rather than guaranteeing future revisions.

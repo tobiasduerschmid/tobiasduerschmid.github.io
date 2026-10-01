@@ -9,7 +9,7 @@
 # helpers and the final search task support transfer; cut is an optional
 # operational extension, not a prerequisite for the course-aligned exercises.
 title: "Prolog Lists and Search"
-description: "Continue after Prolog Foundations: build list relations, evaluate arithmetic, control goal order, and generate solutions to a small scheduling problem. For programmers comfortable with facts, rules, unification, and recursive membership; allow 100–115 minutes across two sessions."
+description: "Further practice after the main Prolog tutorial: build list relations, evaluate arithmetic, control goal order, and generate solutions to a small scheduling problem. For programmers comfortable with facts, rules, unification, and recursive membership; allow 100–115 minutes across two sessions."
 learning_objectives:
   - "Apply recursive list relations in construction, checking, and finite splitting modes."
   - "Analyze all answers to a deletion query, including repeated values and overlapping clauses."
@@ -36,7 +36,7 @@ steps:
       - Apply a recursive list relation to concatenate two finite lists.
       - Analyze how the same clauses enumerate every split of a known list.
 
-      This tutorial continues [Prolog Foundations](/SEBook/tools/prolog-tutorial).
+      This tutorial offers further practice after [Prolog: Queries to Programs](/SEBook/tools/prolog-tutorial).
       You should already be able to trace a recursive membership predicate.
       Plan a break after Step 5; return for the second half after some time away.
 
