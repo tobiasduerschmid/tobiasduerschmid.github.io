@@ -1,295 +1,399 @@
 title: "CS 131: Object-Oriented Programming"
-description: "Distinguish reuse from subtyping and reason about encapsulation, contracts, inheritance, and dispatch."
+description: "Short inheritance, access, construction, and dispatch problems modeled on course assessments."
 active: true
-# Sources: oop_palooza_v7.pptx (slide numbers below), Homework Problems (Public),
-# Fall 2025 Quiz 2 and Quiz 4 solutions. Examples and questions are newly authored.
-# Excluded: Language of the Week slides 28 (PostScript) and 78 (Mojo).
+# Complete replacement. Page references below are physical PDF pages.
+# Time estimates are planning estimates, not measured student completion times.
 questions:
-  # Sources: lecture slides 31–37; homework OOP1 Part A.
-  - id: cs131-oop-encapsulation-boundary
-    type: single
-    difficulty: basic
-    bloom: understand
-    question: "A task queue may later replace its internal array with a linked structure. Which public interface best protects callers from that change?"
+  # Lecture: oop_palooza_v7_handouts.pdf pp.33–34.
+  # Assessment: [Final] S23 V1 (Public).pdf, Problem 11 pp.21–22; reason about access and supported operations.
+  - id: cs131-v2-oop-access-check
+    type: multiple
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: |
+      In C++, `Device` declares public `start()`, protected `reset()`, and private `key()`. `Sensor` publicly inherits `Device`. Select every call allowed by access control.
     options:
-      - "Methods to enqueue a task and remove the next task."
-      - "Methods to get and replace the internal array."
-      - "Public fields for the array and its current capacity."
-    correct_index: 0
+      - "A Sensor method calls its inherited reset()."
+      - "A Sensor method calls Device's private key()."
+      - "Client code calls start() on a Sensor object."
+      - "Client code calls reset() on a Sensor object."
+    correct_indices: [0, 2]
     option_feedback:
-      1: "Getters and setters still expose the array as part of the contract. Callers can become dependent on that representation."
-      2: "Public storage fields couple callers to layout details and let them bypass the queue's behavior."
-    explanation: "Encapsulation hides changeable representation behind meaningful operations. A queue's clients need its behavior, while storage choices belong to its implementation."
+      0: "Protected members are available inside derived-class methods."
+      1: "Private access belongs to Device's methods; inheritance does not grant Sensor direct access."
+      2: "Public inheritance preserves start() in Sensor's public interface."
+      3: "Protected access does not extend to ordinary client code."
+    explanation: "Sensor's methods may use inherited public and protected members. Clients may use its public interface, including start()."
 
-  # Sources: lecture slides 40–41; homework OOP1 Part B.
-  - id: cs131-oop-receiver-state
+  # Lecture: oop_palooza_v7_handouts.pdf pp.82,85–86.
+  # Assessment: [Final] F22 (Public).pdf, Problem 16 p.9; infer implementation inheritance from a rejected substitution.
+  - id: cs131-v2-oop-private-base
     type: single
     difficulty: intermediate
     bloom: apply
+    estimated_seconds: 45
     question: |
-      Two Python counters start at zero. After the final call, which state changes?
+      C++ client code has these declarations. Which statement compiles?
+
+      ```cpp
+      class Engine { public: void run() {} };
+      class Pump : private Engine {
+      public: void start() { run(); }
+      };
+      void inspect(Engine& e) {}
+      Pump p;
+      ```
+    options:
+      - "p.run();"
+      - "inspect(p);"
+      - "p.start();"
+    correct_index: 2
+    option_feedback:
+      0: "The inherited implementation is usable inside Pump, but private inheritance hides run() from clients."
+      1: "Client code cannot implicitly use a privately derived Pump as an Engine reference."
+    explanation: "Pump exposes its own public start() operation. Reusing Engine's implementation does not expose Engine's public type or methods to clients."
+
+  # Lecture: oop_palooza_v7_handouts.pdf pp.54,66,69,85–86.
+  # Assessment: Fall 2025 Quiz 4, Problem 1(a,c,d); infer an inheritance link from substitutability evidence.
+  - id: cs131-v2-oop-infer-link
+    type: single
+    difficulty: advanced
+    bloom: analyze
+    estimated_seconds: 60
+    question: |
+      In a statically typed language, `B` derives from `A`, and `C` derives from `B`. Each link uses interface, subclassing, or implementation-only inheritance. A `B` can be passed where `A` is required, but a `C` cannot. Assume inheritance is the only reason a substitution could fail. What follows about the `C`-from-`B` link?
+    options:
+      - "It must use interface inheritance."
+      - "It must use implementation-only inheritance."
+      - "It must use subclassing inheritance."
+    correct_index: 1
+    option_feedback:
+      0: "Interface inheritance preserves a subtype relationship, so C would also be usable as A."
+      2: "Subclassing preserves the inherited public interface and subtype relationship."
+    explanation: "B already supports substitution for A. The remaining link must break that relationship; among the listed forms, implementation-only inheritance does so."
+
+  # Lecture: oop_palooza_v7_handouts.pdf pp.70–72,107–108.
+  # Assessment: [Final] F22 (Public).pdf, Problem 14 p.7; identify an unimplemented abstract operation after a signature mismatch.
+  - id: cs131-v2-oop-abstract-signature
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: |
+      Why does declaring `Printer p;` fail in this C++ program?
+
+      ```cpp
+      class Output { public: virtual void write() = 0; };
+      class Printer : public Output {
+      public: void write(int copies) {}
+      };
+      ```
+    options:
+      - "Printer does not implement write() with no arguments."
+      - "A derived class cannot add a parameterized method."
+      - "An abstract base cannot have a concrete derived class."
+    correct_index: 0
+    option_feedback:
+      1: "Adding write(int) is permitted; it simply does not implement the separate write() operation."
+      2: "A derived class can be concrete once it implements all inherited pure virtual operations."
+    explanation: "The no-argument pure virtual write() remains unimplemented. A method with an int parameter has a different signature, so Printer remains abstract."
+
+  # Lecture: oop_palooza_v7_handouts.pdf pp.105,107–108.
+  # Assessment: [Final] F22 (Public).pdf, Problem 14 p.7; repair a non-overriding signature.
+  - id: cs131-v2-oop-override-repair
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: |
+      A C++ base class declares `virtual int cost(int n)`. A subclass should replace that operation. Which declaration gives the compiler the intended override check?
+    options:
+      - "int cost() override;"
+      - "int cost(string n) override;"
+      - "int cost(int n) override;"
+    correct_index: 2
+    option_feedback:
+      0: "The missing parameter changes the signature rather than overriding cost(int)."
+      1: "Changing the parameter type from int to string creates a different signature."
+    explanation: "The parameter list matches the inherited operation. The override keyword then asks the compiler to verify that an override exists."
+
+  # Lecture: oop_palooza_v7_handouts.pdf pp.121–124,135.
+  # Assessment: [Final] S23 V1 (Public).pdf, Problem 8 p.17; trace a virtual call through a base pointer.
+  - id: cs131-v2-oop-virtual-output
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: |
+      What does this C++ code print?
+
+      ```cpp
+      struct Base { virtual int value() { return 2; } };
+      struct Child : Base { int value() override { return 7; } };
+      Child c;
+      Base& b = c;
+      cout << b.value();
+      ```
+    options:
+      - "2"
+      - "7"
+      - "27"
+    correct_index: 1
+    option_feedback:
+      0: "Base& is the reference's static type. The virtual call uses the actual Child object's implementation."
+      2: "Overriding selects a method; it does not automatically run both bodies."
+    explanation: "b refers to a Child object, and value() is virtual, so the call runs Child::value() and prints 7."
+
+  # Lecture: oop_palooza_v7_handouts.pdf pp.135,140.
+  # Assessment: [Final] F23 (Public).pdf, Problem 6(b) pp.16–17; classify dispatch at individual call sites.
+  - id: cs131-v2-oop-dispatch-sites
+    type: multiple
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: |
+      In the course's C++ dispatch model, select every call below that uses dynamic dispatch. Ignore compiler optimizations.
+
+      ```cpp
+      struct Base {
+        void save() {}
+        virtual void show() {}
+      };
+      struct Child : Base { void show() override {} };
+      Child c;
+      Base& b = c;
+      ```
+    options:
+      - "b.save()"
+      - "b.show()"
+      - "c.save()"
+      - "c.show()"
+    correct_indices: [1, 3]
+    option_feedback:
+      0: "save() is non-virtual, so its implementation is selected statically."
+      1: "The virtual call selects show() using the receiver's actual class."
+      2: "Inheritance alone does not make a non-virtual method virtual."
+      3: "An ordinary call to a virtual method uses the virtual dispatch semantics even when the receiver is declared Child."
+    explanation: "The virtual show() calls use dynamic dispatch. The non-virtual save() calls use static dispatch."
+
+  # Lecture: oop_palooza_v7_handouts.pdf pp.78–79,135.
+  # Assessment: [Final] S23 V1 (Public).pdf, Problem 8 p.17; trace a virtual call inside an inherited non-virtual method.
+  - id: cs131-v2-oop-inherited-wrapper
+    type: single
+    difficulty: advanced
+    bloom: analyze
+    estimated_seconds: 60
+    question: |
+      What does this C++ code print?
+
+      ```cpp
+      struct Base {
+        virtual void mark() { cout << "B"; }
+        void wrap() { cout << "<"; mark(); cout << ">"; }
+      };
+      struct Child : Base { void mark() override { cout << "C"; } };
+      Child c;
+      Base& b = c;
+      b.wrap();
+      ```
+    options:
+      - "<B>"
+      - "<BC>"
+      - "<C>"
+    correct_index: 2
+    option_feedback:
+      0: "Running Base::wrap() does not change the receiver into a Base object. Its virtual mark() call still reaches Child."
+      1: "The override replaces the selected implementation; the base mark() body is not automatically called."
+    explanation: "Base::wrap() runs, prints <, dynamically calls Child::mark() on the same receiver, and then prints >."
+
+  # Lecture: function_palooza_v8_handouts.pdf pp.85–86,90–94.
+  # Assessment: Fall 2025 Quiz 3, Problem 5(a,b); distinguish template instantiation from generic-body checking.
+  - id: cs131-v2-oop-template-or-generic
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: |
+      In a mystery language, `show<T>(T x)` calls `x.label()`. No bound is declared, and not every type has label(). The compiler accepts the definition and a use with Badge, but rejects a use with int. Which lecture model explains all three observations?
+    options:
+      - "Unbounded generics checked before use."
+      - "Templates checked for the chosen type."
+      - "Dynamic typing checked only at runtime."
+    correct_index: 1
+    option_feedback:
+      0: "An unbounded generic cannot assume every possible T supports label(), even if a particular use supplies Badge."
+      2: "The int use fails at compile time, so runtime-only checking does not explain the observations."
+    explanation: "The template model permits operations required by its body and checks whether a chosen concrete type supports them when the template is instantiated."
+
+  # Lecture: function_palooza_v8_handouts.pdf pp.91–94,101.
+  # Assessment: Fall 2025 Quiz 3, Problem 5(b,c); supply the interface bound needed by a generic body.
+  - id: cs131-v2-oop-generic-bound
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: |
+      A statically checked generic uses this pseudocode. `T` has no universal base class. Which bound is sufficient for every operation in send?
+
+      ```text
+      function send<T>(x: T):
+          x.encode()
+          x.transmit()
+      ```
+    options:
+      - "Requires encode() only."
+      - "Requires transmit() only."
+      - "Requires both methods."
+    correct_index: 2
+    option_feedback:
+      0: "The bound must justify transmit() as well as encode()."
+      1: "The bound must justify encode() as well as transmit()."
+    explanation: "A bounded generic may use the operations guaranteed by its bound. Both called methods must be part of that guarantee."
+
+  # Lecture: oop_palooza_v7_handouts.pdf pp.96–100.
+  # Assessment: [Final] F22 (Public).pdf, Problem 15 p.8; trace construction and destruction effects.
+  - id: cs131-v2-oop-lifetime-order
+    type: parsons
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: |
+      Arrange the four printed lines for this C++ scope, from first to last. Leave out the line that is never printed.
+
+      ```cpp
+      struct Base {
+        Base() { cout << "base starts\n"; }
+        ~Base() { cout << "base ends\n"; }
+      };
+      struct Child : Base {
+        Child() { cout << "child starts\n"; }
+        ~Child() { cout << "child ends\n"; }
+      };
+      { Child c; }
+      ```
+    lines:
+      - "base starts"
+      - "child starts"
+      - "child ends"
+      - "base ends"
+    distractors:
+      - "child starts again"
+    explanation: "The base constructor runs before the derived constructor body. At scope exit, destruction proceeds in reverse: Child's destructor body, then Base's. The inherited base part is not a second Child object."
+
+  # Lecture: oop_palooza_v7_handouts.pdf pp.98–99.
+  # Assessment: [Final] F22 (Public).pdf, Problem 15 p.8; diagnose initialization from an observed object's state.
+  - id: cs131-v2-oop-python-base-init
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: |
+      `print(c.name)` raises an attribute error. Which statement should be added before `self.score = score`?
 
       ```python
-      class Counter:
-          def __init__(self): self.value = 0
-          def add(self, amount): self.value += amount
-      first, second = Counter(), Counter()
-      Counter.add(second, 3)
+      class Base:
+          def __init__(self): self.name = "ready"
+      class Child(Base):
+          def __init__(self, score): self.score = score
+      c = Child(8)
       ```
     options:
-      - "Only second has value 3."
-      - "Only first has value 3."
-      - "Both counters have value 3."
-    correct_index: 0
+      - "Base()"
+      - "self.__init__(score)"
+      - "super().__init__()"
+    correct_index: 2
     option_feedback:
-      1: "The receiver is the object passed as the explicit first argument, not the first object that was created."
-      2: "These are two independent instance attributes. Sharing a method definition does not make their state shared."
-    explanation: "`Counter.add(second, 3)` passes `second` as `self`, just as `second.add(3)` would. The method updates that object's value."
+      0: "Constructing a separate Base object does not initialize the Base fields on self."
+      1: "This calls the same Child initializer again and recurses instead of initializing the base part."
+    explanation: "Child defines its own __init__, so it must explicitly call the base initializer to set name on this object. super().__init__() does that."
 
-  # Sources: lecture slides 45–48.
-  - id: cs131-oop-property-contract
-    type: single
-    difficulty: basic
-    bloom: understand
-    question: "A read-only `temperature` property originally returns a stored Celsius value. Which implementation change can preserve its public contract?"
-    options:
-      - "Compute Celsius from a stored Kelvin value."
-      - "Return Kelvin through the same property."
-      - "Require callers to update the conversion cache first."
-    correct_index: 0
-    option_feedback:
-      1: "The return type may be unchanged, but changing units changes the meaning callers rely on."
-      2: "Adding a required preparation step strengthens the obligations on callers and changes how the property must be used."
-    explanation: "A property can hide whether a value is stored or computed. Preserving its meaning and usage contract lets callers remain unchanged."
-
-  # Sources: lecture slides 51–62; homework OOP2 Part B.
-  - id: cs131-oop-interface-role
+  # Lecture: oop_palooza_v7_handouts.pdf pp.138–139.
+  # Assessment: [Final] F23 (Public).pdf, Problem 6(b) pp.16–17; locate implementations selected by virtual calls.
+  - id: cs131-v2-oop-vtable-entries
     type: single
     difficulty: intermediate
     bloom: apply
-    question: "Unrelated classes represent a report and a map. A print service needs only a `renderPage()` operation from each. Which relationship best expresses that shared capability?"
+    estimated_seconds: 45
+    question: "Base provides virtual draw() and erase(). Child publicly derives from Base and overrides only draw(). In the lecture's vtable model, which implementations appear in Child's draw and erase entries?"
     options:
-      - "Both implement a Printable interface."
-      - "Report inherits Map's implementation."
-      - "Map inherits Report's implementation."
+      - "Child::draw and Base::erase"
+      - "Base::draw and Base::erase"
+      - "Child::draw and an empty erase entry"
     correct_index: 0
     option_feedback:
-      1: "The shared capability does not mean a report is a kind of map or should depend on map internals."
-      2: "Sharing one role does not establish a subtype relationship between the two concrete classes."
-    explanation: "An interface names a role that otherwise unrelated types can support. The print service can depend on that role without requiring shared implementation."
+      1: "Child's override replaces the draw entry in Child's table."
+      2: "An inherited implementation remains callable even when Child supplies no new body."
+    explanation: "Child's table selects its override for draw and retains the inherited Base implementation for erase."
 
-  # Sources: lecture slides 73–76; Fall 2025 Quiz 4, Problem 1 Parts a, c–e.
-  - id: cs131-oop-private-inheritance-boundary
-    type: multiple
-    difficulty: advanced
-    bloom: analyze
-    question: "In C++, `Cache` privately inherits `Storage`, whose public methods include `read` and `write`. Cache publicly exposes only `fetch`, and declares no friends. Which statements hold for ordinary client code? Select all that apply."
-    options:
-      - "Cache may reuse Storage's method implementations internally."
-      - "Clients may call fetch on a Cache object."
-      - "Clients may call the inherited write on a Cache object."
-      - "Clients may implicitly convert a Cache reference to Storage."
-    correct_indices: [0, 1]
-    option_feedback:
-      0: "Private inheritance still supplies inherited implementation to the derived class's members."
-      1: "The derived class controls its own public interface, which explicitly includes `fetch`."
-      2: "Private inheritance makes the inherited public methods inaccessible through the derived object to ordinary clients."
-      3: "The private base is inaccessible to ordinary clients, so this public substitutability is not established."
-    explanation: "Implementation reuse and a public subtype relationship are separate. Private inheritance provides the former without exposing the base interface to ordinary clients."
-
-  # Sources: lecture slides 113–114; homework OOP3 Part C.4.
-  - id: cs131-oop-behavioral-contract
-    type: single
-    difficulty: intermediate
-    bloom: analyze
-    question: "A base method promises a distance in meters. Its override returns the same distance in centimeters, using the same numeric return type. Why can a client written for the base type fail?"
-    options:
-      - "The override changes the result's meaning."
-      - "The override changes the method's parameter count."
-      - "The override prevents runtime method selection."
-    correct_index: 0
-    option_feedback:
-      1: "The signature can remain identical while the promised units change. Type-compatible calls are not enough for behavioral compatibility."
-      2: "Runtime selection can work correctly and still select an implementation that violates the base contract."
-    explanation: "Behavioral subtyping requires preserving guarantees such as units, not merely method names and types. A client that adds a 2-meter margin must receive meters from every valid subtype."
-
-  # Sources: lecture slides 113–114; Liskov & Wing (1994), Behavioral Notion of Subtyping.
-  # Rule verified: https://www.eiffel.org/doc/solutions/Design_by_Contract_and_Assertions
-  # Accuracy correction: slide 114 reverses the precondition rule. Subtypes may
-  # weaken preconditions, but may not strengthen them for inherited operations.
-  - id: cs131-oop-subtype-obligations
+  # Lecture: oop_palooza_v7_handouts.pdf pp.129–130 (interface and semantic consistency only).
+  # Assessment: [Final] S23 V1 (Public).pdf, Problem 11 pp.21–22; evaluate whether inherited operations support substitution.
+  - id: cs131-v2-oop-contract-check
     type: multiple
     difficulty: advanced
     bloom: evaluate
-    question: "A base `reserve(n)` accepts every integer n from 1 through 10 and guarantees at least n seats on success. Considering only these stated conditions, which changes are compatible with a behavioral subtype? Select all that apply."
+    estimated_seconds: 60
+    question: "A Clock interface promises public elapsed(), returning a nonnegative number of seconds. Each proposed implementation returns a nonnegative number. Select every implementation that preserves the stated interface and meaning."
     options:
-      - "Accept 1 through 20 and retain the seat guarantee."
-      - "Accept 1 through 10 and guarantee exactly n seats."
-      - "Accept only 1 through 5 and retain the seat guarantee."
-      - "Accept 1 through 10 but guarantee only n minus 1 seats."
-    correct_indices: [0, 1]
+      - "Public elapsed() returns stored seconds."
+      - "Public elapsed() returns stored milliseconds unchanged."
+      - "Private elapsed() returns stored seconds."
+      - "Public elapsed() converts stored milliseconds to seconds."
+    correct_indices: [0, 3]
     option_feedback:
-      0: "Accepting additional inputs preserves every call a base-type client was already allowed to make."
-      1: "Exactly n seats implies at least n, so this stronger outcome still satisfies the base promise."
-      2: "A base-type client may legally request 6 seats. Rejecting that call adds a stronger precondition."
-      3: "A successful call may now provide less than the promised minimum, weakening the postcondition."
-    explanation: "A subtype must accept the base contract's valid calls and preserve its guaranteed outcomes. It may require less from clients and promise more, provided all other behavioral requirements remain satisfied."
+      0: "The public operation and its seconds-based result match the contract."
+      1: "A valid number alone is insufficient: the client expects seconds, so the units must match."
+      2: "Clients promised a public operation cannot use a private one."
+      3: "Internal storage units may differ if the public result still meets the contract."
+    explanation: "Substitution requires both the promised public operation and its meaning. Storing milliseconds is compatible with the contract if elapsed() converts them to seconds."
 
-  # Sources: lecture slide 71; homework OOP2 Part B.3.
-  - id: cs131-oop-fragile-base
-    type: single
-    difficulty: advanced
-    bloom: analyze
-    question: "An audited collection overrides `add` to record each insertion. Its inherited `addAll` calls `add` for every value. The base author optimizes `addAll` to write directly to storage. Existing base-class behavior stays the same. What breaks in the derived class?"
-    options:
-      - "Bulk insertions bypass the auditing override."
-      - "Single insertions invoke the audit twice."
-      - "Bulk insertions invoke the audit twice."
-    correct_index: 0
-    option_feedback:
-      1: "The change is inside `addAll`; direct calls to the overridden `add` still follow their original path."
-      2: "Writing directly to storage eliminates the overridden calls; it does not add a second path through them."
-    explanation: "The subclass relied on an internal base-class call path, not just the public result of `addAll`. A base refactor can therefore preserve base behavior while silently breaking derived behavior."
-
-  # Sources: lecture slides 69–75; homework OOP2 Part B.3.
-  - id: cs131-oop-delegation-design
+  # Lecture: oop_palooza_v7_handouts.pdf pp.78–80.
+  # Assessment: [Final] S23 V1 (Public).pdf, Problem 8 p.17; reason about an inherited wrapper's virtual call.
+  - id: cs131-v2-oop-fragile-wrapper
     type: single
     difficulty: advanced
     bloom: evaluate
-    question: "A bounded inbox wants to reuse a general list, but every insertion must enforce a capacity limit. Which design gives the inbox explicit control over all operations it exposes?"
+    estimated_seconds: 75
+    question: "Logger.addAll(xs) used to call virtual add(x) for each element. CheckedLogger overrides add(x) to reject empty strings. A revision makes addAll write directly to storage, and empty strings now enter CheckedLogger. Which repair restores the established checking behavior for calls to addAll?"
     options:
-      - "Keep a private list and delegate after checking the limit."
-      - "Publicly inherit the list and override only append."
-      - "Return the mutable list to clients for direct insertion."
-    correct_index: 0
+      - "Make the storage field protected."
+      - "Have addAll call virtual add for each element."
+      - "Make CheckedLogger.add private."
+    correct_index: 1
     option_feedback:
-      1: "Other inherited insertion methods can remain available and may bypass the single overridden method."
-      2: "Exposing the mutable list allows clients to change its size without going through the inbox's capacity check."
-    explanation: "Composition lets the inbox define a narrow public interface and enforce its own invariant before delegating storage work. Forwarding methods add some code, but avoid exposing unsuitable base operations."
+      0: "Changing field access does not cause the checking method to run."
+      2: "Changing visibility does not repair the path that bypasses the override."
+    explanation: "The derived behavior depends on addAll routing each insertion through the virtual add operation. Restoring that call path restores the checks; direct storage writes bypass them."
 
-  # Source: lecture slide 95.
-  - id: cs131-oop-override-intent
-    type: single
+  # Lecture: oop_palooza_v7_handouts.pdf pp.109,135.
+  # Assessment: [Final] S23 V1 (Public).pdf, Problem 8 p.17; order outputs across inherited and overridden calls.
+  - id: cs131-v2-oop-super-trace
+    type: parsons
     difficulty: intermediate
     bloom: apply
-    question: "A C++ base declares `virtual void save()`. A derived class accidentally declares `void save(int mode) override`. What useful feedback does `override` enable?"
-    options:
-      - "A compile-time error that no matching method is overridden."
-      - "Automatic adaptation of the call to provide a mode value."
-      - "Runtime selection between save overloads using argument values."
-    correct_index: 0
-    option_feedback:
-      1: "The annotation checks an intended override; it does not invent missing arguments or change a base method's signature."
-      2: "Overload selection and overriding are different. The mismatched signature is detected before execution."
-    explanation: "An override must match an appropriate virtual base method. The explicit annotation turns a signature mistake into a compile-time diagnostic instead of silently defining a different method."
-
-  # Sources: lecture slides 118–123; Fall 2025 Quiz 4, Problem 1 Part f.
-  - id: cs131-oop-static-dynamic-dispatch
-    type: single
-    difficulty: intermediate
-    bloom: apply
-    question: "In C++, Base defines virtual `sound()` and nonvirtual `label()`. Derived defines matching methods of both names. A `Base&` refers to a Derived object. Which implementations do `ref.sound()` and `ref.label()` select?"
-    options:
-      - "Derived sound and Base label."
-      - "Derived sound and Derived label."
-      - "Base sound and Base label."
-    correct_index: 0
-    option_feedback:
-      1: "The nonvirtual method is selected using the reference's static type, even though the underlying object is derived."
-      2: "The virtual method uses the underlying object's dynamic type, so its derived override is selected."
-    explanation: "The same reference can participate in both forms of dispatch. Virtual calls select an override dynamically; nonvirtual calls use the member determined from the static type."
-
-  # Sources: lecture slides 107–109, 118, 126.
-  - id: cs131-oop-substitution-versus-dispatch
-    type: single
-    difficulty: basic
-    bloom: understand
-    question: "Which statement distinguishes subtype polymorphism from dynamic dispatch?"
-    options:
-      - "Subtyping permits substitution; dispatch selects a method at runtime."
-      - "Subtyping selects a method; dispatch changes the object's type."
-      - "Subtyping requires shared method bodies; dispatch checks access rules."
-    correct_index: 0
-    option_feedback:
-      1: "Dispatch chooses behavior for the existing object; it does not change that object's type."
-      2: "Unrelated implementations can satisfy the same supertype. Dispatch selects the called implementation, rather than deciding its accessibility."
-    explanation: "Subtype polymorphism lets a value be used through a supertype contract. Dynamic dispatch determines which implementation runs for a particular method call."
-
-  # Sources: lecture slides 85–89.
-  - id: cs131-oop-construction-order
-    type: single
-    difficulty: intermediate
-    bloom: understand
-    question: "A C++ derived constructor reads a field initialized by its base constructor. Why must base initialization complete before the derived constructor body runs?"
-    options:
-      - "The derived body relies on valid base state."
-      - "The base constructor needs the derived body's final state."
-      - "Both constructors must assign the same base fields."
-    correct_index: 0
-    option_feedback:
-      1: "The dependency points the other way in this example: the derived body uses state established by the base."
-      2: "Each constructor initializes its own part. The derived constructor can use base state without assigning the base fields itself."
-    explanation: "The base subobject provides part of the derived object's state and behavior. Initializing it first lets the derived constructor safely build on those established components."
-
-  # Sources: lecture slides 101–104; homework OOP5 Part A.
-  - id: cs131-oop-diamond-state
-    type: multiple
-    difficulty: advanced
-    bloom: analyze
-    question: "In C++, Scanner and Printer each publicly inherit Device without virtual inheritance. Copier publicly inherits both. Device contains an instance field `serial` and a method `getSerial()`. Which consequences follow? Select all that apply."
-    options:
-      - "A Copier contains two Device base subobjects."
-      - "An unqualified getSerial call on Copier is ambiguous."
-      - "Both paths automatically share one serial field."
-      - "The compiler automatically chooses the Printer path."
-    correct_indices: [0, 1]
-    option_feedback:
-      0: "Each nonvirtual inheritance path contributes its own base subobject."
-      1: "The inherited method is reachable through two distinct Device subobjects, so the call needs disambiguation."
-      2: "Sharing the common base requires a different inheritance design; it does not happen automatically here."
-      3: "C++ does not silently resolve this ambiguity by choosing one of these base paths."
-    explanation: "A diamond can duplicate both inherited state and paths to behavior. The programmer must choose an explicit design for which base state and method path should be used."
-
-  # Sources: lecture slides 79–81; homework OOP3 Part C.
-  - id: cs131-oop-prototype-receiver
-    type: single
-    difficulty: intermediate
-    bloom: apply
+    estimated_seconds: 60
     question: |
-      What does the final JavaScript expression return?
+      Arrange the four printed lines in execution order. Leave out the unused base-class output.
 
-      ```javascript
-      const template = { name: "base", greet() { return this.name; } };
-      const member = Object.create(template);
-      member.name = "Mina";
-      member.greet();
+      ```python
+      class Base:
+          def run(self):
+              print("start")
+              self.step()
+              print("finish")
+          def step(self): print("base step")
+      class Child(Base):
+          def run(self):
+              super().run()
+              print("child done")
+          def step(self): print("child step")
+      Child().run()
       ```
-    options:
-      - "The string Mina."
-      - "The string base."
-      - "The value undefined."
-    correct_index: 0
-    option_feedback:
-      1: "The method is found on the prototype, but this call still uses `member` as its receiver."
-      2: "Lookup can find `greet` through the prototype chain; the method need not be an own property."
-    explanation: "Method lookup finds `template.greet`, while the receiver for `member.greet()` is `member`. Its own `name` shadows the prototype's value."
-
-  # Sources: lecture slides 51–76, 107–114; Fall 2025 Quiz 2, Problem 2(a),
-  # and Fall 2025 Quiz 4, Problem 1(a–e).
-  - id: cs131-oop-inheritance-evidence
-    type: multiple
-    difficulty: advanced
-    bloom: analyze
-    question: "In a nominally typed language, Sensor explicitly implements Readable and is accepted by a function expecting Readable. We have no information about internal code reuse. Which conclusions are justified? Select all that apply."
-    options:
-      - "Sensor supports the operations required by Readable."
-      - "Sensor can be used through the Readable type."
-      - "Sensor reuses method bodies supplied by Readable."
-      - "Every Readable object can be used as a Sensor."
-    correct_indices: [0, 1]
-    option_feedback:
-      0: "Implementing the interface commits Sensor to its required operations."
-      1: "The declared relationship and accepted call establish this type-level substitution."
-      2: "An interface relationship does not establish where method implementations came from."
-      3: "Substitution goes from the implementing type to the interface. Other Readable values need not be Sensors."
-    explanation: "Separate what the interface relationship establishes from claims about reuse or reverse conversions. Behavioral correctness still requires checking that the implementations honor the interface's promises."
+    lines:
+      - "start"
+      - "child step"
+      - "finish"
+      - "child done"
+    distractors:
+      - "base step"
+    explanation: "super().run() executes Base's run body with the same Child receiver. self.step() therefore calls Child.step(). After the base body finishes, Child.run() prints child done."

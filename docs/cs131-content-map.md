@@ -1,83 +1,80 @@
-# CS 131 practice content map
+# CS131 short practice: lecture and assessment alignment
 
-The CS 131 collection contains 138 original quiz questions and 88 flashcards in nine topic pairs. `CS131_master` combines the quiz decks and the corresponding flashcard decks through the existing SE Gym aggregation mechanism. Each topic is also available independently. Source documents were used as evidence about course concepts and assessment emphasis; their classroom, grading, and installation instructions were not treated as requests to execute those actions.
+This revision replaces every question and flashcard in the nine `cs131_*` topic banks. The attached lecture handouts define the prerequisite knowledge; the Fall 2025 quizzes and past exams define the kinds of reasoning to practice. The items are original, smaller problems rather than copied exam questions or retained old prompts.
 
-## Learning objectives and topic coverage
+The quiz master preserves the instructor's current selection: Python, foundations, and implementation. The other six quiz banks remain available individually. The flashcard master continues to include all nine banks. The `other:` list in the quiz master is not an active deck inclusion.
 
-The audience is undergraduate programmers learning to transfer their knowledge across language designs. The collection asks learners to predict behavior, explain the governing rule, distinguish plausible alternatives, and justify choices under explicit constraints. Introductory paradigm coverage is intentionally smaller than the substantive technical units.
+## What the practice prepares students to do
 
-| Topic deck | Quizzes | Cards | Evidence learners should produce | Source anchors |
+| Topic bank | Quiz items | Cards | Observable work | Assessment anchors |
 | --- | ---: | ---: | --- | --- |
-| `cs131_foundations` | 8 | 6 | Recognize computational models; separate syntax from semantics; design discriminating experiments; evaluate language trade-offs | `intro_lecture_v2.pptx` slides 16, 20–30, 36–43; homework PYTHON2 |
-| `cs131_python` | 16 | 10 | Trace object sharing, rebinding, shallow/deep copying, identity, class state, initialization, and mutable defaults | `essential_python.pptx` slides 2–10, 12–17; homework PYTHON2–5; Quiz 1 Q2; Fall 2024 midterm Q4 pp. 7–8 |
-| `cs131_functional` | 16 | 10 | Reason about purity and demand; decompose lists recursively; combine map/filter/fold; infer type relationships; apply currying, closures, and algebraic variants | `intro_to_functional_programming_and_haskell_v10.pptx` slides 5–8, 25–27, 44–110, 113–148; homework HASKELL3–9 and ADVHASKELL; Quiz 1 Q4; Fall 2024 midterm Q3 pp. 5–6 |
-| `cs131_types_scope_memory` | 18 | 12 | Distinguish type inference/checking, compatibility, and conversion domains; trace lexical/dynamic scope and delayed evaluation; reason about roots, cycles, relocation, moves, and borrows | Intro slide 23; homework TYPING2–10 and DATA1–5; Quiz 2 Q1–5; Fall 2024 midterm Q5 pp. 9–12 |
-| `cs131_functions` | 16 | 10 | Predict parameter and capture effects; evaluate optional/result/error contracts; trace exception cleanup; justify generic operations from bounds | `function_palooza_v8.pptx` slides 9–27, 34–69, 75–109; homework FUNC1–5, FUNC7; Quiz 3 Q1, Q4–5; Spring 2023 final pp. 10, 13–15; Fall 2023 final pp. 12–15 |
-| `cs131_control` | 16 | 10 | Separate grouping from evaluation order; trace short-circuiting, loop exits, iterator state and generator suspension; reason about synchronization and cooperative scheduling | `control_palooza_v7.pptx` slides 2–30, 39–98; homework CTRL1–3; Quiz 3 Q3 and Quiz 4 Q3 |
-| `cs131_oop` | 16 | 10 | Distinguish encapsulation, reuse, and subtyping; preserve contracts; predict dispatch, initialization, repeated inheritance, and prototype receiver behavior | `oop_palooza_v7.pptx` slides 31–76, 79–114, 118–126; homework OOP1–3, OOP5; Quiz 2 Q2(a); Quiz 4 Q1 |
-| `cs131_logic` | 16 | 10 | Interpret relations, unification, conjunction, search order, recursive list rules, negation, and a bounded cut example | `logic_palooza_v6.pptx` core slides and cut appendix; homework LOGIC2–8; Quiz 4 Q4–5; Fall 2022 final pp. 10–11, Fall 2023 final pp. 22–24, Fall 2024 final pp. 23–25, Spring 2023 final p. 11 |
-| `cs131_implementation` | 16 | 10 | Distinguish lexing, parsing, semantic checking, and linking; preserve precedence; evaluate compiler reuse and interpreter state | `pl_implementation_palooza.pptx` slides 3–37, 40–49; homework TOOLS1–5; Quiz 1 Q1 |
-| **Total** | **138** | **88** | | |
+| `cs131_foundations` | 8 | 8 | Recognize the model used by a small computation; predict copying/aliasing effects; judge whether an experiment distinguishes language rules | Introductory prerequisites for Quiz 1 P2–3, Quiz 4 P1–2/P4–5, and Fall 2023 midterm P5 |
+| `cs131_python` | 16 | 10 | Trace object references, mutation versus rebinding, shallow/deep copies, parameters, and returned aliases; construct short dependent procedures | Quiz 1 P2; Fall 2023 midterm P1 pp. 2–3; Fall 2024 midterm P4 pp. 7–8 |
+| `cs131_functional` | 16 | 10 | Infer function and partial-application types; complete recursive cases; trace folds and list pipelines; construct recursive data | Quiz 1 P3–5; Fall 2023 midterm P3 pp. 6–7; Fall 2024 midterm P1–3 pp. 2–6 |
+| `cs131_types_scope_memory` | 16 | 10 | Follow type constraints, conversions, scope and lifetime; trace roots, reachability, reference counts, and ownership | Quiz 2 P1–5; Fall 2024 midterm solutions P6 pp. 13–14; Fall 2023 final solutions garbage-collection problems pp. 8–11 |
+| `cs131_functions` | 16 | 10 | Track passing modes, delayed evaluation, captures, first-class calls, exception propagation, and cleanup | Quiz 3 P1–2/P4; Fall 2024 final solutions P2–3 pp. 5–9; Fall 2023 final solutions binding/passing pp. 7–8 and error handling pp. 16–19 |
+| `cs131_control` | 16 | 10 | Trace evaluation order, short circuiting, loop state, iterators, generator suspension, and explicit async schedules | Quiz 4 P2–3; Fall 2024 final solutions P6 pp. 19–23; Fall 2023 final solutions iteration problems pp. 24–27 |
+| `cs131_oop` | 16 | 10 | Infer inheritance constraints; predict dispatch and initialization; repair signatures; check generic bounds and observable contracts | Quiz 4 P1; Quiz 3 P5; Fall 2022 final P14 p. 7; Spring 2023 final P8 p. 17 |
+| `cs131_logic` | 16 | 10 | Unify terms and lists; track bindings through backtracking; order proof steps; complete recursive list rules | Quiz 4 P4–5; Fall 2024 final P7 pp. 23–25; earlier finals' Prolog tasks |
+| `cs131_implementation` | 20 | 12 | Tokenize under longest-match/tie rules; classify lexical, parsing, and semantic failures; repair small grammars; trace a toy interpreter | Quiz 1 P1; supporting state-tracing subskills for Fall 2024 midterm P5 pp. 9–12 |
+| **Total across topic banks** | **140** | **90** | | |
 
-The dedicated data/types lecture deck was not present in the archive. The types/scope/memory topic therefore draws its detailed scope from the supplied homework and assessments, with the introduction's building-block overview as lecture context. It does not claim coverage of an unseen lecture.
+The table labels solutions editions explicitly where their page numbers differ from the question papers. Individual item comments identify the source edition.
 
-Each question and flashcard has a stable ID, a calibrated `difficulty`, a non-rendered `bloom` field, and a YAML comment identifying source locations. Slide numbers refer to the named full presentation, not a differently paginated handout. Exam page references are physical PDF pages; question labels identify the conceptual source rather than a copied question.
+Foundations provides prerequisite practice, not a claim that the exams contain a separate paradigm-identification section. Some implementation items (target code generation and linking) retain central lecture outcomes without claiming a direct matching past-exam question. Python's class-state, equality, and method-call items extend the object-tracing task family; their comments distinguish this from a direct topic match.
 
-| Bloom process | Quiz questions | Flashcards |
-| --- | ---: | ---: |
-| Understand | 22 | 19 |
-| Apply | 46 | 14 |
-| Analyze | 46 | 23 |
-| Evaluate | 24 | 11 |
-| Create | 0 | 21 |
+## Lecture boundary and traceability
 
-The quizzes comprise 104 single-answer and 34 multiple-answer items. Creation is elicited through constructed flashcard responses rather than recognition of a prewritten choice. Basic concept questions support retrieval without requiring slide trivia.
+Every item has a `# Lecture:` comment naming an attached handout and its physical PDF page(s), plus a `# Assessment:` comment identifying the task family or marking supporting prerequisite practice. Page numbers include title and blank pages; they are not slide numbers from another presentation version. Both the answer and the reasoning needed to distinguish distractors must fit this boundary.
 
-## Excluded Language of the Week slides
+Primary lecture sources are:
 
-The user's exclusion applies to showcase segments, rather than the course's main teaching languages. Core Haskell, Python, and Prolog remain included.
+- `intro_lecture_td_handouts.pdf`: paradigms pp. 25–27; building blocks and parameter experiments pp. 28, 32–36.
+- `essential_python_handouts_td.pdf`: object/class basics pp. 6–16; references and copying pp. 9–10; parameter behavior pp. 20–24.
+- `intro_to_functional_programming_and_haskell_v10_handouts.pdf`: recursive lists pp. 67–69, 87–89; types pp. 73–75; higher-order operations pp. 86–94, 106–107; currying pp. 114, 120–123; recursive data pp. 132, 139–142.
+- `data_palooza_v12_handouts.pdf`: types/conversions, scope/lifetime, binding, storage, collection, and ownership at the item-specific pages. This handout is present in the new archive; the earlier homework-based coverage limitation no longer applies.
+- `function_palooza_v8_handouts.pdf`: passing, evaluation, capture and error handling; its pp. 85–101 also support the OOP bank's generic/template questions.
+- `control_palooza_v7_handouts.pdf`: expressions and control, iteration/generators, and asynchronous execution at the item-specific pages.
+- `oop_palooza_v7_handouts.pdf`: access, inheritance, initialization, overriding and dispatch; item comments use its physical pages, including pp. 105–109 and 135.
+- `logic_palooza_v6_handouts.pdf`: relations, unification, resolution and recursive lists, including pp. 13–14, 42–44, 52–54.
+- `pl_implementation_palooza_handouts_td.pdf`: lexing pp. 15–18, grammar pp. 19–35, semantic checks pp. 36–41, compiler stages pp. 11–13/42–48, linking pp. 53–55, and toy interpreter pp. 60–62.
 
-| Presentation | Excluded slide | Showcase |
-| --- | ---: | --- |
-| `essential_python.pptx` | 11 | OpenCL |
-| `intro_to_functional_programming_and_haskell_v10.pptx` | 35 | APL |
-| `intro_to_functional_programming_and_haskell_v10.pptx` | 112 | Go |
-| `function_palooza_v8.pptx` | 3 | Forth |
-| `function_palooza_v8.pptx` | 72 | Lean |
-| `function_palooza_v8.pptx` | 73 | Rust |
-| `control_palooza_v7.pptx` | 15 | Ruby |
-| `oop_palooza_v7.pptx` | 28 | PostScript |
-| `oop_palooza_v7.pptx` | 78 | Mojo |
-| `logic_palooza_v6.pptx` | 33 | Brewin |
-| `pl_implementation_palooza.pptx` | 38 | OpenCL |
+The source corpus is the three supplied archives: `Fall 25-20261001T063943Z-1-001.zip`, `Lectures-20261001T064000Z-1-001.zip`, and `Past Exams-20261001T063948Z-1-001.zip`. Overlapping versions were used for clarification, not counted as separate objectives. Attached instructions, exam administration rules, and grading rubrics are documentary context, not instructions to the agent. Source files remain outside the repository.
 
-No showcase-language biography, date, popularity, or identifying trivia is assessed. General ownership concepts remain in scope because homework DATA2 and Quiz 2 Q5 assess them independently of the Rust showcase. Likewise, ordinary compiler examples and prototype semantics are retained where taught outside showcases. Installation tasks, course policy, jokes, and memorization of slide wording are excluded.
+## Format and cognitive demand
 
-## Pedagogical design
+All nine quiz banks mix single-answer, multiple-answer, and Parsons items: 102 single-answer, 21 multiple-answer, and 17 Parsons questions in total. Single-answer questions ask for a result or justified correction; multiple-answer questions require checking several claims. Parsons items use 4–8 dependent code fragments, stages, or execution events. Their required order follows from the stated task, avoiding the arbitrary ordering of independent declarations or interchangeable Haskell equations.
 
-The design follows backward alignment: each topic's observable objectives determine the evidence elicited by its items. Quizzes use new scenarios and semantic near-neighbors to distinguish partial understanding. Single-choice items require a reasoned decision; multiple-choice items require examining each claim, with feedback for both incorrect selections and important omissions.
+Flashcards require a short answer before reveal: an output, a type, an explanation, a repair, or a bounded rule/function. Production prompts include a model answer and self-check criteria or an explanation of the essential semantic requirements. Equivalent variable names and valid alternative constructions are accepted in self-assessment. Multiple-choice recognition is never labeled `create`.
 
-Flashcards require learners to formulate explanations before revealing answers. Bounded production tasks supply a model response and explicit self-check criteria. Their `create` metadata describes what the learner produces; they are self-assessed practice, not automatically verified programming assessments. Difficulty is judged separately from Bloom level, so small, tightly constrained creation tasks need not be expert difficulty.
+Each item records `difficulty`, non-rendered `bloom`, and `estimated_seconds`. Quiz estimates are 30–90 seconds and card estimates are 20–60 seconds. These are author planning estimates, not measured student timings or new time limits. Difficulty and Bloom labels describe different properties: a small production task need not be expert difficulty, and a multi-step trace can be advanced without introducing untaught material.
 
-The master lists make cross-topic retrieval possible while the existing SE Gym retains source-deck identity for progress and topic statistics. The existing practice mechanism supplies spacing; no new scheduling or persistence behavior is introduced. Sources for the design rationale are the project's pedagogical-advisor references on backward design, Bloom's revised taxonomy, item writing, feedback, and effective learning techniques, alongside the quiz-format authoring rules.
+New item IDs use the `cs131-v2-` prefix. No old prompt or old item ID remains in these banks. Existing historical records are not erased, but the replacement items have distinct identities and do not inherit the old items' individual practice keys. Deck identifiers remain unchanged.
 
-## Accuracy decisions
+## Deliberate exclusions and source corrections
 
-The OOP presentation's slide 114 reverses the subtype-precondition rule. The new practice uses the correct requirement: inherited preconditions cannot be strengthened, and postconditions cannot be weakened. This is supported by [Liskov and Wing's behavioral subtyping criterion](https://www.cs.cmu.edu/Groups/venari/subtype-toplas.html) and the explicit rule in [Eiffel's Design by Contract documentation](https://www.eiffel.org/doc/solutions/Design_by_Contract_and_Assertions). The supplied source slides were not edited.
+- Exclude Language of the Week showcases, language history, tool trivia, homework-only prerequisites, and project-specific APIs or semantics that the question does not state.
+- Avoid undefined/unspecified language behavior, Python interning trivia, complex method-resolution puzzles, and type-defaulting tricks. Toy-language rules are explicit where the behavior depends on them.
+- OOP handout p. 130 reverses the subtype precondition rule. The bank does not assess that erroneous statement; contract questions instead use explicit public operations and consistent units. The source deck itself was not edited.
+- The Prolog handout's p. 57 lists cut among further topics rather than teaching a sufficient operational treatment. Cut is excluded. Quiz 4 P5's title, “Cut It Out!”, refers to removing consecutive duplicates; the new practice covers that recursive list operation.
+- The deletion clauses in logic pp. 52–54 may produce additional answers through backtracking. Questions using this pattern explicitly ask for the first result.
+- Do not carry over historical answer-key terminology that calls ordinary arrow-chain Haskell signatures “uncurried.” Questions distinguish right-associative arrow notation, partial application, and tuple arguments accurately.
 
-Questions state the language or toy semantics when behavior depends on them. In particular, implicit numeric conversion does not prove unsafe typing; runtime checks do not prove dynamic typing; syntax does not establish semantic validity; pure reference counting is distinguished from counting augmented with cycle detection; logical identity is distinguished from physical location. Call-by-name/need examples explicitly specify effects and caching. Prolog examples specify search order or finite failure where needed.
+## Student use and limits
 
-## Source archive inventory
+Work through a topic after its lecture, predicting the answer before inspecting choices where practical. After an error, use the feedback to identify the mistaken step, then retry the skill on another example. For a production card, write the type, rule, or short function before revealing it; judge it against the stated behavior rather than exact variable names.
 
-- Lectures: eight core units, with full presentations and overlapping handout versions.
-- Quiz solutions: Fall 2025 quizzes 1–4. Some solution documents contain answer keys rather than complete stems; these guide concept selection without inventing missing source wording.
-- Homeworks: `CS131 Homework 0 (Public).docx` supplies prerequisite calibration in parameter passing (Q1–2), recursion, inheritance/polymorphism, and linked lists. `Homework Problems (Public).docx` supplies the topical PYTHON, TOOLS, HASKELL, ADVHASKELL, TYPING, DATA, FUNC, CTRL, OOP, and LOGIC problem groups.
-- Past exams: Fall 2022, Spring 2023, Fall 2023, and Fall 2024 midterm/final materials, including variants and solution sets. Variants are overlapping evidence, not counted as separate curricular objectives.
-
-The archives and extracted source documents stay outside the repository. Only the original practice content and this map are added.
+Once the individual skills are reliable, mix the available topics and attempt full past-paper problems. These short tasks practice the component reasoning used in longer assessments. They do not establish readiness for sustained multi-part programming, proof, or exam-time work by themselves. The design uses backward alignment, retrieval with corrective feedback, and bounded construction; actual learning gains and timing require student evidence.
 
 ## Validation
 
-All 138 quiz questions and 88 flashcards passed schema, answer-index, feedback-key, stable-ID, Bloom-value, and master-deck reference checks. The multiple-choice authoring audit found no answer-length or phrasing tells. Topic authors cross-reviewed answer keys, assumptions, and feedback; executable Python examples were checked locally, while Haskell and Prolog examples were reviewed manually.
+All 230 items received an independent content review: reviewers solved the tasks and checked keys, explanations, lecture prerequisites, assessment alignment, Bloom labels, and whether the short task had an unambiguous answer. Revisions included explicit input assumptions, clearer lexer whitespace rules, and removal of an override question's untaught qualifier distinction.
 
-The full Jekyll build passed. Six existing SE Gym checks passed for deck discovery, quiz and flashcard launches, master-deck source tracking, and narrow-screen layouts. The project's WCAG 2.2 AA audit passed for the SE Gym page with no findings; this was a scoped check, not a whole-site audit. Browser review confirmed the new master counts, quiz feedback, flashcard answer reveal, self-assessment, and focus progression, with visual checks in light and dark mode.
+- YAML, unique IDs, full replacement against the original banks, answer and feedback indices, difficulty/Bloom values, time ranges, source comments, code fences, Parsons sizes, and shuffle-safe wording passed validation. The multiple-choice answer-length/format audit found no flagged items. The changed content files pass `git diff --check`.
+- Executed Python and C++ traces and constructions, checked lexer/interpreter results, and ran 24 Tau Prolog checks. Python construction puzzles also had their required-line permutations checked. Haskell answers were independently reduced and type-derived; no GHC was available, so they are not reported as compiler-tested.
+- A full isolated Jekyll build succeeded. The final practice and statistics pages were then rendered with the normal templates after wording changes. All 230 replacement IDs appear in the emitted data; the quiz master contains 44 active items and the flashcard master contains 90.
+- Nine targeted existing browser checks passed across the initial run and a focused rerun: discovery, direct launches, mobile layouts, answering/feedback, flashcard self-assessment, keyboard Parsons controls, and source-deck statistics. The flashcard light/dark accessibility check exceeded its original 30-second test budget; it passed with a 90-second allowance, without changing its assertions or repository test configuration.
+- Every one of the 17 rendered Parsons solutions scored 1/1 in Chromium, alternating desktop and narrow mobile viewports. Manual screenshot review identified missing separators in inline Haskell solutions; explicit spaces in quoted YAML fragments repair the concatenated answer display. Both corrected expressions were checked again for their displayed answer and score.
+- Representative block and inline Parsons cards passed scoped light/dark WCAG-tagged axe scans. Desktop and mobile screenshots were inspected for readable code, answer controls, and explanations. These are focused checks, not a manual audit of all 55 WCAG A/AA criteria across the site.
+
+The broader dark-mode scan also found a pre-existing `link-in-text-block` violation in five footer attribution links (Datafolio, Jekyll, Bootstrap, GitHub Pages, and the last-updated date). They have no non-color distinction and insufficient contrast against surrounding text. The footer and styles are unchanged by this content revision; this finding is surfaced separately rather than represented as a passing whole-page accessibility audit.

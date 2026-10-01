@@ -1,107 +1,111 @@
-title: "CS 131: Control and Concurrency"
-description: "Explain evaluation and suspension, design lazy traversals, and justify concurrency choices."
+title: 'CS 131: Control and Concurrency'
+description: Retrieve and apply short-circuit, iterator, generator, and scheduling rules from the lectures.
 active: true
-# Sources: control_palooza_v7.pptx; Homework Problems (Public), CTRL sections;
-# CS131 Fall 25 Quiz 4. Slide/question locators accompany each card.
-# Exclude Language of the Week: slide 15 (Ruby).
+# Original replacement practice. Page references are physical PDF pages.
+# Time estimates are planning estimates, not time limits.
 cards:
-  # Source: Control slides 6–13; Homework CTRL1.
-  - id: cs131-control-card-safe-guard
+  # Lecture: control_palooza_v7_handouts.pdf pp.9–15
+  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P2 (demanded evaluation; supporting prerequisite)
+  - id: cs131-v2-control-card-short-circuit
     difficulty: intermediate
     bloom: apply
-    question: "Write a Python condition that calls `passes(record)` only when `record` is not `None`. Explain why reversing the two tests changes safety even if logical conjunction is commutative."
-    answer: "Use `record is not None and passes(record)`. Python evaluates the left operand first and skips the right operand when the left is false. Reversing the tests calls `passes` before establishing that its argument exists."
-    explanation: "Self-check: separate the truth table of conjunction from the operational behavior of evaluation. The function call may fail or have effects, so its position matters."
+    estimated_seconds: 25
+    question: '`A()` prints A and returns true; `B()` prints B and returns false. With left-to-right short circuit, what is printed while evaluating `A() || B()` and what is the result?'
+    answer: Only A is printed; the result is true. B is skipped because the left operand already determines the OR result.
+    explanation: 'Self-check: OR can skip its right operand when the left one is true.'
 
-  # Source: Control slides 17–22.
-  - id: cs131-control-card-loop-exits
+  # Lecture: control_palooza_v7_handouts.pdf pp.12–15
+  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P2 (demanded evaluation; supporting prerequisite)
+  - id: cs131-v2-control-card-safe-guard
+    difficulty: intermediate
+    bloom: create
+    estimated_seconds: 30
+    question: Using short-circuit `&&`, write one condition that tests whether `10 / n > 2` but never divides by zero. Put the safety check before the division.
+    answer: '`n != 0 && 10 / n > 2`'
+    explanation: 'Self-check: When n is zero, the left operand must be false so the right operand is skipped.'
+
+  # Lecture: control_palooza_v7_handouts.pdf pp.4–8
+  # Assessment: CS131 Fall 25 Quiz 3 Solutions (Public).docx P2 (evaluation-rule reasoning; supporting prerequisite)
+  - id: cs131-v2-control-card-grouping
     difficulty: basic
     bloom: understand
-    question: "Inside a nested loop in a function, contrast an unlabeled `continue`, an unlabeled `break`, and `return`. Describe which work is skipped by each."
-    answer: "Continue skips the remainder of the nearest loop's current iteration and proceeds according to that loop's iteration rule. Break exits the nearest loop, allowing surrounding code to continue. Return exits the entire function, including both loops."
-    explanation: "Self-check: a break in the inner loop does not generally stop the outer loop. In a counter-controlled for loop, continue still follows that loop's update-and-test behavior."
+    estimated_seconds: 30
+    question: Why does knowing that `a() - b() - c()` groups as `(a() - b()) - c()` not alone determine which function prints first?
+    answer: Grouping determines which values are subtracted together. The language’s operand-evaluation rules separately determine when the calls run.
+    explanation: 'Self-check: Do not infer temporal execution order just from an expression’s grouping.'
 
-  # Source: Control slides 39–49; Quiz 4, Problem 2 b/d.
-  - id: cs131-control-card-independent-traversal
-    difficulty: advanced
-    bloom: create
-    question: "Design the iterator behavior of a reusable `RangeLike(start, stop)` object so that nested loops traverse all ordered pairs of its values. State what the collection stores, what each iterator stores, and what happens when a loop requests an iterator."
-    answer: "The collection stores the range bounds. Each iterator stores its own current position and the stop bound. Each new traversal request returns a fresh iterator initialized to start; asking an iterator for its own iterator returns itself. Advancing one iterator changes only that iterator's position."
-    explanation: "Self-check: for values 1 and 2, nested loops must visit `(1,1)`, `(1,2)`, `(2,1)`, and `(2,2)`. A single position shared by both loops fails this check; copying all elements is unnecessary."
-
-  # Source: Control slides 51–57; Quiz 4, Problem 2.
-  - id: cs131-control-card-generator-progress
+  # Lecture: control_palooza_v7_handouts.pdf pp.21–22
+  # Assessment: [Final] F24 Solutions (Public).pdf P6(A,B) pp.19–20 (iteration control prerequisite)
+  - id: cs131-v2-control-card-loop-transfer
     difficulty: intermediate
     bloom: apply
-    question: |
-      Predict the two values printed and explain where the generator pauses after each request.
+    estimated_seconds: 25
+    question: In a loop over `[1, 2, 3]`, the body skips to the next iteration when the item is 2 and otherwise prints it. Give the output and name the required control statement.
+    answer: 'Output: 1, 3. Use continue; break would terminate the loop at 2.'
+    explanation: 'Self-check: Continue leaves the current iteration; break leaves the loop.'
 
-      ```python
-      def steps():
-          value = 2
-          yield value
-          value += 3
-          yield value
-      it = steps()
-      print(next(it))
-      print(next(it))
-      ```
-    answer: "The values are 2, then 5. The first request runs through initialization to the first yield. The second resumes after that yield, updates the retained local variable, and pauses at the second yield."
-    explanation: "Self-check: execution resumes rather than restarting the body. A third next call would run to the end and signal exhaustion with `StopIteration`."
-
-  # Source: Control slides 51–58; Homework CTRL2 B;
-  # Final F24 solutions, pp. 19 and 22.
-  - id: cs131-control-card-lazy-transform
-    difficulty: advanced
-    bloom: create
-    question: "Write a Python generator `positive_squares(values)` that yields the square of each positive input in order, without first materializing the input or output. It should work when a consumer requests a finite prefix of an unbounded input."
-    answer: |
-      ```python
-      def positive_squares(values):
-          for value in values:
-              if value > 0:
-                  yield value * value
-      ```
-
-      For `[-2, 0, 3, 1]`, the yielded values are 9 and 1.
-    explanation: "Self-check: preserve order, exclude zero, and produce output incrementally. Laziness does not guarantee every request terminates: an unbounded input with no later positive value can keep the next request searching forever."
-
-  # Source: Control slides 65–66 and 98; Homework CTRL6.
-  - id: cs131-control-card-concurrency-parallelism
-    difficulty: basic
-    bloom: understand
-    question: "How can two downloads finish sooner with concurrency on one application thread, even though the thread never executes two instructions simultaneously? State the condition that makes overlap useful."
-    answer: "While one download waits for the network, the runtime can start or advance another. Their waiting intervals overlap, so total elapsed time can fall even without parallel application execution. This requires nonblocking operations and useful independent work to run during waits."
-    explanation: "Self-check: attribute the benefit to overlapping waiting, not making the single processor execute two instruction streams at once. Concurrency is not a guaranteed speedup for every workload."
-
-  # Source: Control slides 75–78; Homework CTRL5.
-  - id: cs131-control-card-lost-update
-    difficulty: advanced
-    bloom: analyze
-    question: "Two workers each increment a counter initially equal to 10 using separate read, add-one, and write steps. Give an interleaving that leaves 11 instead of 12, then name the unit that synchronization must protect."
-    answer: "Both workers read 10. Each computes 11. One writes 11, then the other writes its own 11, overwriting rather than incorporating the first update. Synchronization must protect the entire read-modify-write, or replace it with an atomic increment."
-    explanation: "Self-check: the explanation must identify the stale read. A lock around just the final write prevents simultaneous writes but still allows both workers to calculate from 10."
-
-  # Source: Control slides 69–74; Homework CTRL5 A/B.
-  - id: cs131-control-card-fork-join-dependencies
+  # Lecture: control_palooza_v7_handouts.pdf pp.48–53
+  # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P2(b,d)
+  - id: cs131-v2-control-card-iterator-state
     difficulty: intermediate
-    bloom: evaluate
-    question: "Tasks `left` and `right` independently compute partial results; `combine` needs both. Describe where to start and join the tasks, and explain why joining each immediately after starting it loses the intended benefit."
-    answer: "Start both tasks before waiting for either. Join both before combine reads their results. Starting and immediately joining left before starting right makes right wait for left's completion, so the independent computations cannot overlap."
-    explanation: "Self-check: preserve the true dependency—combine needs both results—without inventing a dependency between the independent producers. The runtime still decides actual parallel scheduling."
-
-  # Source: Control slides 84–89; Quiz 4, Problem 3 a.
-  - id: cs131-control-card-await-readiness
-    difficulty: advanced
     bloom: analyze
-    question: "A runtime specifies that awaiting an already completed handle returns its outcome immediately, while awaiting a pending handle suspends the current task. Why is 'every await lets another task run' an unsafe assumption in this runtime?"
-    answer: "If the handle is already complete, await returns without suspension. The current task can therefore continue running through many await expressions without allowing another task to run. Only an actual suspension gives this cooperative scheduler control under the stated rules."
-    explanation: "Self-check: base the answer on the runtime's readiness rule. Async syntax alone does not specify when work is scheduled or whether a particular await yields."
+    estimated_seconds: 25
+    question: Two loops share the same list but each receives a new iterator. After the first loop advances twice, does the second iterator also move? Explain in one sentence.
+    answer: No. Each iterator stores its own traversal position, so advancing one does not advance the other.
+    explanation: 'Self-check: The shared collection and each iterator’s independent position play different roles.'
 
-  # Source: Control slides 82–98; Homework CTRL5 B.4 and CTRL6.
-  - id: cs131-control-card-workload-design
-    difficulty: expert
+  # Lecture: control_palooza_v7_handouts.pdf pp.63–65
+  # Assessment: [Final] F24 Solutions (Public).pdf P6(B) p.20
+  - id: cs131-v2-control-card-generator-pause
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 40
+    question: A Python generator body is `yield 4`, then `print("next")`, then `yield 6`. What is produced or printed by its first two calls to next?
+    answer: 'First call: yields 4 without printing. Second call: prints next, then yields 6.'
+    explanation: 'Self-check: Execution resumes after the previous yield; it does not restart.'
+
+  # Lecture: control_palooza_v7_handouts.pdf pp.63–67
+  # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P2; [Final] F24 Solutions (Public).pdf P6(A) p.19
+  - id: cs131-v2-control-card-range-generator
+    difficulty: intermediate
+    bloom: create
+    estimated_seconds: 40
+    question: Write a Python generator `even_three()` using three yield statements so successive calls to next produce 2, 4, and 6.
+    answer: |-
+      ```python
+      def even_three():
+          yield 2
+          yield 4
+          yield 6
+      ```
+    explanation: 'Self-check: Each next should produce only one value; using return for the first value would stop the generator.'
+
+  # Lecture: control_palooza_v7_handouts.pdf pp.56,59–60
+  # Assessment: [Final] F24 Solutions (Public).pdf P6(C.1) p.21
+  - id: cs131-v2-control-card-iterator-boundary
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 30
+    question: An iterator indexes a list using pos. The list has length 3 and pos is 3. What should Python __next__ do, and why should it check before indexing?
+    answer: Raise StopIteration. Index 3 is past the last element, so indexing first would produce an indexing error rather than the iteration-completion signal.
+    explanation: 'Self-check: Completion should use the iterator protocol’s expected signal rather than an unrelated error.'
+
+  # Lecture: control_palooza_v7_handouts.pdf pp.104–107
+  # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P3(a,b)
+  - id: cs131-v2-control-card-inline-scheduled
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 40
+    question: A child prints C before its first suspension. The caller spawns it and immediately prints M. Give the first two prints for inline spawn and for scheduled spawn under the lecture’s single-threaded runtime.
+    answer: 'Inline: C, M. Scheduled: M, C, provided the caller then yields or finishes so the queued child can run.'
+    explanation: 'Self-check: Inline runs the child immediately; scheduled spawn queues it until control returns to the runtime.'
+
+  # Lecture: control_palooza_v7_handouts.pdf pp.108–110
+  # Assessment: CS131 Fall 25 Quiz 4 (with solutions).docx P3(a,b)
+  - id: cs131-v2-control-card-await-purpose
+    difficulty: advanced
     bloom: evaluate
-    question: "A service both waits on many independent network requests and performs expensive calculations on their responses. Propose a concurrency design that keeps request handling responsive and bounds resource use. Explain which part addresses each workload."
-    answer: "Use nonblocking asynchronous operations to overlap network waiting. Send expensive calculations to a bounded worker pool and await their results from the event loop. Limit queued or admitted work as needed so demand cannot grow memory without bound."
-    explanation: "Self-check: calculation must not monopolize the event-loop thread; the pool must bound active workers; and a large incoming workload still needs an explicit queue or admission policy. More threads alone do not guarantee lower latency."
+    estimated_seconds: 40
+    question: A scheduled job returns a number. A proposed program reads its unfinished result immediately after spawning it. Give the missing operation and explain what other queued work can do while the caller waits.
+    answer: Await the job’s handle. The caller suspends until the result is ready, while the runtime can execute other ready operations.
+    explanation: 'Self-check: Await suspends this operation; it does not require freezing the entire runtime.'

@@ -1,313 +1,365 @@
-title: "CS 131: Types, Scope, and Memory"
-description: "Reason about type guarantees, name visibility, evaluation, and object lifetime."
+title: 'CS 131: Types, Scope, and Memory'
+description: Short lecture-based traces of type rules, bindings, scope, ownership, and collection.
 active: true
-# These building blocks appear in intro_lecture_v2.pptx slide 23.
-# Their dedicated lecture deck was not supplied. Detailed sources are the
-# TYPING/DATA homework and Quiz 2/exams, not Language of the Week showcases.
+# Original replacement practice. Page references are physical PDF pages.
+# Time estimates are planning estimates, not time limits.
 questions:
-  # Sources: Homework Problems, TYPING4, TYPING7; Quiz 2 solutions, Q2(c–d).
-  - id: inference-is-not-dynamic-typing
+  # Lecture: data_palooza_v12_handouts.pdf pp.29–32
+  # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P1(d); [Midterm] F24 Solutions (Public).pdf P6 pp.13–14 (typing from evidence)
+  - id: cs131-v2-types-inferred-fixed-type
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 40
+    question: |-
+      A toy language infers each variable's fixed type from its initializer and permits no implicit conversions. Which line is rejected before execution?
+
+      ```text
+      var n = 6       // line 1
+      n = n + 2       // line 2
+      n = "six"       // line 3
+      ```
+    options:
+    - Line 1
+    - Line 2
+    - Line 3
+    correct_index: 2
+    option_feedback:
+      0: Inference supplies the type even though no annotation is written.
+      1: Both operands and the result are integers.
+    explanation: The initializer fixes n as an integer. Integer addition preserves that type, but assigning a string violates it.
+
+  # Lecture: data_palooza_v12_handouts.pdf pp.29–31
+  # Assessment: [Midterm] F24 Solutions (Public).pdf P6 pp.13–14 (infer typing constraints; supporting prerequisite)
+  - id: cs131-v2-types-inference-constraints
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: |-
+      In this statically typed toy language, `+` accepts two integers and returns an integer; each function must return either Int or String, with no union or common-supertype result. No conversions occur. Which definition passes type checking?
+
+      ```text
+      f(flag) = if flag then 4 + 2 else 9
+      g(flag) = if flag then 4 + 2 else "nine"
+      h(flag) = if flag then 4 + "2" else 9
+      ```
+      Assume `flag` is Boolean.
+    options:
+    - Only f
+    - Only g
+    - Both f and g
+    correct_index: 0
+    option_feedback:
+      1: One possible integer result does not make the string branch type-compatible.
+      2: A fixed return type must accommodate both branches under the stated rules.
+    explanation: Both branches of f return integers. The branches of g disagree, and h applies integer addition to a string.
+
+  # Lecture: data_palooza_v12_handouts.pdf pp.23–24
+  # Assessment: [Midterm] F24 Solutions (Public).pdf P6 pp.13–14 (classify unknown-language rules; supporting prerequisite)
+  - id: cs131-v2-types-record-equivalence
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 40
+    question: |-
+      Two record types are declared separately:
+
+      ```text
+      type Point = { x: Int, y: Int }
+      type Pixel = { x: Int, y: Int }
+      ```
+      There are no conversions or declared relationships. Which rule accepts assigning a `Pixel` value to a `Point` variable?
+    options:
+    - Name equivalence
+    - Structural equivalence
+    - Neither equivalence rule
+    correct_index: 1
+    option_feedback:
+      0: The type names differ even though the structures match.
+      2: Structural equivalence deliberately ignores the different type names.
+    explanation: The field names and field types match, so structural equivalence accepts the assignment. Name equivalence distinguishes Point from Pixel.
+
+  # Lecture: data_palooza_v12_handouts.pdf pp.33,57–62
+  # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P2(c–d) (evaluate type-error evidence)
+  - id: cs131-v2-types-checked-downcast
+    type: single
+    difficulty: advanced
+    bloom: evaluate
+    estimated_seconds: 60
+    question: 'A compiler accepts a checked cast of an `Animal` reference to a `Cat` reference. At runtime the object is a `Dog`, so the operation raises an exception before any Cat operation runs. A student concludes: "The language must be dynamically typed and weakly typed." Which assessment is justified?'
+    options:
+    - Both classifications follow.
+    - Only dynamic typing follows.
+    - Neither classification follows.
+    correct_index: 2
+    option_feedback:
+      0: A runtime check does not establish when the rest of the program is checked or show unsafe execution.
+      1: Static typing can coexist with runtime checks when the actual object type is only known at runtime.
+    explanation: Static languages can require runtime checks for downcasts. Rejecting an incompatible operation also fits the lecture’s strong-typing safety requirement.
+
+  # Lecture: data_palooza_v12_handouts.pdf p.79
+  # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P2(e–f) (classify conversions by representable values)
+  - id: cs131-v2-types-narrowing-both-directions
+    type: multiple
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: Type `Whole` represents integers from −8 through 8. Type `Half` represents multiples of 0.5 from 0 through 7.5. Select every narrowing conversion, using the lecture's requirement that widening preserve every source value exactly.
+    options:
+    - Whole → Half
+    - Half → Whole
+    - Neither direction is narrowing
+    correct_indices:
+    - 0
+    - 1
+    option_feedback:
+      0: For example, −1 is a Whole value outside Half’s range.
+      1: For example, 0.5 is a Half value outside Whole’s set of values.
+      2: Both directions have source values that the destination cannot preserve.
+    explanation: Whole includes negative numbers and 8, which Half cannot represent. Half includes fractions such as 0.5, which Whole cannot represent.
+
+  # Lecture: data_palooza_v12_handouts.pdf pp.75–76,83–84
+  # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P1(a–b) (locate conversion/coercion)
+  - id: cs131-v2-types-conversion-versus-cast
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 40
+    question: Use the lecture's terminology. Operation X creates a floating-point value `5.0` from integer `5`. Operation Y views an existing Student object through a Person reference without creating another object. How are X and Y classified?
+    options:
+    - 'X: cast; Y: conversion'
+    - 'X: conversion; Y: cast'
+    - 'X: conversion; Y: conversion'
+    correct_index: 1
+    option_feedback:
+      0: Creating a new numeric representation is the conversion; viewing the same object through a related type is the cast.
+      2: Y creates no new object or converted value.
+    explanation: X creates a new representation of a value. Y changes the type through which the existing object is viewed.
+
+  # Lecture: data_palooza_v12_handouts.pdf pp.96–99,102–103
+  # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P3(b) (lexical-scope trace)
+  - id: cs131-v2-types-lexical-caller
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: |-
+      What does this pseudocode print under lexical scoping? `show` is defined at global scope.
+
+      ```text
+      var x = 3
+      function show() { print(x) }
+      function run() {
+          var x = 8
+          show()
+      }
+      run()
+      ```
+    options:
+    - '3'
+    - '8'
+    - An undefined-name error
+    correct_index: 0
+    option_feedback:
+      1: The caller’s local x would be used by dynamic scoping, not by the stated lexical rule.
+      2: The global x is visible at the definition of show.
+    explanation: show looks in its defining environment after its own local scope. The caller’s local x is not in that lexical environment.
+
+  # Lecture: data_palooza_v12_handouts.pdf p.103
+  # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P3(a) (dynamic lookup and mutation)
+  - id: cs131-v2-types-dynamic-update
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: |-
+      Under dynamic scoping, what two values are printed, in order? Assignment updates the nearest active binding.
+
+      ```text
+      var x = 2
+      function bump() { x = x + 1 }
+      function run() {
+          var x = 7
+          bump()
+          print(x)
+      }
+      run()
+      print(x)
+      ```
+    options:
+    - 7, 3
+    - 8, 2
+    - 8, 3
+    correct_index: 1
+    option_feedback:
+      0: This follows the global binding as lexical scoping would; dynamic lookup finds the caller’s x first.
+      2: Only the nearest matching binding is updated, not every variable named x.
+    explanation: bump finds run’s active local x and changes 7 to 8. The separate global x remains 2.
+
+  # Lecture: data_palooza_v12_handouts.pdf pp.100–102
+  # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P3; [Midterm] F24 Solutions (Public).pdf P5 pp.9–12 (block shadowing)
+  - id: cs131-v2-types-shadow-block
+    type: parsons
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 75
+    question: Arrange this pseudocode to print `9` inside a nested block and then `4` after leaving it. Declare the outer `x` before opening the inner block. `let` creates a new block-local binding; braces open and close the inner block.
+    lines:
+    - let x = 4
+    - '{'
+    - '    let x = 9'
+    - '    print(x)  // inside the block'
+    - '}'
+    - print(x)  // after the block
+    distractors:
+    - '    x = 9  // assign instead of declaring'
+    explanation: The inner declaration hides the outer binding temporarily. Assigning to the existing outer x would leave 9 after the block as well.
+
+  # Lecture: data_palooza_v12_handouts.pdf pp.94–95,104–105
+  # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P2(b) (scope versus lifetime)
+  - id: cs131-v2-types-live-but-hidden
     type: single
     difficulty: basic
     bloom: understand
-    question: "A compiler infers that `count` is an integer and rejects assigning a string to it before execution. What does omitting the type annotation demonstrate?"
+    estimated_seconds: 35
+    question: In a lexically scoped program, `main` creates a local `score`, calls a separately defined `display`, and then prints `score`. While `display` is running, what is true of main's `score`?
     options:
-      - "Dynamic typing, because the programmer wrote no type."
-      - "Static type inference, because checking occurs before execution."
-      - "Implicit conversion, because a string becomes an integer."
-    correct_index: 1
-    option_feedback:
-      0: "Who writes a type and when it is checked are separate questions. The compiler can infer a static type."
-      2: "The assignment is rejected; no conversion is described."
-    explanation: "Type inference derives types from constraints. It can support static checking without explicit annotations."
-
-  # Sources: Homework Problems, TYPING5; Quiz 2 solutions, Q2(d).
-  - id: runtime-error-limits-inference
-    type: single
-    difficulty: intermediate
-    bloom: analyze
-    question: "A program compiles, but a checked downcast fails during execution. What can this observation establish about whether the language is statically or dynamically typed?"
-    options:
-      - "It must be dynamically typed because execution found the error."
-      - "It must be statically typed because compilation succeeded."
-      - "This observation alone does not determine the typing discipline."
-    correct_index: 2
-    option_feedback:
-      0: "Statically typed languages can retain runtime checks for operations such as checked downcasts."
-      1: "Compilation can also translate dynamically typed programs; compilation alone does not establish static checking."
-    explanation: "A particular runtime failure is narrower evidence than a language-wide classification. Determine which properties the type checker guarantees before execution."
-
-  # Sources: Homework Problems, TYPING2–3.
-  - id: structural-versus-nominal-compatibility
-    type: single
-    difficulty: intermediate
-    bloom: apply
-    question: "Two separately declared record types have exactly the same field names and field types. A language accepts one where the other is expected solely because of those matching fields. Which rule is being used?"
-    options:
-      - "Nominal compatibility based on declaration identity."
-      - "Structural compatibility based on the record's shape."
-      - "Compatibility based on the fields' current values."
-    correct_index: 1
-    option_feedback:
-      0: "The declarations differ; the stated acceptance rule ignores their identities."
-      2: "The rule compares field types and names, without needing particular runtime values."
-    explanation: "Structural compatibility compares required structure. Nominal systems instead rely on declared type relationships or identity, according to the language's rules."
-
-  # Sources: Homework Problems, TYPING8–9; Quiz 2 solutions, Q1(c), Q2(c).
-  - id: coercion-does-not-prove-unsafety
-    type: single
-    difficulty: intermediate
-    bloom: analyze
-    question: "A language automatically converts a small integer to an exactly representable floating-point value for addition. What follows about type safety?"
-    options:
-      - "The conversion alone does not establish unsafe behavior."
-      - "Any automatic conversion permits arbitrary memory reinterpretation."
-      - "The conversion proves that type checking occurs only at runtime."
+    - It is alive but not visible by name in display.
+    - It is destroyed until display returns to main.
+    - It is visible by name in every active function.
     correct_index: 0
     option_feedback:
-      1: "A specified numeric conversion is different from treating arbitrary bits as an unrelated object type."
-      2: "Static type systems can specify and insert numeric coercions."
-    explanation: "Judge the actual conversion rules and guarantees. Automatic conversion by itself does not establish unchecked operations or determine when type checking happens."
+      1: The caller’s active stack frame retains its local variable while the callee runs.
+      2: An active variable need not be in the callee’s lexical scope.
+    explanation: Calling another function does not end the lifetime of main’s local variable. Its name is still outside display’s lexical scope.
 
-  # Sources: Homework Problems, TYPING9; Quiz 2 solutions, Q2(e–f).
-  - id: conversion-domains-both-narrow
+  # Lecture: data_palooza_v12_handouts.pdf pp.118–123
+  # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P4(a–c); [Final] F23 Solutions (Public).pdf Garbage Collection pp.8–10 (roots and marked objects)
+  - id: cs131-v2-types-roots-reachability
     type: multiple
-    difficulty: advanced
+    difficulty: intermediate
     bloom: analyze
-    question: "Type `Whole` represents integers from -8 through 8. Type `Tenths` represents multiples of 0.1 from 0 through 7.9. Which conversion claims are correct? Select all that apply."
+    estimated_seconds: 60
+    question: At collection time, a global points to object A, a local in an active caller points to B, and A has a field pointing to C. No other references exist. Select every root object under the lecture's definition.
     options:
-      - "Whole to Tenths can fail to preserve a negative value."
-      - "Tenths to Whole can fail to preserve a fractional value."
-      - "Whole to Tenths preserves every value because Tenths has fractions."
-      - "Tenths to Whole preserves every value because Whole includes negatives."
-    correct_indices: [0, 1]
+    - A
+    - B
+    - C
+    correct_indices:
+    - 0
+    - 1
     option_feedback:
-      0: "Negative values are outside the destination's representable range."
-      1: "Values such as 2.3 cannot be represented exactly by an integer type."
-      2: "Fractional precision does not compensate for missing negative values or the upper endpoint 8."
-      3: "Extra range does not compensate for losing fractional precision."
-    explanation: "Each source domain contains values absent from the destination. Both directions are potentially narrowing; compare complete value sets rather than type names."
+      1: Roots include locals in every active stack frame, even if their names are out of scope in the current callee.
+      2: Reachable through a root is different from directly referenced by a root variable.
+    explanation: A and B are directly referenced by global or active-frame variables. C is reachable through A and will be marked, but is not itself a root.
 
-  # Source: Homework Problems, TYPING6.
-  - id: incremental-typing-boundary
+  # Lecture: data_palooza_v12_handouts.pdf pp.115,118–123,174–177
+  # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P4(c); [Final] F24 Solutions (Public).pdf P2 pp.5–7 (reference lifetime and collection)
+  - id: cs131-v2-types-last-alias
+    type: parsons
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 75
+    question: Arrange the object-reference pseudocode to print 7 through s while r is null. The Box must become unreachable only after that print, and collection must reclaim it. `collect()` uses mark and sweep; no hidden references exist.
+    lines:
+    - r = new Box(7)
+    - s = r
+    - r = null
+    - print(s.value)
+    - s = null
+    - collect()
+    distractors:
+    - delete r.value
+    explanation: Clearing r leaves the Box reachable through s. Removing s makes the Box unreachable; collection can then reclaim it. Explicit deletion is not part of this garbage-collected sequence.
+
+  # Lecture: data_palooza_v12_handouts.pdf pp.118–123,130–136
+  # Assessment: [Final] F24 Solutions (Public).pdf P2 pp.5–7 (reference counts versus reachability)
+  - id: cs131-v2-types-unreachable-cycle
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: Objects A and B point to each other. The last variable that referred to A is set to null, and no roots reach either object. What happens under pure reference counting versus mark and sweep?
+    options:
+    - Both reclaim A and B.
+    - Only reference counting reclaims them.
+    - Only mark and sweep reclaims them.
+    correct_index: 2
+    option_feedback:
+      0: Pure reference counting cannot reduce either count to zero while the cycle remains.
+      1: References inside the cycle keep the counts positive; tracing from roots is what reveals the garbage.
+    explanation: The cycle leaves each reference count positive. Mark and sweep follows roots, so it leaves both unreachable objects unmarked and reclaims them.
+
+  # Lecture: data_palooza_v12_handouts.pdf pp.124–128
+  # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P2(g); [Final] F23 Solutions (Public).pdf Garbage Collection p.10(d) (evaluate collector cost)
+  - id: cs131-v2-types-collector-tradeoff
     type: single
     difficulty: advanced
     bloom: evaluate
-    question: "A codebase is adding static checks incrementally. Some boundaries still accept unchecked values. What is the strongest justified review policy?"
+    estimated_seconds: 60
+    question: A program keeps almost all of its heap objects alive across many collections. You want to reduce repeatedly copying those survivors. Which of the lecture's collector properties best supports choosing mark and compact over two-space mark and copy?
     options:
-      - "Trust annotations to validate every external value at runtime."
-      - "Treat successful compilation as proof of all boundary assumptions."
-      - "Validate unchecked inputs before relying on their declared shape."
-    correct_index: 2
+    - Compacted survivors may stay in place.
+    - Compaction skips the marking phase.
+    - Compaction needs no pointer updates.
+    correct_index: 0
     option_feedback:
-      0: "Annotations need not insert runtime validators; that behavior must be provided explicitly or guaranteed by the language."
-      1: "Unchecked escape routes can bypass the assumptions used by statically checked code."
-    explanation: "Incremental checking can catch many errors while leaving dynamic boundaries. Validation is needed wherever runtime data is not covered by the assumed guarantee."
+      1: Mark and compact still identifies live objects by marking.
+      2: Pointers must be adjusted whenever compaction moves an object.
+    explanation: After long-lived objects have been packed together, later compactions may leave them in place. Two-space copying moves all survivors to the other half each collection.
 
-  # Sources: Homework Problems, DATA1; Quiz 2 solutions, Q3.
-  - id: lexical-versus-dynamic-read
-    type: single
+  # Lecture: data_palooza_v12_handouts.pdf pp.139–141
+  # Assessment: CS131 Fall 25 Quiz 2 Solutions (Public).docx P5(a–f) (ownership legality trace)
+  - id: cs131-v2-types-move-and-borrow
+    type: multiple
     difficulty: intermediate
     bloom: apply
-    question: |
-      Consider this pseudocode. `show` is defined at global scope, and `let`
-      creates a new local binding. What does `caller()` return under lexical
-      scoping, then under dynamic scoping?
+    estimated_seconds: 60
+    question: |-
+      This toy language uses the lecture's single-owner rules: `move` transfers ownership and invalidates the old owner; `borrow` reads without transferring it. After these lines, select every true statement.
 
       ```text
-      let x = 4
-      function show() { return x }
-      function caller() { let x = 9; return show() }
+      owner = new String("map")
+      reader = borrow(owner)
+      print(reader)          // read-only borrow ends here
+      next = move(owner)
       ```
-    options: ["Lexical: 4; dynamic: 9.", "Lexical: 9; dynamic: 4.", "Lexical: 9; dynamic: 9."]
-    correct_index: 0
-    option_feedback:
-      1: "Lexical lookup follows definition nesting; dynamic lookup follows the active calling context."
-      2: "The caller's local binding is not lexically enclosing the definition of `show`."
-    explanation: "Lexically, `show` resolves its free name in the global environment. Dynamically, the most recent active caller binding supplies 9."
-
-  # Sources: Homework Problems, TYPING10; F24 midterm Q5 pp. 9–12.
-  - id: environment-stack-leaks-caller
-    type: single
-    difficulty: advanced
-    bloom: analyze
-    question: "An interpreter for a lexically scoped language searches every active call frame from newest to oldest for a name. A global function can therefore read a caller's private local variable. What is the underlying error?"
     options:
-      - "It resolves names through call history instead of lexical parents."
-      - "It searches recent block bindings before older block bindings."
-      - "It stores the bindings in dictionaries instead of in arrays."
-    correct_index: 0
+    - owner is still valid after the move.
+    - next owns the original string.
+    - Borrowing next leaves it as owner.
+    correct_indices:
+    - 1
+    - 2
     option_feedback:
-      1: "Searching inward-to-outward within the correct lexical environment is necessary for shadowing."
-      2: "The data structure's container type does not determine which environments should be visible."
-    explanation: "Separate dynamic call history from lexical environment links. A callee should consult its defining environment and its own nested scopes, according to the language's rules."
+      0: The earlier borrow has ended, but that does not restore ownership after the later move.
+      2: A read-only borrow does not transfer ownership.
+    explanation: next owns the string after the move. Read-only borrowing does not consume next, so repeated reads are valid. owner is invalid after moving.
 
-  # Sources: Homework Problems, DATA1; Quiz 2 solutions, Q2(b).
-  - id: scope-versus-lifetime
-    type: multiple
-    difficulty: intermediate
-    bloom: analyze
-    question: "Which situations demonstrate that lexical visibility and storage lifetime are different? Select all that apply."
-    options:
-      - "A caller's local remains alive while a global callee cannot name it."
-      - "A closure retains a binding after its creating function returns."
-      - "A live object must be nameable in every function that can run."
-      - "A shadowed outer local remains stored while an inner name hides it."
-    correct_indices: [0, 1, 3]
-    option_feedback:
-      0: "The suspended caller still needs its local, although the callee lacks lexical access to that name."
-      1: "Captured storage may outlive the creating call even though outside code cannot directly use the local name."
-      2: "Storage can be live without its names being visible in the current lexical scope."
-      3: "Hiding a name changes lookup, not necessarily the existence of the underlying storage."
-    explanation: "Scope determines where a name can be used. Lifetime determines when a binding's storage or an object exists. Neither is a synonym for the other."
-
-  # Sources: Homework Problems, DATA1; Quiz 2 solutions, Q3.
-  - id: shadowing-does-not-overwrite
+  # Lecture: data_palooza_v12_handouts.pdf pp.174–179
+  # Assessment: [Midterm] F24 Solutions (Public).pdf P4 pp.7–8 (object-reference state trace)
+  - id: cs131-v2-types-alias-mutation
     type: single
     difficulty: intermediate
     bloom: apply
-    question: |
-      In this block-scoped pseudocode, `let` declares a fresh binding.
-      Which two numbers are printed?
+    estimated_seconds: 40
+    question: |-
+      What does this Python code print?
 
-      ```text
-      let n = 2
-      { let n = 6; n = n + 1; print(n) }
-      print(n)
+      ```python
+      a = [2, 4]
+      b = a
+      b[0] = 7
+      b = [9]
+      print(a)
       ```
-    options: ["7, then 7.", "7, then 2.", "6, then 2."]
+    options:
+    - '[2, 4]'
+    - '[7, 4]'
+    - '[9]'
     correct_index: 1
     option_feedback:
-      0: "The inner declaration shadows the outer binding rather than assigning to it."
-      2: "The assignment inside the block updates its visible inner `n` from 6 to 7."
-    explanation: "Inside the block, both the assignment and print resolve to the inner binding. After it ends, the unchanged outer binding becomes visible again."
-
-  # Sources: Homework Problems, DATA4–5; intro_lecture_v2.pptx slide 23.
-  - id: name-versus-need-side-effects
-    type: single
-    difficulty: intermediate
-    bloom: apply
-    question: "In a hypothetical language, evaluating `next()` increments a counter and returns it. The counter starts at 0. A delayed binding `x = next()` is then read twice. Under call-by-name it is recomputed on every read; under call-by-need its first result is cached. What pair is observed in each case?"
-    options:
-      - "Name: (1, 2); need: (1, 1)."
-      - "Name: (1, 1); need: (1, 2)."
-      - "Name: (0, 0); need: (1, 1)."
-    correct_index: 0
-    option_feedback:
-      1: "Caching belongs to call-by-need. Call-by-name repeats the delayed computation on each use."
-      2: "Reading the binding demands its value; call-by-name delays evaluation rather than preventing it."
-    explanation: "Repeated evaluation repeats the increment; memoization reuses the first returned integer. The side effect makes the evaluation policies observably different."
-
-  # Sources: Homework Problems, DATA4–5.
-  - id: distinguish-eager-from-need
-    type: single
-    difficulty: advanced
-    bloom: evaluate
-    question: "Two implementations both print the same value twice. One might evaluate a binding eagerly; the other might evaluate it on first use and cache it. Which probe most directly distinguishes them?"
-    options:
-      - "Read the same successfully computed binding a third time."
-      - "Rename the binding without changing its expression or uses."
-      - "Bind an observable computation and leave its value unused."
-    correct_index: 2
-    option_feedback:
-      0: "Both eager evaluation and cached first-use evaluation can reuse the same result on later reads."
-      1: "Changing only the variable's name does not test evaluation timing."
-    explanation: "An unused computation with a visible effect runs eagerly but is never demanded under call-by-need. State the side-effect rules explicitly when designing such a probe."
-
-  # Sources: Homework Problems, DATA3; Quiz 2 solutions, Q4.
-  - id: trace-reachability-through-roots
-    type: multiple
-    difficulty: intermediate
-    bloom: apply
-    question: "The only root reference points to object `A`. `A` refers to `B`, and `B` refers to `C`. Objects `D` and `E` refer only to each other. No other references exist. Which objects are eligible for reclamation by a tracing collector? Select all that apply."
-    options: ["Object `B`", "Object `C`", "Object `D`", "Object `E`"]
-    correct_indices: [2, 3]
-    option_feedback:
-      0: "A root reaches `B` indirectly through `A`. Direct root references are not required for every live object."
-      1: "Tracing follows the full reachable chain through `A` and `B`."
-      2: "The cycle containing `D` is disconnected from all roots."
-      3: "A reference from another unreachable object does not make `E` reachable from a root."
-    explanation: "Tracing starts from roots and follows references transitively. The isolated cycle is unreachable and can be collected as a group."
-
-  # Sources: Homework Problems, DATA3 A; Quiz 2 solutions, Q4.
-  - id: reference-count-cycle
-    type: single
-    difficulty: intermediate
-    bloom: analyze
-    question: "Two objects refer to each other, and their last external reference is removed. A collector uses reference counts alone, with no cycle detection. Why can the objects remain allocated?"
-    options:
-      - "Each object still has an incoming reference from the other."
-      - "Every cycle is necessarily reachable from a live program root."
-      - "Reference counts track outgoing edges instead of incoming edges."
-    correct_index: 0
-    option_feedback:
-      1: "A cycle can be completely disconnected from the running program's roots."
-      2: "Reference counting tracks references to an object; the mutual incoming references keep both counts nonzero."
-    explanation: "Zero-count reclamation cannot start when both objects retain a positive count. Real runtimes may supplement counting with a cycle detector."
-
-  # Sources: Homework Problems, DATA3 A.1–A.3; Quiz 2 solutions, Q2(g).
-  - id: copying-collector-live-set-cost
-    type: single
-    difficulty: advanced
-    bloom: evaluate
-    question: "A collector copies every surviving object during each collection. Almost all of a large heap stays reachable across many collections. What cost should be investigated?"
-    options:
-      - "Repeatedly moving a large volume of long-lived data."
-      - "Failure to discover cycles disconnected from roots."
-      - "Reclaiming live objects because their fields are immutable."
-    correct_index: 0
-    option_feedback:
-      1: "A copying collector based on root tracing can discover unreachable cycles."
-      2: "Reachability, rather than mutability, determines which objects this collector retains."
-    explanation: "Copying cost depends on surviving data. A high survival rate can make repeated evacuation expensive; different or generational policies can change the trade-off."
-
-  # Sources: Homework Problems, DATA3; Quiz 2 solutions, Q4(d).
-  - id: moving-collector-reference-repair
-    type: single
-    difficulty: advanced
-    bloom: analyze
-    question: "A compacting collector moves a live object to a new address. What must the runtime preserve for existing references to keep designating that object?"
-    options:
-      - "The object's previous physical address in all future collections."
-      - "The reference target, through updated references or indirection."
-      - "A separate logical object for each reference to the moved object."
-    correct_index: 1
-    option_feedback:
-      0: "Moving an object explicitly changes its physical location; a stable handle can hide that change."
-      2: "Duplicating logical objects would break aliasing and shared mutation."
-    explanation: "Physical location may change while logical identity and sharing stay the same. The runtime must repair pointers or resolve references through a mechanism that tracks the new location."
-
-  # Sources: Homework Problems, DATA2; Quiz 2 solutions, Q5.
-  - id: ownership-move-versus-borrow
-    type: multiple
-    difficulty: intermediate
-    bloom: apply
-    question: "A hypothetical ownership system moves a resource from `a` to `b`, invalidating `a`'s old value but permitting `a` to be reinitialized. A read-only borrow lets `inspect(b)` read the resource without moving it. Which actions obey those rules? Select all that apply."
-    options:
-      - "Read through `a` after the move."
-      - "Read through `b` after `inspect` returns."
-      - "Reinitialize `a` with a different owned resource."
-      - "Free the same resource once through each variable."
-    correct_indices: [1, 2]
-    option_feedback:
-      0: "The move invalidates the original access path until it is assigned a new resource."
-      1: "The read-only borrow leaves ownership with `b`."
-      2: "The stated system permits reinitialization. Giving a a new owned resource does not restore access to the resource now owned by b."
-      3: "There is one resource owner. Freeing the resource twice violates that ownership discipline."
-    explanation: "Moving transfers responsibility; borrowing temporarily grants access. Here `b` remains the owner after inspection, and `a` can be given a new resource."
-
-  # Source: Homework Problems, DATA2, rule 2 and its motivation.
-  - id: exclusive-mutable-borrow-purpose
-    type: single
-    difficulty: advanced
-    bloom: evaluate
-    question: "A collection may reallocate its elements when extended. A language forbids extending it through a mutable borrow while a reference to an element remains in use. What problem does that restriction address?"
-    options:
-      - "The element reference could designate storage invalidated by growth."
-      - "The restriction addresses simultaneous reads on different threads."
-      - "The borrow must copy the element whenever the collection grows."
-    correct_index: 0
-    option_feedback:
-      1: "Reallocation can invalidate a reference even in one thread. Concurrent reads alone are not the problem described here."
-      2: "A borrow refers to the existing element rather than providing an independent copy. The restriction prevents its target from being invalidated."
-    explanation: "Restricting overlapping access prevents mutation from invalidating a live reference. This is a memory-safety rationale for exclusivity, beyond concurrent data races."
+      0: The shared list was mutated before b was rebound.
+      2: Rebinding b changes that variable’s reference; it does not rebind a.
+    explanation: b initially refers to the same list as a, so the element mutation is shared. Rebinding b later leaves a pointing at the original modified list.

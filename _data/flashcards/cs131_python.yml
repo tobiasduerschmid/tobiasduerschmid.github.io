@@ -1,92 +1,134 @@
-title: "CS 131: Python Object Semantics"
-description: "Explain aliasing and copying, then design small examples that expose them."
+title: 'CS 131: Python Object Semantics'
+description: Trace reference paths and produce small copy and parameter repairs before revealing the answer.
 active: true
-# Essential Python slide 11 (OpenCL showcase) is excluded.
+# All items are newly authored. Times are planning estimates, not learner-calibrated limits.
 cards:
-  # Source: essential_python.pptx, slides 4, 6, 13.
-  - id: names-objects-mutation
-    difficulty: basic
-    bloom: understand
-    question: "Explain the difference between rebinding a Python name and mutating an object. Include the effect on another name referring to the old object."
-    answer: "Rebinding changes which object one name refers to; other names retain their bindings. Mutation changes the object itself, so every alias to that object can observe the change."
-
-  # Sources: essential_python.pptx, slides 14–16; Homework Problems, PYTHON2.
-  - id: object-reference-is-not-variable-alias
-    difficulty: intermediate
-    bloom: analyze
-    question: "Why can a Python function append to the caller's list but fail to replace that list by assigning a new list to its parameter?"
-    answer: "The caller's name and the parameter are separate bindings to the same object. Append changes that shared object. Assignment to the parameter changes only the function's local binding; it does not alias or rebind the caller's variable."
-
-  # Sources: essential_python.pptx, slide 7; Homework Problems, PYTHON4; F24 midterm Q4 pp. 7–8.
-  - id: explain-copy-depth
-    difficulty: intermediate
-    bloom: understand
-    question: "For an ordinary nested list, distinguish assignment, a shallow copy, and a deep copy. Which mutable objects remain shared with the original?"
-    answer: "Assignment shares the original outer and inner lists. A shallow copy creates another outer list while sharing the inner lists. A deep copy recursively copies the inner mutable lists, isolating their later edits from the original."
-
-  # Sources: essential_python.pptx, slides 8, 10.
-  - id: demonstrate-equality-without-identity
+  # Lecture: essential_python_handouts_td.pdf, pp. 20–21
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 2D (replace a container slot).
+  - id: cs131-v2-python-card-track-container-slot
     difficulty: intermediate
     bloom: apply
-    question: "Give a short Python example where two lists compare equal but have different identities. Explain why neither result is contradictory."
-    answer: "`a = [8]; b = [8]` makes `a == b` true and `a is b` false. Equality compares the lists' values; identity distinguishes the separately constructed objects."
+    estimated_seconds: 45
+    question: |-
+      Predict the output, then name the assignment that disconnects one path.
 
-  # Source: essential_python.pptx, slides 5, 17.
-  - id: diagnose-unintended-sharing
-    difficulty: advanced
-    bloom: analyze
-    question: "Two instances unexpectedly share a list, and two calls unexpectedly share a default list. Where was each list likely created, and how should per-instance or per-call state be created?"
-    answer: "A class-body list is shared through the class, so create per-instance lists inside `__init__` on `self`. A mutable default is created when the function definition executes; use a sentinel such as `None` and allocate inside each call that omits the argument."
-
-  # Sources: essential_python.pptx, slide 17; Homework Problems, PYTHON2.
-  - id: create-safe-optional-list
-    difficulty: advanced
-    bloom: create
-    question: "Write `add(value, items=None)` so omitted lists are fresh, while supplied lists, including empty ones, are mutated and returned. Give two checks that distinguish those requirements."
-    answer: |
       ```python
-      def add(value, items=None):
-          if items is None:
-              items = []
-          items.append(value)
-          return items
+      entry = [4]
+      left = [entry]
+      right = left
+      left[0] = [9]
+      print(entry, right)
       ```
+    answer: '`[4] [[9]]`. The assignment `left[0] = [9]` replaces the shared outer list''s slot.'
+    explanation: '`left` and `right` share the outer list; `entry` still reaches the old inner list.'
 
-      Check that `add(2)` and `add(5)` return `[2]` and `[5]` independently. Then use `provided = []`: `add(7, provided)` must return the very same object as `provided`, which now contains `[7]`.
-    explanation: "Self-check: a truthiness test would replace an explicitly supplied empty list. Use a sentinel comparison so omission and emptiness stay distinct."
-
-  # Sources: essential_python.pptx, slides 10, 13; Homework Problems, PYTHON4 A.4–A.5.
-  - id: immutable-container-mutable-child
+  # Lecture: essential_python_handouts_td.pdf, pp. 22–24
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 2B (parameter rebinding).
+  - id: cs131-v2-python-card-repair-reset-procedure
     difficulty: intermediate
-    bloom: analyze
-    question: "Why can `bundle = ([4],)` allow `bundle[0].append(6)` but reject `bundle[0] = [6]`?"
-    answer: "The append changes the referenced list. The assignment attempts to replace the tuple's reference slot. Tuple immutability forbids slot replacement, but does not make the objects stored in those slots immutable."
-
-  # Sources: essential_python.pptx, slide 9; Homework Problems, PYTHON5 A.
-  - id: explain-missing-base-initialization
-    difficulty: intermediate
-    bloom: analyze
-    question: "A subclass defines `__init__` and inherits a working method, yet calling that method reports a missing instance attribute. What initialization dependency should be checked first?"
-    answer: "Check whether the inherited method relies on fields created by the base initializer and whether the subclass called that initializer. Defining an initializer does not automatically invoke the base initializer. Usually the subclass needs `super().__init__(...)`."
-
-  # Sources: essential_python.pptx, slide 7; Homework Problems, PYTHON4.
-  - id: evaluate-copy-policy
-    difficulty: advanced
-    bloom: evaluate
-    question: "A view needs its own sort order but must show live edits to the same records as the original list. Explain which copy depth fits and what it deliberately leaves shared."
-    answer: "Use a shallow copy of the outer list. The view can reorder its own reference slots while both lists still refer to the same mutable records. A deep copy would isolate the record edits that the view needs to observe."
-
-  # Sources: essential_python.pptx, slides 6–7, 13; Homework Problems, PYTHON3.
-  - id: create-aliasing-counterexample
-    difficulty: advanced
     bloom: create
-    question: "Construct a nested-list example that disproves the claim 'a shallow copy prevents every edit to the copy from affecting the original.' Show one edit that propagates and one that does not."
-    answer: |
+    estimated_seconds: 45
+    question: A function runs `values = []` and returns nothing. Its caller wants an empty list after the call. Give a two-line repair that returns the replacement and explicitly stores it at the call site.
+    answer: 'Inside the function: `return []`. At the call site: `values = reset(values)`.'
+    explanation: Returning a new reference and assigning it in the caller replaces the caller's binding. Merely assigning to the parameter cannot do that.
+
+  # Lecture: essential_python_handouts_td.pdf, pp. 10
+  # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 4, p. 7 (copy depth).
+  - id: cs131-v2-python-card-compare-shallow-children
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 30
+    question: |-
+      Without running it, predict both booleans and explain the difference.
+
       ```python
       from copy import copy
-      original = [[1]]
-      other = copy(original)
-      other[0].append(2)  # original becomes [[1, 2]]
-      other[0] = [9]     # original stays [[1, 2]]
+      a = [[2]]
+      b = copy(a)
+      print(a is b, a[0] is b[0])
       ```
-    explanation: "Self-check: identify the shared child object and the separate outer lists. One edit must mutate the shared child; the other must replace a slot only in the copied outer list."
+    answer: '`False True`: the outer list is new, but its child is shared.'
+    explanation: A shallow copy copies the outer list's references rather than recursively cloning their targets.
+
+  # Lecture: essential_python_handouts_td.pdf, pp. 10
+  # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 4 Part D, p. 7 (nested sharing).
+  - id: cs131-v2-python-card-evaluate-double-shallow-copy
+    difficulty: intermediate
+    bloom: evaluate
+    estimated_seconds: 45
+    question: For `source = [[1]]`, a teammate proposes `copy(copy(source))` to isolate all later nested edits. Does two-stage shallow copying meet that requirement? Give one operation that settles the question.
+    answer: No. With `trial = copy(copy(source))`, executing `trial[0].append(2)` also changes `source` to `[[1, 2]]`.
+    explanation: Each shallow copy makes only another outer list. All three still refer to the same inner list.
+
+  # Lecture: essential_python_handouts_td.pdf, pp. 9,22–24
+  # Assessment: [Midterm] F23 (Public).pdf, Problem 1, pp. 2–3 (returned member aliases).
+  - id: cs131-v2-python-card-method-result-alias
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 30
+    question: A method returns `self.entries` directly. The caller executes `saved = obj.get_entries()` and then `saved.append(5)`. Why does `obj.entries` change even though the caller never assigns to that field?
+    answer: The returned value is a reference to the field's list. `append` mutates that same list through the caller's reference.
+    explanation: Returning an object reference does not copy the object or turn it into a reference to the field variable.
+
+  # Lecture: essential_python_handouts_td.pdf, pp. 10
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 2E (deep-copy isolation).
+  - id: cs131-v2-python-card-write-independent-nested-edit
+    difficulty: intermediate
+    bloom: create
+    estimated_seconds: 60
+    question: Write a function `with_zero(rows)` that returns a deep copy of a nonempty list of integer lists with its first element changed to 0. Each row is nonempty. The input must remain unchanged; assume `deepcopy` is imported.
+    answer: |-
+      ```python
+      def with_zero(rows):
+          result = deepcopy(rows)
+          result[0][0] = 0
+          return result
+      ```
+    explanation: Deep copying must happen before the nested assignment so no mutable row remains shared with the input.
+
+  # Lecture: essential_python_handouts_td.pdf, pp. 6–7
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 2A (object-state trace family; class state is a lecture extension).
+  - id: cs131-v2-python-card-class-stamps-not-live-links
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 30
+    question: A constructor increments `Counter.total`, then assigns `self.number = Counter.total`. After three objects are constructed, why does the first object's `number` still equal 1?
+    answer: The constructor stored the then-current integer in the first instance. Later assignments to `Counter.total` update the class field, not that instance field.
+    explanation: The class counter is shared; the separately assigned instance numbers are snapshots of its value.
+
+  # Lecture: essential_python_handouts_td.pdf, pp. 13
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 2A (object-state trace family; custom equality is a lecture extension).
+  - id: cs131-v2-python-card-custom-equality-change
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 30
+    question: A class defines `__eq__` to compare only `self.code == other.code`. Distinct objects `a` and `b` initially both have code 3. After `b.code = 4`, give the results of `a == b` and `a is b`.
+    answer: 'Both are `False`: their compared fields now differ, and their identities were always distinct.'
+    explanation: Changing an equality-relevant field can change `==`. It does not merge or split object identities.
+
+  # Lecture: essential_python_handouts_td.pdf, pp. 14–16
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 2A (method/output-trace family; inheritance is a lecture extension).
+  - id: cs131-v2-python-card-explain-overridden-hook
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 30
+    question: '`Base.run` calls `self.step()`. `Child` inherits `run` and overrides `step`. In `Child().run()`, which `step` executes, and why?'
+    answer: '`Child.step` executes because `self` is a `Child` instance, even inside the inherited `Base.run` method.'
+    explanation: The location of the inherited method's source does not change the runtime class of its receiver.
+
+  # Lecture: essential_python_handouts_td.pdf, pp. 22–24
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 2B (separate mutation from concatenation).
+  - id: cs131-v2-python-card-create-two-observable-results
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 30
+    question: |-
+      Complete the return expression so `finish(values)` appends 2 to the original list but returns a separate list with a final 9.
+
+      ```python
+      def finish(values):
+          values.append(2)
+          return ...
+      ```
+    answer: '`return values + [9]`'
+    explanation: The append mutates the shared object. Concatenation then constructs the distinct returned list, keeping 9 out of the caller's original list.

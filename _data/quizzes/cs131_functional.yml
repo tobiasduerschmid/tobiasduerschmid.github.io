@@ -1,318 +1,375 @@
-title: "CS 131: Functional Programming and Haskell"
-description: "Reason about purity, recursive data, higher-order functions, types, closures, and immutable updates."
+title: 'CS 131: Functional Programming and Haskell'
+description: Complete recursion, infer types, trace folds, and assemble short Haskell expressions.
 active: true
-# Sources: intro_to_functional_programming_and_haskell_v10.pptx (slide numbers below),
-# Homework Problems (Public), Fall 2025 Quiz 1 solutions, Fall 2024 midterm solutions.
-# Excluded: Language of the Week slides 35 (APL) and 112 (Go).
+# All items are newly authored. Times are planning estimates, not learner-calibrated limits.
 questions:
-  # Sources: lecture slides 5–8; homework HASKELL7 Part A.
-  - id: cs131-functional-purity-effects
-    type: multiple
-    difficulty: intermediate
-    bloom: analyze
-    question: "An integer function always returns the square of its argument. Which additional behaviors would make it impure? Select all that apply."
-    options:
-      - "It appends a record to a shared log."
-      - "It increments a shared call counter."
-      - "It creates a private temporary integer."
-      - "It reads a fixed, immutable constant."
-    correct_indices: [0, 1]
-    option_feedback:
-      0: "Appending changes externally observable state even when the returned number stays the same."
-      1: "A shared counter records that a call occurred; replacing the call by its result would remove that effect."
-      2: "An unobserved local temporary does not change the function's external behavior."
-      3: "An immutable constant cannot vary between calls; reading it does not introduce dependence on changing state."
-    explanation: "Purity requires both a stable result for the same inputs and absence of observable side effects. Deterministic return values alone are insufficient."
-
-  # Source: lecture slide 8.
-  - id: cs131-functional-demand
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 67–69
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3b (complete recursion on a count and list).
+  - id: cs131-v2-functional-skip-recursive-step
     type: single
     difficulty: intermediate
     bloom: apply
-    question: |
-      What does this Haskell expression evaluate to?
+    estimated_seconds: 60
+    question: |-
+      Complete `skip`, which discards the first `n` items, or all items if the list is shorter. Assume `n >= 0`.
 
       ```haskell
-      choose flag x = if flag then 12 else x
-      choose True (head [])
+      skip _ [] = []
+      skip 0 xs = xs
+      skip n (x:xs) = ___
       ```
     options:
-      - "It fails while evaluating the argument."
-      - "It returns 12 without evaluating the empty-list head."
-      - "It returns 12 after evaluating the empty-list head."
+      - '`x : skip (n-1) xs`'
+      - '`skip (n-1) xs`'
+      - '`skip (n-1) (x:xs)`'
     correct_index: 1
     option_feedback:
-      0: "Haskell does not evaluate every argument before entering a function. This branch never demands the second argument."
-      2: "Evaluating the head of an empty list would fail. The result is possible because that expression is left unevaluated."
-    explanation: "The selected branch returns 12 and does not use `x`. Demand-driven evaluation avoids the failing computation entirely."
+      0: Consing the removed head back onto the result preserves an item that the function must discard.
+      2: Decreasing the count without removing the head eventually returns the original list.
+    explanation: Each recursive step removes one input item and consumes one unit of the count. When the count reaches zero, the unprocessed suffix is returned.
 
-  # Sources: lecture slides 25–27; homework HASKELL3.
-  - id: cs131-functional-guard-priority
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 67–69
+  # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 1, p. 2 (trace list recursion and base cases).
+  - id: cs131-v2-functional-pairwise-recursion-trace
     type: single
     difficulty: intermediate
     bloom: apply
-    question: |
-      This Haskell function should return 0 for children under 5 and 4 for ages 5–17. What change repairs its behavior?
+    estimated_seconds: 60
+    question: |-
+      What is `groupSums [2,5,4,1,8]`?
 
       ```haskell
-      fare age
-        | age < 18 = 4
-        | age < 5 = 0
-        | otherwise = 9
+      groupSums [] = []
+      groupSums [x] = [x]
+      groupSums (x:y:rest) = (x+y) : groupSums rest
       ```
     options:
-      - "Move the under-5 guard before the under-18 guard."
-      - "Move the otherwise guard before the age guards."
-      - "Replace the under-5 condition with age <= 5."
+      - '`[7, 5, 8]`'
+      - '`[7, 9, 5, 9]`'
+      - '`[7, 5]`'
     correct_index: 0
     option_feedback:
-      1: "The `otherwise` condition is true, so placing it first would give every age the adult fare."
-      2: "Changing the boundary cannot help while the earlier under-18 guard already matches every young child."
-    explanation: "Guards select the first matching branch. When conditions overlap, the more specific case must be handled before a broader case that includes it."
+      1: The pattern removes two items per call; the pairs do not overlap.
+      2: The singleton case retains an unpaired final element instead of discarding it.
+    explanation: The calls process `[2,5]`, then `[4,1]`, then the singleton `[8]`. Their contributions are 7, 5, and 8.
 
-  # Sources: lecture slides 44–45, 66–70; homework HASKELL6 and HASKELL9.
-  - id: cs131-functional-recursive-progress
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 67–69,89
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3b (recursive completion).
+  - id: cs131-v2-functional-recursive-selection-repair
     type: single
     difficulty: intermediate
     bloom: analyze
-    question: |
-      On a nonempty finite list, this Haskell function never produces the intended count. Which replacement repairs the recursive branch?
+    estimated_seconds: 60
+    question: |-
+      `positives` should retain positive integers in order. Which expression fills the blank?
 
       ```haskell
-      count [] = 0
-      count (x:xs) = 1 + count (x:xs)
+      positives [] = []
+      positives (x:xs)
+        | x > 0 = x : positives xs
+        | otherwise = ___
       ```
     options:
-      - "`1 + count xs`"
-      - "`count xs`"
-      - "`1 + count []`"
-    correct_index: 0
+      - '`xs`'
+      - '`positives (x:xs)`'
+      - '`positives xs`'
+    correct_index: 2
     option_feedback:
-      1: "This reaches the base case but discards the contribution of every removed element, so it returns zero."
-      2: "This counts only one element regardless of how many remain. The rest of the list must still be processed."
-    explanation: "Count the current head once, then recurse on the shorter tail. The list length decreases toward the empty-list base case."
+      0: Returning the tail unchanged can leave later nonpositive elements in the result.
+      1: This repeats the same input and cannot progress past a nonpositive head.
+    explanation: Dropping the current head is only one step. The remaining tail still needs the same selection rule.
 
-  # Sources: lecture slides 51–59; homework HASKELL8.
-  - id: cs131-functional-comprehension-product
-    type: single
-    difficulty: intermediate
-    bloom: apply
-    question: |
-      Which list does this Haskell comprehension produce?
-
-      ```haskell
-      [(x,y) | x <- [1,3], y <- [2,4], x < y]
-      ```
-    options:
-      - "`[(1,2),(1,4),(3,4)]`"
-      - "`[(1,2),(3,4)]`"
-      - "`[(1,2),(1,4),(3,2),(3,4)]`"
-    correct_index: 0
-    option_feedback:
-      1: "Separate generators enumerate combinations like nested loops; they do not pair elements by matching positions."
-      2: "The generators produce four candidate pairs, but the condition excludes the pair whose first component is 3 and second is 2."
-    explanation: "For each `x`, the comprehension visits each `y`, retaining only pairs satisfying `x < y`. Generator order also determines result order."
-
-  # Sources: lecture slides 66–71; homework HASKELL9.
-  - id: cs131-functional-pattern-shapes
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 35,65–68
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3b (list patterns in recursive code).
+  - id: cs131-v2-functional-nested-pattern-bindings
     type: multiple
     difficulty: intermediate
     bloom: analyze
-    question: "Which Haskell patterns match the value `[[2,5],[8]]`? Select all that apply."
+    estimated_seconds: 60
+    question: The Haskell pattern `(first:second:rest)` is matched against `[[1,2], [], [3]]`. Which bindings result? Select all that apply.
     options:
-      - "`[a,b]`"
-      - "`(a:rest)`"
-      - "`[[a,b],[c]]`"
-      - "`[[a],[b]]`"
-    correct_indices: [0, 1, 2]
+      - '`first = [1,2]`'
+      - '`second = []`'
+      - '`rest = [[3]]`'
+      - '`rest = [3]`'
+    correct_indices:
+      - 0
+      - 1
+      - 2
     option_feedback:
-      0: "The outer list contains exactly two elements; each bound variable can itself hold a list."
-      1: "The outer list is nonempty, so it splits into one head element and a remaining list."
-      2: "The first inner list has two elements and the second has one, exactly matching this nested shape."
-      3: "This pattern requires both inner lists to have exactly one element, but the first inner list has two."
-    explanation: "Patterns describe constructor structure, not just a flattened sequence of values. Here `a` in `(a:rest)` is `[2,5]`, while `rest` is `[[8]]`."
+      0: The first element of the outer list is itself the list `[1,2]`.
+      1: An empty inner list is still a complete element of the outer list.
+      2: The remaining outer list contains one inner list, `[3]`.
+      3: The tail keeps the outer list level; pattern matching does not flatten it.
+    explanation: Each colon removes one element from the outer list. `rest` contains whatever outer elements remain, retaining their nested structure.
 
-  # Sources: lecture slides 74–76; Fall 2024 midterm, Problem 3 Parts A–C, page 5.
-  - id: cs131-functional-type-variable-relations
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 86,88
+  # Assessment: [Midterm] F23 (Public).pdf, Problem 3a–b, p. 6 (choose map versus filter).
+  - id: cs131-v2-functional-map-boolean-results
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: |-
+      What is the pair of results?
+
+      ```haskell
+      map (\x -> x > 3) [2,5,4]
+      filter (\x -> x > 3) [2,5,4]
+      ```
+    options:
+      - '`[5,4]` and `[True,True]`'
+      - '`[False,True,True]` and `[5,4]`'
+      - '`[False,True,True]` and `[True,True]`'
+    correct_index: 1
+    option_feedback:
+      0: '`map` keeps one result per input element and uses the predicate''s Boolean return values.'
+      2: '`filter` returns the original elements for which the predicate succeeds, not the returned Booleans.'
+    explanation: Mapping transforms all three elements into Booleans. Filtering retains two original integers.
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 86,88,106–107
+  # Assessment: [Midterm] F23 (Public).pdf, Problem 3, pp. 6–7 (compose selection and transformation).
+  - id: cs131-v2-functional-pipeline-order-counterexample
+    type: single
+    difficulty: intermediate
+    bloom: evaluate
+    estimated_seconds: 60
+    question: Here `abs` returns the absolute value of its argument. For `xs = [-2,3]`, compare `map abs (filter (\x -> x > 0) xs)` with `filter (\x -> x > 0) (map abs xs)`. Which conclusion is justified?
+    options:
+      - Both produce `[3]`; these operations commute.
+      - Both produce `[2,3]`; absolute value runs first.
+      - They produce `[3]` and `[2,3]`; order matters.
+    correct_index: 2
+    option_feedback:
+      0: The second expression transforms -2 to 2 before testing positivity, so it retains that element.
+      1: The first expression removes -2 before `abs` ever receives it.
+    explanation: Selection tests different values in the two pipelines. A negative input supplies a counterexample to freely swapping these stages.
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 91–94
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3c and Problem 4b (accumulator recursion and folding).
+  - id: cs131-v2-functional-fold-positional-accumulator
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: |-
+      What does this expression evaluate to?
+
+      ```haskell
+      foldl (\acc digit -> 10*acc + digit) 0 [2,4,1]
+      ```
+    options:
+      - '`7`'
+      - '`241`'
+      - '`142`'
+    correct_index: 1
+    option_feedback:
+      0: The accumulator is multiplied by 10 before each new digit is added; this is not a simple sum.
+      2: '`foldl` processes the input left to right, so 2 contributes before 4 and 1.'
+    explanation: The accumulator takes the values 0, 2, 24, and 241. Its update rule determines the result, not merely the presence of a fold.
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 39–40,91–94
+  # Assessment: [Midterm] F23 (Public).pdf, Problem 3d, p. 7 (build a list with a fold).
+  - id: cs131-v2-functional-fold-string-order
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: |-
+      What does this expression evaluate to?
+
+      ```haskell
+      foldl (\acc word -> word ++ acc) "" ["go", "up", "now"]
+      ```
+    options:
+      - '`"goupnow"`'
+      - '`"nowupgo"`'
+      - '`"now"`'
+    correct_index: 1
+    option_feedback:
+      0: Each incoming word is placed before the accumulated string, not after it.
+      2: The new word is concatenated with the existing accumulator; it does not replace it.
+    explanation: The successive accumulators are `"go"`, `"upgo"`, and `"nowupgo"`. Left-to-right folding can still build output in reverse order.
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 35,73–74,86
+  # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 3B–C, p. 5 (infer polymorphic higher-order types).
+  - id: cs131-v2-functional-same-element-type-constraint
+    type: single
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 60
+    question: |-
+      What is the most general type of this function?
+
+      ```haskell
+      collect f x = [x, f x]
+      ```
+    options:
+      - '`(a -> b) -> a -> [b]`'
+      - '`(a -> a) -> a -> [a]`'
+      - '`a -> (a -> a) -> [a]`'
+    correct_index: 1
+    option_feedback:
+      0: Both `x` and `f x` occupy one homogeneous list, so they must have the same type.
+      2: The first parameter is applied as a function; the second is its argument.
+    explanation: 'If `x :: a`, the list forces `f x :: a` too. Thus `f :: a -> a`, and the result is `[a]`.'
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 91–92,114,122–123
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 3c (type after partial application of accumulator recursion).
+  - id: cs131-v2-functional-partially-applied-fold-type
+    type: single
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 60
+    question: |-
+      Given these signatures, what is the type of `build`?
+
+      ```haskell
+      combine :: [Int] -> Int -> [Int]
+      foldl :: (b -> a -> b) -> b -> [a] -> b
+      build = foldl combine []
+      ```
+    options:
+      - '`Int -> [Int]`'
+      - '`[Int] -> [Int]`'
+      - '`[[Int]] -> [Int]`'
+    correct_index: 1
+    option_feedback:
+      0: The combining function handles one integer at a time, but the partially applied fold still expects a whole input list.
+      2: The accumulator is a list, but each input element is the second argument of `combine`, an `Int`.
+    explanation: The accumulator type `b` is `[Int]`, and the element type `a` is `Int`. Supplying the function and seed leaves `[Int] -> [Int]`.
+
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 122–123
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 5 (remove only redundant curry parentheses).
+  - id: cs131-v2-functional-function-argument-parentheses
     type: single
     difficulty: basic
     bloom: understand
-    question: "What does the Haskell type `pair :: a -> b -> (a,b)` require of the argument types?"
+    estimated_seconds: 30
+    question: Which type is equivalent to `(String -> Int) -> ([String] -> Int)` with only redundant parentheses removed?
     options:
-      - "The arguments must have different types."
-      - "The arguments may have the same or different types."
-      - "Both arguments must have the same type."
+      - '`String -> Int -> [String] -> Int`'
+      - '`(String -> Int) -> [String] -> Int`'
+      - '`String -> (Int -> [String]) -> Int`'
     correct_index: 1
     option_feedback:
-      0: "Different type-variable names permit different types; they do not require them to differ."
-      2: "A repeated variable would impose that equality. Here the two type variables are independent."
-    explanation: "Each type variable tracks a relationship: the first argument's type reappears in the first tuple component, and the second argument's type in the second component."
+      0: Removing the first pair changes one function-valued argument into separate `String` and `Int` arguments.
+      2: This groups a different function type as an argument and changes the contract.
+    explanation: Arrows associate to the right. Parentheses around the result function are redundant, while those around the function-valued first argument are necessary.
 
-  # Sources: lecture slides 83–90; Fall 2024 midterm, Problem 3 Part B, page 5.
-  - id: cs131-functional-map-filter-pipeline
-    type: multiple
-    difficulty: intermediate
-    bloom: analyze
-    question: "Given a finite list of strings `names`, which Haskell expressions return the lengths of only the names longer than 3 characters? Select all that apply."
-    options:
-      - "`map length (filter (\\s -> length s > 3) names)`"
-      - "`filter (> 3) (map length names)`"
-      - "`map (\\s -> length s > 3) names`"
-      - "`map length (filter (\\s -> length s < 3) names)`"
-    correct_indices: [0, 1]
-    option_feedback:
-      0: "The predicate retains qualifying strings before the transformation to lengths."
-      1: "Once strings become integer lengths, filtering those integers by the same threshold selects exactly the required results."
-      2: "Mapping the predicate produces a Boolean for every name; it neither removes short names nor returns lengths."
-      3: "The filter keeps names shorter than the threshold, reversing the required condition."
-    explanation: "The selection can happen on strings before transformation, or on their lengths afterward. The predicate must match the values it receives, and the condition must select the same original names."
-
-  # Sources: lecture slides 91–96; Fall 2025 Quiz 1, Problem 4 Part B.
-  - id: cs131-functional-fold-accumulator-order
-    type: single
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 120–123
+  # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 3D, p. 6 (write an explicitly curried body).
+  - id: cs131-v2-functional-assemble-explicit-currying
+    type: parsons
     difficulty: intermediate
     bloom: apply
-    question: "What is the result of the Haskell expression `foldl (\\acc x -> acc - x) 10 [3,2]`?"
-    options:
-      - "`5`"
-      - "`9`"
-      - "`15`"
-    correct_index: 0
-    option_feedback:
-      1: "This groups the subtraction as `10 - (3 - 2)`. A left fold carries the updated accumulator into the next step."
-      2: "The initial value participates in the subtraction; the combining function does not add the elements to it."
-    explanation: "The accumulator moves from 10 to `10 - 3 = 7`, then to `7 - 2 = 5`. With subtraction, regrouping the operations changes the result."
+    estimated_seconds: 75
+    question: Arrange the fragments after `decorate =` to rewrite `decorate f x suffix = f x ++ suffix` as nested single-argument lambdas. Preserve the argument order `f`, `x`, then `suffix`. You may assume `f x` and `suffix` are strings.
+    display: inline
+    lines:
+      - '\f -> '
+      - '\x -> '
+      - '\suffix -> '
+      - 'f x '
+      - ++ suffix
+    distractors:
+      - 'suffix ++ '
+      - f suffix
+    explanation: Each arrow introduces exactly the next argument. The body must apply `f` to `x` before appending `suffix`; swapping those roles changes the function.
 
-  # Sources: lecture slides 87, 89, 91–93; Fall 2024 midterm, Problem 3 Part C, page 5.
-  - id: cs131-functional-higher-order-type
-    type: single
-    difficulty: advanced
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 132,141
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 4a; [Midterm] F23 (Public).pdf, Problem 2a, p. 4 (construct a recursive algebraic value).
+  - id: cs131-v2-functional-recursive-constructor-values
+    type: multiple
+    difficulty: intermediate
     bloom: analyze
-    question: |
-      What is the most general Haskell type of `accepted`, given the explicit type of `length` below?
+    estimated_seconds: 60
+    question: |-
+      For this definition, which expressions are complete values of type `Chain`? Select all that apply.
 
       ```haskell
-      length :: [a] -> Int
-      accepted p xs = length (filter p xs)
+      data Chain = End | Link String Chain
       ```
     options:
-      - "`(a -> Bool) -> [a] -> Int`"
-      - "`(a -> Bool) -> [a] -> [a]`"
-      - "`(a -> Int) -> [a] -> Int`"
-    correct_index: 0
+      - '`Link "a" End`'
+      - '`Link "a" (Link "b" End)`'
+      - '`Link End "a"`'
+      - '`Link "a"`'
+    correct_indices:
+      - 0
+      - 1
     option_feedback:
-      1: "The filtered list is an intermediate value. Applying `length` changes the final result to an integer."
-      2: "The predicate must decide whether to keep each element, so it returns a Boolean rather than a count."
-    explanation: "Trace the pipeline's contracts: `p` tests an element of type `a`, `filter` returns a list of that same element type, and `length` consumes that list and returns `Int`."
+      0: '`Link` receives a string followed by a complete tail value.'
+      1: A nested `Link` is a valid value for the recursive tail field.
+      2: 'The constructor fields have a fixed order: the string precedes the `Chain`.'
+      3: Supplying only the string leaves a function expecting its `Chain` argument.
+    explanation: The constructor has type `String -> Chain -> Chain`. A complete node supplies both fields, ending eventually in `End` for these finite examples.
 
-  # Sources: lecture slides 102–110.
-  - id: cs131-functional-closure-shadowing
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 91–92,132,141–142
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx, Problem 4b (combine the current node with recursive child results).
+  - id: cs131-v2-functional-tree-fold-recursive-contribution
     type: single
-    difficulty: advanced
+    difficulty: intermediate
     bloom: analyze
-    question: |
-      What does `make 4 7 10` return in Haskell?
+    estimated_seconds: 75
+    question: |-
+      Complete `total`, which sums the integer weights of a finite tree.
 
       ```haskell
-      make x y = \x -> x - y
+      data Tree = Branch Int [Tree]
+      total (Branch weight children) =
+        foldl (\acc child -> ___) weight children
       ```
     options:
-      - "`3`, using the lambda argument and captured y."
-      - "`-3`, using both arguments passed to make."
-      - "`6`, using the lambda argument and captured outer x."
+      - '`acc + total child`'
+      - '`weight + total child`'
+      - '`total child`'
     correct_index: 0
     option_feedback:
-      1: "The lambda's parameter named `x` shadows the outer `x`; inside the lambda, `x` refers to 10."
-      2: "The lambda's free variable is `y`, whose value is 7. The outer `x` is hidden by the parameter of the same name."
-    explanation: "After `make 4 7`, the returned function behaves like `\\x -> x - 7`. Applying it to 10 produces 3."
+      1: Using the original weight each time discards earlier children's accumulated contributions.
+      2: Returning only the current child's total loses the parent and previously processed children.
+    explanation: The seed counts the current node once. Each fold step adds one child subtree's total to the accumulated sum.
 
-  # Sources: lecture slides 113–128; Fall 2024 midterm, Problem 3 Part D, page 6.
-  - id: cs131-functional-currying-versus-application
-    type: single
-    difficulty: basic
-    bloom: understand
-    question: "Which distinction correctly separates currying from partial application?"
-    options:
-      - "Currying reorganizes arguments; partial application fixes some values."
-      - "Currying fixes some values; partial application reorganizes arguments."
-      - "Currying delays every computation; partial application evaluates every argument."
-    correct_index: 0
-    option_feedback:
-      1: "The value-fixing step belongs to partial application. Currying changes a multi-argument function into a sequence of unary functions."
-      2: "These describe neither transformation. Strict or lazy evaluation is a separate issue from how a function accepts arguments."
-    explanation: "Currying represents a multi-argument computation as functions that each take one argument. Partial application supplies fewer arguments than needed for the final result, producing a specialized function."
-
-  # Sources: lecture slides 116–129; Fall 2024 midterm, Problem 3, pages 5–6.
-  - id: cs131-functional-partial-type
-    type: single
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 86,88,91–94,106–107
+  # Assessment: [Midterm] F23 (Public).pdf, Problem 3, pp. 6–7 (compose map, filter and fold).
+  - id: cs131-v2-functional-assemble-select-square-sum
+    type: parsons
     difficulty: intermediate
     bloom: apply
-    question: "Given `between :: Int -> Int -> Int -> Bool` and `between low high value = low <= value && value <= high`, what is the type of `between 2 8`?"
-    options:
-      - "`Int -> Bool`"
-      - "`Bool`"
-      - "`Int -> Int -> Bool`"
-    correct_index: 0
-    option_feedback:
-      1: "The bounds are known, but a value to test has not been supplied. The result is still a function."
-      2: "Both bound arguments have already been supplied, leaving only the value parameter."
-    explanation: "Each application consumes one argument from the curried function. Fixing the two bounds yields a predicate that accepts one integer and returns a Boolean."
+    estimated_seconds: 75
+    question: Arrange one expression that sums the squares of only the positive integers in `values`. Negative integers must be discarded before squaring. Use all four required fragments.
+    display: inline
+    lines:
+      - 'foldl (+) 0 '
+      - '(map (\x -> x*x) '
+      - '(filter (\x -> x > 0) '
+      - values))
+    distractors:
+      - '(map (\x -> x+x) '
+      - '(filter (\x -> x*x > 0) '
+    explanation: The innermost filter removes nonpositive inputs, map squares what remains, and fold adds the squares. Squaring before checking positivity would incorrectly admit negative inputs.
 
-  # Sources: lecture slides 131–145; Fall 2025 Quiz 1, Problem 4 Parts A–B.
-  - id: cs131-functional-variant-coverage
-    type: multiple
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf, pp. 132,139–142
+  # Assessment: [Midterm] F24 V1 (Public).pdf, Problem 2, pp. 3–4 (skip a node's own contribution but still visit descendants).
+  - id: cs131-v2-functional-tree-pruning-counterexample
+    type: single
     difficulty: intermediate
-    bloom: analyze
-    question: |
-      A function must total all scores in this Haskell data structure. Which cases are necessary for a complete recursive solution? Select all that apply.
+    bloom: evaluate
+    estimated_seconds: 60
+    question: |-
+      The function is intended to sum all weights in a finite tree. Which input exposes its faulty zero-weight case?
 
       ```haskell
-      data Scores = End | Entry Int Scores
+      data Tree = Branch Int [Tree]
+      total (Branch 0 _) = 0
+      total (Branch w cs) = foldl (\a c -> a + total c) w cs
       ```
     options:
-      - "For End, return zero."
-      - "For Entry, add its score to the total of its remainder."
-      - "For Entry, return its score and ignore its remainder."
-      - "For End, recursively total End again."
-    correct_indices: [0, 1]
+      - '`Branch 0 []`'
+      - '`Branch 5 []`'
+      - '`Branch 0 [Branch 5 []]`'
+    correct_index: 2
     option_feedback:
-      0: "The empty variant is the base case, and zero is the contribution of an empty sequence."
-      1: "An entry contributes both its local score and every score represented by the recursive field."
-      2: "This loses all scores beyond the first entry. Every recursive field carrying data must contribute."
-      3: "Revisiting the same empty value makes no progress and prevents termination."
-    explanation: "The function mirrors the data definition: one base case for `End`, and one recursive case that processes both fields of `Entry`."
-
-  # Sources: lecture slides 143–148.
-  - id: cs131-functional-persistent-update
-    type: single
-    difficulty: advanced
-    bloom: evaluate
-    question: "A program must retain old versions of an immutable binary search tree. An insertion follows a path of height h. Which update strategy preserves old versions while allocating only proportional to h new nodes?"
-    options:
-      - "Copy the insertion path and share its unchanged subtrees."
-      - "Modify the insertion path and reuse the original root."
-      - "Copy every node before inserting into the copied tree."
-    correct_index: 0
-    option_feedback:
-      1: "Old roots still refer to those path nodes, so mutation would also change an earlier version."
-      2: "A full copy preserves versions but allocates proportional to the entire tree, which can greatly exceed the path height."
-    explanation: "Only nodes whose child references change need replacement. Unchanged immutable subtrees can be shared safely; the old root still reaches the old version."
-
-  # Sources: lecture slides 6–8, 87, 148; homework HASKELL7.
-  - id: cs131-functional-purity-optimization-boundaries
-    type: multiple
-    difficulty: advanced
-    bloom: evaluate
-    question: "A batch calls a pure, terminating function on independent immutable inputs. Which changes preserve its returned results under ordinary value semantics? Select all that apply."
-    options:
-      - "Reuse a prior result for an equal input."
-      - "Evaluate independent calls in another order."
-      - "Skip a call whose value is required in the output."
-      - "Reuse one input's result for every other input."
-    correct_indices: [0, 1]
-    option_feedback:
-      0: "Equal inputs have equal results and there are no side effects to replay, so caching is valid here."
-      1: "No call changes state observed by another; their evaluation order cannot alter these returned values."
-      2: "Purity does not make required values unnecessary. Each needed result must be obtained by computation or a valid reuse."
-      3: "Purity guarantees repeatability for the same input, not equal outputs for different inputs."
-    explanation: "Purity removes dependencies through changing external state. It permits reordering independent work and reusing equal-input results, while preserving all actual data dependencies."
+      0: A zero-weight node with no children really does have total 0, so it hides the defect.
+      1: A nonzero leaf uses the general case and returns its own weight correctly.
+    explanation: A zero-weight parent can still have nonzero descendants. The first pattern discards the children instead of recursively summing them.

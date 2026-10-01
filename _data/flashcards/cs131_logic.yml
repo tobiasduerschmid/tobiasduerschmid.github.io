@@ -1,113 +1,150 @@
-title: "CS 131: Logic Programming Flashcards"
-description: "Explain and construct small relations, trace proof search, and check assumptions behind negation and list recursion."
+title: "CS 131: Logic Programming"
+description: "Practice short Prolog traces, explanations, repairs, and rule construction."
 active: true
+# Complete replacement. Page references below are physical PDF pages.
+# Time estimates are planning estimates, not measured student completion times.
 cards:
-  # Sources: logic_palooza_v6.pptx slides 6–7; Homework Problems (Public).docx LOGIC2 B.
-  - id: relation-contract-explanation
-    bloom: understand
-    difficulty: basic
-    question: "A team stores `depends(build, compile)`. What must its documentation say before someone can safely write rules using depends?"
-    answer: "It must define the meaning of each argument position, such as: depends(A, B) means A requires B. Prolog does not infer this direction from the predicate's English name."
-    explanation: "Self-check: distinguish the ordered relation the team intends from Prolog's structural matching. Swapping arguments generally asks a different question."
-
-  # Sources: logic_palooza_v6.pptx slides 7–8; Homework Problems (Public).docx LOGIC3; [Final] S23 V1 (Public).pdf p11 question 5.
-  - id: construct-shared-resource-rule
-    bloom: create
-    difficulty: advanced
-    question: "Write a Prolog rule `shares_resource(A, B)` using `needs(Task, Resource)`. It should hold when the two tasks need at least one common resource. Self-pairs are allowed. Explain what enforces a common resource."
-    answer: |
-      One solution is:
-
-      ```prolog
-      shares_resource(A, B) :- needs(A, R), needs(B, R).
-      ```
-
-      The same R appears in both subgoals, so one successful proof must use the same resource for both tasks.
-    explanation: "Self-check: the two needs calls must share their resource variable. Using two unrelated variables would merely show that both tasks need something; multiple shared resources may produce duplicate task pairs."
-
-  # Sources: logic_palooza_v6.pptx slides 21–30; Homework Problems (Public).docx LOGIC4 A.6–A.10.
-  - id: explain-repeated-variable-failure
-    bloom: analyze
+  # Lecture: logic_palooza_v6_handouts.pdf pp.25–27,36,47–48.
+  # Assessment: [Final] F23 (Public).pdf, Problem 8(a)(ii) p.22; infer a query variable using repeated-variable constraints.
+  - id: cs131-v2-logic-card-unify-repeated
     difficulty: intermediate
-    question: "Explain why `record(X, tag(X)) = record(green, tag(blue))` fails. How would replacing the inner X with a fresh Y change the outcome?"
-    answer: "The first arguments bind X to green, so tag(X) becomes tag(green), which cannot match tag(blue). With a fresh Y inside tag, unification succeeds with X = green and Y = blue."
-    explanation: "Self-check: mention both propagation of the first binding and consistency of repeated occurrences. A fresh variable removes an equality constraint; it is not a rename of the whole original X."
-
-  # Sources: logic_palooza_v6.pptx slides 18–20, 30–31; [Final] F22 (Public).pdf p11 question 21.
-  - id: explain-unification-resolution
-    bloom: understand
-    difficulty: basic
-    question: "Why can a goal successfully unify with a rule head but still have no solution through that rule? Distinguish unification from resolution."
-    answer: "Unification only finds a consistent match between the goal and the rule head. Resolution must also prove every body subgoal using the resulting bindings; a body subgoal may fail or its search may not terminate."
-    explanation: "Self-check: a local match identifies a candidate proof step, not a complete proof. Resolution coordinates further matches and backtracking."
-
-  # Sources: logic_palooza_v6.pptx slides 14–19, 31; CS131 Fall 25 Quiz 4 (with solutions).docx Problem 4.
-  - id: trace-conjunction-backtracking
     bloom: apply
-    difficulty: intermediate
+    estimated_seconds: 30
+    question: "Unify `record(X, tag(X))` with `record(blue, tag(Y))`. Give bindings for X and Y."
+    answer: "X = blue and Y = blue."
+    explanation: "The first position fixes X as blue. Its repeated occurrence inside tag(...) then forces Y to match blue too."
+
+  # Lecture: logic_palooza_v6_handouts.pdf pp.16–19.
+  # Assessment: Fall 2025 Quiz 4, Problem 4(a); evaluate a ground query using only the displayed database.
+  - id: cs131-v2-logic-card-ground-negation
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 30
     question: |
-      Predict all bindings for `match(X)` in order, and explain why one candidate is skipped.
+      Does `allowed(kai)` succeed? Explain using the database, without assuming anything about the real person.
 
       ```prolog
-      candidate(ivy). candidate(omar). candidate(zoe).
-      approved(omar). approved(zoe).
-      match(X) :- candidate(X), approved(X).
+      blocked(ren).
+      allowed(X) :- not(blocked(X)).
       ```
-    answer: "X = omar, then X = zoe. The ivy candidate fails approved(ivy), so Prolog backtracks, undoes that candidate binding, and tries the next candidate."
-    explanation: "Self-check: each answer must satisfy both goals with the same X. The order comes from searching candidate facts before moving to their approval checks."
+    answer: "Yes. The database cannot prove blocked(kai), so not(blocked(kai)) succeeds."
+    explanation: "This is negation as failure for a ground query. It reports what this program can prove, not independent evidence about the world."
 
-  # Sources: logic_palooza_v6.pptx slides 11–12; [Final] F23 (Public).pdf p24 question 8c.
-  - id: negation-data-completeness
-    bloom: evaluate
-    difficulty: advanced
-    question: "A finite database has no `unpaid(jo)` fact or rule proving it. Why can `not(unpaid(jo))` succeed without establishing that Jo has paid? State an assumption that would justify using this result."
-    answer: "Negation succeeds because the search for unpaid(jo) fails. Missing evidence could instead be an incomplete record. Using this to conclude paid requires a complete, current unpaid relation and a domain policy in which the alternatives really are paid or unpaid."
-    explanation: "Self-check: separate failure to prove a database predicate from knowledge about the world. Negation as failure also depends on the inner search terminating."
-
-  # Sources: logic_palooza_v6.pptx slides 8–9, 32; [Final] S23 V1 (Public).pdf p11 question 5.
-  - id: repair-path-search
-    bloom: create
-    difficulty: expert
-    question: "For a finite directed graph with no cycles, write `reachable(A, B)` using `edge(A, B)`. It should find paths of at least one edge from a given A. Include a base clause and explain how your recursive subgoal order makes progress."
-    answer: |
-      One solution is:
-
-      ```prolog
-      reachable(A, B) :- edge(A, B).
-      reachable(A, B) :- edge(A, Next), reachable(Next, B).
-      ```
-
-      The base clause finds direct edges. The recursive clause chooses an actual outgoing edge before searching from its endpoint.
-    explanation: "Self-check: direct and longer paths must work, the recursive call must advance through an edge, and the termination argument must use the stated finite acyclic graph. On cyclic graphs, this version can revisit nodes indefinitely."
-
-  # Sources: logic_palooza_v6.pptx slides 34–38, 47; Homework Problems (Public).docx LOGIC7 A.2.
-  - id: generate-list-prefix-splits
-    bloom: apply
+  # Lecture: logic_palooza_v6_handouts.pdf pp.20–23,42.
+  # Assessment: [Final] F23 (Public).pdf, Problem 8(b) p.23; enumerate ordered answers across a shared middle node.
+  - id: cs131-v2-logic-card-two-step-order
     difficulty: intermediate
-    question: "Without treating append as a one-directional function, give every pair of lists P and S satisfying `append(P, S, [sun, moon])`."
-    answer: "P = [], S = [sun, moon]; P = [sun], S = [moon]; P = [sun, moon], S = []."
-    explanation: "Self-check: include both empty-list boundaries, preserve element order, and verify that concatenating each pair reconstructs the same whole list."
-
-  # Sources: logic_palooza_v6.pptx slides 38–46; Homework Problems (Public).docx LOGIC7–8; [Final] F23 (Public).pdf p22 question 8a.
-  - id: construct-double-elements
-    bloom: create
-    difficulty: advanced
-    question: "Write `double_items(Input, Output)` for finite ground lists. Each input element should appear twice consecutively in the output, in the original order. Give the empty-list case and one recursive clause."
-    answer: |
-      One solution is:
+    bloom: apply
+    estimated_seconds: 60
+    question: |
+      Give all Y values in order for `hop(a,Y)`.
 
       ```prolog
-      double_items([], []).
-      double_items([H|T], [H,H|R]) :- double_items(T, R).
+      edge(a,c).
+      edge(a,b).
+      edge(b,z).
+      edge(c,y).
+      hop(X,Y) :- edge(X,M), edge(M,Y).
       ```
+    answer: "Y = y, then Y = z."
+    explanation: "The first subgoal chooses M = c before M = b. Its second subgoal reaches y; after backtracking, the b branch reaches z. The later location of edge(c,y) does not reverse the branch order."
 
-      For example, double_items([red, blue], Out) yields Out = [red, red, blue, blue].
-    explanation: "Self-check: the empty input produces [], the recursive call consumes the input tail, and exactly two copies of the head precede the recursively produced tail. A nested [H,H] element would produce a different shape."
-
-  # Sources: logic_palooza_v6.pptx slides 39–46; [Final] F23 (Public).pdf pp22–24 question 8; CS131 Fall 25 Quiz 4 (with solutions).docx Problem 5.
-  - id: list-filter-counterexample
+  # Lecture: logic_palooza_v6_handouts.pdf pp.13–14,22,42.
+  # Assessment: Fall 2025 Quiz 4, Problem 4(c); preserve duplicate solutions from distinct proofs.
+  - id: cs131-v2-logic-card-duplicate-reason
+    difficulty: intermediate
     bloom: analyze
+    estimated_seconds: 45
+    question: |
+      Why does `pick(X)` produce X = a twice when all answers are requested?
+
+      ```prolog
+      red(a).
+      round(a).
+      pick(X) :- red(X).
+      pick(X) :- round(X).
+      ```
+    answer: "There are two successful proofs: one through red(a), then one through round(a). Each proof yields X = a."
+    explanation: "Resolution enumerates successful proofs in clause order. It does not automatically turn their bindings into a set of unique answers."
+
+  # Lecture: logic_palooza_v6_handouts.pdf pp.46,48–49.
+  # Assessment: Fall 2025 Quiz 4, Problem 5; fill list-pattern variables consistently.
+  - id: cs131-v2-logic-card-list-decomposition
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 30
+    question: "Unify `[A,B|Rest]` with `[[red],blue,green,yellow]`. Give A, B, and Rest."
+    answer: "A = [red], B = blue, Rest = [green,yellow]."
+    explanation: "A matches one whole element, even when that element is a list. Rest matches the list remaining after the first two elements."
+
+  # Lecture: logic_palooza_v6_handouts.pdf pp.47–49,52–54.
+  # Assessment: Fall 2025 Quiz 4, Problem 5; construct the equal-head case for consecutive duplicate removal.
+  - id: cs131-v2-logic-card-squeeze-equal
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 45
+    question: |
+      squeeze(Input,Output) removes consecutive duplicates. Complete its equal-head clause so one copy remains available for comparison with the rest of the list.
+
+      ```prolog
+      squeeze([X,X|T], R) :- MISSING.
+      ```
+    answer: "`squeeze([X|T], R)`"
+    explanation: "Self-check: exactly one repeated X is dropped, but one X stays at the front of the recursive input. Recursing on T would lose both copies; recursing on [X,X|T] would make no progress."
+
+  # Lecture: logic_palooza_v6_handouts.pdf pp.9–10,22–23.
+  # Assessment: [Final] S23 V1 (Public).pdf, Problem 5 p.11; build a relation by joining facts through a shared variable.
+  - id: cs131-v2-logic-card-shared-team-rule
+    difficulty: intermediate
+    bloom: create
+    estimated_seconds: 60
+    question: "The fact on_team(Person,Team) records membership. Write one rule same_team(A,B) that succeeds when A and B share a team. Allow A and B to be the same person."
+    answer: "`same_team(A,B) :- on_team(A,T), on_team(B,T).`"
+    explanation: "Self-check: both membership subgoals use the same team variable. Using unrelated team variables would allow people on different teams. Reversing the two subgoals preserves this relation's meaning."
+
+  # Lecture: logic_palooza_v6_handouts.pdf pp.48,51–54.
+  # Assessment: Fall 2025 Quiz 4, Problem 5; complete the output list after a recursive call.
+  - id: cs131-v2-logic-card-list-repair
+    difficulty: intermediate
+    bloom: analyze
+    estimated_seconds: 45
+    question: |
+      The recursive clause loses the prefix before the removed item. Replace only `R` in its head to repair that problem.
+
+      ```prolog
+      remove_one(X,[X|T],T).
+      remove_one(X,[H|T],R) :- remove_one(X,T,R).
+      ```
+    answer: "Use `remove_one(X,[H|T],[H|R]) :- remove_one(X,T,R).`"
+    explanation: "The recursive result R describes the processed tail. The current head H must be put back before it. For remove_one(b,[a,b,c],Out), the repaired rule first produces Out = [a,c]."
+
+  # Lecture: logic_palooza_v6_handouts.pdf pp.13–14,42–44.
+  # Assessment: [Final] F24 V1 (Public).pdf, Problem 7(A.1) p.23; explain how subgoal order affects recursive progress.
+  - id: cs131-v2-logic-card-recursion-repair
     difficulty: advanced
-    question: "A removal predicate has one rule that drops a matching head and another that always keeps the head before recurring. Give the smallest ground input that reveals why the keep rule needs a condition when the promise is to remove every target occurrence."
-    answer: "Use target a and input [a]. The drop rule can produce [], but backtracking into the unconditional keep rule can also produce [a]. For ground input, allow keeping the head only when it differs from the target."
-    explanation: "Self-check: request all answers, not just the first successful one. The counterexample must expose an incorrect additional proof, showing why testing only the first answer can hide a relational bug."
+    bloom: evaluate
+    estimated_seconds: 60
+    question: |
+      For this finite, acyclic edge database, which recursive body avoids repeatedly asking the same path question before making progress: `path(X,M), edge(M,Y)` or `edge(X,M), path(M,Y)`? Justify the choice for path(a,Y).
+
+      ```prolog
+      edge(a,b).
+      edge(b,c).
+      path(X,Y) :- edge(X,Y).
+      ```
+    answer: "Use `edge(X,M), path(M,Y)`. It first chooses an actual next node, so path(a,Y) recurses on b and then c rather than immediately re-entering a path search from a."
+    explanation: "The acyclic database makes this progress finite. This is an operational search-order argument, even though both bodies describe connected paths."
+
+  # Lecture: logic_palooza_v6_handouts.pdf pp.48–50,52–54.
+  # Assessment: [Final] F24 V1 (Public).pdf, Problem 7(C) p.25; construct a recursive list output from head elements and a recursive tail.
+  - id: cs131-v2-logic-card-double-elements
+    difficulty: advanced
+    bloom: create
+    estimated_seconds: 60
+    question: "Write two clauses for double_each(Input,Output) on finite lists: [] produces [], and each element appears twice in the output. For example, double_each([a,b],R) yields R = [a,a,b,b]. Use head/tail matching and recursion."
+    answer: |
+      ```prolog
+      double_each([], []).
+      double_each([H|T], [H,H|R]) :- double_each(T,R).
+      ```
+    explanation: "Self-check: the empty case ends recursion, the recursive call processes only T, and the output places two copies of H before the processed tail R. Equivalent variable names are valid."

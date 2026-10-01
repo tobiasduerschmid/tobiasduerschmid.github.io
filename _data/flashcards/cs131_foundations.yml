@@ -1,54 +1,104 @@
-title: "CS 131: Language Paradigms and Design"
-description: "Explain computational models and justify language-design decisions."
+title: 'CS 131: Language Paradigms and Design'
+description: Explain a model, predict a small effect, or construct a distinguishing experiment before
+  revealing the answer.
 active: true
+# Entire replacement bank. Times are author estimates, not enforced limits.
 cards:
-  # Source: intro_lecture_v2.pptx, slides 20–23, 36–38.
-  - id: paradigms-are-strategies
+  # Lecture: intro_lecture_td_handouts.pdf pp. 25–27
+  # Assessment: Foundation for Fall 2025 Quiz 4, Problem 1 (OOP)
+  - id: cs131-v2-foundations-card-object-model
     difficulty: basic
     bloom: understand
-    question: "Why can two programs in the same language exemplify different programming paradigms?"
-    answer: "A paradigm describes how a solution is organized. One program might use explicit state updates, while another composes transformations or delegates work to objects. A language can provide constructs that support several approaches."
+    estimated_seconds: 25
+    question: A drawing program asks each shape object to run its own `draw()` method. Name the paradigm
+      organizing that design and the evidence for your answer.
+    answer: 'Object-oriented programming: the program organizes work around objects receiving method calls.'
+    explanation: 'Self-check: name the organizing mechanism, not just the presence of a noun such as shape.'
 
-  # Source: intro_lecture_v2.pptx, slides 21–22.
-  - id: recast-a-reachability-problem
-    difficulty: intermediate
-    bloom: apply
-    question: "Describe how to express reachability between stations using facts and rules. State a direct case and a recursive case in plain language."
-    answer: "Facts record direct connections. A station is reachable if there is a direct connection, or if a directly connected intermediate station can reach the destination. A query supplies a start or destination and asks for bindings that satisfy the relation."
-    explanation: "Self-check: include both the direct case and the recursive relation. These specify possible routes; the search strategy separately affects termination on cyclic networks."
+  # Lecture: intro_lecture_td_handouts.pdf pp. 25–27
+  # Assessment: Foundation for Fall 2025 Quiz 4, Problems 4–5 (Prolog)
+  - id: cs131-v2-foundations-card-relational-model
+    difficulty: basic
+    bloom: understand
+    estimated_seconds: 25
+    question: A program records who teaches each course and defines a rule for who teaches a student. It
+      asks a query to find matching teachers. Which paradigm is this, and what supplies the answer?
+    answer: Logic programming. The runtime uses the recorded facts and the rule to find bindings that satisfy
+      the query.
+    explanation: 'Self-check: mention facts/rules and a query rather than a programmer-written sequence
+      of updates.'
 
-  # Source: intro_lecture_v2.pptx, slides 23–30.
-  - id: syntax-does-not-determine-semantics
+  # Lecture: intro_lecture_td_handouts.pdf pp. 28, 32–34
+  # Assessment: Fall 2023 Midterm, Problem 5, PDF p. 10 (reasoning under chosen language rules)
+  - id: cs131-v2-foundations-card-independent-dimensions
     difficulty: intermediate
     bloom: analyze
-    question: "A new language looks like C++. Name two semantic questions that still need answers before porting code that shares mutable objects."
-    answer: "For example: Does assignment copy the object or share it? Does parameter assignment rebind only a local name or change the caller's variable? Other useful questions concern object lifetime and callback capture. Matching syntax does not answer these questions."
+    estimated_seconds: 30
+    question: A language has classes. Does that observation tell you whether it passes arguments by value
+      or by reference? Give the missing information.
+    answer: No. Class support and parameter passing are separate choices. We need its passing rule or an
+      experiment that distinguishes copies from aliases.
+    explanation: 'Self-check: distinguish an observed language feature from an unsupported inference about
+      another feature.'
 
-  # Source: intro_lecture_v2.pptx, slides 27–29; Homework Problems, PYTHON2.
-  - id: design-a-passing-experiment
-    difficulty: expert
+  # Lecture: intro_lecture_td_handouts.pdf pp. 33
+  # Assessment: Fall 2025 Quiz 1 v1, Problem 2 (mutation versus rebinding); prerequisite for passing traces
+  - id: cs131-v2-foundations-card-value-update
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 30
+    question: An integer variable `n` holds 4. A function receives it by value and sets its parameter to
+      10. Predict `n` after the call and explain why.
+    answer: '`n` remains 4. The function changes its copied parameter, not the caller''s variable.'
+    explanation: 'Self-check: trace which variable receives the assignment.'
+
+  # Lecture: intro_lecture_td_handouts.pdf pp. 33
+  # Assessment: Fall 2025 Quiz 1 v1, Problem 2 (mutation versus rebinding); prerequisite for passing traces
+  - id: cs131-v2-foundations-card-reference-update
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 30
+    question: An integer variable `n` holds 4. A function receives it by reference and sets its parameter
+      to 10. Predict `n` after the call and explain why.
+    answer: '`n` becomes 10 because the parameter aliases the caller''s variable.'
+    explanation: 'Self-check: assignment through an alias reaches the original variable.'
+
+  # Lecture: intro_lecture_td_handouts.pdf pp. 32–34
+  # Assessment: Fall 2025 Quiz 1 v1, Problem 2 (mutation versus rebinding)
+  - id: cs131-v2-foundations-card-separate-tests
+    difficulty: intermediate
     bloom: create
-    question: "For records containing only numeric fields, design a two-part experiment to distinguish an independent record copy, sharing the object through a local parameter, and aliasing the caller's variable. Describe the operations and expected observations."
-    answer: |
-      Start each trial with a fresh record containing a known field value.
+    estimated_seconds: 50
+    question: Write a one-statement function body that distinguishes independent record copying from sharing
+      an object. Assume the parameter is `p`, the caller's record has numeric field `value = 1`, and field
+      assignment is allowed. State what the caller should inspect.
+    answer: 'For example, `p.value = 5`. After the call, inspect the original record''s field: 1 suggests
+      an independent copy; 5 shows a shared object.'
+    explanation: 'Self-check: change the existing record, then observe the caller. Merely rebinding p does
+      not distinguish an independent copy from a local object reference.'
 
-      1. Change the field through the parameter; inspect the caller's record.
-      2. Rebind the parameter to a different record; inspect the caller's variable.
-
-      A record copy exposes neither change. A local reference to the shared object exposes field mutation only. An alias for the caller's variable exposes both changes.
-    explanation: "Self-check: vary mutation and rebinding separately and reset the input between trials. State that copying is an independent record copy in this model; a record containing nested references would require further probes."
-
-  # Source: intro_lecture_v2.pptx, slides 18, 30, 36–40.
-  - id: evaluate-a-shorter-rewrite
-    difficulty: advanced
+  # Lecture: intro_lecture_td_handouts.pdf pp. 28, 33–36
+  # Assessment: Fall 2023 Midterm, Problem 5, PDF p. 10 (reasoning under chosen language rules)
+  - id: cs131-v2-foundations-card-evaluate-claim
+    difficulty: intermediate
     bloom: evaluate
-    question: "A rewrite halves source length. Give two checks needed before claiming it is a better implementation, and explain what each check establishes."
-    answer: "Check behavior across the required input domain, including boundary cases, to establish equivalence. Then evaluate an actual quality constraint, such as operation count and allocation cost for performance or clarity for the intended maintainers. Fewer characters alone establishes none of these."
+    estimated_seconds: 40
+    question: A program is rewritten with different keywords and punctuation. A student predicts identical
+      output without checking the language rules. Give one concrete rule they must check for a program that
+      modifies an argument.
+    answer: 'They must check parameter passing: changing a copied record may be invisible to the caller,
+      while changing a shared record may be visible.'
+    explanation: 'Self-check: connect the rule to a possible difference in output; keyword resemblance is
+      insufficient.'
 
-  # Source: intro_lecture_v2.pptx, slides 16, 39.
-  - id: design-a-small-rule-language
-    difficulty: expert
-    bloom: create
-    question: "Propose two constructs for a small eligibility-rule language and one invalid rule it should reject. Explain how restricting the language helps analysts."
-    answer: "One design supports field comparisons and conjunction. For example, `age >= 18 and status == eligible` combines two conditions. Reject comparing an age with a date if their domains differ. Named fields and limited operators make the rules inspectable and allow domain checks before evaluation."
-    explanation: "Self-check: specify the meaning of both constructs and an actual invalid case. Other designs count if they suit eligibility rules and explain the benefit of their restrictions."
+  # Lecture: intro_lecture_td_handouts.pdf pp. 25–27
+  # Assessment: Foundation for Fall 2025 Quiz 1, Problem 3
+  - id: cs131-v2-foundations-card-functional-construction
+    difficulty: intermediate
+    bloom: apply
+    estimated_seconds: 40
+    question: A recursive total function returns 0 for an empty list. On `[3,5]`, it returns the head plus
+      the total of the tail. Give the two additions needed to obtain its result.
+    answer: '`5 + 0 = 5`, then `3 + 5 = 8`.'
+    explanation: 'Self-check: use the empty-list result as the base and build each result while returning
+      from recursion.'
