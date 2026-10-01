@@ -44,44 +44,52 @@ steps:
 
       ### A tiny worked example
 
+      Planning a pizza night? Start with a function that computes how much
+      money is left after a purchase. All amounts here are whole dollars.
+
       ```haskell
-      remainingTime :: Int -> Int -> Int
-      remainingTime available used = available - used
+      remainingMoney :: Int -> Int -> Int
+      remainingMoney budget spent = budget - spent
       ```
 
       `::` introduces a type signature: this function accepts two `Int`
       arguments and produces an `Int`. `=` defines the result; it does not
       assign a new value to either parameter.
       The body is an expression, so there is no `return` statement.
-      Call it with `remainingTime 45 12`, which gives `33`. Names of functions and bindings
+      Call it with `remainingMoney 45 12`: spending 12 dollars from a
+      45-dollar budget leaves `33`. Names of functions and bindings
       start with a lowercase letter; type names such as `Int` start uppercase.
       `--` starts a comment.
 
       Function application binds more tightly than arithmetic:
-      `remainingTime 45 12 * 2` means `(remainingTime 45 12) * 2`. Use parentheses when an argument
+      `remainingMoney 45 12 * 2` means `(remainingMoney 45 12) * 2`. Use parentheses when an argument
       is itself an expression. `f x y` groups as `(f x) y`; that grouping
       rule does **not** specify which expression Haskell evaluates first.
 
       ### Predict before you Run!
 
-      The starter's `afterTwoSessions 45 12` should report the time left
-      after two sessions of 12 minutes each, starting with 45 minutes.
+      You and your friends order two pizzas at 12 dollars each from a
+      45-dollar budget. The starter's `pizzaMoneyLeft 45 12` is supposed to
+      calculate how much money remains for snacks.
       Will it print `21`, `66`, or a type error? Think about your prediction,
       then choose **Run**.
 
       <details markdown="1"><summary>Click for explanation</summary>
 
-      It prints `66`: the starter subtracts one session, then doubles the
-      remaining time. The doubled duration must be the second argument.
+      It prints `66`: the starter subtracts the price of one pizza, then
+      doubles the money left. Buying pizza cannot increase your budget!
+      The total price of both pizzas must be the second argument.
 
       </details>
 
       ### Your challenge
 
-      Repair `afterTwoSessions available duration` to subtract two session
-      durations from the available time. Inputs are nonnegative `Int` values
-      in the small ranges used here; a negative result reports an overrun.
-      Try a zero duration and an overrun before choosing **Test My Work**.
+      Repair `pizzaMoneyLeft budget pizzaPrice` to subtract the price of
+      two equally priced pizzas from the budget. Inputs are nonnegative
+      `Int` values in whole dollars, using the small ranges here; a negative
+      result tells you how much extra money you need (`-4` means 4 dollars
+      short). Try free pizzas and an order that exceeds your budget before
+      choosing **Test My Work**.
 
       `main = print (...)` is the supplied display harness. Your function computes
       a value, and `main` displays it. Leave the harness's type signature alone.
@@ -98,43 +106,43 @@ steps:
         content: |
           module Main where
 
-          remainingTime :: Int -> Int -> Int
-          remainingTime available used = available - used
+          remainingMoney :: Int -> Int -> Int
+          remainingMoney budget spent = budget - spent
 
-          afterTwoSessions :: Int -> Int -> Int
-          afterTwoSessions available duration = remainingTime available duration * 2
+          pizzaMoneyLeft :: Int -> Int -> Int
+          pizzaMoneyLeft budget pizzaPrice = remainingMoney budget pizzaPrice * 2
 
           main :: IO ()
-          main = print (afterTwoSessions 45 12)
+          main = print (pizzaMoneyLeft 45 12)
     open_file: Main.hs
     run_file: Main.hs
     tests:
-      - description: "Two sessions subtract both durations, including zero, exact fit, and overrun"
-        command: "afterTwoSessions 45 12 == 21 && afterTwoSessions 30 15 == 0 && afterTwoSessions 20 12 == (-4) && afterTwoSessions 17 0 == 17 && afterTwoSessions 0 3 == (-6)"
+      - description: "Two pizzas leave the correct balance, including free pizzas, exact budget, and a shortfall"
+        command: "pizzaMoneyLeft 45 12 == 21 && pizzaMoneyLeft 30 15 == 0 && pizzaMoneyLeft 20 12 == (-4) && pizzaMoneyLeft 17 0 == 17 && pizzaMoneyLeft 0 3 == (-6)"
         hints:
-          - text: "Which argument represents time used: one session duration or the combined duration?"
+          - text: "Which amount should come out of the budget: the price of one pizza or the total price of both?"
           - text: "Application groups before multiplication. Parentheses can make a whole expression one argument."
-          - text: "Use `remainingTime available (...)`, placing the combined duration in parentheses."
+          - text: "Use `remainingMoney budget (...)`, placing the total price of both pizzas in parentheses."
     quiz:
       title: "Step 1 — Knowledge Check"
       min_score: 0.8
       questions:
         - type: single
           difficulty: intermediate
-          question: "With `remainingTime available used = available - used`, what is `remainingTime 18 4 * 2`?"
+          question: "With `remainingMoney budget spent = budget - spent`, what is `remainingMoney 18 4 * 2`?"
           options: ["`28`", "`10`", "A type error"]
           correct_index: 0
           option_feedback:
-            1: "That would be `remainingTime 18 (4 * 2)`. Without those parentheses, multiplication applies to the result."
+            1: "That would be `remainingMoney 18 (4 * 2)`. Without those parentheses, multiplication applies to the result."
             2: "A function result can be used in arithmetic; the call and multiplication both produce compatible numbers."
-          explanation: "The expression groups as `(remainingTime 18 4) * 2`, giving 14 * 2."
+          explanation: "The expression groups as `(remainingMoney 18 4) * 2`, giving 14 * 2."
         - type: single
           difficulty: basic
-          question: "What does `remainingTime available used = available - used` do with available?"
+          question: "What does `remainingMoney budget spent = budget - spent` do with budget?"
           options:
-            - "Replaces it with the remaining time"
+            - "Replaces it with the remaining money"
             - "Defines a result using its value"
-            - "Prints it before subtracting used"
+            - "Prints it before subtracting spent"
           correct_index: 1
           option_feedback:
             0: "A parameter binding stays the same. The expression computes the function's result."
@@ -146,15 +154,16 @@ steps:
           language: haskell
           content: |
             module Main where
-            remainingTime :: Int -> Int -> Int
-            remainingTime available used = available - used
-            afterTwoSessions :: Int -> Int -> Int
-            afterTwoSessions available duration = remainingTime available (duration * 2)
+            remainingMoney :: Int -> Int -> Int
+            remainingMoney budget spent = budget - spent
+            pizzaMoneyLeft :: Int -> Int -> Int
+            pizzaMoneyLeft budget pizzaPrice = remainingMoney budget (pizzaPrice * 2)
             main :: IO ()
-            main = print (afterTwoSessions 45 12)
+            main = print (pizzaMoneyLeft 45 12)
       explanation: |
-        The parentheses make the combined duration the second argument. Directly
-        writing `available - 2 * duration` is also correct; the checks assess
+        The parentheses make the total price of both pizzas the second argument.
+        That leaves `45 - 24 = 21` dollars for snacks. Directly
+        writing `budget - 2 * pizzaPrice` is also correct; the checks assess
         the result, not which helper you use.
 
   # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf pp. 13–15, 25–27.
@@ -624,11 +633,11 @@ steps:
           explanation: "Both positions must have the same type. Two Char values meet that requirement."
         - type: single
           difficulty: intermediate
-          question: "Recall `remainingTime available used = available - used`. What does `remainingTime 30 (4 * 3)` return?"
+          question: "Recall `remainingMoney budget spent = budget - spent`. What does `remainingMoney 30 (4 * 3)` return?"
           options: ["`78`", "`26`", "`18`"]
           correct_index: 2
           option_feedback:
-            0: "That is `(remainingTime 30 4) * 3`, with the multiplication outside the second argument."
+            0: "That is `(remainingMoney 30 4) * 3`, with the multiplication outside the second argument."
             1: "That subtracts only 4. The grouped argument supplies the full product 4 * 3."
           explanation: "The grouped second argument is 12, leaving 18. Parentheses also group a tuple used as one argument."
         - type: single
