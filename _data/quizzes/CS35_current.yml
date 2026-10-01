@@ -4,10 +4,10 @@ active: true
 decks:
   - user_stories
   - effective_learning
-other:
   - shell
   - regex
   - shell_parson
+other:
   - python
   - git_basic
   - nodejs

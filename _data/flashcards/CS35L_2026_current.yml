@@ -4,11 +4,12 @@ active: true
 decks:
   - user_stories
   - study_tips
-other:
   - shell
   - shell_commands_reference
   - shell_pipes
   - regex_basics
+  - regex_examples
+other:
   - python_syntax_explain
   - python_syntax_generate
   - git_basic
