@@ -108,7 +108,7 @@ async function answerWorkoutCardWithShortcut(page, card, key) {
 }
 
 async function answerVisibleWorkoutCard(page) {
-  const quizCard = page.locator('.workout-quiz-card').first();
+  const quizCard = page.locator('#workout-card-area .workout-quiz-card').first();
   if (await quizCard.isVisible()) {
     const type = await quizCard.getAttribute('data-type');
     if (type === 'multiple') {
@@ -498,7 +498,7 @@ test.describe('SE Gym - Library View', () => {
     await page.goto(GYM_URL);
 
     await expect(page.getByLabel('Show hero during workout')).toBeChecked();
-    await page.getByRole('button', { name: 'Start Workout' }).click();
+    await page.getByRole('button', { name: 'Start Workout', exact: true }).click();
     await expect(page.locator('#gym-workout')).toHaveClass(/workout-hero-enabled/);
 
     await page.getByRole('button', { name: /Back to Gym Entrance/i }).click();
@@ -531,7 +531,7 @@ test.describe('SE Gym - Mobile layout', () => {
 
     await expect(page.getByRole('heading', { name: 'SE Gym' })).toBeVisible();
     await expectNoHorizontalScroll(page, 'SE Gym library');
-    await expectTapTarget(page.getByRole('button', { name: 'Start Workout' }), 'Start Workout button');
+    await expectTapTarget(page.getByRole('button', { name: 'Start Workout', exact: true }), 'Start Workout button');
     await expectTapTarget(page.getByRole('button', { name: /^Add .+ to gym$/i }).first(), 'quiz add button');
     await expectTapTarget(page.getByRole('button', { name: /Info about personal gym/i }), 'personal gym info button');
     await expectTapTarget(page.getByLabel('Toggle personal gym activation'), 'personal gym activation switch');
@@ -544,7 +544,7 @@ test.describe('SE Gym - Mobile layout', () => {
     await page.goto(GYM_URL);
 
     await page.getByRole('spinbutton', { name: /max cards/i }).fill('1');
-    await page.getByRole('button', { name: 'Start Workout' }).click();
+    await page.getByRole('button', { name: 'Start Workout', exact: true }).click();
 
     await expect(page.getByRole('button', { name: /Back to Gym Entrance/i })).toBeVisible();
     const answerOptions = page
@@ -566,11 +566,16 @@ test.describe('SE Gym - Mobile layout', () => {
 
     await expect(page.getByLabel('Show hero during workout')).toBeChecked();
     await page.getByRole('spinbutton', { name: /max cards/i }).fill('1');
-    await page.getByRole('button', { name: 'Start Workout' }).click();
+    await page.getByRole('button', { name: 'Start Workout', exact: true }).click();
 
     await expect(page.locator('#gym-workout')).toHaveClass(/workout-hero-enabled/);
     await expect(page.locator('.workout-hero-visual:visible')).toHaveCount(0);
-    await expect(page.getByRole('radio').first()).toBeVisible();
+    const answerOptions = page.getByRole('radiogroup', { name: 'Answer options' })
+      .or(page.getByRole('group', { name: 'Answer options' }));
+    const firstAnswerOption = answerOptions.getByRole('radio').or(answerOptions.getByRole('checkbox')).first();
+    await expect(firstAnswerOption).toBeVisible();
+    await expect(firstAnswerOption).toBeEnabled();
+    await expectTapTarget(firstAnswerOption, 'first answer option with hero setting enabled on mobile');
     await expectNoHorizontalScroll(page, 'SE Gym workout with hero setting enabled on mobile');
   });
 
@@ -580,7 +585,7 @@ test.describe('SE Gym - Mobile layout', () => {
     await page.goto(GYM_URL);
 
     await page.getByRole('spinbutton', { name: /max cards/i }).fill('12');
-    await page.getByRole('button', { name: 'Start Workout' }).click();
+    await page.getByRole('button', { name: 'Start Workout', exact: true }).click();
 
     let foundExponentiationCard = false;
     for (let i = 0; i < 12; i++) {
@@ -759,7 +764,7 @@ test.describe('Personal Gym - Workout', () => {
 
     await expect(page.getByLabel('Show hero during workout')).toBeChecked();
     await page.getByRole('spinbutton', { name: /max cards/i }).fill('1');
-    await page.getByRole('button', { name: 'Start Workout' }).click();
+    await page.getByRole('button', { name: 'Start Workout', exact: true }).click();
 
     const leftHero = page.locator('.workout-hero-visual-left [data-gym-hero-svg]');
     const rightHero = page.locator('.workout-hero-visual-right [data-gym-hero-svg]');
@@ -799,7 +804,7 @@ test.describe('Personal Gym - Workout', () => {
     await page.goto(GYM_URL);
 
     await page.getByRole('spinbutton', { name: /max cards/i }).fill('1');
-    await page.getByRole('button', { name: 'Start Workout' }).click();
+    await page.getByRole('button', { name: 'Start Workout', exact: true }).click();
 
     const leftHero = page.locator('.workout-hero-visual-left [data-gym-hero-svg]');
     await expect(leftHero).toBeVisible();
@@ -882,7 +887,7 @@ test.describe('Personal Gym - Workout', () => {
     await page.locator('#start-workout-btn').click();
 
     // Should have quiz UI elements
-    const quizCard = page.locator('.workout-quiz-card');
+    const quizCard = page.locator('#workout-card-area .workout-quiz-card');
     await expect(quizCard).toBeVisible();
     await expect(quizCard.locator('.question-text')).toBeVisible();
     await expect(quizCard.locator('.quiz-options')).toBeVisible();
@@ -912,7 +917,7 @@ test.describe('Personal Gym - Workout', () => {
     await page.locator('#max-cards').fill('2');
     await page.locator('#start-workout-btn').click();
 
-    const quizCard = page.locator('.workout-quiz-card');
+    const quizCard = page.locator('#workout-card-area .workout-quiz-card');
     await expect(quizCard).toBeVisible();
     const type = await quizCard.getAttribute('data-type');
 
@@ -945,7 +950,7 @@ test.describe('Personal Gym - Workout', () => {
     await page.locator('#max-cards').fill('1');
     await page.locator('#start-workout-btn').click();
 
-    const quizCard = page.locator('.workout-quiz-card');
+    const quizCard = page.locator('#workout-card-area .workout-quiz-card');
     await expect(quizCard).toBeVisible();
     const type = await quizCard.getAttribute('data-type');
     if (type === 'multiple') {
@@ -969,7 +974,7 @@ test.describe('Personal Gym - Workout', () => {
     await page.locator('#max-cards').fill('2');
     await page.locator('#start-workout-btn').click();
 
-    let quizCard = page.locator('.workout-quiz-card');
+    let quizCard = page.locator('#workout-card-area .workout-quiz-card');
     await expect(quizCard).toBeVisible();
     await expect(quizCard.locator('.quiz-shortcuts-hint')).toBeVisible();
     await expect(quizCard.locator('.quiz-option').first()).toBeFocused();
@@ -978,7 +983,7 @@ test.describe('Personal Gym - Workout', () => {
     await expect(quizCard.locator('.quiz-shortcuts-hint')).toBeHidden();
 
     await quizCard.locator('.next-btn').click();
-    quizCard = page.locator('.workout-quiz-card');
+    quizCard = page.locator('#workout-card-area .workout-quiz-card');
     await expect(quizCard).toBeVisible();
     await expect(quizCard.locator('.quiz-option').first()).toBeFocused();
 
@@ -1020,9 +1025,9 @@ test.describe('Personal Gym - Workout', () => {
     });
 
     await page.locator('#max-cards').fill('1');
-    await page.getByRole('button', { name: 'Start Workout' }).first().click();
+    await page.getByRole('button', { name: 'Start Workout', exact: true }).click();
 
-    const quizCard = page.locator('.workout-quiz-card');
+    const quizCard = page.locator('#workout-card-area .workout-quiz-card');
     await expect(quizCard).toBeVisible();
     await expect(quizCard).toHaveAttribute('data-type', 'single');
     const secondOption = quizCard.locator('.quiz-option').nth(1);
@@ -1042,7 +1047,7 @@ test.describe('Personal Gym - Workout', () => {
     await page.locator('#max-cards').fill('1');
     await page.locator('#start-workout-btn').click();
 
-    const quizCard = page.locator('.workout-quiz-card');
+    const quizCard = page.locator('#workout-card-area .workout-quiz-card');
     await expect(quizCard).toBeVisible();
     await expect(quizCard).toHaveAttribute('data-type', 'multiple');
     await expect(quizCard.locator('.quiz-shortcuts-hint')).toContainText(/Enter|Return/);
@@ -1111,13 +1116,13 @@ test.describe('Personal Gym - Workout', () => {
     });
 
     await page.locator('#max-cards').fill('2');
-    await page.getByRole('button', { name: 'Start Workout' }).first().click();
+    await page.getByRole('button', { name: 'Start Workout', exact: true }).click();
 
-    const questionText = page.locator('.workout-quiz-card .question-text');
+    const questionText = page.locator('#workout-card-area .workout-quiz-card .question-text');
     await expect(questionText).toBeVisible();
     expect((await questionText.innerText()).replace(/\s+/g, ' ').trim()).toBe(expectedQuestions[0]);
 
-    const firstCard = page.locator('.workout-quiz-card');
+    const firstCard = page.locator('#workout-card-area .workout-quiz-card');
     await expect(firstCard).toHaveAttribute('data-type', 'multiple');
     await answerWorkoutMultipleChoice(firstCard);
     await expect(firstCard.locator('.quiz-explanation')).toBeVisible();
@@ -1130,7 +1135,7 @@ test.describe('Personal Gym - Workout', () => {
     await page.reload();
     await expect(page.locator('#saved-workout-row')).toBeVisible();
     await expect(page.locator('#saved-workout-summary')).toHaveText('Saved workout: 1 of 2 completed.');
-    await expect(page.getByRole('button', { name: 'Start Workout' }).first()).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Start Workout', exact: true })).toBeEnabled();
     await expect(page.getByRole('button', { name: 'Discard Saved Workout' })).toBeEnabled();
     await a11yCheckpoint(page, 'gym entrance - saved workout resume prompt', { feature: A11Y_FEATURE, darkMode: true });
 
@@ -1139,7 +1144,7 @@ test.describe('Personal Gym - Workout', () => {
     await expect(questionText).toBeVisible();
     expect((await questionText.innerText()).replace(/\s+/g, ' ').trim()).toBe(expectedQuestions[1]);
 
-    const secondCard = page.locator('.workout-quiz-card');
+    const secondCard = page.locator('#workout-card-area .workout-quiz-card');
     await expect(secondCard).toHaveAttribute('data-type', 'multiple');
     await answerWorkoutMultipleChoice(secondCard);
     await secondCard.getByRole('button', { name: 'Next' }).click();
@@ -1158,7 +1163,7 @@ test.describe('Personal Gym - Workout', () => {
     await page.locator('#max-cards').fill('1');
     await page.locator('#start-workout-btn').click();
 
-    const quizCard = page.locator('.workout-quiz-card[data-type="parsons"]');
+    const quizCard = page.locator('#workout-card-area .workout-quiz-card[data-type="parsons"]');
     await expect(quizCard).toBeVisible();
     await expect(quizCard.locator('.parsons-shortcuts-hint')).toContainText(/Enter|Return/);
     await expect(quizCard.locator('.parsons-line').first()).toBeFocused();
@@ -1411,7 +1416,7 @@ test.describe('Personal Gym - Workout', () => {
 
     // Answer 2 quiz cards, handling both single and multiple choice types
     for (let i = 0; i < 2; i++) {
-      const card = page.locator('.workout-quiz-card');
+      const card = page.locator('#workout-card-area .workout-quiz-card');
       await expect(card).toBeVisible();
       const type = await card.getAttribute('data-type');
 
@@ -1492,16 +1497,16 @@ test.describe('Personal Gym - Workout', () => {
       return chosen.map((entry) => entry.text);
     });
 
-    await page.getByRole('button', { name: 'Start Workout' }).first().click();
+    await page.getByRole('button', { name: 'Start Workout', exact: true }).click();
 
-    const questionText = page.locator('.workout-quiz-card .question-text');
+    const questionText = page.locator('#workout-card-area .workout-quiz-card .question-text');
     await expect(questionText).toBeVisible();
     expect(
       (await questionText.innerText()).replace(/\s+/g, ' ').trim(),
       'the first card should be the least-recently practiced question',
     ).toBe(expectedQuestions[0]);
 
-    const firstCard = page.locator('.workout-quiz-card');
+    const firstCard = page.locator('#workout-card-area .workout-quiz-card');
     const firstType = await firstCard.getAttribute('data-type');
     if (firstType === 'multiple') {
       await answerWorkoutMultipleChoice(firstCard);
@@ -1526,7 +1531,7 @@ test.describe('Personal Gym - Workout', () => {
     await page.locator('#start-workout-btn').click();
 
     for (let i = 0; i < 5; i++) {
-      const card = page.locator('.workout-quiz-card');
+      const card = page.locator('#workout-card-area .workout-quiz-card');
       await expect(card).toBeVisible();
       const questionText = await card.locator('.question-text').innerText();
       const includeOptional = questionText.includes('homepage to load blazing fast');
@@ -1575,7 +1580,7 @@ test.describe('Personal Gym - Difficulty', () => {
     // Skip past any questions that lack a difficulty until we land on one
     // that has it; that's the only case where the toggle is observable.
     for (let i = 0; i < 5; i++) {
-      const card = page.locator('.workout-quiz-card').first();
+      const card = page.locator('#workout-card-area .workout-quiz-card').first();
       await expect(card).toBeVisible();
       const chip = card.locator('.quiz-difficulty');
       const chipCount = await chip.count();
@@ -1622,7 +1627,7 @@ test.describe('Personal Gym - Difficulty', () => {
 
     // Walk to a difficulty-tagged card; chip should be visible from the start.
     for (let i = 0; i < 5; i++) {
-      const card = page.locator('.workout-quiz-card').first();
+      const card = page.locator('#workout-card-area .workout-quiz-card').first();
       await expect(card).toBeVisible();
       const chip = card.locator('.quiz-difficulty');
       if (await chip.count() > 0) {
@@ -1664,7 +1669,7 @@ test.describe('Personal Gym - Difficulty', () => {
     await expect(page.getByText(/1 total cards available/)).toBeVisible();
 
     await page.getByRole('spinbutton', { name: /max cards/i }).fill('20');
-    await page.getByRole('button', { name: 'Start Workout' }).click();
+    await page.getByRole('button', { name: 'Start Workout', exact: true }).click();
 
     await expect(page.getByText('Untagged difficulty fixture question', { exact: true })).toBeVisible();
     await expect(page.getByLabel(/^Difficulty:/)).toHaveCount(0);
@@ -1688,10 +1693,10 @@ test.describe('Personal Gym - Difficulty', () => {
     await expect(page.getByText(/3 total cards available/)).toBeVisible();
 
     await page.getByRole('spinbutton', { name: /max cards/i }).fill('20');
-    await page.getByRole('button', { name: 'Start Workout' }).click();
+    await page.getByRole('button', { name: 'Start Workout', exact: true }).click();
     const visibleQuestions = [];
     for (let i = 0; i < 3; i++) {
-      visibleQuestions.push(await page.locator('.workout-quiz-card .question-text').innerText());
+      visibleQuestions.push(await page.locator('#workout-card-area .workout-quiz-card .question-text').innerText());
       await answerDifficultyFixtureCard(page);
     }
     expect(visibleQuestions.sort()).toEqual([
@@ -1714,7 +1719,7 @@ test.describe('Personal Gym - Difficulty', () => {
     await page.goto(GYM_URL);
     await installDifficultyFixture(page);
     await page.getByRole('spinbutton', { name: /max cards/i }).fill('20');
-    await page.getByRole('button', { name: 'Start Workout' }).click();
+    await page.getByRole('button', { name: 'Start Workout', exact: true }).click();
 
     for (let i = 0; i < DIFFICULTY_FIXTURE_QUIZ.questions.length; i++) {
       await answerDifficultyFixtureCard(page);
@@ -1962,16 +1967,15 @@ test.describe('Personal Gym - Performance Tracking', () => {
 
     // Create a saved checkpoint: start the main gym workout and answer one card.
     await page.locator('#max-cards').fill('2');
-    await page.getByRole('button', { name: 'Start Workout' }).first().click();
+    await page.getByRole('button', { name: 'Start Workout', exact: true }).click();
     await expect(page.locator('#gym-workout')).toBeVisible();
     await answerVisibleWorkoutCard(page);
 
     await page.reload();
     await expect(page.locator('#saved-workout-row')).toBeVisible();
-    // The prominent main Start button still defers to Resume/Discard...
-    await expect(page.getByRole('button', { name: 'Start Workout' }).first()).toBeDisabled();
+    await expect(page.getByRole('button', { name: 'Start Workout', exact: true })).toBeEnabled();
 
-    // ...but the quick-start launchers stay available and start immediately,
+    // The quick-start launchers also stay available and start immediately,
     // replacing the saved checkpoint instead of being blocked by it.
     const hardWorkout = page.getByRole('button', { name: 'Start Hard Workout' });
     await expect(hardWorkout).toBeEnabled();
@@ -2221,7 +2225,7 @@ test.describe('SE Gym - Spaced repetition, Workout of the Day, Topic Mastery', (
     await expect(page.locator('#due-count')).toContainText('1 card');
     await page.locator('#start-review-btn').click();
     await expect(page.locator('#gym-workout')).toBeVisible();
-    await expect(page.locator('.workout-quiz-card')).toBeVisible();
+    await expect(page.locator('#workout-card-area .workout-quiz-card')).toBeVisible();
   });
 
   test('flashcard stats migrate from question hashes to stable card IDs', async ({ page, context }) => {
@@ -2558,7 +2562,7 @@ test.describe('SE Gym — challenge a friend', () => {
     await page.locator('#challenge-upload-input').setInputFiles(file);
 
     // The challenge's question becomes a one-card workout (git:1 is single-choice).
-    const quizCard = page.locator('.workout-quiz-card');
+    const quizCard = page.locator('#workout-card-area .workout-quiz-card');
     await expect(quizCard).toBeVisible();
     await quizCard.locator('.quiz-option').first().click();
     await quizCard.locator('.next-btn').click();

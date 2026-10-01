@@ -59,7 +59,7 @@ layout: sebook
       </div>
       {% endif %}
       <div class="gym-start-row">
-        <button id="start-workout-btn" class="gym-btn primary gym-start-btn" disabled><i class="fa-solid fa-play" aria-hidden="true"></i> Start Workout</button>
+        <button id="start-workout-btn" class="gym-btn primary gym-start-btn" aria-describedby="gym-summary" disabled><i class="fa-solid fa-play" aria-hidden="true"></i> Start Workout</button>
       </div>
       <div class="gym-topic-strip" aria-hidden="true">
         <span class="gym-topic-token topic-code"><i class="fa-solid fa-code"></i></span>
@@ -233,7 +233,7 @@ layout: sebook
             </button>
           </div>
           <div class="gym-controls-start-row">
-            <button id="start-workout-btn-bottom" class="gym-btn primary gym-start-btn" aria-label="Begin workout from controls" disabled><i class="fa-solid fa-play" aria-hidden="true"></i> Start Workout</button>
+            <button id="start-workout-btn-bottom" class="gym-btn primary gym-start-btn" aria-label="Start Workout from controls" aria-describedby="gym-summary" disabled><i class="fa-solid fa-play" aria-hidden="true"></i> Start Workout</button>
           </div>
         </div>
       </div>
@@ -966,6 +966,7 @@ layout: sebook
       var workoutEndedByTimer = false;
       var workoutIsDaily = false; // true when the current workout was started by "Workout of the Day"
       var workoutActivityCardCount = 0;
+      var workoutPreservesSavedProgress = false;
       var challengeTarget = null; // { score, total, name } when the current workout is an imported challenge
       var lastTimedPracticeDrawCount = 0;
       var WORKOUT_PROGRESS_KEY = 'se-gym-workout-progress';
@@ -1619,17 +1620,12 @@ layout: sebook
               ? ' least-recently practiced cards.'
               : ' shuffled cards. Turn on Track Performance to rotate by least-recently practiced cards.');
           if (hasSavedWorkout) {
-            gymSummary.textContent += ' Resume or discard the saved workout before starting another.';
+            gymSummary.textContent += ' Starting a new workout discards the saved workout.';
           }
         } else {
           gymSummary.textContent = '';
         }
-        // A pending saved workout still disables the prominent main "Start
-        // Workout" buttons (paired with the adjacent Resume/Discard prompt), but
-        // the quick-start launchers (Today's Workout, Start Review, Start Hard
-        // Workout) and the per-deck practice buttons stay available — they
-        // replace the saved checkpoint when started (see beginWorkout).
-        setStartButtonsDisabled(!PersonalGym.isPersonalGymActive() || !hasAnything || drawCount === 0 || hasSavedWorkout);
+        setStartButtonsDisabled(!PersonalGym.isPersonalGymActive() || !hasAnything || drawCount === 0);
       }
 
       // ---- Difficult questions helper ----
@@ -1739,16 +1735,9 @@ layout: sebook
         options = options || {};
         workoutIsDaily = false;
         if (!cards || cards.length === 0) return false;
-        // A pending saved workout normally blocks a fresh start so the user
-        // resumes or discards it first (this guards the prominent main
-        // "Start Workout" button). Targeted and quick-start practice — hard,
-        // per-deck, daily, review — pass replaceSaved to stay always available;
-        // the saveWorkoutProgress(0) below then overwrites the slot so the new
-        // session cleanly replaces the old checkpoint.
-        if (!isPlainView && !challengeTarget && !options.replaceSaved && updateSavedWorkoutResume()) {
-          announceGymStatus('Resume or discard the saved workout before starting a new one.');
-          return false;
-        }
+        // Linked practice can run alongside a paused workout. Keep that
+        // checkpoint protected for this run, including its reviews and restarts.
+        workoutPreservesSavedProgress = !!options.preserveSaved && readWorkoutProgress() !== null;
         workoutCards = cards;
         workoutCurrentStep = 0;
         workoutScore = 0;
@@ -1984,7 +1973,7 @@ layout: sebook
       }
 
       function canCheckpointWorkout() {
-        return !isPlainView && PersonalGym.isPersonalGymActive() && workoutCards && workoutCards.length > 0 && !challengeTarget
+        return !isPlainView && !workoutPreservesSavedProgress && PersonalGym.isPersonalGymActive() && workoutCards && workoutCards.length > 0 && !challengeTarget
           && (!workoutIsReview || workoutReviewQueue.length > 0);
       }
 
@@ -2081,6 +2070,7 @@ layout: sebook
         workoutEndedByTimer = false;
         workoutIsDaily = saved.isDaily;
         workoutActivityCardCount = saved.activityCardCount;
+        workoutPreservesSavedProgress = false;
         challengeTarget = null;
         workoutDifficultyStats = normalizeWorkoutDifficultyStats(saved.difficultyStats);
 
@@ -2146,15 +2136,14 @@ layout: sebook
 
       // Per-deck targeted practice: start a workout for just this quiz/flashcard
       // set without touching the saved gym selection. Delegated so it also covers
-      // any library rows that get re-rendered. replaceSaved keeps it available
-      // even when a saved workout is pending (it replaces that checkpoint).
+      // any library rows that get re-rendered.
       document.addEventListener('click', function (e) {
         var btn = e.target && e.target.closest ? e.target.closest('.gym-practice-btn') : null;
         if (!btn || btn.disabled) return;
         var type = btn.getAttribute('data-type');
         var id = btn.getAttribute('data-id');
         if (!type || !id) return;
-        startWorkout({ sourceGym: [{ type: type, id: id }], requireActive: false, replaceSaved: true });
+        startWorkout({ sourceGym: [{ type: type, id: id }], requireActive: false });
       });
 
       // Bind difficult gym add button
@@ -2285,7 +2274,7 @@ layout: sebook
         });
         challengeTarget = null;
         if (hardWorkoutCards.length === 0) return;
-        beginWorkout(hardWorkoutCards, { replaceSaved: true });
+        beginWorkout(hardWorkoutCards);
       });
 
       // ---- Workout of the Day / Due Review / Topic-Mastery practice / enable tracking ----
@@ -2300,7 +2289,7 @@ layout: sebook
             return;
           }
           // beginWorkout() resets workoutIsDaily, so flag this workout AFTER it starts.
-          if (beginWorkout(dailyWorkout, { replaceSaved: true })) {
+          if (beginWorkout(dailyWorkout)) {
             workoutIsDaily = true;
             saveWorkoutProgress(0);
           }
@@ -2322,7 +2311,7 @@ layout: sebook
             announceGymStatus('No due cards match your current difficulty filter. Adjust the filter and try again.');
             return;
           }
-          beginWorkout(due, { replaceSaved: true });
+          beginWorkout(due);
         });
       }
 
@@ -2600,7 +2589,7 @@ layout: sebook
           else announceGymStatus('No cards match your current gym and difficulty filter.');
           return;
         }
-        beginWorkout(cards, { replaceSaved: !!(options && options.replaceSaved) });
+        beginWorkout(cards, { preserveSaved: !!(options && options.preserveSaved) });
       }
 
       function showWorkoutCard(index) {
@@ -3411,7 +3400,7 @@ layout: sebook
 
       function finishWorkout() {
         stopWorkoutTimer(true);
-        clearWorkoutProgress();
+        if (!workoutPreservesSavedProgress) clearWorkoutProgress();
         workoutCardArea.innerHTML = '';
         workoutView.classList.add('workout-results-active');
         showElement(workoutResults);
@@ -3590,7 +3579,7 @@ layout: sebook
           return;
         }
         if (!requestedWorkoutEntries.length) return;
-        startWorkout({ sourceGym: requestedWorkoutEntries.slice(), requireActive: false });
+        startWorkout({ sourceGym: requestedWorkoutEntries.slice(), requireActive: false, preserveSaved: true });
       }
 
       // ==================== EVENT BINDINGS ====================
