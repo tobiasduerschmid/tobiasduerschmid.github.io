@@ -110,7 +110,7 @@ test.describe('tutorial progress follows lessons across the Python expansion', (
     await expectActiveStep(page, 0);
     const notice = page.getByRole('status', { name: 'Saved progress update' });
     await expect(notice).toContainText('could not be matched confidently');
-    await expect(notice).toContainText('skip optional checks');
+    await expect(notice).toContainText('need rechecking');
     await a11yCheckpoint(page, 'ambiguous tutorial progress migration', { feature: 'tutorial-progress-migration' });
     const progress = await savedProgress(page);
     expect(passedKeys(progress, 'stepsPassed')).toEqual(['hello', 'variables']);

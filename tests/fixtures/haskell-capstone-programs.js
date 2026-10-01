@@ -8,7 +8,7 @@ function playlistProgram(definition) {
   return `module Main where\nplaylistReport :: Int -> Int -> [(String, Int)] -> ([String], Int)\n${definition}\nmain = print (playlistReport 5 2 [("one",5),("two",4)])\n`;
 }
 
-function journeyFold({ strictThreshold = false, alwaysHalve = false, revive = false } = {}) {
+function journeyFold({ strictThreshold = false, alwaysHalve = false, revive = false, uncappedDefensiveHeal = false } = {}) {
   const defensive = strictThreshold ? 'hp < 40' : 'hp <= 40';
   return `module Main where
 data Event = Travel Integer | Fight Integer | Heal Integer deriving (Eq, Show)
@@ -20,7 +20,7 @@ journey = foldl advance 100
       let next = case event of
             Fight n -> hp - (if ${alwaysHalve ? 'True' : defensive} then n \`div\` 2 else n)
             Travel n -> if ${defensive} then hp else min 100 (hp + n \`div\` 4)
-            Heal n -> min 100 (hp + n)
+            Heal n -> ${uncappedDefensiveHeal ? 'if hp <= 40 then hp + n else min 100 (hp + n)' : 'min 100 (hp + n)'}
       in if next <= 0 then -1 else next
 main = print (journey [Fight 60, Heal 1, Fight 3])
 `;
@@ -122,5 +122,6 @@ main = print (journey [Fight 60, Heal 1, Fight 3])
     { name: 'excluding exactly forty from defensive mode', passes: false, source: journeyFold({ strictThreshold: true }) },
     { name: 'halving damage even in normal mode', passes: false, source: journeyFold({ alwaysHalve: true }) },
     { name: 'allowing a later heal to revive a dead expedition', passes: false, source: journeyFold({ revive: true }) },
+    { name: 'failing to cap healing in defensive mode', passes: false, source: journeyFold({ uncappedDefensiveHeal: true }) },
   ],
 };

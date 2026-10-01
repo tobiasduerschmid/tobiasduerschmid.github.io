@@ -1915,8 +1915,13 @@ New-only filenames, indices outside the legacy range, or an active file matching
 only one candidate step distinguish them. The legacy one-past-last unlocked
 sentinel is not evidence of the expanded ordering. If neither layout is certain,
 only records whose positions mean the same lesson in both layouts survive;
-resume uses a uniquely matching `open_file`, otherwise the first lesson. All
-file overrides, including unknown filenames, remain in storage. An accessible
+resume uses a uniquely matching `open_file`, otherwise the first lesson.
+Unversioned saves are also treated conservatively when a legacy lesson was
+removed, since its missing file definition cannot identify a newer ordering.
+The migration notice describes rechecking without promising optional navigation.
+In versioned tutorials with required tests, only a matching test pass unlocks
+Next; access to a later lesson does not credit a replacement lesson's tests.
+All file overrides, including unknown filenames, remain in storage. An accessible
 notice appears in the resumed instructions and popout during that visit, explaining
 preservation or the need to recheck uncertain progress. Saving stamps the current
 identity metadata, so reload does not migrate a second time. No check becomes

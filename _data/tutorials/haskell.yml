@@ -2,21 +2,31 @@ title: "Haskell 1: Expressions, Types, and Recursion"
 description: "For CS131 students who know functions, conditionals, and lists in Python or C++: build pure Haskell functions through prediction, debugging, and independent practice. Allow 90–110 minutes, with a break after Step 5."
 backend: haskell
 require_tests: true
+
+# Preserve matching saved lessons without crediting replacements at the same index.
+progress_version: 2
+legacy_step_keys: [expressions, numeric-conversions, guards, local-bindings, tuples, lists, list-patterns, recursion, comprehensions, budget]
 learning_objectives:
   - "Analyze function application and distinguish grouping from evaluation order."
-  - "Apply type signatures and explicit numeric conversion to pure functions."
+  - "Derive type signatures from parameter and result constraints."
   - "Create complete conditional definitions with guards and local bindings."
   - "Analyze tuple, list, and string patterns without assuming mutable variables."
   - "Create recursive list transformations with complete base cases."
   - "Evaluate boundary cases and build a budget-limited prefix selector independently."
-# Course sources: Intro to Functional Programming & Haskell v10, slides 5–76,
-# 167–169; Homework Problems HASKELL1–10. Original practice problems, not an
-# assignment answer key. Exact source coverage lives in docs/haskell-course-source-map.md.
+# Course source: intro_to_functional_programming_and_haskell_v10_handouts.pdf.
+# Page references below are physical PDF pages. The supplied handout PPTX
+# supplements display harnesses (slide 14) and div notation (39).
+# Assessments guide task families; prerequisites come from the supplied lectures.
+# Original practice, with exact coverage in docs/haskell-course-source-map.md.
 # Each step is an independent exercise. Reseeding Main.hs prevents one step's
 # definitions from silently replacing the next step's starter.
 steps:
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf pp. 5–8, 13–18.
+  # Display harness: intro_to_functional_programming_and_haskell_v10_handouts.pptx slide 14.
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx P3b — application/parentheses prerequisite for list recursion.
   # Pedagogy: PRIMM — contrast application grouping, Run, then Modify.
   - title: "Functions as Expressions"
+    key: session-time
     instructions: |
       ### Why this matters
 
@@ -34,44 +44,47 @@ steps:
       ### A tiny worked example
 
       ```haskell
-      square :: Int -> Int
-      square x = x * x
+      remainingTime :: Int -> Int -> Int
+      remainingTime available used = available - used
       ```
 
-      `::` introduces a type signature: an `Int` goes in and an `Int` comes
-      out. `=` defines the result; it does not assign a new value to `x`.
+      `::` introduces a type signature: this function accepts two `Int`
+      arguments and produces an `Int`. `=` defines the result; it does not
+      assign a new value to either parameter.
       The body is an expression, so there is no `return` statement.
-      Call the function with `square 3`. Names of functions and bindings
+      Call it with `remainingTime 45 12`, which gives `33`. Names of functions and bindings
       start with a lowercase letter; type names such as `Int` start uppercase.
       `--` starts a comment.
 
       Function application binds more tightly than arithmetic:
-      `square 3 + 1` means `(square 3) + 1`. Use parentheses when an argument
+      `remainingTime 45 12 * 2` means `(remainingTime 45 12) * 2`. Use parentheses when an argument
       is itself an expression. `f x y` groups as `(f x) y`; that grouping
       rule does **not** specify which expression Haskell evaluates first.
 
       ### Predict before you Run!
 
-      The starter's `nextSquare 3` is meant to square the **next** integer.
-      Will the programm print a number (if so, which one) or a type error? Think about your prediction,
+      The starter's `afterTwoSessions 45 12` should report the time left
+      after two sessions of 12 minutes each, starting with 45 minutes.
+      Will it print `21`, `66`, or a type error? Think about your prediction,
       then choose **Run**.
 
       <details markdown="1"><summary>Click for explanation</summary>
 
-      It prints `10`: the starter squares `3`, then adds `1`. To square
-      the next integer, the addition must be part of the argument.
+      It prints `66`: the starter subtracts one session, then doubles the
+      remaining time. The doubled duration must be the second argument.
 
       </details>
 
       ### Your challenge
 
-      Repair `nextSquare n` to return the square of `n + 1` for any `Int`
-      in the small ranges used here. Try a negative number and zero before
-      choosing **Test My Work**. Explain why the same definition works for both.
+      Repair `afterTwoSessions available duration` to subtract two session
+      durations from the available time. Inputs are nonnegative `Int` values
+      in the small ranges used here; a negative result reports an overrun.
+      Try a zero duration and an overrun before choosing **Test My Work**.
 
-      `main = print (...)` is the supplied display harness. `IO ()` marks
-      an input/output action; `()` is its result type. Your function computes
-      a value, and `main` displays it. The browser uses MicroHs, a compact
+      `main = print (...)` is the supplied display harness. Your function computes
+      a value, and `main` displays it. Leave the harness's type signature alone.
+      The browser uses MicroHs, a compact
       Haskell implementation; course-style definitions go in `Main.hs`, not
       interpreter commands such as `:load`.
 
@@ -84,47 +97,47 @@ steps:
         content: |
           module Main where
 
-          square :: Int -> Int
-          square x = x * x
+          remainingTime :: Int -> Int -> Int
+          remainingTime available used = available - used
 
-          nextSquare :: Int -> Int
-          nextSquare n = square n + 1
+          afterTwoSessions :: Int -> Int -> Int
+          afterTwoSessions available duration = remainingTime available duration * 2
 
           main :: IO ()
-          main = print (nextSquare 3)
+          main = print (afterTwoSessions 45 12)
     open_file: Main.hs
     run_file: Main.hs
     tests:
-      - description: "nextSquare squares the successor for positive, zero, and negative inputs"
-        command: "nextSquare 3 == 16 && nextSquare 0 == 1 && nextSquare (-1) == 0 && nextSquare (-4) == 9 && nextSquare 8 == 81"
+      - description: "Two sessions subtract both durations, including zero, exact fit, and overrun"
+        command: "afterTwoSessions 45 12 == 21 && afterTwoSessions 30 15 == 0 && afterTwoSessions 20 12 == (-4) && afterTwoSessions 17 0 == 17 && afterTwoSessions 0 3 == (-6)"
         hints:
-          - text: "Identify the value that must enter square. Is it n, or the integer after n?"
-          - text: "Application groups before addition. Parentheses can make a whole expression one argument."
-          - text: "Use the shape `nextSquare n = square (...)`, with the successor expression inside."
+          - text: "Which argument represents time used: one session duration or the combined duration?"
+          - text: "Application groups before multiplication. Parentheses can make a whole expression one argument."
+          - text: "Use `remainingTime available (...)`, placing the combined duration in parentheses."
     quiz:
       title: "Step 1 — Knowledge Check"
       min_score: 0.8
       questions:
         - type: single
           difficulty: intermediate
-          question: "With `triple x = 3 * x`, what is `triple 2 + 4`?"
-          options: ["`10`", "`18`", "A type error"]
+          question: "With `remainingTime available used = available - used`, what is `remainingTime 18 4 * 2`?"
+          options: ["`28`", "`10`", "A type error"]
           correct_index: 0
           option_feedback:
-            1: "That would be `triple (2 + 4)`. Without those parentheses, triple receives only 2."
-            2: "A function result can be used in arithmetic; the call and addition both produce compatible numbers."
-          explanation: "The expression groups as `(triple 2) + 4`, giving 6 + 4."
+            1: "That would be `remainingTime 18 (4 * 2)`. Without those parentheses, multiplication applies to the result."
+            2: "A function result can be used in arithmetic; the call and multiplication both produce compatible numbers."
+          explanation: "The expression groups as `(remainingTime 18 4) * 2`, giving 14 * 2."
         - type: single
           difficulty: basic
-          question: "What does `square x = x * x` do with x?"
+          question: "What does `remainingTime available used = available - used` do with available?"
           options:
-            - "Replaces x with its square"
-            - "Defines a result using x"
-            - "Prints x and then squares it"
+            - "Replaces it with the remaining time"
+            - "Defines a result using its value"
+            - "Prints it before subtracting used"
           correct_index: 1
           option_feedback:
             0: "A parameter binding stays the same. The expression computes the function's result."
-            2: "Multiplication is pure; displaying the result requires a separate output action."
+            2: "Subtraction is pure; displaying the result requires a separate output action."
           explanation: "The definition describes a value for each input, without modifying the input."
     solution:
       files:
@@ -132,61 +145,68 @@ steps:
           language: haskell
           content: |
             module Main where
-            square :: Int -> Int
-            square x = x * x
-            nextSquare :: Int -> Int
-            nextSquare n = square (n + 1)
+            remainingTime :: Int -> Int -> Int
+            remainingTime available used = available - used
+            afterTwoSessions :: Int -> Int -> Int
+            afterTwoSessions available duration = remainingTime available (duration * 2)
             main :: IO ()
-            main = print (nextSquare 3)
+            main = print (afterTwoSessions 45 12)
       explanation: |
-        The parentheses make `n + 1` the argument. Directly writing
-        `(n + 1) * (n + 1)` is also correct; the checks assess the function's
-        result, not which helper you use.
+        The parentheses make the combined duration the second argument. Directly
+        writing `available - 2 * duration` is also correct; the checks assess
+        the result, not which helper you use.
 
-  # Pedagogy: mistake-based familiarization — a well-typed numerical bug.
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf pp. 13–15, 25–27.
+  # Assessment: [Midterm] F24 V1 (Public).pdf P3A p. 5 — derive a signature from fixed numeric inputs and a comparison.
+  # Pedagogy: mistake-based familiarization — separate a well-typed numerical bug from a type mismatch.
   - title: "Types and Numeric Boundaries"
+    key: fractional-shares
     instructions: |
       ### Why this matters
 
-      A program can compile and still throw away the information you need.
+      A program can compile and still calculate the wrong answer.
       Types help you decide what a value can represent, but you still choose the operation.
 
       ### 🎯 You will learn to
 
-      - Apply numeric conversion before fractional division
-      - Distinguish type inference from runtime type changes
+      - Apply a numeric type signature to a fractional calculation
+      - Derive a result type from the expression being computed
 
-      `Int` represents bounded whole numbers, `Integer` supports arbitrary
-      precision, and `Double` represents approximate floating-point numbers.
+      `Int` represents whole numbers, and `Double` represents approximate
+      floating-point numbers, including fractional values.
       `Bool` has the values `True` and `False`. `'x'` is a `Char`, while
       `"x"` is a `String`. A type is part of the program even when its
       signature is omitted: Haskell infers types before executing your code.
 
-      `div` performs integral division. Write `div 7 2` or use backticks:
-      ``7 `div` 2``. Both give `3`. `/` is fractional division, so convert
-      an existing `Int` with `fromIntegral` when a fractional result is needed.
-      For example, `fromIntegral 3 * 2.5 :: Double` gives `7.5`.
-      Numeric literals can adapt to an expected numeric type; existing
-      `Int` values do not silently become `Double` values.
+      `/` performs fractional division. With a `Double` result, `7 / 2`
+      gives `3.5`. In this exercise, both inputs already have type `Double`;
+      the literal `7` can be used where a `Double` is expected.
+
+      Derive a signature by tracking **input types** and the **whole result**.
+      For `fits first second space = first + second <= space`, assume all
+      three inputs are `Int` values. Addition produces an `Int`, but the
+      comparison produces `Bool`: `fits :: Int -> Int -> Int -> Bool`.
+      The result type describes the comparison's answer, not its operands.
 
       ### Thinking time!
 
-      A team splits seven points between two players. The starter converts
-      its answer to `Double`. Does that restore the half point, yielding
-      `3.5`, or does it produce `3.0`? Predict, then run.
+      A team splits seven points between two players. The starter divides
+      by `players + 1`. Will it return `3.5` or about `2.33`? Identify
+      the denominator before running.
 
-      <details markdown="1"><summary>Where the fraction went</summary>
+      <details markdown="1"><summary>Check the denominator</summary>
 
-      Integral division already produced `3`. Converting that result gives
-      `3.0`; it cannot recover information discarded earlier.
+      The starter divides by three, so it returns about `2.33`. Its types
+      are consistent; the numerical rule is wrong.
 
       </details>
 
       ### Your challenge
 
       Repair `pointsPerPlayer total players` so it returns the fractional
-      share. Assume `total >= 0` and `players > 0`. Use the provided types;
-      the checks allow floating-point rounding error.
+      share. Assume `total >= 0` and a positive whole-number player count
+      represented as a `Double`. The total may contain a fraction, such as
+      `7.5`. Use the provided types; the checks allow floating-point rounding error.
 
       For a short debugging experiment, replace an argument in `main` with
       `True` and run. Read the type error, explain the mismatch, then undo
@@ -198,32 +218,32 @@ steps:
         reseed: true
         content: |
           module Main where
-          pointsPerPlayer :: Int -> Int -> Double
-          pointsPerPlayer total players = fromIntegral (total `div` players)
+          pointsPerPlayer :: Double -> Double -> Double
+          pointsPerPlayer total players = total / (players + 1)
           main :: IO ()
           main = print (pointsPerPlayer 7 2)
     open_file: Main.hs
     run_file: Main.hs
     tests:
-      - description: "Shares preserve fractions, exact divisions, and zero totals"
-        command: "abs (pointsPerPlayer 7 2 - 3.5) < 1e-9 && abs (pointsPerPlayer 10 4 - 2.5) < 1e-9 && abs (pointsPerPlayer 9 3 - 3) < 1e-9 && abs (pointsPerPlayer 0 5) < 1e-9 && abs (pointsPerPlayer 1 3 - 1/3) < 1e-9"
+      - description: "Shares preserve fractional totals, fractional results, exact divisions, and zero totals"
+        command: "abs (pointsPerPlayer 7 2 - 3.5) < 1e-9 && abs (pointsPerPlayer 7.5 3 - 2.5) < 1e-9 && abs (pointsPerPlayer 10 4 - 2.5) < 1e-9 && abs (pointsPerPlayer 9 3 - 3) < 1e-9 && abs (pointsPerPlayer 0 5) < 1e-9 && abs (pointsPerPlayer 1 3 - 1/3) < 1e-9"
         hints:
-          - text: "Find the point where the starter loses the fractional part. A later conversion cannot restore it."
-          - text: "Fractional division needs fractional operands. Convert the supplied Int values before dividing."
-          - text: "The expression has the shape `fromIntegral ... / fromIntegral ...`; decide which input belongs on each side."
+          - text: "Compare the number of players in the story with the number used by the starter."
+          - text: "The numerator is the total to share. The denominator counts the people receiving a share."
+          - text: "Use one division expression with the two supplied parameters; no extra recipient is part of the rule."
     quiz:
       title: "Step 2 — Knowledge Check"
       min_score: 0.8
       questions:
         - type: single
           difficulty: intermediate
-          question: "Which result does ``fromIntegral (9 `div` 2) :: Double`` produce?"
-          options: ["`4.5`", "`4.0`", "A type error"]
+          question: "Assume total, each, and groups are Ints. Which signature fits `leftover total each groups = total - each * groups`?"
+          options: ["`Int -> Int -> Int -> Bool`", "`Int -> Int -> Int -> Int`", "`Int -> Int -> Bool -> Int`"]
           correct_index: 1
           option_feedback:
-            0: "The conversion happens after integral division, when the fraction is already gone."
-            2: "Converting an integral result to Double is valid; the issue is lost precision before conversion."
-          explanation: "The inner result is 4, and its Double representation is 4.0."
+            0: "There is no comparison here. Both multiplication and subtraction produce an Int result."
+            2: "groups participates in multiplication and is specified as an Int; it is not a Boolean condition."
+          explanation: "All three inputs are Ints. The final subtraction also returns an Int, so the signature has three Int inputs and an Int result."
         - type: single
           difficulty: basic
           question: "A definition omits its type signature. What does Haskell do?"
@@ -242,131 +262,144 @@ steps:
           language: haskell
           content: |
             module Main where
-            pointsPerPlayer :: Int -> Int -> Double
-            pointsPerPlayer total players = fromIntegral total / fromIntegral players
+            pointsPerPlayer :: Double -> Double -> Double
+            pointsPerPlayer total players = total / players
             main :: IO ()
             main = print (pointsPerPlayer 7 2)
       explanation: |
-        The result signature selects Double, and `/` now operates on converted
-        operands. The positive-player precondition avoids division by zero.
+        Both operands and the result have type Double. Dividing by the actual
+        player count gives each share; the positive-player precondition avoids
+        division by zero. The signature checks compatibility, not the formula.
 
-  # Pedagogy: PRIMM — contrast overlapping guards, then test the boundary.
-  - title: "Conditional Values and Guards"
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf pp. 20–24.
+  # Assessment: [Midterm] F24 V1 (Public).pdf P1 p. 2 — guard selection prerequisite for conditional recursion.
+  # Pedagogy: PRIMM — contrast old and proposed state, then test both clamp boundaries.
+  - title: Conditional Values and Guards
+    key: stock-adjustment
     instructions: |
       ### Why this matters
 
-      Your program often has to choose between several answers. In Haskell,
-      a conditional chooses a value, and the order of overlapping rules matters.
+      Several valid conditions can overlap. Guards let you state which rule
+      wins and choose a value without changing a variable in place.
 
       ### 🎯 You will learn to
 
-      - Analyze which guard handles a boundary value
-      - Create a complete classification function
+      - Analyze guard conditions at a boundary
+      - Create a complete calculation with lower and upper limits
 
-      An `if` is an expression: `if score >= 60 then "Pass" else "Retry"`.
+      An `if` is an expression: `if locked then 0 else available`.
       It needs both branches, and their types must agree. Comparisons use
-      `==`, `/=`, `<`, `<=`, `>`, and `>=`; Boolean combinations use `&&`
+      `==`, `<`, `<=`, `>`, and `>=`; Boolean combinations use `&&`
       and `||`. Notice the distinction between defining with `=` and
       comparing with `==`.
 
-      Guards give a readable form for several conditions:
+      Guards can express a calculation with several possible results:
 
       ```haskell
-      ticket age
-        | age < 12 = "Child"
-        | age < 18 = "Teen"
-        | otherwise = "Adult"
+      refund returned damaged
+        | damaged = 0
+        | returned = 12
+        | otherwise = 0
       ```
 
-      Read from the top. The first true guard supplies the result.
+      Read from the top. The first true guard supplies the result. If both
+      Boolean inputs are `True`, the damaged-item rule wins and the refund is 0.
       `otherwise` is the Boolean value `True`, so it provides a final fallback.
 
       ### Thinking time!
 
-      The starter has a rule for scores of at least 90. Will `rankScore 95`
-      return `"Gold"` or `"Silver"`? Name the first matching guard before running.
+      A storage bin holds at most 10 items. It currently holds 8, and a proposed
+      adjustment adds 5. Will the starter's `adjustStock 8 5 10` return 10 or 13?
+      Check whether its guards examine the old count or the proposed new count.
 
       ### Your challenge
 
-      Repair `rankScore` for this complete rule:
+      Repair `adjustStock stock change capacity`. First calculate the proposed
+      count `stock + change`. Return 0 if that is below 0, return `capacity` if
+      it exceeds capacity, and otherwise return the proposed count.
 
-      - Below 60: `"Practice"`
-      - From 60 through 89: `"Silver"`
-      - At least 90: `"Gold"`
-
-      The function accepts any `Int`, including values outside the usual
-      score range. Test 59, 60, 89, and 90 yourself. A large sample such as
-      95 tells you less about the exact threshold than 89 and 90 together.
+      The capacity is nonnegative; the starting stock is between 0 and capacity.
+      The signed change can add or remove items. Every input is an `Int` in the
+      small ranges used here. The function returns a new count; it does not
+      modify its arguments. Test exact limits as well as crossing each limit.
       Guards or an equivalent nested `if` are both valid.
     files:
-      - path: Main.hs
-        language: haskell
-        reseed: true
-        content: |
-          module Main where
-          rankScore :: Int -> String
-          rankScore score
-            | score >= 60 = "Silver"
-            | score >= 90 = "Gold"
-            | otherwise = "Practice"
-          main :: IO ()
-          main = print (rankScore 95)
+    - path: Main.hs
+      language: haskell
+      reseed: true
+      content: |
+        module Main where
+        adjustStock :: Int -> Int -> Int -> Int
+        adjustStock stock change capacity
+          | stock < 0 = 0
+          | stock > capacity = capacity
+          | otherwise = stock + change
+        main :: IO ()
+        main = print (adjustStock 8 5 10)
     open_file: Main.hs
     run_file: Main.hs
     tests:
-      - description: "Ranks honor both inclusive thresholds and every surrounding range"
-        command: "rankScore (-5) == \"Practice\" && rankScore 59 == \"Practice\" && rankScore 60 == \"Silver\" && rankScore 89 == \"Silver\" && rankScore 90 == \"Gold\" && rankScore 105 == \"Gold\""
-        hints:
-          - text: "A score of 95 satisfies both comparisons. Which one is reached first?"
-          - text: "Check the narrower high-score rule before the broader rule, or make the ranges disjoint."
-          - text: "Arrange the shape `| high condition = ...`, then `| middle condition = ...`, then `| otherwise = ...`."
+    - description: Adjustments respect both capacity limits and preserve valid intermediate counts
+      command: adjustStock 8 5 10 == 10 && adjustStock 2 (-5) 10 == 0 && adjustStock 3 4 10 == 7 && adjustStock 3
+        (-3) 10 == 0 && adjustStock 3 7 10 == 10 && adjustStock 6 0 10 == 6 && adjustStock 0 4 0 == 0 && adjustStock
+        0 (-4) 0 == 0
+      hints:
+      - text: The starting stock is already valid. Which quantity could fall outside the permitted range?
+      - text: Each boundary guard must examine the proposed count after applying the signed change.
+      - text: Use the same expression, stock + change, in both comparisons and in the unrestricted result.
     quiz:
-      title: "Step 3 — Knowledge Check"
+      title: Step 3 — Knowledge Check
       min_score: 0.8
       questions:
-        - type: single
-          difficulty: intermediate
-          question: "Why can moving an `otherwise` guard to the top change a function's result?"
-          options:
-            - "Every later rule runs first"
-            - "It always matches immediately"
-            - "It only matches invalid inputs"
-          correct_index: 1
-          option_feedback:
-            0: "Guards are considered from top to bottom, not in reverse order."
-            2: "otherwise has no built-in notion of invalid input; it is True."
-          explanation: "An unconditional true guard at the top prevents later alternatives from being selected."
-        - type: single
-          difficulty: intermediate
-          question: "What is wrong with `if score > 10 then 1 else False`?"
-          options:
-            - "The branches have incompatible types"
-            - "The condition needs an integer result"
-            - "The else branch executes before then"
-          correct_index: 0
-          option_feedback:
-            1: "A conditional requires a Bool condition; the comparison already provides one."
-            2: "Only the selected branch supplies the value. The problem is the branches' types."
-          explanation: "One expression must have one consistent type; a numeric result and Bool cannot serve as its alternatives."
+      - type: single
+        difficulty: intermediate
+        question: Why can moving an `otherwise` guard to the top change a function's result?
+        options:
+        - Every later rule runs first
+        - It always matches immediately
+        - It only matches invalid inputs
+        correct_index: 1
+        option_feedback:
+          0: Guards are considered from top to bottom, not in reverse order.
+          2: otherwise has no built-in notion of invalid input; it is True.
+        explanation: An unconditional true guard at the top prevents later alternatives from being selected.
+      - type: single
+        difficulty: intermediate
+        question: What is wrong with `if locked then 0 else False`?
+        options:
+        - The branches have incompatible types
+        - The condition needs an integer result
+        - The else branch executes before then
+        correct_index: 0
+        option_feedback:
+          1: The condition must be Bool; a Boolean parameter such as locked provides that. The incompatible result
+            branches are the problem.
+          2: Only the selected branch supplies the value. The problem is the branches' types.
+        explanation: One expression must have one consistent type; a numeric result and Bool cannot serve as its alternatives.
     solution:
       files:
-        - path: Main.hs
-          language: haskell
-          content: |
-            module Main where
-            rankScore :: Int -> String
-            rankScore score
-              | score >= 90 = "Gold"
-              | score >= 60 = "Silver"
-              | otherwise = "Practice"
-            main :: IO ()
-            main = print (rankScore 95)
+      - path: Main.hs
+        language: haskell
+        content: |
+          module Main where
+          adjustStock :: Int -> Int -> Int -> Int
+          adjustStock stock change capacity
+            | stock + change < 0 = 0
+            | stock + change > capacity = capacity
+            | otherwise = stock + change
+          main :: IO ()
+          main = print (adjustStock 8 5 10)
       explanation: |
-        The most restrictive successful range comes first. A score that reaches
-        the Silver guard is already known to be below 90.
+        Each guard checks the proposed count, not the already valid starting
+        stock. Counts inside the limits pass through unchanged; attempts to cross
+        a limit return that limit. Equality is already valid and needs no adjustment.
 
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf pp. 25–31;
+  # supporting div notation: intro_to_functional_programming_and_haskell_v10_handouts.pptx slide 39.
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx P3c — local-binding prerequisite for helper-function reasoning.
   # Pedagogy: worked example with fading — name intermediate values, repair one relation.
   - title: "Local Bindings"
+    key: local-bindings
     instructions: |
       ### Why this matters
 
@@ -381,24 +414,28 @@ steps:
       A `let` expression binds names and uses them after `in`:
 
       ```haskell
-      perimeter side =
-        let edges = 4
-        in edges * side
+      minutesAfter hours minutes =
+        let perHour = 60
+        in hours * perHour + minutes
       ```
 
       A `where` clause attaches local definitions to an equation, including
       its guards:
 
       ```haskell
-      perimeter side = edges * side
-        where edges = 4
+      minutesAfter hours minutes = hours * perHour + minutes
+        where perHour = 60
       ```
 
       Keep definitions in the same block aligned; indentation is meaningful.
       Both forms can define helper functions as well as data. A helper can
       refer to the surrounding function's parameters. Neither form is a
-      sequence of assignments: `let x = x + 1 in x` is a recursive definition,
-      not an increment operation.
+      sequence of assignments: naming one result does not change another binding.
+
+      This billing rule uses integral division: ``subtotal `div` 4`` means
+      divide the nonnegative subtotal by four and discard its fractional
+      part. For example, ``35 `div` 4`` is `8`. Backticks let the two-argument
+      function appear between its arguments; `div 35 4` means the same thing.
 
       ### Thinking time!
 
@@ -489,8 +526,11 @@ steps:
         expression combines them with the fee. An equivalent let expression
         changes scope syntax, not the billing rule.
 
-  # Pedagogy: PRIMM — a worked polymorphic tuple swap, then a different transformation.
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf pp. 34–35, 63, 72–74.
+  # Assessment: [Midterm] F23 (Public).pdf P3a p. 6 — tuple/list type-shape prerequisite for extract2nd.
+  # Pedagogy: PRIMM — project a field and attach a status, then update a different tuple and derive a type.
   - title: "Tuples and Type Variables"
+    key: tuples
     instructions: |
       ### Why this matters
 
@@ -508,15 +548,21 @@ steps:
       several components.
 
       ```haskell
-      swapPair :: (a, b) -> (b, a)
-      swapPair (left, right) = (right, left)
+      markSeen :: (a, b) -> (a, Bool)
+      markSeen (value, label) = (value, True)
       ```
 
-      `(left, right)` is a **pattern** that names the two components.
+      `(value, label)` is a **pattern** that names the two components.
       Lowercase type variables `a` and `b` describe arbitrary types. Reusing
       the same letter requires the same type; different letters permit
-      different types but do not require them to differ. Thus `swapPair`
-      works for both `(True, 'x')` and `(3, 4)`.
+      different types but do not require them to differ. Thus `markSeen`
+      accepts both `(True, 'x')` and `(3, 4)`, retaining the first field
+      and replacing the second with `True`.
+
+      To derive `markSeen`'s type, call the first component's type `a` and
+      the second component's type `b`. The parameter pattern needs `(a, b)`;
+      the result keeps a value of type `a` and adds a `Bool`. The unused
+      label can have any type `b`. Connect the input and result with `->`.
 
       ### Thinking time!
 
@@ -543,8 +589,8 @@ steps:
         reseed: true
         content: |
           module Main where
-          swapPair :: (a, b) -> (b, a)
-          swapPair (left, right) = (right, left)
+          markSeen :: (a, b) -> (a, Bool)
+          markSeen (value, label) = (value, True)
           addBonus :: Int -> (String, Int) -> (String, Int)
           addBonus bonus (name, score) = (name, score)
           original :: (String, Int)
@@ -577,21 +623,33 @@ steps:
           explanation: "Both positions must have the same type. Two Char values meet that requirement."
         - type: single
           difficulty: intermediate
-          question: "Recall `square x = x * x`. What does `square (2 + 3)` return?"
-          options: ["`7`", "`13`", "`25`"]
+          question: "Recall `remainingTime available used = available - used`. What does `remainingTime 30 (4 * 3)` return?"
+          options: ["`78`", "`26`", "`18`"]
           correct_index: 2
           option_feedback:
-            0: "That is the result of square 2 + 3, with the addition outside the argument."
-            1: "Squaring a sum differs from adding two separately squared values."
-          explanation: "The grouped argument is 5, whose square is 25. The same grouping rule applies around tuple arguments."
+            0: "That is `(remainingTime 30 4) * 3`, with the multiplication outside the second argument."
+            1: "That subtracts only 4. The grouped argument supplies the full product 4 * 3."
+          explanation: "The grouped second argument is 12, leaving 18. Parentheses also group a tuple used as one argument."
+        - type: single
+          difficulty: intermediate
+          question: "Which most general type fits `repeatFirst (x, y) = (x, x)`?"
+          options:
+            - "`(a, a) -> (a, a)`"
+            - "`(a, b) -> (a, b)`"
+            - "`(a, b) -> (a, a)`"
+          correct_index: 2
+          option_feedback:
+            0: "Nothing compares or combines x with y, so their input types need not agree. This type is unnecessarily restrictive."
+            1: "Both output positions contain x; the second result has x's type, not the unrelated type of y."
+          explanation: "The input components can have independent types. Reusing x in both output positions requires the same type variable in both."
     solution:
       files:
         - path: Main.hs
           language: haskell
           content: |
             module Main where
-            swapPair :: (a, b) -> (b, a)
-            swapPair (left, right) = (right, left)
+            markSeen :: (a, b) -> (a, Bool)
+            markSeen (value, label) = (value, True)
             addBonus :: Int -> (String, Int) -> (String, Int)
             addBonus bonus (name, score) = (name, score + bonus)
             original :: (String, Int)
@@ -602,11 +660,13 @@ steps:
               print original
       explanation: |
         Pattern matching exposes the old components. The result constructs a
-        new pair; original remains ("Mina", 40). A helper using fst and snd
-        instead of a tuple pattern would produce the same behavior.
+        new pair; original remains ("Mina", 40).
 
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf pp. 35–40, 72–74.
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx P3a–b — shared list element type and cons construction.
   # Pedagogy: contrast — a list of strings versus one string; generalization across element types.
   - title: "Lists and Strings"
+    key: lists
     instructions: |
       ### Why this matters
 
@@ -632,8 +692,7 @@ steps:
       to the first two. `length xs` counts items, `null xs` tests whether
       the list is empty, and ``x `elem` xs`` tests whether it contains `x`.
       `head xs` returns the first item and `tail xs` returns the remaining
-      list; both require a nonempty list. `xs !! i` selects an item at a
-      valid zero-based index.
+      list; both require a nonempty list.
       Enumerations such as `[1..4]` and `[2,4..10]` include the endpoint
       when the step reaches it.
 
@@ -687,13 +746,13 @@ steps:
           explanation: "The result has two String elements, so its type is [String]."
         - type: single
           difficulty: intermediate
-          question: "Which type best describes `bookend` without restricting its element type?"
-          options: ["`a -> [a] -> [a]`", "`a -> [b] -> [b]`", "`[a] -> a -> a`"]
+          question: "Which most general type fits `keepWith (x, y) xs = x : xs`?"
+          options: ["`(a, b) -> [a] -> [a]`", "`(a, b) -> [b] -> [b]`", "`(a, a) -> [a] -> [a]`"]
           correct_index: 0
           option_feedback:
-            1: "The inserted item must share the input list's element type; independent a and b do not guarantee that."
-            2: "The item is one element, while the collection and the result are lists."
-          explanation: "The same type variable connects the item, the input elements, and the output elements."
+            1: "The inserted element is x. Its type a must match the list elements; y's type b does not determine them."
+            2: "The unused y can have a different type from x. Requiring both tuple components to have type a restricts valid inputs."
+          explanation: "The tuple components may differ. Cons connects x's type to both the input list's element type and the result's element type."
     solution:
       files:
         - path: Main.hs
@@ -710,11 +769,14 @@ steps:
       explanation: |
         Cons constructs the front; concatenation preserves the middle and adds
         the final singleton. `[item] ++ items ++ [item]` is also correct.
-        No Eq or numeric constraint is needed because the operation neither
+        The element type stays arbitrary because the operation neither
         compares nor calculates with the elements.
 
-  # Pedagogy: worked example with fading — first-element example to second-element task.
-  - title: "Complete List Patterns"
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf pp. 62–69, 72–74.
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx P3a–b — type consistency and complete list cases.
+  # Pedagogy: worked example with fading — replace one list entry, then reconstruct a two-entry prefix.
+  - title: Complete List Patterns
+    key: swap-front
     instructions: |
       ### Why this matters
 
@@ -724,117 +786,124 @@ steps:
       ### 🎯 You will learn to
 
       - Analyze exact-length and nonempty-list patterns
-      - Create a function that handles every list length
+      - Reconstruct a list while preserving its remaining elements
 
       Compare a list's construction with its decomposition. `x : xs`
       constructs a list; the parameter pattern `(x:xs)` extracts its first
       element into `x` and its remaining **list** into `xs`.
 
+      This function replaces an existing first element without adding one to
+      an empty list:
+
       ```haskell
-      firstOr fallback [] = fallback
-      firstOr fallback (x:xs) = x
+      replaceHead replacement [] = []
+      replaceHead replacement (_:rest) = replacement : rest
       ```
 
       Equations are tried from top to bottom. `[]` matches an empty list,
       `[x]` exactly one element, `[x,y]` exactly two, and `(x:y:rest)` at
       least two. `_` matches a value you do not need to name.
 
-      A `case` expression selects a pattern inside another expression:
-
-      ```haskell
-      firstOr fallback values = case values of
-        [] -> fallback
-        x:_ -> x
-      ```
-
-      Here alternatives use `->` rather than the `=` of function equations.
+      Derive `replaceHead`'s type before checking its signature in the starter.
+      If the input is `[a]`, then rest is also `[a]`. Cons requires replacement
+      to have type `a`, and the result is another `[a]`. State how this connects
+      the two arguments and result.
 
       ### Thinking time!
 
-      Which inputs match `[x,y]`: `[5]`, `[5,7]`, or `[5,7,9]`? Which match
-      `(x:y:_)`? Predict the difference before trying examples.
+      A waiting list is `["Ada","Bo","Cy"]`. A rule matching `[first,second]`
+      will not handle it, but `(first:second:rest)` will. Name all three bindings,
+      then predict what `second : first : rest` constructs. The `:` expressions
+      build one list whose order starts with second, then first.
 
       ### Your challenge
 
-      Implement `secondOr fallback values`. Return the second element when
-      there are at least two; otherwise return the supplied fallback.
-      Preserve polymorphism: it must work for numbers, strings, and characters.
+      Implement `swapFront values`: exchange the first two elements, preserving
+      the full remaining tail in its original order. Empty and singleton lists
+      must stay unchanged. The function must work for any element type.
 
-      The starter always returns the fallback. Run it, then replace that
-      single catch-all with complete cases. Use either function equations
-      or `case`. Explain why matching **exactly** two elements would miss
-      a valid input.
+      The starter leaves every list unchanged. Replace that catch-all with
+      complete equations. Try an empty list, one item, exactly two items, and a
+      longer list. Explain why an exact two-item pattern would miss a valid input.
     files:
-      - path: Main.hs
-        language: haskell
-        reseed: true
-        content: |
-          module Main where
-          firstOr :: a -> [a] -> a
-          firstOr fallback [] = fallback
-          firstOr fallback (x:xs) = x
-          secondOr :: a -> [a] -> a
-          secondOr fallback values = fallback
-          main :: IO ()
-          main = print (secondOr "silence" ["intro", "chorus", "outro"])
+    - path: Main.hs
+      language: haskell
+      reseed: true
+      content: |
+        module Main where
+        replaceHead :: a -> [a] -> [a]
+        replaceHead replacement [] = []
+        replaceHead replacement (_:rest) = replacement : rest
+        swapFront :: [a] -> [a]
+        swapFront values = values
+        main :: IO ()
+        main = print (swapFront ["Ada", "Bo", "Cy"])
     open_file: Main.hs
     run_file: Main.hs
     tests:
-      - description: "Second-element selection distinguishes zero, one, two, and many elements"
-        command: "secondOr (99 :: Int) [] == 99 && secondOr (99 :: Int) [5] == 99 && secondOr (99 :: Int) [5,7] == 7 && secondOr (99 :: Int) [5,7,9] == 7 && secondOr '!' \"abc\" == 'b' && secondOr \"silence\" [\"intro\",\"chorus\"] == \"chorus\""
-        hints:
-          - text: "Separate lists with fewer than two elements from lists with at least two."
-          - text: "A cons pattern can name the second element while allowing any remaining tail."
-          - text: "Use the pattern `(_:second:_)` for the successful case, plus a fallback for shorter lists. Put the specific case before a catch-all."
+    - description: Swap only the first two entries, preserving short inputs, duplicates, and every tail entry
+      command: 'swapFront ([] :: [Int]) == [] && swapFront [5 :: Int] == [5] && swapFront [5 :: Int,7] == [7,5] &&
+        swapFront [5 :: Int,7,9,11] == [7,5,9,11] && swapFront "abcd" == "bacd" && swapFront ["Ada","Bo","Cy"] ==
+        ["Bo","Ada","Cy"] && swapFront [True,True,False] == [True,True,False]'
+      hints:
+      - text: Separate lists with fewer than two entries from those with at least two.
+      - text: A cons pattern can name the first two entries and leave the remaining tail as a list.
+      - text: For (x:y:rest), construct the new prefix with y followed by x, then reuse rest. Handle empty and singleton
+          lists separately.
     quiz:
-      title: "Step 7 — Knowledge Check"
+      title: Step 7 — Knowledge Check
       min_score: 0.8
       questions:
-        - type: single
-          difficulty: intermediate
-          question: "Matching `(x:xs)` against `[\"cat\"]`, what are x and xs?"
-          options:
-            - "`x = 'c'`, `xs = \"at\"`"
-            - "`x = \"cat\"`, `xs = []`"
-            - "`x = [\"cat\"]`, `xs = []`"
-          correct_index: 1
-          option_feedback:
-            0: "That decomposes the String \"cat\", not the outer list containing it."
-            2: "x is one element of the input list; here that element is a String, not another [String]."
-          explanation: "The outer list has one String element and an empty tail."
-        - type: single
-          difficulty: intermediate
-          question: "A catch-all equation appears before specific list patterns. Which rule applies?"
-          options:
-            - "Haskell chooses the most specific pattern"
-            - "Haskell tries each rule until the last match"
-            - "Haskell chooses the first matching pattern"
-          correct_index: 2
-          option_feedback:
-            0: "Pattern specificity does not override source order. A catch-all can hide every later equation."
-            1: "Selection stops at the first matching equation rather than remembering a later match."
-          explanation: "As with the earlier guard example, place specific cases before an unconditional fallback."
+      - type: single
+        difficulty: intermediate
+        question: 'After matching `(first:second:rest)` against `[[1],[2,3],[]]`, what does `second : rest` construct?'
+        options:
+        - '`[2,3]`'
+        - '`[[2,3],[]]`'
+        - '`[[2,3]]`'
+        correct_index: 1
+        option_feedback:
+          0: second is one list-valued element. Cons places that whole element before rest; it does not flatten it.
+          2: rest still contains the final empty list. Reconstructing the list must preserve that element.
+        explanation: 'second is [2,3] and rest is [[]]. Cons produces a two-element outer list: [[2,3],[]].'
+      - type: single
+        difficulty: intermediate
+        question: A catch-all equation appears before specific list patterns. Which rule applies?
+        options:
+        - Haskell chooses the most specific pattern
+        - Haskell tries each rule until the last match
+        - Haskell chooses the first matching pattern
+        correct_index: 2
+        option_feedback:
+          0: Pattern specificity does not override source order. A catch-all can hide every later equation.
+          1: Selection stops at the first matching equation rather than remembering a later match.
+        explanation: As with the earlier guard example, place specific cases before an unconditional fallback.
     solution:
       files:
-        - path: Main.hs
-          language: haskell
-          content: |
-            module Main where
-            firstOr :: a -> [a] -> a
-            firstOr fallback [] = fallback
-            firstOr fallback (x:xs) = x
-            secondOr :: a -> [a] -> a
-            secondOr fallback (_:second:_) = second
-            secondOr fallback _ = fallback
-            main :: IO ()
-            main = print (secondOr "silence" ["intro", "chorus", "outro"])
+      - path: Main.hs
+        language: haskell
+        content: |
+          module Main where
+          replaceHead :: a -> [a] -> [a]
+          replaceHead replacement [] = []
+          replaceHead replacement (_:rest) = replacement : rest
+          swapFront :: [a] -> [a]
+          swapFront [] = []
+          swapFront [x] = [x]
+          swapFront (x:y:rest) = y : x : rest
+          main :: IO ()
+          main = print (swapFront ["Ada", "Bo", "Cy"])
       explanation: |
-        The successful pattern proves that a second element exists. The final
-        equation handles every shorter list. Explicit empty and singleton
-        equations, or an equivalent case expression, are equally valid.
+        The empty and singleton equations preserve inputs that cannot be swapped.
+        The final pattern guarantees two entries; constructing y : x : rest
+        exchanges just that prefix and preserves the entire tail.
 
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf pp. 41–45, 63, 67–69.
+  # Assessment: [Midterm] F24 V1 (Public).pdf P1 p. 2 — keep counting after a nonmatching element;
+  # CS131 Fall 25 Quiz 1 v2.docx P3b — base case and recursion on the list tail.
   # Pedagogy: worked recursion example, trace prediction, then independent modification.
   - title: "Structural Recursion"
+    key: recursion
     instructions: |
       ### Why this matters
 
@@ -846,23 +915,25 @@ steps:
       - Analyze the base case and progress of a recursive definition
       - Create a list reduction from a per-element decision
 
-      Here is a complete recursive sum:
+      Here is a complete function that joins several rows, preserving their order:
 
       ```haskell
-      total [] = 0
-      total (x:xs) = x + total xs
+      joinRows [] = []
+      joinRows (row:rows) = row ++ joinRows rows
       ```
 
-      The empty list supplies an answer immediately. The nonempty case
-      combines one element with the result for a **smaller input**.
-      For `[4,2]`, expand `4 + total [2]`, then `4 + (2 + total [])`,
-      and finally `4 + (2 + 0)`. Each call has its own parameter bindings.
+      The empty outer list supplies an empty result immediately. The nonempty
+      case joins its first row to the result for **fewer rows**.
+      For `[[4],[],[2,3]]`, expand `[4] ++ joinRows [[],[2,3]]`, then
+      `[4] ++ ([] ++ ([2,3] ++ joinRows []))`, producing `[4,2,3]`.
+      An empty row contributes nothing but does not stop the recursion.
+      Each call has its own parameter bindings.
 
       ### Thinking time!
 
-      Suppose a counter has base case `count [] = 1` and adds one per
-      element. Would a list of three items produce 3 or 4? Explain where
-      the extra unit comes from before running anything.
+      Suppose `joinRows` used `[0]` as its base result instead of `[]`.
+      Would `joinRows [[4],[],[2,3]]` produce `[4,2,3]` or `[4,2,3,0]`?
+      Explain where the extra element enters the result before running.
 
       ### Your challenge
 
@@ -871,8 +942,8 @@ steps:
       zero for an empty list. Scores and the threshold can be negative.
 
       Run the starter, which currently reports zero for every input.
-      Build from the sum example: decide whether the first score contributes
-      zero or one, then combine it with the result for the tail. Recursion
+      Use the same smaller-input structure, but calculate a count: decide
+      whether the first score contributes zero or one, then add the tail's count. Recursion
       is the practice focus; any behaviorally equivalent implementation passes.
 
       Before testing, trace `[60,59,60]` with threshold 60. Name the input
@@ -885,9 +956,9 @@ steps:
         reseed: true
         content: |
           module Main where
-          total :: [Int] -> Int
-          total [] = 0
-          total (x:xs) = x + total xs
+          joinRows :: [[Int]] -> [Int]
+          joinRows [] = []
+          joinRows (row:rows) = row ++ joinRows rows
           countAtLeast :: Int -> [Int] -> Int
           countAtLeast threshold scores = 0
           main :: IO ()
@@ -907,16 +978,26 @@ steps:
       questions:
         - type: single
           difficulty: intermediate
-          question: "Why does the recursive sum call `total xs` rather than `total (x:xs)`?"
+          question: |
+            This counter should count every value at least 5. What belongs
+            in the blank so a smaller value does not hide later matches?
+
+            ```haskell
+            countHits :: [Int] -> Int
+            countHits [] = 0
+            countHits (x:xs)
+              | x >= 5 = 1 + countHits xs
+              | otherwise = ______
+            ```
           options:
-            - "The tail moves toward the empty base case"
-            - "The call mutates x before processing the tail"
-            - "The full list has a different element type"
+            - "`countHits xs`"
+            - "`0`"
+            - "`countHits (x:xs)`"
           correct_index: 0
           option_feedback:
-            1: "Recursive calls receive new bindings; the original head is not mutated."
-            2: "The full list and tail share the same element type. The difference is progress, not typing."
-          explanation: "Removing one element makes finite input smaller. Calling the same definition on unchanged input makes no progress."
+            1: "Returning zero stops here. On [4,5], it would lose the later qualifying 5."
+            2: "The call receives the same input, so it repeatedly encounters the same nonmatching head and never reaches the base case."
+          explanation: "The head contributes zero, but the tail still needs processing. On [4,5], the result is countHits [5] = 1."
         - type: single
           difficulty: intermediate
           question: "A counter uses `x > threshold`. Which input best reveals the missing equality case?"
@@ -935,9 +1016,9 @@ steps:
           language: haskell
           content: |
             module Main where
-            total :: [Int] -> Int
-            total [] = 0
-            total (x:xs) = x + total xs
+            joinRows :: [[Int]] -> [Int]
+            joinRows [] = []
+            joinRows (row:rows) = row ++ joinRows rows
             countAtLeast :: Int -> [Int] -> Int
             countAtLeast threshold [] = 0
             countAtLeast threshold (x:xs) = contribution + countAtLeast threshold xs
@@ -949,8 +1030,12 @@ steps:
         when it meets the threshold, and the recursive call handles every
         remaining occurrence. The comparison includes equality.
 
-  # Pedagogy: PRIMM — generator/filter separation, then transfer to pair enumeration.
-  - title: "List Comprehensions"
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf pp. 38, 48–56.
+  # Assessment: preparatory list construction for [Midterm] F23 (Public).pdf P3 pp. 6–7;
+  # comprehensions themselves are not a direct requirement of that map/filter/fold task family.
+  # Pedagogy: PRIMM — combine heterogeneous supplied collections with independent validity rules.
+  - title: List Comprehensions
+    key: route-candidates
     instructions: |
       ### Why this matters
 
@@ -960,102 +1045,122 @@ steps:
       ### 🎯 You will learn to
 
       - Analyze generator order and inclusive numeric ranges
-      - Create a list of pairs satisfying a stated condition
+      - Create structured results from two supplied collections
 
       ```haskell
-      [2 * n | n <- [1..4], n > 2]
+      [(label, length label) | label <- ["oak", "", "pine"], length label > 0]
       ```
 
-      Read it as: take each `n` from 1 through 4, keep those greater than
-      2, and emit `2 * n`. The answer is `[6,8]`. `<-` introduces a generator;
-      a Boolean qualifier filters candidates. The expression before `|`
-      constructs each output element.
+      Read it as: visit each label, keep the nonempty ones, and pair each with
+      its length. The answer is `[("oak",3),("pine",4)]`. `<-` introduces a
+      generator; a Boolean qualifier filters candidates. The expression before
+      `|` constructs each output element.
 
       With two generators, the right one varies fastest:
-      `[(x,y) | x <- [1,2], y <- [3,4]]` produces
-      `[(1,3),(1,4),(2,3),(2,4)]`, rather than pairing positions.
-      Later generators may depend on earlier values, such as `y <- [x..4]`.
+      `[(flag,label) | flag <- [True,False], label <- ["r","s"]]` produces
+      `[(True,"r"),(True,"s"),(False,"r"),(False,"s")]`.
+      The result enumerates combinations rather than pairing list positions.
 
       ### Thinking time!
 
-      Predict `[(x,y) | x <- [1,2], y <- [x..2]]`.
-      Is `(2,1)` included? Is `(2,2)` included? Explain each decision,
-      then temporarily print the expression to compare.
+      A later generator can use an earlier value. Predict
+      `[(word,c) | word <- ["go","!"], c <- word]`.
+      Remember that a String is a list of characters. How many pairs does each
+      word contribute, and what is each pair's second-component type?
+      Print the expression to compare with your prediction.
 
       ### Your challenge
 
-      Implement `snackPairs limit target`: return every pair `(a,b)` with
-      `1 <= a <= b <= limit` and `a + b == target`. Think of a and b as
-      snack prices. Equal prices are allowed; reversed duplicates are not.
-      Order by increasing a, then increasing b. For a nonpositive limit,
-      return the empty list. For example, `snackPairs 5 6` is
-      `[(1,5),(2,4),(3,3)]`.
+      Implement `routeCandidates routes platforms` for a dispatch board.
+      Every nonempty route name can use every positive platform number. Return
+      a `(platform, route)` pair for each permitted combination. Visit routes
+      in their input order; for each route, visit platforms in their input order.
+      Keep repeated entries if the inputs contain them. Do not sort either input.
 
-      The starter already generates candidates but keeps too many. Repair
-      its qualification. Comprehensions are the practice focus; equivalent
-      recursive solutions are accepted. Explain which part controls shape,
-      which controls order, and which enforces the budget total.
+      For example, `routeCandidates ["Cedar","","Bay"] [3,0,1]` is
+      `[(3,"Cedar"),(1,"Cedar"),(3,"Bay"),(1,"Bay")]`.
+      Either empty input produces no combinations.
+
+      The starter forms every combination, including invalid ones. Repair its
+      qualifiers. `length route > 0` identifies a nonempty route; the other rule
+      concerns the platform number. Comprehensions are the practice focus;
+      equivalent recursive solutions are accepted. Explain which part determines
+      tuple shape, which determines order, and which removes invalid candidates.
     files:
-      - path: Main.hs
-        language: haskell
-        reseed: true
-        content: |
-          module Main where
-          snackPairs :: Int -> Int -> [(Int, Int)]
-          snackPairs limit target = [(a,b) | a <- [1..limit], b <- [a..limit]]
-          main :: IO ()
-          main = print (snackPairs 5 6)
+    - path: Main.hs
+      language: haskell
+      reseed: true
+      content: |
+        module Main where
+        routeCandidates :: [String] -> [Int] -> [(Int, String)]
+        routeCandidates routes platforms = [(platform,route) | route <- routes, platform <- platforms]
+        main :: IO ()
+        main = print (routeCandidates ["Cedar","","Bay"] [3,0,1])
     open_file: Main.hs
     run_file: Main.hs
     tests:
-      - description: "Pairs meet the target exactly without reversed duplicates or lost equal-price pairs"
-        command: "snackPairs 5 6 == [(1,5),(2,4),(3,3)] && snackPairs 3 4 == [(1,3),(2,2)] && snackPairs 1 2 == [(1,1)] && snackPairs 0 2 == [] && snackPairs (-2) 3 == [] && snackPairs 4 20 == [] && snackPairs 4 3 == [(1,2)]"
-        hints:
-          - text: "The generators already enforce positive prices, increasing order, and a <= b. Which rule is still missing?"
-          - text: "A Boolean qualifier after the generators can reject candidates without changing their order."
-          - text: "Keep the pair expression and add one condition after the generators; compare the sum of the two prices with the target."
+    - description: Candidates filter both inputs while preserving route-first order and repeated entries
+      command: routeCandidates ["Cedar","","Bay"] [3,0,1] == [(3,"Cedar"),(1,"Cedar"),(3,"Bay"),(1,"Bay")] && routeCandidates
+        [] [1,2] == [] && routeCandidates ["Bay"] [] == [] && routeCandidates ["","Bay"] [-2,0] == [] && routeCandidates
+        [""] [4] == [] && routeCandidates ["Bay","Bay"] [2,2] == [(2,"Bay"),(2,"Bay"),(2,"Bay"),(2,"Bay")] && routeCandidates
+        ["Zoo","Ash"] [5,2] == [(5,"Zoo"),(2,"Zoo"),(5,"Ash"),(2,"Ash")]
+      hints:
+      - text: Identify one invalid route and one invalid platform that appear in the starter result.
+      - text: Use a separate Boolean qualifier for each input rule. Keep the generator order so every platform is
+          considered for one route before the next route.
+      - text: After the two generators, require length route > 0 and platform > 0. Keep (platform,route) as the result
+          expression.
     quiz:
-      title: "Step 9 — Knowledge Check"
+      title: Step 9 — Knowledge Check
       min_score: 0.8
       questions:
-        - type: single
-          difficulty: intermediate
-          question: "What does `[n | n <- [2,4..8], n /= 4]` produce?"
-          options: ["`[2,6,8]`", "`[2,6]`", "`[2,3,5,6,7,8]`"]
-          correct_index: 0
-          option_feedback:
-            1: "The endpoint is included when the arithmetic step reaches it; this sequence reaches 8."
-            2: "The first two values set a step of 2. The generator never produces the odd numbers."
-          explanation: "The generator gives 2, 4, 6, 8, and the qualifier removes 4."
-        - type: single
-          difficulty: intermediate
-          question: "Which result describes `[(x,y) | x <- [1,2], y <- [7,8]]`?"
-          options:
-            - "`[(1,7),(2,8)]`"
-            - "`[(1,7),(1,8),(2,7),(2,8)]`"
-            - "`[(1,7),(2,7),(1,8),(2,8)]`"
-          correct_index: 1
-          option_feedback:
-            0: "Two generators enumerate combinations; they do not zip corresponding positions."
-            2: "The rightmost generator varies fastest, so all y values are produced for x = 1 first."
-          explanation: "For each x, the comprehension visits every y before moving to the next x."
+      - type: single
+        difficulty: intermediate
+        question: What does `[(n,n-1) | n <- [2,4..8], n > 4]` produce?
+        options:
+        - '`[(6,5),(8,7)]`'
+        - '`[(6,5)]`'
+        - '`[(5,4),(6,5),(7,6),(8,7)]`'
+        correct_index: 0
+        option_feedback:
+          1: The endpoint is included when the arithmetic step reaches it; this sequence reaches 8.
+          2: The first two range values set a step of 2. The generator never produces 5 or 7.
+        explanation: The generator gives 2, 4, 6, 8. The qualifier retains 6 and 8, then each becomes a pair with
+          its predecessor.
+      - type: single
+        difficulty: intermediate
+        question: Which result describes `[(name,flag) | flag <- [True,False], name <- ["A","B"]]`?
+        options:
+        - '`[("A",True),("B",False)]`'
+        - '`[("A",True),("B",True),("A",False),("B",False)]`'
+        - '`[("A",True),("A",False),("B",True),("B",False)]`'
+        correct_index: 1
+        option_feedback:
+          0: Two generators enumerate all combinations; they do not pair corresponding positions.
+          2: The rightmost generator varies fastest, so both names are produced for True before moving to False.
+        explanation: The result expression controls the order inside each tuple, but the generators control the order
+          of tuples. For each flag, visit every name.
     solution:
       files:
-        - path: Main.hs
-          language: haskell
-          content: |
-            module Main where
-            snackPairs :: Int -> Int -> [(Int, Int)]
-            snackPairs limit target = [(a,b) | a <- [1..limit], b <- [a..limit], a + b == target]
-            main :: IO ()
-            main = print (snackPairs 5 6)
+      - path: Main.hs
+        language: haskell
+        content: |
+          module Main where
+          routeCandidates :: [String] -> [Int] -> [(Int, String)]
+          routeCandidates routes platforms = [(platform,route) | route <- routes, platform <- platforms, length route > 0, platform > 0]
+          main :: IO ()
+          main = print (routeCandidates ["Cedar","","Bay"] [3,0,1])
       explanation: |
-        Starting b at a prevents reversed duplicates while retaining (a,a).
-        The final qualifier enforces the exact sum. An empty candidate range
-        naturally handles nonpositive limits.
+        The two qualifiers remove empty route names and nonpositive platform
+        numbers. The outer route generator sets route-first order even though the
+        result tuple puts the platform first. Empty inputs supply no combinations;
+        repeated inputs legitimately create repeated output entries.
 
+  # Lecture: intro_to_functional_programming_and_haskell_v10_handouts.pdf pp. 67–69.
+  # Assessment: CS131 Fall 25 Quiz 1 v2.docx P3b — distinguish stopping cases and update a numeric parameter while consuming the tail.
   # Pedagogy: Make — faded, independent transfer; retrieval of guards, patterns, and recursion.
   - title: "The Snack Budget Challenge"
+    key: budget
     instructions: |
       ### Why this matters
 

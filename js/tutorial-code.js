@@ -8538,8 +8538,11 @@
     // Steps with no tests can't be gated by tests — there's nothing to pass.
     // (A quiz, if present, opens via clicking Next, not by gating it.)
     if (!this._stepHasTests(this.steps[idx])) return false;
+    // Numeric legacy saves used the next unlock as completion evidence.
+    // Versioned lessons have explicit identities: a later lesson's access
+    // must not credit a replacement lesson's required tests.
     var canContinue = !this.requireTests || this.instructorMode ||
-      this._stepsPassed.has(idx) || this._stepsUnlocked.has(idx + 1);
+      this._stepsPassed.has(idx) || (!this.progressVersion && this._stepsUnlocked.has(idx + 1));
     return !canContinue;
   };
 
@@ -10663,6 +10666,9 @@
 
     const legacyLength = this.legacyStepKeys.length;
     const legacySteps = this.legacyStepKeys.map(key => this.steps.find(step => step.key === key));
+    // A removed lesson has no current file definition. Its missing filename
+    // cannot establish that a numeric save came from the newer ordering.
+    if (legacySteps.some(step => !step)) return null;
     const legacyFiles = new Set(legacySteps.flatMap(step => (step && step.files || []).map(file => file.path)));
     const currentFiles = new Set(this.steps.flatMap(step => (step.files || []).map(file => file.path)));
     const savedFiles = Object.keys(data.files || {}).concat(data.activeFile || []);
@@ -10712,7 +10718,7 @@
     if (!data.stepKeys || changedOrder) {
       this._progressMigrationNotice = savedKeys
         ? 'This tutorial has been updated. Your saved code and progress for matching lessons have been preserved. Use the step navigation to explore the added lessons.'
-        : 'This tutorial has been updated. Your saved code has been preserved, but some old completion records could not be matched confidently to lessons. Those lessons need rechecking; you can still choose any lesson and skip optional checks.';
+        : 'This tutorial has been updated. Your saved code has been preserved, but some old completion records could not be matched confidently to lessons. Those lessons need rechecking before their completion can be credited.';
     }
     return this._withProgressIdentity(remapped);
   };
