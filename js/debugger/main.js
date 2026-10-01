@@ -3124,6 +3124,10 @@
     var model = this.t.editorModels[filename] && this.t.editorModels[filename].model;
     if (!model) { this.setStatus('Cannot locate code for ' + filename + '. Open the program file and try again.'); return; }
     var code = model.getValue();
+    if (backend === 'haskell' && !this.t._haskellCycles.check(filename)) {
+      this.setStatus('Execution blocked by a Haskell alias cycle. Check the editor diagnostics.');
+      return;
+    }
     var path = this.normalizeBreakpointPath(filename);
     var files = this.collectDebugFiles();
     var runAsPytest = this.shouldDebugWithPytest(filename);

@@ -1,0 +1,21 @@
+.haskell-cycle-diagnostics {
+  flex: 0 0 auto;
+  max-height: 10em;
+  overflow: auto;
+  padding: .5em .75em;
+  font-size: 18px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+  background: #fff;
+  color: #222;
+  border-bottom: 1px solid currentColor;
+}
+.haskell-cycle-diagnostics p { margin: 0; font: inherit; }
+.haskell-cycle-diagnostics ul { margin: .25em 0 0; padding-left: 1.5em; }
+.haskell-cycle-diagnostics li { font: inherit; }
+.haskell-cycle-diagnostics:focus-visible { outline: 3px solid currentColor; outline-offset: -3px; }
+html.dark-mode .haskell-cycle-diagnostics { background: #202020; color: #eee; }
+@media print {
+  .haskell-cycle-diagnostics,
+  html.dark-mode .haskell-cycle-diagnostics { max-height: none; overflow: visible; background: #fff; color: #222; }
+}

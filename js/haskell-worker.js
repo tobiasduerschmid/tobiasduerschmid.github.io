@@ -395,6 +395,7 @@ function startOperation(message, settings) {
 
 function startRun(message) {
   const path = normalizeWorkspacePath(message.path);
+  checkAliasCycles(readWorkspaceFile(path), path);
   const descriptor = moduleDescriptor(path);
   const argumentText = Array.isArray(message.args)
     ? message.args.join(' ')
@@ -424,6 +425,7 @@ function startRunTest(message) {
   if (/\r|\n/.test(expression)) {
     throw new Error('runTest Boolean expressions must fit on one line');
   }
+  checkAliasCycles(readWorkspaceFile(path), path, expression);
 
   const passMarker = markerFor('TEST_PASS', message.id);
   const failMarker = markerFor('TEST_FAIL', message.id);
@@ -494,7 +496,16 @@ function prepareDebugFiles(message) {
   return { sites: sites, sourceMaps: sourceMaps };
 }
 
+function checkAliasCycles(source, filename, expression) {
+  const result = runtimeScope.SEBookHaskellCycles.analyze(source, { filename, expression });
+  if (result.blocked) {
+    throw new Error(result.diagnostics.filter(item => item.severity === 'error')
+      .map(item => item.filename + ':' + item.line + ':' + item.column + ': ' + item.message).join('\n'));
+  }
+}
+
 function startDebug(message) {
+  checkAliasCycles(message.code, message.filename);
   const prepared = prepareDebugFiles(message);
   const sites = prepared.sites;
   if (!sites.length) throw new Error('No supported Haskell equations were found to debug.');
@@ -759,6 +770,7 @@ registerProtocolMessageHandler(function (message) {
 });
 
 if (!isWindowRuntime) {
+  importScripts('/js/haskell/cycle-analysis.js');
   importScripts('/js/debugger/haskell/instrument.js', '/js/debugger/haskell/session.js');
 }
 

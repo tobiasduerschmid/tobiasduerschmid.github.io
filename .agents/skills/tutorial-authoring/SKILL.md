@@ -1933,6 +1933,48 @@ Language views and popouts share `ui-render.js` and the native keyboard
 controls in `css/debugger-controls.css`. They reuse the existing breakpoint,
 section-collapse, and popout storage families; there are no new storage keys.
 
+#### Haskell alias-cycle preflight
+
+Haskell always loads `js/haskell/cycle-analysis.js` independently of the
+debugger and Python linter flags. The pure, bounded analyzer recognizes named
+value aliases in top-level, `let`, and `where` groups with lexical binding
+identity. Self/mutual cycles get source-location diagnostics; productive
+constructor recursion and function recursion are not alias cycles.
+`js/haskell/cycle-diagnostics.js` owns debounced Monaco markers and the readable,
+keyboard-focusable diagnostic region (`css/haskell-diagnostics.css`). It handles
+initial files and later edits, resets, solutions and host-mirrored popout edits.
+
+Warnings alone do not block execution: unused bindings remain lazy. Run and
+Debug check the selected entry's `main`; Test My Work checks each Boolean
+expression rather than assuming it runs `main`. A proven mandatory demand of
+an alias cycle blocks that action with an explanation and leaves controls usable.
+Test expressions see only the module's exports; a missing module header exports
+only `main`, matching the pinned MicroHs parser.
+The MicroHs adapter repeats the same check on raw source before Run, Test, or
+debug instrumentation, so direct runtime messages use the same policy.
+
+This is a partial syntax/demand check, **not** a Haskell interpreter, type checker,
+or termination proof. It follows value aliases, selected literal Boolean branches,
+the first executed `do` action, and a small set of trusted Prelude demand edges.
+Evaluating an IO action as a value does not imply running its output effects.
+The check does not unfold functions, follow imports, force constructor fields,
+prove completion of earlier effects/operands, or analyze general patterns,
+guards, case expressions, or numeric-instance demand. Comparison demand requires
+a complete literal value on the other side rather than assuming an operand
+evaluation order. Imports, custom data/instances and language pragmas disable
+the relevant Prelude assumptions. Unsupported equations are opaque; unsupported
+module/binding structure or exhausted analysis budgets can yield no diagnostics.
+No-warning output must never be described as safe to execute. Source, token,
+nesting, demand, displayed-chain and diagnostic-count limits bound analysis cost.
+
+The motivating runtime mechanism is the indirection-following loop in the pinned
+MicroHs evaluator (`src/runtime/eval.c`, commit
+`9e8f923c614c12f14412e63e329de25ff9309c4f`, around lines 5122–5128): a cyclic
+indirection can prevent reaching its normal cooperative yield. Keep dangerous
+fixtures static; runtime guard tests include an unrelated compile-error backstop
+so removing a guard cannot execute that cycle in a browser. No vendored runtime
+bytes or storage keys change.
+
 If you add a backend, update this table.
 
 ### 4.7 Autosave / progress storage

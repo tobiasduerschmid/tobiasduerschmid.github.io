@@ -62,6 +62,22 @@ test.describe('Haskell live demand debugger', () => {
   test.setTimeout(150_000);
   test.beforeEach(async ({ page }) => startRuntime(page));
 
+  for (const type of ['run', 'runTest', 'start']) {
+    test(`${type} rejects a demanded alias cycle before compiling or evaluating`, async ({ page }) => {
+      // The unrelated undefined name is a safety backstop: a missing preflight
+      // produces a compiler error instead of executing a browser-freezing loop.
+      const code = 'module Main where\nbad = bad\nbackstop = missingCycleTestName\nmain = print (bad :: Int)\n';
+      const written = await send(page, { type: 'write', id: 1, path: '/tutorial/Main.hs', content: code });
+      await waitForMessage(page, 'write_ok', written);
+      const cursor = await send(page, { type, id: 2, path: '/tutorial/Main.hs', filename: '/tutorial/Main.hs', code,
+        expression: 'bad == (1 :: Int)' });
+      const response = await waitForMessage(page, type === 'start' ? 'debugComplete' : 'run_done', cursor);
+      expect(response.exitCode).toBe(1);
+      expect(response.error).toContain('Execution blocked');
+      expect(response.error).toContain('Main.hs:2');
+    });
+  }
+
   test('pauses recursive evaluation at original source lines and steps out of the live demand stack', async ({ page }) => {
     await startDebug(page, `module Main where
 fac 0 = 1

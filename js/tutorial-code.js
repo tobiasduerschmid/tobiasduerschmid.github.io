@@ -1493,6 +1493,7 @@
 
   TutorialCode.prototype.destroy = function () {
     this._destroyed = true;
+    if (this._haskellCycles) this._haskellCycles.dispose();
     if (this._debuggerCtl && this._debuggerCtl.channel) this._debuggerCtl.channel.dispose();
     this._stopFileWatch();
     this._stopGuestClockSync();
@@ -1935,6 +1936,9 @@
           '<div class="tvm-editor-tabs" role="group" aria-label="Code file tabs"></div>' +
           '</div>'
         : '<div class="tvm-editor-tabs" role="group" aria-label="File tabs"></div>') +
+      (this.config.backend === 'haskell'
+        ? '<section class="haskell-cycle-diagnostics" data-haskell-diagnostics tabindex="0" aria-label="Haskell cycle diagnostics"><p role="status" aria-live="polite"></p><ul></ul></section>'
+        : '') +
       '<div class="tvm-editor-container"></div>' +
       '</div>' +
       (this.editorSplitSupported
@@ -2813,7 +2817,13 @@
         ? loadScript('/js/playwright-compat/runner.js')
         : Promise.resolve();
 
-      return Promise.all([v86Promise, monacoPromise, playwrightPromise]);
+      var haskellAnalysis = self.config.backend === 'haskell'
+        ? loadScript('/js/haskell/cycle-analysis.js').then(function () {
+            return loadScript('/js/haskell/cycle-diagnostics.js');
+          })
+        : Promise.resolve();
+      if (self.config.backend === 'haskell') loadCSS('/css/haskell-diagnostics.css');
+      return Promise.all([v86Promise, monacoPromise, playwrightPromise, haskellAnalysis]);
     });
   };
 
@@ -5861,6 +5871,7 @@
     }
 
     if (backend === 'haskell') {
+      if (!self._haskellCycles.check(filename)) return Promise.resolve(false);
       var haskellPath = '/tutorial/' + filename;
       // Sync the complete workspace so imports resolve just as they do in a
       // local Haskell project, even when the active file is not Main.hs.
@@ -5879,6 +5890,7 @@
           { type: 'run', path: haskellPath },
           { timeoutMs: self._haskellExecutionTimeoutMs }
         ).then(function (msg) {
+          if (msg.error) self._appendOutput(msg.error + '\n', 'err');
           if (msg.exitCode === 0) {
             self._appendOutput('\n\u2713 Done\n', 'info');
           } else {
@@ -7436,7 +7448,11 @@
       var saveTimer;
       var lintTimer;
       var gutterTimer;
+      if (this.config.backend === 'haskell' && !this._haskellCycles) {
+        this._haskellCycles = new window.SEBookHaskellCycleDiagnostics(this);
+      }
       model.onDidChangeContent(function () {
+        if (self._haskellCycles) self._haskellCycles.schedule();
         // Lint + gutter reflect CURRENT content, regardless of who changed
         // it — so they run even during programmatic edits (step transitions,
         // Apply Solution, popup-driven setValue) when _suppressAutoSave is on.
@@ -7472,6 +7488,7 @@
         // React preview is also save-only — popups send a request-save via Ctrl+S.
       });
       // Initial lint pass when the file first opens.
+      if (this._haskellCycles) this._haskellCycles.schedule();
       if (this.config.enableLinter && this._isPythonFile(filename)) {
         var initSelf = self;
         setTimeout(function () { initSelf._lintFile(filename); }, 100);
@@ -7876,6 +7893,7 @@
     if (!entry) return;
     entry.model.dispose();
     delete this.editorModels[filename];
+    if (this._haskellCycles) this._haskellCycles.schedule();
     if (this._leftActiveFile === filename) this._leftActiveFile = null;
     if (this._rightActiveFile === filename) this._rightActiveFile = null;
     if (this.activeFileName === filename) {
@@ -13144,6 +13162,12 @@
         return;
       }
 
+      if (!self._haskellCycles.check(runFile, tests[i].command)) {
+        results[i] = false;
+        runNext(i + 1);
+        return;
+      }
+
       testTimeout = setTimeout(function () {
         if (finished) return;
         finished = true;
@@ -13158,6 +13182,7 @@
         function (msg) {
           if (finished) return;
           activeRequestId = null;
+          if (msg.error) self._appendOutput(msg.error + '\n', 'err');
           results[i] = (msg.exitCode === 0);
           runNext(i + 1);
         }
