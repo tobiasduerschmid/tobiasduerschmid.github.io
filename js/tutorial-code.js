@@ -948,11 +948,13 @@
     //   - webcontainer (Node.js, via in-process V8 inspector + JSON-over-stdio)
     //   - browser (in-page sandboxed JS, via acorn AST instrumentation +
     //     sibling iframe + SAB for sync pause)
+    //   - prolog / haskell (cooperative interpreter/evaluation trace messages)
     // When false, no debugger code is loaded — see js/debugger/main.js. When
     // true, _buildUI() lazy-loads the debugger module after the base UI is
     // constructed.
     this.debuggerEnabled = !!options.debugger && (
-      backend === 'pyodide' || backend === 'webcontainer' || backend === 'browser'
+      backend === 'pyodide' || backend === 'webcontainer' || backend === 'browser' ||
+      backend === 'prolog' || backend === 'haskell'
     );
     this.debuggerOptions = options.debuggerOptions || {};
   }
@@ -1491,6 +1493,7 @@
 
   TutorialCode.prototype.destroy = function () {
     this._destroyed = true;
+    if (this._debuggerCtl && this._debuggerCtl.channel) this._debuggerCtl.channel.dispose();
     this._stopFileWatch();
     this._stopGuestClockSync();
     this._clearTimedPracticeTimer();
@@ -7247,6 +7250,7 @@
     var self = this;
     var needsNodeChannel = false;
     var needsBrowserChannel = self.config.backend === 'browser' || self.config.backend === 'webcontainer';
+    var needsLanguageChannel = self.config.backend === 'prolog' || self.config.backend === 'haskell';
     return new Promise(function (resolve, reject) {
       var dbgAssetVersion = String(Date.now());
       function ensureCss() {
@@ -7257,6 +7261,12 @@
         css.setAttribute('data-sebook-debugger-css', 'true');
         css.href = '/js/debugger/debugger.css?v=' + dbgAssetVersion;
         document.head.appendChild(css);
+        var controlsCss = document.createElement('link');
+        controlsCss.rel = 'stylesheet';
+        controlsCss.href = '/css/debugger-controls.css?v=' + dbgAssetVersion;
+        document.head.appendChild(controlsCss);
+        var printPolicy = document.querySelector('link[href*="/css/print-light.css"]');
+        if (printPolicy) document.head.appendChild(printPolicy);
       }
       function loadScriptOnce(src) {
         return new Promise(function (res, rej) {
@@ -7306,6 +7316,12 @@
         p = p.then(function () {
           if (window.SEBookBrowserChannel) return null;
           return loadScriptOnce('/js/debugger/browser-channel.js?v=' + dbgAssetVersion);
+        });
+      }
+      if (needsLanguageChannel) {
+        p = p.then(function () {
+          if (window.SEBookLanguageChannel) return null;
+          return loadScriptOnce('/js/debugger/language-channel.js?v=' + dbgAssetVersion);
         });
       }
       p.then(attach).catch(reject);

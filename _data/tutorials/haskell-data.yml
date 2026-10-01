@@ -7,6 +7,7 @@ learning_objectives:
   - "Evaluate how persistent updates preserve old values and reuse unaffected structure."
   - "Create a pure event simulator with explicit boundary and stopping rules."
 backend: haskell
+debugger: true
 require_tests: true
 
 # Preserve matching saved lessons without crediting replacements at the same index.

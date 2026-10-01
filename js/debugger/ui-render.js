@@ -331,12 +331,12 @@
     rootEl.innerHTML = sections.map(function (s) {
       var collapsed = helpers.getSectionCollapsed(s.key);
       return '<section class="tvm-dbg-section' + (collapsed ? ' collapsed' : '') +
-             '" data-section="' + s.key + '">' +
-             '<header class="tvm-dbg-section-head" data-section="' + s.key + '">' +
-             '<span class="tvm-dbg-section-chevron">▾</span>' +
-             '<i class="fa ' + s.icon + '"></i>' +
+             '" data-section="' + s.key + '" aria-label="' + s.label + '">' +
+             '<button type="button" class="tvm-dbg-section-head" data-section="' + s.key + '" aria-expanded="' + !collapsed + '">' +
+             '<span class="tvm-dbg-section-chevron" aria-hidden="true">▾</span>' +
+             '<i class="fa ' + s.icon + '" aria-hidden="true"></i>' +
              '<span class="tvm-dbg-section-title">' + s.label + '</span>' +
-             '</header>' +
+             '</button>' +
              '<div class="tvm-dbg-section-body" data-section="' + s.key + '">' +
              '<div class="tvm-debug-empty">' + s.empty + '</div>' +
              '</div>' +
@@ -350,6 +350,7 @@
       var key = section.getAttribute('data-section');
       var nowCollapsed = !section.classList.contains('collapsed');
       section.classList.toggle('collapsed', nowCollapsed);
+      head.setAttribute('aria-expanded', String(!nowCollapsed));
       helpers.setSectionCollapsed(key, nowCollapsed);
     });
   }
@@ -399,6 +400,11 @@
       html = '<div class="tvm-debug-return">→ returned ' +
              helpers.escape(snap.return_value.repr || '') + '</div>' + html;
     }
+    if (state.backend === 'haskell') {
+      html = '<p class="tvm-debug-language-note">Recorded events mark demanded right-hand sides. Arguments are shown without forcing their values.</p>' + html;
+    } else if (state.backend === 'prolog') {
+      html = '<p class="tvm-debug-language-note">Resolution goals and query bindings show the current search state.</p>' + html;
+    }
     view.innerHTML = html;
     wireExpanders(view);
     wireSubsectionToggles(view, helpers);
@@ -409,10 +415,10 @@
     var collapsed = helpers.getSubsectionCollapsed(key);
     return '<div class="tvm-debug-subsection' + (collapsed ? ' collapsed' : '') +
            '" data-subsection="' + key + '">' +
-           '<div class="tvm-debug-subsection-head">' +
-           '<span class="tvm-debug-subsection-chevron">▾</span>' +
+           '<button type="button" class="tvm-debug-subsection-head" aria-expanded="' + !collapsed + '">' +
+           '<span class="tvm-debug-subsection-chevron" aria-hidden="true">▾</span>' +
            '<span class="tvm-debug-subsection-title">' + label + '</span>' +
-           '</div>' +
+           '</button>' +
            '<div class="tvm-debug-subsection-body">' + contentHtml + '</div>' +
            '</div>';
   }
@@ -427,6 +433,7 @@
           var key = sub.getAttribute('data-subsection');
           var nowCollapsed = !sub.classList.contains('collapsed');
           sub.classList.toggle('collapsed', nowCollapsed);
+          head.setAttribute('aria-expanded', String(!nowCollapsed));
           helpers.setSubsectionCollapsed(key, nowCollapsed);
         });
       })(heads[i]);
@@ -471,13 +478,13 @@
                     '>' + helpers.escape(val.repr || val.preview || '') + '</span>';
     var hasChildren = val.kind === 'collection' || (val.kind === 'object' && val.attrs && Object.keys(val.attrs).length);
     var expander = hasChildren
-      ? '<span class="tvm-debug-expander" data-expanded="false">▶</span>'
+      ? '<button type="button" class="tvm-debug-expander" data-expanded="false" aria-expanded="false" aria-label="Expand ' + helpers.escape(name) + '">▶</button>'
       : '<span class="tvm-debug-expander-spacer"></span>';
     var row = '<div class="tvm-debug-var-row" style="padding-left:' + (depth * 14) + 'px">' +
               expander + nameHtml + typeHtml + valueHtml + (aliasBadge || '') + '</div>';
     if (hasChildren) {
       var childHtml = renderChildren(val, depth + 1, helpers);
-      row += '<div class="tvm-debug-var-children" style="display:none">' + childHtml + '</div>';
+      row += '<div class="tvm-debug-var-children" hidden>' + childHtml + '</div>';
     }
     return row;
   }
@@ -515,10 +522,12 @@
         ex.addEventListener('click', function () {
           var expanded = ex.getAttribute('data-expanded') === 'true';
           ex.setAttribute('data-expanded', !expanded);
+          ex.setAttribute('aria-expanded', String(!expanded));
+          ex.setAttribute('aria-label', ex.getAttribute('aria-label').replace(/^(Expand|Collapse) /, expanded ? 'Expand ' : 'Collapse '));
           ex.textContent = expanded ? '▶' : '▼';
           var children = ex.parentElement.nextElementSibling;
           if (children && children.classList.contains('tvm-debug-var-children')) {
-            children.style.display = expanded ? 'none' : 'block';
+            children.hidden = expanded;
           }
         });
       })(expanders[i]);
@@ -635,10 +644,10 @@
     for (var i = snap.stack.length - 1; i >= 0; i--) {
       var f = displayFrameForSnapshot(snap, i);
       var cls = 'tvm-debug-frame' + (i === selectedIdx ? ' active' : '');
-      rows.push('<div class="' + cls + '" data-frame-idx="' + i + '">' +
+      rows.push('<button type="button" class="' + cls + '" data-frame-idx="' + i + '" aria-pressed="' + (i === selectedIdx) + '">' +
                 '<span class="tvm-debug-frame-fn">' + helpers.escape(f.function) + '</span>' +
                 '<span class="tvm-debug-frame-loc">' + helpers.escape(helpers.basename(f.file)) + ':' + f.line + '</span>' +
-                '</div>');
+                '</button>');
     }
     view.innerHTML = '<div class="tvm-debug-stack">' + rows.join('') + '</div>';
     var frames = view.querySelectorAll('.tvm-debug-frame');
@@ -657,6 +666,11 @@
   function renderWatch(view, state, dispatch, helpers) {
     if (!view) return;
     helpers = defaultHelpers(helpers);
+    if (state.backend === 'haskell') {
+      view.innerHTML = '<p class="tvm-debug-language-note">Haskell values remain unevaluated; watches and variable edits are unavailable.</p>';
+      return;
+    }
+    var isProlog = state.backend === 'prolog';
     var snap = (state.historyIdx != null && state.historyIdx >= 0 && state.history)
       ? state.history[state.historyIdx]
       : null;
@@ -681,10 +695,11 @@
     view.innerHTML =
       '<div class="tvm-debug-watch-list">' + rows.join('') + '</div>' +
       '<div class="tvm-debug-watch-add">' +
-      '<input type="text" class="tvm-debug-watch-input" placeholder="Add a Python expression to watch (e.g. len(items))" data-original-title="Watch expression" aria-label="Watch expression" />' +
+      '<input type="text" class="tvm-debug-watch-input" placeholder="' + (isProlog ? 'Query variable (e.g. X)' : 'Add a Python expression to watch (e.g. len(items))') + '" aria-label="' + (isProlog ? 'Query variable to watch' : 'Watch expression') + '" />' +
       '<button class="tvm-debug-watch-add-btn">+ Add</button>' +
       '</div>' +
-      (watches.length === 0 ? '<div class="tvm-debug-empty">Watches are evaluated on every step. Avoid expressions with side effects.</div>' : '');
+      (isProlog ? '<p class="tvm-debug-language-note">Watch a named variable from your query. Arbitrary Prolog goals are not evaluated.</p>' :
+        (watches.length === 0 ? '<div class="tvm-debug-empty">Watches are evaluated on every step. Avoid expressions with side effects.</div>' : ''));
 
     var input = view.querySelector('.tvm-debug-watch-input');
     var addBtn = view.querySelector('.tvm-debug-watch-add-btn');
@@ -721,6 +736,11 @@
   function renderBreakpoints(view, state, dispatch, helpers) {
     if (!view) return;
     helpers = defaultHelpers(helpers);
+    // Runtime acknowledgements may refresh this section after a condition
+    // dialog has restored focus to its Edit button.
+    var focusedEdit = view.contains(document.activeElement) && document.activeElement.hasAttribute('data-bp-edit')
+      ? { path: document.activeElement.getAttribute('data-path'), line: document.activeElement.getAttribute('data-line') }
+      : null;
     var snap = (state.historyIdx != null && state.historyIdx >= 0 && state.history)
       ? state.history[state.historyIdx]
       : null;
@@ -746,7 +766,7 @@
           '<span class="tvm-debug-manager-title">' + helpers.escape(helpers.basename(path)) + ':' + line + '</span>' +
           cond + hits + err +
           '</span>' +
-          '<button class="tvm-debug-manager-icon" data-bp-edit="1" data-path="' + helpers.escape(path) + '" data-line="' + line + '" data-original-title="Edit condition" aria-label="Edit condition">' + debugManagerIcon('edit') + '</button>' +
+          (state.backend === 'haskell' ? '' : '<button class="tvm-debug-manager-icon" data-bp-edit="1" data-path="' + helpers.escape(path) + '" data-line="' + line + '" data-original-title="Edit condition" aria-label="Edit condition">' + debugManagerIcon('edit') + '</button>') +
           '<button class="tvm-debug-manager-icon tvm-debug-manager-danger" data-bp-remove="1" data-path="' + helpers.escape(path) + '" data-line="' + line + '" data-original-title="Remove breakpoint" aria-label="Remove breakpoint">' + debugManagerIcon('trash') + '</button>' +
           '</div>'
         );
@@ -774,7 +794,7 @@
     });
     var watchpointControls =
       '<div class="tvm-debug-manager-add">' +
-      '<input type="text" class="tvm-debug-watchpoint-input" placeholder="Break when expression changes value" data-original-title="Data watchpoint expression" aria-label="Data watchpoint expression" />' +
+      '<input type="text" class="tvm-debug-watchpoint-input" placeholder="' + (state.backend === 'prolog' ? 'Query variable (e.g. X)' : 'Break when expression changes value') + '" aria-label="' + (state.backend === 'prolog' ? 'Query variable for data watchpoint' : 'Data watchpoint expression') + '" />' +
       '<button class="tvm-debug-watchpoint-add-btn">' + debugManagerIcon('plus') + '<span>Add Data Watchpoint</span></button>' +
       '</div>' +
       '<div class="tvm-debug-manager-actions">' +
@@ -816,10 +836,10 @@
       '<div class="tvm-debug-manager">' +
       renderBreakpointGroup('manager-code-breakpoints', 'Code Breakpoints',
         bpRows.length ? bpRows.join('') : '<div class="tvm-debug-empty-row">No code breakpoints.</div>', helpers) +
-      renderBreakpointGroup('manager-data-watchpoints', 'Data Watchpoints',
-        (wpRows.length ? wpRows.join('') : '<div class="tvm-debug-empty-row">No data watchpoints.</div>') + watchpointControls, helpers) +
-      renderBreakpointGroup('manager-exception-breakpoints', 'Exception Breakpoints',
-        (ebRows.length ? ebRows.join('') : '<div class="tvm-debug-empty-row">No exception breakpoints.</div>') + exceptionControls, helpers) +
+      (state.backend === 'haskell' ? '' : renderBreakpointGroup('manager-data-watchpoints', 'Data Watchpoints',
+        (wpRows.length ? wpRows.join('') : '<div class="tvm-debug-empty-row">No data watchpoints.</div>') + watchpointControls, helpers)) +
+      (state.backend === 'prolog' || state.backend === 'haskell' ? '' : renderBreakpointGroup('manager-exception-breakpoints', 'Exception Breakpoints',
+        (ebRows.length ? ebRows.join('') : '<div class="tvm-debug-empty-row">No exception breakpoints.</div>') + exceptionControls, helpers)) +
       '</div>';
 
     var input = view.querySelector('.tvm-debug-watchpoint-input');
@@ -834,13 +854,22 @@
     if (input) input.addEventListener('keydown', function (e) { if (e.key === 'Enter') add(); });
     wireManagerButtons(view, state, dispatch);
     wireBreakpointGroups(view, helpers);
+    if (focusedEdit) {
+      var editButtons = view.querySelectorAll('[data-bp-edit]');
+      for (var i = 0; i < editButtons.length; i++) {
+        if (editButtons[i].getAttribute('data-path') === focusedEdit.path && editButtons[i].getAttribute('data-line') === focusedEdit.line) {
+          editButtons[i].focus({ preventScroll: true });
+          break;
+        }
+      }
+    }
   }
 
   function renderBreakpointGroup(key, label, bodyHtml, helpers) {
     var collapsed = helpers.getSubsectionCollapsed(key);
     return '<section class="tvm-debug-manager-group' + (collapsed ? ' collapsed' : '') + '" data-manager-group="' + helpers.escape(key) + '">' +
-      '<button type="button" class="tvm-debug-manager-heading" data-manager-group-toggle="' + helpers.escape(key) + '">' +
-      '<span class="tvm-debug-manager-chevron">▾</span>' +
+      '<button type="button" class="tvm-debug-manager-heading" data-manager-group-toggle="' + helpers.escape(key) + '" aria-expanded="' + !collapsed + '">' +
+      '<span class="tvm-debug-manager-chevron" aria-hidden="true">▾</span>' +
       '<span>' + helpers.escape(label) + '</span>' +
       '</button>' +
       '<div class="tvm-debug-manager-group-body">' + bodyHtml + '</div>' +
@@ -857,6 +886,7 @@
           if (!group) return;
           var nowCollapsed = !group.classList.contains('collapsed');
           group.classList.toggle('collapsed', nowCollapsed);
+          head.setAttribute('aria-expanded', String(!nowCollapsed));
           helpers.setSubsectionCollapsed(key, nowCollapsed);
         });
       })(heads[i]);
@@ -994,17 +1024,21 @@
   function renderHistory(view, state, dispatch, helpers) {
     if (!view) return;
     helpers = defaultHelpers(helpers);
+    var focused = view.contains(document.activeElement) ? document.activeElement : null;
+    var focusSlider = focused && focused.classList.contains('tvm-debug-history-slider');
+    var focusedItem = focused && focused.classList.contains('tvm-debug-history-item') ? focused.getAttribute('data-i') : null;
     var hi = state.historyIdx;
     if (hi == null || hi < 0 || !state.history || state.history.length === 0) {
       view.innerHTML = '<div class="tvm-debug-empty">Start debugging to navigate execution history.</div>';
       return;
     }
     var n = state.history.length;
+    var recorded = (state.backend === 'prolog' || state.backend === 'haskell') && !(state.session && state.session.active);
     var html = '<div class="tvm-debug-history-controls">' +
       '<input type="range" class="tvm-debug-history-slider" min="0" max="' + (n - 1) + '" value="' + hi + '" data-original-title="Execution history position" aria-label="Execution history position">' +
       '<span class="tvm-debug-history-pos">' + (hi + 1) + ' / ' + n + '</span>' +
       (hi === state.liveIdx
-        ? '<span class="tvm-debug-history-live">● live</span>'
+        ? '<span class="tvm-debug-history-live">● ' + (recorded ? 'recorded' : 'live') + '</span>'
         : '<span class="tvm-debug-history-rewound">⏮ rewound</span>') +
       '</div>';
     html += '<div class="tvm-debug-history-list">';
@@ -1015,11 +1049,11 @@
       var loc = displayLocationForSnapshot(s);
       var marker = (i === hi) ? ' active' : '';
       var ev = s.event === 'call' ? '↳' : s.event === 'return' ? '↰' : s.event === 'exception' ? '⚠' : '·';
-      html += '<div class="tvm-debug-history-item' + marker + '" data-i="' + i + '">' +
+      html += '<button type="button" class="tvm-debug-history-item' + marker + '" data-i="' + i + '" aria-pressed="' + (i === hi) + '">' +
               '<span class="tvm-debug-history-i">' + (i + 1) + '</span>' +
-              '<span class="tvm-debug-history-ev">' + ev + '</span>' +
+              '<span class="tvm-debug-history-ev" aria-hidden="true">' + ev + '</span>' +
               '<span class="tvm-debug-history-loc">' + helpers.escape(helpers.basename(loc.file)) + ':' + loc.line + '</span>' +
-              '</div>';
+              '</button>';
     }
     html += '</div>';
     view.innerHTML = html;
@@ -1034,6 +1068,17 @@
           dispatch({ type: 'setHistoryIdx', idx: +it.getAttribute('data-i') });
         });
       })(items[k]);
+    }
+    // Seeking replaces the history markup; keep keyboard navigation on the
+    // same control so consecutive arrow keys continue moving through it.
+    if (focusSlider && slider) slider.focus({ preventScroll: true });
+    else if (focusedItem != null) {
+      for (var j = 0; j < items.length; j++) {
+        if (items[j].getAttribute('data-i') === focusedItem) {
+          items[j].focus({ preventScroll: true });
+          break;
+        }
+      }
     }
   }
 

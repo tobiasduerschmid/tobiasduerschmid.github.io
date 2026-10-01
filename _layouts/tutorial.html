@@ -326,13 +326,15 @@
   {%- comment -%}
     The COI service worker is needed by:
       - WebContainers backend (always — needs SharedArrayBuffer)
-      - Tutorials with the time-travel debugger (SharedArrayBuffer + Atomics.wait)
+      - Python/JavaScript debugger tutorials (SharedArrayBuffer + Atomics.wait)
       - v86 backend — not for COI itself, but to enable the SW's validated
         VM-asset cache (state.bin.gz alone is ~50 MB; Cache Storage avoids
         repeat downloads, while validator checks prevent stale snapshots).
   {%- endcomment -%}
   {% assign tutorial_requires_coi = false %}
-  {% if tutorial_uses_webcontainer or tutorial_data.debugger %}
+  {% if tutorial_uses_webcontainer %}
+    {% assign tutorial_requires_coi = true %}
+  {% elsif tutorial_data.debugger and tutorial_data.backend != 'prolog' and tutorial_data.backend != 'haskell' %}
     {% assign tutorial_requires_coi = true %}
   {% endif %}
   {% if tutorial_requires_coi or tutorial_uses_v86 %}
@@ -454,7 +456,7 @@
         outputPopupUrl: '{{ "/tutorial-output-popup.html" | relative_url }}',
         editorSplit: config.editor_split || false,
         outputHeight: config.output_height || null,
-        // Time-travel debugger opt-in (pyodide tutorials only). When false,
+        // Debugger opt-in for supported single-backend tutorials. When false,
         // no debugger code is loaded. See plan in
         // .claude/plans/what-would-be-options-temporal-ritchie.md
         debugger: config.debugger || false,

@@ -1,0 +1,161 @@
+/* Shared main-window and popout debugger controls. The existing debugger
+   palette owns light/dark backgrounds; native buttons inherit that palette. */
+.tvm-debug-view {
+  font-size: max(1em, var(--font-size-readable-min, 16px));
+}
+
+.tvm-bp-dialog {
+  font-size: max(1em, var(--font-size-readable-min, 16px));
+  max-height: calc(100dvh - 36px);
+  overflow-y: auto;
+}
+
+.tvm-bp-dialog :is(label, input, button, .tvm-bp-dialog-location, .tvm-bp-dialog-error, .tvm-bp-dialog-copy) {
+  font-size: inherit;
+}
+
+.tvm-bp-dialog .tvm-bp-dialog-title { font-size: 1.2em; }
+
+.tvm-debug-toolbar .tvm-debug-status {
+  font-size: max(1em, var(--font-size-readable-min, 16px));
+  font-style: normal;
+  text-transform: none;
+}
+
+.tvm-debug-view :is(
+  .tvm-dbg-section-head, .tvm-debug-subsection-head, .tvm-debug-frame,
+  .tvm-debug-history-item, .tvm-debug-manager-heading, .tvm-debug-expander
+) {
+  appearance: none;
+  font: inherit;
+  text-align: left;
+  border: 0;
+  min-height: 28px;
+}
+
+.tvm-debug-view :is(
+  .tvm-dbg-section-head, .tvm-debug-subsection-head, .tvm-debug-frame,
+  .tvm-debug-history-item, .tvm-debug-manager-heading
+) {
+  width: 100%;
+}
+
+.tvm-debug-view :is(.tvm-dbg-section-head, .tvm-debug-subsection-head, .tvm-debug-manager-heading) {
+  font-weight: 700;
+}
+
+.tvm-debug-view :is(.tvm-debug-frame, .tvm-debug-history-item, .tvm-debug-expander) {
+  background: transparent;
+  color: inherit;
+}
+
+.tvm-debug-view :is(.tvm-debug-frame, .tvm-debug-history-item, .tvm-debug-expander):hover {
+  background: rgba(255, 209, 0, 0.18);
+}
+
+html.dark-mode .tvm-debug-view :is(.tvm-debug-frame, .tvm-debug-history-item, .tvm-debug-expander):hover {
+  background: rgba(255, 209, 0, 0.18);
+}
+
+.tvm-debug-view .tvm-debug-manager-run:hover,
+html.dark-mode .tvm-debug-view .tvm-debug-manager-run:hover {
+  background: #ffb81c;
+  color: #1a1a1a;
+}
+
+.tvm-debug-view :is(button, input, select):focus-visible,
+.tvm-bp-dialog :is(button, input):focus-visible {
+  outline: 2px solid #075985;
+  outline-offset: -2px;
+}
+
+.tvm-debug-manager-toggle:has(input:focus-visible) > span {
+  outline: 2px solid #075985;
+  outline-offset: 3px;
+}
+
+html.dark-mode .tvm-debug-manager-toggle:has(input:focus-visible) > span {
+  outline-color: #ffe066;
+}
+
+html.dark-mode .tvm-debug-view :is(button, input, select):focus-visible,
+html.dark-mode .tvm-bp-dialog :is(button, input):focus-visible {
+  outline-color: #ffe066;
+}
+
+.tvm-debug-view input::placeholder,
+.tvm-bp-dialog input::placeholder {
+  color: #6a6a6a;
+  opacity: 1;
+}
+
+html.dark-mode .tvm-debug-view input::placeholder,
+html.dark-mode .tvm-bp-dialog input::placeholder {
+  color: #cbd5e1;
+}
+
+.tvm-debug-view :is(
+  .tvm-debug-empty, .tvm-debug-empty-row, .tvm-debug-var-name,
+  .tvm-debug-var-value, .tvm-debug-var-type, .tvm-debug-frame-fn,
+  .tvm-debug-frame-loc, .tvm-debug-watch-expr, .tvm-debug-watch-val,
+  .tvm-debug-history-pos, .tvm-debug-history-live, .tvm-debug-history-rewound,
+  .tvm-debug-manager-title, .tvm-debug-manager-value, .tvm-debug-manager-condition,
+  .tvm-debug-manager-hitcount, .tvm-debug-manager-muted, .tvm-debug-manager-error,
+  .tvm-debug-history-list, .tvm-debug-history-loc, .tvm-debug-watch-error
+) {
+  font-size: inherit;
+}
+
+.tvm-debug-language-note {
+  margin: 0.6em;
+  line-height: 1.5;
+  color: inherit;
+}
+
+.tvm-debug-view .tvm-debug-frame.active,
+.tvm-debug-view .tvm-debug-history-item.active {
+  background: #ffd100;
+  color: #1a1a1a;
+}
+
+html.dark-mode .tvm-debug-view .tvm-debug-frame.active,
+html.dark-mode .tvm-debug-view .tvm-debug-history-item.active {
+  background: #ffd100;
+  color: #1a1a1a;
+}
+
+html.dark-mode .tvm-debug-view .tvm-debug-frame.active :is(.tvm-debug-frame-fn, .tvm-debug-frame-loc) {
+  color: #1a1a1a;
+}
+
+.tvm-debug-view .tvm-debug-expander {
+  flex: 0 0 28px;
+  width: 28px;
+  padding: 0;
+  text-align: center;
+}
+
+.tvm-debug-var-children[hidden] { display: none; }
+
+/* Keep syntax tokens readable over the paused source line. The outlined
+   gutter chevron identifies the current event independently of its tint. */
+html:not(.dark-mode) .monaco-editor .tvm-debug-current-line {
+  background: #fffef9;
+}
+
+html:not(.dark-mode) .monaco-editor :is(.tvm-debug-current-line-rewound, .tvm-debug-current-line-after) {
+  background: #fdfefe;
+}
+
+@media print {
+  .tvm-debug-view,
+  html.dark-mode .tvm-debug-view {
+    background: #fff;
+    color: #111;
+  }
+
+  .tvm-debug-view :is(button, input, select):focus-visible,
+  html.dark-mode .tvm-debug-view :is(button, input, select):focus-visible {
+    outline-color: #111;
+  }
+}

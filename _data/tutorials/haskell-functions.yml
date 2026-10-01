@@ -15,6 +15,7 @@ learning_objectives:
   - "Predict finite results obtained by mapping, filtering, and taking from infinite ranges."
   - "Create a tested data-processing pipeline from an input and output contract."
 backend: haskell
+debugger: true
 require_tests: true
 
 # Preserve matching saved lessons without crediting replacements at the same index.

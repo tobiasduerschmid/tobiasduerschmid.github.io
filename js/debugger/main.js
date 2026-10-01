@@ -58,6 +58,20 @@
 
   var UNCHANGED = 'UNCHANGED';   // diff sentinel from Python side
 
+  function trapDialogTab(event, dialog) {
+    if (event.key !== 'Tab') return;
+    var controls = dialog.querySelectorAll('input:not([disabled]), button:not([disabled])');
+    if (!controls.length) return;
+    var first = controls[0], last = controls[controls.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
+
   function debugManagerIcon(name) {
     var svg = "<svg class='tvm-debug-manager-svg' xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' aria-hidden='true' focusable='false'>";
     if (name === 'playData') {
@@ -99,8 +113,13 @@
   }
 
   // ---- attach() -----------------------------------------------------------
+  function usesLanguageChannel(tutorial) {
+    var backend = tutorial.config && tutorial.config.backend;
+    return backend === 'prolog' || backend === 'haskell';
+  }
+
   function attach(tutorial) {
-    if (!window.crossOriginIsolated) {
+    if (!usesLanguageChannel(tutorial) && !window.crossOriginIsolated) {
       // First load on a fresh debugger tutorial — service worker registered
       // but headers don't take effect until reload. Some embedded webviews
       // never grant the isolation headers, so keep the debugger entry points
@@ -112,7 +131,7 @@
       });
       return;
     }
-    if (!window.SharedArrayBuffer || !window.Atomics) {
+    if (!usesLanguageChannel(tutorial) && (!window.SharedArrayBuffer || !window.Atomics)) {
       console.warn('[SEBookDebugger] SharedArrayBuffer/Atomics unavailable — debugger disabled');
       installUnavailableDebuggerUI(tutorial, {
         title: 'Debugger unavailable in this webview',
@@ -336,7 +355,9 @@
     // WebContainer's in-browser Node inspector does not reliably service CDP
     // pause/step commands.
     var backend = this.t.config && this.t.config.backend;
-    if (backend === 'webcontainer' && window.SEBookBrowserChannel) {
+    if (usesLanguageChannel(this.t)) {
+      this.channel = new window.SEBookLanguageChannel(this, this.t);
+    } else if (backend === 'webcontainer' && window.SEBookBrowserChannel) {
       this.channel = new window.SEBookBrowserChannel(this, this.t);
     } else if (backend === 'webcontainer' && window.SEBookNodeChannel) {
       this.channel = new window.SEBookNodeChannel(this, this.t);
@@ -1150,7 +1171,9 @@
       view.className = 'tvm-debug-view tvm-debug-view-' + v.panel;
       view.style.display = 'none';
       view.dataset.panel = v.panel;
-      if (v.type === 'combined') {
+      if (v.type === 'combined' && usesLanguageChannel(self.t)) {
+        window.SEBookDebuggerUI.buildCombinedShell(view, self.languageViewHelpers());
+      } else if (v.type === 'combined') {
         view.innerHTML = self._buildCombinedViewShell();
       } else {
         view.innerHTML = '<div class="tvm-debug-empty">' + (v.empty || '') + '</div>';
@@ -1159,7 +1182,7 @@
     });
 
     // Wire collapse/expand on section headers inside the combined view
-    this._wireSectionToggles();
+    if (!usesLanguageChannel(this.t)) this._wireSectionToggles();
 
     // Hook other existing left tabs (Steps, UML) to also hide our debug views
     // when clicked. Their existing click handler runs first; ours runs after.
@@ -1263,6 +1286,7 @@
     // Debug button — sits next to Run.
     this.debugBtn = document.createElement('button');
     this.debugBtn.className = 'tvm-debug-btn';
+    this.debugBtn.setAttribute('aria-label', 'Start debugger');
     this.debugBtn.setAttribute('data-original-title', 'Start debugger (F5)');
     this.debugBtn.innerHTML = '<i class="fa fa-bug"></i> Debug';
     this.debugBtn.addEventListener('click', function () { self.startSession(); });
@@ -1383,6 +1407,7 @@
     // Keyboard shortcuts
     document.addEventListener('keydown', function (e) {
       if (!self.session) return;
+      if (usesLanguageChannel(self.t) && !e.target.closest('.tvm-debug-view, .tvm-debug-toolbar')) return;
       if (e.key === 'F5' && !e.shiftKey) { e.preventDefault(); self.handleToolbarCmd('continue'); }
       else if (e.key === 'F5' && e.shiftKey && e.altKey) { e.preventDefault(); self.handleToolbarCmd('backContinue'); }
       else if (e.key === 'F5' && e.shiftKey) { e.preventDefault(); self.handleToolbarCmd('stop'); }
@@ -1422,6 +1447,7 @@
     actions = actions || (this.t.root && this.t.root.querySelector('.tvm-output-actions'));
     if (!actions || !this.stepToolbar) return;
     var toolbar = this.stepToolbar;
+    var focusedControl = toolbar.contains(document.activeElement) ? document.activeElement : null;
     var header = (actions.closest && actions.closest('.tvm-output-header')) || this.stepToolbarHeader;
     if (toolbar.parentNode !== actions) {
       actions.appendChild(toolbar);
@@ -1444,6 +1470,11 @@
       } else {
         actions.classList.add('tvm-debug-toolbar-new-row');
       }
+    }
+    // Moving a focused button between rows blurs it in the browser. Preserve
+    // keyboard navigation when a resize or status update lays out the toolbar.
+    if (focusedControl && document.activeElement !== focusedControl) {
+      focusedControl.focus({ preventScroll: true });
     }
   };
 
@@ -1486,7 +1517,9 @@
     // A rewound history row is a different execution cursor. To move forward
     // from there, restart and replay to that snapshot, then issue the command.
     if (this.historyIdx < this.liveIdx) {
-      if (cmd === 'watchContinue') {
+      if (this.channel && this.channel.readOnlyHistory) {
+        this.advanceRecordedHistory(cmd);
+      } else if (cmd === 'watchContinue') {
         this.runForwardToWatchpoint(false, null);
       } else if (cmd === 'continue' && this.hasEnabledWatchpoints()) {
         this.runForwardToWatchpoint(true, null);
@@ -1524,6 +1557,32 @@
   DebuggerController.prototype.isForwardDebugCommand = function (cmd) {
     return cmd === 'continue' || cmd === 'watchContinue' ||
       cmd === 'step' || cmd === 'next' || cmd === 'return';
+  };
+
+  // Read-only language traces navigate recorded events without re-executing
+  // effects. Once the cursor reaches the live pause, execution can resume.
+  DebuggerController.prototype.advanceRecordedHistory = function (cmd) {
+    if (cmd === 'watchContinue' || (cmd === 'continue' && this.hasEnabledWatchpoints())) {
+      this.runForwardToWatchpoint(cmd === 'continue', null);
+      return;
+    }
+    var current = this.history[this.historyIdx];
+    var depth = current.stack.length;
+    var target = this.liveIdx;
+    for (var i = this.historyIdx + 1; i <= this.liveIdx; i++) {
+      var snap = this.history[i];
+      var atBreakpoint = this.snapshotBreakpointMatch(snap);
+      if (cmd === 'step' || atBreakpoint ||
+          (cmd === 'next' && snap.stack.length <= depth) ||
+          (cmd === 'return' && snap.stack.length < depth)) {
+        target = i;
+        break;
+      }
+    }
+    this.historyIdx = target;
+    this.selectedFrameIdx = -1;
+    this.renderAll(true);
+    this.setStatus(target === this.liveIdx ? 'paused at live event' : 'recorded step ' + (target + 1));
   };
 
   DebuggerController.prototype.needsRuntimeSyncBeforeCommand = function (cmd) {
@@ -2009,6 +2068,13 @@
         this.pauseAtForwardTarget(existing);
         return;
       }
+      if (this.channel && this.channel.readOnlyHistory) {
+        this.historyIdx = this.liveIdx;
+        this.selectedFrameIdx = -1;
+        this.renderAll(true);
+        this.beginWatchpointRun(includeLineBreakpoints, id);
+        return;
+      }
       this.session.pendingWatchpointRun = {
         includeLineBreakpoints: !!includeLineBreakpoints,
         id: id || null,
@@ -2318,6 +2384,7 @@
   };
 
   DebuggerController.prototype.snapshotBreakpointMatch = function (snap) {
+    if (snap && snap.source_mapped === false) return false;
     if (!snap || !snap.file || !snap.line) return false;
     var bps = this.breakpoints.get(snap.file);
     if (!bps) {
@@ -2338,6 +2405,7 @@
   };
 
   DebuggerController.prototype.snapshotHasBreakpoint = function (snap) {
+    if (snap && snap.source_mapped === false) return false;
     if (!snap || !snap.file || !snap.line) return false;
     var bps = this.breakpoints.get(snap.file);
     if (!bps) {
@@ -2490,6 +2558,10 @@
   };
 
   DebuggerController.prototype.editBreakpointCondition = function (filename, line) {
+    if (this.t.config.backend === 'haskell') {
+      this.setStatus('Haskell supports source breakpoints without conditions.');
+      return;
+    }
     var path = this.normalizeBreakpointPath(filename);
     line = this.normalizeBreakpointLine(line);
     if (!path || !line) return;
@@ -2567,13 +2639,14 @@
       var label = document.createElement('label');
       label.className = 'tvm-bp-dialog-label';
       label.setAttribute('for', 'tvm-bp-condition-input');
-      label.textContent = 'Python expression';
+      var isProlog = self.t.config.backend === 'prolog';
+      label.textContent = isProlog ? 'Prolog comparison' : 'Python expression';
       var input = document.createElement('input');
       input.id = 'tvm-bp-condition-input';
       input.className = 'tvm-bp-dialog-input';
       input.type = 'text';
       input.value = existing || '';
-      input.placeholder = 'score >= 90 and attempts < 3';
+      input.placeholder = isProlog ? 'X >= 2' : 'score >= 90 and attempts < 3';
       input.setAttribute('spellcheck', 'false');
       input.setAttribute('autocomplete', 'off');
       input.setAttribute('autocapitalize', 'off');
@@ -2640,16 +2713,27 @@
         done = true;
         backdrop.removeEventListener('keydown', onKeydown);
         if (backdrop.parentNode) backdrop.parentNode.removeChild(backdrop);
-        try {
-          if (previousFocus && previousFocus.focus) previousFocus.focus();
-        } catch (e) {}
         resolve(result);
+        // The resolved edit redraws the breakpoint manager. Restore focus to
+        // its replacement button after that redraw, or to the original editor.
+        Promise.resolve().then(function () {
+          var target = previousFocus;
+          if (target && !target.isConnected) {
+            var candidates = self.t.root.querySelectorAll('[data-bp-edit]');
+            target = Array.prototype.find.call(candidates, function (button) {
+              return button.getAttribute('data-path') === self.normalizeBreakpointPath(filename) &&
+                Number(button.getAttribute('data-line')) === line;
+            }) || self.debugBtn;
+          }
+          if (target && target.focus) target.focus({ preventScroll: true });
+        });
       }
       function onKeydown(e) {
+        trapDialogTab(e, dialog);
         if (e.key === 'Escape') {
           e.preventDefault();
           close(null);
-        } else if (e.key === 'Enter') {
+        } else if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
           e.preventDefault();
           close({ condition: input.value, hitCount: hitInput.value });
         }
@@ -2759,10 +2843,11 @@
         close({ choice: which, remember: !!remember.checked });
       }
       function onKeydown(e) {
+        trapDialogTab(e, dialog);
         if (e.key === 'Escape') {
           e.preventDefault();
           close(null);
-        } else if (e.key === 'Enter') {
+        } else if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
           e.preventDefault();
           choice('watch');
         }
@@ -3018,6 +3103,10 @@
 
   DebuggerController.prototype.startSession = function () {
     if (this.session) return;   // already active
+    if (this.t._activeRunTransaction || this.t._testRunInFlight) {
+      this.setStatus('Wait for the current run or test to finish before debugging.');
+      return;
+    }
     // For pyodide we need a Worker reference; for webcontainer (NodeChannel)
     // we need the WebContainer to be booted; for browser we just need the
     // BrowserChannel module loaded (no async runtime to wait on).
@@ -3033,7 +3122,7 @@
     if (!filename) { this.setStatus('Open a file in the editor before debugging.'); return; }
     filename = String(filename).replace(/^\/tutorial\//, '').replace(/^\/+/, '');
     var model = this.t.editorModels[filename] && this.t.editorModels[filename].model;
-    if (!model) { this.setStatus('Cannot locate code for ' + filename + '. Switch to a Python file and try again.'); return; }
+    if (!model) { this.setStatus('Cannot locate code for ' + filename + '. Open the program file and try again.'); return; }
     var code = model.getValue();
     var path = this.normalizeBreakpointPath(filename);
     var files = this.collectDebugFiles();
@@ -3114,6 +3203,7 @@
         breakpoints: this.collectBreakpointsForRun(),
         watches: this.session.watches,
         args: this.session.args || [],
+        query: (this.t.root.querySelector('.tvm-args-input') || {}).value || '',
         options: this.opts,
         serverMode: !!(step && step.http_client),
         overrides: this.session.replayOverrides || [],
@@ -3388,14 +3478,24 @@
   };
 
   DebuggerController.prototype.onDebugComplete = function (msg) {
+    var languageTrace = this.channel && this.channel.readOnlyHistory;
+    if (languageTrace && msg.snapshots && msg.snapshots.length) {
+      this.history = this.history.concat(msg.snapshots);
+      this.historyIdx = this.liveIdx = this.history.length - 1;
+      this.selectedFrameIdx = -1;
+    }
     this.disableStepButtons(true);
-    this.endSession(false);
+    this.endSession(!!languageTrace && !msg.stopped);
+    if (languageTrace && !msg.stopped) this.renderAll();
+    if (msg.error && languageTrace && !msg.errorReported) this.t._appendOutput('\n' + msg.error + '\n', 'stderr');
   };
 
   DebuggerController.prototype.onCapReached = function (msg) {
     if (!this.session) return;
     this.session.capReached = true;
-    this.setStatus('snapshot cap (' + msg.limit + ') — back-in-time disabled');
+    this.setStatus(this.channel && this.channel.readOnlyHistory
+      ? 'trace limit (' + msg.limit + ') reached — recorded history remains available'
+      : 'snapshot cap (' + msg.limit + ') — back-in-time disabled');
   };
 
   DebuggerController.prototype.onBreakpointError = function (msg) {
@@ -3476,6 +3576,24 @@
   // ===========================================================================
   // Rendering
   // ===========================================================================
+  DebuggerController.prototype.languageViewHelpers = function () {
+    var self = this;
+    return {
+      getSectionCollapsed: function (key) { return self._isSectionCollapsed(key); },
+      setSectionCollapsed: function (key, value) { self._setSectionCollapsed(key, value); },
+      getSubsectionCollapsed: function (key) { return self._isSubsectionCollapsed(key); },
+      setSubsectionCollapsed: function (key, value) { self._setSubsectionCollapsed(key, value); },
+      isVarScopeEditable: function () { return false; },
+    };
+  };
+
+  DebuggerController.prototype.renderLanguageSection = function (panel, renderer) {
+    if (!usesLanguageChannel(this.t)) return false;
+    var view = this.viewEl(panel);
+    if (view) window.SEBookDebuggerUI[renderer](view, this._buildSyncState(), this._handleAction.bind(this), this.languageViewHelpers());
+    return true;
+  };
+
   DebuggerController.prototype.renderAll = function (revealCurrentLine) {
     this.renderVariables();
     this.renderCallStack();
@@ -3497,6 +3615,7 @@
   };
 
   DebuggerController.prototype.renderVariables = function () {
+    if (this.renderLanguageSection('dbg-vars', 'renderVariables')) return;
     var view = this.viewEl('dbg-vars');
     if (!view) return;
     if (this.historyIdx < 0) {
@@ -3607,6 +3726,7 @@
   };
 
   DebuggerController.prototype.isVarScopeEditable = function (snap, frameIdx, scope) {
+    if (usesLanguageChannel(this.t)) return false;
     if (!this.session || !snap || !snap.stack) return false;
     if (snap.event !== 'line' && snap.event !== 'sync') return false;
     var frame = snap.stack[frameIdx];
@@ -3835,6 +3955,7 @@
   };
 
   DebuggerController.prototype.renderCallStack = function () {
+    if (this.renderLanguageSection('dbg-stack', 'renderCallStack')) return;
     var view = this.viewEl('dbg-stack');
     if (!view) return;
     if (this.historyIdx < 0) {
@@ -3869,6 +3990,7 @@
   };
 
   DebuggerController.prototype.renderWatch = function () {
+    if (this.renderLanguageSection('dbg-watch', 'renderWatch')) return;
     var view = this.viewEl('dbg-watch');
     if (!view) return;
     var snap = this.historyIdx >= 0 ? this.history[this.historyIdx] : null;
@@ -3949,6 +4071,7 @@
   };
 
   DebuggerController.prototype.renderBreakpointManager = function () {
+    if (this.renderLanguageSection('dbg-breakpoints', 'renderBreakpoints')) return;
     var view = this.viewEl('dbg-breakpoints');
     if (!view) return;
     var snap = this.historyIdx >= 0 ? this.history[this.historyIdx] : null;
@@ -4196,6 +4319,7 @@
   };
 
   DebuggerController.prototype.renderHistory = function () {
+    if (this.renderLanguageSection('dbg-history', 'renderHistory')) return;
     var view = this.viewEl('dbg-history');
     if (!view) return;
     if (this.historyIdx < 0 || this.history.length === 0) {

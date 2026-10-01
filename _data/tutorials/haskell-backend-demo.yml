@@ -6,6 +6,7 @@ description: "Try a compact MicroHs WebAssembly runtime that runs a practical Ha
 exclude_from_index: true
 
 backend: haskell
+debugger: true
 require_tests: true
 autosave_type: none
 

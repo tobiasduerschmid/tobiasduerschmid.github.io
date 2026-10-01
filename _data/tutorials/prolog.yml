@@ -10,6 +10,7 @@ learning_objectives:
   - Trace pending goals and accumulator state without treating variables as mutable storage.
   - Create and explain new list and route relations from a contract, using only the taught mechanisms.
 backend: prolog
+debugger: true
 require_tests: false
 require_quiz: false
 allow_skip_steps: true

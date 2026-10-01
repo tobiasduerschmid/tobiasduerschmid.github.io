@@ -643,7 +643,7 @@ backend: v86 | cpp | pyodide | webcontainer | react | prolog | haskell | uml-edi
 #                 output panel and Run; no shell, VM, SharedArrayBuffer, or
 #                 cross-origin isolation is required. Supports mixed cpp /
 #                 pyodide tutorials. See §4.6 for limits and §4.8 for checks.
-# pyodide       — Python in-browser, no shell. Required for `debugger: true`.
+# pyodide       — Python in-browser, no shell; supports `debugger: true`.
 # webcontainer  — Node.js + npm + dev server (StackBlitz). Needs COOP/COEP.
 # react         — React + Vite + live preview iframe + Playwright-compat.
 # prolog        — Single-backend Tau Prolog 0.3.4 worker, locally pinned under
@@ -771,7 +771,8 @@ cooldown_seconds: integer              # Optional, default 0 (disabled). When
                                        # learning goal (e.g. UML modeling,
                                        # design exercises).
 linter: boolean | "pyflakes"           # Live diagnostics in Monaco gutter.
-debugger: boolean                      # Time-travel debugger (pyodide only).
+debugger: boolean                      # Debugger for pyodide, browser/webcontainer,
+                                       # prolog, and haskell (single-backend).
 debugger_options: { ... }              # Per-tutorial debugger config
                                        # (snapshot caps, breakpoint behavior).
 uml_diagram: boolean                   # Live UML class+sequence diagram pane.
@@ -1352,7 +1353,7 @@ synchronizes with the main tutorial via `BroadcastChannel` (see
   navigation messages include `hasUnpassedQuiz` so the final step's Next
   control can still open its knowledge check in the popout.
 - `tutorial-output-popup.html` — stdout / stderr / preview iframe.
-- `tutorial-debugger-popup.html` — time-travel debugger UI (pyodide).
+- `tutorial-debugger-popup.html` — shared debugger UI for enabled backends.
 - `tutorial-pane-popup.html` — single editor pane (test or code file).
 - `tutorial-tab-popup.html` — single code file in Monaco.
 - `tutorial-graph-popup.html` — Git commit graph (SVG).
@@ -1775,7 +1776,7 @@ snapshot-input, or checksum drift.
 | Shell terminal         | ✅  | ❌  | ❌      | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         |
 | Compiled languages     | C   | C++17 | ❌    | (npm only)   | ❌      | ❌    | ❌     | ✅      | ❌         |
 | `git`                  | ✅  | ❌  | mocked  | ✅           | ❌      | ❌    | ❌     | ❌      | ❌         |
-| Time-travel debugger   | ❌  | ❌  | ✅      | ❌           | ❌      | ❌    | ❌     | ❌      | ❌         |
+| Debugger / recorded history | ❌ | ❌ | ✅ | ✅ | ✅ | ❌ | ✅ | ✅ | ❌ |
 | Live preview iframe    | ❌  | ❌  | ❌      | ✅           | ❌      | ✅    | ❌     | ❌      | ❌         |
 | Playwright tests       | ❌  | ❌  | ❌      | ❌           | ❌      | ✅    | ❌     | ❌      | ❌         |
 | UML assertion tests    | ❌  | ❌  | ❌      | ❌           | ❌      | ❌    | ❌     | ❌      | ✅         |
@@ -1842,7 +1843,7 @@ treated as an implicit URL. Import list predicates explicitly with
 clause `not(Goal) :- \+ Goal.` before consulting learner code. Core terms,
 unification, backtracking, recursion, arithmetic, negation, cut, and collections
 use the real interpreter. This is a bounded educational environment, not full
-SWI-Prolog: it does not supply SWI-specific constraint libraries, a tracer UI,
+SWI-Prolog: it does not supply SWI-specific constraint libraries
 or host file/terminal access. Interactive queries display at most 100 answers;
 each answer has a 100,000-inference budget, with the shared host watchdog and
 Stop/restart path also active. Limits must be reported, not described as proof
@@ -1875,6 +1876,62 @@ for every request, including after errors. Marker output uses
 the host adds `/tutorial/` when syncing files. Absolute `/tutorial/...` paths
 are not a supported Haskell authoring form. Haskell `setup_commands` and `solution.commands` are
 intentionally unsupported; express setup and solutions through workspace files.
+
+#### Prolog and Haskell debugging
+
+Set `debugger: true` to expose Debug, source breakpoints, stepping, the
+variable/stack inspector, recorded history, and synchronized debugger popouts.
+The existing Prolog and Haskell tutorial families opt in. These two backends
+use `js/debugger/language-channel.js` and cooperative runtime messages, so
+neither requires cross-origin isolation or `SharedArrayBuffer`. Do not enable
+the isolation service worker solely for their debugger flag.
+
+Each debug session owns a separate Prolog worker or sandboxed Haskell frame.
+It receives the current editor files and the same step `run_file` as Run;
+Prolog receives the Query field as one complete goal string. Stop destroys
+that executor. Normal Run and Test keep their own runtime and file state.
+The host applies a 120-second boot watchdog and a 30-second execution
+watchdog by default (`debugger_options.execution_timeout_ms` overrides the
+latter). A paused session has no reading deadline. Navigation, restart, and destruction discard old runtime
+messages. Output and errors go to the normal output panel.
+
+Prolog traces actual Tau Prolog resolution, including alternative solutions
+and variable substitutions. Source highlights identify the owning clause;
+they are not imperative line-by-line execution. Watches inspect in-scope
+Prolog variables or terms without executing new queries. Conditional
+breakpoints accept pure term equality and numeric comparisons. The
+interpreter's inference and answer limits remain explicit errors, never false
+proof of finite failure. The pinned vendor interpreter is unchanged. Prolog caps traces at 5,000 events
+by default (`max_history` or `max_snapshots`, at most 50,000), with the existing
+100-answer and 100,000-inferences-per-answer bounds.
+
+Haskell traces demanded equation/guard expressions through weak head normal
+form using instrumentation in `js/debugger/haskell/instrument.js` and the
+existing MicroHs adapter. Evaluation probes use a private runtime input
+handshake to yield and resume. Unused expressions remain unused; argument
+values are shown as unevaluated rather than forced with `show`. This is an
+evaluation trace, not a GHC debugger: arbitrary watch evaluation, variable
+mutation, conditional breakpoints, and exception breakpoints are unavailable.
+Supported pause sites are top-level named prefix equations and Boolean
+guards, including imported workspace modules. Nested local bindings and IO
+statements have no independent pause sites. Explicit module braces, semicolon
+declarations, infix equations, and pattern guards produce actionable
+diagnostics. Compiler diagnostics and trace locations map to original source
+lines. Haskell traces stop at 2,000 events by default (`max_history`, at most
+10,000). Output produced before a pause is available immediately. MicroHs
+normally yields between reductions, but a demanded cyclic local alias can
+remain inside its indirection-following loop without yielding. Because the
+existing compiler needs an iframe rather than a Worker, that pathological
+case can also delay the host watchdog and Stop; reloading the page may be
+necessary. Do not claim hard cancellation for every Haskell expression.
+
+Both traces are read-only. Step Back and the history slider inspect captured
+states; moving forward through that history visits stored events until the
+live pause, without repeating output or other effects. Completing execution
+keeps the trace available for inspection; Stop or a new session clears it.
+Language views and popouts share `ui-render.js` and the native keyboard
+controls in `css/debugger-controls.css`. They reuse the existing breakpoint,
+section-collapse, and popout storage families; there are no new storage keys.
 
 If you add a backend, update this table.
 

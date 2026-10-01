@@ -1,0 +1,91 @@
+'use strict';
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const { instrument } = require('../../js/debugger/haskell/instrument');
+
+test('Haskell probes describe original equation and guard locations without evaluating arguments', () => {
+  const source = `module Main where
+-- equals = inside comments are not code
+fac 0 = 1
+fac n = n * fac (n - 1)
+category n
+  | n < 0 = "negative = value"
+  | otherwise = "positive"
+main = print (fac 3)
+`;
+  const result = instrument(source, '/tutorial/Main.hs');
+  assert.deepEqual(result.sites.map(({ function: name, line }) => [name, line]),
+    [['fac', 3], ['fac', 4], ['category', 6], ['category', 7], ['main', 8]]);
+  assert.deepEqual(result.sites[1].bindings, ['n']);
+  assert.match(result.code, /fac n = SEBookTrace\.probe 1 SEBookTrace\.\$\n\s+n \* fac \(n - 1\)/);
+  assert.doesNotMatch(result.code, /show n/);
+  assert.match(result.code, /module Main where\nimport qualified SEBookDebug as SEBookTrace/);
+});
+
+test('Haskell instrumentation leaves nested layout and record fields within their original expressions', () => {
+  const source = `{-# LANGUAGE RecordWildCards #-}
+module Main (main) where
+import Data.List (sort)
+data Pair = Pair { left :: Int, right :: Int }
+average x y = total / 2 where total = x + y
+choose x = let y = x + 1 in y
+main = do
+  let p = Pair { left = 2, right = 3 }
+  print (choose (left p))
+`;
+  const result = instrument(source, '/tutorial/Main.hs');
+  assert.deepEqual(result.sites.map(site => site.function), ['average', 'choose', 'main']);
+  assert.match(result.code, /total \/ 2 where total = x \+ y/);
+  assert.match(result.code, /Pair \{ left = 2, right = 3 \}/);
+});
+
+test('Haskell instrumentation keeps where clauses outside guarded RHS probes', () => {
+  const result = instrument(`module Main where
+f x | ok = x
+    | otherwise = -x
+  where ok = x > 0
+main = print (f 2)
+`, '/tutorial/Main.hs');
+  assert.deepEqual(result.sites.map(site => site.line), [2, 3, 5]);
+  assert.match(result.code, /where ok = x > 0/);
+});
+
+test('Haskell debugger rejects unsupported declaration layout with an actionable error', () => {
+  assert.throws(() => instrument('module Main where { main = print 1 }', '/tutorial/Main.hs'), /explicit.*braces/i);
+  assert.throws(() => instrument('module Main where\nf x = x; main = print (f 1)\n', '/tutorial/Main.hs'), /semicolon/i);
+});
+
+
+test('Haskell dashed comments and infix binding diagnostics do not create false source locations', () => {
+  const result = instrument('module Main where\n--- equals = a comment\nmain = print "done"\n', '/tutorial/Main.hs');
+  assert.deepEqual(result.sites.map(site => site.line), [3]);
+  assert.throws(() => instrument('module Main where\nx +++ y = x + y\nmain = print (1 +++ 2)\n', '/tutorial/Main.hs'), /named prefix equations/);
+});
+
+const { HaskellDebugSession } = require('../../js/debugger/haskell/session');
+
+test('Haskell breakpoints reject unsupported source lines and honor live removal', () => {
+  const messages = [];
+  let resumed = 0;
+  const session = new HaskellDebugSession({
+    sites: [{ id: 0, function: 'f', file: '/tutorial/Main.hs', line: 2, first_line: 2, bindings: ['x'] }],
+    breakpoints: [{ file: '/tutorial/Main.hs', line: 5 }],
+    send: message => messages.push(message), resume: () => { resumed += 1; }, marker: 'test',
+  });
+  assert.match(messages[0].error, /top-level equation/);
+  session.observe('call', 0);
+  session.handleMessage({ type: 'command', command: 1 });
+  session.updateBreakpoints([{ op: 'add', file: '/tutorial/Main.hs', line: 2 }]);
+  session.updateBreakpoints([{ op: 'remove', file: '/tutorial/Main.hs', line: 2 }]);
+  session.observe('call', 0);
+  assert.equal(messages.filter(message => message.type === 'paused').length, 1);
+  assert.equal(resumed, 2);
+});
+
+
+test('Haskell generated line maps retain original compiler diagnostic locations', () => {
+  const source = 'module Main where\nf x = x + 1\nmain = print unknownValue\n';
+  const result = instrument(source, '/tutorial/Main.hs');
+  const generatedLine = result.code.split('\n').findIndex(line => line.includes('print unknownValue')) + 1;
+  assert.equal(result.lineMap[generatedLine], 3);
+});

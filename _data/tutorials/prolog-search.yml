@@ -19,6 +19,7 @@ learning_objectives:
   - "Create accumulator-based reversal and an interleaving relation with complete base cases."
   - "Create a finite generate-and-test search whose results satisfy every constraint."
 backend: prolog
+debugger: true
 require_tests: true
 autosave_type: files
 

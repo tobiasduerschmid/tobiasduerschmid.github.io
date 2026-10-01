@@ -130,6 +130,7 @@ function appendRuntimeText(text, channel) {
 
   if (activeOperation) {
     captureOperationOutput(activeOperation, output, channel);
+    finishFailedDebugAfterPrompt(activeOperation);
   }
   announceReadyAfterPrompt();
 }
@@ -150,7 +151,7 @@ function appendRuntimeByte(value, channel) {
 
 function captureOperationOutput(operation, text, channel) {
   if (channel === 'stderr') {
-    operation.rawStderr += text;
+    operation.rawStderr += operation.debug ? operation.debug.consumeStderr(text) : text;
     if (containsRuntimeFailure(text)) operation.failed = true;
     return;
   }
@@ -224,6 +225,10 @@ function rejectPendingMessages(message) {
 }
 
 function rejectMessage(message, reason) {
+  if (message.type === 'start') {
+    postProtocolMessage({ type: 'debugComplete', exitCode: 1, error: reason });
+    return;
+  }
   if (message.type === 'write') {
     postProtocolMessage({ type: 'write_error', id: message.id, message: reason });
     return;
@@ -358,12 +363,12 @@ function sendInteractiveCommands(commands) {
 }
 
 function startOperation(message, settings) {
-  const doneMarker = markerFor('DONE', message.id);
+  const doneMarker = settings.doneMarker || markerFor('DONE', message.id);
   // Keep the import through the marker so MicroHs can reuse its translated
   // environment. Removing it first makes the marker rebuild that environment.
   // Clean up before the next operation's reload, including after a failed run.
   const commands = pendingCleanupCommands
-    .concat(settings.commands, commandForMarker(doneMarker));
+    .concat(settings.commands, settings.inlineCompletion ? [] : [commandForMarker(doneMarker)]);
   pendingCleanupCommands = settings.cleanupCommands || [];
 
   activeOperation = {
@@ -381,6 +386,8 @@ function startOperation(message, settings) {
     rawStdout: '',
     rawStderr: '',
     stdoutLineBuffer: '',
+    debug: settings.debug || null,
+    publishedDebugOutput: { stdout: '', stderr: '' },
   };
 
   sendInteractiveCommands(commands);
@@ -438,25 +445,165 @@ function startRunTest(message) {
   });
 }
 
+/**
+ * GETRAW is MicroHs's existing browser readline primitive. It uses Asyncify
+ * while waiting for _set_input_char; ordinary Haskell getLine reads MEMFS
+ * stdin (EOF), and threadDelay blocks this browser build instead of yielding.
+ * The probe demands exactly WHNF, as its caller already did; it never shows
+ * arguments or traverses a lazy result merely to populate debugger variables.
+ */
+function debugHelperSource(marker) {
+  return [
+    'module SEBookDebug (probe, ($)) where',
+    'import System.IO.Unsafe (unsafePerformIO)',
+    'import System.IO (hPutStrLn, hFlush, stdout, stderr)',
+    'foreign import ccall "GETRAW" getDebugCommand :: IO Int',
+    'pause event site = do',
+    '  hFlush stdout',
+    '  hPutStrLn stderr (' + JSON.stringify(marker) + ' ++ event ++ ":" ++ show site)',
+    '  hFlush stderr',
+    '  _ <- getDebugCommand',
+    '  return ()',
+    'probe :: Int -> a -> a',
+    'probe site value = unsafePerformIO (do',
+    '  pause "call" site',
+    '  value `seq` pause "return" site',
+    '  return value)',
+    '',
+  ].join('\n');
+}
+
+function prepareDebugFiles(message) {
+  const files = Object.assign({}, message.files || {});
+  files[message.filename] = message.code;
+  const sites = [];
+  const sourceMaps = new Map();
+  Object.keys(files).forEach(function (filename) {
+    const path = normalizeWorkspacePath(filename);
+    if (path.endsWith('/SEBookDebug.hs')) {
+      throw new Error('The Haskell debugger reserves the module name SEBookDebug.');
+    }
+    const value = files[filename];
+    const source = typeof value === 'string' ? value : value.content;
+    if (!path.endsWith('.hs')) { writeWorkspaceFile(path, source); return; }
+    const result = runtimeScope.SEBookHaskellInstrument.instrument(source, path, sites.length);
+    sites.push.apply(sites, result.sites);
+    sourceMaps.set(path, result.lineMap);
+    writeWorkspaceFile(path, result.code);
+  });
+  return { sites: sites, sourceMaps: sourceMaps };
+}
+
+function startDebug(message) {
+  const prepared = prepareDebugFiles(message);
+  const sites = prepared.sites;
+  if (!sites.length) throw new Error('No supported Haskell equations were found to debug.');
+  const path = normalizeWorkspacePath(message.filename);
+  const descriptor = moduleDescriptor(path);
+  const marker = markerFor('DEBUG', message.id);
+  const doneMarker = markerFor('DONE', message.id);
+  writeWorkspaceFile(descriptor.sourcePath + '/SEBookDebug.hs', debugHelperSource(marker));
+  const debug = new runtimeScope.SEBookHaskellDebug.HaskellDebugSession({
+    sites: sites, marker: marker, options: message.options,
+    breakpoints: message.breakpoints, watches: message.watches,
+    send: function (payload) {
+      if (payload.type === 'paused' && activeOperation && activeOperation.debug === debug) {
+        flushDebugOutput(activeOperation, false);
+      }
+      postProtocolMessage(payload);
+    },
+    resume: function () {
+      setTimeout(function () {
+        if (activeOperation && activeOperation.debug === debug && !debug.finished) {
+          runtimeScope.Module._set_input_char(10);
+        }
+      }, 0);
+    },
+  });
+  debug.mapDiagnostics = function (text) {
+    return text.replace(/("([^"\n]+\.hs)": line\s+)(\d+)/g, function (match, prefix, file, line) {
+      const path = file.startsWith('/') ? file : descriptor.sourcePath + '/' + file;
+      const segments = [];
+      path.split('/').forEach(function (part) {
+        if (part === '..') segments.pop();
+        else if (part && part !== '.') segments.push(part);
+      });
+      const lineMap = prepared.sourceMaps.get('/' + segments.join('/'));
+      return lineMap && lineMap[Number(line)] ? prefix + lineMap[Number(line)] : match;
+    });
+  };
+  const args = Array.isArray(message.args) ? message.args.map(String) : [];
+  const main = descriptor.moduleName + '.main';
+  const entry = args.length
+    ? 'SEBookEnvironment.withArgs ' + JSON.stringify(args) + ' (' + main + ')'
+    : main;
+  const imports = ['import ' + descriptor.moduleName];
+  if (args.length) imports.push('import qualified System.Environment as SEBookEnvironment');
+  startOperation(message, {
+    kind: 'debug', debug: debug, doneMarker: doneMarker, inlineCompletion: true,
+    commands: [
+      ':set path=' + descriptor.sourcePath,
+      ':reload',
+    ].concat(imports, [entry + ' >> ' + commandForMarker('\\n' + doneMarker)]),
+    cleanupCommands: [':delete import ' + descriptor.moduleName],
+  });
+}
+
+function debugStreamText(lines) {
+  const visible = lines.slice();
+  while (visible.length && visible[0] === '') visible.shift();
+  return visible.join('\n');
+}
+
+function flushDebugOutput(operation, final) {
+  const split = splitStdoutAndDiagnostics(operation);
+  const output = final ? normalizeOperationOutput(operation) : {
+    stdout: debugStreamText(split.stdout),
+    stderr: operation.debug.mapDiagnostics(debugStreamText(appendNonemptyOutput(split.stderr, operation.rawStderr))),
+  };
+  ['stdout', 'stderr'].forEach(function (channel) {
+    const published = operation.publishedDebugOutput[channel];
+    // Final normalization removes trailing blank lines. Text already delivered
+    // during a pause is retained; it must never be replayed or withdrawn.
+    if (!output[channel].startsWith(published)) return;
+    const delta = output[channel].slice(published.length);
+    if (delta) postProtocolMessage({ type: channel, text: delta });
+    operation.publishedDebugOutput[channel] = output[channel];
+  });
+}
+
+function finishFailedDebugAfterPrompt(operation) {
+  if (!operation.debug || !operation.failed || operation.isFinishing || !bootOutput.endsWith('> ')) return;
+  operation.isFinishing = true;
+  setTimeout(function () { finishOperation(operation); }, 0);
+}
+
 function startRunCode(message) {
   throw new Error('runCode is not supported by the Haskell tutorial backend');
 }
 
 function finishOperation(operation) {
   if (activeOperation !== operation) return;
+  if (operation.debug) {
+    operation.rawStderr += operation.debug.stderrBuffer;
+    operation.debug.stderrBuffer = '';
+  }
   const output = normalizeOperationOutput(operation);
   const testFailed = operation.kind === 'test' &&
     (!operation.sawTestPass || operation.sawTestFail);
   const exitCode = operation.failed || testFailed ? 1 : 0;
 
-  if (!operation.silent && output.stdout) {
+  if (operation.debug) flushDebugOutput(operation, true);
+  if (!operation.debug && !operation.silent && output.stdout) {
     postProtocolMessage({ type: 'stdout', text: output.stdout });
   }
-  if (!operation.silent && output.stderr) {
+  if (!operation.debug && !operation.silent && output.stderr) {
     postProtocolMessage({ type: 'stderr', text: output.stderr });
   }
 
-  postProtocolMessage({
+  if (operation.debug) {
+    operation.debug.complete(exitCode, exitCode ? output.stderr || 'Haskell execution failed.' : undefined, Boolean(output.stderr));
+  } else postProtocolMessage({
     type: 'run_done',
     id: operation.id,
     exitCode: exitCode,
@@ -470,10 +617,9 @@ function finishOperation(operation) {
 function normalizeOperationOutput(operation) {
   const output = splitStdoutAndDiagnostics(operation);
   const stderr = appendNonemptyOutput(output.stderr, operation.rawStderr);
-  return {
-    stdout: normalizeLines(output.stdout),
-    stderr: normalizeLines(stderr),
-  };
+  const normalized = { stdout: normalizeLines(output.stdout), stderr: normalizeLines(stderr) };
+  if (operation.debug) normalized.stderr = operation.debug.mapDiagnostics(normalized.stderr);
+  return normalized;
 }
 
 function splitStdoutAndDiagnostics(operation) {
@@ -578,6 +724,7 @@ function processNextMessage() {
     if (message.type === 'write') writeFileMessage(message);
     else if (message.type === 'read') readFileMessage(message);
     else if (message.type === 'run') startRun(message);
+    else if (message.type === 'start') startDebug(message);
     else if (message.type === 'runTest') startRunTest(message);
     else if (message.type === 'runCode') startRunCode(message);
     else rejectMessage(message, 'Unknown Haskell worker message: ' + message.type);
@@ -595,6 +742,10 @@ function interruptRuntime(message) {
 }
 
 registerProtocolMessageHandler(function (message) {
+  if (['command', 'breakpoints', 'watches'].includes(message.type)) {
+    if (activeOperation && activeOperation.debug) activeOperation.debug.handleMessage(message);
+    return;
+  }
   if (message.type === 'interrupt') {
     interruptRuntime(message);
     return;
@@ -606,6 +757,10 @@ registerProtocolMessageHandler(function (message) {
   pendingMessages.push(message);
   processNextMessage();
 });
+
+if (!isWindowRuntime) {
+  importScripts('/js/debugger/haskell/instrument.js', '/js/debugger/haskell/session.js');
+}
 
 postLoading('Loading Haskell runtime\u2026');
 
