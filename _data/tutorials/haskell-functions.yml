@@ -16,7 +16,10 @@ learning_objectives:
   - "Create a tested data-processing pipeline from an input and output contract."
 backend: haskell
 debugger: true
-require_tests: true
+# Checks provide optional practice; students may visit any lesson.
+require_tests: false
+require_quiz: false
+allow_skip_steps: true
 
 # Preserve matching saved lessons without crediting replacements at the same index.
 progress_version: 2

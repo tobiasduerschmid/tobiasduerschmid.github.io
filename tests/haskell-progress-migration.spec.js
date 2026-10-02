@@ -2,7 +2,7 @@ const { test, expect } = require('@playwright/test');
 const { loadTutorialConfig, waitForTutorialReady, expectActiveStep, stepButton } = require('./tutorial-helpers');
 const { a11yCheckpoint } = require('./a11y-helpers');
 
-test('Haskell version 2 saves preserve drafts and matching credit but require the new price lesson', async ({ page }) => {
+test('Haskell version 2 saves preserve drafts and matching credit without crediting the new price lesson', async ({ page }) => {
   test.setTimeout(150_000);
   const config = loadTutorialConfig('haskell');
   const key = 'tutorial-progress-haskell';
@@ -43,11 +43,10 @@ test('Haskell version 2 saves preserve drafts and matching credit but require th
   expect((await savedProgress()).quizPassed).toEqual(matchingIndices);
   expect((await savedProgress()).files).toMatchObject(files);
 
-  // Matching credit permits normal progression into the replacement, but the
-  // removed lesson's numeric unlock must not bypass its new checks.
+  // Replacement checks remain available without blocking navigation or awarding credit.
   await page.getByRole('button', { name: /^Next/ }).click();
   await expectActiveStep(page, replacementIndex);
-  await expect(page.getByRole('button', { name: /^Next/ })).toBeDisabled();
+  await expect(page.getByRole('button', { name: /^Next/ })).toBeEnabled();
   await a11yCheckpoint(page, 'Haskell — version 2 replaced price lesson', { feature: 'haskell-tutorial' });
 });
 
@@ -90,7 +89,6 @@ for (const [slug, replacedIndices, resumeReplacement] of [
     const notice = page.getByRole('status', { name: 'Saved progress update' });
     await expect(notice).toContainText('preserved');
     await expect(notice).toContainText('rechecking');
-    await expect(notice).not.toContainText('skip optional checks');
     await a11yCheckpoint(page, `${slug} — replaced lesson progress`, { feature: 'haskell-tutorial' });
 
     // A normal reload keeps the matching credit and does not migrate again.
@@ -105,6 +103,6 @@ for (const [slug, replacedIndices, resumeReplacement] of [
     await stepButton(page, resumeReplacement - 1).click();
     await page.getByRole('button', { name: /^Next/ }).click();
     await expectActiveStep(page, resumeReplacement);
-    await expect(page.getByRole('button', { name: /^Next/ })).toBeDisabled();
+    await expect(page.getByRole('button', { name: /^Next/ })).toBeEnabled();
   });
 }

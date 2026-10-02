@@ -2,7 +2,10 @@ title: "Haskell 1: Expressions, Types, and Recursion"
 description: "For CS131 students who know functions, conditionals, and lists in Python or C++: build pure Haskell functions through prediction, debugging, and independent practice. Allow 90–110 minutes, with a break after Step 5."
 backend: haskell
 debugger: true
-require_tests: true
+# Checks provide optional practice; students may visit any lesson.
+require_tests: false
+require_quiz: false
+allow_skip_steps: true
 
 # Preserve matching saved lessons without crediting replacements at the same index.
 progress_version: 2

@@ -80,9 +80,39 @@ for (const slug of TUTORIALS) {
   const tutorialUrl = `/SEBook/tools/${slug}-tutorial`;
 
   test.describe(config.title, () => {
+    test('students can visit every lesson and skip checks without recording passes', async ({ page }) => {
+      test.setTimeout(150_000);
+      await page.goto(tutorialUrl + '?autosave=true');
+      await waitForTutorialReady(page, { bootTimeout: BOOT_TIMEOUT });
+      await stepButton(page, config.steps.length - 1).click();
+      await expectActiveStep(page, config.steps.length - 1);
+      await stepButton(page, 0).click();
+      await expectActiveStep(page, 0);
+      await expectFailingGate(page, config.steps[0].tests.length);
+
+      for (let index = 0; index < config.steps.length; index += 1) {
+        await expectActiveStep(page, index);
+        await page.getByRole('button', { name: /^Next/ }).click();
+        await expect(page.getByRole('heading', { name: `Step ${index + 1} — Knowledge Check`, exact: true })).toBeVisible();
+        await page.getByRole('button', { name: 'Skip Knowledge Check', exact: true }).click();
+      }
+      const readProgress = () => page.evaluate(slug =>
+        JSON.parse(localStorage.getItem(`tutorial-progress-${slug}`)), slug);
+      await expect.poll(async () => (await readProgress()).stepsVisited.length).toBe(config.steps.length);
+      const progress = await readProgress();
+      expect(progress.stepsPassed).toEqual([]);
+      expect(progress.quizPassed).toEqual([]);
+      await page.reload();
+      await waitForTutorialReady(page, { bootTimeout: BOOT_TIMEOUT });
+      await stepButton(page, 0).click();
+      await expectActiveStep(page, 0);
+      await expect(page.getByRole('button', { name: /^Next/ })).toBeEnabled();
+      await a11yCheckpoint(page, `${slug} — optional progression`, { feature: A11Y_FEATURE });
+    });
+
     // Each module is one student journey with a fresh browser context. The
-    // steps intentionally depend on the preceding tests and quiz unlocking it.
-    test('every starter needs repair, every solution passes, and quizzes unlock the path', async ({ page }) => {
+    // optional checks retain their diagnostic feedback and genuine pass records.
+    test('every starter needs repair, every solution passes, and quizzes remain optional', async ({ page }) => {
       test.setTimeout(15 * 60_000);
       const browserErrors = [];
       page.on('pageerror', (error) => browserErrors.push(error.message));
@@ -98,12 +128,12 @@ for (const slug of TUTORIALS) {
         await test.step(`Step ${index + 1}: ${step.title}`, async () => {
           await expectActiveStep(page, index);
           await expect(page.getByRole('heading', { level: 2, name: step.title, exact: true })).toBeVisible();
-          await expect(page.getByRole('button', { name: /^Next/ })).toBeDisabled();
+          await expect(page.getByRole('button', { name: /^Next/ })).toBeEnabled();
 
           await runProgram(page);
 
           await expectFailingGate(page, step.tests.length);
-          await expect(page.getByRole('button', { name: /^Next/ })).toBeDisabled();
+          await expect(page.getByRole('button', { name: /^Next/ })).toBeEnabled();
 
           await enterSolution(page, step);
           await expectPassingGate(page, step.tests.length);
@@ -121,8 +151,8 @@ for (const slug of TUTORIALS) {
           }
           if (slug === 'haskell' && index === 0) {
             await rejectOneQuizAnswer(page);
-            await expect(page.getByRole('button', { name: /Continue to Step 2/ })).toBeHidden();
-            await expect(stepButton(page, 1)).toBeDisabled();
+            await expect(page.getByRole('button', { name: /Continue to Step 2/ })).toBeVisible();
+            await expect(stepButton(page, 1)).toBeEnabled();
             await a11yCheckpoint(page, 'Haskell — retry after incorrect reasoning', { feature: A11Y_FEATURE });
             await page.getByRole('button', { name: 'Try Again', exact: true }).click();
           }
@@ -210,7 +240,7 @@ test('the price lesson distinguishes text ordering, numeric contracts, and affor
   await runProgram(page);
   await expect(output).toContainText('False');
   await expectOnlyFailingGate(page, step.tests.length, signatureTest.description);
-  await expect(page.getByRole('button', { name: /^Next/ })).toBeDisabled();
+  await expect(page.getByRole('button', { name: /^Next/ })).toBeEnabled();
   await a11yCheckpoint(page, 'Haskell prices — inference works but the declaration is required', { feature: A11Y_FEATURE });
 
   // Describing a declaration in either comment syntax does not declare a type.
@@ -260,26 +290,22 @@ test('the price lesson distinguishes text ordering, numeric contracts, and affor
   await a11yCheckpoint(page, 'Haskell prices — type-correct reversed comparison fails checks', { feature: A11Y_FEATURE });
 });
 
-test('detached instructions open the required quiz without unlocking the next numbered step early', async ({ page }) => {
+test('detached instructions let students skip the knowledge check without passing tests', async ({ page }) => {
   test.setTimeout(150_000);
   const config = loadTutorialConfig('haskell');
   await page.goto('/SEBook/tools/haskell-tutorial');
   await waitForTutorialReady(page, { bootTimeout: BOOT_TIMEOUT });
-  await enterSolution(page, config.steps[0]);
-  await expectPassingGate(page, config.steps[0].tests.length);
-
   const [popup] = await Promise.all([
     page.waitForEvent('popup'),
     page.getByRole('button', { name: /Open instructions in separate window/ }).click(),
   ]);
   await expect(popup.getByRole('button', { name: /^Next/ })).toBeEnabled();
-  await expect(stepButton(popup, 1)).toBeDisabled();
+  await expect(stepButton(popup, 1)).toBeEnabled();
   await popup.getByRole('button', { name: /^Next/ }).click();
   await expect(popup.getByRole('heading', { name: 'Step 1 — Knowledge Check', exact: true })).toBeVisible();
-  await answerQuizCorrectly(popup);
-  await popup.getByRole('button', { name: /Continue to Step 2/ }).click();
+  await popup.getByRole('button', { name: 'Skip Knowledge Check', exact: true }).click();
   await expect(popup.getByRole('heading', { level: 2, name: config.steps[1].title, exact: true })).toBeVisible();
-  await a11yCheckpoint(popup, 'Haskell — detached instructions after quiz completion', { feature: A11Y_FEATURE });
+  await a11yCheckpoint(popup, 'Haskell — detached instructions after skipping optional quiz', { feature: A11Y_FEATURE });
   await popup.close();
   // Detaching instructions selects Debug; reopen Steps to inspect synchronized navigation.
   await page.getByRole('button', { name: /\bSteps$/ }).click();

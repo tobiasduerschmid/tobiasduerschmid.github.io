@@ -8,7 +8,9 @@ for (const slug of ['haskell', 'haskell-functions', 'haskell-data']) {
   test(`${slug} declares executable exercises with valid knowledge checks`, () => {
     const config = yaml.load(fs.readFileSync(path.resolve(__dirname, '../../_data/tutorials', `${slug}.yml`), 'utf8'));
     assert.equal(config.backend, 'haskell');
-    assert.equal(config.require_tests, true);
+    assert.equal(config.require_tests, false);
+    assert.equal(config.require_quiz, false);
+    assert.equal(config.allow_skip_steps, true);
     assert.ok(config.learning_objectives.length >= 4 && config.learning_objectives.length <= 8);
     for (const [index, step] of config.steps.entries()) {
       const label = `${slug} step ${index + 1}: ${step.title}`;
