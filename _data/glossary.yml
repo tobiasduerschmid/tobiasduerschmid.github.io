@@ -548,3 +548,12 @@
   definition: ZIP archive format
   description: A compressed archive file format commonly used to bundle one or more files into a single downloadable file.
   related: [PDF]
+
+- term: GHCi
+  definition: Glasgow Haskell Compiler interactive environment
+  description: The interactive Haskell environment supplied with GHC. It evaluates expressions, displays types, and loads source files. The tutorial browser interpreter uses MicroHs, a separate Haskell implementation.
+
+- term: GHC
+  definition: Glasgow Haskell Compiler
+  description: A compiler for Haskell that also supplies the GHCi interactive environment.
+  related: [GHCi]

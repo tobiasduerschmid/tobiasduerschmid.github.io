@@ -226,11 +226,12 @@
   }
 
   /**
-   * Return {diagnostics, blocked}. `expression` selects a Boolean Test entry;
+   * Return {diagnostics, blocked}. `expression` selects an expression entry;
+   * `executeExpression` also follows known IO demand for interpreter commands;
    * otherwise entry is main. No diagnostics is NOT a termination guarantee.
    * Unsupported syntax stays opaque or abandons analysis, without executing it.
    */
-  function analyze(source, { filename = 'Main.hs', expression } = {}) {
+  function analyze(source, { filename = 'Main.hs', expression, executeExpression = false } = {}) {
     const empty = { diagnostics: [], blocked: false };
     if (source.length > 200000) return empty;
     try {
@@ -275,12 +276,12 @@
       // apparently familiar operations. In that case only alias demand counts.
       const prelude = !tokens.some(token => ['import', 'instance', 'data', 'newtype'].includes(token.text)) && !/\{-#\s*LANGUAGE/.test(source);
       const standardSyntax = !/\{-#\s*LANGUAGE/.test(source);
-      const reached = demanded(entry, { cyclic, prelude, standardSyntax, budget: 12000 }, expression === undefined);
+      const reached = demanded(entry, { cyclic, prelude, standardSyntax, budget: 12000 }, expression === undefined || executeExpression);
       const diagnostics = groups.sort((a, b) => Number(reached.has(b)) - Number(reached.has(a))).flatMap(group => {
         const names = group.map(binding => binding.token.text.length > 60 ? binding.token.text.slice(0, 60) + '…' : binding.token.text);
         const chain = (names.length > 8 ? [...names.slice(0, 8), '…', names[0]] : [...names, names[0]]).join(' → ');
         const blocked = reached.has(group);
-        return group.map(binding => ({ filename: binding.testExpression ? filename + ' (test expression)' : filename, line: binding.token.line, column: binding.token.column,
+        return group.map(binding => ({ filename: binding.testExpression ? filename + (executeExpression ? ' (interpreter expression)' : ' (test expression)') : filename, line: binding.token.line, column: binding.token.column,
           endColumn: binding.token.column + binding.token.text.length, severity: blocked ? 'error' : 'warning',
           message: 'Cyclic value alias: ' + chain + '. ' + (blocked
             ? 'Execution blocked: this entry demands the cycle, which can freeze MicroHs. '

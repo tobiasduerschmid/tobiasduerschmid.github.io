@@ -13,6 +13,7 @@
  *   { type: 'write',   id, path, content }
  *   { type: 'read',    id, path }
  *   { type: 'run',     id, path, args?, silent? }
+ *   { type: 'evaluate', id, path, expression, silent? }
  *   { type: 'runTest', id, path, expression, signature?, silent? }
  *   { type: 'runCode', id }  (rejected; retained only for protocol parity)
  *   { type: 'interrupt', id }
@@ -22,6 +23,9 @@
  * field is also accepted by the worker adapter. Optional signature {name,type}
  * requires an explicit top-level declaration and an exact compiler-resolved
  * monomorphic type, independently scoped from the student module.
+ * `evaluate.expression` is one expression or :type/:t followed by one
+ * expression. It uses fresh workspace source, does not require main, and
+ * does not retain interactive definitions. Other REPL commands are rejected.
  *
  * Outbound protocol messages (adapter -> tutorial host):
  *   { type: 'loading', message }
@@ -240,6 +244,10 @@ function rejectMessage(message, reason) {
     postProtocolMessage({ type: 'read_error', id: message.id, message: reason });
     return;
   }
+  if (message.type === 'evaluate') {
+    postProtocolMessage({ type: 'run_done', id: message.id, exitCode: 1, stdout: '', stderr: reason + '\n' });
+    return;
+  }
   postProtocolMessage({ type: 'run_done', id: message.id, exitCode: 1, error: reason });
 }
 
@@ -392,6 +400,7 @@ function startOperation(message, settings) {
     rawStderr: '',
     stdoutLineBuffer: '',
     debug: settings.debug || null,
+    mapDiagnostics: settings.mapDiagnostics || null,
     cleanupFiles: cleanupFiles,
     publishedDebugOutput: { stdout: '', stderr: '' },
   };
@@ -417,6 +426,77 @@ function startRun(message) {
       mainCommand,
     ],
     cleanupCommands: [':delete import ' + descriptor.moduleName],
+  });
+}
+
+function interpreterInput(suppliedExpression) {
+  const input = String(suppliedExpression || '').trim();
+  if (!input) throw new Error('Enter a Haskell expression or :type followed by an expression.');
+  if (/[\x00-\x1f\x7f]/.test(input)) {
+    throw new Error('Interpreter expressions must fit on one line without control characters.');
+  }
+  const typeCommand = input.match(/^:(?:type|t)(?:\s+(.*))?$/);
+  if (input.startsWith(':') && !typeCommand) {
+    throw new Error('Only expressions and :type (:t) are supported. Edit definitions in the editor; files reload automatically.');
+  }
+  const expression = typeCommand ? (typeCommand[1] || '').trim() : input;
+  if (!expression) throw new Error('Provide an expression after :type (:t).');
+  return { expression: expression, inspectType: Boolean(typeCommand) };
+}
+
+function interpreterScope(path) {
+  const source = readWorkspaceFile(path);
+  const descriptor = moduleDescriptor(path);
+  const body = sourceAfterLeadingHaskellTrivia(source);
+  if (HASKELL_MODULE_PATTERN.test(body)) return { ...descriptor, source: source };
+
+  // A headerless program implicitly exports only main. A private module gives
+  // the interpreter access to its definitions without rewriting the editor file.
+  let moduleName, temporaryFile;
+  do {
+    moduleName = 'SEBookExpressionScope' + (++operationSequence);
+    temporaryFile = descriptor.sourcePath + '/' + moduleName + '.hs';
+  } while (runtimeScope.Module.FS.analyzePath(temporaryFile).exists);
+  const insertion = source.length - body.length;
+  return {
+    moduleName: moduleName,
+    sourcePath: descriptor.sourcePath,
+    source: source.slice(0, insertion) + 'module ' + moduleName + ' where\n' + body,
+    temporaryFile: temporaryFile,
+    mapDiagnostics: function (text) {
+      return text.replace(/"([^"\n]+\.hs)": line\s+(\d+)/g, function (match, file, line) {
+        if (file !== temporaryFile && file !== moduleName + '.hs') return match;
+        return '"' + path + '": line ' + Math.max(1, Number(line) - 1);
+      });
+    },
+  };
+}
+
+function startEvaluate(message) {
+  const input = interpreterInput(message.expression);
+  const path = normalizeWorkspacePath(message.path);
+  const scope = interpreterScope(path);
+  if (!input.inspectType) {
+    checkAliasCycles(scope.source, path, input.expression, {
+      executeExpression: true,
+      sourceLineOffset: scope.temporaryFile ? 1 : 0,
+    });
+  }
+  if (scope.temporaryFile) writeWorkspaceFile(scope.temporaryFile, scope.source);
+  // `case` forces MicroHs's expression parser. Plain parenthesizing can still
+  // be parsed as a top-level pattern binding; interactive bindings must not leak.
+  const expressionCommand = 'case () of { () -> (' + input.expression + ') }';
+  startOperation(message, {
+    kind: 'evaluate',
+    commands: [
+      ':set path=' + scope.sourcePath,
+      ':reload',
+      'import ' + scope.moduleName,
+      input.inspectType ? ':type (' + input.expression + ')' : expressionCommand,
+    ],
+    cleanupCommands: [':delete import ' + scope.moduleName],
+    temporaryFile: scope.temporaryFile,
+    mapDiagnostics: scope.mapDiagnostics,
   });
 }
 
@@ -540,11 +620,16 @@ function prepareDebugFiles(message) {
   return { sites: sites, sourceMaps: sourceMaps };
 }
 
-function checkAliasCycles(source, filename, expression) {
-  const result = runtimeScope.SEBookHaskellCycles.analyze(source, { filename, expression });
+function checkAliasCycles(source, filename, expression, options = {}) {
+  const result = runtimeScope.SEBookHaskellCycles.analyze(source, {
+    filename, expression, executeExpression: Boolean(options.executeExpression),
+  });
   if (result.blocked) {
     throw new Error(result.diagnostics.filter(item => item.severity === 'error')
-      .map(item => item.filename + ':' + item.line + ':' + item.column + ': ' + item.message).join('\n'));
+      .map(function (item) {
+        const line = item.line - (item.filename === filename ? options.sourceLineOffset || 0 : 0);
+        return item.filename + ':' + line + ':' + item.column + ': ' + item.message;
+      }).join('\n'));
   }
 }
 
@@ -678,6 +763,7 @@ function normalizeOperationOutput(operation) {
   const stderr = appendNonemptyOutput(output.stderr, operation.rawStderr);
   const normalized = { stdout: normalizeLines(output.stdout), stderr: normalizeLines(stderr) };
   if (operation.debug) normalized.stderr = operation.debug.mapDiagnostics(normalized.stderr);
+  if (operation.mapDiagnostics) normalized.stderr = operation.mapDiagnostics(normalized.stderr);
   return normalized;
 }
 
@@ -783,6 +869,7 @@ function processNextMessage() {
     if (message.type === 'write') writeFileMessage(message);
     else if (message.type === 'read') readFileMessage(message);
     else if (message.type === 'run') startRun(message);
+    else if (message.type === 'evaluate') startEvaluate(message);
     else if (message.type === 'start') startDebug(message);
     else if (message.type === 'runTest') startRunTest(message);
     else if (message.type === 'runCode') startRunCode(message);

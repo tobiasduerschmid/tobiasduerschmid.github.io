@@ -1,25 +1,15 @@
 ---
 name: cs-tutorial-design
 description: >
-  Evidence-based guidance for designing computer science tutorials grounded in
-  Cognitive Load Theory, Desirable Difficulties, Bloom's Taxonomy, Growth
-  Mindset, and domain-specific pedagogical research. Use this skill whenever
-  you are helping someone create a programming tutorial, design coding
-  exercises, structure a CS course or workshop, write documentation for a
-  library/framework as learning material, build interactive learning
-  materials, evaluate or improve existing tutorial content, or onboard
-  developers. Also trigger when users mention "tutorial", "learn to code",
-  "teaching programming", "curriculum design", "coding bootcamp",
-  "educational content", "onboarding developers", "workshop materials",
-  "code examples for learning", or want feedback on whether their technical
-  teaching approach is pedagogically sound. This skill applies to ALL
-  programming languages and CS topics — from introductory Python to advanced
-  systems programming, from web development to machine learning. For
-  *project-specific* operational mechanics (SEBook tutorial YAML schema,
-  runtime architecture, page-pair conventions, popouts, backends, autosave,
-  quiz/hint/test wiring), defer to `tutorial-authoring`; for the broader
-  pedagogical lens beyond CS (Mayer's multimedia, ICAP, Variation Theory,
-  Self-Determination, UDL, UbD), defer to `pedagogical-advisor`.
+  Evidence-based design and review of programming tutorials, coding exercises,
+  CS courses/workshops, library documentation as learning material, and interactive
+  learning experiences. Use for sequencing concepts, choosing examples, designing
+  practice and assessment, or improving learner comprehension and onboarding.
+  Applies Cognitive Load Theory, Bloom's taxonomy, desirable difficulties,
+  PRIMM, worked-example fading, growth mindset, and paradigm-transition guidance
+  across programming languages. Defer to tutorial-authoring for SEBook YAML,
+  runtime, backends, popouts, autosave, quizzes, hints, and test mechanics;
+  use pedagogical-advisor for broader learning science and non-tutorial formats.
 ---
 
 # Computer Science Tutorial Design
@@ -310,6 +300,35 @@ For code comprehension exercises:
 4. **Modify:** Extend the code to handle a new case
 5. **Make:** Create something new using the same pattern
 
+### Skimmable Student-Facing Instructions
+
+Make the lesson's structure visible so learners can find the rule, example, or
+next action without rereading a dense paragraph. This reduces search effort
+(Cognitive Load Theory) and uses selective emphasis to signal what matters
+(Mayer's signaling principle).
+
+- **Keep context in short paragraphs.** Use prose to motivate the task and
+  connect ideas; use lists when several items need to be scanned or compared.
+- **Use bullets for parallel information:** rules, examples, input constraints,
+  boundary cases, alternative predictions, and independent tasks. Keep related
+  items together and avoid unnecessary nesting.
+- **Number genuinely ordered actions:** predict, run, explain, modify, then
+  check. Numbering should express a needed sequence, not imply an order among
+  independent requirements.
+- **Bold selectively:** emphasize a key concept, critical constraint, or short
+  item label such as **Inputs**, **Result**, or **Empty input**. Keep the rest
+  readable as normal text; bolding whole paragraphs hides the useful signals.
+- **Keep explanations beside their code.** Preserve readable code blocks and
+  inline code notation; do not replace the explanation of why something works
+  with disconnected fragments.
+- **Preserve the learning task.** When restructuring, retain every requirement,
+  edge case, prediction prompt, and accepted solution approach. Preserve the
+  intended level of scaffolding: predictions precede running or revealing
+  answers, and independent exercises remain tasks for the learner to solve.
+- **Use semantic Markdown.** Separate lists from surrounding text with blank
+  lines and indent continuation lines correctly. Verify lists, emphasis, and
+  code blocks in both the live tutorial and print view.
+
 ### Live Coding Over Static Examples
 
 When demonstrating, write code live rather than presenting finished solutions:
@@ -447,6 +466,8 @@ Answer these questions before creating tutorial content:
 9. **What prior knowledge might cause negative transfer?** How will I surface it?
 10. **Am I fostering a growth mindset?** Am I normalizing struggle, praising process, and
     framing errors as learning opportunities?
+11. **Can learners skim the instructions?** Are parallel rules/examples/tasks in lists,
+    ordered actions numbered, and essential points selectively bolded without losing meaning?
 
 ---
 

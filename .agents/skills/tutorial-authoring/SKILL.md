@@ -1883,6 +1883,48 @@ the host adds `/tutorial/` when syncing files. Absolute `/tutorial/...` paths
 are not a supported Haskell authoring form. Haskell `setup_commands` and `solution.commands` are
 intentionally unsupported; express setup and solutions through workspace files.
 
+#### Haskell expression interpreter
+
+Every `backend: haskell` tutorial automatically offers **Output** and
+**Interpreter** view buttons; no YAML opt-in is needed. The interpreter is
+MicroHs, not GHCi. `js/haskell/interpreter.js` owns the accessible transcript,
+expression form, and bounded, page-session-only history; presentation lives in
+`css/haskell-interpreter.css`. Its semantic color variables follow the site’s
+light/dark theme, including input, transcript, help, and control states.
+`TutorialCode` loads both alongside cycle diagnostics.
+
+- Evaluate one-line Haskell expressions, including calls to functions in the
+  active `.hs` file, without adding `main`. Use `:type expression` or `:t expression`
+  to inspect a type without evaluating its value.
+- Each request syncs all editor models (including unsaved changes), reloads the
+  active file, and imports its scope. Explicit modules respect their exports;
+  a headerless `Main.hs` uses a temporary named module so its definitions are
+  available without requiring `main`. Temporary source never replaces learner files.
+- Interpreter diagnostics explain unprintable function results and offer a conditional
+  tuple-versus-curried-arguments hint (for example, `f(9,12)` versus `f 9 12`).
+  Tuple arguments remain valid Haskell; never rewrite input or presume function
+  arity. Preserve the original error in expandable **Compiler details**.
+- Each request starts with fresh module scope. Reusable definitions belong in
+  the editor; expression-local bindings use `let … in …`. Other colon commands,
+  shell commands, and multiline input are rejected with a diagnostic.
+- Worker protocol: `{ type: 'evaluate', id, path, expression, silent: true }`
+  returns `{ type: 'run_done', id, exitCode, stdout, stderr }`. Results stay in
+  the interpreter transcript, separate from program output and exercise checks.
+- Evaluation shares the host execution guard with Run, checks, and the debugger.
+  Stop and the execution deadline restart the sandbox, then permit another
+  expression. Type queries bypass value-demand cycle checks; expression checks
+  pass `executeExpression: true` to the cycle analyzer to follow known IO demand.
+- Enter evaluates; Up/Down recall history. Visible Previous/Next command buttons
+  offer the same history actions. Keep `/shortcuts/` synchronized. No persistence
+  keys are added. The terminal controls are hidden in print.
+- The help includes local GHCi guidance (`ghci Main.hs`). Do not label the browser
+  engine GHCi: that would imply compiler and session capabilities it does not have.
+
+Run `tests/haskell-interpreter.spec.js` for actual compiler protocol and UI coverage,
+including modules without `main`, fresh edits, type queries, error recovery, and
+isolation from Run and gates. Keep the existing Haskell backend and tutorial suites
+passing when changing its integration.
+
 #### Prolog and Haskell debugging
 
 Set `debugger: true` to expose Debug, source breakpoints, stepping, the

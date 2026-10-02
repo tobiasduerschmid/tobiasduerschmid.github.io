@@ -1494,6 +1494,7 @@
   TutorialCode.prototype.destroy = function () {
     this._destroyed = true;
     if (this._haskellCycles) this._haskellCycles.dispose();
+    if (this._haskellInterpreter) this._haskellInterpreter.dispose();
     if (this._debuggerCtl && this._debuggerCtl.channel) this._debuggerCtl.channel.dispose();
     this._stopFileWatch();
     this._stopGuestClockSync();
@@ -2823,9 +2824,14 @@
             return loadScript('/js/haskell/cycle-analysis.js');
           }).then(function () {
             return loadScript('/js/haskell/cycle-diagnostics.js');
+          }).then(function () {
+            return loadScript('/js/haskell/interpreter.js');
           })
         : Promise.resolve();
-      if (self.config.backend === 'haskell') loadCSS('/css/haskell-diagnostics.css');
+      if (self.config.backend === 'haskell') {
+        loadCSS('/css/haskell-diagnostics.css');
+        loadCSS('/css/haskell-interpreter.css');
+      }
       return Promise.all([v86Promise, monacoPromise, playwrightPromise, haskellAnalysis]);
     });
   };
@@ -5737,7 +5743,8 @@
 
   TutorialCode.prototype._runCurrentFile = function () {
     if (this._activeRunTransaction) return this._activeRunTransaction.promise;
-    if (this.config.backend === 'cpp' && this._testRunInFlight) return Promise.resolve(false);
+    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell') && this._testRunInFlight) return Promise.resolve(false);
+    if (this._haskellInterpreter) this._haskellInterpreter.showOutput();
 
     var stepIndex = this.currentStep >= 0 ? this.currentStep : 0;
     var step = this.steps[stepIndex];
@@ -7453,6 +7460,7 @@
       var gutterTimer;
       if (this.config.backend === 'haskell' && !this._haskellCycles) {
         this._haskellCycles = new window.SEBookHaskellCycleDiagnostics(this);
+        this._haskellInterpreter = new window.SEBookHaskellInterpreter(this);
       }
       model.onDidChangeContent(function () {
         if (self._haskellCycles) self._haskellCycles.schedule();
@@ -12854,7 +12862,7 @@
     // results return. Without this guard, the second run can replace the
     // pending test buffer/state and produce ghost results in the panel.
     if (this._testRunInFlight) return;
-    if (this.config.backend === 'cpp' && this._activeRunTransaction) return;
+    if ((this.config.backend === 'cpp' || this.config.backend === 'haskell') && this._activeRunTransaction) return;
     var stepIndex = this.currentStep;
     var step = this.steps[stepIndex];
     if (!step || !this._stepHasTests(step)) return;

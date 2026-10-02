@@ -92,6 +92,12 @@ If you add a new diagram type or a new SVG-rendering widget, follow this pattern
 
 Some IDE-style panels (the editor / terminal pane) are intentionally dark in **both** modes — see the comment "Always dark-mode for the workspace panels" at the top of [`css/tutorial.css`](../../../css/tutorial.css). When editing those panels, match the existing convention: the dark colors are the default, and the only mode-specific rules are `html:not(.dark-mode)` rules for the surrounding chrome (toolbar buttons, labels) so they stay legible against the page's white background.
 
+**Check the specific panel before applying the always-dark convention.** The tutorial
+Output pane switches to white in light mode (`html:not(.dark-mode)` rules in
+`css/tutorial.css`), and the Haskell interpreter follows that light/dark theme.
+Match the adjacent panel’s actual theme rules; do not assume every workspace
+panel is always dark.
+
 ### Popout windows
 
 Tutorial popouts pass the dark-mode state through the URL (`&dark=0|1`) and re-apply the class on the popup's `<html>` — see [`js/tutorial-popout-manager.js`](../../../js/tutorial-popout-manager.js). If you create a new popout / detached pane, propagate the theme the same way, otherwise the popup defaults to light and looks broken next to a dark parent.
